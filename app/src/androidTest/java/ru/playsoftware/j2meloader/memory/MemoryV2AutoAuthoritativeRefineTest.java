@@ -22,12 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Device gate for the production Auto path after the fused first-scan cutover. The mutable native
- * probe is deliberately outside ART so changing 1 -> 2 cannot itself trigger a managed GC or move
- * the observed address. One little-endian aligned uint64_t simultaneously represents Byte, Short,
- * Char, Int and Long numeric values, exercising multi-plane COW membership at one raw address.
- */
+/** Device gate for fused Auto COW refine and O(1) ResultStore revision Undo. */
 @RunWith(AndroidJUnit4.class)
 public class MemoryV2AutoAuthoritativeRefineTest {
 	private static final int[] EXPECTED_INTEGER_ALIASES = {
@@ -39,7 +34,7 @@ public class MemoryV2AutoAuthoritativeRefineTest {
 	};
 
 	@Test
-	public void autoRefineClearsBitmapCowAndUndoRestagesResultCursor() {
+	public void autoRefineClearsBitmapCowAndUndoRestoresRememberedRevision() {
 		int pageSize = NativeMemoryTarget.pageSize();
 		assertTrue(pageSize > 0);
 		long[] originalProbe = NativeMemoryTarget.readProbe();
@@ -80,14 +75,26 @@ public class MemoryV2AutoAuthoritativeRefineTest {
 					NativeMemoryEngine.historyDepth() > 0);
 			assertResultCursorOnly();
 
+			long[] catalogBefore = NativeMemoryEngine.v2RevisionCatalogStats();
+			assertNotNull(catalogBefore);
+			assertEquals(4, catalogBefore.length);
+			assertTrue("authoritative Auto revisions were not retained", catalogBefore[0] > 0L);
+			long hitsBefore = catalogBefore[2];
+			long missesBefore = catalogBefore[3];
+
 			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.undo());
-			// Undo swaps the immutable SearchState. The first page must rebuild ResultStore metadata from
-			// that committed revision, without reading target memory and without falling back to the old
-			// Candidate pager even though the physical probe still contains 2.
+			long[] catalogAfter = NativeMemoryEngine.v2RevisionCatalogStats();
+			assertNotNull(catalogAfter);
+			assertEquals(hitsBefore + 1L, catalogAfter[2]);
+			assertEquals("Auto Undo unexpectedly rebuilt from Candidate compatibility state",
+					missesBefore, catalogAfter[3]);
+			assertTrue("remembered Auto revision was not restored as authoritative",
+					NativeMemoryEngine.v2KnownAuthoritativeRevision());
+
 			Map<Integer, Long> undoneIds = aliasesAt(probeAddress);
 			assertExpectedIntegerAliases(undoneIds);
 			for (int type : EXPECTED_INTEGER_ALIASES) {
-				assertEquals("CandidateId changed after Undo restage for type=" + type,
+				assertEquals("CandidateId changed after O(1) Auto revision Undo for type=" + type,
 						firstIds.get(type), undoneIds.get(type));
 			}
 			assertResultCursorOnly();
@@ -139,9 +146,7 @@ public class MemoryV2AutoAuthoritativeRefineTest {
 					previousAddress = address;
 					uniqueInPage++;
 				}
-				if (address == wantedAddress) {
-					result.put(type, id);
-				}
+				if (address == wantedAddress) result.put(type, id);
 			}
 			assertTrue(uniqueInPage > 0L && uniqueInPage <= limit);
 			offset += uniqueInPage;
