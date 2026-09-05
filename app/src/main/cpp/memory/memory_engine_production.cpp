@@ -12,4 +12,5 @@
 // is fully replaced and the native module can be split normally again.
 #include "memory_engine_compilation_unit.cpp"
 #include "memory_engine_v2_extensions.inc"
+#include "memory_engine_auto_refine_extension.inc"
 #include "memory_engine_refresh_extension.inc"
