@@ -10,6 +10,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <span>
 #include <vector>
 
@@ -35,6 +36,18 @@ class OrdinaryResultStore final {
     [[nodiscard]] bool reserve(std::size_t count) noexcept;
     [[nodiscard]] bool append(const OrdinaryResultRecord &record,
                               bool identityValid) noexcept;
+
+    // Boundary matches may not have enough bytes in the already-read scan chunk to compute their
+    // passive relocation fingerprint. First-scan code records only those sparse ordinals and fills
+    // the fingerprint afterwards with a bounded target read; no address/type data is duplicated here.
+    [[nodiscard]] bool updateIdentity(std::size_t index, std::uint64_t identityHash,
+                                      bool identityValid) noexcept;
+
+    // IDs remain strictly increasing because first scan assigns them in ResultAliasCursor order and
+    // every refine/filter only removes rows. Binary search therefore resolves a UI ResultId without
+    // an unordered_map proportional to the complete result set.
+    [[nodiscard]] std::optional<std::size_t> findIndexById(
+            std::uint64_t id) const noexcept;
 
     [[nodiscard]] std::size_t size() const noexcept { return records_.size(); }
     [[nodiscard]] bool empty() const noexcept { return records_.empty(); }
