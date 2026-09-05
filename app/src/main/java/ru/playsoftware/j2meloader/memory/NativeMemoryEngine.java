@@ -109,7 +109,7 @@ final class NativeMemoryEngine {
 	private static native int refineKnownV2CompactOwner(int predicate, String first, String second,
 	                                                   boolean allowRelocationReconcile);
 
-	private static native int refineRelativeV2CompactOwner(
+	private static native int refineRelativeV2CompactOwnerSafe(
 			int predicate, int compareTarget, String first, String second);
 
 	private static native int startGroupV2CompactOwner(
@@ -227,7 +227,7 @@ final class NativeMemoryEngine {
 	static int refineRelative(int predicate, int compareTarget, String first, String second) {
 		// The compact owner handles both Unknown-baseline first materialization and later relative COW
 		// refinements. A successful first relative scan therefore never creates a Candidate mirror.
-		int result = refineRelativeV2CompactOwner(predicate, compareTarget, first, second);
+		int result = refineRelativeV2CompactOwnerSafe(predicate, compareTarget, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			publishV2KnownPagingStage(true, true);
 		}
