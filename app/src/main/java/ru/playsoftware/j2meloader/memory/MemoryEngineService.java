@@ -265,9 +265,11 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long refreshCandidates(long token, long[] candidateIds, boolean passiveRefresh) {
+			long[] ids = candidateIds == null ? new long[0] : candidateIds;
 			return enqueue(token, false, 0, passiveRefresh,
-					() -> refreshForRead(token,
-							candidateIds == null ? new long[0] : candidateIds));
+					() -> passiveRefresh
+							? refreshVisibleCandidates(ids)
+							: refreshForRead(token, ids));
 		}
 
 		@Override
@@ -632,15 +634,15 @@ public final class MemoryEngineService extends Service {
 		long operationId = nextOperationId.getAndIncrement();
 		long enqueueEpoch = cancelEpoch.get();
 		worker.execute(() -> {
-			// configureTarget() may spend time in target-side mincore() before the next native scan
-			// resets its counters. Keep the previous snapshot as a sentinel so that old progress is
-			// never relabeled with this operationId while target configuration is still running.
-			long[] progressBaseline = NativeMemoryEngine.scanProgress();
-			ScheduledFuture<?> progressUpdates = progressNotifier.scheduleWithFixedDelay(
-					() -> notifyProgress(operationId, progressBaseline, searchOperation),
-					PROGRESS_UPDATE_PERIOD_MS,
-					PROGRESS_UPDATE_PERIOD_MS,
-					TimeUnit.MILLISECONDS);
+			// Presentation-only refreshes are deliberately tiny and never report scan progress. Avoid
+			// creating a second scheduled task four times per second just to discover there is no scan.
+			long[] progressBaseline = passiveRefresh ? null : NativeMemoryEngine.scanProgress();
+			ScheduledFuture<?> progressUpdates = passiveRefresh ? null
+					: progressNotifier.scheduleWithFixedDelay(
+							() -> notifyProgress(operationId, progressBaseline, searchOperation),
+							PROGRESS_UPDATE_PERIOD_MS,
+							PROGRESS_UPDATE_PERIOD_MS,
+							TimeUnit.MILLISECONDS);
 			int result;
 			String serviceMessage = null;
 			try {
@@ -683,7 +685,7 @@ public final class MemoryEngineService extends Service {
 					serviceMessage = gcSafetyMessage(result);
 				}
 			} finally {
-				progressUpdates.cancel(false);
+				if (progressUpdates != null) progressUpdates.cancel(false);
 			}
 			notifyFinished(operationId, result, serviceMessage, passiveRefresh, searchOperation);
 		});
@@ -801,6 +803,19 @@ public final class MemoryEngineService extends Service {
 		return MemoryEngineContract.RESULT_GC_RACE;
 	}
 
+	/**
+	 * Cheap presentation refresh for rows that are already materialized on screen. It updates only
+	 * the live Candidate overlay at the current binding and never performs a heap-wide relocation
+	 * search, resident-range rebuild, GC-epoch mutation, or SearchState/history commit.
+	 */
+	private int refreshVisibleCandidates(long[] candidateIds) {
+		if (candidateIds == null || candidateIds.length == 0) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
+		return NativeMemoryEngine.refresh(candidateIds, false);
+	}
+
+	/** Explicit Refresh/rebind path. This may perform identity recovery after a copying GC. */
 	private int refreshForRead(long token, long[] candidateIds) {
 		if (candidateIds == null || candidateIds.length == 0) {
 			return MemoryEngineContract.RESULT_INVALID_REQUEST;
