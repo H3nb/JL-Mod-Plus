@@ -49,18 +49,19 @@ final class NativeMemoryEngine {
 	static native boolean canWriteTarget(int pid, long address, long expectedBits);
 
 	static int startKnown(int valueType, int predicate, String first, String second) {
-		int result = valueType == MemoryEngineContract.TYPE_AUTO
-				? startKnownAutoV2Authoritative(predicate, first, second)
-				: startKnownV2Authoritative(valueType, predicate, first, second);
+		int result = startKnownV2CompactOwner(valueType, predicate, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			clearV2RevisionCatalog();
 			publishV2KnownPagingStage(true, true);
-			rememberCurrentV2Revision();
 			if (BuildConfig.DEBUG) resetV2ShadowSession();
 		}
 		return result;
 	}
 
+	private static native int startKnownV2CompactOwner(int valueType, int predicate,
+	                                                  String first, String second);
+
+	// Candidate-compatible first-search paths remain compiled as differential/fallback references.
 	private static native int startKnownV2Authoritative(int valueType, int predicate,
 	                                                    String first, String second);
 
@@ -85,8 +86,7 @@ final class NativeMemoryEngine {
 
 	static native long[] v2RevisionCatalogStats();
 
-	// Compact migration gates are package-private on purpose. Production routing remains on the
-	// proven Candidate-compatible path until instrumentation validates page/action parity.
+	// Differential staging from the old Candidate mirror is retained for instrumentation only.
 	static native boolean stageV2CompactRevision();
 
 	static native boolean hasCurrentV2CompactRevision();
@@ -104,6 +104,39 @@ final class NativeMemoryEngine {
 	static native long[] expandResultGroupsV2Compact(long[] resultIds, int valueType);
 
 	private static native void clearV2CompactRevisions();
+
+	// Candidate-free production owner API.
+	private static native int refineKnownV2CompactOwner(int predicate, String first, String second,
+	                                                   boolean allowRelocationReconcile);
+
+	private static native int refineRelativeV2CompactOwner(
+			int predicate, int compareTarget, String first, String second);
+
+	private static native int filterV2CompactOwner(long[] candidateIds, boolean keep);
+
+	private static native long[] resultPageV2CompactOwner(int offset, int limit);
+
+	private static native int refreshV2CompactOwner(long[] candidateIds, boolean allowRecovery);
+
+	private static native int editV2CompactOwner(long[] candidateIds, String replacementValue);
+
+	private static native int pinV2CompactOwner(long[] candidateIds, boolean add);
+
+	private static native long[] inspectV2CompactOwner(long candidateId, int radius);
+
+	private static native long[] expandResultGroupsV2CompactOwner(long[] resultIds, int valueType);
+
+	private static native int editInspectorValueV2CompactOwner(
+			long anchorCandidateId, int relativeOffset, int valueType,
+			long expectedBits, String replacementValue);
+
+	private static native int startNearbyV2CompactOwner(
+			long anchorCandidateId, int radius, int valueType,
+			int predicate, String first, String second);
+
+	private static native int undoV2CompactOwner();
+
+	static native long[] v2CompactOwnerStats();
 
 	static int startUnknown(int valueType) {
 		int result = startUnknownUnchecked(valueType);
@@ -123,9 +156,21 @@ final class NativeMemoryEngine {
 
 	static int startNearby(long anchorCandidateId, int radius, int valueType,
 	                       int predicate, String first, String second) {
-		int result = startNearbyUnchecked(
-				anchorCandidateId, radius, valueType, predicate, first, second);
-		if (result == MemoryEngineContract.RESULT_OK) resetV2ForLegacyNewSearch();
+		boolean compact = hasCurrentV2CompactRevision();
+		int result = compact
+				? startNearbyV2CompactOwner(
+						anchorCandidateId, radius, valueType, predicate, first, second)
+				: startNearbyUnchecked(
+						anchorCandidateId, radius, valueType, predicate, first, second);
+		if (result == MemoryEngineContract.RESULT_OK) {
+			if (compact) {
+				clearV2RevisionCatalog();
+				publishV2KnownPagingStage(true, true);
+				if (BuildConfig.DEBUG) resetV2ShadowSession();
+			} else {
+				resetV2ForLegacyNewSearch();
+			}
+		}
 		return result;
 	}
 
@@ -138,6 +183,15 @@ final class NativeMemoryEngine {
 
 	static int refineKnown(int predicate, String first, String second,
 	                      boolean allowRelocationReconcile) {
+		if (hasCurrentV2CompactRevision()) {
+			int result = refineKnownV2CompactOwner(
+					predicate, first, second, allowRelocationReconcile);
+			if (result == MemoryEngineContract.RESULT_OK) {
+				publishV2KnownPagingStage(true, true);
+			}
+			return result;
+		}
+
 		rememberAuthoritativeCurrentRevision();
 		boolean autoRevision = hasCurrentV2AutoResultStore();
 		boolean explicitRevision = hasCurrentV2KnownResultStore();
@@ -163,6 +217,17 @@ final class NativeMemoryEngine {
 			int predicate, String first, String second, boolean allowRelocationReconcile);
 
 	static int refineRelative(int predicate, int compareTarget, String first, String second) {
+		if (hasCurrentV2CompactRevision()) {
+			int result = refineRelativeV2CompactOwner(
+					predicate, compareTarget, first, second);
+			if (result == MemoryEngineContract.RESULT_OK) {
+				publishV2KnownPagingStage(true, true);
+			}
+			return result;
+		}
+
+		// Unknown baseline first materialization remains on the proven relative path for this cutover
+		// stage. It can be converted/staged later without affecting Known/Auto candidate-free sessions.
 		rememberAuthoritativeCurrentRevision();
 		int result = refineRelativeV2Authoritative(predicate, compareTarget, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
@@ -178,8 +243,12 @@ final class NativeMemoryEngine {
 			int predicate, int compareTarget, String first, String second);
 
 	static int undo() {
-		int result = undoV2Aware();
+		int result = undoV2CompactOwner();
 		if (result != MemoryEngineContract.RESULT_OK) return result;
+		if (hasCurrentV2CompactRevision()) {
+			publishV2KnownPagingStage(true, true);
+			return result;
+		}
 		boolean remembered = hasCurrentV2KnownResultStore() || hasCurrentV2AutoResultStore();
 		if (remembered) {
 			publishV2KnownPagingStage(true, true);
@@ -193,6 +262,9 @@ final class NativeMemoryEngine {
 	private static native int undoV2Aware();
 
 	static int refresh(long[] candidateIds, boolean allowRecovery) {
+		if (hasCurrentV2CompactRevision()) {
+			return refreshV2CompactOwner(candidateIds, allowRecovery);
+		}
 		return allowRecovery
 				? refreshUnchecked(candidateIds, true)
 				: refreshPresentation(candidateIds);
@@ -203,6 +275,13 @@ final class NativeMemoryEngine {
 	private static native int refreshPresentation(long[] candidateIds);
 
 	static int filter(long[] candidateIds, boolean keep) {
+		if (hasCurrentV2CompactRevision()) {
+			int result = filterV2CompactOwner(candidateIds, keep);
+			if (result == MemoryEngineContract.RESULT_OK) {
+				publishV2KnownPagingStage(true, true);
+			}
+			return result;
+		}
 		rememberAuthoritativeCurrentRevision();
 		int result = filterUnchecked(candidateIds, keep);
 		if (result == MemoryEngineContract.RESULT_OK) {
@@ -215,19 +294,46 @@ final class NativeMemoryEngine {
 	private static native int filterUnchecked(long[] candidateIds, boolean keep);
 
 	static int edit(long[] candidateIds, String replacementValue) {
-		int result = editUnchecked(candidateIds, replacementValue);
+		int result = hasCurrentV2CompactRevision()
+				? editV2CompactOwner(candidateIds, replacementValue)
+				: editUnchecked(candidateIds, replacementValue);
 		return MemoryMutationOutcome.classifyEditResult(result, lastMessage());
 	}
 
 	private static native int editUnchecked(long[] candidateIds, String replacementValue);
 
-	static native long[] expandResultGroups(long[] resultIds, int valueType);
+	static long[] expandResultGroups(long[] resultIds, int valueType) {
+		return hasCurrentV2CompactRevision()
+				? expandResultGroupsV2CompactOwner(resultIds, valueType)
+				: expandResultGroupsUnchecked(resultIds, valueType);
+	}
 
-	static native int editInspectorValue(long anchorCandidateId, int relativeOffset,
-	                                     int valueType, long expectedBits,
-	                                     String replacementValue);
+	private static native long[] expandResultGroupsUnchecked(long[] resultIds, int valueType);
+
+	static int editInspectorValue(long anchorCandidateId, int relativeOffset,
+	                              int valueType, long expectedBits,
+	                              String replacementValue) {
+		return hasCurrentV2CompactRevision()
+				? editInspectorValueV2CompactOwner(
+						anchorCandidateId, relativeOffset, valueType,
+						expectedBits, replacementValue)
+				: editInspectorValueUnchecked(
+						anchorCandidateId, relativeOffset, valueType,
+						expectedBits, replacementValue);
+	}
+
+	private static native int editInspectorValueUnchecked(
+			long anchorCandidateId, int relativeOffset, int valueType,
+			long expectedBits, String replacementValue);
 
 	static int pin(long[] candidateIds, boolean add) {
+		if (hasCurrentV2CompactRevision()) {
+			int result = pinV2CompactOwner(candidateIds, add);
+			if (result == MemoryEngineContract.RESULT_OK) {
+				publishV2KnownPagingStage(true, true);
+			}
+			return result;
+		}
 		boolean authoritative = isCurrentV2RevisionAuthoritative();
 		if (authoritative) rememberAuthoritativeCurrentRevision();
 		int result = pinUnchecked(candidateIds, add);
@@ -243,6 +349,8 @@ final class NativeMemoryEngine {
 
 	static native long[] watchPage();
 
+	// Freeze deliberately remains Watch-only. Every Watch row is already a promoted heavyweight
+	// Candidate, so the compact ordinary result database is not part of the Freeze loop.
 	static native int freeze(long[] candidateIds, int mode, String firstValue, String secondValue);
 
 	static native long resultCount();
@@ -263,6 +371,7 @@ final class NativeMemoryEngine {
 	}
 
 	private static void rememberAuthoritativeCurrentRevision() {
+		if (hasCurrentV2CompactRevision()) return;
 		if (!isCurrentV2RevisionAuthoritative() || rememberCurrentV2Revision()) return;
 		boolean staged = stageV2KnownResultStore() || stageV2AutoResultStore();
 		if (staged) rememberCurrentV2Revision();
@@ -285,6 +394,20 @@ final class NativeMemoryEngine {
 		synchronized (V2_KNOWN_PAGING_LOCK) {
 			stagedGeneration = v2KnownStaged ? v2KnownStageGeneration : 0L;
 		}
+
+		if (hasCurrentV2CompactRevision()) {
+			long[] compact = resultPageV2CompactOwner(offset, limit);
+			if (compact != null) {
+				recordV2PageHit(stagedGeneration);
+				return compact;
+			}
+			synchronized (V2_KNOWN_PAGING_LOCK) {
+				v2KnownPageFallbacks++;
+			}
+			// Candidate-free authority must never silently fall through to an empty Candidate page.
+			return null;
+		}
+
 		if (stagedGeneration != 0L) {
 			long[] staged = stagedResultPage(offset, limit);
 			if (staged != null) {
@@ -364,7 +487,13 @@ final class NativeMemoryEngine {
 		publishV2KnownPagingStage(false, false);
 	}
 
-	static native long[] inspect(long candidateId, int radius);
+	static long[] inspect(long candidateId, int radius) {
+		return hasCurrentV2CompactRevision()
+				? inspectV2CompactOwner(candidateId, radius)
+				: inspectUnchecked(candidateId, radius);
+	}
+
+	private static native long[] inspectUnchecked(long candidateId, int radius);
 
 	static native long[] canonicalKnownPlan(int valueType, int predicate, String first, String second);
 
