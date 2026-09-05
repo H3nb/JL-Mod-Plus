@@ -12,14 +12,13 @@
 
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <type_traits>
+#include <utility>
 
 namespace jlmem::v2 {
 
-// Stable values deliberately match MemoryEngineContract / the production parser. Keeping the
-// stable numeric values here makes diagnostic boundaries easy to audit and prevents a hidden
-// translation table from drifting away from Java.
 enum class RelativePredicate : std::uint8_t {
     Changed = 7U,
     Unchanged = 8U,
@@ -104,7 +103,6 @@ template <typename T>
         return false;
     }
     if (!relativePredicateNeedsMagnitude(plan.predicate)) {
-        // Changed/Unchanged/Increased/Decreased carry no hidden numeric operands.
         return plan.firstBits == 0U && plan.secondBits == 0U;
     }
     switch (plan.plane) {
