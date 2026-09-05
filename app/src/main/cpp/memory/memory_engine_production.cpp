@@ -18,8 +18,18 @@
 #include "memory_engine_revision_extension.inc"
 #include "memory_engine_ordinary_extension.inc"
 #include "memory_engine_compact_extension.inc"
+
+// Keep the previous compact-owner JNI implementation available under a private Legacy suffix while
+// the public name is routed to the linear relocation implementation below. This avoids a Java ABI
+// change and makes it impossible for production routing to silently keep using the quadratic seek
+// path that this migration replaces.
+#define Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnownV2CompactOwner \
+        Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnownV2CompactOwnerLegacy
 #include "memory_engine_compact_owner_extension.inc"
+#undef Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnownV2CompactOwner
+
 #include "memory_engine_compact_relocation_linear.inc"
+#include "memory_engine_linear_cutover_bridge.inc"
 #include "memory_engine_group_extension.inc"
 #include "memory_engine_compact_relative_safety.inc"
 #include "memory_engine_compact_cutover_bridge.inc"
