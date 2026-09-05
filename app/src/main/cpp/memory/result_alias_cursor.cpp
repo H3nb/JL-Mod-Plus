@@ -70,6 +70,15 @@ constexpr std::array<ResultPlane, kResultPlaneCount> kDisplayOrder{
     return true;
 }
 
+[[nodiscard]] std::uint64_t blockTypedCount(
+        const ResultBlockHeader &header) noexcept {
+    std::uint64_t result = 0U;
+    for (const std::uint16_t count : header.counts) {
+        result += count;
+    }
+    return result;
+}
+
 static_assert(resultAliasDisplayPriority(ResultPlane::Int) == 0U);
 static_assert(resultAliasDisplayPriority(ResultPlane::Byte) == 6U);
 static_assert(allResultPlaneBits() == 0x7fU);
@@ -149,10 +158,8 @@ bool seekAliasAddressOffset(const ResultStore &store,
     std::uint64_t prefix = 0U;
     const auto headers = store.headers();
     for (std::size_t block = 0U; block < addressCursor.blockIndex; ++block) {
-        for (const std::uint16_t count : headers[block].counts) {
-            if (!addChecked(prefix, count)) {
-                return false;
-            }
+        if (!addChecked(prefix, blockTypedCount(headers[block]))) {
+            return false;
         }
     }
 
@@ -180,6 +187,56 @@ bool seekAliasAddressOffset(const ResultStore &store,
     cursor = {addressCursor, 0U, 0U};
     typedOffset = prefix;
     return true;
+}
+
+bool seekAliasTypedOffset(const ResultStore &store,
+                          std::uint64_t typedOffset,
+                          ResultAliasCursor &cursor) {
+    if (typedOffset > store.typedCount()) {
+        return false;
+    }
+    if (typedOffset == store.typedCount()) {
+        cursor = {{store.blockCount(), 0U}, 0U, 0U};
+        return true;
+    }
+
+    const auto headers = store.headers();
+    std::uint64_t remaining = typedOffset;
+    std::size_t blockIndex = 0U;
+    for (; blockIndex < headers.size(); ++blockIndex) {
+        const std::uint64_t count = blockTypedCount(headers[blockIndex]);
+        if (remaining < count) {
+            break;
+        }
+        remaining -= count;
+    }
+    if (blockIndex >= headers.size()) {
+        return false;
+    }
+
+    ResultAliasCursor working{{blockIndex, 0U}, 0U, 0U};
+    while (remaining != 0U) {
+        const std::size_t step = static_cast<std::size_t>(std::min<std::uint64_t>(
+                remaining, kResultAliasCursorPageLimit));
+        ResultAliasPage skipped;
+        if (step == 0U || !readAliasPage(store, working, step, skipped) ||
+            skipped.rows.size() != step) {
+            return false;
+        }
+        working = skipped.next;
+        remaining -= step;
+    }
+    cursor = working;
+    return true;
+}
+
+bool readAliasPageAtTypedOffset(const ResultStore &store,
+                                std::uint64_t typedOffset,
+                                std::size_t limit,
+                                ResultAliasPage &page) {
+    ResultAliasCursor cursor;
+    return seekAliasTypedOffset(store, typedOffset, cursor) &&
+           readAliasPage(store, cursor, limit, page);
 }
 
 } // namespace jlmem::v2
