@@ -53,8 +53,6 @@ final class NativeMemoryEngine {
 				? startKnownAutoV2Authoritative(predicate, first, second)
 				: startKnownV2Authoritative(valueType, predicate, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
-			// A successful New Search owns a fresh history root. Only now discard acceleration entries
-			// for the previous root; failed/cancelled searches must leave the old revision recoverable.
 			clearV2RevisionCatalog();
 			publishV2KnownPagingStage(true, true);
 			rememberCurrentV2Revision();
@@ -209,7 +207,21 @@ final class NativeMemoryEngine {
 	                                     int valueType, long expectedBits,
 	                                     String replacementValue);
 
-	static native int pin(long[] candidateIds, boolean add);
+	static int pin(long[] candidateIds, boolean add) {
+		boolean authoritative = isCurrentV2RevisionAuthoritative();
+		if (authoritative) rememberAuthoritativeCurrentRevision();
+		int result = pinUnchecked(candidateIds, add);
+		if (result == MemoryEngineContract.RESULT_OK && authoritative) {
+			// pin() copies SearchState only to update the Watch List. Membership, CandidateIds and value
+			// history are unchanged, so a verified metadata rebind preserves ResultStore authority.
+			boolean staged = stageV2KnownResultStore() || stageV2AutoResultStore();
+			publishV2KnownPagingStage(staged, staged);
+			if (staged) rememberCurrentV2Revision();
+		}
+		return result;
+	}
+
+	private static native int pinUnchecked(long[] candidateIds, boolean add);
 
 	static native long[] watchPage();
 
@@ -226,15 +238,14 @@ final class NativeMemoryEngine {
 		if (BuildConfig.DEBUG) resetV2ShadowSession();
 	}
 
-	private static void rememberAuthoritativeCurrentRevision() {
-		boolean authoritative;
+	private static boolean isCurrentV2RevisionAuthoritative() {
 		synchronized (V2_KNOWN_PAGING_LOCK) {
-			authoritative = v2KnownStaged && v2KnownAuthoritativeRevision;
+			return v2KnownStaged && v2KnownAuthoritativeRevision;
 		}
-		if (!authoritative || rememberCurrentV2Revision()) return;
-		// Watch-only SearchState replacement preserves membership. Reconstruct bitmap metadata from
-		// the already committed Candidate mirror, never target memory, and attach the same logical
-		// authoritative membership to that new immutable state pointer.
+	}
+
+	private static void rememberAuthoritativeCurrentRevision() {
+		if (!isCurrentV2RevisionAuthoritative() || rememberCurrentV2Revision()) return;
 		boolean staged = stageV2KnownResultStore() || stageV2AutoResultStore();
 		if (staged) rememberCurrentV2Revision();
 	}
@@ -309,9 +320,7 @@ final class NativeMemoryEngine {
 	}
 
 	static boolean v2KnownAuthoritativeRevision() {
-		synchronized (V2_KNOWN_PAGING_LOCK) {
-			return v2KnownStaged && v2KnownAuthoritativeRevision;
-		}
+		return isCurrentV2RevisionAuthoritative();
 	}
 
 	static boolean v2KnownAuthoritativeFirstScan() {
