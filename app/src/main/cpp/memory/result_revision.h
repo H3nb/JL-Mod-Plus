@@ -12,6 +12,7 @@
 #include "result_store.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <vector>
@@ -23,10 +24,10 @@ enum class ResultRevisionKind : std::uint8_t {
     Auto,
 };
 
-// Immutable ownership object attached to one SearchState revision. Global staging caches remain
-// only JNI/page acceleration; they are no longer the lifetime owner of authoritative ResultStore
-// membership. Undo can therefore recover the exact COW store/index in O(1) instead of rebuilding a
-// bitmap from the transitional Candidate mirror.
+// Immutable ownership object associated with one SearchState revision. Global staging caches remain
+// only JNI/page acceleration; they are not intended to be the sole lifetime owner of authoritative
+// ResultStore membership. The transitional registry can therefore restore exact COW state across
+// Undo without rebuilding a bitmap from the Candidate compatibility mirror.
 struct ResultRevision final {
     ResultRevisionKind kind = ResultRevisionKind::Explicit;
     ResultPlane plane = ResultPlane::Count;
@@ -59,13 +60,30 @@ struct ResultRevision final {
             result += bytes;
             return true;
         };
-        if (!add(store->retainedBytes()) ||
-            !add(checkpoints->capacity() * sizeof(ResultCursor))) {
+        if (!add(store->retainedBytes())) {
             return std::numeric_limits<std::size_t>::max();
         }
-        if (candidateOffsets != nullptr &&
-            !add(candidateOffsets->capacity() * sizeof(std::size_t))) {
+        const std::size_t checkpointBytes =
+                checkpoints->capacity() >
+                                std::numeric_limits<std::size_t>::max() /
+                                        sizeof(ResultCursor)
+                        ? std::numeric_limits<std::size_t>::max()
+                        : checkpoints->capacity() * sizeof(ResultCursor);
+        if (checkpointBytes == std::numeric_limits<std::size_t>::max() ||
+            !add(checkpointBytes)) {
             return std::numeric_limits<std::size_t>::max();
+        }
+        if (candidateOffsets != nullptr) {
+            const std::size_t offsetBytes =
+                    candidateOffsets->capacity() >
+                                    std::numeric_limits<std::size_t>::max() /
+                                            sizeof(std::size_t)
+                            ? std::numeric_limits<std::size_t>::max()
+                            : candidateOffsets->capacity() * sizeof(std::size_t);
+            if (offsetBytes == std::numeric_limits<std::size_t>::max() ||
+                !add(offsetBytes)) {
+                return std::numeric_limits<std::size_t>::max();
+            }
         }
         return result;
     }
