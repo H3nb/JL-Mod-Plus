@@ -27,18 +27,16 @@ enum class ResultRevisionKind : std::uint8_t {
 
 // Immutable ownership object associated with one SearchState revision. Global staging caches remain
 // only JNI/page acceleration; they are not intended to be the sole lifetime owner of authoritative
-// ResultStore membership. The optional ordinaryValues sidecar is indexed by ResultAliasCursor typed
-// ordinal and therefore does not duplicate address/type membership.
+// ResultStore membership. ordinaryValues is the compact production value/ResultId sidecar; it is
+// indexed by ResultAliasCursor typed ordinal and therefore never duplicates address/type membership.
 struct ResultRevision final {
     ResultRevisionKind kind = ResultRevisionKind::Explicit;
     ResultPlane plane = ResultPlane::Count;
     std::shared_ptr<const ResultStore> store;
     std::shared_ptr<const std::vector<ResultCursor>> checkpoints;
-    // Auto only during the Candidate-compatibility transition. Remove once paging/refine use the
-    // compact ordinary sidecar directly.
+    // Transitional Candidate-era Auto offset index. Compact revisions intentionally leave it null;
+    // seekAliasAddressOffset()/seekAliasTypedOffset() derive ordinals from bitmap/header counts.
     std::shared_ptr<const std::vector<std::size_t>> candidateOffsets;
-    // Optional during staged migration. Once populated, exactly one compact value record must exist
-    // for every typed alias represented by ResultStore.
     std::shared_ptr<const OrdinaryResultStore> ordinaryValues;
 
     [[nodiscard]] bool valid() const noexcept {
@@ -49,8 +47,15 @@ struct ResultRevision final {
         if (kind == ResultRevisionKind::Explicit) {
             return plane != ResultPlane::Count && candidateOffsets == nullptr;
         }
-        return kind == ResultRevisionKind::Auto &&
-               plane == ResultPlane::Count && candidateOffsets != nullptr;
+        if (kind != ResultRevisionKind::Auto || plane != ResultPlane::Count) {
+            return false;
+        }
+        // Legacy Auto staging needs Candidate offsets; compact Auto owns value ordinals directly.
+        return candidateOffsets != nullptr || ordinaryValues != nullptr;
+    }
+
+    [[nodiscard]] bool compact() const noexcept {
+        return valid() && ordinaryValues != nullptr;
     }
 
     [[nodiscard]] std::size_t retainedBytes() const noexcept {
