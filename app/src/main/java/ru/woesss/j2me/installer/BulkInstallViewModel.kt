@@ -40,6 +40,7 @@ class BulkInstallViewModel : ViewModel() {
             val currentName: String,
             val results: List<BulkInstallResult>,
             val cancelRequested: Boolean,
+            val stageLabel: Int? = null,
         ) : State
         data class Finished(
             val plan: BulkInstallPlan,
@@ -57,6 +58,26 @@ class BulkInstallViewModel : ViewModel() {
     private var executionJob: Job? = null
     private val closeRequested = AtomicBoolean()
     private var bundleImport: LibraryUniversalBundleStager.PreparedBundle? = null
+    private var previousResults: List<BulkInstallResult> = emptyList()
+
+    fun reviewUnfinished(library: LibraryViewModel) {
+        val finished = mutableState.value as? State.Finished ?: return
+        if (!library.isReadyGeneration(finished.plan.generation, finished.plan.workdir)) {
+            mutableState.value = State.Error("Library changed. Close this batch and select the sources again.")
+            return
+        }
+        val unfinished = finished.results.filter {
+            it.kind == BulkInstallResultKind.Failed || it.kind == BulkInstallResultKind.NotProcessed ||
+                it.kind == BulkInstallResultKind.PartiallyInstalled
+        }.associateBy { it.itemId }
+        previousResults = finished.results.filter { it.itemId !in unfinished }
+        mutableState.value = State.Review(finished.plan.copy(items = finished.plan.items.mapNotNull { item ->
+            val result = unfinished[item.id] ?: return@mapNotNull null
+            item.copy(selected = true,
+                restoreAppId = result.installedAppId,
+                restoreStorageKey = result.installedStorageKey)
+        }))
+    }
 
     fun planExplicit(
         uriStrings: List<String>,
@@ -348,11 +369,14 @@ class BulkInstallViewModel : ViewModel() {
             cancelRequested = false,
         )
         executionJob = viewModelScope.launch(Dispatchers.IO) {
-            val results = ArrayList<BulkInstallResult>()
+            val results = ArrayList(previousResults)
             var fatalError: String? = null
             try {
                 selected.forEachIndexed { index, item ->
-                    if (cancelRequested.get() || fatalError != null) return@forEachIndexed
+                    if (cancelRequested.get() || fatalError != null) {
+                        results += BulkInstallResult(item.id, item.name, BulkInstallResultKind.NotProcessed)
+                        return@forEachIndexed
+                    }
                     mutableState.value = State.Running(
                         plan = plan,
                         completed = index,
@@ -367,6 +391,8 @@ class BulkInstallViewModel : ViewModel() {
                         val detail = boundedMessage(error.cause ?: error)
                         results += BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
                         fatalError = detail
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
                     } catch (error: Throwable) {
                         results += BulkInstallResult(
                             item.id,
@@ -412,6 +438,17 @@ class BulkInstallViewModel : ViewModel() {
     ): BulkInstallResult {
         if (!library.isReadyGeneration(plan.generation, plan.workdir)) {
             throw FatalBatchException(IllegalStateException("Library generation changed before batch item execution"))
+        }
+        if (item.restoreAppId != null) {
+            return try {
+                check(bundleImport != null) { "Bundle restore sources are no longer available" }
+                restoreBundlePayload(plan, item, item.restoreAppId, item.restoreStorageKey, library)
+                BulkInstallResult(item.id, item.name, BulkInstallResultKind.Reinstalled)
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) {
+                BulkInstallResult(item.id, item.name, BulkInstallResultKind.PartiallyInstalled,
+                    boundedMessage(error), item.restoreAppId, item.restoreStorageKey)
+            }
         }
         val requestedSource = when (item.action) {
             BulkInstallAction.InstallJarOnly -> item.unit.jarFile
@@ -467,6 +504,16 @@ class BulkInstallViewModel : ViewModel() {
                 AppInstaller(source, resolvedJar, library, scratch)
             }
             installer = activeInstaller
+            activeInstaller.setProgress { stage ->
+                val running = mutableState.value as? State.Running
+                if (running != null) mutableState.value = running.copy(stageLabel = when (stage) {
+                    AppInstaller.Stage.READING -> R.string.loading_info
+                    AppInstaller.Stage.DOWNLOADING -> R.string.installer_stage_download
+                    AppInstaller.Stage.WAITING -> R.string.installer_stage_wait
+                    AppInstaller.Stage.CONVERTING -> R.string.converting_wait
+                    AppInstaller.Stage.SAVING -> R.string.installer_stage_save
+                })
+            }
             val currentCode = Single.create<Int>(activeInstaller::loadInfo).blockingGet()
             if (activeInstaller.expectedGeneration != plan.generation || activeInstaller.expectedWorkdir?.canonicalFile != plan.workdir) {
                 throw FatalBatchException(IllegalStateException("Library generation changed during batch revalidation"))
@@ -496,7 +543,14 @@ class BulkInstallViewModel : ViewModel() {
                         "Already installed after revalidation",
                     )
                 }
-                restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
+                try {
+                    restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (error: Exception) {
+                    return BulkInstallResult(item.id, item.name, BulkInstallResultKind.PartiallyInstalled,
+                        boundedMessage(error), activeInstaller.installedId,
+                        activeInstaller.installedPath?.let { File(it).name })
+                }
                 return BulkInstallResult(
                     item.id,
                     item.name,
@@ -515,7 +569,14 @@ class BulkInstallViewModel : ViewModel() {
             if (installCode != AppInstaller.STATUS_SUCCESS) {
                 return failed(item, "Installer stopped with status $installCode")
             }
-            restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
+            try {
+                restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) {
+                return BulkInstallResult(item.id, item.name, BulkInstallResultKind.PartiallyInstalled,
+                    boundedMessage(error), activeInstaller.installedId,
+                    File(activeInstaller.installedPath).name)
+            }
             val kind = when {
                 item.action == BulkInstallAction.InstallSeparateCopy -> BulkInstallResultKind.Installed
                 item.action == BulkInstallAction.Reinstall -> BulkInstallResultKind.Reinstalled
@@ -546,14 +607,25 @@ class BulkInstallViewModel : ViewModel() {
         installer: AppInstaller,
         library: LibraryViewModel,
     ) {
+        restoreBundlePayload(plan, item, installer.installedId,
+            installer.installedPath?.let { File(it).name }, library)
+    }
+
+    private suspend fun restoreBundlePayload(
+        plan: BulkInstallPlan,
+        item: BulkInstallItem,
+        installedId: Long,
+        storageKey: String?,
+        library: LibraryViewModel,
+    ) {
         val bundle = bundleImport ?: return
         val staged = bundle.apps.firstOrNull {
             it.prepared.jarFile.canonicalFile.path == item.unit.primaryFile.canonicalFile.path
         } ?: throw IllegalStateException("Universal app-bundle payload is unavailable")
-        val installedId = installer.installedId
         if (installedId < 0L) throw IllegalStateException("Installed app identity is unavailable")
         val app = library.getApp(plan.generation, plan.workdir, installedId)
             ?: throw IllegalStateException("Installed app is not visible after bundle import")
+        check(app.storageKey == storageKey) { "Bundle restore target changed" }
         library.restoreImportedBundleAwait(
             expectedGeneration = plan.generation,
             expectedWorkdir = plan.workdir,
@@ -587,20 +659,15 @@ class BulkInstallViewModel : ViewModel() {
         AppInstaller.STATUS_SAME -> BulkInstallStatus.AlreadyInstalled
         AppInstaller.STATUS_EQUAL -> BulkInstallStatus.ReinstallOrVariant
         AppInstaller.STATUS_UNMATCHED -> BulkInstallStatus.JadJarMismatch
+        AppInstaller.STATUS_AMBIGUOUS -> BulkInstallStatus.AmbiguousInstalledMatch
         else -> BulkInstallStatus.SourceError
     }
 
     private fun isFatalEnvironmentError(error: Throwable): Boolean {
         var cursor: Throwable? = error
         while (cursor != null) {
-            val message = cursor.message.orEmpty().lowercase()
-            if (message.contains("library generation changed") ||
-                message.contains("library is not ready") ||
-                message.contains("no space left on device") ||
-                message.contains("enospc") ||
-                message.contains("committed install did not become visible") ||
-                message.contains("staging directory")
-            ) {
+            if (cursor is InstallerFailure ||
+                (cursor is android.system.ErrnoException && cursor.errno == android.system.OsConstants.ENOSPC)) {
                 return true
             }
             cursor = cursor.cause

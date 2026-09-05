@@ -55,6 +55,7 @@ public final class AutoReconversionDialog extends DialogFragment {
     private Uri appUri;
     private File appDir;
     private boolean started;
+    private boolean running;
 
     public static boolean show(FragmentActivity activity, String name, String path) {
         FragmentManager manager = activity.getSupportFragmentManager();
@@ -87,6 +88,7 @@ public final class AutoReconversionDialog extends DialogFragment {
                 new InstallerActions() {
                     @Override
                     public void onInstall() {
+                        startReconversion();
                     }
 
                     @Override
@@ -138,6 +140,7 @@ public final class AutoReconversionDialog extends DialogFragment {
     }
 
     private void startReconversion() {
+        if (running || appDir == null) return;
         if (!AppReconverter.hasRetainedSource(appDir)) {
             if (AppReconverter.hasUsableConvertedPayload(appDir)) {
                 launchMidlet();
@@ -146,6 +149,9 @@ public final class AutoReconversionDialog extends DialogFragment {
             }
             return;
         }
+        running = true;
+        controller.showConverting(appName, getString(R.string.reconverting_wait),
+                getString(R.string.converting_wait));
         disposables.add(Single.fromCallable(() -> {
             AppReconverter.reconvert(appDir);
             if (AppReconverter.needsReconversion(appDir)) {
@@ -153,7 +159,7 @@ public final class AutoReconversionDialog extends DialogFragment {
             }
             return Boolean.TRUE;
         })
-                .subscribeOn(Schedulers.computation())
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(ignored -> launchMidlet(), this::showError));
     }
@@ -169,16 +175,18 @@ public final class AutoReconversionDialog extends DialogFragment {
     }
 
     private void showError(Throwable error) {
+        running = false;
         Log.e(TAG, "Automatic MIDlet reconversion failed", error);
         if (!isAdded() || controller == null) return;
         String detail = error.getMessage();
         if (detail == null || detail.trim().isEmpty()) {
             detail = error.getClass().getSimpleName();
         }
-        controller.showError(
+        controller.showConfirmation(
                 appName,
                 getString(R.string.reconversion_error, detail),
-                getString(R.string.close));
+                getString(R.string.library_retry),
+                getString(R.string.close), null, null);
     }
 
     @Nullable

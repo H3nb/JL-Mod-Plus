@@ -27,13 +27,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -53,7 +50,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -102,6 +103,8 @@ sealed interface InstallerUiState {
         override val title: String,
         val message: String,
         val closeLabel: String,
+        val retryLabel: String? = null,
+        val details: String? = null,
     ) : InstallerUiState
 }
 
@@ -174,11 +177,15 @@ class InstallerComposeController internal constructor(
         )
     }
 
-    fun showError(title: String, message: String, closeLabel: String) {
+    @JvmOverloads
+    fun showError(title: String, message: String, closeLabel: String,
+                  retryLabel: String? = null, details: String? = null) {
         state = InstallerUiState.Error(
             title = title,
             message = message,
             closeLabel = closeLabel,
+            retryLabel = retryLabel,
+            details = details,
         )
     }
 }
@@ -230,15 +237,8 @@ fun InstallerScreen(
             val compactScrollState = rememberScrollState()
             val compactCanScrollForward = rememberScrollCanScrollForward(compactScrollState)
             val dialogShape = MaterialTheme.shapes.extraLarge
-            val surfaceModifier = if (compactHeight) {
-                Modifier
-                    .width(dialogLayout.width)
-                    .height(dialogLayout.maxHeight)
-            } else {
-                dialogLayout.modifier
-            }
             Surface(
-                modifier = surfaceModifier.clip(dialogShape),
+                modifier = dialogLayout.modifier.clip(dialogShape).testTag("installer-popup"),
                 shape = dialogShape,
                 color = MaterialTheme.colorScheme.surface,
             ) {
@@ -286,7 +286,12 @@ fun InstallerScreen(
                         }
 
                         when (state) {
-                            is InstallerUiState.Loading -> InstallerProgress(state.status, compactHeight)
+                            is InstallerUiState.Loading -> {
+                                InstallerProgress(state.status, compactHeight)
+                                TextButton(onClick = actions::onClose) {
+                                    Text(stringResource(android.R.string.cancel))
+                                }
+                            }
                             is InstallerUiState.Converting -> {
                                 InstallerMessage(
                                     message = state.message,
@@ -299,6 +304,9 @@ fun InstallerScreen(
                                     scrollable = !compactHeight,
                                 )
                                 InstallerProgress(state.status, compactHeight)
+                                TextButton(onClick = actions::onClose) {
+                                    Text(stringResource(android.R.string.cancel))
+                                }
                             }
 
                             is InstallerUiState.Confirmation -> {
@@ -337,6 +345,7 @@ fun InstallerScreen(
                             }
 
                             is InstallerUiState.Error -> {
+                                val clipboard = LocalClipboardManager.current
                                 InstallerMessage(
                                     message = state.message,
                                     isError = true,
@@ -348,10 +357,18 @@ fun InstallerScreen(
                                     compact = compactHeight,
                                     scrollable = !compactHeight,
                                 )
-                                Row(
+                                FlowRow(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.End,
                                 ) {
+                                    if (state.details != null) {
+                                        TextButton(onClick = { clipboard.setText(AnnotatedString(state.details)) }) {
+                                            Text(stringResource(R.string.installer_copy_details))
+                                        }
+                                    }
+                                    if (state.retryLabel != null) {
+                                        Button(onClick = actions::onInstall) { Text(state.retryLabel) }
+                                    }
                                     TextButton(onClick = actions::onClose) {
                                         Text(
                                             state.closeLabel,

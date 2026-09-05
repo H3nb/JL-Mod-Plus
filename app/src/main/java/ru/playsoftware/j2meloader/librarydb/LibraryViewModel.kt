@@ -832,41 +832,39 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         launchMutation(callback) {
             withContext(Dispatchers.IO) {
                 val results = ArrayList<LibraryBulkItemResult>(plan.apps.size)
-                run {
-                    for ((index, app) in plan.apps.withIndex()) {
-                        if (!repository.isReadyGeneration(generation)) {
-                            plan.apps.drop(index).forEach { remaining ->
-                                results += LibraryBulkItemResult(
-                                    appId = remaining.id,
-                                    storageKey = remaining.storageKey,
-                                    title = remaining.title,
-                                    status = LibraryBulkItemStatus.Skipped,
-                                    detail = "Library generation changed before deletion",
-                                )
-                            }
-                            break
-                        }
-                        try {
-                            val deleted = deleteApp(generation, app)
+                for ((index, app) in plan.apps.withIndex()) {
+                    if (!repository.isReadyGeneration(generation)) {
+                        plan.apps.drop(index).forEach { remaining ->
                             results += LibraryBulkItemResult(
-                                appId = app.id,
-                                storageKey = app.storageKey,
-                                title = app.title,
-                                status = LibraryBulkItemStatus.Succeeded,
-                                detail = if (deleted.leftoverConfig || deleted.leftoverSaveData)
-                                    "App removed; some settings or save data could not be deleted" else null,
-                            )
-                        } catch (cancelled: CancellationException) {
-                            throw cancelled
-                        } catch (error: Exception) {
-                            results += LibraryBulkItemResult(
-                                appId = app.id,
-                                storageKey = app.storageKey,
-                                title = app.title,
-                                status = LibraryBulkItemStatus.Failed,
-                                detail = error.message,
+                                appId = remaining.id,
+                                storageKey = remaining.storageKey,
+                                title = remaining.title,
+                                status = LibraryBulkItemStatus.Skipped,
+                                detail = "Library generation changed before deletion",
                             )
                         }
+                        break
+                    }
+                    try {
+                        val deleted = deleteApp(generation, app)
+                        results += LibraryBulkItemResult(
+                            appId = app.id,
+                            storageKey = app.storageKey,
+                            title = app.title,
+                            status = LibraryBulkItemStatus.Succeeded,
+                            detail = if (deleted.leftoverConfig || deleted.leftoverSaveData)
+                                getApplication<Application>().getString(ru.playsoftware.j2meloader.R.string.installer_removed_leftovers) else null,
+                        )
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        results += LibraryBulkItemResult(
+                            appId = app.id,
+                            storageKey = app.storageKey,
+                            title = app.title,
+                            status = LibraryBulkItemStatus.Failed,
+                            detail = error.message,
+                        )
                     }
                 }
                 LibraryBulkOperationResult(

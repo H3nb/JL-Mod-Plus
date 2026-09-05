@@ -28,6 +28,22 @@ private val NoOpInstallerActions = object : InstallerActions {
 }
 
 @PreviewTest
+@Preview(name = "Installer recovery actions", widthDp = 360, heightDp = 640, showBackground = true)
+@Preview(name = "Installer recovery short large text", widthDp = 480, heightDp = 240, fontScale = 2f, showBackground = true)
+@Composable
+fun InstallerRecoveryScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        InstallerScreen(
+            InstallerUiState.Error(
+                "Installation incomplete",
+                "Application files were saved, but the Library could not finish updating. Refresh the Library before trying again.",
+                "Close", "Refresh Library", "Stage: SAVING",
+            ), NoOpInstallerActions,
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Installer loading", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun InstallerLoadingScreenshot() {

@@ -654,7 +654,7 @@ public class AppsListFragment extends Fragment {
                         return;
                     }
                     if (result != null && (result.getLeftoverConfig() || result.getLeftoverSaveData())) {
-                        Log.w(TAG, "App removed with leftover config/save data: " + result.getAppPath());
+                        showError(new IOException(getString(R.string.installer_removed_leftovers)));
                     }
                 });
             }

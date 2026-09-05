@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="installer_ambiguous">Several installed games match this application. Install a separate copy? Existing games and their data will be kept.</string>
+    <string name="installer_separate_copy">Install separate copy</string>
+    <string name="installer_stage_download">Downloading application…</string>
+    <string name="installer_stage_wait">Waiting for another operation…</string>
+    <string name="installer_stage_save">Saving application…</string>
+    <string name="installer_failed_download">The application could not be downloaded. Check the connection and download link, then try again.</string>
+    <string name="installer_failed_storage">The working folder is unavailable or could not be written. Check storage access and free space, then try again.</string>
+    <string name="installer_failed_conversion">The application could not be converted. Check that the file is complete and supported, then try again.</string>
+    <string name="installer_needs_recovery">Application files were saved, but the Library could not finish updating. Refresh the Library before trying again.</string>
+    <string name="installer_refresh_library">Refresh Library</string>
+    <string name="installer_cancel_pending">Stopping at the next safe point…</string>
+    <string name="installer_retry_remaining">Review unfinished items</string>
+    <string name="installer_not_processed">Not processed</string>
+    <string name="installer_partial_restore">Game installed; restoring data or settings failed</string>
+    <string name="installer_removed_leftovers">Game removed; some settings or save data could not be deleted.</string>
+    <string name="installer_copy_details">Copy details</string>
+</resources>
