@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "ordinary_result_store.h"
 #include "result_cursor.h"
 #include "result_store.h"
 
@@ -26,19 +27,23 @@ enum class ResultRevisionKind : std::uint8_t {
 
 // Immutable ownership object associated with one SearchState revision. Global staging caches remain
 // only JNI/page acceleration; they are not intended to be the sole lifetime owner of authoritative
-// ResultStore membership. The transitional registry can therefore restore exact COW state across
-// Undo without rebuilding a bitmap from the Candidate compatibility mirror.
+// ResultStore membership. The optional ordinaryValues sidecar is indexed by ResultAliasCursor typed
+// ordinal and therefore does not duplicate address/type membership.
 struct ResultRevision final {
     ResultRevisionKind kind = ResultRevisionKind::Explicit;
     ResultPlane plane = ResultPlane::Count;
     std::shared_ptr<const ResultStore> store;
     std::shared_ptr<const std::vector<ResultCursor>> checkpoints;
-    // Auto only: Candidate-vector offset corresponding to each cursor checkpoint. Empty for an
-    // explicit single-plane revision, whose candidate ordinal equals its unique address ordinal.
+    // Auto only during the Candidate-compatibility transition. Remove once paging/refine use the
+    // compact ordinary sidecar directly.
     std::shared_ptr<const std::vector<std::size_t>> candidateOffsets;
+    // Optional during staged migration. Once populated, exactly one compact value record must exist
+    // for every typed alias represented by ResultStore.
+    std::shared_ptr<const OrdinaryResultStore> ordinaryValues;
 
     [[nodiscard]] bool valid() const noexcept {
-        if (store == nullptr || checkpoints == nullptr) {
+        if (store == nullptr || checkpoints == nullptr ||
+            (ordinaryValues != nullptr && ordinaryValues->size() != store->typedCount())) {
             return false;
         }
         if (kind == ResultRevisionKind::Explicit) {
@@ -54,7 +59,8 @@ struct ResultRevision final {
         }
         std::size_t result = sizeof(ResultRevision);
         const auto add = [&](std::size_t bytes) {
-            if (result > std::numeric_limits<std::size_t>::max() - bytes) {
+            if (bytes == std::numeric_limits<std::size_t>::max() ||
+                result > std::numeric_limits<std::size_t>::max() - bytes) {
                 return false;
             }
             result += bytes;
@@ -69,8 +75,7 @@ struct ResultRevision final {
                                         sizeof(ResultCursor)
                         ? std::numeric_limits<std::size_t>::max()
                         : checkpoints->capacity() * sizeof(ResultCursor);
-        if (checkpointBytes == std::numeric_limits<std::size_t>::max() ||
-            !add(checkpointBytes)) {
+        if (!add(checkpointBytes)) {
             return std::numeric_limits<std::size_t>::max();
         }
         if (candidateOffsets != nullptr) {
@@ -80,10 +85,12 @@ struct ResultRevision final {
                                             sizeof(std::size_t)
                             ? std::numeric_limits<std::size_t>::max()
                             : candidateOffsets->capacity() * sizeof(std::size_t);
-            if (offsetBytes == std::numeric_limits<std::size_t>::max() ||
-                !add(offsetBytes)) {
+            if (!add(offsetBytes)) {
                 return std::numeric_limits<std::size_t>::max();
             }
+        }
+        if (ordinaryValues != nullptr && !add(ordinaryValues->retainedBytes())) {
+            return std::numeric_limits<std::size_t>::max();
         }
         return result;
     }
