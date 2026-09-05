@@ -66,6 +66,11 @@ public class MemoryV2RelativeAuthoritativeTest {
 					NativeMemoryEngine.filter(new long[]{1L}, true));
 			assertTrue("failed filter mutated the Unknown baseline into a compact revision",
 					!NativeMemoryEngine.hasCurrentV2CompactRevision());
+			assertTrue("Result-group expansion must not route an Unknown baseline through Candidate fallback",
+					NativeMemoryEngine.expandResultGroups(
+							new long[]{1L}, MemoryEngineContract.TYPE_INT) == null);
+			assertTrue("failed result-group expansion mutated the Unknown baseline into a compact revision",
+					!NativeMemoryEngine.hasCurrentV2CompactRevision());
 
 			NativeMemoryTarget.writeProbe(2L);
 			assertEquals(MemoryEngineContract.RESULT_OK,

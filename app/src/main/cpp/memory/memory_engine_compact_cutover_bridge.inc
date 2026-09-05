@@ -6,26 +6,14 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
-// Small JNI bridge used while Java routes production Known/Auto sessions to the candidate-free
-// compact owner. Legacy forwarders call the already-compiled implementation in this same native
-// translation unit; they do not copy search/mutation logic.
-
-extern "C" jlongArray
-Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_expandResultGroups(
-        JNIEnv *, jclass, jlongArray, jint);
+// Small JNI bridge for tracked Candidate interactions that remain valid without a compact ordinary
+// result revision. Result-group expansion is compact-only in production and has no legacy alias.
 extern "C" jlongArray
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_inspect(
         JNIEnv *, jclass, jlong, jint);
 extern "C" jint
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_editInspectorValue(
         JNIEnv *, jclass, jlong, jint, jint, jlong, jstring);
-
-extern "C" JNIEXPORT jlongArray JNICALL
-Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_expandResultGroupsUnchecked(
-        JNIEnv *env, jclass clazz, jlongArray rawIds, jint requestedType) {
-    return Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_expandResultGroups(
-            env, clazz, rawIds, requestedType);
-}
 
 extern "C" JNIEXPORT jlongArray JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_inspectUnchecked(

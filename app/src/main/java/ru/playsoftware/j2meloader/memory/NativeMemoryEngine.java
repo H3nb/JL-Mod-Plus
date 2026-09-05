@@ -268,12 +268,11 @@ final class NativeMemoryEngine {
 	private static native int editUnchecked(long[] candidateIds, String replacementValue);
 
 	static long[] expandResultGroups(long[] resultIds, int valueType) {
-		return hasCurrentV2CompactRevision()
-				? expandResultGroupsV2CompactOwner(resultIds, valueType)
-				: expandResultGroupsUnchecked(resultIds, valueType);
+		// Result groups exist only for compact ordinary search membership. Watch/Freeze/Inspector
+		// operate on tracked CandidateIds directly when no compact revision is present.
+		if (!hasCurrentV2CompactRevision()) return null;
+		return expandResultGroupsV2CompactOwner(resultIds, valueType);
 	}
-
-	private static native long[] expandResultGroupsUnchecked(long[] resultIds, int valueType);
 
 	static int editInspectorValue(long anchorCandidateId, int relativeOffset,
 	                              int valueType, long expectedBits,
