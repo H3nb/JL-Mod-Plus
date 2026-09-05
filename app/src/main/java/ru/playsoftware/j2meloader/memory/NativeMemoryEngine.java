@@ -130,7 +130,23 @@ final class NativeMemoryEngine {
 	private static native int refineKnownAutoV2Authoritative(
 			int predicate, String first, String second, boolean allowRelocationReconcile);
 
-	static native int refineRelative(int predicate, int compareTarget, String first, String second);
+	static int refineRelative(int predicate, int compareTarget, String first, String second) {
+		// Unknown materialization and subsequent relative scans are ResultStore-authoritative. The
+		// service still owns the GC-epoch gate/rollback around this call, so a copying GC during a
+		// relative operation cannot publish a stale-address revision.
+		int result = refineRelativeV2Authoritative(predicate, compareTarget, first, second);
+		if (result == MemoryEngineContract.RESULT_OK) {
+			boolean authoritative = hasCurrentV2KnownResultStore() || hasCurrentV2AutoResultStore();
+			if (!authoritative) {
+				authoritative = stageV2KnownResultStore() || stageV2AutoResultStore();
+			}
+			publishV2KnownPagingStage(authoritative, authoritative);
+		}
+		return result;
+	}
+
+	private static native int refineRelativeV2Authoritative(
+			int predicate, int compareTarget, String first, String second);
 
 	static native int undo();
 
