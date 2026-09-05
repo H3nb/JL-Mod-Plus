@@ -61,9 +61,7 @@ private fun MissingAppDialog(
     message: String,
     onExit: () -> Unit,
 ) {
-    val maxMessageHeight = adaptiveDialogLayout().maxContentHeight(
-        reservedHeight = 160.dp,
-    )
+    val maxMessageHeight = adaptiveDialogLayout().maxHeight
     val scrollState = rememberScrollState()
     val canScrollForward = rememberScrollCanScrollForward(scrollState)
     AlertDialog(

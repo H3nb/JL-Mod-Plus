@@ -236,7 +236,7 @@
     <string name="config_screen_size">Screen Size</string>
     <string name="config_select_screen_size">Select screen size</string>
     <string name="config_current_screen_size">Current size: %1$s</string>
-    <string name="config_custom_resolution">Custom resolution</string>
+    <string name="config_custom_resolution">Custom Resolution</string>
     <string name="config_select">Select</string>
     <string name="profile_custom">Custom</string>
     <string name="profile_custom_summary">Settings do not match a saved profile</string>
@@ -332,7 +332,7 @@
     <string name="remove_screen_preset">Remove Screen Preset</string>
     <string name="removed">Removed %1$s</string>
     <string name="config_color_picker_title">Choose Color</string>
-    <string name="config_color_picker_hex">Hex color</string>
+    <string name="config_color_picker_hex">Hex Color</string>
     <string name="config_color_picker_hint">Drag the color fields or enter a six-digit RGB value.</string>
     <string name="config_color_picker_invalid">Enter exactly six hexadecimal digits.</string>
     <string name="config_color_picker_saturation_value">Saturation and brightness</string>

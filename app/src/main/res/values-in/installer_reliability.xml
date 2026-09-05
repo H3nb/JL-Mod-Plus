@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="installer_ambiguous">Beberapa game terpasang cocok dengan aplikasi ini. Pasang salinan terpisah? Game yang ada beserta datanya akan tetap disimpan.</string>
+    <string name="installer_separate_copy">Pasang Salinan Terpisah</string>
+    <string name="installer_stage_download">Mengunduh aplikasi…</string>
+    <string name="installer_stage_wait">Menunggu operasi lain…</string>
+    <string name="installer_stage_save">Menyimpan aplikasi…</string>
+    <string name="installer_failed_download">Aplikasi tidak dapat diunduh. Periksa koneksi dan tautan unduhan, lalu coba lagi.</string>
+    <string name="installer_failed_storage">Folder kerja tidak tersedia atau tidak dapat ditulis. Periksa akses penyimpanan dan ruang kosong, lalu coba lagi.</string>
+    <string name="installer_failed_conversion">Aplikasi tidak dapat dikonversi. Pastikan file lengkap dan didukung, lalu coba lagi.</string>
+    <string name="installer_needs_recovery">File aplikasi telah disimpan, tetapi pembaruan Library belum selesai. Muat ulang Library sebelum mencoba lagi.</string>
+    <string name="installer_refresh_library">Muat Ulang Library</string>
+    <string name="installer_cancel_pending">Menghentikan pada tahap aman berikutnya…</string>
+    <string name="installer_retry_remaining">Tinjau Item Yang Belum Selesai</string>
+    <string name="installer_not_processed">Belum diproses</string>
+    <string name="installer_partial_restore">Game terpasang; pemulihan data atau pengaturan gagal</string>
+    <string name="installer_removed_leftovers">Game dihapus; sebagian pengaturan atau data simpanan tidak dapat dihapus.</string>
+    <string name="installer_copy_details">Salin Detail</string>
+</resources>

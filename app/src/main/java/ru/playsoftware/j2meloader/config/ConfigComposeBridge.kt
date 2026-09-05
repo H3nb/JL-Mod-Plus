@@ -14,7 +14,6 @@
 
 package ru.playsoftware.j2meloader.config
 
-import android.content.res.Configuration
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
@@ -96,7 +95,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size as ComposeSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -904,38 +902,12 @@ internal fun ScreenPresetDialog(
 }
 
 @Composable
-private fun configDialogLandscape(): Boolean =
-    LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-
-@Composable
-private fun ConfigDialogScrollableBody(
+private fun ConfigDialogBody(
     verticalArrangement: Arrangement.Vertical,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    // Leave title and actions outside the scroll container, including with large fonts.
-    val maxBodyHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 168.dp)
-    val scrollState = rememberScrollState()
-    val hintThresholdPx = with(LocalDensity.current) { 24.dp.roundToPx() }
-    val canScrollForward = rememberScrollCanScrollForward(scrollState, hintThresholdPx)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = maxBodyHeight)
-            .imePadding(),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = maxBodyHeight)
-                .verticalScroll(scrollState),
-            verticalArrangement = verticalArrangement,
-            content = content,
-        )
-        ScrollableContentHint(
-            visible = canScrollForward,
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
-    }
+    // The shared dialog owns scrolling and measures the space left by its title/actions.
+    Column(Modifier.fillMaxWidth(), verticalArrangement = verticalArrangement, content = content)
 }
 
 @Composable
@@ -961,7 +933,7 @@ internal fun CustomResolutionDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_custom_resolution)) },
         text = {
-            ConfigDialogScrollableBody(
+            ConfigDialogBody(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(
@@ -1133,22 +1105,18 @@ internal fun FontSizesDialog(
     var smallDraft by remember(small) { mutableStateOf(small) }
     var mediumDraft by remember(medium) { mutableStateOf(medium) }
     var largeDraft by remember(large) { mutableStateOf(large) }
-    val landscape = configDialogLandscape()
-    val useHorizontalFields = availableWindowWidthDp() >= 600.dp
+    val useHorizontalFields = adaptiveDialogLayout().width >=
+        600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_font_sizes)) },
         text = {
-            ConfigDialogScrollableBody(
+            ConfigDialogBody(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = stringResource(R.string.config_help_font_sizes_long),
-                    style = if (landscape) {
-                        MaterialTheme.typography.bodySmall
-                    } else {
-                        MaterialTheme.typography.bodyMedium
-                    },
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (useHorizontalFields) {
@@ -1645,7 +1613,7 @@ internal fun ConfigNumberDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
-            ConfigDialogScrollableBody(
+            ConfigDialogBody(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 if (description != null) {
@@ -1730,7 +1698,7 @@ internal fun ConfigSliderDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
-            ConfigDialogScrollableBody(
+            ConfigDialogBody(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (description != null) {
@@ -1887,7 +1855,7 @@ internal fun ConfigChoiceDialog(
     onDismissRequest: () -> Unit,
     onSelected: (Int) -> Unit,
 ) {
-    val maxListHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 152.dp)
+    val maxListHeight = adaptiveDialogLayout().maxHeight
     AlertDialog(
         textScrollable = false,
         onDismissRequest = onDismissRequest,
@@ -1944,7 +1912,7 @@ internal fun ConfigChoiceDialog(
                 }
             }
         },
-        confirmButton = {},
+        confirmButton = null,
     )
 }
 

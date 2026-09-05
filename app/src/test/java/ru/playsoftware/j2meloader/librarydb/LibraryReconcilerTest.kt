@@ -109,7 +109,7 @@ class LibraryReconcilerTest {
                 favorite = true,
             ),
         )
-        // A real emulator workdir always has converted/ before installer recovery runs.
+        // This test covers an interrupted replacement within an available converted namespace.
         File(workDir, "converted").mkdirs()
         createBackupDirectory("game", "Old Source", version = "1.0")
         val staging = LibraryInstallRecovery.stagingDirectory(workDir).apply { mkdirs() }
@@ -130,6 +130,7 @@ class LibraryReconcilerTest {
     }
 
     @Test fun failedRecoveryEvidenceProtectsCatalogRowFromAutomaticRemoval() = runBlocking {
+        File(workDir, "converted").mkdir()
         dao.insertApp(app("game", "Preserved"))
         val invalidBackup = File(backupRoot().apply { mkdirs() }, "game")
         invalidBackup.writeText("not a directory")
@@ -165,7 +166,21 @@ class LibraryReconcilerTest {
         }
     }
 
+    @Test fun missingConvertedRootPreservesUserState() = runBlocking {
+        val id = dao.insertApp(app("preserved", "Preserved").copy(favorite = true, customTitle = "Mine"))
+        try {
+            LibraryReconciler().reconcile(database, workDir)
+            throw AssertionError("Expected storage failure")
+        } catch (_: IOException) {
+            val retained = requireNotNull(dao.getApp(id))
+            assertTrue(retained.favorite)
+            assertEquals("Mine", retained.customTitle)
+            assertFalse(File(workDir, "converted").exists())
+        }
+    }
+
     @Test fun removalsAreChunkedBelowLegacySqliteBindLimit() = runBlocking {
+        File(workDir, "converted").mkdir()
         val count = 1_500
         dao.insertApps((0 until count).map { index -> app("missing-$index", "Game $index") })
 

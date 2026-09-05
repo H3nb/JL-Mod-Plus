@@ -272,9 +272,7 @@ private fun runtimeMenuDialogLayout(): RuntimeMenuDialogLayout {
 
 @Composable
 private fun runtimeMenuDialogContentHeight() =
-    adaptiveDialogLayout().maxContentHeight(
-        reservedHeight = 160.dp,
-    )
+    adaptiveDialogLayout().maxHeight
 
 @Composable
 internal fun RuntimeLimitFpsDialog(
@@ -351,7 +349,7 @@ internal fun RuntimeEmulationSpeedDialog(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = dialogBounds.maxContentHeight()),
+                    .heightIn(max = dialogBounds.maxHeight),
             ) {
                 Column(
                     modifier = Modifier
@@ -604,7 +602,7 @@ private fun RuntimeMenuDialog(
                 )
             }
         },
-        confirmButton = {},
+        confirmButton = null,
     )
 }
 

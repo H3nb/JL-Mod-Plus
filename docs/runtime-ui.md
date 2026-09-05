@@ -1,14 +1,13 @@
-# Runtime menu Compose migration contract
+# Runtime UI and compatibility boundaries
 
 The Android runtime toolbar and options menu are app-owned presentation and
-may use Compose Material 3. They are not the Java ME LCDUI command system.
-This boundary lets the menu be modernized without moving renderer, input, or
-MIDP lifecycle behavior into Compose.
+use Compose Material 3. They are separate from the Java ME LCDUI command system.
+Renderer, input, and MIDP lifecycle behavior remain in the runtime implementation.
 
-## Specification review
+## Contract references
 
-The migration was checked against the local `J2ME_Docs` checkout requested by
-the project maintainer, especially these MIDP 2.0 pages:
+For compatibility work, consult [J2ME_Docs](https://github.com/shinovon/J2ME_Docs)
+under `docs/midp-2.0/`, especially these pages:
 
 - `javax/microedition/lcdui/Canvas.html`: Canvas key, pointer, paint, show, and
   hide callbacks are serialized by the implementation; command availability
@@ -20,7 +19,7 @@ the project maintainer, especially these MIDP 2.0 pages:
 - `javax/microedition/lcdui/Command.html`: a `Command` carries semantic
   information while the implementation decides its device presentation.
 
-Consequently, Compose owns only the Android host menu. It must not invoke a
+The host-menu Compose code must not invoke a
 MIDP `CommandListener`, synthesize Java ME key events, alter `ViewHandler`
 ordering, or replace `Displayable` views.
 
@@ -42,10 +41,10 @@ non-Canvas Displayables.
 
 ## Geometry and lifecycle safeguards
 
-- The former `activity_micro.xml` hierarchy is constructed by
-  `RuntimeHostView`; `displayable_container` and `OverlayView` remain direct
+- The runtime hierarchy is constructed by `RuntimeHostView`;
+  `displayable_container` and `OverlayView` remain direct
   View boundaries without an `AndroidView` measurement wrapper.
-- The Compose toolbar uses the prior AppCompat action-bar height. A Canvas
+- The Compose toolbar uses the AppCompat action-bar height. A Canvas
   with the toolbar preference disabled still receives a zero-height toolbar;
   opening its menu uses a modal Material 3 panel and does not resize the
   Canvas.
@@ -72,8 +71,7 @@ non-Canvas Displayables.
 
 ## Validation gates
 
-- Compile both Kotlin and Java for `emulatorDebug`.
-- Run unit, lint, Compose screenshot, and Android-test compilation tasks.
+- Use the relevant commands in [Build and validation](development.md).
 - Keep Compose UI tests for Canvas versus non-Canvas action visibility,
   virtual-keyboard submenu state, and dismiss-before-callback ordering.
 - Keep screenshot baselines for phone toolbar/overflow and dark landscape
@@ -84,21 +82,21 @@ non-Canvas Displayables.
 
 ## Screen soft-key boundary
 
-`ScreenSoftBar` now hosts a Material 3 Compose bar, but it still receives the
-the command set from the LCDUI implementation. The placement policy follows
-the MIDP contract in the local `J2ME_Docs` checkout: `Command` type and lower
-priority values guide placement, while labels remain presentation data.
+`ScreenSoftBar` hosts a Material 3 Compose bar and receives the command set
+from the LCDUI implementation. The current `ScreenSoftBarPolicy` uses command
+type and the existing `Command.compareTo()` ordering; labels remain presentation data.
 
-- the first `OK` command is preferred for the middle soft key;
-- the first `BACK` or `EXIT` command is preferred for the right soft key;
+- the first `BACK` or `EXIT` command occupies the right soft key;
+- when that right-side command exists, the first `OK` command occupies the middle;
+- without `BACK`/`EXIT`, `OK` occupies the right when there are other commands,
+  or the left when it is the only command;
 - remaining commands stay in their existing compatibility order and become a
   left-side menu when more than one competes for that slot;
 - a single remaining command is shown directly on the left.
 
-This matches the MIDP example where `BACK` is right and other commands are
-available from an options menu, while retaining the vendor three-button
-variant when an `OK` command is present. Selecting either a direct or overflow
-action still calls `Displayable.fireCommandAction()`, which posts the existing
+These are project compatibility rules, not a requirement that every MIDP device
+use this layout. `ScreenSoftBarPolicyTest` covers placement and duplicate prevention.
+Selecting either a direct or overflow action calls `Displayable.fireCommandAction()`, which posts the existing
 `CommandActionEvent`; Compose never calls a MIDlet listener directly.
 
 The native Canvas soft bar remains a separate `OverlayView` layer. Its popup
@@ -106,8 +104,7 @@ continues to use the same command objects and event path, but command updates
 close an open popup and rebuild its adapter from a snapshot to avoid stale or
 duplicated entries.
 
-The reviewed contracts are:
-
-- `D:\Personal\J2ME_Docs\docs\midp-2.0\javax\microedition\lcdui\Command.html`;
-- `D:\Personal\J2ME_Docs\docs\midp-2.0\javax\microedition\lcdui\Displayable.html`;
-- `D:\Personal\J2ME_Docs\docs\midp-2.0\javax\microedition\lcdui\Canvas.html`.
+Implementation and regression coverage live under
+`app/src/main/java/javax/microedition/{shell,lcdui/commands}/`,
+`app/src/test/java/javax/microedition/lcdui/commands/`, and the corresponding
+`androidTest` and `screenshotTest` source sets.

@@ -290,9 +290,7 @@ internal fun ProfileActionsDialog(
     } else {
         profile.name
     }
-    val maxActionHeight = adaptiveDialogLayout().maxContentHeight(
-        reservedHeight = 120.dp,
-    )
+    val maxActionHeight = adaptiveDialogLayout().maxHeight
     val scrollState = rememberScrollState()
     val canScrollForward = rememberScrollCanScrollForward(scrollState)
     AlertDialog(
@@ -328,7 +326,7 @@ internal fun ProfileActionsDialog(
                 )
             }
         },
-        confirmButton = {},
+        confirmButton = null,
     )
 }
 
@@ -379,7 +377,7 @@ internal fun ProfileNameDialog(
         title = {
             Text(
                 stringResource(
-                    if (dialog is ProfileNameDialog.Create) R.string.enter_name else R.string.enter_new_name,
+                    if (dialog is ProfileNameDialog.Create) R.string.profile_create_title else R.string.profile_rename_title,
                 ),
             )
         },

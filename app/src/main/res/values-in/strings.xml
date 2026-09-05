@@ -184,7 +184,7 @@
     <string name="config_system_properties_empty">Tidak ada properti khusus</string>
     <string name="config_select_screen_size">Pilih ukuran layar</string>
     <string name="config_current_screen_size">Ukuran saat ini: %1$s</string>
-    <string name="config_custom_resolution">Resolusi kustom</string>
+    <string name="config_custom_resolution">Resolusi Kustom</string>
     <string name="config_select">Pilih</string>
     <string name="pref_theme_auto_battery">Otomatis, Berdasarkan Penghemat Baterai</string>
     <string name="pref_theme_auto_time">Otomatis, Berdasarkan Waktu</string>
@@ -287,7 +287,7 @@
     <string name="file_picker_selection_unavailable">Item yang dipilih sudah tidak tersedia.</string>
     <string name="config_color_picker_title">Pilih Warna</string>
     <string name="library_load_error_title">Pustaka Tidak Tersedia</string>
-    <string name="config_color_picker_hex">Warna heksadesimal</string>
+    <string name="config_color_picker_hex">Warna Heksadesimal</string>
     <string name="config_color_picker_hint">Seret bidang warna atau masukkan nilai RGB enam digit.</string>
     <string name="config_color_picker_invalid">Masukkan tepat enam digit heksadesimal.</string>
     <string name="config_color_picker_saturation_value">Saturasi dan kecerahan</string>

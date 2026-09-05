@@ -837,7 +837,7 @@ private fun AddToCollectionDialog(
     onCreate: () -> Unit,
     onSelected: (Long) -> Unit,
 ) {
-    val maxListHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 176.dp)
+    val maxListHeight = adaptiveDialogLayout().maxHeight
     AlertDialog(
         textScrollable = false,
         onDismissRequest = onDismiss,
@@ -925,7 +925,7 @@ private fun AddAppsToCollectionDialog(
     onDismiss: () -> Unit,
     onSelected: (Long) -> Unit,
 ) {
-    val maxListHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 176.dp)
+    val maxListHeight = adaptiveDialogLayout().maxHeight
     AlertDialog(
         textScrollable = false,
         onDismissRequest = onDismiss,
@@ -993,7 +993,7 @@ private fun AddAppsToCollectionDialog(
                 }
             }
         },
-        confirmButton = {},
+        confirmButton = null,
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(android.R.string.cancel))
@@ -1033,7 +1033,7 @@ private fun CollectionActionsDialog(
                 )
             }
         },
-        confirmButton = {},
+        confirmButton = null,
     )
 }
 

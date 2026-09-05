@@ -47,6 +47,12 @@ class LibraryReconciler(
             "Library reconciliation requires a READY database"
         }
 
+        val databaseKeys = dao.getStorageKeys().toSet()
+        // A missing whole namespace is not evidence that each game was deleted. Do this before
+        // recovery can recreate any directories and hide the original storage failure.
+        if (databaseKeys.isNotEmpty()) withContext(Dispatchers.IO) {
+            WorkDirLayout.requireConverted(emulatorDir)
+        }
         val recovery = withContext(Dispatchers.IO) {
             LibraryInstallRecovery.recoverFilesystem(emulatorDir)
         }
@@ -60,7 +66,6 @@ class LibraryReconciler(
             scanner.storageKeys(emulatorDir)
         }
         currentCoroutineContext().ensureActive()
-        val databaseKeys = dao.getStorageKeys().toSet()
         val initialDiff = difference(databaseKeys, initialFilesystemKeys)
         val keysToScan = initialDiff.added + recovery.refreshStorageKeys
         if (keysToScan.isEmpty() && initialDiff.removed.isEmpty()) {
@@ -80,6 +85,7 @@ class LibraryReconciler(
         // removed automatically because doing so could erase Library-owned state while a backup is
         // still the only surviving copy of the installed directory.
         val finalFilesystemKeys = withContext(Dispatchers.IO) {
+            if (databaseKeys.isNotEmpty()) WorkDirLayout.requireConverted(emulatorDir)
             scanner.storageKeys(emulatorDir)
         }
         currentCoroutineContext().ensureActive()

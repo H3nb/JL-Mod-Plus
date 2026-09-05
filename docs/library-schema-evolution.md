@@ -45,7 +45,17 @@ When a feature is removed, only data owned exclusively by that removed feature m
 
 ## Testing requirements
 
-`LibraryMigrationTest` enforces the adjacent migration chain and uses Room 3 `MigrationTestHelper` with the committed schema snapshots.
+[LibraryMigrationTest](../app/src/test/java/ru/playsoftware/j2meloader/librarydb/LibraryMigrationTest.kt)
+enforces the adjacent migration chain. It reconstructs SQLite files from the
+committed Room JSON snapshots using `BundledSQLiteDriver`, then opens them with
+the current Room database and production migration registry to force migration
+and schema validation. It also checks preservation of Library-owned state.
+
+Production uses `AndroidSQLiteDriver`; passing the local bundled-driver tests
+does not establish compatibility with every supported platform SQLite version.
+[LibraryDatabaseAndroidTest](../app/src/androidTest/java/ru/playsoftware/j2meloader/librarydb/LibraryDatabaseAndroidTest.kt)
+covers the database on Android. See [Build and validation](development.md) for
+local and connected test commands.
 
 For every schema revision:
 

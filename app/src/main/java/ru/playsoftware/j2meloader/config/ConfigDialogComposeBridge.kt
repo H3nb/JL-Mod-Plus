@@ -16,17 +16,17 @@ package ru.playsoftware.j2meloader.config
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -61,6 +61,7 @@ import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
+import ru.playsoftware.j2meloader.ui.rememberScrollCanScrollForward
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
 
@@ -169,8 +170,8 @@ private fun DialogSurface(
                 ) {
                     Column(
                         modifier = Modifier.padding(
-                            horizontal = if (compactWidth) 16.dp else 24.dp,
-                            vertical = if (compactHeight) 12.dp else 20.dp,
+                            horizontal = if (compactWidth) 16.dp else 20.dp,
+                            vertical = if (compactHeight) 12.dp else 16.dp,
                         ),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         content = content,
@@ -246,6 +247,7 @@ private fun LoadProfileContent(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SaveProfileContent(
     existingConfigNames: Set<String>,
@@ -259,39 +261,39 @@ private fun SaveProfileContent(
 
     DialogSurface(onDismissRequest = callbacks::onDismiss) {
         Text(stringResource(R.string.profile_save_template), style = MaterialTheme.typography.titleLarge)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f, fill = false)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                stringResource(R.string.profile_save_template_summary),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            OutlinedTextField(
-                value = name,
-                onValueChange = {
-                    touched = true
-                    name = it.filterNot { ch -> ch in "/\\:*?\"<>|" }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.enter_name)) },
-                singleLine = true,
-                isError = touched && !valid,
-                supportingText = if (touched && !valid) {
-                    { Text(stringResource(R.string.error_name)) }
-                } else {
-                    null
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            )
+        val scrollState = rememberScrollState()
+        val canScrollForward = rememberScrollCanScrollForward(scrollState)
+        Box(Modifier.fillMaxWidth().weight(1f, fill = false)) {
+            Column(
+                modifier = Modifier.fillMaxWidth().verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    stringResource(R.string.profile_save_template_summary),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        touched = true
+                        name = it.filterNot { ch -> ch in "/\\:*?\"<>|" }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.profile_name_label)) },
+                    singleLine = true,
+                    isError = touched && !valid,
+                    supportingText = if (touched && !valid) {
+                        { Text(stringResource(R.string.error_name)) }
+                    } else {
+                        null
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                )
+            }
+            ScrollableContentHint(canScrollForward, Modifier.align(Alignment.BottomCenter))
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
         ) {
             TextButton(onClick = callbacks::onDismiss) {
@@ -359,6 +361,7 @@ private fun shaderSettings(shader: ShaderInfo): List<ShaderSettingUi> {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ShaderContent(
     shader: ShaderInfo,
@@ -446,10 +449,8 @@ private fun ShaderContent(
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
         ) {
             TextButton(onClick = {

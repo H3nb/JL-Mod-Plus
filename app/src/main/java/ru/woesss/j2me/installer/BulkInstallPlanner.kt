@@ -165,6 +165,7 @@ object BulkInstallPlanner {
         AppInstaller.STATUS_SAME -> BulkInstallStatus.AlreadyInstalled
         AppInstaller.STATUS_EQUAL -> BulkInstallStatus.ReinstallOrVariant
         AppInstaller.STATUS_UNMATCHED -> BulkInstallStatus.JadJarMismatch
+        AppInstaller.STATUS_AMBIGUOUS -> BulkInstallStatus.AmbiguousInstalledMatch
         else -> BulkInstallStatus.SourceError
     }
 

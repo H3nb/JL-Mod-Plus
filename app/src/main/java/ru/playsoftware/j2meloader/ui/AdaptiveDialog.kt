@@ -16,21 +16,31 @@ package ru.playsoftware.j2meloader.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -52,11 +62,6 @@ internal data class AdaptiveDialogLayout(
 
     val properties: DialogProperties
         get() = DialogProperties(usePlatformDefaultWidth = false)
-
-    fun maxContentHeight(
-        reservedHeight: Dp = 200.dp,
-    ): Dp = (maxHeight - reservedHeight)
-        .coerceAtLeast(0.dp)
 }
 
 @Composable
@@ -88,12 +93,13 @@ internal fun adaptiveDialogLayout(
     )
 }
 
-/** Material 3 AlertDialog with the project-wide adaptive modal bounds. */
+/** Material 3 modal whose body gets the space left by its measured title and actions. */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun AdaptiveAlertDialog(
     onDismissRequest: () -> Unit,
-    confirmButton: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    confirmButton: (@Composable () -> Unit)? = null,
     dismissButton: (@Composable () -> Unit)? = null,
     icon: (@Composable () -> Unit)? = null,
     title: (@Composable () -> Unit)? = null,
@@ -108,57 +114,10 @@ internal fun AdaptiveAlertDialog(
     properties: DialogProperties = DialogProperties(),
 ) {
     val layout = adaptiveDialogLayout()
-    val titleStyle = if (layout.maxHeight < 320.dp) {
-        MaterialTheme.typography.titleMedium
-    } else {
-        MaterialTheme.typography.titleLarge
-    }
-    AlertDialog(
+    val compact = layout.maxHeight < 320.dp
+    BasicAlertDialog(
         onDismissRequest = onDismissRequest,
-        confirmButton = confirmButton,
         modifier = layout.modifier.then(modifier),
-        dismissButton = dismissButton,
-        icon = icon,
-        title = title?.let { titleContent ->
-            {
-                ProvideTextStyle(titleStyle) {
-                    titleContent()
-                }
-            }
-        },
-        text = text?.let { textContent ->
-            if (textScrollable) {
-                {
-                    val scrollState = rememberScrollState()
-                    val canScrollForward = rememberScrollCanScrollForward(scrollState)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = layout.maxContentHeight()),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .verticalScroll(scrollState),
-                        ) {
-                            textContent()
-                        }
-                        ScrollableContentHint(
-                            visible = canScrollForward,
-                            modifier = Modifier.align(Alignment.BottomCenter),
-                        )
-                    }
-                }
-            } else {
-                textContent
-            }
-        },
-        shape = shape,
-        containerColor = containerColor,
-        iconContentColor = iconContentColor,
-        titleContentColor = titleContentColor,
-        textContentColor = textContentColor,
-        tonalElevation = tonalElevation,
         properties = DialogProperties(
             dismissOnBackPress = properties.dismissOnBackPress,
             dismissOnClickOutside = properties.dismissOnClickOutside,
@@ -166,5 +125,59 @@ internal fun AdaptiveAlertDialog(
             usePlatformDefaultWidth = false,
             decorFitsSystemWindows = properties.decorFitsSystemWindows,
         ),
-    )
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().testTag("adaptive-dialog-surface"),
+            shape = shape,
+            color = containerColor,
+            contentColor = textContentColor,
+            tonalElevation = tonalElevation,
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = if (compact) 12.dp else 16.dp),
+                verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
+            ) {
+                if (icon != null) {
+                    Box(Modifier.align(Alignment.CenterHorizontally)) {
+                        CompositionLocalProvider(LocalContentColor provides iconContentColor) { icon() }
+                    }
+                }
+                if (title != null) {
+                    CompositionLocalProvider(LocalContentColor provides titleContentColor) {
+                        ProvideTextStyle(MaterialTheme.typography.titleLarge) { title() }
+                    }
+                }
+                if (text != null) {
+                    // Measure the title/footer first; no guessed fixed-height reservations.
+                    Box(Modifier.fillMaxWidth().weight(1f, fill = false)) {
+                        ProvideTextStyle(MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Start)) {
+                            if (textScrollable) {
+                                val scrollState = rememberScrollState()
+                                val canScrollForward = rememberScrollCanScrollForward(scrollState)
+                                Column(Modifier.fillMaxWidth().verticalScroll(scrollState)) { text() }
+                                ScrollableContentHint(canScrollForward, Modifier.align(Alignment.BottomCenter))
+                            } else {
+                                // Lists and forms can own their scrolling, within this measured viewport.
+                                text()
+                            }
+                        }
+                    }
+                }
+                if (dismissButton != null || confirmButton != null) {
+                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
+                        ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                dismissButton?.invoke()
+                                confirmButton?.invoke()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

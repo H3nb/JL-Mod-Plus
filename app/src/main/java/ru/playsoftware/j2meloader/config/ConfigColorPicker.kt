@@ -92,7 +92,7 @@ internal fun ConfigColorPickerDialog(
         title = { Text(stringResource(R.string.config_color_picker_title)) },
         text = {
             BoxWithConstraints {
-                val useTwoPane = maxWidth >= 480.dp &&
+                val useTwoPane = maxWidth >= 480.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f) &&
                     maxWidth > maxHeight && maxHeight != Dp.Infinity
                 val pickerHeight = if (maxHeight == Dp.Infinity) {
                     180.dp
