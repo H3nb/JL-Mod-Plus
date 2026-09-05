@@ -149,8 +149,8 @@
 
     <string name="memory_editor_expression_single_hint">Masukkan satu nilai, atau gunakan ; untuk mencari beberapa nilai berdekatan.</string>
     <string name="memory_editor_expression_group_needs_type">Pilih jenis data tertentu untuk Pencarian Grup.</string>
-    <string name="memory_editor_expression_group_hint">Pencarian Grup · %1$d nilai · dalam %2$d byte</string>
-    <string name="memory_editor_expression_query_help">Contoh: 500 · 500;1000 · 500;1000:128</string>
-    <string name="memory_editor_expression_ordered_group_unsupported">Sintaks grup berurutan (::) belum didukung engine saat ini. Gunakan : untuk grup biasa.</string>
+    <string name="memory_editor_expression_group_hint">Pencarian Grup · %1$d nilai · gunakan : untuk bebas urutan atau :: untuk berurutan</string>
+    <string name="memory_editor_expression_query_help">Contoh: 500 · 500;1000 · 500;1000:128 · 500;1000::128 (berurutan)</string>
+    <string name="memory_editor_expression_ordered_group_unsupported">Gunakan ::jarak jika Pencarian Grup harus mengikuti urutan alamat yang meningkat.</string>
     <string name="memory_editor_keypad_clear">Bersihkan</string>
 </resources>
