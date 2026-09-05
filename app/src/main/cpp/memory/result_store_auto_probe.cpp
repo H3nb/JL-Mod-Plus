@@ -11,6 +11,7 @@
 
 #include <jni.h>
 #include <sys/uio.h>
+#include <unistd.h>
 
 #include <array>
 #include <cerrno>
@@ -212,9 +213,14 @@ Java_ru_playsoftware_j2meloader_memory_MemoryV2AutoKernelParityTest_v2AutoKernel
         JNIEnv *env, jclass, jint pid, jlongArray rawRuns, jint predicate,
         jintArray rawTypes, jlongArray rawFirstBits, jlongArray rawSecondBits) {
     try {
+        // This diagnostic intentionally cannot become a generic cross-process read primitive. The
+        // instrumentation comparison only needs the test process' own bounded resident page.
+        if (pid != static_cast<jint>(getpid())) {
+            return makeResult(env, kInvalidRequest);
+        }
         std::vector<jlmem::v2::ScanRange> ranges;
         std::vector<jlmem::v2::KnownScanRequest> plans;
-        if (pid <= 0 || !readRanges(env, rawRuns, ranges) ||
+        if (!readRanges(env, rawRuns, ranges) ||
             !readPlans(env, predicate, rawTypes, rawFirstBits, rawSecondBits,
                        plans)) {
             if (env->ExceptionCheck()) {
