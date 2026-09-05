@@ -40,6 +40,12 @@ struct ResultAliasPage {
     ResultAliasCursor next;
 };
 
+struct ResultAliasAddressLookup {
+    ResultAddressRow row;
+    // Typed ordinal of the first alias at row.address in stable UI display order.
+    std::uint64_t typedOffset = 0U;
+};
+
 // Stable typed display order inherited from the transitional production UI. Keep it explicit: the
 // internal ResultPlane enum is layout-oriented (Byte first) and intentionally has a different order.
 [[nodiscard]] constexpr std::size_t resultAliasDisplayPriority(
@@ -81,5 +87,12 @@ struct ResultAliasPage {
                                               std::uint64_t typedOffset,
                                               std::size_t limit,
                                               ResultAliasPage &page);
+
+// Resolve one exact raw address to its complete alias mask and the first compact typed ordinal.
+// This powers select-all-aliases, Group expansion, Nearby and write-overlap reconciliation without
+// duplicating bitmap-prefix arithmetic in those higher-level features.
+[[nodiscard]] bool lookupAliasAddress(const ResultStore &store,
+                                      std::uintptr_t address,
+                                      ResultAliasAddressLookup &lookup);
 
 } // namespace jlmem::v2
