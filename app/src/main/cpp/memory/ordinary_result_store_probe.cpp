@@ -50,8 +50,10 @@ constexpr std::array<ExpectedAlias, 7> kExpectedAliases{{
                                     std::size_t retained = 0U,
                                     std::uint64_t pageCount = 0U,
                                     std::uint64_t validIdentities = 0U,
-                                    std::uint64_t fingerprint = 0U) {
-    const std::array<jlong, 8> values{
+                                    std::uint64_t fingerprint = 0U,
+                                    std::uint64_t seekTypedOffset = 0U,
+                                    int seekStableType = 0) {
+    const std::array<jlong, 10> values{
             status,
             static_cast<jlong>(typed),
             static_cast<jlong>(unique),
@@ -60,6 +62,8 @@ constexpr std::array<ExpectedAlias, 7> kExpectedAliases{{
             static_cast<jlong>(pageCount),
             static_cast<jlong>(validIdentities),
             static_cast<jlong>(fingerprint),
+            static_cast<jlong>(seekTypedOffset),
+            static_cast<jlong>(seekStableType),
     };
     jlongArray result = env->NewLongArray(static_cast<jsize>(values.size()));
     if (result != nullptr) {
@@ -109,7 +113,9 @@ constexpr std::array<ExpectedAlias, 7> kExpectedAliases{{
         const jlmem::v2::OrdinaryResultStore &ordinary,
         std::uint64_t &pageCount,
         std::uint64_t &validIdentities,
-        std::uint64_t &fingerprint) {
+        std::uint64_t &fingerprint,
+        std::uint64_t &seekTypedOffset,
+        int &seekStableType) {
     jlmem::v2::ResultAliasCursor cursor;
     std::size_t ordinal = 0U;
     pageCount = 0U;
@@ -161,6 +167,32 @@ constexpr std::array<ExpectedAlias, 7> kExpectedAliases{{
         endPage.next.addressCursor.nextByteOffset != 0U) {
         return false;
     }
+
+    // Unique-address offset 1 starts at base+2. Three typed aliases live before it at base: Int,
+    // Float and Byte. This is the replacement for the transitional Auto candidateOffsets index.
+    jlmem::v2::ResultAliasCursor seekCursor;
+    if (!jlmem::v2::seekAliasAddressOffset(store, 1U, seekCursor, seekTypedOffset) ||
+        seekTypedOffset != 3U) {
+        return false;
+    }
+    jlmem::v2::ResultAliasPage seekPage;
+    if (!jlmem::v2::readAliasPage(store, seekCursor, 1U, seekPage) ||
+        seekPage.rows.size() != 1U ||
+        seekPage.rows.front().address != kBaseAddress + 2U ||
+        seekPage.rows.front().plane != jlmem::v2::ResultPlane::Short) {
+        return false;
+    }
+    seekStableType =
+            jlmem::v2::stableValueTypeFromResultPlane(seekPage.rows.front().plane);
+
+    jlmem::v2::ResultAliasCursor endSeek;
+    std::uint64_t endTypedOffset = 0U;
+    if (!jlmem::v2::seekAliasAddressOffset(
+                store, store.uniqueAddressCount(), endSeek, endTypedOffset) ||
+        endTypedOffset != store.typedCount() ||
+        endSeek.addressCursor.blockIndex != store.blockCount()) {
+        return false;
+    }
     return ordinal == ordinary.size() && ordinal == store.typedCount();
 }
 
@@ -178,13 +210,17 @@ Java_ru_playsoftware_j2meloader_memory_MemoryV2OrdinaryResultStoreTest_nativePro
         std::uint64_t pageCount = 0U;
         std::uint64_t validIdentities = 0U;
         std::uint64_t fingerprint = 0U;
+        std::uint64_t seekTypedOffset = 0U;
+        int seekStableType = 0;
         if (!verifyAliasAndOrdinaryStores(
-                    store, ordinary, pageCount, validIdentities, fingerprint)) {
+                    store, ordinary, pageCount, validIdentities, fingerprint,
+                    seekTypedOffset, seekStableType)) {
             return makeResult(env, kInvalidRequest);
         }
         return makeResult(
                 env, kOk, store.typedCount(), store.uniqueAddressCount(),
-                ordinary.retainedBytes(), pageCount, validIdentities, fingerprint);
+                ordinary.retainedBytes(), pageCount, validIdentities, fingerprint,
+                seekTypedOffset, seekStableType);
     } catch (...) {
         if (env->ExceptionCheck()) {
             env->ExceptionClear();
