@@ -96,9 +96,6 @@ final class NativeMemoryEngine {
 	                              int predicate, String first, String second);
 
 	static int refineKnown(int predicate, String first, String second) {
-		// Compatibility/internal callers that have no target-GC evidence must never request an
-		// expensive relocation reconciliation. The service uses the overload below after comparing
-		// the published search epoch with the current target GC epoch.
 		return refineKnown(predicate, first, second, false);
 	}
 
@@ -124,8 +121,6 @@ final class NativeMemoryEngine {
 			}
 			publishV2KnownPagingStage(authoritative, authoritative);
 		}
-		// Failure/cancellation is transactional in native and leaves the prior Candidate revision and
-		// ResultStore owner untouched, so Java deliberately preserves the existing generation.
 		return result;
 	}
 
@@ -179,42 +174,64 @@ final class NativeMemoryEngine {
 
 	static native int historyDepth();
 
+	private static long[] stagedResultPage(int offset, int limit) {
+		long[] page = resultPageV2Auto(offset, limit);
+		return page != null ? page : resultPageV2Known(offset, limit);
+	}
+
+	private static boolean restageCurrentResultStoreForPaging() {
+		// Rebuilding from an already committed Candidate revision performs no target read and lets
+		// Group/Nearby/relative/filter/Undo state changes return to ResultCursor on their next page.
+		boolean staged = stageV2KnownResultStore();
+		if (!staged) staged = stageV2AutoResultStore();
+		if (staged) publishV2KnownPagingStage(true, false);
+		return staged;
+	}
+
 	static long[] resultPage(int offset, int limit) {
-		// A staged ResultStore is tied to the exact immutable compatibility SearchState. Auto is tried
-		// first because it owns multi-plane alias masks; explicit Known then handles its single plane.
-		// Only if neither stage matches the current revision do we use the legacy page materializer.
 		long stagedGeneration;
 		synchronized (V2_KNOWN_PAGING_LOCK) {
 			stagedGeneration = v2KnownStaged ? v2KnownStageGeneration : 0L;
 		}
 		if (stagedGeneration != 0L) {
-			long[] staged = resultPageV2Auto(offset, limit);
-			if (staged == null) {
-				staged = resultPageV2Known(offset, limit);
-			}
+			long[] staged = stagedResultPage(offset, limit);
 			if (staged != null) {
-				synchronized (V2_KNOWN_PAGING_LOCK) {
-					if (v2KnownStaged && v2KnownStageGeneration == stagedGeneration) {
-						v2KnownPageHits++;
-					}
-				}
+				recordV2PageHit(stagedGeneration);
 				return staged;
 			}
+		}
+
+		// A native state-changing operation may intentionally invalidate the weak staged revision.
+		// Try one bounded metadata rebuild before falling back to Candidate paging. If the current
+		// state is Unknown/Empty or fails parity verification, both stage calls simply return false.
+		if (restageCurrentResultStoreForPaging()) {
 			synchronized (V2_KNOWN_PAGING_LOCK) {
-				v2KnownPageFallbacks++;
-				// Do not let an old page request demote a newer staged revision that was published while
-				// either native ResultCursor call was in flight.
-				if (v2KnownStaged && v2KnownStageGeneration == stagedGeneration) {
-					v2KnownStaged = false;
-					v2KnownAuthoritativeRevision = false;
-				}
+				stagedGeneration = v2KnownStageGeneration;
 			}
-		} else {
-			synchronized (V2_KNOWN_PAGING_LOCK) {
-				v2KnownPageFallbacks++;
+			long[] staged = stagedResultPage(offset, limit);
+			if (staged != null) {
+				recordV2PageHit(stagedGeneration);
+				return staged;
+			}
+		}
+
+		synchronized (V2_KNOWN_PAGING_LOCK) {
+			v2KnownPageFallbacks++;
+			// Do not let an old request demote a newer stage published by another operation.
+			if (stagedGeneration != 0L && v2KnownStageGeneration == stagedGeneration) {
+				v2KnownStaged = false;
+				v2KnownAuthoritativeRevision = false;
 			}
 		}
 		return resultPageUnchecked(offset, limit);
+	}
+
+	private static void recordV2PageHit(long stagedGeneration) {
+		synchronized (V2_KNOWN_PAGING_LOCK) {
+			if (v2KnownStaged && v2KnownStageGeneration == stagedGeneration) {
+				v2KnownPageHits++;
+			}
+		}
 	}
 
 	private static native long[] resultPageV2Auto(int offset, int limit);
@@ -265,29 +282,17 @@ final class NativeMemoryEngine {
 
 	static native long[] inspect(long candidateId, int radius);
 
-	/**
-	 * Returns [valueType, predicate, firstBits, secondBits] using the exact native parser that owns
-	 * production Known canonicalization. V2 consumes these stable bits and never reparses query
-	 * strings independently.
-	 */
 	static native long[] canonicalKnownPlan(int valueType, int predicate, String first, String second);
 
 	static native long[] v2ShadowKnownEqual(int valueType, long initialBits, long currentBits);
 
-	/**
-	 * Debug/shadow boundary for an already parsed explicit-type Known query. Thresholds are raw
-	 * primitive bits from the authoritative parser; this method intentionally accepts no query
-	 * strings so validation cannot grow subtly different signedness, Float, range, or hex semantics.
-	 */
 	static native long[] v2ShadowKnown(int valueType, int predicate,
 	                                  long firstBits, long secondBits);
 
 	static void clearSearch() {
 		clearSearchUnchecked();
 		clearV2KnownPagingStage();
-		if (BuildConfig.DEBUG) {
-			resetV2ShadowSession();
-		}
+		if (BuildConfig.DEBUG) resetV2ShadowSession();
 	}
 
 	private static native void clearSearchUnchecked();
@@ -295,9 +300,7 @@ final class NativeMemoryEngine {
 	static void clearTarget() {
 		clearTargetUnchecked();
 		clearV2KnownPagingStage();
-		if (BuildConfig.DEBUG) {
-			clearV2ShadowTarget();
-		}
+		if (BuildConfig.DEBUG) clearV2ShadowTarget();
 	}
 
 	private static native void clearTargetUnchecked();
