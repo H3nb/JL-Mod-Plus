@@ -6,6 +6,8 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
+#include "result_alias_cursor.h"
+
 // Differential-only bridge for the Candidate -> compact ordinary metadata cutover. It performs no
 // target reads and does not publish the sidecar. Tests/diagnostics can therefore prove that the
 // committed Candidate mirror and ResultStore alias ordinal describe the same revision before normal
