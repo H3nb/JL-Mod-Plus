@@ -1,6 +1,9 @@
 /*
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
 package ru.playsoftware.j2meloader.memory
@@ -8,7 +11,17 @@ package ru.playsoftware.j2meloader.memory
 /** Compact GameGuardian-style query syntax used by the production overlay search field. */
 internal sealed interface MemorySearchExpression {
     data class Single(val value: String) : MemorySearchExpression
-    data class Group(val values: List<String>, val maxDistance: Int) : MemorySearchExpression
+
+    /**
+     * maxDistance is the engine argument. Positive values mean the established any-order group;
+     * negative values mean ordered-group semantics. Keeping the encoding here avoids widening the
+     * Binder/native ABI while the public query syntax remains unambiguous (`:` vs `::`).
+     */
+    data class Group(val values: List<String>, val maxDistance: Int) : MemorySearchExpression {
+        val ordered: Boolean get() = maxDistance < 0
+        val displayDistance: Int get() = kotlin.math.abs(maxDistance)
+    }
+
     data class Invalid(val reason: Reason) : MemorySearchExpression
 
     enum class Reason {
@@ -28,17 +41,15 @@ internal const val MAX_GROUP_DISTANCE = 4096
  * Supported forms:
  *   500
  *   500;1000
- *   500;1000:128
+ *   500;1000:128      // any order within the existing symmetric anchor window
+ *   500;1000::128     // in order, strictly increasing addresses within a forward window
  *
- * `::` is intentionally recognized and rejected explicitly rather than silently changing its
- * meaning. The current native group kernel does not expose ordered-group semantics yet.
+ * Ordered state is encoded as a negative engine distance internally. User-entered distances remain
+ * positive and bounded to 1..4096 bytes.
  */
 internal fun parseMemorySearchExpression(input: String): MemorySearchExpression {
     val text = input.trim()
     if (text.isEmpty()) return MemorySearchExpression.Invalid(MemorySearchExpression.Reason.EMPTY)
-    if ("::" in text) {
-        return MemorySearchExpression.Invalid(MemorySearchExpression.Reason.ORDERED_GROUP_UNSUPPORTED)
-    }
     if (';' !in text) {
         return if (':' in text) {
             MemorySearchExpression.Invalid(MemorySearchExpression.Reason.UNEXPECTED_RANGE)
@@ -47,12 +58,21 @@ internal fun parseMemorySearchExpression(input: String): MemorySearchExpression 
         }
     }
 
-    val rangeIndex = text.lastIndexOf(':')
+    val orderedIndex = text.lastIndexOf("::")
+    val ordered = orderedIndex >= 0
+    val rangeIndex = if (ordered) orderedIndex else text.lastIndexOf(':')
+    val delimiterLength = if (ordered) 2 else if (rangeIndex >= 0) 1 else 0
+
     val groupText: String
     val distance: Int
     if (rangeIndex >= 0) {
         groupText = text.substring(0, rangeIndex).trim()
-        val distanceText = text.substring(rangeIndex + 1).trim()
+        val distanceText = text.substring(rangeIndex + delimiterLength).trim()
+        // A second colon outside the selected delimiter is always malformed rather than silently
+        // changing ordered/any-order semantics.
+        if (':' in groupText || ':' in distanceText) {
+            return MemorySearchExpression.Invalid(MemorySearchExpression.Reason.INVALID_DISTANCE)
+        }
         distance = distanceText.toIntOrNull()
             ?.takeIf { it in 1..MAX_GROUP_DISTANCE }
             ?: return MemorySearchExpression.Invalid(MemorySearchExpression.Reason.INVALID_DISTANCE)
@@ -68,5 +88,5 @@ internal fun parseMemorySearchExpression(input: String): MemorySearchExpression 
     if (values.any(String::isEmpty)) {
         return MemorySearchExpression.Invalid(MemorySearchExpression.Reason.EMPTY_GROUP_VALUE)
     }
-    return MemorySearchExpression.Group(values, distance)
+    return MemorySearchExpression.Group(values, if (ordered) -distance else distance)
 }
