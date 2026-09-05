@@ -19,11 +19,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/** Differential gate before compact ordinary metadata replaces the production Candidate mirror. */
+/** Migration gate for compact Known ownership and the still-transitional Unknown materialization. */
 @RunWith(AndroidJUnit4.class)
 public class MemoryV2OrdinaryProductionParityTest {
 	@Test
-	public void compactSidecarMatchesProductionAutoAndRelativeRevisions() {
+	public void knownUsesCompactOwnerWhileUnknownRelativeStillHasVerifiedCompatibilitySidecar() {
 		int pageSize = NativeMemoryTarget.pageSize();
 		assertTrue(pageSize > 0);
 		long[] originalProbe = NativeMemoryTarget.readProbe();
@@ -42,7 +42,7 @@ public class MemoryV2OrdinaryProductionParityTest {
 					NativeMemoryEngine.startKnown(
 							MemoryEngineContract.TYPE_AUTO,
 							MemoryEngineContract.PREDICATE_EQUAL, "1", ""));
-			assertOrdinaryParity("Auto Known");
+			assertCompactKnownOwner();
 
 			NativeMemoryEngine.clearSearch();
 			NativeMemoryTarget.writeProbe(1L);
@@ -53,14 +53,27 @@ public class MemoryV2OrdinaryProductionParityTest {
 					NativeMemoryEngine.refineRelative(
 							MemoryEngineContract.PREDICATE_INCREASED,
 							MemoryEngineContract.COMPARE_PREVIOUS, "", ""));
-			assertOrdinaryParity("Unknown relative");
+			assertLegacyOrdinaryParity("Unknown relative");
 		} finally {
 			NativeMemoryTarget.writeProbe(originalProbe[1]);
 			NativeMemoryEngine.clearTarget();
 		}
 	}
 
-	private static void assertOrdinaryParity(String label) {
+	private static void assertCompactKnownOwner() {
+		assertTrue("Auto Known revision must remain ResultStore-authoritative",
+				NativeMemoryEngine.v2KnownAuthoritativeRevision());
+		long[] stats = NativeMemoryEngine.v2CompactOwnerStats();
+		assertNotNull(stats);
+		assertEquals(8, stats.length);
+		assertEquals("compact owner missing", 1L, stats[0]);
+		assertTrue("Known should produce at least one typed result", stats[1] > 0L);
+		assertEquals("Known still retains the Candidate ordinary database", 0L, stats[2]);
+		assertEquals(NativeMemoryEngine.resultCount(), stats[3]);
+		assertTrue("compact revision retained accounting is invalid", stats[4] > 0L);
+	}
+
+	private static void assertLegacyOrdinaryParity(String label) {
 		assertTrue(label + " revision must remain ResultStore-authoritative",
 				NativeMemoryEngine.v2KnownAuthoritativeRevision());
 		long[] stats = MemoryV2OrdinaryDiagnostics.parityStats();
