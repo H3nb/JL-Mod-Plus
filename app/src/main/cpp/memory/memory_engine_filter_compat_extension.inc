@@ -6,22 +6,11 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
-// Keep the established Candidate primitives byte-for-byte intact while Java owns ResultStore
-// lifecycle bookkeeping around operations that replace SearchState. Delete these aliases once
-// filter/watch state is natively split from ordinary search membership.
-extern "C" jint
-Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_filter(
-        JNIEnv *, jclass, jlongArray, jboolean);
+// Watch pin/unpin still needs the established Candidate primitive when no compact revision exists.
+// Ordinary result filtering is compact-only in production and no longer gets a legacy JNI alias.
 extern "C" jint
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_pin(
         JNIEnv *, jclass, jlongArray, jboolean);
-
-extern "C" JNIEXPORT jint JNICALL
-Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_filterUnchecked(
-        JNIEnv *env, jclass clazz, jlongArray rawIds, jboolean keep) {
-    return Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_filter(
-            env, clazz, rawIds, keep);
-}
 
 extern "C" JNIEXPORT jint JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_pinUnchecked(

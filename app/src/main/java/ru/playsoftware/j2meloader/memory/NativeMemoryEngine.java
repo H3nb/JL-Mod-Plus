@@ -246,23 +246,17 @@ final class NativeMemoryEngine {
 	private static native int refreshPresentation(long[] candidateIds);
 
 	static int filter(long[] candidateIds, boolean keep) {
-		if (hasCurrentV2CompactRevision()) {
-			int result = filterV2CompactOwner(candidateIds, keep);
-			if (result == MemoryEngineContract.RESULT_OK) {
-				publishV2KnownPagingStage(true, true);
-			}
-			return result;
+		// Ordinary result filtering is valid only while compact search membership is authoritative.
+		// Watch removal is pin(false), which intentionally keeps its tracked-Candidate fallback.
+		if (!hasCurrentV2CompactRevision()) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
 		}
-		rememberAuthoritativeCurrentRevision();
-		int result = filterUnchecked(candidateIds, keep);
+		int result = filterV2CompactOwner(candidateIds, keep);
 		if (result == MemoryEngineContract.RESULT_OK) {
-			boolean staged = stageV2KnownResultStore() || stageV2AutoResultStore();
-			publishV2KnownPagingStage(staged, false);
+			publishV2KnownPagingStage(true, true);
 		}
 		return result;
 	}
-
-	private static native int filterUnchecked(long[] candidateIds, boolean keep);
 
 	static int edit(long[] candidateIds, String replacementValue) {
 		int result = hasCurrentV2CompactRevision()
