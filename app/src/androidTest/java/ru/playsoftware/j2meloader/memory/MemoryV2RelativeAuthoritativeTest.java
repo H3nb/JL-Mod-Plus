@@ -53,6 +53,14 @@ public class MemoryV2RelativeAuthoritativeTest {
 					NativeMemoryEngine.configureTarget(Process.myPid(), pageSize, token, runs));
 			assertEquals(MemoryEngineContract.RESULT_OK,
 					NativeMemoryEngine.startUnknown(MemoryEngineContract.TYPE_AUTO));
+			assertTrue("Unknown baseline unexpectedly owns a compact result revision",
+					!NativeMemoryEngine.hasCurrentV2CompactRevision());
+			assertEquals("Known refine must not route an Unknown baseline through Candidate fallback",
+					MemoryEngineContract.RESULT_INVALID_REQUEST,
+					NativeMemoryEngine.refineKnown(
+							MemoryEngineContract.PREDICATE_EQUAL, "1", "", false));
+			assertTrue("failed Known refine mutated the Unknown baseline into a compact revision",
+					!NativeMemoryEngine.hasCurrentV2CompactRevision());
 
 			NativeMemoryTarget.writeProbe(2L);
 			assertEquals(MemoryEngineContract.RESULT_OK,

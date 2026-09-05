@@ -180,29 +180,15 @@ final class NativeMemoryEngine {
 
 	static int refineKnown(int predicate, String first, String second,
 	                      boolean allowRelocationReconcile) {
-		if (hasCurrentV2CompactRevision()) {
-			int result = refineKnownV2CompactOwner(
-					predicate, first, second, allowRelocationReconcile);
-			if (result == MemoryEngineContract.RESULT_OK) {
-				publishV2KnownPagingStage(true, true);
-			}
-			return result;
+		// Production Known Next Scan is valid only for a compact candidate revision. Unknown
+		// baselines must materialize through refineRelative() before Known predicates are available.
+		if (!hasCurrentV2CompactRevision()) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
 		}
-
-		rememberAuthoritativeCurrentRevision();
-		boolean autoRevision = hasCurrentV2AutoResultStore();
-		boolean explicitRevision = hasCurrentV2KnownResultStore();
-		if (!autoRevision && !explicitRevision) autoRevision = stageV2AutoResultStore();
-		int result = autoRevision
-				? refineKnownAutoV2Authoritative(
-						predicate, first, second, allowRelocationReconcile)
-				: refineKnownV2Authoritative(
-						predicate, first, second, allowRelocationReconcile);
+		int result = refineKnownV2CompactOwner(
+				predicate, first, second, allowRelocationReconcile);
 		if (result == MemoryEngineContract.RESULT_OK) {
-			boolean authoritative = hasCurrentV2KnownResultStore() || hasCurrentV2AutoResultStore();
-			if (!authoritative) authoritative = stageV2KnownResultStore() || stageV2AutoResultStore();
-			publishV2KnownPagingStage(authoritative, authoritative);
-			if (authoritative) rememberCurrentV2Revision();
+			publishV2KnownPagingStage(true, true);
 		}
 		return result;
 	}
