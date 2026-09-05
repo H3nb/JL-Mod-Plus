@@ -1,0 +1,14 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
+
+// Final migration work is kept in the same translation unit as the transitional engine so it can
+// reuse the authoritative parser, immutable SearchState and guarded mutation primitives without
+// exporting a second internal ABI. Delete this wrapper when the legacy Candidate search database
+// is fully replaced and the native module can be split normally again.
+#include "memory_engine_compilation_unit.cpp"
+#include "memory_engine_v2_extensions.inc"
