@@ -9,6 +9,7 @@
 #include "ordinary_result_store.h"
 
 #include <limits>
+#include <utility>
 
 namespace jlmem::v2 {
 
@@ -91,10 +92,8 @@ std::size_t OrdinaryResultStore::retainedBytes() const noexcept {
 }
 
 void OrdinaryResultStore::clear() noexcept {
-    records_.clear();
-    records_.shrink_to_fit();
-    identityValidBits_.clear();
-    identityValidBits_.shrink_to_fit();
+    std::vector<OrdinaryResultRecord>().swap(records_);
+    std::vector<std::uint64_t>().swap(identityValidBits_);
 }
 
 } // namespace jlmem::v2
