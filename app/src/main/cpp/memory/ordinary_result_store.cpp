@@ -20,6 +20,9 @@ bool OrdinaryResultStore::reserve(std::size_t count) noexcept {
         records_.reserve(count);
         const std::size_t wordCount = count / 64U + (count % 64U == 0U ? 0U : 1U);
         identityValidBits_.reserve(wordCount);
+        if (!relocationCounts_.empty()) {
+            relocationCounts_.reserve(count);
+        }
         return true;
     } catch (...) {
         return false;
@@ -27,7 +30,8 @@ bool OrdinaryResultStore::reserve(std::size_t count) noexcept {
 }
 
 bool OrdinaryResultStore::append(const OrdinaryResultRecord &record,
-                                 bool identityValid) noexcept {
+                                 bool identityValid,
+                                 std::uint16_t relocationCount) noexcept {
     if (record.id == 0U || records_.size() == std::numeric_limits<std::size_t>::max() ||
         records_.size() >= static_cast<std::size_t>(
                                    std::numeric_limits<std::uint32_t>::max())) {
@@ -50,9 +54,35 @@ bool OrdinaryResultStore::append(const OrdinaryResultRecord &record,
         } else if (wordIndex > identityValidBits_.size()) {
             return false;
         }
+
+        const bool createRelocationArray =
+                relocationCount != 0U && relocationCounts_.empty();
+        if (createRelocationArray) {
+            relocationCounts_.assign(index, 0U);
+        }
+        if (!relocationCounts_.empty()) {
+            try {
+                relocationCounts_.push_back(relocationCount);
+            } catch (...) {
+                if (createRelocationArray) {
+                    std::vector<std::uint16_t>().swap(relocationCounts_);
+                }
+                if (addedWord) {
+                    identityValidBits_.pop_back();
+                }
+                return false;
+            }
+        }
+
         try {
             records_.push_back(record);
         } catch (...) {
+            if (!relocationCounts_.empty() && relocationCounts_.size() == index + 1U) {
+                relocationCounts_.pop_back();
+                if (createRelocationArray) {
+                    std::vector<std::uint16_t>().swap(relocationCounts_);
+                }
+            }
             if (addedWord) {
                 identityValidBits_.pop_back();
             }
@@ -159,6 +189,13 @@ bool OrdinaryResultStore::identityValid(std::size_t index) const noexcept {
            (identityValidBits_[wordIndex] & identityBit(index)) != 0U;
 }
 
+std::uint16_t OrdinaryResultStore::relocationCount(std::size_t index) const noexcept {
+    if (index >= records_.size() || relocationCounts_.empty()) {
+        return 0U;
+    }
+    return index < relocationCounts_.size() ? relocationCounts_[index] : 0U;
+}
+
 std::size_t OrdinaryResultStore::retainedBytes() const noexcept {
     std::size_t result = sizeof(OrdinaryResultStore);
     const auto addCapacity = [&](std::size_t capacity, std::size_t elementSize) {
@@ -174,6 +211,7 @@ std::size_t OrdinaryResultStore::retainedBytes() const noexcept {
     };
     if (!addCapacity(records_.capacity(), sizeof(OrdinaryResultRecord)) ||
         !addCapacity(identityValidBits_.capacity(), sizeof(std::uint64_t)) ||
+        !addCapacity(relocationCounts_.capacity(), sizeof(std::uint16_t)) ||
         !addCapacity(idOrder_.capacity(), sizeof(std::uint32_t))) {
         return std::numeric_limits<std::size_t>::max();
     }
@@ -183,6 +221,7 @@ std::size_t OrdinaryResultStore::retainedBytes() const noexcept {
 void OrdinaryResultStore::clear() noexcept {
     std::vector<OrdinaryResultRecord>().swap(records_);
     std::vector<std::uint64_t>().swap(identityValidBits_);
+    std::vector<std::uint16_t>().swap(relocationCounts_);
     std::vector<std::uint32_t>().swap(idOrder_);
     idsStrictlyIncreasing_ = true;
 }
