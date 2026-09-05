@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/** Device gate for Unknown materialization, relative COW refine, and retained-revision Undo. */
+/** Device gate for candidate-free Unknown materialization, relative COW refine, and Undo. */
 @RunWith(AndroidJUnit4.class)
 public class MemoryV2RelativeAuthoritativeTest {
 	private static final int[] EXPECTED_ALIASES = {
@@ -36,7 +36,7 @@ public class MemoryV2RelativeAuthoritativeTest {
 	};
 
 	@Test
-	public void unknownIncreasedMaterializesResultStoreThenRefinesCowAndUndoes() {
+	public void unknownIncreasedMaterializesCompactThenRefinesCowAndUndoes() {
 		int pageSize = NativeMemoryTarget.pageSize();
 		assertTrue(pageSize > 0);
 		long[] originalProbe = NativeMemoryTarget.readProbe();
@@ -60,8 +60,7 @@ public class MemoryV2RelativeAuthoritativeTest {
 							MemoryEngineContract.PREDICATE_INCREASED,
 							MemoryEngineContract.COMPARE_PREVIOUS,
 							"", ""));
-			assertTrue("first Unknown refine did not publish authoritative ResultStore",
-					NativeMemoryEngine.v2KnownAuthoritativeRevision());
+			assertCompactCandidateFree("first Unknown relative materialization");
 			Map<Integer, Long> firstIds = aliasesAt(probeAddress);
 			assertExpectedAliases(firstIds);
 			assertResultCursorOnly();
@@ -72,38 +71,23 @@ public class MemoryV2RelativeAuthoritativeTest {
 							MemoryEngineContract.PREDICATE_INCREASED,
 							MemoryEngineContract.COMPARE_PREVIOUS,
 							"", ""));
-			assertTrue("subsequent relative refine lost ResultStore authority",
-					NativeMemoryEngine.v2KnownAuthoritativeRevision());
+			assertCompactCandidateFree("relative COW refine");
 			Map<Integer, Long> secondIds = aliasesAt(probeAddress);
 			assertExpectedAliases(secondIds);
 			for (int type : EXPECTED_ALIASES) {
-				assertEquals("CandidateId changed during relative COW refine for type=" + type,
+				assertEquals("ResultId changed during relative COW refine for type=" + type,
 						firstIds.get(type), secondIds.get(type));
 			}
 			assertTrue("relative COW refine did not retain Undo history",
 					NativeMemoryEngine.historyDepth() > 0);
 			assertResultCursorOnly();
 
-			long[] catalogBefore = NativeMemoryEngine.v2RevisionCatalogStats();
-			assertNotNull(catalogBefore);
-			assertEquals(4, catalogBefore.length);
-			assertTrue("relative ResultStore revision was not retained", catalogBefore[0] > 0L);
-			long hitsBefore = catalogBefore[2];
-			long missesBefore = catalogBefore[3];
-
 			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.undo());
-			long[] catalogAfter = NativeMemoryEngine.v2RevisionCatalogStats();
-			assertNotNull(catalogAfter);
-			assertEquals(hitsBefore + 1L, catalogAfter[2]);
-			assertEquals("relative Undo unexpectedly rebuilt from Candidate compatibility state",
-					missesBefore, catalogAfter[3]);
-			assertTrue("remembered relative revision was not restored as authoritative",
-					NativeMemoryEngine.v2KnownAuthoritativeRevision());
-
+			assertCompactCandidateFree("relative Undo");
 			Map<Integer, Long> undoneIds = aliasesAt(probeAddress);
 			assertExpectedAliases(undoneIds);
 			for (int type : EXPECTED_ALIASES) {
-				assertEquals("CandidateId changed after O(1) relative revision Undo for type=" + type,
+				assertEquals("ResultId changed after compact relative Undo for type=" + type,
 						firstIds.get(type), undoneIds.get(type));
 			}
 			assertResultCursorOnly();
@@ -111,6 +95,18 @@ public class MemoryV2RelativeAuthoritativeTest {
 			NativeMemoryTarget.writeProbe(originalProbe[1]);
 			NativeMemoryEngine.clearTarget();
 		}
+	}
+
+	private static void assertCompactCandidateFree(String label) {
+		assertTrue(label + " lost ResultStore authority",
+				NativeMemoryEngine.v2KnownAuthoritativeRevision());
+		long[] stats = NativeMemoryEngine.v2CompactOwnerStats();
+		assertNotNull(stats);
+		assertEquals(8, stats.length);
+		assertEquals(label + " has no compact owner", 1L, stats[0]);
+		assertTrue(label + " produced no ordinary rows", stats[1] > 0L);
+		assertEquals(label + " rebuilt legacy Candidate ordinary rows", 0L, stats[2]);
+		assertEquals(NativeMemoryEngine.resultCount(), stats[3]);
 	}
 
 	private static void assertExpectedAliases(Map<Integer, Long> aliases) {
