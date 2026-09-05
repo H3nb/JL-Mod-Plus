@@ -186,6 +186,7 @@ fun MemoryEditorLandscapeKnownSearchDialogScreenshot() {
                 sessionStage = MemorySessionStage.CANDIDATES,
             ),
             actions = NoOpMemoryEditorActions,
+            onPeekUnderlayChanged = {},
             onDismiss = {},
         )
     }

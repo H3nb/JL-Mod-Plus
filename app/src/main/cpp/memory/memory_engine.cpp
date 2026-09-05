@@ -775,39 +775,54 @@ bool writeExact(pid_t pid, uintptr_t address, const void *source, size_t size) {
     return true;
 }
 
+// Identity context is intentionally small, but it may straddle two adjacent resident runs
+// when mincore reports a fragmented or recently touched managed heap. Read each exact span only
+// from the configured target ranges; never bridge an unconfigured hole.
+bool readTargetSpan(const Target &target, uintptr_t address, size_t size,
+                    uint8_t *destination) {
+    if ((destination == nullptr && size != 0U) ||
+        !isAddressSpanValid(address, size)) {
+        return false;
+    }
+    size_t copied = 0U;
+    while (copied < size) {
+        uintptr_t cursor = 0U;
+        if (!checkedAddressAdd(address, copied, cursor)) {
+            return false;
+        }
+        const auto range = std::find_if(
+                target.ranges.begin(), target.ranges.end(),
+                [cursor](const Range &item) {
+                    return item.start <= cursor && cursor < item.end;
+                });
+        if (range == target.ranges.end()) {
+            return false;
+        }
+        const size_t available = static_cast<size_t>(range->end - cursor);
+        const size_t chunk = std::min(available, size - copied);
+        if (chunk == 0U ||
+            !readExact(target.pid, cursor, destination + copied, chunk)) {
+            return false;
+        }
+        copied += chunk;
+    }
+    return true;
+}
+
 bool readIdentity(const Target &target, uintptr_t address, ValueType type,
                   uint64_t &hash) {
     const size_t width = widthOf(type);
     uintptr_t valueEnd = 0;
-    uintptr_t contextEnd = 0;
     if (width == 0 || address < kIdentityRadius ||
         !checkedAddressAdd(address, width, valueEnd) ||
-        !checkedAddressAdd(valueEnd, kIdentityRadius, contextEnd)) {
+        !isAddressSpanValid(valueEnd, kIdentityRadius)) {
         return false;
     }
     const uintptr_t contextStart = address - kIdentityRadius;
-    const auto range = std::find_if(
-            target.ranges.begin(), target.ranges.end(), [&](const Range &item) {
-                return item.start <= contextStart && item.end >= contextEnd;
-            });
-    if (range == target.ranges.end()) {
-        return false;
-    }
     std::array<uint8_t, kIdentityRadius * 2U> context{};
-    std::array<iovec, 2> local{{
-            {context.data(), kIdentityRadius},
-            {context.data() + kIdentityRadius, kIdentityRadius},
-    }};
-    std::array<iovec, 2> remote{{
-            {reinterpret_cast<void *>(contextStart), kIdentityRadius},
-            {reinterpret_cast<void *>(valueEnd), kIdentityRadius},
-    }};
-    ssize_t result;
-    do {
-        result = process_vm_readv(target.pid, local.data(), local.size(),
-                                  remote.data(), remote.size(), 0);
-    } while (result < 0 && errno == EINTR);
-    if (result != static_cast<ssize_t>(context.size())) {
+    if (!readTargetSpan(target, contextStart, kIdentityRadius, context.data()) ||
+        !readTargetSpan(target, valueEnd, kIdentityRadius,
+                        context.data() + kIdentityRadius)) {
         return false;
     }
     hash = identityHash(std::span<const uint8_t>(context).first(kIdentityRadius),
@@ -2146,9 +2161,16 @@ jint recoverCandidatesBatch(const Target &target, uint64_t cancellationEpoch,
         return kInvalidRequest;
     }
     std::array<std::unordered_map<uint64_t, std::vector<size_t>>, kTypeSlotCount> wanted{};
+    std::array<std::unordered_map<uint64_t, std::vector<size_t>>, kTypeSlotCount>
+            valueFallbackWanted{};
     std::vector<bool> eligible(recovery.size(), false);
+    std::vector<bool> valueFallbackEligible(recovery.size(), false);
     std::vector<uintptr_t> foundAddress(recovery.size(), 0);
     std::vector<uint8_t> matchCount(recovery.size(), 0);
+    std::vector<uintptr_t> valueFallbackAddress(recovery.size(), 0);
+    std::vector<uint8_t> valueFallbackMatchCount(recovery.size(), 0);
+    std::vector<uint64_t> valueFallbackIdentityHash(recovery.size(), 0U);
+    std::vector<bool> valueFallbackIdentityValid(recovery.size(), false);
     size_t eligibleCount = 0;
     for (size_t index = 0; index < recovery.size(); ++index) {
         Candidate &candidate = candidates[recovery[index]];
@@ -2160,6 +2182,22 @@ jint recoverCandidatesBatch(const Target &target, uint64_t cancellationEpoch,
         eligible[index] = true;
         ++eligibleCount;
         wanted[typeIndex(candidate.type)][candidate.currentBits].push_back(index);
+
+        // A managed object may keep the same value while its neighbouring fields change during
+        // normal execution or a copying GC. If the old binding still contains the expected value,
+        // or this candidate already has a relocation history, a unique typed-value match is a
+        // bounded rebind signal. Ambiguous values remain unsafe and never reach a write.
+        uint64_t current = 0U;
+        const bool oldValueStillMatches =
+                readCandidate(target, candidate, current) &&
+                current == candidate.currentBits;
+        valueFallbackEligible[index] =
+                oldValueStillMatches || candidate.relocationCount != 0U;
+        if (valueFallbackEligible[index]) {
+            valueFallbackWanted[typeIndex(candidate.type)]
+                    [candidate.currentBits]
+                    .push_back(index);
+        }
     }
     if (eligibleCount == 0) {
         return kOk;
@@ -2180,7 +2218,7 @@ jint recoverCandidatesBatch(const Target &target, uint64_t cancellationEpoch,
                 return kTargetLost;
             }
             for (jint type = kTypeByte; type <= kTypeDouble; ++type) {
-                if (wanted[type].empty()) {
+                if (wanted[type].empty() && valueFallbackWanted[type].empty()) {
                     continue;
                 }
                 const size_t width = widthOf(type);
@@ -2196,14 +2234,17 @@ jint recoverCandidatesBatch(const Target &target, uint64_t cancellationEpoch,
                     }
                     const uint64_t bits = loadBits(buffer.data() + offset, width);
                     const auto interested = wanted[type].find(bits);
-                    if (interested != wanted[type].end()) {
+                    const auto valueFallbackInterested =
+                            valueFallbackWanted[type].find(bits);
+                    if (interested != wanted[type].end() ||
+                        valueFallbackInterested != valueFallbackWanted[type].end()) {
                         uint64_t hash = 0;
                         bool hasIdentity = snapshotIdentity(
                                 buffer.data(), chunkSize, offset, width, hash);
                         if (!hasIdentity) {
                             hasIdentity = readIdentity(target, address, type, hash);
                         }
-                        if (hasIdentity) {
+                        if (interested != wanted[type].end() && hasIdentity) {
                             for (size_t recoveryIndex : interested->second) {
                                 if (!eligible[recoveryIndex] ||
                                     matchCount[recoveryIndex] > 1) {
@@ -2218,6 +2259,26 @@ jint recoverCandidatesBatch(const Target &target, uint64_t cancellationEpoch,
                                     matchCount[recoveryIndex] = 1;
                                 } else if (foundAddress[recoveryIndex] != address) {
                                     matchCount[recoveryIndex] = 2;
+                                }
+                            }
+                        }
+                        if (valueFallbackInterested != valueFallbackWanted[type].end()) {
+                            for (size_t recoveryIndex : valueFallbackInterested->second) {
+                                if (!eligible[recoveryIndex] ||
+                                    !valueFallbackEligible[recoveryIndex] ||
+                                    valueFallbackMatchCount[recoveryIndex] > 1) {
+                                    continue;
+                                }
+                                if (valueFallbackMatchCount[recoveryIndex] == 0) {
+                                    valueFallbackAddress[recoveryIndex] = address;
+                                    valueFallbackMatchCount[recoveryIndex] = 1;
+                                    if (hasIdentity) {
+                                        valueFallbackIdentityHash[recoveryIndex] = hash;
+                                        valueFallbackIdentityValid[recoveryIndex] = true;
+                                    }
+                                } else if (valueFallbackAddress[recoveryIndex] != address) {
+                                    valueFallbackMatchCount[recoveryIndex] = 2;
+                                    valueFallbackIdentityValid[recoveryIndex] = false;
                                 }
                             }
                         }
@@ -2242,6 +2303,15 @@ jint recoverCandidatesBatch(const Target &target, uint64_t cancellationEpoch,
                 ++candidate.relocationCount;
             }
             candidate.address = foundAddress[index];
+            candidate.state = kStable;
+        } else if (valueFallbackMatchCount[index] == 1 &&
+                   valueFallbackIdentityValid[index]) {
+            if (candidate.address != valueFallbackAddress[index]) {
+                ++candidate.relocationCount;
+            }
+            candidate.address = valueFallbackAddress[index];
+            candidate.identityHash = valueFallbackIdentityHash[index];
+            candidate.identityValid = true;
             candidate.state = kStable;
         } else {
             candidate.state = matchCount[index] > 1 ? kAmbiguous : kLost;

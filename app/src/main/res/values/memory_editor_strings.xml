@@ -156,4 +156,6 @@
     <string name="memory_editor_expression_query_help">Examples: 500 · 500;1000 · 500;1000:128 · 500;1000::128 (in order)</string>
     <string name="memory_editor_expression_ordered_group_unsupported">Use ::distance when Group Search must follow increasing address order.</string>
     <string name="memory_editor_keypad_clear">Clear</string>
+    <string name="memory_editor_peek_underlay">Press and hold to see the MIDlet below</string>
+    <string name="memory_editor_peek_underlay_active">Showing the MIDlet below</string>
 </resources>

@@ -848,8 +848,8 @@ public final class MemoryEngineService extends Service {
 			if (refreshedBindingResult == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
 				return refreshedBindingResult;
 			}
-			// A uniquely recovered move is normal for read-only presentation; explicit mutation still
-			// performs its own binding comparison and requires a retry before writing.
+			// A uniquely recovered move is normal for read-only presentation; explicit mutation will
+			// perform its own native identity check immediately before writing.
 			return MemoryEngineContract.RESULT_OK;
 		}
 
@@ -902,15 +902,16 @@ public final class MemoryEngineService extends Service {
 			int result = refreshWithRecovery(token, candidateIds);
 			if (result != MemoryEngineContract.RESULT_OK) return result;
 			int refreshedBindingResult = compareRefreshedBindings(before);
-			// Actual relocation requires one explicit user retry. Ambiguous/lost identity fails closed.
-			if (refreshedBindingResult != MemoryEngineContract.RESULT_OK) {
+			// A unique recovery is already verified by native refresh and can continue into the
+			// guarded operation. Ambiguous/lost identity still fails closed.
+			if (!MemoryGcPolicy.mutationBindingIsReady(refreshedBindingResult)) {
 				return refreshedBindingResult;
 			}
 			return MemoryEngineContract.RESULT_OK;
 		}
 
 		if (fastResult != MemoryEngineContract.RESULT_OK) return fastResult;
-		if (bindingResult != MemoryEngineContract.RESULT_OK) return bindingResult;
+		if (!MemoryGcPolicy.mutationBindingIsReady(bindingResult)) return bindingResult;
 		gcBindings.markCandidatesValidated(candidateIds,
 				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
 		return MemoryEngineContract.RESULT_OK;
@@ -1453,8 +1454,7 @@ public final class MemoryEngineService extends Service {
 		return switch (result) {
 			case MemoryEngineContract.RESULT_GC_REVALIDATED ->
 					"The selected value moved to a new verified address. Memory Editor updated the " +
-							"CandidateId binding. Review the refreshed value/address and retry; no write " +
-							"was performed.";
+							"CandidateId binding; the next guarded operation will use the refreshed address.";
 			case MemoryEngineContract.RESULT_GC_RACE ->
 					"Java GC occurred during the operation. The result or write could not be safely " +
 							"confirmed, so no automatic retry was attempted.";

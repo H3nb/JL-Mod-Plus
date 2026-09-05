@@ -53,4 +53,25 @@ class MemorySearchExpressionTest {
             )
         }
     }
+
+    @Test
+    fun autoGroupTypeUsesOneExactTypeForIntegerTerms() {
+        assertEquals(
+            MemoryEngineContract.TYPE_INT,
+            inferMemoryGroupType(listOf("500", "1000", "-25")),
+        )
+        assertEquals(
+            MemoryEngineContract.TYPE_LONG,
+            inferMemoryGroupType(listOf("2147483648", "2147483649")),
+        )
+    }
+
+    @Test
+    fun autoGroupTypeUsesDoubleForFiniteDecimalTerms() {
+        assertEquals(
+            MemoryEngineContract.TYPE_DOUBLE,
+            inferMemoryGroupType(listOf("1.5", "2e1")),
+        )
+        assertEquals(null, inferMemoryGroupType(listOf("1.0", "not-a-number")))
+    }
 }

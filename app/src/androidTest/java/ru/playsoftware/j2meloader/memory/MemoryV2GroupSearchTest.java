@@ -102,6 +102,69 @@ public class MemoryV2GroupSearchTest {
 		}
 	}
 
+	@Test
+	public void refreshRebindsUniqueValueAfterNeighbourFingerprintChanges() {
+		int pageSize = NativeMemoryTarget.pageSize();
+		long[] original = NativeMemoryTarget.readGroupProbe();
+		assertNotNull(original);
+		assertEquals(10, original.length);
+		long probeAddress = original[0];
+		int[] restore = new int[8];
+		for (int i = 0; i < restore.length; i++) restore[i] = (int) original[i + 2];
+
+		long pageStart = probeAddress - Math.floorMod(probeAddress, (long) pageSize);
+		long pageEnd = pageStart + pageSize;
+		long[] runs = {1L, 0L, pageStart, pageEnd};
+		long token = 0x4A4C524542494E44L;
+		int[] changedNeighbour = FIXTURE.clone();
+		changedNeighbour[1] ^= 0x01010101;
+		int replacement = A + 1;
+
+		try {
+			assertTrue(NativeMemoryTarget.writeGroupProbe(FIXTURE));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.configureTarget(Process.myPid(), pageSize, token, runs));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startKnown(
+							MemoryEngineContract.TYPE_INT,
+							MemoryEngineContract.PREDICATE_EQUAL,
+							Integer.toString(A), ""));
+			long[] candidate = findCandidateAt(probeAddress, MemoryEngineContract.TYPE_INT);
+			assertNotNull("fixture anchor was not found", candidate);
+
+			// The value remains valid, but its neighbouring field changes. The old 16-byte identity
+			// therefore becomes stale; refresh must rebind the unique typed value rather than leave
+			// the row permanently unsafe.
+			assertTrue(NativeMemoryTarget.writeGroupProbe(changedNeighbour));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.refresh(new long[]{candidate[0]}, true));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.edit(new long[]{candidate[0]}, Integer.toString(replacement)));
+			long[] afterEdit = NativeMemoryTarget.readGroupProbe();
+			assertNotNull(afterEdit);
+			assertEquals(replacement, (int) afterEdit[2]);
+		} finally {
+			NativeMemoryTarget.writeGroupProbe(restore);
+			NativeMemoryEngine.clearTarget();
+		}
+	}
+
+	private static long[] findCandidateAt(long address, int type) {
+		long resultCount = NativeMemoryEngine.resultCount();
+		for (int offset = 0; offset < resultCount; offset += MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
+			long[] page = NativeMemoryEngine.resultPage(offset, MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+			if (page == null || page.length == 0) continue;
+			int count = Math.toIntExact(page[0]);
+			for (int index = 0; index < count; index++) {
+				int base = 1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE;
+				if (page[base + 1] == address && page[base + 3] == type) {
+					return new long[]{page[base], page[base + 8], page[base + 4]};
+				}
+			}
+		}
+		return null;
+	}
+
 	private static void assertCompactCandidateFree() {
 		long[] stats = NativeMemoryEngine.v2CompactOwnerStats();
 		assertNotNull(stats);

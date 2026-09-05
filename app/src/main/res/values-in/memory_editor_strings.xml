@@ -153,4 +153,6 @@
     <string name="memory_editor_expression_query_help">Contoh: 500 · 500;1000 · 500;1000:128 · 500;1000::128 (berurutan)</string>
     <string name="memory_editor_expression_ordered_group_unsupported">Gunakan ::jarak jika Pencarian Grup harus mengikuti urutan alamat yang meningkat.</string>
     <string name="memory_editor_keypad_clear">Bersihkan</string>
+    <string name="memory_editor_peek_underlay">Tekan dan tahan untuk melihat MIDlet di bawah</string>
+    <string name="memory_editor_peek_underlay_active">MIDlet di bawah sedang ditampilkan</string>
 </resources>

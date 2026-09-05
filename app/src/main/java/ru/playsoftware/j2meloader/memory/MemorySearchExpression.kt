@@ -38,6 +38,30 @@ internal const val DEFAULT_GROUP_DISTANCE = 128
 internal const val MAX_GROUP_DISTANCE = 4096
 
 /**
+ * Group Search uses one exact type for every term in the compact expression. When the user leaves
+ * the type at Auto, infer the narrowest practical common type instead of silently disabling New
+ * Search. Explicit type selections remain authoritative.
+ */
+internal fun inferMemoryGroupType(values: List<String>): Int? {
+    if (values.isEmpty()) return null
+
+    val integers = values.map(String::toLongOrNull)
+    if (integers.all { it != null }) {
+        return if (integers.all { it!! in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong() }) {
+            MemoryEngineContract.TYPE_INT
+        } else {
+            MemoryEngineContract.TYPE_LONG
+        }
+    }
+
+    return if (values.all { it.toDoubleOrNull()?.isFinite() == true }) {
+        MemoryEngineContract.TYPE_DOUBLE
+    } else {
+        null
+    }
+}
+
+/**
  * Supported forms:
  *   500
  *   500;1000

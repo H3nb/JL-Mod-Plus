@@ -68,7 +68,7 @@ public final class MemoryEngineContract {
 	public static final int RESULT_NO_SESSION = 6;
 	public static final int RESULT_IDENTITY_UNSAFE = 7;
 	public static final int RESULT_SAFETY_LIMIT = 8;
-	/** Candidate binding was revalidated/refreshed; retry before any explicit write. */
+	/** Candidate binding was uniquely revalidated/refreshed; guarded mutations may continue. */
 	public static final int RESULT_GC_REVALIDATED = 9;
 	/** A GC occurred during a scan/write critical window, so the operation cannot be confirmed. */
 	public static final int RESULT_GC_RACE = 10;

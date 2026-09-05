@@ -59,6 +59,16 @@ final class MemoryGcPolicy {
 				bindingResult == MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
 	}
 
+	/**
+	 * A unique relocation is safe to carry into a guarded mutation. Native refresh has already
+	 * verified the candidate identity, and the mutation performs the same verification once more
+	 * immediately before writing. Ambiguous or lost bindings must still fail closed.
+	 */
+	static boolean mutationBindingIsReady(int bindingResult) {
+		return bindingResult == MemoryEngineContract.RESULT_OK ||
+				bindingResult == MemoryEngineContract.RESULT_GC_REVALIDATED;
+	}
+
 	/** A successful or partial mutation may already have changed target memory. */
 	static boolean mutationMayHaveWritten(int result) {
 		return result == MemoryEngineContract.RESULT_OK ||

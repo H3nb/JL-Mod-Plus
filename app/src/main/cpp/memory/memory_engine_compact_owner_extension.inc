@@ -1554,6 +1554,72 @@ class CompactOwnerOutputBuilder final {
     return false;
 }
 
+// OrdinaryResultStore is immutable by design.  A wide write can nevertheless change the value
+// observed by several compact aliases, so materialize every alias whose address falls inside the
+// written span into the sparse live overlay.  Without this, resultPage() keeps serving the stale
+// immutable value for an unselected sibling alias until that alias is explicitly refreshed.
+void compactOwnerAppendTouchedAliasSeeds(
+        const OperationContext &context,
+        const std::shared_ptr<const jlmem::v2::ResultRevision> &revision,
+        const std::vector<WrittenSpan> &writes,
+        std::vector<Candidate> &seeds) {
+    if (revision == nullptr || revision->store == nullptr ||
+        revision->ordinaryValues == nullptr) {
+        return;
+    }
+    for (const WrittenSpan &write : writes) {
+        if (write.address == 0U || write.width == 0U) {
+            continue;
+        }
+        for (std::size_t offset = 0U; offset < write.width; ++offset) {
+            std::uintptr_t address = 0U;
+            if (!checkedAddressAdd(write.address, offset, address)) {
+                break;
+            }
+            jlmem::v2::ResultAliasAddressLookup lookup;
+            if (!jlmem::v2::lookupAliasAddress(
+                        *revision->store, address, lookup)) {
+                continue;
+            }
+            const std::size_t aliasCount = static_cast<std::size_t>(
+                    std::popcount(lookup.row.aliasMask));
+            if (aliasCount == 0U ||
+                lookup.typedOffset >
+                        static_cast<std::uint64_t>(
+                                std::numeric_limits<std::size_t>::max())) {
+                continue;
+            }
+            const std::size_t firstOrdinal =
+                    static_cast<std::size_t>(lookup.typedOffset);
+            if (firstOrdinal > revision->ordinaryValues->size() ||
+                aliasCount > revision->ordinaryValues->size() - firstOrdinal) {
+                continue;
+            }
+            jlmem::v2::ResultAliasPage page;
+            if (!jlmem::v2::readAliasPageAtTypedOffset(
+                        *revision->store, lookup.typedOffset, aliasCount, page) ||
+                page.rows.size() != aliasCount) {
+                continue;
+            }
+            for (std::size_t index = 0U; index < page.rows.size(); ++index) {
+                if (page.rows[index].address != address) {
+                    continue;
+                }
+                const auto *record = revision->ordinaryValues->record(
+                        firstOrdinal + index);
+                if (record == nullptr || record->id == 0U) {
+                    continue;
+                }
+                Candidate alias{};
+                if (compactOwnerCandidateForId(
+                            context, revision, record->id, alias)) {
+                    seeds.push_back(alias);
+                }
+            }
+        }
+    }
+}
+
 [[nodiscard]] bool compactOwnerCandidatesForIds(
         const OperationContext &context,
         const std::shared_ptr<const jlmem::v2::ResultRevision> &revision,
@@ -1712,8 +1778,10 @@ class CompactOwnerOutputBuilder final {
             ++skipped;
         }
     }
+    std::vector<Candidate> seeds = selected;
+    compactOwnerAppendTouchedAliasSeeds(context, revision, writes, seeds);
     const auto reconciled = reconcileTrackedLiveCandidatesAfterWrites(
-            context, writes, selected);
+            context, writes, seeds);
     const jint published = publishLiveCandidates(context, reconciled);
     if (published == kOk) {
         setMessage((std::to_string(edited) + " edited, " +
@@ -1902,6 +1970,7 @@ class CompactOwnerOutputBuilder final {
                     ? anchor.id : 0U;
     std::vector<WrittenSpan> writes{written};
     std::vector<Candidate> seeds{anchor};
+    compactOwnerAppendTouchedAliasSeeds(context, revision, writes, seeds);
     const auto reconciled = reconcileTrackedLiveCandidatesAfterWrites(
             context, writes, seeds);
     const jint published = publishLiveCandidates(context, reconciled);

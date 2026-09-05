@@ -63,6 +63,17 @@ public class MemoryGcPolicyTest {
 	}
 
 	@Test
+	public void uniquelyRevalidatedBindingCanContinueGuardedMutation() {
+		assertTrue(MemoryGcPolicy.mutationBindingIsReady(MemoryEngineContract.RESULT_OK));
+		assertTrue(MemoryGcPolicy.mutationBindingIsReady(
+				MemoryEngineContract.RESULT_GC_REVALIDATED));
+		assertFalse(MemoryGcPolicy.mutationBindingIsReady(
+				MemoryEngineContract.RESULT_IDENTITY_UNSAFE));
+		assertFalse(MemoryGcPolicy.mutationBindingIsReady(
+				MemoryEngineContract.RESULT_TARGET_LOST));
+	}
+
+	@Test
 	public void unrelatedErrorsDoNotTriggerExpensiveRangeRetry() {
 		assertFalse(MemoryGcPolicy.shouldRetryReadWithFreshRanges(
 				MemoryEngineContract.RESULT_INVALID_REQUEST,
