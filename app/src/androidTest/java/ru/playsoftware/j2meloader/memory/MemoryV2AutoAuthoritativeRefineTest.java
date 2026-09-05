@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/** Device gate for fused Auto COW refine and O(1) ResultStore revision Undo. */
+/** Device gate for fused Auto compact COW refine and compact-revision Undo. */
 @RunWith(AndroidJUnit4.class)
 public class MemoryV2AutoAuthoritativeRefineTest {
 	private static final int[] EXPECTED_INTEGER_ALIASES = {
@@ -34,7 +34,7 @@ public class MemoryV2AutoAuthoritativeRefineTest {
 	};
 
 	@Test
-	public void autoRefineClearsBitmapCowAndUndoRestoresRememberedRevision() {
+	public void autoRefineClearsBitmapCowAndUndoRestoresCompactRevision() {
 		int pageSize = NativeMemoryTarget.pageSize();
 		assertTrue(pageSize > 0);
 		long[] originalProbe = NativeMemoryTarget.readProbe();
@@ -55,6 +55,7 @@ public class MemoryV2AutoAuthoritativeRefineTest {
 							MemoryEngineContract.PREDICATE_EQUAL,
 							"1", ""));
 			assertTrue(NativeMemoryEngine.v2KnownAuthoritativeRevision());
+			assertCandidateFree();
 
 			Map<Integer, Long> firstIds = aliasesAt(probeAddress);
 			assertExpectedIntegerAliases(firstIds);
@@ -65,36 +66,35 @@ public class MemoryV2AutoAuthoritativeRefineTest {
 					NativeMemoryEngine.refineKnown(
 							MemoryEngineContract.PREDICATE_EQUAL, "2", "", false));
 			assertTrue(NativeMemoryEngine.v2KnownAuthoritativeRevision());
+			assertCandidateFree();
 			Map<Integer, Long> secondIds = aliasesAt(probeAddress);
 			assertExpectedIntegerAliases(secondIds);
 			for (int type : EXPECTED_INTEGER_ALIASES) {
-				assertEquals("CandidateId changed during ordinary Auto bitmap refine for type=" + type,
+				assertEquals("ResultId changed during ordinary Auto compact refine for type=" + type,
 						firstIds.get(type), secondIds.get(type));
 			}
 			assertTrue("Auto refine did not retain an Undo revision",
 					NativeMemoryEngine.historyDepth() > 0);
 			assertResultCursorOnly();
 
-			long[] catalogBefore = NativeMemoryEngine.v2RevisionCatalogStats();
-			assertNotNull(catalogBefore);
-			assertEquals(4, catalogBefore.length);
-			assertTrue("authoritative Auto revisions were not retained", catalogBefore[0] > 0L);
-			long hitsBefore = catalogBefore[2];
-			long missesBefore = catalogBefore[3];
+			long[] beforeUndo = NativeMemoryEngine.v2CompactOwnerStats();
+			assertNotNull(beforeUndo);
+			assertEquals(8, beforeUndo.length);
+			assertTrue(beforeUndo[6] > 0L);
 
 			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.undo());
-			long[] catalogAfter = NativeMemoryEngine.v2RevisionCatalogStats();
-			assertNotNull(catalogAfter);
-			assertEquals(hitsBefore + 1L, catalogAfter[2]);
-			assertEquals("Auto Undo unexpectedly rebuilt from Candidate compatibility state",
-					missesBefore, catalogAfter[3]);
-			assertTrue("remembered Auto revision was not restored as authoritative",
+			assertTrue("compact Auto revision was not restored as authoritative",
 					NativeMemoryEngine.v2KnownAuthoritativeRevision());
+			assertCandidateFree();
+			long[] afterUndo = NativeMemoryEngine.v2CompactOwnerStats();
+			assertNotNull(afterUndo);
+			assertTrue("Undo did not consume one search-history revision",
+					afterUndo[6] < beforeUndo[6]);
 
 			Map<Integer, Long> undoneIds = aliasesAt(probeAddress);
 			assertExpectedIntegerAliases(undoneIds);
 			for (int type : EXPECTED_INTEGER_ALIASES) {
-				assertEquals("CandidateId changed after O(1) Auto revision Undo for type=" + type,
+				assertEquals("ResultId changed after compact Auto revision Undo for type=" + type,
 						firstIds.get(type), undoneIds.get(type));
 			}
 			assertResultCursorOnly();
@@ -102,6 +102,16 @@ public class MemoryV2AutoAuthoritativeRefineTest {
 			NativeMemoryTarget.writeProbe(originalProbe[1]);
 			NativeMemoryEngine.clearTarget();
 		}
+	}
+
+	private static void assertCandidateFree() {
+		long[] owner = NativeMemoryEngine.v2CompactOwnerStats();
+		assertNotNull(owner);
+		assertEquals(8, owner.length);
+		assertEquals(1L, owner[0]);
+		assertTrue(owner[1] > 0L);
+		assertEquals("Auto revision still owns legacy Candidate rows", 0L, owner[2]);
+		assertEquals(NativeMemoryEngine.resultCount(), owner[3]);
 	}
 
 	private static void assertExpectedIntegerAliases(Map<Integer, Long> aliases) {
