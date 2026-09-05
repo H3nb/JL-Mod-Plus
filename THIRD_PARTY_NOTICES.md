@@ -1,6 +1,6 @@
 # Third-party provenance and license inventory
 
-This file is the canonical provenance ledger for third-party software currently bundled by JL-Mod Plus. It was audited against `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486` and the local `emulatorDebugRuntimeClasspath` on 2026-08-14.
+This file is the provenance ledger for third-party software bundled by JL-Mod Plus. Its last full runtime-classpath audit used `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486` on 2026-08-14; that historical audit is not verification of subsequent dependency changes.
 
 The app-facing copy is `app/src/main/assets/licenses.html`, reachable from **About -> Licenses**. Source-file copyright headers, published artifact metadata, and upstream license files remain authoritative when they are more specific than this summary.
 
@@ -21,7 +21,7 @@ This ledger is a provenance/notice inventory for the current project state, not 
 
 ## Material Symbols assets
 
-The Compose host UI uses twenty-nine official Material Symbols Android VectorDrawable assets. They
+The table below records the Material Symbols Android VectorDrawable assets from that audit. They
 were downloaded with `scripts/material-symbols.py` as developer-time inputs and are committed locally;
 Gradle and CI do not access the network to obtain them.
 
@@ -76,7 +76,7 @@ The Gradle runtime graph is the authority for what resolves into the current APK
 
 ## Repository-only vendored material
 
-`.agents/skills/**` contains selected Android Skills reference material used for development/agent guidance, not application runtime code. Its provenance is already pinned in `.agents/PROVENANCE.md`, with the corresponding Apache-2.0 terms in `.agents/LICENSE.txt`. It is intentionally excluded from the app-facing Licenses screen because it is not shipped as emulator runtime content.
+`.agents/skills/**` contains selected Android Skills reference material used for development/agent guidance, not application runtime code. Its provenance is pinned in [.agents/UPSTREAM.md](.agents/UPSTREAM.md), with the corresponding Apache-2.0 terms in `.agents/LICENSE.txt`. It is intentionally excluded from the app-facing Licenses screen because it is not shipped as emulator runtime content.
 
 ## Audit corrections from the legacy in-app notice
 

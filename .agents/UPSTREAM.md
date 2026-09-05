@@ -39,6 +39,15 @@ For JL-Mod Plus, the missing scripts are a failed prerequisite, not an instructi
 - use the skill's non-scripted heuristic analysis path instead, based on the available Gradle/R8 configuration and vendored references;
 - if a future verified upstream revision supplies the scripts, review that revision first and vendor or retrieve the exact upstream files before using the scripted path.
 
+## Project interpretation for coding agents
+
+Apply [AGENTS.md](../AGENTS.md) before generic upstream workflow defaults. These local interpretations do not change the pinned upstream files:
+
+- XML-to-Compose Step 3 requests plan approval. An explicit request to migrate a bounded UI already authorizes the local implementation; present the approach and continue within that scope. For Step 4, use available repository screenshots or emulator captures before requesting an upload. Report unavailable visual evidence.
+- Adaptive Step 3.3 requests user verification of screenshots. Inspect the rendered output yourself and provide reviewable artifacts; ask for a product decision when visual intent remains ambiguous. Do not accept references without inspection.
+- Testing setup describes a broad installation sequence and asks whether to document its findings. Apply only the infrastructure needed for the requested task, retain the existing stack, and document relevant changes in dedicated project documentation. Do not put transient testing state into AGENTS.md.
+- Compose, target-SDK, and Navigation 3 prerequisites remain scope constraints. A missing prerequisite does not authorize an unrelated migration. The R8 script fallback above remains applicable.
+
 ## Updating these skills
 
 Update skills intentionally, not as background dependency churn:
