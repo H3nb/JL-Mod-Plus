@@ -11,7 +11,7 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE := jlmem
 JL_MEM_PRODUCTION_SRC := memory_engine_production.cpp mutation_bridge.cpp result_store.cpp \
-    result_store_scan.cpp result_store_refine.cpp result_cursor.cpp
+    result_store_scan.cpp result_store_refine.cpp result_store_relative.cpp result_cursor.cpp
 ifeq ($(NDK_DEBUG),1)
 LOCAL_SRC_FILES := $(JL_MEM_PRODUCTION_SRC) result_store_shadow_bridge.cpp result_store_auto_probe.cpp
 else
