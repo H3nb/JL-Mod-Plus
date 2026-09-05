@@ -21,13 +21,13 @@ import static org.junit.Assert.assertTrue;
 @RunWith(AndroidJUnit4.class)
 public class MemoryV2OrdinaryResultStoreTest {
 	@Test
-	public void typedAliasPaginationKeepsCompactMetadataOrdinalStable() {
+	public void typedAliasPaginationAndDeepSeekKeepCompactOrdinalStable() {
 		// Initialize jlmem through its normal production owner before calling this test-only JNI probe.
 		assertNotNull(NativeMemoryEngine.v2RevisionCatalogStats());
 
 		long[] result = nativeProbe();
 		assertNotNull(result);
-		assertEquals(8, result.length);
+		assertEquals(10, result.length);
 		assertEquals(MemoryEngineContract.RESULT_OK, (int) result[0]);
 		assertEquals("typed alias count", 7L, result[1]);
 		assertEquals("unique address count", 3L, result[2]);
@@ -36,6 +36,9 @@ public class MemoryV2OrdinaryResultStoreTest {
 		assertEquals("two-row paging should cross four typed pages", 4L, result[5]);
 		assertEquals("identity-valid bitset count", 4L, result[6]);
 		assertTrue("ordered address/type fingerprint should be non-zero", result[7] != 0L);
+		assertEquals("unique-address offset 1 must skip three typed aliases", 3L, result[8]);
+		assertEquals("deep seek must begin at Short alias",
+				MemoryEngineContract.TYPE_SHORT, (int) result[9]);
 	}
 
 	private static native long[] nativeProbe();
