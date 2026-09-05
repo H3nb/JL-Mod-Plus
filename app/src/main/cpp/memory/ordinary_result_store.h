@@ -18,8 +18,8 @@ namespace jlmem::v2 {
 
 // Ordinary search membership already lives in ResultStore, so this record intentionally does NOT
 // duplicate address, primitive type, relocation state or relocation count. Those are obtained from
-// ResultAliasCursor or promoted into sparse tracked-candidate state only when an identity-sensitive
-// feature (Watch/Edit/Freeze/Inspector) actually needs them.
+// ResultAliasCursor or optional compact side metadata, and promoted into sparse tracked-candidate
+// state only when an identity-sensitive feature (Watch/Edit/Freeze/Inspector) actually needs them.
 struct OrdinaryResultRecord {
     std::uint64_t id = 0U;
     std::uint64_t initialBits = 0U;
@@ -35,7 +35,8 @@ class OrdinaryResultStore final {
   public:
     [[nodiscard]] bool reserve(std::size_t count) noexcept;
     [[nodiscard]] bool append(const OrdinaryResultRecord &record,
-                              bool identityValid) noexcept;
+                              bool identityValid,
+                              std::uint16_t relocationCount = 0U) noexcept;
 
     // Finalize the immutable ResultId lookup. Normal first/refine/filter revisions keep IDs in
     // address order and need no extra index. A relocation may reorder stable IDs by new address;
@@ -62,6 +63,7 @@ class OrdinaryResultStore final {
     [[nodiscard]] const OrdinaryResultRecord *record(
             std::size_t index) const noexcept;
     [[nodiscard]] bool identityValid(std::size_t index) const noexcept;
+    [[nodiscard]] std::uint16_t relocationCount(std::size_t index) const noexcept;
     [[nodiscard]] std::size_t retainedBytes() const noexcept;
 
     void clear() noexcept;
@@ -80,6 +82,9 @@ class OrdinaryResultStore final {
     // One bit instead of a padded bool in every row. identityHash itself is retained because it is
     // useful both for cheap movement sampling and later promotion into TrackedCandidate.
     std::vector<std::uint64_t> identityValidBits_;
+    // Empty until a bulk relocation actually occurs. Once needed it stores one saturated uint16 per
+    // typed result, keeping the ordinary row at 40 bytes instead of widening every first-scan row.
+    std::vector<std::uint16_t> relocationCounts_;
     // Empty in the overwhelmingly common monotonic case. When GC relocation changes address order,
     // this stores record ordinals sorted by stable ResultId rather than duplicating ResultId itself.
     std::vector<std::uint32_t> idOrder_;
