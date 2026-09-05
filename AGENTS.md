@@ -9,6 +9,14 @@
 - Route matching tasks through the repository skills described below.
 - Project workflows are CLI-first; do not require Android Studio unless the user explicitly asks for it.
 
+## Task execution
+
+- For analysis, review, or planning requests, inspect and report; implement only when requested. For change requests, complete the scoped edits and relevant validation without pausing for routine local decisions.
+- Carry forward the user's authorization and constraints. Ask only when a missing decision materially affects correctness, compatibility, scope, or authority; continue independent work while waiting.
+- Before an action needing additional authorization, prepare the reviewable result. Do not infer permission for destructive operations, publishing, or merging from a request for local edits.
+- Treat follow-up corrections and status questions as part of the active task unless the user changes the objective. Preserve completed work and outstanding checks across context compaction.
+- When delegation is authorized by the user and agent environment, use subagents for independent, bounded work that benefits the task. Review their results before integration; tool availability alone does not require delegation.
+
 ## Repository skills
 
 The repository contains task-specific guidance under `.agents/skills/`. When a task matches a skill, read that skill's `SKILL.md` before planning or editing and follow the parts that are relevant to the current task.
@@ -18,6 +26,8 @@ The repository contains task-specific guidance under `.agents/skills/`. When a t
 - Do not install every framework, dependency, test tool, or architectural pattern suggested by a general skill. Prefer the current project stack and add only what the current task concretely requires.
 - Follow a skill's local `references/`, scripts, and validation instructions when they apply; do not substitute remembered or historical guidance for repository-provided material.
 - If a skill's assumptions do not match the project, preserve the task scope and current behavior, then adapt or defer the incompatible part rather than forcing the project to fit the skill.
+- A generic skill approval step does not require renewed approval for already-authorized work. If a skill blocks progress, link the exact file, quote the blocking instruction, and explain why it applies.
+- Keep vendored skills unchanged for project policy adaptations; record provenance and local interpretation in [.agents/UPSTREAM.md](.agents/UPSTREAM.md).
 
 Available skill routing:
 
@@ -125,10 +135,12 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 
 ## Validation and handoff
 
+- See [Build and validation](docs/development.md) for the current CLI workflow and test source sets.
 - Use the narrowest relevant test/build while iterating; derive exact commands and ABI scope from the current repository configuration rather than this file.
 - Prefer debug validation unless release, signing, shrinking, R8, or distribution behavior is specifically under test.
 - Do not run `clean` routinely.
+- For documentation-only edits, check the diff, links, and instruction consistency; Android builds are unnecessary. For code changes, stop after relevant checks pass unless new edits, failures, or unresolved risks justify more testing. Preserve the specific UI, schema, and compatibility checks above.
 - Add focused regression or characterization tests for compatibility-sensitive changes when practical.
 - If validation cannot be run, state exactly what remains unverified.
 - Before handoff, review the final diff for unrelated changes, dead code, temporary workarounds, licensing issues, and unintended behavior changes.
-- Report concisely what changed, what was validated, and any remaining limitation or uncertainty.
+- Lead with the result in the user's language. Include changed files, validation evidence, and material limitations; use plain paragraphs or short lists without filler. Brevity must not hide missing checks or unfinished work.
