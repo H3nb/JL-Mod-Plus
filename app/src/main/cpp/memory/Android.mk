@@ -10,7 +10,13 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := jlmem
-LOCAL_SRC_FILES := memory_engine_compilation_unit.cpp mutation_bridge.cpp result_store.cpp result_store_scan.cpp result_store_refine.cpp result_store_shadow_bridge.cpp result_store_auto_probe.cpp result_cursor.cpp
+JL_MEM_PRODUCTION_SRC := memory_engine_compilation_unit.cpp mutation_bridge.cpp result_store.cpp \
+    result_store_scan.cpp result_store_refine.cpp result_cursor.cpp
+ifeq ($(NDK_DEBUG),1)
+LOCAL_SRC_FILES := $(JL_MEM_PRODUCTION_SRC) result_store_shadow_bridge.cpp result_store_auto_probe.cpp
+else
+LOCAL_SRC_FILES := $(JL_MEM_PRODUCTION_SRC) memory_engine_compat_bridge.cpp
+endif
 LOCAL_CPPFLAGS := -std=c++23 -Wall -Wextra -Werror -Wpedantic -Wformat=2 -Wimplicit-fallthrough
 LOCAL_CPP_FEATURES := exceptions
 LOCAL_LDLIBS := -llog
