@@ -174,9 +174,6 @@ final class NativeMemoryEngine {
 		return result;
 	}
 
-	private static native int startNearbyUnchecked(long anchorCandidateId, int radius, int valueType,
-	                                               int predicate, String first, String second);
-
 	static int refineKnown(int predicate, String first, String second) {
 		return refineKnown(predicate, first, second, false);
 	}
