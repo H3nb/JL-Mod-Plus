@@ -33,5 +33,10 @@ final class NativeMemoryTarget {
 	 */
 	static native void writeProbe(long value);
 
+	/** Native-only deterministic fixture for ordered/any-order Group Search instrumentation. */
+	static native long[] readGroupProbe();
+
+	static native boolean writeGroupProbe(int[] values);
+
 	static native long[] collectResidentRuns(int scope, int maxRuns);
 }
