@@ -177,12 +177,7 @@ object LibraryInstallRecovery {
     }
 
     private fun requireSafeStorageKey(storageKey: String) {
-        require(storageKey.isNotBlank()) { "storageKey is blank" }
-        require(storageKey != "." && storageKey != "..") { "Unsafe storageKey: $storageKey" }
-        require(!storageKey.contains('/') && !storageKey.contains('\\')) {
-            "Unsafe storageKey: $storageKey"
-        }
-        require(!isReservedStorageKey(storageKey)) { "Reserved storageKey: $storageKey" }
+        WorkDirLayout.requireStorageKey(storageKey)
     }
 
     private fun boundedReason(error: Throwable): String {

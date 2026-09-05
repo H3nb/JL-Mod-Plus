@@ -13,7 +13,7 @@ import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.playsoftware.j2meloader.util.FileUtils
-import ru.woesss.j2me.installer.InstallerExecutionCoordinator
+
 
 /** Filesystem actions scoped explicitly to the captured workdir generation. */
 object LibraryFileOperations {
@@ -23,13 +23,13 @@ object LibraryFileOperations {
         val leftoverSaveData: Boolean,
     )
 
-    suspend fun deleteInstalledApp(
+    internal fun deleteInstalledApp(
         context: Context,
         emulatorDir: File,
         storageKey: String,
-    ): DeleteResult = withContext(Dispatchers.IO) {
-        val permit = InstallerExecutionCoordinator.acquire()
-        try {
+    ): DeleteResult {
+        // Caller holds the operation permit and generation lease.
+        run {
             requireSafeStorageKey(storageKey)
             val appDir = File(File(emulatorDir, "converted"), storageKey)
             val configDir = File(File(emulatorDir, "configs"), storageKey)
@@ -53,13 +53,11 @@ object LibraryFileOperations {
             FileUtils.deleteDirectory(dataDir)
             ShortcutManagerCompat.removeDynamicShortcuts(context, listOf(appPath))
 
-            DeleteResult(
+            return DeleteResult(
                 appPath = appPath,
                 leftoverConfig = configDir.exists(),
                 leftoverSaveData = dataDir.exists(),
             )
-        } finally {
-            permit.close()
         }
     }
 
@@ -75,10 +73,6 @@ object LibraryFileOperations {
     }
 
     private fun requireSafeStorageKey(storageKey: String) {
-        require(storageKey.isNotBlank()) { "storageKey is blank" }
-        require(storageKey != "." && storageKey != "..") { "Unsafe storageKey: $storageKey" }
-        require(!storageKey.contains('/') && !storageKey.contains('\\')) {
-            "Unsafe storageKey: $storageKey"
-        }
+        WorkDirLayout.requireStorageKey(storageKey)
     }
 }

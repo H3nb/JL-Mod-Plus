@@ -19,6 +19,7 @@ import androidx.preference.PreferenceManager
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.locks.ReentrantLock
+import ru.woesss.j2me.installer.InstallerExecutionCoordinator
 import kotlin.concurrent.withLock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -467,7 +468,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             callback.complete(null, IllegalStateException("Library app is not available"))
             return
         }
-        launchMutation(callback) {
+        launchCriticalMutation(callback) {
             restoreImportedBundleAwait(
                 expectedGeneration = generation.generation,
                 expectedWorkdir = generation.emulatorDir,
@@ -484,6 +485,18 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
      * Room reconciliation cannot drift apart when the active Library changes mid-batch.
      */
     suspend fun restoreImportedBundleAwait(
+        expectedGeneration: Long,
+        expectedWorkdir: File,
+        appId: Long,
+        storageKey: String,
+        prepared: LibraryAppBundleImporter.PreparedImport,
+    ) = withContext(Dispatchers.IO) {
+        InstallerExecutionCoordinator.acquire().use {
+            restoreImportedBundleLocked(expectedGeneration, expectedWorkdir, appId, storageKey, prepared)
+        }
+    }
+
+    private suspend fun restoreImportedBundleLocked(
         expectedGeneration: Long,
         expectedWorkdir: File,
         appId: Long,
@@ -705,7 +718,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         callback: MutationCallback<Long>,
     ) {
         val generation = token(expectedGeneration, expectedWorkdir)
-        launchMutation(callback) {
+        launchCriticalMutation(callback) {
             repository.recordInstalledApp(
                 expected = generation,
                 existingId = existingId,
@@ -734,14 +747,22 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             return
         }
         launchMutation(callback) {
-            check(repository.isReadyGeneration(generation)) {
-                "Library generation changed before delete"
+            deleteApp(generation, app)
+        }
+    }
+
+    private suspend fun deleteApp(
+        generation: LibraryGenerationToken,
+        app: LibraryAppRow,
+    ): LibraryFileOperations.DeleteResult = withContext(Dispatchers.IO) {
+        InstallerExecutionCoordinator.acquire().use {
+            val result = acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                check(repository.currentApp(generation, app.id)?.storageKey == app.storageKey) {
+                    "Library delete target changed"
+                }
+                LibraryFileOperations.deleteInstalledApp(getApplication(), generation.emulatorDir, app.storageKey)
             }
-            val result = LibraryFileOperations.deleteInstalledApp(
-                context = getApplication(),
-                emulatorDir = generation.emulatorDir,
-                storageKey = app.storageKey,
-            )
+            // Keep the operation permit through the DB mutation, but never a thread-owned lock.
             repository.removeCatalogApp(generation, app.storageKey)
             result
         }
@@ -811,7 +832,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         launchMutation(callback) {
             withContext(Dispatchers.IO) {
                 val results = ArrayList<LibraryBulkItemResult>(plan.apps.size)
-                acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                run {
                     for ((index, app) in plan.apps.withIndex()) {
                         if (!repository.isReadyGeneration(generation)) {
                             plan.apps.drop(index).forEach { remaining ->
@@ -826,17 +847,14 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                             break
                         }
                         try {
-                            LibraryFileOperations.deleteInstalledApp(
-                                context = getApplication(),
-                                emulatorDir = generation.emulatorDir,
-                                storageKey = app.storageKey,
-                            )
-                            repository.removeCatalogApp(generation, app.storageKey)
+                            val deleted = deleteApp(generation, app)
                             results += LibraryBulkItemResult(
                                 appId = app.id,
                                 storageKey = app.storageKey,
                                 title = app.title,
                                 status = LibraryBulkItemStatus.Succeeded,
+                                detail = if (deleted.leftoverConfig || deleted.leftoverSaveData)
+                                    "App removed; some settings or save data could not be deleted" else null,
                             )
                         } catch (cancelled: CancellationException) {
                             throw cancelled
@@ -956,6 +974,11 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 callback.complete(null, error)
             }
         }
+    }
+
+    /** Installer callbacks own resources, so completion must also cover cancellation before start. */
+    private fun <T> launchCriticalMutation(callback: MutationCallback<T>, block: suspend () -> T) {
+        launchInstallerMutation(scope, callback::complete, block)
     }
 
     private fun readSortPreference(sharedPreferences: SharedPreferences): Int = try {

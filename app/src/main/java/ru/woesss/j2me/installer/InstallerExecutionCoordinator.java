@@ -13,6 +13,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
+import java.io.InterruptedIOException;
 
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 
@@ -43,9 +45,17 @@ public final class InstallerExecutionCoordinator {
      * directory after a concurrent user delete has already removed it.</p>
      */
     public static Permit acquire() throws IOException {
+        return acquire(() -> false);
+    }
+
+    public interface Cancellation { boolean isCancelled(); }
+
+    public static Permit acquire(Cancellation cancellation) throws IOException {
         try {
-            INSTALL_PERMIT.acquire();
-            return new Permit();
+            while (!cancellation.isCancelled()) {
+                if (INSTALL_PERMIT.tryAcquire(250, TimeUnit.MILLISECONDS)) return new Permit();
+            }
+            throw new InterruptedIOException("Cancelled while waiting for installer execution permit");
         } catch (InterruptedException error) {
             Thread.currentThread().interrupt();
             throw new IOException("Interrupted while waiting for installer execution permit", error);
