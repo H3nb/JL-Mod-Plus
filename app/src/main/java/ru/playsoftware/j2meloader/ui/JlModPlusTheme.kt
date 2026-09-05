@@ -330,6 +330,7 @@ private val AppShapes = Shapes(
 fun JLModPlusTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     accent: AccentPalette? = null,
+    paintWindowBackground: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
@@ -374,9 +375,11 @@ fun JLModPlusTheme(
                 navigationBarColor,
                 colorScheme.background,
             )
-            // Edge-to-edge keeps system bars transparent. The host content is intentionally
-            // inset below them, so the window background must follow the Compose surface.
-            window.decorView.setBackgroundColor(colorScheme.background.toArgb())
+            // Most app screens paint the decor behind transparent system bars. Translucent
+            // hosts such as Memory Editor deliberately keep the underlying game visible.
+            if (paintWindowBackground) {
+                window.decorView.setBackgroundColor(colorScheme.background.toArgb())
+            }
         }
     }
 

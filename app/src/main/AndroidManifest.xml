@@ -206,6 +206,7 @@
             android:theme="@style/AppTheme.NoActionBar"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:enableOnBackInvokedCallback="true"
+            android:windowSoftInputMode="stateHidden|adjustResize"
             android:process=":midlet" />
         <service
             android:name=".runtime.MidletKeepAliveService"
@@ -216,6 +217,23 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="j2me_midlet_runtime" />
         </service>
+        <service
+            android:name=".memory.MemoryTargetBridgeService"
+            android:exported="false"
+            android:process=":midlet" />
+        <service
+            android:name=".memory.MemoryEngineService"
+            android:exported="false"
+            android:process=":memory_engine" />
+        <activity
+            android:name=".memory.MemoryEditorActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:process=":memory_engine"
+            android:theme="@style/AppTheme.MemoryEditorTranslucent"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity android:name=".settings.SettingsActivity"
             android:exported="true"
             android:theme="@style/AppTheme.NoActionBar">

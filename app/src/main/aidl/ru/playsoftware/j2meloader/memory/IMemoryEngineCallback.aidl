@@ -1,0 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
+ */
+
+package ru.playsoftware.j2meloader.memory;
+
+/** Publishes completion of an asynchronous Memory Editor engine operation. */
+oneway interface IMemoryEngineCallback {
+    void onOperationProgress(long operationId, long scannedBytes, long totalBytes,
+            boolean searchOperation);
+
+    void onOperationFinished(long operationId, int resultCode, long resultCount, String message,
+            boolean passiveRefresh, boolean searchOperation);
+}

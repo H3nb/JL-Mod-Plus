@@ -2,6 +2,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2021 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +79,7 @@ import ru.playsoftware.j2meloader.BuildConfig;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.crashes.MidletSessionStore;
+import ru.playsoftware.j2meloader.memory.MemoryEditorBubbleController;
 import ru.playsoftware.j2meloader.runtime.MidletKeepAliveService;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.LogUtils;
@@ -103,6 +105,7 @@ public class MicroActivity extends AppCompatActivity {
 	private String appPath;
 	private RuntimeHostView binding;
 	private RuntimeMenuComposeController runtimeMenuController;
+	private MemoryEditorBubbleController memoryEditorController;
 	private TransientNoticeComposeController runtimeNoticeController;
 	private WindowInsetsCompat lastWindowInsets;
 	private boolean skinLayerAvailable;
@@ -293,6 +296,12 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
+					public void onMemoryEditor() {
+						memoryEditorController().toggleBubble();
+						updateRuntimeMenuState(current);
+					}
+
+					@Override
 					public void onEditVirtualKeyboardLayout() {
 						setVirtualKeyboardEditMode(VirtualKeyboard.LAYOUT_KEYS,
 								R.string.layout_edit_mode);
@@ -404,7 +413,17 @@ public class MicroActivity extends AppCompatActivity {
 				orientationLocked,
 				emulationSpeedAvailable,
 				emulationSpeedPercent,
-				emulationSpeedAuto);
+				emulationSpeedAuto,
+				memoryEditorController != null && memoryEditorController.isBubbleEnabled());
+	}
+
+	private MemoryEditorBubbleController memoryEditorController() {
+		if (memoryEditorController == null) {
+			memoryEditorController = new MemoryEditorBubbleController(
+					this, binding.memoryEditorBubble, binding.memoryEditorBubbleIcon,
+					binding.memoryEditorBubbleProgress);
+		}
+		return memoryEditorController;
 	}
 
 	private GuestWindowPolicy.Chrome getRuntimeChrome(@Nullable Displayable displayable) {
@@ -441,13 +460,28 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	@Override
+	protected void onResume() {
+		super.onResume();
+		if (memoryEditorController != null) {
+			memoryEditorController.onHostResumed();
+		}
+	}
+
+	@Override
 	public void onPause() {
+		if (memoryEditorController != null) {
+			memoryEditorController.onHostPaused();
+		}
 		hideSoftInput();
 		super.onPause();
 	}
 
 	@Override
 	protected void onDestroy() {
+		if (memoryEditorController != null) {
+			memoryEditorController.destroy();
+			memoryEditorController = null;
+		}
 		// A MIDlet chooser, malformed archive, or Activity teardown can happen before a
 		// MidletThread is started. In that window MicroLoader still owns any launch session.
 		if (microLoader != null) {

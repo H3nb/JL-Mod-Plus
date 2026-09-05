@@ -1,0 +1,42 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package ru.playsoftware.j2meloader.memory;
+
+final class NativeMemoryTarget {
+	static {
+		System.loadLibrary("jlmem_target");
+	}
+
+	private NativeMemoryTarget() {
+	}
+
+	static native int pageSize();
+
+	static native long[] readProbe();
+
+	/**
+	 * Writes the bounded native probe used by device instrumentation. Production code never calls
+	 * this helper; keeping the fixture in native memory lets scanner tests change bytes without
+	 * allocating Java objects or relying on ART object addresses.
+	 */
+	static native void writeProbe(long value);
+
+	/** Native-only deterministic fixture for ordered/any-order Group Search instrumentation. */
+	static native long[] readGroupProbe();
+
+	static native boolean writeGroupProbe(int[] values);
+
+	static native long[] collectResidentRuns(int scope, int maxRuns);
+}

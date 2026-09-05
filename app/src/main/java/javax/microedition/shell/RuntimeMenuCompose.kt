@@ -84,6 +84,7 @@ internal data class RuntimeMenuUiState(
     val emulationSpeedAvailable: Boolean = false,
     val emulationSpeedPercent: Int = EmulationSpeed.NORMAL_PERCENT,
     val emulationSpeedAuto: Boolean = false,
+    val memoryEditorBubbleEnabled: Boolean = false,
 )
 
 interface RuntimeMenuActions {
@@ -99,6 +100,7 @@ interface RuntimeMenuActions {
     fun onSetEmulationSpeed(value: Int)
     fun onSetAutoEmulationSpeed()
     fun onResetEmulationSpeed()
+    fun onMemoryEditor()
     fun onEditVirtualKeyboardLayout()
     fun onResizeVirtualKeyboardLayout()
     fun onFinishVirtualKeyboardLayout()
@@ -196,6 +198,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         emulationSpeedAvailable: Boolean,
         emulationSpeedPercent: Int,
         emulationSpeedAuto: Boolean,
+        memoryEditorBubbleEnabled: Boolean,
     ) {
         state = RuntimeMenuUiState(
             title = title,
@@ -208,6 +211,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             emulationSpeedAvailable = emulationSpeedAvailable,
             emulationSpeedPercent = emulationSpeedPercent,
             emulationSpeedAuto = emulationSpeedAuto,
+            memoryEditorBubbleEnabled = memoryEditorBubbleEnabled,
         )
     }
 
@@ -657,6 +661,17 @@ private fun LazyListScope.runtimeMenuItems(
             onClick = {
                 onDismiss()
                 actions.onToggleOrientationLock()
+            },
+        )
+    }
+    item {
+        RuntimeToggleItem(
+            label = R.string.memory_editor_bubble,
+            checked = state.memoryEditorBubbleEnabled,
+            leadingIcon = R.drawable.ic_memory_editor_search,
+            onClick = {
+                onDismiss()
+                actions.onMemoryEditor()
             },
         )
     }

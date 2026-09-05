@@ -25,6 +25,11 @@
         <activity android:name=".filepicker.FilteredFilePickerActivity" tools:node="remove" />
         <activity android:name=".config.ProfilesActivity" tools:node="remove" />
         <service android:name=".runtime.MidletKeepAliveService" tools:node="remove" />
+        <!-- The standalone MIDlet Activity runs in the application process. Keep the target
+             bridge beside it; only the heavy MemoryEngineService remains isolated. -->
+        <service
+            android:name=".memory.MemoryTargetBridgeService"
+            tools:remove="android:process" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

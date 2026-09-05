@@ -35,6 +35,34 @@ Gradle and CI do not access the network to obtain them.
 | `ic_config_quick.xml` (`bolt`), `ic_config_graphics.xml` (`tune`), `ic_config_audio.xml` (`volume_up`), `ic_config_media.xml` (`image`), `ic_config_controls.xml` (`gamepad`), `ic_config_system.xml` (`settings`), `ic_play.xml` (`play_arrow`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `143ab3540dd135c4d7637bd2220bcb04ff76a4b0858de2851c91678161cfbfae`, `7620ffcecd323ed28d0479a615129efd1202701bc66e58dd3b8b28d2a8a5d45fb`, `cf6148478dc7965dad942a5f35ab1a613450f56f991e7e75129c2049f687a4d4`, `17313b4cd878f62bd13e21e2c96cc6d1023f23295349a3d33d94e67ecb862254`, `4ece323d53aee9d233ffd0a067353d8580ccfcee0b9a7d499584a0493de5812d`, `7f350bff4766520d4011185658a0c05e517aa2729e7b8113b8b28d2a8a5d45fb`, and `4cfe5685d7c22230c1263f85efd46dee0e06103b01402a9863c7f15ab0ea32c0`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_license.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `04c5ae7ae82289583a80181c11cff9e06e27e686813a202f9d069cb9df8108e2`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 
+## Phosphor Icons assets
+
+`app/src/main/res/drawable/ic_memory_editor_search.xml` and `ic_memory_editor_close.xml` are
+VectorDrawable conversions of Phosphor Icons' regular `MagnifyingGlass` and `X` SVGs, pinned at
+revision `3370cb1bc0a31ef3610367f3bd985462c2e201ea`. Only these required static assets are vendored.
+
+MIT License
+
+Copyright (c) 2023 Phosphor Icons
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 ### `third_party/` audit
 
 The current repository tree does **not** contain a `third_party/` directory. The active external native checkout is the TinySoundFont submodule at `app/src/main/cpp/mmapi_tsf/TinySoundFont`, and `.gitmodules` points to its upstream repository directly. Historical notices for `third_party/minimp3`, `third_party/stb`, Mesa-derived code, or other absent paths must not be treated as current shipped provenance.
