@@ -104,12 +104,19 @@ final class NativeMemoryEngine {
 
 	static int refineKnown(int predicate, String first, String second,
 	                      boolean allowRelocationReconcile) {
-		// Explicit revisions refine their bitmap directly. Auto currently uses the proven adaptive
-		// Candidate address-set refine, then reconstructs a verified multi-plane ResultStore from that
-		// exact committed revision without rereading the target. This keeps paging/membership staging
-		// compact while the multi-plane bitmap-refine kernel is completed.
-		int result = refineKnownV2Authoritative(
-				predicate, first, second, allowRelocationReconcile);
+		// Recover a missing stage from the immutable Candidate compatibility mirror after Undo or a
+		// verified relocation fallback. This rebuild touches no target memory. A live Auto stage then
+		// uses multi-plane COW bit clearing; explicit Known uses its specialized single-plane kernel.
+		boolean autoRevision = hasCurrentV2AutoResultStore();
+		boolean explicitRevision = hasCurrentV2KnownResultStore();
+		if (!autoRevision && !explicitRevision) {
+			autoRevision = stageV2AutoResultStore();
+		}
+		int result = autoRevision
+				? refineKnownAutoV2Authoritative(
+						predicate, first, second, allowRelocationReconcile)
+				: refineKnownV2Authoritative(
+						predicate, first, second, allowRelocationReconcile);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			boolean authoritative = hasCurrentV2KnownResultStore() || hasCurrentV2AutoResultStore();
 			if (!authoritative) {
@@ -124,6 +131,9 @@ final class NativeMemoryEngine {
 
 	private static native int refineKnownV2Authoritative(int predicate, String first, String second,
 	                                                    boolean allowRelocationReconcile);
+
+	private static native int refineKnownAutoV2Authoritative(
+			int predicate, String first, String second, boolean allowRelocationReconcile);
 
 	static native int refineRelative(int predicate, int compareTarget, String first, String second);
 
