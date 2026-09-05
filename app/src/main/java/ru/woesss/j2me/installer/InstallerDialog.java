@@ -70,11 +70,10 @@ public class InstallerDialog extends DialogFragment {
 	private LibraryAppBundleImporter.PreparedImport bundleImport;
 	private boolean bundleWorkerInFlight;
 	private boolean restoredInstance;
-
-	/** Compatibility entry point for callers that do not participate in MainActivity request restore. */
-	public static InstallerDialog newInstance(Uri uri) {
-		return newExternalRequest(null, uri);
-	}
+	private boolean operationRunning;
+	private boolean cancelRequested;
+	private volatile boolean destroyed;
+	private volatile boolean workerExecuting;
 
 	public static InstallerDialog newExternalRequest(@Nullable String requestId, Uri uri) {
 		return newExternalRequest(requestId, uri, false);
@@ -156,7 +155,10 @@ public class InstallerDialog extends DialogFragment {
 
 	@Override
 	public void onDestroy() {
+		destroyed = true;
+		if (installer != null && operationRunning) installer.cancel();
 		compositeDisposable.dispose();
+		if (installer != null && !workerExecuting) installer.clearCache();
 		if (!bundleWorkerInFlight) cleanupBundleImport();
 		super.onDestroy();
 	}
@@ -213,6 +215,7 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void prepareBundle(Uri uri) {
+		operationRunning = true;
 		if (composeController != null) {
 			composeController.showLoading(installerTitle, getString(R.string.library_import_preparing));
 		}
@@ -230,7 +233,9 @@ public class InstallerDialog extends DialogFragment {
 				.subscribeOn(Schedulers.io())
 				.observeOn(AndroidSchedulers.mainThread())
 				.subscribe(prepared -> {
+				operationRunning = false;
 				bundleImport = prepared;
+				if (cancelRequested) { closeInstaller(); return; }
 				installApp(prepared.getJarFile(), null);
 			}, this::onError);
 		compositeDisposable.add(disposable);
@@ -238,14 +243,11 @@ public class InstallerDialog extends DialogFragment {
 
 	private void installApp(File jar, Uri uri) {
 		installer = new AppInstaller(jar, uri, libraryViewModel);
+		observeInstallerStage();
 		primaryAction = this::convert;
 		if (isBundleRequest()) bundleWorkerInFlight = true;
 		showLoading();
-		Disposable disposable = Single.create(installer::loadInfo)
-				.subscribeOn(Schedulers.computation())
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(this::onProgress, this::onError);
-		compositeDisposable.add(disposable);
+		runInstaller(installer::loadInfo);
 	}
 
 	private void reinstallApp(long id, long expectedGeneration, File expectedWorkdir,
@@ -256,13 +258,43 @@ public class InstallerDialog extends DialogFragment {
 				expectedWorkdir,
 				storageKey,
 				libraryViewModel);
+		observeInstallerStage();
 		primaryAction = this::convert;
 		showLoading();
-		Disposable disposable = Single.create(installer::loadInfo)
-				.subscribeOn(Schedulers.computation())
+		runInstaller(installer::loadInfo);
+	}
+
+	private void runInstaller(io.reactivex.SingleOnSubscribe<Integer> work) {
+		operationRunning = true;
+		AppInstaller active = installer;
+		Disposable disposable = Single.<Integer>create(emitter -> {
+			workerExecuting = true;
+			try { if (!destroyed) work.subscribe(emitter); }
+			finally {
+				workerExecuting = false;
+				if (destroyed) active.clearCache();
+			}
+		}).subscribeOn(Schedulers.io())
 				.observeOn(AndroidSchedulers.mainThread())
 				.subscribe(this::onProgress, this::onError);
 		compositeDisposable.add(disposable);
+	}
+
+	private void observeInstallerStage() {
+		AppInstaller active = installer;
+		android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+		active.setProgress(stage -> handler.post(() -> {
+			if (!isAdded() || composeController == null || active != installer || !operationRunning) return;
+			int message = switch (stage) {
+				case READING -> R.string.loading_info;
+				case DOWNLOADING -> R.string.installer_stage_download;
+				case WAITING -> R.string.installer_stage_wait;
+				case CONVERTING -> R.string.converting_wait;
+				case SAVING -> R.string.installer_stage_save;
+			};
+			composeController.showLoading(currentTitle, getString(cancelRequested
+					? R.string.installer_cancel_pending : message));
+		}));
 	}
 
 	private void showLoading() {
@@ -272,21 +304,19 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void convert() {
-		if (installer == null || composeController == null || !isAdded()) return;
+		if (installer == null || composeController == null || !isAdded() || operationRunning) return;
 		Descriptor nd = installer.getNewDescriptor();
 		if (isBundleRequest()) bundleWorkerInFlight = true;
 		composeController.showConverting(
 				currentTitle,
 				nd.getInfo(requireActivity()).toString(),
 				getString(R.string.converting_wait));
-		Disposable disposable = Single.create(installer::install)
-				.subscribeOn(Schedulers.computation())
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(this::onProgress, this::onError);
-		compositeDisposable.add(disposable);
+		runInstaller(installer::install);
 	}
 
 	private void onProgress(@NonNull Integer status) {
+		operationRunning = false;
+		if (cancelRequested) { closeInstaller(); return; }
 		if (!isAdded() || composeController == null) return;
 		if (isBundleRequest()) bundleWorkerInFlight = false;
 		if (status == AppInstaller.STATUS_SUCCESS) {
@@ -324,6 +354,14 @@ public class InstallerDialog extends DialogFragment {
 		String message;
 		String runLabel = null;
 		switch (status) {
+			case AppInstaller.STATUS_AMBIGUOUS -> {
+				currentTitle = nd.getName();
+				primaryAction = this::convert;
+				composeController.showConfirmation(currentTitle, getString(R.string.installer_ambiguous),
+						getString(R.string.installer_separate_copy), getString(android.R.string.cancel), null,
+						installer.getIconPath());
+				return;
+			}
 			case AppInstaller.STATUS_NEW -> {
 				message = nd.getInfo(requireActivity()).toString();
 			}
@@ -338,8 +376,7 @@ public class InstallerDialog extends DialogFragment {
 			case AppInstaller.STATUS_UNMATCHED -> {
 				SpannableStringBuilder info = installer.getManifest().getInfo(requireActivity());
 				info.append(getString(R.string.install_jar_non_matched_jad));
-				File jar = installer.getJar();
-				primaryAction = () -> installApp(jar, null);
+				primaryAction = () -> runInstaller(installer::useJarOnly);
 				showConfirmation(installerTitle, info.toString(), null);
 				return;
 			}
@@ -399,9 +436,12 @@ public class InstallerDialog extends DialogFragment {
 			return;
 		}
 		bundleWorkerInFlight = true;
+		operationRunning = true;
 		composeController.showLoading(currentTitle, getString(R.string.library_import_restoring));
 		libraryViewModel.restoreImportedBundle(installedId, bundleImport, (ignored, error) -> {
+			operationRunning = false;
 			bundleWorkerInFlight = false;
+			if (cancelRequested) { closeInstaller(); return; }
 			if (error != null) {
 				if (!isAdded() || composeController == null) {
 					cleanupBundleImport();
@@ -444,6 +484,13 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void closeInstaller() {
+		if (operationRunning) {
+			cancelRequested = true;
+			if (installer != null) installer.cancel();
+			if (composeController != null) composeController.showLoading(currentTitle,
+					getString(R.string.installer_cancel_pending));
+			return;
+		}
 		if (installer != null) {
 			installer.deleteTemp();
 			installer.clearCache();
@@ -480,6 +527,8 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void onError(Throwable e) {
+		operationRunning = false;
+		if (cancelRequested) { closeInstaller(); return; }
 		bundleWorkerInFlight = false;
 		Log.e("Installer", e.toString(), e);
 		Bundle args = getArguments();
@@ -504,14 +553,38 @@ public class InstallerDialog extends DialogFragment {
 		// Keep the dialog visible so a malformed or damaged bundle is reported to the user instead
 		// of silently disappearing. Release temporary installer files now; closing the error surface
 		// remains the acknowledgement point for the pending external request.
+		boolean published = installer != null && installer.hasPublished();
+		int message = published ? R.string.installer_needs_recovery
+				: e instanceof InstallerFailure ? R.string.installer_failed_storage
+				: installer == null ? R.string.library_import_invalid_bundle
+				: switch (installer.getStage()) {
+					case DOWNLOADING -> R.string.installer_failed_download;
+					case WAITING, SAVING -> R.string.installer_failed_storage;
+					case CONVERTING -> R.string.installer_failed_conversion;
+					case READING -> R.string.installer_error_message;
+				};
 		cleanupInstallerResources();
-		primaryAction = null;
-		composeController.showError(
-			isBundleRequest() ? getString(R.string.library_import_error_title) : getString(R.string.error),
-			isBundleRequest()
-					? getString(R.string.library_import_invalid_bundle)
-					: getString(R.string.installer_error_message),
-			getString(R.string.close));
+		primaryAction = published ? () -> {
+			libraryViewModel.retry();
+			closeInstaller();
+		} : this::retryRequest;
+		composeController.showError(getString(R.string.error), getString(message), getString(R.string.close),
+				getString(published ? R.string.installer_refresh_library : R.string.library_retry),
+				"Build: " + ru.playsoftware.j2meloader.BuildConfig.VERSION_NAME + "\nStage: " +
+						(installer == null ? "bundle" : installer.getStage()) + "\n" + InstallerFailure.details(e));
+	}
+
+	private void retryRequest() {
+		cancelRequested = false;
+		Bundle args = requireArguments();
+		Uri source = args.getParcelable(ARG_URI);
+		if (source != null) {
+			if (isBundleRequest()) prepareBundle(source);
+			else installApp(null, source);
+		} else {
+			reinstallApp(args.getLong(ARG_ID), args.getLong(ARG_GENERATION),
+					new File(args.getString(ARG_WORKDIR)), args.getString(ARG_STORAGE_KEY));
+		}
 	}
 
 	private void cleanupInstallerResources() {

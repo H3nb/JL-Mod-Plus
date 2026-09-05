@@ -2,6 +2,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +77,13 @@ public class FileUtils {
 			 FileChannel sourceChannel = fis.getChannel();
 			 FileOutputStream fos = new FileOutputStream(dest);
 			 FileChannel destChannel = fos.getChannel()) {
-			destChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
+			long size = sourceChannel.size();
+			long copied = 0;
+			while (copied < size) {
+				long count = destChannel.transferFrom(sourceChannel, copied, size - copied);
+				if (count <= 0) throw new IOException("File copy ended before all bytes were written");
+				copied += count;
+			}
 		}
 	}
 
@@ -229,17 +236,18 @@ public class FileUtils {
 
 	public static boolean initWorkDir(File dir) {
 		if ((dir.isDirectory() || dir.mkdirs()) && dir.canWrite()) {
-			//noinspection ResultOfMethodCallIgnored
-			new File(dir, Config.SHADERS_DIR).mkdir();
-			//noinspection ResultOfMethodCallIgnored
-			new File(dir, Config.SOUNDBANKS_DIR).mkdir();
-			//noinspection ResultOfMethodCallIgnored
-			new File(dir, Config.SKINS_DIR).mkdir();
+			// Optional assets do not gate Library access. The installer owns converted/ creation.
+			for (String name : new String[]{Config.SHADERS_DIR, Config.SOUNDBANKS_DIR, Config.SKINS_DIR}) {
+				File assets = new File(dir, name);
+				if (!assets.isDirectory() && !assets.mkdir()) {
+					Log.w(TAG, "Optional asset directory is unavailable: " + assets);
+				}
+			}
 			try {
 				//noinspection ResultOfMethodCallIgnored
 				new File(dir, MediaStore.MEDIA_IGNORE_FILENAME).createNewFile();
 			} catch (Exception e) {
-				e.printStackTrace();
+				Log.w(TAG, "Unable to create media ignore marker", e);
 			}
 			return true;
 		}

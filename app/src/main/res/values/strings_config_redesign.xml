@@ -27,13 +27,13 @@
     <string name="profile_save_template">Save As Profile</string>
     <string name="profile_save_template_summary">Save the current configuration as a reusable template.</string>
     <string name="config_lock_custom_resolution_ratio">Keep Width/Height Ratio While Editing</string>
-    <string name="config_swap_screen_size">Swap width and height</string>
+    <string name="config_swap_screen_size">Swap Width and Height</string>
     <string name="profile_builtin_settings">Built-In Settings</string>
     <string name="profile_builtin_settings_summary">JL-Mod Plus factory configuration</string>
     <string name="profile_default_template_summary">Default template for new apps</string>
     <string name="profile_default_badge_short">Default</string>
     <string name="profile_modified_summary">Modified from this template</string>
-    <string name="profile_choose_or_manage">Choose or manage templates</string>
+    <string name="profile_choose_or_manage">Choose or Manage Templates</string>
     <string name="profile_update_template">Update Template</string>
     <string name="profile_update_template_summary">Replace %1$s with the current configuration.</string>
     <string name="profile_save_as_new_template">Save As New Template</string>
@@ -68,9 +68,9 @@
     <string name="config_help_show_fps">Shows a compact game, render, dropped-frame, and runtime-speed diagnostic.</string>
     <string name="config_help_fps_limit">Caps the maximum frame rate. Leave empty for no limit.</string>
     <string name="PREF_EMULATION_SPEED">Emulation Speed</string>
-    <string name="PREF_TIMING_MODE">Timing mode</string>
-    <string name="config_timing_mode_full_guest">Full guest time</string>
-    <string name="config_timing_mode_real_wall">Real wall clock</string>
+    <string name="PREF_TIMING_MODE">Timing Mode</string>
+    <string name="config_timing_mode_full_guest">Full Guest Time</string>
+    <string name="config_timing_mode_real_wall">Real Wall Clock</string>
     <string name="config_help_emulation_speed">Scales guest time and compatible delays. Audio and Android-host UI remain at normal speed.</string>
     <string name="emulation_speed_auto">Auto</string>
     <string name="emulation_speed_auto_summary">Learns the current workload and continuously seeks the highest speed it can sustain.</string>
@@ -112,4 +112,6 @@
     <string name="config_help_reset_layout">Restore the virtual keypad layout without resetting the app’s other emulator settings.</string>
     <string name="config_help_skip_resume">Skip the Java ME resume callback when returning to the app. Use this only for compatibility with apps that misbehave after resume.</string>
     <string name="config_help_soundbank">Select the instrument soundbank used for MIDI playback.</string>
+    <string name="profile_create_title">Create Profile</string>
+    <string name="profile_rename_title">Rename Profile</string>
 </resources>

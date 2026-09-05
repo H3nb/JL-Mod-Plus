@@ -75,6 +75,9 @@ data class BulkInstallItem(
     val detail: String? = null,
     /** True when the source is a universal bundle carrying app-owned state for this item. */
     val bundlePayloadAvailable: Boolean = false,
+    /** A retry after conversion committed restores only the remaining bundle payload. */
+    val restoreAppId: Long? = null,
+    val restoreStorageKey: String? = null,
 ) {
     val installable: Boolean
         get() = when (status) {
@@ -112,6 +115,8 @@ enum class BulkInstallResultKind {
     Reinstalled,
     Skipped,
     Failed,
+    PartiallyInstalled,
+    NotProcessed,
 }
 
 data class BulkInstallResult(
@@ -119,4 +124,6 @@ data class BulkInstallResult(
     val name: String,
     val kind: BulkInstallResultKind,
     val detail: String? = null,
+    val installedAppId: Long? = null,
+    val installedStorageKey: String? = null,
 )

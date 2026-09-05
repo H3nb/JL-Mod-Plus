@@ -30,14 +30,9 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,6 +50,7 @@ import ru.playsoftware.j2meloader.librarydb.LibraryIconOverride;
 import ru.playsoftware.j2meloader.librarydb.LibraryIconRevision;
 import ru.playsoftware.j2meloader.librarydb.LibraryInstallRecovery;
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
+import ru.playsoftware.j2meloader.librarydb.WorkDirLayout;
 import ru.playsoftware.j2meloader.util.ConverterException;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
@@ -76,6 +72,7 @@ public class AppInstaller {
     static final int STATUS_UNMATCHED = 3;
     static final int STATUS_SUCCESS = 4;
     static final int STATUS_SAME = 5;
+    static final int STATUS_AMBIGUOUS = 6;
 
     private final long id;
     private final LibraryViewModel libraryViewModel;
@@ -85,12 +82,14 @@ public class AppInstaller {
     private final InstallerScratch scratch;
     private final File resolvedJar;
 
+    private volatile boolean cancelled;
     private Uri uri;
     private Descriptor manifest;
     private Descriptor newDesc;
     private String appDirName;
     private File targetDir;
     private File srcJar;
+    private File srcJad;
     private File tmpDir;
     private LibraryAppRow currentApp;
     private File srcFile;
@@ -100,6 +99,23 @@ public class AppInstaller {
     private String installedTitle;
     private String installedPath;
     private int loadedStatus = NO_STATUS;
+    private String matchedIdentity = "";
+    private String loadedIdentity = "";
+    private volatile boolean published;
+    enum Stage { READING, DOWNLOADING, WAITING, CONVERTING, SAVING }
+    private volatile Stage stage = Stage.READING;
+    interface Progress { void update(Stage stage); }
+    private Progress progress = ignored -> {};
+
+    void setProgress(Progress progress) { this.progress = progress; }
+    Stage getStage() { return stage; }
+    boolean hasPublished() { return published; }
+    private void stage(Stage next) { stage = next; progress.update(next); }
+    private void checkCancelled() throws java.io.InterruptedIOException {
+        if (cancelled || Thread.currentThread().isInterrupted()) {
+            throw new java.io.InterruptedIOException("Installation cancelled");
+        }
+    }
 
     AppInstaller(File jar, Uri uri, LibraryViewModel libraryViewModel) {
         id = NO_ID;
@@ -149,10 +165,6 @@ public class AppInstaller {
         return manifest;
     }
 
-    LibraryAppRow getCurrentApp() {
-        return currentApp;
-    }
-
     long getExpectedGeneration() {
         return expectedGeneration;
     }
@@ -163,6 +175,8 @@ public class AppInstaller {
 
     /** Load and check app info from source against one captured READY Library generation. */
     void loadInfo(SingleEmitter<Integer> emitter) throws IOException, ConverterException {
+        checkCancelled();
+        stage(Stage.READING);
         bindReadyGeneration();
         if (id != NO_ID) {
             verifyRequestedGeneration();
@@ -173,7 +187,11 @@ public class AppInstaller {
             if (!srcJar.isFile()) {
                 throw new IOException("Retained JAR is unavailable for reinstall: " + appDirName);
             }
-            newDesc = new Descriptor(child(targetDir, Config.MIDLET_MANIFEST_FILE), false);
+            newDesc = AppReconverter.mergeInstalledDescriptor(loadManifest(srcJar),
+                    child(targetDir, Config.MIDLET_MANIFEST_FILE));
+            File retainedJad = new File(targetDir, AppReconverter.RETAINED_JAD);
+            srcJad = retainedJad.isFile() ? scratch.copy(retainedJad, "reviewed.jad") : null;
+            srcJar = scratch.copy(srcJar, "reviewed.jar");
             emitLoadedStatus(emitter, STATUS_EQUAL);
             return;
         }
@@ -191,7 +209,8 @@ public class AppInstaller {
 
         String name = srcFile.getName();
         if (TextUtils.endsWithIgnoreCase(name, ".jad")) {
-            newDesc = new Descriptor(srcFile, true);
+            srcJad = scratch.copy(srcFile, "reviewed.jad");
+            newDesc = new Descriptor(srcJad, true);
             String url = newDesc.getJarUrl();
             if (url == null) {
                 throw new ConverterException("Jad not have " + Descriptor.MIDLET_JAR_URL);
@@ -222,22 +241,41 @@ public class AppInstaller {
             }
         } else if (TextUtils.endsWithIgnoreCase(name, ".kjx")) {
             parseKjx();
-            newDesc = new Descriptor(srcFile, true);
+            srcJad = scratch.copy(srcFile, "reviewed.jad");
+            newDesc = new Descriptor(srcJad, true);
+            manifest = loadManifest(srcJar);
+            if (!manifest.equals(newDesc)) {
+                emitLoadedStatus(emitter, STATUS_UNMATCHED);
+                return;
+            }
         } else {
-            srcJar = srcFile;
-            newDesc = loadManifest(srcFile);
+            srcJar = scratch.copy(srcFile, "reviewed.jar");
+            newDesc = loadManifest(srcJar);
         }
+        if (srcJar != null && resolvedJar == null) srcJar = scratch.copy(srcJar, "reviewed.jar");
         emitLoadedStatus(emitter, checkDescriptor());
     }
 
     private void emitLoadedStatus(SingleEmitter<Integer> emitter, int status) {
         loadedStatus = status;
+        loadedIdentity = matchedIdentity;
         emitter.onSuccess(status);
+    }
+
+    void useJarOnly(SingleEmitter<Integer> emitter) throws IOException {
+        checkCancelled();
+        if (srcJar == null || manifest == null) throw new IOException("JAR fallback is unavailable");
+        newDesc = manifest;
+        srcJad = null;
+        if (srcJar != null && resolvedJar == null) {
+            srcJar = scratch.copy(srcJar, "reviewed.jar");
+        }
+        emitLoadedStatus(emitter, checkDescriptor());
     }
 
     private void bindReadyGeneration() throws IOException {
         LibraryGenerationToken generation = libraryViewModel.readyGeneration();
-        if (generation == null) throw new IOException("Library is not READY for installation");
+        if (generation == null) throw new InstallerFailure("Library is not READY for installation");
         expectedGeneration = generation.getGeneration();
         expectedWorkdir = generation.getEmulatorDir().getCanonicalFile();
     }
@@ -246,13 +284,13 @@ public class AppInstaller {
         if (requestedGeneration == NO_GENERATION || requestedGeneration != expectedGeneration ||
                 requestedWorkdir == null ||
                 !requestedWorkdir.getCanonicalFile().equals(expectedWorkdir)) {
-            throw new IOException("Library generation changed before opening reinstall target");
+            throw new InstallerFailure("Library generation changed before opening reinstall target");
         }
     }
 
     private void verifyActiveGeneration() throws IOException {
         if (!libraryViewModel.isReadyGeneration(expectedGeneration, expectedWorkdir)) {
-            throw new IOException("Library generation changed while installer was running");
+            throw new InstallerFailure("Library generation changed while installer was running");
         }
     }
 
@@ -339,93 +377,86 @@ public class AppInstaller {
         }
     }
 
-    private void downloadJad() throws ConverterException {
-        try {
-            srcFile = scratch.file("download.jad");
-        } catch (IOException error) {
-            throw new ConverterException("Can't prepare JAD scratch file", error);
-        }
-        String url = uri.toString();
-        Log.d(TAG, "Downloading " + url);
-        Exception exception;
-        HttpURLConnection connection = null;
-        try {
-            connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setInstanceFollowRedirects(true);
-            connection.setReadTimeout(3 * 60 * 1000);
-            connection.setConnectTimeout(15000);
-            int code = connection.getResponseCode();
-            if (code == HttpURLConnection.HTTP_MOVED_PERM || code == HttpURLConnection.HTTP_MOVED_TEMP) {
-                String urlStr = connection.getHeaderField("Location");
-                connection.disconnect();
-                connection = (HttpURLConnection) new URL(urlStr).openConnection();
-                connection.setInstanceFollowRedirects(true);
-                connection.setReadTimeout(3 * 60 * 1000);
-                connection.setConnectTimeout(15000);
-            }
-            try (InputStream inputStream = connection.getInputStream();
-                    OutputStream outputStream = new FileOutputStream(srcFile)) {
-                byte[] buffer = new byte[2048];
-                int length;
-                while ((length = inputStream.read(buffer)) > 0) outputStream.write(buffer, 0, length);
-            }
-            connection.disconnect();
-            Log.d(TAG, "Download complete");
-            return;
-        } catch (MalformedURLException | FileNotFoundException e) {
-            exception = e;
-        } catch (IOException e) {
-            exception = e;
-        } finally {
-            if (connection != null) connection.disconnect();
-        }
-        deleteTemp();
-        throw new ConverterException("Can't download jad", exception);
+    private void downloadJad() throws IOException {
+        stage(Stage.DOWNLOADING);
+        srcFile = scratch.file("download.jad");
+        java.net.URI finalUri = InstallerDownload.download(
+                InstallerDownload.resolve(null, uri.toString()), srcFile,
+                () -> cancelled, (bytes, total) -> {});
+        uri = Uri.parse(finalUri.toString());
     }
-
     /** Finalize converted files first, then publish a generation-bound Room3 mutation asynchronously. */
     void install(SingleEmitter<Integer> emitter) throws ConverterException, IOException {
-        final InstallerExecutionCoordinator.Permit executionPermit = InstallerExecutionCoordinator.acquire();
+        checkCancelled();
+        // Source preparation owns only request scratch and must not block other filesystem operations.
+        if (srcJar == null) {
+            srcJar = scratch.file("download.jar");
+            try {
+                downloadJar();
+                manifest = loadManifest(srcJar);
+            } catch (IOException error) {
+                srcJar = null;
+                throw error;
+            }
+            if (!manifest.equals(newDesc)) {
+                emitLoadedStatus(emitter, STATUS_UNMATCHED);
+                return;
+            }
+        }
+        stage(Stage.WAITING);
+        final InstallerExecutionCoordinator.Permit executionPermit = InstallerExecutionCoordinator.acquire(() -> cancelled);
         boolean handedOff = false;
         try {
+            checkCancelled();
             verifyActiveGeneration();
             if (id != NO_ID) {
                 verifyRequestedGeneration();
-                requireRequestedAppIdentity();
+                currentApp = requireRequestedAppIdentity();
+                File currentJar = child(targetDir, Config.MIDLET_RES_FILE);
+                Descriptor currentDescriptor = AppReconverter.mergeInstalledDescriptor(loadManifest(currentJar),
+                        child(targetDir, Config.MIDLET_MANIFEST_FILE));
+                File retainedJad = new File(targetDir, AppReconverter.RETAINED_JAD);
+                srcJad = retainedJad.isFile() ? scratch.copy(retainedJad, "reviewed.jad") : null;
+                if (!newDesc.getAttrs().equals(currentDescriptor.getAttrs()) ||
+                        !filesHaveSameContents(srcJar, currentJar)) {
+                    newDesc = currentDescriptor;
+                    srcJar = scratch.copy(currentJar, "reviewed.jar");
+                    emitLoadedStatus(emitter, STATUS_EQUAL);
+                    return;
+                }
             } else {
                 int currentStatus = checkDescriptor();
-                if (loadedStatus != NO_STATUS && currentStatus != loadedStatus) {
+                if (loadedStatus != NO_STATUS && (currentStatus != loadedStatus ||
+                        !loadedIdentity.equals(matchedIdentity))) {
                     // Source inspection and user confirmation happen outside the global permit. If a
                     // previous installer changed the Library while this request was pending, surface
                     // the new classification instead of applying a stale NEW/UPDATE/REINSTALL decision.
-                    emitter.onSuccess(currentStatus);
+                    emitLoadedStatus(emitter, currentStatus);
                     return;
                 }
             }
 
+            try {
+                WorkDirLayout.prepareConverted(expectedWorkdir,
+                        !libraryViewModel.storageKeys(expectedGeneration, expectedWorkdir).isEmpty());
+            } catch (IOException error) {
+                throw new InstallerFailure("Work directory is unavailable for installation", error);
+            }
             LibraryInstallRecovery.discardStaging(expectedWorkdir);
             tmpDir = LibraryInstallRecovery.stagingDirectory(expectedWorkdir);
             if (!tmpDir.mkdirs()) {
-                throw new ConverterException("Can't create staging directory: '" + tmpDir + "'");
+                throw new InstallerFailure("Can't create staging directory: '" + tmpDir + "'");
             }
-            if (srcJar == null) {
-                try {
-                    srcJar = scratch.file("download.jar");
-                } catch (IOException error) {
-                    throw new ConverterException("Can't prepare JAR scratch file", error);
-                }
-                downloadJar();
-                manifest = loadManifest(srcJar);
-                if (!manifest.equals(newDesc)) {
-                    emitter.onSuccess(STATUS_UNMATCHED);
-                    return;
-                }
-            }
+            stage(Stage.CONVERTING);
             try {
                 Main.main(new String[]{"--no-optimize", "--output=" + tmpDir + Config.MIDLET_DEX_ARCH,
                         srcJar.getAbsolutePath()});
             } catch (Throwable e) {
                 throw new ConverterException("Dexing error", e);
+            }
+            File payload = child(tmpDir, Config.MIDLET_DEX_ARCH);
+            if (!payload.isFile() || payload.length() == 0L) {
+                throw new ConverterException("DX produced no converted MIDlet payload");
             }
             if (manifest != null) {
                 manifest.merge(newDesc);
@@ -435,6 +466,8 @@ public class AppInstaller {
 
             File resJar = child(tmpDir, Config.MIDLET_RES_FILE);
             FileUtils.copyFileUsingChannel(srcJar, resJar);
+            if (srcJad != null) FileUtils.copyFileUsingChannel(srcJad,
+                    new File(tmpDir, AppReconverter.RETAINED_JAD));
             String icon = newDesc.getIcon();
             File iconFile = child(tmpDir, Config.MIDLET_ICON_FILE);
             if (icon != null) {
@@ -449,6 +482,8 @@ public class AppInstaller {
             newDesc.writeTo(child(tmpDir, Config.MIDLET_MANIFEST_FILE));
 
             // DX/copy can run for a while. Revalidate the generation again immediately before publish.
+            checkCancelled();
+            stage(Stage.SAVING);
             verifyActiveGeneration();
             if (id != NO_ID) {
                 verifyRequestedGeneration();
@@ -462,6 +497,7 @@ public class AppInstaller {
             try (LibraryGenerationLease ignored = libraryViewModel.acquireGenerationLease(
                     expectedGeneration,
                     expectedWorkdir)) {
+                WorkDirLayout.requireConverted(expectedWorkdir);
                 if (currentApp != null) {
                     LibraryIconOverride.applyPersistedOverride(expectedWorkdir, appDirName, tmpDir);
                 }
@@ -479,6 +515,8 @@ public class AppInstaller {
                     }
                     throw new ConverterException("Can't move '" + tmpDir + "' to '" + targetDir + "'");
                 }
+                tmpDir = null;
+                published = true;
             }
 
             String sourceTitle = newDesc.getName();
@@ -509,7 +547,8 @@ public class AppInstaller {
                             executionPermit.close();
                             // Keep recoveryBackup. Startup reconciliation will refresh this exact storage key
                             // without deleting the successfully published replacement.
-                            if (!emitter.isDisposed()) emitter.onError(error);
+                            if (!emitter.isDisposed()) emitter.onError(new InstallerFailure(
+                                    "Installed files need Library recovery", error));
                             return;
                         }
                         if (value == null) {
@@ -534,13 +573,23 @@ public class AppInstaller {
                                 visibilityError -> {
                                     executionPermit.close();
                                     if (emitter.isDisposed()) return;
-                                    if (visibilityError != null) emitter.onError(visibilityError);
+                                    if (visibilityError != null) emitter.onError(new InstallerFailure(
+                                            "Installed files need Library recovery", visibilityError));
                                     else emitter.onSuccess(STATUS_SUCCESS);
                                 });
                     });
             handedOff = true;
+        } catch (IOException error) {
+            if (!(error instanceof java.io.InterruptedIOException) &&
+                    (stage == Stage.WAITING || stage == Stage.SAVING)) {
+                throw new InstallerFailure("Unable to finish installation in this work directory", error);
+            }
+            throw error;
         } finally {
-            if (!handedOff) executionPermit.close();
+            if (!handedOff) {
+                deleteTemp();
+                executionPermit.close();
+            }
         }
     }
 
@@ -563,8 +612,8 @@ public class AppInstaller {
             jar = new File(dir, name.substring(0, name.length() - 4) + ".jar");
             if (!jar.exists()) throw new ConverterException("Jar-file not found for url: " + jarUrl);
         }
-        srcJar = jar;
-        manifest = loadManifest(jar);
+        srcJar = scratch.copy(jar, "reviewed.jar");
+        manifest = loadManifest(srcJar);
         return manifest.equals(newDesc);
     }
 
@@ -574,8 +623,8 @@ public class AppInstaller {
         if (jarUri == null || !"content".equals(jarUri.getScheme())) return checkJarFile(jadFile);
         File jar = scratch.materialize(jarUri);
         if (!jar.exists()) throw new ConverterException("Jar-file not found for uri: " + jarUri);
-        srcJar = jar;
-        manifest = loadManifest(jar);
+        srcJar = scratch.copy(jar, "reviewed.jar");
+        manifest = loadManifest(srcJar);
         return manifest.equals(newDesc);
     }
 
@@ -593,6 +642,12 @@ public class AppInstaller {
             throw new IOException("Library generation changed while matching installer identity", e);
         }
         currentApp = candidates.size() == 1 ? candidates.get(0) : null;
+        List<String> identities = new java.util.ArrayList<>();
+        for (LibraryAppRow app : candidates) {
+            identities.add(app.getId() + ":" + app.getStorageKey() + ":" + app.getSourceVersion());
+        }
+        Collections.sort(identities);
+        matchedIdentity = identities.toString();
         if (currentApp == null) {
             Set<String> indexedStorageKeys;
             try {
@@ -603,7 +658,7 @@ public class AppInstaller {
             generatePathName(
                     name.replaceAll(FileUtils.ILLEGAL_FILENAME_CHARS, "").trim(),
                     indexedStorageKeys);
-            return STATUS_NEW;
+            return candidates.isEmpty() ? STATUS_NEW : STATUS_AMBIGUOUS;
         }
 
         appDirName = currentApp.getStorageKey();
@@ -673,61 +728,18 @@ public class AppInstaller {
         return dir;
     }
 
-    private void downloadJar() throws ConverterException {
-        Uri jarUri = Uri.parse(newDesc.getJarUrl());
-        if (jarUri.getScheme() == null) {
-            String schemeOfJadSource = this.uri == null ? null : this.uri.getScheme();
-            if ("http".equals(schemeOfJadSource) || "https".equals(schemeOfJadSource)) {
-                List<String> pathSegments = uri.getPathSegments();
-                if (pathSegments.isEmpty()) throw new ConverterException("Can't resolve relative JAR URL");
-                StringBuilder path = new StringBuilder(pathSegments.get(0));
-                for (int i = 1; i < pathSegments.size() - 1; i++) path.append('/').append(pathSegments.get(i));
-                path.append('/').append(jarUri.getPath());
-                jarUri = uri.buildUpon().path(path.toString()).build();
-            } else {
-                jarUri = jarUri.buildUpon().scheme("http").build();
-            }
-        }
-        String url = jarUri.toString();
-        Log.d(TAG, "Downloading " + url);
-        Exception exception;
-        HttpURLConnection connection = null;
-        try {
-            connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setInstanceFollowRedirects(true);
-            connection.setReadTimeout(3 * 60 * 1000);
-            connection.setConnectTimeout(15000);
-            int code = connection.getResponseCode();
-            if (code == HttpURLConnection.HTTP_MOVED_PERM || code == HttpURLConnection.HTTP_MOVED_TEMP) {
-                String urlStr = connection.getHeaderField("Location");
-                connection.disconnect();
-                connection = (HttpURLConnection) new URL(urlStr).openConnection();
-                connection.setInstanceFollowRedirects(true);
-                connection.setReadTimeout(3 * 60 * 1000);
-                connection.setConnectTimeout(15000);
-            }
-            try (InputStream inputStream = connection.getInputStream();
-                    OutputStream outputStream = new FileOutputStream(srcJar)) {
-                byte[] buffer = new byte[2048];
-                int length;
-                while ((length = inputStream.read(buffer)) > 0) outputStream.write(buffer, 0, length);
-            }
-            connection.disconnect();
-            Log.d(TAG, "Download complete");
-            return;
-        } catch (MalformedURLException | FileNotFoundException e) {
-            exception = e;
-        } catch (IOException e) {
-            exception = e;
-        } finally {
-            if (connection != null) connection.disconnect();
-        }
-        deleteTemp();
-        throw new ConverterException("Can't download jar", exception);
+    private void downloadJar() throws IOException {
+        stage(Stage.DOWNLOADING);
+        java.net.URI base = uri == null ? null : java.net.URI.create(uri.toString());
+        InstallerDownload.download(InstallerDownload.resolve(base, newDesc.getJarUrl()), srcJar,
+                () -> cancelled, (bytes, total) -> {});
     }
 
+    void cancel() { cancelled = true; }
     void deleteTemp() {
-        if (tmpDir != null) FileUtils.deleteDirectory(tmpDir);
+        File owned = tmpDir;
+        tmpDir = null;
+        if (owned != null) FileUtils.deleteDirectory(owned);
     }
 
     public File getJar() {
@@ -757,7 +769,7 @@ public class AppInstaller {
 
     private File appsDir() {
         if (expectedWorkdir == null) throw new IllegalStateException("Installer workdir is not bound");
-        return new File(expectedWorkdir, "converted");
+        return WorkDirLayout.converted(expectedWorkdir);
     }
 
     private static File child(File directory, String suffix) {

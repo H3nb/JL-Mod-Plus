@@ -271,7 +271,7 @@ fun SettingsScreen(
     }
 
     state.directoryError?.let { message ->
-        val maxMessageHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 176.dp)
+        val maxMessageHeight = adaptiveDialogLayout().maxHeight
         AlertDialog(
             textScrollable = false,
             onDismissRequest = {},
@@ -455,7 +455,7 @@ private fun SettingsChoiceDialog(
     onSelected: (String) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val maxListHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 120.dp)
+    val maxListHeight = adaptiveDialogLayout().maxHeight
     val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
         textScrollable = false,
@@ -521,7 +521,7 @@ private fun SettingsChoiceDialog(
                 )
             }
         },
-        confirmButton = {},
+        confirmButton = null,
     )
 }
 

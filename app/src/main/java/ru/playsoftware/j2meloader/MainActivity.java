@@ -1,4 +1,5 @@
 /*
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
@@ -455,7 +456,10 @@ public class MainActivity extends AppCompatActivity {
 		String emulatorDir = Config.getEmulatorDir();
 		File dir = new File(emulatorDir);
 		if (dir.isDirectory() && dir.canWrite()) {
-			FileUtils.initWorkDir(dir);
+			if (!FileUtils.initWorkDir(dir)) {
+				alertDirCannotCreate(emulatorDir);
+				return;
+			}
 			libraryViewModel.setEmulatorDirectory(emulatorDir);
 			return;
 		}

@@ -25,10 +25,23 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.test.platform.app.InstrumentationRegistry
+import android.graphics.Bitmap
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import java.io.File
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -56,7 +69,7 @@ class InstallerComposeTest {
                             }.joinToString("\n"),
                             installLabel = "Install",
                             closeLabel = "Cancel",
-                            runLabel = "Run existing",
+                            runLabel = "Run Existing",
                             iconPath = null,
                         ),
                         actions = actions,
@@ -71,17 +84,20 @@ class InstallerComposeTest {
     }
 
     @Test
-    fun loadingStateHidesCancellationActions() {
-        setState(InstallerUiState.Loading("MIDlet Installer", "Loading info…"))
+    fun loadingStateCanRequestCancellation() {
+        val actions = RecordingInstallerActions()
+        setState(InstallerUiState.Loading("MIDlet Installer", "Loading info…"), actions)
 
         composeRule.onNodeWithText("Loading info…").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Loading info…").assertIsDisplayed()
         composeRule.onAllNodesWithText("Install").assertCountEquals(0)
         composeRule.onAllNodesWithText("Close").assertCountEquals(0)
+        composeRule.onNodeWithText("Cancel").performClick()
+        assertEquals(1, actions.closeCount)
     }
 
     @Test
-    fun conversionStateHidesCancellationActions() {
+    fun conversionStateCanRequestCancellation() {
         setState(
             InstallerUiState.Converting(
                 title = "Demo MIDlet",
@@ -90,7 +106,7 @@ class InstallerComposeTest {
             ),
         )
         composeRule.onNodeWithText("Converting JAR…").assertIsDisplayed()
-        composeRule.onAllNodesWithText("Cancel").assertCountEquals(0)
+        composeRule.onNodeWithText("Cancel").assertIsDisplayed()
     }
 
     @Test
@@ -178,6 +194,70 @@ class InstallerComposeTest {
         composeRule.onNodeWithText("Close").performClick()
 
         assertEquals(1, actions.closeCount)
+    }
+
+    @Test fun recoveryActionsRemainReachableInShortWindowWithLargeText() {
+        val actions = RecordingInstallerActions()
+        composeRule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp))) {
+                CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
+                    JLModPlusTheme {
+                        InstallerScreen(InstallerUiState.Error("Installation Incomplete",
+                            "Application files were saved, but the Library could not finish updating. Refresh the Library before trying again.",
+                            "Close", "Refresh Library", "Storage error"), actions)
+                    }
+                }
+            }
+        }
+        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        capturePopup("recovery-short.png")
+        composeRule.onNodeWithText("Copy Details").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("Refresh Library").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("Close").performScrollTo().assertIsDisplayed().performClick()
+        assertEquals(1, actions.installCount)
+        assertEquals(1, actions.closeCount)
+    }
+
+    @Test fun bulkRetryRemainsReachableInShortWindowWithLargeText() {
+        var retries = 0
+        composeRule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp))) {
+                CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
+                    JLModPlusTheme {
+                        BulkInstallSurface(BulkInstallViewModel.State.Finished(
+                            BulkInstallPlan(1, File("/workdir"), emptyList()),
+                            listOf(BulkInstallResult("one", "Game", BulkInstallResultKind.PartiallyInstalled)),
+                            cancelled = true), onToggle = {}, onRecommended = {}, onClear = {},
+                            onInstall = {}, onRetry = { retries++ }, onCancel = {}, onClose = {})
+                    }
+                }
+            }
+        }
+        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        capturePopup("bulk-short.png")
+        composeRule.onNodeWithTag("bulk-results").performScrollToIndex(1)
+        composeRule.onNodeWithText("Review Unfinished Items").assertIsDisplayed().performClick()
+        assertEquals(1, retries)
+    }
+
+    @Test fun shortPopupWrapsContentInsteadOfFillingMaximumHeight() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp))) {
+                JLModPlusTheme {
+                    InstallerScreen(InstallerUiState.Loading("Installer", "Reading"), RecordingInstallerActions())
+                }
+            }
+        }
+        val bounds = composeRule.onNodeWithTag("installer-popup").getUnclippedBoundsInRoot()
+        assertEquals(448f, (bounds.right - bounds.left).value, 1f)
+        assertTrue("Short content must wrap within the adaptive height limit", bounds.bottom - bounds.top < 208.dp)
+    }
+
+    private fun capturePopup(name: String) {
+        val directory = InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null)
+        File(directory, name).outputStream().use {
+            composeRule.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
     }
 
     private fun setState(

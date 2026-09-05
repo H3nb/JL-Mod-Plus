@@ -32,7 +32,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.test.espresso.Espresso.pressBack
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -215,8 +214,10 @@ class RuntimeMenuComposeTest {
         }
 
         composeRule.onNodeWithText("Exit").assertIsDisplayed()
-        pressBack()
-        composeRule.waitForIdle()
+        androidx.test.espresso.Espresso.onView(androidx.test.espresso.matcher.ViewMatchers.isRoot())
+            .inRoot(androidx.test.espresso.matcher.RootMatchers.isDialog())
+            .perform(androidx.test.espresso.action.ViewActions.pressKey(android.view.KeyEvent.KEYCODE_BACK))
+        composeRule.waitUntil(timeoutMillis = 5_000) { !visible.value }
         composeRule.onAllNodesWithText("Exit").assertCountEquals(0)
     }
 
