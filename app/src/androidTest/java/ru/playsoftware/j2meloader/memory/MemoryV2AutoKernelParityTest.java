@@ -16,7 +16,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -47,7 +46,7 @@ public class MemoryV2AutoKernelParityTest {
 	};
 
 	@Test
-	public void fusedAutoKernelMatchesCurrentProductionAutoForEveryKnownPredicate() {
+	public void fusedAutoKernelMatchesAuthoritativeProductionAutoForEveryKnownPredicate() {
 		int pageSize = NativeMemoryTarget.pageSize();
 		assertTrue(pageSize > 0);
 		long[] probe = NativeMemoryTarget.readProbe();
@@ -75,17 +74,23 @@ public class MemoryV2AutoKernelParityTest {
 					secondBits[index] = plan[3];
 				}
 
-				assertEquals("current production Auto failed predicate=" + predicate,
+				assertEquals("authoritative production Auto failed predicate=" + predicate,
 						MemoryEngineContract.RESULT_OK,
 						NativeMemoryEngine.startKnown(
 								MemoryEngineContract.TYPE_AUTO, predicate, first, second));
-				// This test intentionally runs before the ownership cutover: production remains the
-				// reference and the new multi-plane kernel is still independent diagnostics here.
-				assertFalse(NativeMemoryEngine.v2KnownAuthoritativeRevision());
+				assertTrue("Auto first scan did not publish an authoritative ResultStore",
+						NativeMemoryEngine.v2KnownAuthoritativeRevision());
 				long productionUnique = NativeMemoryEngine.resultCount();
 				assertTrue(productionUnique >= 0L);
 				long[] production = productionAutoSummary(productionUnique);
+				long[] paging = NativeMemoryEngine.v2KnownPagingStats();
+				assertEquals(4, paging.length);
+				assertEquals("authoritative Auto page unexpectedly fell back to legacy paging",
+						0L, paging[3]);
+				assertTrue("authoritative Auto page did not use ResultCursor", paging[2] > 0L);
 
+				// The independent self-process probe still exercises the same fused kernel through a
+				// diagnostic boundary and verifies typed count, unique addresses and ordered aliases.
 				long[] shadow = v2AutoKernelProbe(
 						Process.myPid(), runs, predicate, EXPLICIT_TYPES,
 						firstBits, secondBits);
