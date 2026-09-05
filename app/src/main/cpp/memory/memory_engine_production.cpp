@@ -15,3 +15,4 @@
 #include "memory_engine_auto_refine_extension.inc"
 #include "memory_engine_relative_extension.inc"
 #include "memory_engine_refresh_extension.inc"
+#include "memory_engine_revision_extension.inc"
