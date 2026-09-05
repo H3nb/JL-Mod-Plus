@@ -239,4 +239,67 @@ bool readAliasPageAtTypedOffset(const ResultStore &store,
            readAliasPage(store, cursor, limit, page);
 }
 
+bool lookupAliasAddress(const ResultStore &store,
+                        std::uintptr_t address,
+                        ResultAliasAddressLookup &lookup) {
+    if (address == 0U || store.blockCount() == 0U) {
+        return false;
+    }
+    const std::uintptr_t mask =
+            static_cast<std::uintptr_t>(kResultLogicalBlockSize - 1U);
+    const std::uintptr_t blockBase = address & ~mask;
+    const auto headers = store.headers();
+    const auto found = std::lower_bound(
+            headers.begin(), headers.end(), blockBase,
+            [](const ResultBlockHeader &header, std::uintptr_t wanted) {
+                return header.baseAddress < wanted;
+            });
+    if (found == headers.end() || found->baseAddress != blockBase) {
+        return false;
+    }
+    const std::size_t blockIndex =
+            static_cast<std::size_t>(std::distance(headers.begin(), found));
+    const std::size_t byteOffset = static_cast<std::size_t>(address - blockBase);
+    if (byteOffset >= kResultLogicalBlockSize) {
+        return false;
+    }
+
+    std::uint64_t typedOffset = 0U;
+    for (std::size_t block = 0U; block < blockIndex; ++block) {
+        if (!addChecked(typedOffset, blockTypedCount(headers[block]))) {
+            return false;
+        }
+    }
+
+    std::uint8_t aliasMask = 0U;
+    for (std::size_t index = 0U; index < kResultPlaneCount; ++index) {
+        const ResultPlane plane = static_cast<ResultPlane>(index);
+        const std::size_t alignment = planeAlignment(plane);
+        if (alignment == 0U) {
+            return false;
+        }
+        const auto words = store.planeWords(blockIndex, plane);
+        const std::size_t slotLimit =
+                (byteOffset + alignment - 1U) / alignment;
+        if (!addChecked(typedOffset, setBitsBeforeSlot(words, slotLimit))) {
+            return false;
+        }
+        if (byteOffset % alignment != 0U) {
+            continue;
+        }
+        const std::size_t slot = byteOffset / alignment;
+        if (slot / 64U < words.size() &&
+            (words[slot / 64U] &
+             (std::uint64_t{1U} << (slot % 64U))) != 0U) {
+            aliasMask = static_cast<std::uint8_t>(
+                    aliasMask | resultPlaneBit(plane));
+        }
+    }
+    if (aliasMask == 0U || typedOffset >= store.typedCount()) {
+        return false;
+    }
+    lookup = {{address, aliasMask}, typedOffset};
+    return true;
+}
+
 } // namespace jlmem::v2
