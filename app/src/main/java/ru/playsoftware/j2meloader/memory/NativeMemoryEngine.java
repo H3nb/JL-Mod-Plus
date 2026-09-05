@@ -112,6 +112,9 @@ final class NativeMemoryEngine {
 	private static native int refineRelativeV2CompactOwner(
 			int predicate, int compareTarget, String first, String second);
 
+	private static native int startGroupV2CompactOwner(
+			int[] valueTypes, String[] values, int encodedDistance);
+
 	private static native int filterV2CompactOwner(long[] candidateIds, boolean keep);
 
 	private static native long[] resultPageV2CompactOwner(int offset, int limit);
@@ -146,12 +149,17 @@ final class NativeMemoryEngine {
 
 	private static native int startUnknownUnchecked(int valueType);
 
-	static int startGroup(int[] valueTypes, String[] values, int maxDistance) {
-		int result = startGroupUnchecked(valueTypes, values, maxDistance);
-		if (result == MemoryEngineContract.RESULT_OK) resetV2ForLegacyNewSearch();
+	static int startGroup(int[] valueTypes, String[] values, int encodedDistance) {
+		int result = startGroupV2CompactOwner(valueTypes, values, encodedDistance);
+		if (result == MemoryEngineContract.RESULT_OK) {
+			clearV2RevisionCatalog();
+			publishV2KnownPagingStage(true, true);
+			if (BuildConfig.DEBUG) resetV2ShadowSession();
+		}
 		return result;
 	}
 
+	// Legacy Candidate-backed Group remains compiled only as a differential/fallback reference.
 	private static native int startGroupUnchecked(int[] valueTypes, String[] values, int maxDistance);
 
 	static int startNearby(long anchorCandidateId, int radius, int valueType,
@@ -217,28 +225,16 @@ final class NativeMemoryEngine {
 			int predicate, String first, String second, boolean allowRelocationReconcile);
 
 	static int refineRelative(int predicate, int compareTarget, String first, String second) {
-		if (hasCurrentV2CompactRevision()) {
-			int result = refineRelativeV2CompactOwner(
-					predicate, compareTarget, first, second);
-			if (result == MemoryEngineContract.RESULT_OK) {
-				publishV2KnownPagingStage(true, true);
-			}
-			return result;
-		}
-
-		// Unknown baseline first materialization remains on the proven relative path for this cutover
-		// stage. It can be converted/staged later without affecting Known/Auto candidate-free sessions.
-		rememberAuthoritativeCurrentRevision();
-		int result = refineRelativeV2Authoritative(predicate, compareTarget, first, second);
+		// The compact owner handles both Unknown-baseline first materialization and later relative COW
+		// refinements. A successful first relative scan therefore never creates a Candidate mirror.
+		int result = refineRelativeV2CompactOwner(predicate, compareTarget, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
-			boolean authoritative = hasCurrentV2KnownResultStore() || hasCurrentV2AutoResultStore();
-			if (!authoritative) authoritative = stageV2KnownResultStore() || stageV2AutoResultStore();
-			publishV2KnownPagingStage(authoritative, authoritative);
-			if (authoritative) rememberCurrentV2Revision();
+			publishV2KnownPagingStage(true, true);
 		}
 		return result;
 	}
 
+	// Candidate-compatible relative path remains compiled for differential tests only.
 	private static native int refineRelativeV2Authoritative(
 			int predicate, int compareTarget, String first, String second);
 
