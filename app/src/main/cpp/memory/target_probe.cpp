@@ -121,6 +121,12 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_readProbe(JNIEnv *env,
     return result;
 }
 
+extern "C" JNIEXPORT void JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_writeProbe(
+        JNIEnv *, jclass, jlong value) {
+    gReadProbe = static_cast<uint64_t>(value);
+}
+
 extern "C" JNIEXPORT jlongArray JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
         JNIEnv *env, jclass, jint scope, jint maxRuns) {
