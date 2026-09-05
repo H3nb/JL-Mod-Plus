@@ -15,22 +15,15 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
-
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Differential gate for the Candidate -> compact ordinary result cutover. The compact revision is
- * staged from the already-authoritative production ResultStore, then page/presentation/tracked
- * actions are exercised without changing normal application routing.
- */
+/** Production gate for the Candidate -> compact ordinary result cutover. */
 @RunWith(AndroidJUnit4.class)
 public class MemoryV2CompactPromotionTest {
 	@Test
-	public void compactPageRefreshInspectWatchAndEditMatchLegacyContract() {
+	public void productionKnownIsCandidateFreeAndTrackedActionsStillWork() {
 		int pageSize = NativeMemoryTarget.pageSize();
 		assertTrue(pageSize > 0);
 		long[] originalProbe = NativeMemoryTarget.readProbe();
@@ -50,68 +43,80 @@ public class MemoryV2CompactPromotionTest {
 							MemoryEngineContract.TYPE_AUTO,
 							MemoryEngineContract.PREDICATE_EQUAL, "1", ""));
 			assertTrue(NativeMemoryEngine.v2KnownAuthoritativeRevision());
-			assertTrue("compact revision could not be staged",
-					NativeMemoryEngine.stageV2CompactRevision());
-			assertTrue(NativeMemoryEngine.hasCurrentV2CompactRevision());
+			assertCandidateFreeOwner("first scan");
 
-			long[] legacyPage = NativeMemoryEngine.resultPage(0, 100);
-			long[] compactPage = NativeMemoryEngine.resultPageV2Compact(0, 100);
-			assertNotNull(legacyPage);
-			assertNotNull(compactPage);
-			assertArrayEquals("initial compact page diverged", legacyPage, compactPage);
-
-			long id = findIdAt(compactPage, probeAddress, MemoryEngineContract.TYPE_INT);
+			long[] page = NativeMemoryEngine.resultPage(0, 100);
+			assertNotNull(page);
+			long id = findIdAt(page, probeAddress, MemoryEngineContract.TYPE_INT);
 			assertTrue("probe Int alias missing", id > 0L);
 			long[] selected = {id};
 
 			NativeMemoryTarget.writeProbe(2L);
 			assertEquals(MemoryEngineContract.RESULT_OK,
-					NativeMemoryEngine.refreshV2Compact(selected, false));
-			compactPage = NativeMemoryEngine.resultPageV2Compact(0, 100);
-			legacyPage = NativeMemoryEngine.resultPage(0, 100);
-			assertArrayEquals("presentation overlay diverged", legacyPage, compactPage);
-			assertEquals(2L, currentBitsForId(compactPage, id));
+					NativeMemoryEngine.refresh(selected, false));
+			page = NativeMemoryEngine.resultPage(0, 100);
+			assertNotNull(page);
+			assertEquals(2L, currentBitsForId(page, id));
+			assertCandidateFreeOwner("presentation refresh");
 
-			long[] compactInspect = NativeMemoryEngine.inspectV2Compact(id, 16);
-			long[] legacyInspect = NativeMemoryEngine.inspect(id, 16);
-			assertNotNull(compactInspect);
-			assertNotNull(legacyInspect);
-			assertArrayEquals("Inspector contract diverged", legacyInspect, compactInspect);
+			long[] inspection = NativeMemoryEngine.inspect(id, 16);
+			assertNotNull(inspection);
+			assertTrue(inspection.length >= 4);
+			assertEquals(MemoryEngineContract.RESULT_OK, (int) inspection[0]);
 
-			long[] compactAliases =
-					NativeMemoryEngine.expandResultGroupsV2Compact(
-							selected, MemoryEngineContract.TYPE_AUTO);
-			long[] legacyAliases =
-					NativeMemoryEngine.expandResultGroups(selected, MemoryEngineContract.TYPE_AUTO);
-			assertNotNull(compactAliases);
-			assertNotNull(legacyAliases);
-			Arrays.sort(compactAliases);
-			Arrays.sort(legacyAliases);
-			assertArrayEquals("alias expansion diverged", legacyAliases, compactAliases);
+			long[] aliases = NativeMemoryEngine.expandResultGroups(
+					selected, MemoryEngineContract.TYPE_AUTO);
+			assertNotNull(aliases);
+			assertTrue("alias expansion lost the selected ResultId", containsRawId(aliases, id));
 
 			assertEquals(MemoryEngineContract.RESULT_OK,
-					NativeMemoryEngine.pinV2Compact(selected, true));
+					NativeMemoryEngine.pin(selected, true));
 			assertTrue("Watch List did not receive promoted compact result",
-					containsId(NativeMemoryEngine.watchPage(), id));
-			assertTrue("compact revision was not rebound after Watch mutation",
-					NativeMemoryEngine.hasCurrentV2CompactRevision());
-			assertEquals(MemoryEngineContract.RESULT_OK,
-					NativeMemoryEngine.pinV2Compact(selected, false));
-			assertTrue("Watch List removal left the candidate behind",
-					!containsId(NativeMemoryEngine.watchPage(), id));
+					containsPageId(NativeMemoryEngine.watchPage(), id));
+			assertCandidateFreeOwner("Watch promotion");
 
 			assertEquals(MemoryEngineContract.RESULT_OK,
-					NativeMemoryEngine.editV2Compact(selected, "3"));
-			compactPage = NativeMemoryEngine.resultPageV2Compact(0, 100);
-			assertNotNull(compactPage);
-			assertEquals("compact edit did not publish tracked current value",
-					3L, currentBitsForId(compactPage, id));
-			assertEquals("native probe did not receive compact edit",
-					3L, NativeMemoryTarget.readProbe()[1]);
+					NativeMemoryEngine.edit(selected, "3"));
+			page = NativeMemoryEngine.resultPage(0, 100);
+			assertNotNull(page);
+			assertEquals(3L, currentBitsForId(page, id));
+			assertEquals(3L, NativeMemoryTarget.readProbe()[1]);
+			assertCandidateFreeOwner("tracked edit");
+
+			long beforeFilter = NativeMemoryEngine.resultCount();
+			assertTrue(beforeFilter > 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.filter(selected, true));
+			assertEquals("Keep filter should leave exactly one unique address", 1L,
+					NativeMemoryEngine.resultCount());
+			assertCandidateFreeOwner("filter");
+			assertTrue(NativeMemoryEngine.historyDepth() > 0);
+
+			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.undo());
+			assertEquals(beforeFilter, NativeMemoryEngine.resultCount());
+			assertCandidateFreeOwner("Undo");
+
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.pin(selected, false));
+			assertTrue("Watch List removal left the candidate behind",
+					!containsPageId(NativeMemoryEngine.watchPage(), id));
+			assertCandidateFreeOwner("Watch removal");
 		} finally {
 			NativeMemoryTarget.writeProbe(originalProbe[1]);
 			NativeMemoryEngine.clearTarget();
 		}
+	}
+
+	private static void assertCandidateFreeOwner(String stage) {
+		long[] stats = NativeMemoryEngine.v2CompactOwnerStats();
+		assertNotNull(stage, stats);
+		assertEquals(stage + " stats length", 8, stats.length);
+		assertEquals(stage + " compact owner missing", 1L, stats[0]);
+		assertTrue(stage + " has no ordinary typed results", stats[1] > 0L);
+		assertEquals(stage + " still retains legacy Candidate ordinary rows", 0L, stats[2]);
+		assertEquals(stage + " unique count diverged from resultCount",
+				NativeMemoryEngine.resultCount(), stats[3]);
+		assertTrue(stage + " compact revision retained-byte accounting is invalid", stats[4] > 0L);
 	}
 
 	private static long findIdAt(long[] page, long address, int type) {
@@ -132,13 +137,18 @@ public class MemoryV2CompactPromotionTest {
 		throw new AssertionError("ResultId " + id + " is not in page");
 	}
 
-	private static boolean containsId(long[] page, long id) {
+	private static boolean containsPageId(long[] page, long id) {
 		if (page == null || page.length == 0) return false;
 		int count = Math.toIntExact(page[0]);
 		for (int index = 0; index < count; index++) {
 			int base = 1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE;
 			if (page[base] == id) return true;
 		}
+		return false;
+	}
+
+	private static boolean containsRawId(long[] ids, long id) {
+		for (long value : ids) if (value == id) return true;
 		return false;
 	}
 }
