@@ -377,8 +377,9 @@ public final class MemoryEngineService extends Service {
 			if (containsManagedIds(candidateIds)) {
 				if (!allManagedIds(candidateIds)) return enqueueMixed(token, false,
 						() -> editMixed(token, candidateIds, replacementValue));
-				return enqueueManaged(token, false, () -> managedEdit(token, managedRevision,
-						candidateIds, replacementValue));
+				return enqueueManaged(token, false, () -> managedEdit(token,
+						isManagedCurrent(token) ? managedRevision : 0L, candidateIds,
+						replacementValue, true));
 			}
 			return enqueue(token, false, 0, () -> {
 				if (candidateIds == null || candidateIds.length == 0 ||
@@ -447,7 +448,7 @@ public final class MemoryEngineService extends Service {
 				if (!allManagedIds(resultIds)) return enqueueMixed(token, false,
 						() -> editResultGroupsMixed(token, resultIds, valueType, replacementValue));
 				return enqueueManaged(token, false, () -> managedEdit(token, managedRevision,
-						resultIds, replacementValue));
+						resultIds, replacementValue, false));
 			}
 			return enqueue(token, false, 0, () -> {
 				if (!MemoryEngineContract.isCandidateType(valueType)) {
@@ -470,7 +471,7 @@ public final class MemoryEngineService extends Service {
 		public long editManagedResultGroups(long token, long expectedRevision, long[] resultIds,
 		                                    String replacementValue) {
 			return enqueueManaged(token, false, () -> managedEdit(token, expectedRevision,
-					resultIds, replacementValue));
+					resultIds, replacementValue, false));
 		}
 
 		@Override
@@ -521,7 +522,7 @@ public final class MemoryEngineService extends Service {
 						() -> setFreezeResultGroupsMixed(token, resultIds, valueType, mode,
 								firstValue, secondValue));
 				return enqueueManaged(token, false, () -> managedFreeze(token, managedRevision,
-						resultIds, mode, firstValue, secondValue));
+						resultIds, mode, firstValue, secondValue, false));
 			}
 			return enqueue(token, false, 0, () -> {
 				if (!MemoryEngineContract.isCandidateType(valueType)) {
@@ -539,7 +540,7 @@ public final class MemoryEngineService extends Service {
 		public long setManagedFreezeResultGroups(long token, long expectedRevision, long[] resultIds,
 		                                        int mode, String firstValue, String secondValue) {
 			return enqueueManaged(token, false, () -> managedFreeze(token, expectedRevision,
-					resultIds, mode, firstValue, secondValue));
+					resultIds, mode, firstValue, secondValue, false));
 		}
 
 		@Override
@@ -684,8 +685,9 @@ public final class MemoryEngineService extends Service {
 			if (containsManagedIds(candidateIds)) {
 				if (!allManagedIds(candidateIds)) return enqueueMixed(token, false,
 						() -> setFreezeMixed(token, candidateIds, mode, firstValue, secondValue));
-				return enqueueManaged(token, false, () -> managedFreeze(token, managedRevision,
-						candidateIds, mode, firstValue, secondValue));
+				return enqueueManaged(token, false, () -> managedFreeze(token,
+						isManagedCurrent(token) ? managedRevision : 0L, candidateIds, mode,
+						firstValue, secondValue, true));
 			}
 			return enqueue(token, false, 0, () -> setFreezeRecords(
 					token, candidateIds, mode, firstValue, secondValue));
@@ -884,6 +886,12 @@ public final class MemoryEngineService extends Service {
 					result = configureTarget(token, scope);
 					if (result == MemoryEngineContract.RESULT_OK) {
 						result = operation.run();
+						if (result == MemoryEngineContract.RESULT_OK) {
+							// Target configuration is only preparation. Retire the previous
+							// managed search and publish the raw backend after the new search
+							// has actually committed.
+							result = commitRawSearch(token, scope);
+						}
 					} else {
 						serviceMessage = configurationFailureMessage(result);
 					}
@@ -946,28 +954,7 @@ public final class MemoryEngineService extends Service {
 				}
 				return MemoryEngineContract.RESULT_RESOURCE_LIMIT;
 			}
-			long previousToken = configuredToken;
-			int previousScope = configuredScope;
-			boolean wasManaged = searchBackend == MemoryEngineContract.BACKEND_MANAGED;
 			int result = NativeMemoryEngine.configureTarget(pid, pageSize, token, runs);
-			if (result == MemoryEngineContract.RESULT_OK) {
-				if (wasManaged) {
-					try {
-						long clearEpoch = cancelEpoch.incrementAndGet();
-						bridge.clearManagedSearch(token, clearEpoch);
-					} catch (RemoteException exception) {
-						return MemoryEngineContract.RESULT_TARGET_LOST;
-					}
-				}
-				if (previousToken != token || wasManaged || previousScope != scope) {
-					NativeMemoryEngine.clearSearch();
-					clearSearchSession();
-				}
-				configuredToken = token;
-				configuredScope = scope;
-				lastRawScope = scope;
-				searchBackend = MemoryEngineContract.BACKEND_RAW;
-			}
 			return result;
 		} catch (RemoteException exception) {
 			return MemoryEngineContract.RESULT_TARGET_LOST;
@@ -977,9 +964,29 @@ public final class MemoryEngineService extends Service {
 	private boolean prepareManagedOperation(long token) {
 		if (!isTargetToken(token)) return false;
 		if (!synchronizeManagedCancelEpoch(token)) return false;
-		configuredToken = token;
-		configuredScope = MemoryEngineContract.SCOPE_MANAGED_JAVA;
 		return true;
+	}
+
+	/** Publishes a raw search only after its target configuration and operation both succeeded. */
+	private int commitRawSearch(long token, int scope) {
+		if (!isTargetToken(token)) return MemoryEngineContract.RESULT_TARGET_LOST;
+		if (searchBackend == MemoryEngineContract.BACKEND_MANAGED) {
+			IMemoryTargetBridge bridge = target;
+			if (bridge == null) return MemoryEngineContract.RESULT_TARGET_LOST;
+			try {
+				long clearEpoch = cancelEpoch.incrementAndGet();
+				bridge.clearManagedSearch(token, clearEpoch);
+			} catch (RemoteException exception) {
+				return MemoryEngineContract.RESULT_TARGET_LOST;
+			}
+			managedRevision = 0L;
+			managedResultCount = 0L;
+		}
+		configuredToken = token;
+		configuredScope = scope;
+		lastRawScope = scope;
+		searchBackend = MemoryEngineContract.BACKEND_RAW;
+		return MemoryEngineContract.RESULT_OK;
 	}
 
 	private int configureRawAuxiliary(long token) {
@@ -1039,7 +1046,7 @@ public final class MemoryEngineService extends Service {
 		long[] raw = idsForBackend(ids, false);
 		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
 				: managedEdit(token, isManagedCurrent(token) ? managedRevision : 0L,
-						managed, replacementValue);
+						managed, replacementValue, true);
 		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
 				: editRawAuxiliary(token, raw, replacementValue);
 		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
@@ -1066,7 +1073,7 @@ public final class MemoryEngineService extends Service {
 		}
 		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
 				: managedEdit(token, isManagedCurrent(token) ? managedRevision : 0L,
-						managed, replacementValue);
+						managed, replacementValue, false);
 		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
 				: editRawAuxiliary(token, raw, replacementValue);
 		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
@@ -1125,7 +1132,7 @@ public final class MemoryEngineService extends Service {
 		}
 		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
 				: managedFreeze(token, isManagedCurrent(token) ? managedRevision : 0L,
-						managed, mode, firstValue, secondValue);
+						managed, mode, firstValue, secondValue, false);
 		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
 				: setRawFreezeAuxiliary(token, raw, firstValue, secondValue);
 		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
@@ -1226,7 +1233,7 @@ public final class MemoryEngineService extends Service {
 		long[] raw = idsForBackend(ids, false);
 		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
 				: managedFreeze(token, isManagedCurrent(token) ? managedRevision : 0L,
-						managed, mode, first, second);
+						managed, mode, first, second, true);
 		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
 				: setRawFreezeAuxiliary(token, raw, first, second);
 		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
@@ -1282,12 +1289,11 @@ public final class MemoryEngineService extends Service {
 			Bundle result = bridge.managedStartExactInt(token, value, cancelEpoch.get());
 			int code = consumeManagedResult(result);
 			if (code == MemoryEngineContract.RESULT_OK) {
-				if (searchBackend != MemoryEngineContract.BACKEND_MANAGED) {
-					freezeRecords.clear();
-					if (managedFreezeCount == 0) stopFreezeTaskIfIdle();
-				}
-				NativeMemoryEngine.clearSearch();
+				boolean wasRaw = searchBackend != MemoryEngineContract.BACKEND_MANAGED;
+				if (wasRaw) NativeMemoryEngine.clearSearch();
 				clearSearchSession();
+				configuredToken = token;
+				configuredScope = MemoryEngineContract.SCOPE_MANAGED_JAVA;
 				searchBackend = MemoryEngineContract.BACKEND_MANAGED;
 				resetSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
 						MemoryEngineContract.SEARCH_MODE_KNOWN, MemoryEngineContract.TYPE_INT,
@@ -1353,11 +1359,12 @@ public final class MemoryEngineService extends Service {
 		}
 	}
 
-	private int managedEdit(long token, long expectedRevision, long[] ids, String replacementValue) {
+	private int managedEdit(long token, long expectedRevision, long[] ids, String replacementValue,
+	                       boolean allowWatchOnly) {
 		Integer replacement = parseManagedInt(replacementValue);
 		if (replacement == null) return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
 				"Managed edit requires a signed decimal integer");
-		if (expectedRevision <= 0L) expectedRevision = managedRevision;
+		if (!allowWatchOnly && expectedRevision <= 0L) expectedRevision = managedRevision;
 		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_MULTI_WRITE) {
 			return managedFailure(MemoryEngineContract.RESULT_SAFETY_LIMIT,
 					"Managed edits are limited to 32 rows");
@@ -1367,7 +1374,7 @@ public final class MemoryEngineService extends Service {
 				"MIDlet runtime is not connected");
 		try {
 			return consumeManagedResult(bridge.managedEdit(token, expectedRevision, ids, replacement,
-					cancelEpoch.get()));
+					allowWatchOnly, cancelEpoch.get()));
 		} catch (RemoteException exception) {
 			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 					"MIDlet runtime connection was lost");
@@ -1422,7 +1429,7 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private int managedFreeze(long token, long expectedRevision, long[] ids, int mode,
-	                          String firstValue, String secondValue) {
+	                          String firstValue, String secondValue, boolean allowWatchOnly) {
 		if (mode != MemoryEngineContract.FREEZE_LOCK) {
 			return managedFailure(MemoryEngineContract.RESULT_UNSUPPORTED,
 					"Managed Freeze supports Lock only");
@@ -1435,13 +1442,13 @@ public final class MemoryEngineService extends Service {
 			return managedFailure(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 					"The global Watch/Freeze limit would be exceeded");
 		}
-		if (expectedRevision <= 0L) expectedRevision = managedRevision;
+		if (!allowWatchOnly && expectedRevision <= 0L) expectedRevision = managedRevision;
 		IMemoryTargetBridge bridge = target;
 		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 				"MIDlet runtime is not connected");
 		try {
 			int code = consumeManagedResult(bridge.managedSetFreezeLock(token, expectedRevision, ids,
-					replacement, cancelEpoch.get()));
+					replacement, allowWatchOnly, cancelEpoch.get()));
 			if (code == MemoryEngineContract.RESULT_OK) startFreezeTaskIfNeeded();
 			return code;
 		} catch (RemoteException exception) {
@@ -1471,7 +1478,6 @@ public final class MemoryEngineService extends Service {
 		if (bridge == null) return emptyResultPage();
 		try {
 			Bundle result = bridge.managedResultPage(token, expectedRevision, offset, limit);
-			updateManagedState(result);
 			return result == null ? emptyResultPage() : result;
 		} catch (RemoteException exception) {
 			return emptyResultPage();
@@ -1483,7 +1489,6 @@ public final class MemoryEngineService extends Service {
 		if (bridge == null) return emptyWatchPage();
 		try {
 			Bundle result = bridge.managedWatchPage(token);
-			updateManagedState(result);
 			return result == null ? emptyWatchPage() : result;
 		} catch (RemoteException exception) {
 			return emptyWatchPage();
@@ -1518,10 +1523,17 @@ public final class MemoryEngineService extends Service {
 			managedWriteSupported = state.getBoolean(
 					MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED);
 		}
+		boolean acceptSearchMetadata = true;
 		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_REVISION)) {
-			managedRevision = state.getLong(MemoryEngineContract.KEY_MANAGED_REVISION);
+			long incomingRevision = state.getLong(MemoryEngineContract.KEY_MANAGED_REVISION);
+			// Pages and Binder replies can arrive after a newer operation. Revision zero is
+			// not a Watch-page sentinel here; only an authoritative clear (which resets the
+			// local fields explicitly) may move a nonzero search revision back to zero.
+			acceptSearchMetadata = incomingRevision >= managedRevision
+					|| (incomingRevision == 0L && managedRevision == 0L);
+			if (acceptSearchMetadata) managedRevision = incomingRevision;
 		}
-		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT)) {
+		if (acceptSearchMetadata && state.containsKey(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT)) {
 			managedResultCount = state.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT);
 		}
 		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT)) {

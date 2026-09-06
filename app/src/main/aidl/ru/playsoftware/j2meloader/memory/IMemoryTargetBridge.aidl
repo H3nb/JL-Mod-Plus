@@ -45,15 +45,15 @@ interface IMemoryTargetBridge {
     Bundle managedWatchPage(long runtimeToken);
     Bundle managedRefresh(long runtimeToken, in long[] ids, long expectedRevision,
             long cancellationEpoch);
-    Bundle managedEdit(long runtimeToken, long expectedRevision, in long[] ids,
-            int replacement, long cancellationEpoch);
+	Bundle managedEdit(long runtimeToken, long expectedRevision, in long[] ids,
+			int replacement, boolean allowWatchOnly, long cancellationEpoch);
     Bundle managedAddWatch(long runtimeToken, long expectedRevision, in long[] ids,
             long cancellationEpoch);
     Bundle managedRemoveWatch(long runtimeToken, in long[] ids, long cancellationEpoch);
     Bundle managedSetWatchLabel(long runtimeToken, long candidateId, String label,
             long cancellationEpoch);
-    Bundle managedSetFreezeLock(long runtimeToken, long expectedRevision, in long[] ids,
-            int replacement, long cancellationEpoch);
+	Bundle managedSetFreezeLock(long runtimeToken, long expectedRevision, in long[] ids,
+			int replacement, boolean allowWatchOnly, long cancellationEpoch);
     Bundle managedClearFreeze(long runtimeToken, in long[] ids, long cancellationEpoch);
     Bundle managedFreezeTick(long runtimeToken, long cancellationEpoch);
     void clearManagedSearch(long runtimeToken, long cancellationEpoch);

@@ -333,12 +333,24 @@ final class ManagedJavaMemoryEngine {
 
 	ManagedOperationResult edit(long token, long expectedRevision, @Nullable long[] ids,
 	                           int replacement, long operationEpoch) {
+		// The package-level overload is retained for characterization tests and older callers. A
+		// zero revision is meaningful only for an explicit Watch-only route; it is not a wildcard
+		// for selecting from the current search revision.
+		return edit(token, expectedRevision, ids, replacement, expectedRevision <= 0L,
+				operationEpoch);
+	}
+
+	ManagedOperationResult edit(long token, long expectedRevision, @Nullable long[] ids,
+	                           int replacement, boolean allowWatchOnly, long operationEpoch) {
 		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_MULTI_WRITE) {
 			return failure(token, MemoryEngineContract.RESULT_SAFETY_LIMIT,
 					"Managed edits are limited to 32 rows");
 		}
-		ResolvedBatch batch = resolveBatch(token, expectedRevision, ids, true);
+		ResolvedBatch batch = resolveBatch(token, expectedRevision, ids, allowWatchOnly);
 		if (batch.error != null) return batch.error;
+		ManagedOperationResult validation = revalidateBatch(token, expectedRevision, batch,
+				allowWatchOnly, operationEpoch);
+		if (validation != null) return validation;
 		if (!isOperationActive(token, operationEpoch)) {
 			return failure(token, MemoryEngineContract.RESULT_CANCELLED,
 					"Managed edit was cancelled before writing");
@@ -409,8 +421,15 @@ final class ManagedJavaMemoryEngine {
 					"Managed Watch request was cancelled");
 		}
 		synchronized (stateLock) {
-			if (!isCurrentLocked(token)) return failureLocked(
-					MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime changed or ended");
+			ManagedOperationResult validation = revalidateBatchLocked(token, expectedRevision, batch,
+				false, operationEpoch);
+			if (validation != null) return validation;
+			int additionalAtCommit = 0;
+			for (long id : unique) if (watches.indexOf(id) < 0) additionalAtCommit++;
+			if (watches.count + additionalAtCommit > MemoryEngineContract.MAX_WATCH_RECORDS) {
+				return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+						"The global Watch List limit is 128 rows");
+			}
 			for (int index = 0; index < unique.length; index++) {
 				if (watches.indexOf(unique[index]) >= 0) continue;
 				watches.append(unique[index], batch.owners[index], batch.slots[index],
@@ -467,19 +486,31 @@ final class ManagedJavaMemoryEngine {
 
 	ManagedOperationResult setFreezeLock(long token, long expectedRevision, @Nullable long[] ids,
 	                                    int replacement, long operationEpoch) {
+		return setFreezeLock(token, expectedRevision, ids, replacement, expectedRevision <= 0L,
+				operationEpoch);
+	}
+
+	ManagedOperationResult setFreezeLock(long token, long expectedRevision, @Nullable long[] ids,
+	                                    int replacement, boolean allowWatchOnly,
+	                                    long operationEpoch) {
 		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_FREEZE_RECORDS) {
 			return failure(token, MemoryEngineContract.RESULT_SAFETY_LIMIT,
 					"Managed Freeze Lock is limited to 32 rows");
 		}
 		long[] unique = uniqueIds(ids);
-		ResolvedBatch batch = resolveBatch(token, expectedRevision, unique, true);
+		ResolvedBatch batch = resolveBatch(token, expectedRevision, unique, allowWatchOnly);
 		if (batch.error != null) return batch.error;
 		int additionalWatches = 0;
 		int additionalFreezes = 0;
 		synchronized (stateLock) {
 			for (long id : unique) {
 				int watchIndex = watches.indexOf(id);
-				if (watchIndex < 0) additionalWatches++;
+				if (watchIndex < 0) {
+					additionalWatches++;
+					// A new Freeze Lock row is also a new frozen record. Count both global
+					// budgets before doing any target-side reads.
+					additionalFreezes++;
+				}
 				else if (!watches.freeze[watchIndex]) additionalFreezes++;
 			}
 			if (watches.count + additionalWatches > MemoryEngineContract.MAX_WATCH_RECORDS
@@ -502,6 +533,25 @@ final class ManagedJavaMemoryEngine {
 					"Managed Freeze Lock was cancelled");
 		}
 		synchronized (stateLock) {
+			ManagedOperationResult validation = revalidateBatchLocked(token, expectedRevision, batch,
+				allowWatchOnly, operationEpoch);
+			if (validation != null) return validation;
+			int watchesToAdd = 0;
+			int freezesToAdd = 0;
+			for (long id : unique) {
+				int watchIndex = watches.indexOf(id);
+				if (watchIndex < 0) {
+					watchesToAdd++;
+					freezesToAdd++;
+				} else if (!watches.freeze[watchIndex]) {
+					freezesToAdd++;
+				}
+			}
+			if (watches.count + watchesToAdd > MemoryEngineContract.MAX_WATCH_RECORDS
+					|| watches.freezeCount() + freezesToAdd > MemoryEngineContract.MAX_FREEZE_RECORDS) {
+				return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+						"The global Watch/Freeze limit would be exceeded");
+			}
 			for (int index = 0; index < unique.length; index++) {
 				int watchIndex = watches.indexOf(unique[index]);
 				if (watchIndex < 0) {
@@ -574,7 +624,11 @@ final class ManagedJavaMemoryEngine {
 				markFreezePaused(snapshot.ids[index]);
 			}
 		}
-		return result(token, MemoryEngineContract.RESULT_OK,
+		int code = written == snapshot.count ? MemoryEngineContract.RESULT_OK
+				: written > 0 ? MemoryEngineContract.RESULT_PARTIAL_WRITE
+				: snapshot.count == 0 ? MemoryEngineContract.RESULT_OK
+				: MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
+		return result(token, code,
 				"Managed Freeze Lock tick wrote " + written + " of " + snapshot.count,
 				snapshot.count, written, snapshot.count - written, 0);
 	}
@@ -725,7 +779,7 @@ final class ManagedJavaMemoryEngine {
 	}
 
 	private ResolvedBatch resolveBatch(long token, long expectedRevision, long[] ids,
-	                                  boolean allowWatch) {
+	                                  boolean allowWatchOnly) {
 		OwnerBucket[] resolvedOwners = new OwnerBucket[ids.length];
 		int[] slots = new int[ids.length];
 		Object[] strongOwners = new Object[ids.length];
@@ -741,14 +795,14 @@ final class ManagedJavaMemoryEngine {
 								"The request contains a non-managed or malformed logical id"));
 				int watchIndex = watches.indexOf(id);
 				boolean memberOfWatch = watchIndex >= 0;
-				boolean memberOfRevision = committed != null
-						&& (expectedRevision <= 0L || committed.id == expectedRevision)
+				boolean memberOfRevision = expectedRevision > 0L && committed != null
+						&& committed.id == expectedRevision
 						&& committed.contains(ManagedJavaMemoryIds.ownerHandle(id),
 								ManagedJavaMemoryIds.kind(id), ManagedJavaMemoryIds.slot(id));
 				if (!memberOfWatch && !memberOfRevision) return ResolvedBatch.error(
 						failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 								"The logical id is not a member of the committed managed revision"));
-				if (!allowWatch && memberOfWatch && !memberOfRevision) return ResolvedBatch.error(
+				if (!allowWatchOnly && memberOfWatch && !memberOfRevision) return ResolvedBatch.error(
 						failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 								"The logical id is not a current search result"));
 				OwnerBucket owner = owners.get(ManagedJavaMemoryIds.ownerHandle(id));
@@ -767,7 +821,60 @@ final class ManagedJavaMemoryEngine {
 				// successful refresh or a failed mutation. Never rebind it.
 			}
 		}
-		return new ResolvedBatch(ids.length, resolvedOwners, slots, strongOwners, watch, null);
+		return new ResolvedBatch(ids, ids.length, resolvedOwners, slots, strongOwners, watch, null);
+	}
+
+	/**
+	 * Revalidates a resolved batch immediately before a mutation. Reflection reads intentionally
+	 * happen outside stateLock, so the owner identity, selected revision, and cancellation epoch
+	 * are checked again at the commit boundary instead of trusting an earlier lookup.
+	 */
+	@Nullable
+	private ManagedOperationResult revalidateBatch(long token, long expectedRevision,
+	                                               ResolvedBatch batch, boolean allowWatchOnly,
+	                                               long operationEpoch) {
+		synchronized (stateLock) {
+			return revalidateBatchLocked(token, expectedRevision, batch, allowWatchOnly,
+					operationEpoch);
+		}
+	}
+
+	@Nullable
+	private ManagedOperationResult revalidateBatchLocked(long token, long expectedRevision,
+	                                                     ResolvedBatch batch,
+	                                                     boolean allowWatchOnly,
+	                                                     long operationEpoch) {
+		if (!isCurrentLocked(token)) return failureLocked(
+				MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime changed or ended");
+		if (!isOperationActive(token, operationEpoch)) return failureLocked(
+				MemoryEngineContract.RESULT_CANCELLED,
+				"Managed mutation was cancelled before its commit boundary");
+		for (int index = 0; index < batch.count; index++) {
+			long id = batch.ids[index];
+			int watchIndex = watches.indexOf(id);
+			boolean memberOfWatch = watchIndex >= 0;
+			boolean memberOfRevision = expectedRevision > 0L && committed != null
+					&& committed.id == expectedRevision
+					&& committed.contains(ManagedJavaMemoryIds.ownerHandle(id),
+							ManagedJavaMemoryIds.kind(id), ManagedJavaMemoryIds.slot(id));
+			if (!memberOfWatch && !memberOfRevision) return failureLocked(
+					MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+					"The logical id is no longer a member of the selected managed state");
+			if (!allowWatchOnly && memberOfWatch && !memberOfRevision) return failureLocked(
+					MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+					"The logical id is no longer a current search result");
+			OwnerBucket owner = owners.get(ManagedJavaMemoryIds.ownerHandle(id));
+			if (owner != batch.owners[index] || owner.kind != ManagedJavaMemoryIds.kind(id)
+					|| ManagedJavaMemoryIds.slot(id) != batch.slots[index]) {
+				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"The managed owner changed before the mutation could commit");
+			}
+			if (owner.kind != KIND_STATIC_FIELD && owner.strongOwner() != batch.strongOwners[index]) {
+				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"The managed owner was collected or rebound before the mutation could commit");
+			}
+		}
+		return null;
 	}
 
 	private long[] uniqueIds(long[] ids) {
@@ -1244,10 +1351,10 @@ final class ManagedJavaMemoryEngine {
 		final Map<Long, OwnerBucketBuilder> byOwner = new HashMap<>();
 		long candidateCount;
 
-		OwnerBucketBuilder builderFor(OwnerBucket owner) {
+		OwnerBucketBuilder builderFor(OwnerBucket owner, int maxCandidates) {
 			OwnerBucketBuilder builder = byOwner.get(owner.handle);
 			if (builder == null) {
-				builder = new OwnerBucketBuilder(owner);
+				builder = new OwnerBucketBuilder(owner, maxCandidates);
 				byOwner.put(owner.handle, builder);
 				builders.add(builder);
 			}
@@ -1257,7 +1364,7 @@ final class ManagedJavaMemoryEngine {
 		boolean add(OwnerBucket owner, int slot, int initialValue, int previousValue,
 		            Limits limits) {
 			if (candidateCount >= limits.maxCandidates) return false;
-			OwnerBucketBuilder builder = builderFor(owner);
+			OwnerBucketBuilder builder = builderFor(owner, limits.maxCandidates);
 			if (!builder.add(slot, initialValue, previousValue, limits)) return false;
 			candidateCount++;
 			return true;
@@ -1281,13 +1388,16 @@ final class ManagedJavaMemoryEngine {
 
 	private static final class OwnerBucketBuilder {
 		final OwnerBucket owner;
-		final IntBuffer slots = new IntBuffer();
-		final IntBuffer initial = new IntBuffer();
-		final IntBuffer previous = new IntBuffer();
 		int size;
+		final IntBuffer slots;
+		final IntBuffer initial;
+		final IntBuffer previous;
 
-		OwnerBucketBuilder(OwnerBucket owner) {
+		OwnerBucketBuilder(OwnerBucket owner, int maxCandidates) {
 			this.owner = owner;
+			this.slots = new IntBuffer(maxCandidates);
+			this.initial = new IntBuffer(maxCandidates);
+			this.previous = new IntBuffer(maxCandidates);
 		}
 
 		boolean add(int slot, int initialValue, int previousValue, Limits limits) {
@@ -1301,14 +1411,20 @@ final class ManagedJavaMemoryEngine {
 	}
 
 	private static final class IntBuffer {
-		private int[] values = new int[16];
+		private int[] values;
 		private int size;
+
+		IntBuffer(int max) {
+			values = new int[Math.min(16, Math.max(0, max))];
+		}
 
 		boolean add(int value, int max) {
 			if (size >= max) return false;
 			if (size == values.length) {
-				if (values.length > max / 2) return false;
-				values = Arrays.copyOf(values, Math.min(max, values.length * 2));
+				long doubled = Math.max(1L, (long) values.length * 2L);
+				int next = (int) Math.min((long) max, doubled);
+				if (next <= values.length) return false;
+				values = Arrays.copyOf(values, next);
 			}
 			values[size++] = value;
 			return true;
@@ -1528,10 +1644,14 @@ final class ManagedJavaMemoryEngine {
 		}
 
 		WatchSnapshot frozenSnapshot(Map<Long, OwnerBucket> ownerMap) {
-			WatchSnapshot result = new WatchSnapshot(freezeCount());
+			int activeCount = 0;
+			for (int index = 0; index < count; index++) {
+				if (freeze[index] && !freezePaused[index]) activeCount++;
+			}
+			WatchSnapshot result = new WatchSnapshot(activeCount);
 			int output = 0;
 			for (int index = 0; index < count; index++) {
-				if (!freeze[index]) continue;
+				if (!freeze[index] || freezePaused[index]) continue;
 				result.ids[output] = ids[index];
 				result.owners[output] = ownerMap.get(ManagedJavaMemoryIds.ownerHandle(ids[index]));
 				result.slots[output] = slots[index];
@@ -1579,6 +1699,7 @@ final class ManagedJavaMemoryEngine {
 	}
 
 	private static final class ResolvedBatch {
+		final long[] ids;
 		final int count;
 		final OwnerBucket[] owners;
 		final int[] slots;
@@ -1586,8 +1707,9 @@ final class ManagedJavaMemoryEngine {
 		final boolean[] watch;
 		final ManagedOperationResult error;
 
-		ResolvedBatch(int count, OwnerBucket[] owners, int[] slots, Object[] strongOwners,
+		ResolvedBatch(long[] ids, int count, OwnerBucket[] owners, int[] slots, Object[] strongOwners,
 		             boolean[] watch, ManagedOperationResult error) {
+			this.ids = ids;
 			this.count = count;
 			this.owners = owners;
 			this.slots = slots;
@@ -1597,7 +1719,7 @@ final class ManagedJavaMemoryEngine {
 		}
 
 		static ResolvedBatch error(ManagedOperationResult error) {
-			return new ResolvedBatch(0, null, null, null, null, error);
+			return new ResolvedBatch(null, 0, null, null, null, null, error);
 		}
 	}
 

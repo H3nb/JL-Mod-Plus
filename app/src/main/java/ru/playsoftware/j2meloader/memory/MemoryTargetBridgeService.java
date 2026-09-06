@@ -133,9 +133,9 @@ public final class MemoryTargetBridgeService extends Service {
 
 		@Override
 		public Bundle managedEdit(long runtimeToken, long expectedRevision, long[] ids,
-				int replacement, long cancellationEpoch) {
+				int replacement, boolean allowWatchOnly, long cancellationEpoch) {
 			return managedResult(managedEngine.edit(runtimeToken, expectedRevision, ids, replacement,
-					cancellationEpoch));
+					allowWatchOnly, cancellationEpoch));
 		}
 
 		@Override
@@ -159,9 +159,9 @@ public final class MemoryTargetBridgeService extends Service {
 
 		@Override
 		public Bundle managedSetFreezeLock(long runtimeToken, long expectedRevision, long[] ids,
-				int replacement, long cancellationEpoch) {
+				int replacement, boolean allowWatchOnly, long cancellationEpoch) {
 			return managedResult(managedEngine.setFreezeLock(runtimeToken, expectedRevision, ids,
-					replacement, cancellationEpoch));
+					replacement, allowWatchOnly, cancellationEpoch));
 		}
 
 		@Override
@@ -305,6 +305,9 @@ public final class MemoryTargetBridgeService extends Service {
 
 	private static Bundle watchPage(ManagedJavaMemoryEngine.ManagedPage page) {
 		Bundle result = resultPage(page);
+		// A Watch page is presentation-only. Its revision field is deliberately zero and must
+		// never be interpreted by :memory_engine as the current search revision.
+		result.remove(MemoryEngineContract.KEY_MANAGED_REVISION);
 		result.putLongArray(MemoryEngineContract.KEY_WATCH_IDS, page.ids);
 		result.putStringArray(MemoryEngineContract.KEY_WATCH_VALUES, page.values);
 		result.putStringArray(MemoryEngineContract.KEY_WATCH_INITIAL_VALUES, page.initialValues);

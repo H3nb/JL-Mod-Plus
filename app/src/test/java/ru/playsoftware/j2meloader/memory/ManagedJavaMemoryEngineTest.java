@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Hashtable;
+import java.util.Arrays;
 import java.util.Stack;
 import java.util.Vector;
 
@@ -140,6 +141,38 @@ public class ManagedJavaMemoryEngineTest {
 		assertEquals(MemoryEngineContract.RESULT_OK,
 				engine.edit(TOKEN, 0L, new long[]{id}, 20, 0).code);
 		assertEquals(20, root.rootMatch);
+	}
+
+	@Test
+	public void watchPageDoesNotChangeCommittedSearchRevision() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		assertTrue(search.revision > 0L);
+		assertEquals(0L, engine.watchPage(TOKEN).revision);
+		assertEquals(search.revision, engine.session(TOKEN).revision);
+		assertEquals(search.resultCount, engine.session(TOKEN).resultCount);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.refineInt(TOKEN, search.revision, MemoryEngineContract.PREDICATE_EQUAL,
+						MemoryEngineContract.COMPARE_PREVIOUS, 7, 0).code);
+	}
+
+	@Test
+	public void candidateBufferGrowsToNonPowerOfTwoLimitAndRejectsTheNextRow() {
+		MemoryDiscoveryBridge.install(TOKEN, getClass().getClassLoader());
+		MemoryDiscoveryBridge.tailSeen(CapacityRoot.class);
+		CapacityRoot capacityRoot = new CapacityRoot(30);
+		MemoryDiscoveryBridge.setMidletRoot(TOKEN, capacityRoot);
+		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
+				100, 100, 100, 30, 100, 100));
+
+		ManagedJavaMemoryEngine.ManagedOperationResult accepted = engine.startExactInt(TOKEN, 7, 0);
+		assertEquals(MemoryEngineContract.RESULT_OK, accepted.code);
+		assertEquals(30L, accepted.resultCount);
+
+		capacityRoot.values = new int[31];
+		Arrays.fill(capacityRoot.values, 7);
+		ManagedJavaMemoryEngine.ManagedOperationResult rejected = engine.startExactInt(TOKEN, 7, 0);
+		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT, rejected.code);
+		assertEquals(accepted.revision, engine.session(TOKEN).revision);
 	}
 
 	@Test
@@ -264,5 +297,14 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	private static final class CustomVector extends Vector<FixtureChild> {
+	}
+
+	private static final class CapacityRoot {
+		int[] values;
+
+		CapacityRoot(int count) {
+			values = new int[count];
+			Arrays.fill(values, 7);
+		}
 	}
 }
