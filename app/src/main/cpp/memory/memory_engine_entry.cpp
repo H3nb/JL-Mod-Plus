@@ -631,8 +631,7 @@ void advanceAuthoritativeKnownProgress(void *, std::size_t bytes) {
         const OperationContext &context, jint valueType, jint predicate,
         const std::string &first, const std::string &second) {
     if (valueType == kTypeAuto ||
-        context.nextId > std::numeric_limits<std::uint64_t>::max() -
-                                 kCandidateLimit) {
+        context.nextId > kRawCandidateIdMax - kCandidateLimit) {
         setMessage(valueType == kTypeAuto
                            ? "Authoritative ResultStore first scan requires an explicit type"
                            : "Candidate identifier space is exhausted for this runtime");

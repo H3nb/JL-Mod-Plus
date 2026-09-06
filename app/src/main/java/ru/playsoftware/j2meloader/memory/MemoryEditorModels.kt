@@ -51,6 +51,7 @@ internal data class MemoryWatchRow(
     val label: String = "",
     val freezeMode: Int = -1,
     val freezePaused: Boolean = false,
+    val backend: Int = MemoryEngineContract.BACKEND_RAW,
 )
 
 /** One engine-formatted logical address result used by the :memory_engine presentation. */
@@ -126,9 +127,11 @@ internal object MemoryWatchPageParser {
         val labels = bundle.getStringArray(MemoryEngineContract.KEY_WATCH_LABELS) ?: return emptyList()
         val freezeModes = bundle.getIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES) ?: return emptyList()
         val freezePaused = bundle.getBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED) ?: return emptyList()
+        val backends = bundle.getIntArray(MemoryEngineContract.KEY_WATCH_BACKENDS)
+            ?: IntArray(ids.size) { MemoryEngineContract.BACKEND_RAW }
         return parse(
             ids, values, initialValues, previousValues, addresses, types, states, relocations,
-            labels, freezeModes, freezePaused,
+            labels, freezeModes, freezePaused, backends,
         )
     }
 
@@ -144,10 +147,12 @@ internal object MemoryWatchPageParser {
         labels: Array<String>,
         freezeModes: IntArray,
         freezePaused: BooleanArray,
+        backends: IntArray = IntArray(ids.size) { MemoryEngineContract.BACKEND_RAW },
     ): List<MemoryWatchRow> {
         if (listOf(
                 values.size, initialValues.size, previousValues.size, addresses.size, types.size,
                 states.size, relocations.size, labels.size, freezeModes.size, freezePaused.size,
+                backends.size,
             ).any { it != ids.size }) {
             return emptyList()
         }
@@ -168,6 +173,7 @@ internal object MemoryWatchPageParser {
                     label = labels[index],
                     freezeMode = freezeModes[index],
                     freezePaused = freezePaused[index],
+                    backend = backends[index],
                 )
             }
         }.takeIf { it.size == ids.size }.orEmpty()
@@ -180,6 +186,9 @@ internal data class MemoryEditorUiState(
     val connected: Boolean = false,
     val supported: Boolean = false,
     val writeSupported: Boolean = false,
+    val managedSupported: Boolean = false,
+    val managedWriteSupported: Boolean = false,
+    val managedRevision: Long = 0L,
     val runtimeToken: Long = 0,
     val busy: Boolean = false,
     val searching: Boolean = false,

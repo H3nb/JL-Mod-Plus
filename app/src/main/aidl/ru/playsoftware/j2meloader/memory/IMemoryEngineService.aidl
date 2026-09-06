@@ -30,6 +30,8 @@ interface IMemoryEngineService {
     long refineKnown(long runtimeToken, int predicate, String firstValue, String secondValue);
     long refineRelative(long runtimeToken, int predicate, int compareTarget,
             String firstValue, String secondValue);
+    long refineManagedInt(long runtimeToken, long expectedRevision, int predicate,
+            int compareTarget, String value);
     long undoSearch(long runtimeToken);
     long refreshCandidates(long runtimeToken, in long[] candidateIds, boolean passiveRefresh);
     long removeCandidates(long runtimeToken, in long[] candidateIds);
@@ -38,9 +40,14 @@ interface IMemoryEngineService {
     long filterResultGroups(long runtimeToken, in long[] resultIds, boolean keep);
     long editResultGroups(long runtimeToken, in long[] resultIds, int valueType,
             String replacementValue);
+    long editManagedResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
+            String replacementValue);
     long addWatchResultGroups(long runtimeToken, in long[] resultIds, int valueType);
+    long addManagedWatchResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds);
     long setFreezeResultGroups(long runtimeToken, in long[] resultIds, int valueType, int mode,
             String firstValue, String secondValue);
+    long setManagedFreezeResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
+            int mode, String firstValue, String secondValue);
     long editInspectorValue(long runtimeToken, long anchorCandidateId, int relativeOffset,
             int valueType, long expectedBits, String replacementValue);
 

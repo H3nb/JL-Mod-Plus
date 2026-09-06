@@ -135,6 +135,8 @@ constexpr jint kLost = 3;
 // aliases covers the dense searches seen in the prototype while retaining a deterministic bound
 // on old API 23 devices. An incomplete set is never committed.
 constexpr size_t kCandidateLimit = 2'000'000;
+// Managed Java logical ids reserve the top two bits; raw ids stay in the lower namespace.
+constexpr std::uint64_t kRawCandidateIdMax = (std::uint64_t{1} << 62U) - 1U;
 constexpr size_t kSnapshotByteLimit = 96U * 1024U * 1024U;
 constexpr size_t kReadChunkSize = 256U * 1024U;
 constexpr size_t kDirectRefineLimit = 4'096;
@@ -1113,7 +1115,7 @@ jint collectKnown(const OperationContext &context, jint requestedType,
                   const std::string &second,
                   std::shared_ptr<SearchState> &next) {
     if (context.nextId >
-        std::numeric_limits<uint64_t>::max() - kCandidateLimit) {
+        kRawCandidateIdMax - kCandidateLimit) {
         setMessage("Candidate identifier space is exhausted for this runtime");
         return kResourceLimit;
     }
@@ -1261,7 +1263,7 @@ jint scanKnown(const OperationContext &context, jint requestedType,
                jint predicate, const std::string &first,
                const std::string &second) {
     if (context.nextId >
-        std::numeric_limits<uint64_t>::max() - kCandidateLimit) {
+        kRawCandidateIdMax - kCandidateLimit) {
         setMessage("Candidate identifier space is exhausted for this runtime");
         return kResourceLimit;
     }
@@ -1333,7 +1335,7 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
     if (types.size() < 2 || types.size() > 8 || values.size() != types.size() ||
         maxDistance <= 0 || maxDistance > 4096 ||
         context.nextId >
-                std::numeric_limits<uint64_t>::max() - kCandidateLimit) {
+                kRawCandidateIdMax - kCandidateLimit) {
         setMessage(
                 "Group Search requires 2-8 typed values within 1-4096 bytes");
         return kInvalidRequest;
@@ -1780,7 +1782,7 @@ jint refineCandidates(const OperationContext &context, jint predicate,
     }
     if (context.state->mode == StateMode::Unknown &&
         context.nextId >
-                std::numeric_limits<uint64_t>::max() - kCandidateLimit) {
+                kRawCandidateIdMax - kCandidateLimit) {
         setMessage("Candidate identifier space is exhausted for this runtime");
         return kResourceLimit;
     }

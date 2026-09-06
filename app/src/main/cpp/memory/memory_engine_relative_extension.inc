@@ -162,7 +162,7 @@ void advanceAuthoritativeRelativeProgress(void *, std::size_t bytes) {
         return kInvalidRequest;
     }
     if (context.nextId >
-        std::numeric_limits<std::uint64_t>::max() - kCandidateLimit) {
+        kRawCandidateIdMax - kCandidateLimit) {
         setMessage("Candidate identifier space is exhausted for this runtime");
         return kResourceLimit;
     }

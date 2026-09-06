@@ -570,7 +570,7 @@ struct AuthoritativeAutoBuildContext {
 [[nodiscard]] jint scanAutoV2Authoritative(
         const OperationContext &context, jint predicate,
         const std::string &first, const std::string &second) {
-    if (context.nextId > std::numeric_limits<std::uint64_t>::max() - kCandidateLimit) {
+    if (context.nextId > kRawCandidateIdMax - kCandidateLimit) {
         setMessage("Candidate identifier space is exhausted for this runtime");
         return kResourceLimit;
     }

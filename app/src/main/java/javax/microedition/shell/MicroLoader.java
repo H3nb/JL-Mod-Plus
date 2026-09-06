@@ -177,8 +177,10 @@ public class MicroLoader {
 		timingSession = null;
 		autoSpeedController = null;
 		GuestTimingBridge.clear(session);
-		MemoryRuntimeSession.close(memoryRuntimeToken);
+		long token = memoryRuntimeToken;
 		memoryRuntimeToken = 0L;
+		MemoryDiscoveryBridge.close(token);
+		MemoryRuntimeSession.close(token);
 	}
 
 	/**
@@ -348,6 +350,11 @@ public class MicroLoader {
 			}
 			ClassLoader loader = new AppClassLoader(dexSource.getAbsolutePath(),
 					dexOptDir.getAbsolutePath(), ContextHolder.getActivity().getClassLoader(), appDir);
+			if (timingTransformCompatible) {
+				// The bridge must exist before loading the main class: its static initializer may be the
+				// first converted class to publish a lifecycle tail.
+				MemoryDiscoveryBridge.install(memoryRuntimeToken, loader);
+			}
 			Log.i(TAG, "loadMIDletList main: " + mainClass + " from dex:" + dexSource.getPath());
 			// Preserve the legacy one-argument reflection ABI for converted archives. New
 			// conversion passes an explicit caller token, but old artifacts need the child loader
@@ -358,7 +365,13 @@ public class MicroLoader {
 			Thread.currentThread().setContextClassLoader(clazz.getClassLoader());
 			Constructor<MIDlet> init = clazz.getDeclaredConstructor();
 			init.setAccessible(true);
-			return init.newInstance();
+			MIDlet midlet = init.newInstance();
+			if (timingTransformCompatible) {
+				// Publish only after the constructor has returned. An instance escaping during <clinit>
+				// is not evidence that the class completed initialization.
+				MemoryDiscoveryBridge.setMidletRoot(memoryRuntimeToken, midlet);
+			}
+			return midlet;
 		} else {
 			AppClassLoader.setDataDir(appDir);
 			//noinspection unchecked

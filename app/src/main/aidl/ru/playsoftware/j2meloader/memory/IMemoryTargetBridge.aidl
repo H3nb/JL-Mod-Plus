@@ -8,6 +8,7 @@
 
 package ru.playsoftware.j2meloader.memory;
 
+import android.os.Bundle;
 import ru.playsoftware.j2meloader.memory.IMemoryTargetCallback;
 
 /** Thin target-process bridge. Scanning and candidate ownership remain in :memory_engine. */
@@ -33,4 +34,28 @@ interface IMemoryTargetBridge {
      * selected by the requested scope are returned.
      */
     long[] getResidentRuns(long runtimeToken, int scope, int maxRuns);
+
+    /** Managed Java graph backend; all values and ids remain logical and target-owned. */
+    Bundle getManagedCapabilities(long runtimeToken);
+    Bundle getManagedSessionInfo(long runtimeToken);
+    Bundle managedStartExactInt(long runtimeToken, int value, long cancellationEpoch);
+    Bundle managedRefineInt(long runtimeToken, long expectedRevision, int predicate,
+            int compareTarget, int value, long cancellationEpoch);
+    Bundle managedResultPage(long runtimeToken, long expectedRevision, int offset, int limit);
+    Bundle managedWatchPage(long runtimeToken);
+    Bundle managedRefresh(long runtimeToken, in long[] ids, long expectedRevision,
+            long cancellationEpoch);
+    Bundle managedEdit(long runtimeToken, long expectedRevision, in long[] ids,
+            int replacement, long cancellationEpoch);
+    Bundle managedAddWatch(long runtimeToken, long expectedRevision, in long[] ids,
+            long cancellationEpoch);
+    Bundle managedRemoveWatch(long runtimeToken, in long[] ids, long cancellationEpoch);
+    Bundle managedSetWatchLabel(long runtimeToken, long candidateId, String label,
+            long cancellationEpoch);
+    Bundle managedSetFreezeLock(long runtimeToken, long expectedRevision, in long[] ids,
+            int replacement, long cancellationEpoch);
+    Bundle managedClearFreeze(long runtimeToken, in long[] ids, long cancellationEpoch);
+    Bundle managedFreezeTick(long runtimeToken, long cancellationEpoch);
+    void clearManagedSearch(long runtimeToken, long cancellationEpoch);
+    void cancelManaged(long runtimeToken, long cancellationEpoch);
 }

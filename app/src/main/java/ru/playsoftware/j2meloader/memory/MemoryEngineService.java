@@ -76,6 +76,15 @@ public final class MemoryEngineService extends Service {
 	private volatile long configuredToken;
 	private volatile long observedRuntimeToken;
 	private volatile int configuredScope = MemoryEngineContract.SCOPE_JAVA_FAST;
+	private volatile int lastRawScope = MemoryEngineContract.SCOPE_JAVA_FAST;
+	private volatile int searchBackend = MemoryEngineContract.BACKEND_RAW;
+	private volatile boolean managedSupported;
+	private volatile boolean managedWriteSupported;
+	private volatile long managedRevision;
+	private volatile long managedResultCount;
+	private volatile int managedWatchCount;
+	private volatile int managedFreezeCount;
+	private volatile String managedLastMessage;
 	private final Map<Long, String> watchLabels = new ConcurrentHashMap<>();
 	private final Map<Long, FreezeRecord> freezeRecords = new ConcurrentHashMap<>();
 	private final MemoryGcBindingTracker gcBindings = new MemoryGcBindingTracker();
@@ -131,6 +140,10 @@ public final class MemoryEngineService extends Service {
 			IMemoryTargetBridge bridge = target;
 			if (bridge == null) {
 				result.putBoolean(MemoryEngineContract.KEY_SUPPORTED, false);
+				result.putBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED, false);
+				result.putBoolean(MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED, false);
+				result.putInt(MemoryEngineContract.KEY_SEARCH_BACKEND,
+						MemoryEngineContract.BACKEND_RAW);
 				result.putLong(MemoryEngineContract.KEY_GC_COUNT,
 						MemoryEngineContract.GC_COUNT_UNKNOWN);
 				result.putString(MemoryEngineContract.KEY_MESSAGE, "MIDlet runtime is not connected");
@@ -144,11 +157,30 @@ public final class MemoryEngineService extends Service {
 				long gcCount = token == 0L
 						? MemoryEngineContract.GC_COUNT_UNKNOWN : bridge.getGcCount(token);
 				long[] probe = token == 0L ? null : bridge.getReadProbe(token);
-				boolean supported = token != 0L && pid > 0 && pageSize > 0 &&
+				Bundle managed = token == 0L ? null : bridge.getManagedCapabilities(token);
+				updateManagedState(managed);
+				if (configuredToken == 0L && managedSupported
+						&& (managedRevision > 0L || managedWatchCount > 0)) {
+					// A freshly reconnected :memory_engine process may have no local session metadata.
+					// Adopt only target-owned managed state; raw state still requires explicit native
+					// configuration, and a watch-only target remains a raw/empty search session.
+					configuredToken = token;
+					configuredScope = MemoryEngineContract.SCOPE_MANAGED_JAVA;
+					if (managedRevision > 0L) searchBackend = MemoryEngineContract.BACKEND_MANAGED;
+				}
+				boolean rawSupported = token != 0L && pid > 0 && pageSize > 0 &&
 						canReadProbe(pid, probe);
-				boolean writeSupported = supported && canWriteProbe(pid, probe);
+				boolean rawWriteSupported = rawSupported && canWriteProbe(pid, probe);
+				boolean supported = rawSupported || managedSupported;
+				boolean writeSupported = rawWriteSupported || managedWriteSupported;
 				result.putBoolean(MemoryEngineContract.KEY_SUPPORTED, supported);
 				result.putBoolean(MemoryEngineContract.KEY_WRITE_SUPPORTED, writeSupported);
+				result.putBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED, managedSupported);
+				result.putBoolean(MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED,
+						managedWriteSupported);
+				result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, managedRevision);
+				result.putLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT, managedResultCount);
+				result.putInt(MemoryEngineContract.KEY_SEARCH_BACKEND, searchBackend);
 				result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, token);
 				result.putInt(MemoryEngineContract.KEY_TARGET_PID, pid);
 				result.putInt(MemoryEngineContract.KEY_PAGE_SIZE, pageSize);
@@ -160,6 +192,8 @@ public final class MemoryEngineService extends Service {
 				}
 			} catch (RemoteException exception) {
 				result.putBoolean(MemoryEngineContract.KEY_SUPPORTED, false);
+				result.putBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED, false);
+				result.putBoolean(MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED, false);
 				result.putLong(MemoryEngineContract.KEY_GC_COUNT,
 						MemoryEngineContract.GC_COUNT_UNKNOWN);
 				result.putString(MemoryEngineContract.KEY_MESSAGE, "MIDlet runtime connection was lost");
@@ -184,6 +218,10 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long startKnownSearch(long token, int scope, int type, int predicate,
 		                             String first, String second) {
+			if (scope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
+				return enqueueManagedSearch(token, () -> managedStartExact(token, type, predicate,
+						first, second));
+			}
 			return enqueueSearch(token, true, scope, () -> runNewSearchWithGcGuard(
 					token,
 					() -> NativeMemoryEngine.startKnown(type, predicate, first, second),
@@ -195,6 +233,9 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long startUnknownSearch(long token, int scope, int type) {
+			if (scope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
+				return enqueueManagedSearch(token, () -> MemoryEngineContract.RESULT_UNSUPPORTED);
+			}
 			return enqueueSearch(token, true, scope, () -> runNewSearchWithGcGuard(
 					token,
 					() -> NativeMemoryEngine.startUnknown(type),
@@ -207,6 +248,9 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long startGroupSearch(long token, int scope, int[] types,
 		                             String[] values, int maxDistance) {
+			if (scope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
+				return enqueueManagedSearch(token, () -> MemoryEngineContract.RESULT_UNSUPPORTED);
+			}
 			return enqueueSearch(token, true, scope, () -> runNewSearchWithGcGuard(
 					token,
 					() -> NativeMemoryEngine.startGroup(types, values, maxDistance),
@@ -219,6 +263,9 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long startNearbySearch(long token, long anchorCandidateId, int radius,
 		                              int type, int predicate, String first, String second) {
+			if (ManagedJavaMemoryIds.isManaged(anchorCandidateId)) {
+				return enqueueManagedSearch(token, () -> MemoryEngineContract.RESULT_UNSUPPORTED);
+			}
 			return enqueueSearch(token, false, 0, () -> {
 				if (anchorCandidateId <= 0L || !MemoryEngineContract.isNearbyRadius(radius)) {
 					return MemoryEngineContract.RESULT_INVALID_REQUEST;
@@ -242,6 +289,10 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long refineKnown(long token, int predicate, String first, String second) {
+			if (isManagedCurrent(token)) {
+				return enqueueManagedSearch(token, () -> managedRefine(token, predicate,
+						MemoryEngineContract.COMPARE_PREVIOUS, first));
+			}
 			return enqueueSearch(token, false, 0,
 					() -> refineKnownAddressSet(token, predicate, first, second));
 		}
@@ -249,12 +300,26 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long refineRelative(long token, int predicate, int compareTarget,
 		                           String first, String second) {
+			if (isManagedCurrent(token)) {
+				return enqueueManagedSearch(token, () -> managedRefine(token, predicate,
+						compareTarget, first));
+			}
 			return enqueueSearch(token, false, 0,
 					() -> refineRelativeGcAware(token, predicate, compareTarget, first, second));
 		}
 
 		@Override
+		public long refineManagedInt(long token, long expectedRevision, int predicate,
+		                             int compareTarget, String value) {
+			return enqueueManagedSearch(token, () -> managedRefine(token, expectedRevision, predicate,
+					compareTarget, value));
+		}
+
+		@Override
 		public long undoSearch(long token) {
+			if (isManagedCurrent(token)) {
+				return enqueueManagedSearch(token, () -> MemoryEngineContract.RESULT_UNSUPPORTED);
+			}
 			return enqueue(token, false, 0, () -> {
 				synchronizeSearchHistoryDepth(NativeMemoryEngine.historyDepth());
 				int result = NativeMemoryEngine.undo();
@@ -266,6 +331,11 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long refreshCandidates(long token, long[] candidateIds, boolean passiveRefresh) {
 			long[] ids = candidateIds == null ? new long[0] : candidateIds;
+			if (containsManagedIds(ids)) {
+				if (!allManagedIds(ids)) return enqueueMixed(token, passiveRefresh,
+						() -> refreshMixed(token, ids, passiveRefresh));
+				return enqueueManaged(token, false, () -> managedRefresh(token, ids, passiveRefresh));
+			}
 			return enqueue(token, false, 0, passiveRefresh,
 					() -> passiveRefresh
 							? refreshVisibleCandidates(ids)
@@ -274,6 +344,9 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long removeCandidates(long token, long[] candidateIds) {
+			if (containsManagedIds(candidateIds)) {
+				return enqueueManaged(token, false, () -> MemoryEngineContract.RESULT_UNSUPPORTED);
+			}
 			return enqueue(token, false, 0, () -> {
 				int result = NativeMemoryEngine.filter(candidateIds, false);
 				if (result == MemoryEngineContract.RESULT_OK) {
@@ -286,6 +359,9 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long keepCandidates(long token, long[] candidateIds) {
+			if (containsManagedIds(candidateIds)) {
+				return enqueueManaged(token, false, () -> MemoryEngineContract.RESULT_UNSUPPORTED);
+			}
 			return enqueue(token, false, 0, () -> {
 				int result = NativeMemoryEngine.filter(candidateIds, true);
 				if (result == MemoryEngineContract.RESULT_OK) {
@@ -298,6 +374,12 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long editCandidates(long token, long[] candidateIds, String replacementValue) {
+			if (containsManagedIds(candidateIds)) {
+				if (!allManagedIds(candidateIds)) return enqueueMixed(token, false,
+						() -> editMixed(token, candidateIds, replacementValue));
+				return enqueueManaged(token, false, () -> managedEdit(token, managedRevision,
+						candidateIds, replacementValue));
+			}
 			return enqueue(token, false, 0, () -> {
 				if (candidateIds == null || candidateIds.length == 0 ||
 						candidateIds.length > MemoryEngineContract.MAX_MULTI_WRITE) {
@@ -313,6 +395,7 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long getResultCount(long token) {
+			if (isManagedCurrent(token)) return managedResultCount;
 			return isCurrentToken(token) ? NativeMemoryEngine.resultCount() : 0L;
 		}
 
@@ -327,6 +410,9 @@ public final class MemoryEngineService extends Service {
 					limit > MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
 				return emptyResultPage();
 			}
+			if (isManagedCurrent(token)) {
+				return managedResultPage(token, managedRevision, offset, limit);
+			}
 			long[] rows = NativeMemoryEngine.resultPage(offset, limit);
 			bindingCache.recordPage(rows, false, offset);
 			return formatResultPage(rows);
@@ -334,6 +420,9 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long filterResultGroups(long token, long[] resultIds, boolean keep) {
+			if (containsManagedIds(resultIds)) {
+				return enqueueManaged(token, false, () -> MemoryEngineContract.RESULT_UNSUPPORTED);
+			}
 			return enqueue(token, false, 0, () -> {
 				long[] candidateIds = NativeMemoryEngine.expandResultGroups(resultIds,
 						MemoryEngineContract.TYPE_AUTO);
@@ -352,6 +441,14 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long editResultGroups(long token, long[] resultIds, int valueType,
 		                             String replacementValue) {
+			if (containsManagedIds(resultIds)) {
+				if (valueType != MemoryEngineContract.TYPE_INT) return enqueueManaged(token, false,
+						() -> MemoryEngineContract.RESULT_UNSUPPORTED);
+				if (!allManagedIds(resultIds)) return enqueueMixed(token, false,
+						() -> editResultGroupsMixed(token, resultIds, valueType, replacementValue));
+				return enqueueManaged(token, false, () -> managedEdit(token, managedRevision,
+						resultIds, replacementValue));
+			}
 			return enqueue(token, false, 0, () -> {
 				if (!MemoryEngineContract.isCandidateType(valueType)) {
 					return MemoryEngineContract.RESULT_INVALID_REQUEST;
@@ -370,7 +467,22 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
+		public long editManagedResultGroups(long token, long expectedRevision, long[] resultIds,
+		                                    String replacementValue) {
+			return enqueueManaged(token, false, () -> managedEdit(token, expectedRevision,
+					resultIds, replacementValue));
+		}
+
+		@Override
 		public long addWatchResultGroups(long token, long[] resultIds, int valueType) {
+			if (containsManagedIds(resultIds)) {
+				if (valueType != MemoryEngineContract.TYPE_INT) return enqueueManaged(token, false,
+						() -> MemoryEngineContract.RESULT_UNSUPPORTED);
+				if (!allManagedIds(resultIds)) return enqueueMixed(token, false,
+						() -> addWatchResultGroupsMixed(token, resultIds, valueType));
+				return enqueueManaged(token, false, () -> managedAddWatch(token, managedRevision,
+						resultIds));
+			}
 			return enqueue(token, false, 0, () -> {
 				if (!MemoryEngineContract.isCandidateType(valueType)) {
 					return MemoryEngineContract.RESULT_INVALID_REQUEST;
@@ -378,6 +490,9 @@ public final class MemoryEngineService extends Service {
 				long[] candidateIds = NativeMemoryEngine.expandResultGroups(resultIds, valueType);
 				if (candidateIds == null || candidateIds.length == 0) {
 					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				if (!globalWatchCapacityAvailable(token, candidateIds)) {
+					return MemoryEngineContract.RESULT_RESOURCE_LIMIT;
 				}
 				int ready = refreshWithRecovery(token, candidateIds);
 				if (ready != MemoryEngineContract.RESULT_OK) return ready;
@@ -391,8 +506,23 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
+		public long addManagedWatchResultGroups(long token, long expectedRevision, long[] resultIds) {
+			return enqueueManaged(token, false, () -> managedAddWatch(token, expectedRevision,
+					resultIds));
+		}
+
+		@Override
 		public long setFreezeResultGroups(long token, long[] resultIds, int valueType, int mode,
 		                                  String firstValue, String secondValue) {
+			if (containsManagedIds(resultIds)) {
+				if (valueType != MemoryEngineContract.TYPE_INT) return enqueueManaged(token, false,
+						() -> MemoryEngineContract.RESULT_UNSUPPORTED);
+				if (!allManagedIds(resultIds)) return enqueueMixed(token, false,
+						() -> setFreezeResultGroupsMixed(token, resultIds, valueType, mode,
+								firstValue, secondValue));
+				return enqueueManaged(token, false, () -> managedFreeze(token, managedRevision,
+						resultIds, mode, firstValue, secondValue));
+			}
 			return enqueue(token, false, 0, () -> {
 				if (!MemoryEngineContract.isCandidateType(valueType)) {
 					return MemoryEngineContract.RESULT_INVALID_REQUEST;
@@ -406,9 +536,19 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
+		public long setManagedFreezeResultGroups(long token, long expectedRevision, long[] resultIds,
+		                                        int mode, String firstValue, String secondValue) {
+			return enqueueManaged(token, false, () -> managedFreeze(token, expectedRevision,
+					resultIds, mode, firstValue, secondValue));
+		}
+
+		@Override
 		public long editInspectorValue(long token, long anchorCandidateId, int relativeOffset,
 		                               int valueType, long expectedBits,
 		                               String replacementValue) {
+			if (ManagedJavaMemoryIds.isManaged(anchorCandidateId)) {
+				return enqueueManaged(token, false, () -> MemoryEngineContract.RESULT_UNSUPPORTED);
+			}
 			return enqueue(token, false, 0, () -> {
 				if (anchorCandidateId <= 0L || !MemoryEngineContract.isCandidateType(valueType) ||
 						Math.abs((long) relativeOffset) > MemoryEngineContract.MAX_INSPECT_RADIUS) {
@@ -431,6 +571,10 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public Bundle inspectCandidate(long token, long candidateId, int radius) {
+			if (ManagedJavaMemoryIds.isManaged(candidateId)) {
+				return inspectionFailure(MemoryEngineContract.RESULT_UNSUPPORTED,
+						"Inspector is available only for raw-address candidates");
+			}
 			if (candidateId <= 0L || !MemoryEngineContract.isInspectRadius(radius)) {
 				return inspectionFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
 						"Inspector requires a valid CandidateId and bounded radius");
@@ -464,14 +608,24 @@ public final class MemoryEngineService extends Service {
 			}
 			long[] rows = NativeMemoryEngine.watchPage();
 			bindingCache.recordPage(rows, true, 0);
-			return formatWatchPage(rows);
+			Bundle raw = formatWatchPage(rows);
+			return mergeWatchPages(raw, managedWatchPage(token));
 		}
 
 		@Override
 		public long addWatch(long token, long[] candidateIds) {
+			if (containsManagedIds(candidateIds)) {
+				if (!allManagedIds(candidateIds)) return enqueueMixed(token, false,
+						() -> addWatchMixed(token, candidateIds));
+				return enqueueManaged(token, false, () -> managedAddWatch(token, managedRevision,
+						candidateIds));
+			}
 			return enqueue(token, false, 0, () -> {
 				if (candidateIds == null || candidateIds.length == 0) {
 					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				if (!globalWatchCapacityAvailable(token, candidateIds)) {
+					return MemoryEngineContract.RESULT_RESOURCE_LIMIT;
 				}
 				int ready = refreshWithRecovery(token, candidateIds);
 				if (ready != MemoryEngineContract.RESULT_OK) return ready;
@@ -486,6 +640,11 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long removeWatch(long token, long[] candidateIds) {
+			if (containsManagedIds(candidateIds)) {
+				if (!allManagedIds(candidateIds)) return enqueueMixed(token, false,
+						() -> removeWatchMixed(token, candidateIds));
+				return enqueueManaged(token, false, () -> managedRemoveWatch(token, candidateIds));
+			}
 			return enqueue(token, false, 0, () -> {
 				int result = NativeMemoryEngine.pin(candidateIds, false);
 				if (result == MemoryEngineContract.RESULT_OK && candidateIds != null) {
@@ -502,6 +661,9 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long setWatchLabel(long token, long candidateId, String label) {
+			if (ManagedJavaMemoryIds.isManaged(candidateId)) {
+				return enqueueManaged(token, false, () -> managedSetWatchLabel(token, candidateId, label));
+			}
 			return enqueue(token, false, 0, () -> {
 				if (candidateId <= 0L || label == null || label.length() > 64 ||
 						!isWatchedCandidate(candidateId)) {
@@ -519,12 +681,23 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long setFreeze(long token, long[] candidateIds, int mode,
 		                      String firstValue, String secondValue) {
+			if (containsManagedIds(candidateIds)) {
+				if (!allManagedIds(candidateIds)) return enqueueMixed(token, false,
+						() -> setFreezeMixed(token, candidateIds, mode, firstValue, secondValue));
+				return enqueueManaged(token, false, () -> managedFreeze(token, managedRevision,
+						candidateIds, mode, firstValue, secondValue));
+			}
 			return enqueue(token, false, 0, () -> setFreezeRecords(
 					token, candidateIds, mode, firstValue, secondValue));
 		}
 
 		@Override
 		public long clearFreeze(long token, long[] candidateIds) {
+			if (containsManagedIds(candidateIds)) {
+				if (!allManagedIds(candidateIds)) return enqueueMixed(token, false,
+						() -> clearFreezeMixed(token, candidateIds));
+				return enqueueManaged(token, false, () -> managedClearFreeze(token, candidateIds));
+			}
 			return enqueue(token, false, 0, () -> {
 				if (candidateIds == null || candidateIds.length == 0) {
 					return MemoryEngineContract.RESULT_INVALID_REQUEST;
@@ -546,14 +719,42 @@ public final class MemoryEngineService extends Service {
 		public void clearSearch(long token) {
 			if (isCurrentToken(token)) {
 				clearSearchSession();
-				worker.execute(NativeMemoryEngine::clearSearch);
+				if (isManagedCurrent(token)) {
+					synchronizeManagedCancelEpoch(token);
+					long epoch = cancelEpoch.incrementAndGet();
+					IMemoryTargetBridge bridge = target;
+					if (bridge != null) {
+						try {
+							bridge.clearManagedSearch(token, epoch);
+						} catch (RemoteException ignored) {
+							// Runtime teardown will clear target state.
+						}
+					}
+					searchBackend = MemoryEngineContract.BACKEND_RAW;
+					managedRevision = 0L;
+					managedResultCount = 0L;
+				} else {
+					worker.execute(NativeMemoryEngine::clearSearch);
+				}
 			}
 		}
 
 		@Override
 		public void cancelOperation(long token) {
 			if (token != 0L && (token == configuredToken || isTargetToken(token))) {
-				NativeMemoryEngine.cancel(cancelEpoch.incrementAndGet());
+				synchronizeManagedCancelEpoch(token);
+				long epoch = cancelEpoch.incrementAndGet();
+				IMemoryTargetBridge bridge = target;
+				if (bridge != null) {
+					try {
+						bridge.cancelManaged(token, epoch);
+					} catch (RemoteException ignored) {
+						// Runtime teardown handles cancellation.
+					}
+				}
+				if (!isManagedCurrent(token)) {
+					NativeMemoryEngine.cancel(epoch);
+				}
 			}
 		}
 	};
@@ -629,15 +830,36 @@ public final class MemoryEngineService extends Service {
 		return enqueue(token, configure, scope, false, true, operation);
 	}
 
+	private long enqueueManagedSearch(long token, NativeOperation operation) {
+		return enqueueManaged(token, true, operation);
+	}
+
+	private long enqueueManaged(long token, boolean searchOperation, NativeOperation operation) {
+		return enqueue(token, false, MemoryEngineContract.SCOPE_MANAGED_JAVA, false,
+				searchOperation, true, operation);
+	}
+
+	private long enqueueMixed(long token, boolean passiveRefresh, NativeOperation operation) {
+		return enqueue(token, false, MemoryEngineContract.SCOPE_MANAGED_JAVA, passiveRefresh,
+				false, true, operation);
+	}
+
 	private long enqueue(long token, boolean configure, int scope, boolean passiveRefresh,
 	                     boolean searchOperation, NativeOperation operation) {
+		return enqueue(token, configure, scope, passiveRefresh, searchOperation, false, operation);
+	}
+
+	private long enqueue(long token, boolean configure, int scope, boolean passiveRefresh,
+	                     boolean searchOperation, boolean managedOperation,
+	                     NativeOperation operation) {
 		long operationId = nextOperationId.getAndIncrement();
 		long enqueueEpoch = cancelEpoch.get();
 		worker.execute(() -> {
 			// Presentation-only refreshes are deliberately tiny and never report scan progress. Avoid
 			// creating a second scheduled task four times per second just to discover there is no scan.
-			long[] progressBaseline = passiveRefresh ? null : NativeMemoryEngine.scanProgress();
-			ScheduledFuture<?> progressUpdates = passiveRefresh ? null
+			long[] progressBaseline = passiveRefresh || managedOperation ? null
+					: NativeMemoryEngine.scanProgress();
+			ScheduledFuture<?> progressUpdates = passiveRefresh || managedOperation ? null
 					: progressNotifier.scheduleWithFixedDelay(
 							() -> notifyProgress(operationId, progressBaseline, searchOperation),
 							PROGRESS_UPDATE_PERIOD_MS,
@@ -652,17 +874,21 @@ public final class MemoryEngineService extends Service {
 				} else if (token == 0L) {
 					result = MemoryEngineContract.RESULT_NO_SESSION;
 					serviceMessage = "No active MIDlet runtime";
-				} else if (!NativeMemoryEngine.prepareOperation(enqueueEpoch)) {
+				} else if (managedOperation && !prepareManagedOperation(token)) {
+					result = MemoryEngineContract.RESULT_TARGET_LOST;
+					serviceMessage = "MIDlet runtime changed or ended";
+				} else if (!managedOperation && !NativeMemoryEngine.prepareOperation(enqueueEpoch)) {
 					result = MemoryEngineContract.RESULT_CANCELLED;
 					serviceMessage = "Operation cancelled before it started";
-				} else if (configure) {
+				} else if (!managedOperation && configure) {
 					result = configureTarget(token, scope);
 					if (result == MemoryEngineContract.RESULT_OK) {
 						result = operation.run();
 					} else {
 						serviceMessage = configurationFailureMessage(result);
 					}
-				} else if (!isCurrentToken(token)) {
+				} else if ((!managedOperation && !isCurrentToken(token))
+						|| (managedOperation && !isTargetToken(token))) {
 					result = MemoryEngineContract.RESULT_TARGET_LOST;
 					serviceMessage = "MIDlet runtime changed or ended";
 				} else {
@@ -675,7 +901,9 @@ public final class MemoryEngineService extends Service {
 					serviceMessage = "Operation cancelled before it started";
 				}
 
-				if (result == MemoryEngineContract.RESULT_OK && !isCurrentToken(token)) {
+				if (result == MemoryEngineContract.RESULT_OK
+						&& ((managedOperation && !isTargetToken(token))
+						|| (!managedOperation && !isCurrentToken(token)))) {
 					NativeMemoryEngine.clearTarget();
 					configuredToken = 0L;
 					result = MemoryEngineContract.RESULT_TARGET_LOST;
@@ -687,13 +915,14 @@ public final class MemoryEngineService extends Service {
 			} finally {
 				if (progressUpdates != null) progressUpdates.cancel(false);
 			}
-			notifyFinished(operationId, result, serviceMessage, passiveRefresh, searchOperation);
+			notifyFinished(operationId, result, serviceMessage, passiveRefresh, searchOperation,
+					managedOperation);
 		});
 		return operationId;
 	}
 
 	private int configureTarget(long token, int scope) {
-		if (!MemoryEngineContract.isScope(scope)) {
+		if (!MemoryEngineContract.isRawScope(scope)) {
 			return MemoryEngineContract.RESULT_INVALID_REQUEST;
 		}
 		IMemoryTargetBridge bridge = target;
@@ -718,15 +947,632 @@ public final class MemoryEngineService extends Service {
 				return MemoryEngineContract.RESULT_RESOURCE_LIMIT;
 			}
 			long previousToken = configuredToken;
+			int previousScope = configuredScope;
+			boolean wasManaged = searchBackend == MemoryEngineContract.BACKEND_MANAGED;
 			int result = NativeMemoryEngine.configureTarget(pid, pageSize, token, runs);
 			if (result == MemoryEngineContract.RESULT_OK) {
-				if (previousToken != token) clearSearchSession();
+				if (wasManaged) {
+					try {
+						long clearEpoch = cancelEpoch.incrementAndGet();
+						bridge.clearManagedSearch(token, clearEpoch);
+					} catch (RemoteException exception) {
+						return MemoryEngineContract.RESULT_TARGET_LOST;
+					}
+				}
+				if (previousToken != token || wasManaged || previousScope != scope) {
+					NativeMemoryEngine.clearSearch();
+					clearSearchSession();
+				}
 				configuredToken = token;
 				configuredScope = scope;
+				lastRawScope = scope;
+				searchBackend = MemoryEngineContract.BACKEND_RAW;
 			}
 			return result;
 		} catch (RemoteException exception) {
 			return MemoryEngineContract.RESULT_TARGET_LOST;
+		}
+	}
+
+	private boolean prepareManagedOperation(long token) {
+		if (!isTargetToken(token)) return false;
+		if (!synchronizeManagedCancelEpoch(token)) return false;
+		configuredToken = token;
+		configuredScope = MemoryEngineContract.SCOPE_MANAGED_JAVA;
+		return true;
+	}
+
+	private int configureRawAuxiliary(long token) {
+		if (!MemoryEngineContract.isRawScope(lastRawScope)) {
+			lastRawScope = MemoryEngineContract.SCOPE_JAVA_FAST;
+		}
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return MemoryEngineContract.RESULT_TARGET_LOST;
+		try {
+			if (bridge.getRuntimeToken() != token) return MemoryEngineContract.RESULT_TARGET_LOST;
+			int pid = bridge.getTargetPid();
+			int pageSize = bridge.getPageSize();
+			if (!canReadProbe(pid, bridge.getReadProbe(token))) {
+				return MemoryEngineContract.RESULT_UNSUPPORTED;
+			}
+			long[] runs = bridge.getResidentRuns(token, lastRawScope,
+					MemoryEngineContract.MAX_RESIDENT_RUNS);
+			if (!MemoryEngineContract.isCompleteRunList(runs)) {
+				return MemoryEngineContract.RESULT_RESOURCE_LIMIT;
+			}
+			return NativeMemoryEngine.configureTarget(pid, pageSize, token, runs);
+		} catch (RemoteException exception) {
+			return MemoryEngineContract.RESULT_TARGET_LOST;
+		}
+	}
+
+	private int refreshRawAuxiliary(long token, long[] ids, boolean passiveRefresh) {
+		int configured = configureRawAuxiliary(token);
+		if (configured != MemoryEngineContract.RESULT_OK) return configured;
+		return NativeMemoryEngine.refresh(ids, !passiveRefresh);
+	}
+
+	private static long[] idsForBackend(@Nullable long[] ids, boolean managed) {
+		if (ids == null || ids.length == 0) return new long[0];
+		ArrayList<Long> selected = new ArrayList<>();
+		for (long id : ids) {
+			if (ManagedJavaMemoryIds.isManaged(id) == managed) selected.add(id);
+		}
+		long[] result = new long[selected.size()];
+		for (int index = 0; index < selected.size(); index++) result[index] = selected.get(index);
+		return result;
+	}
+
+	private static long[] concatIds(long[] first, long[] second) {
+		if (first.length > Integer.MAX_VALUE - second.length) return null;
+		long[] result = new long[first.length + second.length];
+		System.arraycopy(first, 0, result, 0, first.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
+		return result;
+	}
+
+	private int editMixed(long token, long[] ids, String replacementValue) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_MULTI_WRITE) {
+			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
+		}
+		long[] managed = idsForBackend(ids, true);
+		long[] raw = idsForBackend(ids, false);
+		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
+				: managedEdit(token, isManagedCurrent(token) ? managedRevision : 0L,
+						managed, replacementValue);
+		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
+				: editRawAuxiliary(token, raw, replacementValue);
+		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
+	}
+
+	private int editResultGroupsMixed(long token, long[] resultIds, int valueType,
+	                                 String replacementValue) {
+		if (valueType != MemoryEngineContract.TYPE_INT
+				|| resultIds == null || resultIds.length == 0
+				|| resultIds.length > MemoryEngineContract.MAX_MULTI_WRITE) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
+		long[] managed = idsForBackend(resultIds, true);
+		long[] rawGroups = idsForBackend(resultIds, false);
+		long[] raw = rawGroups.length == 0 ? new long[0]
+				: NativeMemoryEngine.expandResultGroups(rawGroups, valueType);
+		if (raw == null || raw.length == 0 && managed.length == 0) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
+		if (raw.length > MemoryEngineContract.MAX_MULTI_WRITE
+				|| managed.length > MemoryEngineContract.MAX_MULTI_WRITE
+				|| raw.length > MemoryEngineContract.MAX_MULTI_WRITE - managed.length) {
+			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
+		}
+		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
+				: managedEdit(token, isManagedCurrent(token) ? managedRevision : 0L,
+						managed, replacementValue);
+		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
+				: editRawAuxiliary(token, raw, replacementValue);
+		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
+	}
+
+	private int editRawAuxiliary(long token, long[] ids, String replacementValue) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_MULTI_WRITE) {
+			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
+		}
+		if (!isWriteSupported(token)) return MemoryEngineContract.RESULT_UNSUPPORTED;
+		return performGuardedRawMutation(token, ids,
+				() -> NativeMemoryEngine.edit(ids, replacementValue));
+	}
+
+	private int addWatchResultGroupsMixed(long token, long[] resultIds, int valueType) {
+		if (valueType != MemoryEngineContract.TYPE_INT
+				|| resultIds == null || resultIds.length == 0
+				|| resultIds.length > MemoryEngineContract.MAX_WATCH_RECORDS) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
+		long[] managed = idsForBackend(resultIds, true);
+		long[] rawGroups = idsForBackend(resultIds, false);
+		long[] raw = rawGroups.length == 0 ? new long[0]
+				: NativeMemoryEngine.expandResultGroups(rawGroups, valueType);
+		if (raw == null) return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		long[] combined = concatIds(managed, raw);
+		if (combined == null || combined.length == 0
+				|| !globalWatchCapacityAvailable(token, combined)) {
+			return MemoryEngineContract.RESULT_RESOURCE_LIMIT;
+		}
+		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
+				: managedAddWatch(token, isManagedCurrent(token) ? managedRevision : 0L, managed);
+		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
+				: addRawWatchAuxiliary(token, raw);
+		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
+	}
+
+	private int setFreezeResultGroupsMixed(long token, long[] resultIds, int valueType,
+	                                      int mode, String firstValue, String secondValue) {
+		if (valueType != MemoryEngineContract.TYPE_INT
+				|| resultIds == null || resultIds.length == 0
+				|| resultIds.length > MemoryEngineContract.MAX_FREEZE_RECORDS) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
+		if (mode != MemoryEngineContract.FREEZE_LOCK) return MemoryEngineContract.RESULT_UNSUPPORTED;
+		long[] managed = idsForBackend(resultIds, true);
+		long[] rawGroups = idsForBackend(resultIds, false);
+		long[] raw = rawGroups.length == 0 ? new long[0]
+				: NativeMemoryEngine.expandResultGroups(rawGroups, valueType);
+		if (raw == null) return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		long[] combined = concatIds(managed, raw);
+		if (combined == null || combined.length == 0
+				|| !globalWatchCapacityAvailable(token, combined)
+				|| !globalFreezeCapacityAvailable(token, combined)) {
+			return MemoryEngineContract.RESULT_RESOURCE_LIMIT;
+		}
+		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
+				: managedFreeze(token, isManagedCurrent(token) ? managedRevision : 0L,
+						managed, mode, firstValue, secondValue);
+		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
+				: setRawFreezeAuxiliary(token, raw, firstValue, secondValue);
+		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
+	}
+
+	private int refreshMixed(long token, long[] ids, boolean passiveRefresh) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_WATCH_RECORDS) {
+			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
+		}
+		long[] managed = idsForBackend(ids, true);
+		long[] raw = idsForBackend(ids, false);
+		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
+				: refreshRawAuxiliary(token, raw, passiveRefresh);
+		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
+				: managedRefresh(token, managed, passiveRefresh);
+		return rawResult != MemoryEngineContract.RESULT_OK ? rawResult : managedResult;
+	}
+
+	private int addWatchMixed(long token, long[] ids) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_WATCH_RECORDS) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
+		if (!globalWatchCapacityAvailable(token, ids)) {
+			return MemoryEngineContract.RESULT_RESOURCE_LIMIT;
+		}
+		long[] managed = idsForBackend(ids, true);
+		long[] raw = idsForBackend(ids, false);
+		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
+				: managedAddWatch(token, isManagedCurrent(token) ? managedRevision : 0L, managed);
+		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
+				: addRawWatchAuxiliary(token, raw);
+		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
+	}
+
+	private int addRawWatchAuxiliary(long token, long[] ids) {
+		int ready = refreshRawAuxiliary(token, ids, false);
+		if (ready != MemoryEngineContract.RESULT_OK) return ready;
+		int result = NativeMemoryEngine.pin(ids, true);
+		if (result == MemoryEngineContract.RESULT_OK) {
+			bindingCache.recordPage(NativeMemoryEngine.watchPage(), true, 0);
+		}
+		return result;
+	}
+
+	private int removeWatchMixed(long token, long[] ids) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_WATCH_RECORDS) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
+		long[] managed = idsForBackend(ids, true);
+		long[] raw = idsForBackend(ids, false);
+		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
+				: managedRemoveWatch(token, managed);
+		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
+				: removeRawWatchAuxiliary(token, raw);
+		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
+	}
+
+	private int removeRawWatchAuxiliary(long token, long[] ids) {
+		int ready = configureRawAuxiliary(token);
+		if (ready != MemoryEngineContract.RESULT_OK) return ready;
+		int result = NativeMemoryEngine.pin(ids, false);
+		if (result == MemoryEngineContract.RESULT_OK) {
+			for (long id : ids) {
+				watchLabels.remove(id);
+				freezeRecords.remove(id);
+				gcBindings.forgetCandidate(id);
+			}
+			stopFreezeTaskIfIdle();
+		}
+		return result;
+	}
+
+	private int clearFreezeMixed(long token, long[] ids) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_FREEZE_RECORDS) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
+		long[] managed = idsForBackend(ids, true);
+		long[] raw = idsForBackend(ids, false);
+		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
+				: managedClearFreeze(token, managed);
+		int rawResult = MemoryEngineContract.RESULT_OK;
+		for (long id : raw) {
+			if (freezeRecords.remove(id) == null) rawResult = MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
+		stopFreezeTaskIfIdle();
+		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
+	}
+
+	private int setFreezeMixed(long token, long[] ids, int mode, String first, String second) {
+		if (mode != MemoryEngineContract.FREEZE_LOCK) {
+			return MemoryEngineContract.RESULT_UNSUPPORTED;
+		}
+		if (!globalWatchCapacityAvailable(token, ids)
+				|| !globalFreezeCapacityAvailable(token, ids)) {
+			return MemoryEngineContract.RESULT_RESOURCE_LIMIT;
+		}
+		long[] managed = idsForBackend(ids, true);
+		long[] raw = idsForBackend(ids, false);
+		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
+				: managedFreeze(token, isManagedCurrent(token) ? managedRevision : 0L,
+						managed, mode, first, second);
+		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
+				: setRawFreezeAuxiliary(token, raw, first, second);
+		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
+	}
+
+	private int setRawFreezeAuxiliary(long token, long[] ids, String firstValue,
+	                                 String secondValue) {
+		if (!isWriteSupported(token)) return MemoryEngineContract.RESULT_UNSUPPORTED;
+		int ready = refreshRawAuxiliary(token, ids, false);
+		if (ready != MemoryEngineContract.RESULT_OK) return ready;
+		long[] newlyWatched = idsForUnwatchedRaw(ids);
+		if (newlyWatched.length > 0) {
+			int pinResult = NativeMemoryEngine.pin(newlyWatched, true);
+			if (pinResult != MemoryEngineContract.RESULT_OK) return pinResult;
+		}
+		int result = NativeMemoryEngine.freeze(ids, MemoryEngineContract.FREEZE_LOCK,
+				firstValue, secondValue == null ? "" : secondValue);
+		if (result != MemoryEngineContract.RESULT_OK && newlyWatched.length > 0) {
+			NativeMemoryEngine.pin(newlyWatched, false);
+		}
+		if (result == MemoryEngineContract.RESULT_OK) {
+			long gc = currentGcCount(token);
+			for (long id : ids) freezeRecords.put(id,
+					new FreezeRecord(MemoryEngineContract.FREEZE_LOCK, firstValue,
+							secondValue == null ? "" : secondValue, gc));
+			startFreezeTaskIfNeeded();
+		}
+		return result;
+	}
+
+	private long[] idsForUnwatchedRaw(long[] ids) {
+		ArrayList<Long> result = new ArrayList<>();
+		for (long id : ids) if (!isWatchedCandidate(id)) result.add(id);
+		long[] output = new long[result.size()];
+		for (int index = 0; index < result.size(); index++) output[index] = result.get(index);
+		return output;
+	}
+
+	private int managedStartExact(long token, int type, int predicate, String first, String second) {
+		if (type != MemoryEngineContract.TYPE_INT || predicate != MemoryEngineContract.PREDICATE_EQUAL) {
+			return managedFailure(MemoryEngineContract.RESULT_UNSUPPORTED,
+					"Managed Java vertical slice supports Exact Int only");
+		}
+		Integer value = parseManagedInt(first);
+		if (value == null) {
+			return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed Exact Int requires a signed decimal integer");
+		}
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			Bundle result = bridge.managedStartExactInt(token, value, cancelEpoch.get());
+			int code = consumeManagedResult(result);
+			if (code == MemoryEngineContract.RESULT_OK) {
+				if (searchBackend != MemoryEngineContract.BACKEND_MANAGED) {
+					freezeRecords.clear();
+					if (managedFreezeCount == 0) stopFreezeTaskIfIdle();
+				}
+				NativeMemoryEngine.clearSearch();
+				clearSearchSession();
+				searchBackend = MemoryEngineContract.BACKEND_MANAGED;
+				resetSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+						MemoryEngineContract.SEARCH_MODE_KNOWN, MemoryEngineContract.TYPE_INT,
+						MemoryEngineContract.SCOPE_MANAGED_JAVA,
+						MemoryEngineContract.GC_COUNT_UNKNOWN);
+			}
+			return code;
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
+	}
+
+	private int managedRefine(long token, int predicate, int compareTarget, String value) {
+		return managedRefine(token, managedRevision, predicate, compareTarget, value);
+	}
+
+	private int managedRefine(long token, long expectedRevision, int predicate,
+	                          int compareTarget, String value) {
+		if (!isTargetToken(token)) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime changed or ended");
+		int compareValue = 0;
+		if (predicate == MemoryEngineContract.PREDICATE_EQUAL) {
+			Integer parsed = parseManagedInt(value);
+			if (parsed == null) return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed Equal refine requires a signed decimal integer");
+			compareValue = parsed;
+		}
+		if (predicate != MemoryEngineContract.PREDICATE_EQUAL
+				&& predicate != MemoryEngineContract.PREDICATE_CHANGED
+				&& predicate != MemoryEngineContract.PREDICATE_UNCHANGED) {
+			return managedFailure(MemoryEngineContract.RESULT_UNSUPPORTED,
+					"Managed refine supports Equal, Changed, and Unchanged only");
+		}
+		if (expectedRevision <= 0L) expectedRevision = managedRevision;
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			int code = consumeManagedResult(bridge.managedRefineInt(token, expectedRevision,
+					predicate, compareTarget, compareValue, cancelEpoch.get()));
+			if (code == MemoryEngineContract.RESULT_OK) {
+				searchBackend = MemoryEngineContract.BACKEND_MANAGED;
+				advanceManagedSearchSession();
+			}
+			return code;
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
+	}
+
+	private int managedRefresh(long token, long[] ids, boolean passiveRefresh) {
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			return consumeManagedResult(bridge.managedRefresh(token, ids,
+					passiveRefresh ? 0L : managedRevision, cancelEpoch.get()));
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
+	}
+
+	private int managedEdit(long token, long expectedRevision, long[] ids, String replacementValue) {
+		Integer replacement = parseManagedInt(replacementValue);
+		if (replacement == null) return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+				"Managed edit requires a signed decimal integer");
+		if (expectedRevision <= 0L) expectedRevision = managedRevision;
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_MULTI_WRITE) {
+			return managedFailure(MemoryEngineContract.RESULT_SAFETY_LIMIT,
+					"Managed edits are limited to 32 rows");
+		}
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			return consumeManagedResult(bridge.managedEdit(token, expectedRevision, ids, replacement,
+					cancelEpoch.get()));
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
+	}
+
+	private int managedAddWatch(long token, long expectedRevision, long[] ids) {
+		if (!globalWatchCapacityAvailable(token, ids)) {
+			return managedFailure(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+					"The global Watch List limit is 128 rows");
+		}
+		if (expectedRevision <= 0L) expectedRevision = managedRevision;
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			return consumeManagedResult(bridge.managedAddWatch(token, expectedRevision, ids,
+					cancelEpoch.get()));
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
+	}
+
+	private int managedRemoveWatch(long token, long[] ids) {
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			int code = consumeManagedResult(bridge.managedRemoveWatch(token, ids, cancelEpoch.get()));
+			if (code == MemoryEngineContract.RESULT_OK && managedFreezeCount == 0) {
+				stopFreezeTaskIfIdle();
+			}
+			return code;
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
+	}
+
+	private int managedSetWatchLabel(long token, long id, String label) {
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			return consumeManagedResult(bridge.managedSetWatchLabel(token, id, label,
+					cancelEpoch.get()));
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
+	}
+
+	private int managedFreeze(long token, long expectedRevision, long[] ids, int mode,
+	                          String firstValue, String secondValue) {
+		if (mode != MemoryEngineContract.FREEZE_LOCK) {
+			return managedFailure(MemoryEngineContract.RESULT_UNSUPPORTED,
+					"Managed Freeze supports Lock only");
+		}
+		Integer replacement = parseManagedInt(firstValue);
+		if (replacement == null) return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+				"Managed Freeze Lock requires a signed decimal integer");
+		if (!globalWatchCapacityAvailable(token, ids)
+				|| !globalFreezeCapacityAvailable(token, ids)) {
+			return managedFailure(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+					"The global Watch/Freeze limit would be exceeded");
+		}
+		if (expectedRevision <= 0L) expectedRevision = managedRevision;
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			int code = consumeManagedResult(bridge.managedSetFreezeLock(token, expectedRevision, ids,
+					replacement, cancelEpoch.get()));
+			if (code == MemoryEngineContract.RESULT_OK) startFreezeTaskIfNeeded();
+			return code;
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
+	}
+
+	private int managedClearFreeze(long token, long[] ids) {
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			int code = consumeManagedResult(bridge.managedClearFreeze(token, ids, cancelEpoch.get()));
+			if (code == MemoryEngineContract.RESULT_OK && managedFreezeCount == 0) {
+				stopFreezeTaskIfIdle();
+			}
+			return code;
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime connection was lost");
+		}
+	}
+
+	private Bundle managedResultPage(long token, long expectedRevision, int offset, int limit) {
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return emptyResultPage();
+		try {
+			Bundle result = bridge.managedResultPage(token, expectedRevision, offset, limit);
+			updateManagedState(result);
+			return result == null ? emptyResultPage() : result;
+		} catch (RemoteException exception) {
+			return emptyResultPage();
+		}
+	}
+
+	private Bundle managedWatchPage(long token) {
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return emptyWatchPage();
+		try {
+			Bundle result = bridge.managedWatchPage(token);
+			updateManagedState(result);
+			return result == null ? emptyWatchPage() : result;
+		} catch (RemoteException exception) {
+			return emptyWatchPage();
+		}
+	}
+
+	private int consumeManagedResult(@Nullable Bundle result) {
+		if (result == null || !result.containsKey(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"Managed target returned no operation result");
+		}
+		updateManagedState(result);
+		return result.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+				MemoryEngineContract.RESULT_TARGET_LOST);
+	}
+
+	private int managedFailure(int code, String message) {
+		managedLastMessage = message;
+		return code;
+	}
+
+	private void updateManagedState(@Nullable Bundle state) {
+		if (state == null) return;
+		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH)) {
+			synchronizeCancelEpoch(state.getLong(
+					MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH));
+		}
+		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_SUPPORTED)) {
+			managedSupported = state.getBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED);
+		}
+		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED)) {
+			managedWriteSupported = state.getBoolean(
+					MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED);
+		}
+		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_REVISION)) {
+			managedRevision = state.getLong(MemoryEngineContract.KEY_MANAGED_REVISION);
+		}
+		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT)) {
+			managedResultCount = state.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT);
+		}
+		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT)) {
+			managedWatchCount = state.getInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT);
+		}
+		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT)) {
+			managedFreezeCount = state.getInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT);
+		}
+		if (state.containsKey(MemoryEngineContract.KEY_MESSAGE)) {
+			managedLastMessage = state.getString(MemoryEngineContract.KEY_MESSAGE);
+		}
+	}
+
+	private void advanceManagedSearchSession() {
+		synchronized (searchSessionLock) {
+			searchSessionStage = MemoryEngineContract.SEARCH_SESSION_CANDIDATES;
+			searchSessionMode = MemoryEngineContract.SEARCH_MODE_KNOWN;
+			searchRequestedType = MemoryEngineContract.TYPE_INT;
+			searchSessionScope = MemoryEngineContract.SCOPE_MANAGED_JAVA;
+			searchStageHistory.clear();
+			searchGcHistory.clear();
+			gcBindings.clearSearchEpoch();
+		}
+	}
+
+	private static Integer parseManagedInt(@Nullable String value) {
+		if (value == null) return null;
+		try {
+			return Integer.valueOf(value.trim());
+		} catch (NumberFormatException exception) {
+			return null;
+		}
+	}
+
+	private static void synchronizeCancelEpoch(long targetEpoch) {
+		if (targetEpoch < 0L) return;
+		while (true) {
+			long current = cancelEpoch.get();
+			if (current >= targetEpoch || cancelEpoch.compareAndSet(current, targetEpoch)) return;
+		}
+	}
+
+	private boolean synchronizeManagedCancelEpoch(long token) {
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return false;
+		try {
+			if (bridge.getRuntimeToken() != token) return false;
+			updateManagedState(bridge.getManagedCapabilities(token));
+			return true;
+		} catch (RemoteException exception) {
+			return false;
 		}
 	}
 
@@ -987,6 +1833,88 @@ public final class MemoryEngineService extends Service {
 		return result;
 	}
 
+	/** Raw half of a mixed operation; it never changes the managed session/backend metadata. */
+	private int refreshRawWithRecovery(long token, long[] candidateIds) {
+		long gcBefore = currentGcCount(token);
+		int ready = configureRawAuxiliary(token);
+		if (ready != MemoryEngineContract.RESULT_OK) return ready;
+		int result = NativeMemoryEngine.refresh(candidateIds, true);
+		if (result != MemoryEngineContract.RESULT_OK) return result;
+		long gcAfter = currentGcCount(token);
+		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
+			return MemoryEngineContract.RESULT_GC_RACE;
+		}
+		gcBindings.markCandidatesValidated(candidateIds,
+				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
+		return MemoryEngineContract.RESULT_OK;
+	}
+
+	private int prepareExplicitRawMutation(long token, long[] candidateIds) {
+		Map<Long, MemoryCandidateBindingCache.Binding> before =
+				bindingCache.snapshot(candidateIds);
+		if (before == null) return MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
+
+		long gcBefore = currentGcCount(token);
+		int fastResult = NativeMemoryEngine.refresh(candidateIds, true);
+		int bindingResult = fastResult == MemoryEngineContract.RESULT_OK
+				? compareRefreshedBindings(before)
+				: MemoryEngineContract.RESULT_OK;
+		long gcAfter = currentGcCount(token);
+		boolean gcChangedDuringFastRefresh =
+				MemoryEngineContract.didGcCountChange(gcBefore, gcAfter);
+
+		if (MemoryGcPolicy.shouldRetryReadWithFreshRanges(
+				fastResult, bindingResult, gcChangedDuringFastRefresh)) {
+			int result = refreshRawWithRecovery(token, candidateIds);
+			if (result != MemoryEngineContract.RESULT_OK) return result;
+			int refreshedBindingResult = compareRefreshedBindings(before);
+			if (!MemoryGcPolicy.mutationBindingIsReady(refreshedBindingResult)) {
+				return refreshedBindingResult;
+			}
+			return MemoryEngineContract.RESULT_OK;
+		}
+
+		if (fastResult != MemoryEngineContract.RESULT_OK) return fastResult;
+		if (!MemoryGcPolicy.mutationBindingIsReady(bindingResult)) return bindingResult;
+		gcBindings.markCandidatesValidated(candidateIds,
+				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
+		return MemoryEngineContract.RESULT_OK;
+	}
+
+	private int revalidateRawIfGcMoved(long token, long[] candidateIds) {
+		long gcCount = currentGcCount(token);
+		if (!gcBindings.candidatesNeedRevalidation(candidateIds, gcCount)) {
+			return MemoryEngineContract.RESULT_OK;
+		}
+		int ready = configureRawAuxiliary(token);
+		if (ready != MemoryEngineContract.RESULT_OK) return ready;
+		return prepareExplicitRawMutation(token, candidateIds);
+	}
+
+	private int performGuardedRawMutation(long token, long[] candidateIds, NativeOperation write) {
+		int ready = configureRawAuxiliary(token);
+		if (ready != MemoryEngineContract.RESULT_OK) return ready;
+		ready = prepareExplicitRawMutation(token, candidateIds);
+		if (ready != MemoryEngineContract.RESULT_OK) return ready;
+		ready = revalidateRawIfGcMoved(token, candidateIds);
+		if (ready != MemoryEngineContract.RESULT_OK) return ready;
+		long gcBeforeWrite = currentGcCount(token);
+		int result = write.run();
+		long gcAfterWrite = currentGcCount(token);
+		if (MemoryGcPolicy.shouldReportGcRaceAfterMutation(
+				result, gcBeforeWrite, gcAfterWrite)) {
+			refreshRawWithRecovery(token, candidateIds);
+			refreshCachedBindings(candidateIds);
+			return MemoryEngineContract.RESULT_GC_RACE;
+		}
+		if (result == MemoryEngineContract.RESULT_OK) {
+			gcBindings.markCandidatesValidated(candidateIds,
+					MemoryEngineContract.latestKnownGcCount(gcBeforeWrite, gcAfterWrite));
+			refreshCachedBindings(candidateIds);
+		}
+		return result;
+	}
+
 	private Bundle inspectCandidateOnWorker(long token, long candidateId, int radius) {
 		if (!isTargetToken(token)) {
 			return inspectionFailure(MemoryEngineContract.RESULT_TARGET_LOST,
@@ -1059,8 +1987,12 @@ public final class MemoryEngineService extends Service {
 			}
 		}
 		if (freezeRecords.size() + additionalRecords >
-					MemoryEngineContract.MAX_FREEZE_RECORDS) {
+				MemoryEngineContract.MAX_FREEZE_RECORDS) {
 			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
+		}
+		if (!globalWatchCapacityAvailable(token, candidateIds)
+				|| !globalFreezeCapacityAvailable(token, candidateIds)) {
+			return MemoryEngineContract.RESULT_RESOURCE_LIMIT;
 		}
 		if (!isWriteSupported(token)) {
 			return MemoryEngineContract.RESULT_UNSUPPORTED;
@@ -1175,10 +2107,36 @@ public final class MemoryEngineService extends Service {
 				active.add(entry);
 			}
 		}
-		if (active.isEmpty()) {
+		boolean managedActive = managedFreezeCount > 0;
+		if (active.isEmpty() && !managedActive) {
 			return;
 		}
+		if (managedActive) synchronizeManagedCancelEpoch(token);
 		long operationEpoch = cancelEpoch.get();
+		if (managedActive) {
+			IMemoryTargetBridge bridge = target;
+			if (bridge == null) {
+				managedFreezeCount = 0;
+			} else {
+				try {
+					int managedResult = consumeManagedResult(
+							bridge.managedFreezeTick(token, operationEpoch));
+					if (managedResult == MemoryEngineContract.RESULT_TARGET_LOST) {
+						managedFreezeCount = 0;
+					}
+				} catch (RemoteException ignored) {
+					managedFreezeCount = 0;
+				}
+			}
+		}
+		if (active.isEmpty()) return;
+		// Raw FreezeRecords can coexist with a managed search/watch session. Keep the native
+		// target configured from the last raw scope without publishing the session as raw or
+		// passing any managed logical IDs to JNI.
+		int rawReady = configureRawAuxiliary(token);
+		if (rawReady != MemoryEngineContract.RESULT_OK) {
+			return;
+		}
 		if (!NativeMemoryEngine.prepareOperation(operationEpoch)) {
 			return;
 		}
@@ -1195,7 +2153,7 @@ public final class MemoryEngineService extends Service {
 		if (anyRecordNeedsRecovery) {
 			// Refresh the resident-range view once, then recover each stale CandidateId independently.
 			// One ambiguous/lost value must not pause unrelated freezes.
-			int configureResult = configureTarget(token, configuredScope);
+			int configureResult = configureRawAuxiliary(token);
 			if (configureResult != MemoryEngineContract.RESULT_OK) {
 				for (Map.Entry<Long, FreezeRecord> entry : active) {
 					entry.getValue().paused = true;
@@ -1288,6 +2246,28 @@ public final class MemoryEngineService extends Service {
 	private Bundle searchSessionInfo(long token) {
 		Bundle bundle = new Bundle();
 		boolean current = isCurrentToken(token);
+		if (current && isManagedCurrent(token)) {
+			IMemoryTargetBridge bridge = target;
+			if (bridge != null) {
+				try {
+					Bundle managed = bridge.getManagedSessionInfo(token);
+					updateManagedState(managed);
+					if (managed != null) bundle.putAll(managed);
+				} catch (RemoteException ignored) {
+					// Return the local session snapshot below when the target disappears mid-read.
+				}
+			}
+			bundle.putInt(MemoryEngineContract.KEY_SEARCH_MODE,
+					MemoryEngineContract.SEARCH_MODE_KNOWN);
+			bundle.putInt(MemoryEngineContract.KEY_SEARCH_SCOPE,
+					MemoryEngineContract.SCOPE_MANAGED_JAVA);
+			bundle.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH, 0);
+			bundle.putLong(MemoryEngineContract.KEY_GC_COUNT,
+					MemoryEngineContract.GC_COUNT_UNKNOWN);
+			bundle.putInt(MemoryEngineContract.KEY_SEARCH_BACKEND,
+					MemoryEngineContract.BACKEND_MANAGED);
+			return bundle;
+		}
 		int nativeHistoryDepth = current ? NativeMemoryEngine.historyDepth() : 0;
 		synchronized (searchSessionLock) {
 			if (current) trimSearchHistoryLocked(nativeHistoryDepth);
@@ -1303,6 +2283,9 @@ public final class MemoryEngineService extends Service {
 					current ? Math.min(nativeHistoryDepth, searchStageHistory.size()) : 0);
 			bundle.putLong(MemoryEngineContract.KEY_GC_COUNT,
 					current ? gcBindings.searchEpoch() : MemoryEngineContract.GC_COUNT_UNKNOWN);
+			bundle.putInt(MemoryEngineContract.KEY_SEARCH_BACKEND,
+					current && searchBackend == MemoryEngineContract.BACKEND_MANAGED
+							? MemoryEngineContract.BACKEND_MANAGED : MemoryEngineContract.BACKEND_RAW);
 		}
 		return bundle;
 	}
@@ -1374,6 +2357,77 @@ public final class MemoryEngineService extends Service {
 		return isTargetToken(token);
 	}
 
+	/** Enforces the one 128-row Watch capacity across both backends. */
+	private boolean globalWatchCapacityAvailable(long token, @Nullable long[] requested) {
+		if (requested == null || requested.length == 0
+				|| requested.length > MemoryEngineContract.MAX_WATCH_RECORDS) return false;
+		Set<Long> existing = new HashSet<>();
+		long[] raw = NativeMemoryEngine.watchPage();
+		int rawCount = validatedPageCount(raw);
+		if (rawCount >= 0) {
+			for (int index = 0; index < rawCount; index++) {
+				existing.add(raw[1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE]);
+			}
+		}
+		Bundle managed = managedWatchPage(token);
+		long[] managedIds = watchLongs(managed, MemoryEngineContract.KEY_WATCH_IDS);
+		for (long id : managedIds) existing.add(id);
+		int additional = 0;
+		Set<Long> unique = new HashSet<>();
+		for (long value : requested) unique.add(value);
+		for (long id : unique) {
+			if (!existing.contains(id)) additional++;
+		}
+		return existing.size() + additional <= MemoryEngineContract.MAX_WATCH_RECORDS;
+	}
+
+	/** Enforces the one 32-row Freeze capacity across both backends. */
+	private boolean globalFreezeCapacityAvailable(long token, @Nullable long[] requested) {
+		if (requested == null || requested.length == 0
+				|| requested.length > MemoryEngineContract.MAX_FREEZE_RECORDS) return false;
+		IMemoryTargetBridge bridge = target;
+		if (bridge != null) {
+			try {
+				updateManagedState(bridge.getManagedCapabilities(token));
+			} catch (RemoteException ignored) {
+				return false;
+			}
+		}
+		Set<Long> frozen = new HashSet<>(freezeRecords.keySet());
+		Bundle managed = managedWatchPage(token);
+		long[] managedIds = watchLongs(managed, MemoryEngineContract.KEY_WATCH_IDS);
+		int[] managedModes = managed == null ? null
+				: managed.getIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES);
+		if (managedModes != null && managedModes.length == managedIds.length) {
+			for (int index = 0; index < managedIds.length; index++) {
+				if (managedModes[index] >= MemoryEngineContract.FREEZE_LOCK) {
+					frozen.add(managedIds[index]);
+				}
+			}
+		}
+		Set<Long> unique = new HashSet<>();
+		for (long id : requested) unique.add(id);
+		int additional = 0;
+		for (long id : unique) if (!frozen.contains(id)) additional++;
+		return frozen.size() + additional <= MemoryEngineContract.MAX_FREEZE_RECORDS;
+	}
+
+	private boolean isManagedCurrent(long token) {
+		return searchBackend == MemoryEngineContract.BACKEND_MANAGED && isCurrentToken(token);
+	}
+
+	private static boolean containsManagedIds(@Nullable long[] ids) {
+		if (ids == null) return false;
+		for (long id : ids) if (ManagedJavaMemoryIds.isManaged(id)) return true;
+		return false;
+	}
+
+	private static boolean allManagedIds(@Nullable long[] ids) {
+		if (ids == null || ids.length == 0) return false;
+		for (long id : ids) if (!ManagedJavaMemoryIds.hasValidNamespace(id)) return false;
+		return true;
+	}
+
 	private boolean isTargetToken(long token) {
 		IMemoryTargetBridge bridge = target;
 		if (token == 0L || bridge == null) {
@@ -1423,6 +2477,14 @@ public final class MemoryEngineService extends Service {
 	private void invalidateTarget() {
 		observedRuntimeToken = 0L;
 		configuredToken = 0L;
+		searchBackend = MemoryEngineContract.BACKEND_RAW;
+		managedSupported = false;
+		managedWriteSupported = false;
+		managedRevision = 0L;
+		managedResultCount = 0L;
+		managedWatchCount = 0;
+		managedFreezeCount = 0;
+		managedLastMessage = null;
 		clearSearchSession();
 		gcBindings.clearAll();
 		bindingCache.clear();
@@ -1466,11 +2528,13 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private void notifyFinished(long operationId, int result, @Nullable String serviceMessage,
-	                            boolean passiveRefresh, boolean searchOperation) {
+	                            boolean passiveRefresh, boolean searchOperation,
+	                            boolean managedOperation) {
 		// Native operations are transactional. Cancellation or failure may leave
 		// a valid previous result set, so do not present it as zero.
-		long count = NativeMemoryEngine.resultCount();
-		String message = serviceMessage == null ? NativeMemoryEngine.lastMessage() : serviceMessage;
+		long count = managedOperation ? managedResultCount : NativeMemoryEngine.resultCount();
+		String message = serviceMessage != null ? serviceMessage
+				: managedOperation ? managedLastMessage : NativeMemoryEngine.lastMessage();
 		int callbackCount = callbacks.beginBroadcast();
 		try {
 			for (int index = 0; index < callbackCount; index++) {
@@ -1512,6 +2576,7 @@ public final class MemoryEngineService extends Service {
 		result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS, new String[0]);
 		result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, new int[0]);
 		result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, new boolean[0]);
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_BACKENDS, new int[0]);
 		return result;
 	}
 
@@ -1585,6 +2650,7 @@ public final class MemoryEngineService extends Service {
 		String[] labels = new String[count];
 		int[] freezeModes = new int[count];
 		boolean[] freezePaused = new boolean[count];
+		int[] backends = new int[count];
 		for (int index = 0; index < count; index++) {
 			int base = 1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE;
 			long id = rows[base];
@@ -1606,6 +2672,7 @@ public final class MemoryEngineService extends Service {
 			FreezeRecord freeze = freezeRecords.get(id);
 			freezeModes[index] = freeze == null ? -1 : freeze.mode;
 			freezePaused[index] = freeze != null && freeze.paused;
+			backends[index] = MemoryEngineContract.BACKEND_RAW;
 		}
 		Bundle result = new Bundle();
 		result.putLongArray(MemoryEngineContract.KEY_WATCH_IDS, ids);
@@ -1619,6 +2686,103 @@ public final class MemoryEngineService extends Service {
 		result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS, labels);
 		result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, freezeModes);
 		result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, freezePaused);
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_BACKENDS, backends);
+		return result;
+	}
+
+	private static Bundle mergeWatchPages(Bundle raw, Bundle managed) {
+		long[] rawIds = watchLongs(raw, MemoryEngineContract.KEY_WATCH_IDS);
+		long[] managedIds = watchLongs(managed, MemoryEngineContract.KEY_WATCH_IDS);
+		int rawCount = rawIds.length;
+		int managedCount = managedIds.length;
+		int total = rawCount + managedCount;
+		Bundle result = new Bundle();
+		result.putLongArray(MemoryEngineContract.KEY_WATCH_IDS, concat(rawIds, managedIds));
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_VALUES, concat(
+				watchStrings(raw, MemoryEngineContract.KEY_WATCH_VALUES, rawCount),
+				watchStrings(managed, MemoryEngineContract.KEY_WATCH_VALUES, managedCount)));
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_INITIAL_VALUES, concat(
+				watchStrings(raw, MemoryEngineContract.KEY_WATCH_INITIAL_VALUES, rawCount),
+				watchStrings(managed, MemoryEngineContract.KEY_WATCH_INITIAL_VALUES, managedCount)));
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_PREVIOUS_VALUES, concat(
+				watchStrings(raw, MemoryEngineContract.KEY_WATCH_PREVIOUS_VALUES, rawCount),
+				watchStrings(managed, MemoryEngineContract.KEY_WATCH_PREVIOUS_VALUES, managedCount)));
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_ADDRESSES, concat(
+				watchStrings(raw, MemoryEngineContract.KEY_WATCH_ADDRESSES, rawCount),
+				watchStrings(managed, MemoryEngineContract.KEY_WATCH_ADDRESSES, managedCount)));
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_TYPES, concat(
+				watchInts(raw, MemoryEngineContract.KEY_WATCH_TYPES, rawCount),
+				watchInts(managed, MemoryEngineContract.KEY_WATCH_TYPES, managedCount)));
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_STATES, concat(
+				watchInts(raw, MemoryEngineContract.KEY_WATCH_STATES, rawCount),
+				watchInts(managed, MemoryEngineContract.KEY_WATCH_STATES, managedCount)));
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_RELOCATIONS, concat(
+				watchInts(raw, MemoryEngineContract.KEY_WATCH_RELOCATIONS, rawCount),
+				watchInts(managed, MemoryEngineContract.KEY_WATCH_RELOCATIONS, managedCount)));
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS, concat(
+				watchStrings(raw, MemoryEngineContract.KEY_WATCH_LABELS, rawCount),
+				watchStrings(managed, MemoryEngineContract.KEY_WATCH_LABELS, managedCount)));
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, concat(
+				watchInts(raw, MemoryEngineContract.KEY_WATCH_FREEZE_MODES, rawCount),
+				watchInts(managed, MemoryEngineContract.KEY_WATCH_FREEZE_MODES, managedCount)));
+		result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, concat(
+				watchBooleans(raw, rawCount), watchBooleans(managed, managedCount)));
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_BACKENDS, concat(
+				watchBackends(raw, rawCount), watchBackends(managed, managedCount)));
+		return result;
+	}
+
+	private static long[] watchLongs(@Nullable Bundle bundle, String key) {
+		long[] values = bundle == null ? null : bundle.getLongArray(key);
+		return values == null ? new long[0] : values;
+	}
+
+	private static String[] watchStrings(@Nullable Bundle bundle, String key, int expected) {
+		String[] values = bundle == null ? null : bundle.getStringArray(key);
+		return values != null && values.length == expected ? values : new String[expected];
+	}
+
+	private static int[] watchInts(@Nullable Bundle bundle, String key, int expected) {
+		int[] values = bundle == null ? null : bundle.getIntArray(key);
+		return values != null && values.length == expected ? values : new int[expected];
+	}
+
+	private static int[] watchBackends(@Nullable Bundle bundle, int expected) {
+		int[] values = bundle == null ? null
+				: bundle.getIntArray(MemoryEngineContract.KEY_WATCH_BACKENDS);
+		if (values != null && values.length == expected) return values;
+		int[] defaults = new int[expected];
+		Arrays.fill(defaults, MemoryEngineContract.BACKEND_RAW);
+		return defaults;
+	}
+
+	private static boolean[] watchBooleans(@Nullable Bundle bundle, int expected) {
+		boolean[] values = bundle == null ? null
+				: bundle.getBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED);
+		return values != null && values.length == expected ? values : new boolean[expected];
+	}
+
+	private static long[] concat(long[] first, long[] second) {
+		long[] result = Arrays.copyOf(first, first.length + second.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
+		return result;
+	}
+
+	private static String[] concat(String[] first, String[] second) {
+		String[] result = Arrays.copyOf(first, first.length + second.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
+		return result;
+	}
+
+	private static int[] concat(int[] first, int[] second) {
+		int[] result = Arrays.copyOf(first, first.length + second.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
+		return result;
+	}
+
+	private static boolean[] concat(boolean[] first, boolean[] second) {
+		boolean[] result = Arrays.copyOf(first, first.length + second.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
 		return result;
 	}
 

@@ -18,6 +18,11 @@ package ru.playsoftware.j2meloader.memory;
 public final class MemoryEngineContract {
 	public static final int SCOPE_JAVA_FAST = 0;
 	public static final int SCOPE_JAVA_THOROUGH = 1;
+	/** Managed Java graph traversal in the MIDlet process; it is not a raw-address scope. */
+	public static final int SCOPE_MANAGED_JAVA = 2;
+
+	public static final int BACKEND_RAW = 0;
+	public static final int BACKEND_MANAGED = 1;
 
 	/** Runtime GC statistic is unavailable or cannot be parsed safely. */
 	public static final long GC_COUNT_UNKNOWN = -1L;
@@ -88,6 +93,7 @@ public final class MemoryEngineContract {
 	public static final int FREEZE_RANGE = 3;
 	public static final int MAX_MULTI_WRITE = 32;
 	public static final int MAX_FREEZE_RECORDS = 32;
+	public static final int MAX_WATCH_RECORDS = 128;
 	public static final int MAX_GROUP_VALUES = 8;
 	/**
 	 * Maximum resident address runs accepted from the target process. 4,096 was too tight for
@@ -109,6 +115,19 @@ public final class MemoryEngineContract {
 
 	public static final String KEY_SUPPORTED = "supported";
 	public static final String KEY_WRITE_SUPPORTED = "writeSupported";
+	public static final String KEY_MANAGED_SUPPORTED = "managedSupported";
+	public static final String KEY_MANAGED_WRITE_SUPPORTED = "managedWriteSupported";
+	public static final String KEY_MANAGED_CONTROL_EPOCH = "managedControlEpoch";
+	public static final String KEY_MANAGED_REVISION = "managedRevision";
+	public static final String KEY_MANAGED_RESULT_COUNT = "managedResultCount";
+	public static final String KEY_MANAGED_WATCH_COUNT = "managedWatchCount";
+	public static final String KEY_MANAGED_FREEZE_COUNT = "managedFreezeCount";
+	public static final String KEY_MANAGED_OPERATION_RESULT = "managedOperationResult";
+	public static final String KEY_MANAGED_ATTEMPTED = "managedAttempted";
+	public static final String KEY_MANAGED_WRITTEN = "managedWritten";
+	public static final String KEY_MANAGED_SKIPPED = "managedSkipped";
+	public static final String KEY_MANAGED_UNCONFIRMED = "managedUnconfirmed";
+	public static final String KEY_SEARCH_BACKEND = "searchBackend";
 	public static final String KEY_RUNTIME_TOKEN = "runtimeToken";
 	public static final String KEY_TARGET_PID = "targetPid";
 	public static final String KEY_PAGE_SIZE = "pageSize";
@@ -141,12 +160,21 @@ public final class MemoryEngineContract {
 	public static final String KEY_WATCH_LABELS = "watchLabels";
 	public static final String KEY_WATCH_FREEZE_MODES = "watchFreezeModes";
 	public static final String KEY_WATCH_FREEZE_PAUSED = "watchFreezePaused";
+	public static final String KEY_WATCH_BACKENDS = "watchBackends";
 
 	private MemoryEngineContract() {
 	}
 
 	public static boolean isScope(int scope) {
+		return isRawScope(scope) || scope == SCOPE_MANAGED_JAVA;
+	}
+
+	public static boolean isRawScope(int scope) {
 		return scope == SCOPE_JAVA_FAST || scope == SCOPE_JAVA_THOROUGH;
+	}
+
+	public static boolean isManagedScope(int scope) {
+		return scope == SCOPE_MANAGED_JAVA;
 	}
 
 	public static boolean isKnownGcCount(long gcCount) {

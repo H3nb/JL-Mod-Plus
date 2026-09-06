@@ -317,6 +317,15 @@ class MemoryEditorComposeController(
         val capabilities = engine.capabilities
         val supported = capabilities.getBoolean(MemoryEngineContract.KEY_SUPPORTED, false)
         val writeSupported = capabilities.getBoolean(MemoryEngineContract.KEY_WRITE_SUPPORTED, false)
+        val managedSupported = capabilities.getBoolean(
+            MemoryEngineContract.KEY_MANAGED_SUPPORTED, false,
+        )
+        val managedWriteSupported = capabilities.getBoolean(
+            MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED, false,
+        )
+        val managedRevision = capabilities.getLong(
+            MemoryEngineContract.KEY_MANAGED_REVISION, 0L,
+        )
         val token = capabilities.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, 0L)
         val capabilityMessage = capabilities.getString(MemoryEngineContract.KEY_MESSAGE)
 
@@ -357,6 +366,9 @@ class MemoryEditorComposeController(
                     connected = true,
                     supported = false,
                     writeSupported = false,
+                    managedSupported = managedSupported,
+                    managedWriteSupported = managedWriteSupported,
+                    managedRevision = managedRevision,
                     runtimeToken = token,
                     results = emptyList(),
                     watches = emptyList(),
@@ -411,8 +423,13 @@ class MemoryEditorComposeController(
             state = state.copy(
                 connecting = false,
                 connected = true,
-                supported = true,
-                writeSupported = writeSupported,
+                    supported = true,
+                    writeSupported = writeSupported,
+                    managedSupported = managedSupported,
+                    managedWriteSupported = managedWriteSupported,
+                    managedRevision = session.getLong(
+                        MemoryEngineContract.KEY_MANAGED_REVISION, managedRevision,
+                    ),
                 runtimeToken = token,
                 resultCount = resultCount,
                 pageOffset = pageOffset,
@@ -506,7 +523,15 @@ class MemoryEditorComposeController(
             searching = true,
             feedback = PendingOperationFeedback(OperationFeedbackKind.NEXT_SCAN, state.resultCount),
         ) { engine, token ->
-            if (predicate >= MemoryEngineContract.PREDICATE_CHANGED) {
+            if (state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
+                engine.refineManagedInt(
+                    token,
+                    state.managedRevision,
+                    predicate,
+                    compare,
+                    value.trim(),
+                )
+            } else if (predicate >= MemoryEngineContract.PREDICATE_CHANGED) {
                 engine.refineRelative(token, predicate, compare, value.trim(), secondValue.trim())
             } else {
                 engine.refineKnown(token, predicate, value.trim(), secondValue.trim())
@@ -567,7 +592,13 @@ class MemoryEditorComposeController(
         val resultGroup = !state.watchTab
         launchOperation { engine, token ->
             if (resultGroup) {
-                engine.editResultGroups(token, longArrayOf(id), type, value.trim())
+                if (state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
+                    engine.editManagedResultGroups(
+                        token, state.managedRevision, longArrayOf(id), value.trim(),
+                    )
+                } else {
+                    engine.editResultGroups(token, longArrayOf(id), type, value.trim())
+                }
             } else {
                 engine.editCandidates(token, longArrayOf(id), value.trim())
             }
@@ -591,7 +622,13 @@ class MemoryEditorComposeController(
         }
         launchOperation { engine, token ->
             if (resultGroup) {
-                engine.editResultGroups(token, longArrayOf(id), type, replacement)
+                if (state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
+                    engine.editManagedResultGroups(
+                        token, state.managedRevision, longArrayOf(id), replacement,
+                    )
+                } else {
+                    engine.editResultGroups(token, longArrayOf(id), type, replacement)
+                }
             } else {
                 engine.editCandidates(token, longArrayOf(id), replacement)
             }
@@ -601,14 +638,25 @@ class MemoryEditorComposeController(
     private fun completeEditFlow(followUp: PendingEditFollowUp) {
         when {
             followUp.freezeAfter && followUp.resultGroup -> launchOperation { engine, token ->
-                engine.setFreezeResultGroups(
-                    token,
-                    longArrayOf(followUp.id),
-                    followUp.type,
-                    MemoryEngineContract.FREEZE_LOCK,
-                    followUp.value,
-                    "",
-                )
+                if (state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
+                    engine.setManagedFreezeResultGroups(
+                        token,
+                        state.managedRevision,
+                        longArrayOf(followUp.id),
+                        MemoryEngineContract.FREEZE_LOCK,
+                        followUp.value,
+                        "",
+                    )
+                } else {
+                    engine.setFreezeResultGroups(
+                        token,
+                        longArrayOf(followUp.id),
+                        followUp.type,
+                        MemoryEngineContract.FREEZE_LOCK,
+                        followUp.value,
+                        "",
+                    )
+                }
             }
             followUp.freezeAfter -> launchOperation { engine, token ->
                 engine.setFreeze(
@@ -620,7 +668,13 @@ class MemoryEditorComposeController(
                 )
             }
             followUp.addToWatch && followUp.resultGroup -> launchOperation { engine, token ->
-                engine.addWatchResultGroups(token, longArrayOf(followUp.id), followUp.type)
+                if (state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
+                    engine.addManagedWatchResultGroups(
+                        token, state.managedRevision, longArrayOf(followUp.id),
+                    )
+                } else {
+                    engine.addWatchResultGroups(token, longArrayOf(followUp.id), followUp.type)
+                }
             }
             else -> reloadState()
         }

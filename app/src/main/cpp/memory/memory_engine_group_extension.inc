@@ -56,7 +56,7 @@ struct CompactGroupMatch final {
     if (!compactGroupDecodeDistance(encodedDistance, ordered, maxDistance) ||
         types.size() < 2U || types.size() > 8U || values.size() != types.size() ||
         context.nextId == 0U ||
-        context.nextId > std::numeric_limits<std::uint64_t>::max() - kCandidateLimit) {
+        context.nextId > kRawCandidateIdMax - kCandidateLimit) {
         setMessage("Group Search requires 2-8 typed values within 1-4096 bytes");
         return kInvalidRequest;
     }
@@ -342,7 +342,7 @@ struct CompactGroupMatch final {
     std::vector<CompactGroupMatch>().swap(retained);
 
     if (unique.size() > kCandidateLimit ||
-        context.nextId > std::numeric_limits<std::uint64_t>::max() - unique.size()) {
+        context.nextId > kRawCandidateIdMax - unique.size()) {
         setMessage("Complete Group Search results exceed the resource limit");
         return kResourceLimit;
     }

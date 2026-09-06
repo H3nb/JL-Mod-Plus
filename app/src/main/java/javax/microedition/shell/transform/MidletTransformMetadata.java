@@ -24,8 +24,8 @@ import java.util.Map;
  * are then rebuilt by the normal app reconversion path when their retained source is available.</p>
  */
 public final class MidletTransformMetadata {
-	/** Version 1 includes guest-time virtualization and suppression of advisory explicit GC. */
-	public static final int TRANSFORM_VERSION = 1;
+	/** Version 2 also publishes managed-memory static-initializer tails. */
+	public static final int TRANSFORM_VERSION = 2;
 	public static final String TRANSFORM_VERSION_ATTRIBUTE = "JLMod-Transform-Version";
 	private static final String LEGACY_TIMING_TRANSFORM_ATTRIBUTE =
 			"JLMod-Timing-Transform-Version";

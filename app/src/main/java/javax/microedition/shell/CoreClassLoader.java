@@ -26,6 +26,8 @@ public class CoreClassLoader extends ClassLoader {
 	public static final Pattern INCLUDE = Pattern.compile("java\\..+|com\\..+|javax\\..+|mmpp\\..+|org.xml.sax.+");
 	public static final Pattern EXCLUDE = initExcludePattern();
 	private static final String TIMING_BRIDGE = "javax.microedition.shell.GuestTimingBridge";
+	private static final String MEMORY_DISCOVERY_BRIDGE =
+			"javax.microedition.shell.MemoryDiscoveryBridge";
 	private static final String CUSTOM_TIMER = "javax.microedition.shell.custom.Timer";
 	private static final String CUSTOM_TIMER_TASK = "javax.microedition.shell.custom.TimerTask";
 
@@ -72,6 +74,7 @@ public class CoreClassLoader extends ClassLoader {
 
 	static boolean isTimingAbiClass(String name) {
 		return TIMING_BRIDGE.equals(name)
+				|| MEMORY_DISCOVERY_BRIDGE.equals(name)
 				|| CUSTOM_TIMER.equals(name)
 				|| name.startsWith(CUSTOM_TIMER + "$")
 				|| CUSTOM_TIMER_TASK.equals(name)

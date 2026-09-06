@@ -51,6 +51,9 @@ public class MemoryEngineContractTest {
 	@Test
 	public void contractRejectsUnknownEnums() {
 		assertTrue(MemoryEngineContract.isScope(MemoryEngineContract.SCOPE_JAVA_FAST));
+		assertTrue(MemoryEngineContract.isScope(MemoryEngineContract.SCOPE_MANAGED_JAVA));
+		assertTrue(MemoryEngineContract.isManagedScope(MemoryEngineContract.SCOPE_MANAGED_JAVA));
+		assertTrue(MemoryEngineContract.isRawScope(MemoryEngineContract.SCOPE_JAVA_THOROUGH));
 		assertTrue(MemoryEngineContract.isValueType(MemoryEngineContract.TYPE_AUTO));
 		assertTrue(MemoryEngineContract.isCandidateType(MemoryEngineContract.TYPE_DOUBLE));
 		assertFalse(MemoryEngineContract.isScope(-1));
@@ -87,6 +90,7 @@ public class MemoryEngineContractTest {
 		assertEquals(100, MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
 		assertEquals(32, MemoryEngineContract.MAX_MULTI_WRITE);
 		assertEquals(32, MemoryEngineContract.MAX_FREEZE_RECORDS);
+		assertEquals(128, MemoryEngineContract.MAX_WATCH_RECORDS);
 		assertEquals(8, MemoryEngineContract.MAX_GROUP_VALUES);
 		assertEquals(8, MemoryEngineContract.MAX_SEARCH_HISTORY);
 		assertEquals(16_384, MemoryEngineContract.MAX_RESIDENT_RUNS);

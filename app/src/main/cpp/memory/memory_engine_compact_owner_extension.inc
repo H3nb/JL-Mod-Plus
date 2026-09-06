@@ -179,8 +179,7 @@ struct CompactOwnerScanBuild {
         build.ordinary.size() >= kCandidateLimit ||
         build.ordinary.size() > static_cast<std::size_t>(kCompactOwnerOrdinalMask) ||
         build.firstId == 0U ||
-        build.firstId > std::numeric_limits<std::uint64_t>::max() -
-                                build.ordinary.size()) {
+        build.firstId > kRawCandidateIdMax - build.ordinary.size()) {
         build.limitReached = true;
         return false;
     }
@@ -282,8 +281,7 @@ compactOwnerMakeRevision(
         jint requestedType, jint predicate,
         const std::string &first, const std::string &second) {
     if (context.nextId == 0U ||
-        context.nextId > std::numeric_limits<std::uint64_t>::max() -
-                                 kCandidateLimit) {
+        context.nextId > kRawCandidateIdMax - kCandidateLimit) {
         setMessage("ResultId space is exhausted for this runtime");
         return kResourceLimit;
     }
@@ -384,8 +382,7 @@ compactOwnerMakeRevision(
         setMessage("Compact first-scan revision could not be finalized");
         return kResourceLimit;
     }
-    if (context.nextId > std::numeric_limits<std::uint64_t>::max() -
-                                 revision->ordinaryValues->size()) {
+    if (context.nextId > kRawCandidateIdMax - revision->ordinaryValues->size()) {
         setMessage("ResultId space is exhausted for this runtime");
         return kResourceLimit;
     }
@@ -1366,8 +1363,7 @@ class CompactOwnerOutputBuilder final {
             context.state->requestedType, explicitPlane,
             std::move(store), std::move(build.ordinary));
     if (revision == nullptr ||
-        context.nextId > std::numeric_limits<std::uint64_t>::max() -
-                                 revision->ordinaryValues->size()) {
+        context.nextId > kRawCandidateIdMax - revision->ordinaryValues->size()) {
         return kResourceLimit;
     }
     auto next = std::make_shared<SearchState>();

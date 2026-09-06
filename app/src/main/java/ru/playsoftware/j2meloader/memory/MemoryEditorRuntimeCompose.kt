@@ -101,6 +101,7 @@ internal fun MemoryEditorRuntimeRoot(
     var tab by remember(state.runtimeToken) { mutableStateOf(initialTab) }
     var peekingUnderlay by remember(state.runtimeToken) { mutableStateOf(false) }
     val selectedId = state.selected.singleOrNull()
+    val selectedManaged = selectedId?.let(ManagedJavaMemoryIds::isManaged) == true
 
     LaunchedEffect(tab) {
         when (tab) {
@@ -111,6 +112,10 @@ internal fun MemoryEditorRuntimeRoot(
     }
     LaunchedEffect(tab, selectedId, state.inspector?.candidateId, state.inspectorLoading) {
         if (tab != RuntimeMemoryTab.INSPECTOR || selectedId == null || state.inspectorLoading) {
+            return@LaunchedEffect
+        }
+        if (selectedManaged) {
+            tab = RuntimeMemoryTab.SEARCH_RESULTS
             return@LaunchedEffect
         }
         if (state.inspector?.candidateId != selectedId) {
@@ -153,6 +158,7 @@ internal fun MemoryEditorRuntimeRoot(
                             tab = tab,
                             results = state.resultCount,
                             watches = state.watches.size,
+                            inspectorEnabled = !selectedManaged,
                             onTab = { tab = it },
                             modifier = Modifier.width(176.dp).fillMaxHeight(),
                         )
@@ -180,6 +186,7 @@ internal fun MemoryEditorRuntimeRoot(
                         tab = tab,
                         results = state.resultCount,
                         watches = state.watches.size,
+                        inspectorEnabled = !selectedManaged,
                         onTab = { tab = it },
                     )
                     if (state.busy) RuntimeOperationStrip(state, actions)
@@ -237,6 +244,7 @@ private fun RuntimeMemoryTabRail(
     tab: RuntimeMemoryTab,
     results: Long,
     watches: Int,
+    inspectorEnabled: Boolean,
     onTab: (RuntimeMemoryTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -277,6 +285,7 @@ private fun RuntimeMemoryTabRail(
         FilterChip(
             selected = tab == RuntimeMemoryTab.INSPECTOR,
             onClick = { onTab(RuntimeMemoryTab.INSPECTOR) },
+            enabled = inspectorEnabled,
             colors = jlModPlusFilterChipColors(),
             leadingIcon = { Icon(painterResource(R.drawable.ic_memory_editor_inspector), null) },
             label = {
@@ -319,6 +328,7 @@ private fun RuntimeMemoryTabs(
     tab: RuntimeMemoryTab,
     results: Long,
     watches: Int,
+    inspectorEnabled: Boolean,
     onTab: (RuntimeMemoryTab) -> Unit,
 ) {
     Row(
@@ -365,6 +375,7 @@ private fun RuntimeMemoryTabs(
         FilterChip(
             selected = tab == RuntimeMemoryTab.INSPECTOR,
             onClick = { onTab(RuntimeMemoryTab.INSPECTOR) },
+            enabled = inspectorEnabled,
             colors = jlModPlusFilterChipColors(),
             leadingIcon = {
                 Icon(painterResource(R.drawable.ic_memory_editor_inspector), contentDescription = null)
@@ -483,7 +494,7 @@ private fun RuntimeSearchResultsTab(
             RuntimeActionIcon(
                 icon = R.drawable.ic_memory_editor_search_unknown,
                 description = R.string.memory_editor_search_unknown_values,
-                enabled = !state.busy,
+                enabled = !state.busy && state.searchScope != MemoryEngineContract.SCOPE_MANAGED_JAVA,
                 onClick = { unknownDialog = true },
             )
             RuntimeActionIcon(
@@ -501,13 +512,15 @@ private fun RuntimeSearchResultsTab(
             RuntimeActionIcon(
                 icon = R.drawable.ic_memory_editor_inspector,
                 description = R.string.memory_editor_inspect_memory,
-                enabled = selectedRow != null && !state.busy,
+                enabled = selectedRow != null && !state.busy
+                    && !ManagedJavaMemoryIds.isManaged(selectedRow.id),
                 onClick = onInspectSelected,
             )
             RuntimeActionIcon(
                 icon = R.drawable.ic_delete,
                 description = R.string.memory_editor_remove,
-                enabled = state.selected.isNotEmpty() && !state.busy,
+                enabled = state.selected.isNotEmpty() && !state.busy
+                    && state.searchScope != MemoryEngineContract.SCOPE_MANAGED_JAVA,
                 onClick = { actions.removeSelected(false) },
             )
             val visibleSelectionDescription = stringResource(
@@ -912,6 +925,14 @@ internal fun RuntimeKnownSearchDialog(
     var scope by remember(state.runtimeToken) { mutableIntStateOf(state.searchScope) }
     var peekingUnderlay by remember { mutableStateOf(false) }
 
+    val managedScope = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA
+    LaunchedEffect(scope) {
+        if (managedScope) {
+            type = MemoryEngineContract.TYPE_INT
+            predicate = MemoryEngineContract.PREDICATE_EQUAL
+        }
+    }
+
     val expression = parseMemorySearchExpression(query.text)
     val spec = MemoryInputSpec.forType(type)
     LaunchedEffect(expression, type) {
@@ -925,7 +946,11 @@ internal fun RuntimeKnownSearchDialog(
     val singleValid = expression is MemorySearchExpression.Single && spec.isComplete(expression.value)
     val groupValid = expression is MemorySearchExpression.Group && type != MemoryEngineContract.TYPE_AUTO &&
         expression.values.all(spec::isComplete)
-    val newSearchValid = (singleValid || groupValid) && secondValid
+    val newSearchValid = if (managedScope) {
+        predicate == MemoryEngineContract.PREDICATE_EQUAL && singleValid
+    } else {
+        (singleValid || groupValid) && secondValid
+    }
     val nextScanValid = state.sessionStage == MemorySessionStage.CANDIDATES &&
     type == state.requestedType && scope == state.searchScope && singleValid && secondValid
 
@@ -950,6 +975,7 @@ internal fun RuntimeKnownSearchDialog(
                         RuntimePredicateMenu(
                             predicate = predicate,
                             onPredicate = { predicate = it },
+                            managed = managedScope,
                             modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
                         )
                         RuntimeSearchField(
@@ -974,22 +1000,34 @@ internal fun RuntimeKnownSearchDialog(
                             RuntimeTypeMenu(
                                 type = type,
                                 onType = { type = it },
+                                managed = managedScope,
                                 modifier = Modifier.weight(1f),
                             )
                             RuntimeScopeMenu(
                                 scope = scope,
                                 onScope = { scope = it },
+                                managedSupported = state.managedSupported,
                                 modifier = Modifier.weight(1f),
                             )
                         }
                     } else {
-                        RuntimeTypeMenu(type = type, onType = { type = it }, modifier = Modifier.fillMaxWidth())
-                        RuntimeScopeMenu(scope = scope, onScope = { scope = it }, modifier = Modifier.fillMaxWidth())
+                        RuntimeTypeMenu(
+                            type = type,
+                            onType = { type = it },
+                            managed = managedScope,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        RuntimeScopeMenu(
+                            scope = scope,
+                            onScope = { scope = it },
+                            managedSupported = state.managedSupported,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
                 },
                 keypad = {
                     RuntimeSearchKeypad(
-                        allowGroup = activeField == RuntimeInputField.FIRST,
+                        allowGroup = activeField == RuntimeInputField.FIRST && !managedScope,
                         onToken = { token ->
                             if (activeField == RuntimeInputField.FIRST) query = runtimeInsert(query, token)
                             else second = runtimeInsert(second, token)
@@ -1123,12 +1161,18 @@ private fun RuntimeUnknownSearchDialog(
                                 RuntimeScopeMenu(
                                     scope = scope,
                                     onScope = { scope = it },
+                                    managedSupported = false,
                                     modifier = Modifier.weight(1f),
                                 )
                             }
                         } else {
                             RuntimeTypeMenu(type = type, onType = { type = it }, modifier = Modifier.fillMaxWidth())
-                            RuntimeScopeMenu(scope = scope, onScope = { scope = it }, modifier = Modifier.fillMaxWidth())
+                            RuntimeScopeMenu(
+                                scope = scope,
+                                onScope = { scope = it },
+                                managedSupported = false,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         }
                     } else {
                         if (sideDock) {
@@ -1871,19 +1915,24 @@ private fun RuntimeSearchControlRow(
 private fun RuntimePredicateMenu(
     predicate: Int,
     onPredicate: (Int) -> Unit,
+    managed: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     RuntimeChoiceMenu(
         value = predicate,
-        values = intArrayOf(
-            MemoryEngineContract.PREDICATE_EQUAL,
-            MemoryEngineContract.PREDICATE_NOT_EQUAL,
-            MemoryEngineContract.PREDICATE_GREATER,
-            MemoryEngineContract.PREDICATE_LESS,
-            MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
-            MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
-            MemoryEngineContract.PREDICATE_BETWEEN,
-        ),
+        values = if (managed) {
+            intArrayOf(MemoryEngineContract.PREDICATE_EQUAL)
+        } else {
+            intArrayOf(
+                MemoryEngineContract.PREDICATE_EQUAL,
+                MemoryEngineContract.PREDICATE_NOT_EQUAL,
+                MemoryEngineContract.PREDICATE_GREATER,
+                MemoryEngineContract.PREDICATE_LESS,
+                MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
+                MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
+                MemoryEngineContract.PREDICATE_BETWEEN,
+            )
+        },
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
         modifier = modifier,
@@ -1921,19 +1970,24 @@ private fun RuntimeTypeMenu(
     onType: (Int) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    managed: Boolean = false,
 ) {
     RuntimeChoiceMenu(
         value = type,
-        values = intArrayOf(
-            MemoryEngineContract.TYPE_AUTO,
-            MemoryEngineContract.TYPE_BYTE,
-            MemoryEngineContract.TYPE_SHORT,
-            MemoryEngineContract.TYPE_CHAR,
-            MemoryEngineContract.TYPE_INT,
-            MemoryEngineContract.TYPE_LONG,
-            MemoryEngineContract.TYPE_FLOAT,
-            MemoryEngineContract.TYPE_DOUBLE,
-        ),
+        values = if (managed) {
+            intArrayOf(MemoryEngineContract.TYPE_INT)
+        } else {
+            intArrayOf(
+                MemoryEngineContract.TYPE_AUTO,
+                MemoryEngineContract.TYPE_BYTE,
+                MemoryEngineContract.TYPE_SHORT,
+                MemoryEngineContract.TYPE_CHAR,
+                MemoryEngineContract.TYPE_INT,
+                MemoryEngineContract.TYPE_LONG,
+                MemoryEngineContract.TYPE_FLOAT,
+                MemoryEngineContract.TYPE_DOUBLE,
+            )
+        },
         label = { runtimeTypeName(it) },
         onChange = onType,
         modifier = modifier,
@@ -1963,15 +2017,25 @@ private fun RuntimeScopeMenu(
     scope: Int,
     onScope: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    managedSupported: Boolean = false,
 ) {
     RuntimeChoiceMenu(
         value = scope,
-        values = intArrayOf(MemoryEngineContract.SCOPE_JAVA_FAST, MemoryEngineContract.SCOPE_JAVA_THOROUGH),
-        label = {
-            stringResource(
-                if (it == MemoryEngineContract.SCOPE_JAVA_FAST) R.string.memory_editor_scope_fast
-                else R.string.memory_editor_scope_thorough,
+        values = if (managedSupported) {
+            intArrayOf(
+                MemoryEngineContract.SCOPE_JAVA_FAST,
+                MemoryEngineContract.SCOPE_JAVA_THOROUGH,
+                MemoryEngineContract.SCOPE_MANAGED_JAVA,
             )
+        } else {
+            intArrayOf(MemoryEngineContract.SCOPE_JAVA_FAST, MemoryEngineContract.SCOPE_JAVA_THOROUGH)
+        },
+        label = {
+            when (it) {
+                MemoryEngineContract.SCOPE_JAVA_FAST -> stringResource(R.string.memory_editor_scope_fast)
+                MemoryEngineContract.SCOPE_MANAGED_JAVA -> stringResource(R.string.memory_editor_scope_managed)
+                else -> stringResource(R.string.memory_editor_scope_thorough)
+            }
         },
         onChange = onScope,
         modifier = modifier,

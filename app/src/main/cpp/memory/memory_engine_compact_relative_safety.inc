@@ -21,7 +21,7 @@ namespace {
         return kInvalidRequest;
     }
     if (context.nextId == 0U ||
-        context.nextId > std::numeric_limits<std::uint64_t>::max() - kCandidateLimit) {
+        context.nextId > kRawCandidateIdMax - kCandidateLimit) {
         setMessage("ResultId space is exhausted for this runtime");
         return kResourceLimit;
     }
@@ -112,7 +112,7 @@ namespace {
     }
 
     const std::size_t ordinaryCount = revision->ordinaryValues->size();
-    if (context.nextId > std::numeric_limits<std::uint64_t>::max() - ordinaryCount) {
+    if (context.nextId > kRawCandidateIdMax - ordinaryCount) {
         setMessage("ResultId space is exhausted for this runtime");
         return kResourceLimit;
     }
