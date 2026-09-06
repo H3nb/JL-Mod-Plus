@@ -6,7 +6,6 @@
 package ru.playsoftware.j2meloader.memory
 
 import android.view.WindowManager
-import android.view.ViewTreeObserver
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -51,6 +50,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -1073,6 +1073,7 @@ internal fun RuntimeKnownSearchDialog(
             )
         },
         textScrollable = false,
+        dismissButtonBelowWrappedActions = state.sessionStage == MemorySessionStage.CANDIDATES,
         confirmButton = {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1295,6 +1296,7 @@ private fun RuntimeUnknownSearchDialog(
             )
         },
         textScrollable = false,
+        dismissButtonBelowWrappedActions = hasUnknownSession,
         confirmButton = {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1851,7 +1853,7 @@ private fun RuntimeInputDialogTitle(
     peeking: Boolean,
     onPeekingChanged: (Boolean) -> Unit,
 ) {
-    RuntimeInputDialogWindowEffect(peeking, onPeekingChanged)
+    RuntimeInputDialogWindowEffect(peeking)
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -1864,52 +1866,71 @@ private fun RuntimeInputDialogTitle(
     }
 }
 
-/** Remove the platform dialog dim while the input dialog itself is being hidden. */
+private data class RuntimeInputDialogWindowBaseline(
+    val flags: Int,
+    val dimAmount: Float,
+    val alpha: Float,
+)
+
+/** Keep the platform dialog hidden for the whole Peek hold without resetting it per recomposition. */
 @Composable
-private fun RuntimeInputDialogWindowEffect(
+internal fun RuntimeInputDialogWindowEffect(
     peeking: Boolean,
-    onPeekingChanged: (Boolean) -> Unit,
 ) {
     val view = LocalView.current
-    DisposableEffect(view, peeking) {
-        val observer = view.viewTreeObserver
-        val focusListener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
-            if (!hasFocus) onPeekingChanged(false)
+    val window = (view.parent as? DialogWindowProvider)?.window
+    val baseline = remember(view, window) {
+        window?.attributes?.let { attributes ->
+            RuntimeInputDialogWindowBaseline(
+                flags = attributes.flags,
+                dimAmount = attributes.dimAmount,
+                alpha = attributes.alpha,
+            )
         }
-        if (observer.isAlive) observer.addOnWindowFocusChangeListener(focusListener)
-        val window = (view.parent as? DialogWindowProvider)?.window
-        if (window == null) {
-            onDispose {
-                if (observer.isAlive) observer.removeOnWindowFocusChangeListener(focusListener)
+    }
+
+    DisposableEffect(view, window, baseline) {
+        onDispose {
+            if (window != null && baseline != null) {
+                applyRuntimeInputDialogWindowState(window, baseline, peeking = false)
             }
-        } else {
-            val originalFlags = window.attributes.flags
-            val originalDimAmount = window.attributes.dimAmount
-            val originalWindowAlpha = window.attributes.alpha
-            if (peeking) {
-                window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-                window.attributes = window.attributes.apply {
-                    alpha = 0f
-                    dimAmount = 0f
-                }
-            }
-            onDispose {
-                if (observer.isAlive) observer.removeOnWindowFocusChangeListener(focusListener)
-                window.attributes = window.attributes.apply {
-                    alpha = originalWindowAlpha
-                    dimAmount = originalDimAmount
-                }
-                if (originalFlags and WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0) {
-                    window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-                } else {
-                    window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-                }
-            }
+        }
+    }
+    SideEffect {
+        if (window != null && baseline != null) {
+            applyRuntimeInputDialogWindowState(window, baseline, peeking)
         }
     }
 }
 
-/** Temporarily lowers the panel opacity while held so the MIDlet remains easy to peek at. */
+private fun applyRuntimeInputDialogWindowState(
+    window: android.view.Window,
+    baseline: RuntimeInputDialogWindowBaseline,
+    peeking: Boolean,
+) {
+    val targetAlpha = if (peeking) 0f else baseline.alpha
+    val targetDimAmount = if (peeking) 0f else baseline.dimAmount
+    val targetDimEnabled = !peeking &&
+        baseline.flags and WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0
+    val currentFlags = window.attributes.flags
+    val currentDimEnabled = currentFlags and WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0
+    if (currentDimEnabled != targetDimEnabled) {
+        if (targetDimEnabled) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        }
+    }
+    val attributes = window.attributes
+    if (attributes.alpha != targetAlpha || attributes.dimAmount != targetDimAmount) {
+        window.attributes = attributes.apply {
+            alpha = targetAlpha
+            dimAmount = targetDimAmount
+        }
+    }
+}
+
+/** Temporarily hides the editor while held so the MIDlet remains visible underneath. */
 @Composable
 private fun RuntimePeekUnderlayButton(
     peeking: Boolean,
