@@ -41,4 +41,16 @@ class MemoryInputModelTest {
         assertFalse(MemoryInputSpec.forType(MemoryEngineContract.TYPE_FLOAT).isComplete("1e39"))
         assertTrue(MemoryInputSpec.forType(MemoryEngineContract.TYPE_DOUBLE).isComplete("1e39"))
     }
+
+    @Test fun relativeMagnitudeUsesUnsignedLongWidthAndRejectsNegativeValues() {
+        val longSpec = MemoryInputSpec.relativeMagnitudeForType(MemoryEngineContract.TYPE_LONG)
+        assertTrue(longSpec.isComplete("18446744073709551615"))
+        assertFalse(longSpec.isComplete("18446744073709551616"))
+        assertFalse(longSpec.acceptsPartial("-1"))
+
+        val floatSpec = MemoryInputSpec.relativeMagnitudeForType(MemoryEngineContract.TYPE_FLOAT)
+        assertFalse(floatSpec.isComplete("-1.0"))
+        assertTrue(floatSpec.isComplete("1.0"))
+        assertTrue(floatSpec.acceptsPartial("1e-3"))
+    }
 }
