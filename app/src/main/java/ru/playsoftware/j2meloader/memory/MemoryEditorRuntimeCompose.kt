@@ -6,6 +6,7 @@
 package ru.playsoftware.j2meloader.memory
 
 import android.view.WindowManager
+import android.view.ViewTreeObserver
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -64,6 +66,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
@@ -922,14 +925,23 @@ internal fun RuntimeKnownSearchDialog(
             state.requestedType.takeIf(MemoryEngineContract::isValueType) ?: MemoryEngineContract.TYPE_AUTO,
         )
     }
-    var scope by remember(state.runtimeToken) { mutableIntStateOf(state.searchScope) }
+    var scope by remember(
+        state.runtimeToken,
+        state.sessionStage,
+        state.searchScope,
+        state.knownScopePreference,
+    ) {
+        mutableIntStateOf(
+            if (state.sessionStage == MemorySessionStage.EMPTY) state.knownScopePreference
+            else state.searchScope,
+        )
+    }
     var peekingUnderlay by remember { mutableStateOf(false) }
 
     val managedScope = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA
     LaunchedEffect(scope) {
-        if (managedScope) {
+        if (managedScope && !MemoryEngineContract.isCandidateType(type)) {
             type = MemoryEngineContract.TYPE_INT
-            predicate = MemoryEngineContract.PREDICATE_EQUAL
         }
     }
 
@@ -946,11 +958,10 @@ internal fun RuntimeKnownSearchDialog(
     val singleValid = expression is MemorySearchExpression.Single && spec.isComplete(expression.value)
     val groupValid = expression is MemorySearchExpression.Group && type != MemoryEngineContract.TYPE_AUTO &&
         expression.values.all(spec::isComplete)
-    val newSearchValid = if (managedScope) {
-        predicate == MemoryEngineContract.PREDICATE_EQUAL && singleValid
-    } else {
-        (singleValid || groupValid) && secondValid
-    }
+    val newSearchValid = if (managedScope) singleValid && secondValid &&
+        MemoryEngineContract.isCandidateType(type) &&
+        predicate in MemoryEngineContract.PREDICATE_EQUAL..MemoryEngineContract.PREDICATE_BETWEEN
+    else (singleValid || groupValid) && secondValid
     val nextScanValid = state.sessionStage == MemorySessionStage.CANDIDATES &&
     type == state.requestedType && scope == state.searchScope && singleValid && secondValid
 
@@ -975,7 +986,6 @@ internal fun RuntimeKnownSearchDialog(
                         RuntimePredicateMenu(
                             predicate = predicate,
                             onPredicate = { predicate = it },
-                            managed = managedScope,
                             modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
                         )
                         RuntimeSearchField(
@@ -1005,7 +1015,10 @@ internal fun RuntimeKnownSearchDialog(
                             )
                             RuntimeScopeMenu(
                                 scope = scope,
-                                onScope = { scope = it },
+                                onScope = {
+                                    scope = it
+                                    actions.setKnownSearchScope(it)
+                                },
                                 managedSupported = state.managedSupported,
                                 modifier = Modifier.weight(1f),
                             )
@@ -1019,7 +1032,10 @@ internal fun RuntimeKnownSearchDialog(
                         )
                         RuntimeScopeMenu(
                             scope = scope,
-                            onScope = { scope = it },
+                            onScope = {
+                                scope = it
+                                actions.setKnownSearchScope(it)
+                            },
                             managedSupported = state.managedSupported,
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -1028,9 +1044,14 @@ internal fun RuntimeKnownSearchDialog(
                 keypad = {
                     RuntimeSearchKeypad(
                         allowGroup = activeField == RuntimeInputField.FIRST && !managedScope,
+                        valueSpec = if (managedScope || activeField == RuntimeInputField.SECOND) spec else null,
                         onToken = { token ->
-                            if (activeField == RuntimeInputField.FIRST) query = runtimeInsert(query, token)
-                            else second = runtimeInsert(second, token)
+                            if (activeField == RuntimeInputField.FIRST) {
+                                query = if (managedScope) runtimeInsertValidated(query, token, spec)
+                                else runtimeInsert(query, token)
+                            } else {
+                                second = runtimeInsertValidated(second, token, spec)
+                            }
                         },
                         onBackspace = {
                             if (activeField == RuntimeInputField.FIRST) query = runtimeBackspace(query)
@@ -1121,16 +1142,25 @@ private fun RuntimeUnknownSearchDialog(
             state.requestedType.takeIf(MemoryEngineContract::isValueType) ?: MemoryEngineContract.TYPE_AUTO,
         )
     }
-    var scope by remember(state.runtimeToken) { mutableIntStateOf(state.searchScope) }
+    var scope by remember(state.runtimeToken) {
+        mutableIntStateOf(
+            state.searchScope.takeIf(MemoryEngineContract::isRawScope)
+                ?: MemoryEngineContract.SCOPE_JAVA_FAST,
+        )
+    }
     var predicate by remember { mutableIntStateOf(MemoryEngineContract.PREDICATE_CHANGED) }
     var first by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
     var second by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
     var activeField by remember { mutableStateOf(RuntimeInputField.FIRST) }
     var peekingUnderlay by remember { mutableStateOf(false) }
-    val spec = MemoryInputSpec.forType(state.requestedType)
     val needsValue = runtimeRelativeNeedsValue(predicate)
     val needsSecond = predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
         predicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
+    val spec = if (hasUnknownSession && needsValue) {
+        MemoryInputSpec.relativeMagnitudeForType(state.requestedType)
+    } else {
+        MemoryInputSpec.forType(state.requestedType)
+    }
     val refineValid = !needsValue || (spec.isComplete(first.text) && (!needsSecond || spec.isComplete(second.text)))
 
     AlertDialog(
@@ -1240,9 +1270,13 @@ private fun RuntimeUnknownSearchDialog(
                 keypad = {
                     RuntimeSearchKeypad(
                         allowGroup = false,
+                        valueSpec = spec,
                         onToken = { token ->
-                            if (activeField == RuntimeInputField.FIRST) first = runtimeInsert(first, token)
-                            else second = runtimeInsert(second, token)
+                            if (activeField == RuntimeInputField.FIRST) {
+                                first = runtimeInsertValidated(first, token, spec)
+                            } else {
+                                second = runtimeInsertValidated(second, token, spec)
+                            }
                         },
                         onBackspace = {
                             if (activeField == RuntimeInputField.FIRST) first = runtimeBackspace(first)
@@ -1817,7 +1851,7 @@ private fun RuntimeInputDialogTitle(
     peeking: Boolean,
     onPeekingChanged: (Boolean) -> Unit,
 ) {
-    RuntimeInputDialogWindowEffect(peeking)
+    RuntimeInputDialogWindowEffect(peeking, onPeekingChanged)
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -1832,12 +1866,22 @@ private fun RuntimeInputDialogTitle(
 
 /** Remove the platform dialog dim while the input dialog itself is being hidden. */
 @Composable
-private fun RuntimeInputDialogWindowEffect(peeking: Boolean) {
+private fun RuntimeInputDialogWindowEffect(
+    peeking: Boolean,
+    onPeekingChanged: (Boolean) -> Unit,
+) {
     val view = LocalView.current
     DisposableEffect(view, peeking) {
+        val observer = view.viewTreeObserver
+        val focusListener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
+            if (!hasFocus) onPeekingChanged(false)
+        }
+        if (observer.isAlive) observer.addOnWindowFocusChangeListener(focusListener)
         val window = (view.parent as? DialogWindowProvider)?.window
         if (window == null) {
-            onDispose { }
+            onDispose {
+                if (observer.isAlive) observer.removeOnWindowFocusChangeListener(focusListener)
+            }
         } else {
             val originalFlags = window.attributes.flags
             val originalDimAmount = window.attributes.dimAmount
@@ -1850,6 +1894,7 @@ private fun RuntimeInputDialogWindowEffect(peeking: Boolean) {
                 }
             }
             onDispose {
+                if (observer.isAlive) observer.removeOnWindowFocusChangeListener(focusListener)
                 window.attributes = window.attributes.apply {
                     alpha = originalWindowAlpha
                     dimAmount = originalDimAmount
@@ -1874,27 +1919,39 @@ private fun RuntimePeekUnderlayButton(
         if (peeking) R.string.memory_editor_peek_underlay_active
         else R.string.memory_editor_peek_underlay,
     )
-    IconButton(
-        onClick = {},
-        modifier = Modifier.pointerInput(Unit) {
-            detectTapGestures(
-                onPress = {
-                    onPeekingChanged(true)
-                    try {
-                        tryAwaitRelease()
-                    } finally {
-                        onPeekingChanged(false)
-                    }
-                },
-            )
-        },
+    DisposableEffect(Unit) {
+        onDispose { onPeekingChanged(false) }
+    }
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .semantics {
+                contentDescription = description
+                onClick {
+                    onPeekingChanged(!peeking)
+                    true
+                }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        onPeekingChanged(true)
+                        try {
+                            tryAwaitRelease()
+                        } finally {
+                            onPeekingChanged(false)
+                        }
+                    },
+                )
+            },
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             painterResource(
                 if (peeking) R.drawable.ic_memory_editor_visibility_off
                 else R.drawable.ic_memory_editor_visibility,
             ),
-            contentDescription = description,
+            contentDescription = null,
         )
     }
 }
@@ -1915,24 +1972,19 @@ private fun RuntimeSearchControlRow(
 private fun RuntimePredicateMenu(
     predicate: Int,
     onPredicate: (Int) -> Unit,
-    managed: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     RuntimeChoiceMenu(
         value = predicate,
-        values = if (managed) {
-            intArrayOf(MemoryEngineContract.PREDICATE_EQUAL)
-        } else {
-            intArrayOf(
-                MemoryEngineContract.PREDICATE_EQUAL,
-                MemoryEngineContract.PREDICATE_NOT_EQUAL,
-                MemoryEngineContract.PREDICATE_GREATER,
-                MemoryEngineContract.PREDICATE_LESS,
-                MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
-                MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
-                MemoryEngineContract.PREDICATE_BETWEEN,
-            )
-        },
+        values = intArrayOf(
+            MemoryEngineContract.PREDICATE_EQUAL,
+            MemoryEngineContract.PREDICATE_NOT_EQUAL,
+            MemoryEngineContract.PREDICATE_GREATER,
+            MemoryEngineContract.PREDICATE_LESS,
+            MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
+            MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
+            MemoryEngineContract.PREDICATE_BETWEEN,
+        ),
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
         modifier = modifier,
@@ -1975,7 +2027,15 @@ private fun RuntimeTypeMenu(
     RuntimeChoiceMenu(
         value = type,
         values = if (managed) {
-            intArrayOf(MemoryEngineContract.TYPE_INT)
+            intArrayOf(
+                MemoryEngineContract.TYPE_BYTE,
+                MemoryEngineContract.TYPE_SHORT,
+                MemoryEngineContract.TYPE_CHAR,
+                MemoryEngineContract.TYPE_INT,
+                MemoryEngineContract.TYPE_LONG,
+                MemoryEngineContract.TYPE_FLOAT,
+                MemoryEngineContract.TYPE_DOUBLE,
+            )
         } else {
             intArrayOf(
                 MemoryEngineContract.TYPE_AUTO,

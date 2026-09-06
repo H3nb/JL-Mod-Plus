@@ -206,6 +206,10 @@ internal data class MemoryEditorUiState(
     val sessionStage: MemorySessionStage = MemorySessionStage.EMPTY,
     val requestedType: Int = MemoryEngineContract.TYPE_AUTO,
     val searchScope: Int = MemoryEngineContract.SCOPE_JAVA_FAST,
+    /** UI preference used only while the Known dialog has no committed session. */
+    val knownScopePreference: Int = MemoryEngineContract.SCOPE_JAVA_FAST,
+    /** Distinguishes an explicit user choice from the capability-driven default. */
+    val knownScopePreferenceExplicit: Boolean = false,
     val canUndo: Boolean = false,
     val inspectorLoading: Boolean = false,
     val inspector: MemoryInspectorSnapshot? = null,
@@ -215,6 +219,7 @@ internal interface MemoryEditorActions {
     fun close()
     fun refreshCapabilities()
     fun startSearch(value: String, secondValue: String, type: Int, predicate: Int, unknown: Boolean, scope: Int)
+    fun setKnownSearchScope(scope: Int) = Unit
     fun nextScan(value: String, secondValue: String, predicate: Int, compare: Int)
     fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int)
     fun undo()

@@ -28,6 +28,7 @@ import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Presentation controller hosted in :memory_engine. The MIDlet process owns only the small bubble;
@@ -54,6 +55,10 @@ class MemoryEditorComposeController(
     private var pendingInspectorRefresh: PendingInspectorRefresh? = null
     private var pendingOperationFeedback: PendingOperationFeedback? = null
     private var liveRefreshPending = false
+    private var visiblePageRequestPending = false
+    private var visiblePageRequestGeneration = 0L
+    private var visiblePageRequestInFlightGeneration = 0L
+    private val stateRequestGeneration = AtomicLong()
     private val liveRefreshRunnable = Runnable(::runLiveRefreshTick)
 
     private data class PendingEditFollowUp(
@@ -218,6 +223,10 @@ class MemoryEditorComposeController(
         if (destroyed) return
         composeView.removeCallbacks(liveRefreshRunnable)
         liveRefreshPending = false
+        stateRequestGeneration.incrementAndGet()
+        visiblePageRequestGeneration++
+        visiblePageRequestPending = false
+        visiblePageRequestInFlightGeneration = 0L
         state = state.copy(visible = false, selected = emptySet())
         composeView.visibility = View.GONE
         closeHost()
@@ -227,8 +236,12 @@ class MemoryEditorComposeController(
         if (destroyed) return
         destroyed = true
         connectionGeneration++
+        stateRequestGeneration.incrementAndGet()
         composeView.removeCallbacks(liveRefreshRunnable)
         liveRefreshPending = false
+        visiblePageRequestGeneration++
+        visiblePageRequestPending = false
+        visiblePageRequestInFlightGeneration = 0L
         composeView.visibility = View.GONE
         composeView.disposeComposition()
         disconnectEngine()
@@ -272,6 +285,10 @@ class MemoryEditorComposeController(
             pendingEditFollowUp = null
             pendingInspectorRefresh = null
             liveRefreshPending = false
+            stateRequestGeneration.incrementAndGet()
+            visiblePageRequestGeneration++
+            visiblePageRequestPending = false
+            visiblePageRequestInFlightGeneration = 0L
             if (!runtimeStillActive()) {
                 destroy()
                 return@post
@@ -306,7 +323,9 @@ class MemoryEditorComposeController(
     private fun reloadState(retry: Int = 0): Unit = runIpc {
         val localToken = ownedRuntimeToken
         if (localToken == 0L) {
-            post { close() }
+            post {
+                if (state.visible && ownedRuntimeToken == 0L) close()
+            }
             return@runIpc
         }
 
@@ -314,6 +333,8 @@ class MemoryEditorComposeController(
             post { scheduleReconnect() }
             return@runIpc
         }
+        val stateRequest = stateRequestGeneration.incrementAndGet()
+        val connection = connectionGeneration
         val capabilities = engine.capabilities
         val supported = capabilities.getBoolean(MemoryEngineContract.KEY_SUPPORTED, false)
         val writeSupported = capabilities.getBoolean(MemoryEngineContract.KEY_WRITE_SUPPORTED, false)
@@ -341,6 +362,9 @@ class MemoryEditorComposeController(
                 }
                 val generation = connectionGeneration
                 post {
+                    if (!state.visible || service !== engine || connection != connectionGeneration ||
+                        stateRequest != stateRequestGeneration.get()
+                    ) return@post
                     state = state.copy(
                         connecting = true,
                         connected = true,
@@ -348,19 +372,29 @@ class MemoryEditorComposeController(
                             ?: context.getString(R.string.memory_editor_engine_reconnecting),
                     )
                     composeView.postDelayed({
-                        if (!destroyed && state.visible && generation == connectionGeneration) {
+                        if (!destroyed && state.visible && generation == connectionGeneration &&
+                            service === engine && stateRequest == stateRequestGeneration.get()
+                        ) {
                             reloadState((retry + 1).coerceAtMost(CAPABILITY_RETRY_DELAYS_MS.size))
                         }
                     }, delay)
                 }
             } else {
-                post { close() }
+                post {
+                    if (!state.visible || service !== engine || connection != connectionGeneration ||
+                        stateRequest != stateRequestGeneration.get()
+                    ) return@post
+                    close()
+                }
             }
             return@runIpc
         }
 
         if (!supported) {
             post {
+                if (!state.visible || service !== engine || connection != connectionGeneration ||
+                    stateRequest != stateRequestGeneration.get()
+                ) return@post
                 state = state.copy(
                     connecting = false,
                     connected = true,
@@ -400,6 +434,23 @@ class MemoryEditorComposeController(
             MemoryEngineContract.KEY_SEARCH_SCOPE,
             MemoryEngineContract.SCOPE_JAVA_FAST,
         )
+        val newRuntime = state.runtimeToken != token
+        val explicitKnownScope = if (stage == MemorySessionStage.EMPTY &&
+            mode == MemorySearchMode.KNOWN && newRuntime
+        ) false else state.knownScopePreferenceExplicit
+        val knownScopePreference = if (stage == MemorySessionStage.EMPTY &&
+            mode == MemorySearchMode.KNOWN && !explicitKnownScope
+        ) {
+            if (managedSupported) MemoryEngineContract.SCOPE_MANAGED_JAVA
+            else MemoryEngineContract.SCOPE_JAVA_FAST
+        } else {
+            state.knownScopePreference
+        }
+        val displayScope = if (stage == MemorySessionStage.EMPTY && mode == MemorySearchMode.KNOWN) {
+            knownScopePreference
+        } else {
+            scope
+        }
         val canUndo = session.getInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH, 0) > 0
         val resultCount = engine.getResultCount(token)
         val requestedOffset = state.pageOffset
@@ -416,6 +467,9 @@ class MemoryEditorComposeController(
         val watches = MemoryWatchPageParser.parse(engine.getWatchPage(token))
 
         post {
+            if (!state.visible || service !== engine || connection != connectionGeneration ||
+                stateRequest != stateRequestGeneration.get()
+            ) return@post
             val validIds = buildSet {
                 results.forEach { add(it.id) }
                 watches.forEach { add(it.id) }
@@ -423,13 +477,13 @@ class MemoryEditorComposeController(
             state = state.copy(
                 connecting = false,
                 connected = true,
-                    supported = true,
-                    writeSupported = writeSupported,
-                    managedSupported = managedSupported,
-                    managedWriteSupported = managedWriteSupported,
-                    managedRevision = session.getLong(
-                        MemoryEngineContract.KEY_MANAGED_REVISION, managedRevision,
-                    ),
+                supported = true,
+                writeSupported = writeSupported,
+                managedSupported = managedSupported,
+                managedWriteSupported = managedWriteSupported,
+                managedRevision = session.getLong(
+                    MemoryEngineContract.KEY_MANAGED_REVISION, managedRevision,
+                ),
                 runtimeToken = token,
                 resultCount = resultCount,
                 pageOffset = pageOffset,
@@ -439,48 +493,89 @@ class MemoryEditorComposeController(
                 searchMode = mode,
                 sessionStage = stage,
                 requestedType = requestedType,
-                searchScope = scope,
+                searchScope = displayScope,
+                knownScopePreference = knownScopePreference,
+                knownScopePreferenceExplicit = explicitKnownScope,
                 canUndo = canUndo,
                 message = capabilityMessage?.takeIf(String::isNotBlank) ?: state.message,
             )
         }
     }
 
-    /** Refresh only the page currently presented by Compose; search/session metadata is immutable. */
-    private fun reloadVisibleRows(): Unit = runIpc {
+    /** Reads only the visible page; managed reads are getters and never refresh search baselines. */
+    private fun reloadVisibleRows() {
+        if (destroyed || visiblePageRequestPending) return
         val token = state.runtimeToken
-        val engine = service ?: return@runIpc
-        if (token == 0L) return@runIpc
+        val engine = service
+        if (token == 0L || engine == null) return
         val watchTab = state.watchTab
         val pageOffset = state.pageOffset
-        val results = if (!watchTab && state.sessionStage == MemorySessionStage.CANDIDATES) {
-            MemoryResultPageParser.parse(engine.getResultPage(token, pageOffset, PAGE_SIZE))
-        } else {
-            emptyList()
-        }
-        val watches = if (watchTab) {
-            MemoryWatchPageParser.parse(engine.getWatchPage(token))
-        } else {
-            emptyList()
-        }
-        post {
-            if (!state.visible || state.busy || state.runtimeToken != token ||
-                state.watchTab != watchTab || state.pageOffset != pageOffset
-            ) {
-                return@post
-            }
-            if (watchTab) {
-                val validIds = watches.mapTo(mutableSetOf(), MemoryWatchRow::id)
-                state = state.copy(
-                    watches = watches,
-                    selected = state.selected.filterTo(mutableSetOf()) { it in validIds },
-                )
-            } else {
-                val validIds = results.mapTo(mutableSetOf(), MemoryResultRow::id)
-                state = state.copy(
-                    results = results,
-                    selected = state.selected.filterTo(mutableSetOf()) { it in validIds },
-                )
+        val sessionStage = state.sessionStage
+        val searchScope = state.searchScope
+        val managedRevision = state.managedRevision
+        val requestGeneration = ++visiblePageRequestGeneration
+        val connection = connectionGeneration
+        visiblePageRequestPending = true
+        visiblePageRequestInFlightGeneration = requestGeneration
+        runIpc {
+            var completionPosted = false
+            try {
+                val resultBundle = if (!watchTab && sessionStage == MemorySessionStage.CANDIDATES) {
+                    engine.getResultPage(token, pageOffset, PAGE_SIZE)
+                } else {
+                    null
+                }
+                val managedPageRevision = if (!watchTab &&
+                    searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA &&
+                    sessionStage == MemorySessionStage.CANDIDATES
+                ) {
+                    resultBundle?.getLong(MemoryEngineContract.KEY_MANAGED_REVISION, Long.MIN_VALUE)
+                } else null
+                val results = MemoryResultPageParser.parse(resultBundle)
+                val watches = if (watchTab) {
+                    MemoryWatchPageParser.parse(engine.getWatchPage(token))
+                } else {
+                    emptyList()
+                }
+                post {
+                    val isInFlight = visiblePageRequestInFlightGeneration == requestGeneration
+                    if (isInFlight) {
+                        visiblePageRequestPending = false
+                        visiblePageRequestInFlightGeneration = 0L
+                    }
+                    if (!isInFlight || requestGeneration != visiblePageRequestGeneration ||
+                        service !== engine || connection != connectionGeneration
+                    ) return@post
+                    if (!state.visible || state.busy || state.runtimeToken != token ||
+                        state.watchTab != watchTab || state.pageOffset != pageOffset ||
+                        state.sessionStage != sessionStage || state.searchScope != searchScope ||
+                        state.managedRevision != managedRevision ||
+                        (managedPageRevision != null && managedPageRevision != managedRevision)
+                    ) return@post
+                    if (watchTab) {
+                        val validIds = watches.mapTo(mutableSetOf(), MemoryWatchRow::id)
+                        state = state.copy(
+                            watches = watches,
+                            selected = state.selected.filterTo(mutableSetOf()) { it in validIds },
+                        )
+                    } else {
+                        val validIds = results.mapTo(mutableSetOf(), MemoryResultRow::id)
+                        state = state.copy(
+                            results = results,
+                            selected = state.selected.filterTo(mutableSetOf()) { it in validIds },
+                        )
+                    }
+                }
+                completionPosted = true
+            } finally {
+                if (!completionPosted) {
+                    post {
+                        if (visiblePageRequestInFlightGeneration == requestGeneration) {
+                            visiblePageRequestPending = false
+                            visiblePageRequestInFlightGeneration = 0L
+                        }
+                    }
+                }
             }
         }
     }
@@ -493,6 +588,7 @@ class MemoryEditorComposeController(
         unknown: Boolean,
         scope: Int,
     ) {
+        invalidateVisiblePageRequest()
         state = state.copy(pageOffset = 0, selected = emptySet(), inspector = null)
         launchOperation(searching = true) { engine, token ->
             if (unknown) {
@@ -510,7 +606,20 @@ class MemoryEditorComposeController(
         }
     }
 
+    override fun setKnownSearchScope(scope: Int) {
+        if (!MemoryEngineContract.isScope(scope) ||
+            state.sessionStage != MemorySessionStage.EMPTY ||
+            state.searchMode != MemorySearchMode.KNOWN
+        ) return
+        state = state.copy(
+            searchScope = scope,
+            knownScopePreference = scope,
+            knownScopePreferenceExplicit = true,
+        )
+    }
+
     override fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int) {
+        invalidateVisiblePageRequest()
         state = state.copy(pageOffset = 0, selected = emptySet(), inspector = null)
         launchOperation(searching = true) { engine, token ->
             engine.startGroupSearch(token, scope, types, values, distance)
@@ -518,20 +627,13 @@ class MemoryEditorComposeController(
     }
 
     override fun nextScan(value: String, secondValue: String, predicate: Int, compare: Int) {
+        invalidateVisiblePageRequest()
         state = state.copy(pageOffset = 0, selected = emptySet(), inspector = null)
         launchOperation(
             searching = true,
             feedback = PendingOperationFeedback(OperationFeedbackKind.NEXT_SCAN, state.resultCount),
         ) { engine, token ->
-            if (state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
-                engine.refineManagedInt(
-                    token,
-                    state.managedRevision,
-                    predicate,
-                    compare,
-                    value.trim(),
-                )
-            } else if (predicate >= MemoryEngineContract.PREDICATE_CHANGED) {
+            if (predicate >= MemoryEngineContract.PREDICATE_CHANGED) {
                 engine.refineRelative(token, predicate, compare, value.trim(), secondValue.trim())
             } else {
                 engine.refineKnown(token, predicate, value.trim(), secondValue.trim())
@@ -560,6 +662,7 @@ class MemoryEditorComposeController(
 
     override fun setWatchTab(watch: Boolean) {
         if (state.watchTab == watch) return
+        invalidateVisiblePageRequest()
         state = state.copy(watchTab = watch, selected = emptySet())
     }
 
@@ -737,12 +840,14 @@ class MemoryEditorComposeController(
 
     override fun previousPage() {
         if (state.pageOffset <= 0) return
+        invalidateVisiblePageRequest()
         state = state.copy(pageOffset = (state.pageOffset - PAGE_SIZE).coerceAtLeast(0), selected = emptySet())
         reloadState()
     }
 
     override fun nextPage() {
         if (state.pageOffset.toLong() + PAGE_SIZE >= state.resultCount) return
+        invalidateVisiblePageRequest()
         state = state.copy(pageOffset = state.pageOffset + PAGE_SIZE, selected = emptySet())
         reloadState()
     }
@@ -758,6 +863,7 @@ class MemoryEditorComposeController(
         val token = state.runtimeToken
         val engine = service ?: return
         if (token == 0L) return
+        invalidateVisiblePageRequest()
         runIpc {
             engine.clearSearch(token)
             post {
@@ -904,6 +1010,7 @@ class MemoryEditorComposeController(
             refreshCapabilities()
             return
         }
+        invalidateVisiblePageRequest()
         val generation = ++operationGeneration
         pendingOperationFeedback = feedback
         activeOperationId = 0L
@@ -927,25 +1034,40 @@ class MemoryEditorComposeController(
 
     private fun runLiveRefreshTick() {
         if (destroyed || !state.visible) return
-        if (!state.busy && !liveRefreshPending && state.inspector == null) {
-            val ids = if (state.watchTab) {
-                state.watches.map(MemoryWatchRow::id)
-            } else {
-                state.results.map(MemoryResultRow::id)
-            }.toLongArray()
+        if (!state.busy && !liveRefreshPending && !visiblePageRequestPending && state.inspector == null) {
             val token = state.runtimeToken
             val engine = service
-            if (ids.isNotEmpty() && token != 0L && engine != null) {
-                liveRefreshPending = true
-                runIpc {
-                    val operationId = engine.refreshCandidates(token, ids, true)
-                    if (operationId <= 0L) post { liveRefreshPending = false }
+            if (token != 0L && engine != null) {
+                val rawIds = if (state.watchTab) {
+                    state.watches.asSequence()
+                        .map(MemoryWatchRow::id)
+                        .filterNot(ManagedJavaMemoryIds::isManaged)
+                        .toList()
+                        .toLongArray()
+                } else if (state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
+                    longArrayOf()
+                } else {
+                    state.results.map(MemoryResultRow::id).toLongArray()
+                }
+                if (rawIds.isNotEmpty()) {
+                    liveRefreshPending = true
+                    runIpc {
+                        val operationId = engine.refreshCandidates(token, rawIds, true)
+                        if (operationId <= 0L) post { liveRefreshPending = false }
+                    }
+                } else if (state.watchTab || state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
+                    reloadVisibleRows()
                 }
             }
         }
         if (!destroyed && state.visible) {
             composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INTERVAL_MS)
         }
+    }
+
+    /** Invalidates the apply side of an in-flight page read without creating a second request. */
+    private fun invalidateVisiblePageRequest() {
+        visiblePageRequestGeneration++
     }
 
     private fun showSearchCompleteToast(resultCount: Long) {
