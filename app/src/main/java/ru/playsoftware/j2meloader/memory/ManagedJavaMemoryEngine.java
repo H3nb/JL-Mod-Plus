@@ -17,6 +17,7 @@ package ru.playsoftware.j2meloader.memory;
 import androidx.annotation.Nullable;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
@@ -36,10 +37,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.microedition.shell.MemoryDiscoveryBridge;
 
 /**
- * Target-process managed Java backend for the bounded Int vertical slice.
+ * Target-process managed Java graph backend for the supported primitive planes.
  *
  * <p>This class deliberately contains no native-memory calls. Candidate identity is a logical
- * owner handle plus a cached schema slot or int-array index. Only the owner is weakly retained;
+ * owner handle plus a cached schema slot or primitive-array index. Only the owner is weakly retained;
  * the graph's temporary identity map is released when a scan finishes.</p>
  */
 final class ManagedJavaMemoryEngine {
@@ -55,6 +56,14 @@ final class ManagedJavaMemoryEngine {
 	private static final int DEFAULT_MAX_CANDIDATES = 2_000_000;
 	private static final int DEFAULT_MAX_CONTAINER_ITEMS = 4_096;
 	private static final int DEFAULT_MAX_ARRAY_ELEMENTS = 2_000_000;
+	private static final long DEFAULT_MAX_RESULT_STORAGE_BYTES = 192L * 1024L * 1024L;
+	private static final long RESULT_SLOT_BYTES = Integer.BYTES + 2L * Long.BYTES;
+	private static final int INITIAL_OWNER_CAPACITY = 16;
+	private static final long STAGED_OWNER_BYTES = 64L;
+	private static final long FINISHED_BUCKET_BYTES = 64L;
+	private static final long TRAVERSAL_ENTRY_BYTES = 64L;
+	private static final long QUEUE_REFERENCE_BYTES = Long.BYTES;
+	private static final long SNAPSHOT_REFERENCE_BYTES = Long.BYTES;
 
 	private final Object stateLock = new Object();
 	private final AtomicLong controlEpoch = new AtomicLong();
@@ -77,6 +86,28 @@ final class ManagedJavaMemoryEngine {
 
 	ManagedJavaMemoryEngine(Limits limits) {
 		this.limits = limits == null ? Limits.defaults() : limits;
+	}
+
+	private static long checkedAdd(long left, long right) {
+		if (left < 0L || right < 0L || left > Long.MAX_VALUE - right) return Long.MAX_VALUE;
+		return left + right;
+	}
+
+	private static long checkedMultiply(long left, long right) {
+		if (left < 0L || right < 0L || (left != 0L && right > Long.MAX_VALUE / left)) {
+			return Long.MAX_VALUE;
+		}
+		return left * right;
+	}
+
+	private static int initialCapacity(int maxCandidates) {
+		return Math.min(INITIAL_OWNER_CAPACITY, Math.max(0, maxCandidates));
+	}
+
+	private static int nextCapacity(int current, int max) {
+		if (max <= current) return current;
+		long doubled = current <= 0 ? 1L : (long) current * 2L;
+		return (int) Math.min((long) max, doubled);
 	}
 
 	ManagedCapabilities capabilities(long token) {
@@ -123,6 +154,12 @@ final class ManagedJavaMemoryEngine {
 	}
 
 	ManagedOperationResult startExactInt(long token, int value, long operationEpoch) {
+		return startExact(token, MemoryEngineContract.TYPE_INT,
+				MemoryEngineContract.PREDICATE_EQUAL, value, 0L, operationEpoch);
+	}
+
+	ManagedOperationResult startExact(long token, int type, int predicate, long first, long second,
+	                                long operationEpoch) {
 		MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshot(token);
 		if (!snapshot.isAvailable()) {
 			return failure(token, MemoryEngineContract.RESULT_UNSUPPORTED,
@@ -132,8 +169,17 @@ final class ManagedJavaMemoryEngine {
 			return failure(token, MemoryEngineContract.RESULT_CANCELLED,
 					"Managed search was cancelled before it started");
 		}
+		if (!ManagedJavaValue.validKnownQuery(type, predicate, first, second)) {
+			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed search received an invalid typed query");
+		}
 
-		ScanContext scan = new ScanContext(token, operationEpoch, snapshot, value);
+		long retainedRevisionBytes;
+		synchronized (stateLock) {
+			retainedRevisionBytes = committed == null ? 0L : committed.storageBytes();
+		}
+		ScanContext scan = new ScanContext(token, operationEpoch, snapshot, type, predicate,
+				first, second, retainedRevisionBytes);
 		try {
 			scan.enqueue(snapshot.root());
 			Class<?>[] classes = snapshot.classes();
@@ -141,8 +187,14 @@ final class ManagedJavaMemoryEngine {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"Managed class snapshot exceeds the resource limit");
 			}
-			for (Class<?> type : classes) {
-				if (!scan.scanStaticClass(type)) return scan.failure();
+			long classSnapshotBytes = checkedMultiply(classes.length, SNAPSHOT_REFERENCE_BYTES);
+			scan.reserveTraversalBytes(classSnapshotBytes);
+			try {
+				for (Class<?> classType : classes) {
+					if (!scan.scanStaticClass(classType)) return scan.failure();
+				}
+			} finally {
+				scan.releaseTraversalBytes(classSnapshotBytes);
 			}
 			while (!scan.queue.isEmpty()) {
 				if (!scan.checkpoint()) return scan.failure();
@@ -154,13 +206,13 @@ final class ManagedJavaMemoryEngine {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"Managed result storage exceeds the 2,000,000-row limit");
 			}
-			Revision revision = built.finish(allocateRevisionId());
+			Revision revision = built.finish(allocateRevisionId(), limits,
+					scan.transientStorageBytes);
 			if (revision == null) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"Managed revision identifier space is exhausted");
 			}
-			return commitSearch(token, operationEpoch, revision, scan.diagnosticMessage(),
-					MemoryEngineContract.TYPE_INT);
+			return commitSearch(token, operationEpoch, revision, scan.diagnosticMessage(), type);
 		} catch (OperationCancelledException cancelled) {
 			return failure(token, MemoryEngineContract.RESULT_CANCELLED,
 					"Managed search was cancelled");
@@ -172,16 +224,43 @@ final class ManagedJavaMemoryEngine {
 		}
 	}
 
+	ManagedOperationResult startExact(long token, int type, int predicate, @Nullable String first,
+	                                @Nullable String second, long operationEpoch) {
+		long[] firstBits = new long[1];
+		long[] secondBits = new long[1];
+		if (!ManagedJavaValue.parse(first, type, firstBits)
+				|| (predicate == MemoryEngineContract.PREDICATE_BETWEEN
+				&& !ManagedJavaValue.parse(second, type, secondBits))) {
+			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed search value is outside the selected primitive type");
+		}
+		return startExact(token, type, predicate, firstBits[0], secondBits[0], operationEpoch);
+	}
+
 	ManagedOperationResult refineInt(long token, long expectedRevision, int predicate,
 	                                int compareTarget, int value, long operationEpoch) {
-		if (predicate != MemoryEngineContract.PREDICATE_EQUAL
-				&& predicate != MemoryEngineContract.PREDICATE_CHANGED
-				&& predicate != MemoryEngineContract.PREDICATE_UNCHANGED) {
+		return refine(token, expectedRevision, MemoryEngineContract.TYPE_INT, predicate,
+				compareTarget, value, 0L, operationEpoch);
+	}
+
+	ManagedOperationResult refine(long token, long expectedRevision, int type, int predicate,
+	                              int compareTarget, long first, long second,
+	                              long operationEpoch) {
+		if (!ManagedJavaValue.isSupportedType(type)) {
 			return failure(token, MemoryEngineContract.RESULT_UNSUPPORTED,
-					"Managed refine supports Equal, Changed, and Unchanged only");
+					"Managed refine received an unsupported primitive type");
 		}
-		if (predicate != MemoryEngineContract.PREDICATE_EQUAL
-				&& compareTarget != MemoryEngineContract.COMPARE_PREVIOUS
+		boolean relative = predicate >= MemoryEngineContract.PREDICATE_CHANGED;
+		if (relative) {
+			if (!ManagedJavaValue.validRelativeQuery(type, predicate, first, second)) {
+				return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+						"Managed relative refine received an invalid typed query");
+			}
+		} else if (!ManagedJavaValue.validKnownQuery(type, predicate, first, second)) {
+			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed known refine received an invalid typed query");
+		}
+		if (compareTarget != MemoryEngineContract.COMPARE_PREVIOUS
 				&& compareTarget != MemoryEngineContract.COMPARE_INITIAL) {
 			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Managed refine received an invalid baseline selector");
@@ -192,6 +271,10 @@ final class ManagedJavaMemoryEngine {
 				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 						"The managed result page is stale; refresh the search");
 			}
+			if (requestedType != type) {
+				return failureLocked(MemoryEngineContract.RESULT_INVALID_REQUEST,
+						"Managed refine type does not match the committed search type");
+			}
 			old = committed;
 		}
 		if (!isOperationActive(token, operationEpoch)) {
@@ -199,8 +282,9 @@ final class ManagedJavaMemoryEngine {
 					"Managed refine was cancelled");
 		}
 
-		RevisionBuilder next = new RevisionBuilder();
+		RevisionBuilder next = new RevisionBuilder(old.storageBytes());
 		long visited = 0L;
+		long[] current = new long[1];
 		try {
 			for (BucketView bucket : old.buckets) {
 				Object strongOwner = bucket.owner.strongOwner();
@@ -213,20 +297,17 @@ final class ManagedJavaMemoryEngine {
 						return failure(token, MemoryEngineContract.RESULT_CANCELLED,
 								"Managed refine was cancelled");
 					}
-					int[] current = new int[1];
-					if (!readInt(bucket.owner, bucket.slots[index], strongOwner, current)) {
+					if (!readTyped(bucket.owner, bucket.slots[index], strongOwner, current)) {
 						continue;
 					}
-					boolean matches;
-					if (predicate == MemoryEngineContract.PREDICATE_EQUAL) {
-						matches = current[0] == value;
-					} else {
-						int baseline = compareTarget == MemoryEngineContract.COMPARE_INITIAL
-								? bucket.initial[index] : bucket.previous[index];
-						boolean changed = current[0] != baseline;
-						matches = predicate == MemoryEngineContract.PREDICATE_CHANGED
-								? changed : !changed;
-					}
+					int candidateType = valueTypeFor(bucket.owner, bucket.slots[index]);
+					if (candidateType != type) continue;
+					long baseline = compareTarget == MemoryEngineContract.COMPARE_INITIAL
+							? bucket.initial[index] : bucket.previous[index];
+					boolean matches = relative
+							? ManagedJavaValue.matchesRelative(type, predicate, current[0], baseline,
+									first, second)
+							: ManagedJavaValue.matchesKnown(type, predicate, current[0], first, second);
 					if (matches) {
 						if (!next.add(bucket.owner, bucket.slots[index], bucket.initial[index], current[0], limits)) {
 							throw new ResourceLimitException("Managed result storage exceeds the resource limit");
@@ -234,18 +315,39 @@ final class ManagedJavaMemoryEngine {
 					}
 				}
 			}
-			Revision revision = next.finish(allocateRevisionId());
+			Revision revision = next.finish(allocateRevisionId(), limits, 0L);
 			if (revision == null) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"Managed revision identifier space is exhausted");
 			}
-			return commitSearch(token, operationEpoch, revision, null, MemoryEngineContract.TYPE_INT);
+			return commitSearch(token, operationEpoch, revision, null, type);
 		} catch (ResourceLimitException limit) {
 			return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT, limit.getMessage());
 		} catch (RuntimeException | LinkageError error) {
 			return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
 					"Managed refine failed safely");
 		}
+	}
+
+	ManagedOperationResult refine(long token, long expectedRevision, int type, int predicate,
+	                              int compareTarget, @Nullable String first,
+	                              @Nullable String second, long operationEpoch) {
+		long[] firstBits = new long[1];
+		long[] secondBits = new long[1];
+		boolean relative = predicate >= MemoryEngineContract.PREDICATE_CHANGED;
+		boolean validFirst = relative
+				? (predicate >= MemoryEngineContract.PREDICATE_INCREASED_BY
+						? ManagedJavaValue.parseMagnitude(first, type, firstBits) : true)
+				: ManagedJavaValue.parse(first, type, firstBits);
+		boolean validSecond = !relative || (predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE
+				|| predicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
+				? ManagedJavaValue.parseMagnitude(second, type, secondBits) : true);
+		if (!validFirst || !validSecond) {
+			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed refine value is outside the selected primitive type");
+		}
+		return refine(token, expectedRevision, type, predicate, compareTarget, firstBits[0],
+				secondBits[0], operationEpoch);
 	}
 
 	ManagedPage resultPage(long token, long expectedRevision, int offset, int limit) {
@@ -265,18 +367,21 @@ final class ManagedJavaMemoryEngine {
 		ManagedPage page = ManagedPage.allocate(outputCount, revision.id);
 		long ordinal = 0L;
 		int output = 0;
+		long[] value = new long[1];
 		for (BucketView bucket : revision.buckets) {
 			Object strongOwner = bucket.owner.strongOwner();
 			for (int index = 0; index < bucket.slots.length; index++) {
 				if (ordinal++ < start) continue;
 				if (output >= outputCount) return page;
 				int slot = bucket.slots[index];
+				int type = valueTypeFor(bucket.owner, slot);
 				page.ids[output] = ManagedJavaMemoryIds.encode(bucket.owner.kind,
 						bucket.owner.handle, slot);
-				page.values[output] = readValueText(bucket.owner, slot, strongOwner, page.states, output);
+				page.values[output] = readValueText(bucket.owner, slot, strongOwner, type,
+						page.states, output, value);
 				page.addresses[output] = labelFor(bucket.owner, slot);
-				page.aliasMasks[output] = 1 << MemoryEngineContract.TYPE_INT;
-				page.types[output] = MemoryEngineContract.TYPE_INT;
+				page.aliasMasks[output] = 1 << type;
+				page.types[output] = type;
 				page.relocations[output] = 0;
 				output++;
 			}
@@ -291,16 +396,18 @@ final class ManagedJavaMemoryEngine {
 			snapshot = watches.snapshot(owners);
 		}
 		ManagedPage page = ManagedPage.allocateWatch(snapshot.count, snapshot.revision);
+		long[] value = new long[1];
 		for (int index = 0; index < snapshot.count; index++) {
 			OwnerBucket owner = snapshot.owners[index];
 			Object strongOwner = owner == null ? null : owner.strongOwner();
 			int slot = snapshot.slots[index];
+			int type = valueTypeFor(owner, slot);
 			page.ids[index] = snapshot.ids[index];
-			page.values[index] = readValueText(owner, slot, strongOwner, page.states, index);
-			page.initialValues[index] = Integer.toString(snapshot.initial[index]);
-			page.previousValues[index] = Integer.toString(snapshot.previous[index]);
+			page.values[index] = readValueText(owner, slot, strongOwner, type, page.states, index, value);
+			page.initialValues[index] = ManagedJavaValue.format(type, snapshot.initial[index]);
+			page.previousValues[index] = ManagedJavaValue.format(type, snapshot.previous[index]);
 			page.addresses[index] = owner == null ? "managed#LOST" : labelFor(owner, slot);
-			page.types[index] = MemoryEngineContract.TYPE_INT;
+			page.types[index] = type;
 			page.relocations[index] = 0;
 			page.labels[index] = snapshot.labels[index] == null ? "" : snapshot.labels[index];
 			page.freezeModes[index] = snapshot.freeze[index] ? MemoryEngineContract.FREEZE_LOCK : -1;
@@ -320,9 +427,9 @@ final class ManagedJavaMemoryEngine {
 		}
 		ResolvedBatch batch = resolveBatch(token, expectedRevision, ids, true);
 		if (batch.error != null) return batch.error;
+		long[] value = new long[1];
 		for (int index = 0; index < batch.count; index++) {
-			int[] value = new int[1];
-			if (!readInt(batch.owners[index], batch.slots[index], batch.strongOwners[index], value)) {
+			if (!readTyped(batch.owners[index], batch.slots[index], batch.strongOwners[index], value)) {
 				if (batch.watch[index]) markFreezePausedIfNeeded(ids[index]);
 				continue;
 			}
@@ -342,12 +449,29 @@ final class ManagedJavaMemoryEngine {
 
 	ManagedOperationResult edit(long token, long expectedRevision, @Nullable long[] ids,
 	                           int replacement, boolean allowWatchOnly, long operationEpoch) {
+		return editTyped(token, expectedRevision, ids, Integer.toString(replacement),
+				allowWatchOnly, operationEpoch);
+	}
+
+	ManagedOperationResult editTyped(long token, long expectedRevision, @Nullable long[] ids,
+	                                @Nullable String replacementValue, boolean allowWatchOnly,
+	                                long operationEpoch) {
 		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_MULTI_WRITE) {
 			return failure(token, MemoryEngineContract.RESULT_SAFETY_LIMIT,
 					"Managed edits are limited to 32 rows");
 		}
 		ResolvedBatch batch = resolveBatch(token, expectedRevision, ids, allowWatchOnly);
 		if (batch.error != null) return batch.error;
+		long[] replacements = new long[batch.count];
+		long[] parsed = new long[1];
+		for (int index = 0; index < batch.count; index++) {
+			int type = valueTypeFor(batch.owners[index], batch.slots[index]);
+			if (!ManagedJavaValue.parse(replacementValue, type, parsed)) {
+				return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+						"Managed edit value is outside the selected primitive type");
+			}
+			replacements[index] = parsed[0];
+		}
 		ManagedOperationResult validation = revalidateBatch(token, expectedRevision, batch,
 				allowWatchOnly, operationEpoch);
 		if (validation != null) return validation;
@@ -359,6 +483,7 @@ final class ManagedJavaMemoryEngine {
 		int written = 0;
 		int skipped = 0;
 		int unconfirmed = 0;
+		long[] readback = new long[1];
 		for (int index = 0; index < batch.count; index++) {
 			if (!isOperationActive(token, operationEpoch)) break;
 			Object owner = batch.strongOwners[index];
@@ -368,10 +493,11 @@ final class ManagedJavaMemoryEngine {
 			}
 			attempted++;
 			try {
-				writeInt(batch.owners[index], batch.slots[index], owner, replacement);
-				int[] readback = new int[1];
-				if (readInt(batch.owners[index], batch.slots[index], owner, readback)
-						&& readback[0] == replacement) {
+				int type = valueTypeFor(batch.owners[index], batch.slots[index]);
+				writeTyped(batch.owners[index], batch.slots[index], owner, type, replacements[index]);
+				if (readTyped(batch.owners[index], batch.slots[index], owner, readback)
+						&& ManagedJavaValue.matchesKnown(type, MemoryEngineContract.PREDICATE_EQUAL,
+								readback[0], replacements[index], 0L)) {
 					written++;
 					if (batch.watch[index]) updateWatchPrevious(ids[index], readback[0]);
 				} else {
@@ -382,7 +508,7 @@ final class ManagedJavaMemoryEngine {
 			}
 		}
 		int code;
-		if (written == ids.length) code = MemoryEngineContract.RESULT_OK;
+		if (written == batch.count) code = MemoryEngineContract.RESULT_OK;
 		else if (written > 0) code = MemoryEngineContract.RESULT_PARTIAL_WRITE;
 		else code = MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
 		String message = "Managed edit attempted " + attempted + ", wrote " + written
@@ -407,10 +533,10 @@ final class ManagedJavaMemoryEngine {
 						"The global Watch List limit is 128 rows");
 			}
 		}
-		int[] currentValues = new int[unique.length];
+		long[] currentValues = new long[unique.length];
+		long[] read = new long[1];
 		for (int index = 0; index < unique.length; index++) {
-			int[] read = new int[1];
-			if (!readInt(batch.owners[index], batch.slots[index], batch.strongOwners[index], read)) {
+			if (!readTyped(batch.owners[index], batch.slots[index], batch.strongOwners[index], read)) {
 				return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 						"A managed owner was collected before it could be watched");
 			}
@@ -493,6 +619,13 @@ final class ManagedJavaMemoryEngine {
 	ManagedOperationResult setFreezeLock(long token, long expectedRevision, @Nullable long[] ids,
 	                                    int replacement, boolean allowWatchOnly,
 	                                    long operationEpoch) {
+		return setFreezeLockTyped(token, expectedRevision, ids, Integer.toString(replacement),
+				allowWatchOnly, operationEpoch);
+	}
+
+	ManagedOperationResult setFreezeLockTyped(long token, long expectedRevision,
+	                                         @Nullable long[] ids, @Nullable String replacementValue,
+	                                         boolean allowWatchOnly, long operationEpoch) {
 		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_FREEZE_RECORDS) {
 			return failure(token, MemoryEngineContract.RESULT_SAFETY_LIMIT,
 					"Managed Freeze Lock is limited to 32 rows");
@@ -500,6 +633,16 @@ final class ManagedJavaMemoryEngine {
 		long[] unique = uniqueIds(ids);
 		ResolvedBatch batch = resolveBatch(token, expectedRevision, unique, allowWatchOnly);
 		if (batch.error != null) return batch.error;
+		long[] replacementValues = new long[unique.length];
+		long[] parsed = new long[1];
+		for (int index = 0; index < unique.length; index++) {
+			int type = valueTypeFor(batch.owners[index], batch.slots[index]);
+			if (!ManagedJavaValue.parse(replacementValue, type, parsed)) {
+				return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+						"Managed Freeze Lock value is outside the selected primitive type");
+			}
+			replacementValues[index] = parsed[0];
+		}
 		int additionalWatches = 0;
 		int additionalFreezes = 0;
 		synchronized (stateLock) {
@@ -519,10 +662,10 @@ final class ManagedJavaMemoryEngine {
 						"The global Watch/Freeze limit would be exceeded");
 			}
 		}
-		int[] currentValues = new int[unique.length];
+		long[] currentValues = new long[unique.length];
+		long[] read = new long[1];
 		for (int index = 0; index < unique.length; index++) {
-			int[] read = new int[1];
-			if (!readInt(batch.owners[index], batch.slots[index], batch.strongOwners[index], read)) {
+			if (!readTyped(batch.owners[index], batch.slots[index], batch.strongOwners[index], read)) {
 				return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 						"A managed owner was collected before Freeze Lock could start");
 			}
@@ -560,7 +703,7 @@ final class ManagedJavaMemoryEngine {
 					watchIndex = watches.count - 1;
 				}
 				watches.freeze[watchIndex] = true;
-				watches.freezeValues[watchIndex] = replacement;
+				watches.freezeValues[watchIndex] = replacementValues[index];
 				watches.freezePaused[watchIndex] = false;
 			}
 			cleanupOwnersLocked();
@@ -601,6 +744,7 @@ final class ManagedJavaMemoryEngine {
 			snapshot = watches.frozenSnapshot(owners);
 		}
 		int written = 0;
+		long[] readback = new long[1];
 		for (int index = 0; index < snapshot.count; index++) {
 			if (!isOperationActive(token, operationEpoch)) return failure(token,
 					MemoryEngineContract.RESULT_CANCELLED, "Managed Freeze tick was cancelled");
@@ -611,10 +755,12 @@ final class ManagedJavaMemoryEngine {
 				continue;
 			}
 			try {
-				writeInt(owner, snapshot.slots[index], strongOwner, snapshot.freezeValues[index]);
-				int[] readback = new int[1];
-				if (readInt(owner, snapshot.slots[index], strongOwner, readback)
-						&& readback[0] == snapshot.freezeValues[index]) {
+				int type = valueTypeFor(owner, snapshot.slots[index]);
+				writeTyped(owner, snapshot.slots[index], strongOwner, type,
+						snapshot.freezeValues[index]);
+				if (readTyped(owner, snapshot.slots[index], strongOwner, readback)
+						&& ManagedJavaValue.matchesKnown(type, MemoryEngineContract.PREDICATE_EQUAL,
+								readback[0], snapshot.freezeValues[index], 0L)) {
 					written++;
 					updateWatchPrevious(snapshot.ids[index], readback[0]);
 				} else {
@@ -634,15 +780,24 @@ final class ManagedJavaMemoryEngine {
 	}
 
 	void clearSearch(long token, long operationEpoch) {
+		clearSearchResult(token, 0L, operationEpoch);
+	}
+
+	ManagedOperationResult clearSearchResult(long token, long expectedRevision, long operationEpoch) {
 		advanceControlEpoch(operationEpoch);
 		synchronized (stateLock) {
-			if (token == activeToken) {
-				committed = null;
-				searchStage = MemoryEngineContract.SEARCH_SESSION_EMPTY;
-				requestedType = MemoryEngineContract.TYPE_AUTO;
-				lastMessage = null;
-				cleanupOwnersLocked();
+			if (!isCurrentLocked(token)) return failureLocked(
+					MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime changed or ended");
+			if (expectedRevision > 0L && (committed == null || committed.id != expectedRevision)) {
+				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"The managed search revision changed before it could be cleared");
 			}
+			committed = null;
+			searchStage = MemoryEngineContract.SEARCH_SESSION_EMPTY;
+			requestedType = MemoryEngineContract.TYPE_AUTO;
+			lastMessage = null;
+			cleanupOwnersLocked();
+			return successLocked(null);
 		}
 	}
 
@@ -893,46 +1048,51 @@ final class ManagedJavaMemoryEngine {
 		return Arrays.copyOf(unique, count);
 	}
 
-	private boolean readInt(OwnerBucket owner, int slot, @Nullable Object strongOwner, int[] output) {
+	private boolean readTyped(OwnerBucket owner, int slot, @Nullable Object strongOwner,
+	                         long[] output) {
 		try {
 			if (owner == null || slot < 0 || output == null || output.length == 0) return false;
+			int type = valueTypeFor(owner, slot);
+			if (!ManagedJavaValue.isSupportedType(type)) return false;
 			if (owner.kind == KIND_ARRAY) {
-				if (!(strongOwner instanceof int[]) || slot >= ((int[]) strongOwner).length) return false;
-				output[0] = ((int[]) strongOwner)[slot];
+				if (strongOwner == null || slot >= Array.getLength(strongOwner)) return false;
+				output[0] = ManagedJavaValue.readArrayElement(strongOwner, slot, type);
 				return true;
 			}
-		FieldSlot field = owner.schema.fieldAt(slot);
-		if (field == null || !field.intField || field.finalField || field.kindStatic !=
-					(owner.kind == KIND_STATIC_FIELD) ||
-					(owner.kind == KIND_OBJECT_FIELD && strongOwner == null)) return false;
-			output[0] = field.field.getInt(owner.kind == KIND_STATIC_FIELD ? null : strongOwner);
+			FieldSlot field = owner.schema.fieldAt(slot);
+			if (field == null || field.valueType != type || field.finalField
+					|| field.kindStatic != (owner.kind == KIND_STATIC_FIELD)
+					|| (owner.kind == KIND_OBJECT_FIELD && strongOwner == null)) return false;
+			output[0] = ManagedJavaValue.readField(field.field,
+					owner.kind == KIND_STATIC_FIELD ? null : strongOwner, type);
 			return true;
 		} catch (IllegalAccessException | RuntimeException | LinkageError error) {
 			return false;
 		}
 	}
 
-	private void writeInt(OwnerBucket owner, int slot, @Nullable Object strongOwner, int value)
-			throws IllegalAccessException {
+	private void writeTyped(OwnerBucket owner, int slot, @Nullable Object strongOwner, int type,
+	                       long value) throws IllegalAccessException {
+		if (!ManagedJavaValue.isSupportedType(type)) throw new IllegalAccessException("unsupported type");
 		if (owner.kind == KIND_ARRAY) {
-			if (!(strongOwner instanceof int[]) || slot < 0 || slot >= ((int[]) strongOwner).length) {
-				throw new IllegalAccessException("int[] owner is unavailable");
+			if (strongOwner == null || slot < 0 || slot >= Array.getLength(strongOwner)) {
+				throw new IllegalAccessException("primitive array owner is unavailable");
 			}
-			((int[]) strongOwner)[slot] = value;
+			ManagedJavaValue.writeArrayElement(strongOwner, slot, type, value);
 			return;
 		}
 		FieldSlot field = owner.schema.fieldAt(slot);
-		if (field == null || !field.intField || field.finalField || field.kindStatic !=
+		if (field == null || field.valueType != type || field.finalField || field.kindStatic !=
 				(owner.kind == KIND_STATIC_FIELD)) throw new IllegalAccessException("field is not editable");
-		field.field.setInt(owner.kind == KIND_STATIC_FIELD ? null : strongOwner, value);
+		ManagedJavaValue.writeField(field.field,
+				owner.kind == KIND_STATIC_FIELD ? null : strongOwner, type, value);
 	}
 
-	private String readValueText(OwnerBucket owner, int slot, @Nullable Object strongOwner,
-	                             int[] states, int output) {
-		int[] value = new int[1];
-		if (readInt(owner, slot, strongOwner, value)) {
+	private String readValueText(OwnerBucket owner, int slot, @Nullable Object strongOwner, int type,
+	                             int[] states, int output, long[] value) {
+		if (readTyped(owner, slot, strongOwner, value)) {
 			states[output] = MemoryEngineContract.CANDIDATE_STABLE;
-			return Integer.toString(value[0]);
+			return ManagedJavaValue.format(type, value[0]);
 		}
 		states[output] = MemoryEngineContract.CANDIDATE_LOST;
 		return "LOST";
@@ -940,7 +1100,8 @@ final class ManagedJavaMemoryEngine {
 
 	private String labelFor(OwnerBucket owner, int slot) {
 		if (owner == null) return "managed#LOST";
-		if (owner.kind == KIND_ARRAY) return "int[]#" + owner.handle + "[" + slot + "]";
+		if (owner.kind == KIND_ARRAY) return arrayTypeName(valueTypeFor(owner, slot)) + "[]#"
+				+ owner.handle + "[" + slot + "]";
 		FieldSlot field = owner.schema.fieldAt(slot);
 		if (field == null) return "managed#" + owner.handle + "[" + slot + "]";
 		if (owner.kind == KIND_STATIC_FIELD) return field.declaringClass.getName() + "."
@@ -948,7 +1109,27 @@ final class ManagedJavaMemoryEngine {
 		return field.declaringClass.getName() + "#" + owner.handle + "." + field.field.getName();
 	}
 
-	private void updateWatchPrevious(long id, int value) {
+	private static int valueTypeFor(OwnerBucket owner, int slot) {
+		if (owner == null) return MemoryEngineContract.TYPE_INT;
+		if (owner.kind == KIND_ARRAY) return owner.arrayType;
+		FieldSlot field = owner.schema == null ? null : owner.schema.fieldAt(slot);
+		return field == null ? MemoryEngineContract.TYPE_AUTO : field.valueType;
+	}
+
+	private static String arrayTypeName(int type) {
+		switch (type) {
+			case MemoryEngineContract.TYPE_BYTE: return "byte";
+			case MemoryEngineContract.TYPE_SHORT: return "short";
+			case MemoryEngineContract.TYPE_CHAR: return "char";
+			case MemoryEngineContract.TYPE_INT: return "int";
+			case MemoryEngineContract.TYPE_LONG: return "long";
+			case MemoryEngineContract.TYPE_FLOAT: return "float";
+			case MemoryEngineContract.TYPE_DOUBLE: return "double";
+			default: return "primitive";
+		}
+	}
+
+	private void updateWatchPrevious(long id, long value) {
 		synchronized (stateLock) {
 			int index = watches.indexOf(id);
 			if (index >= 0) watches.previous[index] = value;
@@ -1032,9 +1213,16 @@ final class ManagedJavaMemoryEngine {
 		final int maxCandidates;
 		final int maxContainerItems;
 		final int maxArrayElements;
+		final long maxResultStorageBytes;
 
 		Limits(int maxVisited, int maxPending, int maxOwners, int maxCandidates,
 		       int maxContainerItems, int maxArrayElements) {
+			this(maxVisited, maxPending, maxOwners, maxCandidates, maxContainerItems,
+					maxArrayElements, DEFAULT_MAX_RESULT_STORAGE_BYTES);
+		}
+
+		Limits(int maxVisited, int maxPending, int maxOwners, int maxCandidates,
+		       int maxContainerItems, int maxArrayElements, long maxResultStorageBytes) {
 			this.maxVisited = maxVisited;
 			this.maxPending = maxPending;
 			this.maxOwners = maxOwners;
@@ -1042,6 +1230,7 @@ final class ManagedJavaMemoryEngine {
 			this.maxCandidates = maxCandidates;
 			this.maxContainerItems = maxContainerItems;
 			this.maxArrayElements = maxArrayElements;
+			this.maxResultStorageBytes = Math.max(0L, maxResultStorageBytes);
 		}
 
 		static Limits defaults() {
@@ -1175,12 +1364,17 @@ final class ManagedJavaMemoryEngine {
 		final long token;
 		final long operationEpoch;
 		final MemoryDiscoveryBridge.Snapshot snapshot;
-		final int wantedValue;
+		final int valueType;
+		final int predicate;
+		final long wantedFirst;
+		final long wantedSecond;
 		final ArrayDeque<Object> queue = new ArrayDeque<>();
 		final IdentityHashMap<Object, Boolean> queued = new IdentityHashMap<>();
 		final IdentityHashMap<Object, Boolean> visited = new IdentityHashMap<>();
 		final IdentityHashMap<Object, OwnerBucket> objectOwners = new IdentityHashMap<>();
-		final RevisionBuilder revision = new RevisionBuilder();
+		final RevisionBuilder revision;
+		final long[] value = new long[1];
+		long transientStorageBytes;
 		long visitCount;
 		int skippedFields;
 		int concurrentFailures;
@@ -1188,11 +1382,16 @@ final class ManagedJavaMemoryEngine {
 		ManagedOperationResult failure;
 
 		ScanContext(long token, long operationEpoch, MemoryDiscoveryBridge.Snapshot snapshot,
-		            int wantedValue) {
+		            int valueType, int predicate, long wantedFirst, long wantedSecond,
+		            long retainedRevisionBytes) {
 			this.token = token;
 			this.operationEpoch = operationEpoch;
 			this.snapshot = snapshot;
-			this.wantedValue = wantedValue;
+			this.valueType = valueType;
+			this.predicate = predicate;
+			this.wantedFirst = wantedFirst;
+			this.wantedSecond = wantedSecond;
+			this.revision = new RevisionBuilder(retainedRevisionBytes);
 		}
 
 		void enqueue(@Nullable Object value) {
@@ -1200,22 +1399,30 @@ final class ManagedJavaMemoryEngine {
 			if (queue.size() >= limits.maxPending) {
 				throw new ResourceLimitException("Managed traversal pending queue exceeds the resource limit");
 			}
+			reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES + QUEUE_REFERENCE_BYTES);
 			queued.put(value, Boolean.TRUE);
 			queue.addLast(value);
 		}
 
 		boolean checkpoint() {
-			return isOperationActive(token, operationEpoch) && visitCount <= limits.maxVisited;
+			if (!isOperationActive(token, operationEpoch) || visitCount > limits.maxVisited) return false;
+			if (!revision.withinStorageBudget(limits, transientStorageBytes)) {
+				throw new ResourceLimitException("Managed traversal storage exceeds the resource limit");
+			}
+			return true;
 		}
 
 		void visit(Object value) {
-			if (value == null || visited.put(value, Boolean.TRUE) != null) return;
+			if (value == null || visited.containsKey(value)) return;
+			reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES);
+			visited.put(value, Boolean.TRUE);
 			if (++visitCount > limits.maxVisited) {
 				throw new ResourceLimitException("Managed visited-owner limit exceeded");
 			}
 			Class<?> type = value.getClass();
-			if (type == int[].class) {
-				scanIntArray((int[]) value);
+			int arrayType = ManagedJavaValue.typeForClass(type.getComponentType());
+			if (ManagedJavaValue.isSupportedType(arrayType)) {
+				scanPrimitiveArray(value, arrayType);
 				return;
 			}
 			if (value instanceof Object[]) {
@@ -1232,15 +1439,25 @@ final class ManagedJavaMemoryEngine {
 			}
 			if (type.getClassLoader() != snapshot.loader()) return;
 			Schema schema = schemaFor(type, snapshot.loader());
-			OwnerBucket owner = ownerForObject(value, KIND_OBJECT_FIELD, schema, objectOwners);
+			OwnerBucket owner = null;
 			for (FieldSlot field : schema.fields) {
 				if (field.kindStatic) continue;
 				try {
-					if (field.intField) {
-						int current = field.field.getInt(value);
-						if (!field.finalField && current == wantedValue
-								&& !revision.add(owner, field.slot, current, current, limits)) {
-							throw new ResourceLimitException("Managed candidate storage exceeds the resource limit");
+					if (!isOperationActive(token, operationEpoch)) {
+						throw new OperationCancelledException();
+					}
+					if (field.primitiveField) {
+						long current = ManagedJavaValue.readField(field.field, value, field.valueType);
+						if (field.valueType == valueType && !field.finalField
+								&& ManagedJavaValue.matchesKnown(valueType, predicate, current,
+										wantedFirst, wantedSecond)) {
+							if (owner == null) owner = ownerForObject(value, KIND_OBJECT_FIELD,
+									schema, objectOwners);
+							if (!revision.add(owner, field.slot, current, current, limits,
+									transientStorageBytes)) {
+								throw new ResourceLimitException(
+										"Managed candidate storage exceeds the resource limit");
+							}
 						}
 						if (field.finalField) skippedFields++;
 					} else if (field.referenceField) {
@@ -1248,6 +1465,8 @@ final class ManagedJavaMemoryEngine {
 					}
 				} catch (ResourceLimitException limit) {
 					throw limit;
+				} catch (OperationCancelledException cancelled) {
+					throw cancelled;
 				} catch (IllegalAccessException | RuntimeException | LinkageError error) {
 					concurrentFailures++;
 				}
@@ -1260,13 +1479,22 @@ final class ManagedJavaMemoryEngine {
 			OwnerBucket owner = null;
 			for (FieldSlot field : schema.fields) {
 				if (!field.kindStatic || field.declaringClass != type) continue;
-				if (owner == null) owner = ownerForObject(type, KIND_STATIC_FIELD, schema, null);
 				try {
-					if (field.intField) {
-						int current = field.field.getInt(null);
-						if (!field.finalField && current == wantedValue
-								&& !revision.add(owner, field.slot, current, current, limits)) {
-							throw new ResourceLimitException("Managed candidate storage exceeds the resource limit");
+					if (!isOperationActive(token, operationEpoch)) {
+						throw new OperationCancelledException();
+					}
+					if (field.primitiveField) {
+						long current = ManagedJavaValue.readField(field.field, null, field.valueType);
+						if (field.valueType == valueType && !field.finalField
+								&& ManagedJavaValue.matchesKnown(valueType, predicate, current,
+										wantedFirst, wantedSecond)) {
+							if (owner == null) owner = ownerForObject(type, KIND_STATIC_FIELD,
+									schema, null);
+							if (!revision.add(owner, field.slot, current, current, limits,
+									transientStorageBytes)) {
+								throw new ResourceLimitException(
+										"Managed candidate storage exceeds the resource limit");
+							}
 						}
 						if (field.finalField) skippedFields++;
 					} else if (field.referenceField) {
@@ -1274,6 +1502,8 @@ final class ManagedJavaMemoryEngine {
 					}
 				} catch (ResourceLimitException limit) {
 					throw limit;
+				} catch (OperationCancelledException cancelled) {
+					throw cancelled;
 				} catch (IllegalAccessException | RuntimeException | LinkageError error) {
 					concurrentFailures++;
 				}
@@ -1281,18 +1511,26 @@ final class ManagedJavaMemoryEngine {
 			return true;
 		}
 
-		void scanIntArray(int[] array) {
-			if (array.length > limits.maxArrayElements) {
-				throw new ResourceLimitException("Managed int[] traversal exceeds the resource limit");
+		void scanPrimitiveArray(Object array, int arrayType) {
+			if (arrayType != valueType) return;
+			int length = Array.getLength(array);
+			if (length > limits.maxArrayElements) {
+				throw new ResourceLimitException("Managed primitive array traversal exceeds the resource limit");
 			}
-			OwnerBucket owner = ownerForObject(array, KIND_ARRAY, null, objectOwners);
-			for (int index = 0; index < array.length; index++) {
+			OwnerBucket owner = null;
+			for (int index = 0; index < length; index++) {
 				if ((index & (CHECK_INTERVAL - 1)) == 0 && !checkpoint()) {
 					throw new OperationCancelledException();
 				}
-				if (array[index] == wantedValue
-						&& !revision.add(owner, index, wantedValue, wantedValue, limits)) {
-					throw new ResourceLimitException("Managed candidate storage exceeds the resource limit");
+				value[0] = ManagedJavaValue.readArrayElement(array, index, arrayType);
+				if (ManagedJavaValue.matchesKnown(arrayType, predicate, value[0], wantedFirst,
+						wantedSecond)) {
+					if (owner == null) owner = ownerForObject(array, KIND_ARRAY, null, objectOwners);
+					if (!revision.add(owner, index, value[0], value[0], limits,
+							transientStorageBytes)) {
+						throw new ResourceLimitException(
+								"Managed candidate storage exceeds the resource limit");
+					}
 				}
 			}
 		}
@@ -1301,11 +1539,17 @@ final class ManagedJavaMemoryEngine {
 			if (array.length > limits.maxPending) {
 				throw new ResourceLimitException("Managed Object[] traversal exceeds the pending limit");
 			}
-			for (Object child : array) enqueue(child);
+			for (int index = 0; index < array.length; index++) {
+				if ((index & (CHECK_INTERVAL - 1)) == 0 && !isOperationActive(token, operationEpoch)) {
+					throw new OperationCancelledException();
+				}
+				enqueue(array[index]);
+			}
 		}
 
 		void scanExactContainer(Object value, Class<?> type) {
 			Object[] contents;
+			long snapshotBytes;
 			synchronized (value) {
 				if (type == Hashtable.class) {
 					Hashtable<?, ?> table = (Hashtable<?, ?>) value;
@@ -1313,6 +1557,8 @@ final class ManagedJavaMemoryEngine {
 					if (size > limits.maxContainerItems || size > Integer.MAX_VALUE / 2) {
 						throw new ResourceLimitException("Managed Hashtable snapshot exceeds the resource limit");
 					}
+					snapshotBytes = checkedMultiply((long) size * 2L, SNAPSHOT_REFERENCE_BYTES);
+					reserveTraversalBytes(snapshotBytes);
 					contents = new Object[size * 2];
 					Enumeration<?> keys = table.keys();
 					int index = 0;
@@ -1326,11 +1572,36 @@ final class ManagedJavaMemoryEngine {
 					if (size > limits.maxContainerItems) {
 						throw new ResourceLimitException("Managed Vector snapshot exceeds the resource limit");
 					}
+					snapshotBytes = checkedMultiply(size, SNAPSHOT_REFERENCE_BYTES);
+					reserveTraversalBytes(snapshotBytes);
 					contents = new Object[size];
 					for (int index = 0; index < size; index++) contents[index] = vector.elementAt(index);
 				}
 			}
-			for (Object child : contents) enqueue(child);
+			try {
+				for (int index = 0; index < contents.length; index++) {
+					if ((index & (CHECK_INTERVAL - 1)) == 0
+							&& !isOperationActive(token, operationEpoch)) {
+						throw new OperationCancelledException();
+					}
+					enqueue(contents[index]);
+				}
+			} finally {
+				releaseTraversalBytes(snapshotBytes);
+			}
+		}
+
+		void reserveTraversalBytes(long bytes) {
+			if (bytes < 0L) throw new ResourceLimitException("Managed traversal storage overflowed");
+			long next = checkedAdd(transientStorageBytes, bytes);
+			if (!revision.withinStorageBudget(limits, next)) {
+				throw new ResourceLimitException("Managed traversal storage exceeds the resource limit");
+			}
+			transientStorageBytes = next;
+		}
+
+		void releaseTraversalBytes(long bytes) {
+			transientStorageBytes = Math.max(0L, transientStorageBytes - Math.max(0L, bytes));
 		}
 
 		ManagedOperationResult failure() {
@@ -1340,7 +1611,7 @@ final class ManagedJavaMemoryEngine {
 
 		String diagnosticMessage() {
 			if (skippedFields == 0 && concurrentFailures == 0 && stoppedContainers == 0) return null;
-			return "Managed Int scan completed with skippedFields=" + skippedFields
+			return "Managed primitive scan completed with skippedFields=" + skippedFields
 					+ ", concurrentAccessFailures=" + concurrentFailures
 					+ ", stoppedContainers=" + stoppedContainers;
 		}
@@ -1349,40 +1620,93 @@ final class ManagedJavaMemoryEngine {
 	private static final class RevisionBuilder {
 		final ArrayList<OwnerBucketBuilder> builders = new ArrayList<>();
 		final Map<Long, OwnerBucketBuilder> byOwner = new HashMap<>();
+		final long retainedRevisionBytes;
 		long candidateCount;
 
-		OwnerBucketBuilder builderFor(OwnerBucket owner, int maxCandidates) {
+		RevisionBuilder() {
+			this(0L);
+		}
+
+		RevisionBuilder(long retainedRevisionBytes) {
+			this.retainedRevisionBytes = Math.max(0L, retainedRevisionBytes);
+		}
+
+		OwnerBucketBuilder builderFor(OwnerBucket owner, Limits limits, long extraBytes) {
 			OwnerBucketBuilder builder = byOwner.get(owner.handle);
 			if (builder == null) {
-				builder = new OwnerBucketBuilder(owner, maxCandidates);
+				int initialCapacity = initialCapacity(limits.maxCandidates);
+				long newStorage = OwnerBucketBuilder.storageFor(initialCapacity);
+				if (!canAddStorage(limits, extraBytes, newStorage)) return null;
+				builder = new OwnerBucketBuilder(owner, initialCapacity);
 				byOwner.put(owner.handle, builder);
 				builders.add(builder);
 			}
 			return builder;
 		}
 
-		boolean add(OwnerBucket owner, int slot, int initialValue, int previousValue,
+		boolean add(OwnerBucket owner, int slot, long initialValue, long previousValue,
 		            Limits limits) {
+			return add(owner, slot, initialValue, previousValue, limits, 0L);
+		}
+
+		boolean add(OwnerBucket owner, int slot, long initialValue, long previousValue,
+		            Limits limits, long extraBytes) {
 			if (candidateCount >= limits.maxCandidates) return false;
-			OwnerBucketBuilder builder = builderFor(owner, limits.maxCandidates);
+			OwnerBucketBuilder builder = byOwner.get(owner.handle);
+			if (builder == null) builder = builderFor(owner, limits, extraBytes);
+			if (builder == null) return false;
+			long growth = builder.additionalStorageForNext(limits.maxCandidates);
+			if (!canAddStorage(limits, extraBytes, growth)) return false;
 			if (!builder.add(slot, initialValue, previousValue, limits)) return false;
 			candidateCount++;
 			return true;
 		}
 
-		Revision finish(long id) {
+		boolean withinStorageBudget(Limits limits, long extraBytes) {
+			return canAddStorage(limits, extraBytes, 0L);
+		}
+
+		long storageBytes() {
+			long total = retainedRevisionBytes;
+			for (OwnerBucketBuilder builder : builders) {
+				total = checkedAdd(total, builder.storageBytes());
+			}
+			return total;
+		}
+
+		Revision finish(long id, Limits limits, long extraBytes) {
 			if (id == 0L) return null;
+			long finishedStorageBytes = 0L;
+			int nonEmptyBuckets = 0;
+			for (OwnerBucketBuilder builder : builders) {
+				if (builder.size == 0) continue;
+				nonEmptyBuckets++;
+				finishedStorageBytes = checkedAdd(finishedStorageBytes,
+						checkedAdd(checkedMultiply(builder.size, RESULT_SLOT_BYTES),
+								FINISHED_BUCKET_BYTES));
+			}
+			if (!canAddStorage(limits, extraBytes, finishedStorageBytes)) {
+				throw new ResourceLimitException("Managed result storage exceeds the byte budget");
+			}
 			ArrayList<BucketView> views = new ArrayList<>(builders.size());
 			long count = 0L;
 			for (OwnerBucketBuilder builder : builders) {
 				if (builder.size == 0) continue;
-				int[] slots = builder.slots.toArray();
-				int[] initial = builder.initial.toArray();
-				int[] previous = builder.previous.toArray();
+				int[] slots = builder.slots.toArray(builder.size);
+				long[] initial = builder.initial.toArray(builder.size);
+				long[] previous = builder.previous.toArray(builder.size);
 				views.add(new BucketView(builder.owner, slots, initial, previous));
 				count += slots.length;
 			}
-			return new Revision(id, views.toArray(new BucketView[0]), count);
+			if (nonEmptyBuckets == 0) finishedStorageBytes = 0L;
+			return new Revision(id, views.toArray(new BucketView[0]), count,
+					finishedStorageBytes);
+		}
+
+		private boolean canAddStorage(Limits limits, long extraBytes, long additionalBytes) {
+			if (extraBytes < 0L || additionalBytes < 0L) return false;
+			long required = checkedAdd(storageBytes(), checkedAdd(extraBytes, additionalBytes));
+			return required <= limits.maxResultStorageBytes;
 		}
 	}
 
@@ -1390,48 +1714,95 @@ final class ManagedJavaMemoryEngine {
 		final OwnerBucket owner;
 		int size;
 		final IntBuffer slots;
-		final IntBuffer initial;
-		final IntBuffer previous;
+		final LongBuffer initial;
+		final LongBuffer previous;
 
-		OwnerBucketBuilder(OwnerBucket owner, int maxCandidates) {
+		OwnerBucketBuilder(OwnerBucket owner, int initialCapacity) {
 			this.owner = owner;
-			this.slots = new IntBuffer(maxCandidates);
-			this.initial = new IntBuffer(maxCandidates);
-			this.previous = new IntBuffer(maxCandidates);
+			this.slots = new IntBuffer(initialCapacity);
+			this.initial = new LongBuffer(initialCapacity);
+			this.previous = new LongBuffer(initialCapacity);
 		}
 
-		boolean add(int slot, int initialValue, int previousValue, Limits limits) {
+		boolean add(int slot, long initialValue, long previousValue, Limits limits) {
 			if (size >= limits.maxCandidates) return false;
-			if (!slots.add(slot, limits.maxCandidates)
-					|| !initial.add(initialValue, limits.maxCandidates)
-					|| !previous.add(previousValue, limits.maxCandidates)) return false;
+			if (size >= slots.capacity()) {
+				int next = nextCapacity(slots.capacity(), limits.maxCandidates);
+				if (next <= slots.capacity()) return false;
+				slots.growTo(next);
+				initial.growTo(next);
+				previous.growTo(next);
+			}
+			slots.set(size, slot);
+			initial.set(size, initialValue);
+			previous.set(size, previousValue);
 			size++;
 			return true;
+		}
+
+		long additionalStorageForNext(int maxCandidates) {
+			if (size >= maxCandidates) return 0L;
+			if (size < slots.capacity()) return 0L;
+			int next = nextCapacity(slots.capacity(), maxCandidates);
+			if (next <= slots.capacity()) return Long.MAX_VALUE;
+			return checkedMultiply((long) next - slots.capacity(), RESULT_SLOT_BYTES);
+		}
+
+		long storageBytes() {
+			return checkedAdd(STAGED_OWNER_BYTES,
+					checkedMultiply(slots.capacity(), RESULT_SLOT_BYTES));
+		}
+
+		static long storageFor(int capacity) {
+			return checkedAdd(STAGED_OWNER_BYTES, checkedMultiply(capacity, RESULT_SLOT_BYTES));
 		}
 	}
 
 	private static final class IntBuffer {
 		private int[] values;
-		private int size;
 
-		IntBuffer(int max) {
-			values = new int[Math.min(16, Math.max(0, max))];
+		IntBuffer(int capacity) {
+			values = new int[Math.max(0, capacity)];
 		}
 
-		boolean add(int value, int max) {
-			if (size >= max) return false;
-			if (size == values.length) {
-				long doubled = Math.max(1L, (long) values.length * 2L);
-				int next = (int) Math.min((long) max, doubled);
-				if (next <= values.length) return false;
-				values = Arrays.copyOf(values, next);
-			}
-			values[size++] = value;
-			return true;
+		int capacity() {
+			return values.length;
 		}
 
-		int[] toArray() {
-			return Arrays.copyOf(values, size);
+		void growTo(int capacity) {
+			if (capacity > values.length) values = Arrays.copyOf(values, capacity);
+		}
+
+		void set(int index, int value) {
+			values[index] = value;
+		}
+
+		int[] toArray(int count) {
+			return Arrays.copyOf(values, count);
+		}
+	}
+
+	private static final class LongBuffer {
+		private long[] values;
+
+		LongBuffer(int capacity) {
+			values = new long[Math.max(0, capacity)];
+		}
+
+		int capacity() {
+			return values.length;
+		}
+
+		void growTo(int capacity) {
+			if (capacity > values.length) values = Arrays.copyOf(values, capacity);
+		}
+
+		void set(int index, long value) {
+			values[index] = value;
+		}
+
+		long[] toArray(int count) {
+			return Arrays.copyOf(values, count);
 		}
 	}
 
@@ -1439,11 +1810,17 @@ final class ManagedJavaMemoryEngine {
 		final long id;
 		final BucketView[] buckets;
 		final long count;
+		final long storageBytes;
 
-		Revision(long id, BucketView[] buckets, long count) {
+		Revision(long id, BucketView[] buckets, long count, long storageBytes) {
 			this.id = id;
 			this.buckets = buckets;
 			this.count = count;
+			this.storageBytes = storageBytes;
+		}
+
+		long storageBytes() {
+			return storageBytes;
 		}
 
 		boolean contains(long ownerHandle, int kind, int slot) {
@@ -1459,10 +1836,10 @@ final class ManagedJavaMemoryEngine {
 	private static final class BucketView {
 		final OwnerBucket owner;
 		final int[] slots;
-		final int[] initial;
-		final int[] previous;
+		final long[] initial;
+		final long[] previous;
 
-		BucketView(OwnerBucket owner, int[] slots, int[] initial, int[] previous) {
+		BucketView(OwnerBucket owner, int[] slots, long[] initial, long[] previous) {
 			this.owner = owner;
 			this.slots = slots;
 			this.initial = initial;
@@ -1492,6 +1869,7 @@ final class ManagedJavaMemoryEngine {
 		final Class<?> staticClass;
 		final WeakReference<Object> weakOwner;
 		final Schema schema;
+		final int arrayType;
 
 		OwnerBucket(long handle, int kind, Object owner, Schema schema) {
 			this.handle = handle;
@@ -1499,6 +1877,9 @@ final class ManagedJavaMemoryEngine {
 			this.staticClass = kind == KIND_STATIC_FIELD ? (Class<?>) owner : null;
 			this.weakOwner = kind == KIND_STATIC_FIELD ? null : new WeakReference<>(owner);
 			this.schema = schema;
+			this.arrayType = kind == KIND_ARRAY
+					? ManagedJavaValue.typeForClass(owner.getClass().getComponentType())
+					: MemoryEngineContract.TYPE_AUTO;
 		}
 
 		Object strongOwner() {
@@ -1525,15 +1906,16 @@ final class ManagedJavaMemoryEngine {
 				}
 				for (Field field : declared) {
 					Class<?> fieldType = field.getType();
-					boolean intField = fieldType == int.class;
+					int valueType = ManagedJavaValue.typeForClass(fieldType);
+					boolean primitiveField = ManagedJavaValue.isSupportedType(valueType);
 					boolean referenceField = !fieldType.isPrimitive();
-					if (!intField && !referenceField) continue;
+					if (!primitiveField && !referenceField) continue;
 					try {
 						field.setAccessible(true);
 					} catch (RuntimeException | LinkageError error) {
 						continue;
 					}
-					fields.add(new FieldSlot(fields.size(), field, intField, referenceField,
+					fields.add(new FieldSlot(fields.size(), field, valueType, primitiveField, referenceField,
 							Modifier.isStatic(field.getModifiers()),
 							Modifier.isFinal(field.getModifiers())));
 				}
@@ -1551,17 +1933,19 @@ final class ManagedJavaMemoryEngine {
 		final int slot;
 		final Field field;
 		final Class<?> declaringClass;
-		final boolean intField;
+		final int valueType;
+		final boolean primitiveField;
 		final boolean referenceField;
 		final boolean kindStatic;
 		final boolean finalField;
 
-		FieldSlot(int slot, Field field, boolean intField, boolean referenceField,
+		FieldSlot(int slot, Field field, int valueType, boolean primitiveField, boolean referenceField,
 		          boolean kindStatic, boolean finalField) {
 			this.slot = slot;
 			this.field = field;
 			this.declaringClass = field.getDeclaringClass();
-			this.intField = intField;
+			this.valueType = valueType;
+			this.primitiveField = primitiveField;
 			this.referenceField = referenceField;
 			this.kindStatic = kindStatic;
 			this.finalField = finalField;
@@ -1572,11 +1956,11 @@ final class ManagedJavaMemoryEngine {
 		final long[] ids = new long[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final OwnerBucket[] owners = new OwnerBucket[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final int[] slots = new int[MemoryEngineContract.MAX_WATCH_RECORDS];
-		final int[] initial = new int[MemoryEngineContract.MAX_WATCH_RECORDS];
-		final int[] previous = new int[MemoryEngineContract.MAX_WATCH_RECORDS];
+		final long[] initial = new long[MemoryEngineContract.MAX_WATCH_RECORDS];
+		final long[] previous = new long[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final String[] labels = new String[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final boolean[] freeze = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
-		final int[] freezeValues = new int[MemoryEngineContract.MAX_WATCH_RECORDS];
+		final long[] freezeValues = new long[MemoryEngineContract.MAX_WATCH_RECORDS];
 		final boolean[] freezePaused = new boolean[MemoryEngineContract.MAX_WATCH_RECORDS];
 		int count;
 
@@ -1585,7 +1969,7 @@ final class ManagedJavaMemoryEngine {
 			return -1;
 		}
 
-		void append(long id, OwnerBucket owner, int slot, int value, String label) {
+		void append(long id, OwnerBucket owner, int slot, long value, String label) {
 			ids[count] = id;
 			owners[count] = owner;
 			slots[count] = slot;
@@ -1676,11 +2060,11 @@ final class ManagedJavaMemoryEngine {
 		final long[] ids;
 		final OwnerBucket[] owners;
 		final int[] slots;
-		final int[] initial;
-		final int[] previous;
+		final long[] initial;
+		final long[] previous;
 		final String[] labels;
 		final boolean[] freeze;
-		final int[] freezeValues;
+		final long[] freezeValues;
 		final boolean[] freezePaused;
 		long revision;
 
@@ -1689,11 +2073,11 @@ final class ManagedJavaMemoryEngine {
 			ids = new long[count];
 			owners = new OwnerBucket[count];
 			slots = new int[count];
-			initial = new int[count];
-			previous = new int[count];
+			initial = new long[count];
+			previous = new long[count];
 			labels = new String[count];
 			freeze = new boolean[count];
-			freezeValues = new int[count];
+			freezeValues = new long[count];
 			freezePaused = new boolean[count];
 		}
 	}

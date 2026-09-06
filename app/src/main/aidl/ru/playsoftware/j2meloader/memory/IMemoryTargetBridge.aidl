@@ -38,6 +38,10 @@ interface IMemoryTargetBridge {
     /** Managed Java graph backend; all values and ids remain logical and target-owned. */
     Bundle getManagedCapabilities(long runtimeToken);
     Bundle getManagedSessionInfo(long runtimeToken);
+    Bundle managedStartExact(long runtimeToken, int valueType, int predicate,
+            String firstValue, String secondValue, long cancellationEpoch);
+    Bundle managedRefine(long runtimeToken, long expectedRevision, int valueType, int predicate,
+            int compareTarget, String firstValue, String secondValue, long cancellationEpoch);
     Bundle managedStartExactInt(long runtimeToken, int value, long cancellationEpoch);
     Bundle managedRefineInt(long runtimeToken, long expectedRevision, int predicate,
             int compareTarget, int value, long cancellationEpoch);
@@ -46,16 +50,21 @@ interface IMemoryTargetBridge {
     Bundle managedRefresh(long runtimeToken, in long[] ids, long expectedRevision,
             long cancellationEpoch);
 	Bundle managedEdit(long runtimeToken, long expectedRevision, in long[] ids,
-			int replacement, boolean allowWatchOnly, long cancellationEpoch);
+            int replacement, boolean allowWatchOnly, long cancellationEpoch);
+	Bundle managedEditTyped(long runtimeToken, long expectedRevision, in long[] ids,
+            String replacement, boolean allowWatchOnly, long cancellationEpoch);
     Bundle managedAddWatch(long runtimeToken, long expectedRevision, in long[] ids,
             long cancellationEpoch);
     Bundle managedRemoveWatch(long runtimeToken, in long[] ids, long cancellationEpoch);
     Bundle managedSetWatchLabel(long runtimeToken, long candidateId, String label,
             long cancellationEpoch);
 	Bundle managedSetFreezeLock(long runtimeToken, long expectedRevision, in long[] ids,
-			int replacement, boolean allowWatchOnly, long cancellationEpoch);
+            int replacement, boolean allowWatchOnly, long cancellationEpoch);
+	Bundle managedSetFreezeLockTyped(long runtimeToken, long expectedRevision, in long[] ids,
+            String replacement, boolean allowWatchOnly, long cancellationEpoch);
     Bundle managedClearFreeze(long runtimeToken, in long[] ids, long cancellationEpoch);
     Bundle managedFreezeTick(long runtimeToken, long cancellationEpoch);
+    Bundle managedClearSearch(long runtimeToken, long expectedRevision, long cancellationEpoch);
     void clearManagedSearch(long runtimeToken, long cancellationEpoch);
     void cancelManaged(long runtimeToken, long cancellationEpoch);
 }

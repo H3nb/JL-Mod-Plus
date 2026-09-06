@@ -176,6 +176,141 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void candidateBufferHandlesZeroAndBelowInitialCapacityLimits() {
+		MemoryDiscoveryBridge.install(TOKEN, getClass().getClassLoader());
+		MemoryDiscoveryBridge.tailSeen(CapacityRoot.class);
+		MemoryDiscoveryBridge.setMidletRoot(TOKEN, new CapacityRoot(1));
+		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
+				100, 100, 100, 1, 100, 100));
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.startExactInt(TOKEN, 7, 0).code);
+
+		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
+				100, 100, 100, 0, 100, 100));
+		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+				engine.startExactInt(TOKEN, 7, 0).code);
+
+		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
+				100, 100, 100, -1, 100, 100));
+		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+				engine.startExactInt(TOKEN, 7, 0).code);
+	}
+
+	@Test
+	public void resultStorageBudgetCountsRetainedStagedAndFinishCopies() {
+		MemoryDiscoveryBridge.install(TOKEN, getClass().getClassLoader());
+		MemoryDiscoveryBridge.tailSeen(CapacityRoot.class);
+		CapacityRoot capacityRoot = new CapacityRoot(30);
+		MemoryDiscoveryBridge.setMidletRoot(TOKEN, capacityRoot);
+		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
+				100, 100, 100, 30, 100, 100, 2_000L));
+
+		ManagedJavaMemoryEngine.ManagedOperationResult first = engine.startExactInt(TOKEN, 7, 0);
+		assertEquals(MemoryEngineContract.RESULT_OK, first.code);
+		ManagedJavaMemoryEngine.ManagedOperationResult rejected = engine.startExactInt(TOKEN, 7, 0);
+		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT, rejected.code);
+		assertEquals(first.revision, engine.session(TOKEN).revision);
+		assertEquals(first.resultCount, engine.session(TOKEN).resultCount);
+	}
+
+	@Test
+	public void exactSearchUsesTheActualPrimitiveTypeForFieldsAndArrays() {
+		assertTypedMatch(MemoryEngineContract.TYPE_BYTE, 7L, "byteMatch", "7");
+		assertTypedMatch(MemoryEngineContract.TYPE_SHORT, 7L, "shortMatch", "7");
+		assertTypedMatch(MemoryEngineContract.TYPE_CHAR, 0xffffL, "charMatch", "65535");
+		assertTypedMatch(MemoryEngineContract.TYPE_INT, 7L, "rootMatch", "7");
+		long longValue = 9_007_199_254_740_993L;
+		assertTypedMatch(MemoryEngineContract.TYPE_LONG, longValue, "longMatch",
+				Long.toString(longValue));
+		assertTypedMatch(MemoryEngineContract.TYPE_FLOAT,
+				Float.floatToRawIntBits(1.5f) & 0xffffffffL, "floatMatch", "1.5");
+		assertTypedMatch(MemoryEngineContract.TYPE_DOUBLE,
+				Double.doubleToRawLongBits(1.5d), "doubleMatch", "1.5");
+	}
+
+	@Test
+	public void typedEditWatchAndRelativeRefinePreserveLongAndFloatingBits() {
+		long longValue = 9_007_199_254_740_993L;
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_LONG, MemoryEngineContract.PREDICATE_EQUAL, longValue, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		long longId = idForAddress(search.revision, "longMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.editTyped(TOKEN, search.revision,
+				new long[]{longId}, "9007199254740994", false, 0L).code);
+		assertEquals(9_007_199_254_740_994L, root.longMatch);
+
+		ManagedJavaMemoryEngine.ManagedOperationResult floatSearch = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_FLOAT, MemoryEngineContract.PREDICATE_EQUAL,
+				Float.floatToRawIntBits(1.5f) & 0xffffffffL, 0L, 0L);
+		long floatId = idForAddress(floatSearch.revision, "floatMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.addWatch(TOKEN,
+				floatSearch.revision, new long[]{floatId}, 0L).code);
+		root.floatMatch = 2.5f;
+		long delta = Float.floatToRawIntBits(1.0f) & 0xffffffffL;
+		ManagedJavaMemoryEngine.ManagedOperationResult relative = engine.refine(TOKEN,
+				floatSearch.revision, MemoryEngineContract.TYPE_FLOAT,
+				MemoryEngineContract.PREDICATE_INCREASED_BY,
+				MemoryEngineContract.COMPARE_PREVIOUS, delta, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, relative.code);
+		assertTrue(hasAddress(engine.resultPage(TOKEN, relative.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE), "floatMatch"));
+
+		ManagedJavaMemoryEngine.ManagedOperationResult doubleSearch = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_DOUBLE, MemoryEngineContract.PREDICATE_EQUAL,
+				Double.doubleToRawLongBits(1.5d), 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, doubleSearch.code);
+		long doubleId = idForAddress(doubleSearch.revision, "doubleMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.setFreezeLockTyped(TOKEN,
+				doubleSearch.revision, new long[]{doubleId}, "2.5", false, 0L).code);
+		root.doubleMatch = 0.5d;
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(TOKEN, 0L).code);
+		assertEquals(2.5d, root.doubleMatch, 0.0d);
+		ManagedJavaMemoryEngine.ManagedPage watches = engine.watchPage(TOKEN);
+		for (int index = 0; index < watches.ids.length; index++) {
+			if (watches.ids[index] == doubleId) {
+				assertEquals("2.5", watches.values[index]);
+				assertEquals(MemoryEngineContract.FREEZE_LOCK, watches.freezeModes[index]);
+				break;
+			}
+		}
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.clearFreeze(TOKEN, new long[]{doubleId}, 0L).code);
+	}
+
+	@Test
+	public void knownPredicatesFilterTypedCandidatesBeforeRelativeRefine() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_GREATER,
+				2L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		long changedId = idForAddress(search.revision, "rootMatch");
+		root.rootMatch = 8;
+		ManagedJavaMemoryEngine.ManagedOperationResult changed = engine.refine(TOKEN,
+				search.revision, MemoryEngineContract.TYPE_INT,
+				MemoryEngineContract.PREDICATE_CHANGED, MemoryEngineContract.COMPARE_PREVIOUS,
+				0L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, changed.code);
+		assertTrue(hasId(engine.resultPage(TOKEN, changed.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE), changedId));
+	}
+
+	private void assertTypedMatch(int type, long valueBits, String address, String text) {
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN, type,
+				MemoryEngineContract.PREDICATE_EQUAL, valueBits, 0L, 0L);
+		assertEquals("type=" + type, MemoryEngineContract.RESULT_OK, result.code);
+		long id = idForAddress(result.revision, address);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, result.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		for (int index = 0; index < page.ids.length; index++) {
+			if (page.ids[index] == id) {
+				assertEquals(text, page.values[index]);
+				assertEquals(type, page.types[index]);
+				return;
+			}
+		}
+		throw new AssertionError("Missing typed row " + address);
+	}
+
+	@Test
 	public void fabricatedAndRawIdsFailClosed() {
 		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
 		long fabricated = ManagedJavaMemoryIds.encode(ManagedJavaMemoryEngine.KIND_OBJECT_FIELD,
@@ -231,9 +366,21 @@ public class ManagedJavaMemoryEngineTest {
 
 		int rootMatch = 7;
 		int rootChanged = 7;
+		byte byteMatch = 7;
+		short shortMatch = 7;
+		char charMatch = 0xffff;
+		long longMatch = 9_007_199_254_740_993L;
+		float floatMatch = 1.5f;
+		double doubleMatch = 1.5d;
 		final int finalMatch = 7;
 		FixtureChild child = new FixtureChild("direct", 7);
 		int[] array = {7, 4, 7};
+		byte[] byteArray = {7, 4};
+		short[] shortArray = {7, 4};
+		char[] charArray = {0xffff, 4};
+		long[] longArray = {9_007_199_254_740_993L, 4L};
+		float[] floatArray = {1.5f, 4f};
+		double[] doubleArray = {1.5d, 4d};
 		Object[] cycle = new Object[2];
 		Vector<Object> vector = new Vector<>();
 		Stack<Object> stack = new Stack<>();

@@ -103,6 +103,21 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 
 		@Override
+		public Bundle managedStartExact(long runtimeToken, int valueType, int predicate,
+				String firstValue, String secondValue, long cancellationEpoch) {
+			return managedResult(managedEngine.startExact(runtimeToken, valueType, predicate,
+					firstValue, secondValue, cancellationEpoch));
+		}
+
+		@Override
+		public Bundle managedRefine(long runtimeToken, long expectedRevision, int valueType,
+				int predicate, int compareTarget, String firstValue, String secondValue,
+				long cancellationEpoch) {
+			return managedResult(managedEngine.refine(runtimeToken, expectedRevision, valueType,
+					predicate, compareTarget, firstValue, secondValue, cancellationEpoch));
+		}
+
+		@Override
 		public Bundle managedStartExactInt(long runtimeToken, int value, long cancellationEpoch) {
 			return managedResult(managedEngine.startExactInt(runtimeToken, value, cancellationEpoch));
 		}
@@ -139,6 +154,13 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 
 		@Override
+		public Bundle managedEditTyped(long runtimeToken, long expectedRevision, long[] ids,
+				String replacement, boolean allowWatchOnly, long cancellationEpoch) {
+			return managedResult(managedEngine.editTyped(runtimeToken, expectedRevision, ids, replacement,
+					allowWatchOnly, cancellationEpoch));
+		}
+
+		@Override
 		public Bundle managedAddWatch(long runtimeToken, long expectedRevision, long[] ids,
 				long cancellationEpoch) {
 			return managedResult(managedEngine.addWatch(runtimeToken, expectedRevision, ids,
@@ -165,6 +187,13 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 
 		@Override
+		public Bundle managedSetFreezeLockTyped(long runtimeToken, long expectedRevision, long[] ids,
+				String replacement, boolean allowWatchOnly, long cancellationEpoch) {
+			return managedResult(managedEngine.setFreezeLockTyped(runtimeToken, expectedRevision, ids,
+					replacement, allowWatchOnly, cancellationEpoch));
+		}
+
+		@Override
 		public Bundle managedClearFreeze(long runtimeToken, long[] ids, long cancellationEpoch) {
 			return managedResult(managedEngine.clearFreeze(runtimeToken, ids, cancellationEpoch));
 		}
@@ -172,6 +201,13 @@ public final class MemoryTargetBridgeService extends Service {
 		@Override
 		public Bundle managedFreezeTick(long runtimeToken, long cancellationEpoch) {
 			return managedResult(managedEngine.freezeTick(runtimeToken, cancellationEpoch));
+		}
+
+		@Override
+		public Bundle managedClearSearch(long runtimeToken, long expectedRevision,
+				long cancellationEpoch) {
+			return managedResult(managedEngine.clearSearchResult(runtimeToken, expectedRevision,
+					cancellationEpoch));
 		}
 
 		@Override
