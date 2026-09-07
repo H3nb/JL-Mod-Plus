@@ -212,7 +212,7 @@ final class ManagedJavaMemoryEngine {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"Managed revision identifier space is exhausted");
 			}
-			return commitSearch(token, operationEpoch, revision, scan.diagnosticMessage(), type);
+			return commitSearch(token, operationEpoch, 0L, revision, scan.diagnosticMessage(), type);
 		} catch (OperationCancelledException cancelled) {
 			return failure(token, MemoryEngineContract.RESULT_CANCELLED,
 					"Managed search was cancelled");
@@ -320,7 +320,7 @@ final class ManagedJavaMemoryEngine {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"Managed revision identifier space is exhausted");
 			}
-			return commitSearch(token, operationEpoch, revision, null, type);
+			return commitSearch(token, operationEpoch, expectedRevision, revision, null, type);
 		} catch (ResourceLimitException limit) {
 			return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT, limit.getMessage());
 		} catch (RuntimeException | LinkageError error) {
@@ -496,8 +496,7 @@ final class ManagedJavaMemoryEngine {
 				int type = valueTypeFor(batch.owners[index], batch.slots[index]);
 				writeTyped(batch.owners[index], batch.slots[index], owner, type, replacements[index]);
 				if (readTyped(batch.owners[index], batch.slots[index], owner, readback)
-						&& ManagedJavaValue.matchesKnown(type, MemoryEngineContract.PREDICATE_EQUAL,
-								readback[0], replacements[index], 0L)) {
+						&& writeConfirmed(readback[0], replacements[index])) {
 					written++;
 					if (batch.watch[index]) updateWatchPrevious(ids[index], readback[0]);
 				} else {
@@ -759,8 +758,7 @@ final class ManagedJavaMemoryEngine {
 				writeTyped(owner, snapshot.slots[index], strongOwner, type,
 						snapshot.freezeValues[index]);
 				if (readTyped(owner, snapshot.slots[index], strongOwner, readback)
-						&& ManagedJavaValue.matchesKnown(type, MemoryEngineContract.PREDICATE_EQUAL,
-								readback[0], snapshot.freezeValues[index], 0L)) {
+						&& writeConfirmed(readback[0], snapshot.freezeValues[index])) {
 					written++;
 					updateWatchPrevious(snapshot.ids[index], readback[0]);
 				} else {
@@ -869,12 +867,18 @@ final class ManagedJavaMemoryEngine {
 		return token != 0L && activeToken == token && MemoryDiscoveryBridge.isActive(token);
 	}
 
-	private ManagedOperationResult commitSearch(long token, long operationEpoch, Revision revision,
+	private ManagedOperationResult commitSearch(long token, long operationEpoch,
+	                                           long expectedRevision, Revision revision,
 	                                           @Nullable String diagnostic, int type) {
 		synchronized (stateLock) {
 			if (!isOperationActive(token, operationEpoch)) return failureLocked(
 					MemoryEngineContract.RESULT_CANCELLED,
 					"Managed search was cancelled before commit");
+			long currentRevision = committed == null ? 0L : committed.id;
+			if (!revisionCanCommit(expectedRevision, currentRevision)) {
+				return failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+						"The managed search revision changed before refine could commit");
+			}
 			committed = revision;
 			searchStage = MemoryEngineContract.SEARCH_SESSION_CANDIDATES;
 			requestedType = type;
@@ -882,6 +886,14 @@ final class ManagedJavaMemoryEngine {
 			cleanupOwnersLocked();
 			return successLocked(diagnostic);
 		}
+	}
+
+	static boolean revisionCanCommit(long expectedRevision, long currentRevision) {
+		return expectedRevision <= 0L || expectedRevision == currentRevision;
+	}
+
+	static boolean writeConfirmed(long readbackBits, long requestedBits) {
+		return readbackBits == requestedBits;
 	}
 
 	private long allocateRevisionId() {

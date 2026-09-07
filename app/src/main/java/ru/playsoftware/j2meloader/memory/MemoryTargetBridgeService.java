@@ -94,18 +94,18 @@ public final class MemoryTargetBridgeService extends Service {
 
 		@Override
 		public Bundle getManagedCapabilities(long runtimeToken) {
-			return managedCapabilities(managedEngine.capabilities(runtimeToken));
+			return managedCapabilities(runtimeToken, managedEngine.capabilities(runtimeToken));
 		}
 
 		@Override
 		public Bundle getManagedSessionInfo(long runtimeToken) {
-			return managedSession(managedEngine.session(runtimeToken));
+			return managedSession(runtimeToken, managedEngine.session(runtimeToken));
 		}
 
 		@Override
 		public Bundle managedStartExact(long runtimeToken, int valueType, int predicate,
 				String firstValue, String secondValue, long cancellationEpoch) {
-			return managedResult(managedEngine.startExact(runtimeToken, valueType, predicate,
+			return managedResult(runtimeToken, managedEngine.startExact(runtimeToken, valueType, predicate,
 					firstValue, secondValue, cancellationEpoch));
 		}
 
@@ -113,101 +113,105 @@ public final class MemoryTargetBridgeService extends Service {
 		public Bundle managedRefine(long runtimeToken, long expectedRevision, int valueType,
 				int predicate, int compareTarget, String firstValue, String secondValue,
 				long cancellationEpoch) {
-			return managedResult(managedEngine.refine(runtimeToken, expectedRevision, valueType,
+			return managedResult(runtimeToken, managedEngine.refine(runtimeToken, expectedRevision, valueType,
 					predicate, compareTarget, firstValue, secondValue, cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedStartExactInt(long runtimeToken, int value, long cancellationEpoch) {
-			return managedResult(managedEngine.startExactInt(runtimeToken, value, cancellationEpoch));
+			return managedResult(runtimeToken,
+					managedEngine.startExactInt(runtimeToken, value, cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedRefineInt(long runtimeToken, long expectedRevision, int predicate,
 				int compareTarget, int value, long cancellationEpoch) {
-			return managedResult(managedEngine.refineInt(runtimeToken, expectedRevision, predicate,
+			return managedResult(runtimeToken, managedEngine.refineInt(runtimeToken, expectedRevision, predicate,
 					compareTarget, value, cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedResultPage(long runtimeToken, long expectedRevision, int offset, int limit) {
-			return resultPage(managedEngine.resultPage(runtimeToken, expectedRevision, offset, limit));
+			return resultPage(runtimeToken,
+					managedEngine.resultPage(runtimeToken, expectedRevision, offset, limit));
 		}
 
 		@Override
 		public Bundle managedWatchPage(long runtimeToken) {
-			return watchPage(managedEngine.watchPage(runtimeToken));
+			return watchPage(runtimeToken, managedEngine.watchPage(runtimeToken));
 		}
 
 		@Override
 		public Bundle managedRefresh(long runtimeToken, long[] ids, long expectedRevision,
 				long cancellationEpoch) {
-			return managedResult(managedEngine.refresh(runtimeToken, ids, expectedRevision,
+			return managedResult(runtimeToken, managedEngine.refresh(runtimeToken, ids, expectedRevision,
 					cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedEdit(long runtimeToken, long expectedRevision, long[] ids,
 				int replacement, boolean allowWatchOnly, long cancellationEpoch) {
-			return managedResult(managedEngine.edit(runtimeToken, expectedRevision, ids, replacement,
-					allowWatchOnly, cancellationEpoch));
+			return managedResult(runtimeToken, managedEngine.edit(runtimeToken, expectedRevision, ids,
+					replacement, allowWatchOnly, cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedEditTyped(long runtimeToken, long expectedRevision, long[] ids,
 				String replacement, boolean allowWatchOnly, long cancellationEpoch) {
-			return managedResult(managedEngine.editTyped(runtimeToken, expectedRevision, ids, replacement,
-					allowWatchOnly, cancellationEpoch));
+			return managedResult(runtimeToken, managedEngine.editTyped(runtimeToken, expectedRevision, ids,
+					replacement, allowWatchOnly, cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedAddWatch(long runtimeToken, long expectedRevision, long[] ids,
 				long cancellationEpoch) {
-			return managedResult(managedEngine.addWatch(runtimeToken, expectedRevision, ids,
+			return managedResult(runtimeToken, managedEngine.addWatch(runtimeToken, expectedRevision, ids,
 					cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedRemoveWatch(long runtimeToken, long[] ids, long cancellationEpoch) {
-			return managedResult(managedEngine.removeWatch(runtimeToken, ids, cancellationEpoch));
+			return managedResult(runtimeToken,
+					managedEngine.removeWatch(runtimeToken, ids, cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedSetWatchLabel(long runtimeToken, long candidateId, String label,
 				long cancellationEpoch) {
-			return managedResult(managedEngine.setWatchLabel(runtimeToken, candidateId, label,
+			return managedResult(runtimeToken, managedEngine.setWatchLabel(runtimeToken, candidateId, label,
 					cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedSetFreezeLock(long runtimeToken, long expectedRevision, long[] ids,
 				int replacement, boolean allowWatchOnly, long cancellationEpoch) {
-			return managedResult(managedEngine.setFreezeLock(runtimeToken, expectedRevision, ids,
-					replacement, allowWatchOnly, cancellationEpoch));
+			return managedResult(runtimeToken, managedEngine.setFreezeLock(runtimeToken, expectedRevision,
+					ids, replacement, allowWatchOnly, cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedSetFreezeLockTyped(long runtimeToken, long expectedRevision, long[] ids,
 				String replacement, boolean allowWatchOnly, long cancellationEpoch) {
-			return managedResult(managedEngine.setFreezeLockTyped(runtimeToken, expectedRevision, ids,
-					replacement, allowWatchOnly, cancellationEpoch));
+			return managedResult(runtimeToken, managedEngine.setFreezeLockTyped(runtimeToken,
+					expectedRevision, ids, replacement, allowWatchOnly, cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedClearFreeze(long runtimeToken, long[] ids, long cancellationEpoch) {
-			return managedResult(managedEngine.clearFreeze(runtimeToken, ids, cancellationEpoch));
+			return managedResult(runtimeToken,
+					managedEngine.clearFreeze(runtimeToken, ids, cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedFreezeTick(long runtimeToken, long cancellationEpoch) {
-			return managedResult(managedEngine.freezeTick(runtimeToken, cancellationEpoch));
+			return managedResult(runtimeToken, managedEngine.freezeTick(runtimeToken, cancellationEpoch));
 		}
 
 		@Override
 		public Bundle managedClearSearch(long runtimeToken, long expectedRevision,
 				long cancellationEpoch) {
-			return managedResult(managedEngine.clearSearchResult(runtimeToken, expectedRevision,
-					cancellationEpoch));
+			return managedResult(runtimeToken, managedEngine.clearSearchResult(runtimeToken,
+					expectedRevision, cancellationEpoch));
 		}
 
 		@Override
@@ -276,8 +280,10 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 	}
 
-	private static Bundle managedCapabilities(ManagedJavaMemoryEngine.ManagedCapabilities state) {
+	private static Bundle managedCapabilities(long runtimeToken,
+	                                          ManagedJavaMemoryEngine.ManagedCapabilities state) {
 		Bundle result = new Bundle();
+		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
 		result.putBoolean(MemoryEngineContract.KEY_SUPPORTED, state.supported);
 		result.putBoolean(MemoryEngineContract.KEY_WRITE_SUPPORTED, state.writeSupported);
 		result.putBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED, state.supported);
@@ -293,8 +299,10 @@ public final class MemoryTargetBridgeService extends Service {
 		return result;
 	}
 
-	private static Bundle managedSession(ManagedJavaMemoryEngine.ManagedSession state) {
+	private static Bundle managedSession(long runtimeToken,
+	                                     ManagedJavaMemoryEngine.ManagedSession state) {
 		Bundle result = new Bundle();
+		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
 		result.putBoolean(MemoryEngineContract.KEY_SUPPORTED, state.supported);
 		result.putBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED, state.supported);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, state.revision);
@@ -309,8 +317,10 @@ public final class MemoryTargetBridgeService extends Service {
 		return result;
 	}
 
-	private static Bundle managedResult(ManagedJavaMemoryEngine.ManagedOperationResult state) {
+	private static Bundle managedResult(long runtimeToken,
+	                                    ManagedJavaMemoryEngine.ManagedOperationResult state) {
 		Bundle result = new Bundle();
+		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, state.code);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, state.revision);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT, state.resultCount);
@@ -326,8 +336,9 @@ public final class MemoryTargetBridgeService extends Service {
 		return result;
 	}
 
-	private static Bundle resultPage(ManagedJavaMemoryEngine.ManagedPage page) {
+	private static Bundle resultPage(long runtimeToken, ManagedJavaMemoryEngine.ManagedPage page) {
 		Bundle result = new Bundle();
+		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, page.revision);
 		result.putLongArray(MemoryEngineContract.KEY_RESULT_IDS, page.ids);
 		result.putStringArray(MemoryEngineContract.KEY_RESULT_VALUES, page.values);
@@ -339,8 +350,8 @@ public final class MemoryTargetBridgeService extends Service {
 		return result;
 	}
 
-	private static Bundle watchPage(ManagedJavaMemoryEngine.ManagedPage page) {
-		Bundle result = resultPage(page);
+	private static Bundle watchPage(long runtimeToken, ManagedJavaMemoryEngine.ManagedPage page) {
+		Bundle result = resultPage(runtimeToken, page);
 		// A Watch page is presentation-only. Its revision field is deliberately zero and must
 		// never be interpreted by :memory_engine as the current search revision.
 		result.remove(MemoryEngineContract.KEY_MANAGED_REVISION);
