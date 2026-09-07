@@ -69,6 +69,16 @@ internal data class MemoryResultRow(
             .filter { aliasMask and (1 shl it) != 0 }
 }
 
+/** Immutable row provenance captured when an edit dialog is opened. */
+internal data class MemoryEditTarget(
+    val id: Long,
+    val type: Int,
+    val valueText: String,
+    val backend: Int,
+    val aliasTypes: List<Int> = emptyList(),
+    val watch: Boolean = false,
+)
+
 /** Bounded read-only snapshot whose address is resolved from a verified CandidateId. */
 internal data class MemoryInspectorSnapshot(
     val candidateId: Long,
@@ -230,6 +240,12 @@ internal interface MemoryEditorActions {
     fun invertVisible()
     fun clearSelection()
     fun editSelected(value: String, type: Int)
+    fun editTargets(
+        targets: List<MemoryEditTarget>,
+        expectedRevision: Long,
+        value: String,
+        type: Int,
+    ) = editSelected(value, type)
     /**
      * Applies an edit and optionally performs the common follow-up actions as one user flow.
      * Implementations that do not support the follow-ups retain the original edit behavior.

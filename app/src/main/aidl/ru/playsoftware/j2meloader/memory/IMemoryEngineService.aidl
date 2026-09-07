@@ -37,9 +37,9 @@ interface IMemoryEngineService {
     long removeCandidates(long runtimeToken, in long[] candidateIds);
     long keepCandidates(long runtimeToken, in long[] candidateIds);
     long editCandidates(long runtimeToken, in long[] candidateIds, String replacementValue);
-    long filterResultGroups(long runtimeToken, in long[] resultIds, boolean keep);
-    long editResultGroups(long runtimeToken, in long[] resultIds, int valueType,
-            String replacementValue);
+    long filterResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds, boolean keep);
+    long editResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
+            int valueType, String replacementValue);
     long editManagedResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
             String replacementValue);
     long addWatchResultGroups(long runtimeToken, in long[] resultIds, int valueType);

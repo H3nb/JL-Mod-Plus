@@ -8,6 +8,7 @@ package ru.playsoftware.j2meloader.memory
 import android.view.WindowManager
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -477,8 +478,12 @@ private fun RuntimeSearchResultsTab(
 ) {
     var knownDialog by remember { mutableStateOf(false) }
     var unknownDialog by remember { mutableStateOf(false) }
-    var editDialog by remember { mutableStateOf(false) }
-    val selectedRow = state.selected.singleOrNull()?.let { id -> state.results.firstOrNull { it.id == id } }
+    var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
+    val selectedRows = state.results.filter { it.id in state.selected }
+    val selectedWriteSupported = selectedRows.isNotEmpty() && selectedRows.all { row ->
+        if (ManagedJavaMemoryIds.isManaged(row.id)) state.managedWriteSupported
+        else state.writeSupported
+    }
     val allVisibleSelected = state.results.isNotEmpty() &&
         state.results.all { it.id in state.selected }
 
@@ -497,14 +502,22 @@ private fun RuntimeSearchResultsTab(
             RuntimeActionIcon(
                 icon = R.drawable.ic_memory_editor_search_unknown,
                 description = R.string.memory_editor_search_unknown_values,
-                enabled = !state.busy && state.searchScope != MemoryEngineContract.SCOPE_MANAGED_JAVA,
+                enabled = !state.busy && (state.supported || state.managedSupported),
                 onClick = { unknownDialog = true },
             )
             RuntimeActionIcon(
                 icon = R.drawable.ic_edit,
                 description = R.string.memory_editor_edit,
-                enabled = selectedRow != null && state.writeSupported && !state.busy,
-                onClick = { editDialog = true },
+                enabled = selectedWriteSupported && !state.busy,
+                onClick = {
+                    editTargets = selectedRows.map { row ->
+                        MemoryEditTarget(row.id, row.primaryType, row.valueText,
+                            if (ManagedJavaMemoryIds.isManaged(row.id)) {
+                                MemoryEngineContract.BACKEND_MANAGED
+                            } else MemoryEngineContract.BACKEND_RAW,
+                            row.aliasTypes)
+                    }
+                },
             )
             RuntimeActionIcon(
                 icon = R.drawable.ic_restart_alt,
@@ -515,8 +528,8 @@ private fun RuntimeSearchResultsTab(
             RuntimeActionIcon(
                 icon = R.drawable.ic_memory_editor_inspector,
                 description = R.string.memory_editor_inspect_memory,
-                enabled = selectedRow != null && !state.busy
-                    && !ManagedJavaMemoryIds.isManaged(selectedRow.id),
+                enabled = selectedRows.size == 1 && !state.busy
+                    && !ManagedJavaMemoryIds.isManaged(selectedRows.single().id),
                 onClick = onInspectSelected,
             )
             RuntimeActionIcon(
@@ -589,14 +602,14 @@ private fun RuntimeSearchResultsTab(
                         selected = row.id in state.selected,
                         onToggle = { actions.toggleSelection(row.id) },
                         onClick = {
-                            if (row.id in state.selected && state.selected.size == 1) {
-                                actions.clearSelection()
-                            } else {
-                                if (state.selected.size <= 1) actions.clearSelection()
-                                actions.toggleSelection(row.id)
-                            }
+                            editTargets = listOf(
+                                MemoryEditTarget(row.id, row.primaryType, row.valueText,
+                                    if (ManagedJavaMemoryIds.isManaged(row.id)) {
+                                        MemoryEngineContract.BACKEND_MANAGED
+                                    } else MemoryEngineContract.BACKEND_RAW,
+                                    row.aliasTypes),
+                            )
                         },
-                        onLongClick = { actions.toggleSelection(row.id) },
                     )
                 }
             }
@@ -626,17 +639,24 @@ private fun RuntimeSearchResultsTab(
             },
         )
     }
-    if (editDialog && selectedRow != null) {
+    val currentEditTargets = editTargets
+    if (currentEditTargets != null) {
         RuntimeEditDialog(
-            value = selectedRow.valueText,
-            initialType = selectedRow.primaryType,
-            types = selectedRow.aliasTypes,
-            writeSupported = state.writeSupported,
-            actions = actions,
+            targets = currentEditTargets,
+            writeSupported = currentEditTargets.all { it.supportsWrite(state) },
             onPeekUnderlayChanged = onPeekUnderlayChanged,
             onDismiss = {
                 onPeekUnderlayChanged(false)
-                editDialog = false
+                editTargets = null
+            },
+            onApply = { value, type, freeze ->
+                if (currentEditTargets.size == 1 && currentEditTargets[0].id in state.selected) {
+                    actions.editSelectedWithOptions(value, type, false, freeze)
+                } else {
+                    actions.editTargets(currentEditTargets, state.managedRevision, value, type)
+                }
+                onPeekUnderlayChanged(false)
+                editTargets = null
             },
         )
     }
@@ -649,7 +669,6 @@ private fun RuntimeResultRow(
     selected: Boolean,
     onToggle: () -> Unit,
     onClick: () -> Unit,
-    onLongClick: () -> Unit,
 ) {
     Surface(
         color = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
@@ -658,14 +677,11 @@ private fun RuntimeResultRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                .clickable(onClick = onClick)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Checkbox(
-                checked = selected,
-                onCheckedChange = { onToggle() },
-            )
+            Checkbox(checked = selected, onCheckedChange = { onToggle() })
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -707,8 +723,12 @@ private fun RuntimeWatchTab(
     onPeekUnderlayChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var editDialog by remember { mutableStateOf(false) }
-    val selectedRow = state.selected.singleOrNull()?.let { id -> state.watches.firstOrNull { it.id == id } }
+    var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
+    val selectedRows = state.watches.filter { it.id in state.selected }
+    val selectedWriteSupported = selectedRows.isNotEmpty() && selectedRows.all { row ->
+        if (row.backend == MemoryEngineContract.BACKEND_MANAGED) state.managedWriteSupported
+        else state.writeSupported
+    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -724,8 +744,13 @@ private fun RuntimeWatchTab(
             RuntimeActionIcon(
                 R.drawable.ic_edit,
                 R.string.memory_editor_edit,
-                enabled = selectedRow != null && state.writeSupported && !state.busy,
-            ) { editDialog = true }
+                enabled = selectedWriteSupported && !state.busy,
+            ) {
+                editTargets = selectedRows.map { row ->
+                    MemoryEditTarget(row.id, row.type, row.valueText,
+                        row.backend, listOf(row.type), watch = true)
+                }
+            }
             RuntimeActionIcon(
                 R.drawable.ic_restart_alt,
                 R.string.memory_editor_refresh,
@@ -733,20 +758,20 @@ private fun RuntimeWatchTab(
                 onClick = actions::refresh,
             )
             when {
-                selectedRow?.freezeMode?.let { it >= 0 } == true -> RuntimeActionIcon(
+                selectedRows.size == 1 && selectedRows.single().freezeMode >= 0 -> RuntimeActionIcon(
                     R.drawable.ic_screen_lock_rotation,
                     R.string.memory_editor_unfreeze,
                     enabled = !state.busy,
                     onClick = actions::clearFreezeSelected,
                 )
-                selectedRow != null -> RuntimeActionIcon(
+                selectedRows.size == 1 -> RuntimeActionIcon(
                     R.drawable.ic_screen_lock_rotation,
                     R.string.memory_editor_freeze,
-                    enabled = state.writeSupported && !state.busy,
+                    enabled = selectedWriteSupported && !state.busy,
                 ) {
                     actions.freezeSelected(
                         MemoryEngineContract.FREEZE_LOCK,
-                        selectedRow.valueText,
+                        selectedRows.single().valueText,
                         "",
                     )
                 }
@@ -772,32 +797,37 @@ private fun RuntimeWatchTab(
                     RuntimeWatchRow(
                         row = row,
                         selected = row.id in state.selected,
+                        onToggle = { actions.toggleSelection(row.id) },
                         onClick = {
-                            if (row.id in state.selected && state.selected.size == 1) {
-                                actions.clearSelection()
-                            } else {
-                                if (state.selected.size <= 1) actions.clearSelection()
-                                actions.toggleSelection(row.id)
-                            }
+                            editTargets = listOf(
+                                MemoryEditTarget(row.id, row.type, row.valueText,
+                                    row.backend, listOf(row.type), watch = true),
+                            )
                         },
-                        onLongClick = { actions.toggleSelection(row.id) },
                     )
                 }
             }
         }
     }
 
-    if (editDialog && selectedRow != null) {
+    val currentEditTargets = editTargets
+    if (currentEditTargets != null) {
         RuntimeEditDialog(
-            value = selectedRow.valueText,
-            initialType = selectedRow.type,
-            types = listOf(selectedRow.type),
-            writeSupported = state.writeSupported,
-            actions = actions,
+            targets = currentEditTargets,
+            writeSupported = currentEditTargets.all { it.supportsWrite(state) },
             onPeekUnderlayChanged = onPeekUnderlayChanged,
             onDismiss = {
                 onPeekUnderlayChanged(false)
-                editDialog = false
+                editTargets = null
+            },
+            onApply = { value, type, freeze ->
+                if (currentEditTargets.size == 1 && currentEditTargets[0].id in state.selected) {
+                    actions.editSelectedWithOptions(value, type, false, freeze)
+                } else {
+                    actions.editTargets(currentEditTargets, 0L, value, type)
+                }
+                onPeekUnderlayChanged(false)
+                editTargets = null
             },
         )
     }
@@ -808,9 +838,10 @@ private fun RuntimeWatchTab(
 private fun RuntimeWatchRow(
     row: MemoryWatchRow,
     selected: Boolean,
+    onToggle: () -> Unit,
     onClick: () -> Unit,
-    onLongClick: () -> Unit,
 ) {
+    val selectDescription = stringResource(R.string.memory_editor_select_result_value)
     Surface(
         color = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
         else Color.Transparent,
@@ -818,10 +849,17 @@ private fun RuntimeWatchRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                .clickable(onClick = onClick)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Checkbox(
+                checked = selected,
+                onCheckedChange = { onToggle() },
+                modifier = Modifier.semantics {
+                    contentDescription = selectDescription
+                },
+            )
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -946,24 +984,34 @@ internal fun RuntimeKnownSearchDialog(
     }
 
     val expression = parseMemorySearchExpression(query.text)
-    val spec = MemoryInputSpec.forType(type)
+    val relative = predicate >= MemoryEngineContract.PREDICATE_CHANGED
+    val spec = if (relative) MemoryInputSpec.relativeMagnitudeForType(type)
+    else MemoryInputSpec.forType(type)
     LaunchedEffect(expression, type) {
         if (expression is MemorySearchExpression.Group && type == MemoryEngineContract.TYPE_AUTO) {
             inferMemoryGroupType(expression.values)?.let { type = it }
         }
     }
-    val needsSecond = predicate == MemoryEngineContract.PREDICATE_BETWEEN &&
-        expression !is MemorySearchExpression.Group
+    val needsSecond = (predicate == MemoryEngineContract.PREDICATE_BETWEEN && !relative &&
+        expression !is MemorySearchExpression.Group) ||
+        predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
+        predicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
+    val firstValid = if (relative && !runtimeRelativeNeedsValue(predicate)) {
+        true
+    } else {
+        spec.isComplete(query.text)
+    }
     val secondValid = !needsSecond || spec.isComplete(second.text)
-    val singleValid = expression is MemorySearchExpression.Single && spec.isComplete(expression.value)
+    val singleValid = expression is MemorySearchExpression.Single && firstValid
     val groupValid = expression is MemorySearchExpression.Group && type != MemoryEngineContract.TYPE_AUTO &&
         expression.values.all(spec::isComplete)
-    val newSearchValid = if (managedScope) singleValid && secondValid &&
+    val newSearchValid = !relative && if (managedScope) singleValid && secondValid &&
         MemoryEngineContract.isCandidateType(type) &&
         predicate in MemoryEngineContract.PREDICATE_EQUAL..MemoryEngineContract.PREDICATE_BETWEEN
     else (singleValid || groupValid) && secondValid
     val nextScanValid = state.sessionStage == MemorySessionStage.CANDIDATES &&
-    type == state.requestedType && scope == state.searchScope && singleValid && secondValid
+        type == state.requestedType && scope == state.searchScope &&
+        (if (relative && !runtimeRelativeNeedsValue(predicate)) true else firstValid) && secondValid
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -986,6 +1034,7 @@ internal fun RuntimeKnownSearchDialog(
                         RuntimePredicateMenu(
                             predicate = predicate,
                             onPredicate = { predicate = it },
+                            includeRelative = state.sessionStage == MemorySessionStage.CANDIDATES,
                             modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
                         )
                         RuntimeSearchField(
@@ -1044,7 +1093,7 @@ internal fun RuntimeKnownSearchDialog(
                 keypad = {
                     RuntimeSearchKeypad(
                         allowGroup = activeField == RuntimeInputField.FIRST && !managedScope,
-                        valueSpec = if (managedScope || activeField == RuntimeInputField.SECOND) spec else null,
+                        valueSpec = if (managedScope || relative || activeField == RuntimeInputField.SECOND) spec else null,
                         onToken = { token ->
                             if (activeField == RuntimeInputField.FIRST) {
                                 query = if (managedScope) runtimeInsertValidated(query, token, spec)
@@ -1145,8 +1194,9 @@ private fun RuntimeUnknownSearchDialog(
     }
     var scope by remember(state.runtimeToken) {
         mutableIntStateOf(
-            state.searchScope.takeIf(MemoryEngineContract::isRawScope)
-                ?: MemoryEngineContract.SCOPE_JAVA_FAST,
+            state.searchScope.takeIf(MemoryEngineContract::isScope)
+                ?: if (state.managedSupported) MemoryEngineContract.SCOPE_MANAGED_JAVA
+                else MemoryEngineContract.SCOPE_JAVA_FAST,
         )
     }
     var predicate by remember { mutableIntStateOf(MemoryEngineContract.PREDICATE_CHANGED) }
@@ -1163,6 +1213,14 @@ private fun RuntimeUnknownSearchDialog(
         MemoryInputSpec.forType(state.requestedType)
     }
     val refineValid = !needsValue || (spec.isComplete(first.text) && (!needsSecond || spec.isComplete(second.text)))
+
+    LaunchedEffect(scope) {
+        if (scope == MemoryEngineContract.SCOPE_MANAGED_JAVA &&
+            !MemoryEngineContract.isCandidateType(type)
+        ) {
+            type = MemoryEngineContract.TYPE_INT
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1187,21 +1245,27 @@ private fun RuntimeUnknownSearchDialog(
                                 RuntimeTypeMenu(
                                     type = type,
                                     onType = { type = it },
+                                    managed = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA,
                                     modifier = Modifier.weight(1f),
                                 )
                                 RuntimeScopeMenu(
                                     scope = scope,
                                     onScope = { scope = it },
-                                    managedSupported = false,
+                                    managedSupported = state.managedSupported,
                                     modifier = Modifier.weight(1f),
                                 )
                             }
                         } else {
-                            RuntimeTypeMenu(type = type, onType = { type = it }, modifier = Modifier.fillMaxWidth())
+                            RuntimeTypeMenu(
+                                type = type,
+                                onType = { type = it },
+                                managed = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                             RuntimeScopeMenu(
                                 scope = scope,
                                 onScope = { scope = it },
-                                managedSupported = false,
+                                managedSupported = state.managedSupported,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
@@ -1344,32 +1408,52 @@ private fun RuntimeUnknownSearchDialog(
 
 @Composable
 private fun RuntimeEditDialog(
-    value: String,
-    initialType: Int,
-    types: List<Int>,
+    targets: List<MemoryEditTarget>,
     writeSupported: Boolean,
-    actions: MemoryEditorActions,
     onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
+    onApply: (String, Int, Boolean) -> Unit,
 ) {
-    val editableTypes = remember(types, initialType) {
-        types.filter { MemoryEngineContract.isCandidateType(it) }
+    val firstTarget = targets.firstOrNull() ?: return
+    val initialType = firstTarget.type
+    val initialValue = targets.map(MemoryEditTarget::valueText).distinct().singleOrNull().orEmpty()
+    val batch = targets.size > 1
+    val editableTypes = remember(targets) {
+        val firstTypes = firstTarget.aliasTypes.filter { MemoryEngineContract.isCandidateType(it) }
+        val commonTypes = if (targets.size > 1) {
+            firstTypes.filter { candidate ->
+                targets.drop(1).all { target -> candidate in target.aliasTypes }
+            }
+        } else {
+            firstTypes
+        }
+        commonTypes
             .distinct()
             .ifEmpty { listOf(initialType) }
     }
-    var type by remember(value, initialType, editableTypes) {
+    val hasCompatibleType = !batch || firstTarget.aliasTypes.any { candidate ->
+        MemoryEngineContract.isCandidateType(candidate) &&
+            targets.drop(1).all { candidate in it.aliasTypes }
+    }
+    var type by remember(targets, initialType, editableTypes) {
         mutableIntStateOf(initialType.takeIf { it in editableTypes } ?: editableTypes.first())
     }
-    var replacement by remember(value, initialType, editableTypes) {
-        mutableStateOf(TextFieldValue(value, TextRange(value.length)))
+    var replacement by remember(targets, initialType, editableTypes) {
+        mutableStateOf(TextFieldValue(initialValue, TextRange(initialValue.length)))
     }
     var freeze by remember { mutableStateOf(false) }
     var peekingUnderlay by remember { mutableStateOf(false) }
     val spec = MemoryInputSpec.forType(type)
+    val replacementValid = if (targets.any(MemoryEditTarget::watch)) {
+        targets.map(MemoryEditTarget::type).distinct()
+            .all { MemoryInputSpec.forType(it).isComplete(replacement.text) }
+    } else {
+        spec.isComplete(replacement.text)
+    }
     val selectType: (Int) -> Unit = { selectedType ->
         if (selectedType != type) {
             type = selectedType
-            val next = if (selectedType == initialType) value else ""
+            val next = if (selectedType == initialType) initialValue else ""
             replacement = TextFieldValue(next, TextRange(next.length))
         }
     }
@@ -1379,7 +1463,9 @@ private fun RuntimeEditDialog(
         modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
         title = {
             RuntimeInputDialogTitle(
-                title = stringResource(R.string.memory_editor_edit),
+                title = if (batch) {
+                    stringResource(R.string.memory_editor_edit_batch, targets.size)
+                } else stringResource(R.string.memory_editor_edit),
                 peeking = peekingUnderlay,
                 onPeekingChanged = {
                     peekingUnderlay = it
@@ -1427,12 +1513,31 @@ private fun RuntimeEditDialog(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = freeze, onCheckedChange = { freeze = it })
-                        Text(stringResource(R.string.memory_editor_freeze))
+                    if (!batch) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(checked = freeze, onCheckedChange = { freeze = it })
+                            Text(stringResource(R.string.memory_editor_freeze))
+                        }
                     }
                 },
-                supportingContent = if (freeze) {
+                supportingContent = if (batch) {
+                    {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                stringResource(R.string.memory_editor_edit_batch_help),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            if (!hasCompatibleType) {
+                                Text(
+                                    stringResource(R.string.memory_editor_edit_batch_no_common_type),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
+                    }
+                } else if (freeze) {
                     {
                         Text(
                             stringResource(R.string.memory_editor_freeze_after_edit_help),
@@ -1456,14 +1561,9 @@ private fun RuntimeEditDialog(
         textScrollable = false,
         confirmButton = {
             Button(
-                enabled = writeSupported && spec.isComplete(replacement.text),
+                enabled = writeSupported && hasCompatibleType && replacementValid,
                 onClick = {
-                    actions.editSelectedWithOptions(
-                        replacement.text,
-                        type,
-                        addToWatch = false,
-                        freezeAfter = freeze,
-                    )
+                    onApply(replacement.text, type, freeze)
                     onDismiss()
                 },
             ) { Text(stringResource(R.string.memory_editor_save)) }
@@ -1473,6 +1573,11 @@ private fun RuntimeEditDialog(
         },
     )
 }
+
+private fun MemoryEditTarget.supportsWrite(state: MemoryEditorUiState): Boolean =
+    if (backend == MemoryEngineContract.BACKEND_MANAGED) state.managedWriteSupported
+    else state.writeSupported
+
 @Composable
 private fun RuntimeInspectorTab(
     state: MemoryEditorUiState,
@@ -1993,11 +2098,12 @@ private fun RuntimeSearchControlRow(
 private fun RuntimePredicateMenu(
     predicate: Int,
     onPredicate: (Int) -> Unit,
+    includeRelative: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     RuntimeChoiceMenu(
         value = predicate,
-        values = intArrayOf(
+        values = (if (includeRelative) intArrayOf(
             MemoryEngineContract.PREDICATE_EQUAL,
             MemoryEngineContract.PREDICATE_NOT_EQUAL,
             MemoryEngineContract.PREDICATE_GREATER,
@@ -2005,7 +2111,24 @@ private fun RuntimePredicateMenu(
             MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
             MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
             MemoryEngineContract.PREDICATE_BETWEEN,
-        ),
+            MemoryEngineContract.PREDICATE_CHANGED,
+            MemoryEngineContract.PREDICATE_UNCHANGED,
+            MemoryEngineContract.PREDICATE_INCREASED,
+            MemoryEngineContract.PREDICATE_DECREASED,
+            MemoryEngineContract.PREDICATE_INCREASED_BY,
+            MemoryEngineContract.PREDICATE_DECREASED_BY,
+            MemoryEngineContract.PREDICATE_CHANGED_BY,
+            MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE,
+            MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE,
+        ) else intArrayOf(
+            MemoryEngineContract.PREDICATE_EQUAL,
+            MemoryEngineContract.PREDICATE_NOT_EQUAL,
+            MemoryEngineContract.PREDICATE_GREATER,
+            MemoryEngineContract.PREDICATE_LESS,
+            MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
+            MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
+            MemoryEngineContract.PREDICATE_BETWEEN,
+        )),
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
         modifier = modifier,

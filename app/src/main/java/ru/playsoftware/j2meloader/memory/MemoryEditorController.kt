@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicLong
  * Presentation controller hosted in :memory_engine. The MIDlet process owns only the small bubble;
  * all Compose state and interaction allocations stay beside the engine rather than the target heap.
  */
-class MemoryEditorComposeController(
+internal class MemoryEditorComposeController(
     private val composeView: ComposeView,
     private val ownedRuntimeToken: Long,
     private val closeHost: () -> Unit,
@@ -667,6 +667,13 @@ class MemoryEditorComposeController(
     }
 
     override fun toggleSelection(id: Long) {
+        if (id !in state.selected && state.selected.size >= MemoryEngineContract.MAX_REQUEST_TARGETS) {
+            state = state.copy(
+                message = "Selection is limited to ${MemoryEngineContract.MAX_REQUEST_TARGETS} targets",
+                messageIsError = true,
+            )
+            return
+        }
         state = state.copy(
             selected = state.selected.toMutableSet().also { selected ->
                 if (!selected.add(id)) selected.remove(id)
@@ -700,7 +707,8 @@ class MemoryEditorComposeController(
                         token, state.managedRevision, longArrayOf(id), value.trim(),
                     )
                 } else {
-                    engine.editResultGroups(token, longArrayOf(id), type, value.trim())
+                    engine.editResultGroups(token, state.managedRevision, longArrayOf(id), type,
+                        value.trim())
                 }
             } else {
                 engine.editCandidates(token, longArrayOf(id), value.trim())
@@ -730,7 +738,8 @@ class MemoryEditorComposeController(
                         token, state.managedRevision, longArrayOf(id), replacement,
                     )
                 } else {
-                    engine.editResultGroups(token, longArrayOf(id), type, replacement)
+                    engine.editResultGroups(token, state.managedRevision, longArrayOf(id), type,
+                        replacement)
                 }
             } else {
                 engine.editCandidates(token, longArrayOf(id), replacement)
@@ -792,7 +801,7 @@ class MemoryEditorComposeController(
                 if (keep) MemoryEngineContract.RESULT_INVALID_REQUEST.toLong()
                 else engine.removeWatch(token, ids)
             } else {
-                engine.filterResultGroups(token, ids, keep)
+                engine.filterResultGroups(token, state.managedRevision, ids, keep)
             }
         }
     }
@@ -1062,6 +1071,32 @@ class MemoryEditorComposeController(
         }
         if (!destroyed && state.visible) {
             composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INTERVAL_MS)
+        }
+    }
+
+    override fun editTargets(
+        targets: List<MemoryEditTarget>,
+        expectedRevision: Long,
+        value: String,
+        type: Int,
+    ) {
+        val snapshot = targets.toList()
+        if (snapshot.isEmpty() || snapshot.size > MemoryEngineContract.MAX_REQUEST_TARGETS) return
+        val ids = snapshot.map(MemoryEditTarget::id).toLongArray()
+        val watch = snapshot.all(MemoryEditTarget::watch)
+        if (!watch && snapshot.any { type !in it.aliasTypes }) {
+            state = state.copy(
+                message = context.getString(R.string.memory_editor_edit_batch_no_common_type),
+                messageIsError = true,
+            )
+            return
+        }
+        launchOperation { engine, token ->
+            if (watch) {
+                engine.editCandidates(token, ids, value.trim())
+            } else {
+                engine.editResultGroups(token, expectedRevision, ids, type, value.trim())
+            }
         }
     }
 

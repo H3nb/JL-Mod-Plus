@@ -40,11 +40,14 @@ interface IMemoryTargetBridge {
     Bundle getManagedSessionInfo(long runtimeToken);
     Bundle managedStartExact(long runtimeToken, int valueType, int predicate,
             String firstValue, String secondValue, long cancellationEpoch);
+    Bundle managedStartUnknown(long runtimeToken, int valueType, long cancellationEpoch);
     Bundle managedRefine(long runtimeToken, long expectedRevision, int valueType, int predicate,
             int compareTarget, String firstValue, String secondValue, long cancellationEpoch);
     Bundle managedStartExactInt(long runtimeToken, int value, long cancellationEpoch);
     Bundle managedRefineInt(long runtimeToken, long expectedRevision, int predicate,
             int compareTarget, int value, long cancellationEpoch);
+    Bundle managedFilter(long runtimeToken, long expectedRevision, in long[] ids,
+            boolean keep, long cancellationEpoch);
     Bundle managedResultPage(long runtimeToken, long expectedRevision, int offset, int limit);
     Bundle managedWatchPage(long runtimeToken);
     Bundle managedRefresh(long runtimeToken, in long[] ids, long expectedRevision,

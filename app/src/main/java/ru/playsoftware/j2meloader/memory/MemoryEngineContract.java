@@ -94,6 +94,8 @@ public final class MemoryEngineContract {
 	public static final int MAX_MULTI_WRITE = 32;
 	public static final int MAX_FREEZE_RECORDS = 32;
 	public static final int MAX_WATCH_RECORDS = 128;
+	/** Maximum number of logical targets in one user edit/filter request. */
+	public static final int MAX_REQUEST_TARGETS = MAX_WATCH_RECORDS;
 	public static final int MAX_GROUP_VALUES = 8;
 	/**
 	 * Maximum resident address runs accepted from the target process. 4,096 was too tight for
@@ -127,6 +129,7 @@ public final class MemoryEngineContract {
 	public static final String KEY_MANAGED_WRITTEN = "managedWritten";
 	public static final String KEY_MANAGED_SKIPPED = "managedSkipped";
 	public static final String KEY_MANAGED_UNCONFIRMED = "managedUnconfirmed";
+	public static final String KEY_MANAGED_NOT_ATTEMPTED = "managedNotAttempted";
 	public static final String KEY_SEARCH_BACKEND = "searchBackend";
 	public static final String KEY_RUNTIME_TOKEN = "runtimeToken";
 	public static final String KEY_TARGET_PID = "targetPid";

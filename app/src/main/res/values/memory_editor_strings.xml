@@ -57,6 +57,9 @@
     <string name="memory_editor_what_changed">What happened to the value?</string>
     <string name="memory_editor_start_over">Start over</string>
     <string name="memory_editor_edit">Edit</string>
+    <string name="memory_editor_edit_batch">Edit %1$d values</string>
+    <string name="memory_editor_edit_batch_help">One replacement value will be applied to all selected targets. Watch and Freeze options are unavailable for batch edits.</string>
+    <string name="memory_editor_edit_batch_no_common_type">The selected result groups have no common data type. Edit a compatible subset separately.</string>
     <string name="memory_editor_save">Save</string>
     <string name="memory_editor_replacement">Replacement value</string>
     <string name="memory_editor_freeze">Freeze</string>

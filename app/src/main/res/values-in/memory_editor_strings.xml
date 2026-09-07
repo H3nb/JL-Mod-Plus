@@ -55,6 +55,9 @@
     <string name="memory_editor_what_changed">Apa yang terjadi pada nilainya?</string>
     <string name="memory_editor_start_over">Mulai ulang pencarian</string>
     <string name="memory_editor_edit">Ubah</string>
+    <string name="memory_editor_edit_batch">Ubah %1$d nilai</string>
+    <string name="memory_editor_edit_batch_help">Satu nilai pengganti akan diterapkan ke semua target yang dipilih. Opsi Pantau dan Bekukan tidak tersedia untuk perubahan massal.</string>
+    <string name="memory_editor_edit_batch_no_common_type">Kelompok hasil yang dipilih tidak memiliki tipe data bersama. Edit subset yang kompatibel secara terpisah.</string>
     <string name="memory_editor_save">Simpan</string>
     <string name="memory_editor_replacement">Nilai pengganti</string>
     <string name="memory_editor_freeze">Bekukan</string>

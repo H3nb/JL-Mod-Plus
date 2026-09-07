@@ -110,6 +110,12 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 
 		@Override
+		public Bundle managedStartUnknown(long runtimeToken, int valueType, long cancellationEpoch) {
+			return managedResult(runtimeToken,
+					managedEngine.startUnknown(runtimeToken, valueType, cancellationEpoch));
+		}
+
+		@Override
 		public Bundle managedRefine(long runtimeToken, long expectedRevision, int valueType,
 				int predicate, int compareTarget, String firstValue, String secondValue,
 				long cancellationEpoch) {
@@ -128,6 +134,13 @@ public final class MemoryTargetBridgeService extends Service {
 				int compareTarget, int value, long cancellationEpoch) {
 			return managedResult(runtimeToken, managedEngine.refineInt(runtimeToken, expectedRevision, predicate,
 					compareTarget, value, cancellationEpoch));
+		}
+
+		@Override
+		public Bundle managedFilter(long runtimeToken, long expectedRevision, long[] ids,
+				boolean keep, long cancellationEpoch) {
+			return managedResult(runtimeToken, managedEngine.filter(runtimeToken, expectedRevision,
+					ids, keep, cancellationEpoch));
 		}
 
 		@Override
@@ -310,6 +323,7 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
 		result.putInt(MemoryEngineContract.KEY_SEARCH_SESSION_STAGE, state.stage);
+		result.putInt(MemoryEngineContract.KEY_SEARCH_MODE, state.mode);
 		result.putInt(MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE, state.requestedType);
 		if (state.message != null && !state.message.isBlank()) {
 			result.putString(MemoryEngineContract.KEY_MESSAGE, state.message);
@@ -328,6 +342,7 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WRITTEN, state.written);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_SKIPPED, state.skipped);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_UNCONFIRMED, state.unconfirmed);
+		result.putInt(MemoryEngineContract.KEY_MANAGED_NOT_ATTEMPTED, state.notAttempted);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
 		if (state.message != null && !state.message.isBlank()) {
