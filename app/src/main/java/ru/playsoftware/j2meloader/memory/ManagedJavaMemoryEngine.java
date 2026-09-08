@@ -585,11 +585,13 @@ final class ManagedJavaMemoryEngine {
 		OwnerBucket owner = anchor.owners[0];
 		Object strongOwner = anchor.strongOwners[0];
 		int anchorSlot = anchor.slots[0];
+		// Modified: logical windows use the result-row budget, not the raw byte budget.
+		radius = Math.min(radius, (MemoryEngineContract.MAX_RESULT_PAGE_SIZE - 1) / 2);
 		ArrayList<Integer> slots = new ArrayList<>();
 		if (owner.kind == KIND_ARRAY) {
 			if (strongOwner == null) return ManagedInspection.failure(
 					MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "The managed Inspector owner was collected");
-				int length;
+			int length;
 			try {
 				length = Array.getLength(strongOwner);
 			} catch (RuntimeException error) {
@@ -597,7 +599,7 @@ final class ManagedJavaMemoryEngine {
 						"The managed Inspector array is unavailable");
 			}
 			int start = Math.max(0, anchorSlot - radius);
-			int end = Math.min(length - 1, anchorSlot + radius);
+			int end = (int) Math.min(length - 1L, (long) anchorSlot + radius);
 			for (int slot = start; slot <= end; slot++) slots.add(slot);
 		} else {
 			int start = Math.max(0, anchorSlot - radius);
@@ -714,6 +716,10 @@ final class ManagedJavaMemoryEngine {
 		if (actualType != valueType) {
 			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Managed Inspector sibling type no longer matches the snapshot");
+		}
+		if (owner.kind != KIND_ARRAY && owner.schema.fieldAt(targetSlot).finalField) {
+			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed Inspector final fields are read-only");
 		}
 		long[] parsed = new long[1];
 		if (!ManagedJavaValue.parse(replacement, valueType, parsed)) {

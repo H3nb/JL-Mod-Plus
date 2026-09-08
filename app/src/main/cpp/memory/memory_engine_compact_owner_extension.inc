@@ -1107,7 +1107,7 @@ class CompactOwnerOutputBuilder final {
 }
 
 [[nodiscard]] jint compactOwnerRefineStable(
-        const OperationContext &context,
+        const OperationContext &context, jint requestedType,
         const std::shared_ptr<const jlmem::v2::ResultRevision> &source,
         jint predicate, jint compareTarget, bool relative,
         const std::array<const Query *, kTypeSlotCount> &queriesByType,
@@ -1204,12 +1204,11 @@ class CompactOwnerOutputBuilder final {
         return kResourceLimit;
     }
     logicalCount = refined.uniqueAddressCount();
-    const jlmem::v2::ResultPlane explicitPlane =
-            source->kind == jlmem::v2::ResultRevisionKind::Explicit
-                    ? source->plane
-                    : jlmem::v2::ResultPlane::Count;
+    // Modified: publication metadata follows this operation, not the source selector.
+    const auto explicitPlane = jlmem::v2::resultPlaneFromStableValueType(requestedType)
+            .value_or(jlmem::v2::ResultPlane::Count);
     published = compactOwnerMakeRevision(
-            context.state->requestedType, explicitPlane,
+            requestedType, explicitPlane,
             std::move(refined), std::move(ordinary));
     if (published == nullptr ||
         published->store->uniqueAddressCount() != logicalCount) {
@@ -1253,7 +1252,7 @@ class CompactOwnerOutputBuilder final {
                 nextRevision, logicalCount, relocatedCount);
     } else {
         result = compactOwnerRefineStable(
-                context, source, predicate, kComparePrevious, false,
+                context, context.state->requestedType, source, predicate, kComparePrevious, false,
                 queriesByType, nextRevision, logicalCount, unreadableCount);
     }
     if (result != kOk) {
@@ -1402,7 +1401,7 @@ class CompactOwnerOutputBuilder final {
     std::uint64_t logicalCount = 0U;
     std::size_t unreadableCount = 0U;
     const jint refined = compactOwnerRefineStable(
-            context, source, predicate, compareTarget, true,
+            context, requestedType, source, predicate, compareTarget, true,
             queriesByType, nextRevision, logicalCount, unreadableCount);
     if (refined != kOk) {
         return refined;

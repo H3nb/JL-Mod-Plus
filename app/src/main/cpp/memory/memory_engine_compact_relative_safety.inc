@@ -9,6 +9,7 @@
 // Move-safe first materialization for an Unknown baseline. This replaces the transitional entry
 // point while the compact-owner file is being split up. The important invariant is that nextId is
 // computed before revision ownership is moved into commitCompactOwnerRevision().
+// Modified: validate short snapshot tails and finalize IDs before transferring ownership.
 namespace {
 
 [[nodiscard]] bool compactOwnerUnknownCaptureAllows(
@@ -96,7 +97,7 @@ namespace {
                 const std::size_t width = widthOf(type);
                 if (query == nullptr || width == 0U ||
                     address % width != 0U ||
-                    offset > snapshot.bytes.size() - width) {
+                    width > snapshot.bytes.size() - offset) {
                     continue;
                 }
                 const std::uint64_t initial =
@@ -164,9 +165,9 @@ namespace {
     next->logicalCount = revision->store->uniqueAddressCount();
     next->candidateOrderDirty = false;
     next->watches = context.state->watches;
+    const std::uint64_t nextId = context.nextId + revision->ordinaryValues->size();
     return commitCompactOwnerRevision(
-            context, std::move(next), std::move(revision), 1,
-            context.nextId + revision->ordinaryValues->size());
+            context, std::move(next), std::move(revision), 1, nextId);
 }
 
 [[nodiscard]] jint compactOwnerScanRelativeUnknownSafe(

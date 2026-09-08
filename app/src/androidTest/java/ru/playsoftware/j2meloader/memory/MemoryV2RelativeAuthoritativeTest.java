@@ -25,6 +25,46 @@ import static org.junit.Assert.assertTrue;
 /** Device gate for candidate-free Unknown materialization, relative COW refine, and Undo. */
 @RunWith(AndroidJUnit4.class)
 public class MemoryV2RelativeAuthoritativeTest {
+	// Modified: exercise the typed production Unknown-to-Known materializer, not legacy JNI.
+	@Test
+	public void typedUnknownAbsoluteMaterializesAndPreservesCaptureUniverseAndInitialBits() {
+		int pageSize = NativeMemoryTarget.pageSize();
+		long[] probe = NativeMemoryTarget.readProbe();
+		assertNotNull(probe);
+		long start = probe[0] - Math.floorMod(probe[0], (long) pageSize);
+		try {
+			NativeMemoryTarget.writeProbe(7L);
+			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.configureTarget(
+					Process.myPid(), pageSize, 0x4A4C414253L, new long[]{1L, 0L, start, start + pageSize}));
+			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.startUnknown(MemoryEngineContract.TYPE_INT));
+			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.refineKnown(
+					MemoryEngineContract.TYPE_FLOAT, MemoryEngineContract.PREDICATE_EQUAL, "7", "", false));
+			assertEquals(0L, NativeMemoryEngine.resultCount());
+			assertTrue(NativeMemoryEngine.hasCurrentV2CompactRevision());
+			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.startUnknown(MemoryEngineContract.TYPE_AUTO));
+			NativeMemoryTarget.writeProbe(9L);
+			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.refineKnown(
+					MemoryEngineContract.TYPE_LONG, MemoryEngineContract.PREDICATE_EQUAL, "9", "", false));
+			assertTrue(aliasesAt(probe[0]).containsKey(MemoryEngineContract.TYPE_LONG));
+			NativeMemoryTarget.writeProbe(10L);
+			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.refineRelative(
+					MemoryEngineContract.TYPE_LONG, MemoryEngineContract.PREDICATE_INCREASED_BY,
+					MemoryEngineContract.COMPARE_INITIAL, "3", ""));
+			assertTrue(aliasesAt(probe[0]).containsKey(MemoryEngineContract.TYPE_LONG));
+			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.refineKnown(
+					MemoryEngineContract.TYPE_AUTO, MemoryEngineContract.PREDICATE_EQUAL, "10", "", false));
+			assertEquals(1, aliasesAt(probe[0]).size());
+			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.refineKnown(
+					MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, "10", "", false));
+			assertEquals(0L, NativeMemoryEngine.resultCount());
+			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.undo());
+			assertTrue(aliasesAt(probe[0]).containsKey(MemoryEngineContract.TYPE_LONG));
+		} finally {
+			NativeMemoryTarget.writeProbe(probe[1]);
+			NativeMemoryEngine.clearTarget();
+		}
+	}
+
 	private static final int[] EXPECTED_ALIASES = {
 			MemoryEngineContract.TYPE_INT,
 			MemoryEngineContract.TYPE_FLOAT,

@@ -57,6 +57,8 @@ internal class MemoryEditorComposeController(
     private var liveRefreshPending = false
     private var visiblePageRequestPending = false
     private var visiblePageRequestGeneration = 0L
+    // Modified: closing/replacing Inspector invalidates asynchronous read replies.
+    private var inspectorRequestGeneration = 0L
     private var visiblePageRequestInFlightGeneration = 0L
     private val stateRequestGeneration = AtomicLong()
     private val liveRefreshRunnable = Runnable(::runLiveRefreshTick)
@@ -231,6 +233,7 @@ internal class MemoryEditorComposeController(
 
     override fun close() {
         if (destroyed) return
+        inspectorRequestGeneration++
         composeView.removeCallbacks(liveRefreshRunnable)
         liveRefreshPending = false
         stateRequestGeneration.incrementAndGet()
@@ -934,6 +937,7 @@ internal class MemoryEditorComposeController(
         val engine = service ?: return
         if (token == 0L) return
         invalidateVisiblePageRequest()
+        closeInspector()
         runIpc {
             engine.clearSearch(token)
             post {
@@ -963,6 +967,10 @@ internal class MemoryEditorComposeController(
         val token = state.runtimeToken
         val engine = service ?: return
         if (token == 0L) return
+        val request = ++inspectorRequestGeneration
+        val connection = connectionGeneration
+        val revision = state.managedRevision
+        val operation = operationGeneration
         state = state.copy(inspectorLoading = true, inspector = null, message = null, messageIsError = false)
         runIpc {
             val bundle = engine.inspectCandidate(token, candidateId, radius, watchAnchor)
@@ -990,7 +998,15 @@ internal class MemoryEditorComposeController(
                 logicalBackends != null && logicalEditable != null && listOf(logicalValues.size, logicalInitial.size,
                     logicalPrevious.size, logicalTypes.size, logicalStates.size, logicalOffsets.size,
                     logicalExpected.size, logicalLabels.size, logicalBackends.size,
-                    logicalEditable.size).all { it == logicalIds.size }
+                    logicalEditable.size).all { it == logicalIds.size } &&
+                logicalIds.size <= MemoryEngineContract.MAX_RESULT_PAGE_SIZE &&
+                logicalIds.indices.all { index ->
+                    ManagedJavaMemoryIds.hasValidNamespace(logicalIds[index]) &&
+                        ManagedJavaMemoryIds.ownerHandle(logicalIds[index]) ==
+                        ManagedJavaMemoryIds.ownerHandle(candidateId) &&
+                        MemoryEngineContract.isCandidateType(logicalTypes[index]) &&
+                        logicalBackends[index] == MemoryEngineContract.BACKEND_MANAGED
+                } && logicalIds.contains(candidateId)
             ) {
                 logicalIds.indices.map { index ->
                     MemoryInspectorLogicalRow(logicalIds[index], logicalOffsets[index], logicalTypes[index],
@@ -1000,6 +1016,18 @@ internal class MemoryEditorComposeController(
                 }
             } else emptyList()
             post {
+                if (request != inspectorRequestGeneration || connection != connectionGeneration ||
+                    service !== engine || state.runtimeToken != token || !state.visible
+                ) return@post
+                if (operation != operationGeneration ||
+                    (!watchAnchor && state.managedRevision != revision) ||
+                    (!watchAnchor && logicalRows.isNotEmpty() && bundle.getLong(
+                        MemoryEngineContract.KEY_INSPECT_EXPECTED_REVISION, 0L,
+                    ) != revision)
+                ) {
+                    closeInspector()
+                    return@post
+                }
                 if (result == MemoryEngineContract.RESULT_TARGET_LOST) {
                     state = state.copy(
                         inspectorLoading = false,
@@ -1055,6 +1083,7 @@ internal class MemoryEditorComposeController(
     }
 
     override fun closeInspector() {
+        inspectorRequestGeneration++
         state = state.copy(inspectorLoading = false, inspector = null)
     }
 
@@ -1077,7 +1106,8 @@ internal class MemoryEditorComposeController(
             )
             launchOperation { engine, token ->
                 engine.editInspectorValue(token, anchorCandidateId, relativeOffset, type,
-                    expectedBits, replacementValue.trim(), watchAnchor)
+                    expectedBits, replacementValue.trim(), watchAnchor,
+                    if (watchAnchor) 0L else snapshot.expectedRevision)
             }
             return
         }
@@ -1096,6 +1126,7 @@ internal class MemoryEditorComposeController(
                 expectedBits,
                 replacementValue.trim(),
                 watchAnchor,
+                0L,
             )
         }
     }

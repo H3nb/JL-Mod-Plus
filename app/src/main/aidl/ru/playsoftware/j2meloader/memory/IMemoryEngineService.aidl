@@ -49,8 +49,10 @@ interface IMemoryEngineService {
             String firstValue, String secondValue);
     long setManagedFreezeResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
             int mode, String firstValue, String secondValue);
+    // Modified: managed Results edits retain the revision displayed by Inspector (Watch uses zero).
     long editInspectorValue(long runtimeToken, long anchorCandidateId, int relativeOffset,
-            int valueType, long expectedBits, String replacementValue, boolean watchAnchor);
+            int valueType, long expectedBits, String replacementValue, boolean watchAnchor,
+            long expectedRevision);
 
     long getResultCount(long runtimeToken);
     Bundle getSearchSessionInfo(long runtimeToken);

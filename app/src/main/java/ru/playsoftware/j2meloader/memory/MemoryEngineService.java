@@ -313,7 +313,8 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long refineKnown(long token, int valueType, int predicate, String first, String second) {
 			if (isManagedCurrent(token)) {
-				return enqueueManagedSearch(token, () -> managedRefine(token, managedRevision,
+				long expectedRevision = managedRevision;
+				return enqueueManagedSearch(token, () -> managedRefine(token, expectedRevision,
 						valueType, predicate, MemoryEngineContract.COMPARE_PREVIOUS, first, second));
 			}
 			return enqueueSearch(token, false, 0,
@@ -324,7 +325,8 @@ public final class MemoryEngineService extends Service {
 		public long refineRelative(long token, int valueType, int predicate, int compareTarget,
 		                           String first, String second) {
 			if (isManagedCurrent(token)) {
-				return enqueueManagedSearch(token, () -> managedRefine(token, managedRevision,
+				long expectedRevision = managedRevision;
+				return enqueueManagedSearch(token, () -> managedRefine(token, expectedRevision,
 						valueType, predicate, compareTarget, first, second));
 			}
 			return enqueueSearch(token, false, 0,
@@ -590,10 +592,10 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long editInspectorValue(long token, long anchorCandidateId, int relativeOffset,
 		                               int valueType, long expectedBits,
-		                               String replacementValue, boolean watchAnchor) {
+		                               String replacementValue, boolean watchAnchor, long expectedRevision) {
 			if (ManagedJavaMemoryIds.isManaged(anchorCandidateId)) {
 				return enqueueManaged(token, false, () -> managedEditInspector(token,
-						anchorCandidateId, watchAnchor, relativeOffset, valueType, expectedBits,
+						anchorCandidateId, watchAnchor, expectedRevision, relativeOffset, valueType, expectedBits,
 						replacementValue));
 			}
 			return enqueue(token, false, 0, () -> {
@@ -1641,13 +1643,18 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private int managedEditInspector(long token, long anchorCandidateId, boolean watchAnchor,
+	                                long expectedRevision,
 	                                int relativeOffset, int valueType, long expectedBits,
 	                                String replacementValue) {
 		IMemoryTargetBridge bridge = target;
 		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 				"MIDlet runtime is not connected");
 		try {
-			long expectedRevision = watchAnchor ? 0L : managedRevision;
+			// Modified: preserve the Inspector snapshot revision; never upgrade a stale edit.
+			if (watchAnchor ? expectedRevision != 0L : expectedRevision <= 0L) {
+				return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+						"Managed Inspector edit requires its original revision/provenance");
+			}
 			return consumeManagedResult(token, bridge, bridge.managedEditInspector(token,
 				expectedRevision, anchorCandidateId, watchAnchor, relativeOffset, valueType,
 				expectedBits, replacementValue, cancelEpoch.get()));

@@ -187,6 +187,44 @@ public class ManagedJavaMemoryEngineTest {
 		assertTrue(inspection.ids.length > 0);
 	}
 
+	// Modified: regressions for bounded inspection and fail-closed sibling writes.
+	@Test
+	public void managedInspectorArrayWindowIsPageBoundedAndContainsAnchor() {
+		root.array = new int[1000];
+		root.array[500] = 71;
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExactInt(TOKEN, 71, 0L);
+		assertEquals(1L, search.resultCount);
+		long anchor = engine.resultPage(TOKEN, search.revision, 0, 1).ids[0];
+		ManagedJavaMemoryEngine.ManagedInspection view = engine.inspect(TOKEN, search.revision,
+				anchor, MemoryEngineContract.MAX_INSPECT_RADIUS, false);
+		assertEquals(MemoryEngineContract.RESULT_OK, view.code);
+		assertTrue(view.ids.length <= MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		assertTrue(view.ids.length > 1);
+		assertTrue(Arrays.stream(view.ids).anyMatch(id -> id == anchor));
+	}
+
+	@Test
+	public void managedInspectorRejectsFinalAndStaleRevisionBeforeWriting() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long anchor = idForAddress(search.revision, "rootMatch");
+		ManagedJavaMemoryEngine.ManagedInspection view = engine.inspect(TOKEN, search.revision,
+				anchor, MemoryEngineContract.MAX_INSPECT_RADIUS, false);
+		int finalIndex = indexForLabel(view, "finalMatch");
+		ManagedJavaMemoryEngine.ManagedOperationResult rejected = engine.editInspector(TOKEN,
+				search.revision, anchor, false, view.relativeOffsets[finalIndex],
+				MemoryEngineContract.TYPE_INT, 7L, "9", 0L);
+		assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST, rejected.code);
+		assertEquals(0, rejected.attempted);
+		assertEquals(7, root.finalMatch);
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.refineInt(TOKEN, search.revision,
+				MemoryEngineContract.PREDICATE_EQUAL, MemoryEngineContract.COMPARE_PREVIOUS, 7, 0L).code);
+		rejected = engine.editInspector(TOKEN, search.revision, anchor, false, 0,
+				MemoryEngineContract.TYPE_INT, 7L, "9", 0L);
+		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, rejected.code);
+		assertEquals(0, rejected.attempted);
+		assertEquals(7, root.rootMatch);
+	}
+
 	@Test
 	public void typedUnknownCapturesHiddenBaselineThenRefinesInitialAndPrevious() {
 		ManagedJavaMemoryEngine.ManagedOperationResult unknown = engine.startUnknown(TOKEN,

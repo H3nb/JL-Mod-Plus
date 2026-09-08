@@ -57,7 +57,7 @@ static_assert(sizeof(CompactLinearRecoveryEntry) <= 32U,
 }
 
 [[nodiscard]] jint compactOwnerRecoverKnownLinear(
-        const OperationContext &context,
+        const OperationContext &context, jint requestedType,
         const std::shared_ptr<const jlmem::v2::ResultRevision> &source,
         jint predicate,
         const std::array<const Query *, kTypeSlotCount> &queriesByType,
@@ -405,12 +405,11 @@ static_assert(sizeof(CompactLinearRecoveryEntry) <= 32U,
         return kResourceLimit;
     }
     logicalCount = rebuiltStore.uniqueAddressCount();
-    const jlmem::v2::ResultPlane explicitPlane =
-            source->kind == jlmem::v2::ResultRevisionKind::Explicit
-                    ? source->plane
-                    : jlmem::v2::ResultPlane::Count;
+    // Modified: recovery must publish the selected type just like stable refinement.
+    const auto explicitPlane = jlmem::v2::resultPlaneFromStableValueType(requestedType)
+            .value_or(jlmem::v2::ResultPlane::Count);
     published = compactOwnerMakeRevision(
-            context.state->requestedType, explicitPlane,
+            requestedType, explicitPlane,
             std::move(rebuiltStore), std::move(rebuiltOrdinary));
     return published != nullptr ? kOk : kResourceLimit;
 }
@@ -445,11 +444,11 @@ static_assert(sizeof(CompactLinearRecoveryEntry) <= 32U,
     if (compactOwnerShouldRecoverMovement(
                 context, *source, allowRelocationReconcile)) {
         result = compactOwnerRecoverKnownLinear(
-                context, source, predicate, queriesByType, candidateWork,
+                context, requestedType, source, predicate, queriesByType, candidateWork,
                 nextRevision, logicalCount, relocatedCount);
     } else {
         result = compactOwnerRefineStable(
-                context, source, predicate, kComparePrevious, false,
+                context, requestedType, source, predicate, kComparePrevious, false,
                 queriesByType, nextRevision, logicalCount, unreadableCount);
     }
     if (result != kOk) {
