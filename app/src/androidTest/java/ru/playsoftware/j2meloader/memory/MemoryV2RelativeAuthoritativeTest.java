@@ -27,7 +27,7 @@ import static org.junit.Assert.assertTrue;
 public class MemoryV2RelativeAuthoritativeTest {
 	// Modified: exercise the typed production Unknown-to-Known materializer, not legacy JNI.
 	@Test
-	public void typedUnknownAbsoluteMaterializesAndPreservesCaptureUniverseAndInitialBits() {
+	public void typedUnknownAbsoluteRejectsMismatchedKnownTypeAndPreservesCaptureUniverse() {
 		int pageSize = NativeMemoryTarget.pageSize();
 		long[] probe = NativeMemoryTarget.readProbe();
 		assertNotNull(probe);
@@ -37,10 +37,15 @@ public class MemoryV2RelativeAuthoritativeTest {
 			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.configureTarget(
 					Process.myPid(), pageSize, 0x4A4C414253L, new long[]{1L, 0L, start, start + pageSize}));
 			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.startUnknown(MemoryEngineContract.TYPE_INT));
+			assertTrue("Unknown baseline did not publish visible candidates",
+					NativeMemoryEngine.resultCount() > 0L);
+			long[] baselinePage = NativeMemoryEngine.resultPage(0, 100);
+			assertNotNull(baselinePage);
+			assertTrue("Unknown baseline page was empty", baselinePage[0] > 0L);
 			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.refineKnown(
 					MemoryEngineContract.TYPE_FLOAT, MemoryEngineContract.PREDICATE_EQUAL, "7", "", false));
-			assertTrue("Unknown baseline did not publish candidates",
-					NativeMemoryEngine.resultCount() > 0L);
+			assertEquals("Unknown Int must not be reinterpreted as Float",
+					0L, NativeMemoryEngine.resultCount());
 			assertTrue(NativeMemoryEngine.hasCurrentV2CompactRevision());
 			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.startUnknown(MemoryEngineContract.TYPE_AUTO));
 			NativeMemoryTarget.writeProbe(9L);
