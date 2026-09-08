@@ -64,6 +64,38 @@ internal fun memoryUnknownPredicateForRuntime(predicate: Int, newRuntime: Boolea
     if (newRuntime) MemoryEngineContract.PREDICATE_CHANGED
     else memoryUnknownPredicateOrDefault(predicate)
 
+/**
+ * Process-local preferences for the currently running MIDlet session.
+ *
+ * The editor controller is recreated with the Activity, but the MIDlet runtime remains the
+ * owner of this short-lived preference. Keeping it here avoids persisting a session choice
+ * beyond the runtime while allowing a recreated controller to restore it.
+ */
+internal object MemoryEditorRuntimePreferences {
+    private var runtimeToken: Long = 0L
+    private var unknownPredicate: Int = MemoryEngineContract.PREDICATE_CHANGED
+
+    @Synchronized
+    fun unknownPredicate(token: Long): Int {
+        if (token == 0L) return MemoryEngineContract.PREDICATE_CHANGED
+        if (token != runtimeToken) {
+            runtimeToken = token
+            unknownPredicate = MemoryEngineContract.PREDICATE_CHANGED
+        }
+        return memoryUnknownPredicateOrDefault(unknownPredicate)
+    }
+
+    @Synchronized
+    fun setUnknownPredicate(token: Long, predicate: Int) {
+        if (token == 0L || memoryUnknownPredicateOrDefault(predicate) != predicate) return
+        if (token != runtimeToken) {
+            runtimeToken = token
+            unknownPredicate = MemoryEngineContract.PREDICATE_CHANGED
+        }
+        unknownPredicate = predicate
+    }
+}
+
 /** One engine-formatted Watch row used by the :memory_engine presentation. */
 internal data class MemoryWatchRow(
     val id: Long,

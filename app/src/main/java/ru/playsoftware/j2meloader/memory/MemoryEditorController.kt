@@ -424,10 +424,11 @@ internal class MemoryEditorComposeController(
                     results = emptyList(),
                     watches = emptyList(),
                     resultCount = 0L,
-                    unknownPredicate = memoryUnknownPredicateForRuntime(
-                        state.unknownPredicate,
-                        newRuntime = state.runtimeToken != token,
-                    ),
+                    unknownPredicate = if (token == 0L) {
+                        MemoryEngineContract.PREDICATE_CHANGED
+                    } else {
+                        MemoryEditorRuntimePreferences.unknownPredicate(token)
+                    },
                     message = capabilityMessage ?: context.getString(R.string.memory_editor_unsupported),
                 )
             }
@@ -520,10 +521,7 @@ internal class MemoryEditorComposeController(
                 searchScope = displayScope,
                 knownScopePreference = knownScopePreference,
                 knownScopePreferenceExplicit = explicitKnownScope,
-                unknownPredicate = memoryUnknownPredicateForRuntime(
-                    state.unknownPredicate,
-                    newRuntime,
-                ),
+                unknownPredicate = MemoryEditorRuntimePreferences.unknownPredicate(token),
                 canUndo = canUndo,
                 message = capabilityMessage?.takeIf(String::isNotBlank) ?: state.message,
             )
@@ -648,7 +646,12 @@ internal class MemoryEditorComposeController(
 
     override fun setUnknownSearchPredicate(predicate: Int) {
         if (memoryUnknownPredicateOrDefault(predicate) != predicate) return
-        state = state.copy(unknownPredicate = predicate)
+        val token = state.runtimeToken
+        if (token == 0L) return
+        MemoryEditorRuntimePreferences.setUnknownPredicate(token, predicate)
+        state = state.copy(
+            unknownPredicate = MemoryEditorRuntimePreferences.unknownPredicate(token),
+        )
     }
 
     override fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int) {

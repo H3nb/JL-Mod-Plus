@@ -80,6 +80,30 @@ class MemoryEditorModelsTest {
         )
     }
 
+    @Test fun unknownPredicatePreferenceSurvivesControllerRecreationForRuntimeToken() {
+        val runtimeA = 0x7A11L
+        val runtimeB = 0x7A12L
+
+        MemoryEditorRuntimePreferences.setUnknownPredicate(
+            runtimeA,
+            MemoryEngineContract.PREDICATE_DECREASED,
+        )
+
+        assertEquals(
+            MemoryEngineContract.PREDICATE_DECREASED,
+            MemoryEditorRuntimePreferences.unknownPredicate(runtimeA),
+        )
+        // A new controller for the same MIDlet session reads the process-local value again.
+        assertEquals(
+            MemoryEngineContract.PREDICATE_DECREASED,
+            MemoryEditorRuntimePreferences.unknownPredicate(runtimeA),
+        )
+        assertEquals(
+            MemoryEngineContract.PREDICATE_CHANGED,
+            MemoryEditorRuntimePreferences.unknownPredicate(runtimeB),
+        )
+    }
+
     @Test fun managedBaselineCountIsPresentedOnlyForKnownManagedBaseline() {
         val managedBaseline = MemoryEditorUiState(
             sessionStage = MemorySessionStage.UNKNOWN_BASELINE,

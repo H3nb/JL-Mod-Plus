@@ -131,9 +131,9 @@ constexpr jint kStable = 0;
 constexpr jint kRelocating = 1;
 constexpr jint kAmbiguous = 2;
 constexpr jint kLost = 3;
-// Candidate records are compact native data and never cross Binder in bulk. Two million typed
-// aliases covers the dense searches seen in the prototype while retaining a deterministic bound
-// on old API 23 devices. An incomplete set is never committed.
+// Materialized Candidate records are compact native data and never cross Binder in bulk. Two
+// million typed aliases bounds known/refined searches on old API 23 devices. Raw Unknown
+// baselines remain snapshot-backed and do not consume this limit until they are refined.
 constexpr size_t kCandidateLimit = 2'000'000;
 // Managed Java logical ids reserve the top two bits; raw ids stay in the lower namespace.
 constexpr std::uint64_t kRawCandidateIdMax = (std::uint64_t{1} << 62U) - 1U;
@@ -205,6 +205,10 @@ struct SearchState {
     StateMode mode = StateMode::Empty;
     jint requestedType = kTypeAuto;
     uint64_t logicalCount = 0;
+    // Raw Unknown baselines keep the capture authoritative and assign this contiguous ID
+    // namespace lazily. Only visible rows or explicitly promoted Watch rows become Candidates.
+    uint64_t baselineCandidateIdBase = 0;
+    uint64_t baselineCandidateCount = 0;
     bool candidateOrderDirty = false;
     std::vector<SnapshotRun> snapshots;
     std::vector<Candidate> candidates;
@@ -580,6 +584,21 @@ bool snapshotIdentity(const uint8_t *bytes, size_t size, size_t offset,
                             hash);
 }
 
+Candidate makeUnknownBaselineCandidate(const SearchState &state,
+                                        uint64_t ordinal, uintptr_t address,
+                                        ValueType type,
+                                        const SnapshotRun &snapshot,
+                                        size_t offset) {
+    const size_t width = widthOf(type);
+    const uint64_t bits = loadBits(snapshot.bytes.data() + offset, width);
+    Candidate candidate = makeCandidate(
+            state.baselineCandidateIdBase + ordinal, address, type, bits, bits);
+    candidate.identityValid = snapshotIdentity(
+            snapshot.bytes.data(), snapshot.bytes.size(), offset, width,
+            candidate.identityHash);
+    return candidate;
+}
+
 int64_t integerValue(ValueType type, uint64_t bits) {
     switch (type) {
     case ValueType::Byte:
@@ -712,6 +731,57 @@ bool matchesRelative(uint64_t currentBits, uint64_t referenceBits,
         return false;
     }
     result = base + static_cast<uintptr_t>(offset);
+    return true;
+}
+
+// Enumerate the typed cells represented by a raw Unknown snapshot in display order. This is
+// deliberately a visitor: the baseline can contain millions of cells, but paging and Watch
+// promotion only need a bounded number of materialized Candidate records.
+template <typename Visitor>
+bool visitUnknownBaselineSlots(const SearchState &state, Visitor &&visitor) {
+    const std::vector<ValueType> types = expandedTypes(state.requestedType);
+    if (types.empty()) {
+        return false;
+    }
+    for (const SnapshotRun &snapshot : state.snapshots) {
+        if (types.size() == 1U) {
+            const size_t width = widthOf(types.front());
+            if (width == 0U || snapshot.bytes.size() < width) {
+                continue;
+            }
+            const size_t misalignment = snapshot.start % width;
+            const size_t firstOffset = misalignment == 0U ? 0U : width - misalignment;
+            if (firstOffset > snapshot.bytes.size() - width) {
+                continue;
+            }
+            for (size_t offset = firstOffset;
+                 offset <= snapshot.bytes.size() - width; offset += width) {
+                uintptr_t address = 0U;
+                if (!checkedAddressAdd(snapshot.start, offset, address) ||
+                    !visitor(address, types.front(), snapshot, offset)) {
+                    return false;
+                }
+            }
+            continue;
+        }
+        for (size_t offset = 0; offset < snapshot.bytes.size(); ++offset) {
+            uintptr_t address = 0U;
+            if (!checkedAddressAdd(snapshot.start, offset, address)) {
+                return false;
+            }
+            for (const ValueType type : types) {
+                const size_t width = widthOf(type);
+                if (width == 0U || address % width != 0U ||
+                    offset > snapshot.bytes.size() ||
+                    width > snapshot.bytes.size() - offset) {
+                    continue;
+                }
+                if (!visitor(address, type, snapshot, offset)) {
+                    return false;
+                }
+            }
+        }
+    }
     return true;
 }
 
@@ -873,6 +943,57 @@ bool safeAdd(uint64_t &value, uint64_t addition) {
     return true;
 }
 
+bool countAlignedSnapshotSlots(const SnapshotRun &snapshot, ValueType type,
+                               uint64_t &count) {
+    const size_t width = widthOf(type);
+    if (width == 0U || snapshot.bytes.size() < width) {
+        count = 0U;
+        return true;
+    }
+    const size_t misalignment = snapshot.start % width;
+    const size_t firstOffset = misalignment == 0U ? 0U : width - misalignment;
+    if (firstOffset > snapshot.bytes.size() - width) {
+        count = 0U;
+        return true;
+    }
+    count = static_cast<uint64_t>(
+                    (snapshot.bytes.size() - width - firstOffset) / width) +
+            1U;
+    return true;
+}
+
+bool countUnknownBaselineSlots(const SearchState &state, uint64_t &typedCount,
+                               uint64_t &logicalCount) {
+    const std::vector<ValueType> types = expandedTypes(state.requestedType);
+    if (types.empty()) {
+        return false;
+    }
+    typedCount = 0U;
+    logicalCount = 0U;
+    for (const SnapshotRun &snapshot : state.snapshots) {
+        uint64_t runTypedCount = 0U;
+        for (const ValueType type : types) {
+            uint64_t typeCount = 0U;
+            if (!countAlignedSnapshotSlots(snapshot, type, typeCount) ||
+                !safeAdd(runTypedCount, typeCount)) {
+                return false;
+            }
+        }
+        if (!safeAdd(typedCount, runTypedCount)) {
+            return false;
+        }
+        // Auto always includes the byte representation, so every captured byte is one logical
+        // address. A typed baseline has exactly one logical address per typed cell.
+        const uint64_t runLogicalCount = types.size() == 1U
+                                                 ? runTypedCount
+                                                 : static_cast<uint64_t>(snapshot.bytes.size());
+        if (!safeAdd(logicalCount, runLogicalCount)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void beginScanProgress(const Target &target) {
     uint64_t total = 0;
     for (const Range &range : target.ranges) {
@@ -1024,6 +1145,12 @@ bool candidateDisplayOrder(const Candidate &left, const Candidate &right) {
 void normalizeCandidateResults(SearchState &state) {
     if (state.mode != StateMode::Unknown && state.mode != StateMode::Candidates) {
         state.addressCheckpoints.clear();
+        return;
+    }
+    if (state.mode == StateMode::Unknown && state.baselineCandidateCount != 0 &&
+        state.candidates.empty()) {
+        state.addressCheckpoints.clear();
+        state.candidateOrderDirty = false;
         return;
     }
     if (!state.candidateOrderDirty) {
@@ -1528,14 +1655,11 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
         setMessage("Invalid value type");
         return kInvalidRequest;
     }
-    if (context.nextId > kRawCandidateIdMax - kCandidateLimit) {
-        setMessage("Candidate identifier space is exhausted for this runtime");
-        return kResourceLimit;
-    }
     auto next = std::make_shared<SearchState>();
     next->mode = StateMode::Unknown;
     next->requestedType = requestedType;
     next->watches = context.state->watches;
+    next->baselineCandidateIdBase = context.nextId;
     size_t retained = 0;
     beginScanProgress(context.target);
     for (const Range &range : context.target.ranges) {
@@ -1558,52 +1682,26 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
             return kTargetLost;
         }
         retained += size;
-        for (ValueType type : types) {
-            const size_t width = widthOf(type);
-            const size_t adjustment =
-                    range.start % width == 0 ? 0 : width - range.start % width;
-            if (range.start >
-                std::numeric_limits<uintptr_t>::max() - adjustment) {
-                continue;
-            }
-            const uintptr_t aligned = range.start + adjustment;
-            if (aligned >= range.end) {
-                continue;
-            }
-            const size_t offset = static_cast<size_t>(aligned - range.start);
-            if (offset > snapshot.bytes.size() ||
-                width > snapshot.bytes.size() - offset) {
-                continue;
-            }
-            for (size_t valueOffset = offset;
-                 valueOffset <= snapshot.bytes.size() - width;
-                 valueOffset += width) {
-                if (next->candidates.size() >= kCandidateLimit) {
-                    setMessage("Candidate limit reached; previous results were preserved");
-                    return kResourceLimit;
-                }
-                uintptr_t address = 0U;
-                if (!checkedAddressAdd(snapshot.start, valueOffset, address)) {
-                    break;
-                }
-                const uint64_t bits = loadBits(
-                        snapshot.bytes.data() + valueOffset, width);
-                Candidate candidate = makeCandidate(
-                        context.nextId + next->candidates.size(), address,
-                        type, bits, bits);
-                candidate.identityValid = snapshotIdentity(
-                        snapshot.bytes.data(), snapshot.bytes.size(), valueOffset,
-                        width, candidate.identityHash);
-                next->candidates.push_back(candidate);
-            }
-        }
         next->snapshots.push_back(std::move(snapshot));
         advanceScanProgress(size);
     }
-    fillMissingIdentities(context.target, next->candidates);
-    next->candidateOrderDirty = true;
+
+    const uint64_t availableIds =
+            context.nextId < kRawCandidateIdMax
+                    ? kRawCandidateIdMax - context.nextId
+                    : 0U;
+    uint64_t typedCount = 0U;
+    uint64_t logicalCount = 0U;
+    if (!countUnknownBaselineSlots(*next, typedCount, logicalCount) ||
+        typedCount > availableIds) {
+        setMessage("Candidate identifier space is exhausted for this runtime");
+        return kResourceLimit;
+    }
+    next->baselineCandidateCount = typedCount;
+    next->logicalCount = logicalCount;
+    next->candidateOrderDirty = false;
     OperationContext committed = context;
-    committed.nextId += next->candidates.size();
+    committed.nextId += typedCount;
     return commitOperation(committed, std::move(next), -1);
 }
 
@@ -1634,7 +1732,40 @@ bool resolveCandidateById(const OperationContext &context, uint64_t id,
         resolved = liveCandidate(*found, context.liveCandidates);
         return true;
     };
-    return findIn(context.state->candidates) || findIn(context.state->watches);
+    if (findIn(context.state->candidates) || findIn(context.state->watches)) {
+        return true;
+    }
+    if (context.state->mode != StateMode::Unknown ||
+        context.state->baselineCandidateCount == 0U ||
+        id < context.state->baselineCandidateIdBase ||
+        id - context.state->baselineCandidateIdBase >=
+                context.state->baselineCandidateCount) {
+        return false;
+    }
+    const uint64_t wantedOrdinal = id - context.state->baselineCandidateIdBase;
+    uint64_t ordinal = 0U;
+    bool found = false;
+    const bool complete = visitUnknownBaselineSlots(
+            *context.state,
+            [&](uintptr_t address, ValueType type, const SnapshotRun &snapshot,
+                size_t offset) {
+                const uint64_t currentOrdinal = ordinal++;
+                if (currentOrdinal != wantedOrdinal) {
+                    return true;
+                }
+                resolved = makeUnknownBaselineCandidate(
+                        *context.state, currentOrdinal, address, type, snapshot,
+                        offset);
+                found = true;
+                return false;
+            });
+    if (!complete && !found) {
+        return false;
+    }
+    if (found) {
+        resolved = liveCandidate(resolved, context.liveCandidates);
+    }
+    return found;
 }
 
 bool verifyCandidateBinding(const Target &target, const Candidate &candidate) {
@@ -2391,6 +2522,17 @@ jint refreshCandidates(const OperationContext &context,
             if (unresolved.empty()) break;
         }
     }
+    if (!unresolved.empty() && context.state->mode == StateMode::Unknown &&
+        context.state->baselineCandidateCount != 0U) {
+        const std::vector<uint64_t> lazyIds(unresolved.begin(), unresolved.end());
+        for (const uint64_t id : lazyIds) {
+            Candidate candidate{};
+            if (resolveCandidateById(context, id, candidate)) {
+                collect(candidate);
+            }
+            if (unresolved.empty()) break;
+        }
+    }
     if (!unresolved.empty()) {
         setMessage("One or more candidate IDs are no longer available");
         return kInvalidRequest;
@@ -2805,10 +2947,19 @@ jint pinCandidates(const OperationContext &context,
         setMessage("Select at least one materialized candidate");
         return kInvalidRequest;
     }
-    if (!allIdsResolve(*context.state, ids, !add, add)) {
+    if (!add && !allIdsResolve(*context.state, ids, true, false)) {
         setMessage(add ? "One or more candidates are not in this search"
                        : "One or more candidates are not in the Watch List");
         return kInvalidRequest;
+    }
+    if (add) {
+        for (const uint64_t id : ids) {
+            Candidate candidate{};
+            if (!resolveCandidateById(context, id, candidate)) {
+                setMessage("One or more candidates are not in this search");
+                return kInvalidRequest;
+            }
+        }
     }
     auto next = std::make_shared<SearchState>(*context.state);
     if (add) {
@@ -2820,13 +2971,16 @@ jint pinCandidates(const OperationContext &context,
             setMessage("The session Watch List limit is 128 candidates");
             return kResourceLimit;
         }
-        for (const Candidate &candidate : next->candidates) {
-            if (pending.erase(candidate.id) != 0U) {
-                next->watches.push_back(candidate);
-                if (pending.empty()) {
-                    break;
-                }
+        for (const uint64_t id : ids) {
+            if (pending.erase(id) == 0U) {
+                continue;
             }
+            Candidate candidate{};
+            if (!resolveCandidateById(context, id, candidate)) {
+                setMessage("One or more candidates are not in this search");
+                return kInvalidRequest;
+            }
+            next->watches.push_back(candidate);
         }
     } else {
         next->watches.erase(
@@ -3257,6 +3411,72 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnown(
 jlongArray candidateAddressPage(JNIEnv *env,
                                 const std::shared_ptr<const SearchState> &state,
                                 size_t addressStart, size_t addressLimit) {
+    if (state->mode == StateMode::Unknown &&
+        state->baselineCandidateCount != 0U && state->candidates.empty()) {
+        std::vector<Candidate> pageCandidates;
+        pageCandidates.reserve(addressLimit * 2U);
+        size_t skippedAddresses = 0U;
+        size_t includedAddresses = 0U;
+        uintptr_t currentAddress = 0U;
+        bool hasCurrentAddress = false;
+        bool includeCurrentAddress = false;
+        uint64_t ordinal = 0U;
+        bool enumerationValid = true;
+        visitUnknownBaselineSlots(
+                *state,
+                [&](uintptr_t address, ValueType type, const SnapshotRun &snapshot,
+                    size_t offset) {
+                    const uint64_t currentOrdinal = ordinal++;
+                    const bool newAddress =
+                            !hasCurrentAddress || currentAddress != address;
+                    if (newAddress) {
+                        hasCurrentAddress = true;
+                        currentAddress = address;
+                        includeCurrentAddress = false;
+                        if (skippedAddresses < addressStart) {
+                            ++skippedAddresses;
+                            return true;
+                        }
+                        if (includedAddresses >= addressLimit) {
+                            return false;
+                        }
+                        ++includedAddresses;
+                        includeCurrentAddress = true;
+                    }
+                    if (!includeCurrentAddress) {
+                        return true;
+                    }
+                    if (currentOrdinal >= state->baselineCandidateCount) {
+                        enumerationValid = false;
+                        return false;
+                    }
+                    pageCandidates.push_back(makeUnknownBaselineCandidate(
+                            *state, currentOrdinal, address, type, snapshot,
+                            offset));
+                    return true;
+                });
+        if (!enumerationValid) {
+            setMessage("Unknown baseline candidate identifiers are invalid");
+            return nullptr;
+        }
+        std::unordered_map<uint64_t, Candidate> liveCandidates;
+        {
+            std::lock_guard<std::mutex> lock(gMutex);
+            if (gState == state) {
+                if (gLiveCandidates.size() + pageCandidates.size() >
+                    kLiveOverlayLimit) {
+                    gLiveCandidates.clear();
+                }
+                for (const Candidate &candidate : pageCandidates) {
+                    gLiveCandidates.try_emplace(candidate.id, candidate);
+                }
+                liveCandidates = gLiveCandidates;
+            }
+        }
+        return candidatePage(env, pageCandidates, liveCandidates, 0,
+                             pageCandidates.size());
+    }
+
     const std::vector<Candidate> &candidates = state->candidates;
     size_t candidateStart = 0;
     size_t skippedAddresses = 0;

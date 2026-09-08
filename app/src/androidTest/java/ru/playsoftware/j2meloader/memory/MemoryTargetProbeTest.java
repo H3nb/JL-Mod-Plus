@@ -38,6 +38,13 @@ public class MemoryTargetProbeTest {
 	private static volatile int managedProbe09, managedProbe10, managedProbe11, managedProbe12;
 	private static volatile int managedProbe13, managedProbe14, managedProbe15, managedProbe16;
 	private static volatile int managedProbe17, managedProbe18, managedProbe19, managedProbe20;
+	private static final byte[] LARGE_UNKNOWN_REGION = new byte[9 * 1024 * 1024];
+
+	static {
+		for (int offset = 0; offset < LARGE_UNKNOWN_REGION.length; offset += 4096) {
+			LARGE_UNKNOWN_REGION[offset] = (byte) (offset / 4096);
+		}
+	}
 
 	private static long[] findCandidateAt(long address, int type) {
 		long addressCount = NativeMemoryEngine.resultCount();
@@ -219,6 +226,86 @@ public class MemoryTargetProbeTest {
 			managedProbe = 0;
 			NativeMemoryEngine.clearTarget();
 		}
+	}
+
+	@Test
+	public void rawUnknownIntLargeBaselineStaysLazyAndPromotesSelectedRow() {
+		for (int offset = 0; offset < LARGE_UNKNOWN_REGION.length; offset += 4096) {
+			LARGE_UNKNOWN_REGION[offset]++;
+		}
+		int pageSize = NativeMemoryTarget.pageSize();
+		long[] runs = NativeMemoryTarget.collectResidentRuns(
+				MemoryEngineContract.SCOPE_JAVA_FAST, 4096);
+		assertNotNull(runs);
+		assertTrue(MemoryEngineContract.isCompleteRunList(runs));
+		long token = 0x4A4C4C415A59494EL;
+		try {
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.configureTarget(Process.myPid(), pageSize, token, runs));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startUnknown(MemoryEngineContract.TYPE_INT));
+			assertTrue("the resident >8 MiB fixture did not enter the Int baseline",
+					NativeMemoryEngine.resultCount() > 2_000_000L);
+
+			long[] page = NativeMemoryEngine.resultPage(0, 100);
+			assertNotNull(page);
+			int count = Math.toIntExact(page[0]);
+			assertTrue(count > 0 && count <= 100);
+			long selectedId = page[1];
+			assertTrue(selectedId > 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.pin(new long[]{selectedId}, true));
+			long[] watches = NativeMemoryEngine.watchPage();
+			assertNotNull(watches);
+			assertEquals(1L, watches[0]);
+			assertTrue("selected lazy baseline row was not promoted to Watch",
+					containsId(watches, selectedId));
+		} finally {
+			NativeMemoryEngine.clearTarget();
+		}
+	}
+
+	@Test
+	public void rawUnknownAutoLargeBaselinePublishesBoundedPageWithoutCandidateLimit() {
+		for (int offset = 0; offset < LARGE_UNKNOWN_REGION.length; offset += 4096) {
+			LARGE_UNKNOWN_REGION[offset]--;
+		}
+		int pageSize = NativeMemoryTarget.pageSize();
+		long[] runs = NativeMemoryTarget.collectResidentRuns(
+				MemoryEngineContract.SCOPE_JAVA_FAST, 4096);
+		assertNotNull(runs);
+		assertTrue(MemoryEngineContract.isCompleteRunList(runs));
+		long token = 0x4A4C4C415A594941L;
+		try {
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.configureTarget(Process.myPid(), pageSize, token, runs));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startUnknown(MemoryEngineContract.TYPE_AUTO));
+			assertTrue("the resident >1 MiB fixture did not enter the Auto baseline",
+					NativeMemoryEngine.resultCount() > 1_000_000L);
+
+			long[] page = NativeMemoryEngine.resultPage(0, 100);
+			assertNotNull(page);
+			int count = Math.toIntExact(page[0]);
+			assertTrue(count > 0 && count <= 100);
+			long firstAddress = page[2];
+			long[] nextAddress = NativeMemoryEngine.resultPage(1, 1);
+			assertNotNull(nextAddress);
+			assertEquals(1L, nextAddress[0]);
+			assertTrue("page offset repeated an alias address instead of advancing",
+					nextAddress[2] != firstAddress);
+		} finally {
+			NativeMemoryEngine.clearTarget();
+		}
+	}
+
+	private static boolean containsId(long[] page, long wantedId) {
+		int count = Math.toIntExact(page[0]);
+		for (int index = 0; index < count; index++) {
+			int base = 1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE;
+			if (page[base] == wantedId) return true;
+		}
+		return false;
 	}
 
 	@Test
