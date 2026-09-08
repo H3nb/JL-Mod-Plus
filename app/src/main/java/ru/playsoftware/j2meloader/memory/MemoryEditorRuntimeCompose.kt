@@ -105,7 +105,6 @@ internal fun MemoryEditorRuntimeRoot(
     var tab by remember(state.runtimeToken) { mutableStateOf(initialTab) }
     var peekingUnderlay by remember(state.runtimeToken) { mutableStateOf(false) }
     val selectedId = state.selected.singleOrNull()
-    val selectedManaged = selectedId?.let(ManagedJavaMemoryIds::isManaged) == true
 
     LaunchedEffect(tab) {
         when (tab) {
@@ -118,13 +117,9 @@ internal fun MemoryEditorRuntimeRoot(
         if (tab != RuntimeMemoryTab.INSPECTOR || selectedId == null || state.inspectorLoading) {
             return@LaunchedEffect
         }
-        if (selectedManaged) {
-            tab = RuntimeMemoryTab.SEARCH_RESULTS
-            return@LaunchedEffect
-        }
         if (state.inspector?.candidateId != selectedId) {
             actions.closeInspector()
-            actions.inspectCandidate(selectedId)
+            actions.inspectCandidate(selectedId, watchAnchor = state.watchTab)
         }
     }
 
@@ -162,7 +157,7 @@ internal fun MemoryEditorRuntimeRoot(
                             tab = tab,
                             results = state.resultCount,
                             watches = state.watches.size,
-                            inspectorEnabled = !selectedManaged,
+                            inspectorEnabled = selectedId != null,
                             onTab = { tab = it },
                             modifier = Modifier.width(176.dp).fillMaxHeight(),
                         )
@@ -190,7 +185,7 @@ internal fun MemoryEditorRuntimeRoot(
                         tab = tab,
                         results = state.resultCount,
                         watches = state.watches.size,
-                        inspectorEnabled = !selectedManaged,
+                        inspectorEnabled = selectedId != null,
                         onTab = { tab = it },
                     )
                     if (state.busy) RuntimeOperationStrip(state, actions)
@@ -479,6 +474,7 @@ private fun RuntimeSearchResultsTab(
     var knownDialog by remember { mutableStateOf(false) }
     var unknownDialog by remember { mutableStateOf(false) }
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
+    var editRevision by remember { mutableStateOf(0L) }
     val selectedRows = state.results.filter { it.id in state.selected }
     val selectedWriteSupported = selectedRows.isNotEmpty() && selectedRows.all { row ->
         if (ManagedJavaMemoryIds.isManaged(row.id)) state.managedWriteSupported
@@ -517,6 +513,7 @@ private fun RuntimeSearchResultsTab(
                             } else MemoryEngineContract.BACKEND_RAW,
                             row.aliasTypes)
                     }
+                    editRevision = state.managedRevision
                 },
             )
             RuntimeActionIcon(
@@ -528,15 +525,13 @@ private fun RuntimeSearchResultsTab(
             RuntimeActionIcon(
                 icon = R.drawable.ic_memory_editor_inspector,
                 description = R.string.memory_editor_inspect_memory,
-                enabled = selectedRows.size == 1 && !state.busy
-                    && !ManagedJavaMemoryIds.isManaged(selectedRows.single().id),
+                enabled = selectedRows.size == 1 && !state.busy,
                 onClick = onInspectSelected,
             )
             RuntimeActionIcon(
                 icon = R.drawable.ic_delete,
                 description = R.string.memory_editor_remove,
-                enabled = state.selected.isNotEmpty() && !state.busy
-                    && state.searchScope != MemoryEngineContract.SCOPE_MANAGED_JAVA,
+                enabled = state.selected.isNotEmpty() && !state.busy,
                 onClick = { actions.removeSelected(false) },
             )
             val visibleSelectionDescription = stringResource(
@@ -609,6 +604,7 @@ private fun RuntimeSearchResultsTab(
                                     } else MemoryEngineContract.BACKEND_RAW,
                                     row.aliasTypes),
                             )
+                            editRevision = state.managedRevision
                         },
                     )
                 }
@@ -650,11 +646,9 @@ private fun RuntimeSearchResultsTab(
                 editTargets = null
             },
             onApply = { value, type, freeze ->
-                if (currentEditTargets.size == 1 && currentEditTargets[0].id in state.selected) {
-                    actions.editSelectedWithOptions(value, type, false, freeze)
-                } else {
-                    actions.editTargets(currentEditTargets, state.managedRevision, value, type)
-                }
+                actions.editTargetsWithOptions(
+                    currentEditTargets, editRevision, value, type, false, freeze,
+                )
                 onPeekUnderlayChanged(false)
                 editTargets = null
             },
@@ -821,11 +815,9 @@ private fun RuntimeWatchTab(
                 editTargets = null
             },
             onApply = { value, type, freeze ->
-                if (currentEditTargets.size == 1 && currentEditTargets[0].id in state.selected) {
-                    actions.editSelectedWithOptions(value, type, false, freeze)
-                } else {
-                    actions.editTargets(currentEditTargets, 0L, value, type)
-                }
+                actions.editTargetsWithOptions(
+                    currentEditTargets, 0L, value, type, false, freeze,
+                )
                 onPeekUnderlayChanged(false)
                 editTargets = null
             },
@@ -977,12 +969,6 @@ internal fun RuntimeKnownSearchDialog(
     var peekingUnderlay by remember { mutableStateOf(false) }
 
     val managedScope = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA
-    LaunchedEffect(scope) {
-        if (managedScope && !MemoryEngineContract.isCandidateType(type)) {
-            type = MemoryEngineContract.TYPE_INT
-        }
-    }
-
     val expression = parseMemorySearchExpression(query.text)
     val relative = predicate >= MemoryEngineContract.PREDICATE_CHANGED
     val spec = if (relative) MemoryInputSpec.relativeMagnitudeForType(type)
@@ -1006,11 +992,12 @@ internal fun RuntimeKnownSearchDialog(
     val groupValid = expression is MemorySearchExpression.Group && type != MemoryEngineContract.TYPE_AUTO &&
         expression.values.all(spec::isComplete)
     val newSearchValid = !relative && if (managedScope) singleValid && secondValid &&
-        MemoryEngineContract.isCandidateType(type) &&
+        MemoryEngineContract.isValueType(type) &&
         predicate in MemoryEngineContract.PREDICATE_EQUAL..MemoryEngineContract.PREDICATE_BETWEEN
     else (singleValid || groupValid) && secondValid
-    val nextScanValid = state.sessionStage == MemorySessionStage.CANDIDATES &&
-        type == state.requestedType && scope == state.searchScope &&
+    val nextScanValid = state.sessionStage != MemorySessionStage.EMPTY &&
+        type in (MemoryEngineContract.TYPE_AUTO..MemoryEngineContract.TYPE_DOUBLE) &&
+        scope == state.searchScope &&
         (if (relative && !runtimeRelativeNeedsValue(predicate)) true else firstValid) && secondValid
 
     AlertDialog(
@@ -1034,7 +1021,7 @@ internal fun RuntimeKnownSearchDialog(
                         RuntimePredicateMenu(
                             predicate = predicate,
                             onPredicate = { predicate = it },
-                            includeRelative = state.sessionStage == MemorySessionStage.CANDIDATES,
+                            includeRelative = state.sessionStage != MemorySessionStage.EMPTY,
                             modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
                         )
                         RuntimeSearchField(
@@ -1069,6 +1056,7 @@ internal fun RuntimeKnownSearchDialog(
                                     actions.setKnownSearchScope(it)
                                 },
                                 managedSupported = state.managedSupported,
+                                enabled = state.sessionStage == MemorySessionStage.EMPTY,
                                 modifier = Modifier.weight(1f),
                             )
                         }
@@ -1086,6 +1074,7 @@ internal fun RuntimeKnownSearchDialog(
                                 actions.setKnownSearchScope(it)
                             },
                             managedSupported = state.managedSupported,
+                            enabled = state.sessionStage == MemorySessionStage.EMPTY,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -1122,7 +1111,7 @@ internal fun RuntimeKnownSearchDialog(
             )
         },
         textScrollable = false,
-        dismissButtonBelowWrappedActions = state.sessionStage == MemorySessionStage.CANDIDATES,
+        dismissButtonBelowWrappedActions = state.sessionStage != MemorySessionStage.EMPTY,
         confirmButton = {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1163,6 +1152,7 @@ internal fun RuntimeKnownSearchDialog(
                                 second.text,
                                 predicate,
                                 MemoryEngineContract.COMPARE_PREVIOUS,
+                                type,
                             )
                             onDismiss()
                         },
@@ -1185,8 +1175,7 @@ private fun RuntimeUnknownSearchDialog(
     onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val hasUnknownSession = state.searchMode == MemorySearchMode.UNKNOWN &&
-        state.sessionStage != MemorySessionStage.EMPTY
+    val activeSession = state.sessionStage != MemorySessionStage.EMPTY
     var type by remember(state.runtimeToken) {
         mutableIntStateOf(
             state.requestedType.takeIf(MemoryEngineContract::isValueType) ?: MemoryEngineContract.TYPE_AUTO,
@@ -1204,23 +1193,16 @@ private fun RuntimeUnknownSearchDialog(
     var second by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
     var activeField by remember { mutableStateOf(RuntimeInputField.FIRST) }
     var peekingUnderlay by remember { mutableStateOf(false) }
-    val needsValue = runtimeRelativeNeedsValue(predicate)
-    val needsSecond = predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
+    val relative = predicate >= MemoryEngineContract.PREDICATE_CHANGED
+    val needsValue = if (relative) runtimeRelativeNeedsValue(predicate) else true
+    val needsSecond = predicate == MemoryEngineContract.PREDICATE_BETWEEN ||
+        predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
         predicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
-    val spec = if (hasUnknownSession && needsValue) {
-        MemoryInputSpec.relativeMagnitudeForType(state.requestedType)
-    } else {
-        MemoryInputSpec.forType(state.requestedType)
-    }
-    val refineValid = !needsValue || (spec.isComplete(first.text) && (!needsSecond || spec.isComplete(second.text)))
-
-    LaunchedEffect(scope) {
-        if (scope == MemoryEngineContract.SCOPE_MANAGED_JAVA &&
-            !MemoryEngineContract.isCandidateType(type)
-        ) {
-            type = MemoryEngineContract.TYPE_INT
-        }
-    }
+    val spec = if (relative) MemoryInputSpec.relativeMagnitudeForType(type)
+    else MemoryInputSpec.forType(type)
+    val firstValid = !needsValue || spec.isComplete(first.text)
+    val secondValid = !needsSecond || spec.isComplete(second.text)
+    val refineValid = activeSession && firstValid && secondValid
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1237,9 +1219,9 @@ private fun RuntimeUnknownSearchDialog(
         },
         text = {
             RuntimeSearchDialogBody(
-                showKeypad = hasUnknownSession && needsValue,
+                showKeypad = activeSession && needsValue,
                 controls = { sideDock ->
-                    if (!hasUnknownSession) {
+                    if (!activeSession) {
                         if (sideDock) {
                             RuntimeSearchControlRow {
                                 RuntimeTypeMenu(
@@ -1272,23 +1254,42 @@ private fun RuntimeUnknownSearchDialog(
                     } else {
                         if (sideDock) {
                             RuntimeSearchControlRow {
-                                RuntimeRelativeMenu(
+                                RuntimePredicateMenu(
                                     predicate = predicate,
                                     onPredicate = { predicate = it },
+                                    includeRelative = true,
                                     modifier = Modifier.weight(1f),
                                 )
                                 RuntimeTypeMenu(
-                                    type = state.requestedType,
-                                    onType = {},
-                                    enabled = false,
+                                    type = type,
+                                    onType = { type = it },
+                                    managed = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA,
                                     modifier = Modifier.weight(1f),
                                 )
                             }
+                            RuntimeScopeMenu(
+                                scope = scope,
+                                onScope = {},
+                                managedSupported = state.managedSupported,
+                                enabled = false,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         } else {
-                            RuntimeRelativeMenu(predicate = predicate, onPredicate = { predicate = it })
+                            RuntimePredicateMenu(
+                                predicate = predicate,
+                                onPredicate = { predicate = it },
+                                includeRelative = true,
+                            )
                             RuntimeTypeMenu(
-                                type = state.requestedType,
-                                onType = {},
+                                type = type,
+                                onType = { type = it },
+                                managed = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            RuntimeScopeMenu(
+                                scope = scope,
+                                onScope = {},
+                                managedSupported = state.managedSupported,
                                 enabled = false,
                                 modifier = Modifier.fillMaxWidth(),
                             )
@@ -1360,7 +1361,7 @@ private fun RuntimeUnknownSearchDialog(
             )
         },
         textScrollable = false,
-        dismissButtonBelowWrappedActions = hasUnknownSession,
+        dismissButtonBelowWrappedActions = activeSession,
         confirmButton = {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1372,17 +1373,17 @@ private fun RuntimeUnknownSearchDialog(
                         actions.startSearch(
                             "",
                             "",
-                            if (hasUnknownSession) state.requestedType else type,
+                            type,
                             MemoryEngineContract.PREDICATE_EQUAL,
                             true,
-                            if (hasUnknownSession) state.searchScope else scope,
+                            scope,
                         )
                         onDismiss()
                     },
                 ) {
                     Text(stringResource(R.string.memory_editor_new_search))
                 }
-                if (hasUnknownSession) {
+                if (activeSession) {
                     Button(
                         enabled = refineValid && !state.busy,
                         onClick = {
@@ -1391,6 +1392,7 @@ private fun RuntimeUnknownSearchDialog(
                                 second.text,
                                 predicate,
                                 MemoryEngineContract.COMPARE_PREVIOUS,
+                                type,
                             )
                             onDismiss()
                         },
@@ -1419,25 +1421,17 @@ private fun RuntimeEditDialog(
     val initialValue = targets.map(MemoryEditTarget::valueText).distinct().singleOrNull().orEmpty()
     val batch = targets.size > 1
     val editableTypes = remember(targets) {
-        val firstTypes = firstTarget.aliasTypes.filter { MemoryEngineContract.isCandidateType(it) }
-        val commonTypes = if (targets.size > 1) {
-            firstTypes.filter { candidate ->
-                targets.drop(1).all { target -> candidate in target.aliasTypes }
-            }
-        } else {
-            firstTypes
-        }
-        commonTypes
+        targets.asSequence()
+            .flatMap { it.aliasTypes.asSequence() }
+            .filter(MemoryEngineContract::isCandidateType)
             .distinct()
+            .toList()
             .ifEmpty { listOf(initialType) }
-    }
-    val hasCompatibleType = !batch || firstTarget.aliasTypes.any { candidate ->
-        MemoryEngineContract.isCandidateType(candidate) &&
-            targets.drop(1).all { candidate in it.aliasTypes }
     }
     var type by remember(targets, initialType, editableTypes) {
         mutableIntStateOf(initialType.takeIf { it in editableTypes } ?: editableTypes.first())
     }
+    val hasCompatibleType = editableTypes.any { it == type }
     var replacement by remember(targets, initialType, editableTypes) {
         mutableStateOf(TextFieldValue(initialValue, TextRange(initialValue.length)))
     }
@@ -1445,8 +1439,7 @@ private fun RuntimeEditDialog(
     var peekingUnderlay by remember { mutableStateOf(false) }
     val spec = MemoryInputSpec.forType(type)
     val replacementValid = if (targets.any(MemoryEditTarget::watch)) {
-        targets.map(MemoryEditTarget::type).distinct()
-            .all { MemoryInputSpec.forType(it).isComplete(replacement.text) }
+        targets.any { it.type == type } && spec.isComplete(replacement.text)
     } else {
         spec.isComplete(replacement.text)
     }
@@ -1586,6 +1579,7 @@ private fun RuntimeInspectorTab(
     modifier: Modifier = Modifier,
 ) {
     var editCell by remember { mutableStateOf<MemoryInspectorCell?>(null) }
+    var editLogicalRow by remember { mutableStateOf<MemoryInspectorLogicalRow?>(null) }
     when {
         state.inspectorLoading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1603,7 +1597,9 @@ private fun RuntimeInspectorTab(
         }
         else -> {
             val snapshot = state.inspector
+            val managed = snapshot.backend == MemoryEngineContract.BACKEND_MANAGED
             val cells = remember(snapshot) { buildInspectorCells(snapshot) }
+            val logicalRows = remember(snapshot) { snapshot.logicalRows }
             Column(modifier = modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
@@ -1615,21 +1611,114 @@ private fun RuntimeInspectorTab(
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                         )
-                        Text(
-                            "${stringResource(R.string.memory_editor_anchor)} 0x${snapshot.anchorAddress.toString(16).uppercase(Locale.ROOT)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontFamily = FontFamily.Monospace,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        if (managed) {
+                            Text(
+                                "Managed · ${snapshot.provenance.ifBlank { "logical" }}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        } else {
+                            Text(
+                                "${stringResource(R.string.memory_editor_anchor)} 0x${snapshot.anchorAddress.toString(16).uppercase(Locale.ROOT)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontFamily = FontFamily.Monospace,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                     RuntimeActionIcon(
                         R.drawable.ic_restart_alt,
                         R.string.memory_editor_refresh_snapshot,
                         enabled = !state.busy,
-                    ) { actions.inspectCandidate(snapshot.candidateId) }
+                    ) {
+                        actions.inspectCandidate(
+                            snapshot.candidateId,
+                            watchAnchor = snapshot.watchAnchor,
+                        )
+                    }
                 }
                 HorizontalDivider()
-                if (cells.isEmpty()) {
+                if (managed) {
+                    if (logicalRows.isEmpty()) {
+                        Box(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                stringResource(R.string.memory_editor_inspector_empty),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else {
+                        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                            val anchorIndex = logicalRows.indexOfFirst { it.relativeOffset == 0 }
+                                .coerceAtLeast(0)
+                            val visibleRows = (maxHeight.value / 55f).toInt().coerceAtLeast(1)
+                            val firstIndex = inspectorCenteredFirstIndex(
+                                cellCount = logicalRows.size,
+                                anchorIndex = anchorIndex,
+                                visibleRows = visibleRows,
+                            )
+                            val listState = rememberLazyListState()
+                            LaunchedEffect(snapshot.candidateId, snapshot.expectedRevision, firstIndex) {
+                                listState.scrollToItem(firstIndex)
+                            }
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier.fillMaxSize(),
+                                userScrollEnabled = logicalRows.size > visibleRows,
+                            ) {
+                                items(logicalRows, key = { it.id }) { row ->
+                                    Surface(
+                                        color = if (row.relativeOffset == 0) {
+                                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
+                                        } else Color.Transparent,
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .combinedClickable(
+                                                    enabled = row.editable && state.managedWriteSupported && !state.busy,
+                                                    onClick = { editLogicalRow = row },
+                                                    onLongClick = { editLogicalRow = row },
+                                                )
+                                                .heightIn(min = 48.dp)
+                                                .padding(horizontal = 12.dp, vertical = 7.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Text(
+                                                if (row.relativeOffset >= 0) "+${row.relativeOffset}"
+                                                else row.relativeOffset.toString(),
+                                                modifier = Modifier.widthIn(min = 48.dp),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontFamily = FontFamily.Monospace,
+                                            )
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    row.label,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                                Text(
+                                                    runtimeTypeShort(row.type),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                )
+                                            }
+                                            Text(
+                                                row.valueText,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontFamily = FontFamily.Monospace,
+                                            )
+                                        }
+                                    }
+                                    HorizontalDivider()
+                                }
+                            }
+                        }
+                    }
+                } else if (cells.isEmpty()) {
                     Box(
                         modifier = Modifier.weight(1f).fillMaxWidth(),
                         contentAlignment = Alignment.Center,
@@ -1711,6 +1800,18 @@ private fun RuntimeInspectorTab(
                     onDismiss = {
                         onPeekUnderlayChanged(false)
                         editCell = null
+                    },
+                )
+            }
+            editLogicalRow?.let { row ->
+                RuntimeInspectorLogicalEditDialog(
+                    snapshot = snapshot,
+                    row = row,
+                    actions = actions,
+                    onPeekUnderlayChanged = onPeekUnderlayChanged,
+                    onDismiss = {
+                        onPeekUnderlayChanged(false)
+                        editLogicalRow = null
                     },
                 )
             }
@@ -1798,6 +1899,7 @@ private fun RuntimeInspectorEditDialog(
                         snapshot.type,
                         cell.bits,
                         value.text,
+                        snapshot.watchAnchor,
                     )
                     onDismiss()
                 },
@@ -1808,6 +1910,82 @@ private fun RuntimeInspectorEditDialog(
         },
     )
 }
+
+@Composable
+private fun RuntimeInspectorLogicalEditDialog(
+    snapshot: MemoryInspectorSnapshot,
+    row: MemoryInspectorLogicalRow,
+    actions: MemoryEditorActions,
+    onPeekUnderlayChanged: (Boolean) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val spec = MemoryInputSpec.forType(row.type)
+    var value by remember(row) {
+        mutableStateOf(TextFieldValue(row.valueText, TextRange(row.valueText.length)))
+    }
+    var peekingUnderlay by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
+        title = {
+            RuntimeInputDialogTitle(
+                title = row.label.ifBlank { runtimeTypeShort(row.type) },
+                peeking = peekingUnderlay,
+                onPeekingChanged = {
+                    peekingUnderlay = it
+                    onPeekUnderlayChanged(it)
+                },
+            )
+        },
+        text = {
+            RuntimeSearchDialogBody(
+                showKeypad = true,
+                controls = { _ ->
+                    RuntimeSearchField(
+                        label = "${runtimeTypeShort(row.type)} · ${row.relativeOffset.formatRelativeOffset()}",
+                        value = value,
+                        active = true,
+                        onClick = {},
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                },
+                keypad = {
+                    RuntimeSearchKeypad(
+                        allowGroup = false,
+                        valueSpec = spec,
+                        onToken = { value = runtimeInsertValidated(value, it, spec) },
+                        onBackspace = { value = runtimeBackspace(value) },
+                        onMove = { value = runtimeMove(value, it) },
+                        onClear = { value = TextFieldValue("", TextRange(0)) },
+                    )
+                },
+            )
+        },
+        textScrollable = false,
+        confirmButton = {
+            Button(
+                enabled = row.editable && spec.isComplete(value.text),
+                onClick = {
+                    actions.editInspectorValue(
+                        snapshot.candidateId,
+                        row.relativeOffset,
+                        row.type,
+                        row.expectedBits,
+                        value.text,
+                        snapshot.watchAnchor,
+                    )
+                    onDismiss()
+                },
+            ) { Text(stringResource(R.string.memory_editor_apply)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        },
+    )
+}
+
+private fun Int.formatRelativeOffset(): String = if (this >= 0) "+$this" else toString()
+
 @Composable
 private fun RuntimeSearchField(
     label: String,
@@ -2172,6 +2350,7 @@ private fun RuntimeTypeMenu(
         value = type,
         values = if (managed) {
             intArrayOf(
+                MemoryEngineContract.TYPE_AUTO,
                 MemoryEngineContract.TYPE_BYTE,
                 MemoryEngineContract.TYPE_SHORT,
                 MemoryEngineContract.TYPE_CHAR,
@@ -2222,6 +2401,7 @@ private fun RuntimeScopeMenu(
     onScope: (Int) -> Unit,
     modifier: Modifier = Modifier,
     managedSupported: Boolean = false,
+    enabled: Boolean = true,
 ) {
     RuntimeChoiceMenu(
         value = scope,
@@ -2243,6 +2423,7 @@ private fun RuntimeScopeMenu(
         },
         onChange = onScope,
         modifier = modifier,
+        enabled = enabled,
     )
 }
 

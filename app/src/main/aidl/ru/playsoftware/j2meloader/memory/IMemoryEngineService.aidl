@@ -27,8 +27,8 @@ interface IMemoryEngineService {
             in String[] values, int maxDistance);
     long startNearbySearch(long runtimeToken, long anchorCandidateId, int radius,
             int valueType, int predicate, String firstValue, String secondValue);
-    long refineKnown(long runtimeToken, int predicate, String firstValue, String secondValue);
-    long refineRelative(long runtimeToken, int predicate, int compareTarget,
+    long refineKnown(long runtimeToken, int valueType, int predicate, String firstValue, String secondValue);
+    long refineRelative(long runtimeToken, int valueType, int predicate, int compareTarget,
             String firstValue, String secondValue);
     long refineManagedInt(long runtimeToken, long expectedRevision, int predicate,
             int compareTarget, String value);
@@ -36,12 +36,13 @@ interface IMemoryEngineService {
     long refreshCandidates(long runtimeToken, in long[] candidateIds, boolean passiveRefresh);
     long removeCandidates(long runtimeToken, in long[] candidateIds);
     long keepCandidates(long runtimeToken, in long[] candidateIds);
-    long editCandidates(long runtimeToken, in long[] candidateIds, String replacementValue);
+    long editCandidates(long runtimeToken, in long[] candidateIds, int valueType,
+            String replacementValue);
     long filterResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds, boolean keep);
     long editResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
             int valueType, String replacementValue);
     long editManagedResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
-            String replacementValue);
+            int valueType, String replacementValue);
     long addWatchResultGroups(long runtimeToken, in long[] resultIds, int valueType);
     long addManagedWatchResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds);
     long setFreezeResultGroups(long runtimeToken, in long[] resultIds, int valueType, int mode,
@@ -49,13 +50,13 @@ interface IMemoryEngineService {
     long setManagedFreezeResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
             int mode, String firstValue, String secondValue);
     long editInspectorValue(long runtimeToken, long anchorCandidateId, int relativeOffset,
-            int valueType, long expectedBits, String replacementValue);
+            int valueType, long expectedBits, String replacementValue, boolean watchAnchor);
 
     long getResultCount(long runtimeToken);
     Bundle getSearchSessionInfo(long runtimeToken);
     // Offset/limit count unique raw addresses. The engine formats one presentation row per address.
     Bundle getResultPage(long runtimeToken, int offset, int limit);
-    Bundle inspectCandidate(long runtimeToken, long candidateId, int radius);
+    Bundle inspectCandidate(long runtimeToken, long candidateId, int radius, boolean watchAnchor);
     Bundle getWatchPage(long runtimeToken);
     long addWatch(long runtimeToken, in long[] candidateIds);
     long removeWatch(long runtimeToken, in long[] candidateIds);

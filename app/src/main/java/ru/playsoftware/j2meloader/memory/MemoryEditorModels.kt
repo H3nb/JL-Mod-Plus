@@ -87,6 +87,25 @@ internal data class MemoryInspectorSnapshot(
     val startAddress: Long,
     val anchorAddress: Long,
     val bytes: ByteArray,
+    val backend: Int = MemoryEngineContract.BACKEND_RAW,
+    val logicalRows: List<MemoryInspectorLogicalRow> = emptyList(),
+    val expectedRevision: Long = 0L,
+    val provenance: String = "",
+    val watchAnchor: Boolean = false,
+)
+
+internal data class MemoryInspectorLogicalRow(
+    val id: Long,
+    val relativeOffset: Int,
+    val type: Int,
+    val state: Int,
+    val valueText: String,
+    val initialValueText: String,
+    val previousValueText: String,
+    val label: String,
+    val expectedBits: Long,
+    val backend: Int,
+    val editable: Boolean = true,
 )
 
 internal object MemoryResultPageParser {
@@ -199,6 +218,7 @@ internal data class MemoryEditorUiState(
     val managedSupported: Boolean = false,
     val managedWriteSupported: Boolean = false,
     val managedRevision: Long = 0L,
+    val managedBaselineCount: Long = 0L,
     val runtimeToken: Long = 0,
     val busy: Boolean = false,
     val searching: Boolean = false,
@@ -230,7 +250,13 @@ internal interface MemoryEditorActions {
     fun refreshCapabilities()
     fun startSearch(value: String, secondValue: String, type: Int, predicate: Int, unknown: Boolean, scope: Int)
     fun setKnownSearchScope(scope: Int) = Unit
-    fun nextScan(value: String, secondValue: String, predicate: Int, compare: Int)
+    fun nextScan(
+        value: String,
+        secondValue: String,
+        predicate: Int,
+        compare: Int,
+        type: Int = MemoryEngineContract.TYPE_AUTO,
+    )
     fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int)
     fun undo()
     fun refresh()
@@ -256,6 +282,14 @@ internal interface MemoryEditorActions {
         addToWatch: Boolean,
         freezeAfter: Boolean,
     ) = editSelected(value, type)
+    fun editTargetsWithOptions(
+        targets: List<MemoryEditTarget>,
+        expectedRevision: Long,
+        value: String,
+        type: Int,
+        addToWatch: Boolean,
+        freezeAfter: Boolean,
+    ) = editTargets(targets, expectedRevision, value, type)
     fun removeSelected(keep: Boolean)
     fun watchSelected(add: Boolean)
     fun labelWatch(id: Long, label: String)
@@ -266,13 +300,18 @@ internal interface MemoryEditorActions {
     fun nextPage()
     fun cancel()
     fun startOver() = Unit
-    fun inspectCandidate(candidateId: Long, radius: Int = MemoryEngineContract.DEFAULT_INSPECT_RADIUS) = Unit
+    fun inspectCandidate(
+        candidateId: Long,
+        radius: Int = MemoryEngineContract.DEFAULT_INSPECT_RADIUS,
+        watchAnchor: Boolean = false,
+    ) = Unit
     fun editInspectorValue(
         anchorCandidateId: Long,
         relativeOffset: Int,
         type: Int,
         expectedBits: Long,
         replacementValue: String,
+        watchAnchor: Boolean = false,
     ) = Unit
     fun closeInspector() = Unit
     fun startNearbySearch(

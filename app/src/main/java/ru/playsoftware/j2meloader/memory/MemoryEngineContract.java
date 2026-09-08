@@ -122,6 +122,8 @@ public final class MemoryEngineContract {
 	public static final String KEY_MANAGED_CONTROL_EPOCH = "managedControlEpoch";
 	public static final String KEY_MANAGED_REVISION = "managedRevision";
 	public static final String KEY_MANAGED_RESULT_COUNT = "managedResultCount";
+	/** Exact size of a hidden managed Unknown baseline; visible result count remains zero until refine. */
+	public static final String KEY_MANAGED_BASELINE_COUNT = "managedBaselineCount";
 	public static final String KEY_MANAGED_WATCH_COUNT = "managedWatchCount";
 	public static final String KEY_MANAGED_FREEZE_COUNT = "managedFreezeCount";
 	public static final String KEY_MANAGED_OPERATION_RESULT = "managedOperationResult";
@@ -130,6 +132,8 @@ public final class MemoryEngineContract {
 	public static final String KEY_MANAGED_SKIPPED = "managedSkipped";
 	public static final String KEY_MANAGED_UNCONFIRMED = "managedUnconfirmed";
 	public static final String KEY_MANAGED_NOT_ATTEMPTED = "managedNotAttempted";
+	public static final String KEY_MANAGED_REJECTED_BEFORE_WRITE = "managedRejectedBeforeWrite";
+	public static final String KEY_MANAGED_SKIPPED_BY_TYPE = "managedSkippedByType";
 	public static final String KEY_SEARCH_BACKEND = "searchBackend";
 	public static final String KEY_RUNTIME_TOKEN = "runtimeToken";
 	public static final String KEY_TARGET_PID = "targetPid";
@@ -145,6 +149,20 @@ public final class MemoryEngineContract {
 	public static final String KEY_INSPECT_START = "inspectStart";
 	public static final String KEY_INSPECT_ANCHOR = "inspectAnchor";
 	public static final String KEY_INSPECT_BYTES = "inspectBytes";
+	public static final String KEY_INSPECT_IDS = "inspectIds";
+	public static final String KEY_INSPECT_VALUES = "inspectValues";
+	public static final String KEY_INSPECT_INITIAL_VALUES = "inspectInitialValues";
+	public static final String KEY_INSPECT_PREVIOUS_VALUES = "inspectPreviousValues";
+	public static final String KEY_INSPECT_TYPES = "inspectTypes";
+	public static final String KEY_INSPECT_STATES = "inspectStates";
+	public static final String KEY_INSPECT_RELATIVE_OFFSETS = "inspectRelativeOffsets";
+	public static final String KEY_INSPECT_EXPECTED_BITS = "inspectExpectedBits";
+	public static final String KEY_INSPECT_LABELS = "inspectLabels";
+	public static final String KEY_INSPECT_BACKENDS = "inspectBackends";
+	public static final String KEY_INSPECT_EDITABLE = "inspectEditable";
+	public static final String KEY_INSPECT_ANCHOR_ID = "inspectAnchorId";
+	public static final String KEY_INSPECT_EXPECTED_REVISION = "inspectExpectedRevision";
+	public static final String KEY_INSPECT_PROVENANCE = "inspectProvenance";
 	public static final String KEY_RESULT_IDS = "resultIds";
 	public static final String KEY_RESULT_VALUES = "resultValues";
 	public static final String KEY_RESULT_ADDRESSES = "resultAddresses";

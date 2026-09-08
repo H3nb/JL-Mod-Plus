@@ -70,6 +70,124 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void autoKnownSearchUsesOneLogicalTraversalAcrossAllPrimitiveTypes() {
+		root.longMatch = 7L;
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_AUTO, MemoryEngineContract.PREDICATE_EQUAL,
+				"7", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, result.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		assertTrue(hasAddress(page, "rootMatch"));
+		assertTrue(hasAddress(page, "byteMatch"));
+		assertTrue(hasAddress(page, "shortMatch"));
+		assertTrue(hasAddress(page, "longMatch"));
+		assertEquals(MemoryEngineContract.TYPE_AUTO, engine.session(TOKEN).requestedType);
+	}
+
+	@Test
+	public void autoUnknownPublishesHiddenBaselineCountAndRefinesAllCurrentTypes() {
+		ManagedJavaMemoryEngine.ManagedOperationResult unknown = engine.startUnknown(TOKEN,
+				MemoryEngineContract.TYPE_AUTO, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, unknown.code);
+		assertEquals(0L, unknown.resultCount);
+		assertTrue(unknown.baselineCount > 0L);
+		assertEquals(unknown.baselineCount, engine.session(TOKEN).baselineCount);
+		assertEquals(0, engine.resultPage(TOKEN, unknown.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE).ids.length);
+
+		root.rootMatch = 8;
+		ManagedJavaMemoryEngine.ManagedOperationResult refined = engine.refine(TOKEN, unknown.revision,
+				MemoryEngineContract.TYPE_AUTO, MemoryEngineContract.PREDICATE_CHANGED,
+				MemoryEngineContract.COMPARE_PREVIOUS, "", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, refined.code);
+		assertTrue(refined.resultCount > 0L);
+		assertEquals(MemoryEngineContract.TYPE_AUTO, engine.session(TOKEN).requestedType);
+	}
+
+	@Test
+	public void concreteRefineCannotReinterpretRowsFromAnotherPrimitivePlane() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
+		ManagedJavaMemoryEngine.ManagedOperationResult refined = engine.refine(TOKEN, search.revision,
+				MemoryEngineContract.TYPE_BYTE, MemoryEngineContract.PREDICATE_EQUAL,
+				MemoryEngineContract.COMPARE_PREVIOUS, "7", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, refined.code);
+		assertEquals(0L, refined.resultCount);
+	}
+
+	@Test
+	public void betweenQueryValidatesTheSecondValueBeforeReplacingTheRevision() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		ManagedJavaMemoryEngine.ManagedOperationResult invalid = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_BETWEEN,
+				"1", "not-a-number", 0L);
+		assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST, invalid.code);
+		assertEquals(search.revision, engine.session(TOKEN).revision);
+	}
+
+	@Test
+	public void betweenQueryUsesBothBoundsBeforeCommittingCandidates() {
+		root.rootMatch = 15;
+		root.rootChanged = 25;
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_BETWEEN,
+				"10", "20", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, result.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		assertTrue(hasAddress(page, "rootMatch"));
+		assertFalse(hasAddress(page, "rootChanged"));
+	}
+
+	@Test
+	public void concreteBatchEditUsesUnionAndReportsTypeSkipsSeparately() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_AUTO, MemoryEngineContract.PREDICATE_EQUAL,
+				"7", "", 0L);
+		long intId = idForAddress(search.revision, "rootMatch");
+		long byteId = idForAddress(search.revision, "byteMatch");
+		ManagedJavaMemoryEngine.ManagedOperationResult edited = engine.editTyped(TOKEN,
+				search.revision, new long[]{intId, byteId}, MemoryEngineContract.TYPE_INT,
+				"8", false, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, edited.code);
+		assertEquals(1, edited.attempted);
+		assertEquals(1, edited.written);
+		assertEquals(0, edited.unconfirmed);
+		assertEquals(0, edited.notAttempted);
+		assertEquals(1, edited.skippedByType);
+		assertEquals(8, root.rootMatch);
+		assertEquals(7, root.byteMatch);
+	}
+
+	@Test
+	public void managedInspectorMarksFinalSiblingsReadOnly() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long anchorId = idForAddress(search.revision, "rootMatch");
+		ManagedJavaMemoryEngine.ManagedInspection inspection = engine.inspect(TOKEN,
+				search.revision, anchorId, MemoryEngineContract.MAX_INSPECT_RADIUS);
+		assertEquals(MemoryEngineContract.RESULT_OK, inspection.code);
+		int mutableIndex = indexForLabel(inspection, "rootMatch");
+		int finalIndex = indexForLabel(inspection, "finalMatch");
+		assertTrue(inspection.editable[mutableIndex]);
+		assertFalse(inspection.editable[finalIndex]);
+	}
+
+	@Test
+	public void managedInspectorRetainsWatchAnchorAfterSearchClear() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long anchorId = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.addWatch(TOKEN, search.revision, new long[]{anchorId}, 0L).code);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.clearSearchResult(TOKEN, 0L, 1L).code);
+		ManagedJavaMemoryEngine.ManagedInspection inspection = engine.inspect(TOKEN, 0L,
+				anchorId, MemoryEngineContract.MAX_INSPECT_RADIUS);
+		assertEquals(MemoryEngineContract.RESULT_OK, inspection.code);
+		assertTrue(inspection.ids.length > 0);
+	}
+
+	@Test
 	public void typedUnknownCapturesHiddenBaselineThenRefinesInitialAndPrevious() {
 		ManagedJavaMemoryEngine.ManagedOperationResult unknown = engine.startUnknown(TOKEN,
 				MemoryEngineContract.TYPE_INT, 0L);
@@ -422,6 +540,14 @@ public class ManagedJavaMemoryEngineTest {
 			if (page.addresses[index].contains(fragment)) return page.ids[index];
 		}
 		throw new AssertionError("Missing managed row containing " + fragment);
+	}
+
+	private static int indexForLabel(ManagedJavaMemoryEngine.ManagedInspection inspection,
+	                                String fragment) {
+		for (int index = 0; index < inspection.labels.length; index++) {
+			if (inspection.labels[index].contains(fragment)) return index;
+		}
+		throw new AssertionError("Missing managed Inspector row containing " + fragment);
 	}
 
 	private static boolean hasAddress(ManagedJavaMemoryEngine.ManagedPage page, String fragment) {

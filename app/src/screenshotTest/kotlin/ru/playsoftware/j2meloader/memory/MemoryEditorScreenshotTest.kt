@@ -23,7 +23,13 @@ private object NoOpMemoryEditorActions : MemoryEditorActions {
     override fun close() = Unit
     override fun refreshCapabilities() = Unit
     override fun startSearch(value: String, secondValue: String, type: Int, predicate: Int, unknown: Boolean, scope: Int) = Unit
-    override fun nextScan(value: String, secondValue: String, predicate: Int, compare: Int) = Unit
+    override fun nextScan(
+        value: String,
+        secondValue: String,
+        predicate: Int,
+        compare: Int,
+        type: Int,
+    ) = Unit
     override fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int) = Unit
     override fun undo() = Unit
     override fun refresh() = Unit

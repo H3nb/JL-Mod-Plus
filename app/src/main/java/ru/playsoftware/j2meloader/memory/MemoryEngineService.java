@@ -83,6 +83,7 @@ public final class MemoryEngineService extends Service {
 	private volatile long managedStateToken;
 	private volatile long managedRevision;
 	private volatile long managedResultCount;
+	private volatile long managedBaselineCount;
 	private volatile int managedWatchCount;
 	private volatile int managedFreezeCount;
 	private volatile String managedLastMessage;
@@ -198,6 +199,10 @@ public final class MemoryEngineService extends Service {
 				result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, visibleManagedRevision);
 				result.putLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT,
 						visibleManagedResultCount);
+				result.putLong(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT,
+						token != 0L && configuredToken == token
+								&& searchBackend == MemoryEngineContract.BACKEND_MANAGED
+								? managedBaselineCount : 0L);
 				result.putInt(MemoryEngineContract.KEY_SEARCH_BACKEND, searchBackend);
 				result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, token);
 				result.putInt(MemoryEngineContract.KEY_TARGET_PID, pid);
@@ -306,30 +311,31 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
-		public long refineKnown(long token, int predicate, String first, String second) {
+		public long refineKnown(long token, int valueType, int predicate, String first, String second) {
 			if (isManagedCurrent(token)) {
 				return enqueueManagedSearch(token, () -> managedRefine(token, managedRevision,
-						predicate, MemoryEngineContract.COMPARE_PREVIOUS, first, second));
+						valueType, predicate, MemoryEngineContract.COMPARE_PREVIOUS, first, second));
 			}
 			return enqueueSearch(token, false, 0,
-					() -> refineKnownAddressSet(token, predicate, first, second));
+					() -> refineKnownAddressSet(token, valueType, predicate, first, second));
 		}
 
 		@Override
-		public long refineRelative(long token, int predicate, int compareTarget,
+		public long refineRelative(long token, int valueType, int predicate, int compareTarget,
 		                           String first, String second) {
 			if (isManagedCurrent(token)) {
 				return enqueueManagedSearch(token, () -> managedRefine(token, managedRevision,
-						predicate, compareTarget, first, second));
+						valueType, predicate, compareTarget, first, second));
 			}
 			return enqueueSearch(token, false, 0,
-					() -> refineRelativeGcAware(token, predicate, compareTarget, first, second));
+					() -> refineRelativeGcAware(token, valueType, predicate, compareTarget, first, second));
 		}
 
 		@Override
 		public long refineManagedInt(long token, long expectedRevision, int predicate,
 		                             int compareTarget, String value) {
-			return enqueueManagedSearch(token, () -> managedRefine(token, expectedRevision, predicate,
+			return enqueueManagedSearch(token, () -> managedRefine(token, expectedRevision,
+					MemoryEngineContract.TYPE_INT, predicate,
 					compareTarget, value, ""));
 		}
 
@@ -397,22 +403,28 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
-		public long editCandidates(long token, long[] candidateIds, String replacementValue) {
+		public long editCandidates(long token, long[] candidateIds, int valueType,
+		                           String replacementValue) {
 			if (containsManagedIds(candidateIds)) {
 				if (!allManagedIds(candidateIds)) return enqueueMixed(token, false,
-						() -> editMixed(token, candidateIds, replacementValue));
+						() -> editMixed(token, candidateIds, valueType, replacementValue));
 				return enqueueManaged(token, false, () -> managedEdit(token,
 						isManagedCurrent(token) ? managedRevision : 0L, candidateIds,
-						replacementValue, true));
+						valueType, replacementValue, true));
 			}
 			return enqueue(token, false, 0, () -> {
 				if (candidateIds == null || candidateIds.length == 0 ||
 						candidateIds.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
 					return MemoryEngineContract.RESULT_SAFETY_LIMIT;
 				}
+				if (!MemoryEngineContract.isCandidateType(valueType)) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
 				if (!isWriteSupported(token)) {
 					return MemoryEngineContract.RESULT_UNSUPPORTED;
 				}
+				int typeCheck = validateRawWatchTypes(candidateIds, valueType);
+				if (typeCheck != MemoryEngineContract.RESULT_OK) return typeCheck;
 				return editRawAuxiliary(token, candidateIds, replacementValue);
 			});
 		}
@@ -481,7 +493,7 @@ public final class MemoryEngineService extends Service {
 				if (!allManagedIds(resultIds)) return enqueueMixed(token, false,
 						() -> editResultGroupsMixed(token, expectedRevision, resultIds, valueType, replacementValue));
 				return enqueueManaged(token, false, () -> managedEdit(token, expectedRevision,
-						resultIds, replacementValue, false));
+						resultIds, valueType, replacementValue, false));
 			}
 			return enqueue(token, false, 0, () -> {
 				if (!MemoryEngineContract.isCandidateType(valueType)) {
@@ -501,9 +513,9 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long editManagedResultGroups(long token, long expectedRevision, long[] resultIds,
-		                                    String replacementValue) {
+		                                    int valueType, String replacementValue) {
 			return enqueueManaged(token, false, () -> managedEdit(token, expectedRevision,
-					resultIds, replacementValue, false));
+					resultIds, valueType, replacementValue, false));
 		}
 
 		@Override
@@ -578,9 +590,11 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long editInspectorValue(long token, long anchorCandidateId, int relativeOffset,
 		                               int valueType, long expectedBits,
-		                               String replacementValue) {
+		                               String replacementValue, boolean watchAnchor) {
 			if (ManagedJavaMemoryIds.isManaged(anchorCandidateId)) {
-				return enqueueManaged(token, false, () -> MemoryEngineContract.RESULT_UNSUPPORTED);
+				return enqueueManaged(token, false, () -> managedEditInspector(token,
+						anchorCandidateId, watchAnchor, relativeOffset, valueType, expectedBits,
+						replacementValue));
 			}
 			return enqueue(token, false, 0, () -> {
 				if (anchorCandidateId <= 0L || !MemoryEngineContract.isCandidateType(valueType) ||
@@ -603,10 +617,9 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
-		public Bundle inspectCandidate(long token, long candidateId, int radius) {
+		public Bundle inspectCandidate(long token, long candidateId, int radius, boolean watchAnchor) {
 			if (ManagedJavaMemoryIds.isManaged(candidateId)) {
-				return inspectionFailure(MemoryEngineContract.RESULT_UNSUPPORTED,
-						"Inspector is available only for raw-address candidates");
+				return inspectManagedCandidate(token, candidateId, radius, watchAnchor);
 			}
 			if (candidateId <= 0L || !MemoryEngineContract.isInspectRadius(radius)) {
 				return inspectionFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
@@ -760,8 +773,9 @@ public final class MemoryEngineService extends Service {
 				epoch = cancelEpoch.incrementAndGet();
 				clearGeneration = nativeSearchClearGeneration.incrementAndGet();
 				searchBackend = MemoryEngineContract.BACKEND_RAW;
-				managedRevision = 0L;
-				managedResultCount = 0L;
+					managedRevision = 0L;
+					managedResultCount = 0L;
+					managedBaselineCount = 0L;
 				nativeSearchClearPending = true;
 				bridge = target;
 			}
@@ -1043,6 +1057,7 @@ public final class MemoryEngineService extends Service {
 				searchBackend = MemoryEngineContract.BACKEND_RAW;
 				managedRevision = 0L;
 				managedResultCount = 0L;
+				managedBaselineCount = 0L;
 				return MemoryEngineContract.RESULT_CANCELLED;
 			}
 			retireManaged = searchBackend == MemoryEngineContract.BACKEND_MANAGED
@@ -1073,6 +1088,7 @@ public final class MemoryEngineService extends Service {
 				searchBackend = MemoryEngineContract.BACKEND_RAW;
 				managedRevision = 0L;
 				managedResultCount = 0L;
+				managedBaselineCount = 0L;
 				return MemoryEngineContract.RESULT_CANCELLED;
 			}
 			configuredToken = token;
@@ -1082,6 +1098,7 @@ public final class MemoryEngineService extends Service {
 			if (retireManaged) {
 				managedRevision = 0L;
 				managedResultCount = 0L;
+				managedBaselineCount = 0L;
 			}
 			if (retirementResult != MemoryEngineContract.RESULT_OK) {
 				// The raw operation already committed. Do not report it as a rollback when a
@@ -1142,18 +1159,47 @@ public final class MemoryEngineService extends Service {
 		return result;
 	}
 
-	private int editMixed(long token, long[] ids, String replacementValue) {
+	private int editMixed(long token, long[] ids, int valueType, String replacementValue) {
 		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
 			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
 		}
+		if (!MemoryEngineContract.isCandidateType(valueType)) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
 		long[] managed = idsForBackend(ids, true);
 		long[] raw = idsForBackend(ids, false);
+		if (raw.length > 0) {
+			int typeCheck = validateRawWatchTypes(raw, valueType);
+			if (typeCheck != MemoryEngineContract.RESULT_OK) return typeCheck;
+		}
 		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
 				: managedEdit(token, isManagedCurrent(token) ? managedRevision : 0L,
-						managed, replacementValue, true);
+						managed, valueType, replacementValue, true);
 		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
 				: editRawAuxiliary(token, raw, replacementValue);
 		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
+	}
+
+	private int validateRawWatchTypes(long[] ids, int declaredType) {
+		Bundle page = formatWatchPage(NativeMemoryEngine.watchPage());
+		long[] watchIds = page.getLongArray(MemoryEngineContract.KEY_WATCH_IDS);
+		int[] watchTypes = page.getIntArray(MemoryEngineContract.KEY_WATCH_TYPES);
+		if (watchIds == null || watchTypes == null || watchIds.length != watchTypes.length) {
+			return MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
+		}
+		for (long id : ids) {
+			boolean found = false;
+			for (int index = 0; index < watchIds.length; index++) {
+				if (watchIds[index] != id) continue;
+				found = true;
+				if (watchTypes[index] != declaredType) {
+					return MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
+				}
+				break;
+			}
+			if (!found) return MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
+		}
+		return MemoryEngineContract.RESULT_OK;
 	}
 
 	private int editResultGroupsMixed(long token, long expectedRevision, long[] resultIds, int valueType,
@@ -1177,7 +1223,7 @@ public final class MemoryEngineService extends Service {
 		}
 		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
 				: managedEdit(token, expectedRevision,
-						managed, replacementValue, false);
+						managed, valueType, replacementValue, false);
 		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
 				: editRawAuxiliary(token, raw, replacementValue);
 		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
@@ -1392,9 +1438,9 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private int managedStartUnknown(long token, int type) {
-		if (!ManagedJavaValue.isSupportedType(type)) {
+		if (!MemoryEngineContract.isValueType(type)) {
 			return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
-					"Managed Unknown search requires an explicit primitive type");
+					"Managed Unknown search received an unsupported type selector");
 		}
 		IMemoryTargetBridge bridge = target;
 		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
@@ -1470,7 +1516,7 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private int managedStartExact(long token, int type, int predicate, String first, String second) {
-		if (!ManagedJavaValue.isSupportedType(type)) {
+		if (!MemoryEngineContract.isValueType(type)) {
 			return managedFailure(MemoryEngineContract.RESULT_UNSUPPORTED,
 					"Managed Java supports Byte, Short, Char, Int, Long, Float, and Double");
 		}
@@ -1519,15 +1565,15 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private int managedRefine(long token, int predicate, int compareTarget, String value) {
-		return managedRefine(token, managedRevision, predicate, compareTarget, value, "");
+		return managedRefine(token, managedRevision, managedSearchType(), predicate,
+				compareTarget, value, "");
 	}
 
-	private int managedRefine(long token, long expectedRevision, int predicate,
+	private int managedRefine(long token, long expectedRevision, int type, int predicate,
 	                          int compareTarget, String value, String secondValue) {
 		if (!isTargetToken(token)) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 				"MIDlet runtime changed or ended");
-		int type = managedSearchType();
-		if (!ManagedJavaValue.isSupportedType(type)) {
+		if (!MemoryEngineContract.isValueType(type)) {
 			return managedFailure(MemoryEngineContract.RESULT_UNSUPPORTED,
 					"Managed refine has no supported primitive search type");
 		}
@@ -1574,8 +1620,8 @@ public final class MemoryEngineService extends Service {
 		}
 	}
 
-	private int managedEdit(long token, long expectedRevision, long[] ids, String replacementValue,
-	                       boolean allowWatchOnly) {
+	private int managedEdit(long token, long expectedRevision, long[] ids, int declaredType,
+	                       String replacementValue, boolean allowWatchOnly) {
 		if (!allowWatchOnly && expectedRevision <= 0L) expectedRevision = managedRevision;
 		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
 			return managedFailure(MemoryEngineContract.RESULT_SAFETY_LIMIT,
@@ -1586,7 +1632,25 @@ public final class MemoryEngineService extends Service {
 				"MIDlet runtime is not connected");
 		try {
 			return consumeManagedResult(token, bridge, bridge.managedEditTyped(token,
-					expectedRevision, ids, replacementValue, allowWatchOnly, cancelEpoch.get()));
+					expectedRevision, ids, declaredType, replacementValue, allowWatchOnly,
+					cancelEpoch.get()));
+		} catch (RemoteException exception) {
+			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
+	}
+
+	private int managedEditInspector(long token, long anchorCandidateId, boolean watchAnchor,
+	                                int relativeOffset, int valueType, long expectedBits,
+	                                String replacementValue) {
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			long expectedRevision = watchAnchor ? 0L : managedRevision;
+			return consumeManagedResult(token, bridge, bridge.managedEditInspector(token,
+				expectedRevision, anchorCandidateId, watchAnchor, relativeOffset, valueType,
+				expectedBits, replacementValue, cancelEpoch.get()));
 		} catch (RemoteException exception) {
 			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 					"MIDlet runtime connection was lost");
@@ -1786,6 +1850,7 @@ public final class MemoryEngineService extends Service {
 			managedStateToken = token;
 			managedRevision = 0L;
 			managedResultCount = 0L;
+			managedBaselineCount = 0L;
 			managedWatchCount = 0;
 			managedFreezeCount = 0;
 			managedLastMessage = null;
@@ -1813,6 +1878,9 @@ public final class MemoryEngineService extends Service {
 		}
 		if (acceptSearchMetadata && state.containsKey(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT)) {
 			managedResultCount = state.getLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT);
+		}
+		if (acceptSearchMetadata && state.containsKey(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT)) {
+			managedBaselineCount = state.getLong(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT);
 		}
 		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT)) {
 			managedWatchCount = state.getInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT);
@@ -1884,24 +1952,39 @@ public final class MemoryEngineService extends Service {
 		return MemoryEngineContract.RESULT_OK;
 	}
 
-	private int refineKnownAddressSet(long token, int predicate, String first, String second) {
+	private int refineKnownAddressSet(long token, int valueType, int predicate,
+	                                 String first, String second) {
 		// Bulk Known/Auto results are address membership. A stale GC epoch merely permits native
 		// to probe for broad relocation; it does not itself request a full target scan. Native
 		// additionally requires a large result set and strong sampled fingerprint evidence.
 		// After a successful refine the published revision epoch advances, so the same GC epoch
 		// cannot repeatedly trigger reconciliation. Small result sets always stay candidate-only.
 		long gcBefore = currentGcCount(token);
-		boolean allowRelocationReconcile = gcBindings.searchEpochChanged(gcBefore);
+		boolean unknownBaseline;
+		synchronized (searchSessionLock) {
+			unknownBaseline = searchSessionStage ==
+					MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE;
+		}
+		if (unknownBaseline && gcBindings.searchEpochChanged(gcBefore)) {
+			NativeMemoryEngine.clearSearch();
+			clearSearchSession();
+			return MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED;
+		}
+		boolean allowRelocationReconcile = !unknownBaseline &&
+				gcBindings.searchEpochChanged(gcBefore);
 		int result = NativeMemoryEngine.refineKnown(
-				predicate, first, second, allowRelocationReconcile);
+				valueType, predicate, first, second, allowRelocationReconcile);
 		if (result != MemoryEngineContract.RESULT_OK) return result;
 		long gcAfter = currentGcCount(token);
+		if (unknownBaseline && MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
+			return rollbackAfterGcRace();
+		}
 		advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
-				MemoryGcPolicy.publishedSearchEpoch(false, gcBefore, gcAfter));
+				MemoryGcPolicy.publishedSearchEpoch(false, gcBefore, gcAfter), valueType);
 		return MemoryEngineContract.RESULT_OK;
 	}
 
-	private int refineRelativeGcAware(long token, int predicate, int compareTarget,
+	private int refineRelativeGcAware(long token, int valueType, int predicate, int compareTarget,
 	                                  String first, String second) {
 		long gcBefore = currentGcCount(token);
 		if (gcBindings.searchEpochChanged(gcBefore)) {
@@ -1916,14 +1999,15 @@ public final class MemoryEngineService extends Service {
 			}
 			return MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED;
 		}
-		int result = NativeMemoryEngine.refineRelative(predicate, compareTarget, first, second);
+		int result = NativeMemoryEngine.refineRelative(
+				valueType, predicate, compareTarget, first, second);
 		if (result != MemoryEngineContract.RESULT_OK) return result;
 		long gcAfter = currentGcCount(token);
 		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
 			return rollbackAfterGcRace();
 		}
 		advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
-				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
+				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter), valueType);
 		return MemoryEngineContract.RESULT_OK;
 	}
 
@@ -2201,6 +2285,33 @@ public final class MemoryEngineService extends Service {
 			refreshCachedBindings(candidateIds);
 		}
 		return result;
+	}
+
+	private Bundle inspectManagedCandidate(long token, long candidateId, int radius,
+	                                      boolean watchAnchor) {
+		if (!isCurrentToken(token)) {
+			return inspectionFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"Managed runtime is no longer current");
+		}
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) return inspectionFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+				"MIDlet runtime is not connected");
+		try {
+			long expectedRevision = watchAnchor ? 0L : managedRevision;
+			Bundle result = bridge.managedInspect(token, expectedRevision, candidateId, radius,
+					watchAnchor);
+			long runtimeAfterRpc = bridge.getRuntimeToken();
+			synchronized (searchCommitLock) {
+				int decision = managedSearchReplyDecisionLocked(token, bridge, result,
+						runtimeAfterRpc, nativeSearchClearGeneration.get(), cancelEpoch.get(),
+						expectedRevision);
+				return decision == MemoryEngineContract.RESULT_OK ? result
+						: inspectionFailure(decision, managedReplyFailureMessage(decision));
+			}
+		} catch (RemoteException exception) {
+			return inspectionFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime connection was lost");
+		}
 	}
 
 	private Bundle inspectCandidateOnWorker(long token, long candidateId, int radius) {
@@ -2618,12 +2729,19 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private void advanceSearchSession(int nextStage, long gcCount) {
+		advanceSearchSession(nextStage, gcCount, Integer.MIN_VALUE);
+	}
+
+	private void advanceSearchSession(int nextStage, long gcCount, int requestedType) {
 		int nativeHistoryDepth = NativeMemoryEngine.historyDepth();
 		synchronized (searchSessionLock) {
 			searchStageHistory.addLast(searchSessionStage);
 			searchGcHistory.addLast(gcBindings.searchEpoch());
 			trimSearchHistoryLocked(nativeHistoryDepth);
 			searchSessionStage = nextStage;
+			if (requestedType != Integer.MIN_VALUE) {
+				searchRequestedType = requestedType;
+			}
 			gcBindings.setSearchEpoch(gcCount);
 		}
 	}
@@ -2801,6 +2919,7 @@ public final class MemoryEngineService extends Service {
 			managedStateToken = 0L;
 			managedRevision = 0L;
 			managedResultCount = 0L;
+			managedBaselineCount = 0L;
 			managedWatchCount = 0;
 			managedFreezeCount = 0;
 			managedLastMessage = null;

@@ -170,9 +170,26 @@ public final class MemoryTargetBridgeService extends Service {
 
 		@Override
 		public Bundle managedEditTyped(long runtimeToken, long expectedRevision, long[] ids,
-				String replacement, boolean allowWatchOnly, long cancellationEpoch) {
+				int declaredType, String replacement, boolean allowWatchOnly, long cancellationEpoch) {
 			return managedResult(runtimeToken, managedEngine.editTyped(runtimeToken, expectedRevision, ids,
-					replacement, allowWatchOnly, cancellationEpoch));
+				declaredType, replacement, allowWatchOnly, cancellationEpoch));
+		}
+
+		@Override
+		public Bundle managedInspect(long runtimeToken, long expectedRevision, long candidateId,
+				int radius, boolean allowWatchOnly) {
+			return managedInspection(runtimeToken,
+					managedEngine.inspect(runtimeToken, expectedRevision, candidateId, radius,
+							allowWatchOnly));
+		}
+
+		@Override
+		public Bundle managedEditInspector(long runtimeToken, long expectedRevision,
+				long anchorCandidateId, boolean allowWatchOnly, int relativeOffset, int valueType,
+				long expectedBits, String replacement, long cancellationEpoch) {
+			return managedResult(runtimeToken, managedEngine.editInspector(runtimeToken,
+				expectedRevision, anchorCandidateId, allowWatchOnly, relativeOffset, valueType,
+				expectedBits, replacement, cancellationEpoch));
 		}
 
 		@Override
@@ -304,6 +321,7 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, state.controlEpoch);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, state.revision);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT, state.resultCount);
+		result.putLong(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, state.baselineCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
 		if (state.message != null && !state.message.isBlank()) {
@@ -320,6 +338,7 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED, state.supported);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, state.revision);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT, state.resultCount);
+		result.putLong(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, state.baselineCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
 		result.putInt(MemoryEngineContract.KEY_SEARCH_SESSION_STAGE, state.stage);
@@ -338,13 +357,48 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, state.code);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, state.revision);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT, state.resultCount);
+		result.putLong(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, state.baselineCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_ATTEMPTED, state.attempted);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WRITTEN, state.written);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_SKIPPED, state.skipped);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_UNCONFIRMED, state.unconfirmed);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_NOT_ATTEMPTED, state.notAttempted);
+		result.putInt(MemoryEngineContract.KEY_MANAGED_REJECTED_BEFORE_WRITE,
+				state.rejectedBeforeWrite);
+		result.putInt(MemoryEngineContract.KEY_MANAGED_SKIPPED_BY_TYPE, state.skippedByType);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
+		if (state.message != null && !state.message.isBlank()) {
+			result.putString(MemoryEngineContract.KEY_MESSAGE, state.message);
+		}
+		return result;
+	}
+
+	private static Bundle managedInspection(long runtimeToken,
+	                                       ManagedJavaMemoryEngine.ManagedInspection state) {
+		Bundle result = new Bundle();
+		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
+		result.putInt(MemoryEngineContract.KEY_INSPECT_RESULT, state.code);
+		if (state.code == MemoryEngineContract.RESULT_OK) {
+			result.putLong(MemoryEngineContract.KEY_INSPECT_ANCHOR_ID, state.anchorId);
+			result.putLong(MemoryEngineContract.KEY_INSPECT_EXPECTED_REVISION, state.revision);
+			result.putLongArray(MemoryEngineContract.KEY_INSPECT_IDS, state.ids);
+			result.putStringArray(MemoryEngineContract.KEY_INSPECT_VALUES, state.values);
+			result.putStringArray(MemoryEngineContract.KEY_INSPECT_INITIAL_VALUES,
+					state.initialValues);
+			result.putStringArray(MemoryEngineContract.KEY_INSPECT_PREVIOUS_VALUES,
+					state.previousValues);
+			result.putIntArray(MemoryEngineContract.KEY_INSPECT_TYPES, state.types);
+			result.putIntArray(MemoryEngineContract.KEY_INSPECT_STATES, state.states);
+			result.putIntArray(MemoryEngineContract.KEY_INSPECT_RELATIVE_OFFSETS,
+					state.relativeOffsets);
+			result.putLongArray(MemoryEngineContract.KEY_INSPECT_EXPECTED_BITS,
+					state.expectedBits);
+			result.putStringArray(MemoryEngineContract.KEY_INSPECT_LABELS, state.labels);
+			result.putIntArray(MemoryEngineContract.KEY_INSPECT_BACKENDS, state.backends);
+			result.putBooleanArray(MemoryEngineContract.KEY_INSPECT_EDITABLE, state.editable);
+			result.putString(MemoryEngineContract.KEY_INSPECT_PROVENANCE, state.provenance);
+		}
 		if (state.message != null && !state.message.isBlank()) {
 			result.putString(MemoryEngineContract.KEY_MESSAGE, state.message);
 		}

@@ -1378,7 +1378,8 @@ class CompactOwnerOutputBuilder final {
 }
 
 [[nodiscard]] jint compactOwnerRefineRelative(
-        const OperationContext &context, jint predicate, jint compareTarget,
+        const OperationContext &context, jint requestedType, jint predicate,
+        jint compareTarget,
         const std::string &first, const std::string &second) {
     if (compareTarget != kComparePrevious && compareTarget != kCompareInitial) {
         return kInvalidRequest;
@@ -1388,7 +1389,7 @@ class CompactOwnerOutputBuilder final {
         return kNoSession;
     }
     std::vector<Query> queries;
-    if (!buildQueries(context.state->requestedType, predicate, first, second,
+    if (!buildQueries(requestedType, predicate, first, second,
                       true, queries)) {
         setMessage("Invalid relative value, type, or predicate");
         return kInvalidRequest;
@@ -1408,7 +1409,7 @@ class CompactOwnerOutputBuilder final {
     }
     auto next = std::make_shared<SearchState>();
     next->mode = StateMode::Candidates;
-    next->requestedType = context.state->requestedType;
+    next->requestedType = requestedType;
     next->logicalCount = logicalCount;
     next->candidateOrderDirty = false;
     next->watches = context.state->watches;
@@ -2056,7 +2057,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineRelativeV2Compac
                     fromJString(env, first), fromJString(env, second));
         }
         return compactOwnerRefineRelative(
-                context, predicate, compareTarget,
+                context, context.state->requestedType, predicate, compareTarget,
                 fromJString(env, first), fromJString(env, second));
     });
 }

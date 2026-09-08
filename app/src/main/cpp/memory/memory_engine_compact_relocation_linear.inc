@@ -416,7 +416,7 @@ static_assert(sizeof(CompactLinearRecoveryEntry) <= 32U,
 }
 
 [[nodiscard]] jint compactOwnerRefineKnownLinear(
-        const OperationContext &context, jint predicate,
+        const OperationContext &context, jint requestedType, jint predicate,
         const std::string &first, const std::string &second,
         bool allowRelocationReconcile) {
     std::shared_ptr<const jlmem::v2::ResultRevision> source;
@@ -424,7 +424,7 @@ static_assert(sizeof(CompactLinearRecoveryEntry) <= 32U,
         return kNoSession;
     }
     std::vector<Query> queries;
-    if (!buildQueries(context.state->requestedType, predicate, first, second,
+    if (!buildQueries(requestedType, predicate, first, second,
                       false, queries)) {
         setMessage("Invalid value, type, or predicate");
         return kInvalidRequest;
@@ -458,7 +458,7 @@ static_assert(sizeof(CompactLinearRecoveryEntry) <= 32U,
 
     auto next = std::make_shared<SearchState>();
     next->mode = StateMode::Candidates;
-    next->requestedType = context.state->requestedType;
+    next->requestedType = requestedType;
     next->logicalCount = logicalCount;
     next->candidateOrderDirty = false;
     next->watches = context.state->watches;
@@ -493,7 +493,8 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnownV2CompactOw
         OperationContext context;
         if (!beginOperation(context)) return kNoSession;
         return compactOwnerRefineKnownLinear(
-                context, predicate, fromJString(env, first), fromJString(env, second),
+                context, context.state->requestedType, predicate,
+                fromJString(env, first), fromJString(env, second),
                 allowRelocationReconcile == JNI_TRUE);
     });
 }

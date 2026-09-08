@@ -14,6 +14,7 @@ extern "C" jint
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnownV2CompactOwnerLinear(
         JNIEnv *, jclass, jint, jstring, jstring, jboolean);
 
+
 extern "C" JNIEXPORT jint JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnownV2CompactOwner(
         JNIEnv *env, jclass clazz, jint predicate, jstring first, jstring second,

@@ -112,6 +112,13 @@ final class NativeMemoryEngine {
 	private static native int refineRelativeV2CompactOwnerSafe(
 			int predicate, int compareTarget, String first, String second);
 
+	private static native int refineKnownV2CompactOwnerTyped(
+			int valueType, int predicate, String first, String second,
+			boolean allowRelocationReconcile);
+
+	private static native int refineRelativeV2CompactOwnerSafeTyped(
+			int valueType, int predicate, int compareTarget, String first, String second);
+
 	private static native int startGroupV2CompactOwner(
 			int[] valueTypes, String[] values, int encodedDistance);
 
@@ -193,6 +200,16 @@ final class NativeMemoryEngine {
 		return result;
 	}
 
+	static int refineKnown(int valueType, int predicate, String first, String second,
+	                      boolean allowRelocationReconcile) {
+		int result = refineKnownV2CompactOwnerTyped(
+				valueType, predicate, first, second, allowRelocationReconcile);
+		if (result == MemoryEngineContract.RESULT_OK) {
+			publishV2KnownPagingStage(true, true);
+		}
+		return result;
+	}
+
 	private static native int refineKnownV2Authoritative(int predicate, String first, String second,
 	                                                    boolean allowRelocationReconcile);
 
@@ -203,6 +220,16 @@ final class NativeMemoryEngine {
 		// The compact owner handles both Unknown-baseline first materialization and later relative COW
 		// refinements. A successful first relative scan therefore never creates a Candidate mirror.
 		int result = refineRelativeV2CompactOwnerSafe(predicate, compareTarget, first, second);
+		if (result == MemoryEngineContract.RESULT_OK) {
+			publishV2KnownPagingStage(true, true);
+		}
+		return result;
+	}
+
+	static int refineRelative(int valueType, int predicate, int compareTarget,
+	                         String first, String second) {
+		int result = refineRelativeV2CompactOwnerSafeTyped(
+				valueType, predicate, compareTarget, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			publishV2KnownPagingStage(true, true);
 		}

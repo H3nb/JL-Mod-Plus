@@ -69,4 +69,15 @@ class ScreenSoftBarPolicyTest {
         assertSame(preferred, presentation.right)
         assertSame(later, presentation.left)
     }
+
+    @Test
+    fun itemCommandsStayAheadOfTerminalActionsInOverflow() {
+        val item = Command("Buy", Command.ITEM, 1)
+        val back = Command("Back", Command.BACK, 1)
+        val exit = Command("Exit", Command.EXIT, 2)
+
+        val presentation = ScreenSoftBarPolicy.present(listOf(item, back, exit))
+
+        assertEquals(listOf(item, exit), presentation.overflow)
+    }
 }
