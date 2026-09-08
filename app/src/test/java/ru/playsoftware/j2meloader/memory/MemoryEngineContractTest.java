@@ -22,38 +22,9 @@ import org.junit.Test;
 
 public class MemoryEngineContractTest {
 	@Test
-	public void completeRunListRequiresExactUntruncatedShape() {
-		assertTrue(MemoryEngineContract.isCompleteRunList(
-				new long[]{2L, 0L, 0x1000L, 0x2000L, 0x3000L, 0x5000L}));
-		assertFalse(MemoryEngineContract.isCompleteRunList(
-				new long[]{2L, 1L, 0x1000L, 0x2000L, 0x3000L, 0x5000L}));
-		assertFalse(MemoryEngineContract.isCompleteRunList(
-				new long[]{2L, 0L, 0x1000L, 0x2000L}));
-		assertFalse(MemoryEngineContract.isCompleteRunList(
-				new long[]{1L, 0L, 0x1000L, 0x2000L, 0x3000L, 0x4000L}));
-		long[] oversized = new long[2 + (MemoryEngineContract.MAX_RESIDENT_RUNS + 1) * 2];
-		oversized[0] = MemoryEngineContract.MAX_RESIDENT_RUNS + 1L;
-		assertFalse(MemoryEngineContract.isCompleteRunList(oversized));
-	}
-
-	@Test
-	public void completeRunListAcceptsTheExactConfiguredMaximum() {
-		long[] runs = new long[2 + MemoryEngineContract.MAX_RESIDENT_RUNS * 2];
-		runs[0] = MemoryEngineContract.MAX_RESIDENT_RUNS;
-		for (int index = 0; index < MemoryEngineContract.MAX_RESIDENT_RUNS; index++) {
-			long start = 0x1000L + index * 0x2000L;
-			runs[2 + index * 2] = start;
-			runs[3 + index * 2] = start + 0x1000L;
-		}
-		assertTrue(MemoryEngineContract.isCompleteRunList(runs));
-	}
-
-	@Test
 	public void contractRejectsUnknownEnums() {
-		assertTrue(MemoryEngineContract.isScope(MemoryEngineContract.SCOPE_JAVA_FAST));
 		assertTrue(MemoryEngineContract.isScope(MemoryEngineContract.SCOPE_MANAGED_JAVA));
 		assertTrue(MemoryEngineContract.isManagedScope(MemoryEngineContract.SCOPE_MANAGED_JAVA));
-		assertTrue(MemoryEngineContract.isRawScope(MemoryEngineContract.SCOPE_JAVA_THOROUGH));
 		assertTrue(MemoryEngineContract.isValueType(MemoryEngineContract.TYPE_AUTO));
 		assertTrue(MemoryEngineContract.isCandidateType(MemoryEngineContract.TYPE_DOUBLE));
 		assertFalse(MemoryEngineContract.isScope(-1));
@@ -62,25 +33,8 @@ public class MemoryEngineContractTest {
 	}
 
 	@Test
-	public void gcEpochHelpersFailOpenOnlyWhenTheRuntimeStatIsUnknown() {
-		assertFalse(MemoryEngineContract.isKnownGcCount(MemoryEngineContract.GC_COUNT_UNKNOWN));
-		assertTrue(MemoryEngineContract.isKnownGcCount(0L));
-		assertTrue(MemoryEngineContract.isKnownGcCount(42L));
-		assertFalse(MemoryEngineContract.didGcCountChange(42L, 42L));
-		assertTrue(MemoryEngineContract.didGcCountChange(42L, 43L));
-		assertFalse(MemoryEngineContract.didGcCountChange(
-				MemoryEngineContract.GC_COUNT_UNKNOWN, 43L));
-		assertEquals(43L, MemoryEngineContract.latestKnownGcCount(42L, 43L));
-		assertEquals(42L, MemoryEngineContract.latestKnownGcCount(
-				42L, MemoryEngineContract.GC_COUNT_UNKNOWN));
-	}
-
-	@Test
 	public void mutationOutcomesRemainDistinct() {
 		assertEquals(7, MemoryEngineContract.RESULT_IDENTITY_UNSAFE);
-		assertEquals(9, MemoryEngineContract.RESULT_GC_REVALIDATED);
-		assertEquals(10, MemoryEngineContract.RESULT_GC_RACE);
-		assertEquals(11, MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED);
 		assertEquals(12, MemoryEngineContract.RESULT_PARTIAL_WRITE);
 	}
 
@@ -93,17 +47,10 @@ public class MemoryEngineContractTest {
 		assertEquals(128, MemoryEngineContract.MAX_WATCH_RECORDS);
 		assertEquals(8, MemoryEngineContract.MAX_GROUP_VALUES);
 		assertEquals(8, MemoryEngineContract.MAX_SEARCH_HISTORY);
-		assertEquals(16_384, MemoryEngineContract.MAX_RESIDENT_RUNS);
 		assertEquals(128, MemoryEngineContract.DEFAULT_INSPECT_RADIUS);
 		assertEquals(256, MemoryEngineContract.MAX_INSPECT_RADIUS);
-		assertEquals(256, MemoryEngineContract.DEFAULT_NEARBY_RADIUS);
-		assertEquals(4096, MemoryEngineContract.MAX_NEARBY_RADIUS);
-		assertEquals(520, MemoryEngineContract.MAX_INSPECT_BYTES);
 		assertTrue(MemoryEngineContract.isInspectRadius(128));
 		assertFalse(MemoryEngineContract.isInspectRadius(0));
 		assertFalse(MemoryEngineContract.isInspectRadius(257));
-		assertTrue(MemoryEngineContract.isNearbyRadius(256));
-		assertFalse(MemoryEngineContract.isNearbyRadius(0));
-		assertFalse(MemoryEngineContract.isNearbyRadius(4097));
 	}
 }

@@ -16,24 +16,6 @@ interface IMemoryTargetBridge {
     void registerTargetCallback(IMemoryTargetCallback callback);
     void unregisterTargetCallback(IMemoryTargetCallback callback);
     long getRuntimeToken();
-    int getTargetPid();
-    int getPageSize();
-
-    /**
-     * Returns the current ART garbage-collection count for this runtime, or
-     * MemoryEngineContract.GC_COUNT_UNKNOWN when the runtime statistic is unavailable.
-     * The count is a relocation signal, not proof that any particular object moved.
-     */
-    long getGcCount(long runtimeToken);
-
-    /** Returns [address, expectedBits] for a target-owned read-only capability probe. */
-    long[] getReadProbe(long runtimeToken);
-
-    /**
-     * Returns [runCount, truncated, start0, end0, ...]. Only resident readable/writable runs
-     * selected by the requested scope are returned.
-     */
-    long[] getResidentRuns(long runtimeToken, int scope, int maxRuns);
 
     /** Managed Java graph backend; all values and ids remain logical and target-owned. */
     Bundle getManagedCapabilities(long runtimeToken);
@@ -41,6 +23,8 @@ interface IMemoryTargetBridge {
     Bundle managedStartExact(long runtimeToken, int valueType, int predicate,
             String firstValue, String secondValue, long cancellationEpoch);
     Bundle managedStartUnknown(long runtimeToken, int valueType, long cancellationEpoch);
+    Bundle managedStartGroup(long runtimeToken, int valueType, in String[] values,
+            long cancellationEpoch);
     Bundle managedRefine(long runtimeToken, long expectedRevision, int valueType, int predicate,
             int compareTarget, String firstValue, String secondValue, long cancellationEpoch);
     Bundle managedStartExactInt(long runtimeToken, int value, long cancellationEpoch);
@@ -48,6 +32,7 @@ interface IMemoryTargetBridge {
             int compareTarget, int value, long cancellationEpoch);
     Bundle managedFilter(long runtimeToken, long expectedRevision, in long[] ids,
             boolean keep, long cancellationEpoch);
+    Bundle managedUndo(long runtimeToken, long expectedRevision, long cancellationEpoch);
     Bundle managedResultPage(long runtimeToken, long expectedRevision, int offset, int limit);
     Bundle managedWatchPage(long runtimeToken);
     Bundle managedRefresh(long runtimeToken, in long[] ids, long expectedRevision,

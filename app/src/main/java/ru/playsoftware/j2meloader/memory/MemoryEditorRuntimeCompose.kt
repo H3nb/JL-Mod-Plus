@@ -82,8 +82,6 @@ import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
 import ru.playsoftware.j2meloader.ui.jlModPlusFilterChipColors
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.util.Locale
 
 private enum class RuntimeMemoryTab { SEARCH_RESULTS, WATCH, INSPECTOR }
@@ -477,10 +475,7 @@ private fun RuntimeSearchResultsTab(
     var editRevision by remember { mutableStateOf(0L) }
     val baselineOnly = state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE
     val selectedRows = state.results.filter { it.id in state.selected }
-    val selectedWriteSupported = selectedRows.isNotEmpty() && selectedRows.all { row ->
-        if (ManagedJavaMemoryIds.isManaged(row.id)) state.managedWriteSupported
-        else state.writeSupported
-    }
+    val selectedWriteSupported = selectedRows.isNotEmpty() && state.managedWriteSupported
     val allVisibleSelected = state.results.isNotEmpty() &&
         state.results.all { it.id in state.selected }
 
@@ -514,11 +509,7 @@ private fun RuntimeSearchResultsTab(
                 enabled = selectedWriteSupported && !state.busy && !baselineOnly,
                 onClick = {
                     editTargets = selectedRows.map { row ->
-                        MemoryEditTarget(row.id, row.primaryType, row.valueText,
-                            if (ManagedJavaMemoryIds.isManaged(row.id)) {
-                                MemoryEngineContract.BACKEND_MANAGED
-                            } else MemoryEngineContract.BACKEND_RAW,
-                            row.aliasTypes)
+                        MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes)
                     }
                     editRevision = state.managedRevision
                 },
@@ -635,11 +626,7 @@ private fun RuntimeSearchResultsTab(
                                 actions.toggleSelection(row.id)
                             } else {
                                 editTargets = listOf(
-                                    MemoryEditTarget(row.id, row.primaryType, row.valueText,
-                                        if (ManagedJavaMemoryIds.isManaged(row.id)) {
-                                            MemoryEngineContract.BACKEND_MANAGED
-                                        } else MemoryEngineContract.BACKEND_RAW,
-                                        row.aliasTypes),
+                                    MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes),
                                 )
                                 editRevision = state.managedRevision
                             }
@@ -734,7 +721,7 @@ private fun RuntimeResultRow(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        row.addressText,
+                        row.locationText,
                         style = MaterialTheme.typography.bodySmall,
                         fontFamily = FontFamily.Monospace,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -757,10 +744,7 @@ private fun RuntimeWatchTab(
 ) {
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     val selectedRows = state.watches.filter { it.id in state.selected }
-    val selectedWriteSupported = selectedRows.isNotEmpty() && selectedRows.all { row ->
-        if (row.backend == MemoryEngineContract.BACKEND_MANAGED) state.managedWriteSupported
-        else state.writeSupported
-    }
+    val selectedWriteSupported = selectedRows.isNotEmpty() && state.managedWriteSupported
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -779,8 +763,7 @@ private fun RuntimeWatchTab(
                 enabled = selectedWriteSupported && !state.busy,
             ) {
                 editTargets = selectedRows.map { row ->
-                    MemoryEditTarget(row.id, row.type, row.valueText,
-                        row.backend, listOf(row.type), watch = true)
+                    MemoryEditTarget(row.id, row.type, row.valueText, listOf(row.type), watch = true)
                 }
             }
             RuntimeActionIcon(
@@ -833,7 +816,7 @@ private fun RuntimeWatchTab(
                         onClick = {
                             editTargets = listOf(
                                 MemoryEditTarget(row.id, row.type, row.valueText,
-                                    row.backend, listOf(row.type), watch = true),
+                                    listOf(row.type), watch = true),
                             )
                         },
                     )
@@ -907,7 +890,7 @@ private fun RuntimeWatchRow(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "${row.addressText} · ${runtimeTypeShort(row.type)}",
+                        "${row.locationText} · ${runtimeTypeShort(row.type)}",
                         style = MaterialTheme.typography.bodySmall,
                         fontFamily = FontFamily.Monospace,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -993,20 +976,8 @@ internal fun RuntimeKnownSearchDialog(
             state.requestedType.takeIf(MemoryEngineContract::isValueType) ?: MemoryEngineContract.TYPE_AUTO,
         )
     }
-    var scope by remember(
-        state.runtimeToken,
-        state.sessionStage,
-        state.searchScope,
-        state.knownScopePreference,
-    ) {
-        mutableIntStateOf(
-            if (state.sessionStage == MemorySessionStage.EMPTY) state.knownScopePreference
-            else state.searchScope,
-        )
-    }
     var peekingUnderlay by remember { mutableStateOf(false) }
 
-    val managedScope = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA
     val expression = parseMemorySearchExpression(query.text)
     val relative = predicate >= MemoryEngineContract.PREDICATE_CHANGED
     val spec = if (relative) MemoryInputSpec.relativeMagnitudeForType(type)
@@ -1027,15 +998,14 @@ internal fun RuntimeKnownSearchDialog(
     }
     val secondValid = !needsSecond || spec.isComplete(second.text)
     val singleValid = expression is MemorySearchExpression.Single && firstValid
-    val groupValid = expression is MemorySearchExpression.Group && type != MemoryEngineContract.TYPE_AUTO &&
-        expression.values.all(spec::isComplete)
-    val newSearchValid = !relative && if (managedScope) singleValid && secondValid &&
+    val managedGroupValid = expression is MemorySearchExpression.Group &&
+        type != MemoryEngineContract.TYPE_AUTO && expression.values.all(spec::isComplete)
+    val newSearchValid = !relative && (singleValid || managedGroupValid) && secondValid &&
         MemoryEngineContract.isValueType(type) &&
         predicate in MemoryEngineContract.PREDICATE_EQUAL..MemoryEngineContract.PREDICATE_BETWEEN
-    else (singleValid || groupValid) && secondValid
     val nextScanValid = state.sessionStage != MemorySessionStage.EMPTY &&
         type in (MemoryEngineContract.TYPE_AUTO..MemoryEngineContract.TYPE_DOUBLE) &&
-        scope == state.searchScope &&
+        state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA &&
         (if (relative && !runtimeRelativeNeedsValue(predicate)) true else firstValid) && secondValid
 
     AlertDialog(
@@ -1084,17 +1054,6 @@ internal fun RuntimeKnownSearchDialog(
                             RuntimeTypeMenu(
                                 type = type,
                                 onType = { type = it },
-                                managed = managedScope,
-                                modifier = Modifier.weight(1f),
-                            )
-                            RuntimeScopeMenu(
-                                scope = scope,
-                                onScope = {
-                                    scope = it
-                                    actions.setKnownSearchScope(it)
-                                },
-                                managedSupported = state.managedSupported,
-                                enabled = state.sessionStage == MemorySessionStage.EMPTY,
                                 modifier = Modifier.weight(1f),
                             )
                         }
@@ -1102,29 +1061,17 @@ internal fun RuntimeKnownSearchDialog(
                         RuntimeTypeMenu(
                             type = type,
                             onType = { type = it },
-                            managed = managedScope,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        RuntimeScopeMenu(
-                            scope = scope,
-                            onScope = {
-                                scope = it
-                                actions.setKnownSearchScope(it)
-                            },
-                            managedSupported = state.managedSupported,
-                            enabled = state.sessionStage == MemorySessionStage.EMPTY,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 },
                 keypad = {
                     RuntimeSearchKeypad(
-                        allowGroup = activeField == RuntimeInputField.FIRST && !managedScope,
-                        valueSpec = if (managedScope || relative || activeField == RuntimeInputField.SECOND) spec else null,
+                        allowGroup = activeField == RuntimeInputField.FIRST,
+                        valueSpec = spec,
                         onToken = { token ->
                             if (activeField == RuntimeInputField.FIRST) {
-                                query = if (managedScope) runtimeInsertValidated(query, token, spec)
-                                else runtimeInsert(query, token)
+                                query = runtimeInsertValidated(query, token, spec)
                             } else {
                                 second = runtimeInsertValidated(second, token, spec)
                             }
@@ -1165,13 +1112,11 @@ internal fun RuntimeKnownSearchDialog(
                                 type,
                                 predicate,
                                 false,
-                                scope,
+                                MemoryEngineContract.SCOPE_MANAGED_JAVA,
                             )
                             is MemorySearchExpression.Group -> actions.groupSearch(
-                                IntArray(parsed.values.size) { type },
+                                type,
                                 parsed.values.toTypedArray(),
-                                parsed.maxDistance,
-                                scope,
                             )
                             is MemorySearchExpression.Invalid -> Unit
                         }
@@ -1219,13 +1164,6 @@ private fun RuntimeUnknownSearchDialog(
             state.requestedType.takeIf(MemoryEngineContract::isValueType) ?: MemoryEngineContract.TYPE_AUTO,
         )
     }
-    var scope by remember(state.runtimeToken) {
-        mutableIntStateOf(
-            state.searchScope.takeIf(MemoryEngineContract::isScope)
-                ?: if (state.managedSupported) MemoryEngineContract.SCOPE_MANAGED_JAVA
-                else MemoryEngineContract.SCOPE_JAVA_FAST,
-        )
-    }
     var predicate by remember(state.runtimeToken) {
         mutableIntStateOf(memoryUnknownPredicateOrDefault(state.unknownPredicate))
     }
@@ -1267,13 +1205,6 @@ private fun RuntimeUnknownSearchDialog(
                                 RuntimeTypeMenu(
                                     type = type,
                                     onType = { type = it },
-                                    managed = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                RuntimeScopeMenu(
-                                    scope = scope,
-                                    onScope = { scope = it },
-                                    managedSupported = state.managedSupported,
                                     modifier = Modifier.weight(1f),
                                 )
                             }
@@ -1281,13 +1212,6 @@ private fun RuntimeUnknownSearchDialog(
                             RuntimeTypeMenu(
                                 type = type,
                                 onType = { type = it },
-                                managed = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            RuntimeScopeMenu(
-                                scope = scope,
-                                onScope = { scope = it },
-                                managedSupported = state.managedSupported,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
@@ -1305,17 +1229,9 @@ private fun RuntimeUnknownSearchDialog(
                                 RuntimeTypeMenu(
                                     type = type,
                                     onType = { type = it },
-                                    managed = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA,
                                     modifier = Modifier.weight(1f),
                                 )
                             }
-                            RuntimeScopeMenu(
-                                scope = scope,
-                                onScope = {},
-                                managedSupported = state.managedSupported,
-                                enabled = false,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
                         } else {
                             RuntimeRelativeMenu(
                                 predicate = predicate,
@@ -1327,14 +1243,6 @@ private fun RuntimeUnknownSearchDialog(
                             RuntimeTypeMenu(
                                 type = type,
                                 onType = { type = it },
-                                managed = scope == MemoryEngineContract.SCOPE_MANAGED_JAVA,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            RuntimeScopeMenu(
-                                scope = scope,
-                                onScope = {},
-                                managedSupported = state.managedSupported,
-                                enabled = false,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
@@ -1420,7 +1328,7 @@ private fun RuntimeUnknownSearchDialog(
                             type,
                             MemoryEngineContract.PREDICATE_EQUAL,
                             true,
-                            scope,
+                            MemoryEngineContract.SCOPE_MANAGED_JAVA,
                         )
                         onDismiss()
                     },
@@ -1612,8 +1520,7 @@ private fun RuntimeEditDialog(
 }
 
 private fun MemoryEditTarget.supportsWrite(state: MemoryEditorUiState): Boolean =
-    if (backend == MemoryEngineContract.BACKEND_MANAGED) state.managedWriteSupported
-    else state.writeSupported
+    state.managedWriteSupported
 
 @Composable
 private fun RuntimeInspectorTab(
@@ -1622,7 +1529,6 @@ private fun RuntimeInspectorTab(
     onPeekUnderlayChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var editCell by remember { mutableStateOf<MemoryInspectorCell?>(null) }
     var editLogicalRow by remember { mutableStateOf<MemoryInspectorLogicalRow?>(null) }
     when {
         state.inspectorLoading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -1640,10 +1546,8 @@ private fun RuntimeInspectorTab(
             )
         }
         else -> {
-            val snapshot = state.inspector
-            val managed = snapshot.backend == MemoryEngineContract.BACKEND_MANAGED
-            val cells = remember(snapshot) { buildInspectorCells(snapshot) }
-            val logicalRows = remember(snapshot) { snapshot.logicalRows }
+            val snapshot = requireNotNull(state.inspector)
+            val logicalRows = snapshot.logicalRows
             Column(modifier = modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
@@ -1655,20 +1559,11 @@ private fun RuntimeInspectorTab(
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                         )
-                        if (managed) {
-                            Text(
-                                "Managed · ${snapshot.provenance.ifBlank { "logical" }}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        } else {
-                            Text(
-                                "${stringResource(R.string.memory_editor_anchor)} 0x${snapshot.anchorAddress.toString(16).uppercase(Locale.ROOT)}",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontFamily = FontFamily.Monospace,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                        Text(
+                            snapshot.provenance.ifBlank { "logical" },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                     RuntimeActionIcon(
                         R.drawable.ic_restart_alt,
@@ -1682,87 +1577,7 @@ private fun RuntimeInspectorTab(
                     }
                 }
                 HorizontalDivider()
-                if (managed) {
-                    if (logicalRows.isEmpty()) {
-                        Box(
-                            modifier = Modifier.weight(1f).fillMaxWidth(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                stringResource(R.string.memory_editor_inspector_empty),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    } else {
-                        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                            val anchorIndex = logicalRows.indexOfFirst { it.relativeOffset == 0 }
-                                .coerceAtLeast(0)
-                            val visibleRows = (maxHeight.value / 55f).toInt().coerceAtLeast(1)
-                            val firstIndex = inspectorCenteredFirstIndex(
-                                cellCount = logicalRows.size,
-                                anchorIndex = anchorIndex,
-                                visibleRows = visibleRows,
-                            )
-                            val listState = rememberLazyListState()
-                            LaunchedEffect(snapshot.candidateId, snapshot.expectedRevision, firstIndex) {
-                                listState.scrollToItem(firstIndex)
-                            }
-                            LazyColumn(
-                                state = listState,
-                                modifier = Modifier.fillMaxSize(),
-                                userScrollEnabled = logicalRows.size > visibleRows,
-                            ) {
-                                items(logicalRows, key = { it.id }) { row ->
-                                    Surface(
-                                        color = if (row.relativeOffset == 0) {
-                                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
-                                        } else Color.Transparent,
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .combinedClickable(
-                                                    enabled = row.editable && state.managedWriteSupported && !state.busy,
-                                                    onClick = { editLogicalRow = row },
-                                                    onLongClick = { editLogicalRow = row },
-                                                )
-                                                .heightIn(min = 48.dp)
-                                                .padding(horizontal = 12.dp, vertical = 7.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            Text(
-                                                if (row.relativeOffset >= 0) "+${row.relativeOffset}"
-                                                else row.relativeOffset.toString(),
-                                                modifier = Modifier.widthIn(min = 48.dp),
-                                                style = MaterialTheme.typography.labelMedium,
-                                                fontFamily = FontFamily.Monospace,
-                                            )
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    row.label,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                )
-                                                Text(
-                                                    runtimeTypeShort(row.type),
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                )
-                                            }
-                                            Text(
-                                                row.valueText,
-                                                style = MaterialTheme.typography.titleSmall,
-                                                fontFamily = FontFamily.Monospace,
-                                            )
-                                        }
-                                    }
-                                    HorizontalDivider()
-                                }
-                            }
-                        }
-                    }
-                } else if (cells.isEmpty()) {
+                if (logicalRows.isEmpty()) {
                     Box(
                         modifier = Modifier.weight(1f).fillMaxWidth(),
                         contentAlignment = Alignment.Center,
@@ -1774,25 +1589,26 @@ private fun RuntimeInspectorTab(
                     }
                 } else {
                     BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        val anchorIndex = cells.indexOfFirst { it.offset == 0 }.coerceAtLeast(0)
-                        val visibleRows = (maxHeight.value / 49f).toInt().coerceAtLeast(1)
+                        val anchorIndex = logicalRows.indexOfFirst { it.relativeOffset == 0 }
+                            .coerceAtLeast(0)
+                        val visibleRows = (maxHeight.value / 55f).toInt().coerceAtLeast(1)
                         val firstIndex = inspectorCenteredFirstIndex(
-                            cellCount = cells.size,
+                            cellCount = logicalRows.size,
                             anchorIndex = anchorIndex,
                             visibleRows = visibleRows,
                         )
                         val listState = rememberLazyListState()
-                        LaunchedEffect(snapshot.candidateId, snapshot.anchorAddress, firstIndex) {
+                        LaunchedEffect(snapshot.candidateId, snapshot.expectedRevision, firstIndex) {
                             listState.scrollToItem(firstIndex)
                         }
                         LazyColumn(
                             state = listState,
                             modifier = Modifier.fillMaxSize(),
-                            userScrollEnabled = cells.size > visibleRows,
+                            userScrollEnabled = logicalRows.size > visibleRows,
                         ) {
-                            items(cells, key = { it.offset }) { cell ->
+                            items(logicalRows, key = { it.id }) { row ->
                                 Surface(
-                                    color = if (cell.offset == 0) {
+                                    color = if (row.relativeOffset == 0) {
                                         MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
                                     } else Color.Transparent,
                                 ) {
@@ -1800,29 +1616,36 @@ private fun RuntimeInspectorTab(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .combinedClickable(
-                                                enabled = state.writeSupported && !state.busy,
-                                                onClick = { editCell = cell },
-                                                onLongClick = { editCell = cell },
+                                                enabled = row.editable && state.managedWriteSupported && !state.busy,
+                                                onClick = { editLogicalRow = row },
+                                                onLongClick = { editLogicalRow = row },
                                             )
                                             .heightIn(min = 48.dp)
                                             .padding(horizontal = 12.dp, vertical = 7.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Text(
-                                            if (cell.offset >= 0) "+${cell.offset}" else cell.offset.toString(),
+                                            if (row.relativeOffset >= 0) "+${row.relativeOffset}"
+                                            else row.relativeOffset.toString(),
                                             modifier = Modifier.widthIn(min = 48.dp),
                                             style = MaterialTheme.typography.labelMedium,
                                             fontFamily = FontFamily.Monospace,
                                         )
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                row.label,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                runtimeTypeShort(row.type),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
                                         Text(
-                                            "0x${cell.address.toString(16).uppercase(Locale.ROOT)}",
-                                            modifier = Modifier.weight(1f),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontFamily = FontFamily.Monospace,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                        Text(
-                                            cell.value,
+                                            row.valueText,
                                             style = MaterialTheme.typography.titleSmall,
                                             fontFamily = FontFamily.Monospace,
                                         )
@@ -1835,18 +1658,6 @@ private fun RuntimeInspectorTab(
                 }
             }
 
-            editCell?.let { cell ->
-                RuntimeInspectorEditDialog(
-                    snapshot = snapshot,
-                    cell = cell,
-                    actions = actions,
-                    onPeekUnderlayChanged = onPeekUnderlayChanged,
-                    onDismiss = {
-                        onPeekUnderlayChanged(false)
-                        editCell = null
-                    },
-                )
-            }
             editLogicalRow?.let { row ->
                 RuntimeInspectorLogicalEditDialog(
                     snapshot = snapshot,
@@ -1873,86 +1684,6 @@ internal fun inspectorCenteredFirstIndex(
     val safeAnchor = anchorIndex.coerceIn(0, cellCount - 1)
     val maxFirst = (cellCount - rows).coerceAtLeast(0)
     return (safeAnchor - rows / 2).coerceIn(0, maxFirst)
-}
-
-internal data class MemoryInspectorCell(
-    val offset: Int,
-    val address: Long,
-    val bits: Long,
-    val value: String,
-)
-
-@Composable
-private fun RuntimeInspectorEditDialog(
-    snapshot: MemoryInspectorSnapshot,
-    cell: MemoryInspectorCell,
-    actions: MemoryEditorActions,
-    onPeekUnderlayChanged: (Boolean) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val spec = MemoryInputSpec.forType(snapshot.type)
-    var value by remember(cell) {
-        mutableStateOf(TextFieldValue(cell.value, TextRange(cell.value.length)))
-    }
-    var peekingUnderlay by remember { mutableStateOf(false) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
-        title = {
-            RuntimeInputDialogTitle(
-                title = "0x${cell.address.toString(16).uppercase(Locale.ROOT)}",
-                peeking = peekingUnderlay,
-                onPeekingChanged = {
-                    peekingUnderlay = it
-                    onPeekUnderlayChanged(it)
-                },
-            )
-        },
-        text = {
-            RuntimeSearchDialogBody(
-                showKeypad = true,
-                controls = { _ ->
-                    RuntimeSearchField(
-                        label = stringResource(R.string.memory_editor_current_value),
-                        value = value,
-                        active = true,
-                        onClick = {},
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                },
-                keypad = {
-                    RuntimeSearchKeypad(
-                        allowGroup = false,
-                        valueSpec = spec,
-                        onToken = { value = runtimeInsertValidated(value, it, spec) },
-                        onBackspace = { value = runtimeBackspace(value) },
-                        onMove = { value = runtimeMove(value, it) },
-                        onClear = { value = TextFieldValue("", TextRange(0)) },
-                    )
-                },
-            )
-        },
-        textScrollable = false,
-        confirmButton = {
-            Button(
-                enabled = spec.isComplete(value.text),
-                onClick = {
-                    actions.editInspectorValue(
-                        snapshot.candidateId,
-                        cell.offset,
-                        snapshot.type,
-                        cell.bits,
-                        value.text,
-                        snapshot.watchAnchor,
-                    )
-                    onDismiss()
-                },
-            ) { Text(stringResource(R.string.memory_editor_apply)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-        },
-    )
 }
 
 @Composable
@@ -2378,33 +2109,19 @@ private fun RuntimeTypeMenu(
     onType: (Int) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    managed: Boolean = false,
 ) {
     RuntimeChoiceMenu(
         value = type,
-        values = if (managed) {
-            intArrayOf(
-                MemoryEngineContract.TYPE_AUTO,
-                MemoryEngineContract.TYPE_BYTE,
-                MemoryEngineContract.TYPE_SHORT,
-                MemoryEngineContract.TYPE_CHAR,
-                MemoryEngineContract.TYPE_INT,
-                MemoryEngineContract.TYPE_LONG,
-                MemoryEngineContract.TYPE_FLOAT,
-                MemoryEngineContract.TYPE_DOUBLE,
-            )
-        } else {
-            intArrayOf(
-                MemoryEngineContract.TYPE_AUTO,
-                MemoryEngineContract.TYPE_BYTE,
-                MemoryEngineContract.TYPE_SHORT,
-                MemoryEngineContract.TYPE_CHAR,
-                MemoryEngineContract.TYPE_INT,
-                MemoryEngineContract.TYPE_LONG,
-                MemoryEngineContract.TYPE_FLOAT,
-                MemoryEngineContract.TYPE_DOUBLE,
-            )
-        },
+        values = intArrayOf(
+            MemoryEngineContract.TYPE_AUTO,
+            MemoryEngineContract.TYPE_BYTE,
+            MemoryEngineContract.TYPE_SHORT,
+            MemoryEngineContract.TYPE_CHAR,
+            MemoryEngineContract.TYPE_INT,
+            MemoryEngineContract.TYPE_LONG,
+            MemoryEngineContract.TYPE_FLOAT,
+            MemoryEngineContract.TYPE_DOUBLE,
+        ),
         label = { runtimeTypeName(it) },
         onChange = onType,
         modifier = modifier,
@@ -2426,38 +2143,6 @@ private fun RuntimeEditTypeMenu(
         onChange = onType,
         modifier = modifier,
         enabled = types.size > 1,
-    )
-}
-
-@Composable
-private fun RuntimeScopeMenu(
-    scope: Int,
-    onScope: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-    managedSupported: Boolean = false,
-    enabled: Boolean = true,
-) {
-    RuntimeChoiceMenu(
-        value = scope,
-        values = if (managedSupported) {
-            intArrayOf(
-                MemoryEngineContract.SCOPE_JAVA_FAST,
-                MemoryEngineContract.SCOPE_JAVA_THOROUGH,
-                MemoryEngineContract.SCOPE_MANAGED_JAVA,
-            )
-        } else {
-            intArrayOf(MemoryEngineContract.SCOPE_JAVA_FAST, MemoryEngineContract.SCOPE_JAVA_THOROUGH)
-        },
-        label = {
-            when (it) {
-                MemoryEngineContract.SCOPE_JAVA_FAST -> stringResource(R.string.memory_editor_scope_fast)
-                MemoryEngineContract.SCOPE_MANAGED_JAVA -> stringResource(R.string.memory_editor_scope_managed)
-                else -> stringResource(R.string.memory_editor_scope_thorough)
-            }
-        },
-        onChange = onScope,
-        modifier = modifier,
-        enabled = enabled,
     )
 }
 
@@ -2503,12 +2188,9 @@ private fun RuntimeExpressionHint(expression: MemorySearchExpression, type: Int)
             stringResource(
                 R.string.memory_editor_expression_group_hint,
                 expression.values.size,
-                expression.maxDistance,
             )
         }
         is MemorySearchExpression.Invalid -> when (expression.reason) {
-            MemorySearchExpression.Reason.ORDERED_GROUP_UNSUPPORTED ->
-                stringResource(R.string.memory_editor_expression_ordered_group_unsupported)
             else -> stringResource(R.string.memory_editor_expression_query_help)
         }
     }
@@ -2643,65 +2325,6 @@ private fun runtimeCandidateState(state: Int, relocations: Int): String? = when 
     MemoryEngineContract.CANDIDATE_RELOCATING -> stringResource(R.string.memory_editor_candidate_relocating)
     MemoryEngineContract.CANDIDATE_AMBIGUOUS -> stringResource(R.string.memory_editor_candidate_ambiguous)
     else -> stringResource(R.string.memory_editor_candidate_lost)
-}
-
-internal fun buildInspectorCells(snapshot: MemoryInspectorSnapshot): List<MemoryInspectorCell> {
-    val width = inspectorTypeWidth(snapshot.type)
-    val anchorIndex = (snapshot.anchorAddress - snapshot.startAddress).toInt()
-    if (width <= 0 || anchorIndex !in snapshot.bytes.indices) return emptyList()
-    val firstOffset = -(anchorIndex / width) * width
-    val result = ArrayList<MemoryInspectorCell>()
-    var offset = firstOffset
-    while (true) {
-        val index = anchorIndex + offset
-        if (index < 0) {
-            offset += width
-            continue
-        }
-        if (index + width > snapshot.bytes.size) break
-        val bits = inspectorReadBits(snapshot.bytes, index, width)
-        result += MemoryInspectorCell(
-            offset = offset,
-            address = snapshot.anchorAddress + offset,
-            bits = bits,
-            value = inspectorFormatBits(snapshot.type, bits),
-        )
-        offset += width
-    }
-    return result
-}
-
-internal fun inspectorTypeWidth(type: Int): Int = when (type) {
-    MemoryEngineContract.TYPE_BYTE -> 1
-    MemoryEngineContract.TYPE_SHORT,
-    MemoryEngineContract.TYPE_CHAR -> 2
-    MemoryEngineContract.TYPE_INT,
-    MemoryEngineContract.TYPE_FLOAT -> 4
-    MemoryEngineContract.TYPE_LONG,
-    MemoryEngineContract.TYPE_DOUBLE -> 8
-    else -> 0
-}
-
-internal fun inspectorReadBits(bytes: ByteArray, index: Int, width: Int): Long {
-    val buffer = ByteBuffer.wrap(bytes, index, width).order(ByteOrder.LITTLE_ENDIAN)
-    return when (width) {
-        1 -> (buffer.get().toInt() and 0xff).toLong()
-        2 -> (buffer.short.toInt() and 0xffff).toLong()
-        4 -> buffer.int.toLong() and 0xffffffffL
-        8 -> buffer.long
-        else -> 0L
-    }
-}
-
-internal fun inspectorFormatBits(type: Int, bits: Long): String = when (type) {
-    MemoryEngineContract.TYPE_BYTE -> bits.toByte().toString()
-    MemoryEngineContract.TYPE_SHORT -> bits.toShort().toString()
-    MemoryEngineContract.TYPE_CHAR -> (bits and 0xffffL).toString()
-    MemoryEngineContract.TYPE_INT -> bits.toInt().toString()
-    MemoryEngineContract.TYPE_LONG -> bits.toString()
-    MemoryEngineContract.TYPE_FLOAT -> Float.intBitsToFloat(bits.toInt()).toString()
-    MemoryEngineContract.TYPE_DOUBLE -> Double.longBitsToDouble(bits).toString()
-    else -> bits.toString()
 }
 
 private fun compactCount(value: Long): String = when {

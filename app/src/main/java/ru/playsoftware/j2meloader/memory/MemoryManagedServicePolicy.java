@@ -54,7 +54,7 @@ final class MemoryManagedServicePolicy {
 		return MemoryEngineContract.RESULT_OK;
 	}
 
-	static boolean freezeSchedulerIdle(int rawFreezeCount, int managedFreezeCount) {
-		return rawFreezeCount <= 0 && managedFreezeCount <= 0;
+	static boolean freezeSchedulerIdle(int managedFreezeCount) {
+		return managedFreezeCount <= 0;
 	}
 }

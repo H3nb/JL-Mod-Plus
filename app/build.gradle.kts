@@ -195,9 +195,8 @@ androidComponents {
     }
 }
 
-// Both memory service processes load these libraries at runtime. Keep the ABI-specific
-// install artifact honest: a stale split left by a previous x86_64 build must not be
-// mistaken for a valid arm64 debug APK and only fail later with UnsatisfiedLinkError.
+// The Managed Java editor has no Raw JNI dependency. Keep the ABI-specific install artifact
+// honest by rejecting stale memory-editor libraries left by an incremental native build.
 val verifyEmulatorDebugNativePackaging = tasks.register("verifyEmulatorDebugNativePackaging") {
     dependsOn("packageEmulatorDebug")
     outputs.upToDateWhen { false }
@@ -209,12 +208,12 @@ val verifyEmulatorDebugNativePackaging = tasks.register("verifyEmulatorDebugNati
         check(apk.isFile) {
             "Expected emulator debug APK for $abi was not produced: ${apk.absolutePath}"
         }
-        val requiredLibraries = listOf("libjlmem.so", "libjlmem_target.so")
+        val forbiddenLibraries = listOf("libjlmem.so", "libjlmem_target.so")
         ZipFile(apk).use { archive ->
-            requiredLibraries.forEach { library ->
+            forbiddenLibraries.forEach { library ->
                 val entry = archive.getEntry("lib/$abi/$library")
-                check(entry != null) {
-                    "${apk.name} is missing lib/$abi/$library; do not install this artifact"
+                check(entry == null) {
+                    "${apk.name} still contains removed Raw memory library lib/$abi/$library"
                 }
             }
         }

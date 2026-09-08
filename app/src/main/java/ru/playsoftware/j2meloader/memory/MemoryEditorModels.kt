@@ -105,18 +105,17 @@ internal data class MemoryWatchRow(
     val valueText: String,
     val initialValueText: String,
     val previousValueText: String,
-    val addressText: String,
+    val locationText: String,
     val label: String = "",
     val freezeMode: Int = -1,
     val freezePaused: Boolean = false,
-    val backend: Int = MemoryEngineContract.BACKEND_RAW,
 )
 
 /** One engine-formatted logical address result used by the :memory_engine presentation. */
 internal data class MemoryResultRow(
     val id: Long,
     val valueText: String,
-    val addressText: String,
+    val locationText: String,
     val aliasMask: Int,
     val primaryType: Int,
     val state: Int,
@@ -132,21 +131,16 @@ internal data class MemoryEditTarget(
     val id: Long,
     val type: Int,
     val valueText: String,
-    val backend: Int,
     val aliasTypes: List<Int> = emptyList(),
     val watch: Boolean = false,
 )
 
-/** Bounded read-only snapshot whose address is resolved from a verified CandidateId. */
+/** Bounded logical snapshot resolved from a verified Managed Java candidate. */
 internal data class MemoryInspectorSnapshot(
     val candidateId: Long,
     val type: Int,
     val label: String,
-    val startAddress: Long,
-    val anchorAddress: Long,
-    val bytes: ByteArray,
-    val backend: Int = MemoryEngineContract.BACKEND_RAW,
-    val logicalRows: List<MemoryInspectorLogicalRow> = emptyList(),
+    val logicalRows: List<MemoryInspectorLogicalRow>,
     val expectedRevision: Long = 0L,
     val provenance: String = "",
     val watchAnchor: Boolean = false,
@@ -162,7 +156,6 @@ internal data class MemoryInspectorLogicalRow(
     val previousValueText: String,
     val label: String,
     val expectedBits: Long,
-    val backend: Int,
     val editable: Boolean = true,
 )
 
@@ -190,7 +183,7 @@ internal object MemoryResultPageParser {
                 MemoryResultRow(
                     id = ids[index],
                     valueText = values[index],
-                    addressText = addresses[index],
+                    locationText = addresses[index],
                     aliasMask = mask,
                     primaryType = type,
                     state = states[index],
@@ -214,11 +207,9 @@ internal object MemoryWatchPageParser {
         val labels = bundle.getStringArray(MemoryEngineContract.KEY_WATCH_LABELS) ?: return emptyList()
         val freezeModes = bundle.getIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES) ?: return emptyList()
         val freezePaused = bundle.getBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED) ?: return emptyList()
-        val backends = bundle.getIntArray(MemoryEngineContract.KEY_WATCH_BACKENDS)
-            ?: IntArray(ids.size) { MemoryEngineContract.BACKEND_RAW }
         return parse(
             ids, values, initialValues, previousValues, addresses, types, states, relocations,
-            labels, freezeModes, freezePaused, backends,
+            labels, freezeModes, freezePaused,
         )
     }
 
@@ -234,12 +225,10 @@ internal object MemoryWatchPageParser {
         labels: Array<String>,
         freezeModes: IntArray,
         freezePaused: BooleanArray,
-        backends: IntArray = IntArray(ids.size) { MemoryEngineContract.BACKEND_RAW },
     ): List<MemoryWatchRow> {
         if (listOf(
                 values.size, initialValues.size, previousValues.size, addresses.size, types.size,
                 states.size, relocations.size, labels.size, freezeModes.size, freezePaused.size,
-                backends.size,
             ).any { it != ids.size }) {
             return emptyList()
         }
@@ -256,11 +245,10 @@ internal object MemoryWatchPageParser {
                     valueText = values[index],
                     initialValueText = initialValues[index],
                     previousValueText = previousValues[index],
-                    addressText = addresses[index],
+                    locationText = addresses[index],
                     label = labels[index],
                     freezeMode = freezeModes[index],
                     freezePaused = freezePaused[index],
-                    backend = backends[index],
                 )
             }
         }.takeIf { it.size == ids.size }.orEmpty()
@@ -293,9 +281,9 @@ internal data class MemoryEditorUiState(
     val searchMode: MemorySearchMode = MemorySearchMode.KNOWN,
     val sessionStage: MemorySessionStage = MemorySessionStage.EMPTY,
     val requestedType: Int = MemoryEngineContract.TYPE_AUTO,
-    val searchScope: Int = MemoryEngineContract.SCOPE_JAVA_FAST,
+    val searchScope: Int = MemoryEngineContract.SCOPE_MANAGED_JAVA,
     /** UI preference used only while the Known dialog has no committed session. */
-    val knownScopePreference: Int = MemoryEngineContract.SCOPE_JAVA_FAST,
+    val knownScopePreference: Int = MemoryEngineContract.SCOPE_MANAGED_JAVA,
     /** Distinguishes an explicit user choice from the capability-driven default. */
     val knownScopePreferenceExplicit: Boolean = false,
     /** Last relative predicate selected for Unknown search in this MIDlet runtime. */
@@ -324,7 +312,7 @@ internal interface MemoryEditorActions {
         compare: Int,
         type: Int = MemoryEngineContract.TYPE_AUTO,
     )
-    fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int)
+    fun groupSearch(type: Int, values: Array<String>)
     fun undo()
     fun refresh()
     fun setWatchTab(watch: Boolean)
@@ -362,7 +350,7 @@ internal interface MemoryEditorActions {
     fun labelWatch(id: Long, label: String)
     fun freezeSelected(mode: Int, first: String, second: String)
     fun clearFreezeSelected()
-    fun copySelected(addresses: Boolean)
+    fun copySelected(locations: Boolean)
     fun previousPage()
     fun nextPage()
     fun cancel()
@@ -381,12 +369,4 @@ internal interface MemoryEditorActions {
         watchAnchor: Boolean = false,
     ) = Unit
     fun closeInspector() = Unit
-    fun startNearbySearch(
-        anchorCandidateId: Long,
-        radius: Int,
-        type: Int,
-        predicate: Int,
-        value: String,
-        secondValue: String,
-    ) = Unit
 }

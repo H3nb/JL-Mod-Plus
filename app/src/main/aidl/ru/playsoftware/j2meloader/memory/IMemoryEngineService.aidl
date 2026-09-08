@@ -12,8 +12,8 @@ import android.os.Bundle;
 import ru.playsoftware.j2meloader.memory.IMemoryEngineCallback;
 
 /**
- * Logical API. Result addresses are informational only: mutations never accept a raw destination,
- * and bounded Inspector/Nearby reads are anchored exclusively by a current CandidateId.
+ * Logical API. Result locations are informational only: mutations never accept a physical address,
+ * and bounded Inspector reads are anchored exclusively by a current CandidateId.
  */
 interface IMemoryEngineService {
     Bundle getCapabilities();
@@ -23,10 +23,7 @@ interface IMemoryEngineService {
     long startKnownSearch(long runtimeToken, int scope, int valueType, int predicate,
             String firstValue, String secondValue);
     long startUnknownSearch(long runtimeToken, int scope, int valueType);
-    long startGroupSearch(long runtimeToken, int scope, in int[] valueTypes,
-            in String[] values, int maxDistance);
-    long startNearbySearch(long runtimeToken, long anchorCandidateId, int radius,
-            int valueType, int predicate, String firstValue, String secondValue);
+    long startGroupSearch(long runtimeToken, int valueType, in String[] values);
     long refineKnown(long runtimeToken, int valueType, int predicate, String firstValue, String secondValue);
     long refineRelative(long runtimeToken, int valueType, int predicate, int compareTarget,
             String firstValue, String secondValue);
@@ -39,14 +36,9 @@ interface IMemoryEngineService {
     long editCandidates(long runtimeToken, in long[] candidateIds, int valueType,
             String replacementValue);
     long filterResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds, boolean keep);
-    long editResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
-            int valueType, String replacementValue);
     long editManagedResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
             int valueType, String replacementValue);
-    long addWatchResultGroups(long runtimeToken, in long[] resultIds, int valueType);
     long addManagedWatchResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds);
-    long setFreezeResultGroups(long runtimeToken, in long[] resultIds, int valueType, int mode,
-            String firstValue, String secondValue);
     long setManagedFreezeResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
             int mode, String firstValue, String secondValue);
     // Modified: managed Results edits retain the revision displayed by Inspector (Watch uses zero).
@@ -56,7 +48,7 @@ interface IMemoryEngineService {
 
     long getResultCount(long runtimeToken);
     Bundle getSearchSessionInfo(long runtimeToken);
-    // Offset/limit count unique raw addresses. The engine formats one presentation row per address.
+    // Offset/limit operate on logical result rows owned by the Managed Java target.
     Bundle getResultPage(long runtimeToken, int offset, int limit);
     Bundle inspectCandidate(long runtimeToken, long candidateId, int radius, boolean watchAnchor);
     Bundle getWatchPage(long runtimeToken);

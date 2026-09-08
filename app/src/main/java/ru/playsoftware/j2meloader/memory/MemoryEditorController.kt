@@ -71,7 +71,6 @@ internal class MemoryEditorComposeController(
         val freezeAfter: Boolean,
         val resultGroup: Boolean,
         val expectedRevision: Long,
-        val backend: Int,
     )
     private data class PendingInspectorRefresh(
         val candidateId: Long,
@@ -454,8 +453,9 @@ internal class MemoryEditorComposeController(
         )
         val scope = session.getInt(
             MemoryEngineContract.KEY_SEARCH_SCOPE,
-            MemoryEngineContract.SCOPE_JAVA_FAST,
-        )
+            MemoryEngineContract.SCOPE_MANAGED_JAVA,
+        ).takeIf { it == MemoryEngineContract.SCOPE_MANAGED_JAVA }
+            ?: MemoryEngineContract.SCOPE_MANAGED_JAVA
         val newRuntime = state.runtimeToken != token
         val explicitKnownScope = if (stage == MemorySessionStage.EMPTY &&
             mode == MemorySearchMode.KNOWN && newRuntime
@@ -463,8 +463,7 @@ internal class MemoryEditorComposeController(
         val knownScopePreference = if (stage == MemorySessionStage.EMPTY &&
             mode == MemorySearchMode.KNOWN && !explicitKnownScope
         ) {
-            if (managedSupported) MemoryEngineContract.SCOPE_MANAGED_JAVA
-            else MemoryEngineContract.SCOPE_JAVA_FAST
+            MemoryEngineContract.SCOPE_MANAGED_JAVA
         } else {
             state.knownScopePreference
         }
@@ -633,7 +632,7 @@ internal class MemoryEditorComposeController(
     }
 
     override fun setKnownSearchScope(scope: Int) {
-        if (!MemoryEngineContract.isScope(scope) ||
+        if (scope != MemoryEngineContract.SCOPE_MANAGED_JAVA ||
             state.sessionStage != MemorySessionStage.EMPTY ||
             state.searchMode != MemorySearchMode.KNOWN
         ) return
@@ -654,11 +653,11 @@ internal class MemoryEditorComposeController(
         )
     }
 
-    override fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int) {
+    override fun groupSearch(type: Int, values: Array<String>) {
         invalidateVisiblePageRequest()
         state = state.copy(pageOffset = 0, selected = emptySet(), inspector = null)
         launchOperation(searching = true) { engine, token ->
-            engine.startGroupSearch(token, scope, types, values, distance)
+            engine.startGroupSearch(token, type, values)
         }
     }
 
@@ -752,14 +751,9 @@ internal class MemoryEditorComposeController(
         val resultGroup = !state.watchTab
         launchOperation { engine, token ->
             if (resultGroup) {
-                if (state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
-                    engine.editManagedResultGroups(
-                        token, state.managedRevision, longArrayOf(id), type, value.trim(),
-                    )
-                } else {
-                    engine.editResultGroups(token, state.managedRevision, longArrayOf(id), type,
-                        value.trim())
-                }
+                engine.editManagedResultGroups(
+                    token, state.managedRevision, longArrayOf(id), type, value.trim(),
+                )
             } else {
                 engine.editCandidates(token, longArrayOf(id), type, value.trim())
             }
@@ -776,13 +770,11 @@ internal class MemoryEditorComposeController(
         val resultGroup = !state.watchTab
         val target = if (resultGroup) {
             state.results.firstOrNull { it.id == id }?.let { row ->
-                MemoryEditTarget(id, row.primaryType, row.valueText,
-                    if (ManagedJavaMemoryIds.isManaged(id)) MemoryEngineContract.BACKEND_MANAGED
-                    else MemoryEngineContract.BACKEND_RAW, row.aliasTypes)
+                MemoryEditTarget(id, row.primaryType, row.valueText, row.aliasTypes)
             }
         } else {
             state.watches.firstOrNull { it.id == id }?.let { row ->
-                MemoryEditTarget(id, row.type, row.valueText, row.backend, listOf(row.type), true)
+                MemoryEditTarget(id, row.type, row.valueText, listOf(row.type), true)
             }
         } ?: return
         editSingleTargetWithOptions(target, if (resultGroup) state.managedRevision else 0L,
@@ -818,17 +810,14 @@ internal class MemoryEditorComposeController(
         val resultGroup = !target.watch
         pendingEditFollowUp = if (addToWatch || freezeAfter) {
             PendingEditFollowUp(target.id, type, replacement, addToWatch, freezeAfter,
-                resultGroup, expectedRevision, target.backend)
+                resultGroup, expectedRevision)
         } else null
         launchOperation { engine, token ->
             if (!resultGroup) {
                 engine.editCandidates(token, longArrayOf(target.id), type, replacement)
-            } else if (target.backend == MemoryEngineContract.BACKEND_MANAGED) {
+            } else {
                 engine.editManagedResultGroups(token, expectedRevision, longArrayOf(target.id),
                     type, replacement)
-            } else {
-                engine.editResultGroups(token, expectedRevision, longArrayOf(target.id), type,
-                    replacement)
             }
         }
     }
@@ -836,25 +825,14 @@ internal class MemoryEditorComposeController(
     private fun completeEditFlow(followUp: PendingEditFollowUp) {
         when {
             followUp.freezeAfter && followUp.resultGroup -> launchOperation { engine, token ->
-                if (followUp.backend == MemoryEngineContract.BACKEND_MANAGED) {
-                    engine.setManagedFreezeResultGroups(
-                        token,
-                        followUp.expectedRevision,
-                        longArrayOf(followUp.id),
-                        MemoryEngineContract.FREEZE_LOCK,
-                        followUp.value,
-                        "",
-                    )
-                } else {
-                    engine.setFreezeResultGroups(
-                        token,
-                        longArrayOf(followUp.id),
-                        followUp.type,
-                        MemoryEngineContract.FREEZE_LOCK,
-                        followUp.value,
-                        "",
-                    )
-                }
+                engine.setManagedFreezeResultGroups(
+                    token,
+                    followUp.expectedRevision,
+                    longArrayOf(followUp.id),
+                    MemoryEngineContract.FREEZE_LOCK,
+                    followUp.value,
+                    "",
+                )
             }
             followUp.freezeAfter -> launchOperation { engine, token ->
                 engine.setFreeze(
@@ -866,13 +844,9 @@ internal class MemoryEditorComposeController(
                 )
             }
             followUp.addToWatch && followUp.resultGroup -> launchOperation { engine, token ->
-                if (followUp.backend == MemoryEngineContract.BACKEND_MANAGED) {
-                    engine.addManagedWatchResultGroups(
-                        token, followUp.expectedRevision, longArrayOf(followUp.id),
-                    )
-                } else {
-                    engine.addWatchResultGroups(token, longArrayOf(followUp.id), followUp.type)
-                }
+                engine.addManagedWatchResultGroups(
+                    token, followUp.expectedRevision, longArrayOf(followUp.id),
+                )
             }
             else -> reloadState()
         }
@@ -916,15 +890,15 @@ internal class MemoryEditorComposeController(
         launchOperation { engine, token -> engine.clearFreeze(token, ids) }
     }
 
-    override fun copySelected(addresses: Boolean) {
+    override fun copySelected(locations: Boolean) {
         val selected = state.selected
         val rows = if (state.watchTab) {
             state.watches.filter { it.id in selected }.map {
-                if (addresses) it.addressText else it.valueText
+                if (locations) it.locationText else it.valueText
             }
         } else {
             state.results.filter { it.id in selected }.map {
-                if (addresses) it.addressText else it.valueText
+                if (locations) it.locationText else it.valueText
             }
         }
         if (rows.isEmpty()) return
@@ -984,8 +958,7 @@ internal class MemoryEditorComposeController(
         if (candidateId <= 0L || !MemoryEngineContract.isInspectRadius(radius) || state.busy) return
         val rowResult = state.results.firstOrNull { it.id == candidateId }
         val rowWatch = state.watches.firstOrNull { it.id == candidateId }
-        val type = rowWatch?.type ?: rowResult?.primaryType ?: return
-        val label = rowWatch?.label.orEmpty()
+        if (rowWatch == null && rowResult == null) return
         val token = state.runtimeToken
         val engine = service ?: return
         if (token == 0L) return
@@ -1000,9 +973,6 @@ internal class MemoryEditorComposeController(
                 MemoryEngineContract.KEY_INSPECT_RESULT,
                 MemoryEngineContract.RESULT_INVALID_REQUEST,
             )
-            val start = bundle.getLong(MemoryEngineContract.KEY_INSPECT_START, 0L)
-            val anchor = bundle.getLong(MemoryEngineContract.KEY_INSPECT_ANCHOR, 0L)
-            val bytes = bundle.getByteArray(MemoryEngineContract.KEY_INSPECT_BYTES)
             val logicalIds = bundle.getLongArray(MemoryEngineContract.KEY_INSPECT_IDS)
             val logicalValues = bundle.getStringArray(MemoryEngineContract.KEY_INSPECT_VALUES)
             val logicalInitial = bundle.getStringArray(MemoryEngineContract.KEY_INSPECT_INITIAL_VALUES)
@@ -1012,29 +982,27 @@ internal class MemoryEditorComposeController(
             val logicalOffsets = bundle.getIntArray(MemoryEngineContract.KEY_INSPECT_RELATIVE_OFFSETS)
             val logicalExpected = bundle.getLongArray(MemoryEngineContract.KEY_INSPECT_EXPECTED_BITS)
             val logicalLabels = bundle.getStringArray(MemoryEngineContract.KEY_INSPECT_LABELS)
-            val logicalBackends = bundle.getIntArray(MemoryEngineContract.KEY_INSPECT_BACKENDS)
             val logicalEditable = bundle.getBooleanArray(MemoryEngineContract.KEY_INSPECT_EDITABLE)
             val logicalRows = if (logicalIds != null && logicalValues != null && logicalInitial != null &&
                 logicalPrevious != null && logicalTypes != null && logicalStates != null &&
                 logicalOffsets != null && logicalExpected != null && logicalLabels != null &&
-                logicalBackends != null && logicalEditable != null && listOf(logicalValues.size, logicalInitial.size,
+                logicalEditable != null && listOf(logicalValues.size, logicalInitial.size,
                     logicalPrevious.size, logicalTypes.size, logicalStates.size, logicalOffsets.size,
-                    logicalExpected.size, logicalLabels.size, logicalBackends.size,
+                    logicalExpected.size, logicalLabels.size,
                     logicalEditable.size).all { it == logicalIds.size } &&
                 logicalIds.size <= MemoryEngineContract.MAX_RESULT_PAGE_SIZE &&
                 logicalIds.indices.all { index ->
                     ManagedJavaMemoryIds.hasValidNamespace(logicalIds[index]) &&
                         ManagedJavaMemoryIds.ownerHandle(logicalIds[index]) ==
                         ManagedJavaMemoryIds.ownerHandle(candidateId) &&
-                        MemoryEngineContract.isCandidateType(logicalTypes[index]) &&
-                        logicalBackends[index] == MemoryEngineContract.BACKEND_MANAGED
+                        MemoryEngineContract.isCandidateType(logicalTypes[index])
                 } && logicalIds.contains(candidateId)
             ) {
                 logicalIds.indices.map { index ->
                     MemoryInspectorLogicalRow(logicalIds[index], logicalOffsets[index], logicalTypes[index],
                         logicalStates[index], logicalValues[index], logicalInitial[index],
                         logicalPrevious[index], logicalLabels[index], logicalExpected[index],
-                        logicalBackends[index], logicalEditable[index])
+                        logicalEditable[index])
                 }
             } else emptyList()
             post {
@@ -1064,31 +1032,11 @@ internal class MemoryEditorComposeController(
                             candidateId = candidateId,
                             type = logicalRows.first().type,
                             label = logicalRows.firstOrNull { it.relativeOffset == 0 }?.label.orEmpty(),
-                            startAddress = 0L,
-                            anchorAddress = 0L,
-                            bytes = ByteArray(0),
-                            backend = MemoryEngineContract.BACKEND_MANAGED,
                             logicalRows = logicalRows,
                             expectedRevision = bundle.getLong(
                                 MemoryEngineContract.KEY_INSPECT_EXPECTED_REVISION, 0L,
                             ),
                             provenance = bundle.getString(MemoryEngineContract.KEY_INSPECT_PROVENANCE).orEmpty(),
-                            watchAnchor = watchAnchor,
-                        ),
-                    )
-                } else if (result == MemoryEngineContract.RESULT_OK && start > 0L && anchor > 0L &&
-                    bytes != null && bytes.size <= MemoryEngineContract.MAX_INSPECT_BYTES
-                ) {
-                    state = state.copy(
-                        inspectorLoading = false,
-                        inspector = MemoryInspectorSnapshot(
-                            candidateId = candidateId,
-                            type = type,
-                            label = label,
-                            startAddress = start,
-                            anchorAddress = anchor,
-                            bytes = bytes,
-                            backend = MemoryEngineContract.BACKEND_RAW,
                             watchAnchor = watchAnchor,
                         ),
                     )
@@ -1119,26 +1067,12 @@ internal class MemoryEditorComposeController(
     ) {
         val snapshot = state.inspector ?: return
         if (snapshot.candidateId != anchorCandidateId || !MemoryEngineContract.isCandidateType(type)) return
-        if (snapshot.backend == MemoryEngineContract.BACKEND_MANAGED) {
-            if (!canLaunchOperation()) return
-            pendingInspectorRefresh = PendingInspectorRefresh(
-                anchorCandidateId,
-                MemoryEngineContract.DEFAULT_INSPECT_RADIUS,
-                watchAnchor,
-            )
-            launchOperation { engine, token ->
-                engine.editInspectorValue(token, anchorCandidateId, relativeOffset, type,
-                    expectedBits, replacementValue.trim(), watchAnchor,
-                    if (watchAnchor) 0L else snapshot.expectedRevision)
-            }
-            return
-        }
-        val radius = maxOf(
-            snapshot.anchorAddress - snapshot.startAddress,
-            snapshot.startAddress + snapshot.bytes.size - snapshot.anchorAddress,
-        ).toInt().coerceIn(1, MemoryEngineContract.MAX_INSPECT_RADIUS)
         if (!canLaunchOperation()) return
-        pendingInspectorRefresh = PendingInspectorRefresh(anchorCandidateId, radius, watchAnchor)
+        pendingInspectorRefresh = PendingInspectorRefresh(
+            anchorCandidateId,
+            MemoryEngineContract.DEFAULT_INSPECT_RADIUS,
+            watchAnchor,
+        )
         launchOperation { engine, token ->
             engine.editInspectorValue(
                 token,
@@ -1148,29 +1082,7 @@ internal class MemoryEditorComposeController(
                 expectedBits,
                 replacementValue.trim(),
                 watchAnchor,
-                0L,
-            )
-        }
-    }
-
-    override fun startNearbySearch(
-        anchorCandidateId: Long,
-        radius: Int,
-        type: Int,
-        predicate: Int,
-        value: String,
-        secondValue: String,
-    ) {
-        state = state.copy(pageOffset = 0, selected = emptySet(), inspector = null)
-        launchOperation(searching = true) { engine, token ->
-            engine.startNearbySearch(
-                token,
-                anchorCandidateId,
-                radius,
-                type,
-                predicate,
-                value.trim(),
-                secondValue.trim(),
+                if (watchAnchor) 0L else snapshot.expectedRevision,
             )
         }
     }
@@ -1221,30 +1133,7 @@ internal class MemoryEditorComposeController(
     private fun runLiveRefreshTick() {
         if (destroyed || !state.visible) return
         if (!state.busy && !liveRefreshPending && !visiblePageRequestPending && state.inspector == null) {
-            val token = state.runtimeToken
-            val engine = service
-            if (token != 0L && engine != null) {
-                val rawIds = if (state.watchTab) {
-                    state.watches.asSequence()
-                        .map(MemoryWatchRow::id)
-                        .filterNot(ManagedJavaMemoryIds::isManaged)
-                        .toList()
-                        .toLongArray()
-                } else if (state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
-                    longArrayOf()
-                } else {
-                    state.results.map(MemoryResultRow::id).toLongArray()
-                }
-                if (rawIds.isNotEmpty()) {
-                    liveRefreshPending = true
-                    runIpc {
-                        val operationId = engine.refreshCandidates(token, rawIds, true)
-                        if (operationId <= 0L) post { liveRefreshPending = false }
-                    }
-                } else if (state.watchTab || state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
-                    reloadVisibleRows()
-                }
-            }
+            if (state.runtimeToken != 0L && service != null) reloadVisibleRows()
         }
         if (!destroyed && state.visible) {
             composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INTERVAL_MS)
@@ -1282,7 +1171,7 @@ internal class MemoryEditorComposeController(
             if (watch) {
                 engine.editCandidates(token, ids, type, value.trim())
             } else {
-                engine.editResultGroups(token, expectedRevision, ids, type, value.trim())
+                engine.editManagedResultGroups(token, expectedRevision, ids, type, value.trim())
             }
         }
     }
@@ -1313,10 +1202,6 @@ internal class MemoryEditorComposeController(
             ?: context.getString(R.string.memory_editor_invalid_request)
         MemoryEngineContract.RESULT_IDENTITY_UNSAFE -> context.getString(R.string.memory_editor_identity_unsafe)
         MemoryEngineContract.RESULT_SAFETY_LIMIT -> context.getString(R.string.memory_editor_safety_limit)
-        MemoryEngineContract.RESULT_GC_REVALIDATED -> context.getString(R.string.memory_editor_gc_revalidated)
-        MemoryEngineContract.RESULT_GC_RACE -> context.getString(R.string.memory_editor_gc_race)
-        MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED ->
-            context.getString(R.string.memory_editor_gc_baseline_invalidated)
         MemoryEngineContract.RESULT_UNSUPPORTED -> context.getString(R.string.memory_editor_unsupported)
         MemoryEngineContract.RESULT_PARTIAL_WRITE -> engineMessage
             ?: context.getString(R.string.memory_editor_identity_unsafe)

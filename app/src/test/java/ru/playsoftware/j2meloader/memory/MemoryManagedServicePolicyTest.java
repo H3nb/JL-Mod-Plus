@@ -75,10 +75,8 @@ public class MemoryManagedServicePolicyTest {
 	}
 
 	@Test
-	public void schedulerStopsOnlyWhenBothBackendsAreIdle() {
-		assertFalse(MemoryManagedServicePolicy.freezeSchedulerIdle(1, 0));
-		assertFalse(MemoryManagedServicePolicy.freezeSchedulerIdle(0, 1));
-		assertFalse(MemoryManagedServicePolicy.freezeSchedulerIdle(1, 1));
-		assertTrue(MemoryManagedServicePolicy.freezeSchedulerIdle(0, 0));
+	public void schedulerStopsWhenManagedFreezeSetIsIdle() {
+		assertFalse(MemoryManagedServicePolicy.freezeSchedulerIdle(1));
+		assertTrue(MemoryManagedServicePolicy.freezeSchedulerIdle(0));
 	}
 }

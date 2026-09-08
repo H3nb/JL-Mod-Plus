@@ -30,7 +30,7 @@ private object NoOpMemoryEditorActions : MemoryEditorActions {
         compare: Int,
         type: Int,
     ) = Unit
-    override fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int) = Unit
+    override fun groupSearch(type: Int, values: Array<String>) = Unit
     override fun undo() = Unit
     override fun refresh() = Unit
     override fun setWatchTab(watch: Boolean) = Unit
@@ -44,7 +44,7 @@ private object NoOpMemoryEditorActions : MemoryEditorActions {
     override fun labelWatch(id: Long, label: String) = Unit
     override fun freezeSelected(mode: Int, first: String, second: String) = Unit
     override fun clearFreezeSelected() = Unit
-    override fun copySelected(addresses: Boolean) = Unit
+    override fun copySelected(locations: Boolean) = Unit
     override fun previousPage() = Unit
     override fun nextPage() = Unit
     override fun cancel() = Unit
@@ -54,7 +54,7 @@ private val previewRows = listOf(
     MemoryResultRow(
         id = 1,
         valueText = "500",
-        addressText = "0x021B99C0",
+        locationText = "0x021B99C0",
         aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
         primaryType = MemoryEngineContract.TYPE_INT,
         state = MemoryEngineContract.CANDIDATE_STABLE,
@@ -63,7 +63,7 @@ private val previewRows = listOf(
     MemoryResultRow(
         id = 2,
         valueText = "500",
-        addressText = "0x021B99C0",
+        locationText = "0x021B99C0",
         aliasMask = 1 shl MemoryEngineContract.TYPE_LONG,
         primaryType = MemoryEngineContract.TYPE_LONG,
         state = MemoryEngineContract.CANDIDATE_STABLE,
@@ -72,7 +72,7 @@ private val previewRows = listOf(
     MemoryResultRow(
         id = 3,
         valueText = "90",
-        addressText = "0x73492150",
+        locationText = "0x73492150",
         aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
         primaryType = MemoryEngineContract.TYPE_INT,
         state = MemoryEngineContract.CANDIDATE_STABLE,
@@ -88,7 +88,7 @@ private val previewWatch = MemoryWatchRow(
     valueText = "90",
     initialValueText = "100",
     previousValueText = "95",
-    addressText = "0x73492150",
+    locationText = "0x73492150",
     label = "HP",
     freezeMode = MemoryEngineContract.FREEZE_LOCK,
     freezePaused = true,
@@ -105,6 +105,8 @@ fun MemoryEditorPortraitScreenshot() {
                 connected = true,
                 supported = true,
                 writeSupported = true,
+                managedSupported = true,
+                managedWriteSupported = true,
                 runtimeToken = 1,
                 resultCount = 2,
                 results = previewRows,
@@ -126,6 +128,8 @@ fun MemoryEditorLandscapeWatchScreenshot() {
                 connected = true,
                 supported = true,
                 writeSupported = true,
+                managedSupported = true,
+                managedWriteSupported = true,
                 runtimeToken = 1,
                 watchTab = true,
                 watches = listOf(previewWatch),
@@ -146,6 +150,8 @@ fun MemoryEditorLandscapeResultsScreenshot() {
                 connected = true,
                 supported = true,
                 writeSupported = true,
+                managedSupported = true,
+                managedWriteSupported = true,
                 runtimeToken = 1,
                 resultCount = 2,
                 results = previewRows,
@@ -167,6 +173,8 @@ fun MemoryEditorUnknownBaselineScreenshot() {
                 connected = true,
                 supported = true,
                 writeSupported = true,
+                managedSupported = true,
+                managedWriteSupported = true,
                 runtimeToken = 1,
                 resultCount = 2,
                 results = previewRows,
@@ -189,6 +197,8 @@ fun MemoryEditorShortLandscapeSearchScreenshot() {
                 connected = true,
                 supported = true,
                 writeSupported = true,
+                managedSupported = true,
+                managedWriteSupported = true,
                 runtimeToken = 1,
                 sessionStage = MemorySessionStage.EMPTY,
             ),
@@ -208,6 +218,8 @@ fun MemoryEditorLandscapeKnownSearchDialogScreenshot() {
                 connected = true,
                 supported = true,
                 writeSupported = true,
+                managedSupported = true,
+                managedWriteSupported = true,
                 runtimeToken = 1,
                 resultCount = 2,
                 results = previewRows,
@@ -224,9 +236,30 @@ private val previewInspectorSnapshot = MemoryInspectorSnapshot(
     candidateId = 1,
     type = MemoryEngineContract.TYPE_INT,
     label = "HP",
-    startAddress = 0x21B9980,
-    anchorAddress = 0x21B99C0,
-    bytes = ByteArray(128) { index -> (index * 3 + 7).toByte() },
+    logicalRows = listOf(
+        MemoryInspectorLogicalRow(
+            id = 1,
+            relativeOffset = 0,
+            type = MemoryEngineContract.TYPE_INT,
+            state = MemoryEngineContract.CANDIDATE_STABLE,
+            valueText = "90",
+            initialValueText = "100",
+            previousValueText = "95",
+            label = "HP",
+            expectedBits = 90L,
+        ),
+        MemoryInspectorLogicalRow(
+            id = 2,
+            relativeOffset = 1,
+            type = MemoryEngineContract.TYPE_INT,
+            state = MemoryEngineContract.CANDIDATE_STABLE,
+            valueText = "100",
+            initialValueText = "100",
+            previousValueText = "100",
+            label = "MaxHP",
+            expectedBits = 100L,
+        ),
+    ),
 )
 
 @PreviewTest
@@ -240,6 +273,8 @@ fun MemoryInspectorCompactScreenshot() {
                 connected = true,
                 supported = true,
                 writeSupported = true,
+                managedSupported = true,
+                managedWriteSupported = true,
                 runtimeToken = 1,
                 inspector = previewInspectorSnapshot,
             ),
@@ -259,6 +294,8 @@ fun MemoryInspectorWideScreenshot() {
                 connected = true,
                 supported = true,
                 writeSupported = true,
+                managedSupported = true,
+                managedWriteSupported = true,
                 runtimeToken = 1,
                 inspector = previewInspectorSnapshot,
             ),
@@ -279,6 +316,8 @@ fun MemoryEditorLandscapeMessageToolbarScreenshot() {
                 connected = true,
                 supported = true,
                 writeSupported = true,
+                managedSupported = true,
+                managedWriteSupported = true,
                 runtimeToken = 1,
                 resultCount = 7,
                 results = previewRows,

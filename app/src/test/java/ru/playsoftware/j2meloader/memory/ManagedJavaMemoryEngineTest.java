@@ -86,6 +86,56 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void managedGroupMatchesTermsWithinOneObjectAndPublishesObservedValues() {
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startGroup(TOKEN,
+				MemoryEngineContract.TYPE_INT, new String[]{"101", "202"}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, result.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		assertTrue(hasAddress(page, "groupFirst"));
+		assertTrue(hasAddress(page, "groupSecond"));
+		assertEquals(2, page.ids.length);
+		assertEquals("101", valueForAddress(page, "groupFirst"));
+		assertEquals("202", valueForAddress(page, "groupSecond"));
+		assertEquals(ManagedJavaMemoryIds.ownerHandle(page.ids[0]),
+				ManagedJavaMemoryIds.ownerHandle(page.ids[1]));
+	}
+
+	@Test
+	public void managedGroupDuplicateTermsUseDistinctSlots() {
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startGroup(TOKEN,
+				MemoryEngineContract.TYPE_INT, new String[]{"7", "7"}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, result.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		for (int index = 0; index < page.ids.length; index++) {
+			for (int other = index + 1; other < page.ids.length; other++) {
+				assertFalse("group published the same logical slot twice",
+						page.ids[index] == page.ids[other]);
+			}
+		}
+	}
+
+	@Test
+	public void managedUndoPublishesFreshRevisionAndRejectsStaleMutation() {
+		ManagedJavaMemoryEngine.ManagedOperationResult first = startExact();
+		long staleId = idForAddress(first.revision, "rootMatch");
+		root.rootMatch = 8;
+		ManagedJavaMemoryEngine.ManagedOperationResult refined = engine.refine(TOKEN, first.revision,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_CHANGED,
+				MemoryEngineContract.COMPARE_PREVIOUS, "", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, refined.code);
+		ManagedJavaMemoryEngine.ManagedOperationResult undone = engine.undo(TOKEN, refined.revision, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, undone.code);
+		assertTrue(undone.revision > refined.revision);
+		assertEquals(first.resultCount, undone.resultCount);
+		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+				engine.edit(TOKEN, refined.revision,
+						new long[]{staleId}, 9, 0L).code);
+		assertEquals(8, root.rootMatch);
+	}
+
+	@Test
 	public void autoUnknownPublishesBaselineCountAndRefinesAllCurrentTypes() {
 		ManagedJavaMemoryEngine.ManagedOperationResult unknown = engine.startUnknown(TOKEN,
 				MemoryEngineContract.TYPE_AUTO, 0L);
@@ -600,6 +650,13 @@ public class ManagedJavaMemoryEngineTest {
 		throw new AssertionError("Missing managed row containing " + fragment);
 	}
 
+	private static String valueForAddress(ManagedJavaMemoryEngine.ManagedPage page, String fragment) {
+		for (int index = 0; index < page.addresses.length; index++) {
+			if (page.addresses[index].contains(fragment)) return page.values[index];
+		}
+		throw new AssertionError("Missing managed row containing " + fragment);
+	}
+
 	private static int indexForLabel(ManagedJavaMemoryEngine.ManagedInspection inspection,
 	                                String fragment) {
 		for (int index = 0; index < inspection.labels.length; index++) {
@@ -639,6 +696,8 @@ public class ManagedJavaMemoryEngineTest {
 		static FixtureChild staticChild = new FixtureChild("static", 7);
 
 		int rootMatch = 7;
+		int groupFirst = 101;
+		int groupSecond = 202;
 		int rootChanged = 7;
 		byte byteMatch = 7;
 		short shortMatch = 7;

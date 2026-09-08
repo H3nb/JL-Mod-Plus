@@ -8,19 +8,11 @@
 
 package ru.playsoftware.j2meloader.memory
 
-/** Compact GameGuardian-style query syntax used by the production overlay search field. */
+/** Compact group query syntax used by the production overlay search field. */
 internal sealed interface MemorySearchExpression {
     data class Single(val value: String) : MemorySearchExpression
 
-    /**
-     * maxDistance is the engine argument. Positive values mean the established any-order group;
-     * negative values mean ordered-group semantics. Keeping the encoding here avoids widening the
-     * Binder/native ABI while the public query syntax remains unambiguous (`:` vs `::`).
-     */
-    data class Group(val values: List<String>, val maxDistance: Int) : MemorySearchExpression {
-        val ordered: Boolean get() = maxDistance < 0
-        val displayDistance: Int get() = kotlin.math.abs(maxDistance)
-    }
+    data class Group(val values: List<String>) : MemorySearchExpression
 
     data class Invalid(val reason: Reason) : MemorySearchExpression
 
@@ -28,14 +20,9 @@ internal sealed interface MemorySearchExpression {
         EMPTY,
         TOO_MANY_VALUES,
         EMPTY_GROUP_VALUE,
-        INVALID_DISTANCE,
-        ORDERED_GROUP_UNSUPPORTED,
         UNEXPECTED_RANGE,
     }
 }
-
-internal const val DEFAULT_GROUP_DISTANCE = 128
-internal const val MAX_GROUP_DISTANCE = 4096
 
 /**
  * Group Search uses one exact type for every term in the compact expression. When the user leaves
@@ -65,11 +52,9 @@ internal fun inferMemoryGroupType(values: List<String>): Int? {
  * Supported forms:
  *   500
  *   500;1000
- *   500;1000:128      // any order within the existing symmetric anchor window
- *   500;1000::128     // in order, strictly increasing addresses within a forward window
  *
- * Ordered state is encoded as a negative engine distance internally. User-entered distances remain
- * positive and bounded to 1..4096 bytes.
+ * Group terms are resolved against one Managed Java owner. Address-distance modifiers are rejected
+ * instead of being silently ignored.
  */
 internal fun parseMemorySearchExpression(input: String): MemorySearchExpression {
     val text = input.trim()
@@ -82,35 +67,16 @@ internal fun parseMemorySearchExpression(input: String): MemorySearchExpression 
         }
     }
 
-    val orderedIndex = text.lastIndexOf("::")
-    val ordered = orderedIndex >= 0
-    val rangeIndex = if (ordered) orderedIndex else text.lastIndexOf(':')
-    val delimiterLength = if (ordered) 2 else if (rangeIndex >= 0) 1 else 0
-
-    val groupText: String
-    val distance: Int
-    if (rangeIndex >= 0) {
-        groupText = text.substring(0, rangeIndex).trim()
-        val distanceText = text.substring(rangeIndex + delimiterLength).trim()
-        // A second colon outside the selected delimiter is always malformed rather than silently
-        // changing ordered/any-order semantics.
-        if (':' in groupText || ':' in distanceText) {
-            return MemorySearchExpression.Invalid(MemorySearchExpression.Reason.INVALID_DISTANCE)
-        }
-        distance = distanceText.toIntOrNull()
-            ?.takeIf { it in 1..MAX_GROUP_DISTANCE }
-            ?: return MemorySearchExpression.Invalid(MemorySearchExpression.Reason.INVALID_DISTANCE)
-    } else {
-        groupText = text
-        distance = DEFAULT_GROUP_DISTANCE
+    if (':' in text) {
+        return MemorySearchExpression.Invalid(MemorySearchExpression.Reason.UNEXPECTED_RANGE)
     }
 
-    val values = groupText.split(';').map(String::trim)
+    val values = text.split(';').map(String::trim)
     if (values.size !in 2..MemoryEngineContract.MAX_GROUP_VALUES) {
         return MemorySearchExpression.Invalid(MemorySearchExpression.Reason.TOO_MANY_VALUES)
     }
     if (values.any(String::isEmpty)) {
         return MemorySearchExpression.Invalid(MemorySearchExpression.Reason.EMPTY_GROUP_VALUE)
     }
-    return MemorySearchExpression.Group(values, if (ordered) -distance else distance)
+    return MemorySearchExpression.Group(values)
 }

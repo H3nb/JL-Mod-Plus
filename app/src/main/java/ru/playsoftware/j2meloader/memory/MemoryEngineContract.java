@@ -14,18 +14,10 @@
 
 package ru.playsoftware.j2meloader.memory;
 
-/** Stable primitive constants shared by the UI-independent engine IPC and native core. */
+/** Stable primitive constants shared by the UI-independent engine IPC and Managed Java target. */
 public final class MemoryEngineContract {
-	public static final int SCOPE_JAVA_FAST = 0;
-	public static final int SCOPE_JAVA_THOROUGH = 1;
-	/** Managed Java graph traversal in the MIDlet process; it is not a raw-address scope. */
-	public static final int SCOPE_MANAGED_JAVA = 2;
-
-	public static final int BACKEND_RAW = 0;
-	public static final int BACKEND_MANAGED = 1;
-
-	/** Runtime GC statistic is unavailable or cannot be parsed safely. */
-	public static final long GC_COUNT_UNKNOWN = -1L;
+	/** Managed Java graph traversal in the MIDlet process. */
+	public static final int SCOPE_MANAGED_JAVA = 0;
 
 	public static final int TYPE_AUTO = 0;
 	public static final int TYPE_BYTE = 1;
@@ -73,12 +65,6 @@ public final class MemoryEngineContract {
 	public static final int RESULT_NO_SESSION = 6;
 	public static final int RESULT_IDENTITY_UNSAFE = 7;
 	public static final int RESULT_SAFETY_LIMIT = 8;
-	/** Candidate binding was uniquely revalidated/refreshed; guarded mutations may continue. */
-	public static final int RESULT_GC_REVALIDATED = 9;
-	/** A GC occurred during a scan/write critical window, so the operation cannot be confirmed. */
-	public static final int RESULT_GC_RACE = 10;
-	/** An Unknown/relative baseline was captured before a moving-GC epoch and is no longer safe. */
-	public static final int RESULT_GC_BASELINE_INVALIDATED = 11;
 	/** At least one bounded write succeeded and at least one selected write was skipped safely. */
 	public static final int RESULT_PARTIAL_WRITE = 12;
 
@@ -95,22 +81,12 @@ public final class MemoryEngineContract {
 	public static final int MAX_FREEZE_RECORDS = 32;
 	public static final int MAX_WATCH_RECORDS = 128;
 	public static final int MAX_GROUP_VALUES = 8;
-	/**
-	 * Maximum resident address runs accepted from the target process. 4,096 was too tight for
-	 * fragmented ART heaps on 16 KiB-page devices and could turn an otherwise valid post-GC range
-	 * refresh into a false resource-limit failure. 16,384 remains bounded and serializes to roughly
-	 * 256 KiB of longs at the worst case, comfortably below Binder's transaction envelope.
-	 */
-	public static final int MAX_RESIDENT_RUNS = 16_384;
 	public static final int DEFAULT_INSPECT_RADIUS = 128;
 	public static final int MAX_INSPECT_RADIUS = 256;
-	public static final int DEFAULT_NEARBY_RADIUS = 256;
-	public static final int MAX_NEARBY_RADIUS = 4096;
-	public static final int MAX_INSPECT_BYTES = MAX_INSPECT_RADIUS * 2 + 8;
 
-	/** [count, id, address, reserved, type, state, relocations, initial, previous, current, ...]. */
+	/** Legacy empty-page stride retained for IPC compatibility; rows are logical locations. */
 	public static final int RESULT_PAGE_STRIDE = 9;
-	/** Maximum unique raw addresses requested per result page; typed aliases may add rows. */
+	/** Maximum logical result rows requested per page. */
 	public static final int MAX_RESULT_PAGE_SIZE = 100;
 
 	public static final String KEY_SUPPORTED = "supported";
@@ -132,11 +108,7 @@ public final class MemoryEngineContract {
 	public static final String KEY_MANAGED_NOT_ATTEMPTED = "managedNotAttempted";
 	public static final String KEY_MANAGED_REJECTED_BEFORE_WRITE = "managedRejectedBeforeWrite";
 	public static final String KEY_MANAGED_SKIPPED_BY_TYPE = "managedSkippedByType";
-	public static final String KEY_SEARCH_BACKEND = "searchBackend";
 	public static final String KEY_RUNTIME_TOKEN = "runtimeToken";
-	public static final String KEY_TARGET_PID = "targetPid";
-	public static final String KEY_PAGE_SIZE = "pageSize";
-	public static final String KEY_GC_COUNT = "gcCount";
 	public static final String KEY_MESSAGE = "message";
 	public static final String KEY_SEARCH_SESSION_STAGE = "searchSessionStage";
 	public static final String KEY_SEARCH_MODE = "searchMode";
@@ -144,9 +116,6 @@ public final class MemoryEngineContract {
 	public static final String KEY_SEARCH_SCOPE = "searchScope";
 	public static final String KEY_SEARCH_HISTORY_DEPTH = "searchHistoryDepth";
 	public static final String KEY_INSPECT_RESULT = "inspectResult";
-	public static final String KEY_INSPECT_START = "inspectStart";
-	public static final String KEY_INSPECT_ANCHOR = "inspectAnchor";
-	public static final String KEY_INSPECT_BYTES = "inspectBytes";
 	public static final String KEY_INSPECT_IDS = "inspectIds";
 	public static final String KEY_INSPECT_VALUES = "inspectValues";
 	public static final String KEY_INSPECT_INITIAL_VALUES = "inspectInitialValues";
@@ -156,9 +125,7 @@ public final class MemoryEngineContract {
 	public static final String KEY_INSPECT_RELATIVE_OFFSETS = "inspectRelativeOffsets";
 	public static final String KEY_INSPECT_EXPECTED_BITS = "inspectExpectedBits";
 	public static final String KEY_INSPECT_LABELS = "inspectLabels";
-	public static final String KEY_INSPECT_BACKENDS = "inspectBackends";
 	public static final String KEY_INSPECT_EDITABLE = "inspectEditable";
-	public static final String KEY_INSPECT_ANCHOR_ID = "inspectAnchorId";
 	public static final String KEY_INSPECT_EXPECTED_REVISION = "inspectExpectedRevision";
 	public static final String KEY_INSPECT_PROVENANCE = "inspectProvenance";
 	public static final String KEY_RESULT_IDS = "resultIds";
@@ -179,33 +146,16 @@ public final class MemoryEngineContract {
 	public static final String KEY_WATCH_LABELS = "watchLabels";
 	public static final String KEY_WATCH_FREEZE_MODES = "watchFreezeModes";
 	public static final String KEY_WATCH_FREEZE_PAUSED = "watchFreezePaused";
-	public static final String KEY_WATCH_BACKENDS = "watchBackends";
 
 	private MemoryEngineContract() {
 	}
 
 	public static boolean isScope(int scope) {
-		return isRawScope(scope) || scope == SCOPE_MANAGED_JAVA;
-	}
-
-	public static boolean isRawScope(int scope) {
-		return scope == SCOPE_JAVA_FAST || scope == SCOPE_JAVA_THOROUGH;
+		return scope == SCOPE_MANAGED_JAVA;
 	}
 
 	public static boolean isManagedScope(int scope) {
 		return scope == SCOPE_MANAGED_JAVA;
-	}
-
-	public static boolean isKnownGcCount(long gcCount) {
-		return gcCount >= 0L;
-	}
-
-	public static boolean didGcCountChange(long before, long after) {
-		return isKnownGcCount(before) && isKnownGcCount(after) && before != after;
-	}
-
-	public static long latestKnownGcCount(long before, long after) {
-		return isKnownGcCount(after) ? after : before;
 	}
 
 	public static boolean isValueType(int type) {
@@ -220,16 +170,4 @@ public final class MemoryEngineContract {
 		return radius > 0 && radius <= MAX_INSPECT_RADIUS;
 	}
 
-	public static boolean isNearbyRadius(int radius) {
-		return radius > 0 && radius <= MAX_NEARBY_RADIUS;
-	}
-
-	static boolean isCompleteRunList(long[] runs) {
-		if (runs == null || runs.length < 2 || runs[0] <= 0L || runs[1] != 0L ||
-				runs[0] > MAX_RESIDENT_RUNS ||
-				runs[0] > (runs.length - 2L) / 2L) {
-			return false;
-		}
-		return runs.length == 2 + (int) runs[0] * 2;
-	}
 }

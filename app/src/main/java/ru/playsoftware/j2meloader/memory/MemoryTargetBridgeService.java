@@ -16,20 +16,15 @@ package ru.playsoftware.j2meloader.memory;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Debug;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Process;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 
 import androidx.annotation.Nullable;
 
-/** Minimal :midlet bridge for runtime identity and target-local mincore collection. */
+/** Minimal :midlet bridge for runtime identity and target-owned Managed Java memory operations. */
 public final class MemoryTargetBridgeService extends Service {
-	private static final String ART_GC_COUNT_STAT = "art.gc.gc-count";
-	private static final long[] EMPTY_RUNS = new long[]{0L, 0L};
-	private final Object rangeLock = new Object();
 	private final RemoteCallbackList<IMemoryTargetCallback> callbacks = new RemoteCallbackList<>();
 	private final MemoryRuntimeSession.Listener runtimeListener = this::notifyRuntimeEnded;
 	private final ManagedJavaMemoryEngine managedEngine = new ManagedJavaMemoryEngine();
@@ -55,44 +50,6 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 
 		@Override
-		public int getTargetPid() {
-			return Process.myPid();
-		}
-
-		@Override
-		public int getPageSize() {
-			return NativeMemoryTarget.pageSize();
-		}
-
-		@Override
-		public long getGcCount(long runtimeToken) {
-			return MemoryRuntimeSession.isActive(runtimeToken)
-					? readGcCount() : MemoryEngineContract.GC_COUNT_UNKNOWN;
-		}
-
-		@Override
-		public long[] getReadProbe(long runtimeToken) {
-			if (!MemoryRuntimeSession.isActive(runtimeToken)) {
-				return new long[0];
-			}
-			long[] probe = NativeMemoryTarget.readProbe();
-			return probe == null ? new long[0] : probe;
-		}
-
-		@Override
-		public long[] getResidentRuns(long runtimeToken, int scope, int maxRuns) {
-			if (!MemoryRuntimeSession.isActive(runtimeToken)
-					|| !MemoryEngineContract.isRawScope(scope)
-					|| maxRuns <= 0 || maxRuns > MemoryEngineContract.MAX_RESIDENT_RUNS) {
-				return EMPTY_RUNS;
-			}
-			synchronized (rangeLock) {
-				long[] runs = NativeMemoryTarget.collectResidentRuns(scope, maxRuns);
-				return runs == null ? EMPTY_RUNS : runs;
-			}
-		}
-
-		@Override
 		public Bundle getManagedCapabilities(long runtimeToken) {
 			return managedCapabilities(runtimeToken, managedEngine.capabilities(runtimeToken));
 		}
@@ -113,6 +70,13 @@ public final class MemoryTargetBridgeService extends Service {
 		public Bundle managedStartUnknown(long runtimeToken, int valueType, long cancellationEpoch) {
 			return managedResult(runtimeToken,
 					managedEngine.startUnknown(runtimeToken, valueType, cancellationEpoch));
+		}
+
+		@Override
+		public Bundle managedStartGroup(long runtimeToken, int valueType, String[] values,
+				long cancellationEpoch) {
+			return managedResult(runtimeToken,
+					managedEngine.startGroup(runtimeToken, valueType, values, cancellationEpoch));
 		}
 
 		@Override
@@ -141,6 +105,12 @@ public final class MemoryTargetBridgeService extends Service {
 				boolean keep, long cancellationEpoch) {
 			return managedResult(runtimeToken, managedEngine.filter(runtimeToken, expectedRevision,
 					ids, keep, cancellationEpoch));
+		}
+
+		@Override
+		public Bundle managedUndo(long runtimeToken, long expectedRevision, long cancellationEpoch) {
+			return managedResult(runtimeToken, managedEngine.undo(runtimeToken, expectedRevision,
+					cancellationEpoch));
 		}
 
 		@Override
@@ -274,26 +244,6 @@ public final class MemoryTargetBridgeService extends Service {
 		super.onDestroy();
 	}
 
-	static long readGcCount() {
-		try {
-			return parseGcCount(Debug.getRuntimeStat(ART_GC_COUNT_STAT));
-		} catch (RuntimeException exception) {
-			return MemoryEngineContract.GC_COUNT_UNKNOWN;
-		}
-	}
-
-	static long parseGcCount(@Nullable String value) {
-		if (value == null || value.isBlank()) {
-			return MemoryEngineContract.GC_COUNT_UNKNOWN;
-		}
-		try {
-			long count = Long.parseLong(value);
-			return count >= 0L ? count : MemoryEngineContract.GC_COUNT_UNKNOWN;
-		} catch (NumberFormatException exception) {
-			return MemoryEngineContract.GC_COUNT_UNKNOWN;
-		}
-	}
-
 	private void notifyRuntimeEnded(long token) {
 		managedEngine.runtimeClosed(token);
 		int count = callbacks.beginBroadcast();
@@ -322,6 +272,7 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, state.revision);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT, state.resultCount);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, state.baselineCount);
+		result.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH, state.historyDepth);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
 		if (state.message != null && !state.message.isBlank()) {
@@ -339,6 +290,7 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, state.revision);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT, state.resultCount);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, state.baselineCount);
+		result.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH, state.historyDepth);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
 		result.putInt(MemoryEngineContract.KEY_SEARCH_SESSION_STAGE, state.stage);
@@ -380,7 +332,6 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
 		result.putInt(MemoryEngineContract.KEY_INSPECT_RESULT, state.code);
 		if (state.code == MemoryEngineContract.RESULT_OK) {
-			result.putLong(MemoryEngineContract.KEY_INSPECT_ANCHOR_ID, state.anchorId);
 			result.putLong(MemoryEngineContract.KEY_INSPECT_EXPECTED_REVISION, state.revision);
 			result.putLongArray(MemoryEngineContract.KEY_INSPECT_IDS, state.ids);
 			result.putStringArray(MemoryEngineContract.KEY_INSPECT_VALUES, state.values);
@@ -395,7 +346,6 @@ public final class MemoryTargetBridgeService extends Service {
 			result.putLongArray(MemoryEngineContract.KEY_INSPECT_EXPECTED_BITS,
 					state.expectedBits);
 			result.putStringArray(MemoryEngineContract.KEY_INSPECT_LABELS, state.labels);
-			result.putIntArray(MemoryEngineContract.KEY_INSPECT_BACKENDS, state.backends);
 			result.putBooleanArray(MemoryEngineContract.KEY_INSPECT_EDITABLE, state.editable);
 			result.putString(MemoryEngineContract.KEY_INSPECT_PROVENANCE, state.provenance);
 		}
@@ -435,7 +385,6 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS, page.labels);
 		result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, page.freezeModes);
 		result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, page.freezePaused);
-		result.putIntArray(MemoryEngineContract.KEY_WATCH_BACKENDS, page.backends);
 		return result;
 	}
 }

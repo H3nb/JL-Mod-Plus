@@ -23,7 +23,7 @@ class MemoryEditorModelsTest {
         )
         assertEquals(42L, parsed.single().id)
         assertEquals("30", parsed.single().valueText)
-        assertEquals("0x1234", parsed.single().addressText)
+        assertEquals("0x1234", parsed.single().locationText)
         assertEquals("HP", parsed.single().label)
     }
 
@@ -111,8 +111,8 @@ class MemoryEditorModelsTest {
             managedBaselineCount = 184_732L,
         )
         assertEquals(184_732L, managedBaselineCountForPresentation(managedBaseline))
-        assertNull(managedBaselineCountForPresentation(
-            managedBaseline.copy(searchScope = MemoryEngineContract.SCOPE_JAVA_FAST),
+        assertEquals(184_732L, managedBaselineCountForPresentation(
+            managedBaseline.copy(searchScope = MemoryEngineContract.SCOPE_MANAGED_JAVA),
         ))
         assertNull(managedBaselineCountForPresentation(
             managedBaseline.copy(managedBaselineCount = 0L),
