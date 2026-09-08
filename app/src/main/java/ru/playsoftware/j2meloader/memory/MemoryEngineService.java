@@ -99,6 +99,7 @@ public final class MemoryEngineService extends Service {
 	private final Object searchSessionLock = new Object();
 	private final ArrayDeque<Integer> searchStageHistory = new ArrayDeque<>();
 	private final ArrayDeque<Long> searchGcHistory = new ArrayDeque<>();
+	private final ArrayDeque<Integer> searchTypeHistory = new ArrayDeque<>();
 	private int searchSessionStage = MemoryEngineContract.SEARCH_SESSION_EMPTY;
 	private int searchSessionMode = MemoryEngineContract.SEARCH_MODE_KNOWN;
 	private int searchRequestedType = MemoryEngineContract.TYPE_AUTO;
@@ -416,7 +417,7 @@ public final class MemoryEngineService extends Service {
 			}
 			return enqueue(token, false, 0, () -> {
 				if (candidateIds == null || candidateIds.length == 0 ||
-						candidateIds.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
+						candidateIds.length > MemoryEngineContract.MAX_WATCH_RECORDS) {
 					return MemoryEngineContract.RESULT_SAFETY_LIMIT;
 				}
 				if (!MemoryEngineContract.isCandidateType(valueType)) {
@@ -427,7 +428,8 @@ public final class MemoryEngineService extends Service {
 				}
 				int typeCheck = validateRawWatchTypes(candidateIds, valueType);
 				if (typeCheck != MemoryEngineContract.RESULT_OK) return typeCheck;
-				return editRawAuxiliary(token, candidateIds, replacementValue);
+				return editRawAuxiliary(token, candidateIds, replacementValue,
+						MemoryEngineContract.MAX_WATCH_RECORDS);
 			});
 		}
 
@@ -461,7 +463,7 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long filterResultGroups(long token, long expectedRevision, long[] resultIds, boolean keep) {
 			if (resultIds == null || resultIds.length == 0
-					|| resultIds.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
+					|| resultIds.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
 				return enqueue(token, false, 0, () -> MemoryEngineContract.RESULT_SAFETY_LIMIT);
 			}
 			if (containsManagedIds(resultIds)) {
@@ -503,13 +505,14 @@ public final class MemoryEngineService extends Service {
 				}
 				long[] candidateIds = NativeMemoryEngine.expandResultGroups(resultIds, valueType);
 				if (candidateIds == null || candidateIds.length == 0 ||
-						candidateIds.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
+						candidateIds.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
 					return MemoryEngineContract.RESULT_SAFETY_LIMIT;
 				}
 				if (!isWriteSupported(token)) {
 					return MemoryEngineContract.RESULT_UNSUPPORTED;
 				}
-				return editRawAuxiliary(token, candidateIds, replacementValue);
+				return editRawAuxiliary(token, candidateIds, replacementValue,
+						MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
 			});
 		}
 
@@ -1162,7 +1165,7 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private int editMixed(long token, long[] ids, int valueType, String replacementValue) {
-		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_WATCH_RECORDS) {
 			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
 		}
 		if (!MemoryEngineContract.isCandidateType(valueType)) {
@@ -1178,7 +1181,8 @@ public final class MemoryEngineService extends Service {
 				: managedEdit(token, isManagedCurrent(token) ? managedRevision : 0L,
 						managed, valueType, replacementValue, true);
 		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
-				: editRawAuxiliary(token, raw, replacementValue);
+				: editRawAuxiliary(token, raw, replacementValue,
+						MemoryEngineContract.MAX_WATCH_RECORDS);
 		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
 	}
 
@@ -1208,7 +1212,7 @@ public final class MemoryEngineService extends Service {
 	                                 String replacementValue) {
 		if (!MemoryEngineContract.isCandidateType(valueType)
 				|| resultIds == null || resultIds.length == 0
-				|| resultIds.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
+				|| resultIds.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
 			return MemoryEngineContract.RESULT_INVALID_REQUEST;
 		}
 		long[] managed = idsForBackend(resultIds, true);
@@ -1218,21 +1222,22 @@ public final class MemoryEngineService extends Service {
 		if (raw == null || raw.length == 0 && managed.length == 0) {
 			return MemoryEngineContract.RESULT_INVALID_REQUEST;
 		}
-		if (raw.length > MemoryEngineContract.MAX_REQUEST_TARGETS
-				|| managed.length > MemoryEngineContract.MAX_REQUEST_TARGETS
-				|| raw.length > MemoryEngineContract.MAX_REQUEST_TARGETS - managed.length) {
+		if (raw.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE
+				|| managed.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE
+				|| raw.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE - managed.length) {
 			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
 		}
 		int managedResult = managed.length == 0 ? MemoryEngineContract.RESULT_OK
 				: managedEdit(token, expectedRevision,
 						managed, valueType, replacementValue, false);
 		int rawResult = raw.length == 0 ? MemoryEngineContract.RESULT_OK
-				: editRawAuxiliary(token, raw, replacementValue);
+				: editRawAuxiliary(token, raw, replacementValue,
+						MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
 		return managedResult != MemoryEngineContract.RESULT_OK ? managedResult : rawResult;
 	}
 
-	private int editRawAuxiliary(long token, long[] ids, String replacementValue) {
-		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
+	private int editRawAuxiliary(long token, long[] ids, String replacementValue, int maxTargets) {
+		if (ids == null || ids.length == 0 || ids.length > maxTargets) {
 			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
 		}
 		if (!isWriteSupported(token)) return MemoryEngineContract.RESULT_UNSUPPORTED;
@@ -1485,9 +1490,9 @@ public final class MemoryEngineService extends Service {
 	private int managedFilterResultGroups(long token, long expectedRevision, long[] resultIds,
 	                                     boolean keep) {
 		if (resultIds == null || resultIds.length == 0
-				|| resultIds.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
+				|| resultIds.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
 			return managedFailure(MemoryEngineContract.RESULT_SAFETY_LIMIT,
-					"Managed candidate filtering is limited to 128 selected rows");
+					"Managed candidate filtering is limited to 100 visible result rows");
 		}
 		IMemoryTargetBridge bridge = target;
 		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
@@ -1625,9 +1630,12 @@ public final class MemoryEngineService extends Service {
 	private int managedEdit(long token, long expectedRevision, long[] ids, int declaredType,
 	                       String replacementValue, boolean allowWatchOnly) {
 		if (!allowWatchOnly && expectedRevision <= 0L) expectedRevision = managedRevision;
-		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
+		int maxTargets = allowWatchOnly ? MemoryEngineContract.MAX_WATCH_RECORDS
+				: MemoryEngineContract.MAX_RESULT_PAGE_SIZE;
+		if (ids == null || ids.length == 0 || ids.length > maxTargets) {
 			return managedFailure(MemoryEngineContract.RESULT_SAFETY_LIMIT,
-					"Managed edits are limited to 128 logical targets");
+					allowWatchOnly ? "Managed Watch edits are limited to 128 rows"
+							: "Managed edits are limited to 100 visible result rows");
 		}
 		IMemoryTargetBridge bridge = target;
 		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
@@ -1907,6 +1915,7 @@ public final class MemoryEngineService extends Service {
 			searchSessionScope = MemoryEngineContract.SCOPE_MANAGED_JAVA;
 			searchStageHistory.clear();
 			searchGcHistory.clear();
+			searchTypeHistory.clear();
 			gcBindings.clearSearchEpoch();
 		}
 	}
@@ -2712,7 +2721,8 @@ public final class MemoryEngineService extends Service {
 			bundle.putInt(MemoryEngineContract.KEY_SEARCH_SCOPE,
 					current ? searchSessionScope : MemoryEngineContract.SCOPE_JAVA_FAST);
 			bundle.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH,
-					current ? Math.min(nativeHistoryDepth, searchStageHistory.size()) : 0);
+					current ? Math.min(nativeHistoryDepth, Math.min(searchStageHistory.size(),
+							Math.min(searchGcHistory.size(), searchTypeHistory.size()))) : 0);
 			bundle.putLong(MemoryEngineContract.KEY_GC_COUNT,
 					current ? gcBindings.searchEpoch() : MemoryEngineContract.GC_COUNT_UNKNOWN);
 			bundle.putInt(MemoryEngineContract.KEY_SEARCH_BACKEND,
@@ -2727,6 +2737,7 @@ public final class MemoryEngineService extends Service {
 		synchronized (searchSessionLock) {
 			searchStageHistory.clear();
 			searchGcHistory.clear();
+			searchTypeHistory.clear();
 			searchSessionStage = stage;
 			searchSessionMode = mode;
 			searchRequestedType = requestedType;
@@ -2744,6 +2755,7 @@ public final class MemoryEngineService extends Service {
 		synchronized (searchSessionLock) {
 			searchStageHistory.addLast(searchSessionStage);
 			searchGcHistory.addLast(gcBindings.searchEpoch());
+			searchTypeHistory.addLast(searchRequestedType);
 			trimSearchHistoryLocked(nativeHistoryDepth);
 			searchSessionStage = nextStage;
 			if (requestedType != Integer.MIN_VALUE) {
@@ -2768,19 +2780,28 @@ public final class MemoryEngineService extends Service {
 		while (searchGcHistory.size() > boundedDepth) {
 			searchGcHistory.removeFirst();
 		}
+		while (searchTypeHistory.size() > boundedDepth) {
+			searchTypeHistory.removeFirst();
+		}
 	}
 
 	private void undoSearchSession() {
 		synchronized (searchSessionLock) {
 			if (!searchStageHistory.isEmpty()) searchSessionStage = searchStageHistory.removeLast();
 			if (!searchGcHistory.isEmpty()) gcBindings.setSearchEpoch(searchGcHistory.removeLast());
+			searchRequestedType = restoreSearchTypeHistory(searchTypeHistory, searchRequestedType);
 		}
+	}
+
+	static int restoreSearchTypeHistory(ArrayDeque<Integer> history, int currentType) {
+		return history.isEmpty() ? currentType : history.removeLast();
 	}
 
 	private void clearSearchSession() {
 		synchronized (searchSessionLock) {
 			searchStageHistory.clear();
 			searchGcHistory.clear();
+			searchTypeHistory.clear();
 			searchSessionStage = MemoryEngineContract.SEARCH_SESSION_EMPTY;
 			searchSessionMode = MemoryEngineContract.SEARCH_MODE_KNOWN;
 			searchRequestedType = MemoryEngineContract.TYPE_AUTO;

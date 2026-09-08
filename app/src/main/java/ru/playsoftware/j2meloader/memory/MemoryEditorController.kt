@@ -424,6 +424,10 @@ internal class MemoryEditorComposeController(
                     results = emptyList(),
                     watches = emptyList(),
                     resultCount = 0L,
+                    unknownPredicate = memoryUnknownPredicateForRuntime(
+                        state.unknownPredicate,
+                        newRuntime = state.runtimeToken != token,
+                    ),
                     message = capabilityMessage ?: context.getString(R.string.memory_editor_unsupported),
                 )
             }
@@ -476,7 +480,7 @@ internal class MemoryEditorComposeController(
                 .coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
         }
         val pageOffset = requestedOffset.coerceIn(0, maxOffset)
-        val results = if (stage == MemorySessionStage.CANDIDATES) {
+        val results = if (stage != MemorySessionStage.EMPTY) {
             MemoryResultPageParser.parse(engine.getResultPage(token, pageOffset, PAGE_SIZE))
         } else {
             emptyList()
@@ -516,6 +520,10 @@ internal class MemoryEditorComposeController(
                 searchScope = displayScope,
                 knownScopePreference = knownScopePreference,
                 knownScopePreferenceExplicit = explicitKnownScope,
+                unknownPredicate = memoryUnknownPredicateForRuntime(
+                    state.unknownPredicate,
+                    newRuntime,
+                ),
                 canUndo = canUndo,
                 message = capabilityMessage?.takeIf(String::isNotBlank) ?: state.message,
             )
@@ -540,14 +548,14 @@ internal class MemoryEditorComposeController(
         runIpc {
             var completionPosted = false
             try {
-                val resultBundle = if (!watchTab && sessionStage == MemorySessionStage.CANDIDATES) {
+                val resultBundle = if (!watchTab && sessionStage != MemorySessionStage.EMPTY) {
                     engine.getResultPage(token, pageOffset, PAGE_SIZE)
                 } else {
                     null
                 }
                 val managedPageRevision = if (!watchTab &&
                     searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA &&
-                    sessionStage == MemorySessionStage.CANDIDATES
+                    sessionStage != MemorySessionStage.EMPTY
                 ) {
                     resultBundle?.getLong(MemoryEngineContract.KEY_MANAGED_REVISION, Long.MIN_VALUE)
                 } else null
@@ -638,6 +646,11 @@ internal class MemoryEditorComposeController(
         )
     }
 
+    override fun setUnknownSearchPredicate(predicate: Int) {
+        if (memoryUnknownPredicateOrDefault(predicate) != predicate) return
+        state = state.copy(unknownPredicate = predicate)
+    }
+
     override fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int) {
         invalidateVisiblePageRequest()
         state = state.copy(pageOffset = 0, selected = emptySet(), inspector = null)
@@ -695,9 +708,15 @@ internal class MemoryEditorComposeController(
     }
 
     override fun toggleSelection(id: Long) {
-        if (id !in state.selected && state.selected.size >= MemoryEngineContract.MAX_REQUEST_TARGETS) {
+        val selectionLimit = if (state.watchTab) MemoryEngineContract.MAX_WATCH_RECORDS
+        else MemoryEngineContract.MAX_RESULT_PAGE_SIZE
+        if (id !in state.selected && state.selected.size >= selectionLimit) {
             state = state.copy(
-                message = "Selection is limited to ${MemoryEngineContract.MAX_REQUEST_TARGETS} targets",
+                message = if (state.watchTab) {
+                    "Watch selection is limited to $selectionLimit rows"
+                } else {
+                    "Selection is limited to $selectionLimit visible result rows"
+                },
                 messageIsError = true,
             )
             return
@@ -1236,8 +1255,10 @@ internal class MemoryEditorComposeController(
         type: Int,
     ) {
         val snapshot = targets.toList()
-        if (snapshot.isEmpty() || snapshot.size > MemoryEngineContract.MAX_REQUEST_TARGETS) return
         val watch = snapshot.all(MemoryEditTarget::watch)
+        val actionLimit = if (watch) MemoryEngineContract.MAX_WATCH_RECORDS
+        else MemoryEngineContract.MAX_RESULT_PAGE_SIZE
+        if (snapshot.isEmpty() || snapshot.size > actionLimit) return
         val eligible = if (watch) snapshot.filter { it.type == type } else snapshot
         if (watch && eligible.isEmpty()) {
             state = state.copy(

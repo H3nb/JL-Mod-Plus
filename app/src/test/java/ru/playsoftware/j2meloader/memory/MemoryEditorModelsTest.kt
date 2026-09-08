@@ -4,7 +4,10 @@
  */
 package ru.playsoftware.j2meloader.memory
 
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -32,5 +35,67 @@ class MemoryEditorModelsTest {
         assertEquals(MemorySearchMode.KNOWN, memorySearchModeFromEngine(-1))
     }
 
+    @Test fun activeSearchIncludesUnknownBaselineForKnownNextScan() {
+        assertFalse(memorySessionHasActiveSearch(MemorySessionStage.EMPTY))
+        assertTrue(memorySessionHasActiveSearch(MemorySessionStage.UNKNOWN_BASELINE))
+        assertTrue(memorySessionHasActiveSearch(MemorySessionStage.CANDIDATES))
+    }
+
+    @Test fun unknownSearchOnlyOffersRelativePredicates() {
+        assertArrayEquals(
+            intArrayOf(
+                MemoryEngineContract.PREDICATE_CHANGED,
+                MemoryEngineContract.PREDICATE_UNCHANGED,
+                MemoryEngineContract.PREDICATE_INCREASED,
+                MemoryEngineContract.PREDICATE_DECREASED,
+                MemoryEngineContract.PREDICATE_INCREASED_BY,
+                MemoryEngineContract.PREDICATE_DECREASED_BY,
+                MemoryEngineContract.PREDICATE_CHANGED_BY,
+                MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE,
+                MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE,
+            ),
+            memoryUnknownSearchPredicates(),
+        )
+        assertEquals(
+            MemoryEngineContract.PREDICATE_CHANGED,
+            memoryUnknownPredicateOrDefault(MemoryEngineContract.PREDICATE_EQUAL),
+        )
+        assertEquals(
+            MemoryEngineContract.PREDICATE_INCREASED_BY,
+            memoryUnknownPredicateOrDefault(MemoryEngineContract.PREDICATE_INCREASED_BY),
+        )
+        assertEquals(
+            MemoryEngineContract.PREDICATE_INCREASED_BY,
+            memoryUnknownPredicateForRuntime(
+                MemoryEngineContract.PREDICATE_INCREASED_BY,
+                newRuntime = false,
+            ),
+        )
+        assertEquals(
+            MemoryEngineContract.PREDICATE_CHANGED,
+            memoryUnknownPredicateForRuntime(
+                MemoryEngineContract.PREDICATE_INCREASED_BY,
+                newRuntime = true,
+            ),
+        )
+    }
+
+    @Test fun managedBaselineCountIsPresentedOnlyForKnownManagedBaseline() {
+        val managedBaseline = MemoryEditorUiState(
+            sessionStage = MemorySessionStage.UNKNOWN_BASELINE,
+            searchScope = MemoryEngineContract.SCOPE_MANAGED_JAVA,
+            managedBaselineCount = 184_732L,
+        )
+        assertEquals(184_732L, managedBaselineCountForPresentation(managedBaseline))
+        assertNull(managedBaselineCountForPresentation(
+            managedBaseline.copy(searchScope = MemoryEngineContract.SCOPE_JAVA_FAST),
+        ))
+        assertNull(managedBaselineCountForPresentation(
+            managedBaseline.copy(managedBaselineCount = 0L),
+        ))
+        assertNull(managedBaselineCountForPresentation(
+            managedBaseline.copy(sessionStage = MemorySessionStage.CANDIDATES),
+        ))
+    }
 
 }

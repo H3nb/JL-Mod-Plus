@@ -38,6 +38,32 @@ internal fun memorySearchModeFromEngine(value: Int): MemorySearchMode = when (va
     else -> MemorySearchMode.KNOWN
 }
 
+internal fun memorySessionHasActiveSearch(stage: MemorySessionStage): Boolean =
+    stage != MemorySessionStage.EMPTY
+
+/** Predicates that describe a change from the captured Unknown-search baseline. */
+internal fun memoryUnknownSearchPredicates(): IntArray = intArrayOf(
+    MemoryEngineContract.PREDICATE_CHANGED,
+    MemoryEngineContract.PREDICATE_UNCHANGED,
+    MemoryEngineContract.PREDICATE_INCREASED,
+    MemoryEngineContract.PREDICATE_DECREASED,
+    MemoryEngineContract.PREDICATE_INCREASED_BY,
+    MemoryEngineContract.PREDICATE_DECREASED_BY,
+    MemoryEngineContract.PREDICATE_CHANGED_BY,
+    MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE,
+    MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE,
+)
+
+internal fun memoryUnknownPredicateOrDefault(predicate: Int): Int =
+    predicate.takeIf {
+        it in MemoryEngineContract.PREDICATE_CHANGED..
+            MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
+    } ?: MemoryEngineContract.PREDICATE_CHANGED
+
+internal fun memoryUnknownPredicateForRuntime(predicate: Int, newRuntime: Boolean): Int =
+    if (newRuntime) MemoryEngineContract.PREDICATE_CHANGED
+    else memoryUnknownPredicateOrDefault(predicate)
+
 /** One engine-formatted Watch row used by the :memory_engine presentation. */
 internal data class MemoryWatchRow(
     val id: Long,
@@ -240,16 +266,25 @@ internal data class MemoryEditorUiState(
     val knownScopePreference: Int = MemoryEngineContract.SCOPE_JAVA_FAST,
     /** Distinguishes an explicit user choice from the capability-driven default. */
     val knownScopePreferenceExplicit: Boolean = false,
+    /** Last relative predicate selected for Unknown search in this MIDlet runtime. */
+    val unknownPredicate: Int = MemoryEngineContract.PREDICATE_CHANGED,
     val canUndo: Boolean = false,
     val inspectorLoading: Boolean = false,
     val inspector: MemoryInspectorSnapshot? = null,
 )
+
+internal fun managedBaselineCountForPresentation(state: MemoryEditorUiState): Long? =
+    state.managedBaselineCount.takeIf {
+        state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE &&
+            state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA && it > 0L
+    }
 
 internal interface MemoryEditorActions {
     fun close()
     fun refreshCapabilities()
     fun startSearch(value: String, secondValue: String, type: Int, predicate: Int, unknown: Boolean, scope: Int)
     fun setKnownSearchScope(scope: Int) = Unit
+    fun setUnknownSearchPredicate(predicate: Int) = Unit
     fun nextScan(
         value: String,
         secondValue: String,

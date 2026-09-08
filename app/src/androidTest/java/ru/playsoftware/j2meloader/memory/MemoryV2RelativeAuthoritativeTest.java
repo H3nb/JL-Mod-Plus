@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/** Device gate for candidate-free Unknown materialization, relative COW refine, and Undo. */
+/** Device gate for visible Unknown materialization, relative COW refine, and Undo. */
 @RunWith(AndroidJUnit4.class)
 public class MemoryV2RelativeAuthoritativeTest {
 	// Modified: exercise the typed production Unknown-to-Known materializer, not legacy JNI.
@@ -39,7 +39,8 @@ public class MemoryV2RelativeAuthoritativeTest {
 			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.startUnknown(MemoryEngineContract.TYPE_INT));
 			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.refineKnown(
 					MemoryEngineContract.TYPE_FLOAT, MemoryEngineContract.PREDICATE_EQUAL, "7", "", false));
-			assertEquals(0L, NativeMemoryEngine.resultCount());
+			assertTrue("Unknown baseline did not publish candidates",
+					NativeMemoryEngine.resultCount() > 0L);
 			assertTrue(NativeMemoryEngine.hasCurrentV2CompactRevision());
 			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.startUnknown(MemoryEngineContract.TYPE_AUTO));
 			NativeMemoryTarget.writeProbe(9L);

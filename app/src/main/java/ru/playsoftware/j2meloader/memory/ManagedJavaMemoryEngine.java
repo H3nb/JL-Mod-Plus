@@ -78,7 +78,7 @@ final class ManagedJavaMemoryEngine {
 	private long nextOwnerHandle = 1L;
 	private long nextRevision = 1L;
 	private Revision committed;
-	/** The original hidden-baseline size. It is metadata, not the visible candidate count. */
+	/** The original Unknown-baseline size retained for diagnostics and session metadata. */
 	private long baselineCount;
 	private int searchStage = MemoryEngineContract.SEARCH_SESSION_EMPTY;
 	private int searchMode = MemoryEngineContract.SEARCH_MODE_KNOWN;
@@ -302,7 +302,7 @@ final class ManagedJavaMemoryEngine {
 		}
 	}
 
-	/** Captures a typed, hidden baseline for an Unknown search without inventing a raw snapshot. */
+	/** Captures a typed baseline for an Unknown search without inventing a raw snapshot. */
 	ManagedOperationResult startUnknown(long token, int type, long operationEpoch) {
 		if (!MemoryEngineContract.isValueType(type)) {
 			return failure(token, MemoryEngineContract.RESULT_UNSUPPORTED,
@@ -532,7 +532,8 @@ final class ManagedJavaMemoryEngine {
 		Revision revision;
 		synchronized (stateLock) {
 			if (!isCurrentLocked(token) || committed == null || committed.id != expectedRevision
-					|| searchStage != MemoryEngineContract.SEARCH_SESSION_CANDIDATES) {
+					|| (searchStage != MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE
+					&& searchStage != MemoryEngineContract.SEARCH_SESSION_CANDIDATES)) {
 				return ManagedPage.empty(expectedRevision);
 			}
 			revision = committed;
@@ -756,10 +757,10 @@ final class ManagedJavaMemoryEngine {
 		}
 	}
 
-	/** Revision-aware Keep/Remove over managed candidate IDs; the hidden Unknown baseline is not a result set. */
+	/** Revision-aware Keep/Remove over managed candidate IDs after a refine. */
 	ManagedOperationResult filter(long token, long expectedRevision, @Nullable long[] ids,
 	                              boolean keep, long operationEpoch) {
-		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
 			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Managed candidate filtering requires a bounded non-empty id list");
 		}
@@ -900,9 +901,12 @@ final class ManagedJavaMemoryEngine {
 			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Managed edit received an unsupported declared primitive type");
 		}
-		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_REQUEST_TARGETS) {
+		int maxTargets = allowWatchOnly ? MemoryEngineContract.MAX_WATCH_RECORDS
+				: MemoryEngineContract.MAX_RESULT_PAGE_SIZE;
+		if (ids == null || ids.length == 0 || ids.length > maxTargets) {
 			return failure(token, MemoryEngineContract.RESULT_SAFETY_LIMIT,
-					"Managed edits are limited to 128 logical targets");
+					allowWatchOnly ? "Managed Watch edits are limited to 128 rows"
+							: "Managed edits are limited to 100 visible result rows");
 		}
 		long[] unique = uniqueIds(ids);
 		ResolvedBatch batch = resolveBatch(token, expectedRevision, unique, allowWatchOnly);
@@ -1025,7 +1029,10 @@ final class ManagedJavaMemoryEngine {
 					"Managed Watch List requests are bounded to 128 rows");
 		}
 		long[] unique = uniqueIds(ids);
-		ResolvedBatch batch = resolveBatch(token, expectedRevision, unique, false);
+		// Adding a baseline row to Watch is allowed before the first Unknown refine. The
+		// baseline is read-only as a search result, but Watch is the explicit way to retain
+		// that logical owner for later refresh/edit operations.
+		ResolvedBatch batch = resolveBatch(token, expectedRevision, unique, true);
 		if (batch.error != null) return batch.error;
 		int additional = 0;
 		synchronized (stateLock) {
@@ -1050,7 +1057,7 @@ final class ManagedJavaMemoryEngine {
 		}
 		synchronized (stateLock) {
 			ManagedOperationResult validation = revalidateBatchLocked(token, expectedRevision, batch,
-				false, operationEpoch);
+				true, operationEpoch);
 			if (validation != null) return validation;
 			int additionalAtCommit = 0;
 			for (long id : unique) if (watches.indexOf(id) < 0) additionalAtCommit++;
@@ -1418,7 +1425,8 @@ final class ManagedJavaMemoryEngine {
 	}
 
 	private long visibleResultCountLocked() {
-		return committed == null || searchStage != MemoryEngineContract.SEARCH_SESSION_CANDIDATES
+		return committed == null || (searchStage != MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE
+				&& searchStage != MemoryEngineContract.SEARCH_SESSION_CANDIDATES)
 				? 0L : committed.count;
 	}
 
@@ -1496,7 +1504,7 @@ final class ManagedJavaMemoryEngine {
 					&& expectedRevision > 0L && committed != null
 					&& committed.id == expectedRevision && !allowWatchOnly) {
 				return ResolvedBatch.error(failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-						"The hidden Unknown baseline has no editable result rows"));
+						"Unknown baseline result rows are not editable until refinement"));
 			}
 			for (int index = 0; index < ids.length; index++) {
 				long id = ids[index];

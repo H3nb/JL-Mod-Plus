@@ -12,6 +12,10 @@
         <item quantity="one">%1$d result</item>
         <item quantity="other">%1$d results</item>
     </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one">%1$d candidate</item>
+        <item quantity="other">%1$d candidates</item>
+    </plurals>
     <plurals name="memory_editor_search_complete">
         <item quantity="one">Search finished · %1$d candidate</item>
         <item quantity="other">Search finished · %1$d candidates</item>
@@ -25,7 +29,7 @@
     <string name="memory_editor_initial">Initial snapshot</string>
     <string name="memory_editor_scope_fast">Java Fast</string>
     <string name="memory_editor_scope_thorough">Java Thorough</string>
-    <string name="memory_editor_scope_managed">Managed Java · Int</string>
+    <string name="memory_editor_scope_managed">Managed Java</string>
     <string name="memory_editor_advanced">Advanced</string>
     <string name="memory_editor_more">More</string>
     <string name="memory_editor_more_conditions">More conditions</string>
@@ -48,10 +52,12 @@
     <string name="memory_editor_search_action">Search</string>
     <string name="memory_editor_search_known_values">Search known values</string>
     <string name="memory_editor_search_unknown_values">Search unknown values</string>
+    <string name="memory_editor_add_to_watch">Add selected to Watch</string>
     <string name="memory_editor_refine_search">Refine current results</string>
     <string name="memory_editor_unknown_explanation">Use this when you do not know the current value. Memory Editor will capture a baseline, then you can return to the game and describe how the value changed.</string>
     <string name="memory_editor_capture_baseline">Capture baseline</string>
     <string name="memory_editor_baseline_captured">Baseline captured</string>
+    <string name="memory_editor_baseline_captured_count">Baseline captured · %1$d candidates</string>
     <string name="memory_editor_baseline_instruction">Return to the game and change the value you are looking for, then reopen Memory Editor.</string>
     <string name="memory_editor_back_to_game">Back to game</string>
     <string name="memory_editor_what_changed">What happened to the value?</string>

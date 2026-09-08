@@ -475,6 +475,7 @@ private fun RuntimeSearchResultsTab(
     var unknownDialog by remember { mutableStateOf(false) }
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     var editRevision by remember { mutableStateOf(0L) }
+    val baselineOnly = state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE
     val selectedRows = state.results.filter { it.id in state.selected }
     val selectedWriteSupported = selectedRows.isNotEmpty() && selectedRows.all { row ->
         if (ManagedJavaMemoryIds.isManaged(row.id)) state.managedWriteSupported
@@ -502,9 +503,15 @@ private fun RuntimeSearchResultsTab(
                 onClick = { unknownDialog = true },
             )
             RuntimeActionIcon(
+                icon = R.drawable.ic_memory_editor_watch_add,
+                description = R.string.memory_editor_add_to_watch,
+                enabled = state.selected.isNotEmpty() && !state.busy,
+                onClick = { actions.watchSelected(true) },
+            )
+            RuntimeActionIcon(
                 icon = R.drawable.ic_edit,
                 description = R.string.memory_editor_edit,
-                enabled = selectedWriteSupported && !state.busy,
+                enabled = selectedWriteSupported && !state.busy && !baselineOnly,
                 onClick = {
                     editTargets = selectedRows.map { row ->
                         MemoryEditTarget(row.id, row.primaryType, row.valueText,
@@ -531,7 +538,7 @@ private fun RuntimeSearchResultsTab(
             RuntimeActionIcon(
                 icon = R.drawable.ic_delete,
                 description = R.string.memory_editor_remove,
-                enabled = state.selected.isNotEmpty() && !state.busy,
+                enabled = state.selected.isNotEmpty() && !state.busy && !baselineOnly,
                 onClick = { actions.removeSelected(false) },
             )
             val visibleSelectionDescription = stringResource(
@@ -562,7 +569,11 @@ private fun RuntimeSearchResultsTab(
         ) {
             Text(
                 pluralStringResource(
-                    R.plurals.memory_editor_results,
+                    if (state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE) {
+                        R.plurals.memory_editor_candidates
+                    } else {
+                        R.plurals.memory_editor_results
+                    },
                     state.resultCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
                     state.resultCount,
                 ),
@@ -584,10 +595,33 @@ private fun RuntimeSearchResultsTab(
 
         if (state.results.isEmpty()) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(
-                    stringResource(R.string.memory_editor_no_results),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE) {
+                    val baselineCount = managedBaselineCountForPresentation(state) ?: state.resultCount
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                    ) {
+                        Text(
+                            stringResource(
+                                R.string.memory_editor_baseline_captured_count,
+                                baselineCount,
+                            ),
+                            style = MaterialTheme.typography.titleMedium,
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            stringResource(R.string.memory_editor_baseline_instruction),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                } else {
+                    Text(
+                        stringResource(R.string.memory_editor_no_results),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         } else {
             LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -597,14 +631,18 @@ private fun RuntimeSearchResultsTab(
                         selected = row.id in state.selected,
                         onToggle = { actions.toggleSelection(row.id) },
                         onClick = {
-                            editTargets = listOf(
-                                MemoryEditTarget(row.id, row.primaryType, row.valueText,
-                                    if (ManagedJavaMemoryIds.isManaged(row.id)) {
-                                        MemoryEngineContract.BACKEND_MANAGED
-                                    } else MemoryEngineContract.BACKEND_RAW,
-                                    row.aliasTypes),
-                            )
-                            editRevision = state.managedRevision
+                            if (baselineOnly) {
+                                actions.toggleSelection(row.id)
+                            } else {
+                                editTargets = listOf(
+                                    MemoryEditTarget(row.id, row.primaryType, row.valueText,
+                                        if (ManagedJavaMemoryIds.isManaged(row.id)) {
+                                            MemoryEngineContract.BACKEND_MANAGED
+                                        } else MemoryEngineContract.BACKEND_RAW,
+                                        row.aliasTypes),
+                                )
+                                editRevision = state.managedRevision
+                            }
                         },
                     )
                 }
@@ -1142,7 +1180,7 @@ internal fun RuntimeKnownSearchDialog(
                 ) {
                     Text(stringResource(R.string.memory_editor_new_search))
                 }
-                if (state.sessionStage == MemorySessionStage.CANDIDATES) {
+                if (memorySessionHasActiveSearch(state.sessionStage)) {
                     Button(
                         enabled = nextScanValid && !state.busy,
                         onClick = {
@@ -1188,7 +1226,9 @@ private fun RuntimeUnknownSearchDialog(
                 else MemoryEngineContract.SCOPE_JAVA_FAST,
         )
     }
-    var predicate by remember { mutableIntStateOf(MemoryEngineContract.PREDICATE_CHANGED) }
+    var predicate by remember(state.runtimeToken) {
+        mutableIntStateOf(memoryUnknownPredicateOrDefault(state.unknownPredicate))
+    }
     var first by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
     var second by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
     var activeField by remember { mutableStateOf(RuntimeInputField.FIRST) }
@@ -1254,10 +1294,12 @@ private fun RuntimeUnknownSearchDialog(
                     } else {
                         if (sideDock) {
                             RuntimeSearchControlRow {
-                                RuntimePredicateMenu(
+                                RuntimeRelativeMenu(
                                     predicate = predicate,
-                                    onPredicate = { predicate = it },
-                                    includeRelative = true,
+                                    onPredicate = {
+                                        predicate = it
+                                        actions.setUnknownSearchPredicate(it)
+                                    },
                                     modifier = Modifier.weight(1f),
                                 )
                                 RuntimeTypeMenu(
@@ -1275,10 +1317,12 @@ private fun RuntimeUnknownSearchDialog(
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         } else {
-                            RuntimePredicateMenu(
+                            RuntimeRelativeMenu(
                                 predicate = predicate,
-                                onPredicate = { predicate = it },
-                                includeRelative = true,
+                                onPredicate = {
+                                    predicate = it
+                                    actions.setUnknownSearchPredicate(it)
+                                },
                             )
                             RuntimeTypeMenu(
                                 type = type,
@@ -2321,17 +2365,7 @@ private fun RuntimeRelativeMenu(
 ) {
     RuntimeChoiceMenu(
         value = predicate,
-        values = intArrayOf(
-            MemoryEngineContract.PREDICATE_CHANGED,
-            MemoryEngineContract.PREDICATE_UNCHANGED,
-            MemoryEngineContract.PREDICATE_INCREASED,
-            MemoryEngineContract.PREDICATE_DECREASED,
-            MemoryEngineContract.PREDICATE_INCREASED_BY,
-            MemoryEngineContract.PREDICATE_DECREASED_BY,
-            MemoryEngineContract.PREDICATE_CHANGED_BY,
-            MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE,
-            MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE,
-        ),
+        values = memoryUnknownSearchPredicates(),
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
         modifier = modifier,

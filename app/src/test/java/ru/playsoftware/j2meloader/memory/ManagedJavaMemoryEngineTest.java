@@ -86,15 +86,15 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
-	public void autoUnknownPublishesHiddenBaselineCountAndRefinesAllCurrentTypes() {
+	public void autoUnknownPublishesBaselineCountAndRefinesAllCurrentTypes() {
 		ManagedJavaMemoryEngine.ManagedOperationResult unknown = engine.startUnknown(TOKEN,
 				MemoryEngineContract.TYPE_AUTO, 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, unknown.code);
-		assertEquals(0L, unknown.resultCount);
 		assertTrue(unknown.baselineCount > 0L);
+		assertEquals(unknown.baselineCount, unknown.resultCount);
 		assertEquals(unknown.baselineCount, engine.session(TOKEN).baselineCount);
-		assertEquals(0, engine.resultPage(TOKEN, unknown.revision, 0,
-				MemoryEngineContract.MAX_RESULT_PAGE_SIZE).ids.length);
+		assertTrue(engine.resultPage(TOKEN, unknown.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE).ids.length > 0);
 
 		root.rootMatch = 8;
 		ManagedJavaMemoryEngine.ManagedOperationResult refined = engine.refine(TOKEN, unknown.revision,
@@ -226,17 +226,17 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
-	public void typedUnknownCapturesHiddenBaselineThenRefinesInitialAndPrevious() {
+	public void typedUnknownCapturesBaselineThenRefinesInitialAndPrevious() {
 		ManagedJavaMemoryEngine.ManagedOperationResult unknown = engine.startUnknown(TOKEN,
 				MemoryEngineContract.TYPE_INT, 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, unknown.code);
 		assertTrue(unknown.revision > 0L);
-		assertEquals(0L, unknown.resultCount);
+		assertTrue(unknown.resultCount > 0L);
 		assertEquals(MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE,
 				engine.session(TOKEN).stage);
 		assertEquals(MemoryEngineContract.SEARCH_MODE_UNKNOWN, engine.session(TOKEN).mode);
-		assertEquals(0, engine.resultPage(TOKEN, unknown.revision, 0,
-				MemoryEngineContract.MAX_RESULT_PAGE_SIZE).ids.length);
+		assertTrue(engine.resultPage(TOKEN, unknown.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE).ids.length > 0);
 
 		root.rootChanged = 8;
 		ManagedJavaMemoryEngine.ManagedOperationResult previous = engine.refine(TOKEN, unknown.revision,
@@ -252,6 +252,26 @@ public class ManagedJavaMemoryEngineTest {
 		assertEquals(MemoryEngineContract.RESULT_OK, initial.code);
 		assertTrue(hasId(engine.resultPage(TOKEN, initial.revision, 0,
 				MemoryEngineContract.MAX_RESULT_PAGE_SIZE), changedId));
+	}
+
+	@Test
+	public void firstUnknownBaselineResultCanBeAddedToWatchBeforeRefine() {
+		ManagedJavaMemoryEngine.ManagedOperationResult unknown = engine.startUnknown(TOKEN,
+				MemoryEngineContract.TYPE_INT, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, unknown.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, unknown.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		assertTrue(page.ids.length > 0);
+
+		long firstId = page.ids[0];
+		ManagedJavaMemoryEngine.ManagedOperationResult watched = engine.addWatch(TOKEN,
+				unknown.revision, new long[]{firstId}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, watched.code);
+		assertEquals(1, watched.watchCount);
+
+		ManagedJavaMemoryEngine.ManagedPage watchPage = engine.watchPage(TOKEN);
+		assertEquals(1, watchPage.ids.length);
+		assertEquals(firstId, watchPage.ids[0]);
 	}
 
 	@Test

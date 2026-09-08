@@ -94,8 +94,6 @@ public final class MemoryEngineContract {
 	public static final int MAX_MULTI_WRITE = 32;
 	public static final int MAX_FREEZE_RECORDS = 32;
 	public static final int MAX_WATCH_RECORDS = 128;
-	/** Maximum number of logical targets in one user edit/filter request. */
-	public static final int MAX_REQUEST_TARGETS = MAX_WATCH_RECORDS;
 	public static final int MAX_GROUP_VALUES = 8;
 	/**
 	 * Maximum resident address runs accepted from the target process. 4,096 was too tight for
@@ -122,7 +120,7 @@ public final class MemoryEngineContract {
 	public static final String KEY_MANAGED_CONTROL_EPOCH = "managedControlEpoch";
 	public static final String KEY_MANAGED_REVISION = "managedRevision";
 	public static final String KEY_MANAGED_RESULT_COUNT = "managedResultCount";
-	/** Exact size of a hidden managed Unknown baseline; visible result count remains zero until refine. */
+	/** Exact size of a managed Unknown baseline captured for the current runtime. */
 	public static final String KEY_MANAGED_BASELINE_COUNT = "managedBaselineCount";
 	public static final String KEY_MANAGED_WATCH_COUNT = "managedWatchCount";
 	public static final String KEY_MANAGED_FREEZE_COUNT = "managedFreezeCount";

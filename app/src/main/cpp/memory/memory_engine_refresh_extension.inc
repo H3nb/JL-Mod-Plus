@@ -10,7 +10,8 @@ namespace {
 
 [[nodiscard]] jint refreshPresentationCandidates(
         const OperationContext &context, const std::vector<std::uint64_t> &ids) {
-    if ((context.state->mode != StateMode::Candidates && context.state->watches.empty()) ||
+    if ((context.state->mode != StateMode::Unknown &&
+         context.state->mode != StateMode::Candidates && context.state->watches.empty()) ||
         ids.empty()) {
         setMessage("No materialized candidates are available for presentation refresh");
         return ids.empty() ? kInvalidRequest : kNoSession;

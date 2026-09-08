@@ -157,6 +157,28 @@ fun MemoryEditorLandscapeResultsScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Memory Editor unknown baseline", widthDp = 720, heightDp = 360, showBackground = true)
+@Composable
+fun MemoryEditorUnknownBaselineScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        MemoryEditorRuntimeRoot(
+            state = MemoryEditorUiState(
+                visible = true,
+                connected = true,
+                supported = true,
+                writeSupported = true,
+                runtimeToken = 1,
+                resultCount = 2,
+                results = previewRows,
+                selected = setOf(1),
+                sessionStage = MemorySessionStage.UNKNOWN_BASELINE,
+            ),
+            actions = NoOpMemoryEditorActions,
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Memory Editor short landscape search", widthDp = 640, heightDp = 320, showBackground = true)
 @Composable
 fun MemoryEditorShortLandscapeSearchScreenshot() {

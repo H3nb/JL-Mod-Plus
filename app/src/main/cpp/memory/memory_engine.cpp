@@ -1022,7 +1022,7 @@ bool candidateDisplayOrder(const Candidate &left, const Candidate &right) {
 }
 
 void normalizeCandidateResults(SearchState &state) {
-    if (state.mode != StateMode::Candidates) {
+    if (state.mode != StateMode::Unknown && state.mode != StateMode::Candidates) {
         state.addressCheckpoints.clear();
         return;
     }
@@ -1528,6 +1528,10 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
         setMessage("Invalid value type");
         return kInvalidRequest;
     }
+    if (context.nextId > kRawCandidateIdMax - kCandidateLimit) {
+        setMessage("Candidate identifier space is exhausted for this runtime");
+        return kResourceLimit;
+    }
     auto next = std::make_shared<SearchState>();
     next->mode = StateMode::Unknown;
     next->requestedType = requestedType;
@@ -1563,17 +1567,44 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
                 continue;
             }
             const uintptr_t aligned = range.start + adjustment;
-            if (aligned < range.end &&
-                static_cast<size_t>(range.end - aligned) >= width) {
-                safeAdd(next->logicalCount,
-                        1U + static_cast<uint64_t>(
-                                     (range.end - aligned - width) / width));
+            if (aligned >= range.end) {
+                continue;
+            }
+            const size_t offset = static_cast<size_t>(aligned - range.start);
+            if (offset > snapshot.bytes.size() ||
+                width > snapshot.bytes.size() - offset) {
+                continue;
+            }
+            for (size_t valueOffset = offset;
+                 valueOffset <= snapshot.bytes.size() - width;
+                 valueOffset += width) {
+                if (next->candidates.size() >= kCandidateLimit) {
+                    setMessage("Candidate limit reached; previous results were preserved");
+                    return kResourceLimit;
+                }
+                uintptr_t address = 0U;
+                if (!checkedAddressAdd(snapshot.start, valueOffset, address)) {
+                    break;
+                }
+                const uint64_t bits = loadBits(
+                        snapshot.bytes.data() + valueOffset, width);
+                Candidate candidate = makeCandidate(
+                        context.nextId + next->candidates.size(), address,
+                        type, bits, bits);
+                candidate.identityValid = snapshotIdentity(
+                        snapshot.bytes.data(), snapshot.bytes.size(), valueOffset,
+                        width, candidate.identityHash);
+                next->candidates.push_back(candidate);
             }
         }
         next->snapshots.push_back(std::move(snapshot));
         advanceScanProgress(size);
     }
-    return commitOperation(context, std::move(next), -1);
+    fillMissingIdentities(context.target, next->candidates);
+    next->candidateOrderDirty = true;
+    OperationContext committed = context;
+    committed.nextId += next->candidates.size();
+    return commitOperation(committed, std::move(next), -1);
 }
 
 bool readCandidate(const Target &target, const Candidate &candidate,
@@ -2325,7 +2356,8 @@ jint recoverCandidatesBatch(const Target &target, uint64_t cancellationEpoch,
 
 jint refreshCandidates(const OperationContext &context,
                        const std::vector<uint64_t> &ids, bool allowRecovery) {
-    if (context.state->mode != StateMode::Candidates &&
+    if (context.state->mode != StateMode::Unknown &&
+        context.state->mode != StateMode::Candidates &&
         context.state->watches.empty()) {
         setMessage("No materialized candidates are available");
         return kNoSession;
@@ -2768,7 +2800,8 @@ jint editCandidates(const OperationContext &context,
 
 jint pinCandidates(const OperationContext &context,
                    const std::vector<uint64_t> &ids, bool add) {
-    if ((add && context.state->mode != StateMode::Candidates) || ids.empty()) {
+    if ((add && context.state->mode != StateMode::Unknown &&
+         context.state->mode != StateMode::Candidates) || ids.empty()) {
         setMessage("Select at least one materialized candidate");
         return kInvalidRequest;
     }
