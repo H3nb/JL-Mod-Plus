@@ -49,7 +49,7 @@
     <string name="memory_editor_capture_baseline">Capture baseline</string>
     <string name="memory_editor_baseline_captured">Baseline captured</string>
     <string name="memory_editor_baseline_captured_count">Baseline captured · %1$d candidates</string>
-    <string name="memory_editor_baseline_instruction">Return to the game and change the value you are looking for, then reopen Memory Editor.</string>
+    <string name="memory_editor_baseline_instruction">Return to the game and change the value you are looking for, then run Next Scan.</string>
     <string name="memory_editor_back_to_game">Back to game</string>
     <string name="memory_editor_what_changed">What happened to the value?</string>
     <string name="memory_editor_start_over">Start over</string>

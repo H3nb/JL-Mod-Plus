@@ -587,16 +587,20 @@ private fun RuntimeSearchResultsTab(
         if (state.results.isEmpty()) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 if (state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE) {
-                    val baselineCount = baselineCountForPresentation(state) ?: state.resultCount
+                    val baselineCount = baselineCountForPresentation(state)
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.padding(horizontal = 24.dp),
                     ) {
                         Text(
-                            stringResource(
-                                R.string.memory_editor_baseline_captured_count,
-                                baselineCount,
-                            ),
+                            if (baselineCount != null) {
+                                stringResource(
+                                    R.string.memory_editor_baseline_captured_count,
+                                    baselineCount,
+                                )
+                            } else {
+                                stringResource(R.string.memory_editor_baseline_captured)
+                            },
                             style = MaterialTheme.typography.titleMedium,
                             textAlign = TextAlign.Center,
                         )

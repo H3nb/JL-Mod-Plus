@@ -288,6 +288,26 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void managedUndoRestoresRequestedTypeMetadataAfterRefine() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_AUTO, MemoryEngineContract.PREDICATE_EQUAL,
+				"7", "", 0L);
+		assertEquals(MemoryEngineContract.TYPE_AUTO, engine.session(TOKEN).requestedType);
+
+		ManagedJavaMemoryEngine.ManagedOperationResult refined = engine.refine(TOKEN,
+				search.revision, MemoryEngineContract.TYPE_INT,
+				MemoryEngineContract.PREDICATE_EQUAL, MemoryEngineContract.COMPARE_PREVIOUS,
+				"7", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, refined.code);
+		assertEquals(MemoryEngineContract.TYPE_INT, engine.session(TOKEN).requestedType);
+
+		ManagedJavaMemoryEngine.ManagedOperationResult undone = engine.undo(TOKEN,
+				refined.revision, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, undone.code);
+		assertEquals(MemoryEngineContract.TYPE_AUTO, engine.session(TOKEN).requestedType);
+	}
+
+	@Test
 	public void betweenQueryValidatesTheSecondValueBeforeReplacingTheRevision() {
 		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
 		ManagedJavaMemoryEngine.ManagedOperationResult invalid = engine.startExact(TOKEN,

@@ -46,7 +46,7 @@
     <string name="memory_editor_capture_baseline">Tangkap baseline</string>
     <string name="memory_editor_baseline_captured">Baseline tersimpan</string>
     <string name="memory_editor_baseline_captured_count">Baseline tersimpan · %1$d kandidat</string>
-    <string name="memory_editor_baseline_instruction">Kembali ke game dan ubah nilai yang dicari, lalu buka kembali Editor Memori.</string>
+    <string name="memory_editor_baseline_instruction">Kembali ke game dan ubah nilai yang dicari, lalu jalankan Pemindaian berikutnya.</string>
     <string name="memory_editor_back_to_game">Kembali ke game</string>
     <string name="memory_editor_what_changed">Apa yang terjadi pada nilainya?</string>
     <string name="memory_editor_start_over">Mulai ulang pencarian</string>
