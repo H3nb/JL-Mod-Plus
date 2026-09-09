@@ -348,18 +348,14 @@ internal class MemoryEditorComposeController(
         val stateRequest = stateRequestGeneration.incrementAndGet()
         val connection = connectionGeneration
         val capabilities = engine.capabilities
-        val supported = capabilities.getBoolean(MemoryEngineContract.KEY_SUPPORTED, false)
-        val writeSupported = capabilities.getBoolean(MemoryEngineContract.KEY_WRITE_SUPPORTED, false)
-        val managedSupported = capabilities.getBoolean(
-            MemoryEngineContract.KEY_MANAGED_SUPPORTED, false,
-        )
-        val managedWriteSupported = capabilities.getBoolean(
-            MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED, false,
-        )
-        val managedRevision = capabilities.getLong(
+        val supported = capabilities.getBoolean(MemoryEngineContract.KEY_SUPPORTED, false) ||
+            capabilities.getBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED, false)
+        val writeSupported = capabilities.getBoolean(MemoryEngineContract.KEY_WRITE_SUPPORTED, false) ||
+            capabilities.getBoolean(MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED, false)
+        val revision = capabilities.getLong(
             MemoryEngineContract.KEY_MANAGED_REVISION, 0L,
         )
-        val managedBaselineCount = capabilities.getLong(
+        val baselineCount = capabilities.getLong(
             MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, 0L,
         )
         val token = capabilities.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, 0L)
@@ -415,10 +411,8 @@ internal class MemoryEditorComposeController(
                     connected = true,
                     supported = false,
                     writeSupported = false,
-                    managedSupported = managedSupported,
-                    managedWriteSupported = managedWriteSupported,
-                    managedRevision = managedRevision,
-                    managedBaselineCount = managedBaselineCount,
+                    revision = revision,
+                    baselineCount = baselineCount,
                     runtimeToken = token,
                     results = emptyList(),
                     watches = emptyList(),
@@ -451,27 +445,6 @@ internal class MemoryEditorComposeController(
             MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE,
             MemoryEngineContract.TYPE_AUTO,
         )
-        val scope = session.getInt(
-            MemoryEngineContract.KEY_SEARCH_SCOPE,
-            MemoryEngineContract.SCOPE_MANAGED_JAVA,
-        ).takeIf { it == MemoryEngineContract.SCOPE_MANAGED_JAVA }
-            ?: MemoryEngineContract.SCOPE_MANAGED_JAVA
-        val newRuntime = state.runtimeToken != token
-        val explicitKnownScope = if (stage == MemorySessionStage.EMPTY &&
-            mode == MemorySearchMode.KNOWN && newRuntime
-        ) false else state.knownScopePreferenceExplicit
-        val knownScopePreference = if (stage == MemorySessionStage.EMPTY &&
-            mode == MemorySearchMode.KNOWN && !explicitKnownScope
-        ) {
-            MemoryEngineContract.SCOPE_MANAGED_JAVA
-        } else {
-            state.knownScopePreference
-        }
-        val displayScope = if (stage == MemorySessionStage.EMPTY && mode == MemorySearchMode.KNOWN) {
-            knownScopePreference
-        } else {
-            scope
-        }
         val canUndo = session.getInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH, 0) > 0
         val resultCount = engine.getResultCount(token)
         val requestedOffset = state.pageOffset
@@ -500,13 +473,11 @@ internal class MemoryEditorComposeController(
                 connected = true,
                 supported = true,
                 writeSupported = writeSupported,
-                managedSupported = managedSupported,
-                managedWriteSupported = managedWriteSupported,
-                managedRevision = session.getLong(
-                    MemoryEngineContract.KEY_MANAGED_REVISION, managedRevision,
+                revision = session.getLong(
+                    MemoryEngineContract.KEY_MANAGED_REVISION, revision,
                 ),
-                managedBaselineCount = session.getLong(
-                    MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, managedBaselineCount,
+                baselineCount = session.getLong(
+                    MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, baselineCount,
                 ),
                 runtimeToken = token,
                 resultCount = resultCount,
@@ -517,9 +488,6 @@ internal class MemoryEditorComposeController(
                 searchMode = mode,
                 sessionStage = stage,
                 requestedType = requestedType,
-                searchScope = displayScope,
-                knownScopePreference = knownScopePreference,
-                knownScopePreferenceExplicit = explicitKnownScope,
                 unknownPredicate = MemoryEditorRuntimePreferences.unknownPredicate(token),
                 canUndo = canUndo,
                 message = capabilityMessage?.takeIf(String::isNotBlank) ?: state.message,
@@ -536,8 +504,7 @@ internal class MemoryEditorComposeController(
         val watchTab = state.watchTab
         val pageOffset = state.pageOffset
         val sessionStage = state.sessionStage
-        val searchScope = state.searchScope
-        val managedRevision = state.managedRevision
+        val revision = state.revision
         val requestGeneration = ++visiblePageRequestGeneration
         val connection = connectionGeneration
         visiblePageRequestPending = true
@@ -550,10 +517,7 @@ internal class MemoryEditorComposeController(
                 } else {
                     null
                 }
-                val managedPageRevision = if (!watchTab &&
-                    searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA &&
-                    sessionStage != MemorySessionStage.EMPTY
-                ) {
+                val pageRevision = if (!watchTab && sessionStage != MemorySessionStage.EMPTY) {
                     resultBundle?.getLong(MemoryEngineContract.KEY_MANAGED_REVISION, Long.MIN_VALUE)
                 } else null
                 val results = MemoryResultPageParser.parse(resultBundle)
@@ -573,9 +537,8 @@ internal class MemoryEditorComposeController(
                     ) return@post
                     if (!state.visible || state.busy || state.runtimeToken != token ||
                         state.watchTab != watchTab || state.pageOffset != pageOffset ||
-                        state.sessionStage != sessionStage || state.searchScope != searchScope ||
-                        state.managedRevision != managedRevision ||
-                        (managedPageRevision != null && managedPageRevision != managedRevision)
+                        state.sessionStage != sessionStage || state.revision != revision ||
+                        (pageRevision != null && pageRevision != revision)
                     ) return@post
                     if (watchTab) {
                         val validIds = watches.mapTo(mutableSetOf(), MemoryWatchRow::id)
@@ -611,17 +574,15 @@ internal class MemoryEditorComposeController(
         type: Int,
         predicate: Int,
         unknown: Boolean,
-        scope: Int,
     ) {
         invalidateVisiblePageRequest()
         state = state.copy(pageOffset = 0, selected = emptySet(), inspector = null)
         launchOperation(searching = true) { engine, token ->
             if (unknown) {
-                engine.startUnknownSearch(token, scope, type)
+                engine.startUnknownSearch(token, type)
             } else {
                 engine.startKnownSearch(
                     token,
-                    scope,
                     type,
                     predicate.coerceAtMost(MemoryEngineContract.PREDICATE_BETWEEN),
                     value.trim(),
@@ -629,18 +590,6 @@ internal class MemoryEditorComposeController(
                 )
             }
         }
-    }
-
-    override fun setKnownSearchScope(scope: Int) {
-        if (scope != MemoryEngineContract.SCOPE_MANAGED_JAVA ||
-            state.sessionStage != MemorySessionStage.EMPTY ||
-            state.searchMode != MemorySearchMode.KNOWN
-        ) return
-        state = state.copy(
-            searchScope = scope,
-            knownScopePreference = scope,
-            knownScopePreferenceExplicit = true,
-        )
     }
 
     override fun setUnknownSearchPredicate(predicate: Int) {
@@ -751,8 +700,8 @@ internal class MemoryEditorComposeController(
         val resultGroup = !state.watchTab
         launchOperation { engine, token ->
             if (resultGroup) {
-                engine.editManagedResultGroups(
-                    token, state.managedRevision, longArrayOf(id), type, value.trim(),
+                engine.editResults(
+                    token, state.revision, longArrayOf(id), type, value.trim(),
                 )
             } else {
                 engine.editCandidates(token, longArrayOf(id), type, value.trim())
@@ -777,7 +726,7 @@ internal class MemoryEditorComposeController(
                 MemoryEditTarget(id, row.type, row.valueText, listOf(row.type), true)
             }
         } ?: return
-        editSingleTargetWithOptions(target, if (resultGroup) state.managedRevision else 0L,
+        editSingleTargetWithOptions(target, if (resultGroup) state.revision else 0L,
             value, type, addToWatch, freezeAfter)
     }
 
@@ -816,7 +765,7 @@ internal class MemoryEditorComposeController(
             if (!resultGroup) {
                 engine.editCandidates(token, longArrayOf(target.id), type, replacement)
             } else {
-                engine.editManagedResultGroups(token, expectedRevision, longArrayOf(target.id),
+                engine.editResults(token, expectedRevision, longArrayOf(target.id),
                     type, replacement)
             }
         }
@@ -825,7 +774,7 @@ internal class MemoryEditorComposeController(
     private fun completeEditFlow(followUp: PendingEditFollowUp) {
         when {
             followUp.freezeAfter && followUp.resultGroup -> launchOperation { engine, token ->
-                engine.setManagedFreezeResultGroups(
+                engine.setFreezeResults(
                     token,
                     followUp.expectedRevision,
                     longArrayOf(followUp.id),
@@ -844,7 +793,7 @@ internal class MemoryEditorComposeController(
                 )
             }
             followUp.addToWatch && followUp.resultGroup -> launchOperation { engine, token ->
-                engine.addManagedWatchResultGroups(
+                engine.addWatchResults(
                     token, followUp.expectedRevision, longArrayOf(followUp.id),
                 )
             }
@@ -861,7 +810,7 @@ internal class MemoryEditorComposeController(
                 if (keep) MemoryEngineContract.RESULT_INVALID_REQUEST.toLong()
                 else engine.removeWatch(token, ids)
             } else {
-                engine.filterResultGroups(token, state.managedRevision, ids, keep)
+                engine.filterResultGroups(token, state.revision, ids, keep)
             }
         }
     }
@@ -940,7 +889,7 @@ internal class MemoryEditorComposeController(
                 state = state.copy(
                     pageOffset = 0,
                     resultCount = 0L,
-                    managedBaselineCount = 0L,
+                    baselineCount = 0L,
                     results = emptyList(),
                     selected = emptySet(),
                     sessionStage = MemorySessionStage.EMPTY,
@@ -964,7 +913,7 @@ internal class MemoryEditorComposeController(
         if (token == 0L) return
         val request = ++inspectorRequestGeneration
         val connection = connectionGeneration
-        val revision = state.managedRevision
+        val revision = state.revision
         val operation = operationGeneration
         state = state.copy(inspectorLoading = true, inspector = null, message = null, messageIsError = false)
         runIpc {
@@ -1010,7 +959,7 @@ internal class MemoryEditorComposeController(
                     service !== engine || state.runtimeToken != token || !state.visible
                 ) return@post
                 if (operation != operationGeneration ||
-                    (!watchAnchor && state.managedRevision != revision) ||
+                    (!watchAnchor && state.revision != revision) ||
                     (!watchAnchor && logicalRows.isNotEmpty() && bundle.getLong(
                         MemoryEngineContract.KEY_INSPECT_EXPECTED_REVISION, 0L,
                     ) != revision)
@@ -1171,7 +1120,7 @@ internal class MemoryEditorComposeController(
             if (watch) {
                 engine.editCandidates(token, ids, type, value.trim())
             } else {
-                engine.editManagedResultGroups(token, expectedRevision, ids, type, value.trim())
+                engine.editResults(token, expectedRevision, ids, type, value.trim())
             }
         }
     }

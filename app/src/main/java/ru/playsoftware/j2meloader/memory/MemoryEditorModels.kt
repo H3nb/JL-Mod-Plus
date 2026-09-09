@@ -261,10 +261,8 @@ internal data class MemoryEditorUiState(
     val connected: Boolean = false,
     val supported: Boolean = false,
     val writeSupported: Boolean = false,
-    val managedSupported: Boolean = false,
-    val managedWriteSupported: Boolean = false,
-    val managedRevision: Long = 0L,
-    val managedBaselineCount: Long = 0L,
+    val revision: Long = 0L,
+    val baselineCount: Long = 0L,
     val runtimeToken: Long = 0,
     val busy: Boolean = false,
     val searching: Boolean = false,
@@ -281,11 +279,6 @@ internal data class MemoryEditorUiState(
     val searchMode: MemorySearchMode = MemorySearchMode.KNOWN,
     val sessionStage: MemorySessionStage = MemorySessionStage.EMPTY,
     val requestedType: Int = MemoryEngineContract.TYPE_AUTO,
-    val searchScope: Int = MemoryEngineContract.SCOPE_MANAGED_JAVA,
-    /** UI preference used only while the Known dialog has no committed session. */
-    val knownScopePreference: Int = MemoryEngineContract.SCOPE_MANAGED_JAVA,
-    /** Distinguishes an explicit user choice from the capability-driven default. */
-    val knownScopePreferenceExplicit: Boolean = false,
     /** Last relative predicate selected for Unknown search in this MIDlet runtime. */
     val unknownPredicate: Int = MemoryEngineContract.PREDICATE_CHANGED,
     val canUndo: Boolean = false,
@@ -293,17 +286,15 @@ internal data class MemoryEditorUiState(
     val inspector: MemoryInspectorSnapshot? = null,
 )
 
-internal fun managedBaselineCountForPresentation(state: MemoryEditorUiState): Long? =
-    state.managedBaselineCount.takeIf {
-        state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE &&
-            state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA && it > 0L
+internal fun baselineCountForPresentation(state: MemoryEditorUiState): Long? =
+    state.baselineCount.takeIf {
+        state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE && it > 0L
     }
 
 internal interface MemoryEditorActions {
     fun close()
     fun refreshCapabilities()
-    fun startSearch(value: String, secondValue: String, type: Int, predicate: Int, unknown: Boolean, scope: Int)
-    fun setKnownSearchScope(scope: Int) = Unit
+    fun startSearch(value: String, secondValue: String, type: Int, predicate: Int, unknown: Boolean)
     fun setUnknownSearchPredicate(predicate: Int) = Unit
     fun nextScan(
         value: String,

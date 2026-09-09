@@ -2574,7 +2574,11 @@ final class ManagedJavaMemoryEngine {
 		}
 
 		void scanPrimitiveArray(Object array, int arrayType) {
-			if (groupMatcher == null && !plan.accepts(arrayType)) return;
+			if (groupMatcher != null) {
+				if (arrayType != groupPlan.type) return;
+			} else if (!plan.accepts(arrayType)) {
+				return;
+			}
 			int length = Array.getLength(array);
 			if (length > limits.maxArrayElements) {
 				throw new ResourceLimitException("Managed primitive array traversal exceeds the resource limit");

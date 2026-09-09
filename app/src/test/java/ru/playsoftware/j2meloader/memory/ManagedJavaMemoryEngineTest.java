@@ -117,6 +117,62 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void managedGroupDoesNotCombineTermsFromDifferentObjects() {
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startGroup(TOKEN,
+				MemoryEngineContract.TYPE_INT, new String[]{"505", "606"}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		assertEquals(0L, result.resultCount);
+	}
+
+	@Test
+	public void managedGroupMatchesIntArraySlotsWithTheSameOwner() {
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startGroup(TOKEN,
+				MemoryEngineContract.TYPE_INT, new String[]{"7", "4"}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, result.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		long first = 0L;
+		long second = 0L;
+		for (int index = 0; index < page.ids.length; index++) {
+			if (!page.addresses[index].startsWith("int[]#")) continue;
+			if (first == 0L) first = page.ids[index];
+			else if (second == 0L) second = page.ids[index];
+		}
+		assertTrue(first != 0L && second != 0L);
+		assertEquals(ManagedJavaMemoryIds.ownerHandle(first),
+				ManagedJavaMemoryIds.ownerHandle(second));
+	}
+
+	@Test
+	public void managedGroupSkipsHugeIrrelevantPrimitiveArraysBeforeApplyingLimits() {
+		root.byteArray = new byte[101];
+		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
+				1_000, 1_000, 1_000, 10_000, 1_000, 100));
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startGroup(TOKEN,
+				MemoryEngineContract.TYPE_INT, new String[]{"7", "4"}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		assertTrue(result.resultCount > 0L);
+	}
+
+	@Test
+	public void managedGroupMatchesStaticFieldsOnlyWithinTheDeclaringClassOwner() {
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startGroup(TOKEN,
+				MemoryEngineContract.TYPE_INT, new String[]{"303", "404"}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, result.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		long first = 0L;
+		long second = 0L;
+		for (int index = 0; index < page.ids.length; index++) {
+			if (page.addresses[index].contains("staticGroupFirst")) first = page.ids[index];
+			if (page.addresses[index].contains("staticGroupSecond")) second = page.ids[index];
+		}
+		assertTrue(first != 0L && second != 0L);
+		assertEquals(ManagedJavaMemoryIds.ownerHandle(first),
+				ManagedJavaMemoryIds.ownerHandle(second));
+	}
+
+	@Test
 	public void managedUndoPublishesFreshRevisionAndRejectsStaleMutation() {
 		ManagedJavaMemoryEngine.ManagedOperationResult first = startExact();
 		long staleId = idForAddress(first.revision, "rootMatch");
@@ -133,6 +189,71 @@ public class ManagedJavaMemoryEngineTest {
 				engine.edit(TOKEN, refined.revision,
 						new long[]{staleId}, 9, 0L).code);
 		assertEquals(8, root.rootMatch);
+	}
+
+	@Test
+	public void managedUnknownChangedUndoRestoresTheBaselineStage() {
+		ManagedJavaMemoryEngine.ManagedOperationResult baseline = engine.startUnknown(TOKEN,
+				MemoryEngineContract.TYPE_INT, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, baseline.code);
+		root.rootChanged = 8;
+		ManagedJavaMemoryEngine.ManagedOperationResult changed = engine.refine(TOKEN,
+				baseline.revision, MemoryEngineContract.TYPE_INT,
+				MemoryEngineContract.PREDICATE_CHANGED, MemoryEngineContract.COMPARE_PREVIOUS,
+				"", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, changed.code);
+		ManagedJavaMemoryEngine.ManagedOperationResult undone = engine.undo(TOKEN,
+				changed.revision, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, undone.code);
+		assertEquals(baseline.resultCount, undone.resultCount);
+		assertEquals(MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE,
+				engine.session(TOKEN).stage);
+	}
+
+	@Test
+	public void managedFilterUndoRestoresThePreviousCandidateMembership() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long keepId = idForAddress(search.revision, "rootMatch");
+		ManagedJavaMemoryEngine.ManagedOperationResult filtered = engine.filter(TOKEN,
+				search.revision, new long[]{keepId}, true, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, filtered.code);
+		assertEquals(1L, filtered.resultCount);
+		ManagedJavaMemoryEngine.ManagedOperationResult undone = engine.undo(TOKEN,
+				filtered.revision, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, undone.code);
+		assertEquals(search.resultCount, undone.resultCount);
+		assertEquals(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+				engine.session(TOKEN).stage);
+	}
+
+	@Test
+	public void managedClearSearchDropsHistoryDepth() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.refineInt(TOKEN, search.revision,
+				MemoryEngineContract.PREDICATE_EQUAL, MemoryEngineContract.COMPARE_PREVIOUS,
+				7, 0L).code);
+		assertTrue(engine.session(TOKEN).historyDepth > 0);
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.clearSearchResult(TOKEN, 0L, 1L).code);
+		assertEquals(0, engine.session(TOKEN).historyDepth);
+		assertEquals(MemoryEngineContract.SEARCH_SESSION_EMPTY, engine.session(TOKEN).stage);
+	}
+
+	@Test
+	public void managedWatchSurvivesUndoAndClearSearch() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.addWatch(TOKEN, search.revision, new long[]{id}, 0L).code);
+		root.rootMatch = 8;
+		ManagedJavaMemoryEngine.ManagedOperationResult refined = engine.refine(TOKEN,
+				search.revision, MemoryEngineContract.TYPE_INT,
+				MemoryEngineContract.PREDICATE_CHANGED, MemoryEngineContract.COMPARE_PREVIOUS,
+				"", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, refined.code);
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.undo(TOKEN, refined.revision, 0L).code);
+		assertEquals(1, engine.watchPage(TOKEN).ids.length);
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.clearSearchResult(TOKEN, 0L, 1L).code);
+		assertEquals(1, engine.watchPage(TOKEN).ids.length);
 	}
 
 	@Test
@@ -692,6 +813,8 @@ public class ManagedJavaMemoryEngineTest {
 
 	private static final class FixtureRoot extends FixtureBase {
 		static int staticMatch = 7;
+		static int staticGroupFirst = 303;
+		static int staticGroupSecond = 404;
 		static int[] staticArray = {7, 3, 7};
 		static FixtureChild staticChild = new FixtureChild("static", 7);
 
@@ -707,6 +830,8 @@ public class ManagedJavaMemoryEngineTest {
 		double doubleMatch = 1.5d;
 		final int finalMatch = 7;
 		FixtureChild child = new FixtureChild("direct", 7);
+		SplitFields splitFirst = new SplitFields(505, 0);
+		SplitFields splitSecond = new SplitFields(0, 606);
 		int[] array = {7, 4, 7};
 		byte[] byteArray = {7, 4};
 		short[] shortArray = {7, 4};
@@ -749,6 +874,16 @@ public class ManagedJavaMemoryEngineTest {
 
 		VectorChild() {
 			super("vector", 7);
+		}
+	}
+
+	private static final class SplitFields {
+		private int first;
+		private int second;
+
+		SplitFields(int first, int second) {
+			this.first = first;
+			this.second = second;
 		}
 	}
 

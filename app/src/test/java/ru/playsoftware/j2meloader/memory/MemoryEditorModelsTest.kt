@@ -104,20 +104,16 @@ class MemoryEditorModelsTest {
         )
     }
 
-    @Test fun managedBaselineCountIsPresentedOnlyForKnownManagedBaseline() {
+    @Test fun baselineCountIsPresentedOnlyForUnknownBaseline() {
         val managedBaseline = MemoryEditorUiState(
             sessionStage = MemorySessionStage.UNKNOWN_BASELINE,
-            searchScope = MemoryEngineContract.SCOPE_MANAGED_JAVA,
-            managedBaselineCount = 184_732L,
+            baselineCount = 184_732L,
         )
-        assertEquals(184_732L, managedBaselineCountForPresentation(managedBaseline))
-        assertEquals(184_732L, managedBaselineCountForPresentation(
-            managedBaseline.copy(searchScope = MemoryEngineContract.SCOPE_MANAGED_JAVA),
+        assertEquals(184_732L, baselineCountForPresentation(managedBaseline))
+        assertNull(baselineCountForPresentation(
+            managedBaseline.copy(baselineCount = 0L),
         ))
-        assertNull(managedBaselineCountForPresentation(
-            managedBaseline.copy(managedBaselineCount = 0L),
-        ))
-        assertNull(managedBaselineCountForPresentation(
+        assertNull(baselineCountForPresentation(
             managedBaseline.copy(sessionStage = MemorySessionStage.CANDIDATES),
         ))
     }

@@ -20,14 +20,14 @@ interface IMemoryEngineService {
     void registerCallback(IMemoryEngineCallback callback);
     void unregisterCallback(IMemoryEngineCallback callback);
 
-    long startKnownSearch(long runtimeToken, int scope, int valueType, int predicate,
+    long startKnownSearch(long runtimeToken, int valueType, int predicate,
             String firstValue, String secondValue);
-    long startUnknownSearch(long runtimeToken, int scope, int valueType);
+    long startUnknownSearch(long runtimeToken, int valueType);
     long startGroupSearch(long runtimeToken, int valueType, in String[] values);
     long refineKnown(long runtimeToken, int valueType, int predicate, String firstValue, String secondValue);
     long refineRelative(long runtimeToken, int valueType, int predicate, int compareTarget,
             String firstValue, String secondValue);
-    long refineManagedInt(long runtimeToken, long expectedRevision, int predicate,
+    long refineInt(long runtimeToken, long expectedRevision, int predicate,
             int compareTarget, String value);
     long undoSearch(long runtimeToken);
     long refreshCandidates(long runtimeToken, in long[] candidateIds, boolean passiveRefresh);
@@ -36,12 +36,12 @@ interface IMemoryEngineService {
     long editCandidates(long runtimeToken, in long[] candidateIds, int valueType,
             String replacementValue);
     long filterResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds, boolean keep);
-    long editManagedResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
+    long editResults(long runtimeToken, long expectedRevision, in long[] resultIds,
             int valueType, String replacementValue);
-    long addManagedWatchResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds);
-    long setManagedFreezeResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds,
+    long addWatchResults(long runtimeToken, long expectedRevision, in long[] resultIds);
+    long setFreezeResults(long runtimeToken, long expectedRevision, in long[] resultIds,
             int mode, String firstValue, String secondValue);
-    // Modified: managed Results edits retain the revision displayed by Inspector (Watch uses zero).
+    // Result edits retain the revision displayed by Inspector (Watch uses zero).
     long editInspectorValue(long runtimeToken, long anchorCandidateId, int relativeOffset,
             int valueType, long expectedBits, String replacementValue, boolean watchAnchor,
             long expectedRevision);

@@ -23,11 +23,8 @@ import org.junit.Test;
 public class MemoryEngineContractTest {
 	@Test
 	public void contractRejectsUnknownEnums() {
-		assertTrue(MemoryEngineContract.isScope(MemoryEngineContract.SCOPE_MANAGED_JAVA));
-		assertTrue(MemoryEngineContract.isManagedScope(MemoryEngineContract.SCOPE_MANAGED_JAVA));
 		assertTrue(MemoryEngineContract.isValueType(MemoryEngineContract.TYPE_AUTO));
 		assertTrue(MemoryEngineContract.isCandidateType(MemoryEngineContract.TYPE_DOUBLE));
-		assertFalse(MemoryEngineContract.isScope(-1));
 		assertFalse(MemoryEngineContract.isValueType(8));
 		assertFalse(MemoryEngineContract.isCandidateType(MemoryEngineContract.TYPE_AUTO));
 	}

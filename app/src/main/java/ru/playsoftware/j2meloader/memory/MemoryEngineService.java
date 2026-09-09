@@ -194,21 +194,15 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
-		public long startKnownSearch(long token, int scope, int type, int predicate,
+		public long startKnownSearch(long token, int type, int predicate,
 		                             String first, String second) {
-			if (scope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
-				return enqueueManagedSearch(token, () -> managedStartExact(token, type, predicate,
-						first, second));
-			}
-			return enqueueManagedSearch(token, () -> MemoryEngineContract.RESULT_UNSUPPORTED);
+			return enqueueManagedSearch(token, () -> managedStartExact(token, type, predicate,
+					first, second));
 		}
 
 		@Override
-		public long startUnknownSearch(long token, int scope, int type) {
-			if (scope == MemoryEngineContract.SCOPE_MANAGED_JAVA) {
-				return enqueueManagedSearch(token, () -> managedStartUnknown(token, type));
-			}
-			return enqueueManagedSearch(token, () -> MemoryEngineContract.RESULT_UNSUPPORTED);
+		public long startUnknownSearch(long token, int type) {
+			return enqueueManagedSearch(token, () -> managedStartUnknown(token, type));
 		}
 
 		@Override
@@ -242,7 +236,7 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
-		public long refineManagedInt(long token, long expectedRevision, int predicate,
+		public long refineInt(long token, long expectedRevision, int predicate,
 		                             int compareTarget, String value) {
 			return enqueueManagedSearch(token, () -> managedRefine(token, expectedRevision,
 					MemoryEngineContract.TYPE_INT, predicate,
@@ -345,20 +339,20 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
-		public long editManagedResultGroups(long token, long expectedRevision, long[] resultIds,
+		public long editResults(long token, long expectedRevision, long[] resultIds,
 		                                    int valueType, String replacementValue) {
 			return enqueueManaged(token, false, () -> managedEdit(token, expectedRevision,
 					resultIds, valueType, replacementValue, false));
 		}
 
 		@Override
-		public long addManagedWatchResultGroups(long token, long expectedRevision, long[] resultIds) {
+		public long addWatchResults(long token, long expectedRevision, long[] resultIds) {
 			return enqueueManaged(token, false, () -> managedAddWatch(token, expectedRevision,
 					resultIds));
 		}
 
 		@Override
-		public long setManagedFreezeResultGroups(long token, long expectedRevision, long[] resultIds,
+		public long setFreezeResults(long token, long expectedRevision, long[] resultIds,
 		                                        int mode, String firstValue, String secondValue) {
 			return enqueueManaged(token, false, () -> managedFreeze(token, expectedRevision,
 					resultIds, mode, firstValue, secondValue, false));
@@ -1271,8 +1265,6 @@ public final class MemoryEngineService extends Service {
 					current ? searchSessionMode : MemoryEngineContract.SEARCH_MODE_KNOWN);
 			bundle.putInt(MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE,
 					current ? searchRequestedType : MemoryEngineContract.TYPE_AUTO);
-			bundle.putInt(MemoryEngineContract.KEY_SEARCH_SCOPE,
-					MemoryEngineContract.SCOPE_MANAGED_JAVA);
 			bundle.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH,
 					current ? bundle.getInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH,
 							managedHistoryDepth) : 0);

@@ -475,7 +475,7 @@ private fun RuntimeSearchResultsTab(
     var editRevision by remember { mutableStateOf(0L) }
     val baselineOnly = state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE
     val selectedRows = state.results.filter { it.id in state.selected }
-    val selectedWriteSupported = selectedRows.isNotEmpty() && state.managedWriteSupported
+    val selectedWriteSupported = selectedRows.isNotEmpty() && state.writeSupported
     val allVisibleSelected = state.results.isNotEmpty() &&
         state.results.all { it.id in state.selected }
 
@@ -494,7 +494,7 @@ private fun RuntimeSearchResultsTab(
             RuntimeActionIcon(
                 icon = R.drawable.ic_memory_editor_search_unknown,
                 description = R.string.memory_editor_search_unknown_values,
-                enabled = !state.busy && (state.supported || state.managedSupported),
+                enabled = !state.busy && state.supported,
                 onClick = { unknownDialog = true },
             )
             RuntimeActionIcon(
@@ -511,7 +511,7 @@ private fun RuntimeSearchResultsTab(
                     editTargets = selectedRows.map { row ->
                         MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes)
                     }
-                    editRevision = state.managedRevision
+                    editRevision = state.revision
                 },
             )
             RuntimeActionIcon(
@@ -587,7 +587,7 @@ private fun RuntimeSearchResultsTab(
         if (state.results.isEmpty()) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 if (state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE) {
-                    val baselineCount = managedBaselineCountForPresentation(state) ?: state.resultCount
+                    val baselineCount = baselineCountForPresentation(state) ?: state.resultCount
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.padding(horizontal = 24.dp),
@@ -628,7 +628,7 @@ private fun RuntimeSearchResultsTab(
                                 editTargets = listOf(
                                     MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes),
                                 )
-                                editRevision = state.managedRevision
+                                editRevision = state.revision
                             }
                         },
                     )
@@ -744,7 +744,7 @@ private fun RuntimeWatchTab(
 ) {
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     val selectedRows = state.watches.filter { it.id in state.selected }
-    val selectedWriteSupported = selectedRows.isNotEmpty() && state.managedWriteSupported
+    val selectedWriteSupported = selectedRows.isNotEmpty() && state.writeSupported
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -979,7 +979,16 @@ internal fun RuntimeKnownSearchDialog(
     var peekingUnderlay by remember { mutableStateOf(false) }
 
     val expression = parseMemorySearchExpression(query.text)
-    val relative = predicate >= MemoryEngineContract.PREDICATE_CHANGED
+    val groupExpression = expression is MemorySearchExpression.Group
+    val effectivePredicate = if (groupExpression) {
+        MemoryEngineContract.PREDICATE_EQUAL
+    } else {
+        predicate
+    }
+    LaunchedEffect(groupExpression) {
+        if (groupExpression) predicate = MemoryEngineContract.PREDICATE_EQUAL
+    }
+    val relative = effectivePredicate >= MemoryEngineContract.PREDICATE_CHANGED
     val spec = if (relative) MemoryInputSpec.relativeMagnitudeForType(type)
     else MemoryInputSpec.forType(type)
     LaunchedEffect(expression, type) {
@@ -987,11 +996,11 @@ internal fun RuntimeKnownSearchDialog(
             inferMemoryGroupType(expression.values)?.let { type = it }
         }
     }
-    val needsSecond = (predicate == MemoryEngineContract.PREDICATE_BETWEEN && !relative &&
+    val needsSecond = (effectivePredicate == MemoryEngineContract.PREDICATE_BETWEEN && !relative &&
         expression !is MemorySearchExpression.Group) ||
-        predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
-        predicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
-    val firstValid = if (relative && !runtimeRelativeNeedsValue(predicate)) {
+        effectivePredicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
+        effectivePredicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
+    val firstValid = if (relative && !runtimeRelativeNeedsValue(effectivePredicate)) {
         true
     } else {
         spec.isComplete(query.text)
@@ -1002,11 +1011,11 @@ internal fun RuntimeKnownSearchDialog(
         type != MemoryEngineContract.TYPE_AUTO && expression.values.all(spec::isComplete)
     val newSearchValid = !relative && (singleValid || managedGroupValid) && secondValid &&
         MemoryEngineContract.isValueType(type) &&
-        predicate in MemoryEngineContract.PREDICATE_EQUAL..MemoryEngineContract.PREDICATE_BETWEEN
+        effectivePredicate in MemoryEngineContract.PREDICATE_EQUAL..MemoryEngineContract.PREDICATE_BETWEEN
     val nextScanValid = state.sessionStage != MemorySessionStage.EMPTY &&
+        expression is MemorySearchExpression.Single &&
         type in (MemoryEngineContract.TYPE_AUTO..MemoryEngineContract.TYPE_DOUBLE) &&
-        state.searchScope == MemoryEngineContract.SCOPE_MANAGED_JAVA &&
-        (if (relative && !runtimeRelativeNeedsValue(predicate)) true else firstValid) && secondValid
+        (if (relative && !runtimeRelativeNeedsValue(effectivePredicate)) true else firstValid) && secondValid
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1027,9 +1036,10 @@ internal fun RuntimeKnownSearchDialog(
                 controls = { sideDock ->
                     RuntimeSearchControlRow {
                         RuntimePredicateMenu(
-                            predicate = predicate,
+                            predicate = effectivePredicate,
                             onPredicate = { predicate = it },
                             includeRelative = state.sessionStage != MemorySessionStage.EMPTY,
+                            enabled = !groupExpression,
                             modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
                         )
                         RuntimeSearchField(
@@ -1110,9 +1120,8 @@ internal fun RuntimeKnownSearchDialog(
                                 parsed.value,
                                 second.text,
                                 type,
-                                predicate,
+                                effectivePredicate,
                                 false,
-                                MemoryEngineContract.SCOPE_MANAGED_JAVA,
                             )
                             is MemorySearchExpression.Group -> actions.groupSearch(
                                 type,
@@ -1129,11 +1138,18 @@ internal fun RuntimeKnownSearchDialog(
                     Button(
                         enabled = nextScanValid && !state.busy,
                         onClick = {
-                            val parsed = expression as MemorySearchExpression.Single
+                            val parsed = expression as? MemorySearchExpression.Single
+                                ?: return@Button
+                            val nextValue = if (relative &&
+                                !runtimeRelativeNeedsValue(effectivePredicate)) {
+                                ""
+                            } else {
+                                parsed.value
+                            }
                             actions.nextScan(
-                                parsed.value,
+                                nextValue,
                                 second.text,
-                                predicate,
+                                effectivePredicate,
                                 MemoryEngineContract.COMPARE_PREVIOUS,
                                 type,
                             )
@@ -1328,7 +1344,6 @@ private fun RuntimeUnknownSearchDialog(
                             type,
                             MemoryEngineContract.PREDICATE_EQUAL,
                             true,
-                            MemoryEngineContract.SCOPE_MANAGED_JAVA,
                         )
                         onDismiss()
                     },
@@ -1520,7 +1535,7 @@ private fun RuntimeEditDialog(
 }
 
 private fun MemoryEditTarget.supportsWrite(state: MemoryEditorUiState): Boolean =
-    state.managedWriteSupported
+    state.writeSupported
 
 @Composable
 private fun RuntimeInspectorTab(
@@ -1616,7 +1631,7 @@ private fun RuntimeInspectorTab(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .combinedClickable(
-                                                enabled = row.editable && state.managedWriteSupported && !state.busy,
+                                                enabled = row.editable && state.writeSupported && !state.busy,
                                                 onClick = { editLogicalRow = row },
                                                 onLongClick = { editLogicalRow = row },
                                             )
@@ -2052,6 +2067,7 @@ private fun RuntimePredicateMenu(
     predicate: Int,
     onPredicate: (Int) -> Unit,
     includeRelative: Boolean = false,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     RuntimeChoiceMenu(
@@ -2085,6 +2101,7 @@ private fun RuntimePredicateMenu(
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
         modifier = modifier,
+        enabled = enabled,
     )
 }
 

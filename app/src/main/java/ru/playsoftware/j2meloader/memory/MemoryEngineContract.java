@@ -16,9 +16,6 @@ package ru.playsoftware.j2meloader.memory;
 
 /** Stable primitive constants shared by the UI-independent engine IPC and Managed Java target. */
 public final class MemoryEngineContract {
-	/** Managed Java graph traversal in the MIDlet process. */
-	public static final int SCOPE_MANAGED_JAVA = 0;
-
 	public static final int TYPE_AUTO = 0;
 	public static final int TYPE_BYTE = 1;
 	public static final int TYPE_SHORT = 2;
@@ -113,7 +110,6 @@ public final class MemoryEngineContract {
 	public static final String KEY_SEARCH_SESSION_STAGE = "searchSessionStage";
 	public static final String KEY_SEARCH_MODE = "searchMode";
 	public static final String KEY_SEARCH_REQUESTED_TYPE = "searchRequestedType";
-	public static final String KEY_SEARCH_SCOPE = "searchScope";
 	public static final String KEY_SEARCH_HISTORY_DEPTH = "searchHistoryDepth";
 	public static final String KEY_INSPECT_RESULT = "inspectResult";
 	public static final String KEY_INSPECT_IDS = "inspectIds";
@@ -148,14 +144,6 @@ public final class MemoryEngineContract {
 	public static final String KEY_WATCH_FREEZE_PAUSED = "watchFreezePaused";
 
 	private MemoryEngineContract() {
-	}
-
-	public static boolean isScope(int scope) {
-		return scope == SCOPE_MANAGED_JAVA;
-	}
-
-	public static boolean isManagedScope(int scope) {
-		return scope == SCOPE_MANAGED_JAVA;
 	}
 
 	public static boolean isValueType(int type) {
