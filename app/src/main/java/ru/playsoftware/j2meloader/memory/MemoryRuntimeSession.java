@@ -95,6 +95,7 @@ public final class MemoryRuntimeSession {
 
 	public static synchronized long start() {
 		if (activeToken != 0L) {
+			ensureTargetBoundLocked();
 			ensureEngineBoundLocked();
 			return activeToken;
 		}
