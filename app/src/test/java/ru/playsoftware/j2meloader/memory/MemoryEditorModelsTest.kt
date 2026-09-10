@@ -90,6 +90,41 @@ class MemoryEditorModelsTest {
         assertTrue(memoryRelativePredicateNeedsValue(MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE))
     }
 
+    @Test fun nextScanPayloadDropsValuesHiddenByTheSelectedPredicate() {
+        assertEquals(
+            MemoryNextScanInput("", ""),
+            memoryNextScanInputForPredicate(
+                MemoryEngineContract.PREDICATE_CHANGED,
+                "10",
+                "20",
+            ),
+        )
+        assertEquals(
+            MemoryNextScanInput("10", ""),
+            memoryNextScanInputForPredicate(
+                MemoryEngineContract.PREDICATE_INCREASED_BY,
+                " 10 ",
+                "20",
+            ),
+        )
+        assertEquals(
+            MemoryNextScanInput("10", "20"),
+            memoryNextScanInputForPredicate(
+                MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE,
+                " 10 ",
+                " 20 ",
+            ),
+        )
+        assertEquals(
+            MemoryNextScanInput("10", "20"),
+            memoryNextScanInputForPredicate(
+                MemoryEngineContract.PREDICATE_BETWEEN,
+                " 10 ",
+                " 20 ",
+            ),
+        )
+    }
+
     @Test fun unknownPredicatePreferenceSurvivesControllerRecreationForRuntimeToken() {
         val runtimeA = 0x7A11L
         val runtimeB = 0x7A12L

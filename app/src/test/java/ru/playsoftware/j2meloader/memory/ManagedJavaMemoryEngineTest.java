@@ -366,6 +366,24 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void managedInspectorReadsUnknownBaselineButKeepsItReadOnlyForMutation() {
+		ManagedJavaMemoryEngine.ManagedOperationResult baseline = engine.startUnknown(TOKEN,
+				MemoryEngineContract.TYPE_INT, 0L);
+		assertTrue(baseline.resultCount > 0L);
+		long anchor = idForAddress(baseline.revision, "rootMatch");
+		ManagedJavaMemoryEngine.ManagedInspection inspection = engine.inspect(TOKEN,
+				baseline.revision, anchor, MemoryEngineContract.MAX_INSPECT_RADIUS, false);
+		assertEquals(MemoryEngineContract.RESULT_OK, inspection.code);
+		int mutableIndex = indexForLabel(inspection, "rootMatch");
+		assertTrue(inspection.editable[mutableIndex]);
+		ManagedJavaMemoryEngine.ManagedOperationResult rejected = engine.editInspector(TOKEN,
+				baseline.revision, anchor, false, inspection.relativeOffsets[mutableIndex],
+				MemoryEngineContract.TYPE_INT, inspection.expectedBits[mutableIndex], "8", 0L);
+		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, rejected.code);
+		assertEquals(7, root.rootMatch);
+	}
+
+	@Test
 	public void managedInspectorRetainsWatchAnchorAfterSearchClear() {
 		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
 		long anchorId = idForAddress(search.revision, "rootMatch");

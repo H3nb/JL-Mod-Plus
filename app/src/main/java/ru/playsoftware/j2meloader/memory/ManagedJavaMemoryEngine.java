@@ -645,7 +645,10 @@ final class ManagedJavaMemoryEngine {
 			return ManagedInspection.failure(MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Managed Inspector requires a valid logical candidate and bounded radius");
 		}
-		ResolvedBatch anchor = resolveBatch(token, expectedRevision, new long[]{anchorId}, allowWatchOnly);
+		// Inspector is a read-only path. Unknown baseline membership is safe to resolve for reads,
+		// while the mutation paths keep the fail-closed baseline guard below.
+		ResolvedBatch anchor = resolveBatchForRead(token, expectedRevision,
+				new long[]{anchorId}, allowWatchOnly);
 		if (anchor.error != null) {
 			return ManagedInspection.failure(anchor.error.code, anchor.error.message);
 		}
@@ -1611,6 +1614,16 @@ final class ManagedJavaMemoryEngine {
 
 	private ResolvedBatch resolveBatch(long token, long expectedRevision, long[] ids,
 	                                  boolean allowWatchOnly) {
+		return resolveBatch(token, expectedRevision, ids, allowWatchOnly, false);
+	}
+
+	private ResolvedBatch resolveBatchForRead(long token, long expectedRevision, long[] ids,
+	                                          boolean allowWatchOnly) {
+		return resolveBatch(token, expectedRevision, ids, allowWatchOnly, true);
+	}
+
+	private ResolvedBatch resolveBatch(long token, long expectedRevision, long[] ids,
+	                                  boolean allowWatchOnly, boolean allowBaselineRead) {
 		OwnerBucket[] resolvedOwners = new OwnerBucket[ids.length];
 		int[] slots = new int[ids.length];
 		Object[] strongOwners = new Object[ids.length];
@@ -1621,7 +1634,7 @@ final class ManagedJavaMemoryEngine {
 							"MIDlet runtime changed or ended"));
 			if (searchStage == MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE
 					&& expectedRevision > 0L && committed != null
-					&& committed.id == expectedRevision && !allowWatchOnly) {
+					&& committed.id == expectedRevision && !allowWatchOnly && !allowBaselineRead) {
 				return ResolvedBatch.error(failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 						"Unknown baseline result rows are not editable until refinement"));
 			}

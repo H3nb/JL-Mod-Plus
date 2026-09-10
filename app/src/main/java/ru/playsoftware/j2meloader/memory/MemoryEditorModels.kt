@@ -68,6 +68,32 @@ internal fun memoryRelativePredicateNeedsValue(predicate: Int): Boolean = when (
     else -> true
 }
 
+internal data class MemoryNextScanInput(
+    val first: String,
+    val second: String,
+)
+
+/** Sanitizes the UI payload before it crosses the controller-to-engine boundary. */
+internal fun memoryNextScanInputForPredicate(
+    predicate: Int,
+    first: String,
+    second: String,
+): MemoryNextScanInput {
+    val firstValue = first.trim()
+    val secondValue = second.trim()
+    return when (predicate) {
+        MemoryEngineContract.PREDICATE_CHANGED,
+        MemoryEngineContract.PREDICATE_UNCHANGED,
+        MemoryEngineContract.PREDICATE_INCREASED,
+        MemoryEngineContract.PREDICATE_DECREASED -> MemoryNextScanInput("", "")
+        MemoryEngineContract.PREDICATE_BETWEEN,
+        MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE,
+        MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE ->
+            MemoryNextScanInput(firstValue, secondValue)
+        else -> MemoryNextScanInput(firstValue, "")
+    }
+}
+
 internal fun memoryUnknownPredicateForRuntime(predicate: Int, newRuntime: Boolean): Int =
     if (newRuntime) MemoryEngineContract.PREDICATE_CHANGED
     else memoryUnknownPredicateOrDefault(predicate)

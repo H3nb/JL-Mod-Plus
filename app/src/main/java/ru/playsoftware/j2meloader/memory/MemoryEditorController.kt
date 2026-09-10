@@ -617,6 +617,7 @@ internal class MemoryEditorComposeController(
         compare: Int,
         type: Int,
     ) {
+        val input = memoryNextScanInputForPredicate(predicate, value, secondValue)
         invalidateVisiblePageRequest()
         state = state.copy(pageOffset = 0, selected = emptySet(), inspector = null)
         launchOperation(
@@ -625,10 +626,10 @@ internal class MemoryEditorComposeController(
         ) { engine, token ->
             if (predicate >= MemoryEngineContract.PREDICATE_CHANGED) {
                 engine.refineRelative(token, type, predicate, compare,
-                    value.trim(), secondValue.trim())
+                    input.first, input.second)
             } else {
                 engine.refineKnown(token, type, predicate,
-                    value.trim(), secondValue.trim())
+                    input.first, input.second)
             }
         }
     }

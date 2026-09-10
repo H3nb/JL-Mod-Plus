@@ -1566,6 +1566,7 @@ private fun RuntimeInspectorTab(
         else -> {
             val snapshot = requireNotNull(state.inspector)
             val logicalRows = snapshot.logicalRows
+            val readOnlyBaseline = state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE
             Column(modifier = modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
@@ -1634,7 +1635,8 @@ private fun RuntimeInspectorTab(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .combinedClickable(
-                                                enabled = row.editable && state.writeSupported && !state.busy,
+                                                enabled = !readOnlyBaseline && row.editable &&
+                                                    state.writeSupported && !state.busy,
                                                 onClick = { editLogicalRow = row },
                                                 onLongClick = { editLogicalRow = row },
                                             )
@@ -1676,7 +1678,7 @@ private fun RuntimeInspectorTab(
                 }
             }
 
-            editLogicalRow?.let { row ->
+            editLogicalRow?.takeUnless { readOnlyBaseline }?.let { row ->
                 RuntimeInspectorLogicalEditDialog(
                     snapshot = snapshot,
                     row = row,
