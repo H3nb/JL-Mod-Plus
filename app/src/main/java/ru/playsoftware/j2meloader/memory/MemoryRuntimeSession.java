@@ -34,6 +34,7 @@ public final class MemoryRuntimeSession {
 	private static final List<Listener> LISTENERS = new ArrayList<>();
 	private static long activeToken;
 	private static boolean engineBound;
+	private static boolean targetBound;
 
 	interface Listener {
 		void onRuntimeEnded(long token);
@@ -66,6 +67,29 @@ public final class MemoryRuntimeSession {
 		}
 	};
 
+	/** Keeps the target-owned Managed state alive while the MIDlet runtime is alive. */
+	private static final ServiceConnection TARGET_LIFECYCLE_CONNECTION = new ServiceConnection() {
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			// Lifetime ownership only. MemoryEngineService owns the interactive target Binder.
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			rebindTargetIfRuntimeActive();
+		}
+
+		@Override
+		public void onBindingDied(ComponentName name) {
+			rebindTargetIfRuntimeActive();
+		}
+
+		@Override
+		public void onNullBinding(ComponentName name) {
+			rebindTargetIfRuntimeActive();
+		}
+	};
+
 	private MemoryRuntimeSession() {
 	}
 
@@ -81,6 +105,7 @@ public final class MemoryRuntimeSession {
 					^ ((long) Process.myPid() << 32);
 		} while (token == 0L);
 		activeToken = token;
+		ensureTargetBoundLocked();
 		ensureEngineBoundLocked();
 		return token;
 	}
@@ -101,9 +126,9 @@ public final class MemoryRuntimeSession {
 			}
 			activeToken = 0L;
 			listeners = LISTENERS.toArray(new Listener[0]);
-			// Keep token and engine ownership transitions atomic. A new runtime cannot observe the
+			// Keep token and service ownership transitions atomic. A new runtime cannot observe the
 			// old lifecycle binding and then have this close tear it down underneath the new token.
-			releaseEngineBindingLocked();
+			releaseRuntimeBindingsLocked();
 		}
 		for (Listener listener : listeners) {
 			try {
@@ -139,6 +164,21 @@ public final class MemoryRuntimeSession {
 		}
 	}
 
+	private static void ensureTargetBoundLocked() {
+		if (targetBound || activeToken == 0L) {
+			return;
+		}
+		Context context = ContextHolder.getAppContext();
+		try {
+			targetBound = context.bindService(
+					new Intent(context, MemoryTargetBridgeService.class),
+					TARGET_LIFECYCLE_CONNECTION,
+					Context.BIND_AUTO_CREATE);
+		} catch (RuntimeException ignored) {
+			targetBound = false;
+		}
+	}
+
 	private static void rebindEngineIfRuntimeActive() {
 		synchronized (MemoryRuntimeSession.class) {
 			Context context = ContextHolder.getAppContext();
@@ -156,8 +196,25 @@ public final class MemoryRuntimeSession {
 		}
 	}
 
+	private static void rebindTargetIfRuntimeActive() {
+		synchronized (MemoryRuntimeSession.class) {
+			Context context = ContextHolder.getAppContext();
+			if (targetBound) {
+				try {
+					context.unbindService(TARGET_LIFECYCLE_CONNECTION);
+				} catch (IllegalArgumentException ignored) {
+					// The dead binding may already have been removed by the framework.
+				}
+			}
+			targetBound = false;
+			if (activeToken != 0L) {
+				ensureTargetBoundLocked();
+			}
+		}
+	}
+
 	/** Must be called while holding MemoryRuntimeSession.class. */
-	private static void releaseEngineBindingLocked() {
+	private static void releaseRuntimeBindingsLocked() {
 		Context context = ContextHolder.getAppContext();
 		if (engineBound) {
 			try {
@@ -166,6 +223,14 @@ public final class MemoryRuntimeSession {
 				// A process/service death may have already removed the binding.
 			}
 			engineBound = false;
+		}
+		if (targetBound) {
+			try {
+				context.unbindService(TARGET_LIFECYCLE_CONNECTION);
+			} catch (IllegalArgumentException ignored) {
+				// A process/service death may have already removed the binding.
+			}
+			targetBound = false;
 		}
 		// Harmless for a purely bound service, and guarantees an accidentally-started engine cannot
 		// survive the MIDlet session after the last binding disappears.
