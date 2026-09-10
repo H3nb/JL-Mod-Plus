@@ -1004,7 +1004,7 @@ internal fun RuntimeKnownSearchDialog(
         expression !is MemorySearchExpression.Group) ||
         effectivePredicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
         effectivePredicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
-    val firstValid = if (relative && !runtimeRelativeNeedsValue(effectivePredicate)) {
+    val firstValid = if (relative && !memoryRelativePredicateNeedsValue(effectivePredicate)) {
         true
     } else {
         spec.isComplete(query.text)
@@ -1016,10 +1016,11 @@ internal fun RuntimeKnownSearchDialog(
     val newSearchValid = !relative && (singleValid || managedGroupValid) && secondValid &&
         MemoryEngineContract.isValueType(type) &&
         effectivePredicate in MemoryEngineContract.PREDICATE_EQUAL..MemoryEngineContract.PREDICATE_BETWEEN
+    val relativeWithoutValue = relative && !memoryRelativePredicateNeedsValue(effectivePredicate)
     val nextScanValid = state.sessionStage != MemorySessionStage.EMPTY &&
-        expression is MemorySearchExpression.Single &&
         type in (MemoryEngineContract.TYPE_AUTO..MemoryEngineContract.TYPE_DOUBLE) &&
-        (if (relative && !runtimeRelativeNeedsValue(effectivePredicate)) true else firstValid) && secondValid
+        (relativeWithoutValue || (expression is MemorySearchExpression.Single && firstValid)) &&
+        secondValid
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1142,13 +1143,11 @@ internal fun RuntimeKnownSearchDialog(
                     Button(
                         enabled = nextScanValid && !state.busy,
                         onClick = {
-                            val parsed = expression as? MemorySearchExpression.Single
-                                ?: return@Button
-                            val nextValue = if (relative &&
-                                !runtimeRelativeNeedsValue(effectivePredicate)) {
+                            val nextValue = if (relativeWithoutValue) {
                                 ""
                             } else {
-                                parsed.value
+                                (expression as? MemorySearchExpression.Single)?.value
+                                    ?: return@Button
                             }
                             actions.nextScan(
                                 nextValue,
@@ -1192,7 +1191,7 @@ private fun RuntimeUnknownSearchDialog(
     var activeField by remember { mutableStateOf(RuntimeInputField.FIRST) }
     var peekingUnderlay by remember { mutableStateOf(false) }
     val relative = predicate >= MemoryEngineContract.PREDICATE_CHANGED
-    val needsValue = if (relative) runtimeRelativeNeedsValue(predicate) else true
+    val needsValue = if (relative) memoryRelativePredicateNeedsValue(predicate) else true
     val needsSecond = predicate == MemoryEngineContract.PREDICATE_BETWEEN ||
         predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
         predicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
@@ -2293,14 +2292,6 @@ private fun runtimeMove(value: TextFieldValue, delta: Int): TextFieldValue {
     val current = if (delta < 0) minOf(value.selection.start, value.selection.end)
     else maxOf(value.selection.start, value.selection.end)
     return value.copy(selection = TextRange((current + delta).coerceIn(0, value.text.length)))
-}
-
-private fun runtimeRelativeNeedsValue(predicate: Int): Boolean = when (predicate) {
-    MemoryEngineContract.PREDICATE_CHANGED,
-    MemoryEngineContract.PREDICATE_UNCHANGED,
-    MemoryEngineContract.PREDICATE_INCREASED,
-    MemoryEngineContract.PREDICATE_DECREASED -> false
-    else -> true
 }
 
 @Composable

@@ -60,6 +60,14 @@ internal fun memoryUnknownPredicateOrDefault(predicate: Int): Int =
             MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
     } ?: MemoryEngineContract.PREDICATE_CHANGED
 
+internal fun memoryRelativePredicateNeedsValue(predicate: Int): Boolean = when (predicate) {
+    MemoryEngineContract.PREDICATE_CHANGED,
+    MemoryEngineContract.PREDICATE_UNCHANGED,
+    MemoryEngineContract.PREDICATE_INCREASED,
+    MemoryEngineContract.PREDICATE_DECREASED -> false
+    else -> true
+}
+
 internal fun memoryUnknownPredicateForRuntime(predicate: Int, newRuntime: Boolean): Int =
     if (newRuntime) MemoryEngineContract.PREDICATE_CHANGED
     else memoryUnknownPredicateOrDefault(predicate)

@@ -31,8 +31,8 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * Presentation controller hosted in :memory_engine. The MIDlet process owns only the small bubble;
- * all Compose state and interaction allocations stay beside the engine rather than the target heap.
+ * Presentation controller hosted in :memory_engine. The MIDlet process owns the target-side
+ * Managed Java engine; Compose state and interaction allocations stay beside this coordinator.
  */
 internal class MemoryEditorComposeController(
     private val composeView: ComposeView,

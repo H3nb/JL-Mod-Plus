@@ -108,6 +108,7 @@ public class ManagedJavaMemoryEngineTest {
 		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
 		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, result.revision, 0,
 				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		assertTrue(page.ids.length >= 2);
 		for (int index = 0; index < page.ids.length; index++) {
 			for (int other = index + 1; other < page.ids.length; other++) {
 				assertFalse("group published the same logical slot twice",

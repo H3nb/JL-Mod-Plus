@@ -80,6 +80,16 @@ class MemoryEditorModelsTest {
         )
     }
 
+    @Test fun onlyMagnitudeRelativePredicatesRequireAnInputValue() {
+        assertFalse(memoryRelativePredicateNeedsValue(MemoryEngineContract.PREDICATE_CHANGED))
+        assertFalse(memoryRelativePredicateNeedsValue(MemoryEngineContract.PREDICATE_UNCHANGED))
+        assertFalse(memoryRelativePredicateNeedsValue(MemoryEngineContract.PREDICATE_INCREASED))
+        assertFalse(memoryRelativePredicateNeedsValue(MemoryEngineContract.PREDICATE_DECREASED))
+        assertTrue(memoryRelativePredicateNeedsValue(MemoryEngineContract.PREDICATE_INCREASED_BY))
+        assertTrue(memoryRelativePredicateNeedsValue(MemoryEngineContract.PREDICATE_CHANGED_BY))
+        assertTrue(memoryRelativePredicateNeedsValue(MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE))
+    }
+
     @Test fun unknownPredicatePreferenceSurvivesControllerRecreationForRuntimeToken() {
         val runtimeA = 0x7A11L
         val runtimeB = 0x7A12L

@@ -37,7 +37,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-/** Owns all scan state in a dedicated app process and exposes only logical candidate IDs. */
+/** Coordinates the editor process and exposes target-owned Managed Java state as logical IDs. */
 public final class MemoryEngineService extends Service {
 	public interface LocalRuntimeListener {
 		void onTargetUnavailable();
