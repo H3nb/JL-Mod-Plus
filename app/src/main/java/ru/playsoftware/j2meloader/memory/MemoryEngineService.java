@@ -138,12 +138,13 @@ public final class MemoryEngineService extends Service {
 				boolean managedAvailable = token != 0L && managedSupported;
 				boolean managedWriteAvailable = token != 0L && managedWriteSupported;
 				if (token != 0L && configuredToken == 0L && managedAvailable
-						&& (managedRevision > 0L || managedWatchCount > 0)) {
+						&& (managedRevision > 0L || managedWatchCount > 0 || managedFreezeCount > 0)) {
 					// A freshly reconnected :memory_engine process may have no local session metadata.
-					// Adopt only target-owned Managed state; a watch-only target remains an empty
-					// search session.
+					// Adopt only target-owned Managed state; a target with Watch entries but no
+					// search remains an empty search session.
 					configuredToken = token;
 				}
+				reconcileFreezeScheduler();
 				// Managed is the only production backend. Do not probe the target process while
 				// publishing ordinary capabilities.
 				boolean supported = managedAvailable;
@@ -682,16 +683,9 @@ public final class MemoryEngineService extends Service {
 			Bundle state = bridge.getManagedSessionInfo(token);
 			if (!acceptManagedRuntimeState(token, bridge, state)) return;
 			updateManagedState(token, state);
-			synchronized (searchSessionLock) {
-				searchSessionStage = state.getInt(MemoryEngineContract.KEY_SEARCH_SESSION_STAGE,
-						searchSessionStage);
-				searchSessionMode = state.getInt(MemoryEngineContract.KEY_SEARCH_MODE,
-						searchSessionMode);
-				searchRequestedType = state.getInt(MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE,
-						searchRequestedType);
-				}
 		} catch (RemoteException ignored) {
-			// The operation result remains authoritative; a later session poll will reconcile metadata.
+			// The operation result remains authoritative; the next successful session read
+			// completes metadata reconciliation.
 		}
 	}
 
@@ -860,7 +854,7 @@ public final class MemoryEngineService extends Service {
 		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 				"MIDlet runtime is not connected");
 		try {
-			// Modified: preserve the Inspector snapshot revision; never upgrade a stale edit.
+			// Preserve the Inspector snapshot revision; never upgrade a stale edit.
 			if (watchAnchor ? expectedRevision != 0L : expectedRevision <= 0L) {
 				return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
 						"Managed Inspector edit requires its original revision/provenance");
@@ -1072,6 +1066,7 @@ public final class MemoryEngineService extends Service {
 			managedWatchCount = 0;
 			managedFreezeCount = 0;
 			managedLastMessage = null;
+			clearSearchSession();
 		}
 		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH)) {
 			synchronizeCancelEpoch(state.getLong(
@@ -1108,10 +1103,31 @@ public final class MemoryEngineService extends Service {
 			managedWatchCount = state.getInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT);
 		}
 		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT)) {
-			managedFreezeCount = state.getInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT);
+			managedFreezeCount = Math.max(0, state.getInt(
+					MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, managedFreezeCount));
 		}
+		if (acceptSearchMetadata) updateManagedSearchSession(state);
 		if (state.containsKey(MemoryEngineContract.KEY_MESSAGE)) {
 			managedLastMessage = state.getString(MemoryEngineContract.KEY_MESSAGE);
+		}
+		reconcileFreezeScheduler();
+	}
+
+	private void updateManagedSearchSession(@Nullable Bundle state) {
+		if (state == null) return;
+		synchronized (searchSessionLock) {
+			if (state.containsKey(MemoryEngineContract.KEY_SEARCH_SESSION_STAGE)) {
+				searchSessionStage = state.getInt(MemoryEngineContract.KEY_SEARCH_SESSION_STAGE,
+						searchSessionStage);
+			}
+			if (state.containsKey(MemoryEngineContract.KEY_SEARCH_MODE)) {
+				searchSessionMode = state.getInt(MemoryEngineContract.KEY_SEARCH_MODE,
+						searchSessionMode);
+			}
+			if (state.containsKey(MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE)) {
+				searchRequestedType = state.getInt(MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE,
+						searchRequestedType);
+			}
 		}
 	}
 
@@ -1186,7 +1202,7 @@ public final class MemoryEngineService extends Service {
 		return bundle;
 	}
 
-	private void startFreezeTaskIfNeeded() {
+	private synchronized void startFreezeTaskIfNeeded() {
 		ScheduledFuture<?> current = freezeTask;
 		if (current == null || current.isDone()) {
 			freezeTask = worker.scheduleWithFixedDelay(
@@ -1194,14 +1210,28 @@ public final class MemoryEngineService extends Service {
 		}
 	}
 
-	private void stopFreezeTaskIfIdle() {
-		if (!MemoryManagedServicePolicy.freezeSchedulerIdle(managedFreezeCount)) {
-			return;
-		}
+	private synchronized void stopFreezeTask() {
 		ScheduledFuture<?> current = freezeTask;
 		freezeTask = null;
 		if (current != null) {
 			current.cancel(false);
+		}
+	}
+
+	private synchronized void stopFreezeTaskIfIdle() {
+		if (!MemoryManagedServicePolicy.freezeSchedulerIdle(managedFreezeCount)) {
+			return;
+		}
+		stopFreezeTask();
+	}
+
+	private void reconcileFreezeScheduler() {
+		if (configuredToken == 0L || managedStateToken != configuredToken) {
+			stopFreezeTask();
+		} else if (MemoryManagedServicePolicy.freezeSchedulerIdle(managedFreezeCount)) {
+			stopFreezeTaskIfIdle();
+		} else {
+			startFreezeTaskIfNeeded();
 		}
 	}
 
@@ -1236,6 +1266,7 @@ public final class MemoryEngineService extends Service {
 	private Bundle searchSessionInfo(long token) {
 		Bundle bundle = new Bundle();
 		boolean current = isCurrentToken(token);
+		boolean targetSessionAccepted = false;
 		if (current && isManagedCurrent(token)) {
 			IMemoryTargetBridge bridge = target;
 			if (bridge != null) {
@@ -1251,6 +1282,7 @@ public final class MemoryEngineService extends Service {
 						if (decision == MemoryEngineContract.RESULT_OK && managed != null) {
 							updateManagedState(token, managed);
 							bundle.putAll(managed);
+							targetSessionAccepted = true;
 						}
 					}
 				} catch (RemoteException ignored) {
@@ -1258,16 +1290,17 @@ public final class MemoryEngineService extends Service {
 				}
 			}
 		}
-		synchronized (searchSessionLock) {
-			bundle.putInt(MemoryEngineContract.KEY_SEARCH_SESSION_STAGE,
-					current ? searchSessionStage : MemoryEngineContract.SEARCH_SESSION_EMPTY);
-			bundle.putInt(MemoryEngineContract.KEY_SEARCH_MODE,
-					current ? searchSessionMode : MemoryEngineContract.SEARCH_MODE_KNOWN);
-			bundle.putInt(MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE,
-					current ? searchRequestedType : MemoryEngineContract.TYPE_AUTO);
-			bundle.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH,
-					current ? bundle.getInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH,
-							managedHistoryDepth) : 0);
+		if (!targetSessionAccepted) {
+			synchronized (searchSessionLock) {
+				bundle.putInt(MemoryEngineContract.KEY_SEARCH_SESSION_STAGE,
+						current ? searchSessionStage : MemoryEngineContract.SEARCH_SESSION_EMPTY);
+				bundle.putInt(MemoryEngineContract.KEY_SEARCH_MODE,
+						current ? searchSessionMode : MemoryEngineContract.SEARCH_MODE_KNOWN);
+				bundle.putInt(MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE,
+						current ? searchRequestedType : MemoryEngineContract.TYPE_AUTO);
+				bundle.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH,
+						current ? managedHistoryDepth : 0);
+			}
 		}
 		return bundle;
 	}
@@ -1396,6 +1429,7 @@ public final class MemoryEngineService extends Service {
 			clearSearchSession();
 			cancelEpoch.incrementAndGet();
 		}
+		stopFreezeTaskIfIdle();
 		notifyLocalRuntimeUnavailable();
 	}
 

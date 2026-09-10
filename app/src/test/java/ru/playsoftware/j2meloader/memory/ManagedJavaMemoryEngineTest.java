@@ -397,7 +397,7 @@ public class ManagedJavaMemoryEngineTest {
 		assertTrue(inspection.ids.length > 0);
 	}
 
-	// Modified: regressions for bounded inspection and fail-closed sibling writes.
+	// Regressions for bounded inspection and fail-closed sibling writes.
 	@Test
 	public void managedInspectorArrayWindowIsPageBoundedAndContainsAnchor() {
 		root.array = new int[1000];

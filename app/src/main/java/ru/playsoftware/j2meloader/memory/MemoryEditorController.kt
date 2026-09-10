@@ -57,7 +57,7 @@ internal class MemoryEditorComposeController(
     private var liveRefreshPending = false
     private var visiblePageRequestPending = false
     private var visiblePageRequestGeneration = 0L
-    // Modified: closing/replacing Inspector invalidates asynchronous read replies.
+    // Closing or replacing Inspector invalidates asynchronous read replies.
     private var inspectorRequestGeneration = 0L
     private var visiblePageRequestInFlightGeneration = 0L
     private val stateRequestGeneration = AtomicLong()
@@ -638,7 +638,7 @@ internal class MemoryEditorComposeController(
         launchOperation { engine, token -> engine.undoSearch(token) }
     }
 
-    /** Explicit refresh is also the relocation/rebind action after Java GC. */
+    /** Refresh rereads visible logical identities; collected owners remain LOST and are not rebound. */
     override fun refresh() {
         if (state.busy) return
         val ids = if (state.watchTab) {
@@ -819,8 +819,15 @@ internal class MemoryEditorComposeController(
     override fun watchSelected(add: Boolean) {
         val ids = state.selected.toLongArray()
         if (ids.isEmpty()) return
+        val resultGroup = !state.watchTab
+        val expectedRevision = state.revision
         launchOperation { engine, token ->
-            if (add) engine.addWatch(token, ids) else engine.removeWatch(token, ids)
+            if (add) {
+                if (resultGroup) engine.addWatchResults(token, expectedRevision, ids)
+                else engine.addWatch(token, ids)
+            } else {
+                engine.removeWatch(token, ids)
+            }
         }
     }
 

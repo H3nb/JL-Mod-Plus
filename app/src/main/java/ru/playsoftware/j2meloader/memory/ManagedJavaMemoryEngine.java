@@ -655,7 +655,7 @@ final class ManagedJavaMemoryEngine {
 		OwnerBucket owner = anchor.owners[0];
 		Object strongOwner = anchor.strongOwners[0];
 		int anchorSlot = anchor.slots[0];
-		// Modified: logical windows use the result-row budget, not the raw byte budget.
+		// Logical windows use the result-row budget, not the raw byte budget.
 		radius = Math.min(radius, (MemoryEngineContract.MAX_RESULT_PAGE_SIZE - 1) / 2);
 		ArrayList<Integer> slots = new ArrayList<>();
 		if (owner.kind == KIND_ARRAY) {
