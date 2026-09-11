@@ -7,7 +7,6 @@ package ru.playsoftware.j2meloader.memory
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -147,20 +146,6 @@ class MemoryEditorModelsTest {
             MemoryEngineContract.PREDICATE_CHANGED,
             MemoryEditorRuntimePreferences.unknownPredicate(runtimeB),
         )
-    }
-
-    @Test fun baselineCountIsPresentedOnlyForUnknownBaseline() {
-        val managedBaseline = MemoryEditorUiState(
-            sessionStage = MemorySessionStage.UNKNOWN_BASELINE,
-            baselineCount = 184_732L,
-        )
-        assertEquals(184_732L, baselineCountForPresentation(managedBaseline))
-        assertNull(baselineCountForPresentation(
-            managedBaseline.copy(baselineCount = 0L),
-        ))
-        assertNull(baselineCountForPresentation(
-            managedBaseline.copy(sessionStage = MemorySessionStage.CANDIDATES),
-        ))
     }
 
 }

@@ -473,7 +473,7 @@ private fun RuntimeSearchResultsTab(
     var unknownDialog by remember { mutableStateOf(false) }
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     var editRevision by remember { mutableStateOf(0L) }
-    val baselineOnly = state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE
+    val unknownBaseline = state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE
     val selectedRows = state.results.filter { it.id in state.selected }
     val selectedWriteSupported = selectedRows.isNotEmpty() && state.writeSupported
     val allVisibleSelected = state.results.isNotEmpty() &&
@@ -506,7 +506,7 @@ private fun RuntimeSearchResultsTab(
             RuntimeActionIcon(
                 icon = R.drawable.ic_edit,
                 description = R.string.memory_editor_edit,
-                enabled = selectedWriteSupported && !state.busy && !baselineOnly,
+                enabled = selectedWriteSupported && !state.busy,
                 onClick = {
                     editTargets = selectedRows.map { row ->
                         MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes)
@@ -529,7 +529,7 @@ private fun RuntimeSearchResultsTab(
             RuntimeActionIcon(
                 icon = R.drawable.ic_delete,
                 description = R.string.memory_editor_remove,
-                enabled = state.selected.isNotEmpty() && !state.busy && !baselineOnly,
+                enabled = state.selected.isNotEmpty() && !state.busy && !unknownBaseline,
                 onClick = { actions.removeSelected(false) },
             )
             val visibleSelectionDescription = stringResource(
@@ -587,30 +587,10 @@ private fun RuntimeSearchResultsTab(
         if (state.results.isEmpty()) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 if (state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE) {
-                    val baselineCount = baselineCountForPresentation(state)
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(horizontal = 24.dp),
-                    ) {
-                        Text(
-                            if (baselineCount != null) {
-                                stringResource(
-                                    R.string.memory_editor_baseline_captured_count,
-                                    baselineCount,
-                                )
-                            } else {
-                                stringResource(R.string.memory_editor_baseline_captured)
-                            },
-                            style = MaterialTheme.typography.titleMedium,
-                            textAlign = TextAlign.Center,
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            stringResource(R.string.memory_editor_baseline_instruction),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                    Text(
+                        stringResource(R.string.memory_editor_no_candidates),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 } else {
                     Text(
                         stringResource(R.string.memory_editor_no_results),
@@ -626,14 +606,10 @@ private fun RuntimeSearchResultsTab(
                         selected = row.id in state.selected,
                         onToggle = { actions.toggleSelection(row.id) },
                         onClick = {
-                            if (baselineOnly) {
-                                actions.toggleSelection(row.id)
-                            } else {
-                                editTargets = listOf(
-                                    MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes),
-                                )
-                                editRevision = state.revision
-                            }
+                            editTargets = listOf(
+                                MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes),
+                            )
+                            editRevision = state.revision
                         },
                     )
                 }
@@ -1566,7 +1542,6 @@ private fun RuntimeInspectorTab(
         else -> {
             val snapshot = requireNotNull(state.inspector)
             val logicalRows = snapshot.logicalRows
-            val readOnlyBaseline = state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE
             Column(modifier = modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
@@ -1635,7 +1610,7 @@ private fun RuntimeInspectorTab(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .combinedClickable(
-                                                enabled = !readOnlyBaseline && row.editable &&
+                                                enabled = row.editable &&
                                                     state.writeSupported && !state.busy,
                                                 onClick = { editLogicalRow = row },
                                                 onLongClick = { editLogicalRow = row },
@@ -1678,7 +1653,7 @@ private fun RuntimeInspectorTab(
                 }
             }
 
-            editLogicalRow?.takeUnless { readOnlyBaseline }?.let { row ->
+            editLogicalRow?.let { row ->
                 RuntimeInspectorLogicalEditDialog(
                     snapshot = snapshot,
                     row = row,

@@ -320,11 +320,6 @@ internal data class MemoryEditorUiState(
     val inspector: MemoryInspectorSnapshot? = null,
 )
 
-internal fun baselineCountForPresentation(state: MemoryEditorUiState): Long? =
-    state.baselineCount.takeIf {
-        state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE && it > 0L
-    }
-
 internal interface MemoryEditorActions {
     fun close()
     fun refreshCapabilities()

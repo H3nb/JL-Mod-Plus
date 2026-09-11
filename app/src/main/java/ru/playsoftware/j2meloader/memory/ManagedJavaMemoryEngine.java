@@ -645,9 +645,8 @@ final class ManagedJavaMemoryEngine {
 			return ManagedInspection.failure(MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Managed Inspector requires a valid logical candidate and bounded radius");
 		}
-		// Inspector is a read-only path. Unknown baseline membership is safe to resolve for reads,
-		// while the mutation paths keep the fail-closed baseline guard below.
-		ResolvedBatch anchor = resolveBatchForRead(token, expectedRevision,
+		// Inspector reads and mutations share the same committed logical identity checks.
+		ResolvedBatch anchor = resolveBatch(token, expectedRevision,
 				new long[]{anchorId}, allowWatchOnly);
 		if (anchor.error != null) {
 			return ManagedInspection.failure(anchor.error.code, anchor.error.message);
@@ -1095,9 +1094,8 @@ final class ManagedJavaMemoryEngine {
 					"Managed Watch List requests are bounded to 128 rows");
 		}
 		long[] unique = uniqueIds(ids);
-		// Adding a baseline row to Watch is allowed before the first Unknown refine. The
-		// baseline is read-only as a search result, but Watch is the explicit way to retain
-		// that logical owner for later refresh/edit operations.
+		// Adding a baseline row to Watch is allowed before the first Unknown refine. Watch keeps
+		// the same logical identity available after the result search is cleared.
 		ResolvedBatch batch = resolveBatch(token, expectedRevision, unique, true);
 		if (batch.error != null) return batch.error;
 		int additional = 0;
@@ -1614,16 +1612,6 @@ final class ManagedJavaMemoryEngine {
 
 	private ResolvedBatch resolveBatch(long token, long expectedRevision, long[] ids,
 	                                  boolean allowWatchOnly) {
-		return resolveBatch(token, expectedRevision, ids, allowWatchOnly, false);
-	}
-
-	private ResolvedBatch resolveBatchForRead(long token, long expectedRevision, long[] ids,
-	                                          boolean allowWatchOnly) {
-		return resolveBatch(token, expectedRevision, ids, allowWatchOnly, true);
-	}
-
-	private ResolvedBatch resolveBatch(long token, long expectedRevision, long[] ids,
-	                                  boolean allowWatchOnly, boolean allowBaselineRead) {
 		OwnerBucket[] resolvedOwners = new OwnerBucket[ids.length];
 		int[] slots = new int[ids.length];
 		Object[] strongOwners = new Object[ids.length];
@@ -1632,12 +1620,6 @@ final class ManagedJavaMemoryEngine {
 			if (!isCurrentLocked(token)) return ResolvedBatch.error(
 					failureLocked(MemoryEngineContract.RESULT_TARGET_LOST,
 							"MIDlet runtime changed or ended"));
-			if (searchStage == MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE
-					&& expectedRevision > 0L && committed != null
-					&& committed.id == expectedRevision && !allowWatchOnly && !allowBaselineRead) {
-				return ResolvedBatch.error(failureLocked(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-						"Unknown baseline result rows are not editable until refinement"));
-			}
 			for (int index = 0; index < ids.length; index++) {
 				long id = ids[index];
 				if (!ManagedJavaMemoryIds.hasValidNamespace(id)) return ResolvedBatch.error(

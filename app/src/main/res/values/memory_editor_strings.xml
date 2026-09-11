@@ -47,9 +47,7 @@
     <string name="memory_editor_refine_search">Refine current results</string>
     <string name="memory_editor_unknown_explanation">Use this when you do not know the current value. Memory Editor will capture a baseline, then you can return to the game and describe how the value changed.</string>
     <string name="memory_editor_capture_baseline">Capture baseline</string>
-    <string name="memory_editor_baseline_captured">Baseline captured</string>
-    <string name="memory_editor_baseline_captured_count">Baseline captured · %1$d candidates</string>
-    <string name="memory_editor_baseline_instruction">Return to the game and change the value you are looking for, then run Next Scan.</string>
+    <string name="memory_editor_no_candidates">No managed candidates found</string>
     <string name="memory_editor_back_to_game">Back to game</string>
     <string name="memory_editor_what_changed">What happened to the value?</string>
     <string name="memory_editor_start_over">Start over</string>
@@ -127,7 +125,7 @@
     <string name="memory_editor_inspector_controls">Inspector controls</string>
     <string name="memory_editor_back_to_memory">Back to memory</string>
     <string name="memory_editor_inspect_memory">Inspect nearby memory</string>
-    <string name="memory_editor_inspector_help">Read-only view anchored to the verified candidate. Relative offsets follow the candidate if it relocates.</string>
+    <string name="memory_editor_inspector_help">Bounded view anchored to the verified candidate. Relative offsets follow the candidate if it relocates.</string>
     <string name="memory_editor_inspector_edit_help">Tap a cell to edit it. Writes verify the live target and read back safely; offsets follow the candidate if it relocates.</string>
     <string name="memory_editor_inspector_loading">Verifying candidate and reading a bounded snapshot…</string>
     <string name="memory_editor_inspector_empty">Select a result, then inspect nearby memory to view and edit its bounded snapshot.</string>

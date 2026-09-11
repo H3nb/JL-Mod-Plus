@@ -44,9 +44,7 @@
     <string name="memory_editor_refine_search">Persempit hasil saat ini</string>
     <string name="memory_editor_unknown_explanation">Gunakan ini jika nilai saat ini tidak diketahui. Editor Memori akan menangkap baseline, lalu Anda dapat kembali ke game dan menjelaskan bagaimana nilainya berubah.</string>
     <string name="memory_editor_capture_baseline">Tangkap baseline</string>
-    <string name="memory_editor_baseline_captured">Baseline tersimpan</string>
-    <string name="memory_editor_baseline_captured_count">Baseline tersimpan · %1$d kandidat</string>
-    <string name="memory_editor_baseline_instruction">Kembali ke game dan ubah nilai yang dicari, lalu jalankan Pemindaian berikutnya.</string>
+    <string name="memory_editor_no_candidates">Kandidat Managed tidak ditemukan</string>
     <string name="memory_editor_back_to_game">Kembali ke game</string>
     <string name="memory_editor_what_changed">Apa yang terjadi pada nilainya?</string>
     <string name="memory_editor_start_over">Mulai ulang pencarian</string>
@@ -123,7 +121,7 @@
     <string name="memory_editor_inspector_controls">Kontrol inspektor</string>
     <string name="memory_editor_back_to_memory">Kembali ke memori</string>
     <string name="memory_editor_inspect_memory">Periksa memori sekitar</string>
-    <string name="memory_editor_inspector_help">Tampilan hanya-baca yang terikat ke kandidat terverifikasi. Offset relatif mengikuti kandidat jika alamatnya berpindah.</string>
+    <string name="memory_editor_inspector_help">Tampilan terbatas yang terikat ke kandidat terverifikasi. Offset relatif mengikuti kandidat jika alamatnya berpindah.</string>
     <string name="memory_editor_inspector_edit_help">Ketuk sel untuk mengeditnya. Penulisan memverifikasi target aktif dan membaca kembali hasilnya dengan aman; offset mengikuti kandidat jika alamatnya berpindah.</string>
     <string name="memory_editor_inspector_loading">Memverifikasi kandidat dan membaca snapshot terbatas…</string>
     <string name="memory_editor_inspector_empty">Pilih hasil, lalu buka Inspektor untuk melihat dan mengedit snapshot memori terbatas di sekitarnya.</string>

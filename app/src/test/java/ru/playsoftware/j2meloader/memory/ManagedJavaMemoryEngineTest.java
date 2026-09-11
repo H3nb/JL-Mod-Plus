@@ -366,7 +366,7 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
-	public void managedInspectorReadsUnknownBaselineButKeepsItReadOnlyForMutation() {
+	public void managedUnknownResultsSupportInspectorMutation() {
 		ManagedJavaMemoryEngine.ManagedOperationResult baseline = engine.startUnknown(TOKEN,
 				MemoryEngineContract.TYPE_INT, 0L);
 		assertTrue(baseline.resultCount > 0L);
@@ -376,11 +376,27 @@ public class ManagedJavaMemoryEngineTest {
 		assertEquals(MemoryEngineContract.RESULT_OK, inspection.code);
 		int mutableIndex = indexForLabel(inspection, "rootMatch");
 		assertTrue(inspection.editable[mutableIndex]);
-		ManagedJavaMemoryEngine.ManagedOperationResult rejected = engine.editInspector(TOKEN,
+		ManagedJavaMemoryEngine.ManagedOperationResult edited = engine.editInspector(TOKEN,
 				baseline.revision, anchor, false, inspection.relativeOffsets[mutableIndex],
 				MemoryEngineContract.TYPE_INT, inspection.expectedBits[mutableIndex], "8", 0L);
-		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, rejected.code);
-		assertEquals(7, root.rootMatch);
+		assertEquals(MemoryEngineContract.RESULT_OK, edited.code);
+		assertEquals(8, root.rootMatch);
+	}
+
+	@Test
+	public void managedUnknownResultsSupportDirectEditAndFreeze() {
+		ManagedJavaMemoryEngine.ManagedOperationResult baseline = engine.startUnknown(TOKEN,
+				MemoryEngineContract.TYPE_INT, 0L);
+		long id = idForAddress(baseline.revision, "rootMatch");
+		ManagedJavaMemoryEngine.ManagedOperationResult edited = engine.editTyped(TOKEN,
+				baseline.revision, new long[]{id}, MemoryEngineContract.TYPE_INT, "8", false, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, edited.code);
+		assertEquals(8, root.rootMatch);
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.setFreezeLockTyped(TOKEN,
+				baseline.revision, new long[]{id}, "9", false, 0L).code);
+		root.rootMatch = 1;
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(TOKEN, 0L).code);
+		assertEquals(9, root.rootMatch);
 	}
 
 	@Test

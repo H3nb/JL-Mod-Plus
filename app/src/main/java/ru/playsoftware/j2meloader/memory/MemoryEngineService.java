@@ -31,7 +31,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -51,11 +53,17 @@ public final class MemoryEngineService extends Service {
 
 	private final AtomicLong nextOperationId = new AtomicLong(1L);
 	private final RemoteCallbackList<IMemoryEngineCallback> callbacks = new RemoteCallbackList<>();
-	private final ScheduledExecutorService worker = Executors.newSingleThreadScheduledExecutor(runnable -> {
+	private final ExecutorService worker = Executors.newSingleThreadExecutor(runnable -> {
 		Thread thread = new Thread(runnable, "MemoryEditorEngine");
 		thread.setPriority(Thread.NORM_PRIORITY - 1);
 		return thread;
 	});
+	private final ScheduledExecutorService freezeScheduler =
+			Executors.newSingleThreadScheduledExecutor(runnable -> {
+				Thread thread = new Thread(runnable, "MemoryEditorFreeze");
+				thread.setPriority(Thread.NORM_PRIORITY - 1);
+				return thread;
+			});
 	private volatile IMemoryTargetBridge target;
 	private volatile boolean targetBound;
 	private volatile long configuredToken;
@@ -95,6 +103,7 @@ public final class MemoryEngineService extends Service {
 			target = bridge;
 			try {
 				bridge.registerTargetCallback(targetCallback);
+				scheduleTargetStateRehydrate(bridge);
 			} catch (RemoteException exception) {
 				target = null;
 				invalidateTarget();
@@ -513,10 +522,8 @@ public final class MemoryEngineService extends Service {
 
 	@Override
 	public void onDestroy() {
-		ScheduledFuture<?> activeFreezeTask = freezeTask;
-		if (activeFreezeTask != null) {
-			activeFreezeTask.cancel(false);
-		}
+		stopFreezeTask();
+		freezeScheduler.shutdownNow();
 		IMemoryTargetBridge bridge = target;
 		if (bridge != null) {
 			try {
@@ -612,6 +619,45 @@ public final class MemoryEngineService extends Service {
 			return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 					"MIDlet runtime connection was lost");
 		}
+	}
+
+	private void scheduleTargetStateRehydrate(IMemoryTargetBridge bridge) {
+		try {
+			worker.execute(() -> rehydrateTargetState(bridge));
+		} catch (RejectedExecutionException ignored) {
+			// The service is already tearing down.
+		}
+	}
+
+	private void rehydrateTargetState(IMemoryTargetBridge bridge) {
+		try {
+			long token = bridge.getRuntimeToken();
+			if (token == 0L || target != bridge) return;
+			Bundle capabilities = bridge.getManagedCapabilities(token);
+			Bundle session = bridge.getManagedSessionInfo(token);
+			if (!acceptManagedRuntimeState(token, bridge, capabilities)
+					|| !acceptManagedRuntimeState(token, bridge, session)) {
+				return;
+			}
+			synchronized (searchCommitLock) {
+				if (target != bridge || bridge.getRuntimeToken() != token) return;
+				observedRuntimeToken = token;
+				if (configuredToken == 0L && hasRetainedManagedState(capabilities)) {
+					configuredToken = token;
+				}
+				updateManagedState(token, capabilities);
+				updateManagedState(token, session);
+				reconcileFreezeScheduler();
+			}
+		} catch (RemoteException ignored) {
+			// The next target connection or capability request will retry reconciliation.
+		}
+	}
+
+	private static boolean hasRetainedManagedState(@Nullable Bundle state) {
+		return state != null && (state.getLong(MemoryEngineContract.KEY_MANAGED_REVISION, 0L) > 0L
+				|| state.getInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, 0) > 0
+				|| state.getInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, 0) > 0);
 	}
 
 	private int managedFilterResultGroups(long token, long expectedRevision, long[] resultIds,
@@ -1055,6 +1101,12 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private void updateManagedState(long token, @Nullable Bundle state) {
+		synchronized (searchCommitLock) {
+			updateManagedStateLocked(token, state);
+		}
+	}
+
+	private void updateManagedStateLocked(long token, @Nullable Bundle state) {
 		if (state == null || token == 0L
 				|| state.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, 0L) != token) return;
 		if (managedStateToken != token) {
@@ -1205,8 +1257,12 @@ public final class MemoryEngineService extends Service {
 	private synchronized void startFreezeTaskIfNeeded() {
 		ScheduledFuture<?> current = freezeTask;
 		if (current == null || current.isDone()) {
-			freezeTask = worker.scheduleWithFixedDelay(
-					this::runFreezeTick, 750L, 750L, TimeUnit.MILLISECONDS);
+			try {
+				freezeTask = freezeScheduler.scheduleWithFixedDelay(
+						this::runFreezeTick, 750L, 750L, TimeUnit.MILLISECONDS);
+			} catch (RejectedExecutionException ignored) {
+				freezeTask = null;
+			}
 		}
 	}
 
