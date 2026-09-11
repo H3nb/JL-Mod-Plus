@@ -16,6 +16,7 @@ package io.github.h3nb.jlmodplus.applist
 
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
+import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
 
 /** Stable surfaces whose scroll anchors must survive destination replacement. */
 enum class LibraryNavigationSurface {
@@ -44,8 +45,8 @@ data class LibraryNavigationState(
     val destination: LibraryDestinationKey = LibraryDestinationKey.Apps,
     val layout: LibraryLayout = LibraryLayout.List,
     val query: String = "",
-    val quickView: io.github.h3nb.jlmodplus.librarydb.LibraryQuickView =
-        io.github.h3nb.jlmodplus.librarydb.LibraryQuickView.All,
+    val quickView: LibraryQuickView =
+        LibraryQuickView.All,
     val sortVariant: Int = 0,
     val selectedCollectionId: Long? = null,
     val anchors: Map<LibraryNavigationSurface, LibraryScrollAnchor> = emptyMap(),
@@ -93,9 +94,9 @@ data class LibraryNavigationState(
                 val query = saved.getOrNull(2) as? String ?: ""
                 val quickView = saved.getOrNull(3)?.toString()?.let {
                     runCatching {
-                        io.github.h3nb.jlmodplus.librarydb.LibraryQuickView.valueOf(it)
+                        LibraryQuickView.valueOf(it)
                     }.getOrNull()
-                } ?: io.github.h3nb.jlmodplus.librarydb.LibraryQuickView.All
+                } ?: LibraryQuickView.All
                 val sortVariant = (saved.getOrNull(4) as? Number)?.toInt() ?: 0
                 val selectedCollectionId = (saved.getOrNull(5) as? Number)?.toLong()
                     ?.takeUnless { it == Long.MIN_VALUE }

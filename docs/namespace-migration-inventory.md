@@ -4,7 +4,9 @@ This artifact records the bounded namespace migration described by the v2 handof
 
 ## Baseline and scope
 
-- Repository: `D:/Personal/JL-Mod-Plus`
+- Status: Completed
+- Audit snapshot: `d7498ebaf9614c481dd4e99d213fe47be571826c`
+- Repository: `H3nb/JL-Mod-Plus`
 - Verified base: `origin/alpha` at `0f2efca7d14bcb0435bffd41106d27688c50c51c`
 - Implementation branch: `refactor/namespace`
 - Moved app entries: 417 total — 312 Java/Kotlin/AIDL/test source entries and 105 PNG screenshot references.

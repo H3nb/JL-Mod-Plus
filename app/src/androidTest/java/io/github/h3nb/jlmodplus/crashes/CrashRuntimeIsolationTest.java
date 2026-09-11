@@ -55,6 +55,7 @@ import javax.microedition.shell.MicroActivity;
 import com.nokia.mid.ui.NotificationActivity;
 
 import jlmod.runtimefixture.LifecycleMidlet;
+import io.github.h3nb.jlmodplus.EmulatorApplication;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.util.Constants;
@@ -78,7 +79,7 @@ public class CrashRuntimeIsolationTest {
 		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
 
 		try {
-			assertEquals(mainProcessName, io.github.h3nb.jlmodplus.EmulatorApplication.getProcessName());
+			assertEquals(mainProcessName, EmulatorApplication.getProcessName());
 			assertEquals(mainPid, processPid(context, mainProcessName));
 			assertMidletFacingActivitiesUseMidletProcess(context, midletProcessName);
 
