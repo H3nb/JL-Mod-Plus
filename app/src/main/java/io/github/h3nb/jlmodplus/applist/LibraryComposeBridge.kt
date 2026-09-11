@@ -695,7 +695,9 @@ fun LibraryScreen(
     }
 
     val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
-    val libraryContentModifier = if (metadataApp == null) {
+    val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
+        || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
+    val libraryContentModifier = if (!libraryOverlayVisible) {
         Modifier
     } else {
         Modifier.clearAndSetSemantics { }
@@ -840,82 +842,91 @@ fun LibraryScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.Top,
             ) { page ->
-                when (LibraryDestination.entries[page]) {
-                    LibraryDestination.Apps -> LibraryAppsDestination(
-                        state = state,
-                        scaffoldPadding = padding,
-                        listState = appsListState,
-                        gridState = appsGridState,
-                        navigationState = navigationState,
-                        returnAnchor = metadataRestoreRequest?.anchor,
-                        returnViewport = metadataRestoreRequest?.viewport,
-                        returnAnchorKey = metadataRestoreAnchorKey,
-                        returnAnchorReady = metadataRestoreReady && !isImeVisible,
-                        onReturnAnchorConsumed = { metadataRestoreRequest = null },
-                        freezeViewport = metadataViewportLocked,
-                        preserveImePaddingWhileFrozen = metadataImeWasVisible,
-                        onNavigationStateChanged = { navigationState = it },
-                        selectionState = selectionState,
-                        onOpenApp = actions::onOpenApp,
-                        onOpenActions = {
-                            appActions = it
-                            appActionsCollectionId = null
-                        },
-                        onSearch = actions::onSearch,
-                        onQuickView = actions::onQuickView,
-                        onFavorite = actions::onFavorite,
-                        onToggleSelection = { app ->
-                            selectionState = selectionState.toggle(state.generation, app.databaseId)
-                        },
-                        onExitSelection = { selectionState = selectionState.clear() },
-                        onSelectAll = {
-                            selectionState = selectionState.selectVisible(
-                                state.generation,
-                                state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
-                            )
-                        },
-                        onUnselectAll = {
-                            selectionState = selectionState.unselectVisible(
-                                state.generation,
-                                state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
-                            )
-                        },
-                        onSort = actions::onSort,
-                        onRetry = actions::onRetryLibrary,
-                        onFabVisibilityChanged = { showInstallFab = it },
-                        onNavigationVisibilityChanged = { visible ->
-                            if (!useNavigationRail) showNavigationBar = visible
-                        },
-                    )
-                    LibraryDestination.Collections -> if (collectionsHost != null) {
-                        LibraryCollectionsDestination(
-                            host = collectionsHost,
-                            libraryState = state,
+                val pageModifier = if (page == pagerState.currentPage) {
+                    Modifier
+                } else {
+                    // HorizontalPager keeps neighbouring pages composed for smooth swipes. Their
+                    // semantics must not leak into the active page's accessibility tree.
+                    Modifier.clearAndSetSemantics { }
+                }
+                Box(modifier = pageModifier.fillMaxSize()) {
+                    when (LibraryDestination.entries[page]) {
+                        LibraryDestination.Apps -> LibraryAppsDestination(
+                            state = state,
                             scaffoldPadding = padding,
+                            listState = appsListState,
+                            gridState = appsGridState,
                             navigationState = navigationState,
+                            returnAnchor = metadataRestoreRequest?.anchor,
+                            returnViewport = metadataRestoreRequest?.viewport,
+                            returnAnchorKey = metadataRestoreAnchorKey,
+                            returnAnchorReady = metadataRestoreReady && !isImeVisible,
+                            onReturnAnchorConsumed = { metadataRestoreRequest = null },
+                            freezeViewport = metadataViewportLocked,
+                            preserveImePaddingWhileFrozen = metadataImeWasVisible,
                             onNavigationStateChanged = { navigationState = it },
-                            onOpenActions = { app, collectionId ->
-                                appActions = app
-                                appActionsCollectionId = collectionId
+                            selectionState = selectionState,
+                            onOpenApp = actions::onOpenApp,
+                            onOpenActions = {
+                                appActions = it
+                                appActionsCollectionId = null
                             },
+                            onSearch = actions::onSearch,
+                            onQuickView = actions::onQuickView,
+                            onFavorite = actions::onFavorite,
+                            onToggleSelection = { app ->
+                                selectionState = selectionState.toggle(state.generation, app.databaseId)
+                            },
+                            onExitSelection = { selectionState = selectionState.clear() },
+                            onSelectAll = {
+                                selectionState = selectionState.selectVisible(
+                                    state.generation,
+                                    state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+                                )
+                            },
+                            onUnselectAll = {
+                                selectionState = selectionState.unselectVisible(
+                                    state.generation,
+                                    state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+                                )
+                            },
+                            onSort = actions::onSort,
+                            onRetry = actions::onRetryLibrary,
+                            onFabVisibilityChanged = { showInstallFab = it },
                             onNavigationVisibilityChanged = { visible ->
                                 if (!useNavigationRail) showNavigationBar = visible
                             },
-                            active = destination == LibraryDestination.Collections,
                         )
-                    } else {
-                        LibraryCollectionsDestination(padding)
+                        LibraryDestination.Collections -> if (collectionsHost != null) {
+                            LibraryCollectionsDestination(
+                                host = collectionsHost,
+                                libraryState = state,
+                                scaffoldPadding = padding,
+                                navigationState = navigationState,
+                                onNavigationStateChanged = { navigationState = it },
+                                onOpenActions = { app, collectionId ->
+                                    appActions = app
+                                    appActionsCollectionId = collectionId
+                                },
+                                onNavigationVisibilityChanged = { visible ->
+                                    if (!useNavigationRail) showNavigationBar = visible
+                                },
+                                active = destination == LibraryDestination.Collections,
+                            )
+                        } else {
+                            LibraryCollectionsDestination(padding)
+                        }
+                        LibraryDestination.More -> LibraryMoreDestination(
+                            scaffoldPadding = padding,
+                            onImportAppBundle = actions::onImportAppBundle,
+                            onAbout = { infoDialog = LibraryInfoDialog.About },
+                            onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
+                            onSettings = actions::onOpenSettings,
+                            onHelp = { infoDialog = LibraryInfoDialog.Help },
+                            onCrashReports = actions::onOpenCrashReports,
+                            onSaveLog = actions::onSaveLog,
+                        )
                     }
-                    LibraryDestination.More -> LibraryMoreDestination(
-                        scaffoldPadding = padding,
-                        onImportAppBundle = actions::onImportAppBundle,
-                        onAbout = { infoDialog = LibraryInfoDialog.About },
-                        onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
-                        onSettings = actions::onOpenSettings,
-                        onHelp = { infoDialog = LibraryInfoDialog.Help },
-                        onCrashReports = actions::onOpenCrashReports,
-                        onSaveLog = actions::onSaveLog,
-                    )
                 }
             }
         }
@@ -1112,7 +1123,7 @@ private const val LIBRARY_CHROME_ANIMATION_MILLIS = 220
 // Require enough scroll progress to survive reclaiming the bottom navigation height. Without
 // this guard, a list/grid with only one or two rows of overflow becomes non-scrollable as soon
 // as the footer disappears, which immediately re-shows the chrome and causes a visible flicker.
-internal const val LIBRARY_CHROME_HIDE_DISTANCE_DP = 128f
+internal const val LIBRARY_CHROME_HIDE_DISTANCE_DP = 80f
 // The footer reclaims roughly one navigation-bar height. Require more than a row or two of
 // remaining content before hiding chrome so the viewport resize cannot immediately make the
 // list non-scrollable and start a hide/show loop.
@@ -1534,19 +1545,32 @@ internal fun LibraryAppsDestination(
                 } else {
                     gridState.canScrollForward || gridState.canScrollBackward
                 }
+                val hasScrolledFromTop = if (state.layout == LibraryLayout.List) {
+                    listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+                } else {
+                    gridState.firstVisibleItemIndex > 0 || gridState.firstVisibleItemScrollOffset > 0
+                }
                 if (!canScroll) {
-                    if (headerOffsetPx.floatValue < -0.5f && (consumed.y > 0f || available.y > 0f)) {
+                    if (
+                        !hasScrolledFromTop &&
+                        headerOffsetPx.floatValue < -0.5f &&
+                        (consumed.y > 0f || available.y > 0f)
+                    ) {
                         headerOffsetPx.floatValue = 0f
                         if (chromeHysteresis.revealNow() != null) {
                             onFabVisibilityChanged(true)
                             onNavigationVisibilityChanged(true)
                         }
-                    } else if (headerOffsetPx.floatValue == 0f && !chromeHysteresis.chromeVisible) {
+                    } else if (
+                        !hasScrolledFromTop &&
+                        headerOffsetPx.floatValue == 0f &&
+                        !chromeHysteresis.chromeVisible
+                    ) {
                         chromeHysteresis.reset()
                         onFabVisibilityChanged(true)
                         onNavigationVisibilityChanged(true)
                     }
-                    return Offset.Zero
+                    if (!hasScrolledFromTop) return Offset.Zero
                 }
 
                 // Base hide/reveal progress on the distance the child actually consumed. A
@@ -1555,7 +1579,10 @@ internal fun LibraryAppsDestination(
                 // non-scrollable when the footer is reclaimed, causing a visible flicker.
                 val delta = when {
                     consumed.y != 0f -> consumed.y
-                    available.y > 0f -> available.y
+                    // A gesture can begin on a clickable row and report its first movement as
+                    // unconsumed even though the list has scroll room. Preserve that movement
+                    // for chrome hysteresis; the scroll-room guard below rejects short lists.
+                    available.y != 0f -> available.y
                     else -> return Offset.Zero
                 }
                 val hasScrollRoom = if (state.layout == LibraryLayout.List) {
@@ -1563,7 +1590,17 @@ internal fun LibraryAppsDestination(
                 } else {
                     gridState.hasLibraryChromeScrollRoom(minScrollRoomPx)
                 }
-                if (delta < 0f && !hasScrollRoom) return Offset.Zero
+                val hasScrolledBack = if (state.layout == LibraryLayout.List) {
+                    listState.canScrollBackward
+                } else {
+                    gridState.canScrollBackward
+                }
+                // A single fling can consume the remaining content before this post-scroll
+                // callback runs. Once the list has moved, still allow the hide transition; a
+                // genuinely short list has neither scroll room nor a backward position.
+                if (delta < 0f && !hasScrollRoom && !hasScrolledBack && !hasScrolledFromTop) {
+                    return Offset.Zero
+                }
                 val fullyHidden = headerOffsetPx.floatValue <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)
                 val shouldMoveHeader =
@@ -1690,6 +1727,13 @@ internal fun LibraryAppsDestination(
                 .fillMaxWidth()
                 .graphicsLayer { translationY = headerOffsetPx.floatValue }
                 .background(MaterialTheme.colorScheme.background)
+                .then(
+                    if (chromeHysteresis.chromeVisible) {
+                        Modifier
+                    } else {
+                        Modifier.clearAndSetSemantics { }
+                    },
+                )
                 .onSizeChanged { headerHeightPx.intValue = it.height },
         ) {
             renderHeader(Modifier, true)

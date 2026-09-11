@@ -109,7 +109,24 @@ public class HostEdgeToEdgeContractTest {
 				WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
 		Rect decorBounds = boundsInWindow(decor);
 		Rect contentBounds = boundsInWindow(content);
-		Rect actionBarBounds = boundsInWindow(actionBarContainer);
+		Rect actionBarBounds = actionBarContainer == null
+				? new Rect(decorBounds.left, decorBounds.top, decorBounds.right, decorBounds.top)
+				: boundsInWindow(actionBarContainer);
+		View composeRoot = activity.findViewById(R.id.settings_compose_root);
+		if (composeRoot == null) {
+			composeRoot = activity.findViewById(R.id.key_mapper_compose_root);
+		}
+		if (actionBarContainer == null && composeRoot != null) {
+			// Compose-owned hosts intentionally receive the full edge-to-edge content frame and
+			// apply WindowInsets inside Scaffold/TopAppBar. Treating android.R.id.content as a
+			// legacy padded frame here would require the insets twice.
+			assertTrue("Compose host must fill the edge-to-edge content frame",
+					contentBounds.equals(boundsInWindow(composeRoot)));
+			assertTrue("Compose host must not receive legacy content padding",
+					content.getPaddingLeft() == 0 && content.getPaddingTop() == 0
+							&& content.getPaddingRight() == 0 && content.getPaddingBottom() == 0);
+			return;
+		}
 		int safeTop = Math.max(decorBounds.top + safe.top, actionBarBounds.bottom);
 		int protectedLeft = contentBounds.left + content.getPaddingLeft();
 		int protectedTop = contentBounds.top + content.getPaddingTop();
@@ -127,12 +144,14 @@ public class HostEdgeToEdgeContractTest {
 		assertTrue("Host content must avoid the navigation bar",
 				protectedBottom <= decorBounds.bottom - safe.bottom);
 
-		assertTrue("ActionBar controls must avoid the left display cutout",
-				actionBarBounds.left + actionBarContainer.getPaddingLeft()
-						>= decorBounds.left + safe.left);
-		assertTrue("ActionBar controls must avoid the right display cutout",
-				actionBarBounds.right - actionBarContainer.getPaddingRight()
-						<= decorBounds.right - safe.right);
+		if (actionBarContainer != null) {
+			assertTrue("ActionBar controls must avoid the left display cutout",
+					actionBarBounds.left + actionBarContainer.getPaddingLeft()
+							>= decorBounds.left + safe.left);
+			assertTrue("ActionBar controls must avoid the right display cutout",
+					actionBarBounds.right - actionBarContainer.getPaddingRight()
+							<= decorBounds.right - safe.right);
+		}
 	}
 
 	private static void assertConfigComposeSurface(Activity activity) {

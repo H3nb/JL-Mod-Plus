@@ -46,10 +46,16 @@ public class LegacyUiResourceContractTest {
 		assertTrue("Runtime host menu must use the Compose-owned Material 3 toolbar",
 				micro.toolbar instanceof ComposeView);
 		assertEquals("Virtual display and overlay must remain direct root children",
-				2, micro.root.getChildCount());
+				4, micro.root.getChildCount());
 		assertSame(micro.virtualDisplay, micro.root.getChildAt(0));
 		assertSame("Overlay must remain above the guest display", micro.overlay,
 				micro.root.getChildAt(1));
+		assertSame("Memory controls must remain a root-level runtime overlay", micro.memoryEditorBubble,
+				micro.root.getChildAt(2));
+		assertSame("Runtime notices must remain a root-level Compose overlay", micro.notices,
+				micro.root.getChildAt(3));
+		assertEquals("Memory controls start hidden until the runtime exposes memory",
+				android.view.View.GONE, micro.memoryEditorBubble.getVisibility());
 		assertSame(micro.toolbar, micro.virtualDisplay.getChildAt(0));
 		assertSame(micro.displayableContainer, micro.virtualDisplay.getChildAt(1));
 		LinearLayout.LayoutParams displayParams =

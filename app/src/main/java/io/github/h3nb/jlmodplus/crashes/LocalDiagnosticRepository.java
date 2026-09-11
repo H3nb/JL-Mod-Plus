@@ -309,6 +309,7 @@ public final class LocalDiagnosticRepository {
 			return;
 		}
 		appendLine(detail, "Lifecycle stage", snapshot.stage == null ? null : snapshot.stage.name());
+		appendLine(detail, "Session outcome", snapshot.outcome == null ? null : snapshot.outcome.name());
 		appendLine(detail, "MIDlet", snapshot.midletName);
 		appendLine(detail, "MIDlet version", snapshot.midletVersion);
 		appendLine(detail, "Entrypoint", snapshot.mainClass);
@@ -332,6 +333,7 @@ public final class LocalDiagnosticRepository {
 				|| exit.reason == ProcessExitStore.REASON_CRASH_NATIVE) && status != null) {
 			mechanism = mechanism + " · " + status;
 		}
+		appendLine(detail, "Exit reason", mechanism);
 		appendLine(detail, "Failure", mechanism);
 		appendLine(detail, "Process", processLabel(exit));
 		appendLine(detail, "PID", exit.pid > 0 ? Integer.toString(exit.pid) : null);

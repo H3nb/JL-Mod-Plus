@@ -442,7 +442,14 @@ private fun PickerEntryRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .semantics { role = Role.Button },
+            .semantics { role = Role.Button }
+            .then(
+                if (allowSelection) {
+                    Modifier.testTag("file_picker_selection_checkbox")
+                } else {
+                    Modifier
+                },
+            ),
         headlineContent = {
             Text(
                 text = entry.name,
@@ -463,7 +470,6 @@ private fun PickerEntryRow(
                 androidx.compose.material3.Checkbox(
                     checked = selected,
                     onCheckedChange = null,
-                    modifier = Modifier.testTag("file_picker_selection_checkbox"),
                 )
             }
         } else {

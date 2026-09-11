@@ -154,11 +154,20 @@ public class PlatformCompatManifestTest {
 	@Test
 	public void launcherFilterStaysOnOneLegacyAlias() {
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		// The connected-test runner may leave the target package disabled after a previous
+		// process-isolation test. The manifest contract is about intent resolution when the app
+		// is enabled, so normalize that external package state before querying it.
+		context.getPackageManager().setApplicationEnabledSetting(
+				context.getPackageName(),
+				PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+				PackageManager.DONT_KILL_APP);
 		Intent intent = new Intent(Intent.ACTION_MAIN)
 				.addCategory(Intent.CATEGORY_LAUNCHER)
 				.setPackage(context.getPackageName());
-		List<ResolveInfo> matches = context.getPackageManager()
-				.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+		// The launcher filter intentionally has MAIN/LAUNCHER only; MATCH_DEFAULT_ONLY would
+		// exclude it because that flag requires CATEGORY_DEFAULT in addition to the requested
+		// categories.
+		List<ResolveInfo> matches = context.getPackageManager().queryIntentActivities(intent, 0);
 		assertEquals(1, matches.size());
 		assertEquals("ru.playsoftware.j2meloader.LauncherActivity", matches.get(0).activityInfo.name);
 	}

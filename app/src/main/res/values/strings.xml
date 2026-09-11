@@ -62,7 +62,7 @@
     <string name="file_picker_sort_type">Folders First</string>
     <string name="file_picker_sort_name_ascending">Name A–Z</string>
     <string name="file_picker_sort_name_descending">Name Z–A</string>
-    <string name="file_picker_sort_modified_newest">Modification: Newest</string>
+    <string name="file_picker_sort_modified_newest">Modified Newest</string>
     <string name="file_picker_sort_modified_oldest">Modification: Oldest</string>
     <string name="file_picker_choose">Choose</string>
     <string name="file_picker_current_folder">Current Folder</string>
@@ -119,8 +119,8 @@
     <string name="library_destination_more">More</string>
     <string name="library_search_placeholder">Search apps or developers…</string>
     <string name="library_filter_all">All</string>
-    <string name="library_filter_recently_opened">Recently Opened</string>
-    <string name="library_filter_recently_added">Recently Added</string>
+    <string name="library_filter_recently_opened">Recently opened</string>
+    <string name="library_filter_recently_added">Recently added</string>
     <string name="library_filter_favorites">Favorites</string>
     <string name="library_favorite_coming_soon">Favorite (coming soon)</string>
     <string name="library_remove_favorite_coming_soon">Remove favorite (coming soon)</string>

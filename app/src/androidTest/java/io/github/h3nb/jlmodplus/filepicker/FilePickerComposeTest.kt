@@ -213,10 +213,13 @@ class FilePickerComposeTest {
     @Test
     fun parentNavigationAndPickerExitAreDistinctActions() {
         val events = AtomicReference<String>("")
+        lateinit var publishState: (FilePickerState) -> Unit
         composeRule.setContent {
+            var state by remember { mutableStateOf(sampleState()) }
+            publishState = { next -> state = next }
             JLModPlusTheme {
                 FilePickerScreen(
-                    state = sampleState(),
+                    state = state,
                     actions = RecordingActions(events),
                 )
             }
@@ -228,14 +231,8 @@ class FilePickerComposeTest {
         composeRule.onNodeWithText("Cancel").performClick()
         assertEquals("exit", events.get())
 
-        composeRule.setContent {
-            JLModPlusTheme {
-                FilePickerScreen(
-                    state = sampleState().copy(currentPath = "/storage"),
-                    actions = RecordingActions(events),
-                )
-            }
-        }
+        publishState(sampleState().copy(currentPath = "/storage"))
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("Cancel").performClick()
         assertEquals("exit", events.get())
     }

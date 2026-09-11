@@ -164,7 +164,7 @@ public class PlatformCompatBehaviorTest {
 			launchFixture(context, appDir);
 			awaitMarker(marker, "shown");
 			awaitMarker(marker, "size=");
-			executeShellCommand("input tap 100 100");
+			tapCanvasArea();
 			awaitMarker(marker, "pointer=");
 			if (!barState[0] && !barState[1]) {
 				int sizeEventsBeforeTransientBars = awaitStableSizeEventCount(marker);
@@ -188,7 +188,7 @@ public class PlatformCompatBehaviorTest {
 		awaitMarker(marker, "shown");
 		awaitMarker(marker, "size=");
 		String initialSize = lastMarkerValue(marker, "size=");
-		executeShellCommand("input tap 100 100");
+		tapCanvasArea();
 		awaitMarker(marker, "form");
 		awaitAccessibilityText("IME probe");
 		focusFirstEditableNode();
@@ -257,6 +257,12 @@ public class PlatformCompatBehaviorTest {
 		return new int[]{Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2))};
 	}
 
+	/** Taps well inside the Canvas, away from the status bar and the optional runtime toolbar. */
+	private static void tapCanvasArea() throws IOException {
+		int[] displaySize = physicalDisplaySize();
+		executeShellCommand("input tap " + displaySize[0] / 2 + " " + displaySize[1] / 4);
+	}
+
 	private static void awaitAccessibilityText(String expected) {
 		long deadline = SystemClock.uptimeMillis() + BACK_TIMEOUT_MILLIS;
 		do {
@@ -302,8 +308,8 @@ public class PlatformCompatBehaviorTest {
 		do {
 			AccessibilityNodeInfo root = InstrumentationRegistry.getInstrumentation()
 					.getUiAutomation().getRootInActiveWindow();
-			AccessibilityNodeInfo node = root == null ? null : findText(root, expected);
-			if (node != null && node.isClickable()
+			AccessibilityNodeInfo node = root == null ? null : findClickableText(root, expected);
+			if (node != null
 					&& node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
 				InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 				return;
@@ -336,6 +342,35 @@ public class PlatformCompatBehaviorTest {
 			}
 		}
 		return null;
+	}
+
+	private static AccessibilityNodeInfo findClickableText(AccessibilityNodeInfo root, String expected) {
+		ArrayDeque<AccessibilityNodeInfo> pending = new ArrayDeque<>();
+		pending.add(root);
+		while (!pending.isEmpty()) {
+			AccessibilityNodeInfo node = pending.removeFirst();
+			if (node.isClickable() && matchesText(node, expected)) {
+				return node;
+			}
+			for (int i = 0; i < node.getChildCount(); i++) {
+				AccessibilityNodeInfo child = node.getChild(i);
+				if (child == null) {
+					continue;
+				}
+				if (node.isClickable() && matchesText(child, expected)) {
+					return node;
+				}
+				pending.addLast(child);
+			}
+		}
+		return null;
+	}
+
+	private static boolean matchesText(AccessibilityNodeInfo node, String expected) {
+		CharSequence text = node.getText();
+		CharSequence description = node.getContentDescription();
+		return (text != null && expected.contentEquals(text))
+				|| (description != null && expected.contentEquals(description));
 	}
 
 	private static AccessibilityNodeInfo findEditableNode(AccessibilityNodeInfo root) {

@@ -16,9 +16,13 @@ package io.github.h3nb.jlmodplus.settings
 
 import android.content.SharedPreferences
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performClick
 import androidx.preference.PreferenceManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -63,13 +67,20 @@ class SettingsActivityComposeSmokeTest {
     fun activityHostsSettingsComposeScreen() {
         composeRule.onNodeWithText("Settings").assertIsDisplayed()
         composeRule.onNodeWithText("Theme").assertIsDisplayed()
-        composeRule.onNodeWithText("Working directory").performScrollTo().assertIsDisplayed()
+        composeRule.onNode(hasScrollAction()).performScrollToIndex(3)
+        composeRule.onNodeWithText("Working Directory").assertIsDisplayed()
     }
 
     @Test
     fun switchWritesTheExistingPreferenceKey() {
         preferences.edit().putBoolean("pref_wakelock_switch", false).commit()
-        composeRule.onNodeWithText("Keep screen on").performClick()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            composeRule.activity.recreate()
+        }
+        composeRule.waitForIdle()
+        composeRule.onNode(hasText("Keep Screen On") and hasClickAction())
+            .performScrollTo()
+            .performClick()
         assertTrue(preferences.getBoolean("pref_wakelock_switch", false))
     }
 }

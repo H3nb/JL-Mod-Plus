@@ -110,7 +110,12 @@ public class ProcessExitRuntimeTest {
 			for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
 				if (!existingIds.contains(record.getId())
 						&& record.getKind() == LocalDiagnosticRepository.Kind.PROCESS_EXIT
-						&& CrashRuntimeProbeActivity.SIGNAL_MIDLET_NAME.equals(record.getMidletName())) {
+						&& CrashRuntimeProbeActivity.SIGNAL_MIDLET_NAME.equals(record.getMidletName())
+						// ProcessExitStore can publish the framework exit before the just-written
+						// session journal becomes visible to the main process. Do not accept that
+						// transient projection as the final correlated diagnostic.
+						&& record.getDetailText().contains("Lifecycle stage: RUNNING")
+						&& record.getDetailText().contains("Session outcome: NONE")) {
 					return record;
 				}
 			}

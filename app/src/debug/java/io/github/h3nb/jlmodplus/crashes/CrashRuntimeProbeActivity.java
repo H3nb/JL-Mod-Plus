@@ -16,6 +16,8 @@ package io.github.h3nb.jlmodplus.crashes;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Process;
 
 /** Debug-only remote-process probe used by instrumentation runtime validation. */
@@ -49,7 +51,10 @@ public final class CrashRuntimeProbeActivity extends Activity {
 			// Deliberately leave outcome=NONE: this represents an abrupt process death that cannot
 			// execute Java exception reporting or graceful MIDlet teardown.
 			journal.transition(MidletSessionJournal.Stage.RUNNING);
-			Process.killProcess(Process.myPid());
+			// Let the Activity launch transaction finish before killing the remote process. This keeps
+			// the synchronously-written session journal correlated with ApplicationExitInfo on API 30+
+			// instead of allowing the framework projection to race the journal visibility check.
+			new Handler(Looper.getMainLooper()).post(() -> Process.killProcess(Process.myPid()));
 			return;
 		}
 

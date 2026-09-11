@@ -123,22 +123,38 @@ The following 38 exported Java-style entry points were renamed. GLES and Micro3D
 - `LibraryMigrationTest` retains v1 -> v2 coverage and adds v2-old-schema -> v2-new-schema coverage with state, `PRAGMA user_version`, and `room_master_table` identity assertions (`app/src/test/java/io/github/h3nb/jlmodplus/librarydb/LibraryMigrationTest.kt:109-184`).
 - PNG bytes remain at their moved paths; the complete 105-entry hash record is [namespace-migration-screenshot-sha256.txt](namespace-migration-screenshot-sha256.txt).
 
-## APK comparison checkpoint
+## APK comparison checkpoint (namespace-only commit)
 
-The pre-migration `emulatorDebug` APKs were captured before the first namespace edit. Their SHA-256 values are recorded here so the final package can be compared without relying on an uninstall or a clean build:
+The pre-migration `emulatorDebug` APKs were captured before the first namespace edit. Their SHA-256 values are recorded here so the namespace-only package can be compared without relying on an uninstall or a clean build:
 
-| ABI | Baseline APK SHA-256 | Final APK SHA-256 |
+| ABI | Baseline APK SHA-256 | Namespace-migration APK SHA-256 |
 | --- | --- | --- |
 | arm64-v8a / universal | `a85878f291afa925de7f139e70d9045a83283bbb1e8b3e95e3ab7f978ab0b836` | `2277162cf617b39b6da97eb7e06d1e535dc0057537de60a42b626f923eee9150` |
 | armeabi-v7a | `2902c07bd9ccb68a062ec587d021aee9057c9c563e694deaaf1aab16f9c7256a` | `d3dd64db596acd03de8668f0377e68801d4e7517f98539583dba964facc3cafc` |
 | x86 | `a099d784d117f71ccc9d0ff115847a3f13a27bb70719d3797540a615be108b70` | `b190634a4004704e5fcd39b9129c75f71c4be0efae46aaf2c8c1a71a45a46e77` |
 | x86_64 | `ffc21fe858b08ed40cfaa4ae28f4353a9f5c428e87d5961fade3a392cb8f844a` | `8cce49b589d172222bda77b845f157bca455264cb772e68f87406e83a960fc01` |
 
-The baseline `aapt2 dump badging` reported package `io.github.h3nb.jlmodplus.debug`, `minSdkVersion 23`, `targetSdkVersion 36`, and launcher component `ru.playsoftware.j2meloader.LauncherActivity`. The final manifest should retain the IDs, permissions, process names, and `${applicationId}.diagnostic-files` authority; the intentional differences are canonical implementation names plus the four legacy aliases.
+The baseline `aapt2 dump badging` reported package `io.github.h3nb.jlmodplus.debug`, `minSdkVersion 23`, `targetSdkVersion 36`, and launcher component `ru.playsoftware.j2meloader.LauncherActivity`. The namespace-migration manifest should retain the IDs, permissions, process names, and `${applicationId}.diagnostic-files` authority; the intentional differences are canonical implementation names plus the four legacy aliases.
 
-The final `aapt2 dump badging` reports the same debug package, min/target SDK, and `arm64-v8a` native ABI. The final merged manifest contains 15 activities and 4 aliases, with exactly one `MAIN`/`LAUNCHER` filter on the legacy launcher alias and the debug FileProvider authority `io.github.h3nb.jlmodplus.debug.diagnostic-files`.
+The namespace-migration `aapt2 dump badging` reports the same debug package, min/target SDK, and `arm64-v8a` native ABI. The merged manifest contains 15 activities and 4 aliases, with exactly one `MAIN`/`LAUNCHER` filter on the legacy launcher alias and the debug FileProvider authority `io.github.h3nb.jlmodplus.debug.diagnostic-files`.
 
 Post-build `llvm-nm -D --defined-only` on the stripped arm64 libraries found 2 canonical GLES, 3 Micro3D, 17 EAS, and 16 TSF JNI exports, with zero old `Java_ru_woesss_*` exports in those four libraries.
+
+## Follow-up runtime validation
+
+The follow-up fixes were validated on 2026-09-12 with the `codex-installer-api36` Android 16/API 36 x86_64 emulator. The debug package remained `io.github.h3nb.jlmodplus.debug`; the emulator test APK was installed over the existing package without uninstalling it or clearing application data.
+
+- The 37 test cases that motivated this follow-up now pass.
+- All 173 unique connected instrumentation tests pass across four bounded x86_64 shards: 56 + 39 + 51 + 32 executions, with five intentional `AdaptiveDialogComposeTest` overlap executions between shards.
+- `:app:testEmulatorDebugUnitTest` passes.
+- `:app:lintEmulatorDebug :dexlib:lintDebug` passes.
+- `:app:validateEmulatorDebugScreenshotTest` passes after refreshing the affected text-only screenshot references.
+- `:app:assembleEmulatorDebug :app:assembleEmulatorDebugAndroidTest` passes for the default arm64-v8a build; the current arm64 debug APK SHA-256 is `e6221ed4d79ce110d955356e6dc38b1ab79be000f06eaa11bbfa0ec9d5754b3c`.
+- Focused runtime coverage includes `M3GRuntimeTest` (9/9) and `MemoryIpcRuntimeTest` (1/1), including exact-ABI native loading and service rebind/token retention.
+
+The monolithic connected-test attempt reached 166/173 before Android 16's WindowManager watchdog killed the system process after a 72-second monitor stall. The bounded shard results above are the reliable connected-test evidence; the watchdog event was emulator infrastructure instability rather than an application assertion failure.
+
+The install-over checkpoint above the namespace-only commit preserved the library database, custom metadata, favorites, collections, preferences/configuration, converted artifacts, legacy activity aliases, and an existing converted MIDlet launch. No ClassNotFoundException, NoClassDefFoundError, BadParcelable, fatal linker, or namespace errors were observed. A tunable shader was not available through the exercised UI, so `ShaderTuneAlert` state restoration remains an unexercised compatibility path rather than being covered by a test shim.
 
 ## Attribution
 

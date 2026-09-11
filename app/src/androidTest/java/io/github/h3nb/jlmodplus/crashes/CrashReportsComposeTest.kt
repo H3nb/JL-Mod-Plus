@@ -173,7 +173,7 @@ class CrashReportsComposeTest {
         composeRule.onAllNodesWithText("Share Report").get(1).performClick()
         assertEquals(1, actions.shareCount)
 
-        composeRule.onNodeWithText("Report on GitHub").performClick()
+        composeRule.onNodeWithContentDescription("Report on GitHub").performClick()
         assertEquals(1, actions.githubCount)
 
         composeRule.onNodeWithContentDescription("Delete Report").performClick()
