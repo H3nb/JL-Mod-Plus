@@ -36,8 +36,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
-import ru.playsoftware.j2meloader.R
-import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 @OptIn(ExperimentalTestApi::class)
 class RuntimeMenuComposeTest {

@@ -16,10 +16,10 @@
 
 package com.mascotcapsule.micro3d.v3;
 
-import static ru.woesss.j2me.micro3d.MathUtil.TO_FLOAT;
+import static io.github.h3nb.jlmodplus.micro3d.MathUtil.TO_FLOAT;
 
-import ru.woesss.j2me.micro3d.Render;
-import ru.woesss.j2me.micro3d.TextureImpl;
+import io.github.h3nb.jlmodplus.micro3d.Render;
+import io.github.h3nb.jlmodplus.micro3d.TextureImpl;
 
 public class RenderProxy {
 

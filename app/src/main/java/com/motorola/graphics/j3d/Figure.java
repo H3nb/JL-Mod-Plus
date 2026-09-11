@@ -18,7 +18,7 @@ package com.motorola.graphics.j3d;
 
 import java.io.IOException;
 
-import ru.woesss.j2me.micro3d.FigureImpl;
+import io.github.h3nb.jlmodplus.micro3d.FigureImpl;
 
 public class Figure {
 	final FigureImpl impl;

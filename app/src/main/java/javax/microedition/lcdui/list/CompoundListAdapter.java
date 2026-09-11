@@ -30,7 +30,7 @@ import java.util.ArrayList;
 
 import javax.microedition.lcdui.Choice;
 import javax.microedition.util.ContextHolder;
-import ru.playsoftware.j2meloader.ui.LegacyThemeColors;
+import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
 
 public class CompoundListAdapter extends CompoundAdapter implements ListAdapter {
 	private final int highlightColor;

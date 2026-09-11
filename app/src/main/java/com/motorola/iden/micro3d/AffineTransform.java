@@ -16,7 +16,7 @@
 
 package com.motorola.iden.micro3d;
 
-import ru.woesss.j2me.micro3d.MathUtil;
+import io.github.h3nb.jlmodplus.micro3d.MathUtil;
 
 public class AffineTransform {
 	public static final int M00 = 0;

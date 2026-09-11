@@ -1,0 +1,58 @@
+/*
+ *  Copyright 2021 Yury Kharchenko
+ * Modified for JL-Mod Plus.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package io.github.h3nb.jlmodplus.util;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+
+import androidx.activity.result.contract.ActivityResultContract;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.filepicker.FilePickerContract;
+import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
+
+public class PickDirResultContract extends ActivityResultContract<String, Uri> {
+	@NonNull
+	@Override
+	public Intent createIntent(@NonNull Context context, String input) {
+		Intent i = new Intent(context, FilteredFilePickerActivity.class);
+		i.putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, false);
+		i.putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, false);
+		i.putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, true);
+		i.putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_DIR);
+		String startPath = input == null ? Config.getEmulatorDir() : input;
+		i.putExtra(FilePickerContract.EXTRA_START_PATH, startPath);
+		return i;
+	}
+
+	@Override
+	public Uri parseResult(int resultCode, @Nullable Intent intent) {
+		if (resultCode == Activity.RESULT_OK && intent != null) {
+			Uri result = intent.getData();
+			if (result != null && result.getScheme() == null && result.getPath() != null) {
+				return Uri.fromFile(new java.io.File(result.getPath()));
+			}
+			return result;
+		}
+		return null;
+	}
+}

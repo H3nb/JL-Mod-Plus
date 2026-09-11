@@ -69,13 +69,13 @@ static void blit(JNIEnv *env, jint x, jint y, jint width, jint height, jobject b
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_gles_GLESUtils_blit
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_gles_GLESUtils_blit
         (JNIEnv *env, jclass /*clazz*/,
          jint x, jint y, jint width, jint height, jobject bitmap_buffer) {
     blit(env, x, y, width, height, bitmap_buffer, GLES1_glReadPixels);
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_gles_GLESUtils_blit2
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_gles_GLESUtils_blit2
         (JNIEnv *env, jclass /*clazz*/,
          jint x, jint y, jint width, jint height, jobject bitmap_buffer) {
     blit(env, x, y, width, height, bitmap_buffer, GLES2_glReadPixels);

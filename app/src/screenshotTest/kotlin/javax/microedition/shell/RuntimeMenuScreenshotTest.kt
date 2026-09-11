@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
-import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 private object NoOpRuntimeMenuActions : RuntimeMenuActions {
     override fun onExit() = Unit

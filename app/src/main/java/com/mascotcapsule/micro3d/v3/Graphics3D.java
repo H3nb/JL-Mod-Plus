@@ -18,7 +18,7 @@ package com.mascotcapsule.micro3d.v3;
 
 import javax.microedition.lcdui.Graphics;
 
-import ru.woesss.j2me.micro3d.Render;
+import io.github.h3nb.jlmodplus.micro3d.Render;
 
 @SuppressWarnings("unused, WeakerAccess")
 public class Graphics3D {

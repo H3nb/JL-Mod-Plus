@@ -31,7 +31,7 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.lcdui.Graphics;
 
-import ru.woesss.gles.GLESUtils;
+import io.github.h3nb.jlmodplus.gles.GLESUtils;
 
 // TODO: 23.01.2023 not implemented check exceptions
 public class M3D {

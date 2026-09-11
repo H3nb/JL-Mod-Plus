@@ -18,7 +18,7 @@ package com.motorola.iden.micro3d;
 
 import java.io.IOException;
 
-import ru.woesss.j2me.micro3d.ActTableImpl;
+import io.github.h3nb.jlmodplus.micro3d.ActTableImpl;
 
 public class ActionTable {
 	final ActTableImpl impl;

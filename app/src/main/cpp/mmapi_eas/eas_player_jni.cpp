@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_loadSoundBank
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_loadSoundBank
 (JNIEnv *env, jobject /*thiz*/, jstring sound_bank) {
     if (sound_bank == nullptr) {
         return;
@@ -27,7 +27,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_loadSoundBank
     }
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_createPlayer
+JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_createPlayer
 (JNIEnv *env, jobject /*thiz*/, jstring pLocator) {
     mmapi::eas::Player *player;
     util::JStringPtr locator(env, pLocator);
@@ -40,13 +40,13 @@ JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_createPlayer
     return reinterpret_cast<jlong>(player);
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_finalize
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_finalize
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     delete player;
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_realize
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_realize
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     if (!player->realize()) {
@@ -54,7 +54,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_realize
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_prefetch
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_prefetch
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     oboe::Result result = player->prefetch();
@@ -64,7 +64,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_prefetch
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_start
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_start
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     oboe::Result result = player->start();
@@ -74,7 +74,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_start
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_pause
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_pause
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     oboe::Result result = player->pause();
@@ -84,55 +84,55 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_pause
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_deallocate
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_deallocate
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     player->deallocate();
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_close
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_close
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     player->close();
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setMediaTime
+JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_setMediaTime
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle, jlong now) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     return player->setMediaTime(now);
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_getMediaTime
+JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_getMediaTime
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     return player->getMediaTime();
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setRepeat
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_setRepeat
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle, jint count) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     player->setRepeat(count);
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setVolume
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_setVolume
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle, jfloat left, jfloat right) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     player->setVolume(left, right);
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_getDuration
+JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_getDuration
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     return player->duration;
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setListener
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_setListener
 (JNIEnv *env, jobject /*thiz*/, jlong handle, jobject listener) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     player->setListener(new mmapi::PlayerListener(env, listener));
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setDataSource
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_setDataSource
 (JNIEnv *env, jobject /*thiz*/, jlong handle, jbyteArray data) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     auto *file = new mmapi::eas::MemFile(env, data);
@@ -144,7 +144,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setDataSource
     }
 }
 
-JNIEXPORT jint JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_writeMIDI
+JNIEXPORT jint JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_writeMIDI
 (JNIEnv *env, jobject /*thiz*/, jlong handle, jbyteArray data, jint offset, jint length) {
     auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
     util::JByteArrayPtr ptr(env, data, offset, length);

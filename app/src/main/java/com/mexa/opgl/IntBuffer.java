@@ -16,7 +16,7 @@
 
 package com.mexa.opgl;
 
-import ru.woesss.j2me.micro3d.BufferUtils;
+import io.github.h3nb.jlmodplus.micro3d.BufferUtils;
 
 public class IntBuffer extends Buffer {
 

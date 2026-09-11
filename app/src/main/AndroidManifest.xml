@@ -58,12 +58,18 @@
             android:excludeFromRecents="false"
             android:exported="true"
             android:noHistory="true"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity-alias
+            android:name="ru.playsoftware.j2meloader.LauncherActivity"
+            android:targetActivity=".LauncherActivity"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
@@ -195,11 +201,19 @@
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>
+        <activity-alias
+            android:name="ru.playsoftware.j2meloader.MainActivity"
+            android:targetActivity=".MainActivity"
+            android:exported="true" />
         <activity
             android:name=".config.ConfigActivity"
             android:exported="true"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize" />
+        <activity-alias
+            android:name="ru.playsoftware.j2meloader.config.ConfigActivity"
+            android:targetActivity=".config.ConfigActivity"
+            android:exported="true" />
         <activity
             android:name="javax.microedition.shell.MicroActivity"
             android:exported="false"
@@ -243,6 +257,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity-alias
+            android:name="ru.playsoftware.j2meloader.settings.SettingsActivity"
+            android:targetActivity=".settings.SettingsActivity"
+            android:exported="true" />
         <activity
             android:name=".settings.KeyMapperActivity"
             android:exported="false"

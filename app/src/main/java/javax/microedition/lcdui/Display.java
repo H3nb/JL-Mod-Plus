@@ -28,7 +28,7 @@ import javax.microedition.lcdui.event.RunnableEvent;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
-import ru.playsoftware.j2meloader.ui.LegacyThemeColors;
+import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
 
 @SuppressWarnings("unused")
 public class Display {

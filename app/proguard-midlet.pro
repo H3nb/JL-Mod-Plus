@@ -16,12 +16,12 @@
 #   public *;
 #}
 -keep public class org.microemu.** { public protected *; }
--keep class ru.playsoftware.j2meloader.util.SparseIntArrayAdapter { *; }
+-keep class io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter { *; }
 # Keep the BuildConfig
--keep class ru.playsoftware.j2meloader.BuildConfig { *; }
+-keep class io.github.h3nb.jlmodplus.BuildConfig { *; }
 
 -keep class com.arthenica.mobileffmpeg.** { *; }
--keep class ru.playsoftware.j2meloader.crashes.models.* { *; }
+-keep class io.github.h3nb.jlmodplus.crashes.models.* { *; }
 
 # Preserve all public midlets.
 

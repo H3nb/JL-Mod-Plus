@@ -1,0 +1,502 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.github.h3nb.jlmodplus.applist
+
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.WindowSize
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+
+@RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalTestApi::class)
+class LibraryComposeTest {
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    @Test
+    fun compactHeightAppActionsExposeScrollHint() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
+            ) {
+                JLModPlusTheme {
+                    AppActionsDialog(
+                        app = LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                        onDismiss = {},
+                        onShortcut = {},
+                        onRename = {},
+                        onSettings = {},
+                        onReinstall = {},
+                        onDelete = {},
+                        onEditMetadata = {},
+                        onAddToCollection = {},
+                        onShareApp = {},
+                        onExportAppBundle = {},
+                        onSelect = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+    }
+
+    @Test
+    fun searchDispatchesCurrentTextWithoutArtificialDebounce() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+        composeRule.waitForIdle()
+        actions.searches.clear()
+
+        composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
+        composeRule.waitForIdle()
+
+        assertEquals(listOf("Demo"), actions.searches)
+    }
+
+    @Test
+    fun libraryExposesLoadingState() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(loading = true),
+            actions = actions,
+        )
+        composeRule.onNodeWithContentDescription("Loading apps").assertIsDisplayed()
+    }
+
+    @Test
+    fun indexingStateShowsProgressAndCurrentStorageKey() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = true,
+                loadingCompleted = 12,
+                loadingTotal = 100,
+                loadingStorageKey = "Bounce_Tales",
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithText("Indexing library… 12/100").assertIsDisplayed()
+        composeRule.onNodeWithText("Scanning Bounce_Tales").assertIsDisplayed()
+    }
+
+    @Test
+    fun libraryErrorOffersRetryCallback() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                errorMessage = "Storage unavailable",
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithText("Library unavailable").assertIsDisplayed()
+        composeRule.onNodeWithText("Storage unavailable").assertIsDisplayed()
+        composeRule.onNodeWithText("Retry").performClick()
+        assertEquals(1, actions.retryCount)
+    }
+
+    @Test
+    fun libraryExposesFilteredEmptyAndInstallStates() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(loading = false, appliedFilter = "missing"),
+            actions = actions,
+        )
+        composeRule.onNodeWithText("No matches for \"missing\"").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Install").performClick()
+        assertEquals(1, actions.installCount)
+    }
+
+    @Test
+    fun appClickAndContextActionsKeepStableAppIdentity() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onNodeWithText("Demo MIDlet").performClick()
+        assertEquals(7, actions.openedId)
+
+        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
+        composeRule.onNodeWithText("Rename").performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput(" Updated")
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(7 to "Demo MIDlet Updated", actions.renamed)
+    }
+
+    @Test
+    fun longPressSelectEntersSelectionModeAndScopesSelectAllToVisibleApps() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                generation = 11L,
+                databaseControlsReady = true,
+                apps = listOf(
+                    LibraryAppUiItem(
+                        id = 7,
+                        title = "Demo MIDlet",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        databaseId = 70L,
+                    ),
+                    LibraryAppUiItem(
+                        id = 8,
+                        title = "Second MIDlet",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        databaseId = 80L,
+                    ),
+                ),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
+        composeRule.onNodeWithText("Select").performClick()
+
+        composeRule.onNodeWithText("1 app").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Recently opened").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Favorites").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("Favorite (coming soon)").assertCountEquals(0)
+        composeRule.onNodeWithContentDescription("Select all").performClick()
+        composeRule.onNodeWithText("2 apps").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Unselect all").performClick()
+        composeRule.onNodeWithText("0 apps").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("Library back").performClick()
+        composeRule.onNodeWithText("Recently opened").assertIsDisplayed()
+    }
+
+    @Test
+    fun viewAndSortActionsRemainExplicitCallbacks() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onNodeWithContentDescription("App Sort Order").performClick()
+        composeRule.onNodeWithText("Vendor").performClick()
+        assertEquals(2, actions.sortIndex)
+    }
+
+    @Test
+    fun moreTabExposesFlatLibraryActions() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onNodeWithText("More").performClick()
+        composeRule.onNodeWithText("Settings").performClick()
+
+        assertEquals(1, actions.settingsCount)
+        composeRule.onAllNodesWithText("Exit Emulator").assertCountEquals(0)
+    }
+
+    @Test
+    fun moreExposesImportAppBundleCallback() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onNodeWithText("More").performClick()
+        composeRule.onNodeWithText("Import App Bundle").performClick()
+
+        assertEquals(1, actions.importCount)
+    }
+
+    @Test
+    fun moreDoesNotExposeFormerInlineLibraryDisplayOptions() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                layout = LibraryLayout.Grid,
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithText("More").performClick()
+        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeRule.onAllNodesWithText("3:4").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Compact (4 dp)").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("Hide titles in grid").assertCountEquals(0)
+    }
+
+    @Test
+    fun destinationsAndDeferredFilterShellAreVisible() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onAllNodesWithText("Recently opened").assertCountEquals(1)
+        composeRule.onAllNodesWithText("Recently added").assertCountEquals(1)
+        composeRule.onAllNodesWithText("Favorites").assertCountEquals(1)
+        composeRule.onNodeWithContentDescription("Favorite (coming soon)").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Favorite (coming soon)").assertIsNotEnabled()
+        composeRule.onAllNodesWithContentDescription("Remove favorite (coming soon)").assertCountEquals(0)
+
+        composeRule.onNodeWithText("Collections").performClick()
+        composeRule.onNodeWithText("Collections and folders will be available in a future update.")
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("More").performClick()
+        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+    }
+
+    @Test
+    fun gridUsesTilesWithoutFavoritePlaceholder() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                layout = LibraryLayout.Grid,
+                apps = listOf(
+                    LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                    LibraryAppUiItem(8, "Second MIDlet", "Example Vendor", "1.0", null, true),
+                ),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithText("Demo MIDlet").assertIsDisplayed()
+        composeRule.onNodeWithText("Second MIDlet").assertIsDisplayed()
+        composeRule.onAllNodesWithContentDescription("Favorite (coming soon)").assertCountEquals(0)
+    }
+
+    @Test
+    fun descriptionToggleOnlyAppearsWhenDescriptionOverflows() {
+        val actions = RecordingLibraryActions()
+        val longDescription = "A MIDlet description that is long enough to require an expandable preview. ".repeat(8)
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                apps = listOf(
+                    LibraryAppUiItem(
+                        id = 7,
+                        title = "Long description",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        description = longDescription,
+                    ),
+                    LibraryAppUiItem(
+                        id = 8,
+                        title = "Short description",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        description = "Short description.",
+                    ),
+                ),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onAllNodesWithContentDescription("Expand description").assertCountEquals(1)
+        composeRule.onNodeWithContentDescription("Expand description").performClick()
+        assertEquals(null, actions.openedId)
+        composeRule.onNodeWithContentDescription("Collapse description").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Collapse description").performClick()
+        composeRule.onNodeWithContentDescription("Expand description").assertIsDisplayed()
+    }
+
+    @Test
+    fun installFabFollowsListScrollDirection() {
+        val actions = RecordingLibraryActions()
+        val apps = (0..24).map { index ->
+            LibraryAppUiItem(index, "Demo MIDlet $index", "Example Vendor", "1.0", null, true)
+        }
+        setLibraryContent(
+            state = LibraryUiState(loading = false, apps = apps),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithContentDescription("Install").assertIsDisplayed()
+        composeRule.onNodeWithText("Demo MIDlet 0").performTouchInput { swipeUp() }
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithContentDescription("Install").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Apps").assertCountEquals(0)
+        composeRule.onAllNodesWithText("JL-Mod Plus Debug").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("App Sort Order").assertCountEquals(0)
+
+        composeRule.onNodeWithText("Demo MIDlet 1").performTouchInput { swipeDown() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Install").assertIsDisplayed()
+        composeRule.onNodeWithText("Apps").assertIsDisplayed()
+        composeRule.onNodeWithText("JL-Mod Plus Debug").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("App Sort Order").assertIsDisplayed()
+    }
+
+    @Test
+    fun shortLibraryKeepsChromeVisibleWhenContentCannotScroll() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                apps = listOf(
+                    LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                ),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { swipeUp() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Install").assertIsDisplayed()
+        composeRule.onNodeWithText("Apps").assertIsDisplayed()
+        composeRule.onNodeWithText("JL-Mod Plus Debug").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("App Sort Order").assertIsDisplayed()
+    }
+
+    @Test
+    fun sortMenuExplainsCurrentDirection() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                apps = listOf(LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true)),
+                sortVariant = Int.MIN_VALUE,
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithContentDescription("App Sort Order").performClick()
+        composeRule.onNodeWithText("Descending").assertIsDisplayed()
+        composeRule.onNodeWithText("Name").performClick()
+        assertEquals(0, actions.sortIndex)
+    }
+
+    @Test
+    fun hiddenGridTitlesKeepAnAccessibleAppLabel() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                layout = LibraryLayout.Grid,
+                hideGridTitles = true,
+                apps = listOf(
+                    LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                ),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithContentDescription("Demo MIDlet")
+            .assertHasClickAction()
+            .performClick()
+
+        assertEquals(7, actions.openedId)
+    }
+
+    @Test
+    fun aboutUsesCurrentProjectIdentityWithoutLegacyEmail() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryInformationDialog(
+                    dialog = LibraryInfoDialog.About,
+                    onDismiss = {},
+                    onOpen = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("JL-Mod Plus").assertIsDisplayed()
+        composeRule.onAllNodesWithText("j2me.forever@gmail.com").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Copyright 2020-2026 Yury Kharchenko").assertCountEquals(0)
+    }
+
+    private fun setLibraryContent(
+        state: LibraryUiState = LibraryUiState(
+            loading = false,
+            apps = listOf(
+                LibraryAppUiItem(
+                    id = 7,
+                    title = "Demo MIDlet",
+                    author = "Example Vendor",
+                    version = "1.0",
+                    iconPath = null,
+                    canReinstall = true,
+                ),
+            ),
+        ),
+        actions: RecordingLibraryActions,
+    ) {
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryScreen(state = state, actions = actions)
+            }
+        }
+    }
+
+    private class RecordingLibraryActions : LibraryActions {
+        val searches = mutableListOf<String>()
+        var layout: LibraryLayout? = null
+        var iconRatio: LibraryIconRatio? = null
+        var gridSpacing: LibraryGridSpacing? = null
+        var hideGridTitles = false
+        var sortIndex: Int? = null
+        var installCount = 0
+        var importCount = 0
+        var openedId: Int? = null
+        var renamed: Pair<Int, String>? = null
+        var settingsCount = 0
+        var retryCount = 0
+
+        override fun onSearch(query: String) { searches += query }
+        override fun onLayoutChange(layout: LibraryLayout) { this.layout = layout }
+        override fun onIconRatioChange(iconRatio: LibraryIconRatio) { this.iconRatio = iconRatio }
+        override fun onHideGridTitlesChange(hide: Boolean) { hideGridTitles = hide }
+        override fun onGridSpacingChange(spacing: LibraryGridSpacing) { gridSpacing = spacing }
+        override fun onSort(sortIndex: Int) { this.sortIndex = sortIndex }
+        override fun onInstall() { installCount++ }
+        override fun onImportAppBundle() { importCount++ }
+        override fun onOpenApp(appId: Int) { openedId = appId }
+        override fun onAddShortcut(appId: Int) = Unit
+        override fun onRename(appId: Int, title: String) { renamed = appId to title }
+        override fun onOpenAppSettings(appId: Int) = Unit
+        override fun onReinstall(appId: Int) = Unit
+        override fun onDelete(appId: Int) = Unit
+        override fun onOpenSettings() { settingsCount++ }
+        override fun onOpenProfiles() = Unit
+        override fun onOpenCrashReports() = Unit
+        override fun onSaveLog() = Unit
+        override fun onRetryLibrary() { retryCount++ }
+    }
+}

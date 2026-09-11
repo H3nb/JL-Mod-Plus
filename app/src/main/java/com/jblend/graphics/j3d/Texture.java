@@ -20,7 +20,7 @@ import java.io.IOException;
 
 import javax.microedition.lcdui.Image;
 
-import ru.woesss.j2me.micro3d.TextureImpl;
+import io.github.h3nb.jlmodplus.micro3d.TextureImpl;
 
 public class Texture {
 	public final TextureImpl impl;

@@ -28,7 +28,7 @@ import javax.microedition.io.Connector;
 import javax.microedition.media.control.RecordControl;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.util.IOUtils;
+import io.github.h3nb.jlmodplus.util.IOUtils;
 
 public class RecordPlayer extends BasePlayer implements RecordControl {
 

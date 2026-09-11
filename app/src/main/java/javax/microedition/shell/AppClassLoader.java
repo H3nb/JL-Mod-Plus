@@ -29,10 +29,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import dalvik.system.DexClassLoader;
-import ru.playsoftware.j2meloader.BuildConfig;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.util.FileUtils;
-import ru.playsoftware.j2meloader.util.IOUtils;
+import io.github.h3nb.jlmodplus.BuildConfig;
+import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.util.FileUtils;
+import io.github.h3nb.jlmodplus.util.IOUtils;
 import ru.woesss.util.zip.ZipFile;
 
 public class AppClassLoader extends DexClassLoader {

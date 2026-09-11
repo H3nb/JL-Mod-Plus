@@ -16,8 +16,8 @@
 
 package com.motorola.iden.micro3d;
 
-import ru.woesss.j2me.micro3d.MathUtil;
-import ru.woesss.j2me.micro3d.Utils;
+import io.github.h3nb.jlmodplus.micro3d.MathUtil;
+import io.github.h3nb.jlmodplus.micro3d.Utils;
 
 public final class Utility {
 

@@ -35,8 +35,8 @@ import javax.microedition.media.protocol.SourceStream;
 import javax.microedition.media.tone.ToneManager;
 import javax.microedition.util.ContextHolder;
 
-import ru.woesss.j2me.mmapi.Plugin;
-import ru.woesss.j2me.mmapi.synth.SynthPluginFactory;
+import io.github.h3nb.jlmodplus.mmapi.Plugin;
+import io.github.h3nb.jlmodplus.mmapi.synth.SynthPluginFactory;
 
 public class Manager {
 	public static final String TONE_DEVICE_LOCATOR = "device://tone";

@@ -39,9 +39,9 @@ import javax.microedition.media.tone.MidiToneConstants;
 import javax.microedition.media.tone.ToneSequence;
 
 import kotlin.io.FilesKt;
-import ru.woesss.j2me.mmapi.FileCacheDataSource;
-import ru.woesss.j2me.mmapi.control.MIDIControlImpl;
-import ru.woesss.j2me.mmapi.protocol.device.DeviceMetaData;
+import io.github.h3nb.jlmodplus.mmapi.FileCacheDataSource;
+import io.github.h3nb.jlmodplus.mmapi.control.MIDIControlImpl;
+import io.github.h3nb.jlmodplus.mmapi.protocol.device.DeviceMetaData;
 
 class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener,
 		VolumeControl, PanControl, ToneControl {

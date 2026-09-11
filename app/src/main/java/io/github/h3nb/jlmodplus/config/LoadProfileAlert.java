@@ -1,0 +1,145 @@
+/*
+ * Copyright 2018-2019 Nikita Shakarun
+ * Copyright 2019-2023 Yury Kharchenko
+ * Modified for JL-Mod Plus.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.github.h3nb.jlmodplus.config;
+
+import static io.github.h3nb.jlmodplus.util.Constants.KEY_CONFIG_PATH;
+import static io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE;
+
+import android.app.Dialog;
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Bundle;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.compose.ui.platform.ComposeView;
+import androidx.fragment.app.DialogFragment;
+import androidx.preference.PreferenceManager;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.ThemedToast;
+
+/** Compose presentation with the legacy profile copy contract kept in the host callback. */
+public class LoadProfileAlert extends DialogFragment {
+	private ArrayList<Profile> profiles;
+	private String configPath;
+
+	static LoadProfileAlert newInstance(String parent) {
+		LoadProfileAlert fragment = new LoadProfileAlert();
+		Bundle args = new Bundle();
+		args.putString(KEY_CONFIG_PATH, parent);
+		fragment.setArguments(args);
+		return fragment;
+	}
+
+	@Override
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		profiles = ProfilesManager.getProfiles();
+		Collections.sort(profiles);
+		configPath = requireArguments().getString(KEY_CONFIG_PATH);
+	}
+
+	@NonNull
+	@Override
+	public Dialog onCreateDialog(Bundle savedInstanceState) {
+		ComposeView composeView = new ComposeView(requireContext());
+		String defaultName = PreferenceManager.getDefaultSharedPreferences(requireContext())
+				.getString(PREF_DEFAULT_PROFILE, null);
+		ConfigDialogComposeBridge.setLoadProfileContent(
+				composeView,
+				profiles,
+				defaultName,
+				new ConfigDialogComposeBridge.LoadProfileCallbacks() {
+					@Override
+					public void onDismiss() {
+						dismiss();
+					}
+
+					@Override
+					public void onError() {
+						Context context = getContext();
+						if (context != null) {
+							ThemedToast.show(context, R.string.error, Toast.LENGTH_SHORT);
+						}
+					}
+
+					@Override
+					public void onConfirm(String name, boolean config, boolean keyboard) {
+						Context context = getContext();
+						if (context == null) {
+							return;
+						}
+						try {
+							Profile selected = null;
+							for (Profile profile : profiles) {
+								if (profile.getName().equals(name)) {
+									selected = profile;
+									break;
+								}
+							}
+							if (selected == null) {
+								ThemedToast.show(context, R.string.error, Toast.LENGTH_SHORT);
+								return;
+							}
+							ProfilesManager.load(selected, configPath, config, keyboard);
+							if (context instanceof ConfigActivity) {
+								((ConfigActivity) context).loadParams(true);
+							}
+							dismiss();
+						} catch (Exception e) {
+							e.printStackTrace();
+							ThemedToast.show(context, R.string.error, Toast.LENGTH_SHORT);
+						}
+					}
+				});
+
+		Dialog dialog = new Dialog(requireContext());
+		dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+		dialog.setContentView(composeView);
+		dialog.setCanceledOnTouchOutside(true);
+		return dialog;
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		Dialog dialog = getDialog();
+		if (dialog == null || dialog.getWindow() == null) {
+			return;
+		}
+		Window window = dialog.getWindow();
+		window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+		window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+		WindowManager.LayoutParams attributes = window.getAttributes();
+		attributes.dimAmount = 0.32f;
+		window.setAttributes(attributes);
+		window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+		window.setLayout(
+				WindowManager.LayoutParams.MATCH_PARENT,
+				WindowManager.LayoutParams.MATCH_PARENT);
+	}
+}

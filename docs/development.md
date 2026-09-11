@@ -22,7 +22,7 @@ The examples use PowerShell. On POSIX shells, replace `./gradlew.bat` with `./gr
 | --- | --- |
 | Documentation | `git diff --check`, check local links, and compare claims with source/configuration |
 | JVM unit tests | `./gradlew.bat :app:testEmulatorDebugUnitTest` |
-| Library migration tests | `./gradlew.bat :app:testEmulatorDebugUnitTest --tests ru.playsoftware.j2meloader.librarydb.LibraryMigrationTest` |
+| Library migration tests | `./gradlew.bat :app:testEmulatorDebugUnitTest --tests io.github.h3nb.jlmodplus.librarydb.LibraryMigrationTest` |
 | Lint | `./gradlew.bat :app:lintEmulatorDebug :dexlib:lintDebug` |
 | Compose screenshot comparison | `./gradlew.bat :app:validateEmulatorDebugScreenshotTest` |
 | Debug APK | `./gradlew.bat :app:assembleEmulatorDebug` |

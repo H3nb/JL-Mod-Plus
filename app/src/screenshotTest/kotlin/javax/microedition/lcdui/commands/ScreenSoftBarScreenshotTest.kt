@@ -19,7 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
 import javax.microedition.lcdui.Command
-import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 private val PreviewCommands = listOf(
     Command("Options", Command.SCREEN, 1),

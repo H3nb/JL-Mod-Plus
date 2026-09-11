@@ -35,9 +35,9 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
 
-import ru.playsoftware.j2meloader.crashes.MidletSessionJournal;
-import ru.playsoftware.j2meloader.crashes.MidletSessionStore;
-import ru.playsoftware.j2meloader.runtime.MidletKeepAliveService;
+import io.github.h3nb.jlmodplus.crashes.MidletSessionJournal;
+import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
+import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();

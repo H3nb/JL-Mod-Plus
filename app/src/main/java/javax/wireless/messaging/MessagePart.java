@@ -22,7 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import ru.playsoftware.j2meloader.util.IOUtils;
+import io.github.h3nb.jlmodplus.util.IOUtils;
 
 public class MessagePart {
 	private final String mimeType;

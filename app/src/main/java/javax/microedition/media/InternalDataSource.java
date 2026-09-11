@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
-import ru.woesss.j2me.mmapi.FileCacheDataSource;
+import io.github.h3nb.jlmodplus.mmapi.FileCacheDataSource;
 
 class InternalDataSource extends FileCacheDataSource {
 	private static final String TAG = InternalDataSource.class.getSimpleName();

@@ -31,8 +31,8 @@ import javax.microedition.lcdui.graphics.CanvasWrapper;
 import javax.microedition.lcdui.overlay.Overlay;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.config.ProfileModel;
+import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.config.ProfileModel;
 
 public class SkinLayer implements Overlay {
 	private static SkinLayer instance;

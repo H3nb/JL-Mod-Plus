@@ -20,7 +20,7 @@ import java.util.LinkedList;
 
 import javax.microedition.lcdui.Graphics;
 
-import ru.woesss.j2me.micro3d.Render;
+import io.github.h3nb.jlmodplus.micro3d.Render;
 
 public class Renderer {
 	private final LinkedList<RenderProxy.RenderNode> stack = new LinkedList<>();

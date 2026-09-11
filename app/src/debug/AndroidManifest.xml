@@ -4,7 +4,7 @@
 
     <application tools:ignore="GoogleAppIndexingWarning,MissingApplicationIcon">
         <activity
-            android:name="ru.playsoftware.j2meloader.crashes.CrashRuntimeProbeActivity"
+            android:name="io.github.h3nb.jlmodplus.crashes.CrashRuntimeProbeActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:noHistory="true"

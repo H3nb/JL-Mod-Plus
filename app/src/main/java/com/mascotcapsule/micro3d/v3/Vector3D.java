@@ -16,7 +16,7 @@
 
 package com.mascotcapsule.micro3d.v3;
 
-import ru.woesss.j2me.micro3d.MathUtil;
+import io.github.h3nb.jlmodplus.micro3d.MathUtil;
 
 public class Vector3D {
 	public int x;

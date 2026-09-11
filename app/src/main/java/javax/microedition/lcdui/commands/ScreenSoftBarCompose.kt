@@ -40,8 +40,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import javax.microedition.lcdui.Command
-import ru.playsoftware.j2meloader.R
-import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 interface ScreenSoftBarActions {
     fun onCommand(command: Command)

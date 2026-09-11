@@ -1,0 +1,186 @@
+/*
+ * Copyright 2018-2019 Nikita Shakarun
+ * Copyright 2020-2026 Yury Kharchenko
+ * Modified for JL-Mod Plus.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.github.h3nb.jlmodplus.config;
+
+import static io.github.h3nb.jlmodplus.util.Constants.ACTION_EDIT;
+import static io.github.h3nb.jlmodplus.util.Constants.KEY_MIDLET_NAME;
+import static io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Environment;
+import android.util.Log;
+
+import androidx.annotation.Keep;
+import androidx.fragment.app.FragmentActivity;
+import androidx.preference.PreferenceManager;
+
+import java.io.File;
+
+import javax.microedition.shell.MicroActivity;
+import javax.microedition.util.ContextHolder;
+
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.installer.AutoReconversionDialog;
+import io.github.h3nb.jlmodplus.installer.AppReconverter;
+
+public class Config {
+	public static final String APPS_DB_NAME = "/J2ME-apps.db";
+	public static final String DEX_OPT_CACHE_DIR = "dex_opt";
+	public static final String MIDLET_CONFIGS_DIR = "/configs/";
+	public static final String MIDLET_CONFIG_FILE = "/config.json";
+	public static final String MIDLET_DATA_DIR = "/data/";
+	public static final String MIDLET_DEX_ARCH = "/converted.zip";
+	public static final String MIDLET_DEX_FILE = "/converted.dex";
+	public static final String MIDLET_ICON_FILE = "/icon.png";
+	public static final String MIDLET_KEY_LAYOUT_FILE = "/VirtualKeyboardLayout";
+	public static final String MIDLET_MANIFEST_FILE = MIDLET_DEX_FILE + ".conf";
+	public static final String MIDLET_RES_DIR = "/res";
+	public static final String MIDLET_RES_FILE = "/res.jar";
+	public static final String SCREENSHOTS_DIR;
+	public static final String SHADERS_DIR = "/shaders/";
+	public static final String SKINS_DIR = "/skins/";
+	public static final String SOUNDBANKS_DIR = "/soundbanks/";
+
+	private static String emulatorDir;
+	private static String dataDir;
+	private static String configsDir;
+	private static String profilesDir;
+	private static String appDir;
+
+	@Keep
+	private static final SharedPreferences.OnSharedPreferenceChangeListener sPrefListener =
+			(sharedPreferences, key) -> {
+				if (PREF_EMULATOR_DIR.equals(key)) {
+					initDirs(sharedPreferences.getString(key, emulatorDir));
+				}
+			};
+
+	static {
+		Context context = ContextHolder.getAppContext();
+		String appName = context.getString(R.string.app_name);
+		SCREENSHOTS_DIR = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+				+ "/" + appName;
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		String path = preferences.getString(PREF_EMULATOR_DIR, null);
+		if (path == null) path = Environment.getExternalStorageDirectory() + "/" + appName;
+		initDirs(path);
+		preferences.registerOnSharedPreferenceChangeListener(sPrefListener);
+	}
+
+	public static String getEmulatorDir() {
+		return emulatorDir;
+	}
+
+	public static String getDataDir() {
+		return dataDir;
+	}
+
+	public static String getConfigsDir() {
+		return configsDir;
+	}
+
+	public static String getProfilesDir() {
+		return profilesDir;
+	}
+
+	public static String getAppDir() {
+		return appDir;
+	}
+
+	/** Returns whether an on-disk emulator artifact can be passed to a loader. */
+	public static boolean isUsableFile(File file) {
+		return file != null && file.isFile() && file.length() > 0L;
+	}
+
+	public static void openSettings(Context context, String name, String path) {
+		Intent intent = new Intent(ACTION_EDIT, Uri.parse(path), context, ConfigActivity.class);
+		intent.putExtra(KEY_MIDLET_NAME, name);
+		context.startActivity(intent);
+	}
+
+	public static boolean startApp(Context context, String name, String path) {
+		int end = path.lastIndexOf(File.separatorChar);
+		int start = path.lastIndexOf(File.separatorChar, end - 1);
+		if (start > 0) {
+			String configPath = new StringBuilder(path)
+					.replace(start, end + 1, MIDLET_CONFIGS_DIR)
+					.append(MIDLET_CONFIG_FILE)
+					.toString();
+			File configFile = new File(configPath);
+			if (!configFile.exists()) {
+				openSettings(context, name, path);
+				return false;
+			}
+		}
+
+		File appDir = localAppDirectory(path);
+		if (AppReconverter.needsReconversion(appDir)
+				&& (appDir == null
+				|| AppReconverter.hasRetainedSource(appDir)
+				|| !AppReconverter.hasUsableConvertedPayload(appDir))) {
+			if (context instanceof FragmentActivity) {
+				return AutoReconversionDialog.show((FragmentActivity) context, name, path);
+			}
+			Log.e(Config.class.getSimpleName(),
+					"Compatibility reconversion requires a FragmentActivity host");
+			return false;
+		}
+
+		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(path), context, MicroActivity.class);
+		intent.putExtra(KEY_MIDLET_NAME, name);
+		context.startActivity(intent);
+		return false;
+	}
+
+	public static boolean startApp(Context context, String name, Uri appUri) {
+		if (appUri == null) {
+			// A malformed shortcut/configuration intent must not open a configuration screen for the
+			// process working directory. The caller can surface its own navigation error or simply
+			// finish, but no MIDlet launch is safe without an app URI.
+			return false;
+		}
+		String path = appUri.getScheme() == null
+				? appUri.toString()
+				: "file".equals(appUri.getScheme()) && appUri.getPath() != null
+						? appUri.getPath()
+						: appUri.toString();
+		return startApp(context, name, path);
+	}
+
+	private static File localAppDirectory(String path) {
+		if (path == null) return null;
+		Uri uri = Uri.parse(path);
+		if ("file".equals(uri.getScheme())) {
+			String filePath = uri.getPath();
+			return filePath == null ? null : new File(filePath);
+		}
+		return uri.getScheme() == null ? new File(path) : null;
+	}
+
+	private static void initDirs(String path) {
+		emulatorDir = path;
+		dataDir = emulatorDir + MIDLET_DATA_DIR;
+		configsDir = emulatorDir + MIDLET_CONFIGS_DIR;
+		profilesDir = emulatorDir + "/templates/";
+		appDir = emulatorDir + "/converted/";
+	}
+}

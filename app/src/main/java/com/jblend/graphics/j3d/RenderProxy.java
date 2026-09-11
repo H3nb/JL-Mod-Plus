@@ -16,7 +16,7 @@
 
 package com.jblend.graphics.j3d;
 
-import static ru.woesss.j2me.micro3d.MathUtil.TO_FLOAT;
+import static io.github.h3nb.jlmodplus.micro3d.MathUtil.TO_FLOAT;
 
 import androidx.annotation.NonNull;
 
@@ -24,8 +24,8 @@ import java.util.WeakHashMap;
 
 import javax.microedition.lcdui.Graphics;
 
-import ru.woesss.j2me.micro3d.Render;
-import ru.woesss.j2me.micro3d.TextureImpl;
+import io.github.h3nb.jlmodplus.micro3d.Render;
+import io.github.h3nb.jlmodplus.micro3d.TextureImpl;
 
 public class RenderProxy {
 	private static final WeakHashMap<Graphics, Render> renders = new WeakHashMap<>();

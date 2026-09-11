@@ -18,7 +18,7 @@ package com.mascotcapsule.micro3d.v3;
 
 import java.io.IOException;
 
-import ru.woesss.j2me.micro3d.TextureImpl;
+import io.github.h3nb.jlmodplus.micro3d.TextureImpl;
 
 @SuppressWarnings("unused, WeakerAccess")
 public class Texture {

@@ -31,7 +31,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.verticalScroll
-import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
+import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -64,11 +64,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import ru.playsoftware.j2meloader.R
-import ru.playsoftware.j2meloader.ui.JLModPlusTheme
-import ru.playsoftware.j2meloader.ui.ScrollableContentHint
-import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
-import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
+import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
+import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
+import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import javax.microedition.shell.timing.EmulationSpeed
 import kotlin.math.roundToInt
 

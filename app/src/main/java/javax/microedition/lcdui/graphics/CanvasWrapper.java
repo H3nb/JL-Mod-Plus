@@ -30,7 +30,7 @@ import androidx.core.content.res.ResourcesCompat;
 import javax.microedition.lcdui.Image;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.R;
+import io.github.h3nb.jlmodplus.R;
 
 public class CanvasWrapper {
 	private final Paint drawPaint = new Paint();

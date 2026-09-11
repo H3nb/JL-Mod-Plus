@@ -20,7 +20,7 @@
 package javax.microedition.shell;
 
 import static android.content.pm.ActivityInfo.*;
-import static ru.playsoftware.j2meloader.util.Constants.*;
+import static io.github.h3nb.jlmodplus.util.Constants.*;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
@@ -75,15 +75,15 @@ import javax.microedition.util.ContextHolder;
 
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
-import ru.playsoftware.j2meloader.BuildConfig;
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.crashes.MidletSessionStore;
-import ru.playsoftware.j2meloader.memory.MemoryEditorBubbleController;
-import ru.playsoftware.j2meloader.runtime.MidletKeepAliveService;
-import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
-import ru.playsoftware.j2meloader.util.LogUtils;
-import ru.playsoftware.j2meloader.ui.TransientNoticeComposeController;
+import io.github.h3nb.jlmodplus.BuildConfig;
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
+import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
+import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
+import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
+import io.github.h3nb.jlmodplus.util.LogUtils;
+import io.github.h3nb.jlmodplus.ui.TransientNoticeComposeController;
 
 public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_DEFAULT = 0;

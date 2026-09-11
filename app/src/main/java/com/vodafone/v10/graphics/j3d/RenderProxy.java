@@ -20,8 +20,8 @@ import com.mascotcapsule.micro3d.v3.Graphics3D;
 
 import javax.microedition.lcdui.Graphics;
 
-import ru.woesss.j2me.micro3d.MathUtil;
-import ru.woesss.j2me.micro3d.Render;
+import io.github.h3nb.jlmodplus.micro3d.MathUtil;
+import io.github.h3nb.jlmodplus.micro3d.Render;
 
 public class RenderProxy {
 

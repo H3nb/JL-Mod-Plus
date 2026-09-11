@@ -33,7 +33,7 @@ import javax.bluetooth.LocalDevice;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.io.StreamConnectionNotifier;
 
-import ru.playsoftware.j2meloader.util.BluetoothPermissionHelper;
+import io.github.h3nb.jlmodplus.util.BluetoothPermissionHelper;
 
 public class Connection implements ConnectionImplementation, StreamConnectionNotifier {
 	private static final String TAG = "btspp.Connection";
