@@ -1,0 +1,794 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.github.h3nb.jlmodplus.crashes;
+
+import android.content.Context;
+import android.os.Process;
+import android.os.SystemClock;
+import android.util.AtomicFile;
+import android.util.Log;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+
+import io.github.h3nb.jlmodplus.EmulatorApplication;
+
+/**
+ * Small, app-private durable record of one MIDlet session.
+ *
+ * The :midlet process is the only writer for a session file. Writes use AtomicFile so a reader in
+ * the main process can observe either the previous complete snapshot or the next complete snapshot,
+ * never a partially written properties file.
+ */
+public final class MidletSessionJournal {
+	/** Legacy schema retained for reader fixtures and rollback compatibility. */
+	static final int SCHEMA_VERSION = 1;
+	/** Newest schema understood by the reader/codec and emitted by the production writer. */
+	static final int CURRENT_SCHEMA_VERSION = 2;
+	static final int MAX_JOURNAL_COUNT = 64;
+	static final long MAX_JOURNAL_AGE_MILLIS = 30L * 24L * 60L * 60L * 1000L;
+	static final long DELETE_GRACE_MILLIS = 5L * 60L * 1000L;
+
+	private static final String TAG = MidletSessionJournal.class.getSimpleName();
+	private static final String JOURNAL_DIR = "diagnostics/midlet-sessions";
+	private static final String JOURNAL_SUFFIX = ".properties";
+	private static final String LEGACY_BACKUP_SUFFIX = ".bak";
+	private static final String NEW_WRITE_SUFFIX = ".new";
+	private static final int MAX_VALUE_LENGTH = 256;
+	private static final int MAX_WORKDIR_LOCATOR_LENGTH = 4096;
+
+	private static final String KEY_SCHEMA_VERSION = "schemaVersion";
+	private static final String KEY_SESSION_ID = "sessionId";
+	private static final String KEY_PROCESS_NAME = "processName";
+	private static final String KEY_PROCESS_PID = "processPid";
+	private static final String KEY_STARTED_WALL_TIME = "startedWallTimeMillis";
+	private static final String KEY_STARTED_ELAPSED_TIME = "startedElapsedRealtimeMillis";
+	private static final String KEY_UPDATED_WALL_TIME = "updatedWallTimeMillis";
+	private static final String KEY_UPDATED_ELAPSED_TIME = "updatedElapsedRealtimeMillis";
+	private static final String KEY_STAGE = "stage";
+	private static final String KEY_OUTCOME = "outcome";
+	private static final String KEY_FAILURE_EVENT_ID = "failureEventId";
+	private static final String KEY_FAILURE_BOUNDARY = "failureBoundary";
+	private static final String KEY_MIDLET_NAME = "midletName";
+	private static final String KEY_MIDLET_VENDOR = "midletVendor";
+	private static final String KEY_MIDLET_VERSION = "midletVersion";
+	private static final String KEY_MAIN_CLASS = "mainClass";
+	private static final String KEY_JAR_SIZE = "jarSize";
+	private static final String KEY_JAR_SHA256 = "jarSha256";
+	private static final String KEY_WORKDIR_LOCATOR = "workdirLocator";
+	private static final String KEY_STORAGE_KEY = "storageKey";
+	private static final String KEY_REACHED_RUNNING = "reachedRunning";
+	private static final String KEY_FIRST_RUNNING_WALL_TIME = "firstRunningWallTimeMillis";
+	private static final String KEY_ACCUMULATED_ACTIVE_TIME = "accumulatedActiveMillis";
+	private static final String KEY_ACTIVE_SEGMENT_START = "activeSegmentStartElapsedRealtimeMillis";
+
+	public enum Stage {
+		PREPARING,
+		INITIALIZING,
+		STARTING,
+		RUNNING,
+		PAUSING,
+		PAUSED,
+		STOPPING,
+		COMPLETED
+	}
+
+	public enum Outcome {
+		NONE,
+		MIDLET_REQUEST,
+		USER_STOP,
+		LIFECYCLE_STOP,
+		UNEXPECTED_FAILURE
+	}
+
+	public enum FailureBoundary {
+		LIFECYCLE_INIT,
+		LIFECYCLE_START,
+		LIFECYCLE_PAUSE,
+		LIFECYCLE_DESTROY,
+		MIDLET_THREAD,
+		UNCAUGHT_THREAD
+	}
+
+	private final AtomicFile atomicFile;
+	private final String sessionId;
+	private final String processName;
+	private final int processPid;
+	private final long startedWallTimeMillis;
+	private final long startedElapsedRealtimeMillis;
+	private final String midletName;
+	private final String midletVendor;
+	private final String midletVersion;
+	private final String mainClass;
+	private final String jarSize;
+	private final String jarSha256;
+	private final String workdirLocator;
+	private final String storageKey;
+	private final MidletSessionPlayStats playStats = new MidletSessionPlayStats();
+
+	private Stage stage;
+	private Outcome outcome;
+	private String failureEventId;
+	private FailureBoundary failureBoundary;
+	private long updatedWallTimeMillis;
+	private long updatedElapsedRealtimeMillis;
+
+	private MidletSessionJournal(File file, String sessionId, String processName, int processPid,
+			long startedWallTimeMillis, long startedElapsedRealtimeMillis, String midletName,
+			String midletVendor, String midletVersion, String mainClass, String jarSize,
+			String jarSha256, String workdirLocator, String storageKey) {
+		this.atomicFile = new AtomicFile(file);
+		this.sessionId = sessionId;
+		this.processName = processName;
+		this.processPid = processPid;
+		this.startedWallTimeMillis = startedWallTimeMillis;
+		this.startedElapsedRealtimeMillis = startedElapsedRealtimeMillis;
+		this.midletName = bound(midletName);
+		this.midletVendor = bound(midletVendor);
+		this.midletVersion = bound(midletVersion);
+		this.mainClass = bound(mainClass);
+		this.jarSize = bound(jarSize);
+		this.jarSha256 = bound(jarSha256);
+		this.workdirLocator = normalizeWorkdirLocator(workdirLocator);
+		this.storageKey = bound(storageKey);
+		this.stage = Stage.PREPARING;
+		this.outcome = Outcome.NONE;
+		this.updatedWallTimeMillis = startedWallTimeMillis;
+		this.updatedElapsedRealtimeMillis = startedElapsedRealtimeMillis;
+	}
+
+	/** Compatibility overload for non-runtime callers; production MicroLoader supplies identity. */
+	public static MidletSessionJournal create(Context context, String midletName, String midletVendor,
+			String midletVersion, String mainClass, String jarSize, String jarSha256) {
+		return create(context, midletName, midletVendor, midletVersion, mainClass, jarSize, jarSha256,
+				null, null);
+	}
+
+	public static MidletSessionJournal create(Context context, String midletName, String midletVendor,
+			String midletVersion, String mainClass, String jarSize, String jarSha256,
+			String workdirLocator, String storageKey) {
+		String sessionId = UUID.randomUUID().toString();
+		File directory = journalDirectory(context);
+		File file = new File(directory, sessionId + JOURNAL_SUFFIX);
+		MidletSessionJournal journal = new MidletSessionJournal(
+				file,
+				sessionId,
+				EmulatorApplication.getProcessName(),
+				Process.myPid(),
+				System.currentTimeMillis(),
+				SystemClock.elapsedRealtime(),
+				midletName,
+				midletVendor,
+				midletVersion,
+				mainClass,
+				jarSize,
+				jarSha256,
+				workdirLocator,
+				storageKey
+		);
+		if (!directory.isDirectory() && !directory.mkdirs()) {
+			Log.w(TAG, "Unable to create MIDlet session journal directory");
+		}
+		journal.persist();
+		try {
+			// ACRA custom data is a process-global HashMap. Publish only the immutable session ID;
+			// stage/outcome stay authoritative in the durable journal and are never mutated there.
+			CrashReporter.setSessionContext(sessionId);
+		} catch (RuntimeException e) {
+			Log.w(TAG, "Unable to publish MIDlet session ID to crash context", e);
+		}
+		return journal;
+	}
+
+	static void prune(Context context) {
+		List<File> journals = journalFiles(context);
+		if (journals.isEmpty()) {
+			return;
+		}
+		ArrayList<File> safeToPrune = new ArrayList<>(journals.size());
+		for (File journal : journals) {
+			try {
+				Snapshot snapshot = read(journal);
+				// Schema-v2 journals carry durable play stats. Retention must never delete them before
+				// the main process has committed (or observed) the exactly-once Room receipt and acked it.
+				if (snapshot.schemaVersion < 2
+						|| MidletSessionStatsAckStore.isAcknowledged(context, snapshot.sessionId)) {
+					safeToPrune.add(journal);
+				}
+			} catch (IOException | RuntimeException error) {
+				// Preserve unreadable/newer evidence rather than guessing that it is safe to discard.
+				Log.w(TAG, "Preserving unreadable MIDlet session journal during pruning", error);
+			}
+		}
+		pruneFiles(
+				safeToPrune,
+				System.currentTimeMillis(),
+				MAX_JOURNAL_COUNT,
+				MAX_JOURNAL_AGE_MILLIS,
+				DELETE_GRACE_MILLIS
+		);
+	}
+
+	static void pruneFiles(List<File> files, long now, int maxCount, long maxAgeMillis,
+			long graceMillis) {
+		ArrayList<File> candidates = new ArrayList<>(files.size());
+		for (File file : files) {
+			if (file != null && atomicRecordExists(file)) {
+				candidates.add(file);
+			}
+		}
+		Collections.sort(candidates, (left, right) -> {
+			long leftModified = atomicLastModified(left);
+			long rightModified = atomicLastModified(right);
+			if (leftModified == rightModified) {
+				return 0;
+			}
+			return leftModified < rightModified ? 1 : -1;
+		});
+
+		int keptCount = 0;
+		for (File journal : candidates) {
+			long modified = atomicLastModified(journal);
+			long age = modified > 0 && now >= modified ? now - modified : 0;
+			boolean inGracePeriod = modified > 0 && now >= modified && age < graceMillis;
+			boolean expired = modified > 0 && now >= modified && age > maxAgeMillis;
+			boolean overCount = keptCount >= maxCount;
+			boolean shouldDelete = !inGracePeriod && (expired || overCount);
+
+			if (shouldDelete && delete(journal)) {
+				continue;
+			}
+			if (shouldDelete) {
+				Log.w(TAG, "Unable to delete old MIDlet session journal: " + journal.getName());
+			}
+			keptCount++;
+		}
+	}
+
+	static File journalDirectory(Context context) {
+		return new File(context.getFilesDir(), JOURNAL_DIR);
+	}
+
+	/** Returns each logical AtomicFile journal once, even when only a .bak/.new sidecar exists. */
+	static List<File> journalFiles(Context context) {
+		File[] files = journalDirectory(context).listFiles();
+		if (files == null || files.length == 0) {
+			return Collections.emptyList();
+		}
+		ArrayList<File> discovered = new ArrayList<>(files.length);
+		Collections.addAll(discovered, files);
+		return canonicalJournalFiles(discovered);
+	}
+
+	static List<File> canonicalJournalFiles(List<File> files) {
+		ArrayList<File> bases = new ArrayList<>();
+		Set<String> seenPaths = new HashSet<>();
+		for (File file : files) {
+			File base = canonicalJournalFile(file);
+			if (base == null) {
+				continue;
+			}
+			String path = base.getAbsolutePath();
+			if (seenPaths.add(path)) {
+				bases.add(base);
+			}
+		}
+		return bases;
+	}
+
+	private static File canonicalJournalFile(File file) {
+		if (file == null || !file.isFile()) {
+			return null;
+		}
+		String name = file.getName();
+		String baseName;
+		if (name.endsWith(JOURNAL_SUFFIX)) {
+			baseName = name;
+		} else if (name.endsWith(JOURNAL_SUFFIX + LEGACY_BACKUP_SUFFIX)) {
+			baseName = name.substring(0, name.length() - LEGACY_BACKUP_SUFFIX.length());
+		} else if (name.endsWith(JOURNAL_SUFFIX + NEW_WRITE_SUFFIX)) {
+			baseName = name.substring(0, name.length() - NEW_WRITE_SUFFIX.length());
+		} else {
+			return null;
+		}
+		return new File(file.getParentFile(), baseName);
+	}
+
+	static boolean delete(File baseFile) {
+		if (baseFile == null) {
+			return false;
+		}
+		boolean success = deleteIfExists(baseFile);
+		success &= deleteIfExists(sidecar(baseFile, LEGACY_BACKUP_SUFFIX));
+		success &= deleteIfExists(sidecar(baseFile, NEW_WRITE_SUFFIX));
+		return success;
+	}
+
+	private static boolean deleteIfExists(File file) {
+		if (!file.exists()) {
+			return true;
+		}
+		return file.isFile() && file.delete();
+	}
+
+	private static boolean atomicRecordExists(File baseFile) {
+		return baseFile.isFile()
+				|| sidecar(baseFile, LEGACY_BACKUP_SUFFIX).isFile()
+				|| sidecar(baseFile, NEW_WRITE_SUFFIX).isFile();
+	}
+
+	private static long atomicLastModified(File baseFile) {
+		return Math.max(
+				baseFile.lastModified(),
+				Math.max(
+						sidecar(baseFile, LEGACY_BACKUP_SUFFIX).lastModified(),
+						sidecar(baseFile, NEW_WRITE_SUFFIX).lastModified()
+				)
+		);
+	}
+
+	private static File sidecar(File baseFile, String suffix) {
+		return new File(baseFile.getPath() + suffix);
+	}
+
+	public String getSessionId() {
+		return sessionId;
+	}
+
+	public synchronized Stage getStage() {
+		return stage;
+	}
+
+	public synchronized void transition(Stage nextStage) {
+		if (nextStage == null || stage == Stage.COMPLETED) {
+			return;
+		}
+		long nowWall = System.currentTimeMillis();
+		long nowElapsed = SystemClock.elapsedRealtime();
+		playStats.transition(stage, nextStage, nowWall, nowElapsed);
+		stage = nextStage;
+		touch(nowWall, nowElapsed);
+		persist();
+	}
+
+	public synchronized void markOutcome(Outcome nextOutcome) {
+		if (nextOutcome == null || nextOutcome == Outcome.NONE || outcome != Outcome.NONE) {
+			return;
+		}
+		long nowWall = System.currentTimeMillis();
+		long nowElapsed = SystemClock.elapsedRealtime();
+		outcome = nextOutcome;
+		if (nextOutcome == Outcome.UNEXPECTED_FAILURE) {
+			playStats.finishActiveSegment(nowElapsed);
+		}
+		touch(nowWall, nowElapsed);
+		persist();
+	}
+
+	/**
+	 * Records the first unexpected fatal event for this session and returns its stable event ID.
+	 * A prior intentional termination outcome rejects a new failure event so teardown noise is not
+	 * promoted into a crash report.
+	 */
+	public synchronized String recordUnexpectedFailure(FailureBoundary boundary) {
+		if (failureEventId != null) {
+			return failureEventId;
+		}
+		if (outcome != Outcome.NONE && outcome != Outcome.UNEXPECTED_FAILURE) {
+			return null;
+		}
+		long nowWall = System.currentTimeMillis();
+		long nowElapsed = SystemClock.elapsedRealtime();
+		outcome = Outcome.UNEXPECTED_FAILURE;
+		failureEventId = UUID.randomUUID().toString();
+		failureBoundary = boundary == null ? FailureBoundary.UNCAUGHT_THREAD : boundary;
+		playStats.finishActiveSegment(nowElapsed);
+		touch(nowWall, nowElapsed);
+		persist();
+		return failureEventId;
+	}
+
+	public synchronized void complete(Outcome fallbackOutcome) {
+		long nowWall = System.currentTimeMillis();
+		long nowElapsed = SystemClock.elapsedRealtime();
+		if (outcome == Outcome.NONE && fallbackOutcome != null && fallbackOutcome != Outcome.NONE) {
+			outcome = fallbackOutcome;
+		}
+		playStats.finishActiveSegment(nowElapsed);
+		// Preserve the causal lifecycle stage when an unexpected failure already won the session.
+		if (outcome != Outcome.UNEXPECTED_FAILURE) {
+			stage = Stage.COMPLETED;
+		}
+		touch(nowWall, nowElapsed);
+		persist();
+	}
+
+	private void touch(long wallTimeMillis, long elapsedRealtimeMillis) {
+		updatedWallTimeMillis = wallTimeMillis;
+		updatedElapsedRealtimeMillis = elapsedRealtimeMillis;
+	}
+
+	private void persist() {
+		FileOutputStream output = null;
+		try {
+			Snapshot snapshot = snapshot();
+			output = atomicFile.startWrite();
+			write(snapshot, output);
+			atomicFile.finishWrite(output);
+		} catch (IOException | RuntimeException e) {
+			rollbackWrite(output);
+			Log.w(TAG, "Unable to persist MIDlet session journal", e);
+		} catch (OutOfMemoryError e) {
+			rollbackWrite(output);
+			// Do not attach the OOM or build richer diagnostics while already under memory pressure.
+			try {
+				Log.w(TAG, "Unable to persist MIDlet session journal under low memory");
+			} catch (Throwable ignored) {}
+		}
+	}
+
+	private void rollbackWrite(FileOutputStream output) {
+		if (output == null) {
+			return;
+		}
+		try {
+			atomicFile.failWrite(output);
+		} catch (Throwable ignored) {
+			// Diagnostics are fail-open; preserve the original emulator/failure path.
+		}
+	}
+
+	private synchronized Snapshot snapshot() {
+		MidletSessionPlayStats.Snapshot stats = playStats.snapshot();
+		return new Snapshot(
+				CURRENT_SCHEMA_VERSION,
+				sessionId,
+				processName,
+				processPid,
+				startedWallTimeMillis,
+				startedElapsedRealtimeMillis,
+				updatedWallTimeMillis,
+				updatedElapsedRealtimeMillis,
+				stage,
+				outcome,
+				failureEventId,
+				failureBoundary,
+				midletName,
+				midletVendor,
+				midletVersion,
+				mainClass,
+				jarSize,
+				jarSha256,
+				workdirLocator,
+				storageKey,
+				stats.reachedRunning,
+				stats.firstRunningWallTimeMillis,
+				stats.accumulatedActiveMillis,
+				stats.activeSegmentStartElapsedRealtimeMillis
+		);
+	}
+
+	static void write(Snapshot snapshot, OutputStream output) throws IOException {
+		if (snapshot.schemaVersion < 1 || snapshot.schemaVersion > CURRENT_SCHEMA_VERSION) {
+			throw new IOException("Unsupported MIDlet session journal schema: " + snapshot.schemaVersion);
+		}
+		Properties properties = new Properties();
+		properties.setProperty(KEY_SCHEMA_VERSION, Integer.toString(snapshot.schemaVersion));
+		put(properties, KEY_SESSION_ID, snapshot.sessionId);
+		put(properties, KEY_PROCESS_NAME, snapshot.processName);
+		properties.setProperty(KEY_PROCESS_PID, Integer.toString(snapshot.processPid));
+		properties.setProperty(KEY_STARTED_WALL_TIME, Long.toString(snapshot.startedWallTimeMillis));
+		properties.setProperty(KEY_STARTED_ELAPSED_TIME, Long.toString(snapshot.startedElapsedRealtimeMillis));
+		properties.setProperty(KEY_UPDATED_WALL_TIME, Long.toString(snapshot.updatedWallTimeMillis));
+		properties.setProperty(KEY_UPDATED_ELAPSED_TIME, Long.toString(snapshot.updatedElapsedRealtimeMillis));
+		properties.setProperty(KEY_STAGE, snapshot.stage.name());
+		properties.setProperty(KEY_OUTCOME, snapshot.outcome.name());
+		put(properties, KEY_FAILURE_EVENT_ID, snapshot.failureEventId);
+		if (snapshot.failureBoundary != null) {
+			properties.setProperty(KEY_FAILURE_BOUNDARY, snapshot.failureBoundary.name());
+		}
+		put(properties, KEY_MIDLET_NAME, snapshot.midletName);
+		put(properties, KEY_MIDLET_VENDOR, snapshot.midletVendor);
+		put(properties, KEY_MIDLET_VERSION, snapshot.midletVersion);
+		put(properties, KEY_MAIN_CLASS, snapshot.mainClass);
+		put(properties, KEY_JAR_SIZE, snapshot.jarSize);
+		put(properties, KEY_JAR_SHA256, snapshot.jarSha256);
+		if (snapshot.schemaVersion >= 2) {
+			// The workdir locator is deliberately not passed through bound(): an absolute/removable
+			// storage path may legitimately exceed the short metadata bound used for title/vendor.
+			put(properties, KEY_WORKDIR_LOCATOR, snapshot.workdirLocator);
+			put(properties, KEY_STORAGE_KEY, snapshot.storageKey);
+			put(properties, KEY_REACHED_RUNNING, snapshot.reachedRunning);
+			put(properties, KEY_FIRST_RUNNING_WALL_TIME, snapshot.firstRunningWallTimeMillis);
+			put(properties, KEY_ACCUMULATED_ACTIVE_TIME, snapshot.accumulatedActiveMillis);
+			put(properties, KEY_ACTIVE_SEGMENT_START, snapshot.activeSegmentStartElapsedRealtimeMillis);
+		}
+		properties.store(output, null);
+	}
+
+	static Snapshot read(InputStream input) throws IOException {
+		Properties properties = new Properties();
+		properties.load(input);
+		int schemaVersion = parseInt(properties, KEY_SCHEMA_VERSION);
+		if (schemaVersion < 1 || schemaVersion > CURRENT_SCHEMA_VERSION) {
+			throw new IOException("Unsupported MIDlet session journal schema: " + schemaVersion);
+		}
+		String sessionId = require(properties, KEY_SESSION_ID);
+		Stage stage = parseEnum(Stage.class, properties, KEY_STAGE);
+		Outcome outcome = parseEnum(Outcome.class, properties, KEY_OUTCOME);
+		FailureBoundary failureBoundary = parseOptionalEnum(
+				FailureBoundary.class, properties, KEY_FAILURE_BOUNDARY);
+		return new Snapshot(
+				schemaVersion,
+				sessionId,
+				properties.getProperty(KEY_PROCESS_NAME),
+				parseInt(properties, KEY_PROCESS_PID),
+				parseLong(properties, KEY_STARTED_WALL_TIME),
+				parseLong(properties, KEY_STARTED_ELAPSED_TIME),
+				parseLong(properties, KEY_UPDATED_WALL_TIME),
+				parseLong(properties, KEY_UPDATED_ELAPSED_TIME),
+				stage,
+				outcome,
+				properties.getProperty(KEY_FAILURE_EVENT_ID),
+				failureBoundary,
+				properties.getProperty(KEY_MIDLET_NAME),
+				properties.getProperty(KEY_MIDLET_VENDOR),
+				properties.getProperty(KEY_MIDLET_VERSION),
+				properties.getProperty(KEY_MAIN_CLASS),
+				properties.getProperty(KEY_JAR_SIZE),
+				properties.getProperty(KEY_JAR_SHA256),
+				schemaVersion >= 2 ? properties.getProperty(KEY_WORKDIR_LOCATOR) : null,
+				schemaVersion >= 2 ? properties.getProperty(KEY_STORAGE_KEY) : null,
+				schemaVersion >= 2 ? parseOptionalBoolean(properties, KEY_REACHED_RUNNING) : null,
+				schemaVersion >= 2 ? parseOptionalLong(properties, KEY_FIRST_RUNNING_WALL_TIME) : null,
+				schemaVersion >= 2 ? parseOptionalLong(properties, KEY_ACCUMULATED_ACTIVE_TIME) : null,
+				schemaVersion >= 2 ? parseOptionalLong(properties, KEY_ACTIVE_SEGMENT_START) : null
+		);
+	}
+
+	static Snapshot read(File file) throws IOException {
+		// openRead() is required to restore the last committed state after an interrupted AtomicFile
+		// write. Directly reading the base path can observe an invalid/partial file on older Android.
+		try (InputStream input = new AtomicFile(file).openRead()) {
+			return read(input);
+		}
+	}
+
+	private static void put(Properties properties, String key, String value) {
+		if (value != null) {
+			properties.setProperty(key, value);
+		}
+	}
+
+	private static void put(Properties properties, String key, Boolean value) {
+		if (value != null) {
+			properties.setProperty(key, Boolean.toString(value));
+		}
+	}
+
+	private static void put(Properties properties, String key, Long value) {
+		if (value != null) {
+			properties.setProperty(key, Long.toString(value));
+		}
+	}
+
+	private static String require(Properties properties, String key) throws IOException {
+		String value = properties.getProperty(key);
+		if (value == null || value.isEmpty()) {
+			throw new IOException("Missing MIDlet session journal field: " + key);
+		}
+		return value;
+	}
+
+	private static int parseInt(Properties properties, String key) throws IOException {
+		try {
+			return Integer.parseInt(require(properties, key));
+		} catch (NumberFormatException e) {
+			throw new IOException("Invalid MIDlet session journal integer: " + key, e);
+		}
+	}
+
+	private static long parseLong(Properties properties, String key) throws IOException {
+		try {
+			return Long.parseLong(require(properties, key));
+		} catch (NumberFormatException e) {
+			throw new IOException("Invalid MIDlet session journal long: " + key, e);
+		}
+	}
+
+	private static Long parseOptionalLong(Properties properties, String key) throws IOException {
+		String value = properties.getProperty(key);
+		if (value == null || value.isEmpty()) {
+			return null;
+		}
+		try {
+			return Long.parseLong(value);
+		} catch (NumberFormatException e) {
+			throw new IOException("Invalid MIDlet session journal long: " + key, e);
+		}
+	}
+
+	private static Boolean parseOptionalBoolean(Properties properties, String key) throws IOException {
+		String value = properties.getProperty(key);
+		if (value == null || value.isEmpty()) {
+			return null;
+		}
+		if ("true".equalsIgnoreCase(value)) {
+			return Boolean.TRUE;
+		}
+		if ("false".equalsIgnoreCase(value)) {
+			return Boolean.FALSE;
+		}
+		throw new IOException("Invalid MIDlet session journal boolean: " + key);
+	}
+
+	private static <T extends Enum<T>> T parseEnum(Class<T> type, Properties properties, String key)
+			throws IOException {
+		try {
+			return Enum.valueOf(type, require(properties, key));
+		} catch (IllegalArgumentException e) {
+			throw new IOException("Invalid MIDlet session journal enum: " + key, e);
+		}
+	}
+
+	private static <T extends Enum<T>> T parseOptionalEnum(Class<T> type, Properties properties,
+			String key) throws IOException {
+		String value = properties.getProperty(key);
+		if (value == null || value.isEmpty()) {
+			return null;
+		}
+		try {
+			return Enum.valueOf(type, value);
+		} catch (IllegalArgumentException e) {
+			throw new IOException("Invalid MIDlet session journal enum: " + key, e);
+		}
+	}
+
+	private static String bound(String value) {
+		if (value == null) {
+			return null;
+		}
+		String normalized = value.replace('\r', ' ').replace('\n', ' ').trim();
+		if (normalized.isEmpty()) {
+			return null;
+		}
+		return normalized.length() <= MAX_VALUE_LENGTH
+				? normalized
+				: normalized.substring(0, MAX_VALUE_LENGTH);
+	}
+
+	private static String normalizeWorkdirLocator(String value) {
+		if (value == null) {
+			return null;
+		}
+		String normalized = value.replace('\r', ' ').replace('\n', ' ').trim();
+		if (normalized.isEmpty()) {
+			return null;
+		}
+		try {
+			normalized = new File(normalized).getCanonicalPath();
+		} catch (IOException | SecurityException ignored) {
+			normalized = new File(normalized).getAbsolutePath();
+		}
+		return normalized.length() <= MAX_WORKDIR_LOCATOR_LENGTH
+				? normalized
+				: normalized.substring(0, MAX_WORKDIR_LOCATOR_LENGTH);
+	}
+
+	static final class Snapshot {
+		final int schemaVersion;
+		final String sessionId;
+		final String processName;
+		final int processPid;
+		final long startedWallTimeMillis;
+		final long startedElapsedRealtimeMillis;
+		final long updatedWallTimeMillis;
+		final long updatedElapsedRealtimeMillis;
+		final Stage stage;
+		final Outcome outcome;
+		final String failureEventId;
+		final FailureBoundary failureBoundary;
+		final String midletName;
+		final String midletVendor;
+		final String midletVersion;
+		final String mainClass;
+		final String jarSize;
+		final String jarSha256;
+		final String workdirLocator;
+		final String storageKey;
+		final Boolean reachedRunning;
+		final Long firstRunningWallTimeMillis;
+		final Long accumulatedActiveMillis;
+		final Long activeSegmentStartElapsedRealtimeMillis;
+
+		Snapshot(int schemaVersion, String sessionId, String processName, int processPid,
+				 long startedWallTimeMillis, long startedElapsedRealtimeMillis,
+				 long updatedWallTimeMillis, long updatedElapsedRealtimeMillis, Stage stage,
+				 Outcome outcome, String failureEventId, FailureBoundary failureBoundary,
+				 String midletName, String midletVendor, String midletVersion, String mainClass,
+				 String jarSize, String jarSha256) {
+			this(
+					schemaVersion,
+					sessionId,
+					processName,
+					processPid,
+					startedWallTimeMillis,
+					startedElapsedRealtimeMillis,
+					updatedWallTimeMillis,
+					updatedElapsedRealtimeMillis,
+					stage,
+					outcome,
+					failureEventId,
+					failureBoundary,
+					midletName,
+					midletVendor,
+					midletVersion,
+					mainClass,
+					jarSize,
+					jarSha256,
+					null,
+					null,
+					null,
+					null,
+					null,
+					null
+			);
+		}
+
+		Snapshot(int schemaVersion, String sessionId, String processName, int processPid,
+				 long startedWallTimeMillis, long startedElapsedRealtimeMillis,
+				 long updatedWallTimeMillis, long updatedElapsedRealtimeMillis, Stage stage,
+				 Outcome outcome, String failureEventId, FailureBoundary failureBoundary,
+				 String midletName, String midletVendor, String midletVersion, String mainClass,
+				 String jarSize, String jarSha256, String workdirLocator, String storageKey,
+				 Boolean reachedRunning, Long firstRunningWallTimeMillis, Long accumulatedActiveMillis,
+				 Long activeSegmentStartElapsedRealtimeMillis) {
+			this.schemaVersion = schemaVersion;
+			this.sessionId = sessionId;
+			this.processName = processName;
+			this.processPid = processPid;
+			this.startedWallTimeMillis = startedWallTimeMillis;
+			this.startedElapsedRealtimeMillis = startedElapsedRealtimeMillis;
+			this.updatedWallTimeMillis = updatedWallTimeMillis;
+			this.updatedElapsedRealtimeMillis = updatedElapsedRealtimeMillis;
+			this.stage = stage;
+			this.outcome = outcome;
+			this.failureEventId = failureEventId;
+			this.failureBoundary = failureBoundary;
+			this.midletName = midletName;
+			this.midletVendor = midletVendor;
+			this.midletVersion = midletVersion;
+			this.mainClass = mainClass;
+			this.jarSize = jarSize;
+			this.jarSha256 = jarSha256;
+			this.workdirLocator = workdirLocator;
+			this.storageKey = storageKey;
+			this.reachedRunning = reachedRunning;
+			this.firstRunningWallTimeMillis = firstRunningWallTimeMillis;
+			this.accumulatedActiveMillis = accumulatedActiveMillis;
+			this.activeSegmentStartElapsedRealtimeMillis = activeSegmentStartElapsedRealtimeMillis;
+		}
+	}
+}

@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2018 Nikita Shakarun
  *
@@ -28,7 +29,7 @@ import java.io.InputStream;
 import javax.microedition.lcdui.game.Sprite;
 import javax.microedition.shell.AppClassLoader;
 
-import ru.playsoftware.j2meloader.util.PNGUtils;
+import io.github.h3nb.jlmodplus.util.PNGUtils;
 
 public class Image {
 	private final boolean mutable;

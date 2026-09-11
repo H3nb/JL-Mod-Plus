@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  *  Copyright 2022 Yury Kharchenko
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +19,11 @@ package com.motorola.iden.micro3d;
 
 import com.mascotcapsule.micro3d.v3.Graphics3D;
 
-import ru.woesss.j2me.micro3d.ActTableImpl;
-import ru.woesss.j2me.micro3d.FigureImpl;
-import ru.woesss.j2me.micro3d.MathUtil;
-import ru.woesss.j2me.micro3d.Render;
-import ru.woesss.j2me.micro3d.TextureImpl;
+import io.github.h3nb.jlmodplus.micro3d.ActTableImpl;
+import io.github.h3nb.jlmodplus.micro3d.FigureImpl;
+import io.github.h3nb.jlmodplus.micro3d.MathUtil;
+import io.github.h3nb.jlmodplus.micro3d.Render;
+import io.github.h3nb.jlmodplus.micro3d.TextureImpl;
 
 public class RenderProxy {
 

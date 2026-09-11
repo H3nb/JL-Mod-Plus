@@ -33,8 +33,8 @@ import androidx.core.view.ViewGroupCompat;
 
 import javax.microedition.lcdui.overlay.OverlayView;
 
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.ui.LegacyThemeColors;
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
 
 /** Structural host for compatibility-sensitive guest Views and app-owned runtime chrome. */
 public final class RuntimeHostView {

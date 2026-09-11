@@ -86,9 +86,9 @@ import javax.microedition.util.ContextHolder;
 
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.ui.LegacyThemeColors;
-import ru.playsoftware.j2meloader.config.ProfileModel;
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
+import io.github.h3nb.jlmodplus.config.ProfileModel;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class Canvas extends Displayable {

@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2018 Nikita Shakarun
  * Copyright 2026 Yury Kharchenko
  *
@@ -33,7 +34,7 @@ import javax.bluetooth.L2CAPConnectionNotifier;
 import javax.bluetooth.LocalDevice;
 import javax.bluetooth.UUID;
 
-import ru.playsoftware.j2meloader.util.BluetoothPermissionHelper;
+import io.github.h3nb.jlmodplus.util.BluetoothPermissionHelper;
 
 public class Connection implements ConnectionImplementation, L2CAPConnectionNotifier {
 	private static final String TAG = "btl2cap.Connection";

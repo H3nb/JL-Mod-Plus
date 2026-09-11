@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * MicroEmulator
  * Copyright (C) 2008 Bartek Teodorczyk <barteo@barteo.net>
  * Copyright (C) 2017-2018 Nikita Shakarun
@@ -44,7 +45,7 @@ import javax.microedition.rms.RecordStoreNotFoundException;
 import javax.microedition.shell.AppClassLoader;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.util.FileUtils;
+import io.github.h3nb.jlmodplus.util.FileUtils;
 
 public class AndroidRecordStoreManager implements RecordStoreManager {
 	private static final String TAG = "RecordStore";

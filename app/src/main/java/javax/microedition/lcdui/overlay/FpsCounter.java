@@ -30,7 +30,7 @@ import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.shell.timing.FrameMetricsSnapshot;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.R;
+import io.github.h3nb.jlmodplus.R;
 
 public class FpsCounter extends TimerTask implements Layer {
 

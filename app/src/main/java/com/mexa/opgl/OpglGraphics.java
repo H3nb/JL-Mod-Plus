@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2023-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +34,7 @@ import javax.microedition.khronos.opengles.GL11;
 import javax.microedition.khronos.opengles.GL11Ext;
 import javax.microedition.lcdui.Graphics;
 
-import ru.woesss.gles.GLESUtils;
+import io.github.h3nb.jlmodplus.gles.GLESUtils;
 
 public class OpglGraphics {
 	public static final int GL_ACTIVE_TEXTURE = 34016;

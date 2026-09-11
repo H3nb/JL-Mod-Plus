@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2020-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +31,7 @@ import androidx.core.content.res.ResourcesCompat;
 import javax.microedition.lcdui.Image;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.R;
+import io.github.h3nb.jlmodplus.R;
 
 public class CanvasWrapper {
 	private final Paint drawPaint = new Paint();

@@ -20,7 +20,7 @@
 package javax.microedition.shell;
 
 import static android.content.pm.ActivityInfo.*;
-import static ru.playsoftware.j2meloader.util.Constants.*;
+import static io.github.h3nb.jlmodplus.util.Constants.*;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
@@ -75,15 +75,15 @@ import javax.microedition.util.ContextHolder;
 
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
-import ru.playsoftware.j2meloader.BuildConfig;
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.crashes.MidletSessionStore;
-import ru.playsoftware.j2meloader.memory.MemoryEditorBubbleController;
-import ru.playsoftware.j2meloader.runtime.MidletKeepAliveService;
-import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
-import ru.playsoftware.j2meloader.util.LogUtils;
-import ru.playsoftware.j2meloader.ui.TransientNoticeComposeController;
+import io.github.h3nb.jlmodplus.BuildConfig;
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
+import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
+import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
+import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
+import io.github.h3nb.jlmodplus.util.LogUtils;
+import io.github.h3nb.jlmodplus.ui.TransientNoticeComposeController;
 
 public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_DEFAULT = 0;
@@ -91,6 +91,8 @@ public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_PORTRAIT = 2;
 	private static final int ORIENTATION_LANDSCAPE = 3;
 	private static final int MIN_RUNTIME_TOOLBAR_TOUCH_TARGET_DP = 48;
+	private static final int MAX_IME_REQUEST_ATTEMPTS = 30;
+	private static final long IME_REQUEST_RETRY_DELAY_MILLIS = 100L;
 
 	private Displayable current;
 	private boolean runtimeToolbarEnabled;
@@ -102,6 +104,8 @@ public class MicroActivity extends AppCompatActivity {
 	private String[] pendingMidletClasses;
 	private InputMethodManager inputMethodManager;
 	private int menuKey;
+	private boolean menuKeyLongPressHandled;
+	private int imeToggleRequest;
 	private String appPath;
 	private RuntimeHostView binding;
 	private RuntimeMenuComposeController runtimeMenuController;
@@ -508,27 +512,63 @@ public class MicroActivity extends AppCompatActivity {
 		if (inputMethodManager == null || binding == null) {
 			return;
 		}
-		binding.displayableContainer.postDelayed(() -> {
-			if (isFinishing() || isDestroyed() || !(current instanceof Canvas)) {
+		int request = ++imeToggleRequest;
+		binding.displayableContainer.postDelayed(
+			() -> requestImeKeyboardWhenReady(request, 0), IME_REQUEST_RETRY_DELAY_MILLIS);
+	}
+
+	private void requestImeKeyboardWhenReady(int request, int attempt) {
+		if (request != imeToggleRequest || isFinishing() || isDestroyed()
+				|| !(current instanceof Canvas)) {
+			return;
+		}
+		View inputTarget = findCanvasSurface(binding.displayableContainer);
+		if (inputTarget == null) {
+			inputTarget = binding.displayableContainer;
+		}
+		if (!binding.getRoot().hasWindowFocus() || !inputTarget.isShown()
+				|| inputTarget.getWindowToken() == null) {
+			retryImeKeyboardRequest(request, attempt);
+			return;
+		}
+		View target = inputTarget;
+		if (!target.requestFocus() || !target.isFocused()) {
+			retryImeKeyboardRequest(request, attempt);
+			return;
+		}
+		target.post(() -> {
+			if (request != imeToggleRequest || isFinishing() || isDestroyed()
+					|| !(current instanceof Canvas) || !binding.getRoot().hasWindowFocus()
+					|| !target.isFocused()) {
+				if (request == imeToggleRequest) {
+					retryImeKeyboardRequest(request, attempt);
+				}
 				return;
 			}
-			View inputTarget = findCanvasSurface(binding.displayableContainer);
-			if (inputTarget == null) {
-				inputTarget = binding.displayableContainer;
+			IBinder windowToken = target.getWindowToken();
+			if (windowToken == null) {
+				retryImeKeyboardRequest(request, attempt);
+				return;
 			}
-			inputTarget.requestFocus();
-			IBinder windowToken = inputTarget.getWindowToken();
-			if (windowToken != null) {
-				inputMethodManager.restartInput(inputTarget);
-				boolean imeVisible = lastWindowInsets != null
-						&& lastWindowInsets.isVisible(WindowInsetsCompat.Type.ime());
-				if (imeVisible) {
-					inputMethodManager.hideSoftInputFromWindow(windowToken, 0);
-				} else {
-					inputMethodManager.showSoftInput(inputTarget, InputMethodManager.SHOW_IMPLICIT);
-				}
+			inputMethodManager.restartInput(target);
+			boolean imeVisible = lastWindowInsets != null
+					&& lastWindowInsets.isVisible(WindowInsetsCompat.Type.ime());
+			if (imeVisible) {
+				inputMethodManager.hideSoftInputFromWindow(windowToken, 0);
+			} else {
+				inputMethodManager.showSoftInput(target, InputMethodManager.SHOW_IMPLICIT);
+				getInsetsController().show(WindowInsetsCompat.Type.ime());
 			}
-		}, 100L);
+		});
+	}
+
+	private void retryImeKeyboardRequest(int request, int attempt) {
+		if (attempt < MAX_IME_REQUEST_ATTEMPTS && request == imeToggleRequest
+				&& binding != null) {
+			binding.displayableContainer.postDelayed(
+					() -> requestImeKeyboardWhenReady(request, attempt + 1),
+					IME_REQUEST_RETRY_DELAY_MILLIS);
+		}
 	}
 
 	@Override
@@ -782,19 +822,29 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
-		if (event.getKeyCode() == KeyEvent.KEYCODE_MENU)
-			if (current instanceof Canvas && binding.displayableContainer.dispatchKeyEvent(event)) {
-				return true;
-			} else if (event.getAction() == KeyEvent.ACTION_DOWN) {
+		// KEYCODE_MENU is a host command, not a guest Canvas key. SurfaceView consumes the
+		// event before Activity.onKeyLongPress() on recent Android releases, so handle the
+		// tracking sequence here before dispatching to the Canvas child.
+		if (event.getKeyCode() == KeyEvent.KEYCODE_MENU) {
+			if (event.getAction() == KeyEvent.ACTION_DOWN) {
 				if (event.getRepeatCount() == 0) {
+					menuKeyLongPressHandled = false;
 					event.startTracking();
 					return true;
-				} else if (event.isLongPress()) {
+				}
+				if (event.isLongPress()) {
+					menuKeyLongPressHandled = true;
 					return onKeyLongPress(event.getKeyCode(), event);
 				}
 			} else if (event.getAction() == KeyEvent.ACTION_UP) {
+				if (menuKeyLongPressHandled) {
+					menuKeyLongPressHandled = false;
+					return true;
+				}
 				return onKeyUp(event.getKeyCode(), event);
 			}
+			return true;
+		}
 		return super.dispatchKeyEvent(event);
 	}
 

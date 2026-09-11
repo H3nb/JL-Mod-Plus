@@ -22,7 +22,7 @@ import java.io.IOException;
 
 import javax.microedition.io.Connection;
 
-import ru.playsoftware.j2meloader.util.BluetoothPermissionHelper;
+import io.github.h3nb.jlmodplus.util.BluetoothPermissionHelper;
 
 public class RemoteDevice {
 	BluetoothDevice dev;

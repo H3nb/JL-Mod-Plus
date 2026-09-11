@@ -39,6 +39,8 @@ public final class PlatformCompatMidlet extends MIDlet {
 	private ProbeCanvas canvas;
 	private String markerPath;
 	private boolean transitionMode;
+	/** Stable primitive owned by the live target for the Managed memory IPC test. */
+	private int memoryProbeValue;
 
 	@Override
 	public void startApp() {

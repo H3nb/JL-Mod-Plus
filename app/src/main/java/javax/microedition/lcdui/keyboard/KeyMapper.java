@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2018 Nikita Shakarun
  * Copyright 2021-2023 Yury Kharchenko
  *
@@ -27,7 +28,7 @@ import androidx.collection.SparseArrayCompat;
 
 import java.util.List;
 
-import ru.playsoftware.j2meloader.config.ProfileModel;
+import io.github.h3nb.jlmodplus.config.ProfileModel;
 
 public class KeyMapper {
 	public static final int KEY_OPTIONS_MENU = 0;

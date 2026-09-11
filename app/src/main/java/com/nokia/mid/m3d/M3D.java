@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  *  Copyright 2023-2024 Yury Kharchenko
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +32,7 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.lcdui.Graphics;
 
-import ru.woesss.gles.GLESUtils;
+import io.github.h3nb.jlmodplus.gles.GLESUtils;
 
 // TODO: 23.01.2023 not implemented check exceptions
 public class M3D {

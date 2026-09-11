@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2023 Nikita Shakarun
  * Copyright 2019-2025 Yury Kharchenko
@@ -47,9 +48,9 @@ import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.shell.AppClassLoader;
 import javax.microedition.shell.MicroActivity;
 
-import ru.playsoftware.j2meloader.BuildConfig;
-import ru.playsoftware.j2meloader.EmulatorApplication;
-import ru.playsoftware.j2meloader.config.Config;
+import io.github.h3nb.jlmodplus.BuildConfig;
+import io.github.h3nb.jlmodplus.EmulatorApplication;
+import io.github.h3nb.jlmodplus.config.Config;
 
 public class ContextHolder {
 	private static Display display;

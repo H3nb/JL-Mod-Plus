@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2018 Nikita Shakarun
  * Copyright 2019-2023 Yury Kharchenko
@@ -30,7 +31,7 @@ import java.util.ArrayList;
 
 import javax.microedition.lcdui.Choice;
 import javax.microedition.util.ContextHolder;
-import ru.playsoftware.j2meloader.ui.LegacyThemeColors;
+import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
 
 public class CompoundListAdapter extends CompoundAdapter implements ListAdapter {
 	private final int highlightColor;

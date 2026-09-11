@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  *  Copyright 2020 Yury Kharchenko
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,7 @@
 
 package com.vodafone.v10.graphics.j3d;
 
-import ru.woesss.j2me.micro3d.MathUtil;
+import io.github.h3nb.jlmodplus.micro3d.MathUtil;
 
 public class AffineTrans {
 	public int m00, m01, m02, m03;

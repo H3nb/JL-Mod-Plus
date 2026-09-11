@@ -26,7 +26,7 @@ import javax.microedition.media.MediaException;
 import javax.microedition.media.Player;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.util.IOUtils;
+import io.github.h3nb.jlmodplus.util.IOUtils;
 
 public class MediaResource {
 

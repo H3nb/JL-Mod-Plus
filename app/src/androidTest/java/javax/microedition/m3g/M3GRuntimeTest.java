@@ -16,14 +16,24 @@
 
 package javax.microedition.m3g;
 
+import android.content.Context;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
@@ -56,6 +66,7 @@ public class M3GRuntimeTest {
 
 	@Before
 	public void setUp() {
+		loadTargetNativeLibraries();
 		g3d = Graphics3D.getInstance();
 		cleanupContext();
 	}
@@ -504,6 +515,95 @@ public class M3GRuntimeTest {
 
 	private static void runtimeStep(String step) {
 		Log.i(TAG, step);
+	}
+
+	/**
+	 * The instrumentation APK has its own native-library search path. M3G is a
+	 * target-APK library, so load the target copies explicitly before the first
+	 * guest class initializes. Production code continues to use
+	 * {@code System.loadLibrary("javam3g")} from the guest API.
+	 */
+	private static synchronized void loadTargetNativeLibraries() {
+		Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		try {
+			File nativeDirectory = targetNativeDirectory(target);
+			System.load(new File(nativeDirectory, "libc++_shared.so").getAbsolutePath());
+			System.load(new File(nativeDirectory, "libjavam3g.so").getAbsolutePath());
+		} catch (IOException | UnsatisfiedLinkError error) {
+			throw new AssertionError(
+					"Unable to load M3G libraries from the target APK: "
+							+ target.getApplicationInfo().sourceDir,
+					error);
+		}
+	}
+
+	private static File targetNativeDirectory(Context target) throws IOException {
+		File packagedDirectory = new File(target.getApplicationInfo().nativeLibraryDir);
+		if (new File(packagedDirectory, "libc++_shared.so").isFile()
+				&& new File(packagedDirectory, "libjavam3g.so").isFile()) {
+			return packagedDirectory;
+		}
+		String targetAbi = targetAbi(target);
+		File extractedDirectory = new File(
+				new File(target.getCodeCacheDir(), "m3g-runtime-test-native"), targetAbi);
+		if (!extractedDirectory.isDirectory() && !extractedDirectory.mkdirs()) {
+			throw new IOException("Unable to create " + extractedDirectory);
+		}
+		extractNativeLibrary(target.getApplicationInfo().sourceDir, extractedDirectory,
+				targetAbi, "libc++_shared.so");
+		extractNativeLibrary(target.getApplicationInfo().sourceDir, extractedDirectory,
+				targetAbi, "libjavam3g.so");
+		return extractedDirectory;
+	}
+
+	private static String targetAbi(Context target) throws IOException {
+		String directoryName = new File(target.getApplicationInfo().nativeLibraryDir).getName();
+		switch (directoryName) {
+			case "arm64":
+			case "arm64-v8a":
+				return "arm64-v8a";
+			case "arm":
+			case "armeabi-v7a":
+				return "armeabi-v7a";
+			case "x86_64":
+				return "x86_64";
+			case "x86":
+				return "x86";
+			default:
+				throw new IOException("Unable to infer target ABI from "
+						+ target.getApplicationInfo().nativeLibraryDir);
+		}
+	}
+
+	private static void extractNativeLibrary(String apkPath, File destinationDirectory,
+			String targetAbi, String libraryName) throws IOException {
+		try (ZipFile apk = new ZipFile(apkPath)) {
+			ZipEntry library = findNativeEntry(apk, targetAbi, libraryName);
+			if (library == null) {
+				throw new IOException("Missing target native library " + libraryName
+						+ " for ABI " + targetAbi);
+			}
+			File destination = new File(destinationDirectory, libraryName);
+			try (InputStream input = apk.getInputStream(library);
+					FileOutputStream output = new FileOutputStream(destination)) {
+				byte[] buffer = new byte[8192];
+				for (int read; (read = input.read(buffer)) != -1; ) {
+					output.write(buffer, 0, read);
+				}
+			}
+		}
+	}
+
+	private static ZipEntry findNativeEntry(ZipFile apk, String targetAbi, String libraryName) {
+		String expectedPath = "lib/" + targetAbi + "/" + libraryName;
+		Enumeration<? extends ZipEntry> entries = apk.entries();
+		while (entries.hasMoreElements()) {
+			ZipEntry entry = entries.nextElement();
+			if (expectedPath.equals(entry.getName())) {
+				return entry;
+			}
+		}
+		return null;
 	}
 
 	private static final class TriangleFixture {

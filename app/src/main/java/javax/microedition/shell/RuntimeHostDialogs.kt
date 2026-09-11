@@ -30,7 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
-import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
+import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -56,11 +56,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import ru.playsoftware.j2meloader.R
-import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
-import ru.playsoftware.j2meloader.ui.ScrollableContentHint
-import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
-import ru.playsoftware.j2meloader.ui.rememberScrollCanScrollForward
+import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
+import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
+import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
+import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 
 /** Callbacks for host-owned runtime dialogs. MIDP state and rendering remain in Java. */
 interface RuntimeHostDialogActions {

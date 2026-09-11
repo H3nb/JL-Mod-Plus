@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  *  Copyright 2022 Yury Kharchenko
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +21,8 @@ import com.mascotcapsule.micro3d.v3.Graphics3D;
 
 import javax.microedition.lcdui.Graphics;
 
-import ru.woesss.j2me.micro3d.MathUtil;
-import ru.woesss.j2me.micro3d.Render;
+import io.github.h3nb.jlmodplus.micro3d.MathUtil;
+import io.github.h3nb.jlmodplus.micro3d.Render;
 
 public class RenderProxy {
 

@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2023 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,7 @@
 
 package com.mexa.opgl;
 
-import ru.woesss.j2me.micro3d.BufferUtils;
+import io.github.h3nb.jlmodplus.micro3d.BufferUtils;
 
 public class ByteBuffer extends Buffer {
 

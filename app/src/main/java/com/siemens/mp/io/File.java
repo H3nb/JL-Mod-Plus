@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  *  Copyright 2018 Nikita Shakarun
  *  Copyright 2021 Yury Kharchenko
  *
@@ -29,7 +30,7 @@ import java.util.Arrays;
 import javax.microedition.shell.AppClassLoader;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.util.FileUtils;
+import io.github.h3nb.jlmodplus.util.FileUtils;
 
 public class File {
 	public static final int INSIDE_STORAGE_PATH = 1;

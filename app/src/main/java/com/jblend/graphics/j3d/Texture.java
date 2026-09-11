@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2022-2023 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +21,7 @@ import java.io.IOException;
 
 import javax.microedition.lcdui.Image;
 
-import ru.woesss.j2me.micro3d.TextureImpl;
+import io.github.h3nb.jlmodplus.micro3d.TextureImpl;
 
 public class Texture {
 	public final TextureImpl impl;

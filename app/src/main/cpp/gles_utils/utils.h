@@ -10,10 +10,10 @@ extern "C" {
 unsigned int GLES1_glReadPixels(int, int, int, int, void *);
 unsigned int GLES2_glReadPixels(int, int, int, int, void *);
 
-JNIEXPORT void JNICALL Java_ru_woesss_gles_GLESUtils_blit
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_gles_GLESUtils_blit
         (JNIEnv *, jclass, jint, jint, jint, jint, jobject);
 
-JNIEXPORT void JNICALL Java_ru_woesss_gles_GLESUtils_blit2
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_gles_GLESUtils_blit2
         (JNIEnv *, jclass, jint, jint, jint, jint, jobject);
 
 #define  LOG_TAG    "GLES_Utils"

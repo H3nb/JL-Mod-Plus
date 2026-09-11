@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2023 Yury Kharchenko
@@ -33,7 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
-import ru.woesss.j2me.mmapi.FileCacheDataSource;
+import io.github.h3nb.jlmodplus.mmapi.FileCacheDataSource;
 
 class InternalDataSource extends FileCacheDataSource {
 	private static final String TAG = InternalDataSource.class.getSimpleName();

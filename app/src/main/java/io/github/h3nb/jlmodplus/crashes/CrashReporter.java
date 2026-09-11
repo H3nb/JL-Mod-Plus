@@ -1,0 +1,533 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.github.h3nb.jlmodplus.crashes;
+
+import static org.acra.ReportField.ANDROID_VERSION;
+import static org.acra.ReportField.APP_VERSION_CODE;
+import static org.acra.ReportField.APP_VERSION_NAME;
+import static org.acra.ReportField.BRAND;
+import static org.acra.ReportField.CUSTOM_DATA;
+import static org.acra.ReportField.IS_SILENT;
+import static org.acra.ReportField.PACKAGE_NAME;
+import static org.acra.ReportField.PHONE_MODEL;
+import static org.acra.ReportField.REPORT_ID;
+import static org.acra.ReportField.STACK_TRACE;
+import static org.acra.ReportField.STACK_TRACE_HASH;
+import static org.acra.ReportField.THREAD_DETAILS;
+import static org.acra.ReportField.USER_APP_START_DATE;
+import static org.acra.ReportField.USER_CRASH_DATE;
+
+import android.app.Activity;
+import android.app.Application;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Process;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
+import org.acra.ACRA;
+import org.acra.ErrorReporter;
+import org.acra.ReportField;
+import org.acra.config.CoreConfigurationBuilder;
+
+import java.util.Arrays;
+import java.util.List;
+
+import io.github.h3nb.jlmodplus.BuildConfig;
+import io.github.h3nb.jlmodplus.EmulatorApplication;
+
+/**
+ * Configures ACRA as a local Java exception collector for JL-Mod Plus.
+ *
+ * Fatal failures are captured at process/lifecycle boundaries. Non-fatal collection is deliberately
+ * allowlisted: only actionable emulator-owned incidents get a dedicated reporting method. Do not
+ * report arbitrary caught MIDlet/vendor exceptions here; those are often compatibility behavior,
+ * can be high-frequency, and observability must not perturb emulator hot paths. Current allowlisted
+ * caught incidents are installer failures and app-repository operation failures.
+ */
+public final class CrashReporter {
+	private static final int MAX_CONTEXT_VALUE_LENGTH = 256;
+	private static final int MAX_CONTEXT_MESSAGE_LENGTH = 768;
+
+	private static final String TAG = CrashReporter.class.getSimpleName();
+	private static final String ROLE_MAIN = "main";
+	private static final String ROLE_MIDLET = "midlet";
+	private static final String ROLE_REPORTER = "reporter";
+	private static final String ROLE_OTHER = "other";
+
+	static final String KEY_PROCESS_NAME = "jlmod.process.name";
+	static final String KEY_PROCESS_ROLE = "jlmod.process.role";
+	static final String KEY_PROCESS_PID = "jlmod.process.pid";
+	static final String KEY_MIDLET_NAME = "jlmod.midlet.name";
+	static final String KEY_MIDLET_VENDOR = "jlmod.midlet.vendor";
+	static final String KEY_MIDLET_VERSION = "jlmod.midlet.version";
+	static final String KEY_MIDLET_JAR_SIZE = "jlmod.midlet.jar.size";
+	static final String KEY_MIDLET_JAR_SHA256 = "jlmod.midlet.jar.sha256";
+	static final String KEY_MIDLET_MAIN_CLASS = "jlmod.midlet.mainClass";
+	static final String KEY_SESSION_ID = "jlmod.session.id";
+	static final String KEY_RUN_ID = "jlmod.run.id";
+	static final String KEY_BUILD_COMMIT = "jlmod.build.commit";
+	static final String KEY_BUILD_VARIANT = "jlmod.build.variant";
+	static final String KEY_CONTEXT_LOCATION = "jlmod.context.location";
+	static final String KEY_CONTEXT_PREVIOUS = "jlmod.context.previous";
+	static final String KEY_CONTEXT_ACTION = "jlmod.context.action";
+	static final String KEY_CONTEXT_PHASE = "jlmod.context.phase";
+	static final String KEY_CONTEXT_UPDATED = "jlmod.context.updated";
+
+	private static final List<ReportField> REPORT_FIELDS = Arrays.asList(
+			REPORT_ID,
+			APP_VERSION_CODE,
+			APP_VERSION_NAME,
+			PACKAGE_NAME,
+			PHONE_MODEL,
+			ANDROID_VERSION,
+			BRAND,
+			CUSTOM_DATA,
+			STACK_TRACE,
+			STACK_TRACE_HASH,
+			USER_APP_START_DATE,
+			USER_CRASH_DATE,
+			IS_SILENT,
+			THREAD_DETAILS
+	);
+
+	private static final Object DIAGNOSTIC_REFRESH_LOCK = new Object();
+	private static Application activeApplication;
+	private static boolean mainProcess;
+	private static boolean lifecycleCallbacksRegistered;
+	private static boolean fatalFallbackInstalled;
+	private static boolean diagnosticRefreshRunning;
+	private static boolean diagnosticRefreshPending;
+	private static volatile boolean diagnosticRefreshReady;
+
+	public enum AppContextPhase {
+		ENTERING("entering"),
+		ACTIVE("active"),
+		EXECUTING("executing"),
+		LEAVING("leaving");
+
+		final String id;
+
+		AppContextPhase(String id) {
+			this.id = id;
+		}
+	}
+
+	private CrashReporter() {}
+
+	/**
+	 * Initializes local-only crash collection and publishes only current-process identity/state.
+	 * Historical ingestion and retention maintenance are deliberately deferred until onCreate().
+	 *
+	 * @return true when running in ACRA's private reporter process, where normal app initialization
+	 * should be skipped.
+	 */
+	public static boolean initialize(Application application) {
+		CoreConfigurationBuilder configuration = new CoreConfigurationBuilder()
+				.withParallel(false)
+				.withDeleteUnapprovedReportsOnApplicationStart(false)
+				.withReportContent(REPORT_FIELDS);
+
+		// Report sending and ACRA startup processing are intentionally disabled. JL-Mod Plus owns
+		// local retention and later presentation/export of the persisted report files.
+		ACRA.init(application, configuration, false);
+
+		String processName = EmulatorApplication.getProcessName();
+		String processRole = classifyProcess(application.getPackageName(), processName);
+		mainProcess = ROLE_MAIN.equals(processRole);
+		diagnosticRefreshRunning = false;
+		diagnosticRefreshPending = false;
+		diagnosticRefreshReady = !mainProcess;
+		boolean reporterProcess = ROLE_REPORTER.equals(processRole) || ACRA.isACRASenderServiceProcess();
+		if (reporterProcess) {
+			return true;
+		}
+
+		activeApplication = application;
+		ErrorReporter reporter = ACRA.getErrorReporter();
+		putBounded(reporter, KEY_PROCESS_NAME, processName);
+		putBounded(reporter, KEY_PROCESS_ROLE, processRole);
+		putBounded(reporter, KEY_PROCESS_PID, Integer.toString(Process.myPid()));
+
+		CrashContextStore.Snapshot context = CrashContextStore.initialize(
+				application, processRole, BuildConfig.JLMOD_BUILD_COMMIT, BuildConfig.JLMOD_BUILD_VARIANT);
+		context = CrashContextStore.update(application, "process.start", "start", AppContextPhase.ACTIVE.id);
+		publishCrashContext(reporter, context);
+
+		// Android 11+ keeps a small process-owned state summary. Publish it synchronously so any
+		// later process death can still be attributed even if deferred maintenance never gets CPU.
+		ProcessExitStore.initializeProcess(application, processRole);
+		installFatalFallback(application, processRole);
+		return false;
+	}
+
+	private static synchronized void installFatalFallback(Application application, String processRole) {
+		if (fatalFallbackInstalled) return;
+		Thread.UncaughtExceptionHandler delegate = Thread.getDefaultUncaughtExceptionHandler();
+		Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
+			FatalJavaCrashStore.capture(application, thread, error, processRole);
+			if (delegate != null) delegate.uncaughtException(thread, error);
+		});
+		fatalFallbackInstalled = true;
+	}
+
+	/** Schedules one best-effort main-process diagnostics refresh after Application startup. */
+	public static void scheduleMaintenance(Application application) {
+		registerActivityContextCallbacks(application);
+		if (!mainProcess) {
+			diagnosticRefreshReady = true;
+			return;
+		}
+		startDiagnosticRefresh(application, false, "jlmod-diagnostics-maintenance");
+	}
+
+	/**
+	 * Records one high-level, stable app state. This is intentionally not a generic telemetry API:
+	 * callers should use route/operation IDs such as "config.graphics", never translated labels,
+	 * user-entered values, scroll positions, frames, or recomposition events.
+	 */
+	public static void recordAppContext(String location, String action, AppContextPhase phase) {
+		Application application = activeApplication;
+		if (application == null || phase == null) {
+			return;
+		}
+		try {
+			CrashContextStore.Snapshot snapshot = CrashContextStore.update(
+					application, location, action, phase.id);
+			if (snapshot == null) {
+				return;
+			}
+			publishCrashContext(ACRA.getErrorReporter(), snapshot);
+			ProcessExitStore.updateProcessContext(application);
+		} catch (Throwable error) {
+			logMaintenanceFailure("Unable to update crash context", error);
+		}
+	}
+
+	/**
+	 * Refreshes durable diagnostics after the main window regains focus without blocking the UI.
+	 * A focus callback arriving during an active pass queues one follow-up pass instead of spawning
+	 * another thread, so a just-finished MIDlet process cannot be missed by an older system snapshot.
+	 */
+	public static void requestDiagnosticRefresh(Application application) {
+		if (!mainProcess) {
+			diagnosticRefreshReady = true;
+			return;
+		}
+		startDiagnosticRefresh(application, true, "jlmod-diagnostics-focus-refresh");
+	}
+
+	/** True once the latest requested background reconciliation and retention pass has finished. */
+	public static boolean isDiagnosticRefreshReady() {
+		return diagnosticRefreshReady;
+	}
+
+	private static void startDiagnosticRefresh(Application application, boolean queueIfRunning,
+			String threadName) {
+		if (!beginDiagnosticRefresh(queueIfRunning)) {
+			return;
+		}
+		try {
+			Thread refresh = new Thread(() -> {
+				setBackgroundThreadPriority();
+				runDiagnosticRefreshLoop(application);
+			}, threadName);
+			refresh.start();
+		} catch (Throwable error) {
+			finishDiagnosticRefresh();
+			logMaintenanceFailure("Unable to schedule diagnostics refresh", error);
+		}
+	}
+
+	private static boolean beginDiagnosticRefresh(boolean queueIfRunning) {
+		synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+			if (diagnosticRefreshRunning) {
+				if (queueIfRunning) {
+					diagnosticRefreshPending = true;
+					diagnosticRefreshReady = false;
+				}
+				return false;
+			}
+			diagnosticRefreshRunning = true;
+			diagnosticRefreshPending = false;
+			diagnosticRefreshReady = false;
+			return true;
+		}
+	}
+
+	private static void runDiagnosticRefreshLoop(Application application) {
+		try {
+			while (true) {
+				refreshDiagnostics(application);
+				synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+					if (diagnosticRefreshPending) {
+						diagnosticRefreshPending = false;
+						continue;
+					}
+					diagnosticRefreshRunning = false;
+					diagnosticRefreshReady = true;
+					return;
+				}
+			}
+		} catch (Throwable error) {
+			finishDiagnosticRefresh();
+			logMaintenanceFailure("Unexpected diagnostics refresh failure", error);
+		}
+	}
+
+	private static void finishDiagnosticRefresh() {
+		synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+			diagnosticRefreshRunning = false;
+			diagnosticRefreshPending = false;
+			diagnosticRefreshReady = true;
+		}
+	}
+
+	private static void refreshDiagnostics(Application application) {
+		// Both exit paths are API-gated internally. Keep retention in the same background pass so
+		// recovery UI never performs report/journal pruning from its window-focus callback.
+		runMaintenanceStep("legacy process-exit reconciliation",
+				() -> LegacyProcessExitFallback.ingest(application));
+		runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
+		runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
+		runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
+		runMaintenanceStep("process context pruning", () -> CrashContextStore.prune(application));
+	}
+
+	private static void setBackgroundThreadPriority() {
+		try {
+			Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+		} catch (Throwable ignored) {}
+	}
+
+	private static void runMaintenanceStep(String label, Runnable step) {
+		try {
+			step.run();
+		} catch (Throwable error) {
+			logMaintenanceFailure("Diagnostics maintenance failed open: " + label, error);
+		}
+	}
+
+	private static void logMaintenanceFailure(String message, Throwable error) {
+		try {
+			Log.w(TAG, message, error);
+		} catch (Throwable ignored) {}
+	}
+
+	public static void setMidletContext(String name, String vendor, String version,
+											 String jarSize, String jarSha256) {
+		ErrorReporter reporter = ACRA.getErrorReporter();
+		clearMidletContext(reporter);
+		clearSessionContext(reporter);
+		putBounded(reporter, KEY_MIDLET_NAME, name);
+		putBounded(reporter, KEY_MIDLET_VENDOR, vendor);
+		putBounded(reporter, KEY_MIDLET_VERSION, version);
+		putBounded(reporter, KEY_MIDLET_JAR_SIZE, jarSize);
+		putBounded(reporter, KEY_MIDLET_JAR_SHA256, jarSha256);
+	}
+
+	public static void setMidletMainClass(String mainClass) {
+		putBounded(ACRA.getErrorReporter(), KEY_MIDLET_MAIN_CLASS, mainClass);
+	}
+
+	static void setSessionContext(String sessionId) {
+		putBounded(ACRA.getErrorReporter(), KEY_SESSION_ID, sessionId);
+		EmulatorApplication application = EmulatorApplication.getInstance();
+		if (application != null) {
+			// The same immutable session key now survives Java exceptions (ACRA), durable journal
+			// writes, and Android process death (ApplicationExitInfo) without timestamp heuristics.
+			ProcessExitStore.setMidletSession(application, sessionId);
+		}
+	}
+
+	/**
+	 * Allowlisted non-fatal incident: the emulator-owned installer operation failed.
+	 * This is intentionally not a generic caught-exception API.
+	 */
+	public static void reportInstallerFailure(Throwable error, String sourceScheme,
+												  String midletName, String midletVendor,
+												  String midletVersion, String jarSize) {
+		String message = buildInstallerContext(sourceScheme, midletName, midletVendor,
+				midletVersion, jarSize);
+		try {
+			ACRA.getErrorReporter().handleException(new InstallerFailureException(message, error), false);
+		} catch (Throwable reportingFailure) {
+			logMaintenanceFailure("Unable to persist installer failure diagnostic", reportingFailure);
+		}
+	}
+
+	/**
+	 * Allowlisted non-fatal incident: a Room/filesystem operation owned by the app repository failed.
+	 * Keep this narrow API instead of exposing arbitrary caught-exception reporting to callers.
+	 */
+	public static void reportAppRepositoryFailure(Throwable error) {
+		if (error == null) {
+			return;
+		}
+		try {
+			ACRA.getErrorReporter().handleException(error, false);
+		} catch (Throwable reportingFailure) {
+			logMaintenanceFailure("Unable to persist app-repository failure diagnostic", reportingFailure);
+		}
+	}
+
+	static String classifyProcess(String packageName, String processName) {
+		if (processName == null || processName.trim().isEmpty()) {
+			return ROLE_OTHER;
+		}
+		if (processName.equals(packageName)) {
+			return ROLE_MAIN;
+		}
+		if (processName.equals(packageName + ":midlet")) {
+			return ROLE_MIDLET;
+		}
+		if (processName.equals(packageName + ":acra")) {
+			return ROLE_REPORTER;
+		}
+		return ROLE_OTHER;
+	}
+
+	private static void registerActivityContextCallbacks(Application application) {
+		if (lifecycleCallbacksRegistered) {
+			return;
+		}
+		lifecycleCallbacksRegistered = true;
+		Application.ActivityLifecycleCallbacks callbacks = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+				? new Api29ActivityContextCallbacks() : new ActivityContextCallbacks();
+		application.registerActivityLifecycleCallbacks(callbacks);
+	}
+
+	private static String activityLocation(Activity activity) {
+		String simpleName = activity.getClass().getSimpleName();
+		return "activity." + (simpleName == null || simpleName.isEmpty() ? "unknown" : simpleName);
+	}
+
+	private static void publishCrashContext(ErrorReporter reporter, CrashContextStore.Snapshot snapshot) {
+		if (snapshot == null) {
+			return;
+		}
+		putBounded(reporter, KEY_RUN_ID, snapshot.runId);
+		putBounded(reporter, KEY_BUILD_COMMIT, snapshot.buildCommit);
+		putBounded(reporter, KEY_BUILD_VARIANT, snapshot.buildVariant);
+		putBounded(reporter, KEY_CONTEXT_LOCATION, snapshot.location);
+		putBounded(reporter, KEY_CONTEXT_PREVIOUS, snapshot.previousLocation);
+		putBounded(reporter, KEY_CONTEXT_ACTION, snapshot.action);
+		putBounded(reporter, KEY_CONTEXT_PHASE, snapshot.phase);
+		putBounded(reporter, KEY_CONTEXT_UPDATED,
+				snapshot.updatedWallTimeMillis > 0 ? Long.toString(snapshot.updatedWallTimeMillis) : null);
+	}
+
+	private static String buildInstallerContext(String sourceScheme, String midletName,
+												String midletVendor, String midletVersion, String jarSize) {
+		StringBuilder message = new StringBuilder("Installer failure");
+		appendContext(message, "sourceScheme", sourceScheme);
+		appendContext(message, "midletName", midletName);
+		appendContext(message, "midletVendor", midletVendor);
+		appendContext(message, "midletVersion", midletVersion);
+		appendContext(message, "jarSize", jarSize);
+		return message.toString();
+	}
+
+	private static void appendContext(StringBuilder message, String key, String value) {
+		String bounded = boundValue(value);
+		if (bounded == null || message.length() >= MAX_CONTEXT_MESSAGE_LENGTH) {
+			return;
+		}
+		message.append("; ").append(key).append('=').append(bounded);
+		if (message.length() > MAX_CONTEXT_MESSAGE_LENGTH) {
+			message.setLength(MAX_CONTEXT_MESSAGE_LENGTH);
+		}
+	}
+
+	private static void clearMidletContext(ErrorReporter reporter) {
+		reporter.removeCustomData(KEY_MIDLET_NAME);
+		reporter.removeCustomData(KEY_MIDLET_VENDOR);
+		reporter.removeCustomData(KEY_MIDLET_VERSION);
+		reporter.removeCustomData(KEY_MIDLET_JAR_SIZE);
+		reporter.removeCustomData(KEY_MIDLET_JAR_SHA256);
+		reporter.removeCustomData(KEY_MIDLET_MAIN_CLASS);
+	}
+
+	private static void clearSessionContext(ErrorReporter reporter) {
+		reporter.removeCustomData(KEY_SESSION_ID);
+	}
+
+	private static void putBounded(ErrorReporter reporter, String key, String value) {
+		String bounded = boundValue(value);
+		if (bounded == null) {
+			reporter.removeCustomData(key);
+		} else {
+			reporter.putCustomData(key, bounded);
+		}
+	}
+
+	static String boundValue(String value) {
+		if (value == null) {
+			return null;
+		}
+		String normalized = value.replace('\n', ' ').replace('\r', ' ').trim();
+		if (normalized.isEmpty()) {
+			return null;
+		}
+		if (normalized.length() > MAX_CONTEXT_VALUE_LENGTH) {
+			return normalized.substring(0, MAX_CONTEXT_VALUE_LENGTH);
+		}
+		return normalized;
+	}
+
+	private static class ActivityContextCallbacks implements Application.ActivityLifecycleCallbacks {
+		@Override
+		public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {}
+
+		@Override
+		public void onActivityStarted(@NonNull Activity activity) {}
+
+		@Override
+		public void onActivityResumed(@NonNull Activity activity) {
+			recordAppContext(activityLocation(activity), "open", AppContextPhase.ACTIVE);
+		}
+
+		@Override
+		public void onActivityPaused(@NonNull Activity activity) {
+			recordAppContext(activityLocation(activity), "open", AppContextPhase.LEAVING);
+		}
+
+		@Override
+		public void onActivityStopped(@NonNull Activity activity) {}
+
+		@Override
+		public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {}
+
+		@Override
+		public void onActivityDestroyed(@NonNull Activity activity) {}
+	}
+
+	@RequiresApi(Build.VERSION_CODES.Q)
+	private static final class Api29ActivityContextCallbacks extends ActivityContextCallbacks {
+		@Override
+		public void onActivityPreCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+			recordAppContext(activityLocation(activity), "open", AppContextPhase.ENTERING);
+		}
+	}
+
+	private static final class InstallerFailureException extends RuntimeException {
+		InstallerFailureException(String message, Throwable cause) {
+			super(message, cause);
+		}
+	}
+}

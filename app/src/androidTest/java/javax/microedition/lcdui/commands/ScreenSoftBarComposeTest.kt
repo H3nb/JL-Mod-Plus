@@ -24,7 +24,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Rule
 import org.junit.Test
-import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 class ScreenSoftBarComposeTest {
     @get:Rule

@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  *  Copyright 2020 Yury Kharchenko
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +19,7 @@ package com.motorola.graphics.j3d;
 
 import java.io.IOException;
 
-import ru.woesss.j2me.micro3d.FigureImpl;
+import io.github.h3nb.jlmodplus.micro3d.FigureImpl;
 
 public class Figure {
 	final FigureImpl impl;

@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  *  Copyright 2022 Yury Kharchenko
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import ru.playsoftware.j2meloader.util.IOUtils;
+import io.github.h3nb.jlmodplus.util.IOUtils;
 
 public class MessagePart {
 	private final String mimeType;

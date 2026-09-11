@@ -1,0 +1,779 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
+package io.github.h3nb.jlmodplus.installer
+
+import androidx.compose.ui.platform.testTag
+
+import android.app.Dialog
+import android.content.Context
+import android.net.Uri
+import android.os.Bundle
+import android.view.WindowManager
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
+import androidx.core.graphics.drawable.toDrawable
+import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.ViewModelProvider
+import io.github.h3nb.jlmodplus.MainActivity
+import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
+import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
+import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
+import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
+
+class BulkInstallerDialog : DialogFragment() {
+    private lateinit var libraryViewModel: LibraryViewModel
+    private lateinit var bulkViewModel: BulkInstallViewModel
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        libraryViewModel = ViewModelProvider(requireActivity())[LibraryViewModel::class.java]
+        bulkViewModel = ViewModelProvider(this)[BulkInstallViewModel::class.java]
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        isCancelable = false
+        if (bulkViewModel.state.value is BulkInstallViewModel.State.Idle) {
+            val args = requireArguments()
+            val omittedWarning = args.getInt(ARG_OMITTED_SOURCES).takeIf { it > 0 }?.let { omitted ->
+                resources.getQuantityString(
+                    R.plurals.bulk_install_omitted_sources,
+                    omitted,
+                    omitted,
+                )
+            }
+            val bundleUri = args.getString(ARG_BUNDLE_URI)
+            val reinstallAppIds = args.getLongArray(ARG_REINSTALL_APP_IDS)
+            if (reinstallAppIds != null) {
+                bulkViewModel.planReinstall(
+                    context = requireContext(),
+                    appIds = reinstallAppIds.toList(),
+                    library = libraryViewModel,
+                    executeImmediately = true,
+                )
+            } else if (bundleUri != null) {
+                bulkViewModel.planUniversalBundle(
+                    context = requireContext(),
+                    uriString = bundleUri,
+                    library = libraryViewModel,
+                    warning = omittedWarning,
+                )
+            } else {
+                bulkViewModel.planExplicit(
+                    args.getStringArrayList(ARG_SOURCES).orEmpty(),
+                    libraryViewModel,
+                    omittedWarning,
+                )
+            }
+        }
+    }
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val compose = ComposeView(requireContext()).apply {
+            setContent {
+                JLModPlusTheme {
+                    val state by bulkViewModel.state.collectAsState()
+                    BulkInstallSurface(
+                        state = state,
+                        onToggle = bulkViewModel::toggle,
+                        onRecommended = bulkViewModel::selectRecommended,
+                        onClear = bulkViewModel::clearSelection,
+                        onInstall = { bulkViewModel.execute(libraryViewModel) },
+                        onRetry = { bulkViewModel.reviewUnfinished(libraryViewModel) },
+                        onCancel = bulkViewModel::cancel,
+                        onClose = {
+                            bulkViewModel.close()
+                            dismissAllowingStateLoss()
+                        },
+                    )
+                }
+            }
+        }
+        return Dialog(requireContext(), theme).apply {
+            setContentView(compose)
+            setCancelable(false)
+            setCanceledOnTouchOutside(false)
+            window?.setBackgroundDrawable(android.graphics.Color.TRANSPARENT.toDrawable())
+        }
+    }
+
+    override fun onDismiss(dialog: android.content.DialogInterface) {
+        super.onDismiss(dialog)
+        val args = arguments
+        val requestId = args?.getString(ARG_REQUEST_ID)
+        val bundleUri = args?.getString(ARG_BUNDLE_URI)
+        val activity = activity
+        if (activity is MainActivity) {
+            if (requestId != null && bundleUri != null) {
+                activity.completeInstallerRequest(requestId, bundleUri.toUri())
+            }
+            activity.onInstallerDialogDismissed()
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val window = dialog?.window ?: return
+        window.setBackgroundDrawable(android.graphics.Color.TRANSPARENT.toDrawable())
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+    }
+
+    companion object {
+        private const val ARG_SOURCES = "BulkInstallerDialog.sources"
+        private const val ARG_OMITTED_SOURCES = "BulkInstallerDialog.omittedSources"
+        private const val ARG_BUNDLE_URI = "BulkInstallerDialog.bundleUri"
+        private const val ARG_REINSTALL_APP_IDS = "BulkInstallerDialog.reinstallAppIds"
+        private const val ARG_REQUEST_ID = "BulkInstallerDialog.requestId"
+        private const val MAX_EXPLICIT_SOURCES = 500
+        const val TAG = "BulkInstallerDialog"
+
+        @JvmStatic
+        fun newFiles(uris: List<Uri>): BulkInstallerDialog = BulkInstallerDialog().apply {
+            val distinct = uris.distinctBy(Uri::toString)
+            val bounded = distinct.take(MAX_EXPLICIT_SOURCES)
+            arguments = Bundle().apply {
+                putStringArrayList(ARG_SOURCES, ArrayList(bounded.map(Uri::toString)))
+                putInt(ARG_OMITTED_SOURCES, distinct.size - bounded.size)
+            }
+        }
+
+        @JvmStatic
+        fun newReinstall(appIds: Collection<Long>): BulkInstallerDialog =
+            BulkInstallerDialog().apply {
+                arguments = Bundle().apply {
+                    putLongArray(ARG_REINSTALL_APP_IDS, appIds.distinct().sorted().toLongArray())
+                }
+            }
+
+        @JvmStatic
+        fun newBundle(uri: Uri, requestId: String? = null): BulkInstallerDialog =
+            BulkInstallerDialog().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_BUNDLE_URI, uri.toString())
+                    requestId?.let { putString(ARG_REQUEST_ID, it) }
+                }
+            }
+    }
+}
+
+@Composable
+internal fun BulkInstallSurface(
+    state: BulkInstallViewModel.State,
+    onToggle: (String) -> Unit,
+    onRecommended: () -> Unit,
+    onClear: () -> Unit,
+    onInstall: () -> Unit,
+    onRetry: () -> Unit,
+    onCancel: () -> Unit,
+    onClose: () -> Unit,
+) {
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing),
+        contentAlignment = Alignment.Center,
+    ) {
+        val compactWidth = maxWidth < 360.dp
+        val compactHeight = maxHeight < 480.dp
+        val compactHeader = compactWidth || compactHeight
+        val dialogLayout = adaptiveDialogLayout(maxWidth, maxHeight)
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = 6.dp,
+                modifier = dialogLayout.modifier,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = if (compactWidth) 16.dp else 20.dp,
+                            vertical = if (compactHeight) 12.dp else 16.dp,
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(if (compactHeader) 8.dp else 12.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.bulk_install_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    when (state) {
+                        BulkInstallViewModel.State.Idle -> PlanningContent(onClose = onClose)
+                        is BulkInstallViewModel.State.Planning -> PlanningContent(state.sourceLabel, onClose)
+                        is BulkInstallViewModel.State.Review -> ReviewContent(
+                            plan = state.plan,
+                            onToggle = onToggle,
+                            onRecommended = onRecommended,
+                            onClear = onClear,
+                            onInstall = onInstall,
+                            onClose = onClose,
+                            compactHeader = compactHeader,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        is BulkInstallViewModel.State.Running -> RunningContent(
+                            state = state,
+                            onCancel = onCancel,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        is BulkInstallViewModel.State.Finished -> FinishedContent(
+                            state,
+                            onClose,
+                            onRetry,
+                            Modifier.weight(1f, fill = false),
+                        )
+                        is BulkInstallViewModel.State.Error -> ErrorContent(
+                            message = state.message,
+                            onClose = onClose,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlanningContent(label: String? = null, onClose: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        CircularProgressIndicator(modifier = Modifier.size(40.dp))
+        Text(stringResource(R.string.bulk_install_planning))
+        if (!label.isNullOrBlank()) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        TextButton(onClick = onClose) {
+            Text(stringResource(R.string.bulk_install_cancel))
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun ReviewContent(
+    plan: BulkInstallPlan,
+    onToggle: (String) -> Unit,
+    onRecommended: () -> Unit,
+    onClear: () -> Unit,
+    onInstall: () -> Unit,
+    onClose: () -> Unit,
+    compactHeader: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val listState = rememberLazyListState()
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false),
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(
+                                pluralStringResource(
+                                    R.plurals.bulk_install_found,
+                                    plan.items.size,
+                                    plan.items.size,
+                                ),
+                                style = if (compactHeader) {
+                                    MaterialTheme.typography.bodySmall
+                                } else {
+                                    MaterialTheme.typography.bodyMedium
+                                },
+                            )
+                            Text(
+                                text = pluralStringResource(
+                                    R.plurals.bulk_install_selected,
+                                    plan.selectedCount,
+                                    plan.selectedCount,
+                                ),
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary,
+                                style = if (compactHeader) {
+                                    MaterialTheme.typography.bodySmall
+                                } else {
+                                    MaterialTheme.typography.bodyMedium
+                                },
+                            )
+                        }
+                        ReviewStatusSummary(plan, compactHeader)
+                        if (plan.warnings.isNotEmpty()) {
+                            Text(
+                                text = pluralStringResource(
+                                    R.plurals.bulk_install_warning_count,
+                                    plan.warnings.size,
+                                    plan.warnings.size,
+                                ),
+                                modifier = Modifier.padding(top = 4.dp),
+                                color = MaterialTheme.colorScheme.tertiary,
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                            Text(
+                                text = plan.warnings.first(),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            OutlinedButton(onClick = onRecommended) {
+                                Text(stringResource(R.string.bulk_install_recommended))
+                            }
+                            OutlinedButton(onClick = onClear, enabled = plan.selectedCount > 0) {
+                                Text(stringResource(R.string.bulk_install_clear))
+                            }
+                        }
+                        HorizontalDivider()
+                    }
+                }
+                if (plan.items.isEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.bulk_install_empty),
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                items(plan.items, key = { it.id }) { item ->
+                    BulkItemRow(item, onToggle)
+                }
+            }
+            ScrollableContentHint(
+                visible = canScrollForward,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+        HorizontalDivider()
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TextButton(onClick = onClose) {
+                Text(stringResource(R.string.bulk_install_close))
+            }
+            Spacer(Modifier.size(8.dp))
+            Button(onClick = onInstall, enabled = plan.selectedCount > 0) {
+                Text(stringResource(R.string.bulk_install_install_count, plan.selectedCount))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewStatusSummary(plan: BulkInstallPlan, compact: Boolean) {
+    val ready = plan.items.count {
+        it.status == BulkInstallStatus.New || it.status == BulkInstallStatus.Update
+    }
+    val skipped = plan.items.count {
+        it.status == BulkInstallStatus.AlreadyInstalled || it.status == BulkInstallStatus.Duplicate
+    }
+    val attention = plan.items.size - ready - skipped
+    Text(
+        text = listOf(
+            pluralStringResource(R.plurals.bulk_install_ready_count, ready, ready),
+            pluralStringResource(R.plurals.bulk_install_skipped_count, skipped, skipped),
+            pluralStringResource(R.plurals.bulk_install_attention_count, attention, attention),
+        ).joinToString(" · "),
+        modifier = Modifier.padding(top = 2.dp),
+        style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun BulkItemRow(item: BulkInstallItem, onToggle: (String) -> Unit) {
+    val enabled = item.installable
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (enabled) 1f else 0.62f)
+            .toggleable(
+                value = item.selected,
+                enabled = enabled,
+                role = Role.Checkbox,
+                onValueChange = { onToggle(item.id) },
+            )
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Checkbox(
+            checked = item.selected,
+            onCheckedChange = null,
+            enabled = enabled,
+        )
+        Column(
+            modifier = Modifier.weight(1f).padding(start = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = item.name,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (item.vendor.isNotBlank() || item.version.isNotBlank()) {
+                Text(
+                    text = listOf(item.vendor, item.version).filter(String::isNotBlank).joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            val statusColor = statusColor(item.status)
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = statusColor.copy(alpha = 0.12f),
+                contentColor = statusColor,
+            ) {
+                Text(
+                    text = statusLabel(item.status),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+            if (item.selected && item.action == BulkInstallAction.InstallSeparateCopy) {
+                Text(
+                    stringResource(R.string.bulk_install_action_separate_copy),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            if (item.selected && item.action == BulkInstallAction.InstallJarOnly) {
+                Text(
+                    stringResource(R.string.bulk_install_action_jar_only),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            item.installedVersion?.let {
+                Text(
+                    stringResource(R.string.bulk_install_installed_version, it),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            item.detail?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                text = stringResource(R.string.bulk_install_source, item.unit.primaryFile.path),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RunningContent(
+    state: BulkInstallViewModel.State.Running,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val progress = if (state.total == 0) 0f else state.completed.toFloat() / state.total.toFloat()
+    val progressLabel = stringResource(
+        R.string.bulk_install_running,
+        state.completed.coerceAtMost(state.total),
+        state.total,
+    )
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(progressLabel)
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = progressLabel },
+            )
+            Text(
+                state.currentName,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            ResultCounters(state.results)
+            state.stageLabel?.let { Text(stringResource(it)) }
+            if (state.cancelRequested) {
+                Text(
+                    stringResource(R.string.bulk_install_cancel_requested),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            OutlinedButton(onClick = onCancel, enabled = !state.cancelRequested) {
+                Text(stringResource(R.string.bulk_install_cancel))
+            }
+        }
+    }
+}
+
+@Composable
+private fun FinishedContent(
+    state: BulkInstallViewModel.State.Finished,
+    onClose: () -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val listState = rememberLazyListState()
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
+    Box(modifier.fillMaxWidth()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth().testTag("bulk-results"),
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item {
+                Text(
+                    if (state.cancelled) stringResource(R.string.bulk_install_cancelled)
+                    else stringResource(R.string.bulk_install_complete),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                state.fatalError?.let {
+                    Text(stringResource(R.string.bulk_install_fatal, it),
+                        color = MaterialTheme.colorScheme.error)
+                }
+            }
+            item {
+                FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    if (state.results.any { it.kind == BulkInstallResultKind.Failed ||
+                            it.kind == BulkInstallResultKind.PartiallyInstalled ||
+                            it.kind == BulkInstallResultKind.NotProcessed }) {
+                        TextButton(onClick = onRetry) {
+                            Text(stringResource(R.string.installer_retry_remaining))
+                        }
+                    }
+                    Button(onClick = onClose) { Text(stringResource(R.string.bulk_install_close)) }
+                }
+            }
+            item { ResultCounters(state.results) }
+            items(state.results, key = { it.itemId }) { result ->
+                Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Text(result.name, style = MaterialTheme.typography.titleSmall)
+                    Text(resultLabel(result.kind), style = MaterialTheme.typography.labelMedium,
+                        color = if (result.kind == BulkInstallResultKind.Failed ||
+                            result.kind == BulkInstallResultKind.PartiallyInstalled)
+                            MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                    result.detail?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                HorizontalDivider()
+            }
+        }
+        ScrollableContentHint(visible = canScrollForward,
+            modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+@Composable
+private fun resultLabel(kind: BulkInstallResultKind): String = stringResource(
+    when (kind) {
+        BulkInstallResultKind.Installed -> R.string.bulk_install_result_installed
+        BulkInstallResultKind.Updated -> R.string.bulk_install_result_updated
+        BulkInstallResultKind.Reinstalled -> R.string.bulk_install_result_reinstalled
+        BulkInstallResultKind.Skipped -> R.string.bulk_install_result_skipped
+        BulkInstallResultKind.Failed -> R.string.bulk_install_result_failed
+        BulkInstallResultKind.PartiallyInstalled -> R.string.installer_partial_restore
+        BulkInstallResultKind.NotProcessed -> R.string.installer_not_processed
+    },
+)
+
+@Composable
+private fun ErrorContent(
+    message: String,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
+            color = MaterialTheme.colorScheme.error,
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            Button(onClick = onClose) {
+                Text(stringResource(R.string.bulk_install_close))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResultCounters(results: List<BulkInstallResult>) {
+    val installed = results.count { it.kind == BulkInstallResultKind.Installed }
+    val updated = results.count { it.kind == BulkInstallResultKind.Updated }
+    val reinstalled = results.count { it.kind == BulkInstallResultKind.Reinstalled }
+    val skipped = results.count { it.kind == BulkInstallResultKind.Skipped }
+    val failed = results.count { it.kind == BulkInstallResultKind.Failed ||
+        it.kind == BulkInstallResultKind.PartiallyInstalled }
+    Text(
+        listOf(
+            pluralStringResource(R.plurals.bulk_install_installed_count, installed, installed),
+            pluralStringResource(R.plurals.bulk_install_updated_count, updated, updated),
+            pluralStringResource(
+                R.plurals.bulk_install_reinstalled_count,
+                reinstalled,
+                reinstalled,
+            ),
+            pluralStringResource(
+                R.plurals.bulk_install_skipped_result_count,
+                skipped,
+                skipped,
+            ),
+            pluralStringResource(R.plurals.bulk_install_failed_count, failed, failed),
+        ).joinToString(" · "),
+        style = MaterialTheme.typography.bodySmall,
+    )
+}
+
+@Composable
+private fun statusLabel(status: BulkInstallStatus): String = stringResource(
+    when (status) {
+        BulkInstallStatus.New -> R.string.bulk_install_status_new
+        BulkInstallStatus.Update -> R.string.bulk_install_status_update
+        BulkInstallStatus.Downgrade -> R.string.bulk_install_status_downgrade
+        BulkInstallStatus.AlreadyInstalled -> R.string.bulk_install_status_same
+        BulkInstallStatus.ReinstallOrVariant -> R.string.bulk_install_status_reinstall
+        BulkInstallStatus.AmbiguousInstalledMatch -> R.string.bulk_install_status_ambiguous
+        BulkInstallStatus.JadJarMismatch -> R.string.bulk_install_status_mismatch
+        BulkInstallStatus.Duplicate -> R.string.bulk_install_status_duplicate
+        BulkInstallStatus.OlderBatchCandidate -> R.string.bulk_install_status_older_batch
+        BulkInstallStatus.BatchConflict -> R.string.bulk_install_status_conflict
+        BulkInstallStatus.RemoteSourceUnsupported -> R.string.bulk_install_status_remote
+        BulkInstallStatus.SourceError -> R.string.bulk_install_status_error
+    },
+)
+
+@Composable
+private fun statusColor(status: BulkInstallStatus) = when (status) {
+    BulkInstallStatus.New,
+    BulkInstallStatus.Update,
+    -> MaterialTheme.colorScheme.primary
+
+    BulkInstallStatus.AlreadyInstalled,
+    BulkInstallStatus.Duplicate,
+    -> MaterialTheme.colorScheme.onSurfaceVariant
+
+    BulkInstallStatus.Downgrade,
+    BulkInstallStatus.ReinstallOrVariant,
+    BulkInstallStatus.AmbiguousInstalledMatch,
+    BulkInstallStatus.JadJarMismatch,
+    BulkInstallStatus.OlderBatchCandidate,
+    BulkInstallStatus.BatchConflict,
+    BulkInstallStatus.RemoteSourceUnsupported,
+    -> MaterialTheme.colorScheme.tertiary
+
+    BulkInstallStatus.SourceError -> MaterialTheme.colorScheme.error
+}

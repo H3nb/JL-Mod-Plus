@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  *  Copyright 2022 Yury Kharchenko
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +21,7 @@ import java.util.LinkedList;
 
 import javax.microedition.lcdui.Graphics;
 
-import ru.woesss.j2me.micro3d.Render;
+import io.github.h3nb.jlmodplus.micro3d.Render;
 
 public class Renderer {
 	private final LinkedList<RenderProxy.RenderNode> stack = new LinkedList<>();

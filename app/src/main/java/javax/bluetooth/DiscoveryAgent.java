@@ -180,7 +180,7 @@ public class DiscoveryAgent {
 		if (option == CACHED) {
 			set = discoveredList;
 		} else if (option == PREKNOWN) {
-			if (!ru.playsoftware.j2meloader.util.BluetoothPermissionHelper.ensureConnectPermission()) {
+			if (!io.github.h3nb.jlmodplus.util.BluetoothPermissionHelper.ensureConnectPermission()) {
 				return null;
 			}
 			try {
@@ -294,7 +294,7 @@ public class DiscoveryAgent {
 		if (listener == null) {
 			throw new NullPointerException("DiscoveryListener is null");
 		}
-		if (!ru.playsoftware.j2meloader.util.BluetoothPermissionHelper.hasScanPermission()) {
+		if (!io.github.h3nb.jlmodplus.util.BluetoothPermissionHelper.hasScanPermission()) {
 			return false;
 		}
 		boolean ret;

@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2020-2023 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,9 +26,9 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.config.ShaderInfo;
-import ru.playsoftware.j2meloader.util.FileUtils;
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.config.ShaderInfo;
+import io.github.h3nb.jlmodplus.util.FileUtils;
 
 public class ShaderProgram {
 	private static final String TAG = ShaderProgram.class.getName();

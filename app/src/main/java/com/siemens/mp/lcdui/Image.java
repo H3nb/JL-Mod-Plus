@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2018 Nikita Shakarun
  * Copyright 2024 Yury Kharchenko
  *
@@ -25,7 +26,7 @@ import java.io.OutputStream;
 
 import javax.microedition.io.Connector;
 
-import ru.playsoftware.j2meloader.util.PNGUtils;
+import io.github.h3nb.jlmodplus.util.PNGUtils;
 import ru.woesss.util.TextUtils;
 
 public class Image extends com.siemens.mp.ui.Image {

@@ -1,0 +1,59 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
+ */
+
+package io.github.h3nb.jlmodplus.memory;
+
+import android.os.Bundle;
+import io.github.h3nb.jlmodplus.memory.IMemoryEngineCallback;
+
+/**
+ * Logical API. Result locations are informational only: mutations never accept a physical address,
+ * and bounded Inspector reads are anchored exclusively by a current CandidateId.
+ */
+interface IMemoryEngineService {
+    Bundle getCapabilities();
+    void registerCallback(IMemoryEngineCallback callback);
+    void unregisterCallback(IMemoryEngineCallback callback);
+
+    long startKnownSearch(long runtimeToken, int valueType, int predicate,
+            String firstValue, String secondValue);
+    long startUnknownSearch(long runtimeToken, int valueType);
+    long startGroupSearch(long runtimeToken, int valueType, in String[] values);
+    long refineKnown(long runtimeToken, int valueType, int predicate, String firstValue, String secondValue);
+    long refineRelative(long runtimeToken, int valueType, int predicate, int compareTarget,
+            String firstValue, String secondValue);
+    long undoSearch(long runtimeToken);
+    long refreshCandidates(long runtimeToken, in long[] candidateIds, boolean passiveRefresh);
+    long editCandidates(long runtimeToken, in long[] candidateIds, int valueType,
+            String replacementValue);
+    long filterResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds, boolean keep);
+    long editResults(long runtimeToken, long expectedRevision, in long[] resultIds,
+            int valueType, String replacementValue);
+    long addWatchResults(long runtimeToken, long expectedRevision, in long[] resultIds);
+    long setFreezeResults(long runtimeToken, long expectedRevision, in long[] resultIds,
+            int mode, String firstValue, String secondValue);
+    // Result edits retain the revision displayed by Inspector (Watch uses zero).
+    long editInspectorValue(long runtimeToken, long anchorCandidateId, int relativeOffset,
+            int valueType, long expectedBits, String replacementValue, boolean watchAnchor,
+            long expectedRevision);
+
+    long getResultCount(long runtimeToken);
+    Bundle getSearchSessionInfo(long runtimeToken);
+    // Offset/limit operate on logical result rows owned by the Managed Java target.
+    Bundle getResultPage(long runtimeToken, int offset, int limit);
+    Bundle inspectCandidate(long runtimeToken, long candidateId, int radius, boolean watchAnchor);
+    Bundle getWatchPage(long runtimeToken);
+    long addWatch(long runtimeToken, in long[] candidateIds);
+    long removeWatch(long runtimeToken, in long[] candidateIds);
+    long setWatchLabel(long runtimeToken, long candidateId, String label);
+    long setFreeze(long runtimeToken, in long[] candidateIds, int mode,
+            String firstValue, String secondValue);
+    long clearFreeze(long runtimeToken, in long[] candidateIds);
+    void clearSearch(long runtimeToken);
+    void cancelOperation(long runtimeToken);
+}

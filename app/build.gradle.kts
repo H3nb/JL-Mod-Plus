@@ -42,7 +42,7 @@ android {
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
     compileSdk = rootProject.extra["compileSdk"] as Int
     ndkVersion = rootProject.extra["ndkVersion"] as String
-    namespace = "ru.playsoftware.j2meloader"
+    namespace = "io.github.h3nb.jlmodplus"
 
     defaultConfig {
         applicationId = "io.github.h3nb.jlmodplus"

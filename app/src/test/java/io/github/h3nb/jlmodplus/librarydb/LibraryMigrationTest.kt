@@ -1,0 +1,258 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ */
+package io.github.h3nb.jlmodplus.librarydb
+
+import androidx.room3.Room
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.execSQL
+import com.google.gson.JsonParser
+import java.io.File
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+
+class LibraryMigrationTest {
+    private companion object {
+        const val LEGACY_SCHEMA_VERSION = 2
+    }
+    @get:Rule val temporaryFolder = TemporaryFolder()
+
+    @Test fun migrationRegistryCoversEverySupportedAdjacentVersion() {
+        assertEquals(
+            emptyList<Pair<Int, Int>>(),
+            LibraryMigrations.missingAdjacentTransitions(LibraryDatabase.SCHEMA_VERSION),
+        )
+        val transitions = LibraryMigrations.ALL.map { it.startVersion to it.endVersion }
+        assertEquals(transitions.size, transitions.toSet().size)
+        assertTrue(transitions.all { (start, end) -> end == start + 1 })
+    }
+
+    /**
+     * Rebuild every committed historical Room snapshot as a real SQLite file, then let the current
+     * Room database open it using the exact production migration registry.
+     */
+    @Test fun everyHistoricalSchemaOpensAndMigratesToLatest() = runBlocking {
+        for (version in LibraryMigrations.FIRST_SUPPORTED_VERSION until LibraryDatabase.SCHEMA_VERSION) {
+            val file = File(temporaryFolder.root, "schema-$version.db")
+            createFromCommittedSchema(version, file)
+            val database = openLatest(file)
+            try {
+                // Force Room to open, migrate, and validate instead of only creating a lazy builder.
+                database.libraryDao().getStorageKeys()
+            } finally {
+                database.close()
+            }
+        }
+    }
+
+    @Test fun schema1MigratesToLatestWithoutLosingLibraryOwnedState() = runBlocking {
+        val file = File(temporaryFolder.root, "preserve-state.db")
+        createFromCommittedSchema(1, file)
+        val connection = BundledSQLiteDriver().open(file.absolutePath)
+        try {
+            connection.execSQL(
+                """
+                INSERT INTO apps (
+                    id, storage_key, source_title, source_vendor, source_version,
+                    source_description, custom_title, custom_vendor, custom_version,
+                    custom_description, favorite, added_at, last_played_at, play_count,
+                    total_play_time_ms, icon_revision
+                ) VALUES (
+                    7, 'game', 'Source Game', 'Vendor', '1.0', 'Source description',
+                    'Custom Game', 'Custom Vendor', 'Special', 'Custom description',
+                    1, 100, 200, 3, 4000, 9
+                )
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                "INSERT INTO collections (id, name, normalized_name, created_at, sort_order) " +
+                    "VALUES (5, 'RPG', 'rpg', 300, 0)",
+            )
+            connection.execSQL(
+                "INSERT INTO collection_apps (collection_id, app_id, added_at) VALUES (5, 7, 400)",
+            )
+            connection.execSQL("INSERT INTO play_stat_receipts (session_id) VALUES ('session-1')")
+            connection.execSQL("INSERT INTO library_state (id, bootstrap_state) VALUES (1, 'READY')")
+        } finally {
+            connection.close()
+        }
+
+        val database = openLatest(file)
+        try {
+            val dao = database.libraryDao()
+            val app = requireNotNull(dao.getApp(7))
+            assertEquals("game", app.storageKey)
+            assertEquals("Custom Game", app.customTitle)
+            assertEquals("Custom Vendor", app.customVendor)
+            assertEquals("Special", app.customVersion)
+            assertEquals("Custom description", app.customDescription)
+            assertTrue(app.favorite)
+            assertEquals(100L, app.addedAt)
+            assertEquals(200L, app.lastPlayedAt)
+            assertEquals(3L, app.playCount)
+            assertEquals(4_000L, app.totalPlayTimeMs)
+            assertEquals(9L, app.iconRevision)
+            assertEquals(listOf(7L), dao.getCollectionAppIds(5))
+            assertEquals("READY", dao.getLibraryState()?.bootstrapState)
+            assertEquals(-1L, dao.insertPlayStatReceipt(PlayStatReceiptEntity("session-1")))
+            assertNotNull(dao.getAppByStorageKey("game"))
+        } finally {
+            database.close()
+        }
+    }
+
+    @Test fun legacySchema2OpensAndMigratesToLatestWithoutLosingLibraryOwnedState() = runBlocking {
+        val legacySchema = legacySchemaFile(LEGACY_SCHEMA_VERSION)
+        val canonicalSchema = schemaFile(LEGACY_SCHEMA_VERSION)
+        assertEquals(legacySchema.readBytes().toList(), canonicalSchema.readBytes().toList())
+
+        val databaseJson = legacySchema.reader().use { reader ->
+            JsonParser.parseReader(reader).asJsonObject.getAsJsonObject("database")
+        }
+        assertEquals(LEGACY_SCHEMA_VERSION, databaseJson.get("version").asInt)
+        val expectedIdentityHash = databaseJson.get("identityHash").asString
+
+        val file = File(temporaryFolder.root, "legacy-v2.db")
+        createFromSchema(legacySchema, LEGACY_SCHEMA_VERSION, file)
+        assertEquals(LEGACY_SCHEMA_VERSION.toLong(), readLong(file, "PRAGMA user_version"))
+        assertEquals(
+            expectedIdentityHash,
+            readText(file, "SELECT identity_hash FROM room_master_table WHERE id = 42"),
+        )
+
+        val connection = BundledSQLiteDriver().open(file.absolutePath)
+        try {
+            connection.execSQL(
+                """
+                INSERT INTO apps (
+                    id, storage_key, source_title, source_vendor, source_version,
+                    source_description, custom_title, custom_vendor, custom_version,
+                    custom_description, favorite, added_at, last_played_at, play_count,
+                    total_play_time_ms, icon_revision
+                ) VALUES (
+                    11, 'legacy-v2-game', 'Legacy v2 Game', 'Vendor', '2.0', 'Source description',
+                    'Preserved v2 Game', 'Custom Vendor', 'Special', 'Custom description',
+                    1, 500, 600, 7, 8000, 12
+                )
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                "INSERT INTO collections (id, name, normalized_name, created_at, sort_order) " +
+                    "VALUES (9, 'Adventure', 'adventure', 700, 1)",
+            )
+            connection.execSQL(
+                "INSERT INTO collection_apps (collection_id, app_id, added_at) VALUES (9, 11, 800)",
+            )
+            connection.execSQL("INSERT INTO play_stat_receipts (session_id) VALUES ('legacy-v2-session')")
+            connection.execSQL("INSERT INTO library_state (id, bootstrap_state) VALUES (1, 'READY')")
+        } finally {
+            connection.close()
+        }
+
+        val database = openLatest(file)
+        try {
+            val dao = database.libraryDao()
+            val app = requireNotNull(dao.getApp(11))
+            assertEquals("legacy-v2-game", app.storageKey)
+            assertEquals("Preserved v2 Game", app.customTitle)
+            assertEquals("Custom Vendor", app.customVendor)
+            assertEquals("Special", app.customVersion)
+            assertEquals("Custom description", app.customDescription)
+            assertTrue(app.favorite)
+            assertEquals(500L, app.addedAt)
+            assertEquals(600L, app.lastPlayedAt)
+            assertEquals(7L, app.playCount)
+            assertEquals(8_000L, app.totalPlayTimeMs)
+            assertEquals(12L, app.iconRevision)
+            assertEquals(listOf(11L), dao.getCollectionAppIds(9))
+            assertEquals("READY", dao.getLibraryState()?.bootstrapState)
+            assertEquals(-1L, dao.insertPlayStatReceipt(PlayStatReceiptEntity("legacy-v2-session")))
+        } finally {
+            database.close()
+        }
+    }
+
+    private fun openLatest(file: File): LibraryDatabase =
+        Room.databaseBuilder<LibraryDatabase>(file.absolutePath)
+            .setDriver(BundledSQLiteDriver())
+            .addMigrations(*LibraryMigrations.ALL)
+            .build()
+
+    private fun createFromCommittedSchema(version: Int, file: File) {
+        require(version < LibraryDatabase.SCHEMA_VERSION) { "Only historical schemas are reconstructed" }
+        createFromSchema(schemaFile(version), version, file)
+    }
+
+    private fun createFromSchema(schema: File, version: Int, file: File) {
+        val databaseJson = schema.reader().use { reader ->
+            JsonParser.parseReader(reader).asJsonObject.getAsJsonObject("database")
+        }
+        assertEquals(version, databaseJson.get("version").asInt)
+
+        val connection = BundledSQLiteDriver().open(file.absolutePath)
+        try {
+            databaseJson.getAsJsonArray("entities").forEach { element ->
+                val entity = element.asJsonObject
+                val tableName = entity.get("tableName").asString
+                connection.execSQL(entity.get("createSql").asString.replace("${'$'}{TABLE_NAME}", tableName))
+                entity.getAsJsonArray("indices")?.forEach { index ->
+                    connection.execSQL(
+                        index.asJsonObject.get("createSql").asString.replace("${'$'}{TABLE_NAME}", tableName),
+                    )
+                }
+            }
+            databaseJson.getAsJsonArray("setupQueries").forEach { query ->
+                connection.execSQL(query.asString)
+            }
+            connection.execSQL("PRAGMA user_version = $version")
+        } finally {
+            connection.close()
+        }
+    }
+
+    private fun readLong(file: File, query: String): Long {
+        val connection = BundledSQLiteDriver().open(file.absolutePath)
+        val statement = connection.prepare(query)
+        return try {
+            assertTrue("Expected a row for $query", statement.step())
+            statement.getLong(0)
+        } finally {
+            statement.close()
+            connection.close()
+        }
+    }
+
+    private fun readText(file: File, query: String): String {
+        val connection = BundledSQLiteDriver().open(file.absolutePath)
+        val statement = connection.prepare(query)
+        return try {
+            assertTrue("Expected a row for $query", statement.step())
+            statement.getText(0)
+        } finally {
+            statement.close()
+            connection.close()
+        }
+    }
+
+    private fun legacySchemaFile(version: Int): File {
+        val relative = "schemas/ru.playsoftware.j2meloader.librarydb.LibraryDatabase/$version.json"
+        val candidates = listOf(File(relative), File("app", relative))
+        return candidates.firstOrNull(File::isFile)
+            ?: error("Legacy Room schema $version not found from ${File(".").absolutePath}")
+    }
+
+    private fun schemaFile(version: Int): File {
+        val relative = "schemas/${LibraryDatabase::class.qualifiedName}/$version.json"
+        val candidates = listOf(File(relative), File("app", relative))
+        return candidates.firstOrNull(File::isFile)
+            ?: error("Room schema $version not found from ${File(".").absolutePath}")
+    }
+}

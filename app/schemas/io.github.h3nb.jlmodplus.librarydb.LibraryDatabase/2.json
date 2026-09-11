@@ -1,0 +1,92 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "b9bfdc9e912275576a5800984be3d4a7",
+    "entities": [
+      {
+        "tableName": "apps",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `storage_key` TEXT NOT NULL, `source_title` TEXT NOT NULL, `source_vendor` TEXT NOT NULL, `source_version` TEXT NOT NULL, `source_description` TEXT, `custom_title` TEXT, `custom_vendor` TEXT, `custom_version` TEXT, `custom_description` TEXT, `favorite` INTEGER NOT NULL, `added_at` INTEGER, `last_played_at` INTEGER, `play_count` INTEGER NOT NULL, `total_play_time_ms` INTEGER NOT NULL, `icon_revision` INTEGER NOT NULL)",
+        "fields": [
+          {"fieldPath": "id", "columnName": "id", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "storageKey", "columnName": "storage_key", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "sourceTitle", "columnName": "source_title", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "sourceVendor", "columnName": "source_vendor", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "sourceVersion", "columnName": "source_version", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "sourceDescription", "columnName": "source_description", "affinity": "TEXT"},
+          {"fieldPath": "customTitle", "columnName": "custom_title", "affinity": "TEXT"},
+          {"fieldPath": "customVendor", "columnName": "custom_vendor", "affinity": "TEXT"},
+          {"fieldPath": "customVersion", "columnName": "custom_version", "affinity": "TEXT"},
+          {"fieldPath": "customDescription", "columnName": "custom_description", "affinity": "TEXT"},
+          {"fieldPath": "favorite", "columnName": "favorite", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "addedAt", "columnName": "added_at", "affinity": "INTEGER"},
+          {"fieldPath": "lastPlayedAt", "columnName": "last_played_at", "affinity": "INTEGER"},
+          {"fieldPath": "playCount", "columnName": "play_count", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "totalPlayTimeMs", "columnName": "total_play_time_ms", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "iconRevision", "columnName": "icon_revision", "affinity": "INTEGER", "notNull": true}
+        ],
+        "primaryKey": {"autoGenerate": true, "columnNames": ["id"]},
+        "indices": [
+          {"name": "index_apps_storage_key", "unique": true, "columnNames": ["storage_key"], "orders": [], "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_apps_storage_key` ON `${TABLE_NAME}` (`storage_key`)"},
+          {"name": "index_apps_source_title_source_vendor", "unique": false, "columnNames": ["source_title", "source_vendor"], "orders": [], "createSql": "CREATE INDEX IF NOT EXISTS `index_apps_source_title_source_vendor` ON `${TABLE_NAME}` (`source_title`, `source_vendor`)"},
+          {"name": "index_apps_favorite", "unique": false, "columnNames": ["favorite"], "orders": [], "createSql": "CREATE INDEX IF NOT EXISTS `index_apps_favorite` ON `${TABLE_NAME}` (`favorite`)"},
+          {"name": "index_apps_added_at", "unique": false, "columnNames": ["added_at"], "orders": [], "createSql": "CREATE INDEX IF NOT EXISTS `index_apps_added_at` ON `${TABLE_NAME}` (`added_at`)"},
+          {"name": "index_apps_last_played_at", "unique": false, "columnNames": ["last_played_at"], "orders": [], "createSql": "CREATE INDEX IF NOT EXISTS `index_apps_last_played_at` ON `${TABLE_NAME}` (`last_played_at`)"}
+        ]
+      },
+      {
+        "tableName": "collections",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `normalized_name` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `sort_order` INTEGER NOT NULL)",
+        "fields": [
+          {"fieldPath": "id", "columnName": "id", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "name", "columnName": "name", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "normalizedName", "columnName": "normalized_name", "affinity": "TEXT", "notNull": true},
+          {"fieldPath": "createdAt", "columnName": "created_at", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "sortOrder", "columnName": "sort_order", "affinity": "INTEGER", "notNull": true}
+        ],
+        "primaryKey": {"autoGenerate": true, "columnNames": ["id"]},
+        "indices": [
+          {"name": "index_collections_normalized_name", "unique": true, "columnNames": ["normalized_name"], "orders": [], "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_collections_normalized_name` ON `${TABLE_NAME}` (`normalized_name`)"}
+        ]
+      },
+      {
+        "tableName": "collection_apps",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`collection_id` INTEGER NOT NULL, `app_id` INTEGER NOT NULL, `added_at` INTEGER NOT NULL, PRIMARY KEY(`collection_id`, `app_id`), FOREIGN KEY(`collection_id`) REFERENCES `collections`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`app_id`) REFERENCES `apps`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {"fieldPath": "collectionId", "columnName": "collection_id", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "appId", "columnName": "app_id", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "addedAt", "columnName": "added_at", "affinity": "INTEGER", "notNull": true}
+        ],
+        "primaryKey": {"autoGenerate": false, "columnNames": ["collection_id", "app_id"]},
+        "indices": [
+          {"name": "index_collection_apps_app_id", "unique": false, "columnNames": ["app_id"], "orders": [], "createSql": "CREATE INDEX IF NOT EXISTS `index_collection_apps_app_id` ON `${TABLE_NAME}` (`app_id`)"}
+        ],
+        "foreignKeys": [
+          {"table": "collections", "onDelete": "CASCADE", "onUpdate": "NO ACTION", "columns": ["collection_id"], "referencedColumns": ["id"]},
+          {"table": "apps", "onDelete": "CASCADE", "onUpdate": "NO ACTION", "columns": ["app_id"], "referencedColumns": ["id"]}
+        ]
+      },
+      {
+        "tableName": "play_stat_receipts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`session_id` TEXT NOT NULL, PRIMARY KEY(`session_id`))",
+        "fields": [
+          {"fieldPath": "sessionId", "columnName": "session_id", "affinity": "TEXT", "notNull": true}
+        ],
+        "primaryKey": {"autoGenerate": false, "columnNames": ["session_id"]}
+      },
+      {
+        "tableName": "library_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `bootstrap_state` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {"fieldPath": "id", "columnName": "id", "affinity": "INTEGER", "notNull": true},
+          {"fieldPath": "bootstrapState", "columnName": "bootstrap_state", "affinity": "TEXT", "notNull": true}
+        ],
+        "primaryKey": {"autoGenerate": false, "columnNames": ["id"]}
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b9bfdc9e912275576a5800984be3d4a7')"
+    ]
+  }
+}

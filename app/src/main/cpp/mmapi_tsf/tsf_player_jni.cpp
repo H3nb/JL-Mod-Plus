@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_loadSoundBank
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_loadSoundBank
 (JNIEnv *env, jobject /*thiz*/, jstring sound_bank) {
     if (sound_bank == nullptr) {
         env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "Sound bank file is null");
@@ -26,7 +26,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_loadSoundBank
     }
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_createPlayer
+JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_createPlayer
 (JNIEnv *env, jobject /*thiz*/, jstring pLocator) {
     mmapi::tiny::Player *player;
     util::JStringPtr locator(env, pLocator);
@@ -38,13 +38,13 @@ JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_createPlayer
     return reinterpret_cast<jlong>(player);
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_finalize
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_finalize
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     delete player;
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_realize
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_realize
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     if (!player->realize()) {
@@ -52,7 +52,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_realize
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_prefetch
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_prefetch
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     oboe::Result result = player->prefetch();
@@ -62,7 +62,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_prefetch
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_start
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_start
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     oboe::Result result = player->start();
@@ -72,7 +72,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_start
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_pause
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_pause
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     oboe::Result result = player->pause();
@@ -82,55 +82,55 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_pause
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_deallocate
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_deallocate
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     player->deallocate();
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_close
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_close
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     player->close();
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_setMediaTime
+JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_setMediaTime
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle, jlong now) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     return player->setMediaTime(now);
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_getMediaTime
+JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_getMediaTime
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     return player->getMediaTime();
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_setRepeat
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_setRepeat
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle, jint count) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     player->setRepeat(count);
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_setVolume
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_setVolume
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle, jfloat left, jfloat right) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     player->setVolume(left, right);
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_getDuration
+JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_getDuration
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     return player->duration;
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_setListener
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_setListener
 (JNIEnv *env, jobject /*thiz*/, jlong handle, jobject listener) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     player->setListener(new mmapi::PlayerListener(env, listener));
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_setDataSource
+JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_tsf_LibTSF_setDataSource
 (JNIEnv *env, jobject /*thiz*/, jlong handle, jbyteArray data) {
     auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
     util::JByteArrayPtr ptr(env, data);
