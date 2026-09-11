@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2021 Nikita Shakarun
  * Copyright 2019-2023 Yury Kharchenko

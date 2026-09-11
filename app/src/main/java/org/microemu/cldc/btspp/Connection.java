@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2018 cerg2010cerg2010
  * Copyright 2026 Yury Kharchenko
  *

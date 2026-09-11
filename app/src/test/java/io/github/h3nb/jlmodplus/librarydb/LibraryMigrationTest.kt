@@ -20,6 +20,9 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 class LibraryMigrationTest {
+    private companion object {
+        const val LEGACY_SCHEMA_VERSION = 2
+    }
     @get:Rule val temporaryFolder = TemporaryFolder()
 
     @Test fun migrationRegistryCoversEverySupportedAdjacentVersion() {
@@ -106,20 +109,20 @@ class LibraryMigrationTest {
         }
     }
 
-    @Test fun legacySchema2OpensAtSameVersionWithoutLosingLibraryOwnedState() = runBlocking {
-        val legacySchema = legacySchemaFile(LibraryDatabase.SCHEMA_VERSION)
-        val canonicalSchema = schemaFile(LibraryDatabase.SCHEMA_VERSION)
+    @Test fun legacySchema2OpensAndMigratesToLatestWithoutLosingLibraryOwnedState() = runBlocking {
+        val legacySchema = legacySchemaFile(LEGACY_SCHEMA_VERSION)
+        val canonicalSchema = schemaFile(LEGACY_SCHEMA_VERSION)
         assertEquals(legacySchema.readBytes().toList(), canonicalSchema.readBytes().toList())
 
         val databaseJson = legacySchema.reader().use { reader ->
             JsonParser.parseReader(reader).asJsonObject.getAsJsonObject("database")
         }
-        assertEquals(LibraryDatabase.SCHEMA_VERSION, databaseJson.get("version").asInt)
+        assertEquals(LEGACY_SCHEMA_VERSION, databaseJson.get("version").asInt)
         val expectedIdentityHash = databaseJson.get("identityHash").asString
 
         val file = File(temporaryFolder.root, "legacy-v2.db")
-        createFromSchema(legacySchema, LibraryDatabase.SCHEMA_VERSION, file)
-        assertEquals(LibraryDatabase.SCHEMA_VERSION.toLong(), readLong(file, "PRAGMA user_version"))
+        createFromSchema(legacySchema, LEGACY_SCHEMA_VERSION, file)
+        assertEquals(LEGACY_SCHEMA_VERSION.toLong(), readLong(file, "PRAGMA user_version"))
         assertEquals(
             expectedIdentityHash,
             readText(file, "SELECT identity_hash FROM room_master_table WHERE id = 42"),

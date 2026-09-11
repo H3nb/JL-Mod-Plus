@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * MicroEmulator
  * Copyright (C) 2008 Bartek Teodorczyk <barteo@barteo.net>
  * Copyright (C) 2017-2018 Nikita Shakarun

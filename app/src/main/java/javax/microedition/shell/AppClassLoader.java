@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2021 Nikita Shakarun
  * Copyright 2020-2023 Yury Kharchenko
