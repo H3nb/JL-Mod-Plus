@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="memory_editor_bubble">Bubble Editor Memori</string>
+    <string name="memory_editor">Editor Memori</string>
+    <string name="memory_editor_search_hint">Nilai</string>
+    <string name="memory_editor_next_scan">Pindai berikutnya</string>
+    <string name="memory_editor_new_search">Pencarian baru</string>
+    <plurals name="memory_editor_results">
+        <item quantity="other">%1$d hasil</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="other">%1$d kandidat</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="other">Pencarian selesai · %1$d kandidat</item>
+    </plurals>
+    <string name="memory_editor_no_results">Belum ada hasil</string>
+    <string name="memory_editor_no_watch">Pantauan masih kosong</string>
+    <string name="memory_editor_unsupported">Editor Memori tidak tersedia untuk runtime/perangkat ini.</string>
+    <string name="memory_editor_engine_unavailable">Mesin Editor Memori tidak tersedia.</string>
+    <string name="memory_editor_engine_reconnecting">Editor Memori sedang menyambung ulang…</string>
+    <string name="memory_editor_refresh">Segarkan</string>
+    <string name="memory_editor_undo">Urungkan</string>
+    <string name="memory_editor_watch">Pantauan</string>
+    <string name="memory_editor_search_tab">Cari</string>
+    <string name="memory_editor_search_known_values">Cari nilai yang diketahui</string>
+    <string name="memory_editor_search_unknown_values">Cari nilai yang tidak diketahui</string>
+    <string name="memory_editor_add_to_watch">Tambahkan pilihan ke Pantauan</string>
+    <string name="memory_editor_no_candidates">Kandidat Managed tidak ditemukan</string>
+    <string name="memory_editor_edit">Ubah</string>
+    <string name="memory_editor_edit_batch">Ubah %1$d nilai</string>
+    <string name="memory_editor_edit_batch_help">Satu nilai pengganti akan diterapkan ke semua target yang dipilih. Opsi Pantau dan Bekukan tidak tersedia untuk perubahan massal.</string>
+    <string name="memory_editor_edit_batch_no_common_type">Kelompok hasil yang dipilih tidak memiliki tipe data bersama. Edit subset yang kompatibel secara terpisah.</string>
+    <string name="memory_editor_save">Simpan</string>
+    <string name="memory_editor_replacement">Nilai pengganti</string>
+    <string name="memory_editor_freeze">Bekukan</string>
+    <string name="memory_editor_remove">Hapus</string>
+    <string name="memory_editor_select_visible">Pilih terlihat</string>
+    <string name="memory_editor_select">Pilih</string>
+    <string name="memory_editor_clear_selection">Hapus pilihan</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="other">%1$d dipilih</item>
+    </plurals>
+    <string name="memory_editor_close">Tutup Editor Memori</string>
+    <string name="memory_editor_cancel">Batalkan operasi</string>
+    <string name="memory_editor_searching">Mencari di memori…</string>
+    <string name="memory_editor_working">Menjalankan operasi…</string>
+    <string name="memory_editor_search_progress">Memindai %1$d dari %2$d MiB</string>
+    <string name="memory_editor_candidate_moved">Alamat diperbarui</string>
+    <string name="memory_editor_candidate_relocating">Memverifikasi ulang</string>
+    <string name="memory_editor_candidate_ambiguous">Ambigu — penulisan dijeda</string>
+    <string name="memory_editor_candidate_lost">Hilang — penulisan dijeda</string>
+    <string name="memory_editor_apply">Terapkan</string>
+    <string name="memory_editor_max_value">Nilai maksimum</string>
+    <string name="memory_editor_unfreeze">Lepas pembekuan</string>
+    <string name="memory_editor_cancelled">Operasi dibatalkan.</string>
+    <string name="memory_editor_resource_limit">Hasil lengkap akan melampaui batas sumber daya aman. Pilih tipe atau cakupan yang lebih sempit.</string>
+    <string name="memory_editor_identity_unsafe">Nilai telah berpindah atau berubah sebelum dapat diverifikasi. Segarkan hasil atau buka ulang Inspektor, lalu coba lagi.</string>
+    <string name="memory_editor_safety_limit">Terlalu banyak kandidat dipilih untuk operasi aman ini.</string>
+    <string name="memory_editor_invalid_request">Nilai atau operasi tidak valid.</string>
+    <string name="memory_editor_freeze_paused">Dijeda demi keamanan</string>
+    <string name="memory_editor_predicate_between">Di antara</string>
+    <string name="memory_editor_predicate_changed">Berubah</string>
+    <string name="memory_editor_predicate_unchanged">Tidak berubah</string>
+    <string name="memory_editor_predicate_increased">Meningkat</string>
+    <string name="memory_editor_predicate_decreased">Menurun</string>
+    <string name="memory_editor_predicate_increased_by">Meningkat sebesar</string>
+    <string name="memory_editor_predicate_decreased_by">Menurun sebesar</string>
+    <string name="memory_editor_predicate_changed_by">Berubah sebesar</string>
+    <string name="memory_editor_predicate_increased_range">Meningkat dalam rentang</string>
+    <string name="memory_editor_predicate_decreased_range">Menurun dalam rentang</string>
+    <string name="memory_editor_current_value">Saat ini</string>
+    <string name="memory_editor_inspector">Inspektor</string>
+    <string name="memory_editor_inspect_memory">Periksa memori sekitar</string>
+    <string name="memory_editor_inspector_loading">Memverifikasi kandidat dan membaca snapshot terbatas…</string>
+    <string name="memory_editor_inspector_empty">Pilih hasil, lalu buka Inspektor untuk melihat dan mengedit snapshot memori terbatas di sekitarnya.</string>
+    <string name="memory_editor_refresh_snapshot">Segarkan snapshot</string>
+    <string name="memory_editor_select_result_value">Pilih hasil ini</string>
+    <string name="memory_editor_freeze_after_edit">Bekukan setelah diterapkan</string>
+    <string name="memory_editor_freeze_after_edit_help">Gunakan nilai pengganti sebagai kunci dan otomatis tambahkan kandidat ke Pantauan.</string>
+
+    <string name="memory_editor_expression_single_hint">Masukkan satu nilai, atau gunakan ; untuk mencari beberapa nilai dalam satu grup.</string>
+    <string name="memory_editor_expression_group_needs_type">Pilih jenis data tertentu untuk Pencarian Grup.</string>
+    <string name="memory_editor_expression_group_hint">Pencarian Grup · %1$d nilai · pemilik Java Terkelola yang sama</string>
+    <string name="memory_editor_expression_query_help">Contoh: 500 · 500;1000. Pencarian Grup memakai 2–8 nilai dari satu pemilik Java Terkelola.</string>
+    <string name="memory_editor_keypad_clear">Bersihkan</string>
+    <string name="memory_editor_peek_underlay">Tekan dan tahan untuk melihat MIDlet di bawah</string>
+    <string name="memory_editor_peek_underlay_active">MIDlet di bawah sedang ditampilkan</string>
+</resources>

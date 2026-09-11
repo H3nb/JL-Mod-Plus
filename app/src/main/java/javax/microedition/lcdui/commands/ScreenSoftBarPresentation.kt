@@ -49,6 +49,15 @@ internal object ScreenSoftBarPolicy {
             middle?.let(::remove)
             right?.let(::remove)
         }
+        // Keep ordinary ITEM commands ahead of EXIT/CANCEL/etc. in the overflow menu.
+        // Command.compareTo intentionally preserves the MIDP type/priority ordering, but
+        // the soft-key overflow is a user-facing action list where ITEM actions are the
+        // primary choices and terminal actions belong at the end.
+        val overflowOrder = compareBy<Command>(
+            { it.commandType != Command.ITEM },
+            { it.commandType },
+            { it.priority },
+        )
 
         val arranged = buildList {
             right?.let(::add)
@@ -63,7 +72,7 @@ internal object ScreenSoftBarPolicy {
             menuStart++
         }
 
-        val menuCandidates = arranged.drop(menuStart)
+        val menuCandidates = arranged.drop(menuStart).sortedWith(overflowOrder)
         val middleSlot = if (right != null) middle else null
         val rightSlot = when {
             right != null -> right

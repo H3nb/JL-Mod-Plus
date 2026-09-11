@@ -63,6 +63,8 @@ public class AndroidProducerDexTest {
 			// allocation/constructor verifier shape valid for subclasses and non-canonical code.
 			assertEquals(1, countMethods(dex, bridge, "currentTimeMillis"));
 			assertEquals(2, countMethods(dex, bridge, "calendarInstance"));
+			String memoryBridge = "Ljavax/microedition/shell/MemoryDiscoveryBridge;";
+			assertEquals(1, countMethods(dex, memoryBridge, "tailSeen"));
 			String systemBridge = "Ljavax/microedition/shell/MidletSystem;";
 			assertEquals(2, countMethods(dex, systemBridge, "gc"));
 			assertEquals(0, countMethods(dex, "Ljava/lang/System;", "gc"));
@@ -119,6 +121,14 @@ public class AndroidProducerDexTest {
 		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 		writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, "sample/Timing", null,
 				"java/lang/Object", null);
+		writer.visitField(Opcodes.ACC_STATIC, "managedValue", "I", null, null).visitEnd();
+		MethodVisitor initializer = writer.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
+		initializer.visitCode();
+		initializer.visitInsn(Opcodes.ICONST_1);
+		initializer.visitFieldInsn(Opcodes.PUTSTATIC, "sample/Timing", "managedValue", "I");
+		initializer.visitInsn(Opcodes.RETURN);
+		initializer.visitMaxs(1, 0);
+		initializer.visitEnd();
 		createClockAndSleepMethod(writer);
 		createExplicitGcMethod(writer);
 		createWaitMethod(writer);

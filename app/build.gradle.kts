@@ -4,6 +4,7 @@ import java.util.Locale
 import java.util.Properties
 import java.util.jar.Attributes
 import java.util.jar.Manifest
+import java.util.zip.ZipFile
 
 plugins {
     alias(libs.plugins.android.application)
@@ -58,6 +59,7 @@ android {
     androidResources.generateLocaleConfig = true
 
     buildFeatures {
+        aidl = true
         compose = true
         prefab = true
         buildConfig = true
@@ -193,6 +195,37 @@ androidComponents {
     }
 }
 
+// The Managed Java editor has no Raw JNI dependency. Keep the ABI-specific install artifact
+// honest by rejecting stale memory-editor libraries left by an incremental native build.
+val verifyEmulatorDebugNativePackaging = tasks.register("verifyEmulatorDebugNativePackaging") {
+    dependsOn("packageEmulatorDebug")
+    outputs.upToDateWhen { false }
+    doLast {
+        val abi = runtimeTestAbi ?: "arm64-v8a"
+        val apk = layout.buildDirectory.file(
+            "outputs/apk/emulator/debug/app-emulator-$abi-debug.apk",
+        ).get().asFile
+        check(apk.isFile) {
+            "Expected emulator debug APK for $abi was not produced: ${apk.absolutePath}"
+        }
+        val forbiddenLibraries = listOf("libjlmem.so", "libjlmem_target.so")
+        ZipFile(apk).use { archive ->
+            forbiddenLibraries.forEach { library ->
+                val entry = archive.getEntry("lib/$abi/$library")
+                check(entry == null) {
+                    "${apk.name} still contains removed Raw memory library lib/$abi/$library"
+                }
+            }
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name == "assembleEmulatorDebug") {
+        dependsOn(verifyEmulatorDebugNativePackaging)
+    }
+}
+
 fun getMidletManifestProperties(): Attributes = Manifest().let { mf ->
     project.file("src/midlet/resources/MIDLET-META-INF/MANIFEST.MF").runCatching {
         inputStream().use(mf::read)
@@ -212,6 +245,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.material3.adaptive)
+    implementation(libs.androidx.material3.adaptive.navigation)
     implementation(libs.androidx.material3.adaptive.navigation3)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.compose.ui)

@@ -40,7 +40,10 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.TypePath;
 
 public class AndroidClassVisitor extends ClassVisitor {
+	private static final String CLINIT = "<clinit>";
 	private final String ownerClassName;
+	private boolean hasManagedStaticRootField;
+	private boolean hasClassInitializer;
 
 	AndroidClassVisitor(ClassVisitor cv) {
 		this(cv, null);
@@ -53,6 +56,9 @@ public class AndroidClassVisitor extends ClassVisitor {
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+		if (CLINIT.equals(name)) {
+			hasClassInitializer = true;
+		}
 		desc = TimingTypeMapper.mapDescriptor(desc);
 		signature = TimingTypeMapper.mapSignature(signature);
 		if (exceptions != null) {
@@ -64,7 +70,7 @@ public class AndroidClassVisitor extends ClassVisitor {
 		boolean returnsBoolean = Type.getReturnType(desc).getSort() == Type.BOOLEAN;
 		return new AndroidMethodVisitor(
 				super.visitMethod(access, name, desc, signature, exceptions), returnsBoolean,
-				ownerClassName);
+				ownerClassName, CLINIT.equals(name) && hasManagedStaticRootField);
 	}
 
 	@Override
@@ -131,6 +137,9 @@ public class AndroidClassVisitor extends ClassVisitor {
 		descriptor = TimingTypeMapper.mapDescriptor(descriptor);
 		signature = TimingTypeMapper.mapSignature(signature);
 		value = TimingTypeMapper.mapValue(value);
+		if ((access & Opcodes.ACC_STATIC) != 0 && isManagedStaticRootField(descriptor, value)) {
+			hasManagedStaticRootField = true;
+		}
 		FieldVisitor fieldVisitor = super.visitField(access, name, descriptor, signature, value);
 		if (fieldVisitor == null) {
 			return null;
@@ -150,6 +159,36 @@ public class AndroidClassVisitor extends ClassVisitor {
 								TimingTypeMapper.mapDescriptor(descriptor), visible));
 			}
 		};
+	}
+
+	@Override
+	public void visitEnd() {
+		if (ownerClassName != null && hasManagedStaticRootField && !hasClassInitializer) {
+			MethodVisitor initializer = super.visitMethod(
+					Opcodes.ACC_STATIC, CLINIT, "()V", null, null);
+			if (initializer != null) {
+				initializer.visitCode();
+				initializer.visitLdcInsn(Type.getObjectType(ownerClassName));
+				initializer.visitMethodInsn(
+						Opcodes.INVOKESTATIC,
+						"javax/microedition/shell/MemoryDiscoveryBridge",
+						"tailSeen",
+						"(Ljava/lang/Class;)V",
+						false);
+				initializer.visitInsn(Opcodes.RETURN);
+				initializer.visitMaxs(1, 0);
+				initializer.visitEnd();
+			}
+		}
+		super.visitEnd();
+	}
+
+	private static boolean isManagedStaticRootField(String descriptor, Object value) {
+		Type type = Type.getType(descriptor);
+		if (type.getSort() == Type.ARRAY || type.getSort() == Type.OBJECT) {
+			return true;
+		}
+		return type.getSort() != Type.VOID && value == null;
 	}
 
 	@Override

@@ -42,9 +42,17 @@ public class KeyMapperMappingRulesTest {
 		SparseIntArray updated = KeyMapperMappingRules.assign(original, Canvas.KEY_LEFT, 13);
 
 		assertEquals(Canvas.KEY_LEFT, updated.get(13));
-		assertEquals(-1, updated.indexOfValue(Canvas.KEY_LEFT));
+		assertEquals(1, countValue(updated, Canvas.KEY_LEFT));
 		assertEquals(Canvas.KEY_RIGHT, updated.get(12));
 		assertEquals(Canvas.KEY_LEFT, original.get(10));
+	}
+
+	private static int countValue(SparseIntArray map, int value) {
+		int count = 0;
+		for (int i = 0; i < map.size(); i++) {
+			if (map.valueAt(i) == value) count++;
+		}
+		return count;
 	}
 
 	@Test

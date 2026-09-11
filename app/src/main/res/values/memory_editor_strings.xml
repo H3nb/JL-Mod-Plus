@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="memory_editor_bubble">Memory Editor bubble</string>
+    <string name="memory_editor">Memory Editor</string>
+    <string name="memory_editor_search_hint">Value</string>
+    <string name="memory_editor_next_scan">Next scan</string>
+    <string name="memory_editor_new_search">New search</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one">%1$d result</item>
+        <item quantity="other">%1$d results</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one">%1$d candidate</item>
+        <item quantity="other">%1$d candidates</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Search finished · %1$d candidate</item>
+        <item quantity="other">Search finished · %1$d candidates</item>
+    </plurals>
+    <string name="memory_editor_no_results">No results yet</string>
+    <string name="memory_editor_no_watch">Watch is empty</string>
+    <string name="memory_editor_unsupported">Memory Editor is unavailable for this runtime/device.</string>
+    <string name="memory_editor_engine_unavailable">Memory Editor engine is unavailable.</string>
+    <string name="memory_editor_engine_reconnecting">Memory Editor is reconnecting…</string>
+    <string name="memory_editor_refresh">Refresh</string>
+    <string name="memory_editor_undo">Undo</string>
+    <string name="memory_editor_watch">Watch</string>
+    <string name="memory_editor_search_tab">Search</string>
+    <string name="memory_editor_search_known_values">Search known values</string>
+    <string name="memory_editor_search_unknown_values">Search unknown values</string>
+    <string name="memory_editor_add_to_watch">Add selected to Watch</string>
+    <string name="memory_editor_no_candidates">No managed candidates found</string>
+    <string name="memory_editor_edit">Edit</string>
+    <string name="memory_editor_edit_batch">Edit %1$d values</string>
+    <string name="memory_editor_edit_batch_help">One replacement value will be applied to all selected targets. Watch and Freeze options are unavailable for batch edits.</string>
+    <string name="memory_editor_edit_batch_no_common_type">The selected result groups have no common data type. Edit a compatible subset separately.</string>
+    <string name="memory_editor_save">Save</string>
+    <string name="memory_editor_replacement">Replacement value</string>
+    <string name="memory_editor_freeze">Freeze</string>
+    <string name="memory_editor_remove">Remove</string>
+    <string name="memory_editor_select_visible">Select visible</string>
+    <string name="memory_editor_select">Select</string>
+    <string name="memory_editor_clear_selection">Clear selection</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <string name="memory_editor_close">Close Memory Editor</string>
+    <string name="memory_editor_cancel">Cancel operation</string>
+    <string name="memory_editor_searching">Searching memory…</string>
+    <string name="memory_editor_working">Applying operation…</string>
+    <string name="memory_editor_search_progress">Scanned %1$d of %2$d MiB</string>
+    <string name="memory_editor_candidate_moved">Address updated</string>
+    <string name="memory_editor_candidate_relocating">Revalidating</string>
+    <string name="memory_editor_candidate_ambiguous">Ambiguous — writes paused</string>
+    <string name="memory_editor_candidate_lost">Lost — writes paused</string>
+    <string name="memory_editor_apply">Apply</string>
+    <string name="memory_editor_max_value">Maximum value</string>
+    <string name="memory_editor_unfreeze">Unfreeze</string>
+    <string name="memory_editor_cancelled">Operation cancelled.</string>
+    <string name="memory_editor_resource_limit">The complete result would exceed the safe resource limit. Choose a narrower type or scope.</string>
+    <string name="memory_editor_identity_unsafe">The value moved or changed before it could be verified. Refresh the results or reopen Inspector, then try again.</string>
+    <string name="memory_editor_safety_limit">Too many candidates were selected for this guarded operation.</string>
+    <string name="memory_editor_invalid_request">The value or operation is invalid.</string>
+    <string name="memory_editor_freeze_paused">Paused for safety</string>
+    <string name="memory_editor_predicate_between">Between</string>
+    <string name="memory_editor_predicate_changed">Changed</string>
+    <string name="memory_editor_predicate_unchanged">Unchanged</string>
+    <string name="memory_editor_predicate_increased">Increased</string>
+    <string name="memory_editor_predicate_decreased">Decreased</string>
+    <string name="memory_editor_predicate_increased_by">Increased by</string>
+    <string name="memory_editor_predicate_decreased_by">Decreased by</string>
+    <string name="memory_editor_predicate_changed_by">Changed by</string>
+    <string name="memory_editor_predicate_increased_range">Increased by range</string>
+    <string name="memory_editor_predicate_decreased_range">Decreased by range</string>
+    <string name="memory_editor_current_value">Current</string>
+    <string name="memory_editor_inspector">Inspector</string>
+    <string name="memory_editor_inspect_memory">Inspect nearby memory</string>
+    <string name="memory_editor_inspector_loading">Verifying candidate and reading a bounded snapshot…</string>
+    <string name="memory_editor_inspector_empty">Select a result, then inspect nearby memory to view and edit its bounded snapshot.</string>
+    <string name="memory_editor_refresh_snapshot">Refresh snapshot</string>
+    <string name="memory_editor_select_result_value">Select this result</string>
+    <string name="memory_editor_freeze_after_edit">Freeze after applying</string>
+    <string name="memory_editor_freeze_after_edit_help">Uses the replacement value as a lock and automatically adds the candidates to Watch.</string>
+
+    <string name="memory_editor_expression_single_hint">Enter one value, or use ; to search group values together.</string>
+    <string name="memory_editor_expression_group_needs_type">Choose a specific data type for Group Search.</string>
+    <string name="memory_editor_expression_group_hint">Group Search · %1$d values · same Managed Java owner</string>
+    <string name="memory_editor_expression_query_help">Examples: 500 · 500;1000. Group Search uses 2–8 values from one Managed Java owner.</string>
+    <string name="memory_editor_keypad_clear">Clear</string>
+    <string name="memory_editor_peek_underlay">Press and hold to see the MIDlet below</string>
+    <string name="memory_editor_peek_underlay_active">Showing the MIDlet below</string>
+</resources>

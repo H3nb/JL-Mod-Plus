@@ -2,8 +2,11 @@
  * You may obtain a copy at http://www.apache.org/licenses/LICENSE-2.0. */
 package ru.playsoftware.j2meloader.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.CompositionLocalProvider
@@ -90,6 +93,68 @@ class AdaptiveDialogComposeTest {
         rule.onNodeWithText("26").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("OK").assertIsDisplayed().performClick()
         assertEquals(listOf("18", "22", "26"), confirmed)
+    }
+
+    @Test fun cancelActionCanStayBelowWrappedConfirmActions() {
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(320.dp, 520.dp))) {
+                JLModPlusTheme {
+                    AdaptiveAlertDialog(
+                        onDismissRequest = {},
+                        title = { Text("Search") },
+                        text = { Text("Body") },
+                        confirmButton = {
+                            FlowRow(
+                                modifier = Modifier.width(112.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                repeat(3) { index ->
+                                    TextButton(onClick = {}) { Text("Action $index") }
+                                }
+                            }
+                        },
+                        dismissButton = { TextButton(onClick = {}) { Text("Cancel") } },
+                        dismissButtonBelowWrappedActions = true,
+                    )
+                }
+            }
+        }
+
+        rule.waitForIdle()
+        val lastAction = rule.onNodeWithText("Action 2").getUnclippedBoundsInRoot()
+        val cancel = rule.onNodeWithText("Cancel").getUnclippedBoundsInRoot()
+        assertTrue("Cancel must be below every wrapped confirm action", cancel.top > lastAction.bottom)
+    }
+
+    @Test fun cancelActionStaysInTheOriginalRowWhenActionsFit() {
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(320.dp, 520.dp))) {
+                JLModPlusTheme {
+                    AdaptiveAlertDialog(
+                        onDismissRequest = {},
+                        title = { Text("Search") },
+                        text = { Text("Body") },
+                        confirmButton = {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                TextButton(onClick = {}) { Text("One") }
+                                TextButton(onClick = {}) { Text("Two") }
+                            }
+                        },
+                        dismissButton = { TextButton(onClick = {}) { Text("Cancel") } },
+                        dismissButtonBelowWrappedActions = true,
+                    )
+                }
+            }
+        }
+
+        rule.waitForIdle()
+        val firstAction = rule.onNodeWithText("One").getUnclippedBoundsInRoot()
+        val cancel = rule.onNodeWithText("Cancel").getUnclippedBoundsInRoot()
+        assertTrue(
+            "Cancel should remain in the action row when it fits",
+            kotlin.math.abs(firstAction.top.value - cancel.top.value) <= 1f,
+        )
     }
 
 }

@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -35,10 +36,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -101,6 +110,7 @@ internal fun AdaptiveAlertDialog(
     modifier: Modifier = Modifier,
     confirmButton: (@Composable () -> Unit)? = null,
     dismissButton: (@Composable () -> Unit)? = null,
+    dismissButtonBelowWrappedActions: Boolean = false,
     icon: (@Composable () -> Unit)? = null,
     title: (@Composable () -> Unit)? = null,
     text: (@Composable () -> Unit)? = null,
@@ -115,6 +125,7 @@ internal fun AdaptiveAlertDialog(
 ) {
     val layout = adaptiveDialogLayout()
     val compact = layout.maxHeight < 320.dp
+    var actionsWrapped by remember { mutableStateOf(false) }
     BasicAlertDialog(
         onDismissRequest = onDismissRequest,
         modifier = layout.modifier.then(modifier),
@@ -151,7 +162,9 @@ internal fun AdaptiveAlertDialog(
                     // Measure the title/footer first; no guessed fixed-height reservations.
                     Box(Modifier.fillMaxWidth().weight(1f, fill = false)) {
                         ProvideTextStyle(MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Start)) {
-                            if (textScrollable) {
+                            if (textScrollable ||
+                                (dismissButtonBelowWrappedActions && actionsWrapped)
+                            ) {
                                 val scrollState = rememberScrollState()
                                 val canScrollForward = rememberScrollCanScrollForward(scrollState)
                                 Column(Modifier.fillMaxWidth().verticalScroll(scrollState)) { text() }
@@ -166,16 +179,81 @@ internal fun AdaptiveAlertDialog(
                 if (dismissButton != null || confirmButton != null) {
                     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
                         ProvideTextStyle(MaterialTheme.typography.labelLarge) {
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End,
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                dismissButton?.invoke()
-                                confirmButton?.invoke()
+                            if (dismissButtonBelowWrappedActions) {
+                                AdaptiveDialogActionLayout(
+                                    confirmButton = confirmButton,
+                                    dismissButton = dismissButton,
+                                    onWrappedChanged = { actionsWrapped = it },
+                                )
+                            } else {
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End,
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    dismissButton?.invoke()
+                                    confirmButton?.invoke()
+                                }
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+/** Keep the legacy one-row order when it fits, but put dismiss below wrapped actions. */
+@Composable
+private fun AdaptiveDialogActionLayout(
+    confirmButton: (@Composable () -> Unit)?,
+    dismissButton: (@Composable () -> Unit)?,
+    onWrappedChanged: (Boolean) -> Unit,
+) {
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        var wrapped by remember(maxWidth) { mutableStateOf(false) }
+        var dismissBounds by remember(maxWidth) { mutableStateOf<Rect?>(null) }
+        var confirmBounds by remember(maxWidth) { mutableStateOf<Rect?>(null) }
+
+        LaunchedEffect(dismissBounds, confirmBounds) {
+            val dismiss = dismissBounds
+            val confirm = confirmBounds
+            if (dismiss != null && confirm != null) {
+                val shouldWrap = confirm.top > dismiss.top ||
+                    confirm.height > dismiss.height
+                if (wrapped != shouldWrap) wrapped = shouldWrap
+                onWrappedChanged(shouldWrap)
+            }
+        }
+
+        if (wrapped) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                confirmButton?.invoke()
+                dismissButton?.invoke()
+            }
+        } else {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                dismissButton?.let { button ->
+                    Box(
+                        modifier = Modifier.onGloballyPositioned {
+                            dismissBounds = it.boundsInRoot()
+                        },
+                    ) { button() }
+                }
+                confirmButton?.let { button ->
+                    Box(
+                        modifier = Modifier.onGloballyPositioned {
+                            confirmBounds = it.boundsInRoot()
+                        },
+                    ) { button() }
                 }
             }
         }

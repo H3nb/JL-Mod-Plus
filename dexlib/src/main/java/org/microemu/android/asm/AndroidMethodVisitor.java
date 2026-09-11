@@ -48,6 +48,7 @@ public class AndroidMethodVisitor extends MethodVisitor {
 	private final boolean returnsBoolean;
 	/** Internal name of the guest class containing this method, when available. */
 	private final String ownerClassName;
+	private final boolean publishManagedStaticTail;
 
 	public AndroidMethodVisitor(MethodVisitor methodVisitor) {
 		this(methodVisitor, false, null);
@@ -58,9 +59,15 @@ public class AndroidMethodVisitor extends MethodVisitor {
 	}
 
 	AndroidMethodVisitor(MethodVisitor methodVisitor, boolean returnsBoolean, String ownerClassName) {
+		this(methodVisitor, returnsBoolean, ownerClassName, false);
+	}
+
+	AndroidMethodVisitor(MethodVisitor methodVisitor, boolean returnsBoolean, String ownerClassName,
+	                     boolean publishManagedStaticTail) {
 		super(ASM9, methodVisitor);
 		this.returnsBoolean = returnsBoolean;
 		this.ownerClassName = ownerClassName;
+		this.publishManagedStaticTail = publishManagedStaticTail && ownerClassName != null;
 	}
 
 	@Override
@@ -81,6 +88,14 @@ public class AndroidMethodVisitor extends MethodVisitor {
 			// conversion explicit before dx so ART sees an int-compatible return value.
 			super.visitInsn(ICONST_1);
 			super.visitInsn(IAND);
+		}
+		if (opcode == RETURN && publishManagedStaticTail) {
+			mv.visitLdcInsn(Type.getObjectType(ownerClassName));
+			mv.visitMethodInsn(INVOKESTATIC,
+					"javax/microedition/shell/MemoryDiscoveryBridge",
+					"tailSeen",
+					"(Ljava/lang/Class;)V",
+					false);
 		}
 		super.visitInsn(opcode);
 	}
