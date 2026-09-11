@@ -168,11 +168,6 @@ final class ManagedJavaMemoryEngine {
 		}
 	}
 
-	ManagedOperationResult startExactInt(long token, int value, long operationEpoch) {
-		return startExact(token, MemoryEngineContract.TYPE_INT,
-				MemoryEngineContract.PREDICATE_EQUAL, value, 0L, operationEpoch);
-	}
-
 	ManagedOperationResult startExact(long token, int type, int predicate, long first, long second,
 	                                long operationEpoch) {
 		MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshot(token);
@@ -426,12 +421,6 @@ final class ManagedJavaMemoryEngine {
 			return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
 					"Managed Group traversal failed safely");
 		}
-	}
-
-	ManagedOperationResult refineInt(long token, long expectedRevision, int predicate,
-	                                int compareTarget, int value, long operationEpoch) {
-		return refine(token, expectedRevision, MemoryEngineContract.TYPE_INT, predicate,
-				compareTarget, value, 0L, operationEpoch);
 	}
 
 	ManagedOperationResult refine(long token, long expectedRevision, int type, int predicate,
@@ -934,15 +923,6 @@ final class ManagedJavaMemoryEngine {
 	}
 
 	ManagedOperationResult edit(long token, long expectedRevision, @Nullable long[] ids,
-	                           int replacement, long operationEpoch) {
-		// The package-level overload is retained for characterization tests and older callers. A
-		// zero revision is meaningful only for an explicit Watch-only route; it is not a wildcard
-		// for selecting from the current search revision.
-		return edit(token, expectedRevision, ids, replacement, expectedRevision <= 0L,
-				operationEpoch);
-	}
-
-	ManagedOperationResult edit(long token, long expectedRevision, @Nullable long[] ids,
 	                           int replacement, boolean allowWatchOnly, long operationEpoch) {
 		return editTyped(token, expectedRevision, ids, Integer.toString(replacement),
 				allowWatchOnly, operationEpoch);
@@ -1349,10 +1329,6 @@ final class ManagedJavaMemoryEngine {
 		return result(token, code,
 				"Managed Freeze Lock tick wrote " + written + " of " + snapshot.count,
 				snapshot.count, written, snapshot.count - written, 0);
-	}
-
-	void clearSearch(long token, long operationEpoch) {
-		clearSearchResult(token, 0L, operationEpoch);
 	}
 
 	ManagedOperationResult clearSearchResult(long token, long expectedRevision, long operationEpoch) {

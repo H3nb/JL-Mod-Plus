@@ -188,7 +188,7 @@ public class ManagedJavaMemoryEngineTest {
 		assertEquals(first.resultCount, undone.resultCount);
 		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 				engine.edit(TOKEN, refined.revision,
-						new long[]{staleId}, 9, 0L).code);
+						new long[]{staleId}, 9, false, 0L).code);
 		assertEquals(8, root.rootMatch);
 	}
 
@@ -230,9 +230,9 @@ public class ManagedJavaMemoryEngineTest {
 	@Test
 	public void managedClearSearchDropsHistoryDepth() {
 		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
-		assertEquals(MemoryEngineContract.RESULT_OK, engine.refineInt(TOKEN, search.revision,
-				MemoryEngineContract.PREDICATE_EQUAL, MemoryEngineContract.COMPARE_PREVIOUS,
-				7, 0L).code);
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.refine(TOKEN, search.revision,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				MemoryEngineContract.COMPARE_PREVIOUS, 7L, 0L, 0L).code);
 		assertTrue(engine.session(TOKEN).historyDepth > 0);
 		assertEquals(MemoryEngineContract.RESULT_OK, engine.clearSearchResult(TOKEN, 0L, 1L).code);
 		assertEquals(0, engine.session(TOKEN).historyDepth);
@@ -418,7 +418,8 @@ public class ManagedJavaMemoryEngineTest {
 	public void managedInspectorArrayWindowIsPageBoundedAndContainsAnchor() {
 		root.array = new int[1000];
 		root.array[500] = 71;
-		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExactInt(TOKEN, 71, 0L);
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 71L, 0L, 0L);
 		assertEquals(1L, search.resultCount);
 		long anchor = engine.resultPage(TOKEN, search.revision, 0, 1).ids[0];
 		ManagedJavaMemoryEngine.ManagedInspection view = engine.inspect(TOKEN, search.revision,
@@ -442,8 +443,9 @@ public class ManagedJavaMemoryEngineTest {
 		assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST, rejected.code);
 		assertEquals(0, rejected.attempted);
 		assertEquals(7, root.finalMatch);
-		assertEquals(MemoryEngineContract.RESULT_OK, engine.refineInt(TOKEN, search.revision,
-				MemoryEngineContract.PREDICATE_EQUAL, MemoryEngineContract.COMPARE_PREVIOUS, 7, 0L).code);
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.refine(TOKEN, search.revision,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				MemoryEngineContract.COMPARE_PREVIOUS, 7L, 0L, 0L).code);
 		rejected = engine.editInspector(TOKEN, search.revision, anchor, false, 0,
 				MemoryEngineContract.TYPE_INT, 7L, "9", 0L);
 		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, rejected.code);
@@ -522,7 +524,8 @@ public class ManagedJavaMemoryEngineTest {
 		MemoryDiscoveryBridge.tailSeen(CapacityRoot.class);
 		CapacityRoot capacityRoot = new CapacityRoot(100);
 		MemoryDiscoveryBridge.setMidletRoot(TOKEN, capacityRoot);
-		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExactInt(TOKEN, 7, 0L);
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
 		ArrayList<Long> arrayIds = new ArrayList<>();
 		for (int offset = 0; offset < search.resultCount; offset += MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
 			ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision,
@@ -566,32 +569,32 @@ public class ManagedJavaMemoryEngineTest {
 		long changedId = idForAddress(first.revision, "rootChanged");
 		root.rootChanged = 9;
 
-		ManagedJavaMemoryEngine.ManagedOperationResult changed = engine.refineInt(TOKEN,
-				first.revision, MemoryEngineContract.PREDICATE_CHANGED,
-				MemoryEngineContract.COMPARE_PREVIOUS, 0, 0);
+		ManagedJavaMemoryEngine.ManagedOperationResult changed = engine.refine(TOKEN,
+				first.revision, MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_CHANGED,
+				MemoryEngineContract.COMPARE_PREVIOUS, 0L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, changed.code);
 		assertTrue(hasId(engine.resultPage(TOKEN, changed.revision, 0,
 				MemoryEngineContract.MAX_RESULT_PAGE_SIZE), changedId));
 
-		ManagedJavaMemoryEngine.ManagedOperationResult unchanged = engine.refineInt(TOKEN,
-				changed.revision, MemoryEngineContract.PREDICATE_UNCHANGED,
-				MemoryEngineContract.COMPARE_PREVIOUS, 0, 0);
+		ManagedJavaMemoryEngine.ManagedOperationResult unchanged = engine.refine(TOKEN,
+				changed.revision, MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_UNCHANGED,
+				MemoryEngineContract.COMPARE_PREVIOUS, 0L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, unchanged.code);
 		assertTrue(hasId(engine.resultPage(TOKEN, unchanged.revision, 0,
 				MemoryEngineContract.MAX_RESULT_PAGE_SIZE), changedId));
 
-		ManagedJavaMemoryEngine.ManagedOperationResult stale = engine.refineInt(TOKEN,
-				first.revision, MemoryEngineContract.PREDICATE_EQUAL,
-				MemoryEngineContract.COMPARE_PREVIOUS, 9, 0);
+		ManagedJavaMemoryEngine.ManagedOperationResult stale = engine.refine(TOKEN,
+				first.revision, MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				MemoryEngineContract.COMPARE_PREVIOUS, 9L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, stale.code);
 		assertEquals(unchanged.revision, engine.session(TOKEN).revision);
 
 		root.rootChanged = 7;
 		ManagedJavaMemoryEngine.ManagedOperationResult fresh = startExact();
 		root.rootChanged = 11;
-		ManagedJavaMemoryEngine.ManagedOperationResult initial = engine.refineInt(TOKEN,
-				fresh.revision, MemoryEngineContract.PREDICATE_CHANGED,
-				MemoryEngineContract.COMPARE_INITIAL, 0, 0);
+		ManagedJavaMemoryEngine.ManagedOperationResult initial = engine.refine(TOKEN,
+				fresh.revision, MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_CHANGED,
+				MemoryEngineContract.COMPARE_INITIAL, 0L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, initial.code);
 		assertTrue(hasAddress(engine.resultPage(TOKEN, initial.revision, 0,
 				MemoryEngineContract.MAX_RESULT_PAGE_SIZE), "rootChanged"));
@@ -616,7 +619,7 @@ public class ManagedJavaMemoryEngineTest {
 		assertEquals("10", watchPage.previousValues[0]);
 
 		ManagedJavaMemoryEngine.ManagedOperationResult edit = engine.edit(TOKEN, search.revision,
-				new long[]{id}, 12, 0);
+				new long[]{id}, 12, false, 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, edit.code);
 		assertEquals(12, root.rootMatch);
 
@@ -628,10 +631,11 @@ public class ManagedJavaMemoryEngineTest {
 		assertEquals(MemoryEngineContract.RESULT_OK,
 				engine.clearFreeze(TOKEN, new long[]{id}, 0).code);
 
-		engine.clearSearch(TOKEN, 0);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.clearSearchResult(TOKEN, 0L, 0L).code);
 		assertEquals(1, engine.watchPage(TOKEN).ids.length);
 		assertEquals(MemoryEngineContract.RESULT_OK,
-				engine.edit(TOKEN, 0L, new long[]{id}, 20, 0).code);
+				engine.edit(TOKEN, 0L, new long[]{id}, 20, true, 0L).code);
 		assertEquals(20, root.rootMatch);
 	}
 
@@ -643,8 +647,9 @@ public class ManagedJavaMemoryEngineTest {
 		assertEquals(search.revision, engine.session(TOKEN).revision);
 		assertEquals(search.resultCount, engine.session(TOKEN).resultCount);
 		assertEquals(MemoryEngineContract.RESULT_OK,
-				engine.refineInt(TOKEN, search.revision, MemoryEngineContract.PREDICATE_EQUAL,
-						MemoryEngineContract.COMPARE_PREVIOUS, 7, 0).code);
+				engine.refine(TOKEN, search.revision, MemoryEngineContract.TYPE_INT,
+						MemoryEngineContract.PREDICATE_EQUAL, MemoryEngineContract.COMPARE_PREVIOUS,
+						7L, 0L, 0L).code);
 	}
 
 	@Test
@@ -656,13 +661,15 @@ public class ManagedJavaMemoryEngineTest {
 		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
 				100, 100, 100, 30, 100, 100));
 
-		ManagedJavaMemoryEngine.ManagedOperationResult accepted = engine.startExactInt(TOKEN, 7, 0);
+		ManagedJavaMemoryEngine.ManagedOperationResult accepted = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, accepted.code);
 		assertEquals(30L, accepted.resultCount);
 
 		capacityRoot.values = new int[31];
 		Arrays.fill(capacityRoot.values, 7);
-		ManagedJavaMemoryEngine.ManagedOperationResult rejected = engine.startExactInt(TOKEN, 7, 0);
+		ManagedJavaMemoryEngine.ManagedOperationResult rejected = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT, rejected.code);
 		assertEquals(accepted.revision, engine.session(TOKEN).revision);
 	}
@@ -674,17 +681,20 @@ public class ManagedJavaMemoryEngineTest {
 		MemoryDiscoveryBridge.setMidletRoot(TOKEN, new CapacityRoot(1));
 		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
 				100, 100, 100, 1, 100, 100));
-		assertEquals(MemoryEngineContract.RESULT_OK, engine.startExactInt(TOKEN, 7, 0).code);
+		assertEquals(MemoryEngineContract.RESULT_OK, engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L).code);
 
 		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
 				100, 100, 100, 0, 100, 100));
 		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
-				engine.startExactInt(TOKEN, 7, 0).code);
+				engine.startExact(TOKEN, MemoryEngineContract.TYPE_INT,
+						MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L).code);
 
 		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
 				100, 100, 100, -1, 100, 100));
 		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
-				engine.startExactInt(TOKEN, 7, 0).code);
+				engine.startExact(TOKEN, MemoryEngineContract.TYPE_INT,
+						MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L).code);
 	}
 
 	@Test
@@ -696,9 +706,11 @@ public class ManagedJavaMemoryEngineTest {
 		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
 				100, 100, 100, 30, 100, 100, 2_000L));
 
-		ManagedJavaMemoryEngine.ManagedOperationResult first = engine.startExactInt(TOKEN, 7, 0);
+		ManagedJavaMemoryEngine.ManagedOperationResult first = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, first.code);
-		ManagedJavaMemoryEngine.ManagedOperationResult rejected = engine.startExactInt(TOKEN, 7, 0);
+		ManagedJavaMemoryEngine.ManagedOperationResult rejected = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT, rejected.code);
 		assertEquals(first.revision, engine.session(TOKEN).revision);
 		assertEquals(first.resultCount, engine.session(TOKEN).resultCount);
@@ -808,13 +820,14 @@ public class ManagedJavaMemoryEngineTest {
 		long fabricated = ManagedJavaMemoryIds.encode(ManagedJavaMemoryEngine.KIND_OBJECT_FIELD,
 				999L, 0);
 		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-				engine.edit(TOKEN, search.revision, new long[]{fabricated}, 1, 0).code);
+				engine.edit(TOKEN, search.revision, new long[]{fabricated}, 1, false, 0L).code);
 		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-				engine.edit(TOKEN, search.revision, new long[]{1L}, 1, 0).code);
+				engine.edit(TOKEN, search.revision, new long[]{1L}, 1, false, 0L).code);
 	}
 
 	private ManagedJavaMemoryEngine.ManagedOperationResult startExact() {
-		return engine.startExactInt(TOKEN, 7, 0);
+		return engine.startExact(TOKEN, MemoryEngineContract.TYPE_INT,
+				MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
 	}
 
 	private long idForAddress(long revision, String fragment) {

@@ -172,7 +172,7 @@ final class ManagedJavaValue {
 		}
 	}
 
-	/** Matches the native integer parser's decimal/0x syntax without narrowing overflow. */
+	/** Parses decimal/0x integer input without narrowing overflow. */
 	@Nullable
 	private static BigInteger parseInteger(String value) {
 		int start = 0;

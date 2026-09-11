@@ -81,8 +81,6 @@ public final class MemoryEngineContract {
 	public static final int DEFAULT_INSPECT_RADIUS = 128;
 	public static final int MAX_INSPECT_RADIUS = 256;
 
-	/** Legacy empty-page stride retained for IPC compatibility; rows are logical locations. */
-	public static final int RESULT_PAGE_STRIDE = 9;
 	/** Maximum logical result rows requested per page. */
 	public static final int MAX_RESULT_PAGE_SIZE = 100;
 

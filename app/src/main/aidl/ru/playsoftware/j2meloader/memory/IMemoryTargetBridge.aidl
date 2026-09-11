@@ -11,7 +11,7 @@ package ru.playsoftware.j2meloader.memory;
 import android.os.Bundle;
 import ru.playsoftware.j2meloader.memory.IMemoryTargetCallback;
 
-/** Thin target-process bridge. Scanning and candidate ownership remain in :memory_engine. */
+/** Thin bridge to the target :midlet process; scanning and candidate ownership stay target-owned. */
 interface IMemoryTargetBridge {
     void registerTargetCallback(IMemoryTargetCallback callback);
     void unregisterTargetCallback(IMemoryTargetCallback callback);
@@ -27,9 +27,6 @@ interface IMemoryTargetBridge {
             long cancellationEpoch);
     Bundle managedRefine(long runtimeToken, long expectedRevision, int valueType, int predicate,
             int compareTarget, String firstValue, String secondValue, long cancellationEpoch);
-    Bundle managedStartExactInt(long runtimeToken, int value, long cancellationEpoch);
-    Bundle managedRefineInt(long runtimeToken, long expectedRevision, int predicate,
-            int compareTarget, int value, long cancellationEpoch);
     Bundle managedFilter(long runtimeToken, long expectedRevision, in long[] ids,
             boolean keep, long cancellationEpoch);
     Bundle managedUndo(long runtimeToken, long expectedRevision, long cancellationEpoch);
@@ -58,6 +55,5 @@ interface IMemoryTargetBridge {
     Bundle managedClearFreeze(long runtimeToken, in long[] ids, long cancellationEpoch);
     Bundle managedFreezeTick(long runtimeToken, long cancellationEpoch);
     Bundle managedClearSearch(long runtimeToken, long expectedRevision, long cancellationEpoch);
-    void clearManagedSearch(long runtimeToken, long cancellationEpoch);
     void cancelManaged(long runtimeToken, long cancellationEpoch);
 }

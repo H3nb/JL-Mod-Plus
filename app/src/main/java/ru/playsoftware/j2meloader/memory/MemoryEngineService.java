@@ -246,14 +246,6 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
-		public long refineInt(long token, long expectedRevision, int predicate,
-		                             int compareTarget, String value) {
-			return enqueueManagedSearch(token, () -> managedRefine(token, expectedRevision,
-					MemoryEngineContract.TYPE_INT, predicate,
-					compareTarget, value, ""));
-		}
-
-		@Override
 		public long undoSearch(long token) {
 			if (isManagedCurrent(token)) {
 				long expectedRevision = managedRevision;
@@ -272,28 +264,6 @@ public final class MemoryEngineService extends Service {
 			}
 			return enqueueManaged(token, passiveRefresh,
 					() -> MemoryEngineContract.RESULT_IDENTITY_UNSAFE);
-		}
-
-		@Override
-		public long removeCandidates(long token, long[] candidateIds) {
-			if (containsManagedIds(candidateIds)) {
-				if (!allManagedIds(candidateIds)) return enqueueManaged(token, false,
-						() -> MemoryEngineContract.RESULT_INVALID_REQUEST);
-				return enqueueManaged(token, false,
-						() -> managedFilterResultGroups(token, managedRevision, candidateIds, false));
-			}
-			return enqueueManaged(token, false, () -> MemoryEngineContract.RESULT_IDENTITY_UNSAFE);
-		}
-
-		@Override
-		public long keepCandidates(long token, long[] candidateIds) {
-			if (containsManagedIds(candidateIds)) {
-				if (!allManagedIds(candidateIds)) return enqueueManaged(token, false,
-						() -> MemoryEngineContract.RESULT_INVALID_REQUEST);
-				return enqueueManaged(token, false,
-						() -> managedFilterResultGroups(token, managedRevision, candidateIds, true));
-			}
-			return enqueueManaged(token, false, () -> MemoryEngineContract.RESULT_IDENTITY_UNSAFE);
 		}
 
 		@Override
@@ -1460,11 +1430,6 @@ public final class MemoryEngineService extends Service {
 		} catch (RemoteException exception) {
 			return false;
 		}
-	}
-
-	private boolean isWriteSupported(long token) {
-		return token != 0L && token == configuredToken && managedWriteSupported
-				&& isTargetToken(token);
 	}
 
 	private void invalidateTarget() {

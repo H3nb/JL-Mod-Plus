@@ -27,12 +27,8 @@ interface IMemoryEngineService {
     long refineKnown(long runtimeToken, int valueType, int predicate, String firstValue, String secondValue);
     long refineRelative(long runtimeToken, int valueType, int predicate, int compareTarget,
             String firstValue, String secondValue);
-    long refineInt(long runtimeToken, long expectedRevision, int predicate,
-            int compareTarget, String value);
     long undoSearch(long runtimeToken);
     long refreshCandidates(long runtimeToken, in long[] candidateIds, boolean passiveRefresh);
-    long removeCandidates(long runtimeToken, in long[] candidateIds);
-    long keepCandidates(long runtimeToken, in long[] candidateIds);
     long editCandidates(long runtimeToken, in long[] candidateIds, int valueType,
             String replacementValue);
     long filterResultGroups(long runtimeToken, long expectedRevision, in long[] resultIds, boolean keep);

@@ -48,19 +48,22 @@ public class ManagedJavaMemoryCorrectnessTest {
 
 	@Test
 	public void cancelBeforeCommitKeepsPreviousRevision() {
-		ManagedJavaMemoryEngine.ManagedOperationResult first = engine.startExactInt(TOKEN, 7, 0L);
+		ManagedJavaMemoryEngine.ManagedOperationResult first = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, first.code);
 		engine.cancel(TOKEN, 1L);
 
 		ManagedJavaMemoryEngine.ManagedOperationResult cancelled =
-				engine.startExactInt(TOKEN, 7, 0L);
+				engine.startExact(TOKEN, MemoryEngineContract.TYPE_INT,
+						MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_CANCELLED, cancelled.code);
 		assertEquals(first.revision, engine.session(TOKEN).revision);
 	}
 
 	@Test
 	public void cancelAfterCommitDoesNotUndoRevision() {
-		ManagedJavaMemoryEngine.ManagedOperationResult committed = engine.startExactInt(TOKEN, 7, 0L);
+		ManagedJavaMemoryEngine.ManagedOperationResult committed = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, committed.code);
 		engine.cancel(TOKEN, 1L);
 		assertEquals(committed.revision, engine.session(TOKEN).revision);
@@ -97,7 +100,8 @@ public class ManagedJavaMemoryCorrectnessTest {
 		MemoryDiscoveryBridge.tailSeen(CapacityRoot.class);
 		MemoryDiscoveryBridge.setMidletRoot(TOKEN, capacityRoot);
 
-		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExactInt(TOKEN, 7, 0L);
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
 		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
 		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0,
 				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);

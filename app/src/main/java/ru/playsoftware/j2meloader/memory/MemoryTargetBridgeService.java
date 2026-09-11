@@ -88,19 +88,6 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 
 		@Override
-		public Bundle managedStartExactInt(long runtimeToken, int value, long cancellationEpoch) {
-			return managedResult(runtimeToken,
-					managedEngine.startExactInt(runtimeToken, value, cancellationEpoch));
-		}
-
-		@Override
-		public Bundle managedRefineInt(long runtimeToken, long expectedRevision, int predicate,
-				int compareTarget, int value, long cancellationEpoch) {
-			return managedResult(runtimeToken, managedEngine.refineInt(runtimeToken, expectedRevision, predicate,
-					compareTarget, value, cancellationEpoch));
-		}
-
-		@Override
 		public Bundle managedFilter(long runtimeToken, long expectedRevision, long[] ids,
 				boolean keep, long cancellationEpoch) {
 			return managedResult(runtimeToken, managedEngine.filter(runtimeToken, expectedRevision,
@@ -212,11 +199,6 @@ public final class MemoryTargetBridgeService extends Service {
 				long cancellationEpoch) {
 			return managedResult(runtimeToken, managedEngine.clearSearchResult(runtimeToken,
 					expectedRevision, cancellationEpoch));
-		}
-
-		@Override
-		public void clearManagedSearch(long runtimeToken, long cancellationEpoch) {
-			managedEngine.clearSearch(runtimeToken, cancellationEpoch);
 		}
 
 		@Override

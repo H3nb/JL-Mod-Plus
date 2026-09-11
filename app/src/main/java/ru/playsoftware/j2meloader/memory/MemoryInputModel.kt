@@ -51,10 +51,6 @@ internal data class MemoryInputSpec(
             else -> MemoryInputSpec(MemoryInputKind.FLOATING)
         }
 
-        fun positiveInteger(min: Long = 1, max: Long? = null): MemoryInputSpec = MemoryInputSpec(
-            MemoryInputKind.POSITIVE_INTEGER, minLong = min, maxLong = max, maxChars = 12,
-        )
-
         fun relativeMagnitudeForType(type: Int): MemoryInputSpec = when (type) {
             MemoryEngineContract.TYPE_BYTE -> MemoryInputSpec(
                 MemoryInputKind.POSITIVE_INTEGER, 0L, 0xffL, maxChars = 3,
