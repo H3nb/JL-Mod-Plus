@@ -41,6 +41,17 @@ internal fun memorySearchModeFromEngine(value: Int): MemorySearchMode = when (va
 internal fun memorySessionHasActiveSearch(stage: MemorySessionStage): Boolean =
     stage != MemorySessionStage.EMPTY
 
+/** Predicates that compare candidates against an explicit Known value. */
+internal fun memoryKnownSearchPredicates(): IntArray = intArrayOf(
+    MemoryEngineContract.PREDICATE_EQUAL,
+    MemoryEngineContract.PREDICATE_NOT_EQUAL,
+    MemoryEngineContract.PREDICATE_GREATER,
+    MemoryEngineContract.PREDICATE_LESS,
+    MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
+    MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
+    MemoryEngineContract.PREDICATE_BETWEEN,
+)
+
 /** Predicates that describe a change from the captured Unknown-search baseline. */
 internal fun memoryUnknownSearchPredicates(): IntArray = intArrayOf(
     MemoryEngineContract.PREDICATE_CHANGED,

@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+// Modifications: cap presentation strings emitted through the target-process Binder response.
+
 package io.github.h3nb.jlmodplus.memory;
 
 import android.app.Service;
@@ -258,7 +260,8 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
 		if (state.message != null && !state.message.isBlank()) {
-			result.putString(MemoryEngineContract.KEY_MESSAGE, state.message);
+			result.putString(MemoryEngineContract.KEY_MESSAGE,
+					MemoryEngineContract.truncateMessage(state.message));
 		}
 		return result;
 	}
@@ -279,7 +282,8 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putInt(MemoryEngineContract.KEY_SEARCH_MODE, state.mode);
 		result.putInt(MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE, state.requestedType);
 		if (state.message != null && !state.message.isBlank()) {
-			result.putString(MemoryEngineContract.KEY_MESSAGE, state.message);
+			result.putString(MemoryEngineContract.KEY_MESSAGE,
+					MemoryEngineContract.truncateMessage(state.message));
 		}
 		return result;
 	}
@@ -303,7 +307,8 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
 		if (state.message != null && !state.message.isBlank()) {
-			result.putString(MemoryEngineContract.KEY_MESSAGE, state.message);
+			result.putString(MemoryEngineContract.KEY_MESSAGE,
+					MemoryEngineContract.truncateMessage(state.message));
 		}
 		return result;
 	}
@@ -316,23 +321,27 @@ public final class MemoryTargetBridgeService extends Service {
 		if (state.code == MemoryEngineContract.RESULT_OK) {
 			result.putLong(MemoryEngineContract.KEY_INSPECT_EXPECTED_REVISION, state.revision);
 			result.putLongArray(MemoryEngineContract.KEY_INSPECT_IDS, state.ids);
-			result.putStringArray(MemoryEngineContract.KEY_INSPECT_VALUES, state.values);
+			result.putStringArray(MemoryEngineContract.KEY_INSPECT_VALUES,
+					MemoryEngineContract.truncateDisplay(state.values));
 			result.putStringArray(MemoryEngineContract.KEY_INSPECT_INITIAL_VALUES,
-					state.initialValues);
+					MemoryEngineContract.truncateDisplay(state.initialValues));
 			result.putStringArray(MemoryEngineContract.KEY_INSPECT_PREVIOUS_VALUES,
-					state.previousValues);
+					MemoryEngineContract.truncateDisplay(state.previousValues));
 			result.putIntArray(MemoryEngineContract.KEY_INSPECT_TYPES, state.types);
 			result.putIntArray(MemoryEngineContract.KEY_INSPECT_STATES, state.states);
 			result.putIntArray(MemoryEngineContract.KEY_INSPECT_RELATIVE_OFFSETS,
 					state.relativeOffsets);
 			result.putLongArray(MemoryEngineContract.KEY_INSPECT_EXPECTED_BITS,
 					state.expectedBits);
-			result.putStringArray(MemoryEngineContract.KEY_INSPECT_LABELS, state.labels);
+			result.putStringArray(MemoryEngineContract.KEY_INSPECT_LABELS,
+					MemoryEngineContract.truncateDisplay(state.labels));
 			result.putBooleanArray(MemoryEngineContract.KEY_INSPECT_EDITABLE, state.editable);
-			result.putString(MemoryEngineContract.KEY_INSPECT_PROVENANCE, state.provenance);
+			result.putString(MemoryEngineContract.KEY_INSPECT_PROVENANCE,
+					MemoryEngineContract.truncateDisplay(state.provenance));
 		}
 		if (state.message != null && !state.message.isBlank()) {
-			result.putString(MemoryEngineContract.KEY_MESSAGE, state.message);
+			result.putString(MemoryEngineContract.KEY_MESSAGE,
+					MemoryEngineContract.truncateMessage(state.message));
 		}
 		return result;
 	}
@@ -342,8 +351,10 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, page.revision);
 		result.putLongArray(MemoryEngineContract.KEY_RESULT_IDS, page.ids);
-		result.putStringArray(MemoryEngineContract.KEY_RESULT_VALUES, page.values);
-		result.putStringArray(MemoryEngineContract.KEY_RESULT_ADDRESSES, page.addresses);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_VALUES,
+				MemoryEngineContract.truncateDisplay(page.values));
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_ADDRESSES,
+				MemoryEngineContract.truncateDisplay(page.addresses));
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_ALIAS_MASKS, page.aliasMasks);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_TYPES, page.types);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_STATES, page.states);
@@ -357,14 +368,19 @@ public final class MemoryTargetBridgeService extends Service {
 		// never be interpreted by :memory_engine as the current search revision.
 		result.remove(MemoryEngineContract.KEY_MANAGED_REVISION);
 		result.putLongArray(MemoryEngineContract.KEY_WATCH_IDS, page.ids);
-		result.putStringArray(MemoryEngineContract.KEY_WATCH_VALUES, page.values);
-		result.putStringArray(MemoryEngineContract.KEY_WATCH_INITIAL_VALUES, page.initialValues);
-		result.putStringArray(MemoryEngineContract.KEY_WATCH_PREVIOUS_VALUES, page.previousValues);
-		result.putStringArray(MemoryEngineContract.KEY_WATCH_ADDRESSES, page.addresses);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_VALUES,
+				MemoryEngineContract.truncateDisplay(page.values));
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_INITIAL_VALUES,
+				MemoryEngineContract.truncateDisplay(page.initialValues));
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_PREVIOUS_VALUES,
+				MemoryEngineContract.truncateDisplay(page.previousValues));
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_ADDRESSES,
+				MemoryEngineContract.truncateDisplay(page.addresses));
 		result.putIntArray(MemoryEngineContract.KEY_WATCH_TYPES, page.types);
 		result.putIntArray(MemoryEngineContract.KEY_WATCH_STATES, page.states);
 		result.putIntArray(MemoryEngineContract.KEY_WATCH_RELOCATIONS, page.relocations);
-		result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS, page.labels);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS,
+				MemoryEngineContract.truncateDisplay(page.labels));
 		result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, page.freezeModes);
 		result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, page.freezePaused);
 		return result;

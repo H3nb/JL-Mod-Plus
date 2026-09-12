@@ -6,6 +6,8 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
+// Modifications: floating-point relative-query semantics and NaN transition handling.
+
 package io.github.h3nb.jlmodplus.memory;
 
 import androidx.annotation.Nullable;
@@ -16,6 +18,8 @@ import java.math.BigInteger;
 /** Typed raw-bit codec and predicate evaluator for the managed primitive planes. */
 final class ManagedJavaValue {
 	private static final BigInteger UNSIGNED_LONG_MAX = BigInteger.ONE.shiftLeft(64).subtract(BigInteger.ONE);
+	private static final int MAX_INPUT_CHARS = 96;
+	private static final int DELTA_ULP_TOLERANCE = 4;
 
 	private ManagedJavaValue() {
 	}
@@ -112,7 +116,7 @@ final class ManagedJavaValue {
 
 	/** Parses one editable/search value into the canonical raw bits for its exact primitive type. */
 	static boolean parse(@Nullable String text, int type, long[] output) {
-		if (text == null || output == null || output.length == 0) return false;
+		if (text == null || text.length() > MAX_INPUT_CHARS || output == null || output.length == 0) return false;
 		String value = text.trim();
 		if (value.isEmpty()) return false;
 		try {
@@ -202,7 +206,7 @@ final class ManagedJavaValue {
 
 	/** Parses a non-negative relative magnitude using the unsigned primitive width. */
 	static boolean parseMagnitude(@Nullable String text, int type, long[] output) {
-		if (text == null || output == null || output.length == 0) return false;
+		if (text == null || text.length() > MAX_INPUT_CHARS || output == null || output.length == 0) return false;
 		String value = text.trim();
 		if (value.startsWith("+")) value = value.substring(1);
 		if (value.isEmpty() || value.startsWith("-")) return false;
@@ -295,22 +299,18 @@ final class ManagedJavaValue {
 
 	static boolean matchesRelative(int type, int predicate, long current, long reference,
 	                               long first, long second) {
-		if (!validRelativeQuery(type, predicate, first, second) || isNan(type, current)
-				|| isNan(type, reference)) return false;
-		if (predicate == MemoryEngineContract.PREDICATE_CHANGED) return !same(type, current, reference);
-		if (predicate == MemoryEngineContract.PREDICATE_UNCHANGED) return same(type, current, reference);
+		if (!validRelativeQuery(type, predicate, first, second)) return false;
+		if (predicate == MemoryEngineContract.PREDICATE_CHANGED) {
+			return valuesChanged(type, current, reference);
+		}
+		if (predicate == MemoryEngineContract.PREDICATE_UNCHANGED) {
+			return !valuesChanged(type, current, reference);
+		}
+		if (isNan(type, current) || isNan(type, reference)) return false;
 		if (predicate == MemoryEngineContract.PREDICATE_INCREASED) return compare(type, current, reference) > 0;
 		if (predicate == MemoryEngineContract.PREDICATE_DECREASED) return compare(type, current, reference) < 0;
 		if (isFloating(type)) {
-			double delta = asDouble(type, current) - asDouble(type, reference);
-			double wanted = asDouble(type, first);
-			if (predicate == MemoryEngineContract.PREDICATE_INCREASED_BY) return delta == wanted;
-			if (predicate == MemoryEngineContract.PREDICATE_DECREASED_BY) return -delta == wanted;
-			if (predicate == MemoryEngineContract.PREDICATE_CHANGED_BY) return Math.abs(delta) == Math.abs(wanted);
-			if (predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE) {
-				return delta >= wanted && delta <= asDouble(type, second);
-			}
-			return -delta >= wanted && -delta <= asDouble(type, second);
+			return matchesFloatingRelative(type, predicate, current, reference, first, second);
 		}
 		boolean increased = compare(type, current, reference) >= 0;
 		long magnitude = unsignedMagnitude(type, current, reference);
@@ -341,6 +341,71 @@ final class ManagedJavaValue {
 	static boolean isNan(int type, long bits) {
 		return type == MemoryEngineContract.TYPE_FLOAT ? Float.isNaN(Float.intBitsToFloat((int) bits))
 				: type == MemoryEngineContract.TYPE_DOUBLE && Double.isNaN(Double.longBitsToDouble(bits));
+	}
+
+	/**
+	 * Numeric comparisons deliberately do not equate NaN. Relative change tracking is different:
+	 * it observes a stored value transition, so preserving an identical NaN payload is unchanged
+	 * while entering, leaving, or changing a NaN payload is changed.
+	 */
+	private static boolean valuesChanged(int type, long current, long reference) {
+		return (isNan(type, current) || isNan(type, reference)) ? current != reference
+				: !same(type, current, reference);
+	}
+
+	private static boolean matchesFloatingRelative(int type, int predicate, long current,
+	                                              long reference, long first, long second) {
+		if (type == MemoryEngineContract.TYPE_FLOAT) {
+			float currentValue = Float.intBitsToFloat((int) current);
+			float referenceValue = Float.intBitsToFloat((int) reference);
+			float wanted = Float.intBitsToFloat((int) first);
+			float delta = currentValue - referenceValue;
+			if (!Float.isFinite(delta)) return false;
+			if (predicate == MemoryEngineContract.PREDICATE_INCREASED_BY) {
+				return delta >= 0.0f && withinUlps(delta, wanted, currentValue, referenceValue);
+			}
+			if (predicate == MemoryEngineContract.PREDICATE_DECREASED_BY) {
+				return delta <= 0.0f && withinUlps(-delta, wanted, currentValue, referenceValue);
+			}
+			if (predicate == MemoryEngineContract.PREDICATE_CHANGED_BY) {
+				return withinUlps(Math.abs(delta), Math.abs(wanted), currentValue, referenceValue);
+			}
+			float upper = Float.intBitsToFloat((int) second);
+			return predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE
+					? delta >= wanted && delta <= upper : -delta >= wanted && -delta <= upper;
+		}
+
+		double currentValue = Double.longBitsToDouble(current);
+		double referenceValue = Double.longBitsToDouble(reference);
+		double wanted = Double.longBitsToDouble(first);
+		double delta = currentValue - referenceValue;
+		if (!Double.isFinite(delta)) return false;
+		if (predicate == MemoryEngineContract.PREDICATE_INCREASED_BY) {
+			return delta >= 0.0 && withinUlps(delta, wanted, currentValue, referenceValue);
+		}
+		if (predicate == MemoryEngineContract.PREDICATE_DECREASED_BY) {
+			return delta <= 0.0 && withinUlps(-delta, wanted, currentValue, referenceValue);
+		}
+		if (predicate == MemoryEngineContract.PREDICATE_CHANGED_BY) {
+			return withinUlps(Math.abs(delta), Math.abs(wanted), currentValue, referenceValue);
+		}
+		double upper = Double.longBitsToDouble(second);
+		return predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE
+				? delta >= wanted && delta <= upper : -delta >= wanted && -delta <= upper;
+	}
+
+	private static boolean withinUlps(float actual, float expected, float current, float reference) {
+		if (!Float.isFinite(actual) || !Float.isFinite(expected)) return false;
+		float scale = Math.max(Math.max(Math.abs(actual), Math.abs(expected)),
+				Math.max(Math.abs(current), Math.abs(reference)));
+		return Math.abs(actual - expected) <= Math.ulp(scale) * DELTA_ULP_TOLERANCE;
+	}
+
+	private static boolean withinUlps(double actual, double expected, double current, double reference) {
+		if (!Double.isFinite(actual) || !Double.isFinite(expected)) return false;
+		double scale = Math.max(Math.max(Math.abs(actual), Math.abs(expected)),
+				Math.max(Math.abs(current), Math.abs(reference)));
+		return Math.abs(actual - expected) <= Math.ulp(scale) * DELTA_ULP_TOLERANCE;
 	}
 
 	private static boolean same(int type, long left, long right) {

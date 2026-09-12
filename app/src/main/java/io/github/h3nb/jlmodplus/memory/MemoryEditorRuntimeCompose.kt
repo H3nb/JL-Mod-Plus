@@ -3,18 +3,25 @@
  * you may not use this file except in compliance with the License.
  */
 
+// Modifications: custom keypad-only value input and IME-safe dialogs.
+
 package io.github.h3nb.jlmodplus.memory
 
 import android.view.WindowManager
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,7 +31,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
@@ -32,7 +43,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -44,6 +59,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -60,21 +77,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindowProvider
 import io.github.h3nb.jlmodplus.R
@@ -83,9 +111,64 @@ import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.jlModPlusFilterChipColors
 import java.util.Locale
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 private enum class RuntimeMemoryTab { SEARCH_RESULTS, WATCH, INSPECTOR }
 private enum class RuntimeInputField { FIRST, SECOND }
+
+private data class RuntimeKeypadCell(
+    val label: String,
+    val onClick: () -> Unit,
+    val enabled: Boolean = true,
+    val span: Int = 1,
+)
+
+private val RuntimeMemoryValueTypes = intArrayOf(
+    MemoryEngineContract.TYPE_AUTO,
+    MemoryEngineContract.TYPE_BYTE,
+    MemoryEngineContract.TYPE_SHORT,
+    MemoryEngineContract.TYPE_CHAR,
+    MemoryEngineContract.TYPE_INT,
+    MemoryEngineContract.TYPE_LONG,
+    MemoryEngineContract.TYPE_FLOAT,
+    MemoryEngineContract.TYPE_DOUBLE,
+)
+
+private const val RuntimeKeypadTransitionDurationMillis = 240
+// Material3 text fields use a 56dp intrinsic height. Sharing it with the outlined menus keeps
+// their top/bottom strokes aligned without clipping the value baseline or blinking caret.
+private val RuntimeInputControlHeight = 56.dp
+// OutlinedTextField reserves an 8dp top inset for its floating label. The surrounding selector
+// controls do not have that inset, so compensate inside the fixed 56dp row slot. Extending by
+// the inset and shifting by half keeps both the outline and its text baseline centered together.
+private val RuntimeOutlinedFieldLabelInset = 8.dp
+private val RuntimeKeypadButtonHeight = 48.dp
+private val RuntimeKeypadPortraitHeight = 256.dp
+private val RuntimeKeypadLandscapeHeight = 198.dp
+
+@Composable
+private fun runtimeMemoryControlTextStyle() = MaterialTheme.typography.labelLarge
+
+@Composable
+private fun runtimeMemoryDataTextStyle() = MaterialTheme.typography.bodyLarge.copy(
+    fontFamily = FontFamily.Monospace,
+)
+
+@Composable
+private fun runtimeMemoryMetaTextStyle() = MaterialTheme.typography.bodySmall.copy(
+    fontFamily = FontFamily.Monospace,
+)
+
+@Composable
+private fun runtimeMemoryKeypadTextStyle() = MaterialTheme.typography.labelLarge.copy(
+    fontFamily = FontFamily.Monospace,
+)
+
+@Composable
+private fun runtimeMemoryInspectorValueTextStyle() = MaterialTheme.typography.titleSmall.copy(
+    fontFamily = FontFamily.Monospace,
+)
 
 /** Production Memory Editor shell hosted in the dedicated :memory_engine Activity. */
 @Composable
@@ -350,7 +433,7 @@ private fun RuntimeMemoryTabs(
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
         )
         FilterChip(
             selected = tab == RuntimeMemoryTab.WATCH,
@@ -367,7 +450,7 @@ private fun RuntimeMemoryTabs(
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
         )
         FilterChip(
             selected = tab == RuntimeMemoryTab.INSPECTOR,
@@ -384,7 +467,7 @@ private fun RuntimeMemoryTabs(
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
         )
     }
 }
@@ -454,7 +537,12 @@ private fun RuntimeMessage(message: String, isError: Boolean) {
     Surface(color = container.copy(alpha = 0.82f)) {
         Text(
             message,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics {
+                    liveRegion = if (isError) LiveRegionMode.Assertive else LiveRegionMode.Polite
+                }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             style = MaterialTheme.typography.bodySmall,
             color = content,
         )
@@ -606,10 +694,12 @@ private fun RuntimeSearchResultsTab(
                         selected = row.id in state.selected,
                         onToggle = { actions.toggleSelection(row.id) },
                         onClick = {
-                            editTargets = listOf(
-                                MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes),
-                            )
-                            editRevision = state.revision
+                            if (state.writeSupported) {
+                                editTargets = listOf(
+                                    MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes),
+                                )
+                                editRevision = state.revision
+                            }
                         },
                     )
                 }
@@ -685,8 +775,7 @@ private fun RuntimeResultRow(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         row.valueText,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontFamily = FontFamily.Monospace,
+                        style = runtimeMemoryDataTextStyle(),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
@@ -702,8 +791,7 @@ private fun RuntimeResultRow(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         row.locationText,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
+                        style = runtimeMemoryMetaTextStyle(),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
@@ -794,10 +882,12 @@ private fun RuntimeWatchTab(
                         selected = row.id in state.selected,
                         onToggle = { actions.toggleSelection(row.id) },
                         onClick = {
-                            editTargets = listOf(
-                                MemoryEditTarget(row.id, row.type, row.valueText,
-                                    listOf(row.type), watch = true),
-                            )
+                            if (state.writeSupported) {
+                                editTargets = listOf(
+                                    MemoryEditTarget(row.id, row.type, row.valueText,
+                                        listOf(row.type), watch = true),
+                                )
+                            }
                         },
                     )
                 }
@@ -864,15 +954,13 @@ private fun RuntimeWatchRow(
                     )
                     Text(
                         row.valueText,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontFamily = FontFamily.Monospace,
+                        style = runtimeMemoryDataTextStyle(),
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         "${row.locationText} · ${runtimeTypeShort(row.type)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
+                        style = runtimeMemoryMetaTextStyle(),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
@@ -896,16 +984,60 @@ private fun RuntimeWatchRow(
 }
 
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RuntimeSearchDialogBody(
     showKeypad: Boolean,
     controls: @Composable (sideDock: Boolean) -> Unit,
-    keypad: @Composable () -> Unit,
+    keypad: @Composable (landscape: Boolean) -> Unit,
     supportingContent: (@Composable () -> Unit)? = null,
 ) {
     val landscape = availableWindowWidthDp() > availableWindowHeightDp()
+    val imeVisible = WindowInsets.isImeVisible
+    // BasicAlertDialog's platform window already moves its frame above the IME. Applying
+    // imePadding here as well reserves that height a second time and creates a white band.
+    // Keep the native IME and custom keypad mutually exclusive. The keypad is given a fixed
+    // viewport and only its layer is animated, so the dialog window is not resized and recentered
+    // on every animation frame.
+    val targetKeypadVisible = showKeypad && !imeVisible
+    var keypadMounted by remember { mutableStateOf(targetKeypadVisible) }
+    // The default virtual keypad is part of the dialog's first frame. Only later mode changes
+    // animate; opening New Search/Edit must not briefly compose an empty, differently sized body.
+    val keypadProgress = remember { Animatable(if (targetKeypadVisible) 1f else 0f) }
+
+    LaunchedEffect(targetKeypadVisible, imeVisible) {
+        if (targetKeypadVisible) {
+            keypadMounted = true
+            keypadProgress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = RuntimeKeypadTransitionDurationMillis,
+                    easing = FastOutSlowInEasing,
+                ),
+            )
+        } else if (imeVisible) {
+            // Once the platform IME takes over, remove the custom keypad immediately. The
+            // system owns the window resize animation and there is no competing layout motion.
+            keypadProgress.snapTo(0f)
+            keypadMounted = false
+        } else {
+            keypadProgress.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(
+                    durationMillis = RuntimeKeypadTransitionDurationMillis,
+                    easing = FastOutSlowInEasing,
+                ),
+            )
+            keypadMounted = false
+        }
+    }
+
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val sideDock = landscape && showKeypad && maxWidth >= 480.dp
+        // Keep the layout mode stable for the entire custom-keypad transition. A fixed viewport
+        // prevents the platform dialog from repeatedly measuring and moving while the layer
+        // fades/scales in or out.
+        val sideDock = landscape && maxWidth >= 480.dp &&
+            (targetKeypadVisible || (keypadMounted && !imeVisible))
         if (sideDock) {
             val keypadWidth = (maxWidth * 0.42f).coerceIn(220.dp, 280.dp)
             Column(
@@ -924,7 +1056,20 @@ private fun RuntimeSearchDialogBody(
                         controls(true)
                         supportingContent?.invoke()
                     }
-                    Box(modifier = Modifier.width(keypadWidth)) { keypad() }
+                    if (keypadMounted && !imeVisible) {
+                        Box(
+                            modifier = Modifier
+                                .width(keypadWidth)
+                                .height(RuntimeKeypadLandscapeHeight)
+                                .graphicsLayer {
+                                    val progress = keypadProgress.value
+                                    alpha = progress
+                                    translationX = (1f - progress) * 20.dp.toPx()
+                                },
+                        ) {
+                            keypad(landscape)
+                        }
+                    }
                 }
             }
         } else {
@@ -934,7 +1079,20 @@ private fun RuntimeSearchDialogBody(
             ) {
                 controls(false)
                 supportingContent?.invoke()
-                if (showKeypad) keypad()
+                if (keypadMounted && !imeVisible) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(RuntimeKeypadPortraitHeight)
+                            .graphicsLayer {
+                                val progress = keypadProgress.value
+                                alpha = progress
+                                translationY = (1f - progress) * 12.dp.toPx()
+                            },
+                    ) {
+                        keypad(landscape)
+                    }
+                }
             }
         }
     }
@@ -958,7 +1116,7 @@ internal fun RuntimeKnownSearchDialog(
     }
     var peekingUnderlay by remember { mutableStateOf(false) }
 
-    val expression = parseMemorySearchExpression(query.text)
+    val expression = remember(query.text) { parseMemorySearchExpression(query.text) }
     val groupExpression = expression is MemorySearchExpression.Group
     val effectivePredicate = if (groupExpression) {
         MemoryEngineContract.PREDICATE_EQUAL
@@ -968,35 +1126,25 @@ internal fun RuntimeKnownSearchDialog(
     LaunchedEffect(groupExpression) {
         if (groupExpression) predicate = MemoryEngineContract.PREDICATE_EQUAL
     }
-    val relative = effectivePredicate >= MemoryEngineContract.PREDICATE_CHANGED
-    val spec = if (relative) MemoryInputSpec.relativeMagnitudeForType(type)
-    else MemoryInputSpec.forType(type)
+    val spec = remember(type) { MemoryInputSpec.forType(type) }
     LaunchedEffect(expression, type) {
         if (expression is MemorySearchExpression.Group && type == MemoryEngineContract.TYPE_AUTO) {
             inferMemoryGroupType(expression.values)?.let { type = it }
         }
     }
-    val needsSecond = (effectivePredicate == MemoryEngineContract.PREDICATE_BETWEEN && !relative &&
-        expression !is MemorySearchExpression.Group) ||
-        effectivePredicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
-        effectivePredicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
-    val firstValid = if (relative && !memoryRelativePredicateNeedsValue(effectivePredicate)) {
-        true
-    } else {
-        spec.isComplete(query.text)
-    }
+    val needsSecond = effectivePredicate == MemoryEngineContract.PREDICATE_BETWEEN &&
+        expression !is MemorySearchExpression.Group
+    val firstValid = spec.isComplete(query.text)
     val secondValid = !needsSecond || spec.isComplete(second.text)
     val singleValid = expression is MemorySearchExpression.Single && firstValid
     val managedGroupValid = expression is MemorySearchExpression.Group &&
         type != MemoryEngineContract.TYPE_AUTO && expression.values.all(spec::isComplete)
-    val newSearchValid = !relative && (singleValid || managedGroupValid) && secondValid &&
+    val newSearchValid = (singleValid || managedGroupValid) && secondValid &&
         MemoryEngineContract.isValueType(type) &&
         effectivePredicate in MemoryEngineContract.PREDICATE_EQUAL..MemoryEngineContract.PREDICATE_BETWEEN
-    val relativeWithoutValue = relative && !memoryRelativePredicateNeedsValue(effectivePredicate)
     val nextScanValid = state.sessionStage != MemorySessionStage.EMPTY &&
         type in (MemoryEngineContract.TYPE_AUTO..MemoryEngineContract.TYPE_DOUBLE) &&
-        (relativeWithoutValue || (expression is MemorySearchExpression.Single && firstValid)) &&
-        secondValid
+        expression is MemorySearchExpression.Single && firstValid && secondValid
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1019,7 +1167,6 @@ internal fun RuntimeKnownSearchDialog(
                         RuntimePredicateMenu(
                             predicate = effectivePredicate,
                             onPredicate = { predicate = it },
-                            includeRelative = state.sessionStage != MemorySessionStage.EMPTY,
                             enabled = !groupExpression,
                             modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
                         )
@@ -1028,7 +1175,10 @@ internal fun RuntimeKnownSearchDialog(
                             value = query,
                             active = activeField == RuntimeInputField.FIRST,
                             onClick = { activeField = RuntimeInputField.FIRST },
+                            onValueChange = { query = it },
+                            valueSpec = spec,
                             modifier = Modifier.weight(1f),
+                            initialFocus = true,
                         )
                     }
                     if (needsSecond) {
@@ -1037,6 +1187,8 @@ internal fun RuntimeKnownSearchDialog(
                             value = second,
                             active = activeField == RuntimeInputField.SECOND,
                             onClick = { activeField = RuntimeInputField.SECOND },
+                            onValueChange = { second = it },
+                            valueSpec = spec,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -1056,8 +1208,9 @@ internal fun RuntimeKnownSearchDialog(
                         )
                     }
                 },
-                keypad = {
+                keypad = { landscape ->
                     RuntimeSearchKeypad(
+                        landscape = landscape,
                         allowGroup = activeField == RuntimeInputField.FIRST,
                         valueSpec = spec,
                         onToken = { token ->
@@ -1119,12 +1272,8 @@ internal fun RuntimeKnownSearchDialog(
                     Button(
                         enabled = nextScanValid && !state.busy,
                         onClick = {
-                            val nextValue = if (relativeWithoutValue) {
-                                ""
-                            } else {
-                                (expression as? MemorySearchExpression.Single)?.value
-                                    ?: return@Button
-                            }
+                            val nextValue = (expression as? MemorySearchExpression.Single)?.value
+                                ?: return@Button
                             actions.nextScan(
                                 nextValue,
                                 second.text,
@@ -1171,8 +1320,10 @@ private fun RuntimeUnknownSearchDialog(
     val needsSecond = predicate == MemoryEngineContract.PREDICATE_BETWEEN ||
         predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
         predicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
-    val spec = if (relative) MemoryInputSpec.relativeMagnitudeForType(type)
-    else MemoryInputSpec.forType(type)
+    val spec = remember(type, relative) {
+        if (relative) MemoryInputSpec.relativeMagnitudeForType(type)
+        else MemoryInputSpec.forType(type)
+    }
     val firstValid = !needsValue || spec.isComplete(first.text)
     val secondValid = !needsSecond || spec.isComplete(second.text)
     val refineValid = activeSession && firstValid && secondValid
@@ -1192,7 +1343,7 @@ private fun RuntimeUnknownSearchDialog(
         },
         text = {
             RuntimeSearchDialogBody(
-                showKeypad = activeSession && needsValue,
+                showKeypad = needsValue,
                 controls = { sideDock ->
                     if (!activeSession) {
                         if (sideDock) {
@@ -1249,13 +1400,18 @@ private fun RuntimeUnknownSearchDialog(
                                         value = first,
                                         active = activeField == RuntimeInputField.FIRST,
                                         onClick = { activeField = RuntimeInputField.FIRST },
+                                        onValueChange = { first = it },
+                                        valueSpec = spec,
                                         modifier = Modifier.weight(1f),
+                                        initialFocus = true,
                                     )
                                     RuntimeSearchField(
                                         label = stringResource(R.string.memory_editor_max_value),
                                         value = second,
                                         active = activeField == RuntimeInputField.SECOND,
                                         onClick = { activeField = RuntimeInputField.SECOND },
+                                        onValueChange = { second = it },
+                                        valueSpec = spec,
                                         modifier = Modifier.weight(1f),
                                     )
                                 }
@@ -1265,7 +1421,10 @@ private fun RuntimeUnknownSearchDialog(
                                     value = first,
                                     active = activeField == RuntimeInputField.FIRST,
                                     onClick = { activeField = RuntimeInputField.FIRST },
+                                    onValueChange = { first = it },
+                                    valueSpec = spec,
                                     modifier = Modifier.fillMaxWidth(),
+                                    initialFocus = true,
                                 )
                                 if (needsSecond) {
                                     RuntimeSearchField(
@@ -1273,6 +1432,8 @@ private fun RuntimeUnknownSearchDialog(
                                         value = second,
                                         active = activeField == RuntimeInputField.SECOND,
                                         onClick = { activeField = RuntimeInputField.SECOND },
+                                        onValueChange = { second = it },
+                                        valueSpec = spec,
                                         modifier = Modifier.fillMaxWidth(),
                                     )
                                 }
@@ -1280,8 +1441,9 @@ private fun RuntimeUnknownSearchDialog(
                         }
                     }
                 },
-                keypad = {
+                keypad = { landscape ->
                     RuntimeSearchKeypad(
+                        landscape = landscape,
                         allowGroup = false,
                         valueSpec = spec,
                         onToken = { token ->
@@ -1383,7 +1545,7 @@ private fun RuntimeEditDialog(
     }
     var freeze by remember { mutableStateOf(false) }
     var peekingUnderlay by remember { mutableStateOf(false) }
-    val spec = MemoryInputSpec.forType(type)
+    val spec = remember(type) { MemoryInputSpec.forType(type) }
     val replacementValid = if (targets.any(MemoryEditTarget::watch)) {
         targets.any { it.type == type } && spec.isComplete(replacement.text)
     } else {
@@ -1432,7 +1594,10 @@ private fun RuntimeEditDialog(
                                 value = replacement,
                                 active = true,
                                 onClick = {},
+                                onValueChange = { replacement = it },
+                                valueSpec = spec,
                                 modifier = Modifier.weight(1f),
+                                initialFocus = true,
                             )
                         }
                     } else {
@@ -1449,7 +1614,10 @@ private fun RuntimeEditDialog(
                             value = replacement,
                             active = true,
                             onClick = {},
+                            onValueChange = { replacement = it },
+                            valueSpec = spec,
                             modifier = Modifier.fillMaxWidth(),
+                            initialFocus = true,
                         )
                     }
                     if (!batch) {
@@ -1485,8 +1653,9 @@ private fun RuntimeEditDialog(
                         )
                     }
                 } else null,
-                keypad = {
+                keypad = { landscape ->
                     RuntimeSearchKeypad(
+                        landscape = landscape,
                         allowGroup = false,
                         valueSpec = spec,
                         onToken = { replacement = runtimeInsertValidated(replacement, it, spec) },
@@ -1623,8 +1792,7 @@ private fun RuntimeInspectorTab(
                                             if (row.relativeOffset >= 0) "+${row.relativeOffset}"
                                             else row.relativeOffset.toString(),
                                             modifier = Modifier.widthIn(min = 48.dp),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontFamily = FontFamily.Monospace,
+                                            style = runtimeMemoryMetaTextStyle(),
                                         )
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
@@ -1641,8 +1809,7 @@ private fun RuntimeInspectorTab(
                                         }
                                         Text(
                                             row.valueText,
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontFamily = FontFamily.Monospace,
+                                            style = runtimeMemoryInspectorValueTextStyle(),
                                         )
                                     }
                                 }
@@ -1689,7 +1856,7 @@ private fun RuntimeInspectorLogicalEditDialog(
     onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val spec = MemoryInputSpec.forType(row.type)
+    val spec = remember(row.type) { MemoryInputSpec.forType(row.type) }
     var value by remember(row) {
         mutableStateOf(TextFieldValue(row.valueText, TextRange(row.valueText.length)))
     }
@@ -1699,7 +1866,8 @@ private fun RuntimeInspectorLogicalEditDialog(
         modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
         title = {
             RuntimeInputDialogTitle(
-                title = row.label.ifBlank { runtimeTypeShort(row.type) },
+                title = (row.label.ifBlank { runtimeTypeShort(row.type) })
+                    .memoryEditorTitleCase(),
                 peeking = peekingUnderlay,
                 onPeekingChanged = {
                     peekingUnderlay = it
@@ -1716,11 +1884,15 @@ private fun RuntimeInspectorLogicalEditDialog(
                         value = value,
                         active = true,
                         onClick = {},
+                        onValueChange = { value = it },
+                        valueSpec = spec,
                         modifier = Modifier.fillMaxWidth(),
+                        initialFocus = true,
                     )
                 },
-                keypad = {
+                keypad = { landscape ->
                     RuntimeSearchKeypad(
+                        landscape = landscape,
                         allowGroup = false,
                         valueSpec = spec,
                         onToken = { value = runtimeInsertValidated(value, it, spec) },
@@ -1756,31 +1928,118 @@ private fun RuntimeInspectorLogicalEditDialog(
 
 private fun Int.formatRelativeOffset(): String = if (this >= 0) "+$this" else toString()
 
+private fun String.memoryEditorTitleCase(): String = trim()
+    .split(Regex("\\s+"))
+    .filter(String::isNotEmpty)
+    .joinToString(" ") { word ->
+        word.replaceFirstChar { first -> first.titlecase(Locale.getDefault()) }
+    }
+
 @Composable
 private fun RuntimeSearchField(
     label: String,
     value: TextFieldValue,
     active: Boolean,
     onClick: () -> Unit,
+    onValueChange: (TextFieldValue) -> Unit,
+    valueSpec: MemoryInputSpec,
     modifier: Modifier = Modifier,
+    initialFocus: Boolean = false,
 ) {
-    OutlinedButton(onClick = onClick, modifier = modifier.sizeIn(minHeight = 52.dp)) {
-        Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-            Text(label, style = MaterialTheme.typography.labelSmall)
-            val cursor = value.selection.end.coerceIn(0, value.text.length)
-            val visibleValue = when {
-                active && value.text.isEmpty() -> "▏"
-                active -> value.text.substring(0, cursor) + "▏" + value.text.substring(cursor)
-                value.text.isEmpty() -> "—"
-                else -> value.text
-            }
-            Text(
-                visibleValue,
-                style = MaterialTheme.typography.titleMedium,
-                fontFamily = FontFamily.Monospace,
-                color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val density = LocalDensity.current
+    val textMeasurer = rememberTextMeasurer()
+    var focused by remember { mutableStateOf(false) }
+    var caretVisible by remember { mutableStateOf(true) }
+    val accent = MaterialTheme.colorScheme.primary
+    val textStyle = runtimeMemoryDataTextStyle().copy(
+        color = if (active) MaterialTheme.colorScheme.onSurface
+        else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    val caretIndex = value.selection.start.coerceIn(0, value.text.length)
+    val caretPrefixWidth = with(density) {
+        textMeasurer.measure(
+            text = value.text.take(caretIndex),
+            style = textStyle,
+        ).size.width.toDp()
+    }
+    val textWidth = with(density) {
+        textMeasurer.measure(
+            text = value.text,
+            style = textStyle,
+        ).size.width.toDp()
+    }
+    LaunchedEffect(initialFocus) {
+        if (initialFocus) {
+            // Keep focus for the custom caret and keypad routing without starting a platform IME.
+            focusRequester.requestFocus()
+        }
+    }
+    LaunchedEffect(focused, caretIndex) {
+        caretVisible = true
+        if (!focused) return@LaunchedEffect
+        while (isActive) {
+            delay(500L)
+            caretVisible = !caretVisible
+        }
+    }
+    BoxWithConstraints(
+        modifier = modifier.requiredHeight(RuntimeInputControlHeight),
+    ) {
+        val caretStart = 16.dp
+        val caretEnd = (maxWidth - 18.dp).coerceAtLeast(caretStart)
+        val visibleTextWidth = (caretEnd - caretStart).coerceAtLeast(1.dp)
+        val caretUnscrolledOffset = caretStart + caretPrefixWidth
+        val maxTextScroll = (textWidth - visibleTextWidth).coerceAtLeast(0.dp)
+        // Mirror the single-line field's horizontal scroll just enough to keep the custom
+        // caret attached to a long value instead of letting it run beyond the outline.
+        val textScroll = (caretUnscrolledOffset - caretEnd)
+            .coerceAtLeast(0.dp)
+            .coerceAtMost(maxTextScroll)
+        val visibleCaretOffset = (caretUnscrolledOffset - textScroll)
+            .coerceIn(caretStart, caretEnd)
+        OutlinedTextField(
+            value = value,
+            onValueChange = { updated ->
+                if (valueSpec.acceptsPartial(updated.text)) onValueChange(updated)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .requiredHeight(RuntimeInputControlHeight + RuntimeOutlinedFieldLabelInset)
+                .offset(y = -(RuntimeOutlinedFieldLabelInset / 2))
+                .focusRequester(focusRequester)
+                .onFocusChanged {
+                    focused = it.isFocused
+                    // Hide any already-visible IME when focus moves between the value field and
+                    // predicate/type controls. All value editing is intentionally keypad-only.
+                    keyboardController?.hide()
+                    if (it.isFocused) onClick()
+                },
+            label = { Text(label) },
+            singleLine = true,
+            readOnly = true,
+            shape = MaterialTheme.shapes.extraLarge,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = accent,
+                focusedLabelColor = accent,
+                unfocusedBorderColor = accent.copy(alpha = 0.62f),
+                unfocusedLabelColor = accent,
+                cursorColor = accent,
+            ),
+            textStyle = textStyle,
+        )
+        if (focused && caretVisible) {
+            // Read-only TextField intentionally owns focus so the custom keypad can edit it
+            // without starting the platform IME. Material3 does not draw a caret for every
+            // read-only configuration, therefore render the insertion marker in the same
+            // content inset and blink it independently of keyboard visibility.
+            Box(
+                modifier = Modifier
+                    .offset(x = visibleCaretOffset, y = 17.dp)
+                    .width(2.dp)
+                    .height(22.dp)
+                    .background(MaterialTheme.colorScheme.primary),
             )
         }
     }
@@ -1788,6 +2047,7 @@ private fun RuntimeSearchField(
 
 @Composable
 private fun RuntimeSearchKeypad(
+    landscape: Boolean,
     allowGroup: Boolean,
     valueSpec: MemoryInputSpec? = null,
     onToken: (String) -> Unit,
@@ -1795,105 +2055,99 @@ private fun RuntimeSearchKeypad(
     onMove: (Int) -> Unit,
     onClear: () -> Unit,
 ) {
-    val landscape = availableWindowWidthDp() > availableWindowHeightDp()
-    Column(verticalArrangement = Arrangement.spacedBy(if (landscape) 2.dp else 4.dp)) {
-        if (landscape) {
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("1") { onToken("1") }
-                RuntimeKeypadButton("2") { onToken("2") }
-                RuntimeKeypadButton("3") { onToken("3") }
-                RuntimeKeypadButton("⌫", onClick = onBackspace)
-                RuntimeKeypadButton("←") { onMove(-1) }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("4") { onToken("4") }
-                RuntimeKeypadButton("5") { onToken("5") }
-                RuntimeKeypadButton("6") { onToken("6") }
-                RuntimeKeypadButton("→") { onMove(1) }
-                RuntimeKeypadButton("-", enabled = valueSpec?.signed ?: true) { onToken("-") }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("7") { onToken("7") }
-                RuntimeKeypadButton("8") { onToken("8") }
-                RuntimeKeypadButton("9") { onToken("9") }
-                RuntimeKeypadButton(".", enabled = valueSpec?.decimal ?: true) { onToken(".") }
-                RuntimeKeypadButton("E", enabled = valueSpec?.exponent ?: true) { onToken("E") }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("0") { onToken("0") }
-                RuntimeKeypadButton(";", enabled = allowGroup) { onToken(";") }
-                RuntimeKeypadButton(":", enabled = allowGroup) { onToken(":") }
-                RuntimeKeypadButton(
-                    stringResource(R.string.memory_editor_keypad_clear),
-                    weight = 2f,
-                    onClick = onClear,
-                )
-            }
-        } else {
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("1") { onToken("1") }
-                RuntimeKeypadButton("2") { onToken("2") }
-                RuntimeKeypadButton("3") { onToken("3") }
-                RuntimeKeypadButton("⌫", onClick = onBackspace)
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("4") { onToken("4") }
-                RuntimeKeypadButton("5") { onToken("5") }
-                RuntimeKeypadButton("6") { onToken("6") }
-                RuntimeKeypadButton("←") { onMove(-1) }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("7") { onToken("7") }
-                RuntimeKeypadButton("8") { onToken("8") }
-                RuntimeKeypadButton("9") { onToken("9") }
-                RuntimeKeypadButton("→") { onMove(1) }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("-", enabled = valueSpec?.signed ?: true) { onToken("-") }
-                RuntimeKeypadButton("0") { onToken("0") }
-                RuntimeKeypadButton(".", enabled = valueSpec?.decimal ?: true) { onToken(".") }
-                RuntimeKeypadButton("E", enabled = valueSpec?.exponent ?: true) { onToken("E") }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton(";", enabled = allowGroup) { onToken(";") }
-                RuntimeKeypadButton(":", enabled = allowGroup) { onToken(":") }
-                RuntimeKeypadButton(
-                    stringResource(R.string.memory_editor_keypad_clear),
-                    weight = 2f,
-                    onClick = onClear,
-                )
+    fun token(label: String, enabled: Boolean = true) = RuntimeKeypadCell(
+        label = label,
+        enabled = enabled,
+        onClick = { onToken(label) },
+    )
+
+    val clearLabel = stringResource(R.string.memory_editor_keypad_clear)
+    val columns = if (landscape) 5 else 4
+    val cells = if (landscape) {
+        listOf(
+            token("1"), token("2"), token("3"),
+            RuntimeKeypadCell("⌫", onClick = onBackspace),
+            RuntimeKeypadCell("←", onClick = { onMove(-1) }),
+            token("4"), token("5"), token("6"),
+            RuntimeKeypadCell("→", onClick = { onMove(1) }),
+            token("-", enabled = valueSpec?.signed ?: true),
+            token("7"), token("8"), token("9"),
+            token(".", enabled = valueSpec?.decimal ?: true),
+            token("E", enabled = valueSpec?.exponent ?: true),
+            token("0"),
+            token(";", enabled = allowGroup),
+            RuntimeKeypadCell(clearLabel, onClick = onClear, span = 3),
+        )
+    } else {
+        listOf(
+            token("1"), token("2"), token("3"),
+            RuntimeKeypadCell("⌫", onClick = onBackspace),
+            token("4"), token("5"), token("6"),
+            RuntimeKeypadCell("←", onClick = { onMove(-1) }),
+            token("7"), token("8"), token("9"),
+            RuntimeKeypadCell("→", onClick = { onMove(1) }),
+            token("-", enabled = valueSpec?.signed ?: true),
+            token("0"),
+            token(".", enabled = valueSpec?.decimal ?: true),
+            token("E", enabled = valueSpec?.exponent ?: true),
+            token(";", enabled = allowGroup),
+            RuntimeKeypadCell(clearLabel, onClick = onClear, span = 3),
+        )
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val rows = if (landscape) 4 else 5
+        val verticalSpacing = if (landscape) 2.dp else 4.dp
+        // Short landscape dialogs can have less height than the preferred 48dp x 4 table.
+        // Scale every cell from the same available row height so the final row is never clipped.
+        val cellHeight = (
+            (maxHeight - (verticalSpacing * (rows - 1))) / rows
+        ).coerceAtMost(RuntimeKeypadButtonHeight).coerceAtLeast(32.dp)
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(verticalSpacing),
+            userScrollEnabled = false,
+        ) {
+            cells.forEach { cell ->
+                item(span = { GridItemSpan(cell.span) }) {
+                    RuntimeKeypadButton(cell, height = cellHeight)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun RuntimeKeypadRow(content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        content = content,
-    )
-}
-
-@Composable
-private fun androidx.compose.foundation.layout.RowScope.RuntimeKeypadButton(
-    label: String,
-    enabled: Boolean = true,
-    weight: Float = 1f,
-    onClick: () -> Unit,
+private fun RuntimeKeypadButton(
+    cell: RuntimeKeypadCell,
+    height: Dp,
 ) {
-    val landscape = availableWindowWidthDp() > availableWindowHeightDp()
     OutlinedButton(
-        onClick = onClick,
-        enabled = enabled,
+        onClick = cell.onClick,
+        enabled = cell.enabled,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.36f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
         contentPadding = PaddingValues(0.dp),
-        modifier = Modifier.weight(weight).sizeIn(minHeight = if (landscape) 40.dp else 42.dp),
+        // Keep the text field as the focus owner while the virtual keypad is tapped so the
+        // insertion caret remains visible without handing input to the platform IME.
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(height)
+            .focusProperties { canFocus = false },
     ) {
         Text(
-            label,
+            cell.label,
             modifier = Modifier.fillMaxWidth(),
-            fontFamily = FontFamily.Monospace,
+            style = runtimeMemoryKeypadTextStyle(),
             maxLines = 1,
             textAlign = TextAlign.Center,
         )
@@ -1911,7 +2165,10 @@ private fun RuntimeInputDialogTitle(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, modifier = Modifier.weight(1f))
+        Text(
+            title,
+            modifier = Modifier.weight(1f),
+        )
         RuntimePeekUnderlayButton(
             peeking = peeking,
             onPeekingChanged = onPeekingChanged,
@@ -2046,42 +2303,17 @@ private fun RuntimeSearchControlRow(
 private fun RuntimePredicateMenu(
     predicate: Int,
     onPredicate: (Int) -> Unit,
-    includeRelative: Boolean = false,
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     RuntimeChoiceMenu(
         value = predicate,
-        values = (if (includeRelative) intArrayOf(
-            MemoryEngineContract.PREDICATE_EQUAL,
-            MemoryEngineContract.PREDICATE_NOT_EQUAL,
-            MemoryEngineContract.PREDICATE_GREATER,
-            MemoryEngineContract.PREDICATE_LESS,
-            MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
-            MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
-            MemoryEngineContract.PREDICATE_BETWEEN,
-            MemoryEngineContract.PREDICATE_CHANGED,
-            MemoryEngineContract.PREDICATE_UNCHANGED,
-            MemoryEngineContract.PREDICATE_INCREASED,
-            MemoryEngineContract.PREDICATE_DECREASED,
-            MemoryEngineContract.PREDICATE_INCREASED_BY,
-            MemoryEngineContract.PREDICATE_DECREASED_BY,
-            MemoryEngineContract.PREDICATE_CHANGED_BY,
-            MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE,
-            MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE,
-        ) else intArrayOf(
-            MemoryEngineContract.PREDICATE_EQUAL,
-            MemoryEngineContract.PREDICATE_NOT_EQUAL,
-            MemoryEngineContract.PREDICATE_GREATER,
-            MemoryEngineContract.PREDICATE_LESS,
-            MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
-            MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
-            MemoryEngineContract.PREDICATE_BETWEEN,
-        )),
+        values = memoryKnownSearchPredicates(),
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
         modifier = modifier,
         enabled = enabled,
+        centerContent = true,
     )
 }
 
@@ -2097,6 +2329,7 @@ private fun RuntimeRelativeMenu(
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
         modifier = modifier,
+        centerContent = true,
     )
 }
 
@@ -2109,20 +2342,16 @@ private fun RuntimeTypeMenu(
 ) {
     RuntimeChoiceMenu(
         value = type,
-        values = intArrayOf(
-            MemoryEngineContract.TYPE_AUTO,
-            MemoryEngineContract.TYPE_BYTE,
-            MemoryEngineContract.TYPE_SHORT,
-            MemoryEngineContract.TYPE_CHAR,
-            MemoryEngineContract.TYPE_INT,
-            MemoryEngineContract.TYPE_LONG,
-            MemoryEngineContract.TYPE_FLOAT,
-            MemoryEngineContract.TYPE_DOUBLE,
-        ),
+        values = RuntimeMemoryValueTypes,
         label = { runtimeTypeName(it) },
         onChange = onType,
         modifier = modifier,
         enabled = enabled,
+        leadingIcon = if (type == MemoryEngineContract.TYPE_AUTO) {
+            R.drawable.ic_auto_awesome
+        } else null,
+        centerContent = true,
+        showTrailingIcon = false,
     )
 }
 
@@ -2140,6 +2369,8 @@ private fun RuntimeEditTypeMenu(
         onChange = onType,
         modifier = modifier,
         enabled = types.size > 1,
+        centerContent = true,
+        showTrailingIcon = false,
     )
 }
 
@@ -2151,20 +2382,96 @@ private fun RuntimeChoiceMenu(
     onChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    leadingIcon: Int? = null,
+    centerContent: Boolean = false,
+    showTrailingIcon: Boolean = true,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val accent = MaterialTheme.colorScheme.primary
+    val containerColor = accent.copy(alpha = 0.10f)
     Box(modifier = modifier) {
         OutlinedButton(
             onClick = { expanded = true },
             enabled = enabled,
-            modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 48.dp),
+            modifier = Modifier.fillMaxWidth().height(RuntimeInputControlHeight),
+            shape = MaterialTheme.shapes.extraLarge,
+            border = BorderStroke(1.dp, accent.copy(alpha = 0.28f)),
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = containerColor,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+            contentPadding = PaddingValues(horizontal = 16.dp),
         ) {
-            Text(label(value), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (centerContent && showTrailingIcon) {
+                Box(Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.align(Alignment.Center),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        leadingIcon?.let { icon ->
+                            Icon(
+                                painter = painterResource(icon),
+                                contentDescription = null,
+                                tint = accent,
+                                modifier = Modifier.size(24.dp),
+                            )
+                            Spacer(Modifier.width(10.dp))
+                        }
+                        Text(
+                            label(value),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = runtimeMemoryControlTextStyle(),
+                        )
+                    }
+                    Icon(
+                        painter = painterResource(R.drawable.ic_keyboard_arrow_down),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.CenterEnd).size(24.dp),
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = if (centerContent) {
+                        Arrangement.Center
+                    } else Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    leadingIcon?.let { icon ->
+                        Icon(
+                            painter = painterResource(icon),
+                            contentDescription = null,
+                            tint = accent,
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(Modifier.width(10.dp))
+                    }
+                    Text(
+                        label(value),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = runtimeMemoryControlTextStyle(),
+                    )
+                    if (showTrailingIcon) {
+                        Spacer(Modifier.weight(1f))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_keyboard_arrow_down),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                }
+            }
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             values.forEach { item ->
                 DropdownMenuItem(
-                    text = { Text(label(item)) },
+                    text = { Text(label(item), style = runtimeMemoryControlTextStyle()) },
                     onClick = {
                         expanded = false
                         onChange(item)
@@ -2202,16 +2509,21 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        TextButton(onClick = actions::previousPage, enabled = state.pageOffset > 0) {
+        TextButton(
+            onClick = actions::previousPage,
+            enabled = state.pageOffset > 0,
+            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+        ) {
             Text("‹")
         }
         Text(
             "${state.pageOffset + 1}–${minOf(state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE, state.resultCount)}",
-            fontFamily = FontFamily.Monospace,
+            style = runtimeMemoryMetaTextStyle(),
         )
         TextButton(
             onClick = actions::nextPage,
             enabled = state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE < state.resultCount,
+            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
         ) {
             Text("›")
         }

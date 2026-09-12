@@ -40,6 +40,26 @@ class MemoryEditorModelsTest {
         assertTrue(memorySessionHasActiveSearch(MemorySessionStage.CANDIDATES))
     }
 
+    @Test fun knownAndUnknownSearchKeepPredicateFamiliesSeparate() {
+        assertArrayEquals(
+            intArrayOf(
+                MemoryEngineContract.PREDICATE_EQUAL,
+                MemoryEngineContract.PREDICATE_NOT_EQUAL,
+                MemoryEngineContract.PREDICATE_GREATER,
+                MemoryEngineContract.PREDICATE_LESS,
+                MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
+                MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
+                MemoryEngineContract.PREDICATE_BETWEEN,
+            ),
+            memoryKnownSearchPredicates(),
+        )
+        assertTrue(
+            memoryKnownSearchPredicates().toSet()
+                .intersect(memoryUnknownSearchPredicates().toSet())
+                .isEmpty(),
+        )
+    }
+
     @Test fun unknownSearchOnlyOffersRelativePredicates() {
         assertArrayEquals(
             intArrayOf(

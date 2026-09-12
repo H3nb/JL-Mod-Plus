@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+// Modifications: history eviction prioritizes active managed search results.
+
 package io.github.h3nb.jlmodplus.memory;
 
 import androidx.annotation.Nullable;
@@ -75,7 +77,7 @@ final class ManagedJavaMemoryEngine {
 	private final Map<Class<?>, Schema> schemaCache = new HashMap<>();
 	private final WatchStore watches = new WatchStore();
 	private final ArrayDeque<SearchState> searchHistory = new ArrayDeque<>();
-	private long activeToken;
+	private volatile long activeToken;
 	private ClassLoader activeLoader;
 	private long nextOwnerHandle = 1L;
 	private long nextRevision = 1L;
@@ -187,7 +189,7 @@ final class ManagedJavaMemoryEngine {
 
 		long retainedRevisionBytes;
 		synchronized (stateLock) {
-			retainedRevisionBytes = retainedSearchStorageBytesLocked();
+			retainedRevisionBytes = committedStorageBytesLocked();
 		}
 		ScanContext scan = new ScanContext(token, operationEpoch, snapshot, plan,
 				retainedRevisionBytes);
@@ -209,7 +211,7 @@ final class ManagedJavaMemoryEngine {
 			}
 			while (!scan.queue.isEmpty()) {
 				if (!scan.checkpoint()) return scan.failure();
-				Object valueObject = scan.queue.removeFirst();
+				Object valueObject = scan.dequeue();
 				scan.visit(valueObject);
 			}
 			RevisionBuilder built = scan.revision;
@@ -217,7 +219,7 @@ final class ManagedJavaMemoryEngine {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"Managed result storage exceeds the 2,000,000-row limit");
 			}
-			Revision revision = built.finish(allocateRevisionId(), limits,
+			Revision revision = finishActiveRevision(built, allocateRevisionId(),
 					scan.transientStorageBytes);
 			if (revision == null) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
@@ -258,7 +260,7 @@ final class ManagedJavaMemoryEngine {
 		}
 		long retainedRevisionBytes;
 		synchronized (stateLock) {
-			retainedRevisionBytes = retainedSearchStorageBytesLocked();
+			retainedRevisionBytes = committedStorageBytesLocked();
 		}
 		ScanContext scan = new ScanContext(token, operationEpoch, snapshot, plan,
 				retainedRevisionBytes);
@@ -280,9 +282,9 @@ final class ManagedJavaMemoryEngine {
 			}
 			while (!scan.queue.isEmpty()) {
 				if (!scan.checkpoint()) return scan.failure();
-				scan.visit(scan.queue.removeFirst());
+				scan.visit(scan.dequeue());
 			}
-			Revision revision = scan.revision.finish(allocateRevisionId(), limits,
+			Revision revision = finishActiveRevision(scan.revision, allocateRevisionId(),
 					scan.transientStorageBytes);
 			if (revision == null) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
@@ -318,7 +320,7 @@ final class ManagedJavaMemoryEngine {
 		}
 		long retainedRevisionBytes;
 		synchronized (stateLock) {
-			retainedRevisionBytes = retainedSearchStorageBytesLocked();
+			retainedRevisionBytes = committedStorageBytesLocked();
 		}
 		ScanContext scan = new ScanContext(token, operationEpoch, snapshot,
 				QueryPlan.unknown(type), retainedRevisionBytes, true);
@@ -340,9 +342,9 @@ final class ManagedJavaMemoryEngine {
 			}
 			while (!scan.queue.isEmpty()) {
 				if (!scan.checkpoint()) return scan.failure();
-				scan.visit(scan.queue.removeFirst());
+				scan.visit(scan.dequeue());
 			}
-			Revision revision = scan.revision.finish(allocateRevisionId(), limits,
+			Revision revision = finishActiveRevision(scan.revision, allocateRevisionId(),
 					scan.transientStorageBytes);
 			if (revision == null) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
@@ -380,7 +382,7 @@ final class ManagedJavaMemoryEngine {
 		}
 		long retainedRevisionBytes;
 		synchronized (stateLock) {
-			retainedRevisionBytes = retainedSearchStorageBytesLocked();
+			retainedRevisionBytes = committedStorageBytesLocked();
 		}
 		ScanContext scan = new ScanContext(token, operationEpoch, snapshot, plan,
 				retainedRevisionBytes);
@@ -402,9 +404,9 @@ final class ManagedJavaMemoryEngine {
 			}
 			while (!scan.queue.isEmpty()) {
 				if (!scan.checkpoint()) return scan.failure();
-				scan.visit(scan.queue.removeFirst());
+				scan.visit(scan.dequeue());
 			}
-			Revision revision = scan.revision.finish(allocateRevisionId(), limits,
+			Revision revision = finishActiveRevision(scan.revision, allocateRevisionId(),
 					scan.transientStorageBytes);
 			if (revision == null) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
@@ -453,7 +455,7 @@ final class ManagedJavaMemoryEngine {
 					"Managed refine was cancelled");
 		}
 
-		RevisionBuilder next = new RevisionBuilder(retainedSearchStorageBytes());
+		RevisionBuilder next = new RevisionBuilder(committedStorageBytes());
 		long visited = 0L;
 		long[] current = new long[1];
 		try {
@@ -481,13 +483,14 @@ final class ManagedJavaMemoryEngine {
 							? plan.matchesRelative(candidateType, predicate, current[0], baseline)
 							: plan.matchesKnown(candidateType, current[0]);
 					if (matches) {
-						if (!next.add(bucket.owner, bucket.slots[index], bucket.initial[index], current[0], limits)) {
+						if (!addToActiveRevision(next, bucket.owner, bucket.slots[index],
+								bucket.initial[index], current[0], 0L)) {
 							throw new ResourceLimitException("Managed result storage exceeds the resource limit");
 						}
 					}
 				}
 			}
-			Revision revision = next.finish(allocateRevisionId(), limits, 0L);
+			Revision revision = finishActiveRevision(next, allocateRevisionId(), 0L);
 			if (revision == null) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"Managed revision identifier space is exhausted");
@@ -538,7 +541,7 @@ final class ManagedJavaMemoryEngine {
 			return failure(token, MemoryEngineContract.RESULT_CANCELLED,
 					"Managed refine was cancelled");
 		}
-		RevisionBuilder next = new RevisionBuilder(retainedSearchStorageBytes());
+		RevisionBuilder next = new RevisionBuilder(committedStorageBytes());
 		long visited = 0L;
 		long[] current = new long[1];
 		try {
@@ -559,13 +562,13 @@ final class ManagedJavaMemoryEngine {
 					boolean matches = predicate >= MemoryEngineContract.PREDICATE_CHANGED
 							? plan.matchesRelative(candidateType, predicate, current[0], baseline)
 							: plan.matchesKnown(candidateType, current[0]);
-					if (matches && !next.add(bucket.owner, bucket.slots[index],
-							bucket.initial[index], current[0], limits)) {
+					if (matches && !addToActiveRevision(next, bucket.owner, bucket.slots[index],
+							bucket.initial[index], current[0], 0L)) {
 						throw new ResourceLimitException("Managed result storage exceeds the resource limit");
 					}
 				}
 			}
-			Revision revision = next.finish(allocateRevisionId(), limits, 0L);
+			Revision revision = finishActiveRevision(next, allocateRevisionId(), 0L);
 			if (revision == null) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"Managed revision identifier space is exhausted");
@@ -839,7 +842,7 @@ final class ManagedJavaMemoryEngine {
 			}
 			old = committed;
 		}
-		RevisionBuilder next = new RevisionBuilder(retainedSearchStorageBytes());
+		RevisionBuilder next = new RevisionBuilder(committedStorageBytes());
 		long visited = 0L;
 		try {
 			for (BucketView bucket : old.buckets) {
@@ -853,13 +856,13 @@ final class ManagedJavaMemoryEngine {
 							bucket.owner.handle, bucket.slots[index]);
 					boolean selectedRow = selectedSet.contains(id);
 					if ((keep && !selectedRow) || (!keep && selectedRow)) continue;
-					if (!next.add(bucket.owner, bucket.slots[index], bucket.initial[index],
-							bucket.previous[index], limits)) {
+					if (!addToActiveRevision(next, bucket.owner, bucket.slots[index],
+							bucket.initial[index], bucket.previous[index], 0L)) {
 						throw new ResourceLimitException("Managed candidate storage exceeds the resource limit");
 					}
 				}
 			}
-			Revision revision = next.finish(allocateRevisionId(), limits, 0L);
+			Revision revision = finishActiveRevision(next, allocateRevisionId(), 0L);
 			if (revision == null) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"Managed revision identifier space is exhausted");
@@ -1296,39 +1299,54 @@ final class ManagedJavaMemoryEngine {
 					MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime changed or ended");
 			snapshot = watches.frozenSnapshot(owners);
 		}
+		int eligible = 0;
 		int written = 0;
+		int rejected = 0;
 		long[] readback = new long[1];
 		for (int index = 0; index < snapshot.count; index++) {
-			if (!isOperationActive(token, operationEpoch)) return failure(token,
-					MemoryEngineContract.RESULT_CANCELLED, "Managed Freeze tick was cancelled");
-			OwnerBucket owner = snapshot.owners[index];
-			Object strongOwner = owner == null ? null : owner.strongOwner();
-			if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)) {
-				markFreezePaused(snapshot.ids[index]);
-				continue;
-			}
-			try {
-				int type = valueTypeFor(owner, snapshot.slots[index]);
-				writeTyped(owner, snapshot.slots[index], strongOwner, type,
-						snapshot.freezeValues[index]);
-				if (readTyped(owner, snapshot.slots[index], strongOwner, readback)
-						&& writeConfirmed(readback[0], snapshot.freezeValues[index])) {
-					written++;
-					updateWatchPrevious(snapshot.ids[index], readback[0]);
-				} else {
-					markFreezePaused(snapshot.ids[index]);
+			synchronized (stateLock) {
+				if (!isOperationActive(token, operationEpoch)) return failureLocked(
+						MemoryEngineContract.RESULT_CANCELLED, "Managed Freeze tick was cancelled");
+				long id = snapshot.ids[index];
+				int watchIndex = watches.indexOf(id);
+				if (watchIndex < 0 || !watches.freeze[watchIndex] || watches.freezePaused[watchIndex]) {
+					continue;
 				}
-			} catch (IllegalAccessException | RuntimeException | LinkageError error) {
-				markFreezePaused(snapshot.ids[index]);
+				OwnerBucket owner = watches.owners[watchIndex];
+				int slot = watches.slots[watchIndex];
+				if (owner != snapshot.owners[index] || slot != snapshot.slots[index]) continue;
+				eligible++;
+				Object strongOwner = owner == null ? null : owner.strongOwner();
+				if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)) {
+					watches.freezePaused[watchIndex] = true;
+					rejected++;
+					continue;
+				}
+				try {
+					int type = valueTypeFor(owner, slot);
+					long freezeValue = watches.freezeValues[watchIndex];
+					writeTyped(owner, slot, strongOwner, type, freezeValue);
+					if (readTyped(owner, slot, strongOwner, readback)
+							&& writeConfirmed(readback[0], freezeValue)) {
+						written++;
+						watches.previous[watchIndex] = readback[0];
+					} else {
+						watches.freezePaused[watchIndex] = true;
+						rejected++;
+					}
+				} catch (IllegalAccessException | RuntimeException | LinkageError error) {
+					watches.freezePaused[watchIndex] = true;
+					rejected++;
+				}
 			}
 		}
-		int code = written == snapshot.count ? MemoryEngineContract.RESULT_OK
+		int code = written == eligible ? MemoryEngineContract.RESULT_OK
 				: written > 0 ? MemoryEngineContract.RESULT_PARTIAL_WRITE
-				: snapshot.count == 0 ? MemoryEngineContract.RESULT_OK
+				: eligible == 0 ? MemoryEngineContract.RESULT_OK
 				: MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
 		return result(token, code,
-				"Managed Freeze Lock tick wrote " + written + " of " + snapshot.count,
-				snapshot.count, written, snapshot.count - written, 0);
+				"Managed Freeze Lock tick wrote " + written + " of " + eligible,
+				eligible, written, rejected, 0);
 	}
 
 	ManagedOperationResult clearSearchResult(long token, long expectedRevision, long operationEpoch) {
@@ -1471,9 +1489,8 @@ final class ManagedJavaMemoryEngine {
 						"The managed search revision changed before refine could commit");
 			}
 			if (expectedRevision > 0L && committed != null) {
-				searchHistory.addLast(new SearchState(committed, searchStage, searchMode,
-						requestedType, baselineCount));
-				while (searchHistory.size() > MAX_SEARCH_HISTORY) searchHistory.removeFirst();
+				retainHistoryLocked(new SearchState(committed, searchStage, searchMode,
+						requestedType, baselineCount), revision);
 			} else if (expectedRevision == 0L) {
 				// A successful New Search starts a new lineage. Failed New Search never reaches here.
 				searchHistory.clear();
@@ -1516,18 +1533,80 @@ final class ManagedJavaMemoryEngine {
 		return baselineCount;
 	}
 
-	private long retainedSearchStorageBytes() {
+	private long committedStorageBytes() {
 		synchronized (stateLock) {
-			return retainedSearchStorageBytesLocked();
+			return committedStorageBytesLocked();
 		}
 	}
 
-	private long retainedSearchStorageBytesLocked() {
-		long total = committed == null ? 0L : committed.storageBytes();
+	private long committedStorageBytesLocked() {
+		return committed == null ? 0L : committed.storageBytes();
+	}
+
+	/** Keeps Undo history only while it fits behind the current active revision. */
+	private void retainHistoryLocked(SearchState previous, Revision nextCommitted) {
+		while (!searchHistory.isEmpty() && !historyFitsLocked(nextCommitted, previous.revision)) {
+			searchHistory.removeFirst();
+		}
+		if (historyFitsLocked(nextCommitted, previous.revision)) {
+			searchHistory.addLast(previous);
+		}
+		while (searchHistory.size() > MAX_SEARCH_HISTORY) searchHistory.removeFirst();
+	}
+
+	private boolean historyFitsLocked(Revision nextCommitted, Revision additional) {
+		long total = nextCommitted.storageBytes();
 		for (SearchState state : searchHistory) {
 			total = checkedAdd(total, state.revision.storageBytes());
 		}
-		return total;
+		total = checkedAdd(total, additional.storageBytes());
+		return total <= limits.maxResultStorageBytes;
+	}
+
+	private boolean addToActiveRevision(RevisionBuilder revision, OwnerBucket owner, int slot,
+	                                    long initialValue, long previousValue, long transientBytes) {
+		while (true) {
+			long extraBytes = checkedAdd(transientBytes, historyStorageBytes());
+			if (revision.add(owner, slot, initialValue, previousValue, limits, extraBytes)) return true;
+			if (!evictOldestHistory()) return false;
+		}
+	}
+
+	private boolean activeRevisionWithinBudget(RevisionBuilder revision, long transientBytes) {
+		while (!revision.withinStorageBudget(limits,
+				checkedAdd(transientBytes, historyStorageBytes()))) {
+			if (!evictOldestHistory()) return false;
+		}
+		return true;
+	}
+
+	private Revision finishActiveRevision(RevisionBuilder revision, long id, long transientBytes) {
+		while (true) {
+			try {
+				return revision.finish(id, limits,
+						checkedAdd(transientBytes, historyStorageBytes()));
+			} catch (ResourceLimitException limit) {
+				if (!evictOldestHistory()) throw limit;
+			}
+		}
+	}
+
+	private long historyStorageBytes() {
+		synchronized (stateLock) {
+			long total = 0L;
+			for (SearchState state : searchHistory) {
+				total = checkedAdd(total, state.revision.storageBytes());
+			}
+			return total;
+		}
+	}
+
+	private boolean evictOldestHistory() {
+		synchronized (stateLock) {
+			if (searchHistory.isEmpty()) return false;
+			searchHistory.removeFirst();
+			return true;
+		}
 	}
 
 	private ManagedOperationResult failure(long token, int code, @Nullable String message) {
@@ -1861,9 +1940,13 @@ final class ManagedJavaMemoryEngine {
 		synchronized (stateLock) {
 			Schema cached = schemaCache.get(type);
 			if (cached != null) return cached;
-			Schema schema = Schema.build(type, loader);
-			schemaCache.put(type, schema);
-			return schema;
+		}
+		Schema built = Schema.build(type, loader);
+		synchronized (stateLock) {
+			Schema cached = schemaCache.get(type);
+			if (cached != null) return cached;
+			schemaCache.put(type, built);
+			return built;
 		}
 	}
 
@@ -2141,6 +2224,7 @@ final class ManagedJavaMemoryEngine {
 		final int predicate;
 		final boolean relative;
 		final boolean[] valid = new boolean[LAST_SUPPORTED_TYPE + 1];
+		final boolean[] alwaysMatch = new boolean[LAST_SUPPORTED_TYPE + 1];
 		final long[] first = new long[LAST_SUPPORTED_TYPE + 1];
 		final long[] second = new long[LAST_SUPPORTED_TYPE + 1];
 
@@ -2187,22 +2271,49 @@ final class ManagedJavaMemoryEngine {
 			if (predicate != MemoryEngineContract.PREDICATE_BETWEEN
 					&& !isBlank(secondText)) return null;
 			QueryPlan plan = new QueryPlan(selector, predicate, false);
+
+			if (selector == MemoryEngineContract.TYPE_AUTO) {
+				for (int type = MemoryEngineContract.TYPE_BYTE;
+				     type <= MemoryEngineContract.TYPE_LONG; type++) {
+					ManagedAutoKnownQuery.Result result = ManagedAutoKnownQuery.forIntegralType(
+							type, predicate, firstText, secondText);
+					if (!result.valid) continue;
+					plan.valid[type] = true;
+					plan.alwaysMatch[type] = result.alwaysMatch;
+					plan.first[type] = result.first;
+					plan.second[type] = result.second;
+				}
+				for (int type = MemoryEngineContract.TYPE_FLOAT;
+				     type <= MemoryEngineContract.TYPE_DOUBLE; type++) {
+					long[] firstBits = new long[1];
+					long[] secondBits = new long[1];
+					if (!ManagedJavaValue.parse(firstText, type, firstBits)) continue;
+					if (predicate == MemoryEngineContract.PREDICATE_BETWEEN
+							&& !ManagedJavaValue.parse(secondText, type, secondBits)) continue;
+					long first = firstBits[0];
+					long second = predicate == MemoryEngineContract.PREDICATE_BETWEEN
+							? secondBits[0] : 0L;
+					if (ManagedJavaValue.validKnownQuery(type, predicate, first, second)) {
+						plan.valid[type] = true;
+						plan.first[type] = first;
+						plan.second[type] = second;
+					}
+				}
+				return hasValidType(plan) ? plan : null;
+			}
+
 			long[] firstBits = new long[1];
 			long[] secondBits = new long[1];
-			for (int type = FIRST_SUPPORTED_TYPE; type <= LAST_SUPPORTED_TYPE; type++) {
-				if (selector != MemoryEngineContract.TYPE_AUTO && selector != type) continue;
-				if (!ManagedJavaValue.parse(firstText, type, firstBits)) continue;
-				if (predicate == MemoryEngineContract.PREDICATE_BETWEEN
-						&& !ManagedJavaValue.parse(secondText, type, secondBits)) continue;
-				long first = firstBits[0];
-				long second = predicate == MemoryEngineContract.PREDICATE_BETWEEN ? secondBits[0] : 0L;
-				if (ManagedJavaValue.validKnownQuery(type, predicate, first, second)) {
-					plan.valid[type] = true;
-					plan.first[type] = first;
-					plan.second[type] = second;
-				}
-			}
-			return hasValidType(plan) ? plan : null;
+			if (!ManagedJavaValue.parse(firstText, selector, firstBits)) return null;
+			if (predicate == MemoryEngineContract.PREDICATE_BETWEEN
+					&& !ManagedJavaValue.parse(secondText, selector, secondBits)) return null;
+			long first = firstBits[0];
+			long second = predicate == MemoryEngineContract.PREDICATE_BETWEEN ? secondBits[0] : 0L;
+			if (!ManagedJavaValue.validKnownQuery(selector, predicate, first, second)) return null;
+			plan.valid[selector] = true;
+			plan.first[selector] = first;
+			plan.second[selector] = second;
+			return plan;
 		}
 
 		static QueryPlan fromRelativeBits(int selector, int predicate, long first, long second) {
@@ -2256,8 +2367,8 @@ final class ManagedJavaMemoryEngine {
 		}
 
 		boolean matchesKnown(int type, long current) {
-			return accepts(type) && ManagedJavaValue.matchesKnown(type, predicate, current,
-					first[type], second[type]);
+			return accepts(type) && (alwaysMatch[type] || ManagedJavaValue.matchesKnown(type, predicate,
+					current, first[type], second[type]));
 		}
 
 		boolean matchesRelative(int type, int actualPredicate, long current, long reference) {
@@ -2427,9 +2538,18 @@ final class ManagedJavaMemoryEngine {
 			queue.addLast(value);
 		}
 
+		Object dequeue() {
+			Object value = queue.removeFirst();
+			releaseTraversalBytes(QUEUE_REFERENCE_BYTES);
+			return value;
+		}
+
 		boolean checkpoint() {
-			if (!isOperationActive(token, operationEpoch) || visitCount > limits.maxVisited) return false;
-			if (!revision.withinStorageBudget(limits, transientStorageBytes)) {
+			if (!isOperationActive(token, operationEpoch)) return false;
+			if (visitCount > limits.maxVisited) {
+				throw new ResourceLimitException("Managed visited-owner limit exceeded");
+			}
+			if (!activeRevisionWithinBudget(revision, transientStorageBytes)) {
 				throw new ResourceLimitException("Managed traversal storage exceeds the resource limit");
 			}
 			return true;
@@ -2479,7 +2599,7 @@ final class ManagedJavaMemoryEngine {
 										current))) {
 							if (owner == null) owner = ownerForObject(value, KIND_OBJECT_FIELD,
 									schema, objectOwners);
-							if (!revision.add(owner, field.slot, current, current, limits,
+							if (!addToActiveRevision(revision, owner, field.slot, current, current,
 									transientStorageBytes)) {
 								throw new ResourceLimitException(
 										"Managed candidate storage exceeds the resource limit");
@@ -2521,7 +2641,7 @@ final class ManagedJavaMemoryEngine {
 										current))) {
 							if (owner == null) owner = ownerForObject(type, KIND_STATIC_FIELD,
 									schema, null);
-							if (!revision.add(owner, field.slot, current, current, limits,
+							if (!addToActiveRevision(revision, owner, field.slot, current, current,
 									transientStorageBytes)) {
 								throw new ResourceLimitException(
 										"Managed candidate storage exceeds the resource limit");
@@ -2566,7 +2686,7 @@ final class ManagedJavaMemoryEngine {
 					if (groupMatcher.complete()) break;
 				} else if (captureAllValues || plan.matchesKnown(arrayType, value[0])) {
 					if (owner == null) owner = ownerForObject(array, KIND_ARRAY, null, objectOwners);
-					if (!revision.add(owner, index, value[0], value[0], limits,
+					if (!addToActiveRevision(revision, owner, index, value[0], value[0],
 							transientStorageBytes)) {
 						throw new ResourceLimitException(
 								"Managed candidate storage exceeds the resource limit");
@@ -2583,7 +2703,7 @@ final class ManagedJavaMemoryEngine {
 			int[] slots = groupMatcher.sortedSlots();
 			long[] observed = groupMatcher.sortedObserved();
 			for (int index = 0; index < slots.length; index++) {
-				if (!revision.add(owner, slots[index], observed[index], observed[index], limits,
+				if (!addToActiveRevision(revision, owner, slots[index], observed[index], observed[index],
 						transientStorageBytes)) {
 					throw new ResourceLimitException("Managed Group result storage exceeds the resource limit");
 				}
@@ -2649,7 +2769,7 @@ final class ManagedJavaMemoryEngine {
 		void reserveTraversalBytes(long bytes) {
 			if (bytes < 0L) throw new ResourceLimitException("Managed traversal storage overflowed");
 			long next = checkedAdd(transientStorageBytes, bytes);
-			if (!revision.withinStorageBudget(limits, next)) {
+			if (!activeRevisionWithinBudget(revision, next)) {
 				throw new ResourceLimitException("Managed traversal storage exceeds the resource limit");
 			}
 			transientStorageBytes = next;

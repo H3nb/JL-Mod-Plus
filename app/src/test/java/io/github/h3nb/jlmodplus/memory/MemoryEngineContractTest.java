@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+// Modifications: IPC text limits and display truncation are contractually tested.
+
 package io.github.h3nb.jlmodplus.memory;
 
 import static org.junit.Assert.assertFalse;
@@ -48,5 +50,16 @@ public class MemoryEngineContractTest {
 		assertTrue(MemoryEngineContract.isInspectRadius(128));
 		assertFalse(MemoryEngineContract.isInspectRadius(0));
 		assertFalse(MemoryEngineContract.isInspectRadius(257));
+	}
+
+	@Test
+	public void ipcTextIsBoundedWithoutChangingDisplayIdentity() {
+		assertTrue(MemoryEngineContract.isBoundedInput("x".repeat(96)));
+		assertFalse(MemoryEngineContract.isBoundedInput("x".repeat(97)));
+		assertTrue(MemoryEngineContract.isBoundedWatchLabel("x".repeat(64)));
+		assertFalse(MemoryEngineContract.isBoundedWatchLabel("x".repeat(65)));
+		String longDisplay = "x".repeat(300);
+		assertEquals(256, MemoryEngineContract.truncateDisplay(longDisplay).length());
+		assertTrue(MemoryEngineContract.truncateDisplay(longDisplay).endsWith("…"));
 	}
 }

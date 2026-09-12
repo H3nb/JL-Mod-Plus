@@ -76,6 +76,33 @@ internal data class MemoryInputSpec(
 }
 
 internal fun MemoryInputSpec.acceptsPartial(text: String): Boolean {
+    if (';' in text) return acceptsPartialGroup(text)
+    return acceptsPartialSingle(text)
+}
+
+/**
+ * Group Search is the only keypad mode that can insert ';'. Keep the separator out of the
+ * primitive parser itself and validate every partial term independently. A trailing empty term is
+ * allowed while the user is typing the next value; leading and repeated separators are rejected.
+ */
+private fun MemoryInputSpec.acceptsPartialGroup(text: String): Boolean {
+    if (text.length > 96) return false
+    val terms = text.split(';')
+    if (terms.size > MemoryEngineContract.MAX_GROUP_VALUES || terms.firstOrNull().isNullOrEmpty()) {
+        return false
+    }
+    for (index in terms.indices) {
+        val term = terms[index]
+        if (term.isEmpty()) {
+            if (index != terms.lastIndex) return false
+            continue
+        }
+        if (!acceptsPartialSingle(term)) return false
+    }
+    return true
+}
+
+private fun MemoryInputSpec.acceptsPartialSingle(text: String): Boolean {
     if (text.length > maxChars) return false
     if (text.isEmpty()) return true
     return when (kind) {

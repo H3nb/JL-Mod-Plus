@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+// Modifications: reject oversized IPC strings and candidate payloads before forwarding them.
+
 package io.github.h3nb.jlmodplus.memory;
 
 import android.app.Service;
@@ -706,6 +708,10 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private int managedStartExact(long token, int type, int predicate, String first, String second) {
+		if (!MemoryEngineContract.isBoundedInput(first) || !MemoryEngineContract.isBoundedInput(second)) {
+			return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed search input exceeds the IPC limit");
+		}
 		if (!MemoryEngineContract.isValueType(type)) {
 			return managedFailure(MemoryEngineContract.RESULT_UNSUPPORTED,
 					"Managed Java supports Byte, Short, Char, Int, Long, Float, and Double");
@@ -749,7 +755,8 @@ public final class MemoryEngineService extends Service {
 
 	private int managedStartGroup(long token, int type, String[] values) {
 		if (!MemoryEngineContract.isCandidateType(type) || values == null
-				|| values.length < 2 || values.length > MemoryEngineContract.MAX_GROUP_VALUES) {
+				|| values.length < 2 || values.length > MemoryEngineContract.MAX_GROUP_VALUES
+				|| !allBoundedInputs(values)) {
 			return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Managed Group search requires one concrete primitive type and 2 to 8 values");
 		}
@@ -791,6 +798,11 @@ public final class MemoryEngineService extends Service {
 
 	private int managedRefine(long token, long expectedRevision, int type, int predicate,
 	                          int compareTarget, String value, String secondValue) {
+		if (!MemoryEngineContract.isBoundedInput(value)
+				|| !MemoryEngineContract.isBoundedInput(secondValue)) {
+			return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed refine input exceeds the IPC limit");
+		}
 		if (!isTargetToken(token)) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 				"MIDlet runtime changed or ended");
 		if (!MemoryEngineContract.isValueType(type)) {
@@ -841,6 +853,10 @@ public final class MemoryEngineService extends Service {
 
 	private int managedEdit(long token, long expectedRevision, long[] ids, int declaredType,
 	                       String replacementValue, boolean allowWatchOnly) {
+		if (!MemoryEngineContract.isBoundedInput(replacementValue)) {
+			return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed replacement exceeds the IPC limit");
+		}
 		if (!allowWatchOnly && expectedRevision <= 0L) expectedRevision = managedRevision;
 		int maxTargets = allowWatchOnly ? MemoryEngineContract.MAX_WATCH_RECORDS
 				: MemoryEngineContract.MAX_RESULT_PAGE_SIZE;
@@ -866,6 +882,10 @@ public final class MemoryEngineService extends Service {
 	                                long expectedRevision,
 	                                int relativeOffset, int valueType, long expectedBits,
 	                                String replacementValue) {
+		if (!MemoryEngineContract.isBoundedInput(replacementValue)) {
+			return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed replacement exceeds the IPC limit");
+		}
 		IMemoryTargetBridge bridge = target;
 		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 				"MIDlet runtime is not connected");
@@ -920,6 +940,10 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private int managedSetWatchLabel(long token, long id, String label) {
+		if (!MemoryEngineContract.isBoundedWatchLabel(label)) {
+			return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed Watch label exceeds the IPC limit");
+		}
 		IMemoryTargetBridge bridge = target;
 		if (bridge == null) return managedFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 				"MIDlet runtime is not connected");
@@ -934,6 +958,11 @@ public final class MemoryEngineService extends Service {
 
 	private int managedFreeze(long token, long expectedRevision, long[] ids, int mode,
 	                          String firstValue, String secondValue, boolean allowWatchOnly) {
+		if (!MemoryEngineContract.isBoundedInput(firstValue)
+				|| !MemoryEngineContract.isBoundedInput(secondValue)) {
+			return managedFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Managed Freeze input exceeds the IPC limit");
+		}
 		if (mode != MemoryEngineContract.FREEZE_LOCK) {
 			return managedFailure(MemoryEngineContract.RESULT_UNSUPPORTED,
 					"Managed Freeze supports Lock only");
@@ -1415,8 +1444,15 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private static boolean allManagedIds(@Nullable long[] ids) {
-		if (ids == null || ids.length == 0) return false;
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_WATCH_RECORDS) {
+			return false;
+		}
 		for (long id : ids) if (!ManagedJavaMemoryIds.hasValidNamespace(id)) return false;
+		return true;
+	}
+
+	private static boolean allBoundedInputs(String[] values) {
+		for (String value : values) if (!MemoryEngineContract.isBoundedInput(value)) return false;
 		return true;
 	}
 

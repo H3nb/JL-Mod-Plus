@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+// Modifications: bounded IPC text and display-safe payload helpers.
+
 package io.github.h3nb.jlmodplus.memory;
 
 /** Stable primitive constants shared by the UI-independent engine IPC and Managed Java target. */
@@ -78,6 +80,12 @@ public final class MemoryEngineContract {
 	public static final int MAX_FREEZE_RECORDS = 32;
 	public static final int MAX_WATCH_RECORDS = 128;
 	public static final int MAX_GROUP_VALUES = 8;
+	/** Input values crossing either Memory Editor Binder boundary are deliberately short. */
+	public static final int MAX_IPC_INPUT_CHARS = 96;
+	public static final int MAX_WATCH_LABEL_CHARS = 64;
+	/** Presentation-only strings are capped to keep a result page well below Binder limits. */
+	public static final int MAX_IPC_DISPLAY_CHARS = 256;
+	public static final int MAX_IPC_MESSAGE_CHARS = 512;
 	public static final int DEFAULT_INSPECT_RADIUS = 128;
 	public static final int MAX_INSPECT_RADIUS = 256;
 
@@ -154,6 +162,36 @@ public final class MemoryEngineContract {
 
 	public static boolean isInspectRadius(int radius) {
 		return radius > 0 && radius <= MAX_INSPECT_RADIUS;
+	}
+
+	public static boolean isBoundedInput(String value) {
+		return value == null || value.length() <= MAX_IPC_INPUT_CHARS;
+	}
+
+	public static boolean isBoundedWatchLabel(String value) {
+		return value != null && value.length() <= MAX_WATCH_LABEL_CHARS;
+	}
+
+	public static String truncateDisplay(String value) {
+		return truncate(value, MAX_IPC_DISPLAY_CHARS);
+	}
+
+	public static String truncateMessage(String value) {
+		return truncate(value, MAX_IPC_MESSAGE_CHARS);
+	}
+
+	public static String[] truncateDisplay(String[] values) {
+		if (values == null) return new String[0];
+		String[] bounded = new String[values.length];
+		for (int index = 0; index < values.length; index++) {
+			bounded[index] = truncateDisplay(values[index]);
+		}
+		return bounded;
+	}
+
+	private static String truncate(String value, int maxChars) {
+		if (value == null || value.length() <= maxChars) return value;
+		return value.substring(0, Math.max(0, maxChars - 1)) + "…";
 	}
 
 }

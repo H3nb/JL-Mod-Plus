@@ -191,10 +191,10 @@ class MemoryEditorBubbleController(
             MotionEvent.ACTION_MOVE -> {
                 val index = event.findPointerIndex(pointerId)
                 if (index < 0) return true
-                // rawX/rawY track the active pointer in screen coordinates and are not affected by
-                // moving the View itself, which prevents the drag from feeding back into its delta.
-                val deltaX = event.rawX - downRawX
-                val deltaY = event.rawY - downRawY
+                // Derive raw coordinates for the active pointer, not only pointer index 0. Using the
+                // local-pointer delta keeps this compatible with API levels before getRawX(index).
+                val deltaX = event.rawXForPointer(index) - downRawX
+                val deltaY = event.rawYForPointer(index) - downRawY
                 if (!dragging && (abs(deltaX) > touchSlop || abs(deltaY) > touchSlop)) {
                     dragging = true
                     bubbleView.isPressed = false
@@ -203,6 +203,24 @@ class MemoryEditorBubbleController(
                     val bounds = movementBounds() ?: return true
                     bubbleView.x = (downViewX + deltaX).coerceIn(bounds.left, bounds.right)
                     bubbleView.y = (downViewY + deltaY).coerceIn(bounds.top, bounds.bottom)
+                }
+                return true
+            }
+
+            MotionEvent.ACTION_POINTER_UP -> {
+                val liftedIndex = event.actionIndex
+                if (event.getPointerId(liftedIndex) == pointerId) {
+                    val replacementIndex = (0 until event.pointerCount)
+                        .firstOrNull { it != liftedIndex }
+                    if (replacementIndex != null) {
+                        pointerId = event.getPointerId(replacementIndex)
+                        downRawX = event.rawXForPointer(replacementIndex)
+                        downRawY = event.rawYForPointer(replacementIndex)
+                        downViewX = bubbleView.x
+                        downViewY = bubbleView.y
+                    } else {
+                        cancelDrag()
+                    }
                 }
                 return true
             }
@@ -233,6 +251,12 @@ class MemoryEditorBubbleController(
         }
         return true
     }
+
+    private fun MotionEvent.rawXForPointer(index: Int): Float =
+        rawX + getX(index) - getX(0)
+
+    private fun MotionEvent.rawYForPointer(index: Int): Float =
+        rawY + getY(index) - getY(0)
 
     private fun movementBounds(): RectF? {
         val parent = bubbleView.parent as? View ?: return null
