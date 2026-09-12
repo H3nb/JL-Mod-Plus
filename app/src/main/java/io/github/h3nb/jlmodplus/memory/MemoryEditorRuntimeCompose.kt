@@ -8,6 +8,14 @@
 package io.github.h3nb.jlmodplus.memory
 
 import android.view.WindowManager
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -68,6 +76,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -112,6 +123,9 @@ private val RuntimeMemoryValueTypes = intArrayOf(
     MemoryEngineContract.TYPE_FLOAT,
     MemoryEngineContract.TYPE_DOUBLE,
 )
+
+private const val RuntimeKeypadTransitionDurationMillis = 220
+private const val RuntimeKeypadFadeDurationMillis = 140
 
 /** Production Memory Editor shell hosted in the dedicated :memory_engine Activity. */
 @Composable
@@ -940,7 +954,6 @@ private fun RuntimeSearchDialogBody(
     supportingContent: (@Composable () -> Unit)? = null,
 ) {
     val landscape = availableWindowWidthDp() > availableWindowHeightDp()
-    val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val imeVisible = WindowInsets.isImeVisible
     // BasicAlertDialog's platform window already moves its frame above the IME. Applying
@@ -949,11 +962,13 @@ private fun RuntimeSearchDialogBody(
     // reduce work while the IME animation is running.
     val customKeypadVisible = showKeypad && !imeVisible
     LaunchedEffect(Unit) {
-        focusManager.clearFocus(force = true)
         keyboardController?.hide()
     }
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val sideDock = landscape && customKeypadVisible && maxWidth >= 480.dp
+        // Keep the layout mode stable while the keypad transitions. Switching the whole dialog
+        // from a docked row to a vertical column at the same instant as the IME visibility change
+        // makes the dialog jump instead of allowing the keypad to animate out naturally.
+        val sideDock = landscape && showKeypad && maxWidth >= 480.dp
         if (sideDock) {
             val keypadWidth = (maxWidth * 0.42f).coerceIn(220.dp, 280.dp)
             Column(
@@ -972,7 +987,21 @@ private fun RuntimeSearchDialogBody(
                         controls(true)
                         supportingContent?.invoke()
                     }
-                    Box(modifier = Modifier.width(keypadWidth)) { keypad() }
+                    AnimatedVisibility(
+                        visible = customKeypadVisible,
+                        enter = fadeIn(tween(RuntimeKeypadFadeDurationMillis)) +
+                            expandHorizontally(
+                                animationSpec = tween(RuntimeKeypadTransitionDurationMillis),
+                                expandFrom = Alignment.End,
+                            ),
+                        exit = fadeOut(tween(RuntimeKeypadFadeDurationMillis)) +
+                            shrinkHorizontally(
+                                animationSpec = tween(RuntimeKeypadTransitionDurationMillis),
+                                shrinkTowards = Alignment.End,
+                            ),
+                    ) {
+                        Box(modifier = Modifier.width(keypadWidth)) { keypad() }
+                    }
                 }
             }
         } else {
@@ -982,7 +1011,21 @@ private fun RuntimeSearchDialogBody(
             ) {
                 controls(false)
                 supportingContent?.invoke()
-                if (customKeypadVisible) keypad()
+                AnimatedVisibility(
+                    visible = customKeypadVisible,
+                    enter = fadeIn(tween(RuntimeKeypadFadeDurationMillis)) +
+                        expandVertically(
+                            animationSpec = tween(RuntimeKeypadTransitionDurationMillis),
+                            expandFrom = Alignment.Top,
+                        ),
+                    exit = fadeOut(tween(RuntimeKeypadFadeDurationMillis)) +
+                        shrinkVertically(
+                            animationSpec = tween(RuntimeKeypadTransitionDurationMillis),
+                            shrinkTowards = Alignment.Top,
+                        ),
+                ) {
+                    keypad()
+                }
             }
         }
     }
@@ -1068,6 +1111,7 @@ internal fun RuntimeKnownSearchDialog(
                             onValueChange = { query = it },
                             valueSpec = spec,
                             modifier = Modifier.weight(1f),
+                            initialFocus = true,
                         )
                     }
                     if (needsSecond) {
@@ -1291,6 +1335,7 @@ private fun RuntimeUnknownSearchDialog(
                                         onValueChange = { first = it },
                                         valueSpec = spec,
                                         modifier = Modifier.weight(1f),
+                                        initialFocus = true,
                                     )
                                     RuntimeSearchField(
                                         label = stringResource(R.string.memory_editor_max_value),
@@ -1311,6 +1356,7 @@ private fun RuntimeUnknownSearchDialog(
                                     onValueChange = { first = it },
                                     valueSpec = spec,
                                     modifier = Modifier.fillMaxWidth(),
+                                    initialFocus = true,
                                 )
                                 if (needsSecond) {
                                     RuntimeSearchField(
@@ -1476,12 +1522,13 @@ private fun RuntimeEditDialog(
                                     if (type == initialType) R.string.memory_editor_current_value
                                     else R.string.memory_editor_replacement,
                                 ),
-                            value = replacement,
-                            active = true,
-                            onClick = {},
-                            onValueChange = { replacement = it },
-                            valueSpec = spec,
-                            modifier = Modifier.weight(1f),
+                                value = replacement,
+                                active = true,
+                                onClick = {},
+                                onValueChange = { replacement = it },
+                                valueSpec = spec,
+                                modifier = Modifier.weight(1f),
+                                initialFocus = true,
                             )
                         }
                     } else {
@@ -1501,6 +1548,7 @@ private fun RuntimeEditDialog(
                             onValueChange = { replacement = it },
                             valueSpec = spec,
                             modifier = Modifier.fillMaxWidth(),
+                            initialFocus = true,
                         )
                     }
                     if (!batch) {
@@ -1770,6 +1818,7 @@ private fun RuntimeInspectorLogicalEditDialog(
                         onValueChange = { value = it },
                         valueSpec = spec,
                         modifier = Modifier.fillMaxWidth(),
+                        initialFocus = true,
                     )
                 },
                 keypad = {
@@ -1818,20 +1867,32 @@ private fun RuntimeSearchField(
     onValueChange: (TextFieldValue) -> Unit,
     valueSpec: MemoryInputSpec,
     modifier: Modifier = Modifier,
+    initialFocus: Boolean = false,
 ) {
+    val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val keyboardType = if (valueSpec.decimal) KeyboardType.Decimal else KeyboardType.Number
+    LaunchedEffect(initialFocus) {
+        if (initialFocus) {
+            // Keep the first field focused for the custom keypad, but suppress the platform IME
+            // on dialog entry. A user tap can still bring the IME back normally.
+            focusRequester.requestFocus()
+            keyboardController?.hide()
+        }
+    }
     OutlinedTextField(
         value = value,
         onValueChange = { updated ->
             if (valueSpec.acceptsPartial(updated.text)) onValueChange(updated)
         },
         modifier = modifier
+            .focusRequester(focusRequester)
             .sizeIn(minHeight = 52.dp)
             .onFocusChanged { if (it.isFocused) onClick() },
         label = { Text(label) },
         singleLine = true,
+        shape = MaterialTheme.shapes.extraLarge,
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType,
             imeAction = ImeAction.Done,
@@ -1951,7 +2012,12 @@ private fun androidx.compose.foundation.layout.RowScope.RuntimeKeypadButton(
         onClick = onClick,
         enabled = enabled,
         contentPadding = PaddingValues(0.dp),
-        modifier = Modifier.weight(weight).sizeIn(minHeight = 48.dp),
+        // Keep the text field as the focus owner while the virtual keypad is tapped. This leaves
+        // the insertion caret visible and blinking, just like it is with the system IME.
+        modifier = Modifier
+            .weight(weight)
+            .sizeIn(minHeight = 48.dp)
+            .focusProperties { canFocus = false },
     ) {
         Text(
             label,
