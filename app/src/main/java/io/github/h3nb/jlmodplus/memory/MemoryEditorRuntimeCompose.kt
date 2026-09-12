@@ -3,7 +3,7 @@
  * you may not use this file except in compliance with the License.
  */
 
-// Modifications: standard text input and IME-safe dialogs complement the custom keypad.
+// Modifications: custom keypad-only value input and IME-safe dialogs.
 
 package io.github.h3nb.jlmodplus.memory
 
@@ -16,8 +16,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,8 +43,9 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -85,7 +84,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
@@ -100,12 +98,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindowProvider
 import io.github.h3nb.jlmodplus.R
@@ -119,6 +116,13 @@ import kotlinx.coroutines.isActive
 
 private enum class RuntimeMemoryTab { SEARCH_RESULTS, WATCH, INSPECTOR }
 private enum class RuntimeInputField { FIRST, SECOND }
+
+private data class RuntimeKeypadCell(
+    val label: String,
+    val onClick: () -> Unit,
+    val enabled: Boolean = true,
+    val span: Int = 1,
+)
 
 private val RuntimeMemoryValueTypes = intArrayOf(
     MemoryEngineContract.TYPE_AUTO,
@@ -135,9 +139,36 @@ private const val RuntimeKeypadTransitionDurationMillis = 240
 // Material3 text fields use a 56dp intrinsic height. Sharing it with the outlined menus keeps
 // their top/bottom strokes aligned without clipping the value baseline or blinking caret.
 private val RuntimeInputControlHeight = 56.dp
+// OutlinedTextField reserves an 8dp top inset for its floating label. The surrounding selector
+// controls do not have that inset, so compensate inside the fixed 56dp row slot. Extending by
+// the inset and shifting by half keeps both the outline and its text baseline centered together.
+private val RuntimeOutlinedFieldLabelInset = 8.dp
 private val RuntimeKeypadButtonHeight = 48.dp
 private val RuntimeKeypadPortraitHeight = 256.dp
 private val RuntimeKeypadLandscapeHeight = 198.dp
+
+@Composable
+private fun runtimeMemoryControlTextStyle() = MaterialTheme.typography.labelLarge
+
+@Composable
+private fun runtimeMemoryDataTextStyle() = MaterialTheme.typography.bodyLarge.copy(
+    fontFamily = FontFamily.Monospace,
+)
+
+@Composable
+private fun runtimeMemoryMetaTextStyle() = MaterialTheme.typography.bodySmall.copy(
+    fontFamily = FontFamily.Monospace,
+)
+
+@Composable
+private fun runtimeMemoryKeypadTextStyle() = MaterialTheme.typography.labelLarge.copy(
+    fontFamily = FontFamily.Monospace,
+)
+
+@Composable
+private fun runtimeMemoryInspectorValueTextStyle() = MaterialTheme.typography.titleSmall.copy(
+    fontFamily = FontFamily.Monospace,
+)
 
 /** Production Memory Editor shell hosted in the dedicated :memory_engine Activity. */
 @Composable
@@ -744,8 +775,7 @@ private fun RuntimeResultRow(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         row.valueText,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontFamily = FontFamily.Monospace,
+                        style = runtimeMemoryDataTextStyle(),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
@@ -761,8 +791,7 @@ private fun RuntimeResultRow(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         row.locationText,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
+                        style = runtimeMemoryMetaTextStyle(),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
@@ -925,15 +954,13 @@ private fun RuntimeWatchRow(
                     )
                     Text(
                         row.valueText,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontFamily = FontFamily.Monospace,
+                        style = runtimeMemoryDataTextStyle(),
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         "${row.locationText} · ${runtimeTypeShort(row.type)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
+                        style = runtimeMemoryMetaTextStyle(),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
@@ -1765,8 +1792,7 @@ private fun RuntimeInspectorTab(
                                             if (row.relativeOffset >= 0) "+${row.relativeOffset}"
                                             else row.relativeOffset.toString(),
                                             modifier = Modifier.widthIn(min = 48.dp),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontFamily = FontFamily.Monospace,
+                                            style = runtimeMemoryMetaTextStyle(),
                                         )
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
@@ -1783,8 +1809,7 @@ private fun RuntimeInspectorTab(
                                         }
                                         Text(
                                             row.valueText,
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontFamily = FontFamily.Monospace,
+                                            style = runtimeMemoryInspectorValueTextStyle(),
                                         )
                                     }
                                 }
@@ -1841,7 +1866,8 @@ private fun RuntimeInspectorLogicalEditDialog(
         modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
         title = {
             RuntimeInputDialogTitle(
-                title = row.label.ifBlank { runtimeTypeShort(row.type) },
+                title = (row.label.ifBlank { runtimeTypeShort(row.type) })
+                    .memoryEditorTitleCase(),
                 peeking = peekingUnderlay,
                 onPeekingChanged = {
                     peekingUnderlay = it
@@ -1902,6 +1928,13 @@ private fun RuntimeInspectorLogicalEditDialog(
 
 private fun Int.formatRelativeOffset(): String = if (this >= 0) "+$this" else toString()
 
+private fun String.memoryEditorTitleCase(): String = trim()
+    .split(Regex("\\s+"))
+    .filter(String::isNotEmpty)
+    .joinToString(" ") { word ->
+        word.replaceFirstChar { first -> first.titlecase(Locale.getDefault()) }
+    }
+
 @Composable
 private fun RuntimeSearchField(
     label: String,
@@ -1914,71 +1947,78 @@ private fun RuntimeSearchField(
     initialFocus: Boolean = false,
 ) {
     val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
-    val keyboardType = if (valueSpec.decimal) KeyboardType.Decimal else KeyboardType.Number
-    val interactionSource = remember { MutableInteractionSource() }
-    var readOnly by remember(initialFocus) { mutableStateOf(initialFocus) }
     var focused by remember { mutableStateOf(false) }
     var caretVisible by remember { mutableStateOf(true) }
-    val pressed by interactionSource.collectIsPressedAsState()
     val accent = MaterialTheme.colorScheme.primary
-    val textStyle = MaterialTheme.typography.titleMedium.copy(
+    val textStyle = runtimeMemoryDataTextStyle().copy(
         color = if (active) MaterialTheme.colorScheme.onSurface
         else MaterialTheme.colorScheme.onSurfaceVariant,
-        fontFamily = FontFamily.Monospace,
     )
     val caretIndex = value.selection.start.coerceIn(0, value.text.length)
-    val caretOffset = with(density) {
-        val measuredWidth = textMeasurer.measure(
+    val caretPrefixWidth = with(density) {
+        textMeasurer.measure(
             text = value.text.take(caretIndex),
             style = textStyle,
         ).size.width.toDp()
-        16.dp + measuredWidth
+    }
+    val textWidth = with(density) {
+        textMeasurer.measure(
+            text = value.text,
+            style = textStyle,
+        ).size.width.toDp()
     }
     LaunchedEffect(initialFocus) {
         if (initialFocus) {
-            // Focus the field for a blinking caret while it is read-only. Read-only focus does
-            // not start a platform IME, so the virtual keypad can own the initial input mode.
+            // Keep focus for the custom caret and keypad routing without starting a platform IME.
             focusRequester.requestFocus()
         }
     }
-    LaunchedEffect(pressed) {
-        if (pressed && readOnly) {
-            // A deliberate tap is the opt-in path to the platform IME. This avoids opening it
-            // as a side effect of dialog composition while retaining normal TextField behavior.
-            readOnly = false
-            keyboardController?.show()
-        }
-    }
-    LaunchedEffect(focused, readOnly, caretIndex) {
+    LaunchedEffect(focused, caretIndex) {
         caretVisible = true
-        if (!focused || !readOnly) return@LaunchedEffect
+        if (!focused) return@LaunchedEffect
         while (isActive) {
             delay(500L)
             caretVisible = !caretVisible
         }
     }
-    Box(modifier = modifier.requiredHeight(RuntimeInputControlHeight)) {
+    BoxWithConstraints(
+        modifier = modifier.requiredHeight(RuntimeInputControlHeight),
+    ) {
+        val caretStart = 16.dp
+        val caretEnd = (maxWidth - 18.dp).coerceAtLeast(caretStart)
+        val visibleTextWidth = (caretEnd - caretStart).coerceAtLeast(1.dp)
+        val caretUnscrolledOffset = caretStart + caretPrefixWidth
+        val maxTextScroll = (textWidth - visibleTextWidth).coerceAtLeast(0.dp)
+        // Mirror the single-line field's horizontal scroll just enough to keep the custom
+        // caret attached to a long value instead of letting it run beyond the outline.
+        val textScroll = (caretUnscrolledOffset - caretEnd)
+            .coerceAtLeast(0.dp)
+            .coerceAtMost(maxTextScroll)
+        val visibleCaretOffset = (caretUnscrolledOffset - textScroll)
+            .coerceIn(caretStart, caretEnd)
         OutlinedTextField(
             value = value,
             onValueChange = { updated ->
                 if (valueSpec.acceptsPartial(updated.text)) onValueChange(updated)
             },
             modifier = Modifier
-                .fillMaxSize()
-                .requiredHeight(RuntimeInputControlHeight)
+                .fillMaxWidth()
+                .requiredHeight(RuntimeInputControlHeight + RuntimeOutlinedFieldLabelInset)
+                .offset(y = -(RuntimeOutlinedFieldLabelInset / 2))
                 .focusRequester(focusRequester)
                 .onFocusChanged {
                     focused = it.isFocused
+                    // Hide any already-visible IME when focus moves between the value field and
+                    // predicate/type controls. All value editing is intentionally keypad-only.
+                    keyboardController?.hide()
                     if (it.isFocused) onClick()
                 },
             label = { Text(label) },
             singleLine = true,
-            readOnly = readOnly,
-            interactionSource = interactionSource,
+            readOnly = true,
             shape = MaterialTheme.shapes.extraLarge,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = accent,
@@ -1987,26 +2027,16 @@ private fun RuntimeSearchField(
                 unfocusedLabelColor = accent,
                 cursorColor = accent,
             ),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = keyboardType,
-                imeAction = ImeAction.Done,
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    keyboardController?.hide()
-                    focusManager.clearFocus()
-                },
-            ),
             textStyle = textStyle,
         )
-        if (focused && readOnly && caretVisible) {
+        if (focused && caretVisible) {
             // Read-only TextField intentionally owns focus so the custom keypad can edit it
             // without starting the platform IME. Material3 does not draw a caret for every
             // read-only configuration, therefore render the insertion marker in the same
             // content inset and blink it independently of keyboard visibility.
             Box(
                 modifier = Modifier
-                    .offset(x = caretOffset, y = 17.dp)
+                    .offset(x = visibleCaretOffset, y = 17.dp)
                     .width(2.dp)
                     .height(22.dp)
                     .background(MaterialTheme.colorScheme.primary),
@@ -2025,106 +2055,99 @@ private fun RuntimeSearchKeypad(
     onMove: (Int) -> Unit,
     onClear: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(if (landscape) 2.dp else 4.dp)) {
-        if (landscape) {
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("1") { onToken("1") }
-                RuntimeKeypadButton("2") { onToken("2") }
-                RuntimeKeypadButton("3") { onToken("3") }
-                RuntimeKeypadButton("⌫", onClick = onBackspace)
-                RuntimeKeypadButton("←") { onMove(-1) }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("4") { onToken("4") }
-                RuntimeKeypadButton("5") { onToken("5") }
-                RuntimeKeypadButton("6") { onToken("6") }
-                RuntimeKeypadButton("→") { onMove(1) }
-                RuntimeKeypadButton("-", enabled = valueSpec?.signed ?: true) { onToken("-") }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("7") { onToken("7") }
-                RuntimeKeypadButton("8") { onToken("8") }
-                RuntimeKeypadButton("9") { onToken("9") }
-                RuntimeKeypadButton(".", enabled = valueSpec?.decimal ?: true) { onToken(".") }
-                RuntimeKeypadButton("E", enabled = valueSpec?.exponent ?: true) { onToken("E") }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("0") { onToken("0") }
-                RuntimeKeypadButton(";", enabled = allowGroup) { onToken(";") }
-                RuntimeKeypadButton(
-                    stringResource(R.string.memory_editor_keypad_clear),
-                    weight = 3f,
-                    onClick = onClear,
-                )
-            }
-        } else {
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("1") { onToken("1") }
-                RuntimeKeypadButton("2") { onToken("2") }
-                RuntimeKeypadButton("3") { onToken("3") }
-                RuntimeKeypadButton("⌫", onClick = onBackspace)
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("4") { onToken("4") }
-                RuntimeKeypadButton("5") { onToken("5") }
-                RuntimeKeypadButton("6") { onToken("6") }
-                RuntimeKeypadButton("←") { onMove(-1) }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("7") { onToken("7") }
-                RuntimeKeypadButton("8") { onToken("8") }
-                RuntimeKeypadButton("9") { onToken("9") }
-                RuntimeKeypadButton("→") { onMove(1) }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton("-", enabled = valueSpec?.signed ?: true) { onToken("-") }
-                RuntimeKeypadButton("0") { onToken("0") }
-                RuntimeKeypadButton(".", enabled = valueSpec?.decimal ?: true) { onToken(".") }
-                RuntimeKeypadButton("E", enabled = valueSpec?.exponent ?: true) { onToken("E") }
-            }
-            RuntimeKeypadRow {
-                RuntimeKeypadButton(";", enabled = allowGroup) { onToken(";") }
-                RuntimeKeypadButton(
-                    stringResource(R.string.memory_editor_keypad_clear),
-                    weight = 3f,
-                    onClick = onClear,
-                )
+    fun token(label: String, enabled: Boolean = true) = RuntimeKeypadCell(
+        label = label,
+        enabled = enabled,
+        onClick = { onToken(label) },
+    )
+
+    val clearLabel = stringResource(R.string.memory_editor_keypad_clear)
+    val columns = if (landscape) 5 else 4
+    val cells = if (landscape) {
+        listOf(
+            token("1"), token("2"), token("3"),
+            RuntimeKeypadCell("⌫", onClick = onBackspace),
+            RuntimeKeypadCell("←", onClick = { onMove(-1) }),
+            token("4"), token("5"), token("6"),
+            RuntimeKeypadCell("→", onClick = { onMove(1) }),
+            token("-", enabled = valueSpec?.signed ?: true),
+            token("7"), token("8"), token("9"),
+            token(".", enabled = valueSpec?.decimal ?: true),
+            token("E", enabled = valueSpec?.exponent ?: true),
+            token("0"),
+            token(";", enabled = allowGroup),
+            RuntimeKeypadCell(clearLabel, onClick = onClear, span = 3),
+        )
+    } else {
+        listOf(
+            token("1"), token("2"), token("3"),
+            RuntimeKeypadCell("⌫", onClick = onBackspace),
+            token("4"), token("5"), token("6"),
+            RuntimeKeypadCell("←", onClick = { onMove(-1) }),
+            token("7"), token("8"), token("9"),
+            RuntimeKeypadCell("→", onClick = { onMove(1) }),
+            token("-", enabled = valueSpec?.signed ?: true),
+            token("0"),
+            token(".", enabled = valueSpec?.decimal ?: true),
+            token("E", enabled = valueSpec?.exponent ?: true),
+            token(";", enabled = allowGroup),
+            RuntimeKeypadCell(clearLabel, onClick = onClear, span = 3),
+        )
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val rows = if (landscape) 4 else 5
+        val verticalSpacing = if (landscape) 2.dp else 4.dp
+        // Short landscape dialogs can have less height than the preferred 48dp x 4 table.
+        // Scale every cell from the same available row height so the final row is never clipped.
+        val cellHeight = (
+            (maxHeight - (verticalSpacing * (rows - 1))) / rows
+        ).coerceAtMost(RuntimeKeypadButtonHeight).coerceAtLeast(32.dp)
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(verticalSpacing),
+            userScrollEnabled = false,
+        ) {
+            cells.forEach { cell ->
+                item(span = { GridItemSpan(cell.span) }) {
+                    RuntimeKeypadButton(cell, height = cellHeight)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun RuntimeKeypadRow(content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        content = content,
-    )
-}
-
-@Composable
-private fun androidx.compose.foundation.layout.RowScope.RuntimeKeypadButton(
-    label: String,
-    enabled: Boolean = true,
-    weight: Float = 1f,
-    onClick: () -> Unit,
+private fun RuntimeKeypadButton(
+    cell: RuntimeKeypadCell,
+    height: Dp,
 ) {
     OutlinedButton(
-        onClick = onClick,
-        enabled = enabled,
+        onClick = cell.onClick,
+        enabled = cell.enabled,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.36f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
         contentPadding = PaddingValues(0.dp),
-        // Keep the text field as the focus owner while the virtual keypad is tapped. This leaves
-        // the insertion caret visible and blinking, just like it is with the system IME.
+        // Keep the text field as the focus owner while the virtual keypad is tapped so the
+        // insertion caret remains visible without handing input to the platform IME.
         modifier = Modifier
-            .weight(weight)
-            .height(RuntimeKeypadButtonHeight)
+            .fillMaxWidth()
+            .height(height)
             .focusProperties { canFocus = false },
     ) {
         Text(
-            label,
+            cell.label,
             modifier = Modifier.fillMaxWidth(),
-            fontFamily = FontFamily.Monospace,
+            style = runtimeMemoryKeypadTextStyle(),
             maxLines = 1,
             textAlign = TextAlign.Center,
         )
@@ -2142,7 +2165,10 @@ private fun RuntimeInputDialogTitle(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, modifier = Modifier.weight(1f))
+        Text(
+            title,
+            modifier = Modifier.weight(1f),
+        )
         RuntimePeekUnderlayButton(
             peeking = peeking,
             onPeekingChanged = onPeekingChanged,
@@ -2287,6 +2313,7 @@ private fun RuntimePredicateMenu(
         onChange = onPredicate,
         modifier = modifier,
         enabled = enabled,
+        centerContent = true,
     )
 }
 
@@ -2302,6 +2329,7 @@ private fun RuntimeRelativeMenu(
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
         modifier = modifier,
+        centerContent = true,
     )
 }
 
@@ -2376,45 +2404,74 @@ private fun RuntimeChoiceMenu(
             ),
             contentPadding = PaddingValues(horizontal = 16.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = if (centerContent) {
-                    Arrangement.Center
-                } else Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                leadingIcon?.let { icon ->
-                    Icon(
-                        painter = painterResource(icon),
-                        contentDescription = null,
-                        tint = accent,
-                        modifier = Modifier.size(24.dp),
-                    )
-                    Spacer(Modifier.width(10.dp))
-                }
-                Text(
-                    label(value),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                if (!centerContent && showTrailingIcon) {
-                    Spacer(Modifier.weight(1f))
-                }
-                if (showTrailingIcon) {
+            if (centerContent && showTrailingIcon) {
+                Box(Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.align(Alignment.Center),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        leadingIcon?.let { icon ->
+                            Icon(
+                                painter = painterResource(icon),
+                                contentDescription = null,
+                                tint = accent,
+                                modifier = Modifier.size(24.dp),
+                            )
+                            Spacer(Modifier.width(10.dp))
+                        }
+                        Text(
+                            label(value),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = runtimeMemoryControlTextStyle(),
+                        )
+                    }
                     Icon(
                         painter = painterResource(R.drawable.ic_keyboard_arrow_down),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.align(Alignment.CenterEnd).size(24.dp),
                     )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = if (centerContent) {
+                        Arrangement.Center
+                    } else Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    leadingIcon?.let { icon ->
+                        Icon(
+                            painter = painterResource(icon),
+                            contentDescription = null,
+                            tint = accent,
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(Modifier.width(10.dp))
+                    }
+                    Text(
+                        label(value),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = runtimeMemoryControlTextStyle(),
+                    )
+                    if (showTrailingIcon) {
+                        Spacer(Modifier.weight(1f))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_keyboard_arrow_down),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
                 }
             }
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             values.forEach { item ->
                 DropdownMenuItem(
-                    text = { Text(label(item)) },
+                    text = { Text(label(item), style = runtimeMemoryControlTextStyle()) },
                     onClick = {
                         expanded = false
                         onChange(item)
@@ -2461,7 +2518,7 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
         }
         Text(
             "${state.pageOffset + 1}–${minOf(state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE, state.resultCount)}",
-            fontFamily = FontFamily.Monospace,
+            style = runtimeMemoryMetaTextStyle(),
         )
         TextButton(
             onClick = actions::nextPage,

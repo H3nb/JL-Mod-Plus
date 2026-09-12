@@ -23,12 +23,12 @@
     <string name="memory_editor_undo">Urungkan</string>
     <string name="memory_editor_watch">Pantauan</string>
     <string name="memory_editor_search_tab">Cari</string>
-    <string name="memory_editor_search_known_values">Cari nilai yang diketahui</string>
-    <string name="memory_editor_search_unknown_values">Cari nilai yang tidak diketahui</string>
+    <string name="memory_editor_search_known_values">Cari Nilai Yang Diketahui</string>
+    <string name="memory_editor_search_unknown_values">Cari Nilai Yang Tidak Diketahui</string>
     <string name="memory_editor_add_to_watch">Tambahkan pilihan ke Pantauan</string>
     <string name="memory_editor_no_candidates">Kandidat Managed tidak ditemukan</string>
     <string name="memory_editor_edit">Ubah</string>
-    <string name="memory_editor_edit_batch">Ubah %1$d nilai</string>
+    <string name="memory_editor_edit_batch">Ubah %1$d Nilai</string>
     <string name="memory_editor_edit_batch_help">Satu nilai pengganti akan diterapkan ke semua target yang dipilih. Opsi Pantau dan Bekukan tidak tersedia untuk perubahan massal.</string>
     <string name="memory_editor_edit_batch_no_common_type">Kelompok hasil yang dipilih tidak memiliki tipe data bersama. Edit subset yang kompatibel secara terpisah.</string>
     <string name="memory_editor_save">Simpan</string>

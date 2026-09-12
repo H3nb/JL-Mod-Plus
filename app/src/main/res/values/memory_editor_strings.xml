@@ -26,12 +26,12 @@
     <string name="memory_editor_undo">Undo</string>
     <string name="memory_editor_watch">Watch</string>
     <string name="memory_editor_search_tab">Search</string>
-    <string name="memory_editor_search_known_values">Search known values</string>
-    <string name="memory_editor_search_unknown_values">Search unknown values</string>
+    <string name="memory_editor_search_known_values">Search Known Values</string>
+    <string name="memory_editor_search_unknown_values">Search Unknown Values</string>
     <string name="memory_editor_add_to_watch">Add selected to Watch</string>
     <string name="memory_editor_no_candidates">No managed candidates found</string>
     <string name="memory_editor_edit">Edit</string>
-    <string name="memory_editor_edit_batch">Edit %1$d values</string>
+    <string name="memory_editor_edit_batch">Edit %1$d Values</string>
     <string name="memory_editor_edit_batch_help">One replacement value will be applied to all selected targets. Watch and Freeze options are unavailable for batch edits.</string>
     <string name="memory_editor_edit_batch_no_common_type">The selected result groups have no common data type. Edit a compatible subset separately.</string>
     <string name="memory_editor_save">Save</string>
