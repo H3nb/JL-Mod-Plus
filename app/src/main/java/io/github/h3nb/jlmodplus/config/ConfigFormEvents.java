@@ -15,7 +15,6 @@
 package io.github.h3nb.jlmodplus.config;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import io.github.h3nb.jlmodplus.config.model.Size;
 
@@ -47,56 +46,42 @@ public interface ConfigFormEvents {
 	default void onShaderTuningComplete(float[] values) {
 	}
 
-	/** Opens the existing profile-load flow from the General destination. */
-	default void onUseProfile() {
-	}
-
-	/** Opens the existing profile-save flow from the General destination. */
-	default void onSaveAsProfile() {
-	}
-
-	/** Opens profile template management from the General destination. */
+	/** Opens preset management from the General destination. */
 	default void onManageProfiles() {
 	}
 
-	/** Returns true when the host applied the selection and the surface may close. */
-	default boolean onApplyBuiltInTemplate() {
+	/** Applies only the selected parts of a saved preset. */
+	default boolean onApplyBuiltInTemplate(@NonNull PresetApplyScope scope) {
 		return true;
 	}
 
-	/** Returns false when the host kept the picker open after an apply failure. */
-	default boolean onApplyTemplate(@NonNull String name) {
+	/** Applies only the selected parts of a saved preset. */
+	default boolean onApplyTemplate(@NonNull String name, @NonNull PresetApplyScope scope) {
 		return true;
 	}
 
-	/** Returns false when the host kept the save dialog open after a save failure. */
-	default boolean onSaveTemplate(@NonNull String name) {
-		return true;
-	}
-
-	/** Saves game settings and optionally the separate virtual keyboard layout artifact. */
+	/** Saves application settings and optionally the separate virtual keyboard layout artifact. */
 	default boolean onSaveTemplate(@NonNull String name, boolean includeKeyboard) {
-		return onSaveTemplate(name);
+		return true;
 	}
 
-	/** Opens the saved keyboard-layout picker without replacing the current game settings draft. */
+	/** Opens the naming dialog for a layout-only saved entry. */
+	default void onSaveKeyboardLayout() {
+	}
+
+	/** Saves only the current virtual keyboard layout as a reusable layout entry. */
+	default boolean onSaveKeyboardLayout(@NonNull String name) {
+		return true;
+	}
+
+	/** Opens the saved keyboard-layout picker without replacing the current application settings draft. */
 	default void onChooseKeyboardLayout() {
 	}
 
-	/** Restores the one persistent setup snapshot captured before a destructive replacement. */
-	default void onRestorePreviousSetup() {
-	}
-
-	default void onUpdateTemplate(@NonNull String name) {
-	}
-
-	default void onRenameTemplate(@NonNull String oldName, @NonNull String newName) {
-	}
-
-	default void onDeleteTemplate(@NonNull String name) {
-	}
-
-	default void onSetDefaultTemplate(@Nullable String name) {
+	enum PresetApplyScope {
+		SETTINGS,
+		KEYBOARD_LAYOUT,
+		SETTINGS_AND_KEYBOARD
 	}
 
 	enum ColorField {

@@ -21,40 +21,18 @@
     <string name="config_maintenance">Atur Ulang &amp; Data</string>
     <string name="config_reset_all_settings">Atur Ulang Semua Pengaturan</string>
     <string name="config_reset_all_settings_summary">Kembalikan pengaturan emulator ke bawaan</string>
-    <string name="config_delete_game_data">Hapus Data Aplikasi</string>
-    <string name="config_delete_game_data_summary">Hapus permanen save dan data yang dibuat aplikasi ini</string>
+    <string name="config_delete_app_data">Hapus Data Aplikasi</string>
+    <string name="config_delete_app_data_summary">Hapus permanen save dan data yang dibuat aplikasi ini</string>
     <string name="config_message_reset_settings">Atur ulang semua pengaturan emulator untuk aplikasi ini ke bawaan? Data aplikasi dan tata letak tombol kustom tidak akan dihapus.</string>
     <string name="config_message_reset_profile_settings">Atur ulang semua pengaturan di profil ini ke bawaan? Profil masih dapat diubah lagi sebelum meninggalkan halaman ini.</string>
-    <string name="config_message_delete_game_data">Hapus permanen semua save dan data yang dibuat aplikasi ini? Pengaturan emulator tidak akan dihapus.</string>
+    <string name="config_message_delete_app_data">Hapus permanen semua save dan data yang dibuat aplikasi ini? Pengaturan emulator tidak akan dihapus.</string>
     <string name="profile_custom">Kustom</string>
-    <string name="profile_custom_summary">Pengaturan berbeda dari profil tersimpan</string>
-    <string name="profile_active_summary">Profil aktif</string>
-    <string name="profile_use">Gunakan profil</string>
-    <string name="profile_change">Ganti profil</string>
-    <string name="profile_save_as">Simpan sebagai profil</string>
-    <string name="profile_choose_template">Pilih Prasetel</string>
-    <string name="profile_choose_template_summary">Terapkan prasetel aplikasi yang tersimpan. Anda bisa langsung memulai atau mengubah pengaturan apa pun setelahnya.</string>
-    <string name="profile_default_badge">Bawaan untuk Aplikasi Baru</string>
-    <string name="profile_save_template">Simpan Sebagai Prasetel</string>
-    <string name="profile_save_template_summary">Simpan konfigurasi saat ini sebagai prasetel yang dapat digunakan kembali.</string>
     <string name="config_lock_custom_resolution_ratio">Pertahankan Rasio Lebar/Tinggi Saat Mengedit</string>
     <string name="config_swap_screen_size">Tukar Lebar dan Tinggi</string>
     <string name="profile_builtin_settings">Bawaan JL-Mod</string>
     <string name="profile_builtin_settings_summary">Pengaturan emulator bawaan</string>
-    <string name="profile_default_template_summary">Prasetel bawaan untuk aplikasi baru</string>
     <string name="profile_default_badge_short">Bawaan untuk aplikasi baru</string>
-    <string name="profile_modified_summary">Diubah setelah memakai prasetel ini</string>
-    <string name="profile_choose_or_manage">Gunakan Prasetel</string>
-    <string name="profile_update_template">Perbarui Prasetel</string>
-    <string name="profile_update_template_summary">Ganti isi %1$s dengan konfigurasi saat ini.</string>
-    <string name="profile_save_as_new_template">Simpan Sebagai Prasetel Baru</string>
-    <string name="profile_save_as_new_template_summary">Simpan konfigurasi saat ini sebagai prasetel yang dapat digunakan kembali.</string>
-    <string name="profile_templates_title">Prasetel</string>
-    <string name="profile_templates_summary">Pilih prasetel yang dapat digunakan kembali. Kelola prasetel untuk mengganti nama, menghapus, atau menjadikannya bawaan untuk aplikasi baru.</string>
     <string name="profile_template_summary">Pengaturan aplikasi tersimpan</string>
-    <string name="profile_active_badge">Aktif</string>
-    <string name="profile_modified_badge">Diubah</string>
-    <string name="profile_save_current_template">Simpan Sebagai Prasetel</string>
     <string name="profile_name_label">Nama Prasetel</string>
     <string name="profile_name_exists">Prasetel dengan nama ini sudah ada.</string>
     <string name="profile_delete_template_message">Hapus prasetel “%1$s”? Tindakan ini tidak menghapus data aplikasi.</string>
@@ -127,53 +105,49 @@
     <string name="profile_rename_title">Ganti Nama Prasetel</string>
 
     <string name="presets">Prasetel</string>
-    <string name="add_preset_description">Buat Prasetel Baru</string>
     <string name="preset_use">Gunakan Prasetel</string>
     <string name="preset_save_as">Simpan Sebagai Prasetel</string>
-    <string name="preset_current_configuration">Konfigurasi Saat Ini</string>
-    <string name="preset_use_summary">Pilih prasetel tersimpan atau bawaan JL-Mod untuk aplikasi ini.</string>
-    <string name="preset_save_as_summary">Simpan konfigurasi ini sebagai prasetel yang dapat digunakan kembali.</string>
-    <string name="preset_restore_previous">Pulihkan Konfigurasi Sebelumnya</string>
-    <string name="preset_restore_previous_summary">Memulihkan pengaturan aplikasi dan tata letak keyboard virtual yang disimpan sebelum perubahan prasetel atau pengaturan ulang terakhir.</string>
     <string name="preset_active">Prasetel aktif: %1$s</string>
     <string name="preset_based_on_modified">Berdasarkan %1$s; diubah</string>
     <string name="preset_builtin">Bawaan JL-Mod</string>
     <string name="preset_builtin_summary">Pengaturan emulator bawaan</string>
-    <string name="preset_custom">Pengaturan kustom</string>
     <string name="preset_picker_title">Gunakan Prasetel</string>
     <string name="preset_manage">Kelola Prasetel</string>
-    <string name="preset_game_settings">Konfigurasi Aplikasi</string>
+    <string name="preset_application_settings">Konfigurasi Aplikasi</string>
     <string name="preset_includes_keyboard_layout">Termasuk tata letak keyboard virtual</string>
     <string name="preset_virtual_keyboard_on">Keypad virtual aktif</string>
     <string name="preset_virtual_keyboard_off">Keypad virtual nonaktif</string>
     <string name="preset_apply">Terapkan</string>
-    <string name="preset_apply_with_keyboard_message">Ini akan mengganti:
-• Pengaturan aplikasi
-• Tata letak keyboard virtual
-
-Konfigurasi saat ini akan disimpan sebagai titik pemulihan satu kali.</string>
-    <string name="preset_apply_without_keyboard_message">Ini akan mengganti pengaturan aplikasi.
-
-Tata letak keyboard virtual saat ini tidak akan berubah.
-Konfigurasi saat ini akan disimpan sebagai titik pemulihan satu kali.</string>
-    <string name="preset_apply_builtin_message">Ini akan mengatur ulang pengaturan aplikasi ke bawaan JL-Mod.
-Tata letak keyboard virtual saat ini tidak akan berubah.
-
-Konfigurasi saat ini akan disimpan sebagai titik pemulihan satu kali.</string>
+    <string name="preset_apply_failed_summary">Prasetel tidak dapat diterapkan. Periksa sumbernya lalu coba lagi.</string>
+    <string name="preset_choose_parts">Pilih Bagian</string>
+    <string name="preset_choose_parts_summary">Pilih bagian prasetel yang ingin diterapkan. Minimal satu bagian harus dipilih.</string>
+    <string name="preset_settings_part">Pengaturan aplikasi</string>
+    <string name="preset_keyboard_part">Tata letak keyboard virtual</string>
     <string name="preset_name">Nama</string>
     <string name="preset_include_keyboard_layout">Sertakan tata letak keyboard virtual</string>
     <string name="preset_save_help">Dapat digunakan kembali dengan aplikasi lain. Perubahan pada aplikasi ini tidak akan mengubah prasetel secara otomatis.</string>
+    <string name="preset_discard_changes_title">Buang perubahan?</string>
+    <string name="preset_discard_changes_summary">Draf prasetel ini belum disimpan.</string>
+    <string name="preset_continue_editing">Lanjut mengedit</string>
+    <string name="preset_discard_changes">Buang</string>
     <string name="preset_name_exists">Prasetel dengan nama ini sudah ada.</string>
     <string name="preset_invalid_name">Masukkan nama prasetel yang valid.</string>
     <string name="preset_manager_default_section">Bawaan untuk Aplikasi Baru</string>
+    <string name="preset_manager_builtin_section">Bawaan</string>
     <string name="preset_manager_presets_section">Prasetel Saya</string>
     <string name="preset_manager_keyboard_section">Tata Letak Keyboard Tersimpan</string>
-    <string name="set_as_default_new_games">Bawaan untuk Aplikasi Baru</string>
+    <string name="preset_manager_empty_summary">Belum ada prasetel atau tata letak keyboard tersimpan. Simpan dari pengaturan aplikasi.</string>
+    <string name="preset_default_policy_summary">Aplikasi baru menggunakan %1$s.</string>
+    <string name="preset_legacy_keyboard_default_summary">Pengaturan aplikasi bawaan ditambah tata letak tersimpan “%1$s”.</string>
+    <string name="preset_keyboard_layout_unavailable">Tata letak keyboard tidak tersedia</string>
+    <string name="set_as_default_new_applications">Bawaan untuk Aplikasi Baru</string>
     <string name="edit_preset">Edit Prasetel</string>
     <string name="saved_keyboard_layout_summary">Tata letak keyboard virtual tersimpan</string>
     <string name="preset_edit_title">Edit prasetel: %1$s</string>
     <string name="choose_saved_keyboard_layout">Pilih Tata Letak Keyboard Tersimpan</string>
     <string name="choose_saved_keyboard_layout_summary">Terapkan tata letak keyboard tersimpan tanpa mengubah pengaturan aplikasi.</string>
+    <string name="save_keyboard_layout">Simpan Tata Letak Keyboard</string>
+    <string name="save_keyboard_layout_summary">Simpan tata letak keyboard virtual ini tanpa menyimpan pengaturan aplikasi.</string>
     <string name="preset_unavailable_section">Tidak Tersedia</string>
     <string name="preset_unavailable_summary">Entri ini tidak dapat dimuat. Ganti nama atau hapus entri ini.</string>
     <string name="preset_change_default">Ganti</string>

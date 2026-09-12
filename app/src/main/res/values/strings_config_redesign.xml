@@ -16,34 +16,17 @@
     <string name="config_maintenance">Reset &amp; Data</string>
     <string name="config_reset_all_settings">Reset All Settings</string>
     <string name="config_reset_all_settings_summary">Restore emulator settings to their defaults</string>
-    <string name="config_delete_game_data">Delete App Data</string>
-    <string name="config_delete_game_data_summary">Permanently delete saves and data created by this app</string>
+    <string name="config_delete_app_data">Delete App Data</string>
+    <string name="config_delete_app_data_summary">Permanently delete saves and data created by this app</string>
     <string name="config_message_reset_settings">Reset all emulator settings for this app to their defaults? App data and the custom button layout will not be deleted.</string>
     <string name="config_message_reset_profile_settings">Reset all settings in this profile to their defaults? The profile can be edited again before leaving this page.</string>
-    <string name="config_message_delete_game_data">Permanently delete all saves and data created by this app? Emulator settings will not be deleted.</string>
-    <string name="profile_choose_template">Choose Preset</string>
-    <string name="profile_choose_template_summary">Apply a saved application preset. You can start immediately or change any setting afterward.</string>
-    <string name="profile_default_badge">Default for New Applications</string>
-    <string name="profile_save_template">Save As Preset</string>
-    <string name="profile_save_template_summary">Save the current configuration as a reusable preset.</string>
+    <string name="config_message_delete_app_data">Permanently delete all saves and data created by this app? Emulator settings will not be deleted.</string>
     <string name="config_lock_custom_resolution_ratio">Keep Width/Height Ratio While Editing</string>
     <string name="config_swap_screen_size">Swap width and height</string>
     <string name="profile_builtin_settings">JL-Mod Defaults</string>
     <string name="profile_builtin_settings_summary">Built-in emulator settings</string>
-    <string name="profile_default_template_summary">Default preset for new applications</string>
     <string name="profile_default_badge_short">Default for new applications</string>
-    <string name="profile_modified_summary">Modified after using this preset</string>
-    <string name="profile_choose_or_manage">Use Preset</string>
-    <string name="profile_update_template">Update Preset</string>
-    <string name="profile_update_template_summary">Replace %1$s with the current configuration.</string>
-    <string name="profile_save_as_new_template">Save as New Preset</string>
-    <string name="profile_save_as_new_template_summary">Keep the current configuration as a reusable preset.</string>
-    <string name="profile_templates_title">Presets</string>
-    <string name="profile_templates_summary">Choose a reusable preset. Manage presets to rename, delete, or set the default for new applications.</string>
     <string name="profile_template_summary">Saved application settings</string>
-    <string name="profile_active_badge">Active</string>
-    <string name="profile_modified_badge">Modified</string>
-    <string name="profile_save_current_template">Save As Preset</string>
     <string name="profile_name_label">Preset Name</string>
     <string name="profile_name_exists">A preset with this name already exists.</string>
     <string name="profile_delete_template_message">Delete preset “%1$s”? This does not delete any app data.</string>
@@ -116,53 +99,49 @@
     <string name="profile_rename_title">Rename Preset</string>
 
     <string name="presets">Presets</string>
-    <string name="add_preset_description">Create New Preset</string>
     <string name="preset_use">Use Preset</string>
     <string name="preset_save_as">Save As Preset</string>
-    <string name="preset_current_configuration">Current Configuration</string>
-    <string name="preset_use_summary">Choose a saved preset or JL-Mod defaults for this application.</string>
-    <string name="preset_save_as_summary">Save this configuration as a reusable preset.</string>
-    <string name="preset_restore_previous">Restore Previous Configuration</string>
-    <string name="preset_restore_previous_summary">Restores the application settings and virtual keyboard layout saved before the last preset change or reset.</string>
     <string name="preset_active">Active preset: %1$s</string>
     <string name="preset_based_on_modified">Based on %1$s; modified</string>
     <string name="preset_builtin">JL-Mod Defaults</string>
     <string name="preset_builtin_summary">Built-in emulator settings</string>
-    <string name="preset_custom">Custom setup</string>
     <string name="preset_picker_title">Use Preset</string>
     <string name="preset_manage">Manage Presets</string>
-    <string name="preset_game_settings">Application Configuration</string>
+    <string name="preset_application_settings">Application Configuration</string>
     <string name="preset_includes_keyboard_layout">Includes virtual keyboard layout</string>
     <string name="preset_virtual_keyboard_on">Virtual keypad on</string>
     <string name="preset_virtual_keyboard_off">Virtual keypad off</string>
     <string name="preset_apply">Apply</string>
-    <string name="preset_apply_with_keyboard_message">This will replace:
-• Application settings
-• Virtual keyboard layout
-
-Your current configuration will be saved as a one-time restore point.</string>
-    <string name="preset_apply_without_keyboard_message">This will replace application settings.
-
-Your current virtual keyboard layout will stay unchanged.
-Your current configuration will be saved as a one-time restore point.</string>
-    <string name="preset_apply_builtin_message">This will reset application settings to JL-Mod defaults.
-Your current virtual keyboard layout will stay unchanged.
-
-Your current configuration will be saved as a one-time restore point.</string>
+    <string name="preset_apply_failed_summary">Could not apply this preset. Check the source and try again.</string>
+    <string name="preset_choose_parts">Choose parts</string>
+    <string name="preset_choose_parts_summary">Choose which parts of this preset to apply. At least one part is required.</string>
+    <string name="preset_settings_part">Application settings</string>
+    <string name="preset_keyboard_part">Virtual keyboard layout</string>
     <string name="preset_name">Name</string>
     <string name="preset_include_keyboard_layout">Include virtual keyboard layout</string>
     <string name="preset_save_help">Can be reused with other applications. Changes to this application won’t automatically change the preset.</string>
+    <string name="preset_discard_changes_title">Discard changes?</string>
+    <string name="preset_discard_changes_summary">This preset draft has not been saved.</string>
+    <string name="preset_continue_editing">Continue editing</string>
+    <string name="preset_discard_changes">Discard</string>
     <string name="preset_name_exists">A preset with this name already exists.</string>
     <string name="preset_invalid_name">Enter a valid preset name.</string>
     <string name="preset_manager_default_section">Default for New Applications</string>
+    <string name="preset_manager_builtin_section">Built-in</string>
     <string name="preset_manager_presets_section">My Presets</string>
     <string name="preset_manager_keyboard_section">Saved Keyboard Layouts</string>
-    <string name="set_as_default_new_games">Default for New Applications</string>
+    <string name="preset_manager_empty_summary">No saved presets or keyboard layouts yet. Save them from an application’s settings.</string>
+    <string name="preset_default_policy_summary">New applications use %1$s.</string>
+    <string name="preset_legacy_keyboard_default_summary">Built-in application settings plus the saved layout “%1$s”.</string>
+    <string name="preset_keyboard_layout_unavailable">Keyboard layout unavailable</string>
+    <string name="set_as_default_new_applications">Default for New Applications</string>
     <string name="edit_preset">Edit Preset</string>
     <string name="saved_keyboard_layout_summary">Saved virtual keyboard layout</string>
     <string name="preset_edit_title">Edit preset: %1$s</string>
     <string name="choose_saved_keyboard_layout">Choose Saved Keyboard Layout</string>
     <string name="choose_saved_keyboard_layout_summary">Apply a saved keyboard layout without changing the application settings.</string>
+    <string name="save_keyboard_layout">Save Keyboard Layout</string>
+    <string name="save_keyboard_layout_summary">Save this virtual keyboard layout without saving application settings.</string>
     <string name="preset_unavailable_section">Unavailable</string>
     <string name="preset_unavailable_summary">This entry could not be loaded. Rename or delete it.</string>
     <string name="preset_change_default">Change</string>

@@ -63,6 +63,8 @@ private val PreviewConfigState = ConfigUiState(
     listOf("Not set", "Default skin"),
     listOf("Android (default)", "custom.sf2"),
     emptyList(),
+    emptyList(),
+    ConfigUiState.ProfileStatus.custom(null),
 )
 
 @PreviewTest

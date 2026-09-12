@@ -15,7 +15,6 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -38,32 +37,29 @@ class ProfilesComposeTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun createRejectsPathCharactersAndDispatchesValidName() {
+    fun managerKeepsCreationInApplicationSettings() {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
         composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
-        composeRule.onNodeWithContentDescription("Create New Preset").performClick()
-        composeRule.onNode(hasSetTextAction()).performTextInput("New/Profile")
-        composeRule.onNodeWithText("OK").assertIsNotEnabled()
-        composeRule.onNode(hasSetTextAction()).performTextReplacement("New Profile")
-        composeRule.onNodeWithText("OK").performClick()
-        assertEquals("New Profile", actions.created)
+        composeRule.onNodeWithContentDescription("Create New Preset").assertDoesNotExist()
     }
 
     @Test
-    fun profileActionsPreserveDefaultEditRenameAndDeleteCallbacks() {
+    fun profileActionsUseDedicatedDefaultRowDirectEditAndLabeledManage() {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
 
+        composeRule.onNodeWithText("Change").performClick()
         composeRule.onNodeWithText("Playable").performClick()
-        composeRule.onNodeWithText("Default for New Applications").performClick()
+        composeRule.onNodeWithText("Apply").performClick()
         assertEquals("Playable", actions.defaulted)
 
         composeRule.onNodeWithText("Playable").performClick()
-        composeRule.onNodeWithText("Edit Preset").performClick()
         assertEquals("Playable", actions.edited)
+        composeRule.onNodeWithText("Edit Preset").assertDoesNotExist()
 
-        composeRule.onNodeWithText("Playable").performClick()
+        composeRule.onNodeWithText("Manage Presets").assertExists()
+        composeRule.onNodeWithText("Manage Presets").performClick()
         composeRule.onNodeWithText("Rename").performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput(" 2")
         composeRule.onNodeWithText("OK").performClick()

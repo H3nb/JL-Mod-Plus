@@ -21,9 +21,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,7 +35,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -53,10 +52,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
@@ -69,14 +70,12 @@ import kotlin.math.roundToInt
 object ConfigDialogComposeBridge {
     interface LoadProfileCallbacks {
         fun onDismiss()
-        fun onError()
-        fun onConfirm(name: String, config: Boolean, keyboard: Boolean)
+        fun onConfirm(name: String)
     }
 
     interface SaveProfileCallbacks {
         fun onDismiss()
-        fun onError()
-        fun onConfirm(name: String, config: Boolean, keyboard: Boolean, asDefault: Boolean)
+        fun onConfirm(name: String)
     }
 
     interface ShaderCallbacks {
@@ -86,53 +85,33 @@ object ConfigDialogComposeBridge {
 
     @JvmStatic
     fun setLoadProfileContent(
-        view: androidx.compose.ui.platform.ComposeView,
+        view: ComposeView,
         profiles: List<Profile>,
-        @Suppress("UNUSED_PARAMETER") defaultName: String?,
-        callbacks: LoadProfileCallbacks,
-    ) = setLoadProfileContent(view, profiles, defaultName, false, emptySet(), callbacks)
-
-    @JvmStatic
-    fun setLoadProfileContent(
-        view: androidx.compose.ui.platform.ComposeView,
-        profiles: List<Profile>,
-        @Suppress("UNUSED_PARAMETER") defaultName: String?,
-        keyboardOnly: Boolean,
-        callbacks: LoadProfileCallbacks,
-    ) = setLoadProfileContent(view, profiles, defaultName, keyboardOnly, emptySet(), callbacks)
-
-    @JvmStatic
-    fun setLoadProfileContent(
-        view: androidx.compose.ui.platform.ComposeView,
-        profiles: List<Profile>,
-        @Suppress("UNUSED_PARAMETER") defaultName: String?,
-        keyboardOnly: Boolean,
-        unavailableProfileNames: Set<String>,
         callbacks: LoadProfileCallbacks,
     ) {
         view.setContent {
             JLModPlusTheme {
-                LoadProfileContent(profiles, keyboardOnly, unavailableProfileNames, callbacks)
+                LoadProfileContent(profiles, callbacks)
             }
         }
     }
 
     @JvmStatic
     fun setSaveProfileContent(
-        view: androidx.compose.ui.platform.ComposeView,
-        existingConfigNames: Set<String>,
+        view: ComposeView,
+        existingProfileNames: Set<String>,
         callbacks: SaveProfileCallbacks,
     ) {
         view.setContent {
             JLModPlusTheme {
-                SaveProfileContent(existingConfigNames, callbacks)
+                SaveProfileContent(existingProfileNames, callbacks)
             }
         }
     }
 
     @JvmStatic
     fun setShaderContent(
-        view: androidx.compose.ui.platform.ComposeView,
+        view: ComposeView,
         shader: ShaderInfo,
         callbacks: ShaderCallbacks,
     ) {
@@ -204,20 +183,15 @@ private fun DialogSurface(
 @Composable
 private fun LoadProfileContent(
     profiles: List<Profile>,
-    keyboardOnly: Boolean,
-    unavailableProfileNames: Set<String>,
     callbacks: ConfigDialogComposeBridge.LoadProfileCallbacks,
 ) {
     DialogSurface(onDismissRequest = callbacks::onDismiss) {
         Text(
-            stringResource(if (keyboardOnly) R.string.choose_saved_keyboard_layout else R.string.profile_choose_template),
+            stringResource(R.string.choose_saved_keyboard_layout),
             style = MaterialTheme.typography.titleLarge,
         )
         Text(
-            stringResource(
-                if (keyboardOnly) R.string.choose_saved_keyboard_layout_summary
-                else R.string.profile_choose_template_summary,
-            ),
+            stringResource(R.string.choose_saved_keyboard_layout_summary),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -240,32 +214,17 @@ private fun LoadProfileContent(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     itemsIndexed(profiles) { _, profile ->
-                        val hasConfig = profile.hasConfig() || profile.hasOldConfig()
-                        val hasKeyboard = profile.hasUsableKeyLayout()
-                        val unavailable = profile.name in unavailableProfileNames
-                        val available = !unavailable && (hasConfig || hasKeyboard)
-                        val selectable = if (keyboardOnly) !unavailable && hasKeyboard else available
                         ListItem(
                             colors = ListItemDefaults.colors(
                                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
                             ),
                             headlineContent = { Text(profile.name) },
-                            supportingContent = if (unavailable) {
-                                { Text(stringResource(R.string.preset_unavailable_summary)) }
-                            } else if (!hasConfig && hasKeyboard) {
-                                { Text(stringResource(R.string.saved_keyboard_layout_summary)) }
-                            } else {
-                                null
+                            supportingContent = {
+                                Text(stringResource(R.string.saved_keyboard_layout_summary))
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(enabled = selectable) {
-                                    if (selectable) {
-                                        callbacks.onConfirm(profile.name, hasConfig, hasKeyboard)
-                                    } else {
-                                        callbacks.onError()
-                                    }
-                                },
+                                .clickable { callbacks.onConfirm(profile.name) },
                         )
                     }
                 }
@@ -286,17 +245,21 @@ private fun LoadProfileContent(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SaveProfileContent(
-    existingConfigNames: Set<String>,
+    existingProfileNames: Set<String>,
     callbacks: ConfigDialogComposeBridge.SaveProfileCallbacks,
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var touched by rememberSaveable { mutableStateOf(false) }
     var overwriteVisible by rememberSaveable { mutableStateOf(false) }
     val trimmed = name.trim()
-    val valid = trimmed.isNotEmpty()
+    val valid = trimmed.isNotEmpty() && Profile.isValidName(trimmed)
+    val duplicate = existingProfileNames.any { it.equals(trimmed, ignoreCase = true) }
 
     DialogSurface(onDismissRequest = callbacks::onDismiss) {
-        Text(stringResource(R.string.profile_save_template), style = MaterialTheme.typography.titleLarge)
+        Text(
+            stringResource(R.string.save_keyboard_layout),
+            style = MaterialTheme.typography.titleLarge,
+        )
         val scrollState = rememberScrollState()
         val canScrollForward = rememberScrollCanScrollForward(scrollState)
         Box(Modifier.fillMaxWidth().weight(1f, fill = false)) {
@@ -305,21 +268,21 @@ private fun SaveProfileContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    stringResource(R.string.profile_save_template_summary),
+                    stringResource(R.string.save_keyboard_layout_summary),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OutlinedTextField(
                     value = name,
                     onValueChange = {
                         touched = true
-                        name = it.filterNot { ch -> ch in "/\\:*?\"<>|" }
+                        name = it
                     },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.profile_name_label)) },
                     singleLine = true,
                     isError = touched && !valid,
                     supportingText = if (touched && !valid) {
-                        { Text(stringResource(R.string.error_name)) }
+                        { Text(stringResource(R.string.preset_invalid_name)) }
                     } else {
                         null
                     },
@@ -338,10 +301,10 @@ private fun SaveProfileContent(
             TextButton(
                 enabled = valid,
                 onClick = {
-                    if (trimmed in existingConfigNames) {
+                    if (duplicate) {
                         overwriteVisible = true
                     } else {
-                        callbacks.onConfirm(trimmed, true, true, false)
+                        callbacks.onConfirm(trimmed)
                     }
                 },
             ) {
@@ -362,7 +325,7 @@ private fun SaveProfileContent(
             confirmButton = {
                 TextButton(onClick = {
                     overwriteVisible = false
-                    callbacks.onConfirm(trimmed, true, true, false)
+                    callbacks.onConfirm(trimmed)
                 }) {
                     Text(stringResource(R.string.save))
                 }
