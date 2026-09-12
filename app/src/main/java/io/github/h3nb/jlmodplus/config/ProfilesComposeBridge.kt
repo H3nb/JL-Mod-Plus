@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextRange
@@ -64,6 +65,11 @@ data class ProfileUiItem(
     val isDefault: Boolean,
     val canEdit: Boolean,
     val isBuiltIn: Boolean = false,
+    val isKeyboardOnly: Boolean = false,
+    val hasKeyboardLayout: Boolean = false,
+    val screenWidth: Int = 0,
+    val screenHeight: Int = 0,
+    val orientation: Int = 0,
 )
 
 data class ProfilesUiState(
@@ -108,10 +114,17 @@ class ProfilesComposeController(
                     isBuiltIn = true,
                 ),
             ) + profiles.sorted().map { profile ->
+                val validGamePreset = ProfilesManager.isValidGamePreset(profile)
+                val config = if (validGamePreset) ProfilesManager.loadConfig(profile.getDir(), false) else null
                 ProfileUiItem(
                     name = profile.name,
-                    isDefault = profile.name == defaultName,
-                    canEdit = profile.hasConfig() || profile.hasOldConfig(),
+                    isDefault = validGamePreset && profile.name == defaultName,
+                    canEdit = validGamePreset,
+                    isKeyboardOnly = !validGamePreset,
+                    hasKeyboardLayout = profile.hasKeyLayout(),
+                    screenWidth = config?.screenWidth ?: 0,
+                    screenHeight = config?.screenHeight ?: 0,
+                    orientation = config?.orientation ?: 0,
                 )
             },
         )
@@ -133,7 +146,7 @@ fun ProfilesScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.profiles)) },
+                title = { Text(stringResource(R.string.presets)) },
                 navigationIcon = {
                     IconButton(onClick = actions::onBack) {
                         Icon(
@@ -146,7 +159,7 @@ fun ProfilesScreen(
                     IconButton(onClick = { nameDialog = ProfileNameDialog.Create }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_add),
-                            contentDescription = stringResource(R.string.add_profile_description),
+                            contentDescription = stringResource(R.string.add_preset_description),
                         )
                     }
                 },
@@ -169,12 +182,30 @@ fun ProfilesScreen(
                 )
             }
         } else {
+            val builtIn = state.profiles.firstOrNull { it.isBuiltIn }
+            val presets = state.profiles.filter { !it.isBuiltIn && !it.isKeyboardOnly }
+            val savedLayouts = state.profiles.filter { it.isKeyboardOnly }
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = padding,
             ) {
-                items(state.profiles, key = { it.name }) { profile ->
+                item { ProfileSectionHeader(stringResource(R.string.preset_manager_default_section)) }
+                builtIn?.let { profile ->
+                    item(key = "__built_in__") {
+                        ProfileRow(profile = profile, onClick = { selectedProfile = profile })
+                    }
+                }
+                if (presets.isNotEmpty()) {
+                    item { ProfileSectionHeader(stringResource(R.string.preset_manager_presets_section)) }
+                }
+                items(presets, key = { it.name }) { profile ->
                     ProfileRow(profile = profile, onClick = { selectedProfile = profile })
+                }
+                if (savedLayouts.isNotEmpty()) {
+                    item { ProfileSectionHeader(stringResource(R.string.preset_manager_keyboard_section)) }
+                    items(savedLayouts, key = { "keyboard:" + it.name }) { profile ->
+                        ProfileRow(profile = profile, onClick = { selectedProfile = profile })
+                    }
                 }
             }
         }
@@ -227,6 +258,16 @@ fun ProfilesScreen(
 }
 
 @Composable
+private fun ProfileSectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+    )
+}
+
+@Composable
 private fun ProfileRow(profile: ProfileUiItem, onClick: () -> Unit) {
     val displayName = if (profile.isBuiltIn) {
         stringResource(R.string.profile_builtin_settings)
@@ -247,18 +288,28 @@ private fun ProfileRow(profile: ProfileUiItem, onClick: () -> Unit) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (profile.isBuiltIn || profile.isDefault) {
-                Text(
-                    text = stringResource(
-                        if (profile.isBuiltIn) R.string.profile_builtin_settings_summary
-                        else R.string.profile_default_template_summary,
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
+            val summary = when {
+                profile.isBuiltIn -> stringResource(R.string.profile_builtin_settings_summary)
+                profile.isKeyboardOnly -> stringResource(R.string.saved_keyboard_layout_summary)
+                profile.screenWidth > 0 && profile.screenHeight > 0 -> buildString {
+                    append(profile.screenWidth).append(" × ").append(profile.screenHeight)
+                    orientationOptions.getOrNull(profile.orientation)?.let {
+                        append(" · ").append(it)
+                    }
+                    if (profile.hasKeyboardLayout) {
+                        append(" · ").append(stringResource(R.string.preset_includes_keyboard_layout))
+                    }
+                }
+                else -> stringResource(R.string.profile_template_summary)
             }
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
         if (profile.isDefault) {
             Text(
@@ -309,11 +360,11 @@ internal fun ProfileActionsDialog(
                         .heightIn(max = maxActionHeight)
                         .verticalScroll(scrollState),
                 ) {
-                    if (!profile.isDefault) {
-                        ProfileDialogAction(R.string.set_as_default, onDismiss, onDefault)
+                    if (!profile.isKeyboardOnly && !profile.isDefault) {
+                        ProfileDialogAction(R.string.set_as_default_new_games, onDismiss, onDefault)
                     }
-                    if (!profile.isBuiltIn && profile.canEdit) {
-                        ProfileDialogAction(R.string.edit, onDismiss, onEdit)
+                    if (!profile.isBuiltIn && !profile.isKeyboardOnly && profile.canEdit) {
+                        ProfileDialogAction(R.string.edit_preset, onDismiss, onEdit)
                     }
                     if (!profile.isBuiltIn) {
                         ProfileDialogAction(R.string.action_context_rename, onDismiss, onRename)

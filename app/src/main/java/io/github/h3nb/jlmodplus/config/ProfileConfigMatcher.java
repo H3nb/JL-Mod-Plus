@@ -40,12 +40,20 @@ final class ProfileConfigMatcher {
 	static final class Candidate {
 		final Profile profile;
 		final ProfileModel config;
+		final boolean hasKeyboardLayout;
 		@Nullable final byte[] keyboard;
 
-		Candidate(@NonNull Profile profile, @NonNull ProfileModel config, @Nullable byte[] keyboard) {
+		Candidate(@NonNull Profile profile, @NonNull ProfileModel config,
+				boolean hasKeyboardLayout, @Nullable byte[] keyboard) {
 			this.profile = profile;
 			this.config = config;
+			this.hasKeyboardLayout = hasKeyboardLayout;
 			this.keyboard = keyboard;
+		}
+
+		/** Compatibility constructor for focused matcher tests and existing package callers. */
+		Candidate(@NonNull Profile profile, @NonNull ProfileModel config, @Nullable byte[] keyboard) {
+			this(profile, config, keyboard != null, keyboard);
 		}
 	}
 
@@ -63,8 +71,13 @@ final class ProfileConfigMatcher {
 			if (config == null) {
 				continue;
 			}
-			byte[] keyboard = profile.hasKeyLayout() ? readKeyboard(profile.getKeyLayout()) : null;
-			candidates.add(new Candidate(profile, config, keyboard));
+			boolean hasKeyboardLayout = profile.hasKeyLayout();
+			byte[] keyboard = hasKeyboardLayout ? readKeyboard(profile.getKeyLayout()) : null;
+			// A layout that cannot be read cannot be safely advertised as part of a preset.
+			if (hasKeyboardLayout && keyboard == null) {
+				continue;
+			}
+			candidates.add(new Candidate(profile, config, hasKeyboardLayout, keyboard));
 		}
 		return candidates;
 	}
@@ -103,15 +116,9 @@ final class ProfileConfigMatcher {
 		draft.applyTo(effective);
 		ArrayList<Profile> matches = new ArrayList<>();
 		for (Candidate candidate : candidates) {
-			if (!sameConfig(effective, candidate.config)) {
-				continue;
+			if (matchesCandidate(effective, candidate, currentKeyboard)) {
+				matches.add(candidate.profile);
 			}
-			// Keyboard state is part of a profile only when that profile explicitly owns a
-			// keyboard artifact. Config-only profiles intentionally ignore keyboard differences.
-			if (candidate.keyboard != null && !sameKeyboardBytes(currentKeyboard, candidate.keyboard)) {
-				continue;
-			}
-			matches.add(candidate.profile);
 		}
 		return selectMatch(matches, defaultProfile);
 	}
@@ -159,6 +166,29 @@ final class ProfileConfigMatcher {
 		ProfileModel effective = copy(current);
 		draft.applyTo(effective);
 		return sameConfig(effective, candidate);
+	}
+
+	/**
+	 * Compares a candidate against the effective draft without selecting an identity. A preset's
+	 * separate keyboard artifact participates in equality only when the preset owns that artifact.
+	 */
+	static boolean matchesCandidate(ProfileModel current, ConfigFormState draft,
+			Candidate candidate, @Nullable byte[] currentKeyboard) {
+		if (current == null || draft == null || candidate == null) {
+			return false;
+		}
+		ProfileModel effective = copy(current);
+		draft.applyTo(effective);
+		return matchesCandidate(effective, candidate, currentKeyboard);
+	}
+
+	private static boolean matchesCandidate(ProfileModel effective, Candidate candidate,
+			@Nullable byte[] currentKeyboard) {
+		if (!sameConfig(effective, candidate.config)) {
+			return false;
+		}
+		return !candidate.hasKeyboardLayout
+				|| sameKeyboardBytes(currentKeyboard, candidate.keyboard);
 	}
 
 	static boolean sameConfig(ProfileModel left, ProfileModel right) {

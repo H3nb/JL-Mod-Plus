@@ -25,12 +25,10 @@ import com.google.gson.JsonElement;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.microedition.util.ContextHolder;
@@ -58,11 +56,13 @@ public class ProfilesManager {
 			return new ArrayList<>();
 		}
 		int size = dirs.length;
-		Profile[] profiles = new Profile[size];
-		for (int i = 0; i < size; i++) {
-			profiles[i] = new Profile(dirs[i].getName());
+		ArrayList<Profile> result = new ArrayList<>(size);
+		for (File dir : dirs) {
+			if (dir.isDirectory()) {
+				result.add(new Profile(dir.getName()));
+			}
 		}
-		return new ArrayList<>(Arrays.asList(profiles));
+		return result;
 	}
 
 	static void load(Profile from, String toPath, boolean config, boolean keyboard)
@@ -72,24 +72,23 @@ public class ProfilesManager {
 		}
 		File dstConfig = new File(toPath, Config.MIDLET_CONFIG_FILE);
 		File dstKeyLayout = new File(toPath, Config.MIDLET_KEY_LAYOUT_FILE);
-		try {
-			if (config) {
-				File source = from.getConfig();
-				if (source.exists()) {
-					FileUtils.copyFileUsingChannel(source, dstConfig);
-				} else {
-					ProfileModel params = loadConfig(from.getDir());
-					if (params != null) {
-						params.dir = dstConfig.getParentFile();
-						saveConfig(params);
-					}
+		if (config) {
+			File source = from.getConfig();
+			if (source.exists()) {
+				FileUtils.copyFileUsingChannel(source, dstConfig);
+			} else {
+				ProfileModel params = loadConfig(from.getDir());
+				if (params == null) {
+					throw new IOException("Profile configuration is not loadable");
+				}
+				params.dir = dstConfig.getParentFile();
+				if (!saveConfig(params)) {
+					throw new IOException("Unable to materialize profile configuration");
 				}
 			}
-			if (keyboard) {
-				FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+		}
+		if (keyboard) {
+			FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
 		}
 	}
 
@@ -101,26 +100,51 @@ public class ProfilesManager {
 		profile.create();
 		File srcConfig = new File(fromPath, Config.MIDLET_CONFIG_FILE);
 		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
-		try {
-			if (config) FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
-			if (keyboard) FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
+		if (config) FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
+		if (keyboard) FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
 	}
 
 	/** Saves the current MIDlet configuration as one reusable template snapshot. */
 	static void saveSnapshot(Profile profile, String fromPath) throws IOException {
+		saveSnapshot(profile, fromPath, true);
+	}
+
+	/**
+	 * Saves a reusable game preset. Game settings are always copied; the separate keyboard layout
+	 * is copied only when explicitly requested, and stale destination layouts are removed.
+	 */
+	static void saveSnapshot(Profile profile, String fromPath, boolean includeKeyboard) throws IOException {
 		profile.create();
 		File srcConfig = new File(fromPath, Config.MIDLET_CONFIG_FILE);
 		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
 		File dstKeyLayout = profile.getKeyLayout();
 		FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
-		if (srcKeyLayout.isFile()) {
+		if (includeKeyboard && srcKeyLayout.isFile()) {
 			FileUtils.copyFileUsingChannel(srcKeyLayout, dstKeyLayout);
 		} else if (dstKeyLayout.exists() && !dstKeyLayout.delete()) {
 			Log.w(TAG, "saveSnapshot: could not remove stale key layout " + dstKeyLayout);
 		}
+	}
+
+	/** Returns whether a profile owns loadable game settings, regardless of keyboard ownership. */
+	static boolean isValidGamePreset(@Nullable Profile profile) {
+		return profile != null
+				&& (profile.hasConfig() || profile.hasOldConfig())
+				&& loadConfig(profile.getDir(), false) != null;
+	}
+
+	/** Resolves a preference to a valid game preset without treating keyboard-only data as one. */
+	@Nullable
+	static Profile findValidGamePreset(@Nullable String name) {
+		if (name == null) {
+			return null;
+		}
+		for (Profile profile : getProfiles()) {
+			if (name.equals(profile.getName()) && isValidGamePreset(profile)) {
+				return profile;
+			}
+		}
+		return null;
 	}
 
 	@Nullable

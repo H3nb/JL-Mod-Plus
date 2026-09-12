@@ -279,7 +279,7 @@
     <string name="pref_wakelock_title">Keep Screen On</string>
     <string name="fps_overlay_label">FPS</string>
     <string name="PREF_WIDTH">Width</string>
-    <string name="profiles">Profiles</string>
+    <string name="profiles">Presets</string>
     <string name="reinstall">App already installed.\n\nDo you want to reinstall it?\nAll data will be saved.</string>
     <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s\nAll data will be saved.</string>
     <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nThe older version may not work correctly with the recorded data.</string>

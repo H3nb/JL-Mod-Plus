@@ -101,7 +101,7 @@ public class ProfilesActivity extends AppCompatActivity {
 
 			@Override
 			public void onSetDefault(@NonNull String name) {
-				if (profilesByName.containsKey(name)) {
+				if (ProfilesManager.isValidGamePreset(profilesByName.get(name))) {
 					preferences.edit().putString(PREF_DEFAULT_PROFILE, name).apply();
 					refreshProfiles();
 				}
@@ -110,7 +110,7 @@ public class ProfilesActivity extends AppCompatActivity {
 			@Override
 			public void onEdit(@NonNull String name) {
 				Profile profile = profilesByName.get(name);
-				if (profile != null && (profile.hasConfig() || profile.hasOldConfig())) {
+				if (ProfilesManager.isValidGamePreset(profile)) {
 					Intent intent = new Intent(ACTION_EDIT_PROFILE, Uri.parse(name),
 							getApplicationContext(), ConfigActivity.class);
 					startActivity(intent);
@@ -150,8 +150,8 @@ public class ProfilesActivity extends AppCompatActivity {
 		for (Profile profile : profiles) {
 			profilesByName.put(profile.getName(), profile);
 		}
-		composeController.updateProfiles(
-				profiles,
+		Profile validDefault = ProfilesManager.findValidGamePreset(
 				preferences.getString(PREF_DEFAULT_PROFILE, null));
+		composeController.updateProfiles(profiles, validDefault == null ? null : validDefault.getName());
 	}
 }

@@ -290,37 +290,44 @@ internal fun ConfigScreen(
                     }
                 },
             ) { padding ->
-                HorizontalPager(
-                    state = pagerState,
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
                         .consumeWindowInsets(padding),
-                ) { page ->
-                    val pageScrollState = rememberScrollState()
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .imePadding()
-                            .verticalScroll(pageScrollState)
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.TopCenter,
+                ) {
+                    if (!isProfile) {
+                        GameSetupSummary(state = state, events = events)
+                    }
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                    ) { page ->
+                        val pageScrollState = rememberScrollState()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .imePadding()
+                                .verticalScroll(pageScrollState)
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            ConfigDestinationContent(
-                                destination = destinations[page],
-                                state = state,
-                                form = form,
-                                onFormChanged = updateForm,
-                                events = events,
-                                isProfile = isProfile,
-                                onRequestAction = { pendingAction = it },
-                                onEditSystemProperties = { systemPropertiesEditorVisible = true },
-                                modifier = Modifier.widthIn(max = 880.dp),
-                            )
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.TopCenter,
+                            ) {
+                                ConfigDestinationContent(
+                                    destination = destinations[page],
+                                    state = state,
+                                    form = form,
+                                    onFormChanged = updateForm,
+                                    events = events,
+                                    isProfile = isProfile,
+                                    onRequestAction = { pendingAction = it },
+                                    onEditSystemProperties = { systemPropertiesEditorVisible = true },
+                                    modifier = Modifier.widthIn(max = 880.dp),
+                                )
+                            }
                         }
                     }
                 }
@@ -384,7 +391,6 @@ private fun ConfigDestinationContent(
                 form = form,
                 onFormChanged = onFormChanged,
                 events = events,
-                showProfileStatus = !isProfile,
             )
             ConfigDestination.Display -> {
                 ScreenSection(form, state, onFormChanged, events)
@@ -406,11 +412,7 @@ private fun GeneralDestination(
     form: ConfigFormState,
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
-    showProfileStatus: Boolean,
 ) {
-    if (showProfileStatus) {
-        ConfigProfilePanel(state.profileStatus, state.profileTemplates, events)
-    }
     var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
     ConfigSection(title = stringResource(R.string.config_basic_display)) {
         ConfigValuePreference(

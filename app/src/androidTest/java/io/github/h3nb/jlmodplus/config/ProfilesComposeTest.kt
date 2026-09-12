@@ -36,7 +36,7 @@ class ProfilesComposeTest {
     fun createFiltersFileNameCharactersAndDispatchesName() {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
-        composeRule.onNodeWithContentDescription("Create New Profile").performClick()
+        composeRule.onNodeWithContentDescription("Create New Preset").performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput("New/Profile")
         composeRule.onNodeWithText("OK").performClick()
         assertEquals("NewProfile", actions.created)
@@ -48,11 +48,11 @@ class ProfilesComposeTest {
         setProfilesContent(actions)
 
         composeRule.onNodeWithText("Playable").performClick()
-        composeRule.onNodeWithText("Set As Default").performClick()
+        composeRule.onNodeWithText("Default for new games").performClick()
         assertEquals("Playable", actions.defaulted)
 
         composeRule.onNodeWithText("Playable").performClick()
-        composeRule.onNodeWithText("Edit").performClick()
+        composeRule.onNodeWithText("Edit preset").performClick()
         assertEquals("Playable", actions.edited)
 
         composeRule.onNodeWithText("Playable").performClick()
@@ -72,13 +72,36 @@ class ProfilesComposeTest {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
 
-        composeRule.onNodeWithText("Built-In Settings").performClick()
-        composeRule.onNodeWithText("Set As Default").performClick()
+        composeRule.onNodeWithText("JL-Mod defaults").performClick()
+        composeRule.onNodeWithText("Default for new games").performClick()
         assertEquals(1, actions.builtInDefaultCalls)
 
-        composeRule.onNodeWithText("Built-In Settings").performClick()
+        composeRule.onNodeWithText("JL-Mod defaults").performClick()
         composeRule.onNodeWithText("Rename").assertDoesNotExist()
         composeRule.onNodeWithText("Delete").assertDoesNotExist()
+    }
+
+    @Test
+    fun keyboardOnlyLegacyItemsCannotBecomeGamePresets() {
+        val actions = RecordingProfilesActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ProfilesScreen(
+                    state = ProfilesUiState(
+                        profiles = listOf(
+                            ProfileUiItem("Legacy layout", false, false, isKeyboardOnly = true),
+                        ),
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Legacy layout").performClick()
+        composeRule.onNodeWithText("Default for new games").assertDoesNotExist()
+        composeRule.onNodeWithText("Edit preset").assertDoesNotExist()
+        composeRule.onNodeWithText("Rename").assertExists()
+        composeRule.onNodeWithText("Delete").assertExists()
     }
 
     private fun setProfilesContent(actions: RecordingProfilesActions) {

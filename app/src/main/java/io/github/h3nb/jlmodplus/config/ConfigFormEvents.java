@@ -68,6 +68,15 @@ public interface ConfigFormEvents {
 	default void onSaveTemplate(@NonNull String name) {
 	}
 
+	/** Saves game settings and optionally the separate virtual keyboard layout artifact. */
+	default void onSaveTemplate(@NonNull String name, boolean includeKeyboard) {
+		onSaveTemplate(name);
+	}
+
+	/** Restores the one persistent setup snapshot captured before a destructive replacement. */
+	default void onRestorePreviousSetup() {
+	}
+
 	default void onUpdateTemplate(@NonNull String name) {
 	}
 

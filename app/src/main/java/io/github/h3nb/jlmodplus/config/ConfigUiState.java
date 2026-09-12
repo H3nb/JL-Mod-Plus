@@ -51,6 +51,10 @@ public final class ConfigUiState {
 	public final List<ProfileTemplate> profileTemplates;
 	/** True when the current MIDlet artifact can execute the timing bridge. */
 	public final boolean timingControlsEnabled;
+	/** True when a persistent one-level restore point exists for the current game. */
+	public final boolean hasPreviousSetup;
+	/** True when the current game owns a separate virtual keyboard layout artifact. */
+	public final boolean hasKeyboardLayout;
 
 	public ConfigUiState(
 			@NonNull ConfigFormState form,
@@ -113,6 +117,23 @@ public final class ConfigUiState {
 			@NonNull ProfileStatus profileStatus,
 			@NonNull List<ProfileTemplate> profileTemplates,
 			boolean timingControlsEnabled) {
+		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
+				profileStatus, profileTemplates, timingControlsEnabled, false, false);
+	}
+
+	public ConfigUiState(
+			@NonNull ConfigFormState form,
+			@NonNull List<Size> screenPresets,
+			@NonNull List<FontPreset> fontPresets,
+			@NonNull List<String> skins,
+			@NonNull List<String> soundBanks,
+			@NonNull List<ShaderInfo> shaders,
+			@NonNull List<Size> removableScreenPresets,
+			@NonNull ProfileStatus profileStatus,
+			@NonNull List<ProfileTemplate> profileTemplates,
+			boolean timingControlsEnabled,
+			boolean hasPreviousSetup,
+			boolean hasKeyboardLayout) {
 		this.form = form;
 		this.screenPresets = immutableCopy(screenPresets);
 		this.removableScreenPresets = immutableCopy(removableScreenPresets);
@@ -123,6 +144,8 @@ public final class ConfigUiState {
 		this.profileStatus = profileStatus;
 		this.profileTemplates = immutableCopy(profileTemplates);
 		this.timingControlsEnabled = timingControlsEnabled;
+		this.hasPreviousSetup = hasPreviousSetup;
+		this.hasKeyboardLayout = hasKeyboardLayout;
 	}
 
 	private static <T> List<T> immutableCopy(List<T> values) {
@@ -148,10 +171,23 @@ public final class ConfigUiState {
 	public static final class ProfileTemplate {
 		@NonNull public final String name;
 		public final boolean isDefault;
+		public final boolean hasKeyboardLayout;
+		public final int screenWidth;
+		public final int screenHeight;
+		public final int orientation;
 
 		public ProfileTemplate(@NonNull String name, boolean isDefault) {
+			this(name, isDefault, false, 0, 0, 0);
+		}
+
+		public ProfileTemplate(@NonNull String name, boolean isDefault, boolean hasKeyboardLayout,
+				int screenWidth, int screenHeight, int orientation) {
 			this.name = name;
 			this.isDefault = isDefault;
+			this.hasKeyboardLayout = hasKeyboardLayout;
+			this.screenWidth = screenWidth;
+			this.screenHeight = screenHeight;
+			this.orientation = orientation;
 		}
 	}
 

@@ -538,7 +538,11 @@ fun LibraryOptionsGridTouchingScreenshot() {
 fun ProfilesContentScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         ProfilesScreen(
-            state = ProfilesUiState(PreviewProfiles),
+            state = ProfilesUiState(
+                listOf(
+                    ProfileUiItem("", isDefault = true, canEdit = false, isBuiltIn = true),
+                ) + PreviewProfiles,
+            ),
             actions = NoOpProfilesActions,
         )
     }

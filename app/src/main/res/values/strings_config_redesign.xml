@@ -28,26 +28,26 @@
     <string name="profile_save_template_summary">Save the current configuration as a reusable template.</string>
     <string name="config_lock_custom_resolution_ratio">Keep Width/Height Ratio While Editing</string>
     <string name="config_swap_screen_size">Swap width and height</string>
-    <string name="profile_builtin_settings">Built-In Settings</string>
-    <string name="profile_builtin_settings_summary">JL-Mod Plus factory configuration</string>
-    <string name="profile_default_template_summary">Default template for new apps</string>
-    <string name="profile_default_badge_short">Default</string>
-    <string name="profile_modified_summary">Modified from this template</string>
-    <string name="profile_choose_or_manage">Choose or manage templates</string>
+    <string name="profile_builtin_settings">JL-Mod defaults</string>
+    <string name="profile_builtin_settings_summary">Built-in emulator settings</string>
+    <string name="profile_default_template_summary">Default preset for new games</string>
+    <string name="profile_default_badge_short">Default for new games</string>
+    <string name="profile_modified_summary">Modified after using this preset</string>
+    <string name="profile_choose_or_manage">Use preset</string>
     <string name="profile_update_template">Update Template</string>
     <string name="profile_update_template_summary">Replace %1$s with the current configuration.</string>
     <string name="profile_save_as_new_template">Save As New Template</string>
     <string name="profile_save_as_new_template_summary">Keep the current configuration as a reusable template.</string>
-    <string name="profile_templates_title">Configuration Templates</string>
-    <string name="profile_templates_summary">Tap a template to apply it. Use the menu to rename, delete, or make it the default for new apps.</string>
-    <string name="profile_template_summary">Saved configuration template</string>
+    <string name="profile_templates_title">Presets</string>
+    <string name="profile_templates_summary">Choose a reusable preset. Manage presets to rename, delete, or set the default for new games.</string>
+    <string name="profile_template_summary">Saved game settings</string>
     <string name="profile_active_badge">Active</string>
     <string name="profile_modified_badge">Modified</string>
-    <string name="profile_save_current_template">Save Current</string>
-    <string name="profile_name_label">Template Name</string>
-    <string name="profile_name_exists">A template with this name already exists.</string>
-    <string name="profile_delete_template_message">Delete template “%1$s”? This does not delete any app data.</string>
-    <string name="profile_template_operation_failed">Could not update the configuration template.</string>
+    <string name="profile_save_current_template">Save as preset</string>
+    <string name="profile_name_label">Preset name</string>
+    <string name="profile_name_exists">A preset with this name already exists.</string>
+    <string name="profile_delete_template_message">Delete preset “%1$s”? This does not delete any app data.</string>
+    <string name="profile_template_operation_failed">Could not update the game preset.</string>
     <string name="config_help_screen_size">Resolution reported to the J2ME application.</string>
     <string name="config_help_orientation">Controls the screen orientation requested while the app is running.</string>
     <string name="config_help_scale_type">Determines how the app screen fits into the available display area.</string>
@@ -112,6 +112,50 @@
     <string name="config_help_reset_layout">Restore the virtual keypad layout without resetting the app’s other emulator settings.</string>
     <string name="config_help_skip_resume">Skip the Java ME resume callback when returning to the app. Use this only for compatibility with apps that misbehave after resume.</string>
     <string name="config_help_soundbank">Select the instrument soundbank used for MIDI playback.</string>
-    <string name="profile_create_title">Create Profile</string>
-    <string name="profile_rename_title">Rename Profile</string>
+    <string name="profile_create_title">Create preset</string>
+    <string name="profile_rename_title">Rename preset</string>
+
+    <string name="presets">Presets</string>
+    <string name="add_preset_description">Create New Preset</string>
+    <string name="preset_use">Use preset</string>
+    <string name="preset_save_as">Save as preset</string>
+    <string name="preset_game_setup">Game setup</string>
+    <string name="preset_restore_previous">Restore previous setup</string>
+    <string name="preset_active">Preset: %1$s</string>
+    <string name="preset_based_on_modified">Based on %1$s · Modified</string>
+    <string name="preset_builtin">JL-Mod defaults</string>
+    <string name="preset_builtin_summary">Built-in emulator settings</string>
+    <string name="preset_custom">Custom setup</string>
+    <string name="preset_picker_title">Use preset</string>
+    <string name="preset_manage">Manage presets</string>
+    <string name="preset_game_settings">Game settings</string>
+    <string name="preset_includes_keyboard_layout">Includes virtual keyboard layout</string>
+    <string name="preset_virtual_keyboard_on">Virtual keypad on</string>
+    <string name="preset_virtual_keyboard_off">Virtual keypad off</string>
+    <string name="preset_apply">Apply</string>
+    <string name="preset_apply_with_keyboard_message">This will replace:
+• Game settings
+• Virtual keyboard layout
+
+Your current setup will be kept so it can be restored.</string>
+    <string name="preset_apply_without_keyboard_message">This will replace game settings.
+
+Your current virtual keyboard layout will be kept.
+Your current setup will be kept so it can be restored.</string>
+    <string name="preset_apply_builtin_message">This will reset game settings to JL-Mod defaults.
+Your current virtual keyboard layout will be kept.
+
+Your current setup will be kept so it can be restored.</string>
+    <string name="preset_name">Name</string>
+    <string name="preset_include_keyboard_layout">Include virtual keyboard layout</string>
+    <string name="preset_save_help">Can be reused with other games. Changes to this game won’t automatically change the preset.</string>
+    <string name="preset_name_exists">A preset with this name already exists.</string>
+    <string name="preset_invalid_name">Enter a valid preset name.</string>
+    <string name="preset_manager_default_section">Default for new games</string>
+    <string name="preset_manager_presets_section">My presets</string>
+    <string name="preset_manager_keyboard_section">Saved keyboard layouts</string>
+    <string name="set_as_default_new_games">Default for new games</string>
+    <string name="edit_preset">Edit preset</string>
+    <string name="saved_keyboard_layout_summary">Saved virtual keyboard layout</string>
+    <string name="preset_edit_title">Edit preset: %1$s</string>
 </resources>
