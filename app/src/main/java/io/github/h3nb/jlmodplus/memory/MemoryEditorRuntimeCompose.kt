@@ -979,35 +979,25 @@ internal fun RuntimeKnownSearchDialog(
     LaunchedEffect(groupExpression) {
         if (groupExpression) predicate = MemoryEngineContract.PREDICATE_EQUAL
     }
-    val relative = effectivePredicate >= MemoryEngineContract.PREDICATE_CHANGED
-    val spec = if (relative) MemoryInputSpec.relativeMagnitudeForType(type)
-    else MemoryInputSpec.forType(type)
+    val spec = MemoryInputSpec.forType(type)
     LaunchedEffect(expression, type) {
         if (expression is MemorySearchExpression.Group && type == MemoryEngineContract.TYPE_AUTO) {
             inferMemoryGroupType(expression.values)?.let { type = it }
         }
     }
-    val needsSecond = (effectivePredicate == MemoryEngineContract.PREDICATE_BETWEEN && !relative &&
-        expression !is MemorySearchExpression.Group) ||
-        effectivePredicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
-        effectivePredicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
-    val firstValid = if (relative && !memoryRelativePredicateNeedsValue(effectivePredicate)) {
-        true
-    } else {
-        spec.isComplete(query.text)
-    }
+    val needsSecond = effectivePredicate == MemoryEngineContract.PREDICATE_BETWEEN &&
+        expression !is MemorySearchExpression.Group
+    val firstValid = spec.isComplete(query.text)
     val secondValid = !needsSecond || spec.isComplete(second.text)
     val singleValid = expression is MemorySearchExpression.Single && firstValid
     val managedGroupValid = expression is MemorySearchExpression.Group &&
         type != MemoryEngineContract.TYPE_AUTO && expression.values.all(spec::isComplete)
-    val newSearchValid = !relative && (singleValid || managedGroupValid) && secondValid &&
+    val newSearchValid = (singleValid || managedGroupValid) && secondValid &&
         MemoryEngineContract.isValueType(type) &&
         effectivePredicate in MemoryEngineContract.PREDICATE_EQUAL..MemoryEngineContract.PREDICATE_BETWEEN
-    val relativeWithoutValue = relative && !memoryRelativePredicateNeedsValue(effectivePredicate)
     val nextScanValid = state.sessionStage != MemorySessionStage.EMPTY &&
         type in (MemoryEngineContract.TYPE_AUTO..MemoryEngineContract.TYPE_DOUBLE) &&
-        (relativeWithoutValue || (expression is MemorySearchExpression.Single && firstValid)) &&
-        secondValid
+        expression is MemorySearchExpression.Single && firstValid && secondValid
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1030,7 +1020,6 @@ internal fun RuntimeKnownSearchDialog(
                         RuntimePredicateMenu(
                             predicate = effectivePredicate,
                             onPredicate = { predicate = it },
-                            includeRelative = state.sessionStage != MemorySessionStage.EMPTY,
                             enabled = !groupExpression,
                             modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
                         )
@@ -1130,12 +1119,8 @@ internal fun RuntimeKnownSearchDialog(
                     Button(
                         enabled = nextScanValid && !state.busy,
                         onClick = {
-                            val nextValue = if (relativeWithoutValue) {
-                                ""
-                            } else {
-                                (expression as? MemorySearchExpression.Single)?.value
-                                    ?: return@Button
-                            }
+                            val nextValue = (expression as? MemorySearchExpression.Single)?.value
+                                ?: return@Button
                             actions.nextScan(
                                 nextValue,
                                 second.text,
@@ -2056,38 +2041,12 @@ private fun RuntimeSearchControlRow(
 private fun RuntimePredicateMenu(
     predicate: Int,
     onPredicate: (Int) -> Unit,
-    includeRelative: Boolean = false,
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     RuntimeChoiceMenu(
         value = predicate,
-        values = (if (includeRelative) intArrayOf(
-            MemoryEngineContract.PREDICATE_EQUAL,
-            MemoryEngineContract.PREDICATE_NOT_EQUAL,
-            MemoryEngineContract.PREDICATE_GREATER,
-            MemoryEngineContract.PREDICATE_LESS,
-            MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
-            MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
-            MemoryEngineContract.PREDICATE_BETWEEN,
-            MemoryEngineContract.PREDICATE_CHANGED,
-            MemoryEngineContract.PREDICATE_UNCHANGED,
-            MemoryEngineContract.PREDICATE_INCREASED,
-            MemoryEngineContract.PREDICATE_DECREASED,
-            MemoryEngineContract.PREDICATE_INCREASED_BY,
-            MemoryEngineContract.PREDICATE_DECREASED_BY,
-            MemoryEngineContract.PREDICATE_CHANGED_BY,
-            MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE,
-            MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE,
-        ) else intArrayOf(
-            MemoryEngineContract.PREDICATE_EQUAL,
-            MemoryEngineContract.PREDICATE_NOT_EQUAL,
-            MemoryEngineContract.PREDICATE_GREATER,
-            MemoryEngineContract.PREDICATE_LESS,
-            MemoryEngineContract.PREDICATE_GREATER_OR_EQUAL,
-            MemoryEngineContract.PREDICATE_LESS_OR_EQUAL,
-            MemoryEngineContract.PREDICATE_BETWEEN,
-        )),
+        values = memoryKnownSearchPredicates(),
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
         modifier = modifier,
