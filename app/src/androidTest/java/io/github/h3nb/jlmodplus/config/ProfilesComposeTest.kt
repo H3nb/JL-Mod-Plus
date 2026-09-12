@@ -15,11 +15,15 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -33,29 +37,29 @@ class ProfilesComposeTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun createFiltersFileNameCharactersAndDispatchesName() {
+    fun managerKeepsCreationInApplicationSettings() {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
-        composeRule.onNodeWithContentDescription("Create New Profile").performClick()
-        composeRule.onNode(hasSetTextAction()).performTextInput("New/Profile")
-        composeRule.onNodeWithText("OK").performClick()
-        assertEquals("NewProfile", actions.created)
+        composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Create New Preset").assertDoesNotExist()
     }
 
     @Test
-    fun profileActionsPreserveDefaultEditRenameAndDeleteCallbacks() {
+    fun profileActionsUseDedicatedDefaultRowDirectEditAndLabeledManage() {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
 
+        composeRule.onNodeWithText("Change").performClick()
         composeRule.onNodeWithText("Playable").performClick()
-        composeRule.onNodeWithText("Set As Default").performClick()
+        composeRule.onNodeWithText("Apply").performClick()
         assertEquals("Playable", actions.defaulted)
 
         composeRule.onNodeWithText("Playable").performClick()
-        composeRule.onNodeWithText("Edit").performClick()
         assertEquals("Playable", actions.edited)
+        composeRule.onNodeWithText("Edit Preset").assertDoesNotExist()
 
-        composeRule.onNodeWithText("Playable").performClick()
+        composeRule.onNodeWithText("Manage Presets").assertExists()
+        composeRule.onNodeWithText("Manage Presets").performClick()
         composeRule.onNodeWithText("Rename").performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput(" 2")
         composeRule.onNodeWithText("OK").performClick()
@@ -72,13 +76,64 @@ class ProfilesComposeTest {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
 
-        composeRule.onNodeWithText("Built-In Settings").performClick()
-        composeRule.onNodeWithText("Set As Default").performClick()
+        composeRule.onNodeWithText("Change").performClick()
+        composeRule.onNodeWithText("Apply").performClick()
         assertEquals(1, actions.builtInDefaultCalls)
 
-        composeRule.onNodeWithText("Built-In Settings").performClick()
+        composeRule.onNodeWithText("JL-Mod Defaults").performClick()
         composeRule.onNodeWithText("Rename").assertDoesNotExist()
         composeRule.onNodeWithText("Delete").assertDoesNotExist()
+    }
+
+    @Test
+    fun keyboardOnlyLegacyItemsCannotBecomeApplicationPresets() {
+        val actions = RecordingProfilesActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ProfilesScreen(
+                    state = ProfilesUiState(
+                        profiles = listOf(
+                            ProfileUiItem("Legacy layout", false, false, isKeyboardOnly = true),
+                        ),
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Legacy layout").performClick()
+        composeRule.onNode(
+            hasText("Default for New Applications") and hasAnyAncestor(isDialog()),
+        ).assertDoesNotExist()
+        composeRule.onNodeWithText("Edit Preset").assertDoesNotExist()
+        composeRule.onNodeWithText("Rename").assertExists()
+        composeRule.onNodeWithText("Delete").assertExists()
+    }
+
+    @Test
+    fun unavailableItemsAreNotPresentedAsSavedLayouts() {
+        val actions = RecordingProfilesActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ProfilesScreen(
+                    state = ProfilesUiState(
+                        profiles = listOf(
+                            ProfileUiItem("Broken", false, false, isUnavailable = true),
+                        ),
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Unavailable").assertExists()
+        composeRule.onNodeWithText("Saved Keyboard Layouts").assertDoesNotExist()
+        composeRule.onNodeWithText("Broken").performClick()
+        composeRule.onNodeWithText("This entry could not be loaded. Rename or delete it.").assertExists()
+        composeRule.onNode(
+            hasText("Default for New Applications") and hasAnyAncestor(isDialog()),
+        ).assertDoesNotExist()
+        composeRule.onNodeWithText("Edit Preset").assertDoesNotExist()
     }
 
     private fun setProfilesContent(actions: RecordingProfilesActions) {

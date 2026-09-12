@@ -4,8 +4,8 @@
     <string name="settings_section_library_appearance">Library Appearance</string>
     <string name="settings_section_midlet_runtime">MIDlet Runtime</string>
     <string name="settings_section_storage">Storage</string>
-    <string name="settings_section_profiles">Profiles</string>
-    <string name="settings_profiles_summary">Manage reusable MIDlet configuration profiles.</string>
+    <string name="settings_section_profiles">Presets</string>
+    <string name="settings_profiles_summary">Manage reusable application setup presets.</string>
     <string name="pref_use_display_cutout_title">Use Display Cutout In MIDlet</string>
     <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the ActionBar to use the display-cutout area. It cannot be used with the system status bar.</string>
     <string name="dialog_scroll_hint">Swipe to continue</string>

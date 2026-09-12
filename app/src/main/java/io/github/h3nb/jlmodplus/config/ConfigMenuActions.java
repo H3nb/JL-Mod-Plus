@@ -26,4 +26,18 @@ public interface ConfigMenuActions {
 
 	void onResetLayout();
 
+	/** Saves an explicit preset-editor draft; ordinary application settings remain autosaved. */
+	default void onSaveProfileDraft() {
+	}
+
+	/** Returns whether the preset editor has changes that have not been explicitly saved. */
+	default boolean hasUnsavedProfileChanges() {
+		return false;
+	}
+
+	/** Discards an unsaved preset-editor draft. */
+	default void onDiscardProfileChanges() {
+		onBack();
+	}
+
 }

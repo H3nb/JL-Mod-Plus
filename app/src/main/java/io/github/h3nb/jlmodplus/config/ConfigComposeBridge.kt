@@ -79,6 +79,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -137,6 +138,7 @@ class ConfigComposeController @JvmOverloads constructor(
     private var state by mutableStateOf(initialState)
     private var colorPicker by mutableStateOf<ColorPickerRequest?>(null)
     private var encodingPicker by mutableStateOf<EncodingPickerRequest?>(null)
+    private var backRequest by mutableIntStateOf(0)
 
     init {
         composeView.id = R.id.config_compose_root
@@ -150,6 +152,7 @@ class ConfigComposeController @JvmOverloads constructor(
                     events = events,
                     title = title,
                     isProfile = isProfile,
+                    backRequest = backRequest,
                     menuActions = menuActions,
                     colorPicker = colorPicker,
                     encodingPicker = encodingPicker,
@@ -179,6 +182,11 @@ class ConfigComposeController @JvmOverloads constructor(
     fun showEncodingPicker(options: List<String>, selected: String?) {
         encodingPicker = EncodingPickerRequest(options, selected)
     }
+
+    /** Routes the system Back event through the same draft/discard policy as the top bar. */
+    fun requestBack() {
+        backRequest++
+    }
 }
 
 data class ColorPickerRequest(
@@ -200,7 +208,7 @@ internal enum class ConfigDestination(val label: Int, val icon: Int) {
 }
 
 internal enum class ConfigAction(val title: Int, val message: Int) {
-    ClearData(R.string.config_delete_game_data, R.string.config_message_delete_game_data),
+    ClearData(R.string.config_delete_app_data, R.string.config_message_delete_app_data),
     ResetSettings(R.string.config_reset_all_settings, R.string.config_message_reset_settings),
     ResetLayout(R.string.RESET_LAYOUT_CMD, R.string.message_reset_layout),
 }
@@ -212,6 +220,7 @@ internal fun ConfigScreen(
     modifier: Modifier = Modifier,
     title: String = "",
     isProfile: Boolean = false,
+    backRequest: Int = 0,
     initialDestination: ConfigDestination? = null,
     menuActions: ConfigMenuActions? = null,
     colorPicker: ColorPickerRequest? = null,
@@ -224,8 +233,22 @@ internal fun ConfigScreen(
     val form = state.form
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
+    var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
+    var savePresetVisible by rememberSaveable { mutableStateOf(false) }
+    var discardProfileChangesVisible by rememberSaveable { mutableStateOf(false) }
     val updateForm: (ConfigFormState) -> Unit = { next ->
         events.onFormChanged(next)
+    }
+    val requestBack = {
+        if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
+            discardProfileChangesVisible = true
+        } else {
+            menuActions?.onBack()
+            Unit
+        }
+    }
+    LaunchedEffect(backRequest) {
+        if (backRequest > 0) requestBack()
     }
 
     val destinations = ConfigDestination.values().toList()
@@ -275,8 +298,10 @@ internal fun ConfigScreen(
                     ConfigTopBar(
                         title = title,
                         isProfile = isProfile,
-                        onBack = { menuActions?.onBack() },
+                        onBack = requestBack,
                         onStart = { menuActions?.onStart() },
+                        onSave = { menuActions?.onSaveProfileDraft() },
+                        saveEnabled = !isProfile || menuActions?.hasUnsavedProfileChanges() == true,
                     )
                 },
                 bottomBar = {
@@ -297,33 +322,35 @@ internal fun ConfigScreen(
                         .padding(padding)
                         .consumeWindowInsets(padding),
                 ) { page ->
-                    val pageScrollState = rememberScrollState()
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .imePadding()
-                            .verticalScroll(pageScrollState)
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.TopCenter,
+                        val pageScrollState = rememberScrollState()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .imePadding()
+                                .verticalScroll(pageScrollState)
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            ConfigDestinationContent(
-                                destination = destinations[page],
-                                state = state,
-                                form = form,
-                                onFormChanged = updateForm,
-                                events = events,
-                                isProfile = isProfile,
-                                onRequestAction = { pendingAction = it },
-                                onEditSystemProperties = { systemPropertiesEditorVisible = true },
-                                modifier = Modifier.widthIn(max = 880.dp),
-                            )
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.TopCenter,
+                            ) {
+                                ConfigDestinationContent(
+                                    destination = destinations[page],
+                                    state = state,
+                                    form = form,
+                                    onFormChanged = updateForm,
+                                    events = events,
+                                    isProfile = isProfile,
+                                    onRequestAction = { pendingAction = it },
+                                    onEditSystemProperties = { systemPropertiesEditorVisible = true },
+                                    onUsePreset = { presetPickerVisible = true },
+                                    onSavePreset = { savePresetVisible = true },
+                                    modifier = Modifier.widthIn(max = 880.dp),
+                                )
+                            }
                         }
                     }
-                }
             }
         }
     }
@@ -363,6 +390,38 @@ internal fun ConfigScreen(
             },
         )
     }
+
+    if (!isProfile) {
+        PresetDialogs(
+            state = state,
+            events = events,
+            pickerVisible = presetPickerVisible,
+            saveDialogVisible = savePresetVisible,
+            onPickerDismiss = { presetPickerVisible = false },
+            onSaveDismiss = { savePresetVisible = false },
+        )
+    }
+
+    if (discardProfileChangesVisible) {
+        AlertDialog(
+            onDismissRequest = { discardProfileChangesVisible = false },
+            title = { Text(stringResource(R.string.preset_discard_changes_title)) },
+            text = { Text(stringResource(R.string.preset_discard_changes_summary)) },
+            dismissButton = {
+                TextButton(onClick = { discardProfileChangesVisible = false }) {
+                    Text(stringResource(R.string.preset_continue_editing))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    discardProfileChangesVisible = false
+                    menuActions?.onDiscardProfileChanges()
+                }) {
+                    Text(stringResource(R.string.preset_discard_changes))
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -375,23 +434,40 @@ private fun ConfigDestinationContent(
     isProfile: Boolean,
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
+    onUsePreset: () -> Unit,
+    onSavePreset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (!isProfile && destination != ConfigDestination.Basic) {
+            PresetActionBar(
+                onUsePreset = onUsePreset,
+                onSavePreset = onSavePreset,
+            )
+        }
         when (destination) {
             ConfigDestination.Basic -> GeneralDestination(
                 state = state,
                 form = form,
                 onFormChanged = onFormChanged,
                 events = events,
-                showProfileStatus = !isProfile,
+                onUsePreset = onUsePreset,
+                onSavePreset = onSavePreset,
+                showPresetSummary = !isProfile,
             )
             ConfigDestination.Display -> {
                 ScreenSection(form, state, onFormChanged, events)
                 FontSection(form, state, onFormChanged)
             }
             ConfigDestination.Audio -> AudioSection(form, state, onFormChanged)
-            ConfigDestination.Controls -> InputSection(form, onFormChanged, events, onRequestAction)
+            ConfigDestination.Controls -> InputSection(
+                form,
+                state,
+                onFormChanged,
+                events,
+                onRequestAction,
+                showLayoutActions = !isProfile,
+            )
             ConfigDestination.System -> {
                 EmulationSection(form, onFormChanged)
                 SystemSection(state, form, onFormChanged, events, !isProfile, onRequestAction, onEditSystemProperties)
@@ -406,12 +482,19 @@ private fun GeneralDestination(
     form: ConfigFormState,
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
-    showProfileStatus: Boolean,
+    onUsePreset: () -> Unit,
+    onSavePreset: () -> Unit,
+    showPresetSummary: Boolean,
 ) {
-    if (showProfileStatus) {
-        ConfigProfilePanel(state.profileStatus, state.profileTemplates, events)
-    }
     var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
+    if (showPresetSummary) {
+        PresetSummary(
+            state = state,
+            onUsePreset = onUsePreset,
+            onSavePreset = onSavePreset,
+            events = events,
+        )
+    }
     ConfigSection(title = stringResource(R.string.config_basic_display)) {
         ConfigValuePreference(
             title = stringResource(R.string.config_screen_size),
@@ -576,6 +659,8 @@ private fun ConfigTopBar(
     isProfile: Boolean,
     onBack: () -> Unit,
     onStart: () -> Unit,
+    onSave: () -> Unit,
+    saveEnabled: Boolean,
 ) {
     TopAppBar(
         title = {
@@ -594,7 +679,11 @@ private fun ConfigTopBar(
             }
         },
         actions = {
-            if (!isProfile) {
+            if (isProfile) {
+                TextButton(onClick = onSave, enabled = saveEnabled) {
+                    Text(stringResource(R.string.save))
+                }
+            } else {
                 IconButton(onClick = onStart) {
                     Icon(
                         painter = painterResource(R.drawable.ic_play),
@@ -1168,9 +1257,11 @@ private fun FontSizeField(
 @Composable
 private fun InputSection(
     form: ConfigFormState,
+    state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     onRequestAction: (ConfigAction) -> Unit,
+    showLayoutActions: Boolean,
 ) {
     ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
         val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
@@ -1181,6 +1272,20 @@ private fun InputSection(
             options = layoutOptions,
             onSelected = { index -> onFormChanged(form.toBuilder().keyCodesLayout(index).build()) },
         )
+        if (showLayoutActions && state.keyboardLayouts.isNotEmpty()) {
+            ConfigActionPreference(
+                title = stringResource(R.string.choose_saved_keyboard_layout),
+                description = stringResource(R.string.choose_saved_keyboard_layout_summary),
+                onClick = events::onChooseKeyboardLayout,
+            )
+        }
+        if (showLayoutActions && state.hasKeyboardLayout) {
+            ConfigActionPreference(
+                title = stringResource(R.string.save_keyboard_layout),
+                description = stringResource(R.string.save_keyboard_layout_summary),
+                onClick = events::onSaveKeyboardLayout,
+            )
+        }
         ConfigActionPreference(
             title = stringResource(R.string.pref_map_keys),
             description = stringResource(R.string.config_help_key_mapping),
@@ -1374,8 +1479,8 @@ private fun SystemSection(
         )
         if (showClearData) {
   ConfigActionPreference(
-      title = stringResource(R.string.config_delete_game_data),
-      description = stringResource(R.string.config_delete_game_data_summary),
+      title = stringResource(R.string.config_delete_app_data),
+      description = stringResource(R.string.config_delete_app_data_summary),
       destructive = true,
       onClick = { onRequestAction(ConfigAction.ClearData) },
   )
