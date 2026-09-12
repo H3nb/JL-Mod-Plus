@@ -2,6 +2,8 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  */
+// Modifications: floating delta, NaN transition, and history-pressure regressions.
+
 package io.github.h3nb.jlmodplus.memory;
 
 import static org.junit.Assert.assertEquals;
@@ -86,6 +88,52 @@ public class ManagedJavaMemoryHardeningTest {
 		root.value = 4;
 		assertEquals(MemoryEngineContract.RESULT_OK, engine.freezeTick(TOKEN, 0L).code);
 		assertEquals(4, root.value);
+	}
+
+	@Test
+	public void floatingDeltaMatchesWithinPrimitiveUlpTolerance() {
+		assertTrue(ManagedJavaValue.matchesRelative(MemoryEngineContract.TYPE_FLOAT,
+				MemoryEngineContract.PREDICATE_INCREASED_BY,
+				Float.floatToRawIntBits(0.3f) & 0xffffffffL,
+				Float.floatToRawIntBits(0.2f) & 0xffffffffL,
+				Float.floatToRawIntBits(0.1f) & 0xffffffffL, 0L));
+		assertTrue(ManagedJavaValue.matchesRelative(MemoryEngineContract.TYPE_DOUBLE,
+				MemoryEngineContract.PREDICATE_INCREASED_BY,
+				Double.doubleToRawLongBits(0.3d), Double.doubleToRawLongBits(0.2d),
+				Double.doubleToRawLongBits(0.1d), 0L));
+	}
+
+	@Test
+	public void nanRelativeTransitionsUseRawPayloadChangesOnly() {
+		long quietNan = Float.floatToRawIntBits(Float.intBitsToFloat(0x7fc00001)) & 0xffffffffL;
+		long otherNan = Float.floatToRawIntBits(Float.intBitsToFloat(0x7fc00002)) & 0xffffffffL;
+		long normal = Float.floatToRawIntBits(7.0f) & 0xffffffffL;
+		assertTrue(ManagedJavaValue.matchesRelative(MemoryEngineContract.TYPE_FLOAT,
+				MemoryEngineContract.PREDICATE_CHANGED, quietNan, normal, 0L, 0L));
+		assertTrue(ManagedJavaValue.matchesRelative(MemoryEngineContract.TYPE_FLOAT,
+				MemoryEngineContract.PREDICATE_UNCHANGED, quietNan, quietNan, 0L, 0L));
+		assertFalse(ManagedJavaValue.matchesRelative(MemoryEngineContract.TYPE_FLOAT,
+				MemoryEngineContract.PREDICATE_CHANGED, quietNan, quietNan, 0L, 0L));
+		assertTrue(ManagedJavaValue.matchesRelative(MemoryEngineContract.TYPE_FLOAT,
+				MemoryEngineContract.PREDICATE_CHANGED, quietNan, otherNan, 0L, 0L));
+	}
+
+	@Test
+	public void historyIsEvictedBeforeItCanBlockTheNextRefine() {
+		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
+				100, 100, 10, 10, 100, 100, 1_100L));
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				"7", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		for (int index = 0; index < 12; index++) {
+			result = engine.refine(TOKEN, result.revision, MemoryEngineContract.TYPE_INT,
+					MemoryEngineContract.PREDICATE_UNCHANGED,
+					MemoryEngineContract.COMPARE_PREVIOUS, "", "", 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		}
+		assertEquals(MemoryEngineContract.MAX_SEARCH_HISTORY,
+				engine.session(TOKEN).historyDepth);
 	}
 
 	private void installRoot(Object value, Class<?> type) {

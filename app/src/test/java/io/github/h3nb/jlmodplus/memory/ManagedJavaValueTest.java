@@ -6,6 +6,8 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
+// Modifications: NaN transitions are explicitly covered as relative changes.
+
 package io.github.h3nb.jlmodplus.memory;
 
 import static org.junit.Assert.assertEquals;
@@ -86,7 +88,7 @@ public class ManagedJavaValueTest {
 		assertTrue(ManagedJavaValue.matchesRelative(floatType,
 				MemoryEngineContract.PREDICATE_UNCHANGED, 0x80000000L, 0L, 0L, 0L));
 		long nan = Float.floatToRawIntBits(Float.NaN) & 0xffffffffL;
-		assertFalse(ManagedJavaValue.matchesRelative(floatType,
+		assertTrue(ManagedJavaValue.matchesRelative(floatType,
 				MemoryEngineContract.PREDICATE_CHANGED, nan, one, 0L, 0L));
 
 		long minimum = Long.MIN_VALUE;
