@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -61,12 +62,13 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Custom").assertExists()
+        composeRule.onNodeWithText("Current Configuration").assertDoesNotExist()
         composeRule.onNodeWithText("Screen Size").assertExists()
         composeRule.onNodeWithText("Screen Orientation").assertExists()
         composeRule.onNodeWithText("Scale Type").assertExists()
         composeRule.onNodeWithText("Scale (%)").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertExists()
+        composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
 
         composeRule.onNodeWithContentDescription("Display").performClick()
         composeRule.onNodeWithText("Screen Appearance").assertExists()
@@ -150,8 +152,8 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Screen Size").assertExists()
         composeRule.onNodeWithText("Touch Input").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
-        composeRule.onNodeWithText("Use profile").assertDoesNotExist()
-        composeRule.onNodeWithText("Save As New Template").assertDoesNotExist()
+        composeRule.onNodeWithText("Use Preset").assertDoesNotExist()
+        composeRule.onNodeWithText("Save As Preset").assertDoesNotExist()
     }
 
     @Test
@@ -207,9 +209,12 @@ class ConfigComposeTest {
   }
         }
 
-        composeRule.onNodeWithText("Choose or manage templates").performClick()
-        composeRule.onNodeWithText("Configuration Templates").assertExists()
-        composeRule.onNodeWithText("Built-In Settings").performClick()
+        composeRule.onNodeWithText("Use Preset").performClick()
+        composeRule.onNodeWithText("Use Preset").assertExists()
+        composeRule.onNodeWithText("Manage Presets").assertExists()
+        composeRule.onNodeWithText("JL-Mod Defaults").performClick()
+        composeRule.onNodeWithText("JL-Mod Defaults").assertExists()
+        composeRule.onNodeWithText("Apply").performClick()
         assertEquals(1, events.applyBuiltInCalls)
     }
 
@@ -230,10 +235,9 @@ class ConfigComposeTest {
         composeRule.setContent {
   JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) }
         }
+        composeRule.onNodeWithText("Active preset: Nokia Classic").assertExists()
+        composeRule.onNodeWithText("Use Preset").performClick()
         composeRule.onNodeWithText("Nokia Classic").assertExists()
-        composeRule.onNodeWithText("Choose or manage templates").performClick()
-        composeRule.onNodeWithText("Configuration Templates").assertExists()
-        composeRule.onNode(hasText("Default") and hasText("Nokia Classic")).assertExists()
     }
 
     @Test
@@ -255,11 +259,97 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Built-In Settings").assertExists()
-        composeRule.onNodeWithText("JL-Mod Plus factory configuration · Default for new apps").assertExists()
-        composeRule.onNodeWithText("Custom").assertDoesNotExist()
-        composeRule.onNodeWithText("Save As New Template").assertDoesNotExist()
-        composeRule.onNodeWithText("Choose or manage templates").assertExists()
+        composeRule.onNodeWithText("JL-Mod Defaults").assertExists()
+        composeRule.onNodeWithText("Built-in emulator settings").assertDoesNotExist()
+        composeRule.onNodeWithText("Current Configuration").assertDoesNotExist()
+        composeRule.onNodeWithText("Use Preset").performClick()
+        composeRule.onNodeWithText("Built-in emulator settings").assertExists()
+        composeRule.onNodeWithText("Cancel").performClick()
+    }
+
+    @Test
+    fun presetPickerShowsSelectedActionsBeforeDispatchingApply() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            base.profileStatus,
+            listOf(
+                ConfigUiState.ProfileTemplate("Touchscreen", false, false, 360, 640, 1),
+                ConfigUiState.ProfileTemplate("RPG 240×320", false, true, 240, 320, 3),
+            ),
+        )
+        val events = RecordingConfigEvents()
+        composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
+
+        composeRule.onNodeWithText("Use Preset").performClick()
+        composeRule.onNodeWithText("RPG 240×320").performClick()
+        composeRule.onNodeWithText("Choose parts").assertExists()
+        composeRule.onNode(hasText("Virtual keyboard layout", substring = true)).assertExists()
+        assertEquals(0, events.applyTemplateCalls)
+
+        composeRule.onNodeWithText("Apply").performClick()
+        assertEquals("RPG 240×320", events.appliedTemplate)
+    }
+
+    @Test
+    fun presetPartsCanBeReenabledAfterClearingSelection() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            base.profileStatus,
+            listOf(ConfigUiState.ProfileTemplate("RPG 240×320", false, true, 240, 320, 3)),
+        )
+        composeRule.setContent { JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) } }
+
+        composeRule.onNodeWithText("Use Preset").performClick()
+        composeRule.onNodeWithText("RPG 240×320").performClick()
+        composeRule.onNodeWithText("Choose parts").performClick()
+        composeRule.onNodeWithTag("preset_apply_settings_part").performClick()
+        composeRule.onNodeWithTag("preset_apply_keyboard_part").performClick()
+        composeRule.onNodeWithText("Apply").assertIsNotEnabled()
+
+        composeRule.onNodeWithTag("preset_apply_settings_part").performClick()
+        composeRule.onNodeWithText("Apply").assertIsEnabled()
+    }
+
+    @Test
+    fun saveAsPresetExposesExplicitKeyboardLayoutChoice() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            base.profileStatus,
+            emptyList(),
+            true,
+            true,
+        )
+        val events = RecordingConfigEvents()
+        composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
+
+        composeRule.onNodeWithText("Save As Preset").performClick()
+        composeRule.onNodeWithText("Include virtual keyboard layout").assertExists()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("Comfortable")
+        composeRule.onNodeWithText("Save").performClick()
+
+        assertEquals("Comfortable", events.savedTemplate)
+        assertTrue(events.savedTemplateIncludesKeyboard)
     }
 
     @Test
@@ -533,21 +623,32 @@ class ConfigComposeTest {
 
         var removed: Size? = null
         var colorPickerField: ConfigFormEvents.ColorField? = null
-        var useProfileCalls = 0
-        var saveAsProfileCalls = 0
         var applyBuiltInCalls = 0
+        var applyTemplateCalls = 0
+        var appliedTemplate: String? = null
+        var savedTemplate: String? = null
+        var savedTemplateIncludesKeyboard = false
 
-        override fun onUseProfile() {
-            useProfileCalls++
-        }
-
-        override fun onSaveAsProfile() {
-            saveAsProfileCalls++
-        }
-
-        override fun onApplyBuiltInTemplate() {
+        override fun onApplyBuiltInTemplate(scope: ConfigFormEvents.PresetApplyScope): Boolean {
             applyBuiltInCalls++
+            return true
         }
+
+        override fun onApplyTemplate(
+            name: String,
+            scope: ConfigFormEvents.PresetApplyScope,
+        ): Boolean {
+            applyTemplateCalls++
+            appliedTemplate = name
+            return true
+        }
+
+        override fun onSaveTemplate(name: String, includeKeyboard: Boolean): Boolean {
+            savedTemplate = name
+            savedTemplateIncludesKeyboard = includeKeyboard
+            return true
+        }
+
     }
 
     private class RecordingMenuActions : ConfigMenuActions {

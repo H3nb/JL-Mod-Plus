@@ -2,7 +2,7 @@
 
 Source repository: `https://github.com/android/skills`
 
-Pinned upstream revision: `1e5e7ae6138bebd0835d0d5854b0b9adfeed3181` (2026-08-07)
+Pinned upstream revision: `bac232fd02b0855df9275281a2a7a47643768719` (2026-09-07)
 
 The selected `SKILL.md` entry points and their vendored local reference files under `.agents/skills/` are sourced from that revision. No project-specific edits to the vendored upstream content are intended; Markdown whitespace may be normalized while vendoring. The pinned upstream revision is the normative source for auditing. Android Skills is licensed under Apache License 2.0; see `.agents/LICENSE.txt`.
 
@@ -17,6 +17,8 @@ The selected `SKILL.md` entry points and their vendored local reference files un
 | `r8-analyzer` | `performance/r8-analyzer/SKILL.md` |
 | `edge-to-edge` | `system/edge-to-edge/SKILL.md` |
 | `testing-setup` | `testing/testing-setup/SKILL.md` |
+| `android-profiler` | `profilers/android-profiler/SKILL.md` |
+| `camerax` | `camera/camerax/SKILL.md` |
 
 The vendored set intentionally includes the reference documents needed by these selected skills where those files exist at the pinned revision. It is not a complete mirror of the upstream repository, and upstream assets or scripts that are not needed or do not exist upstream are not fabricated locally.
 

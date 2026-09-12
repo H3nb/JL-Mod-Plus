@@ -49,19 +49,16 @@ public final class ConfigUiState {
 	public final ProfileStatus profileStatus;
 	@NonNull
 	public final List<ProfileTemplate> profileTemplates;
+	/** Saved layout projection of the same profile collection; combined entries are not duplicated on disk. */
+	@NonNull
+	public final List<ProfileTemplate> keyboardLayouts;
 	/** True when the current MIDlet artifact can execute the timing bridge. */
 	public final boolean timingControlsEnabled;
-
-	public ConfigUiState(
-			@NonNull ConfigFormState form,
-			@NonNull List<Size> screenPresets,
-			@NonNull List<FontPreset> fontPresets,
-			@NonNull List<String> skins,
-			@NonNull List<String> soundBanks,
-			@NonNull List<ShaderInfo> shaders) {
-		this(form, screenPresets, fontPresets, skins, soundBanks, shaders,
-				Collections.emptyList(), ProfileStatus.custom(null));
-	}
+	/** True when the current application owns a separate virtual keyboard layout artifact. */
+	public final boolean hasKeyboardLayout;
+	/** Names already occupied by profiles, including layout-only and unavailable entries. */
+	@NonNull
+	public final List<String> profileNames;
 
 	public ConfigUiState(
 			@NonNull ConfigFormState form,
@@ -113,6 +110,60 @@ public final class ConfigUiState {
 			@NonNull ProfileStatus profileStatus,
 			@NonNull List<ProfileTemplate> profileTemplates,
 			boolean timingControlsEnabled) {
+		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
+				profileStatus, profileTemplates, timingControlsEnabled, false,
+				Collections.emptyList(), Collections.emptyList());
+	}
+
+	public ConfigUiState(
+			@NonNull ConfigFormState form,
+			@NonNull List<Size> screenPresets,
+			@NonNull List<FontPreset> fontPresets,
+			@NonNull List<String> skins,
+			@NonNull List<String> soundBanks,
+			@NonNull List<ShaderInfo> shaders,
+			@NonNull List<Size> removableScreenPresets,
+			@NonNull ProfileStatus profileStatus,
+			@NonNull List<ProfileTemplate> profileTemplates,
+			boolean timingControlsEnabled,
+			boolean hasKeyboardLayout) {
+		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
+				profileStatus, profileTemplates, timingControlsEnabled, hasKeyboardLayout,
+				Collections.emptyList(), Collections.emptyList());
+	}
+
+	public ConfigUiState(
+			@NonNull ConfigFormState form,
+			@NonNull List<Size> screenPresets,
+			@NonNull List<FontPreset> fontPresets,
+			@NonNull List<String> skins,
+			@NonNull List<String> soundBanks,
+			@NonNull List<ShaderInfo> shaders,
+			@NonNull List<Size> removableScreenPresets,
+			@NonNull ProfileStatus profileStatus,
+			@NonNull List<ProfileTemplate> profileTemplates,
+			boolean timingControlsEnabled,
+			boolean hasKeyboardLayout,
+			@NonNull List<String> profileNames) {
+		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
+				profileStatus, profileTemplates, timingControlsEnabled, hasKeyboardLayout,
+				profileNames, Collections.emptyList());
+	}
+
+	public ConfigUiState(
+			@NonNull ConfigFormState form,
+			@NonNull List<Size> screenPresets,
+			@NonNull List<FontPreset> fontPresets,
+			@NonNull List<String> skins,
+			@NonNull List<String> soundBanks,
+			@NonNull List<ShaderInfo> shaders,
+			@NonNull List<Size> removableScreenPresets,
+			@NonNull ProfileStatus profileStatus,
+			@NonNull List<ProfileTemplate> profileTemplates,
+			boolean timingControlsEnabled,
+			boolean hasKeyboardLayout,
+			@NonNull List<String> profileNames,
+			@NonNull List<ProfileTemplate> keyboardLayouts) {
 		this.form = form;
 		this.screenPresets = immutableCopy(screenPresets);
 		this.removableScreenPresets = immutableCopy(removableScreenPresets);
@@ -122,7 +173,10 @@ public final class ConfigUiState {
 		this.shaders = immutableCopy(shaders);
 		this.profileStatus = profileStatus;
 		this.profileTemplates = immutableCopy(profileTemplates);
+		this.keyboardLayouts = immutableCopy(keyboardLayouts);
 		this.timingControlsEnabled = timingControlsEnabled;
+		this.hasKeyboardLayout = hasKeyboardLayout;
+		this.profileNames = immutableCopy(profileNames);
 	}
 
 	private static <T> List<T> immutableCopy(List<T> values) {
@@ -148,10 +202,31 @@ public final class ConfigUiState {
 	public static final class ProfileTemplate {
 		@NonNull public final String name;
 		public final boolean isDefault;
+		public final boolean hasKeyboardLayout;
+		/** True when settings are readable but the separate layout artifact is not. */
+		public final boolean keyboardLayoutUnavailable;
+		public final int screenWidth;
+		public final int screenHeight;
+		public final int orientation;
 
 		public ProfileTemplate(@NonNull String name, boolean isDefault) {
+			this(name, isDefault, false, 0, 0, 0);
+		}
+
+		public ProfileTemplate(@NonNull String name, boolean isDefault, boolean hasKeyboardLayout,
+				int screenWidth, int screenHeight, int orientation) {
+			this(name, isDefault, hasKeyboardLayout, false, screenWidth, screenHeight, orientation);
+		}
+
+		public ProfileTemplate(@NonNull String name, boolean isDefault, boolean hasKeyboardLayout,
+				boolean keyboardLayoutUnavailable, int screenWidth, int screenHeight, int orientation) {
 			this.name = name;
 			this.isDefault = isDefault;
+			this.hasKeyboardLayout = hasKeyboardLayout;
+			this.keyboardLayoutUnavailable = keyboardLayoutUnavailable;
+			this.screenWidth = screenWidth;
+			this.screenHeight = screenHeight;
+			this.orientation = orientation;
 		}
 	}
 

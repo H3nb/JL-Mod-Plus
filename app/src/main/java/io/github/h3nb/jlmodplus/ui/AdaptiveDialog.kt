@@ -14,12 +14,12 @@
 
 package io.github.h3nb.jlmodplus.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -41,13 +41,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -85,6 +85,7 @@ internal fun adaptiveDialogLayout(): AdaptiveDialogLayout {
 internal fun adaptiveDialogLayout(
     availableWidth: Dp,
     availableHeight: Dp,
+    maxDialogWidth: Dp = DialogMaximumWidth,
 ): AdaptiveDialogLayout {
     val compactWindow = availableWidth < 600.dp || availableHeight < 480.dp
     val horizontalMargin = if (compactWindow) {
@@ -95,7 +96,7 @@ internal fun adaptiveDialogLayout(
     return AdaptiveDialogLayout(
         width = (availableWidth - horizontalMargin * 2)
             .coerceAtLeast(0.dp)
-            .coerceAtMost(DialogMaximumWidth),
+            .coerceAtMost(maxDialogWidth),
         // Keep the maximum-height gap visually consistent with the width gap. Long content may
         // use the whole safe window inside this margin before its body becomes scrollable.
         maxHeight = (availableHeight - horizontalMargin * 2).coerceAtLeast(0.dp),
@@ -122,8 +123,13 @@ internal fun AdaptiveAlertDialog(
     textContentColor: Color = AlertDialogDefaults.textContentColor,
     tonalElevation: Dp = AlertDialogDefaults.TonalElevation,
     properties: DialogProperties = DialogProperties(),
+    maxWidth: Dp = DialogMaximumWidth,
 ) {
-    val layout = adaptiveDialogLayout()
+    val layout = adaptiveDialogLayout(
+        availableWidth = availableWindowWidthDp(),
+        availableHeight = availableWindowHeightDp(),
+        maxDialogWidth = maxWidth,
+    )
     val compact = layout.maxHeight < 320.dp
     var actionsWrapped by remember { mutableStateOf(false) }
     BasicAlertDialog(
@@ -203,7 +209,7 @@ internal fun AdaptiveAlertDialog(
     }
 }
 
-/** Keep the legacy one-row order when it fits, but put dismiss below wrapped actions. */
+/** Keep the standard one-row order when it fits; move dismiss below wrapped actions. */
 @Composable
 private fun AdaptiveDialogActionLayout(
     confirmButton: (@Composable () -> Unit)?,

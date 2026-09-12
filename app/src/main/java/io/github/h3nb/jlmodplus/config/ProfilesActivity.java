@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContract;
@@ -37,15 +38,22 @@ import androidx.compose.ui.platform.ComposeView;
 import androidx.preference.PreferenceManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.Map;
 
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
+import io.github.h3nb.jlmodplus.ui.ThemedToast;
+import io.github.h3nb.jlmodplus.R;
 
 public class ProfilesActivity extends AppCompatActivity {
 	private final Map<String, Profile> profilesByName = new HashMap<>();
 	private SharedPreferences preferences;
 	private ProfilesComposeController composeController;
+	private final ExecutorService profileExecutor = Executors.newSingleThreadExecutor();
+	private int refreshGeneration;
 
 	private final ActivityResultLauncher<String> editProfileLauncher = registerForActivityResult(
 			new ActivityResultContract<String, String>() {
@@ -81,6 +89,12 @@ public class ProfilesActivity extends AppCompatActivity {
 		refreshProfiles();
 	}
 
+	@Override
+	protected void onDestroy() {
+		profileExecutor.shutdownNow();
+		super.onDestroy();
+	}
+
 	private ProfilesActions createActions() {
 		return new ProfilesActions() {
 			@Override
@@ -101,7 +115,8 @@ public class ProfilesActivity extends AppCompatActivity {
 
 			@Override
 			public void onSetDefault(@NonNull String name) {
-				if (profilesByName.containsKey(name)) {
+				Profile profile = profilesByName.get(name);
+				if (profile != null && ProfilesManager.inspectProfile(profile).settings.isReady()) {
 					preferences.edit().putString(PREF_DEFAULT_PROFILE, name).apply();
 					refreshProfiles();
 				}
@@ -110,20 +125,23 @@ public class ProfilesActivity extends AppCompatActivity {
 			@Override
 			public void onEdit(@NonNull String name) {
 				Profile profile = profilesByName.get(name);
-				if (profile != null && (profile.hasConfig() || profile.hasOldConfig())) {
-					Intent intent = new Intent(ACTION_EDIT_PROFILE, Uri.parse(name),
-							getApplicationContext(), ConfigActivity.class);
-					startActivity(intent);
+				if (profile != null && ProfilesManager.inspectProfile(profile).settings.isReady()) {
+					editProfileLauncher.launch(name);
 				}
 			}
 
 			@Override
 			public void onRename(@NonNull String oldName, @NonNull String newName) {
 				Profile profile = profilesByName.get(oldName);
-				if (profile == null) {
+				if (profile == null || !Profile.isValidName(newName)
+						|| ProfilesManager.profileNameExists(newName)) {
 					return;
 				}
-				profile.renameTo(newName);
+				if (!profile.renameTo(newName)) {
+					ThemedToast.show(ProfilesActivity.this,
+							R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+					return;
+				}
 				if (oldName.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
 					preferences.edit().putString(PREF_DEFAULT_PROFILE, newName).apply();
 				}
@@ -134,7 +152,11 @@ public class ProfilesActivity extends AppCompatActivity {
 			public void onDelete(@NonNull String name) {
 				Profile profile = profilesByName.get(name);
 				if (profile != null) {
-					profile.delete();
+					if (!profile.delete()) {
+						ThemedToast.show(ProfilesActivity.this,
+								R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+						return;
+					}
 					if (name.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
 						preferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
 					}
@@ -145,13 +167,53 @@ public class ProfilesActivity extends AppCompatActivity {
 	}
 
 	private void refreshProfiles() {
-		ArrayList<Profile> profiles = ProfilesManager.getProfiles();
-		profilesByName.clear();
-		for (Profile profile : profiles) {
-			profilesByName.put(profile.getName(), profile);
-		}
-		composeController.updateProfiles(
-				profiles,
-				preferences.getString(PREF_DEFAULT_PROFILE, null));
+		final int generation = ++refreshGeneration;
+		final String defaultName = preferences.getString(PREF_DEFAULT_PROFILE, null);
+		profileExecutor.execute(() -> {
+			ArrayList<Profile> profiles = ProfilesManager.getProfiles();
+			Collections.sort(profiles);
+			ArrayList<ProfilesManager.ProfileInfo> inspected = ProfilesManager.inspectProfiles(profiles);
+			boolean hasValidDefault = false;
+			String legacyKeyboardDefaultName = null;
+			for (ProfilesManager.ProfileInfo info : inspected) {
+				if (info.settings.isReady() && defaultName != null
+						&& defaultName.equals(info.profile.getName())) {
+					hasValidDefault = true;
+				} else if (legacyKeyboardDefaultName == null
+						&& info.settings.status == ProfilesManager.CapabilityStatus.ABSENT
+						&& info.keyboardLayout.isReady()
+						&& defaultName != null && defaultName.equals(info.profile.getName())) {
+					legacyKeyboardDefaultName = info.profile.getName();
+				}
+			}
+			ArrayList<ProfileUiItem> items = new ArrayList<>(inspected.size() + 1);
+			items.add(new ProfileUiItem(
+					"", !hasValidDefault, false, true, false, false, 0, 0, 0, false, false));
+			for (ProfilesManager.ProfileInfo info : inspected) {
+				boolean valid = info.settings.isReady();
+				boolean keyboardOnly = info.settings.status == ProfilesManager.CapabilityStatus.ABSENT
+						&& info.keyboardLayout.isReady();
+				boolean unavailable = !valid && !keyboardOnly;
+				items.add(new ProfileUiItem(
+						info.profile.getName(),
+						valid && info.profile.getName().equals(defaultName),
+						valid,
+						false,
+						keyboardOnly,
+						info.keyboardLayout.isReady(),
+						info.config == null ? 0 : info.config.screenWidth,
+						info.config == null ? 0 : info.config.screenHeight,
+						info.config == null ? 0 : info.config.orientation,
+						unavailable,
+						info.keyboardLayout.status == ProfilesManager.CapabilityStatus.UNAVAILABLE));
+			}
+			final String resolvedLegacyKeyboardDefaultName = legacyKeyboardDefaultName;
+			runOnUiThread(() -> {
+				if (generation != refreshGeneration || isFinishing() || isDestroyed()) return;
+				profilesByName.clear();
+				for (Profile profile : profiles) profilesByName.put(profile.getName(), profile);
+				composeController.updateProfileItems(items, resolvedLegacyKeyboardDefaultName);
+			});
+		});
 	}
 }

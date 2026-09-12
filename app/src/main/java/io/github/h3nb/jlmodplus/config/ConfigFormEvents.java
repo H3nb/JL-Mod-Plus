@@ -15,7 +15,6 @@
 package io.github.h3nb.jlmodplus.config;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import io.github.h3nb.jlmodplus.config.model.Size;
 
@@ -47,37 +46,42 @@ public interface ConfigFormEvents {
 	default void onShaderTuningComplete(float[] values) {
 	}
 
-	/** Opens the existing profile-load flow from the General destination. */
-	default void onUseProfile() {
-	}
-
-	/** Opens the existing profile-save flow from the General destination. */
-	default void onSaveAsProfile() {
-	}
-
-	/** Opens profile template management from the General destination. */
+	/** Opens preset management from the General destination. */
 	default void onManageProfiles() {
 	}
 
-	default void onApplyBuiltInTemplate() {
+	/** Applies only the selected parts of a saved preset. */
+	default boolean onApplyBuiltInTemplate(@NonNull PresetApplyScope scope) {
+		return true;
 	}
 
-	default void onApplyTemplate(@NonNull String name) {
+	/** Applies only the selected parts of a saved preset. */
+	default boolean onApplyTemplate(@NonNull String name, @NonNull PresetApplyScope scope) {
+		return true;
 	}
 
-	default void onSaveTemplate(@NonNull String name) {
+	/** Saves application settings and optionally the separate virtual keyboard layout artifact. */
+	default boolean onSaveTemplate(@NonNull String name, boolean includeKeyboard) {
+		return true;
 	}
 
-	default void onUpdateTemplate(@NonNull String name) {
+	/** Opens the naming dialog for a layout-only saved entry. */
+	default void onSaveKeyboardLayout() {
 	}
 
-	default void onRenameTemplate(@NonNull String oldName, @NonNull String newName) {
+	/** Saves only the current virtual keyboard layout as a reusable layout entry. */
+	default boolean onSaveKeyboardLayout(@NonNull String name) {
+		return true;
 	}
 
-	default void onDeleteTemplate(@NonNull String name) {
+	/** Opens the saved keyboard-layout picker without replacing the current application settings draft. */
+	default void onChooseKeyboardLayout() {
 	}
 
-	default void onSetDefaultTemplate(@Nullable String name) {
+	enum PresetApplyScope {
+		SETTINGS,
+		KEYBOARD_LAYOUT,
+		SETTINGS_AND_KEYBOARD
 	}
 
 	enum ColorField {

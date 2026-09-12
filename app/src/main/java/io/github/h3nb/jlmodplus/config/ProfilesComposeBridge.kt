@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,13 +26,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
-import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,13 +49,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
@@ -64,10 +69,18 @@ data class ProfileUiItem(
     val isDefault: Boolean,
     val canEdit: Boolean,
     val isBuiltIn: Boolean = false,
+    val isKeyboardOnly: Boolean = false,
+    val hasKeyboardLayout: Boolean = false,
+    val screenWidth: Int = 0,
+    val screenHeight: Int = 0,
+    val orientation: Int = 0,
+    val isUnavailable: Boolean = false,
+    val isKeyboardLayoutUnavailable: Boolean = false,
 )
 
 data class ProfilesUiState(
     val profiles: List<ProfileUiItem> = emptyList(),
+    val legacyKeyboardDefaultName: String? = null,
 )
 
 interface ProfilesActions {
@@ -98,23 +111,8 @@ class ProfilesComposeController(
         }
     }
 
-    fun updateProfiles(profiles: List<Profile>, defaultName: String?) {
-        state = ProfilesUiState(
-            profiles = listOf(
-                ProfileUiItem(
-                    name = "",
-                    isDefault = defaultName == null,
-                    canEdit = false,
-                    isBuiltIn = true,
-                ),
-            ) + profiles.sorted().map { profile ->
-                ProfileUiItem(
-                    name = profile.name,
-                    isDefault = profile.name == defaultName,
-                    canEdit = profile.hasConfig() || profile.hasOldConfig(),
-                )
-            },
-        )
+    fun updateProfileItems(items: List<ProfileUiItem>, legacyKeyboardDefaultName: String? = null) {
+        state = ProfilesUiState(profiles = items, legacyKeyboardDefaultName = legacyKeyboardDefaultName)
     }
 }
 
@@ -128,25 +126,18 @@ fun ProfilesScreen(
     var selectedProfile by remember { mutableStateOf<ProfileUiItem?>(null) }
     var nameDialog by remember { mutableStateOf<ProfileNameDialog?>(null) }
     var deleteTarget by remember { mutableStateOf<ProfileUiItem?>(null) }
+    var defaultDialogVisible by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.profiles)) },
+                title = { Text(stringResource(R.string.presets)) },
                 navigationIcon = {
                     IconButton(onClick = actions::onBack) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
                             contentDescription = stringResource(R.string.action_back),
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { nameDialog = ProfileNameDialog.Create }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_add),
-                            contentDescription = stringResource(R.string.add_profile_description),
                         )
                     }
                 },
@@ -160,7 +151,7 @@ fun ProfilesScreen(
                     .padding(padding),
             ) {
                 Text(
-                    text = stringResource(R.string.no_data_for_display),
+                    text = stringResource(R.string.preset_manager_empty_summary),
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(top = 12.dp),
@@ -169,12 +160,52 @@ fun ProfilesScreen(
                 )
             }
         } else {
+            val builtIn = state.profiles.firstOrNull { it.isBuiltIn }
+            val activeDefault = state.profiles.firstOrNull { it.isDefault && !it.isBuiltIn } ?: builtIn
+            val presets = state.profiles.filter {
+                !it.isBuiltIn && !it.isKeyboardOnly && !it.isUnavailable
+            }
+            val savedLayouts = state.profiles.filter { !it.isBuiltIn && it.isKeyboardOnly }
+            val unavailable = state.profiles.filter { it.isUnavailable }
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = padding,
             ) {
-                items(state.profiles, key = { it.name }) { profile ->
-                    ProfileRow(profile = profile, onClick = { selectedProfile = profile })
+                item { ProfileSectionHeader(stringResource(R.string.preset_manager_default_section)) }
+                item(key = "default-policy") {
+                    DefaultPolicyRow(
+                        activeDefault = activeDefault,
+                        legacyKeyboardDefaultName = state.legacyKeyboardDefaultName,
+                        onClick = { defaultDialogVisible = true },
+                    )
+                }
+                builtIn?.let { profile ->
+                    item(key = "builtin") {
+                        ProfileSectionHeader(stringResource(R.string.preset_manager_builtin_section))
+                        ProfileRow(profile = profile, onClick = { selectedProfile = profile })
+                    }
+                }
+                if (presets.isNotEmpty()) {
+                    item { ProfileSectionHeader(stringResource(R.string.preset_manager_presets_section)) }
+                }
+                items(presets, key = { it.name }) { profile ->
+                    ProfileRow(
+                        profile = profile,
+                        onClick = { actions.onEdit(profile.name) },
+                        onManage = { selectedProfile = profile },
+                    )
+                }
+                if (savedLayouts.isNotEmpty()) {
+                    item { ProfileSectionHeader(stringResource(R.string.preset_manager_keyboard_section)) }
+                    items(savedLayouts, key = { "keyboard:" + it.name }) { profile ->
+                        ProfileRow(profile = profile, onClick = { selectedProfile = profile })
+                    }
+                }
+                if (unavailable.isNotEmpty()) {
+                    item { ProfileSectionHeader(stringResource(R.string.preset_unavailable_section)) }
+                    items(unavailable, key = { "unavailable:" + it.name }) { profile ->
+                        ProfileRow(profile = profile, onClick = { selectedProfile = profile })
+                    }
                 }
             }
         }
@@ -183,10 +214,8 @@ fun ProfilesScreen(
     selectedProfile?.let { profile ->
         ProfileActionsDialog(
             profile = profile,
+            legacyKeyboardDefaultName = state.legacyKeyboardDefaultName,
             onDismiss = { selectedProfile = null },
-            onDefault = {
-                if (profile.isBuiltIn) actions.onSetBuiltInDefault() else actions.onSetDefault(profile.name)
-            },
             onEdit = { actions.onEdit(profile.name) },
             onRename = { nameDialog = ProfileNameDialog.Rename(profile) },
             onDelete = { deleteTarget = profile },
@@ -210,7 +239,7 @@ fun ProfilesScreen(
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
             title = { Text(stringResource(android.R.string.dialog_alert_title)) },
-            text = { Text(stringResource(R.string.action_context_delete) + ": " + profile.name + "?") },
+            text = { Text(stringResource(R.string.profile_delete_template_message, profile.name)) },
             confirmButton = {
                 TextButton(onClick = {
                     deleteTarget = null
@@ -224,10 +253,78 @@ fun ProfilesScreen(
             },
         )
     }
+    if (defaultDialogVisible) {
+        DefaultPresetDialog(
+            profiles = state.profiles,
+            onDismiss = { defaultDialogVisible = false },
+            onApply = { profile ->
+                defaultDialogVisible = false
+                if (profile.isBuiltIn) actions.onSetBuiltInDefault()
+                else actions.onSetDefault(profile.name)
+            },
+        )
+    }
 }
 
 @Composable
-private fun ProfileRow(profile: ProfileUiItem, onClick: () -> Unit) {
+private fun ProfileSectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+    )
+}
+
+@Composable
+private fun DefaultPolicyRow(
+    activeDefault: ProfileUiItem?,
+    legacyKeyboardDefaultName: String?,
+    onClick: () -> Unit,
+) {
+    val displayName = when {
+        legacyKeyboardDefaultName != null -> stringResource(R.string.profile_builtin_settings)
+        activeDefault?.isBuiltIn == true -> stringResource(R.string.profile_builtin_settings)
+        activeDefault != null -> activeDefault.name
+        else -> stringResource(R.string.profile_builtin_settings)
+    }
+    val summary = if (legacyKeyboardDefaultName != null) {
+        stringResource(R.string.preset_legacy_keyboard_default_summary, legacyKeyboardDefaultName)
+    } else {
+        stringResource(R.string.preset_default_policy_summary, displayName)
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.set_as_default_new_applications), fontWeight = FontWeight.Medium)
+            Text(
+                summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Text(
+            stringResource(R.string.preset_change_default),
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.labelLarge,
+        )
+    }
+}
+
+@Composable
+private fun ProfileRow(
+    profile: ProfileUiItem,
+    onClick: () -> Unit,
+    onManage: (() -> Unit)? = null,
+) {
     val displayName = if (profile.isBuiltIn) {
         stringResource(R.string.profile_builtin_settings)
     } else {
@@ -236,7 +333,7 @@ private fun ProfileRow(profile: ProfileUiItem, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -247,40 +344,58 @@ private fun ProfileRow(profile: ProfileUiItem, onClick: () -> Unit) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (profile.isBuiltIn || profile.isDefault) {
-                Text(
-                    text = stringResource(
-                        if (profile.isBuiltIn) R.string.profile_builtin_settings_summary
-                        else R.string.profile_default_template_summary,
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
+            val summary = when {
+                profile.isBuiltIn -> stringResource(R.string.profile_builtin_settings_summary)
+                profile.isKeyboardOnly -> stringResource(R.string.saved_keyboard_layout_summary)
+                profile.isUnavailable -> stringResource(R.string.preset_unavailable_summary)
+                profile.screenWidth > 0 && profile.screenHeight > 0 -> buildString {
+                    append(profile.screenWidth).append(" × ").append(profile.screenHeight)
+                    orientationOptions.getOrNull(profile.orientation)?.let {
+                        append(" · ").append(it)
+                    }
+                    if (profile.hasKeyboardLayout) {
+                        append(" · ").append(stringResource(R.string.preset_includes_keyboard_layout))
+                    }
+                    if (profile.isKeyboardLayoutUnavailable) {
+                        append(" · ").append(stringResource(R.string.preset_keyboard_layout_unavailable))
+                    }
+                }
+                else -> buildString {
+                    append(stringResource(R.string.profile_template_summary))
+                    if (profile.isKeyboardLayoutUnavailable) {
+                        append(" · ").append(stringResource(R.string.preset_keyboard_layout_unavailable))
+                    }
+                }
             }
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-        if (profile.isDefault) {
+        if (profile.isDefault && !profile.isBuiltIn) {
             Text(
                 text = stringResource(R.string.profile_default_badge_short),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 8.dp),
             )
         }
-        Icon(
-            painter = painterResource(R.drawable.ic_more_vert),
-            contentDescription = stringResource(R.string.more),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        onManage?.let { manage ->
+            TextButton(onClick = manage) {
+                Text(stringResource(R.string.preset_manage))
+            }
+        }
     }
 }
 
 @Composable
 internal fun ProfileActionsDialog(
     profile: ProfileUiItem,
+    legacyKeyboardDefaultName: String? = null,
     onDismiss: () -> Unit,
-    onDefault: () -> Unit,
     onEdit: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
@@ -309,11 +424,22 @@ internal fun ProfileActionsDialog(
                         .heightIn(max = maxActionHeight)
                         .verticalScroll(scrollState),
                 ) {
-                    if (!profile.isDefault) {
-                        ProfileDialogAction(R.string.set_as_default, onDismiss, onDefault)
+                    if (profile.isBuiltIn) {
+                        Text(
+                            if (legacyKeyboardDefaultName != null) {
+                                stringResource(
+                                    R.string.preset_legacy_keyboard_default_summary,
+                                    legacyKeyboardDefaultName,
+                                )
+                            } else {
+                                stringResource(R.string.profile_builtin_settings_summary)
+                            },
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 8.dp),
+                        )
                     }
-                    if (!profile.isBuiltIn && profile.canEdit) {
-                        ProfileDialogAction(R.string.edit, onDismiss, onEdit)
+                    if (!profile.isBuiltIn && !profile.isKeyboardOnly && !profile.isUnavailable && profile.canEdit) {
+                        ProfileDialogAction(R.string.edit_preset, onDismiss, onEdit)
                     }
                     if (!profile.isBuiltIn) {
                         ProfileDialogAction(R.string.action_context_rename, onDismiss, onRename)
@@ -327,8 +453,73 @@ internal fun ProfileActionsDialog(
             }
         },
         confirmButton = null,
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        },
     )
 }
+
+@Composable
+private fun DefaultPresetDialog(
+    profiles: List<ProfileUiItem>,
+    onDismiss: () -> Unit,
+    onApply: (ProfileUiItem) -> Unit,
+) {
+    val choices = profiles.filter {
+        it.isBuiltIn || (!it.isKeyboardOnly && !it.isUnavailable && it.canEdit)
+    }
+    val active = profiles.firstOrNull { it.isDefault } ?: profiles.firstOrNull { it.isBuiltIn }
+    var selectedId by rememberSaveable(active?.let(::profileSelectionId)) {
+        mutableStateOf(active?.let(::profileSelectionId))
+    }
+    val selected = choices.firstOrNull { profileSelectionId(it) == selectedId }
+    AlertDialog(
+        textScrollable = false,
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.preset_default_picker_title)) },
+        text = {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = adaptiveDialogLayout().maxHeight),
+            ) {
+                items(choices, key = ::profileSelectionId) { profile ->
+                    val displayName = if (profile.isBuiltIn) {
+                        stringResource(R.string.profile_builtin_settings)
+                    } else {
+                        profile.name
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = selectedId == profileSelectionId(profile),
+                                onClick = { selectedId = profileSelectionId(profile) },
+                                role = androidx.compose.ui.semantics.Role.RadioButton,
+                            )
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = selectedId == profileSelectionId(profile), onClick = null)
+                        Text(displayName, modifier = Modifier.padding(start = 4.dp))
+                    }
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = selected != null,
+                onClick = { selected?.let(onApply) },
+            ) { Text(stringResource(R.string.preset_apply)) }
+        },
+    )
+}
+
+private fun profileSelectionId(profile: ProfileUiItem): String =
+    if (profile.isBuiltIn) "builtin" else "saved:${profile.name}"
 
 @Composable
 private fun ProfileDialogAction(label: Int, onDismiss: () -> Unit, action: () -> Unit) {
@@ -370,8 +561,11 @@ internal fun ProfileNameDialog(
     var touched by rememberSaveable(original) { mutableStateOf(false) }
     val trimmed = value.text.trim()
     val empty = trimmed.isEmpty()
-    val duplicate = trimmed == original || trimmed in existingNames
-    val valid = !empty && !duplicate
+    val duplicate = !trimmed.equals(original, ignoreCase = true) &&
+        existingNames.any { it.equals(trimmed, ignoreCase = true) }
+    val invalidName = !empty && !Profile.isValidName(trimmed)
+    val unchanged = dialog is ProfileNameDialog.Rename && trimmed.equals(original, ignoreCase = true)
+    val valid = !empty && !duplicate && !invalidName && !unchanged
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -386,19 +580,16 @@ internal fun ProfileNameDialog(
                 value = value,
                 onValueChange = { input ->
                     touched = true
-                    val filtered = input.text.filterNot { it in "/\\:*?\"<>|" }
-                    value = input.copy(
-                        text = filtered,
-                        selection = TextRange(input.selection.end.coerceAtMost(filtered.length)),
-                    )
+                    value = input
                 },
                 singleLine = true,
-                isError = touched && (empty || duplicate),
-                supportingText = if (touched && (empty || duplicate)) {
+                isError = touched && (empty || duplicate || invalidName),
+                supportingText = if (touched && (empty || duplicate || invalidName)) {
                     {
                         when {
                             empty -> Text(stringResource(R.string.error_name))
-                            duplicate -> Text(stringResource(R.string.not_saved_exists))
+                            duplicate -> Text(stringResource(R.string.preset_name_exists))
+                            else -> Text(stringResource(R.string.preset_invalid_name))
                         }
                     }
                 } else {

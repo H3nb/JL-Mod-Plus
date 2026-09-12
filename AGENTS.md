@@ -62,10 +62,31 @@ Available skill routing:
 - Prefer existing project patterns and dependencies when they are adequate.
 - Treat historical or experimental branches as reference material rather than implementation authority; do not merge them wholesale or replay broad commit ranges unless explicitly requested.
 - Reconstruct desired behavior against the current architecture, carrying forward verified contracts and tests rather than obsolete implementation structure.
+- When replacing an existing flow, identify its active entry points, state owners, and persistence paths. Route the retained behavior through one authoritative implementation, and remove superseded paths once their callers and compatibility requirements have been accounted for. Do not leave parallel implementations of the same behavior as an incidental result of the refactor.
 - Keep migration status, roadmap state, and branch-specific reconstruction decisions in dedicated tracking artifacts rather than this file.
 - Preserve application behavior during UI migration. Do not change Java ME API behavior merely to facilitate Compose.
 - Application-owned UI may migrate to Compose incrementally, but emulator, rendering, input, or Android-platform boundaries may remain native/View when they serve a concrete purpose.
 - For internal app icons, prefer official Material Symbols when suitable; use a repository-provided helper when available before creating a custom icon.
+
+## Source language policy
+
+- Use Kotlin as the default language for new app-owned Android code, including Compose UI, ViewModels, state management, repositories, settings, and Android integrations.
+- Language choice does not imply introducing ViewModels, repositories, interfaces, wrappers, or other architectural layers. Add them only when the task has a concrete need.
+- When making a focused change inside an existing Java subsystem, keep the implementation in Java when that is the simpler and safer fit. Do not migrate stable Java code to Kotlin solely for consistency or modernization.
+- For new code that primarily belongs to an existing Java-heavy Java ME compatibility, emulator, runtime, rendering, audio, or similar core subsystem, follow the surrounding subsystem language unless there is a concrete reason to introduce Kotlin.
+- Kotlin and Java interoperability is an accepted project architecture. Do not add wrapper or adapter layers solely to hide a mixed-language boundary.
+- Keep Jetpack Compose implementation in Kotlin.
+
+## Performance discipline
+
+- Write Kotlin and Java that are efficient by default without sacrificing correctness, readability, or maintainability for speculative micro-optimizations. Prefer better algorithms, data structures, and less unnecessary work before low-level tuning.
+- Avoid avoidable allocation, copying, boxing, temporary collections, and repeated computation when a comparably clear implementation can avoid them, especially in frequently executed code.
+- In hot loops or performance-sensitive paths, prefer straightforward loops and primitive-friendly representations when they avoid meaningful overhead. Do not replace a simple loop with chained collection operations, sequences, lambdas, or abstractions merely because they are more idiomatic.
+- Do not assume `Sequence`, collection pipelines, coroutines, `inline`, or other Kotlin features are inherently faster. Choose them for appropriate semantics or demonstrated benefit, considering the workload and generated overhead.
+- Keep expensive work, blocking I/O, parsing, decoding, persistence, and other unsuitable operations off latency-sensitive UI or rendering paths.
+- Do not introduce caching, object pooling, custom collections, manual inlining, or other complexity without a concrete performance reason.
+- Treat interpreter/VM loops, rendering and audio pipelines, memory scanning, JNI-adjacent code, and other high-frequency paths as performance-sensitive. Preserve efficient existing implementations unless a change has a concrete benefit.
+- When two implementations are similarly clear, prefer the one that performs less work and creates less garbage. When the performance tradeoff is non-obvious or material, measure with an appropriate benchmark or profiler rather than relying on assumptions about Kotlin versus Java.
 
 ## App-owned UI, adaptation, and navigation
 

@@ -16,7 +16,6 @@ package io.github.h3nb.jlmodplus.config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.res.Configuration;
@@ -29,7 +28,6 @@ import org.junit.Test;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.Collections;
 
 import javax.microedition.shell.timing.TimingMode;
@@ -58,19 +56,7 @@ public class ProfileConfigMatcherTest {
 	}
 
 	@Test
-	public void duplicateMatchesPreferDefaultThenStableNameOrder() {
-		Profile defaultProfile = new Profile("zeta");
-		Profile caseInsensitiveFirst = new Profile("Alpha");
-		Profile caseInsensitiveTie = new Profile("alpha");
-
-		assertEquals("zeta", ProfileConfigMatcher.selectMatch(
-				Arrays.asList(caseInsensitiveTie, defaultProfile, caseInsensitiveFirst), "zeta").getName());
-		assertEquals("Alpha", ProfileConfigMatcher.selectMatch(
-				Arrays.asList(caseInsensitiveTie, defaultProfile, caseInsensitiveFirst), null).getName());
-	}
-
-	@Test
-	public void cachedMatchTreatsKeyboardAsPartOfProfilesThatOwnIt() {
+	public void candidateMatchingTreatsKeyboardAsPartOfProfilesThatOwnIt() {
 		ProfileModel current = new ProfileModel();
 		current.version = ProfileModel.VERSION;
 		current.screenWidth = 240;
@@ -81,42 +67,25 @@ public class ProfileConfigMatcherTest {
 		Profile withKeyboard = new Profile("with-keyboard");
 		Profile configOnly = new Profile("config-only");
 		ProfileConfigMatcher.Candidate keyboardCandidate = new ProfileConfigMatcher.Candidate(
-				withKeyboard, current, "keys".getBytes(StandardCharsets.UTF_8));
+				withKeyboard, current, true, "keys".getBytes(StandardCharsets.UTF_8));
 		ProfileConfigMatcher.Candidate configOnlyCandidate = new ProfileConfigMatcher.Candidate(
-				configOnly, current, null);
+				configOnly, current, false, null);
 
-		assertEquals("with-keyboard", ProfileConfigMatcher.findMatchCached(
+		assertTrue(ProfileConfigMatcher.matchesCandidate(
 				current,
 				draft,
-				Arrays.asList(configOnlyCandidate, keyboardCandidate),
-				"with-keyboard",
-				"keys".getBytes(StandardCharsets.UTF_8)).getName());
-		assertEquals("config-only", ProfileConfigMatcher.findMatchCached(
+				keyboardCandidate,
+				"keys".getBytes(StandardCharsets.UTF_8)));
+		assertFalse(ProfileConfigMatcher.matchesCandidate(
 				current,
 				draft,
-				Arrays.asList(configOnlyCandidate, keyboardCandidate),
-				"with-keyboard",
-				"different".getBytes(StandardCharsets.UTF_8)).getName());
-		assertNull(ProfileConfigMatcher.findMatchCached(
+				keyboardCandidate,
+				"different".getBytes(StandardCharsets.UTF_8)));
+		assertTrue(ProfileConfigMatcher.matchesCandidate(
 				current,
 				draft,
-				Collections.singletonList(keyboardCandidate),
-				null,
-				null));
-	}
-
-	@Test
-	public void keyboardArtifactComparisonIsExactAndOptionalAtCaller() throws Exception {
-		File first = File.createTempFile("jlmod-keyboard-a", ".bin");
-		File second = File.createTempFile("jlmod-keyboard-b", ".bin");
-		first.deleteOnExit();
-		second.deleteOnExit();
-		Files.write(first.toPath(), "keyboard\n".getBytes(StandardCharsets.UTF_8));
-		Files.write(second.toPath(), "keyboard\n".getBytes(StandardCharsets.UTF_8));
-
-		assertTrue(ProfileConfigMatcher.sameKeyboardFile(first, second));
-		Files.write(second.toPath(), "different\n".getBytes(StandardCharsets.UTF_8));
-		assertFalse(ProfileConfigMatcher.sameKeyboardFile(first, second));
+				configOnlyCandidate,
+				"different".getBytes(StandardCharsets.UTF_8)));
 	}
 
 	@Test

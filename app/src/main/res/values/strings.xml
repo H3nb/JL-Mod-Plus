@@ -239,13 +239,6 @@
     <string name="config_custom_resolution">Custom Resolution</string>
     <string name="config_select">Select</string>
     <string name="profile_custom">Custom</string>
-    <string name="profile_custom_summary">Settings do not match a saved profile</string>
-    <string name="profile_active_summary">Active profile</string>
-    <string name="profile_default_summary">Default for new games: %1$s</string>
-    <string name="profile_default_none">None</string>
-    <string name="profile_use">Use profile</string>
-    <string name="profile_change">Change profile</string>
-    <string name="profile_save_as">Save as profile</string>
     <string name="pref_theme_auto_battery">Auto, By Battery Saver</string>
     <string name="pref_theme_auto_time">Auto, By Time of Day</string>
     <string name="pref_theme_default" translatable="false">light</string>
@@ -279,7 +272,7 @@
     <string name="pref_wakelock_title">Keep Screen On</string>
     <string name="fps_overlay_label">FPS</string>
     <string name="PREF_WIDTH">Width</string>
-    <string name="profiles">Profiles</string>
+    <string name="profiles">Presets</string>
     <string name="reinstall">App already installed.\n\nDo you want to reinstall it?\nAll data will be saved.</string>
     <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s\nAll data will be saved.</string>
     <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nThe older version may not work correctly with the recorded data.</string>
