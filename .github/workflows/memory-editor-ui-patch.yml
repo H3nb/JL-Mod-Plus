@@ -1,0 +1,31 @@
+name: Memory Editor UI patch
+
+on:
+  push:
+    branches:
+      - fix/memory-editor-correctness-20260912
+    paths:
+      - .github/workflows/memory-editor-ui-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Apply focused Memory Editor UI fixes
+        run: python3 .github/memory_editor_ui_patch.py
+      - name: Commit source changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/io/github/h3nb/jlmodplus/memory/MemoryEditorBubbleController.kt
+          git add app/src/main/java/io/github/h3nb/jlmodplus/memory/MemoryEditorRuntimeCompose.kt
+          git diff --cached --check
+          git commit -m "Fix Memory Editor bubble pointer and write gating"
+          git push
