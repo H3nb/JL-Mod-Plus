@@ -8,19 +8,17 @@
 package io.github.h3nb.jlmodplus.memory
 
 import android.view.WindowManager
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -37,7 +35,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
@@ -48,6 +48,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -59,6 +60,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -81,8 +83,10 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -99,6 +103,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -109,6 +114,8 @@ import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.jlModPlusFilterChipColors
 import java.util.Locale
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 private enum class RuntimeMemoryTab { SEARCH_RESULTS, WATCH, INSPECTOR }
 private enum class RuntimeInputField { FIRST, SECOND }
@@ -124,8 +131,13 @@ private val RuntimeMemoryValueTypes = intArrayOf(
     MemoryEngineContract.TYPE_DOUBLE,
 )
 
-private const val RuntimeKeypadTransitionDurationMillis = 220
-private const val RuntimeKeypadFadeDurationMillis = 140
+private const val RuntimeKeypadTransitionDurationMillis = 240
+// Material3 text fields use a 56dp intrinsic height. Sharing it with the outlined menus keeps
+// their top/bottom strokes aligned without clipping the value baseline or blinking caret.
+private val RuntimeInputControlHeight = 56.dp
+private val RuntimeKeypadButtonHeight = 48.dp
+private val RuntimeKeypadPortraitHeight = 256.dp
+private val RuntimeKeypadLandscapeHeight = 198.dp
 
 /** Production Memory Editor shell hosted in the dedicated :memory_engine Activity. */
 @Composable
@@ -950,25 +962,55 @@ private fun RuntimeWatchRow(
 private fun RuntimeSearchDialogBody(
     showKeypad: Boolean,
     controls: @Composable (sideDock: Boolean) -> Unit,
-    keypad: @Composable () -> Unit,
+    keypad: @Composable (landscape: Boolean) -> Unit,
     supportingContent: (@Composable () -> Unit)? = null,
 ) {
     val landscape = availableWindowWidthDp() > availableWindowHeightDp()
-    val keyboardController = LocalSoftwareKeyboardController.current
     val imeVisible = WindowInsets.isImeVisible
     // BasicAlertDialog's platform window already moves its frame above the IME. Applying
     // imePadding here as well reserves that height a second time and creates a white band.
-    // Keep the native IME and custom keypad mutually exclusive to avoid competing layouts and
-    // reduce work while the IME animation is running.
-    val customKeypadVisible = showKeypad && !imeVisible
-    LaunchedEffect(Unit) {
-        keyboardController?.hide()
+    // Keep the native IME and custom keypad mutually exclusive. The keypad is given a fixed
+    // viewport and only its layer is animated, so the dialog window is not resized and recentered
+    // on every animation frame.
+    val targetKeypadVisible = showKeypad && !imeVisible
+    var keypadMounted by remember { mutableStateOf(targetKeypadVisible) }
+    // The default virtual keypad is part of the dialog's first frame. Only later mode changes
+    // animate; opening New Search/Edit must not briefly compose an empty, differently sized body.
+    val keypadProgress = remember { Animatable(if (targetKeypadVisible) 1f else 0f) }
+
+    LaunchedEffect(targetKeypadVisible, imeVisible) {
+        if (targetKeypadVisible) {
+            keypadMounted = true
+            keypadProgress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = RuntimeKeypadTransitionDurationMillis,
+                    easing = FastOutSlowInEasing,
+                ),
+            )
+        } else if (imeVisible) {
+            // Once the platform IME takes over, remove the custom keypad immediately. The
+            // system owns the window resize animation and there is no competing layout motion.
+            keypadProgress.snapTo(0f)
+            keypadMounted = false
+        } else {
+            keypadProgress.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(
+                    durationMillis = RuntimeKeypadTransitionDurationMillis,
+                    easing = FastOutSlowInEasing,
+                ),
+            )
+            keypadMounted = false
+        }
     }
+
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        // Keep the layout mode stable while the keypad transitions. Switching the whole dialog
-        // from a docked row to a vertical column at the same instant as the IME visibility change
-        // makes the dialog jump instead of allowing the keypad to animate out naturally.
-        val sideDock = landscape && showKeypad && maxWidth >= 480.dp
+        // Keep the layout mode stable for the entire custom-keypad transition. A fixed viewport
+        // prevents the platform dialog from repeatedly measuring and moving while the layer
+        // fades/scales in or out.
+        val sideDock = landscape && maxWidth >= 480.dp &&
+            (targetKeypadVisible || (keypadMounted && !imeVisible))
         if (sideDock) {
             val keypadWidth = (maxWidth * 0.42f).coerceIn(220.dp, 280.dp)
             Column(
@@ -987,20 +1029,19 @@ private fun RuntimeSearchDialogBody(
                         controls(true)
                         supportingContent?.invoke()
                     }
-                    AnimatedVisibility(
-                        visible = customKeypadVisible,
-                        enter = fadeIn(tween(RuntimeKeypadFadeDurationMillis)) +
-                            expandHorizontally(
-                                animationSpec = tween(RuntimeKeypadTransitionDurationMillis),
-                                expandFrom = Alignment.End,
-                            ),
-                        exit = fadeOut(tween(RuntimeKeypadFadeDurationMillis)) +
-                            shrinkHorizontally(
-                                animationSpec = tween(RuntimeKeypadTransitionDurationMillis),
-                                shrinkTowards = Alignment.End,
-                            ),
-                    ) {
-                        Box(modifier = Modifier.width(keypadWidth)) { keypad() }
+                    if (keypadMounted && !imeVisible) {
+                        Box(
+                            modifier = Modifier
+                                .width(keypadWidth)
+                                .height(RuntimeKeypadLandscapeHeight)
+                                .graphicsLayer {
+                                    val progress = keypadProgress.value
+                                    alpha = progress
+                                    translationX = (1f - progress) * 20.dp.toPx()
+                                },
+                        ) {
+                            keypad(landscape)
+                        }
                     }
                 }
             }
@@ -1011,20 +1052,19 @@ private fun RuntimeSearchDialogBody(
             ) {
                 controls(false)
                 supportingContent?.invoke()
-                AnimatedVisibility(
-                    visible = customKeypadVisible,
-                    enter = fadeIn(tween(RuntimeKeypadFadeDurationMillis)) +
-                        expandVertically(
-                            animationSpec = tween(RuntimeKeypadTransitionDurationMillis),
-                            expandFrom = Alignment.Top,
-                        ),
-                    exit = fadeOut(tween(RuntimeKeypadFadeDurationMillis)) +
-                        shrinkVertically(
-                            animationSpec = tween(RuntimeKeypadTransitionDurationMillis),
-                            shrinkTowards = Alignment.Top,
-                        ),
-                ) {
-                    keypad()
+                if (keypadMounted && !imeVisible) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(RuntimeKeypadPortraitHeight)
+                            .graphicsLayer {
+                                val progress = keypadProgress.value
+                                alpha = progress
+                                translationY = (1f - progress) * 12.dp.toPx()
+                            },
+                    ) {
+                        keypad(landscape)
+                    }
                 }
             }
         }
@@ -1141,8 +1181,9 @@ internal fun RuntimeKnownSearchDialog(
                         )
                     }
                 },
-                keypad = {
+                keypad = { landscape ->
                     RuntimeSearchKeypad(
+                        landscape = landscape,
                         allowGroup = activeField == RuntimeInputField.FIRST,
                         valueSpec = spec,
                         onToken = { token ->
@@ -1275,7 +1316,7 @@ private fun RuntimeUnknownSearchDialog(
         },
         text = {
             RuntimeSearchDialogBody(
-                showKeypad = activeSession && needsValue,
+                showKeypad = needsValue,
                 controls = { sideDock ->
                     if (!activeSession) {
                         if (sideDock) {
@@ -1373,8 +1414,9 @@ private fun RuntimeUnknownSearchDialog(
                         }
                     }
                 },
-                keypad = {
+                keypad = { landscape ->
                     RuntimeSearchKeypad(
+                        landscape = landscape,
                         allowGroup = false,
                         valueSpec = spec,
                         onToken = { token ->
@@ -1584,8 +1626,9 @@ private fun RuntimeEditDialog(
                         )
                     }
                 } else null,
-                keypad = {
+                keypad = { landscape ->
                     RuntimeSearchKeypad(
+                        landscape = landscape,
                         allowGroup = false,
                         valueSpec = spec,
                         onToken = { replacement = runtimeInsertValidated(replacement, it, spec) },
@@ -1821,8 +1864,9 @@ private fun RuntimeInspectorLogicalEditDialog(
                         initialFocus = true,
                     )
                 },
-                keypad = {
+                keypad = { landscape ->
                     RuntimeSearchKeypad(
+                        landscape = landscape,
                         allowGroup = false,
                         valueSpec = spec,
                         onToken = { value = runtimeInsertValidated(value, it, spec) },
@@ -1872,47 +1916,108 @@ private fun RuntimeSearchField(
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val density = LocalDensity.current
+    val textMeasurer = rememberTextMeasurer()
     val keyboardType = if (valueSpec.decimal) KeyboardType.Decimal else KeyboardType.Number
+    val interactionSource = remember { MutableInteractionSource() }
+    var readOnly by remember(initialFocus) { mutableStateOf(initialFocus) }
+    var focused by remember { mutableStateOf(false) }
+    var caretVisible by remember { mutableStateOf(true) }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val accent = MaterialTheme.colorScheme.primary
+    val textStyle = MaterialTheme.typography.titleMedium.copy(
+        color = if (active) MaterialTheme.colorScheme.onSurface
+        else MaterialTheme.colorScheme.onSurfaceVariant,
+        fontFamily = FontFamily.Monospace,
+    )
+    val caretIndex = value.selection.start.coerceIn(0, value.text.length)
+    val caretOffset = with(density) {
+        val measuredWidth = textMeasurer.measure(
+            text = value.text.take(caretIndex),
+            style = textStyle,
+        ).size.width.toDp()
+        16.dp + measuredWidth
+    }
     LaunchedEffect(initialFocus) {
         if (initialFocus) {
-            // Keep the first field focused for the custom keypad, but suppress the platform IME
-            // on dialog entry. A user tap can still bring the IME back normally.
+            // Focus the field for a blinking caret while it is read-only. Read-only focus does
+            // not start a platform IME, so the virtual keypad can own the initial input mode.
             focusRequester.requestFocus()
-            keyboardController?.hide()
         }
     }
-    OutlinedTextField(
-        value = value,
-        onValueChange = { updated ->
-            if (valueSpec.acceptsPartial(updated.text)) onValueChange(updated)
-        },
-        modifier = modifier
-            .focusRequester(focusRequester)
-            .sizeIn(minHeight = 52.dp)
-            .onFocusChanged { if (it.isFocused) onClick() },
-        label = { Text(label) },
-        singleLine = true,
-        shape = MaterialTheme.shapes.extraLarge,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = keyboardType,
-            imeAction = ImeAction.Done,
-        ),
-        keyboardActions = KeyboardActions(
-            onDone = {
-                keyboardController?.hide()
-                focusManager.clearFocus()
+    LaunchedEffect(pressed) {
+        if (pressed && readOnly) {
+            // A deliberate tap is the opt-in path to the platform IME. This avoids opening it
+            // as a side effect of dialog composition while retaining normal TextField behavior.
+            readOnly = false
+            keyboardController?.show()
+        }
+    }
+    LaunchedEffect(focused, readOnly, caretIndex) {
+        caretVisible = true
+        if (!focused || !readOnly) return@LaunchedEffect
+        while (isActive) {
+            delay(500L)
+            caretVisible = !caretVisible
+        }
+    }
+    Box(modifier = modifier.requiredHeight(RuntimeInputControlHeight)) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = { updated ->
+                if (valueSpec.acceptsPartial(updated.text)) onValueChange(updated)
             },
-        ),
-        textStyle = MaterialTheme.typography.titleMedium.copy(
-            color = if (active) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-            fontFamily = FontFamily.Monospace,
-        ),
-    )
+            modifier = Modifier
+                .fillMaxSize()
+                .requiredHeight(RuntimeInputControlHeight)
+                .focusRequester(focusRequester)
+                .onFocusChanged {
+                    focused = it.isFocused
+                    if (it.isFocused) onClick()
+                },
+            label = { Text(label) },
+            singleLine = true,
+            readOnly = readOnly,
+            interactionSource = interactionSource,
+            shape = MaterialTheme.shapes.extraLarge,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = accent,
+                focusedLabelColor = accent,
+                unfocusedBorderColor = accent.copy(alpha = 0.62f),
+                unfocusedLabelColor = accent,
+                cursorColor = accent,
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = keyboardType,
+                imeAction = ImeAction.Done,
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    keyboardController?.hide()
+                    focusManager.clearFocus()
+                },
+            ),
+            textStyle = textStyle,
+        )
+        if (focused && readOnly && caretVisible) {
+            // Read-only TextField intentionally owns focus so the custom keypad can edit it
+            // without starting the platform IME. Material3 does not draw a caret for every
+            // read-only configuration, therefore render the insertion marker in the same
+            // content inset and blink it independently of keyboard visibility.
+            Box(
+                modifier = Modifier
+                    .offset(x = caretOffset, y = 17.dp)
+                    .width(2.dp)
+                    .height(22.dp)
+                    .background(MaterialTheme.colorScheme.primary),
+            )
+        }
+    }
 }
 
 @Composable
 private fun RuntimeSearchKeypad(
+    landscape: Boolean,
     allowGroup: Boolean,
     valueSpec: MemoryInputSpec? = null,
     onToken: (String) -> Unit,
@@ -1920,7 +2025,6 @@ private fun RuntimeSearchKeypad(
     onMove: (Int) -> Unit,
     onClear: () -> Unit,
 ) {
-    val landscape = availableWindowWidthDp() > availableWindowHeightDp()
     Column(verticalArrangement = Arrangement.spacedBy(if (landscape) 2.dp else 4.dp)) {
         if (landscape) {
             RuntimeKeypadRow {
@@ -1947,10 +2051,9 @@ private fun RuntimeSearchKeypad(
             RuntimeKeypadRow {
                 RuntimeKeypadButton("0") { onToken("0") }
                 RuntimeKeypadButton(";", enabled = allowGroup) { onToken(";") }
-                RuntimeKeypadButton(":", enabled = allowGroup) { onToken(":") }
                 RuntimeKeypadButton(
                     stringResource(R.string.memory_editor_keypad_clear),
-                    weight = 2f,
+                    weight = 3f,
                     onClick = onClear,
                 )
             }
@@ -1981,10 +2084,9 @@ private fun RuntimeSearchKeypad(
             }
             RuntimeKeypadRow {
                 RuntimeKeypadButton(";", enabled = allowGroup) { onToken(";") }
-                RuntimeKeypadButton(":", enabled = allowGroup) { onToken(":") }
                 RuntimeKeypadButton(
                     stringResource(R.string.memory_editor_keypad_clear),
-                    weight = 2f,
+                    weight = 3f,
                     onClick = onClear,
                 )
             }
@@ -2016,7 +2118,7 @@ private fun androidx.compose.foundation.layout.RowScope.RuntimeKeypadButton(
         // the insertion caret visible and blinking, just like it is with the system IME.
         modifier = Modifier
             .weight(weight)
-            .sizeIn(minHeight = 48.dp)
+            .height(RuntimeKeypadButtonHeight)
             .focusProperties { canFocus = false },
     ) {
         Text(
@@ -2217,6 +2319,11 @@ private fun RuntimeTypeMenu(
         onChange = onType,
         modifier = modifier,
         enabled = enabled,
+        leadingIcon = if (type == MemoryEngineContract.TYPE_AUTO) {
+            R.drawable.ic_auto_awesome
+        } else null,
+        centerContent = true,
+        showTrailingIcon = false,
     )
 }
 
@@ -2234,6 +2341,8 @@ private fun RuntimeEditTypeMenu(
         onChange = onType,
         modifier = modifier,
         enabled = types.size > 1,
+        centerContent = true,
+        showTrailingIcon = false,
     )
 }
 
@@ -2245,15 +2354,62 @@ private fun RuntimeChoiceMenu(
     onChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    leadingIcon: Int? = null,
+    centerContent: Boolean = false,
+    showTrailingIcon: Boolean = true,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val accent = MaterialTheme.colorScheme.primary
+    val containerColor = accent.copy(alpha = 0.10f)
     Box(modifier = modifier) {
         OutlinedButton(
             onClick = { expanded = true },
             enabled = enabled,
-            modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 48.dp),
+            modifier = Modifier.fillMaxWidth().height(RuntimeInputControlHeight),
+            shape = MaterialTheme.shapes.extraLarge,
+            border = BorderStroke(1.dp, accent.copy(alpha = 0.28f)),
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = containerColor,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+            contentPadding = PaddingValues(horizontal = 16.dp),
         ) {
-            Text(label(value), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = if (centerContent) {
+                    Arrangement.Center
+                } else Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                leadingIcon?.let { icon ->
+                    Icon(
+                        painter = painterResource(icon),
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Spacer(Modifier.width(10.dp))
+                }
+                Text(
+                    label(value),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                if (!centerContent && showTrailingIcon) {
+                    Spacer(Modifier.weight(1f))
+                }
+                if (showTrailingIcon) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_keyboard_arrow_down),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             values.forEach { item ->
