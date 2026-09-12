@@ -9,12 +9,15 @@
 package io.github.h3nb.jlmodplus.memory
 
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.Build
 import android.os.IBinder
+import android.os.PersistableBundle
 import android.os.RemoteException
 import android.view.View
 import android.widget.Toast
@@ -859,9 +862,13 @@ internal class MemoryEditorComposeController(
             }
         }
         if (rows.isEmpty()) return
-        context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(
-            ClipData.newPlainText("Memory Editor", rows.joinToString("\n")),
-        )
+        val clip = ClipData.newPlainText("Memory Editor", rows.joinToString("\n"))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            clip.description.extras = PersistableBundle().apply {
+                putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+            }
+        }
+        context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(clip)
     }
 
     override fun previousPage() {

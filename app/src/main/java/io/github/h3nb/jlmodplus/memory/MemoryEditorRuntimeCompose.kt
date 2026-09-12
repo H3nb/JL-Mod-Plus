@@ -66,7 +66,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
@@ -350,7 +352,7 @@ private fun RuntimeMemoryTabs(
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
         )
         FilterChip(
             selected = tab == RuntimeMemoryTab.WATCH,
@@ -367,7 +369,7 @@ private fun RuntimeMemoryTabs(
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
         )
         FilterChip(
             selected = tab == RuntimeMemoryTab.INSPECTOR,
@@ -384,7 +386,7 @@ private fun RuntimeMemoryTabs(
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
         )
     }
 }
@@ -454,7 +456,12 @@ private fun RuntimeMessage(message: String, isError: Boolean) {
     Surface(color = container.copy(alpha = 0.82f)) {
         Text(
             message,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics {
+                    liveRegion = if (isError) LiveRegionMode.Assertive else LiveRegionMode.Polite
+                }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             style = MaterialTheme.typography.bodySmall,
             color = content,
         )
@@ -1887,12 +1894,11 @@ private fun androidx.compose.foundation.layout.RowScope.RuntimeKeypadButton(
     weight: Float = 1f,
     onClick: () -> Unit,
 ) {
-    val landscape = availableWindowWidthDp() > availableWindowHeightDp()
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
         contentPadding = PaddingValues(0.dp),
-        modifier = Modifier.weight(weight).sizeIn(minHeight = if (landscape) 40.dp else 42.dp),
+        modifier = Modifier.weight(weight).sizeIn(minHeight = 48.dp),
     ) {
         Text(
             label,
@@ -2206,7 +2212,11 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        TextButton(onClick = actions::previousPage, enabled = state.pageOffset > 0) {
+        TextButton(
+            onClick = actions::previousPage,
+            enabled = state.pageOffset > 0,
+            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+        ) {
             Text("‹")
         }
         Text(
@@ -2216,6 +2226,7 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
         TextButton(
             onClick = actions::nextPage,
             enabled = state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE < state.resultCount,
+            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
         ) {
             Text("›")
         }
