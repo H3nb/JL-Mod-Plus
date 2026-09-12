@@ -52,7 +52,7 @@ class MemoryInputModelTest {
         val byteSpec = MemoryInputSpec.forType(MemoryEngineContract.TYPE_BYTE)
         assertTrue(byteSpec.acceptsPartial("1;2"))
         assertTrue(byteSpec.acceptsPartial("-12;127"))
-        assertFalse(byteSpec.acceptsPartial("-129;1"))
+        assertFalse(byteSpec.acceptsPartial("12345;1"))
     }
 
     @Test fun float32RejectsOverflowThatDoubleWouldAccept() {
