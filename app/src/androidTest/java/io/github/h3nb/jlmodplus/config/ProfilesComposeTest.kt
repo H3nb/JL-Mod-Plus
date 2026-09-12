@@ -41,6 +41,7 @@ class ProfilesComposeTest {
     fun createRejectsPathCharactersAndDispatchesValidName() {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
+        composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Create New Preset").performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput("New/Profile")
         composeRule.onNodeWithText("OK").assertIsNotEnabled()

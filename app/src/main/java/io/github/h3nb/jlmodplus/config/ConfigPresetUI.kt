@@ -63,51 +63,58 @@ private data class PresetChoice(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun GameSetupSummary(
+internal fun PresetSummary(
     state: ConfigUiState,
     onUsePreset: () -> Unit,
+    onSavePreset: () -> Unit,
     events: ConfigFormEvents,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 4.dp, end = 4.dp, bottom = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.preset_game_setup),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            text = setupSummary(state.form),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        provenanceSummary(state.profileStatus)?.let { provenance ->
+    ConfigSection(title = stringResource(R.string.presets)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
             Text(
-                text = provenance,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                text = stringResource(R.string.preset_current_configuration),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = setupSummary(state.form),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+            provenanceSummary(state.profileStatus)?.let { provenance ->
+                Text(
+                    text = provenance,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            TextButton(onClick = onUsePreset) {
-                Text(stringResource(R.string.preset_use))
-            }
-            if (state.hasPreviousSetup) {
-                TextButton(onClick = events::onRestorePreviousSetup) {
-                    Text(stringResource(R.string.preset_restore_previous))
-                }
-            }
+        ConfigActionPreference(
+            title = stringResource(R.string.preset_use),
+            description = stringResource(R.string.preset_use_summary),
+            onClick = onUsePreset,
+        )
+        ConfigActionPreference(
+            title = stringResource(R.string.preset_save_as),
+            description = stringResource(R.string.preset_save_as_summary),
+            onClick = onSavePreset,
+        )
+        if (state.hasPreviousSetup) {
+            ConfigActionPreference(
+                title = stringResource(R.string.preset_restore_previous),
+                description = stringResource(R.string.preset_restore_previous_summary),
+                onClick = events::onRestorePreviousSetup,
+            )
         }
     }
 }

@@ -24,7 +24,7 @@
     <string name="profile_choose_template">Choose Preset</string>
     <string name="profile_choose_template_summary">Apply a saved application preset. You can start immediately or change any setting afterward.</string>
     <string name="profile_default_badge">Default for New Applications</string>
-    <string name="profile_save_template">Save as Preset</string>
+    <string name="profile_save_template">Save As Preset</string>
     <string name="profile_save_template_summary">Save the current configuration as a reusable preset.</string>
     <string name="config_lock_custom_resolution_ratio">Keep Width/Height Ratio While Editing</string>
     <string name="config_swap_screen_size">Swap width and height</string>
@@ -43,7 +43,7 @@
     <string name="profile_template_summary">Saved application settings</string>
     <string name="profile_active_badge">Active</string>
     <string name="profile_modified_badge">Modified</string>
-    <string name="profile_save_current_template">Save as Preset</string>
+    <string name="profile_save_current_template">Save As Preset</string>
     <string name="profile_name_label">Preset Name</string>
     <string name="profile_name_exists">A preset with this name already exists.</string>
     <string name="profile_delete_template_message">Delete preset “%1$s”? This does not delete any app data.</string>
@@ -118,9 +118,12 @@
     <string name="presets">Presets</string>
     <string name="add_preset_description">Create New Preset</string>
     <string name="preset_use">Use Preset</string>
-    <string name="preset_save_as">Save as Preset</string>
-    <string name="preset_game_setup">Application Setup</string>
-    <string name="preset_restore_previous">Restore Previous Setup</string>
+    <string name="preset_save_as">Save As Preset</string>
+    <string name="preset_current_configuration">Current Configuration</string>
+    <string name="preset_use_summary">Choose a saved preset or JL-Mod defaults for this application.</string>
+    <string name="preset_save_as_summary">Save this configuration as a reusable preset.</string>
+    <string name="preset_restore_previous">Restore Previous Configuration</string>
+    <string name="preset_restore_previous_summary">Restores the application settings and virtual keyboard layout saved before the last preset change or reset.</string>
     <string name="preset_active">Active preset: %1$s</string>
     <string name="preset_based_on_modified">Based on %1$s; modified</string>
     <string name="preset_builtin">JL-Mod Defaults</string>
@@ -128,7 +131,7 @@
     <string name="preset_custom">Custom setup</string>
     <string name="preset_picker_title">Use Preset</string>
     <string name="preset_manage">Manage Presets</string>
-    <string name="preset_game_settings">Application Settings</string>
+    <string name="preset_game_settings">Application Configuration</string>
     <string name="preset_includes_keyboard_layout">Includes virtual keyboard layout</string>
     <string name="preset_virtual_keyboard_on">Virtual keypad on</string>
     <string name="preset_virtual_keyboard_off">Virtual keypad off</string>
@@ -137,15 +140,15 @@
 • Application settings
 • Virtual keyboard layout
 
-Your current setup will be kept so it can be restored.</string>
+Your current configuration will be saved as a one-time restore point.</string>
     <string name="preset_apply_without_keyboard_message">This will replace application settings.
 
-Your current virtual keyboard layout will be kept.
-Your current setup will be kept so it can be restored.</string>
+Your current virtual keyboard layout will stay unchanged.
+Your current configuration will be saved as a one-time restore point.</string>
     <string name="preset_apply_builtin_message">This will reset application settings to JL-Mod defaults.
-Your current virtual keyboard layout will be kept.
+Your current virtual keyboard layout will stay unchanged.
 
-Your current setup will be kept so it can be restored.</string>
+Your current configuration will be saved as a one-time restore point.</string>
     <string name="preset_name">Name</string>
     <string name="preset_include_keyboard_layout">Include virtual keyboard layout</string>
     <string name="preset_save_help">Can be reused with other applications. Changes to this application won’t automatically change the preset.</string>

@@ -55,8 +55,6 @@ import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -281,10 +279,6 @@ internal fun ConfigScreen(
                         isProfile = isProfile,
                         onBack = { menuActions?.onBack() },
                         onStart = { menuActions?.onStart() },
-                        hasPreviousSetup = state.hasPreviousSetup,
-                        onUsePreset = { presetPickerVisible = true },
-                        onSavePreset = { savePresetVisible = true },
-                        onRestorePreviousSetup = events::onRestorePreviousSetup,
                     )
                 },
                 bottomBar = {
@@ -328,6 +322,7 @@ internal fun ConfigScreen(
                                     onRequestAction = { pendingAction = it },
                                     onEditSystemProperties = { systemPropertiesEditorVisible = true },
                                     onUsePreset = { presetPickerVisible = true },
+                                    onSavePreset = { savePresetVisible = true },
                                     modifier = Modifier.widthIn(max = 880.dp),
                                 )
                             }
@@ -396,6 +391,7 @@ private fun ConfigDestinationContent(
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
     onUsePreset: () -> Unit,
+    onSavePreset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -406,6 +402,7 @@ private fun ConfigDestinationContent(
                 onFormChanged = onFormChanged,
                 events = events,
                 onUsePreset = onUsePreset,
+                onSavePreset = onSavePreset,
                 showPresetSummary = !isProfile,
             )
             ConfigDestination.Display -> {
@@ -435,11 +432,17 @@ private fun GeneralDestination(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     onUsePreset: () -> Unit,
+    onSavePreset: () -> Unit,
     showPresetSummary: Boolean,
 ) {
     var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
     if (showPresetSummary) {
-        GameSetupSummary(state = state, onUsePreset = onUsePreset, events = events)
+        PresetSummary(
+            state = state,
+            onUsePreset = onUsePreset,
+            onSavePreset = onSavePreset,
+            events = events,
+        )
     }
     ConfigSection(title = stringResource(R.string.config_basic_display)) {
         ConfigValuePreference(
@@ -605,12 +608,7 @@ private fun ConfigTopBar(
     isProfile: Boolean,
     onBack: () -> Unit,
     onStart: () -> Unit,
-    hasPreviousSetup: Boolean,
-    onUsePreset: () -> Unit,
-    onSavePreset: () -> Unit,
-    onRestorePreviousSetup: () -> Unit,
 ) {
-    var menuVisible by rememberSaveable { mutableStateOf(false) }
     TopAppBar(
         title = {
             Text(
@@ -635,40 +633,6 @@ private fun ConfigTopBar(
                         modifier = Modifier.size(30.dp),
                         contentDescription = stringResource(R.string.START_CMD),
                     )
-                }
-                IconButton(onClick = { menuVisible = true }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_more_vert),
-                        contentDescription = stringResource(R.string.more),
-                    )
-                }
-                DropdownMenu(
-                    expanded = menuVisible,
-                    onDismissRequest = { menuVisible = false },
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.preset_use)) },
-                        onClick = {
-                            menuVisible = false
-                            onUsePreset()
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.preset_save_as)) },
-                        onClick = {
-                            menuVisible = false
-                            onSavePreset()
-                        },
-                    )
-                    if (hasPreviousSetup) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.preset_restore_previous)) },
-                            onClick = {
-                                menuVisible = false
-                                onRestorePreviousSetup()
-                            },
-                        )
-                    }
                 }
             }
         },

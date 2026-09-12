@@ -130,8 +130,11 @@
     <string name="add_preset_description">Buat Prasetel Baru</string>
     <string name="preset_use">Gunakan Prasetel</string>
     <string name="preset_save_as">Simpan Sebagai Prasetel</string>
-    <string name="preset_game_setup">Pengaturan Aplikasi</string>
-    <string name="preset_restore_previous">Pulihkan Pengaturan Sebelumnya</string>
+    <string name="preset_current_configuration">Konfigurasi Saat Ini</string>
+    <string name="preset_use_summary">Pilih prasetel tersimpan atau bawaan JL-Mod untuk aplikasi ini.</string>
+    <string name="preset_save_as_summary">Simpan konfigurasi ini sebagai prasetel yang dapat digunakan kembali.</string>
+    <string name="preset_restore_previous">Pulihkan Konfigurasi Sebelumnya</string>
+    <string name="preset_restore_previous_summary">Memulihkan pengaturan aplikasi dan tata letak keyboard virtual yang disimpan sebelum perubahan prasetel atau pengaturan ulang terakhir.</string>
     <string name="preset_active">Prasetel aktif: %1$s</string>
     <string name="preset_based_on_modified">Berdasarkan %1$s; diubah</string>
     <string name="preset_builtin">Bawaan JL-Mod</string>
@@ -139,7 +142,7 @@
     <string name="preset_custom">Pengaturan kustom</string>
     <string name="preset_picker_title">Gunakan Prasetel</string>
     <string name="preset_manage">Kelola Prasetel</string>
-    <string name="preset_game_settings">Pengaturan Aplikasi</string>
+    <string name="preset_game_settings">Konfigurasi Aplikasi</string>
     <string name="preset_includes_keyboard_layout">Termasuk tata letak keyboard virtual</string>
     <string name="preset_virtual_keyboard_on">Keypad virtual aktif</string>
     <string name="preset_virtual_keyboard_off">Keypad virtual nonaktif</string>
@@ -148,15 +151,15 @@
 • Pengaturan aplikasi
 • Tata letak keyboard virtual
 
-Pengaturan saat ini akan disimpan agar dapat dipulihkan.</string>
+Konfigurasi saat ini akan disimpan sebagai titik pemulihan satu kali.</string>
     <string name="preset_apply_without_keyboard_message">Ini akan mengganti pengaturan aplikasi.
 
-Tata letak keyboard virtual saat ini akan dipertahankan.
-Pengaturan saat ini akan disimpan agar dapat dipulihkan.</string>
+Tata letak keyboard virtual saat ini tidak akan berubah.
+Konfigurasi saat ini akan disimpan sebagai titik pemulihan satu kali.</string>
     <string name="preset_apply_builtin_message">Ini akan mengatur ulang pengaturan aplikasi ke bawaan JL-Mod.
-Tata letak keyboard virtual saat ini akan dipertahankan.
+Tata letak keyboard virtual saat ini tidak akan berubah.
 
-Pengaturan saat ini akan disimpan agar dapat dipulihkan.</string>
+Konfigurasi saat ini akan disimpan sebagai titik pemulihan satu kali.</string>
     <string name="preset_name">Nama</string>
     <string name="preset_include_keyboard_layout">Sertakan tata letak keyboard virtual</string>
     <string name="preset_save_help">Dapat digunakan kembali dengan aplikasi lain. Perubahan pada aplikasi ini tidak akan mengubah prasetel secara otomatis.</string>
