@@ -2,6 +2,8 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  */
+// Modifications: the Compose memory-editor surface participates in the shared edge-to-edge policy.
+
 package io.github.h3nb.jlmodplus.memory
 
 import android.content.Context
@@ -38,7 +40,7 @@ class MemoryEditorActivity : AppCompatActivity() {
 
         window.setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
         window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-        EdgeToEdgeCompat.enableIfSupported(this)
+        EdgeToEdgeCompat.enableForComposeSurface(this)
         hideSystemBars()
 
         MemoryEngineService.addLocalRuntimeListener(runtimeListener)

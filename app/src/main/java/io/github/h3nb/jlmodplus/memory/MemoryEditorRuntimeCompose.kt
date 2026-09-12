@@ -3,6 +3,8 @@
  * you may not use this file except in compliance with the License.
  */
 
+// Modifications: standard text input and IME-safe dialogs complement the custom keypad.
+
 package io.github.h3nb.jlmodplus.memory
 
 import android.view.WindowManager
@@ -24,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -44,6 +47,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -60,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
@@ -915,7 +920,7 @@ private fun RuntimeSearchDialogBody(
     supportingContent: (@Composable () -> Unit)? = null,
 ) {
     val landscape = availableWindowWidthDp() > availableWindowHeightDp()
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().imePadding()) {
         val sideDock = landscape && showKeypad && maxWidth >= 480.dp
         if (sideDock) {
             val keypadWidth = (maxWidth * 0.42f).coerceIn(220.dp, 280.dp)
@@ -1028,6 +1033,8 @@ internal fun RuntimeKnownSearchDialog(
                             value = query,
                             active = activeField == RuntimeInputField.FIRST,
                             onClick = { activeField = RuntimeInputField.FIRST },
+                            onValueChange = { query = it },
+                            valueSpec = spec,
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -1037,6 +1044,8 @@ internal fun RuntimeKnownSearchDialog(
                             value = second,
                             active = activeField == RuntimeInputField.SECOND,
                             onClick = { activeField = RuntimeInputField.SECOND },
+                            onValueChange = { second = it },
+                            valueSpec = spec,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -1245,6 +1254,8 @@ private fun RuntimeUnknownSearchDialog(
                                         value = first,
                                         active = activeField == RuntimeInputField.FIRST,
                                         onClick = { activeField = RuntimeInputField.FIRST },
+                                        onValueChange = { first = it },
+                                        valueSpec = spec,
                                         modifier = Modifier.weight(1f),
                                     )
                                     RuntimeSearchField(
@@ -1252,6 +1263,8 @@ private fun RuntimeUnknownSearchDialog(
                                         value = second,
                                         active = activeField == RuntimeInputField.SECOND,
                                         onClick = { activeField = RuntimeInputField.SECOND },
+                                        onValueChange = { second = it },
+                                        valueSpec = spec,
                                         modifier = Modifier.weight(1f),
                                     )
                                 }
@@ -1261,6 +1274,8 @@ private fun RuntimeUnknownSearchDialog(
                                     value = first,
                                     active = activeField == RuntimeInputField.FIRST,
                                     onClick = { activeField = RuntimeInputField.FIRST },
+                                    onValueChange = { first = it },
+                                    valueSpec = spec,
                                     modifier = Modifier.fillMaxWidth(),
                                 )
                                 if (needsSecond) {
@@ -1269,6 +1284,8 @@ private fun RuntimeUnknownSearchDialog(
                                         value = second,
                                         active = activeField == RuntimeInputField.SECOND,
                                         onClick = { activeField = RuntimeInputField.SECOND },
+                                        onValueChange = { second = it },
+                                        valueSpec = spec,
                                         modifier = Modifier.fillMaxWidth(),
                                     )
                                 }
@@ -1425,10 +1442,12 @@ private fun RuntimeEditDialog(
                                     if (type == initialType) R.string.memory_editor_current_value
                                     else R.string.memory_editor_replacement,
                                 ),
-                                value = replacement,
-                                active = true,
-                                onClick = {},
-                                modifier = Modifier.weight(1f),
+                            value = replacement,
+                            active = true,
+                            onClick = {},
+                            onValueChange = { replacement = it },
+                            valueSpec = spec,
+                            modifier = Modifier.weight(1f),
                             )
                         }
                     } else {
@@ -1445,6 +1464,8 @@ private fun RuntimeEditDialog(
                             value = replacement,
                             active = true,
                             onClick = {},
+                            onValueChange = { replacement = it },
+                            valueSpec = spec,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -1712,6 +1733,8 @@ private fun RuntimeInspectorLogicalEditDialog(
                         value = value,
                         active = true,
                         onClick = {},
+                        onValueChange = { value = it },
+                        valueSpec = spec,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 },
@@ -1758,28 +1781,22 @@ private fun RuntimeSearchField(
     value: TextFieldValue,
     active: Boolean,
     onClick: () -> Unit,
+    onValueChange: (TextFieldValue) -> Unit,
+    valueSpec: MemoryInputSpec,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedButton(onClick = onClick, modifier = modifier.sizeIn(minHeight = 52.dp)) {
-        Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-            Text(label, style = MaterialTheme.typography.labelSmall)
-            val cursor = value.selection.end.coerceIn(0, value.text.length)
-            val visibleValue = when {
-                active && value.text.isEmpty() -> "▏"
-                active -> value.text.substring(0, cursor) + "▏" + value.text.substring(cursor)
-                value.text.isEmpty() -> "—"
-                else -> value.text
-            }
-            Text(
-                visibleValue,
-                style = MaterialTheme.typography.titleMedium,
-                fontFamily = FontFamily.Monospace,
-                color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
+    OutlinedTextField(
+        value = value,
+        onValueChange = { updated ->
+            if (valueSpec.acceptsPartial(updated.text)) onValueChange(updated)
+        },
+        modifier = modifier
+            .sizeIn(minHeight = 52.dp)
+            .onFocusChanged { if (it.isFocused) onClick() },
+        label = { Text(label) },
+        singleLine = true,
+        textStyle = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Monospace),
+    )
 }
 
 @Composable
