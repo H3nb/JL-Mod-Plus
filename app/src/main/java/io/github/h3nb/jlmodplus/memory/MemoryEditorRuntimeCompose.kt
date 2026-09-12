@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -26,7 +27,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -35,6 +37,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -67,6 +71,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -79,6 +85,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -93,6 +101,17 @@ import java.util.Locale
 
 private enum class RuntimeMemoryTab { SEARCH_RESULTS, WATCH, INSPECTOR }
 private enum class RuntimeInputField { FIRST, SECOND }
+
+private val RuntimeMemoryValueTypes = intArrayOf(
+    MemoryEngineContract.TYPE_AUTO,
+    MemoryEngineContract.TYPE_BYTE,
+    MemoryEngineContract.TYPE_SHORT,
+    MemoryEngineContract.TYPE_CHAR,
+    MemoryEngineContract.TYPE_INT,
+    MemoryEngineContract.TYPE_LONG,
+    MemoryEngineContract.TYPE_FLOAT,
+    MemoryEngineContract.TYPE_DOUBLE,
+)
 
 /** Production Memory Editor shell hosted in the dedicated :memory_engine Activity. */
 @Composable
@@ -912,6 +931,7 @@ private fun RuntimeWatchRow(
 }
 
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RuntimeSearchDialogBody(
     showKeypad: Boolean,
@@ -920,8 +940,20 @@ private fun RuntimeSearchDialogBody(
     supportingContent: (@Composable () -> Unit)? = null,
 ) {
     val landscape = availableWindowWidthDp() > availableWindowHeightDp()
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth().imePadding()) {
-        val sideDock = landscape && showKeypad && maxWidth >= 480.dp
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val imeVisible = WindowInsets.isImeVisible
+    // BasicAlertDialog's platform window already moves its frame above the IME. Applying
+    // imePadding here as well reserves that height a second time and creates a white band.
+    // Keep the native IME and custom keypad mutually exclusive to avoid competing layouts and
+    // reduce work while the IME animation is running.
+    val customKeypadVisible = showKeypad && !imeVisible
+    LaunchedEffect(Unit) {
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
+    }
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val sideDock = landscape && customKeypadVisible && maxWidth >= 480.dp
         if (sideDock) {
             val keypadWidth = (maxWidth * 0.42f).coerceIn(220.dp, 280.dp)
             Column(
@@ -950,7 +982,7 @@ private fun RuntimeSearchDialogBody(
             ) {
                 controls(false)
                 supportingContent?.invoke()
-                if (showKeypad) keypad()
+                if (customKeypadVisible) keypad()
             }
         }
     }
@@ -974,7 +1006,7 @@ internal fun RuntimeKnownSearchDialog(
     }
     var peekingUnderlay by remember { mutableStateOf(false) }
 
-    val expression = parseMemorySearchExpression(query.text)
+    val expression = remember(query.text) { parseMemorySearchExpression(query.text) }
     val groupExpression = expression is MemorySearchExpression.Group
     val effectivePredicate = if (groupExpression) {
         MemoryEngineContract.PREDICATE_EQUAL
@@ -984,7 +1016,7 @@ internal fun RuntimeKnownSearchDialog(
     LaunchedEffect(groupExpression) {
         if (groupExpression) predicate = MemoryEngineContract.PREDICATE_EQUAL
     }
-    val spec = MemoryInputSpec.forType(type)
+    val spec = remember(type) { MemoryInputSpec.forType(type) }
     LaunchedEffect(expression, type) {
         if (expression is MemorySearchExpression.Group && type == MemoryEngineContract.TYPE_AUTO) {
             inferMemoryGroupType(expression.values)?.let { type = it }
@@ -1176,8 +1208,10 @@ private fun RuntimeUnknownSearchDialog(
     val needsSecond = predicate == MemoryEngineContract.PREDICATE_BETWEEN ||
         predicate == MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE ||
         predicate == MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE
-    val spec = if (relative) MemoryInputSpec.relativeMagnitudeForType(type)
-    else MemoryInputSpec.forType(type)
+    val spec = remember(type, relative) {
+        if (relative) MemoryInputSpec.relativeMagnitudeForType(type)
+        else MemoryInputSpec.forType(type)
+    }
     val firstValid = !needsValue || spec.isComplete(first.text)
     val secondValid = !needsSecond || spec.isComplete(second.text)
     val refineValid = activeSession && firstValid && secondValid
@@ -1396,7 +1430,7 @@ private fun RuntimeEditDialog(
     }
     var freeze by remember { mutableStateOf(false) }
     var peekingUnderlay by remember { mutableStateOf(false) }
-    val spec = MemoryInputSpec.forType(type)
+    val spec = remember(type) { MemoryInputSpec.forType(type) }
     val replacementValid = if (targets.any(MemoryEditTarget::watch)) {
         targets.any { it.type == type } && spec.isComplete(replacement.text)
     } else {
@@ -1706,7 +1740,7 @@ private fun RuntimeInspectorLogicalEditDialog(
     onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val spec = MemoryInputSpec.forType(row.type)
+    val spec = remember(row.type) { MemoryInputSpec.forType(row.type) }
     var value by remember(row) {
         mutableStateOf(TextFieldValue(row.valueText, TextRange(row.valueText.length)))
     }
@@ -1785,6 +1819,9 @@ private fun RuntimeSearchField(
     valueSpec: MemoryInputSpec,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val keyboardType = if (valueSpec.decimal) KeyboardType.Decimal else KeyboardType.Number
     OutlinedTextField(
         value = value,
         onValueChange = { updated ->
@@ -1795,7 +1832,21 @@ private fun RuntimeSearchField(
             .onFocusChanged { if (it.isFocused) onClick() },
         label = { Text(label) },
         singleLine = true,
-        textStyle = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Monospace),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = ImeAction.Done,
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                keyboardController?.hide()
+                focusManager.clearFocus()
+            },
+        ),
+        textStyle = MaterialTheme.typography.titleMedium.copy(
+            color = if (active) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            fontFamily = FontFamily.Monospace,
+        ),
     )
 }
 
@@ -2095,16 +2146,7 @@ private fun RuntimeTypeMenu(
 ) {
     RuntimeChoiceMenu(
         value = type,
-        values = intArrayOf(
-            MemoryEngineContract.TYPE_AUTO,
-            MemoryEngineContract.TYPE_BYTE,
-            MemoryEngineContract.TYPE_SHORT,
-            MemoryEngineContract.TYPE_CHAR,
-            MemoryEngineContract.TYPE_INT,
-            MemoryEngineContract.TYPE_LONG,
-            MemoryEngineContract.TYPE_FLOAT,
-            MemoryEngineContract.TYPE_DOUBLE,
-        ),
+        values = RuntimeMemoryValueTypes,
         label = { runtimeTypeName(it) },
         onChange = onType,
         modifier = modifier,
