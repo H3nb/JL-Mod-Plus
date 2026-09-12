@@ -606,10 +606,12 @@ private fun RuntimeSearchResultsTab(
                         selected = row.id in state.selected,
                         onToggle = { actions.toggleSelection(row.id) },
                         onClick = {
-                            editTargets = listOf(
-                                MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes),
-                            )
-                            editRevision = state.revision
+                            if (state.writeSupported) {
+                                editTargets = listOf(
+                                    MemoryEditTarget(row.id, row.primaryType, row.valueText, row.aliasTypes),
+                                )
+                                editRevision = state.revision
+                            }
                         },
                     )
                 }
@@ -794,10 +796,12 @@ private fun RuntimeWatchTab(
                         selected = row.id in state.selected,
                         onToggle = { actions.toggleSelection(row.id) },
                         onClick = {
-                            editTargets = listOf(
-                                MemoryEditTarget(row.id, row.type, row.valueText,
-                                    listOf(row.type), watch = true),
-                            )
+                            if (state.writeSupported) {
+                                editTargets = listOf(
+                                    MemoryEditTarget(row.id, row.type, row.valueText,
+                                        listOf(row.type), watch = true),
+                                )
+                            }
                         },
                     )
                 }
