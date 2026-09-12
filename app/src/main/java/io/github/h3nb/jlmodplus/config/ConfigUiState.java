@@ -55,6 +55,9 @@ public final class ConfigUiState {
 	public final boolean hasPreviousSetup;
 	/** True when the current game owns a separate virtual keyboard layout artifact. */
 	public final boolean hasKeyboardLayout;
+	/** Names already occupied by profiles, including layout-only and unavailable entries. */
+	@NonNull
+	public final List<String> profileNames;
 
 	public ConfigUiState(
 			@NonNull ConfigFormState form,
@@ -134,6 +137,25 @@ public final class ConfigUiState {
 			boolean timingControlsEnabled,
 			boolean hasPreviousSetup,
 			boolean hasKeyboardLayout) {
+		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
+				profileStatus, profileTemplates, timingControlsEnabled, hasPreviousSetup,
+				hasKeyboardLayout, Collections.emptyList());
+	}
+
+	public ConfigUiState(
+			@NonNull ConfigFormState form,
+			@NonNull List<Size> screenPresets,
+			@NonNull List<FontPreset> fontPresets,
+			@NonNull List<String> skins,
+			@NonNull List<String> soundBanks,
+			@NonNull List<ShaderInfo> shaders,
+			@NonNull List<Size> removableScreenPresets,
+			@NonNull ProfileStatus profileStatus,
+			@NonNull List<ProfileTemplate> profileTemplates,
+			boolean timingControlsEnabled,
+			boolean hasPreviousSetup,
+			boolean hasKeyboardLayout,
+			@NonNull List<String> profileNames) {
 		this.form = form;
 		this.screenPresets = immutableCopy(screenPresets);
 		this.removableScreenPresets = immutableCopy(removableScreenPresets);
@@ -146,6 +168,7 @@ public final class ConfigUiState {
 		this.timingControlsEnabled = timingControlsEnabled;
 		this.hasPreviousSetup = hasPreviousSetup;
 		this.hasKeyboardLayout = hasKeyboardLayout;
+		this.profileNames = immutableCopy(profileNames);
 	}
 
 	private static <T> List<T> immutableCopy(List<T> values) {

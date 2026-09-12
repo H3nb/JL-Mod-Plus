@@ -241,7 +241,7 @@
     <string name="profile_custom">Custom</string>
     <string name="profile_custom_summary">Settings do not match a saved profile</string>
     <string name="profile_active_summary">Active profile</string>
-    <string name="profile_default_summary">Default for new games: %1$s</string>
+    <string name="profile_default_summary">Default for new applications: %1$s</string>
     <string name="profile_default_none">None</string>
     <string name="profile_use">Use profile</string>
     <string name="profile_change">Change profile</string>

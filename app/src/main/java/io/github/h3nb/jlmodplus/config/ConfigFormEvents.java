@@ -59,18 +59,28 @@ public interface ConfigFormEvents {
 	default void onManageProfiles() {
 	}
 
-	default void onApplyBuiltInTemplate() {
+	/** Returns true when the host applied the selection and the surface may close. */
+	default boolean onApplyBuiltInTemplate() {
+		return true;
 	}
 
-	default void onApplyTemplate(@NonNull String name) {
+	/** Returns false when the host kept the picker open after an apply failure. */
+	default boolean onApplyTemplate(@NonNull String name) {
+		return true;
 	}
 
-	default void onSaveTemplate(@NonNull String name) {
+	/** Returns false when the host kept the save dialog open after a save failure. */
+	default boolean onSaveTemplate(@NonNull String name) {
+		return true;
 	}
 
 	/** Saves game settings and optionally the separate virtual keyboard layout artifact. */
-	default void onSaveTemplate(@NonNull String name, boolean includeKeyboard) {
-		onSaveTemplate(name);
+	default boolean onSaveTemplate(@NonNull String name, boolean includeKeyboard) {
+		return onSaveTemplate(name);
+	}
+
+	/** Opens the saved keyboard-layout picker without replacing the current game settings draft. */
+	default void onChooseKeyboardLayout() {
 	}
 
 	/** Restores the one persistent setup snapshot captured before a destructive replacement. */

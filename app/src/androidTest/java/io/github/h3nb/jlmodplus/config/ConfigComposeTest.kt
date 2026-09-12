@@ -61,7 +61,7 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Custom setup").assertExists()
+        composeRule.onNodeWithText("Application Setup").assertExists()
         composeRule.onNodeWithText("Screen Size").assertExists()
         composeRule.onNodeWithText("Screen Orientation").assertExists()
         composeRule.onNodeWithText("Scale Type").assertExists()
@@ -150,8 +150,8 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Screen Size").assertExists()
         composeRule.onNodeWithText("Touch Input").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
-        composeRule.onNodeWithText("Use preset").assertDoesNotExist()
-        composeRule.onNodeWithText("Save as preset").assertDoesNotExist()
+        composeRule.onNodeWithText("Use Preset").assertDoesNotExist()
+        composeRule.onNodeWithText("Save as Preset").assertDoesNotExist()
     }
 
     @Test
@@ -207,10 +207,10 @@ class ConfigComposeTest {
   }
         }
 
-        composeRule.onNodeWithText("Use preset").performClick()
-        composeRule.onNodeWithText("Use preset").assertExists()
-        composeRule.onNodeWithText("JL-Mod defaults").performClick()
-        composeRule.onNodeWithText("JL-Mod defaults").assertExists()
+        composeRule.onNodeWithText("Use Preset").performClick()
+        composeRule.onNodeWithText("Use Preset").assertExists()
+        composeRule.onNodeWithText("JL-Mod Defaults").performClick()
+        composeRule.onNodeWithText("JL-Mod Defaults").assertExists()
         composeRule.onNodeWithText("Apply").performClick()
         assertEquals(1, events.applyBuiltInCalls)
     }
@@ -232,8 +232,8 @@ class ConfigComposeTest {
         composeRule.setContent {
   JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) }
         }
-        composeRule.onNodeWithText("Preset: Nokia Classic").assertExists()
-        composeRule.onNodeWithText("Use preset").performClick()
+        composeRule.onNodeWithText("Active preset: Nokia Classic").assertExists()
+        composeRule.onNodeWithText("Use Preset").performClick()
         composeRule.onNodeWithText("Nokia Classic").assertExists()
     }
 
@@ -256,14 +256,16 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("JL-Mod defaults").assertExists()
+        composeRule.onNodeWithText("JL-Mod Defaults").assertExists()
+        composeRule.onNodeWithText("Built-in emulator settings").assertDoesNotExist()
+        composeRule.onNodeWithText("Application Setup").assertExists()
+        composeRule.onNodeWithText("Use Preset").performClick()
         composeRule.onNodeWithText("Built-in emulator settings").assertExists()
-        composeRule.onNodeWithText("Custom setup").assertDoesNotExist()
-        composeRule.onNodeWithText("Use preset").assertExists()
+        composeRule.onNodeWithText("Cancel").performClick()
     }
 
     @Test
-    fun presetPickerConfirmsImpactBeforeDispatchingApply() {
+    fun presetPickerShowsImpactBeforeDispatchingApply() {
         val base = sampleState()
         val state = ConfigUiState(
             base.form,
@@ -282,7 +284,7 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
 
-        composeRule.onNodeWithText("Use preset").performClick()
+        composeRule.onNodeWithText("Use Preset").performClick()
         composeRule.onNodeWithText("RPG 240×320").performClick()
         composeRule.onNode(hasText("This will replace:", substring = true)).assertExists()
         composeRule.onNode(hasText("Virtual keyboard layout", substring = true)).assertExists()
@@ -312,7 +314,8 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
 
-        composeRule.onNodeWithText("Save as preset").performClick()
+        composeRule.onNodeWithContentDescription("More").performClick()
+        composeRule.onNodeWithText("Save as Preset").performClick()
         composeRule.onNodeWithText("Include virtual keyboard layout").assertExists()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("Comfortable")
         composeRule.onNodeWithText("Save").performClick()
@@ -341,7 +344,9 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
 
-        composeRule.onNodeWithText("Restore previous setup").performClick()
+        composeRule.onNodeWithContentDescription("Display").performClick()
+        composeRule.onNodeWithContentDescription("More").performClick()
+        composeRule.onNodeWithText("Restore Previous Setup").performClick()
         assertEquals(1, events.restoreCalls)
     }
 
@@ -633,18 +638,21 @@ class ConfigComposeTest {
             saveAsProfileCalls++
         }
 
-        override fun onApplyBuiltInTemplate() {
+        override fun onApplyBuiltInTemplate(): Boolean {
             applyBuiltInCalls++
+            return true
         }
 
-        override fun onApplyTemplate(name: String) {
+        override fun onApplyTemplate(name: String): Boolean {
             applyTemplateCalls++
             appliedTemplate = name
+            return true
         }
 
-        override fun onSaveTemplate(name: String, includeKeyboard: Boolean) {
+        override fun onSaveTemplate(name: String, includeKeyboard: Boolean): Boolean {
             savedTemplate = name
             savedTemplateIncludesKeyboard = includeKeyboard
+            return true
         }
 
         override fun onRestorePreviousSetup() {

@@ -55,6 +55,8 @@ import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -224,6 +226,8 @@ internal fun ConfigScreen(
     val form = state.form
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
+    var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
+    var savePresetVisible by rememberSaveable { mutableStateOf(false) }
     val updateForm: (ConfigFormState) -> Unit = { next ->
         events.onFormChanged(next)
     }
@@ -277,6 +281,10 @@ internal fun ConfigScreen(
                         isProfile = isProfile,
                         onBack = { menuActions?.onBack() },
                         onStart = { menuActions?.onStart() },
+                        hasPreviousSetup = state.hasPreviousSetup,
+                        onUsePreset = { presetPickerVisible = true },
+                        onSavePreset = { savePresetVisible = true },
+                        onRestorePreviousSetup = events::onRestorePreviousSetup,
                     )
                 },
                 bottomBar = {
@@ -290,19 +298,13 @@ internal fun ConfigScreen(
                     }
                 },
             ) { padding ->
-                Column(
+                HorizontalPager(
+                    state = pagerState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
                         .consumeWindowInsets(padding),
-                ) {
-                    if (!isProfile) {
-                        GameSetupSummary(state = state, events = events)
-                    }
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                    ) { page ->
+                ) { page ->
                         val pageScrollState = rememberScrollState()
                         Column(
                             modifier = Modifier
@@ -325,12 +327,12 @@ internal fun ConfigScreen(
                                     isProfile = isProfile,
                                     onRequestAction = { pendingAction = it },
                                     onEditSystemProperties = { systemPropertiesEditorVisible = true },
+                                    onUsePreset = { presetPickerVisible = true },
                                     modifier = Modifier.widthIn(max = 880.dp),
                                 )
                             }
                         }
                     }
-                }
             }
         }
     }
@@ -370,6 +372,17 @@ internal fun ConfigScreen(
             },
         )
     }
+
+    if (!isProfile) {
+        PresetDialogs(
+            state = state,
+            events = events,
+            pickerVisible = presetPickerVisible,
+            saveDialogVisible = savePresetVisible,
+            onPickerDismiss = { presetPickerVisible = false },
+            onSaveDismiss = { savePresetVisible = false },
+        )
+    }
 }
 
 @Composable
@@ -382,6 +395,7 @@ private fun ConfigDestinationContent(
     isProfile: Boolean,
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
+    onUsePreset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -391,13 +405,21 @@ private fun ConfigDestinationContent(
                 form = form,
                 onFormChanged = onFormChanged,
                 events = events,
+                onUsePreset = onUsePreset,
+                showPresetSummary = !isProfile,
             )
             ConfigDestination.Display -> {
                 ScreenSection(form, state, onFormChanged, events)
                 FontSection(form, state, onFormChanged)
             }
             ConfigDestination.Audio -> AudioSection(form, state, onFormChanged)
-            ConfigDestination.Controls -> InputSection(form, onFormChanged, events, onRequestAction)
+            ConfigDestination.Controls -> InputSection(
+                form,
+                onFormChanged,
+                events,
+                onRequestAction,
+                isGame = !isProfile,
+            )
             ConfigDestination.System -> {
                 EmulationSection(form, onFormChanged)
                 SystemSection(state, form, onFormChanged, events, !isProfile, onRequestAction, onEditSystemProperties)
@@ -412,8 +434,13 @@ private fun GeneralDestination(
     form: ConfigFormState,
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
+    onUsePreset: () -> Unit,
+    showPresetSummary: Boolean,
 ) {
     var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
+    if (showPresetSummary) {
+        GameSetupSummary(state = state, onUsePreset = onUsePreset, events = events)
+    }
     ConfigSection(title = stringResource(R.string.config_basic_display)) {
         ConfigValuePreference(
             title = stringResource(R.string.config_screen_size),
@@ -578,7 +605,12 @@ private fun ConfigTopBar(
     isProfile: Boolean,
     onBack: () -> Unit,
     onStart: () -> Unit,
+    hasPreviousSetup: Boolean,
+    onUsePreset: () -> Unit,
+    onSavePreset: () -> Unit,
+    onRestorePreviousSetup: () -> Unit,
 ) {
+    var menuVisible by rememberSaveable { mutableStateOf(false) }
     TopAppBar(
         title = {
             Text(
@@ -603,6 +635,40 @@ private fun ConfigTopBar(
                         modifier = Modifier.size(30.dp),
                         contentDescription = stringResource(R.string.START_CMD),
                     )
+                }
+                IconButton(onClick = { menuVisible = true }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_more_vert),
+                        contentDescription = stringResource(R.string.more),
+                    )
+                }
+                DropdownMenu(
+                    expanded = menuVisible,
+                    onDismissRequest = { menuVisible = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.preset_use)) },
+                        onClick = {
+                            menuVisible = false
+                            onUsePreset()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.preset_save_as)) },
+                        onClick = {
+                            menuVisible = false
+                            onSavePreset()
+                        },
+                    )
+                    if (hasPreviousSetup) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.preset_restore_previous)) },
+                            onClick = {
+                                menuVisible = false
+                                onRestorePreviousSetup()
+                            },
+                        )
+                    }
                 }
             }
         },
@@ -1173,6 +1239,7 @@ private fun InputSection(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     onRequestAction: (ConfigAction) -> Unit,
+    isGame: Boolean,
 ) {
     ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
         val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
@@ -1183,6 +1250,13 @@ private fun InputSection(
             options = layoutOptions,
             onSelected = { index -> onFormChanged(form.toBuilder().keyCodesLayout(index).build()) },
         )
+        if (isGame) {
+            ConfigActionPreference(
+                title = stringResource(R.string.choose_saved_keyboard_layout),
+                description = stringResource(R.string.choose_saved_keyboard_layout_summary),
+                onClick = events::onChooseKeyboardLayout,
+            )
+        }
         ConfigActionPreference(
             title = stringResource(R.string.pref_map_keys),
             description = stringResource(R.string.config_help_key_mapping),

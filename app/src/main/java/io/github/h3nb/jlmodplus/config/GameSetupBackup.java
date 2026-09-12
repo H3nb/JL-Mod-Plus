@@ -44,14 +44,25 @@ final class GameSetupBackup {
 	}
 
 	static boolean hasBackup(@NonNull File configDir) {
+		recoverInterruptedBackup(configDir);
 		File backupDir = backupDir(configDir);
-		return backupDir.isDirectory()
-				&& new File(backupDir, CONFIG_FILE).isFile()
-				&& new File(backupDir, METADATA_FILE).isFile();
+		return isCompleteBackup(backupDir);
 	}
 
 	static void capture(@NonNull File configDir, @Nullable String profileOrigin,
 			boolean builtInThemeLinked) throws IOException {
+		capture(configDir, profileOrigin, builtInThemeLinked, null);
+	}
+
+	/** Test-only fault injection point used to verify recovery after backup rotation. */
+	interface CaptureFaultInjector {
+		void afterPreviousRotated() throws IOException;
+	}
+
+	static void capture(@NonNull File configDir, @Nullable String profileOrigin,
+			boolean builtInThemeLinked, @Nullable CaptureFaultInjector faultInjector)
+			throws IOException {
+		recoverInterruptedBackup(configDir);
 		File currentConfig = new File(configDir, CONFIG_FILE);
 		if (!currentConfig.isFile()) {
 			throw new IOException("Current game configuration is not materialized");
@@ -64,15 +75,15 @@ final class GameSetupBackup {
 		File previous = backupDir(configDir);
 		File old = new File(configDir, OLD_DIR);
 		deleteRecursively(temporary);
-		deleteRecursively(old);
 		boolean movedPrevious = false;
+		boolean installedNew = false;
 		try {
 			if (!temporary.mkdirs()) {
 				throw new IOException("Unable to create temporary previous setup directory");
 			}
 			copyFile(currentConfig, new File(temporary, CONFIG_FILE));
 			File currentKeyboard = new File(configDir, KEY_LAYOUT_FILE);
-			boolean hadKeyboardLayout = currentKeyboard.isFile();
+			boolean hadKeyboardLayout = isUsableFile(currentKeyboard);
 			if (hadKeyboardLayout) {
 				copyFile(currentKeyboard, new File(temporary, KEY_LAYOUT_FILE));
 			}
@@ -91,16 +102,21 @@ final class GameSetupBackup {
 				}
 				movedPrevious = true;
 			}
+			if (movedPrevious && faultInjector != null) {
+				faultInjector.afterPreviousRotated();
+			}
 			if (!temporary.renameTo(previous)) {
 				throw new IOException("Unable to install previous setup backup");
 			}
-			if (movedPrevious) {
-				deleteRecursively(old);
-			}
+			installedNew = true;
+			// The old copy is disposable only after the new complete backup is in place.
+			deleteRecursively(old);
 		} catch (IOException | RuntimeException failure) {
-			// Keep the last complete backup if replacing the new temporary copy failed.
-			deleteRecursively(previous);
-			if (movedPrevious && old.exists() && !old.renameTo(previous)) {
+			// If rotation happened but installation did not, restore the old complete copy. Do not
+			// delete either side here: a failed rename can leave an artifact that the next open can
+			// reconcile safely in recoverInterruptedBackup().
+			if (movedPrevious && !installedNew && old.exists() && !previous.exists()
+					&& !old.renameTo(previous)) {
 				failure.addSuppressed(new IOException("Unable to restore previous setup backup"));
 			}
 			if (failure instanceof IOException) {
@@ -109,14 +125,36 @@ final class GameSetupBackup {
 			throw failure;
 		} finally {
 			deleteRecursively(temporary);
+		}
+	}
+
+	/**
+	 * Reconciles the two rotation artifacts left by a process interruption. A complete active
+	 * backup always wins; otherwise a complete rotated copy is promoted back to active storage.
+	 */
+	static void recoverInterruptedBackup(@NonNull File configDir) {
+		File previous = backupDir(configDir);
+		File old = new File(configDir, OLD_DIR);
+		boolean previousComplete = isCompleteBackup(previous);
+		boolean oldComplete = isCompleteBackup(old);
+		if (previousComplete) {
+			deleteRecursively(old);
+		} else if (oldComplete) {
+			deleteRecursively(previous);
+			// Leave old in place when the promotion fails; a later open can retry it.
+			old.renameTo(previous);
+		} else {
+			deleteRecursively(previous);
 			deleteRecursively(old);
 		}
+		deleteRecursively(new File(configDir, TEMP_DIR));
 	}
 
 	@NonNull
 	static RestoredMetadata restore(@NonNull File configDir) throws IOException {
+		recoverInterruptedBackup(configDir);
 		File backup = backupDir(configDir);
-		if (!hasBackup(configDir)) {
+		if (!isCompleteBackup(backup)) {
 			throw new IOException("No previous setup backup exists");
 		}
 		Metadata metadata = readMetadata(new File(backup, METADATA_FILE));
@@ -124,7 +162,7 @@ final class GameSetupBackup {
 			throw new IOException("Unsupported previous setup backup schema");
 		}
 		File backupKeyboard = new File(backup, KEY_LAYOUT_FILE);
-		if (metadata.hadKeyboardLayout && !backupKeyboard.isFile()) {
+		if (metadata.hadKeyboardLayout && !isUsableFile(backupKeyboard)) {
 			throw new IOException("Previous setup keyboard layout is missing");
 		}
 		copyFile(new File(backup, CONFIG_FILE), new File(configDir, CONFIG_FILE));
@@ -149,6 +187,16 @@ final class GameSetupBackup {
 	@NonNull
 	private static File backupDir(File configDir) {
 		return new File(configDir, BACKUP_DIR);
+	}
+
+	private static boolean isCompleteBackup(File directory) {
+		return directory.isDirectory()
+				&& isUsableFile(new File(directory, CONFIG_FILE))
+				&& isUsableFile(new File(directory, METADATA_FILE));
+	}
+
+	private static boolean isUsableFile(File file) {
+		return file != null && file.isFile() && file.length() > 0L;
 	}
 
 	@NonNull

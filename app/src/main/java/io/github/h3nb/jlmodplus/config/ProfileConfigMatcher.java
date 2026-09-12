@@ -71,12 +71,11 @@ final class ProfileConfigMatcher {
 			if (config == null) {
 				continue;
 			}
-			boolean hasKeyboardLayout = profile.hasKeyLayout();
+			boolean hasKeyboardLayout = profile.hasUsableKeyLayout();
 			byte[] keyboard = hasKeyboardLayout ? readKeyboard(profile.getKeyLayout()) : null;
-			// A layout that cannot be read cannot be safely advertised as part of a preset.
-			if (hasKeyboardLayout && keyboard == null) {
-				continue;
-			}
+			// Keep a valid config-only preset visible when its separate layout artifact is empty or
+			// unreadable. Applying it is still safe because the current layout will be preserved.
+			if (hasKeyboardLayout && keyboard == null) hasKeyboardLayout = false;
 			candidates.add(new Candidate(profile, config, hasKeyboardLayout, keyboard));
 		}
 		return candidates;

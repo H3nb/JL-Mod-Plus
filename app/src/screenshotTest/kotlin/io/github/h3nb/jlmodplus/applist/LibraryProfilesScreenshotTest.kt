@@ -540,7 +540,7 @@ fun ProfilesContentScreenshot() {
         ProfilesScreen(
             state = ProfilesUiState(
                 listOf(
-                    ProfileUiItem("", isDefault = true, canEdit = false, isBuiltIn = true),
+                    ProfileUiItem("", isDefault = false, canEdit = false, isBuiltIn = true),
                 ) + PreviewProfiles,
             ),
             actions = NoOpProfilesActions,

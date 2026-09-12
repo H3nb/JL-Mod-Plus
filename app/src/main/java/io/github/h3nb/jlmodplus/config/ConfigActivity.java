@@ -53,6 +53,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.microedition.shell.transform.MidletTransformMetadata;
 import javax.microedition.util.ContextHolder;
@@ -88,8 +90,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private ArrayList<ShaderInfo> shaders;
 	private String workDir;
 	private boolean needShow;
-	/** Captured before initialization so a broken existing config is never mistaken for a new game. */
-	private boolean configArtifactExistedBeforeInitialization;
+	/** Captured before initialization so partial existing setup is never mistaken for a new app. */
+	private boolean setupArtifactExistedBeforeInitialization;
 	private boolean initializationDecisionMade;
 	private boolean hasPreviousSetup;
 	private ConfigFormState currentForm;
@@ -108,6 +110,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			};
 	private List<ProfileConfigMatcher.Candidate> profileCandidates = Collections.emptyList();
 	private byte[] currentKeyLayoutSnapshot;
+	private List<String> profileNames = Collections.emptyList();
+	@Nullable private String cachedDefaultProfileName;
+	private int profileCacheGeneration;
+	private final ExecutorService profileMetadataExecutor = Executors.newSingleThreadExecutor();
 	@Nullable private String profileOrigin;
 
 	private final ConfigFormEvents formEvents = new ConfigFormEvents() {
@@ -179,23 +185,28 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		@Override
-		public void onApplyBuiltInTemplate() {
-			applyBuiltInTemplate();
+		public boolean onApplyBuiltInTemplate() {
+			return applyBuiltInTemplate();
 		}
 
 		@Override
-		public void onApplyTemplate(@NonNull String name) {
-			applyTemplate(name);
+		public boolean onApplyTemplate(@NonNull String name) {
+			return applyTemplate(name);
 		}
 
 		@Override
-		public void onSaveTemplate(@NonNull String name) {
-			saveTemplate(name, true);
+		public boolean onSaveTemplate(@NonNull String name) {
+			return saveTemplate(name, true);
 		}
 
 		@Override
-		public void onSaveTemplate(@NonNull String name, boolean includeKeyboard) {
-			saveTemplate(name, includeKeyboard);
+		public boolean onSaveTemplate(@NonNull String name, boolean includeKeyboard) {
+			return saveTemplate(name, includeKeyboard);
+		}
+
+		@Override
+		public void onChooseKeyboardLayout() {
+			showKeyboardLayoutPicker();
 		}
 
 		@Override
@@ -280,12 +291,17 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			dataDir.mkdirs();
 			configDir = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDir.getName());
 		}
-		configArtifactExistedBeforeInitialization = hasConfigArtifact(configDir);
 		configDir.mkdirs();
 		hasPreviousSetup = GameSetupBackup.hasBackup(configDir);
 		hostPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		hostPreferences.registerOnSharedPreferenceChangeListener(hostThemeListener);
 		profileOrigin = readProfileOrigin();
+		setupArtifactExistedBeforeInitialization = hasConfigArtifact(configDir)
+				|| new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE).isFile()
+				|| profileOrigin != null
+				|| hasPreviousSetup
+				|| (!isProfile && hostPreferences.getBoolean(
+						ProfileModel.builtInThemePreferenceKey(configDir), false));
 		builtInDefaultParams = newBuiltInProfile();
 
 		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
@@ -399,18 +415,24 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	void loadConfig() {
-		boolean mayInitializeNewGame = !initializationDecisionMade
-				&& !configArtifactExistedBeforeInitialization;
+		boolean mayInitializeNewApp = !initializationDecisionMade
+				&& !setupArtifactExistedBeforeInitialization;
 		initializationDecisionMade = true;
 		String configuredDefault = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
 				.getString(PREF_DEFAULT_PROFILE, null);
-		Profile validDefault = isProfile ? null : ProfilesManager.findValidGamePreset(configuredDefault);
+		Profile configuredProfile = isProfile ? null : ProfilesManager.findProfile(configuredDefault);
+		Profile validDefault = ProfilesManager.isValidGamePreset(configuredProfile)
+				? configuredProfile : null;
+		Profile keyboardOnlyDefault = validDefault == null && configuredProfile != null
+				&& configuredProfile.hasUsableKeyLayout() ? configuredProfile : null;
 		defProfile = validDefault == null ? null : validDefault.getName();
+		cachedDefaultProfileName = defProfile;
 		params = ProfilesManager.loadConfig(configDir);
 		boolean loadedDefaultProfile = false;
-		if (params == null && mayInitializeNewGame && validDefault != null) {
+		boolean loadedLegacyDefaultLayout = false;
+		if (params == null && mayInitializeNewApp && validDefault != null) {
 			try {
-				ProfilesManager.load(validDefault, configDir.getPath(), true, validDefault.hasKeyLayout());
+				ProfilesManager.load(validDefault, configDir.getPath(), true, validDefault.hasUsableKeyLayout());
 			} catch (IOException e) {
 				Log.e(TAG, "loadConfig: default preset", e);
 			}
@@ -419,10 +441,24 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			if (loadedDefaultProfile) {
 				setProfileOrigin(validDefault.getName());
 			}
+		} else if (params == null && mayInitializeNewApp && keyboardOnlyDefault != null) {
+			// Preserve the legacy default keyboard-only preference for new games while keeping the
+		// built-in game settings as the explicit configuration source.
+			params = newBuiltInProfile();
+			if (ProfilesManager.saveConfig(params)) {
+				try {
+					ProfilesManager.load(keyboardOnlyDefault, configDir.getPath(), false, true);
+					loadedLegacyDefaultLayout = true;
+				} catch (IOException e) {
+					Log.e(TAG, "loadConfig: legacy default keyboard layout", e);
+				}
+			}
+			if (loadedLegacyDefaultLayout) setProfileOrigin(null);
 		}
 		if (params == null) {
 			params = newBuiltInProfile();
-			setBuiltInThemeLinked(!isProfile && !loadedDefaultProfile);
+			setBuiltInThemeLinked(!isProfile && !loadedDefaultProfile
+					&& !setupArtifactExistedBeforeInitialization && profileOrigin == null);
 			return;
 		}
 		if (isProfile) {
@@ -433,6 +469,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		boolean linked = readBuiltInThemeLinked();
 		if (profileOrigin != null || loadedDefaultProfile) {
 			linked = false;
+		}
+		if (loadedLegacyDefaultLayout) {
+			setBuiltInThemeLinked(true);
+			return;
 		}
 		setBuiltInThemeLinked(linked);
 		if (builtInThemeLinked) {
@@ -571,6 +611,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	@Override
 	protected void onDestroy() {
+		profileMetadataExecutor.shutdownNow();
 		if (hostPreferences != null) {
 			hostPreferences.unregisterOnSharedPreferenceChangeListener(hostThemeListener);
 			hostPreferences = null;
@@ -716,16 +757,21 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	private void applyBuiltInTemplate() {
-		if (!capturePreviousSetup()) return;
+	private boolean applyBuiltInTemplate() {
+		if (!capturePreviousSetup()) return false;
 		setProfileOrigin(null);
 		params = newBuiltInProfile();
 		setBuiltInThemeLinked(true);
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+		if (!saveParams()) {
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			return false;
+		}
 		refreshProfileMatchCache();
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
+		return true;
 	}
 
 	private ProfileModel newBuiltInProfile() {
@@ -748,39 +794,51 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return ProfileModel.isDarkTheme(this);
 	}
 
-	private void applyTemplate(@NonNull String name) {
-		Profile profile = ProfilesManager.findValidGamePreset(name);
-		if (profile == null) return;
-		if (!capturePreviousSetup()) return;
+	private boolean applyTemplate(@NonNull String name) {
+		Profile profile = ProfilesManager.findProfile(name);
+		if (!ProfilesManager.isValidGamePreset(profile)) {
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			return false;
+		}
+		if (!capturePreviousSetup()) return false;
 		try {
-			ProfilesManager.load(profile, configDir.getPath(), true, profile.hasKeyLayout());
+			ProfilesManager.load(profile, configDir.getPath(), true, profile.hasUsableKeyLayout());
 			setProfileOrigin(profile.getName());
 			setBuiltInThemeLinked(false);
 			loadParams(true);
+			return true;
 		} catch (IOException e) {
 			Log.e(TAG, "applyTemplate: " + name, e);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			return false;
 		}
 	}
 
-	private void saveTemplate(@NonNull String rawName, boolean includeKeyboard) {
+	private boolean saveTemplate(@NonNull String rawName, boolean includeKeyboard) {
 		String name = rawName.trim();
-		if (name.isEmpty() || findProfile(name) != null) {
-			ThemedToast.show(this, R.string.profile_name_exists, Toast.LENGTH_SHORT);
-			return;
+		if (!Profile.isValidName(name)) {
+			ThemedToast.show(this, R.string.preset_invalid_name, Toast.LENGTH_SHORT);
+			return false;
 		}
+		if (ProfilesManager.profileNameExists(name)) {
+			ThemedToast.show(this, R.string.profile_name_exists, Toast.LENGTH_SHORT);
+			return false;
+		}
+		Profile profile = new Profile(name);
 		try {
 			if (!saveParams()) {
 				throw new IOException("Unable to save current game configuration");
 			}
-			Profile profile = new Profile(name);
 			ProfilesManager.saveSnapshot(profile, configDir.getPath(), includeKeyboard);
 			setProfileOrigin(name);
 			refreshProfileMatchCache();
-			composeController.update(createUiState());
+			if (composeController != null) composeController.update(createUiState());
+			return true;
 		} catch (IOException e) {
 			Log.e(TAG, "saveTemplate: " + name, e);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			profile.delete();
+			return false;
 		}
 	}
 
@@ -834,9 +892,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private void setDefaultTemplate(@Nullable String name) {
 		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
 		if (name == null) editor.remove(PREF_DEFAULT_PROFILE);
-		else if (findProfile(name) != null) editor.putString(PREF_DEFAULT_PROFILE, name);
+		else if (ProfilesManager.isValidGamePreset(findProfile(name))) {
+			editor.putString(PREF_DEFAULT_PROFILE, name);
+		}
 		else return;
 		editor.apply();
+		refreshProfileMatchCache();
 		if (composeController != null) composeController.update(createUiState());
 	}
 
@@ -895,6 +956,34 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		LoadProfileAlert.newInstance(keylayoutFile.getParent())
 				.show(getSupportFragmentManager(), "load_profile");
+	}
+
+	private void showKeyboardLayoutPicker() {
+		if (keylayoutFile == null) return;
+		LoadProfileAlert.newInstance(keylayoutFile.getParent(), true)
+				.show(getSupportFragmentManager(), "load_keyboard_layout");
+	}
+
+	/** Applies only a saved keyboard artifact and leaves the current game-settings draft intact. */
+	boolean applyKeyboardLayout(@NonNull String name) {
+		Profile profile = ProfilesManager.findProfile(name);
+		if (profile == null || !profile.hasUsableKeyLayout()) {
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			return false;
+		}
+		if (!capturePreviousSetup()) return false;
+		try {
+			ProfilesManager.load(profile, configDir.getPath(), false, true);
+			loadKeyLayout();
+			refreshProfileMatchCache();
+			if (composeController != null) composeController.update(createUiState());
+			return true;
+		} catch (IOException e) {
+			Log.e(TAG, "applyKeyboardLayout: " + name, e);
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			if (composeController != null) composeController.update(createUiState());
+			return false;
+		}
 	}
 
 	private void showSaveProfile() {
@@ -988,19 +1077,47 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (isProfile) {
 			profileCandidates = Collections.emptyList();
 			currentKeyLayoutSnapshot = null;
+			profileNames = Collections.emptyList();
+			cachedDefaultProfileName = null;
 			return;
 		}
-		profileCandidates = ProfileConfigMatcher.loadCandidates(ProfilesManager.getProfiles());
-		currentKeyLayoutSnapshot = ProfileConfigMatcher.readKeyboard(keylayoutFile);
+		final int generation = ++profileCacheGeneration;
+		final File currentLayout = keylayoutFile;
+		final String configuredDefault = PreferenceManager.getDefaultSharedPreferences(this)
+				.getString(PREF_DEFAULT_PROFILE, null);
+		profileMetadataExecutor.execute(() -> {
+			ArrayList<Profile> profiles = ProfilesManager.getProfiles();
+			List<ProfileConfigMatcher.Candidate> candidates =
+					ProfileConfigMatcher.loadCandidates(profiles);
+			byte[] keyboard = ProfileConfigMatcher.readKeyboard(currentLayout);
+			String defaultName = null;
+			if (configuredDefault != null) {
+				for (ProfileConfigMatcher.Candidate candidate : candidates) {
+					if (configuredDefault.equals(candidate.profile.getName())) {
+						defaultName = configuredDefault;
+						break;
+					}
+				}
+			}
+			ArrayList<String> names = new ArrayList<>(profiles.size());
+			for (Profile profile : profiles) names.add(profile.getName());
+			final String resolvedDefaultName = defaultName;
+			runOnUiThread(() -> {
+				if (generation != profileCacheGeneration || isFinishing() || isDestroyed()) return;
+				profileCandidates = candidates;
+				currentKeyLayoutSnapshot = keyboard;
+				profileNames = names;
+				cachedDefaultProfileName = resolvedDefaultName;
+				if (composeController != null) composeController.update(createUiState());
+			});
+		});
 	}
 
 	private ConfigUiState createUiState() {
 		ConfigFormState state = currentForm == null
 				? ConfigFormState.fromProfile(params, normalizedSystemProperties())
 				: currentForm;
-		Profile validDefault = isProfile ? null : ProfilesManager.findValidGamePreset(
-				PreferenceManager.getDefaultSharedPreferences(this).getString(PREF_DEFAULT_PROFILE, null));
-		String defaultProfile = validDefault == null ? null : validDefault.getName();
+		String defaultProfile = isProfile ? null : cachedDefaultProfileName;
 		ProfileConfigMatcher.Candidate originCandidate = !isProfile && profileOrigin != null
 				? findProfileCandidate(profileOrigin) : null;
 		ConfigUiState.ProfileStatus profileStatus;
@@ -1029,7 +1146,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
-				hasPreviousSetup, keylayoutFile != null && keylayoutFile.isFile());
+				hasPreviousSetup, Config.isUsableFile(keylayoutFile), profileNames);
 	}
 
 	private boolean hasCompatibleTimingTransform() {

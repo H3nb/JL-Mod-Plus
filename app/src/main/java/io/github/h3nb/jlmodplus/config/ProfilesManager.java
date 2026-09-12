@@ -30,6 +30,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.microedition.util.ContextHolder;
 
@@ -47,6 +48,48 @@ public class ProfilesManager {
 	static ArrayList<Profile> getProfiles() {
 		File root = new File(Config.getProfilesDir());
 		return getList(root);
+	}
+
+	/** A disk-only inspection result prepared before Compose state is updated. */
+	static final class ProfileInfo {
+		@NonNull final Profile profile;
+		@Nullable final ProfileModel config;
+		final boolean validGamePreset;
+		final boolean usableKeyboardLayout;
+
+		ProfileInfo(@NonNull Profile profile, @Nullable ProfileModel config,
+				boolean usableKeyboardLayout) {
+			this.profile = profile;
+			this.config = config;
+			this.validGamePreset = config != null;
+			this.usableKeyboardLayout = usableKeyboardLayout;
+		}
+	}
+
+	/** Performs profile parsing and artifact checks in the caller's worker thread. */
+	@NonNull
+	static ArrayList<ProfileInfo> inspectProfiles(@Nullable List<Profile> profiles) {
+		ArrayList<ProfileInfo> result = new ArrayList<>();
+		if (profiles == null) return result;
+		for (Profile profile : profiles) {
+			ProfileModel config = (profile.hasConfig() || profile.hasOldConfig())
+					? loadConfig(profile.getDir(), false) : null;
+			result.add(new ProfileInfo(profile, config, profile.hasUsableKeyLayout()));
+		}
+		return result;
+	}
+
+	/** Returns true when a directory or a saved layout already occupies this collection name. */
+	static boolean profileNameExists(@Nullable String rawName) {
+		if (!Profile.isValidName(rawName)) return false;
+		String name = rawName.trim();
+		for (Profile profile : getProfiles()) {
+			if (profile.getName().equalsIgnoreCase(name)) return true;
+		}
+		File root = new File(Config.getProfilesDir());
+		return new File(root, name).exists()
+				|| new File(root, name + Config.MIDLET_CONFIG_FILE).exists()
+				|| new File(root, name + Config.MIDLET_KEY_LAYOUT_FILE).exists();
 	}
 
 	@NonNull
@@ -88,6 +131,9 @@ public class ProfilesManager {
 			}
 		}
 		if (keyboard) {
+			if (!from.hasUsableKeyLayout()) {
+				throw new IOException("Profile keyboard layout is not loadable");
+			}
 			FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
 		}
 	}
@@ -119,7 +165,7 @@ public class ProfilesManager {
 		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
 		File dstKeyLayout = profile.getKeyLayout();
 		FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
-		if (includeKeyboard && srcKeyLayout.isFile()) {
+		if (includeKeyboard && Config.isUsableFile(srcKeyLayout)) {
 			FileUtils.copyFileUsingChannel(srcKeyLayout, dstKeyLayout);
 		} else if (dstKeyLayout.exists() && !dstKeyLayout.delete()) {
 			Log.w(TAG, "saveSnapshot: could not remove stale key layout " + dstKeyLayout);
@@ -143,6 +189,16 @@ public class ProfilesManager {
 			if (name.equals(profile.getName()) && isValidGamePreset(profile)) {
 				return profile;
 			}
+		}
+		return null;
+	}
+
+	/** Resolves a saved collection entry without requiring it to contain a game configuration. */
+	@Nullable
+	static Profile findProfile(@Nullable String name) {
+		if (name == null) return null;
+		for (Profile profile : getProfiles()) {
+			if (name.equals(profile.getName())) return profile;
 		}
 		return null;
 	}

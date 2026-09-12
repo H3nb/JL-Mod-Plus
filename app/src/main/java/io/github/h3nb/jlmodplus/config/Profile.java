@@ -82,6 +82,25 @@ public class Profile implements Comparable<Profile> {
 		return getKeyLayout().exists();
 	}
 
+	/** Returns whether the saved keyboard artifact has content that can be loaded safely. */
+	boolean hasUsableKeyLayout() {
+		return Config.isUsableFile(getKeyLayout());
+	}
+
+	/** Validates a user-facing name before it is used as a profile directory name. */
+	static boolean isValidName(@Nullable String rawName) {
+		if (rawName == null) return false;
+		String value = rawName.trim();
+		if (value.isEmpty() || ".".equals(value) || "..".equals(value)) return false;
+		for (int i = 0; i < value.length(); i++) {
+			char character = value.charAt(i);
+			if (character == '/' || character == '\\' || Character.isISOControl(character)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	@Override
 	public boolean equals(@Nullable Object obj) {
 		if (this == obj) return true;

@@ -38,19 +38,29 @@ import androidx.preference.PreferenceManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.ui.ThemedToast;
 
 /** Compose presentation with the legacy profile copy contract kept in the host callback. */
 public class LoadProfileAlert extends DialogFragment {
+	private static final String KEYBOARD_ONLY = "keyboard_only";
 	private ArrayList<Profile> profiles;
+	private Set<String> unavailableProfileNames;
 	private String configPath;
+	private boolean keyboardOnly;
 
 	static LoadProfileAlert newInstance(String parent) {
+		return newInstance(parent, false);
+	}
+
+	static LoadProfileAlert newInstance(String parent, boolean keyboardOnly) {
 		LoadProfileAlert fragment = new LoadProfileAlert();
 		Bundle args = new Bundle();
 		args.putString(KEY_CONFIG_PATH, parent);
+		args.putBoolean(KEYBOARD_ONLY, keyboardOnly);
 		fragment.setArguments(args);
 		return fragment;
 	}
@@ -60,7 +70,17 @@ public class LoadProfileAlert extends DialogFragment {
 		super.onCreate(savedInstanceState);
 		profiles = ProfilesManager.getProfiles();
 		Collections.sort(profiles);
+		unavailableProfileNames = new HashSet<>();
+		for (ProfilesManager.ProfileInfo info : ProfilesManager.inspectProfiles(profiles)) {
+			boolean hasConfigArtifact = info.profile.hasConfig() || info.profile.hasOldConfig();
+			boolean layoutOnly = !info.validGamePreset && !hasConfigArtifact
+					&& info.usableKeyboardLayout;
+			if (!info.validGamePreset && !layoutOnly) {
+				unavailableProfileNames.add(info.profile.getName());
+			}
+		}
 		configPath = requireArguments().getString(KEY_CONFIG_PATH);
+		keyboardOnly = requireArguments().getBoolean(KEYBOARD_ONLY, false);
 	}
 
 	@NonNull
@@ -73,6 +93,8 @@ public class LoadProfileAlert extends DialogFragment {
 				composeView,
 				profiles,
 				defaultName,
+				keyboardOnly,
+				unavailableProfileNames,
 				new ConfigDialogComposeBridge.LoadProfileCallbacks() {
 					@Override
 					public void onDismiss() {
@@ -103,6 +125,12 @@ public class LoadProfileAlert extends DialogFragment {
 							}
 							if (selected == null) {
 								ThemedToast.show(context, R.string.error, Toast.LENGTH_SHORT);
+								return;
+							}
+							if (keyboardOnly && context instanceof ConfigActivity) {
+								if (((ConfigActivity) context).applyKeyboardLayout(name)) {
+									dismiss();
+								}
 								return;
 							}
 							ProfilesManager.load(selected, configPath, config, keyboard);

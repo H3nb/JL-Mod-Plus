@@ -37,7 +37,10 @@ import androidx.compose.ui.platform.ComposeView;
 import androidx.preference.PreferenceManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.Map;
 
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -46,6 +49,8 @@ public class ProfilesActivity extends AppCompatActivity {
 	private final Map<String, Profile> profilesByName = new HashMap<>();
 	private SharedPreferences preferences;
 	private ProfilesComposeController composeController;
+	private final ExecutorService profileExecutor = Executors.newSingleThreadExecutor();
+	private int refreshGeneration;
 
 	private final ActivityResultLauncher<String> editProfileLauncher = registerForActivityResult(
 			new ActivityResultContract<String, String>() {
@@ -79,6 +84,12 @@ public class ProfilesActivity extends AppCompatActivity {
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		composeController = new ProfilesComposeController(composeView, createActions());
 		refreshProfiles();
+	}
+
+	@Override
+	protected void onDestroy() {
+		profileExecutor.shutdownNow();
+		super.onDestroy();
 	}
 
 	private ProfilesActions createActions() {
@@ -120,10 +131,13 @@ public class ProfilesActivity extends AppCompatActivity {
 			@Override
 			public void onRename(@NonNull String oldName, @NonNull String newName) {
 				Profile profile = profilesByName.get(oldName);
-				if (profile == null) {
+				if (profile == null || !Profile.isValidName(newName)
+						|| ProfilesManager.profileNameExists(newName)) {
 					return;
 				}
-				profile.renameTo(newName);
+				if (!profile.renameTo(newName)) {
+					return;
+				}
 				if (oldName.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
 					preferences.edit().putString(PREF_DEFAULT_PROFILE, newName).apply();
 				}
@@ -145,13 +159,48 @@ public class ProfilesActivity extends AppCompatActivity {
 	}
 
 	private void refreshProfiles() {
-		ArrayList<Profile> profiles = ProfilesManager.getProfiles();
-		profilesByName.clear();
-		for (Profile profile : profiles) {
-			profilesByName.put(profile.getName(), profile);
-		}
-		Profile validDefault = ProfilesManager.findValidGamePreset(
-				preferences.getString(PREF_DEFAULT_PROFILE, null));
-		composeController.updateProfiles(profiles, validDefault == null ? null : validDefault.getName());
+		final int generation = ++refreshGeneration;
+		final String defaultName = preferences.getString(PREF_DEFAULT_PROFILE, null);
+		profileExecutor.execute(() -> {
+			ArrayList<Profile> profiles = ProfilesManager.getProfiles();
+			Collections.sort(profiles);
+			ArrayList<ProfilesManager.ProfileInfo> inspected = ProfilesManager.inspectProfiles(profiles);
+			boolean hasValidDefault = false;
+			for (ProfilesManager.ProfileInfo info : inspected) {
+				if (info.validGamePreset && defaultName != null
+						&& defaultName.equals(info.profile.getName())) {
+					hasValidDefault = true;
+					break;
+				}
+			}
+			ArrayList<ProfileUiItem> items = new ArrayList<>(inspected.size() + 1);
+			items.add(new ProfileUiItem(
+					"", !hasValidDefault, false, true, false, false, 0, 0, 0, false));
+			for (ProfilesManager.ProfileInfo info : inspected) {
+				boolean valid = info.validGamePreset;
+				boolean hasConfigArtifact = info.profile.hasConfig() || info.profile.hasOldConfig();
+				// A usable layout is a standalone saved layout only when no configuration artifact is
+				// present. A corrupt configuration with a layout must remain identifiable as unavailable.
+				boolean keyboardOnly = !valid && !hasConfigArtifact && info.usableKeyboardLayout;
+				boolean unavailable = !valid && !keyboardOnly;
+				items.add(new ProfileUiItem(
+						info.profile.getName(),
+						valid && info.profile.getName().equals(defaultName),
+						valid,
+						false,
+						keyboardOnly,
+						info.usableKeyboardLayout,
+						info.config == null ? 0 : info.config.screenWidth,
+						info.config == null ? 0 : info.config.screenHeight,
+						info.config == null ? 0 : info.config.orientation,
+						unavailable));
+			}
+			runOnUiThread(() -> {
+				if (generation != refreshGeneration || isFinishing() || isDestroyed()) return;
+				profilesByName.clear();
+				for (Profile profile : profiles) profilesByName.put(profile.getName(), profile);
+				composeController.updateProfileItems(items);
+			});
+		});
 	}
 }

@@ -86,6 +86,62 @@ public class GameSetupBackupTest {
 		assertTrue(read("config.json").equals("second"));
 	}
 
+	@Test
+	public void failedCaptureBeforeRotationKeepsPreviousSetup() throws Exception {
+		writeConfig("first");
+		GameSetupBackup.capture(directory, "first-origin", false);
+
+		new File(directory, "config.json").delete();
+		try {
+			GameSetupBackup.capture(directory, "failed-origin", false);
+			throw new AssertionError("capture should fail without a current config");
+		} catch (java.io.IOException expected) {
+			// The previous complete backup must remain available to the user.
+		}
+
+		assertTrue(GameSetupBackup.hasBackup(directory));
+		GameSetupBackup.RestoredMetadata restored = GameSetupBackup.restore(directory);
+		assertTrue(restored.profileOrigin.equals("first-origin"));
+		assertTrue(read("config.json").equals("first"));
+	}
+
+	@Test
+	public void failedCaptureAfterRotationRestoresPreviousSetup() throws Exception {
+		writeConfig("first");
+		GameSetupBackup.capture(directory, "first-origin", false);
+
+		writeConfig("second");
+		try {
+			GameSetupBackup.capture(directory, "failed-origin", false,
+					() -> { throw new java.io.IOException("injected rotation failure"); });
+			throw new AssertionError("capture should fail at the injected fault");
+		} catch (java.io.IOException expected) {
+			// Verify the rotated backup was restored below.
+		}
+
+		assertTrue(GameSetupBackup.hasBackup(directory));
+		GameSetupBackup.RestoredMetadata restored = GameSetupBackup.restore(directory);
+		assertTrue(restored.profileOrigin.equals("first-origin"));
+		assertTrue(read("config.json").equals("first"));
+	}
+
+	@Test
+	public void failedRestoreKeepsBackupForRetry() throws Exception {
+		writeConfig("old-config");
+		writeLayout("old-layout");
+		GameSetupBackup.capture(directory, "Old preset", false);
+		new File(directory, ".previous_setup/VirtualKeyboardLayout").delete();
+
+		try {
+			GameSetupBackup.restore(directory);
+			throw new AssertionError("restore should fail when the saved layout is missing");
+		} catch (java.io.IOException expected) {
+			// A failed restore must not consume the only recovery point.
+		}
+
+		assertTrue(GameSetupBackup.hasBackup(directory));
+	}
+
 	private void writeConfig(String value) throws Exception {
 		Files.write(new File(directory, "config.json").toPath(), value.getBytes(StandardCharsets.UTF_8));
 	}

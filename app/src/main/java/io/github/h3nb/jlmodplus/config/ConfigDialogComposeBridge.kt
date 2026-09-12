@@ -90,10 +90,29 @@ object ConfigDialogComposeBridge {
         profiles: List<Profile>,
         @Suppress("UNUSED_PARAMETER") defaultName: String?,
         callbacks: LoadProfileCallbacks,
+    ) = setLoadProfileContent(view, profiles, defaultName, false, emptySet(), callbacks)
+
+    @JvmStatic
+    fun setLoadProfileContent(
+        view: androidx.compose.ui.platform.ComposeView,
+        profiles: List<Profile>,
+        @Suppress("UNUSED_PARAMETER") defaultName: String?,
+        keyboardOnly: Boolean,
+        callbacks: LoadProfileCallbacks,
+    ) = setLoadProfileContent(view, profiles, defaultName, keyboardOnly, emptySet(), callbacks)
+
+    @JvmStatic
+    fun setLoadProfileContent(
+        view: androidx.compose.ui.platform.ComposeView,
+        profiles: List<Profile>,
+        @Suppress("UNUSED_PARAMETER") defaultName: String?,
+        keyboardOnly: Boolean,
+        unavailableProfileNames: Set<String>,
+        callbacks: LoadProfileCallbacks,
     ) {
         view.setContent {
             JLModPlusTheme {
-                LoadProfileContent(profiles, callbacks)
+                LoadProfileContent(profiles, keyboardOnly, unavailableProfileNames, callbacks)
             }
         }
     }
@@ -185,12 +204,20 @@ private fun DialogSurface(
 @Composable
 private fun LoadProfileContent(
     profiles: List<Profile>,
+    keyboardOnly: Boolean,
+    unavailableProfileNames: Set<String>,
     callbacks: ConfigDialogComposeBridge.LoadProfileCallbacks,
 ) {
     DialogSurface(onDismissRequest = callbacks::onDismiss) {
-        Text(stringResource(R.string.profile_choose_template), style = MaterialTheme.typography.titleLarge)
         Text(
-            stringResource(R.string.profile_choose_template_summary),
+            stringResource(if (keyboardOnly) R.string.choose_saved_keyboard_layout else R.string.profile_choose_template),
+            style = MaterialTheme.typography.titleLarge,
+        )
+        Text(
+            stringResource(
+                if (keyboardOnly) R.string.choose_saved_keyboard_layout_summary
+                else R.string.profile_choose_template_summary,
+            ),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -214,17 +241,26 @@ private fun LoadProfileContent(
                 ) {
                     itemsIndexed(profiles) { _, profile ->
                         val hasConfig = profile.hasConfig() || profile.hasOldConfig()
-                        val hasKeyboard = profile.hasKeyLayout()
-                        val available = hasConfig || hasKeyboard
+                        val hasKeyboard = profile.hasUsableKeyLayout()
+                        val unavailable = profile.name in unavailableProfileNames
+                        val available = !unavailable && (hasConfig || hasKeyboard)
+                        val selectable = if (keyboardOnly) !unavailable && hasKeyboard else available
                         ListItem(
                             colors = ListItemDefaults.colors(
                                 containerColor = androidx.compose.ui.graphics.Color.Transparent,
                             ),
                             headlineContent = { Text(profile.name) },
+                            supportingContent = if (unavailable) {
+                                { Text(stringResource(R.string.preset_unavailable_summary)) }
+                            } else if (!hasConfig && hasKeyboard) {
+                                { Text(stringResource(R.string.saved_keyboard_layout_summary)) }
+                            } else {
+                                null
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(enabled = available) {
-                                    if (available) {
+                                .clickable(enabled = selectable) {
+                                    if (selectable) {
                                         callbacks.onConfirm(profile.name, hasConfig, hasKeyboard)
                                     } else {
                                         callbacks.onError()
