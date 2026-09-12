@@ -125,7 +125,7 @@ final class ManagedAutoKnownQuery {
 
     @Nullable
     private static BigInteger parseWideInteger(@Nullable String text) {
-        if (text == null) return null;
+        if (text == null || text.length() > 96) return null;
         String value = text.trim();
         if (value.isEmpty()) return null;
 

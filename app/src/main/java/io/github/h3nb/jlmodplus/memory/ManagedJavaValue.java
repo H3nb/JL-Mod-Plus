@@ -16,6 +16,7 @@ import java.math.BigInteger;
 /** Typed raw-bit codec and predicate evaluator for the managed primitive planes. */
 final class ManagedJavaValue {
 	private static final BigInteger UNSIGNED_LONG_MAX = BigInteger.ONE.shiftLeft(64).subtract(BigInteger.ONE);
+	private static final int MAX_INPUT_CHARS = 96;
 
 	private ManagedJavaValue() {
 	}
@@ -112,7 +113,7 @@ final class ManagedJavaValue {
 
 	/** Parses one editable/search value into the canonical raw bits for its exact primitive type. */
 	static boolean parse(@Nullable String text, int type, long[] output) {
-		if (text == null || output == null || output.length == 0) return false;
+		if (text == null || text.length() > MAX_INPUT_CHARS || output == null || output.length == 0) return false;
 		String value = text.trim();
 		if (value.isEmpty()) return false;
 		try {
@@ -202,7 +203,7 @@ final class ManagedJavaValue {
 
 	/** Parses a non-negative relative magnitude using the unsigned primitive width. */
 	static boolean parseMagnitude(@Nullable String text, int type, long[] output) {
-		if (text == null || output == null || output.length == 0) return false;
+		if (text == null || text.length() > MAX_INPUT_CHARS || output == null || output.length == 0) return false;
 		String value = text.trim();
 		if (value.startsWith("+")) value = value.substring(1);
 		if (value.isEmpty() || value.startsWith("-")) return false;

@@ -209,7 +209,7 @@ final class ManagedJavaMemoryEngine {
 			}
 			while (!scan.queue.isEmpty()) {
 				if (!scan.checkpoint()) return scan.failure();
-				Object valueObject = scan.queue.removeFirst();
+				Object valueObject = scan.dequeue();
 				scan.visit(valueObject);
 			}
 			RevisionBuilder built = scan.revision;
@@ -280,7 +280,7 @@ final class ManagedJavaMemoryEngine {
 			}
 			while (!scan.queue.isEmpty()) {
 				if (!scan.checkpoint()) return scan.failure();
-				scan.visit(scan.queue.removeFirst());
+				scan.visit(scan.dequeue());
 			}
 			Revision revision = scan.revision.finish(allocateRevisionId(), limits,
 					scan.transientStorageBytes);
@@ -340,7 +340,7 @@ final class ManagedJavaMemoryEngine {
 			}
 			while (!scan.queue.isEmpty()) {
 				if (!scan.checkpoint()) return scan.failure();
-				scan.visit(scan.queue.removeFirst());
+				scan.visit(scan.dequeue());
 			}
 			Revision revision = scan.revision.finish(allocateRevisionId(), limits,
 					scan.transientStorageBytes);
@@ -357,7 +357,7 @@ final class ManagedJavaMemoryEngine {
 			return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT, limit.getMessage());
 		} catch (RuntimeException | LinkageError error) {
 			return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
-					"Managed Unknown traversal failed safely");
+					"Managed graph traversal failed safely");
 		}
 	}
 
@@ -402,7 +402,7 @@ final class ManagedJavaMemoryEngine {
 			}
 			while (!scan.queue.isEmpty()) {
 				if (!scan.checkpoint()) return scan.failure();
-				scan.visit(scan.queue.removeFirst());
+				scan.visit(scan.dequeue());
 			}
 			Revision revision = scan.revision.finish(allocateRevisionId(), limits,
 					scan.transientStorageBytes);
@@ -1296,39 +1296,54 @@ final class ManagedJavaMemoryEngine {
 					MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime changed or ended");
 			snapshot = watches.frozenSnapshot(owners);
 		}
+		int eligible = 0;
 		int written = 0;
+		int rejected = 0;
 		long[] readback = new long[1];
 		for (int index = 0; index < snapshot.count; index++) {
-			if (!isOperationActive(token, operationEpoch)) return failure(token,
-					MemoryEngineContract.RESULT_CANCELLED, "Managed Freeze tick was cancelled");
-			OwnerBucket owner = snapshot.owners[index];
-			Object strongOwner = owner == null ? null : owner.strongOwner();
-			if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)) {
-				markFreezePaused(snapshot.ids[index]);
-				continue;
-			}
-			try {
-				int type = valueTypeFor(owner, snapshot.slots[index]);
-				writeTyped(owner, snapshot.slots[index], strongOwner, type,
-						snapshot.freezeValues[index]);
-				if (readTyped(owner, snapshot.slots[index], strongOwner, readback)
-						&& writeConfirmed(readback[0], snapshot.freezeValues[index])) {
-					written++;
-					updateWatchPrevious(snapshot.ids[index], readback[0]);
-				} else {
-					markFreezePaused(snapshot.ids[index]);
+			synchronized (stateLock) {
+				if (!isOperationActive(token, operationEpoch)) return failureLocked(
+						MemoryEngineContract.RESULT_CANCELLED, "Managed Freeze tick was cancelled");
+				long id = snapshot.ids[index];
+				int watchIndex = watches.indexOf(id);
+				if (watchIndex < 0 || !watches.freeze[watchIndex] || watches.freezePaused[watchIndex]) {
+					continue;
 				}
-			} catch (IllegalAccessException | RuntimeException | LinkageError error) {
-				markFreezePaused(snapshot.ids[index]);
+				OwnerBucket owner = watches.owners[watchIndex];
+				int slot = watches.slots[watchIndex];
+				if (owner != snapshot.owners[index] || slot != snapshot.slots[index]) continue;
+				eligible++;
+				Object strongOwner = owner == null ? null : owner.strongOwner();
+				if (owner == null || (owner.kind != KIND_STATIC_FIELD && strongOwner == null)) {
+					watches.freezePaused[watchIndex] = true;
+					rejected++;
+					continue;
+				}
+				try {
+					int type = valueTypeFor(owner, slot);
+					long freezeValue = watches.freezeValues[watchIndex];
+					writeTyped(owner, slot, strongOwner, type, freezeValue);
+					if (readTyped(owner, slot, strongOwner, readback)
+							&& writeConfirmed(readback[0], freezeValue)) {
+						written++;
+						watches.previous[watchIndex] = readback[0];
+					} else {
+						watches.freezePaused[watchIndex] = true;
+						rejected++;
+					}
+				} catch (IllegalAccessException | RuntimeException | LinkageError error) {
+					watches.freezePaused[watchIndex] = true;
+					rejected++;
+				}
 			}
 		}
-		int code = written == snapshot.count ? MemoryEngineContract.RESULT_OK
+		int code = written == eligible ? MemoryEngineContract.RESULT_OK
 				: written > 0 ? MemoryEngineContract.RESULT_PARTIAL_WRITE
-				: snapshot.count == 0 ? MemoryEngineContract.RESULT_OK
+				: eligible == 0 ? MemoryEngineContract.RESULT_OK
 				: MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
 		return result(token, code,
-				"Managed Freeze Lock tick wrote " + written + " of " + snapshot.count,
-				snapshot.count, written, snapshot.count - written, 0);
+				"Managed Freeze Lock tick wrote " + written + " of " + eligible,
+				eligible, written, rejected, 0);
 	}
 
 	ManagedOperationResult clearSearchResult(long token, long expectedRevision, long operationEpoch) {
@@ -1861,9 +1876,13 @@ final class ManagedJavaMemoryEngine {
 		synchronized (stateLock) {
 			Schema cached = schemaCache.get(type);
 			if (cached != null) return cached;
-			Schema schema = Schema.build(type, loader);
-			schemaCache.put(type, schema);
-			return schema;
+		}
+		Schema built = Schema.build(type, loader);
+		synchronized (stateLock) {
+			Schema cached = schemaCache.get(type);
+			if (cached != null) return cached;
+			schemaCache.put(type, built);
+			return built;
 		}
 	}
 
@@ -2455,8 +2474,17 @@ final class ManagedJavaMemoryEngine {
 			queue.addLast(value);
 		}
 
+		Object dequeue() {
+			Object value = queue.removeFirst();
+			releaseTraversalBytes(QUEUE_REFERENCE_BYTES);
+			return value;
+		}
+
 		boolean checkpoint() {
-			if (!isOperationActive(token, operationEpoch) || visitCount > limits.maxVisited) return false;
+			if (!isOperationActive(token, operationEpoch)) return false;
+			if (visitCount > limits.maxVisited) {
+				throw new ResourceLimitException("Managed visited-owner limit exceeded");
+			}
 			if (!revision.withinStorageBudget(limits, transientStorageBytes)) {
 				throw new ResourceLimitException("Managed traversal storage exceeds the resource limit");
 			}
