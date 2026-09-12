@@ -806,10 +806,10 @@ internal class MemoryEditorComposeController(
         val ids = state.selected.toLongArray()
         if (ids.isEmpty()) return
         val watch = state.watchTab
+        if (watch && keep) return
         launchOperation { engine, token ->
             if (watch) {
-                if (keep) MemoryEngineContract.RESULT_INVALID_REQUEST.toLong()
-                else engine.removeWatch(token, ids)
+                engine.removeWatch(token, ids)
             } else {
                 engine.filterResultGroups(token, state.revision, ids, keep)
             }
