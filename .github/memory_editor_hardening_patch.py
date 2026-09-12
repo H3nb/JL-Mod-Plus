@@ -14,16 +14,10 @@ engine_path = 'app/src/main/java/io/github/h3nb/jlmodplus/memory/ManagedJavaMemo
 p = Path(engine_path)
 text = p.read_text()
 
-old = 'Object valueObject = scan.queue.removeFirst();\n\t\t\tscan.visit(valueObject);'
-new = 'Object valueObject = scan.dequeue();\n\t\t\tscan.visit(valueObject);'
-if text.count(old) != 1:
-    raise SystemExit(f'engine first dequeue match count={text.count(old)}')
-text = text.replace(old, new, 1)
-
-old = 'scan.visit(scan.queue.removeFirst());'
-if text.count(old) != 3:
-    raise SystemExit(f'engine compact dequeue match count={text.count(old)}')
-text = text.replace(old, 'scan.visit(scan.dequeue());')
+old = 'scan.queue.removeFirst()'
+if text.count(old) != 4:
+    raise SystemExit(f'engine dequeue match count={text.count(old)}')
+text = text.replace(old, 'scan.dequeue()')
 
 old = '''\t\tvoid enqueue(@Nullable Object value) {
 \t\t\tif (value == null || queued.containsKey(value) || visited.containsKey(value)) return;
