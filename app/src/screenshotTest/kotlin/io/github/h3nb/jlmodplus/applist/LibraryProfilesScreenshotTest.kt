@@ -588,7 +588,6 @@ fun ProfileActionsScreenshot() {
         ProfileActionsDialog(
             profile = PreviewProfiles.first(),
             onDismiss = {},
-            onDefault = {},
             onEdit = {},
             onRename = {},
             onDelete = {},
@@ -712,7 +711,6 @@ fun ProfileActionsCompactLandscapeLargeTextScreenshot() {
         ProfileActionsDialog(
             profile = PreviewProfiles.first().copy(isDefault = false),
             onDismiss = {},
-            onDefault = {},
             onEdit = {},
             onRename = {},
             onDelete = {},

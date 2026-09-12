@@ -37,6 +37,7 @@ import android.util.Log;
 import android.view.Display;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -399,6 +400,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				},
 				getTitle() == null ? "" : getTitle().toString(),
 				isProfile);
+		getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+			@Override
+			public void handleOnBackPressed() {
+				if (isProfile && composeController != null) {
+					composeController.requestBack();
+				} else {
+					finish();
+				}
+			}
+		});
 	}
 
 	@Override
@@ -408,15 +419,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			outState.putBoolean(STATE_PROFILE_DRAFT_DIRTY, profileDraftDirty);
 		}
 		super.onSaveInstanceState(outState);
-	}
-
-	@Override
-	public void onBackPressed() {
-		if (isProfile && composeController != null) {
-			composeController.requestBack();
-			return;
-		}
-		super.onBackPressed();
 	}
 
 	private void initSkinOptions() {
