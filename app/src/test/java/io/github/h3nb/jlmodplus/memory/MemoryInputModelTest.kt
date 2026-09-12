@@ -37,6 +37,24 @@ class MemoryInputModelTest {
         assertTrue(spec.isComplete("1.5E-3"))
     }
 
+    @Test fun groupSearchSeparatorValidatesEachPartialTerm() {
+        val spec = MemoryInputSpec.forType(MemoryEngineContract.TYPE_INT)
+        assertTrue(spec.acceptsPartial("1;"))
+        assertTrue(spec.acceptsPartial("1;2"))
+        assertTrue(spec.acceptsPartial("-1;2;-3"))
+        assertFalse(spec.acceptsPartial(";1"))
+        assertFalse(spec.acceptsPartial("1;;2"))
+        assertFalse(spec.acceptsPartial("1;2.5"))
+        assertFalse(spec.acceptsPartial("1;2;3;4;5;6;7;8;9"))
+    }
+
+    @Test fun groupSearchUsesPerTermWidthInsteadOfSingleValueWidth() {
+        val byteSpec = MemoryInputSpec.forType(MemoryEngineContract.TYPE_BYTE)
+        assertTrue(byteSpec.acceptsPartial("1;2"))
+        assertTrue(byteSpec.acceptsPartial("-12;127"))
+        assertFalse(byteSpec.acceptsPartial("-129;1"))
+    }
+
     @Test fun float32RejectsOverflowThatDoubleWouldAccept() {
         assertFalse(MemoryInputSpec.forType(MemoryEngineContract.TYPE_FLOAT).isComplete("1e39"))
         assertTrue(MemoryInputSpec.forType(MemoryEngineContract.TYPE_DOUBLE).isComplete("1e39"))
