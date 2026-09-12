@@ -75,7 +75,7 @@ final class ManagedJavaMemoryEngine {
 	private final Map<Class<?>, Schema> schemaCache = new HashMap<>();
 	private final WatchStore watches = new WatchStore();
 	private final ArrayDeque<SearchState> searchHistory = new ArrayDeque<>();
-	private long activeToken;
+	private volatile long activeToken;
 	private ClassLoader activeLoader;
 	private long nextOwnerHandle = 1L;
 	private long nextRevision = 1L;
@@ -357,7 +357,7 @@ final class ManagedJavaMemoryEngine {
 			return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT, limit.getMessage());
 		} catch (RuntimeException | LinkageError error) {
 			return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
-					"Managed graph traversal failed safely");
+					"Managed Unknown traversal failed safely");
 		}
 	}
 
@@ -2141,6 +2141,7 @@ final class ManagedJavaMemoryEngine {
 		final int predicate;
 		final boolean relative;
 		final boolean[] valid = new boolean[LAST_SUPPORTED_TYPE + 1];
+		final boolean[] alwaysMatch = new boolean[LAST_SUPPORTED_TYPE + 1];
 		final long[] first = new long[LAST_SUPPORTED_TYPE + 1];
 		final long[] second = new long[LAST_SUPPORTED_TYPE + 1];
 
@@ -2187,22 +2188,49 @@ final class ManagedJavaMemoryEngine {
 			if (predicate != MemoryEngineContract.PREDICATE_BETWEEN
 					&& !isBlank(secondText)) return null;
 			QueryPlan plan = new QueryPlan(selector, predicate, false);
+
+			if (selector == MemoryEngineContract.TYPE_AUTO) {
+				for (int type = MemoryEngineContract.TYPE_BYTE;
+				     type <= MemoryEngineContract.TYPE_LONG; type++) {
+					ManagedAutoKnownQuery.Result result = ManagedAutoKnownQuery.forIntegralType(
+							type, predicate, firstText, secondText);
+					if (!result.valid) continue;
+					plan.valid[type] = true;
+					plan.alwaysMatch[type] = result.alwaysMatch;
+					plan.first[type] = result.first;
+					plan.second[type] = result.second;
+				}
+				for (int type = MemoryEngineContract.TYPE_FLOAT;
+				     type <= MemoryEngineContract.TYPE_DOUBLE; type++) {
+					long[] firstBits = new long[1];
+					long[] secondBits = new long[1];
+					if (!ManagedJavaValue.parse(firstText, type, firstBits)) continue;
+					if (predicate == MemoryEngineContract.PREDICATE_BETWEEN
+							&& !ManagedJavaValue.parse(secondText, type, secondBits)) continue;
+					long first = firstBits[0];
+					long second = predicate == MemoryEngineContract.PREDICATE_BETWEEN
+							? secondBits[0] : 0L;
+					if (ManagedJavaValue.validKnownQuery(type, predicate, first, second)) {
+						plan.valid[type] = true;
+						plan.first[type] = first;
+						plan.second[type] = second;
+					}
+				}
+				return hasValidType(plan) ? plan : null;
+			}
+
 			long[] firstBits = new long[1];
 			long[] secondBits = new long[1];
-			for (int type = FIRST_SUPPORTED_TYPE; type <= LAST_SUPPORTED_TYPE; type++) {
-				if (selector != MemoryEngineContract.TYPE_AUTO && selector != type) continue;
-				if (!ManagedJavaValue.parse(firstText, type, firstBits)) continue;
-				if (predicate == MemoryEngineContract.PREDICATE_BETWEEN
-						&& !ManagedJavaValue.parse(secondText, type, secondBits)) continue;
-				long first = firstBits[0];
-				long second = predicate == MemoryEngineContract.PREDICATE_BETWEEN ? secondBits[0] : 0L;
-				if (ManagedJavaValue.validKnownQuery(type, predicate, first, second)) {
-					plan.valid[type] = true;
-					plan.first[type] = first;
-					plan.second[type] = second;
-				}
-			}
-			return hasValidType(plan) ? plan : null;
+			if (!ManagedJavaValue.parse(firstText, selector, firstBits)) return null;
+			if (predicate == MemoryEngineContract.PREDICATE_BETWEEN
+					&& !ManagedJavaValue.parse(secondText, selector, secondBits)) return null;
+			long first = firstBits[0];
+			long second = predicate == MemoryEngineContract.PREDICATE_BETWEEN ? secondBits[0] : 0L;
+			if (!ManagedJavaValue.validKnownQuery(selector, predicate, first, second)) return null;
+			plan.valid[selector] = true;
+			plan.first[selector] = first;
+			plan.second[selector] = second;
+			return plan;
 		}
 
 		static QueryPlan fromRelativeBits(int selector, int predicate, long first, long second) {
@@ -2256,8 +2284,8 @@ final class ManagedJavaMemoryEngine {
 		}
 
 		boolean matchesKnown(int type, long current) {
-			return accepts(type) && ManagedJavaValue.matchesKnown(type, predicate, current,
-					first[type], second[type]);
+			return accepts(type) && (alwaysMatch[type] || ManagedJavaValue.matchesKnown(type, predicate,
+					current, first[type], second[type]));
 		}
 
 		boolean matchesRelative(int type, int actualPredicate, long current, long reference) {
