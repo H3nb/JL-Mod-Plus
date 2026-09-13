@@ -36,10 +36,11 @@ import javax.microedition.util.ContextHolder;
 import androidx.preference.PreferenceManager;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
 import io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter;
 import javax.microedition.shell.timing.TimingMode;
 public class ProfileModel {
-	public static final int VERSION = 6;
+	public static final int VERSION = 7;
 
 	/** Stable preference key used to keep the built-in palette linked to the host theme. */
 	public static String builtInThemePreferenceKey(File configDir) {
@@ -61,6 +62,11 @@ public class ProfileModel {
 
 	@SerializedName("ScreenBackgroundColor")
 	public int screenBackgroundColor;
+
+	/** Stable background strategy; the custom color remains stored while other modes are active. */
+	@JsonAdapter(BackgroundModeAdapter.class)
+	@SerializedName("ScreenBackgroundMode")
+	public int screenBackgroundMode = BackgroundMode.CUSTOM;
 
 	@SerializedName("ScreenBackgroundImage")
 	public String screenBackgroundImage;
@@ -202,6 +208,7 @@ public class ProfileModel {
 		screenWidth = 240;
 		screenHeight = 320;
 		screenBackgroundColor = 0xD0D0D0;
+		screenBackgroundMode = BackgroundMode.CUSTOM;
 		screenScaleType = 1;
 		screenGravity = 1;
 		screenScaleRatio = 100;
@@ -232,7 +239,6 @@ public class ProfileModel {
 	public static void applyBuiltInTheme(ProfileModel profile, boolean darkTheme) {
 		int background = darkTheme ? 0x000000 : 0xFFFFFF;
 		int foreground = darkTheme ? 0xFFFFFF : 0x000000;
-		profile.screenBackgroundColor = background;
 		profile.vkAlpha = 255;
 		profile.vkBgColor = background;
 		profile.vkFgColor = foreground;
@@ -267,6 +273,9 @@ public class ProfileModel {
 	 */
 	public static ProfileModel createBuiltIn(File dir, boolean darkTheme) {
 		ProfileModel profile = new ProfileModel(dir);
+		profile.screenBackgroundMode = BackgroundMode.THEME;
+		// Keep a deterministic dormant custom value so switching back to Custom is reversible.
+		profile.screenBackgroundColor = AppBackgroundColors.rgb(darkTheme);
 		applyBuiltInTheme(profile, darkTheme);
 		return profile;
 	}

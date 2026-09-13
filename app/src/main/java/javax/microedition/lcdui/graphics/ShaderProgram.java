@@ -41,6 +41,7 @@ public class ShaderProgram {
 	public int uTexelDelta;
 	public int uSetting;
 	public int uPixelDelta;
+	private int programHandle = -1;
 
 	public ShaderProgram(ShaderInfo shader) {
 		if (shader != null) {
@@ -101,9 +102,25 @@ public class ShaderProgram {
 			glDeleteProgram(program);
 			program = -1;
 		}
+		programHandle = program;
 		glDeleteShader(vertexId);
 		glDeleteShader(fragmentId);
 		return program;
+	}
+
+	/** Rebinds this program before updating uniforms or vertex attributes. */
+	public void use() {
+		if (programHandle >= 0) {
+			glUseProgram(programHandle);
+		}
+	}
+
+	/** Deletes the program on its owning GL thread. */
+	public void release() {
+		if (programHandle >= 0) {
+			glDeleteProgram(programHandle);
+			programHandle = -1;
+		}
 	}
 
 	private int loadShader(int type, String shaderCode) {

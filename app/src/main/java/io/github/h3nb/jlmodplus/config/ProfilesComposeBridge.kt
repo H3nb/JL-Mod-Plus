@@ -15,9 +15,11 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,12 +31,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -141,6 +145,11 @@ fun ProfilesScreen(
                         )
                     }
                 },
+                actions = {
+                    TextButton(onClick = { nameDialog = ProfileNameDialog.Create }) {
+                        Text(stringResource(R.string.profile_create_title))
+                    }
+                },
             )
         },
     ) { padding ->
@@ -150,13 +159,11 @@ fun ProfilesScreen(
                     .fillMaxSize()
                     .padding(padding),
             ) {
-                Text(
-                    text = stringResource(R.string.preset_manager_empty_summary),
+                EmptyProfilesCard(
+                    onCreate = { nameDialog = ProfileNameDialog.Create },
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .padding(top = 12.dp),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        .padding(16.dp),
                 )
             }
         } else {
@@ -169,7 +176,13 @@ fun ProfilesScreen(
             val unavailable = state.profiles.filter { it.isUnavailable }
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = padding,
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    top = padding.calculateTopPadding() + 16.dp,
+                    end = 16.dp,
+                    bottom = padding.calculateBottomPadding() + 16.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 item { ProfileSectionHeader(stringResource(R.string.preset_manager_default_section)) }
                 item(key = "default-policy") {
@@ -267,12 +280,42 @@ fun ProfilesScreen(
 }
 
 @Composable
+private fun EmptyProfilesCard(onCreate: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            Text(
+                text = stringResource(R.string.profile_create_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = stringResource(R.string.profile_create_summary),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(onClick = onCreate, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.profile_create_title))
+            }
+        }
+    }
+}
+
+@Composable
 private fun ProfileSectionHeader(title: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(top = 12.dp, bottom = 2.dp),
     )
 }
 
@@ -293,29 +336,46 @@ private fun DefaultPolicyRow(
     } else {
         stringResource(R.string.preset_default_policy_summary, displayName)
     }
-    Row(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .heightIn(min = 96.dp),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.set_as_default_new_applications), fontWeight = FontWeight.Medium)
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                stringResource(R.string.set_as_default_new_applications),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                displayName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Text(
                 summary,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+            Text(
+                text = stringResource(R.string.preset_change_default),
+                modifier = Modifier.align(Alignment.End),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
-        Text(
-            stringResource(R.string.preset_change_default),
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.labelLarge,
-        )
     }
 }
 
@@ -330,62 +390,77 @@ private fun ProfileRow(
     } else {
         profile.name
     }
-    Row(
+    val colors = MaterialTheme.colorScheme
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .heightIn(min = 76.dp),
+        shape = MaterialTheme.shapes.large,
+        color = if (profile.isDefault) colors.secondaryContainer else colors.surfaceContainerLow,
+        contentColor = if (profile.isDefault) colors.onSecondaryContainer else colors.onSurface,
+        border = if (profile.isDefault) BorderStroke(1.dp, colors.secondary) else null,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = displayName,
-                fontWeight = if (profile.isDefault) FontWeight.SemiBold else FontWeight.Normal,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
-            val summary = when {
-                profile.isBuiltIn -> stringResource(R.string.profile_builtin_settings_summary)
-                profile.isKeyboardOnly -> stringResource(R.string.saved_keyboard_layout_summary)
-                profile.isUnavailable -> stringResource(R.string.preset_unavailable_summary)
-                profile.screenWidth > 0 && profile.screenHeight > 0 -> buildString {
-                    append(profile.screenWidth).append(" × ").append(profile.screenHeight)
-                    orientationOptions.getOrNull(profile.orientation)?.let {
-                        append(" · ").append(it)
-                    }
-                    if (profile.hasKeyboardLayout) {
-                        append(" · ").append(stringResource(R.string.preset_includes_keyboard_layout))
-                    }
-                    if (profile.isKeyboardLayoutUnavailable) {
-                        append(" · ").append(stringResource(R.string.preset_keyboard_layout_unavailable))
+        Row(
+            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = displayName,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = if (profile.isDefault) FontWeight.SemiBold else FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (profile.isDefault && !profile.isBuiltIn) {
+                        Surface(
+                            shape = MaterialTheme.shapes.small,
+                            color = colors.secondary,
+                            contentColor = colors.onSecondary,
+                        ) {
+                            Text(
+                                text = stringResource(R.string.profile_default_badge_short),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                            )
+                        }
                     }
                 }
-                else -> buildString {
-                    append(stringResource(R.string.profile_template_summary))
-                    if (profile.isKeyboardLayoutUnavailable) {
-                        append(" · ").append(stringResource(R.string.preset_keyboard_layout_unavailable))
+                val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
+                val summary = when {
+                    profile.isBuiltIn -> stringResource(R.string.profile_builtin_settings_summary)
+                    profile.isKeyboardOnly -> stringResource(R.string.saved_keyboard_layout_summary)
+                    profile.isUnavailable -> stringResource(R.string.preset_unavailable_summary)
+                    profile.screenWidth > 0 && profile.screenHeight > 0 -> buildString {
+                        append(profile.screenWidth).append(" × ").append(profile.screenHeight)
+                        orientationOptions.getOrNull(profile.orientation)?.let { append(" · ").append(it) }
+                        if (profile.hasKeyboardLayout) append(" · ").append(stringResource(R.string.preset_includes_keyboard_layout))
+                        if (profile.isKeyboardLayoutUnavailable) append(" · ").append(stringResource(R.string.preset_keyboard_layout_unavailable))
+                    }
+                    else -> buildString {
+                        append(stringResource(R.string.profile_template_summary))
+                        if (profile.isKeyboardLayoutUnavailable) append(" · ").append(stringResource(R.string.preset_keyboard_layout_unavailable))
                     }
                 }
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (profile.isDefault) colors.onSecondaryContainer.copy(alpha = 0.78f) else colors.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        if (profile.isDefault && !profile.isBuiltIn) {
-            Text(
-                text = stringResource(R.string.profile_default_badge_short),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-        onManage?.let { manage ->
-            TextButton(onClick = manage) {
-                Text(stringResource(R.string.preset_manage))
+            onManage?.let { manage ->
+                IconButton(onClick = manage) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_more_vert),
+                        contentDescription = stringResource(R.string.profile_more_actions, displayName),
+                    )
+                }
             }
         }
     }
@@ -423,6 +498,7 @@ internal fun ProfileActionsDialog(
                         .fillMaxWidth()
                         .heightIn(max = maxActionHeight)
                         .verticalScroll(scrollState),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     if (profile.isBuiltIn) {
                         Text(
@@ -482,6 +558,7 @@ private fun DefaultPresetDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = adaptiveDialogLayout().maxHeight),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(choices, key = ::profileSelectionId) { profile ->
                     val displayName = if (profile.isBuiltIn) {
@@ -489,19 +566,36 @@ private fun DefaultPresetDialog(
                     } else {
                         profile.name
                     }
-                    Row(
+                    val selected = selectedId == profileSelectionId(profile)
+                    val colors = MaterialTheme.colorScheme
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
                             .selectable(
-                                selected = selectedId == profileSelectionId(profile),
+                                selected = selected,
                                 onClick = { selectedId = profileSelectionId(profile) },
                                 role = androidx.compose.ui.semantics.Role.RadioButton,
                             )
-                            .padding(vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                            .heightIn(min = 56.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        color = if (selected) colors.secondaryContainer else colors.surfaceContainerLow,
+                        contentColor = if (selected) colors.onSecondaryContainer else colors.onSurface,
+                        border = if (selected) BorderStroke(1.dp, colors.secondary) else null,
                     ) {
-                        RadioButton(selected = selectedId == profileSelectionId(profile), onClick = null)
-                        Text(displayName, modifier = Modifier.padding(start = 4.dp))
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = selected, onClick = null)
+                            Text(
+                                displayName,
+                                modifier = Modifier.padding(start = 8.dp),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
             }
@@ -523,16 +617,23 @@ private fun profileSelectionId(profile: ProfileUiItem): String =
 
 @Composable
 private fun ProfileDialogAction(label: Int, onDismiss: () -> Unit, action: () -> Unit) {
-    TextButton(
+    Surface(
         onClick = {
             onDismiss()
             action()
         },
         modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Text(
             text = stringResource(label),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Medium,
         )
     }
 }

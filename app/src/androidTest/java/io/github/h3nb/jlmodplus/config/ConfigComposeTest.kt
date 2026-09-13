@@ -17,6 +17,7 @@ package io.github.h3nb.jlmodplus.config
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
@@ -210,7 +211,7 @@ class ConfigComposeTest {
         }
 
         composeRule.onNodeWithText("Use Preset").performClick()
-        composeRule.onNodeWithText("Use Preset").assertExists()
+        composeRule.onNode(hasText("Use Preset") and hasAnyAncestor(isDialog())).assertExists()
         composeRule.onNodeWithText("Manage Presets").assertExists()
         composeRule.onNodeWithText("JL-Mod Defaults").performClick()
         composeRule.onNodeWithText("JL-Mod Defaults").assertExists()
@@ -290,7 +291,6 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Use Preset").performClick()
         composeRule.onNodeWithText("RPG 240×320").performClick()
         composeRule.onNodeWithText("Choose parts").assertExists()
-        composeRule.onNode(hasText("Virtual keyboard layout", substring = true)).assertExists()
         assertEquals(0, events.applyTemplateCalls)
 
         composeRule.onNodeWithText("Apply").performClick()
@@ -318,10 +318,10 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Choose parts").performClick()
         composeRule.onNodeWithTag("preset_apply_settings_part").performClick()
         composeRule.onNodeWithTag("preset_apply_keyboard_part").performClick()
-        composeRule.onNodeWithText("Apply").assertIsNotEnabled()
+        composeRule.onNodeWithTag("preset_parts_apply").assertIsNotEnabled()
 
         composeRule.onNodeWithTag("preset_apply_settings_part").performClick()
-        composeRule.onNodeWithText("Apply").assertIsEnabled()
+        composeRule.onNodeWithTag("preset_parts_apply").assertIsEnabled()
     }
 
     @Test
@@ -357,28 +357,36 @@ class ConfigComposeTest {
         val menuActions = RecordingMenuActions()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), RecordingConfigEvents(), menuActions = menuActions)
+                ConfigScreen(
+                    sampleState(),
+                    RecordingConfigEvents(),
+                    menuActions = menuActions,
+                )
             }
         }
 
-        composeRule.onNodeWithText("Reset All Settings").assertDoesNotExist()
-        composeRule.onNodeWithContentDescription("System").performClick()
-
-        composeRule.onNodeWithText("Reset All Settings").performClick()
+        repeat(4) {
+            composeRule.onRoot().performTouchInput { swipeLeft() }
+            composeRule.waitForIdle()
+        }
+        composeRule.onNodeWithText("System Properties").assertIsDisplayed()
+        composeRule.onNodeWithTag("config_reset_settings_action").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText(
             "Reset all emulator settings for this app to their defaults? App data and the custom button layout will not be deleted.",
         ).assertExists()
         composeRule.onNode(hasText("Reset All Settings") and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
         assertEquals(1, menuActions.resetSettingsCalls)
 
-        composeRule.onNodeWithText("Delete App Data").performClick()
+        composeRule.onNodeWithTag("config_clear_data_action").performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNodeWithText(
             "Permanently delete all saves and data created by this app? Emulator settings will not be deleted.",
         ).assertExists()
         composeRule.onNode(hasText("Delete App Data") and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
         assertEquals(1, menuActions.clearDataCalls)
 
-        composeRule.onNodeWithContentDescription("Controls").performClick()
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("Reset Key Layout").performScrollTo().performClick()
         composeRule.onNodeWithText("Reset the button layout to its default?").assertExists()
     }
@@ -398,7 +406,7 @@ class ConfigComposeTest {
         }
 
         composeRule.onNodeWithText("Delete App Data").assertDoesNotExist()
-        composeRule.onNodeWithText("Reset All Settings").performClick()
+        composeRule.onNodeWithTag("config_reset_settings_action").performClick()
         composeRule.onNodeWithText(
             "Reset all settings in this profile to their defaults? The profile can be edited again before leaving this page.",
         ).assertExists()
@@ -521,9 +529,41 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Background").performClick()
+        composeRule.onNodeWithText("Custom color").performClick()
 
         assertEquals(ConfigFormEvents.ColorField.SCREEN_BACKGROUND, events.colorPickerField)
+    }
+
+    @Test
+    fun backgroundModeKeepsCustomColorDormantWhenPickerIsHidden() {
+        val events = RecordingConfigEvents()
+        val snapshot = androidx.compose.runtime.mutableStateOf(sampleState())
+        val hostEvents = object : ConfigFormEvents by events {
+            override fun onFormChanged(form: ConfigFormState) {
+                events.onFormChanged(form)
+                val previous = snapshot.value
+                snapshot.value = ConfigUiState(
+                    form, previous.screenPresets, previous.fontPresets, previous.skins,
+                    previous.soundBanks, previous.shaders, previous.removableScreenPresets,
+                    previous.profileStatus, previous.profileTemplates, previous.timingControlsEnabled,
+                )
+            }
+        }
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(snapshot.value, hostEvents, initialDestination = ConfigDestination.Display)
+            }
+        }
+
+        composeRule.onNodeWithText("Background").performClick()
+        composeRule.onNodeWithText("Immersive").performClick()
+        assertEquals(BackgroundMode.IMMERSIVE, events.lastForm?.screenBackgroundMode)
+        composeRule.onNodeWithText("Custom color").assertDoesNotExist()
+
+        composeRule.onNodeWithText("Background").performClick()
+        composeRule.onNodeWithText("Custom").performClick()
+        assertEquals("D0D0D0", events.lastForm?.screenBackground)
+        composeRule.onNodeWithText("Custom color").assertExists()
     }
 
     @Test

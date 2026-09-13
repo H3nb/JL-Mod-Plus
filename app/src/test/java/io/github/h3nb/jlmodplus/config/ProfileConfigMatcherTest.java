@@ -106,6 +106,40 @@ public class ProfileConfigMatcherTest {
 	}
 
 	@Test
+	public void legacyBackgroundContextIsExplicitAndMalformedModeIsLocal() throws Exception {
+		File namedDirectory = Files.createTempDirectory("jlmod-named-background").toFile();
+		namedDirectory.deleteOnExit();
+		File midletDirectory = Files.createTempDirectory("jlmod-midlet-background").toFile();
+		midletDirectory.deleteOnExit();
+		Gson gson = new Gson();
+		ProfileModel legacy = new ProfileModel();
+		legacy.version = 6;
+		legacy.screenBackgroundColor = 0x123456;
+		Files.write(new File(namedDirectory, "config.json").toPath(),
+				gson.toJson(legacy).getBytes(StandardCharsets.UTF_8));
+		Files.write(new File(midletDirectory, "config.json").toPath(),
+				gson.toJson(legacy).getBytes(StandardCharsets.UTF_8));
+
+		ProfileModel named = ProfilesManager.loadConfig(namedDirectory, false,
+				ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, true);
+		ProfileModel midlet = ProfilesManager.loadConfig(midletDirectory, false,
+				ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG, true);
+		assertEquals(BackgroundMode.CUSTOM, named.screenBackgroundMode);
+		assertEquals(BackgroundMode.THEME, midlet.screenBackgroundMode);
+		assertEquals(0x123456, named.screenBackgroundColor);
+		assertEquals(0x123456, midlet.screenBackgroundColor);
+
+		JsonObject malformed = gson.toJsonTree(midlet).getAsJsonObject();
+		malformed.add("ScreenBackgroundMode", new com.google.gson.JsonObject());
+		Files.write(new File(namedDirectory, "config.json").toPath(),
+				gson.toJson(malformed).getBytes(StandardCharsets.UTF_8));
+		ProfileModel malformedLoaded = ProfilesManager.loadConfig(namedDirectory, false,
+				ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false);
+		assertEquals(BackgroundMode.CUSTOM, malformedLoaded.screenBackgroundMode);
+		assertEquals(0x123456, malformedLoaded.screenBackgroundColor);
+	}
+
+	@Test
 	public void legacyProfileDropsRuntimeSpeedFieldsButPreservesTimingMode() throws Exception {
 		File directory = Files.createTempDirectory("jlmod-profile-timing").toFile();
 		directory.deleteOnExit();
@@ -127,7 +161,7 @@ public class ProfileConfigMatcherTest {
 		String migrated = new String(
 				Files.readAllBytes(new File(directory, "config.json").toPath()),
 				StandardCharsets.UTF_8);
-		assertTrue(migrated.contains("\"Version\": 6"));
+		assertTrue(migrated.contains("\"Version\": 7"));
 		assertFalse(migrated.contains("EmulationSpeedPercent"));
 		assertFalse(migrated.contains("ShowEmulationSpeed"));
 		assertTrue(migrated.contains("\"TimingMode\": 1"));
@@ -141,12 +175,12 @@ public class ProfileConfigMatcherTest {
 
 		ProfileModel.applyBuiltInTheme(profile, true);
 		assertEquals(360, profile.screenWidth);
-		assertEquals(0x000000, profile.screenBackgroundColor);
+		assertEquals(0x123456, profile.screenBackgroundColor);
 		assertEquals(0xFFFFFF, profile.vkFgColor);
 
 		ProfileModel.applyBuiltInTheme(profile, false);
 		assertEquals(360, profile.screenWidth);
-		assertEquals(0xFFFFFF, profile.screenBackgroundColor);
+		assertEquals(0x123456, profile.screenBackgroundColor);
 		assertEquals(0x000000, profile.vkFgColor);
 	}
 

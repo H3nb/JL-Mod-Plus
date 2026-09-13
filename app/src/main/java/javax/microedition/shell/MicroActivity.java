@@ -78,12 +78,14 @@ import io.reactivex.disposables.Disposable;
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
 import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.util.LogUtils;
 import io.github.h3nb.jlmodplus.ui.TransientNoticeComposeController;
+import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
 
 public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_DEFAULT = 0;
@@ -118,6 +120,11 @@ public class MicroActivity extends AppCompatActivity {
 	private int virtualDisplayPaddingRight;
 	private int virtualDisplayPaddingBottom;
 	private View overlayAnchor;
+	private SharedPreferences defaultPreferences;
+	private final SharedPreferences.OnSharedPreferenceChangeListener canvasThemeListener =
+			(sharedPreferences, key) -> {
+				if (PREF_THEME.equals(key)) refreshCanvasBackground();
+			};
 	private final View.OnLayoutChangeListener overlayAnchorLayoutListener =
 			(view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
 					updateOverlayLocation();
@@ -148,6 +155,8 @@ public class MicroActivity extends AppCompatActivity {
 				oldLeft, oldTop, oldRight, oldBottom) -> updateOverlayLocation());
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		defaultPreferences = sp;
+		sp.registerOnSharedPreferenceChangeListener(canvasThemeListener);
 		runtimeToolbarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
 		// Keep legacy preference files safe: status bar and cutout are mutually exclusive even if
@@ -466,6 +475,7 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		refreshCanvasBackground();
 		if (memoryEditorController != null) {
 			memoryEditorController.onHostResumed();
 		}
@@ -481,7 +491,17 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	@Override
+	public void onConfigurationChanged(@NonNull Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		refreshCanvasBackground();
+	}
+
+	@Override
 	protected void onDestroy() {
+		if (defaultPreferences != null) {
+			defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
+			defaultPreferences = null;
+		}
 		if (memoryEditorController != null) {
 			memoryEditorController.destroy();
 			memoryEditorController = null;
@@ -492,6 +512,12 @@ public class MicroActivity extends AppCompatActivity {
 			microLoader.closeTimingSessionIfNotTransferred();
 		}
 		super.onDestroy();
+	}
+
+	private void refreshCanvasBackground() {
+		if (current instanceof Canvas canvas) {
+			canvas.updateBackgroundTheme(AppBackgroundColors.argb(ProfileModel.isDarkTheme(this)));
+		}
 	}
 
 	private void hideSoftInput() {
@@ -1118,6 +1144,7 @@ public class MicroActivity extends AppCompatActivity {
 			if (next != null) {
 				binding.displayableContainer.addView(next.getDisplayableView());
 			}
+			refreshCanvasBackground();
 			binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
 		}
 	}

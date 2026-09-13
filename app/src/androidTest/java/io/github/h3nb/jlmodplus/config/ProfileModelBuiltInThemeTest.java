@@ -30,7 +30,8 @@ public class ProfileModelBuiltInThemeTest {
 				"built-in-light-profile");
 		ProfileModel profile = ProfileModel.createBuiltIn(dir, false);
 
-		assertEquals(0xFFFFFF, profile.screenBackgroundColor);
+		assertEquals(0xFAFBFC, profile.screenBackgroundColor);
+		assertEquals(BackgroundMode.THEME, profile.screenBackgroundMode);
 		assertEquals(255, profile.vkAlpha);
 		assertEquals(0xFFFFFF, profile.vkBgColor);
 		assertEquals(0x000000, profile.vkFgColor);

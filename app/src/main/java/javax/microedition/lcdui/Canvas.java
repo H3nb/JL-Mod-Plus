@@ -31,8 +31,10 @@ import android.graphics.RectF;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLU;
 import android.opengl.GLUtils;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -87,13 +89,21 @@ import javax.microedition.util.ContextHolder;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.config.BackgroundMode;
 import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
+import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
+import javax.microedition.lcdui.graphics.AmbientCanvasRenderer;
+import javax.microedition.lcdui.graphics.AmbientColorField;
+import javax.microedition.lcdui.graphics.AmbientColorSampler;
+import javax.microedition.lcdui.graphics.AmbientMesh;
+import javax.microedition.lcdui.graphics.AmbientGlRenderer;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class Canvas extends Displayable {
 	private static final String TAG = Canvas.class.getName();
 	private static final int MAX_SYNCHRONOUS_DRAIN = 4;
+	private static final long AMBIENT_HOST_INTERVAL_NS = 33_333_333L;
 
 	public static final int KEY_POUND = 35;
 	public static final int KEY_STAR = 42;
@@ -161,6 +171,25 @@ public abstract class Canvas extends Displayable {
 	private final PresentationMailbox presentationMailbox = new PresentationMailbox();
 	private int onX, onY, onWidth, onHeight;
 	private final FramePacer framePacer = new FramePacer(GuestTimingBridge.activeSession());
+	private final Object ambientLock = new Object();
+	private final AmbientColorSampler ambientSampler = new AmbientColorSampler();
+	private AmbientColorField ambientField;
+	private AmbientColorField ambientGlField;
+	private AmbientCanvasRenderer ambientCanvasRenderer;
+	private final AmbientMesh ambientMesh = new AmbientMesh();
+    private final float[] ambientGlX = new float[AmbientMesh.MAX_VERTEX_COUNT];
+    private final float[] ambientGlY = new float[AmbientMesh.MAX_VERTEX_COUNT];
+    private final int[] ambientTargetArgb = new int[AmbientColorField.GRID_COLOR_COUNT];
+	private final RectF ambientSurface = new RectF();
+	private final RectF ambientGameRect = new RectF();
+	private volatile int themeBackgroundArgb;
+	private volatile long lastAmbientSampleSequence = Long.MIN_VALUE;
+	private volatile long nextAmbientSampleNs;
+	private volatile long nextAmbientBitmapUpdateNs;
+	private volatile boolean ambientGeometryDirty = true;
+	private volatile boolean ambientLayoutValid;
+	private volatile boolean ambientHostScheduled;
+	private final Runnable ambientHostRunnable = this::runAmbientHostTick;
 	private Handler uiHandler;
 	private Overlay overlay;
 	private FpsCounter fpsCounter;
@@ -173,6 +202,8 @@ public abstract class Canvas extends Displayable {
 
 	protected Canvas(boolean fullscreen) {
 		this.fullscreen = fullscreen;
+		themeBackgroundArgb = AppBackgroundColors.argb(
+				ProfileModel.isDarkTheme(ContextHolder.getActivity()));
 		super.softBar = softBar;
 		if (settings.graphicsMode == 1) {
 			renderer = new GLRenderer();
@@ -182,6 +213,7 @@ public abstract class Canvas extends Displayable {
 		}
 		displayWidth = ContextHolder.getDisplayWidth();
 		displayHeight = ContextHolder.getDisplayHeight();
+		ensureAmbientState();
 		updateSize();
 	}
 
@@ -198,6 +230,202 @@ public abstract class Canvas extends Displayable {
 		fpsLimit = settings.fpsLimit;
 		int mode = settings.graphicsMode;
 		parallelRedraw = (mode == 0 || mode == 3) && settings.parallelRedrawScreen;
+	}
+
+	/** Receives a host-owned theme snapshot; render paths never read preferences or Compose state. */
+	public void updateBackgroundTheme(int argb) {
+		themeBackgroundArgb = argb | Color.BLACK;
+		if (!isImmersiveMode()) return;
+		long now = SystemClock.elapsedRealtimeNanos();
+		synchronized (ambientLock) {
+			ensureAmbientStateLocked();
+			ambientField.setBaseColor(themeBackgroundArgb, now, false);
+			ambientGlField.setBaseColor(themeBackgroundArgb, now, false);
+		}
+		invalidateAmbientHost();
+	}
+
+	private boolean isImmersiveMode() {
+		return BackgroundMode.sanitize(settings.screenBackgroundMode) == BackgroundMode.IMMERSIVE;
+	}
+
+	private int effectiveBackgroundArgb() {
+		return isImmersiveMode() || BackgroundMode.sanitize(settings.screenBackgroundMode)
+				== BackgroundMode.THEME
+				? themeBackgroundArgb
+				: settings.screenBackgroundColor | Color.BLACK;
+	}
+
+	private void ensureAmbientState() {
+		if (!isImmersiveMode()) return;
+		synchronized (ambientLock) {
+			ensureAmbientStateLocked();
+		}
+	}
+
+	private void ensureAmbientStateLocked() {
+		if (ambientField == null) {
+			ambientField = new AmbientColorField();
+			ambientGlField = new AmbientColorField();
+			ambientField.resetToBase(themeBackgroundArgb);
+			ambientGlField.resetToBase(themeBackgroundArgb);
+			ambientCanvasRenderer = new AmbientCanvasRenderer(ambientField, themeBackgroundArgb);
+		}
+	}
+
+	private void configureAmbientGeometry() {
+		if (!isImmersiveMode()) {
+			synchronized (ambientLock) {
+				ambientLayoutValid = false;
+				ambientGeometryDirty = true;
+			}
+			return;
+		}
+		int padding = SkinLayer.getInstance() != null && SkinLayer.getInstance().hasDisplayFrame()
+				? 0 : Math.max(settings.screenPadding, 0);
+		boolean layoutValid;
+		synchronized (ambientLock) {
+			ambientLayoutValid = false;
+			ambientSurface.set(0.0f, 0.0f, displayWidth, displayHeight);
+			ambientGameRect.set(virtualScreen);
+			if (!ambientGameRect.intersect(padding, padding,
+					displayWidth - padding, displayHeight - padding)) {
+				ambientGameRect.setEmpty();
+			}
+			layoutValid = ambientSurface.width() > 0.0f && ambientSurface.height() > 0.0f
+					&& ambientGameRect.width() > 0.0f && ambientGameRect.height() > 0.0f
+					&& (ambientGameRect.left > ambientSurface.left
+							|| ambientGameRect.top > ambientSurface.top
+							|| ambientGameRect.right < ambientSurface.right
+							|| ambientGameRect.bottom < ambientSurface.bottom);
+			ambientGeometryDirty = true;
+			if (layoutValid) {
+				ensureAmbientStateLocked();
+				ambientCanvasRenderer.configure(displayWidth, displayHeight, ambientGameRect);
+				ambientMesh.build(displayWidth, displayHeight, ambientGameRect);
+				for (int i = 0; i < ambientMesh.vertexCount(); i++) {
+					ambientGlX[i] = ambientMesh.vertexX(i) / displayWidth;
+					ambientGlY[i] = ambientMesh.vertexY(i) / displayHeight;
+				}
+				ambientGlField.configureNodes(ambientGlX, ambientGlY, ambientMesh.vertexCount(),
+						ambientGameRect.left / displayWidth, ambientGameRect.top / displayHeight,
+						ambientGameRect.right / displayWidth, ambientGameRect.bottom / displayHeight,
+						displayWidth / (float) displayHeight);
+			}
+			ambientLayoutValid = layoutValid;
+		}
+		lastAmbientSampleSequence = Long.MIN_VALUE;
+		nextAmbientSampleNs = 0L;
+		nextAmbientBitmapUpdateNs = 0L;
+		if (layoutValid) {
+			invalidateAmbientHost();
+		} else {
+			cancelAmbientHostTick();
+		}
+	}
+
+	private boolean sampleAmbientIfDue(long nowNs) {
+		if (!isImmersiveMode() || !visible || !ambientLayoutValid || nowNs < nextAmbientSampleNs) {
+			return false;
+		}
+		boolean sampled = false;
+		long sampledSequence = Long.MIN_VALUE;
+		synchronized (bufferLock) {
+			if (offscreenCopy != null) {
+				long sequence = publishedFrameSequence;
+				if (sequence != 0L && (ambientGeometryDirty || sequence != lastAmbientSampleSequence)) {
+					Rect bounds = offscreenCopy.getBounds();
+					sampled = ambientSampler.captureGrid(offscreenCopy.getBitmap(), bounds.right,
+							bounds.bottom);
+					if (sampled) sampledSequence = sequence;
+				}
+			}
+		}
+		nextAmbientSampleNs = nowNs + AmbientColorField.SAMPLE_INTERVAL_NS;
+		if (!sampled) return false;
+		ambientSampler.toneCapturedGrid(themeBackgroundArgb, ambientTargetArgb);
+		synchronized (ambientLock) {
+			if (ambientField == null || !ambientLayoutValid || !isImmersiveMode()) return false;
+			ambientField.setTargetGrid(ambientTargetArgb, themeBackgroundArgb, nowNs, false);
+			ambientGlField.setTargetGrid(ambientTargetArgb, themeBackgroundArgb, nowNs, false);
+		}
+		lastAmbientSampleSequence = sampledSequence;
+		ambientGeometryDirty = false;
+		return true;
+	}
+
+	private boolean updateAmbientCanvas(long nowNs) {
+		if (!isImmersiveMode() || !ambientLayoutValid) return false;
+		sampleAmbientIfDue(nowNs);
+		synchronized (ambientLock) {
+			if (ambientCanvasRenderer == null) return false;
+			if (nowNs >= nextAmbientBitmapUpdateNs) {
+				boolean active = ambientCanvasRenderer.update(nowNs);
+				nextAmbientBitmapUpdateNs = nowNs + 33_333_333L;
+				return active;
+			}
+			return ambientField != null && ambientField.isTransitioning();
+		}
+	}
+
+	private void drawAmbient(android.graphics.Canvas canvas, long nowNs) {
+		if (!isImmersiveMode() || !ambientLayoutValid) return;
+		updateAmbientCanvas(nowNs);
+		synchronized (ambientLock) {
+			if (ambientCanvasRenderer != null) {
+				ambientCanvasRenderer.draw(canvas, ambientSurface, ambientGameRect);
+			}
+		}
+	}
+
+	private void invalidateAmbientHost() {
+		if (!isImmersiveMode() || !visible || !ambientLayoutValid) return;
+		long generation = presentationMailbox.generation();
+		if (presentationMailbox.invalidateHost(generation) != 0L) {
+			requestFlushToScreen();
+		}
+	}
+
+	private void runAmbientHostTick() {
+		ambientHostScheduled = false;
+		if (!visible || !isImmersiveMode() || !ambientLayoutValid) return;
+		long now = SystemClock.elapsedRealtimeNanos();
+		boolean active;
+		synchronized (ambientLock) {
+			active = ambientField != null && ambientField.isTransitioning();
+		}
+		boolean samplePending = hasAmbientSamplePending();
+		if ((samplePending && now >= nextAmbientSampleNs) || active) invalidateAmbientHost();
+		if (active || (samplePending && now < nextAmbientSampleNs)) {
+			scheduleAmbientHostTick(active ? AMBIENT_HOST_INTERVAL_NS : nextAmbientSampleNs - now);
+		}
+	}
+
+	private void scheduleAmbientHostTick(long delayNs) {
+		if (ambientHostScheduled || innerView == null || !isImmersiveMode() || !visible
+				|| (!hasAmbientSamplePending() && !isAmbientTransitioning())) return;
+		ambientHostScheduled = true;
+		long delayMs = Math.max(1L, Math.min(1000L, (delayNs + 999_999L) / 1_000_000L));
+		innerView.postDelayed(ambientHostRunnable, delayMs);
+	}
+
+	private boolean hasAmbientSamplePending() {
+		long sequence;
+		synchronized (bufferLock) {
+			sequence = publishedFrameSequence;
+		}
+		return sequence != 0L && (ambientGeometryDirty || sequence != lastAmbientSampleSequence);
+	}
+
+	private boolean isAmbientTransitioning() {
+		synchronized (ambientLock) {
+			return ambientField != null && ambientField.isTransitioning();
+		}
+	}
+
+	private void cancelAmbientHostTick() {
+		if (innerView != null) innerView.removeCallbacks(ambientHostRunnable);
+		ambientHostScheduled = false;
 	}
 
 	/** Enables the diagnostic only when the loaded artifact has the current universal transform. */
@@ -267,23 +495,32 @@ public abstract class Canvas extends Displayable {
 	public void doShowNotify() {
 		visible = true;
 		showNotify();
+		scheduleAmbientHostTick(AMBIENT_HOST_INTERVAL_NS);
 	}
 
 	public void doHideNotify() {
 		hideNotify();
 		visible = false;
+		cancelAmbientHostTick();
 	}
 
 	public void onDraw(android.graphics.Canvas canvas) {
 		if (settings.graphicsMode != 2) return; // Fix for Android Pie
+		if (!visible) {
+			presentationMailbox.releaseAfterFailure(presentationMailbox.generation());
+			return;
+		}
 		FrameMetrics metrics = frameMetrics;
 		long frameSequence = 0L;
 		long presentationGeneration = presentationMailbox.generation();
+		long hostRevision = presentationMailbox.captureHostRevision(presentationGeneration);
 		boolean presented = false;
 		CanvasWrapper g = canvasWrapper;
 		try {
+			long nowNs = SystemClock.elapsedRealtimeNanos();
 			g.bind(canvas);
-			g.clear(settings.screenBackgroundColor | Color.BLACK);
+			g.clear(effectiveBackgroundArgb());
+			drawAmbient(canvas, nowNs);
 			SkinLayer skinLayer = SkinLayer.getInstance();
 			int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
 			canvas.clipRect(p, p, displayWidth - p, displayHeight - p);
@@ -298,10 +535,13 @@ public abstract class Canvas extends Displayable {
 			}
 		} finally {
 			boolean needsAnother = presented
-					? presentationMailbox.complete(presentationGeneration, frameSequence)
+					? presentationMailbox.complete(presentationGeneration, frameSequence, hostRevision)
 					: presentationMailbox.releaseAfterFailure(presentationGeneration);
 			if (needsAnother) {
 				requestAnotherPresentation(!presented);
+			}
+			if (presented && isImmersiveMode()) {
+				scheduleAmbientHostTick(AMBIENT_HOST_INTERVAL_NS);
 			}
 		}
 	}
@@ -479,6 +719,7 @@ public abstract class Canvas extends Displayable {
 				offscreenCopy.setSize(width, height);
 			}
 		}
+		configureAmbientGeometry();
 		if (overlay != null) {
 			overlay.resize(screen, onX, onY, onX + onWidth, onY + onHeight + softBarHeight);
 		}
@@ -552,6 +793,7 @@ public abstract class Canvas extends Displayable {
 	@Override
 	public void clearDisplayableView() {
 		super.clearDisplayableView();
+		cancelAmbientHostTick();
 		layout = null;
 		innerView = null;
 	}
@@ -693,7 +935,8 @@ public abstract class Canvas extends Displayable {
 		}
 		if (parallelRedraw && uiHandler != null) {
 			boolean needsAnother = result.presented
-					? presentationMailbox.complete(presentationGeneration, result.frameSequence)
+					? presentationMailbox.complete(presentationGeneration, result.frameSequence,
+							result.hostRevision)
 					: presentationMailbox.releaseAfterFailure(presentationGeneration);
 			if (needsAnother) {
 				requestAnotherPresentation(!result.presented);
@@ -726,12 +969,13 @@ public abstract class Canvas extends Displayable {
 			drained++;
 			if (drained >= MAX_SYNCHRONOUS_DRAIN) {
 				if (presentationMailbox.completeAndRelease(
-						presentationGeneration, result.frameSequence)) {
+						presentationGeneration, result.frameSequence, result.hostRevision)) {
 					postSynchronousRetry(presentationGeneration, 0L);
 				}
 				return;
 			}
-			if (!presentationMailbox.complete(presentationGeneration, result.frameSequence)) {
+			if (!presentationMailbox.complete(presentationGeneration, result.frameSequence,
+					result.hostRevision)) {
 				return;
 			}
 		}
@@ -757,6 +1001,8 @@ public abstract class Canvas extends Displayable {
 	private PresentationResult presentToSurface() {
 		FrameMetrics metrics = frameMetrics;
 		long frameSequence = 0L;
+		long presentationGeneration = presentationMailbox.generation();
+		long hostRevision = presentationMailbox.captureHostRevision(presentationGeneration);
 		Surface surface = this.surface;
 		if (surface == null || !surface.isValid()) {
 			return PresentationResult.surfaceUnavailable();
@@ -764,14 +1010,15 @@ public abstract class Canvas extends Displayable {
 		android.graphics.Canvas lockedCanvas = null;
 		try {
 			synchronized (surfaceLock) {
-				lockedCanvas = settings.graphicsMode == 3 ?
+				lockedCanvas = settings.graphicsMode == 3 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
 						surface.lockHardwareCanvas() : surface.lockCanvas(null);
 				if (lockedCanvas == null) {
 					return PresentationResult.surfaceReady();
 				}
 				CanvasWrapper g = this.canvasWrapper;
 				g.bind(lockedCanvas);
-				g.clear(settings.screenBackgroundColor | Color.BLACK);
+				g.clear(effectiveBackgroundArgb());
+				drawAmbient(lockedCanvas, SystemClock.elapsedRealtimeNanos());
 				SkinLayer skinLayer = SkinLayer.getInstance();
 				int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
 				lockedCanvas.clipRect(p, p, displayWidth - p, displayHeight - p);
@@ -790,7 +1037,7 @@ public abstract class Canvas extends Displayable {
 			if (metrics != null) {
 				metrics.recordRender(frameSequence);
 			}
-			return PresentationResult.presented(frameSequence);
+			return PresentationResult.presented(frameSequence, hostRevision);
 		} catch (Exception e) {
 			Log.w(TAG, "repaintScreen: " + e);
 			return PresentationResult.surfaceReady();
@@ -811,23 +1058,26 @@ public abstract class Canvas extends Displayable {
 		final boolean surfaceAvailable;
 		final boolean presented;
 		final long frameSequence;
+		final long hostRevision;
 
-		private PresentationResult(boolean surfaceAvailable, boolean presented, long frameSequence) {
+		private PresentationResult(boolean surfaceAvailable, boolean presented, long frameSequence,
+				long hostRevision) {
 			this.surfaceAvailable = surfaceAvailable;
 			this.presented = presented;
 			this.frameSequence = frameSequence;
+			this.hostRevision = hostRevision;
 		}
 
 		static PresentationResult surfaceUnavailable() {
-			return new PresentationResult(false, false, 0L);
+			return new PresentationResult(false, false, 0L, 0L);
 		}
 
 		static PresentationResult surfaceReady() {
-			return new PresentationResult(true, false, 0L);
+			return new PresentationResult(true, false, 0L, 0L);
 		}
 
-		static PresentationResult presented(long frameSequence) {
-			return new PresentationResult(true, true, frameSequence);
+		static PresentationResult presented(long frameSequence, long hostRevision) {
+			return new PresentationResult(true, true, frameSequence, hostRevision);
 		}
 	}
 
@@ -888,6 +1138,7 @@ public abstract class Canvas extends Displayable {
 
 	void setInvisible() {
 		this.visible = false;
+		cancelAmbientHostTick();
 	}
 
 	public void doKeyPressed(int keyCode) {
@@ -908,21 +1159,39 @@ public abstract class Canvas extends Displayable {
 		private GLSurfaceView mView;
 		private final int[] bgTextureId = new int[1];
 		private ShaderProgram program;
+		private AmbientGlRenderer ambientRenderer;
+		private long lastUploadedSequence = Long.MIN_VALUE;
+		private int lastUploadedWidth;
+		private int lastUploadedHeight;
+		private boolean textureValid;
 		private boolean isStarted;
 
 		@Override
 		public void onSurfaceCreated(GL10 gl, EGLConfig config) {
 			program = new ShaderProgram(settings.shader);
-			int c = settings.screenBackgroundColor;
-			glClearColor((c >> 16 & 0xff) / 255.0f, (c >> 8 & 0xff) / 255.0f, (c & 0xff) / 255.0f, 1.0f);
+			program.use();
+			int c = effectiveBackgroundArgb();
+			glClearColor((c >> 16 & 0xff) / 255.0f, (c >> 8 & 0xff) / 255.0f,
+					(c & 0xff) / 255.0f, 1.0f);
 			glDisable(GL_BLEND);
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(false);
 			initTex();
 			Bitmap bitmap = offscreenCopy.getBitmap();
+			textureValid = false;
+			lastUploadedSequence = Long.MIN_VALUE;
+			lastUploadedWidth = bitmap.getWidth();
+			lastUploadedHeight = bitmap.getHeight();
 			program.loadVbo(vbo, bitmap.getWidth(), bitmap.getHeight());
 			if (settings.shader != null && settings.shader.values != null && program.uSetting >= 0) {
 				glUniform4fv(program.uSetting, 1, settings.shader.values, 0);
+			}
+			if (isImmersiveMode()) {
+				ambientRenderer = new AmbientGlRenderer();
+				if (!ambientRenderer.initialize()) {
+					Log.w(TAG, "Immersive background shader unavailable; using Theme for this GL session");
+					ambientRenderer = null;
+				}
 			}
 			isStarted = true;
 		}
@@ -932,7 +1201,8 @@ public abstract class Canvas extends Displayable {
 			glViewport(0, 0, width, height);
 			SkinLayer skinLayer = SkinLayer.getInstance();
 			int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
-			glScissor(p, p, width - 2 * p, height - 2 * p);
+			glScissor(p, p, Math.max(0, width - 2 * p), Math.max(0, height - 2 * p));
+			program.use();
 			if (program.uPixelDelta >= 0) {
 				glUniform2f(program.uPixelDelta, 1.0f / width, 1.0f / height);
 			}
@@ -943,14 +1213,41 @@ public abstract class Canvas extends Displayable {
 			FrameMetrics metrics = frameMetrics;
 			long frameSequence = 0L;
 			long presentationGeneration = presentationMailbox.generation();
+			long hostRevision = presentationMailbox.captureHostRevision(presentationGeneration);
 			boolean presented = false;
 			try {
+				long nowNs = SystemClock.elapsedRealtimeNanos();
 				glDisable(GL_SCISSOR_TEST);
+				int c = effectiveBackgroundArgb();
+				glClearColor((c >> 16 & 0xff) / 255.0f, (c >> 8 & 0xff) / 255.0f,
+						(c & 0xff) / 255.0f, 1.0f);
 				glClear(GL_COLOR_BUFFER_BIT);
+				if (ambientRenderer != null && ambientLayoutValid) {
+					sampleAmbientIfDue(nowNs);
+					synchronized (ambientLock) {
+						ambientRenderer.draw(ambientGlField, ambientMesh, nowNs,
+								displayWidth, displayHeight);
+					}
+				}
 				glEnable(GL_SCISSOR_TEST);
+				program.use();
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, bgTextureId[0]);
 				synchronized (bufferLock) {
-					GLUtils.texImage2D(GL_TEXTURE_2D, 0, offscreenCopy.getBitmap(), 0);
+					Bitmap bitmap = offscreenCopy.getBitmap();
 					frameSequence = publishedFrameSequence;
+					if (!textureValid || frameSequence != lastUploadedSequence
+							|| bitmap.getWidth() != lastUploadedWidth
+							|| bitmap.getHeight() != lastUploadedHeight) {
+						GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
+						textureValid = true;
+						lastUploadedSequence = frameSequence;
+						lastUploadedWidth = bitmap.getWidth();
+						lastUploadedHeight = bitmap.getHeight();
+					}
+				}
+				synchronized (vbo) {
+					program.loadVbo(vbo, lastUploadedWidth, lastUploadedHeight);
 				}
 				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 				presented = true;
@@ -959,15 +1256,19 @@ public abstract class Canvas extends Displayable {
 				}
 			} finally {
 				boolean needsAnother = presented
-						? presentationMailbox.complete(presentationGeneration, frameSequence)
+						? presentationMailbox.complete(presentationGeneration, frameSequence, hostRevision)
 						: presentationMailbox.releaseAfterFailure(presentationGeneration);
 				if (needsAnother) {
 					requestAnotherPresentation(!presented);
+				}
+				if (presented && isImmersiveMode()) {
+					scheduleAmbientHostTick(AMBIENT_HOST_INTERVAL_NS);
 				}
 			}
 		}
 
 		private void initTex() {
+			program.use();
 			glGenTextures(1, bgTextureId, 0);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, bgTextureId[0]);
@@ -989,6 +1290,8 @@ public abstract class Canvas extends Displayable {
 			}
 			if (isStarted) {
 				mView.queueEvent(() -> {
+					if (!isStarted || program == null) return;
+					program.use();
 					Bitmap bitmap = offscreenCopy.getBitmap();
 					synchronized (vbo) {
 						program.loadVbo(vbo, bitmap.getWidth(), bitmap.getHeight());
@@ -1346,10 +1649,12 @@ public abstract class Canvas extends Displayable {
 			if (overlay != null) {
 				overlay.setTarget(Canvas.this);
 			}
+			scheduleAmbientHostTick(AMBIENT_HOST_INTERVAL_NS);
 		}
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+			cancelAmbientHostTick();
 			if (autoSpeedController != null) {
 				autoSpeedController.setFrameSourceActive(false);
 				autoSpeedController = null;

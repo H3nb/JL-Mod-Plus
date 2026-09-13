@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -53,15 +54,14 @@ internal fun ConfigSection(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = if (highlighted) MaterialTheme.colorScheme.onPrimaryContainer
-            else MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.large,
             color = if (highlighted) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.58f)
+                MaterialTheme.colorScheme.primaryContainer
             } else {
                 MaterialTheme.colorScheme.surfaceContainerLow
             },
@@ -70,6 +70,8 @@ internal fun ConfigSection(
             } else {
                 null
             },
+            tonalElevation = if (highlighted) 2.dp else 0.dp,
+            shadowElevation = if (highlighted) 2.dp else 0.dp,
         ) {
             Column(content = content)
         }
@@ -334,6 +336,7 @@ internal fun ConfigActionPreference(
     description: String,
     onClick: () -> Unit,
     destructive: Boolean = false,
+    testTag: String? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -344,6 +347,7 @@ internal fun ConfigActionPreference(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(role = Role.Button, onClick = onClick)
+                .then(if (testTag == null) Modifier else Modifier.testTag(testTag))
                 .padding(horizontal = 16.dp, vertical = 11.dp),
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {

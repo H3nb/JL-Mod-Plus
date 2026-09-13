@@ -91,4 +91,42 @@ public class PresentationMailboxTest {
 		assertTrue(mailbox.releaseAfterFailure(generation));
 		assertTrue(mailbox.trySchedule(generation));
 	}
+
+	@Test
+	public void hostOnlyInvalidationIsScheduledAndAcknowledgedSeparately() {
+		PresentationMailbox mailbox = new PresentationMailbox();
+		long generation = mailbox.begin();
+		long hostRevision = mailbox.invalidateHost(generation);
+
+		assertEquals(1L, hostRevision);
+		assertTrue(mailbox.trySchedule(generation));
+		assertEquals(hostRevision, mailbox.captureHostRevision(generation));
+		assertFalse(mailbox.complete(generation, 0L, hostRevision));
+		assertFalse(mailbox.trySchedule(generation));
+	}
+
+	@Test
+	public void hostInvalidationDuringDrawKeepsOnePendingRequest() {
+		PresentationMailbox mailbox = new PresentationMailbox();
+		long generation = mailbox.begin();
+		long firstRevision = mailbox.invalidateHost(generation);
+		assertTrue(mailbox.trySchedule(generation));
+		long secondRevision = mailbox.invalidateHost(generation);
+
+		assertTrue(secondRevision > firstRevision);
+		assertTrue(mailbox.complete(generation, 0L, firstRevision));
+		assertEquals(secondRevision, mailbox.captureHostRevision(generation));
+	}
+
+	@Test
+	public void staleHostInvalidationCannotWakeNewGeneration() {
+		PresentationMailbox mailbox = new PresentationMailbox();
+		long oldGeneration = mailbox.begin();
+		mailbox.close();
+		long newGeneration = mailbox.begin();
+
+		assertEquals(0L, mailbox.invalidateHost(oldGeneration));
+		assertEquals(0L, mailbox.captureHostRevision(oldGeneration));
+		assertEquals(1L, mailbox.invalidateHost(newGeneration));
+	}
 }

@@ -28,6 +28,7 @@ public class ConfigFormStateTest {
 	public void applyToKeepsLegacyParsingAndFallbackRules() {
 		ProfileModel model = new ProfileModel();
 		model.screenBackgroundColor = 0x112233;
+		model.screenBackgroundMode = BackgroundMode.IMMERSIVE;
 		model.vkBgColor = 0x445566;
 		model.vkFgColor = 0x778899;
 		model.vkBgColorSelected = 0xAABBCC;
@@ -51,6 +52,7 @@ public class ConfigFormStateTest {
 				.vkSelectedBackground("invalid")
 				.vkSelectedForeground("DDEEFF")
 				.vkOutline("invalid")
+				.screenBackgroundMode(BackgroundMode.IMMERSIVE)
 				.graphicsMode(1)
 				.screenFilter(true)
 				.showKeyboard(true)
@@ -63,6 +65,7 @@ public class ConfigFormStateTest {
 		assertEquals(0, model.screenWidth);
 		assertEquals(320, model.screenHeight);
 		assertEquals(0x112233, model.screenBackgroundColor);
+		assertEquals(BackgroundMode.IMMERSIVE, model.screenBackgroundMode);
 		assertEquals(100, model.screenScaleRatio);
 		assertEquals(0, model.screenPadding);
 		assertEquals(0, model.fpsLimit);
@@ -89,6 +92,7 @@ public class ConfigFormStateTest {
 		model.screenWidth = 240;
 		model.screenHeight = 320;
 		model.screenBackgroundColor = 0x00AB0C;
+		model.screenBackgroundMode = BackgroundMode.THEME;
 		model.screenScaleRatio = 125;
 		model.fpsLimit = 60;
 		model.timingMode = TimingMode.REAL_WALL_CLOCK;
@@ -102,6 +106,7 @@ public class ConfigFormStateTest {
 		assertEquals("240", state.screenWidth);
 		assertEquals("320", state.screenHeight);
 		assertEquals("00AB0C", state.screenBackground);
+		assertEquals(BackgroundMode.THEME, state.screenBackgroundMode);
 		assertEquals("125", state.screenScaleRatio);
 		assertEquals("60", state.fpsLimit);
 		assertEquals(TimingMode.REAL_WALL_CLOCK, state.timingMode);

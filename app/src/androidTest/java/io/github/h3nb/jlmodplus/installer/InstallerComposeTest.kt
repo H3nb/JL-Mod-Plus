@@ -14,6 +14,7 @@
 
 package io.github.h3nb.jlmodplus.installer
 
+import androidx.annotation.StringRes
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
@@ -45,6 +46,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 @RunWith(AndroidJUnit4::class)
@@ -78,7 +80,7 @@ class InstallerComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(targetString(R.string.dialog_scroll_hint)).assertIsDisplayed()
         composeRule.onNodeWithText("Install").performScrollTo().assertIsDisplayed().performClick()
         assertEquals(1, actions.installCount)
     }
@@ -92,21 +94,23 @@ class InstallerComposeTest {
         composeRule.onNodeWithContentDescription("Loading info…").assertIsDisplayed()
         composeRule.onAllNodesWithText("Install").assertCountEquals(0)
         composeRule.onAllNodesWithText("Close").assertCountEquals(0)
-        composeRule.onNodeWithText("Cancel").performClick()
+        composeRule.onNodeWithText(targetString(android.R.string.cancel)).performClick()
         assertEquals(1, actions.closeCount)
     }
 
     @Test
     fun conversionStateCanRequestCancellation() {
+        val actions = RecordingInstallerActions()
         setState(
             InstallerUiState.Converting(
                 title = "Demo MIDlet",
                 message = "Name: Demo MIDlet\nVendor: Example\nVersion: 1.0",
                 status = "Converting JAR…",
-            ),
+            ), actions,
         )
         composeRule.onNodeWithText("Converting JAR…").assertIsDisplayed()
-        composeRule.onNodeWithText("Cancel").assertIsDisplayed()
+        composeRule.onNodeWithText(targetString(android.R.string.cancel)).assertIsDisplayed().performClick()
+        assertEquals(1, actions.closeCount)
     }
 
     @Test
@@ -209,9 +213,10 @@ class InstallerComposeTest {
                 }
             }
         }
-        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(targetString(R.string.dialog_scroll_hint)).assertIsDisplayed()
         capturePopup("recovery-short.png")
-        composeRule.onNodeWithText("Copy Details").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText(targetString(R.string.installer_copy_details))
+            .performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNodeWithText("Refresh Library").performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNodeWithText("Close").performScrollTo().assertIsDisplayed().performClick()
         assertEquals(1, actions.installCount)
@@ -233,10 +238,11 @@ class InstallerComposeTest {
                 }
             }
         }
-        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(targetString(R.string.dialog_scroll_hint)).assertIsDisplayed()
         capturePopup("bulk-short.png")
         composeRule.onNodeWithTag("bulk-results").performScrollToIndex(1)
-        composeRule.onNodeWithText("Review Unfinished Items").assertIsDisplayed().performClick()
+        composeRule.onNodeWithText(targetString(R.string.installer_retry_remaining))
+            .assertIsDisplayed().performClick()
         assertEquals(1, retries)
     }
 
@@ -259,6 +265,9 @@ class InstallerComposeTest {
             composeRule.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
         }
     }
+
+    private fun targetString(@StringRes resource: Int): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(resource)
 
     private fun setState(
         state: InstallerUiState,

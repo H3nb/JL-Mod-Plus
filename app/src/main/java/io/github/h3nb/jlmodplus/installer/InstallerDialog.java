@@ -41,6 +41,7 @@ import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.exceptions.Exceptions;
 import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.MainActivity;
 import io.github.h3nb.jlmodplus.R;
@@ -222,13 +223,18 @@ public class InstallerDialog extends DialogFragment {
 		Context applicationContext = requireContext().getApplicationContext();
 		bundleWorkerInFlight = true;
 		Disposable disposable = Single.<LibraryAppBundleImporter.PreparedImport>create(emitter -> {
-			LibraryAppBundleImporter.PreparedImport prepared = LibraryAppBundleImporter.prepare(
-					applicationContext, uri);
-			if (emitter.isDisposed()) {
-				LibraryAppBundleImporter.cleanup(prepared);
-				return;
+			try {
+				LibraryAppBundleImporter.PreparedImport prepared = LibraryAppBundleImporter.prepare(
+						applicationContext, uri);
+				if (emitter.isDisposed()) {
+					LibraryAppBundleImporter.cleanup(prepared);
+					return;
+				}
+				emitter.onSuccess(prepared);
+			} catch (Throwable error) {
+				Exceptions.throwIfFatal(error);
+				if (!emitter.isDisposed()) emitter.onError(error);
 			}
-			emitter.onSuccess(prepared);
 		})
 				.subscribeOn(Schedulers.io())
 				.observeOn(AndroidSchedulers.mainThread())
@@ -269,7 +275,15 @@ public class InstallerDialog extends DialogFragment {
 		AppInstaller active = installer;
 		Disposable disposable = Single.<Integer>create(emitter -> {
 			workerExecuting = true;
-			try { if (!destroyed) work.subscribe(emitter); }
+			try {
+				if (!destroyed) work.subscribe(emitter);
+			} catch (Throwable error) {
+				Exceptions.throwIfFatal(error);
+				// Activity teardown can dispose the subscription while DX is unwinding after
+				// cancellation. Do not turn that expected terminal state into a process-level
+				// undeliverable RxJava error.
+				if (!emitter.isDisposed()) emitter.onError(error);
+			}
 			finally {
 				workerExecuting = false;
 				if (destroyed) active.clearCache();

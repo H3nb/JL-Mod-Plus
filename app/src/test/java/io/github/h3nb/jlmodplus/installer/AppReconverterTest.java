@@ -15,20 +15,46 @@
 package io.github.h3nb.jlmodplus.installer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.InterruptedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.github.h3nb.jlmodplus.jar.Descriptor;
 
 public class AppReconverterTest {
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+	@Test public void cancellationSignalStopsBeforeReconversionPublishesAnything() throws Exception {
+		AtomicBoolean cancelled = new AtomicBoolean(true);
+		try {
+			AppReconverter.checkCancelled(cancelled::get);
+			fail("Cancelled reconversion must stop before touching the installed payload");
+		} catch (InterruptedIOException expected) {
+			assertEquals("Reconversion cancelled", expected.getMessage());
+		}
+	}
+
+	@Test public void interruptedReconversionIsReportedAsCancellation() throws Exception {
+		Thread.currentThread().interrupt();
+		try {
+			AppReconverter.checkCancelled(() -> false);
+			fail("Interrupted reconversion must stop before publishing");
+		} catch (InterruptedIOException expected) {
+			assertEquals("Reconversion interrupted", expected.getMessage());
+		} finally {
+			// Do not leak the test thread's interrupt flag into the JUnit runner.
+			Thread.interrupted();
+		}
+	}
 
 	@Test public void missingInstalledDescriptorCanBeRebuiltFromRetainedManifest() throws Exception {
 		Descriptor source = new Descriptor("MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n", false);

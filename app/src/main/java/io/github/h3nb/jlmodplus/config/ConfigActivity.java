@@ -149,7 +149,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 		@Override
 		public void onColorPicked(ColorField field, @NonNull String value) {
-			if (currentForm != null) {
+			// The picker is host-owned and may report after a mode change. A stale result must not
+			// silently turn Theme/Immersive back into a custom color edit.
+			if (currentForm != null && (field != ColorField.SCREEN_BACKGROUND
+					|| currentForm.screenBackgroundMode == BackgroundMode.CUSTOM)) {
 				updateForm(setColorValue(currentForm, field, value));
 			}
 		}
@@ -473,7 +476,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				&& configuredInfo.keyboardLayout.isReady() ? configuredProfile : null;
 		defProfile = validDefault == null ? null : validDefault.getName();
 		cachedDefaultProfileName = defProfile;
-		params = ProfilesManager.loadConfig(configDir);
+		params = ProfilesManager.loadConfig(
+				configDir,
+				true,
+				isProfile ? ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE
+						: ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
+				!isProfile && profileOrigin == null && readBuiltInThemeLinked());
 		boolean loadedDefaultProfile = false;
 		boolean loadedLegacyDefaultLayout = false;
 		if (params == null && mayInitializeNewApp && validDefault != null) {
@@ -484,7 +492,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			} catch (IOException | RuntimeException e) {
 				Log.e(TAG, "loadConfig: default preset", e);
 			}
-			params = ProfilesManager.loadConfig(configDir);
+			params = ProfilesManager.loadConfig(
+					configDir,
+					true,
+					isProfile ? ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE
+							: ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
+					!isProfile && profileOrigin == null && readBuiltInThemeLinked());
 			loadedDefaultProfile = params != null;
 			if (loadedDefaultProfile) {
 				setProfileOrigin(validDefault.getName());
@@ -1055,7 +1068,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private void showColorPicker(ColorField field) {
-		if (composeController != null && currentForm != null) {
+		if (composeController != null && currentForm != null
+				&& (field != ColorField.SCREEN_BACKGROUND
+				|| currentForm.screenBackgroundMode == BackgroundMode.CUSTOM)) {
 			composeController.showColorPicker(field, colorValue(currentForm, field));
 		}
 	}
@@ -1256,6 +1271,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void updateForm(ConfigFormState state) {
 		currentForm = state;
+		if (state.screenBackgroundMode != BackgroundMode.CUSTOM && composeController != null) {
+			composeController.dismissColorPicker(ColorField.SCREEN_BACKGROUND);
+		}
 		if (isProfile) profileDraftDirty = true;
 		reconcileBuiltInThemeLink();
 		if (composeController != null) {

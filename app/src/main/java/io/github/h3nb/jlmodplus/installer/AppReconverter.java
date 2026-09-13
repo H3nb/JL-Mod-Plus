@@ -89,6 +89,18 @@ public final class AppReconverter {
      * @throws ConverterException if DX or payload publication fails
      */
     public static void reconvert(File requestedAppDir) throws IOException, ConverterException {
+        reconvert(requestedAppDir, () -> false);
+    }
+
+    /**
+     * Rebuilds an installed payload while honoring a request-owned cancellation signal.
+     *
+     * <p>The converter uses a blocking thread pool internally, so cancellation cannot safely
+     * tear down that pool from the UI thread. The signal is checked at every filesystem boundary
+     * and, most importantly, immediately before publishing the replacement directory.</p>
+     */
+    static void reconvert(File requestedAppDir, InstallerExecutionCoordinator.Cancellation cancellation)
+            throws IOException, ConverterException {
         File appDir = requireInstalledAppDirectory(requestedAppDir);
         File workdir = appDir.getParentFile().getParentFile();
         String storageKey = appDir.getName();
@@ -97,8 +109,11 @@ public final class AppReconverter {
             throw new IOException("Retained MIDlet JAR is unavailable: " + storageKey);
         }
 
-        try (InstallerExecutionCoordinator.Permit ignored = InstallerExecutionCoordinator.acquire()) {
+        checkCancelled(cancellation);
+        try (InstallerExecutionCoordinator.Permit ignored =
+                     InstallerExecutionCoordinator.acquire(cancellation)) {
             // The workdir or target may have changed while this launch waited for another operation.
+            checkCancelled(cancellation);
             requireInstalledAppDirectory(appDir);
             if (!Config.isUsableFile(retainedJar)) {
                 throw new IOException("Retained MIDlet JAR is unavailable: " + storageKey);
@@ -108,6 +123,7 @@ public final class AppReconverter {
             if (!needsReconversion(appDir)) return;
 
             LibraryInstallRecovery.discardStaging(workdir);
+            checkCancelled(cancellation);
             File staging = LibraryInstallRecovery.stagingDirectory(workdir);
             if (!staging.mkdirs()) {
                 throw new ConverterException("Can't create reconversion staging directory: " + staging);
@@ -132,6 +148,7 @@ public final class AppReconverter {
                     throw new ConverterException("Dexing error during automatic reconversion", error);
                 }
 
+                checkCancelled(cancellation);
                 File generatedPayload = fileWithSuffix(staging, Config.MIDLET_DEX_ARCH);
                 if (!generatedPayload.isFile() || generatedPayload.length() <= 0L) {
                     throw new ConverterException("DX produced no converted MIDlet payload");
@@ -144,9 +161,7 @@ public final class AppReconverter {
                 descriptor.writeTo(fileWithSuffix(staging, Config.MIDLET_MANIFEST_FILE));
                 LibraryIconOverride.applyPersistedOverride(workdir, storageKey, staging);
 
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new java.io.InterruptedIOException("Reconversion cancelled before publish");
-                }
+                checkCancelled(cancellation);
                 requireInstalledAppDirectory(appDir);
                 replacementBackup = LibraryInstallRecovery.createBackup(workdir, storageKey, appDir);
                 if (!staging.renameTo(appDir)) {
@@ -165,6 +180,16 @@ public final class AppReconverter {
                 // recovery pass instead of turning a successful conversion into a launch error.
                 Log.w(TAG, "Automatic reconversion succeeded but backup cleanup was deferred: " + storageKey);
             }
+        }
+    }
+
+    static void checkCancelled(InstallerExecutionCoordinator.Cancellation cancellation)
+            throws java.io.InterruptedIOException {
+        if (cancellation != null && cancellation.isCancelled()) {
+            throw new java.io.InterruptedIOException("Reconversion cancelled");
+        }
+        if (Thread.currentThread().isInterrupted()) {
+            throw new java.io.InterruptedIOException("Reconversion interrupted");
         }
     }
 

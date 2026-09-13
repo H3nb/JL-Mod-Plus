@@ -56,6 +56,7 @@ public final class ConfigFormState {
 	public final ShaderInfo shader;
 
 	public final int orientation;
+	public final int screenBackgroundMode;
 	public final int screenScaleType;
 	public final int screenGravity;
 	public final int graphicsMode;
@@ -98,6 +99,7 @@ public final class ConfigFormState {
 		soundBank = builder.soundBank;
 		shader = builder.shader;
 		orientation = builder.orientation;
+		screenBackgroundMode = BackgroundMode.sanitize(builder.screenBackgroundMode);
 		screenScaleType = builder.screenScaleType;
 		screenGravity = builder.screenGravity;
 		graphicsMode = builder.graphicsMode;
@@ -133,6 +135,7 @@ public final class ConfigFormState {
 				.screenWidth(optionalInt(params.screenWidth))
 				.screenHeight(optionalInt(params.screenHeight))
 				.screenBackground(formatColor(params.screenBackgroundColor))
+				.screenBackgroundMode(params.screenBackgroundMode)
 				.screenBackgroundImage(params.screenBackgroundImage)
 				.screenScaleRatio(Integer.toString(params.screenScaleRatio))
 				.orientation(params.orientation)
@@ -177,6 +180,7 @@ public final class ConfigFormState {
 		params.screenWidth = parseInt(screenWidth, 0);
 		params.screenHeight = parseInt(screenHeight, 0);
 		params.screenBackgroundColor = parseHexOrKeep(screenBackground, params.screenBackgroundColor);
+		params.screenBackgroundMode = BackgroundMode.sanitize(screenBackgroundMode);
 		params.screenBackgroundImage = screenBackgroundImage;
 		params.screenScaleRatio = parseInt(screenScaleRatio, 100);
 		params.orientation = orientation;
@@ -287,6 +291,7 @@ public final class ConfigFormState {
 		private String soundBank;
 		private ShaderInfo shader;
 		private int orientation;
+		private int screenBackgroundMode = BackgroundMode.CUSTOM;
 		private int screenScaleType;
 		private int screenGravity;
 		private int graphicsMode;
@@ -331,6 +336,7 @@ public final class ConfigFormState {
 			soundBank = source.soundBank;
 			shader = source.shader;
 			orientation = source.orientation;
+			screenBackgroundMode = source.screenBackgroundMode;
 			screenScaleType = source.screenScaleType;
 			screenGravity = source.screenGravity;
 			graphicsMode = source.graphicsMode;
@@ -372,6 +378,7 @@ public final class ConfigFormState {
 		public Builder soundBank(String value) { soundBank = value; return this; }
 		public Builder shader(ShaderInfo value) { shader = value; return this; }
 		public Builder orientation(int value) { orientation = value; return this; }
+		public Builder screenBackgroundMode(int value) { screenBackgroundMode = BackgroundMode.sanitize(value); return this; }
 		public Builder screenScaleType(int value) { screenScaleType = value; return this; }
 		public Builder screenGravity(int value) { screenGravity = value; return this; }
 		public Builder graphicsMode(int value) { graphicsMode = value; return this; }
