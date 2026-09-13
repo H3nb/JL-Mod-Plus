@@ -627,7 +627,8 @@ private fun LazyListScope.runtimeMenuItems(
             RuntimeActionItem(R.string.layout_edit_mode, onDismiss, actions::onEditVirtualKeyboardLayout, leadingIcon = R.drawable.ic_edit)
         }
         item {
-            RuntimeActionItem(R.string.layout_scale_mode, onDismiss, actions::onResizeVirtualKeyboardLayout)
+            RuntimeActionItem(R.string.layout_scale_mode, onDismiss, actions::onResizeVirtualKeyboardLayout,
+                leadingIcon = R.drawable.ic_runtime_resize)
         }
         if (state.virtualKeyboardEditing) {
             item {
@@ -635,14 +636,16 @@ private fun LazyListScope.runtimeMenuItems(
                     R.string.layout_edit_finish,
                     onDismiss,
                     actions::onFinishVirtualKeyboardLayout,
+                    leadingIcon = R.drawable.ic_runtime_done,
                 )
             }
         }
         item {
-            RuntimeActionItem(R.string.layout_switch, onDismiss, actions::onSwitchVirtualKeyboardLayout, leadingIcon = R.drawable.ic_restart_alt)
+            RuntimeActionItem(R.string.layout_switch, onDismiss, actions::onSwitchVirtualKeyboardLayout, leadingIcon = R.drawable.ic_runtime_switch)
         }
         item {
-            RuntimeActionItem(R.string.hide_buttons, onDismiss, actions::onHideVirtualKeyboardButtons)
+            RuntimeActionItem(R.string.hide_buttons, onDismiss, actions::onHideVirtualKeyboardButtons,
+                leadingIcon = R.drawable.ic_runtime_hide)
         }
         return
     }
@@ -668,7 +671,7 @@ private fun LazyListScope.runtimeMenuItems(
         RuntimeToggleItem(
             label = R.string.memory_editor_bubble,
             checked = state.memoryEditorBubbleEnabled,
-            leadingIcon = R.drawable.ic_memory_editor_search,
+            leadingIcon = R.drawable.ic_runtime_memory,
             onClick = {
                 onDismiss()
                 actions.onMemoryEditor()
@@ -701,7 +704,7 @@ private fun LazyListScope.runtimeMenuItems(
             }
         }
         item {
-            RuntimeActionItem(R.string.PREF_LIMIT_FPS, onDismiss, actions::onLimitFps, leadingIcon = R.drawable.ic_speed)
+            RuntimeActionItem(R.string.PREF_LIMIT_FPS, onDismiss, actions::onLimitFps, leadingIcon = R.drawable.ic_runtime_fps)
         }
         if (state.emulationSpeedAvailable) {
             item {
@@ -717,7 +720,7 @@ private fun LazyListScope.runtimeMenuItems(
             item {
                 RuntimeMenuItem(
                     label = R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
-                    leadingIcon = R.drawable.ic_action_keyboard,
+                    leadingIcon = R.drawable.ic_runtime_virtual_keyboard,
                     onClick = onOpenVirtualKeyboardPage,
                 )
             }

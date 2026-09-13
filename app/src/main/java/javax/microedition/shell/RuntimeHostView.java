@@ -89,7 +89,7 @@ public final class RuntimeHostView {
 		bubble.setBackground(bubbleBackground);
 
 		AppCompatImageView bubbleIcon = new AppCompatImageView(context);
-		bubbleIcon.setImageResource(R.drawable.ic_memory_editor_search);
+		bubbleIcon.setImageResource(R.drawable.ic_runtime_memory);
 		bubbleIcon.setImageTintList(ColorStateList.valueOf(
 				resolveThemeColor(context, android.R.attr.textColorPrimaryInverse, Color.WHITE)));
 		bubbleIcon.setPadding(dp(context, 14), dp(context, 14), dp(context, 14), dp(context, 14));
