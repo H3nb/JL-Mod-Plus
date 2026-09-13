@@ -179,6 +179,11 @@ class ConfigComposeController @JvmOverloads constructor(
         colorPicker = ColorPickerRequest(field, initialHex)
     }
 
+    /** Drops a host-owned picker that became invalid while the draft was changing. */
+    fun dismissColorPicker(field: ConfigFormEvents.ColorField) {
+        if (colorPicker?.field == field) colorPicker = null
+    }
+
     fun showEncodingPicker(options: List<String>, selected: String?) {
         encodingPicker = EncodingPickerRequest(options, selected)
     }
@@ -439,12 +444,6 @@ private fun ConfigDestinationContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        if (!isProfile && destination != ConfigDestination.Basic) {
-            PresetActionBar(
-                onUsePreset = onUsePreset,
-                onSavePreset = onSavePreset,
-            )
-        }
         when (destination) {
             ConfigDestination.Basic -> GeneralDestination(
                 state = state,
@@ -704,12 +703,34 @@ private fun ScreenSection(
     events: ConfigFormEvents,
 ) {
     ConfigSection(title = stringResource(R.string.config_display_appearance)) {
-        ConfigColorPreference(
-            title = stringResource(R.string.PREF_BACKGROUND),
-            description = stringResource(R.string.config_help_background),
-            value = form.screenBackground,
-            onClick = { events.onColorPicker(ConfigFormEvents.ColorField.SCREEN_BACKGROUND) },
+        val backgroundModes = listOf(
+            stringResource(R.string.config_background_custom),
+            stringResource(R.string.config_background_theme),
+            stringResource(R.string.config_background_immersive),
         )
+        val backgroundMode = BackgroundMode.sanitize(form.screenBackgroundMode)
+        val backgroundDescription = when (backgroundMode) {
+            BackgroundMode.THEME -> stringResource(R.string.config_background_theme_help)
+            BackgroundMode.IMMERSIVE -> stringResource(R.string.config_background_immersive_help)
+            else -> stringResource(R.string.config_help_background)
+        }
+        ConfigChoicePreference(
+            title = stringResource(R.string.config_background_mode),
+            description = backgroundDescription,
+            selected = backgroundModes[backgroundMode],
+            options = backgroundModes,
+            onSelected = { index ->
+                onFormChanged(form.toBuilder().screenBackgroundMode(index).build())
+            },
+        )
+        if (backgroundMode == BackgroundMode.CUSTOM) {
+            ConfigColorPreference(
+                title = stringResource(R.string.config_background_custom_color),
+                description = stringResource(R.string.config_help_background),
+                value = form.screenBackground,
+                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.SCREEN_BACKGROUND) },
+            )
+        }
         val skinIndex = state.skins.indexOfFirst { it == form.screenBackgroundImage }.coerceAtLeast(0)
         ConfigChoicePreference(
             title = stringResource(R.string.pref_skin_title),
@@ -1475,6 +1496,7 @@ private fun SystemSection(
   title = stringResource(R.string.config_reset_all_settings),
   description = stringResource(R.string.config_reset_all_settings_summary),
   destructive = true,
+  testTag = "config_reset_settings_action",
   onClick = { onRequestAction(ConfigAction.ResetSettings) },
         )
         if (showClearData) {
@@ -1482,6 +1504,7 @@ private fun SystemSection(
       title = stringResource(R.string.config_delete_app_data),
       description = stringResource(R.string.config_delete_app_data_summary),
       destructive = true,
+      testTag = "config_clear_data_action",
       onClick = { onRequestAction(ConfigAction.ClearData) },
   )
         }

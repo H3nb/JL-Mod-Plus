@@ -57,6 +57,7 @@ public final class AutoReconversionDialog extends DialogFragment {
     private File appDir;
     private boolean started;
     private boolean running;
+    private volatile boolean cancelRequested;
 
     public static boolean show(FragmentActivity activity, String name, String path) {
         FragmentManager manager = activity.getSupportFragmentManager();
@@ -94,7 +95,7 @@ public final class AutoReconversionDialog extends DialogFragment {
 
                     @Override
                     public void onClose() {
-                        dismissAllowingStateLoss();
+                        requestClose();
                     }
 
                     @Override
@@ -135,7 +136,12 @@ public final class AutoReconversionDialog extends DialogFragment {
 
     @Override
     public void onDestroy() {
-        disposables.dispose();
+        cancelRequested = true;
+        // Do not interrupt an in-flight DX conversion by disposing its subscription. The
+        // converter owns a worker pool and is cancellation-aware at safe filesystem boundaries;
+        // disposing here would make a late conversion failure undeliverable during Activity
+        // teardown. The completed callback releases the subscription normally.
+        if (!running) disposables.dispose();
         controller = null;
         super.onDestroy();
     }
@@ -151,10 +157,11 @@ public final class AutoReconversionDialog extends DialogFragment {
             return;
         }
         running = true;
+        cancelRequested = false;
         controller.showConverting(appName, getString(R.string.reconverting_wait),
                 getString(R.string.converting_wait));
         disposables.add(Single.fromCallable(() -> {
-            AppReconverter.reconvert(appDir);
+            AppReconverter.reconvert(appDir, () -> cancelRequested);
             if (AppReconverter.needsReconversion(appDir)) {
                 throw new IllegalStateException("Reconversion completed without a compatible marker");
             }
@@ -162,7 +169,14 @@ public final class AutoReconversionDialog extends DialogFragment {
         })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(ignored -> launchMidlet(), this::showError));
+                .subscribe(ignored -> {
+                    running = false;
+                    if (cancelRequested) {
+                        if (isAdded()) dismissAllowingStateLoss();
+                    } else {
+                        launchMidlet();
+                    }
+                }, this::showError));
     }
 
     private void launchMidlet() {
@@ -177,6 +191,10 @@ public final class AutoReconversionDialog extends DialogFragment {
 
     private void showError(Throwable error) {
         running = false;
+        if (cancelRequested) {
+            if (isAdded()) dismissAllowingStateLoss();
+            return;
+        }
         Log.e(TAG, "Automatic MIDlet reconversion failed", error);
         if (!isAdded() || controller == null) return;
         String detail = error.getMessage();
@@ -188,6 +206,18 @@ public final class AutoReconversionDialog extends DialogFragment {
                 getString(R.string.reconversion_error, detail),
                 getString(R.string.library_retry),
                 getString(R.string.close), null, null);
+    }
+
+    private void requestClose() {
+        if (!running) {
+            dismissAllowingStateLoss();
+            return;
+        }
+        cancelRequested = true;
+        if (controller != null) {
+            controller.showConverting(appName, getString(R.string.reconverting_wait),
+                    getString(R.string.installer_cancel_pending));
+        }
     }
 
     @Nullable

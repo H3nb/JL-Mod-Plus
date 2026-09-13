@@ -120,7 +120,14 @@ public class MicroLoader {
 
 	public boolean init() {
 		File config = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDirName);
-		this.params = ProfilesManager.loadConfig(config);
+		boolean legacyThemeLinked = PreferenceManager.getDefaultSharedPreferences(
+				ContextHolder.getAppContext())
+				.getBoolean(ProfileModel.builtInThemePreferenceKey(config), false);
+		this.params = ProfilesManager.loadConfig(
+				config,
+				true,
+				ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
+				legacyThemeLinked);
 		if (params == null) {
 			return false;
 		}
@@ -242,7 +249,7 @@ public class MicroLoader {
 	private void applyLinkedBuiltInTheme(File configDir) {
 		boolean linked = PreferenceManager.getDefaultSharedPreferences(ContextHolder.getAppContext())
 				.getBoolean(ProfileModel.builtInThemePreferenceKey(configDir), false);
-		if (!linked) {
+		if (!linked || params.screenBackgroundMode != io.github.h3nb.jlmodplus.config.BackgroundMode.THEME) {
 			return;
 		}
 		ProfileModel.applyBuiltInTheme(

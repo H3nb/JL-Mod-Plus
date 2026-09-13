@@ -18,6 +18,8 @@
 
 package io.github.h3nb.jlmodplus.settings;
 
+import static io.github.h3nb.jlmodplus.util.Constants.ACTION_EDIT_PROFILE;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.SparseIntArray;
@@ -30,6 +32,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
+import androidx.preference.PreferenceManager;
 
 import com.google.gson.GsonBuilder;
 
@@ -65,7 +68,15 @@ public class KeyMapperActivity extends AppCompatActivity {
 		}
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
-		params = ProfilesManager.loadConfig(new File(path));
+		boolean namedProfile = ACTION_EDIT_PROFILE.equals(intent.getAction());
+		boolean legacyThemeLinked = !namedProfile && PreferenceManager
+				.getDefaultSharedPreferences(getApplicationContext())
+				.getBoolean(ProfileModel.builtInThemePreferenceKey(new File(path)), false);
+		params = ProfilesManager.loadConfig(new File(path), true,
+				namedProfile
+						? ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE
+						: ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
+				legacyThemeLinked);
 
 		if (savedInstanceState == null) {
 			SparseIntArray keyMap = params.keyMappings;

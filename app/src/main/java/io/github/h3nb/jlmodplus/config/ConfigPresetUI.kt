@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,15 +24,18 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -42,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -71,46 +76,44 @@ internal fun PresetSummary(
     onSavePreset: () -> Unit,
     events: ConfigFormEvents,
 ) {
-    ConfigSection(title = stringResource(R.string.presets)) {
+    ConfigSection(
+        title = stringResource(R.string.presets),
+        highlighted = true,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = setupSummary(state.form),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = stringResource(R.string.preset_current_configuration),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Text(
+                text = presetStatusTitle(state.profileStatus),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            provenanceSummary(state.profileStatus)?.let { provenance ->
-                Text(
-                    text = provenance,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            PresetActionButtons(onUsePreset = onUsePreset, onSavePreset = onSavePreset)
-        }
-    }
-}
-
-@Composable
-internal fun PresetActionBar(
-    onUsePreset: () -> Unit,
-    onSavePreset: () -> Unit,
-) {
-    ConfigSection(title = stringResource(R.string.presets)) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-        ) {
+            provenanceSummary(state.profileStatus)?.let { provenance -> Text(
+                text = provenance,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.74f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            ) }
+            Text(
+                text = setupSummary(state.form),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
             PresetActionButtons(onUsePreset = onUsePreset, onSavePreset = onSavePreset)
         }
     }
@@ -121,36 +124,56 @@ private fun PresetActionButtons(
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Button(
-            onClick = onUsePreset,
-            modifier = Modifier.weight(1f).heightIn(min = 52.dp),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.preset_use),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
-        }
-        OutlinedButton(
-            onClick = onSavePreset,
-            modifier = Modifier.weight(1f).heightIn(min = 52.dp),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.preset_save_as),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val compactActions = maxWidth < 440.dp
+        if (compactActions) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                PresetPrimaryButton(onUsePreset, Modifier.fillMaxWidth())
+                PresetSecondaryButton(onSavePreset, Modifier.fillMaxWidth())
+            }
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                PresetPrimaryButton(onUsePreset, Modifier.weight(1f))
+                PresetSecondaryButton(onSavePreset, Modifier.weight(1f))
+            }
         }
     }
+}
+
+@Composable
+private fun PresetPrimaryButton(onClick: () -> Unit, modifier: Modifier) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = 52.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ),
+    ) {
+        PresetActionLabel(R.string.preset_use)
+    }
+}
+
+@Composable
+private fun PresetSecondaryButton(onClick: () -> Unit, modifier: Modifier) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = 52.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+    ) { PresetActionLabel(R.string.preset_save_as) }
+}
+
+@Composable
+private fun PresetActionLabel(label: Int) {
+    Text(
+        text = stringResource(label),
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Center,
+    )
 }
 
 @Composable
@@ -206,12 +229,19 @@ private fun setupSummary(form: ConfigFormState): String {
 }
 
 @Composable
-private fun provenanceSummary(status: ConfigUiState.ProfileStatus): String? = when {
-    status.activeProfile != null -> stringResource(R.string.preset_active, status.activeProfile)
-    status.modified && status.sourceProfile != null ->
+private fun provenanceSummary(status: ConfigUiState.ProfileStatus): String? =
+    if (status.modified && status.sourceProfile != null) {
         stringResource(R.string.preset_based_on_modified, status.sourceProfile)
+    } else {
+        null
+    }
+
+@Composable
+private fun presetStatusTitle(status: ConfigUiState.ProfileStatus): String = when {
+    status.activeProfile != null -> status.activeProfile
+    status.sourceProfile != null -> status.sourceProfile
     status.builtInDefault -> stringResource(R.string.preset_builtin)
-    else -> null
+    else -> stringResource(R.string.preset_custom_configuration)
 }
 
 @Composable
@@ -259,13 +289,14 @@ private fun PresetPickerDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = maxHeight),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 item(key = BUILT_IN_PRESET_KEY) {
                     PresetPickerRow(
                         name = stringResource(R.string.preset_builtin),
                         summary = stringResource(R.string.preset_builtin_summary),
                         selected = selectedKey == BUILT_IN_PRESET_KEY,
+                        onChooseParts = null,
                         onClick = {
                             selectedKey = BUILT_IN_PRESET_KEY
                             applyErrorVisible = false
@@ -277,26 +308,25 @@ private fun PresetPickerDialog(
                         name = template.name,
                         summary = presetDescription(template),
                         selected = selectedKey == savedPresetKey(template.name),
+                        onChooseParts = if (template.hasKeyboardLayout) {
+                            {
+                                selectedKey = savedPresetKey(template.name)
+                                applyErrorVisible = false
+                                choosePartsVisible = true
+                            }
+                        } else {
+                            null
+                        },
                         onClick = {
                             selectedKey = savedPresetKey(template.name)
                             applyErrorVisible = false
                         },
                     )
                 }
-                selectedChoice?.takeIf { it.hasKeyboardLayout || applyErrorVisible }?.let { choice ->
+                selectedChoice?.takeIf { applyErrorVisible }?.let {
                     item(key = "selected-actions") {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
-                            if (choice.hasKeyboardLayout) {
-                                TextButton(
-                                    onClick = { choosePartsVisible = true },
-                                    modifier = Modifier
-                                        .align(Alignment.Start)
-                                        .padding(top = 2.dp),
-                                ) {
-                                    Text(stringResource(R.string.preset_choose_parts))
-                                }
-                            }
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            HorizontalDivider(modifier = Modifier.padding(top = 4.dp))
                             if (applyErrorVisible) {
                                 Text(
                                     text = stringResource(R.string.preset_apply_failed_summary),
@@ -308,15 +338,11 @@ private fun PresetPickerDialog(
                         }
                     }
                 }
-                item(key = "manage") {
-                    TextButton(onClick = onManage) {
-                        Text(stringResource(R.string.preset_manage))
-                    }
-                }
             }
         },
         confirmButton = {
             Row(horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onManage) { Text(stringResource(R.string.preset_manage)) }
                 TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) }
                 TextButton(
                     enabled = selectedChoice != null,
@@ -363,7 +389,7 @@ private fun PresetPartsDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.preset_choose_parts)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     stringResource(R.string.preset_choose_parts_summary),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -387,6 +413,7 @@ private fun PresetPartsDialog(
         },
         confirmButton = {
             TextButton(
+                modifier = Modifier.testTag("preset_parts_apply"),
                 enabled = scope != null,
                 onClick = { scope?.let(onConfirm) },
             ) {
@@ -412,6 +439,7 @@ private fun ApplyPartRow(
                 role = Role.Checkbox,
                 onValueChange = onCheckedChange,
             )
+            .heightIn(min = 48.dp)
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -445,30 +473,49 @@ private fun PresetPickerRow(
     name: String,
     summary: String,
     selected: Boolean,
+    onChooseParts: (() -> Unit)?,
     onClick: () -> Unit,
 ) {
-    Row(
+    val colors = MaterialTheme.colorScheme
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
-            .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .heightIn(min = 72.dp),
+        shape = MaterialTheme.shapes.medium,
+        color = if (selected) colors.secondaryContainer else colors.surfaceContainerLow,
+        contentColor = if (selected) colors.onSecondaryContainer else colors.onSurface,
+        border = if (selected) BorderStroke(1.dp, colors.secondary) else null,
     ) {
-        RadioButton(selected = selected, onClick = null)
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 4.dp, end = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = name, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            RadioButton(selected = selected, onClick = null)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp, end = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                Text(text = name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (selected) colors.onSecondaryContainer.copy(alpha = 0.78f) else colors.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            onChooseParts?.let { chooseParts ->
+                androidx.compose.material3.IconButton(onClick = chooseParts) {
+                    androidx.compose.material3.Icon(
+                        painter = painterResource(R.drawable.ic_tune),
+                        contentDescription = stringResource(R.string.preset_choose_parts),
+                        tint = if (selected) colors.onSecondaryContainer else colors.primary,
+                    )
+                }
+            }
         }
     }
 }
@@ -492,7 +539,7 @@ private fun SavePresetDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.preset_save_as)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = value,
                     onValueChange = { value = it },
@@ -512,23 +559,12 @@ private fun SavePresetDialog(
                     } else null,
                 )
                 if (hasKeyboardLayout) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .toggleable(
-                                value = includeKeyboard,
-                                onValueChange = { includeKeyboard = it },
-                                role = Role.Checkbox,
-                            )
-                            .padding(vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(
-                            checked = includeKeyboard,
-                            onCheckedChange = null,
-                        )
-                        Text(stringResource(R.string.preset_include_keyboard_layout))
-                    }
+                    ApplyPartRow(
+                        label = stringResource(R.string.preset_include_keyboard_layout),
+                        checked = includeKeyboard,
+                        onCheckedChange = { includeKeyboard = it },
+                        testTag = "preset_include_keyboard_layout",
+                    )
                 }
                 Text(
                     text = stringResource(R.string.preset_save_help),

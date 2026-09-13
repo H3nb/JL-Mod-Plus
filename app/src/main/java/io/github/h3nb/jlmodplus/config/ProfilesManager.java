@@ -45,6 +45,12 @@ public class ProfilesManager {
 	private static final String TAG = ProfilesManager.class.getName();
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
+	/** Identifies whether legacy linkage metadata is meaningful for a config load. */
+	public enum BackgroundMigrationContext {
+		NAMED_PROFILE,
+		MIDLET_CONFIG
+	}
+
 	static ArrayList<Profile> getProfiles() {
 		File root = new File(Config.getProfilesDir());
 		return getList(root);
@@ -101,7 +107,9 @@ public class ProfilesManager {
 	@NonNull
 	static ProfileInfo inspectProfile(@NonNull Profile profile) {
 		boolean hasConfigArtifact = profile.hasConfig() || profile.hasOldConfig();
-		ProfileModel config = hasConfigArtifact ? loadConfig(profile.getDir(), false) : null;
+		ProfileModel config = hasConfigArtifact
+				? loadConfig(profile.getDir(), false, BackgroundMigrationContext.NAMED_PROFILE, false)
+				: null;
 		Capability settings = hasConfigArtifact
 				? new Capability(config == null ? CapabilityStatus.UNAVAILABLE : CapabilityStatus.READY,
 						config == null ? "configuration cannot be parsed" : null)
@@ -490,33 +498,44 @@ public class ProfilesManager {
 
 	@Nullable
 	public static ProfileModel loadConfig(File dir) {
-		return loadConfig(dir, true);
+		return loadConfig(dir, true, BackgroundMigrationContext.MIDLET_CONFIG, false);
 	}
 
 	/** Loads a profile and optionally persists legacy-format migrations. */
 	@Nullable
 	static ProfileModel loadConfig(File dir, boolean persistMigrations) {
+		return loadConfig(dir, persistMigrations, BackgroundMigrationContext.MIDLET_CONFIG, false);
+	}
+
+	/**
+	 * Loads a config with explicit legacy Background Mode context.
+	 *
+	 * <p>The caller supplies linkage evidence because a named preset must never read the active
+	 * MIDlet's preference key. Historical migration is normalized before any JSON/XML write.</p>
+	 */
+	@Nullable
+	public static ProfileModel loadConfig(File dir, boolean persistMigrations,
+			@NonNull BackgroundMigrationContext context, boolean legacyThemeLinked) {
 		File file = new File(dir, Config.MIDLET_CONFIG_FILE);
 		ProfileModel params = null;
+		File oldFile = new File(dir, "config.xml");
+		boolean loadedLegacyFile = false;
 		if (file.exists()) {
 			try (FileReader reader = new FileReader(file)) {
 				params = gson.fromJson(reader, ProfileModel.class);
-				params.dir = dir;
+				if (params != null) params.dir = dir;
 			} catch (Exception e) {
 				Log.e(TAG, "loadConfig: ", e);
 			}
 		}
 		if (params == null) {
-			File oldFile = new File(dir, "config.xml");
 			if (oldFile.exists()) {
 				try (FileInputStream in = new FileInputStream(oldFile)) {
 					HashMap<String, Object> map = XmlUtils.readMapXml(in);
 					JsonElement json = gson.toJsonTree(map);
 					params = gson.fromJson(json, ProfileModel.class);
-					params.dir = dir;
-					if (persistMigrations && saveConfig(params) && oldFile.delete()) {
-						Log.d(TAG, "loadConfig: old config file deleted");
-					}
+					if (params != null) params.dir = dir;
+					loadedLegacyFile = params != null;
 				} catch (Exception e) {
 					Log.e(TAG, "loadConfig: ", e);
 				}
@@ -525,6 +544,7 @@ public class ProfilesManager {
 		if (params == null) {
 			return null;
 		}
+		int originalVersion = params.version;
 		switch (params.version) {
 			case 0:
 				if (params.hwAcceleration) {
@@ -556,15 +576,25 @@ public class ProfilesManager {
 				params.screenGravity = 1;
 				break;
 		}
-		boolean versionNeedsMigration = params.version < ProfileModel.VERSION;
+		boolean backgroundModeNeedsMigration = originalVersion < ProfileModel.VERSION;
+		if (backgroundModeNeedsMigration) {
+			params.screenBackgroundMode = context == BackgroundMigrationContext.MIDLET_CONFIG
+					&& legacyThemeLinked ? BackgroundMode.THEME : BackgroundMode.CUSTOM;
+		} else {
+			params.screenBackgroundMode = BackgroundMode.sanitize(params.screenBackgroundMode);
+		}
+		boolean versionNeedsMigration = originalVersion < ProfileModel.VERSION;
 		int normalizedTimingMode = TimingMode.sanitize(params.timingMode);
 		boolean timingModeNeedsMigration = params.timingMode != normalizedTimingMode;
 		params.timingMode = normalizedTimingMode;
 		if (versionNeedsMigration) {
 			params.version = ProfileModel.VERSION;
 		}
-		if (persistMigrations && (versionNeedsMigration || timingModeNeedsMigration)) {
-			ProfilesManager.saveConfig(params);
+		if (persistMigrations && (versionNeedsMigration || timingModeNeedsMigration
+				|| backgroundModeNeedsMigration)) {
+			if (saveConfig(params) && loadedLegacyFile && oldFile.delete()) {
+				Log.d(TAG, "loadConfig: old config file deleted");
+			}
 		}
 		return params;
 	}

@@ -26,6 +26,8 @@ public final class PresentationMailbox {
 	private long generation;
 	private long publishedSequence;
 	private long renderedSequence;
+	private long requestedHostRevision;
+	private long presentedHostRevision;
 	private boolean open;
 	private boolean renderScheduled;
 
@@ -34,6 +36,8 @@ public final class PresentationMailbox {
 		generation = nextGeneration(generation);
 		publishedSequence = 0L;
 		renderedSequence = 0L;
+		requestedHostRevision = 0L;
+		presentedHostRevision = 0L;
 		renderScheduled = false;
 		open = true;
 		return generation;
@@ -59,10 +63,23 @@ public final class PresentationMailbox {
 		return publishedSequence;
 	}
 
+	/** Requests a host-only redraw without pretending that a guest frame was published. */
+	public synchronized long invalidateHost(long expectedGeneration) {
+		if (!open || generation != expectedGeneration) return 0L;
+		requestedHostRevision = nextSequence(requestedHostRevision);
+		return requestedHostRevision;
+	}
+
+	/** Returns the newest host revision captured for the active draw. */
+	public synchronized long captureHostRevision(long expectedGeneration) {
+		if (!open || generation != expectedGeneration || !renderScheduled) return 0L;
+		return requestedHostRevision;
+	}
+
 	/** Arms one renderer request. Repeated producer requests coalesce while one is in flight. */
 	public synchronized boolean trySchedule(long expectedGeneration) {
 		if (!open || generation != expectedGeneration || renderScheduled
-				|| publishedSequence <= renderedSequence) {
+				|| !hasPendingLocked()) {
 			return false;
 		}
 		renderScheduled = true;
@@ -75,13 +92,22 @@ public final class PresentationMailbox {
 	 * a frame (for example, a transient surface lock failure).
 	 */
 	public synchronized boolean complete(long expectedGeneration, long consumedSequence) {
+		return complete(expectedGeneration, consumedSequence, 0L);
+	}
+
+	/** Completes a draw and acknowledges only the guest/host revisions captured by that draw. */
+	public synchronized boolean complete(long expectedGeneration, long consumedSequence,
+			long consumedHostRevision) {
 		if (!open || generation != expectedGeneration || !renderScheduled) {
 			return false;
 		}
 		if (consumedSequence > renderedSequence) {
 			renderedSequence = consumedSequence;
 		}
-		if (publishedSequence > renderedSequence) {
+		if (consumedHostRevision > presentedHostRevision) {
+			presentedHostRevision = consumedHostRevision;
+		}
+		if (hasPendingLocked()) {
 			return true;
 		}
 		renderScheduled = false;
@@ -93,13 +119,21 @@ public final class PresentationMailbox {
 	 * used by bounded synchronous drains so a later producer or host retry can re-arm the mailbox.
 	 */
 	public synchronized boolean completeAndRelease(long expectedGeneration, long consumedSequence) {
+		return completeAndRelease(expectedGeneration, consumedSequence, 0L);
+	}
+
+	public synchronized boolean completeAndRelease(long expectedGeneration, long consumedSequence,
+			long consumedHostRevision) {
 		if (!open || generation != expectedGeneration || !renderScheduled) {
 			return false;
 		}
 		if (consumedSequence > renderedSequence) {
 			renderedSequence = consumedSequence;
 		}
-		boolean pending = publishedSequence > renderedSequence;
+		if (consumedHostRevision > presentedHostRevision) {
+			presentedHostRevision = consumedHostRevision;
+		}
+		boolean pending = hasPendingLocked();
 		renderScheduled = false;
 		return pending;
 	}
@@ -110,7 +144,12 @@ public final class PresentationMailbox {
 			return false;
 		}
 		renderScheduled = false;
-		return publishedSequence > renderedSequence;
+		return hasPendingLocked();
+	}
+
+	private boolean hasPendingLocked() {
+		return publishedSequence > renderedSequence
+				|| requestedHostRevision > presentedHostRevision;
 	}
 
 	private static long nextSequence(long sequence) {
