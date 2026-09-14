@@ -18,12 +18,12 @@ import android.view.KeyEvent
 import javax.microedition.lcdui.keyboard.KeyMapper
 
 /**
- * Routes only host-owned controller key edges.
+ * Routes host-owned physical key edges before ordinary Android/View dispatch.
  *
- * Ordinary controller keys are deliberately returned to Android/View dispatch when a MIDP
- * Canvas is active. Canvas then applies the universal KeyMapper, which is the sole digital guest
- * mapping. The one runtime host action exposed through that same map is `M`: any physical
- * controller key assigned to KeyMapper.KEY_OPTIONS_MENU becomes [HostCommand.OpenMenu].
+ * The universal KeyMapper `M` target is intentionally source-agnostic: a keyboard key, phone key,
+ * or gamepad button assigned to M becomes [HostCommand.OpenMenu]. Other inferred host navigation
+ * commands remain gamepad-only. Ordinary physical keys are returned to Android/View dispatch so a
+ * visible MIDP Canvas can apply the same KeyMapper as before.
  */
 class HostInputRouter(
     private val host: ControllerHostSink,
@@ -33,12 +33,13 @@ class HostInputRouter(
     private val captured = LinkedHashMap<PhysicalKey, HostCommand>()
 
     fun onKeyEvent(event: KeyEvent): Boolean {
-        if (!ControllerInputRouter.isGamepadEvent(event)) return false
+        val mappedMenu = KeyMapper.isOptionsMenuKey(event.keyCode)
+        val gamepadEvent = ControllerInputRouter.isGamepadEvent(event)
+        if (!mappedMenu && !gamepadEvent) return false
 
         val physicalKey = PhysicalKey(event.deviceId, event.keyCode)
         val modal = host.isControllerModalActive()
         val canvasVisible = host.currentCanvas() != null
-        val mappedMenu = KeyMapper.isOptionsMenuKey(event.keyCode)
         val command = if (mappedMenu) {
             HostCommand.OpenMenu
         } else {
@@ -47,8 +48,8 @@ class HostInputRouter(
         val hostOwned = mappedMenu || modal || !canvasVisible || command?.isGlobalShortcut == true
 
         // Unknown vendor/controller keys must remain available to KeyMapper. A modal is the one
-        // exception: its host ownership prevents an arbitrary key from leaking into the guest.
-        // A key explicitly mapped to M is also host-owned even while a Canvas is visible.
+        // exception: its host ownership prevents an arbitrary gamepad key from leaking into the
+        // guest. A key explicitly mapped to M is host-owned regardless of its physical source.
         if (!hostOwned) return false
 
         when (event.action) {
@@ -58,7 +59,7 @@ class HostInputRouter(
                 if (captured.containsKey(physicalKey)) return true
                 val handled = host.onHostCommand(command, true)
                 // A Screen without an app-owned modal may still be a native/View-backed guest
-                // surface. Let its ordinary navigation keys continue through Android dispatch
+                // surface. Let its ordinary gamepad navigation continue through Android dispatch
                 // when the host has no command owner, just as Canvas keys do.
                 if (!handled && !command.isGlobalShortcut && !modal) {
                     return false
