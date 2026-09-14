@@ -20,10 +20,10 @@ import javax.microedition.lcdui.keyboard.KeyMapper
 /**
  * Routes host-owned physical key edges before ordinary Android/View dispatch.
  *
- * The universal KeyMapper `M` target is intentionally source-agnostic: a keyboard key, phone key,
- * or gamepad button assigned to M becomes [HostCommand.OpenMenu]. Other inferred host navigation
- * commands remain gamepad-only. Ordinary physical keys are returned to Android/View dispatch so a
- * visible MIDP Canvas can apply the same KeyMapper as before.
+ * The universal KeyMapper `M` target is source-agnostic for user-added bindings: a keyboard key,
+ * phone key, or gamepad button assigned to M becomes [HostCommand.OpenMenu]. Android BACK keeps
+ * its established Activity/Back-dispatch path so this router does not change its edge/long-press
+ * semantics. Other inferred host navigation commands remain gamepad-only.
  */
 class HostInputRouter(
     private val host: ControllerHostSink,
@@ -33,7 +33,11 @@ class HostInputRouter(
     private val captured = LinkedHashMap<PhysicalKey, HostCommand>()
 
     fun onKeyEvent(event: KeyEvent): Boolean {
-        val mappedMenu = KeyMapper.isOptionsMenuKey(event.keyCode)
+        // BACK is the built-in default M binding, but MicroActivity deliberately owns its legacy
+        // short/long-press behavior and Android's system Back callback. Only additional physical
+        // bindings to M are intercepted here.
+        val mappedMenu = event.keyCode != KeyEvent.KEYCODE_BACK &&
+            KeyMapper.isOptionsMenuKey(event.keyCode)
         val gamepadEvent = ControllerInputRouter.isGamepadEvent(event)
         if (!mappedMenu && !gamepadEvent) return false
 
