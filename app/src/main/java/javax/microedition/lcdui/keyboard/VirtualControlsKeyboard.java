@@ -43,8 +43,10 @@ import io.github.h3nb.jlmodplus.input.VirtualDpadGeometry;
  * Unified touch controls layered over the established virtual keypad.
  *
  * Numeric/soft/game buttons remain ordinary legacy virtual keys. Movement controls are owned here
- * as two cohesive widgets: one D-pad and one analog stick. Each widget has one center and one
- * radius, is moved/resized as a whole, and persists normalized geometry in the MIDlet profile.
+ * as two cohesive widgets: one D-pad and one analog stick. The user-facing editor has one gesture
+ * model for all controls: drag with one finger to move and pinch with two fingers to resize. The
+ * legacy keypad scale engine remains underneath so existing saved layouts keep their format and
+ * snapping behavior.
  */
 public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_DPAD_CENTER_X = 0.82f;
@@ -94,6 +96,22 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private float editOffsetY;
 	private float pinchStartRadius;
 	private float pinchStartDistance;
+
+	/*
+	 * Legacy keypad buttons still use VirtualKeyboard's persisted key-scale groups. These fields
+	 * only translate a two-finger pinch into that established scale engine while the public editor
+	 * remains in LAYOUT_KEYS. LAYOUT_SCALES is therefore an internal compatibility detail, not a
+	 * second user-visible editing mode.
+	 */
+	private int legacyEditPointer = -1;
+	private int legacyPinchPointer = -1;
+	private float legacyEditX;
+	private float legacyEditY;
+	private float legacyPinchX;
+	private float legacyPinchY;
+	private float legacyPinchOriginX;
+	private float legacyPinchOriginY;
+	private float legacyPinchStartDistance;
 
 	public VirtualControlsKeyboard(ProfileModel settings) {
 		super(settings);
@@ -168,6 +186,12 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	@Override
+	public void setLayoutEditMode(int mode) {
+		clearLegacyEditTracking();
+		super.setLayoutEditMode(mode);
+	}
+
+	@Override
 	public void paint(CanvasWrapper graphics) {
 		if (getLayoutEditMode() != LAYOUT_EOF && screenBounds != null) {
 			paintEditGrid(graphics);
@@ -182,11 +206,25 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public boolean pointerPressed(int pointer, float x, float y) {
-		if (getLayoutEditMode() != LAYOUT_EOF) {
+		int mode = getLayoutEditMode();
+		if (mode != LAYOUT_EOF) {
+			if (legacyEditPointer >= 0 && pointer != legacyEditPointer && beginLegacyPinch(pointer, x, y)) {
+				return true;
+			}
 			if (beginGroupedPinch(pointer, x, y)) return true;
 			if (beginGroupedEdit(pointer, x, y)) return true;
+			if (mode == LAYOUT_KEYS) {
+				boolean consumed = super.pointerPressed(pointer, x, y);
+				if (consumed) {
+					legacyEditPointer = pointer;
+					legacyPinchPointer = -1;
+					legacyEditX = x;
+					legacyEditY = y;
+				}
+				return consumed;
+			}
 		}
-		if (getLayoutEditMode() == LAYOUT_EOF) {
+		if (mode == LAYOUT_EOF) {
 			if (beginDpad(pointer, x, y)) return true;
 			if (beginAnalog(pointer, x, y)) return true;
 		}
@@ -209,6 +247,23 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				editPinchY = y;
 				updateGroupedPinch();
 				invalidateOverlay();
+				return true;
+			}
+		}
+		if (legacyEditPointer >= 0) {
+			if (pointer == legacyEditPointer) {
+				legacyEditX = x;
+				legacyEditY = y;
+				if (legacyPinchPointer >= 0) {
+					updateLegacyPinch();
+					return true;
+				}
+				return super.pointerDragged(pointer, x, y);
+			}
+			if (pointer == legacyPinchPointer) {
+				legacyPinchX = x;
+				legacyPinchY = y;
+				updateLegacyPinch();
 				return true;
 			}
 		}
@@ -251,6 +306,21 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			finishGroupedEdit();
 			return true;
 		}
+		if (legacyEditPointer >= 0) {
+			if (legacyPinchPointer >= 0 && pointer == legacyPinchPointer) {
+				finishLegacyPinchAndResumeMove(false);
+				return true;
+			}
+			if (pointer == legacyEditPointer) {
+				if (legacyPinchPointer >= 0) {
+					finishLegacyPinchAndResumeMove(true);
+					return true;
+				}
+				boolean consumed = super.pointerReleased(pointer, x, y);
+				clearLegacyEditTracking();
+				return consumed;
+			}
+		}
 		if (pointer == dpadPointer) {
 			endDpad();
 			return true;
@@ -267,6 +337,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		editPointer = -1;
 		editPinchPointer = -1;
 		editControl = EditControl.NONE;
+		clearLegacyEditTracking();
 		endDpad();
 		endAnalog();
 		super.cancel();
@@ -393,7 +464,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	private boolean beginGroupedEdit(int pointer, float x, float y) {
-		if (screenBounds == null || pointer < 0 || editPointer >= 0) return false;
+		if (screenBounds == null || pointer < 0 || editPointer >= 0 || legacyEditPointer >= 0) return false;
 		EditControl selected = EditControl.NONE;
 		VirtualDpadGeometry geometry = null;
 		if (settings.virtualDpadEnabled && insideControl(x, y, dpadGeometry(), 1.15f)) {
@@ -475,6 +546,74 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		editControl = EditControl.NONE;
 		ProfilesManager.saveConfig(settings);
 		invalidateOverlay();
+	}
+
+	private boolean beginLegacyPinch(int pointer, float x, float y) {
+		if (getLayoutEditMode() != LAYOUT_KEYS || legacyEditPointer < 0 ||
+				legacyPinchPointer >= 0 || pointer == legacyEditPointer) return false;
+
+		/* Finalize the current move before handing the selected key's scale group to the legacy
+		 * resize engine. The second finger itself is not forwarded to VirtualKeyboard. */
+		super.pointerReleased(legacyEditPointer, legacyEditX, legacyEditY);
+		super.setLayoutEditMode(LAYOUT_SCALES);
+		if (!super.pointerPressed(legacyEditPointer, legacyEditX, legacyEditY)) {
+			super.setLayoutEditMode(LAYOUT_KEYS);
+			if (!super.pointerPressed(legacyEditPointer, legacyEditX, legacyEditY)) {
+				clearLegacyEditTracking();
+			}
+			return false;
+		}
+
+		legacyPinchPointer = pointer;
+		legacyPinchX = x;
+		legacyPinchY = y;
+		legacyPinchOriginX = legacyEditX;
+		legacyPinchOriginY = legacyEditY;
+		legacyPinchStartDistance = Math.max(1.0f,
+				(float) Math.hypot(legacyPinchX - legacyEditX, legacyPinchY - legacyEditY));
+		return true;
+	}
+
+	private void updateLegacyPinch() {
+		if (legacyEditPointer < 0 || legacyPinchPointer < 0 || getLayoutEditMode() != LAYOUT_SCALES) return;
+		float distance = (float) Math.hypot(legacyPinchX - legacyEditX, legacyPinchY - legacyEditY);
+		float delta = distance - legacyPinchStartDistance;
+		/* LAYOUT_SCALES interprets +X and -Y as larger X/Y scales. Feeding the same pixel delta
+		 * to both axes turns its established group-resize implementation into a uniform pinch. */
+		super.pointerDragged(
+				legacyEditPointer,
+				legacyPinchOriginX + delta,
+				legacyPinchOriginY - delta);
+	}
+
+	private void finishLegacyPinchAndResumeMove(boolean primaryReleased) {
+		if (getLayoutEditMode() == LAYOUT_SCALES) {
+			super.pointerReleased(legacyEditPointer, legacyEditX, legacyEditY);
+		}
+		int nextPointer = primaryReleased ? legacyPinchPointer : legacyEditPointer;
+		float nextX = primaryReleased ? legacyPinchX : legacyEditX;
+		float nextY = primaryReleased ? legacyPinchY : legacyEditY;
+		super.setLayoutEditMode(LAYOUT_KEYS);
+		legacyEditPointer = nextPointer;
+		legacyPinchPointer = -1;
+		legacyEditX = nextX;
+		legacyEditY = nextY;
+		if (nextPointer < 0 || !super.pointerPressed(nextPointer, nextX, nextY)) {
+			clearLegacyEditTracking();
+		}
+		invalidateOverlay();
+	}
+
+	private void clearLegacyEditTracking() {
+		legacyEditPointer = -1;
+		legacyPinchPointer = -1;
+		legacyEditX = 0.0f;
+		legacyEditY = 0.0f;
+		legacyPinchX = 0.0f;
+		legacyPinchY = 0.0f;
+		legacyPinchOriginX = 0.0f;
+		legacyPinchOriginY = 0.0f;
+		legacyPinchStartDistance = 0.0f;
 	}
 
 	private void paintEditGrid(CanvasWrapper graphics) {
