@@ -144,6 +144,14 @@ public class ProfileModel {
 	@SerializedName("ShowKeyboard")
 	public boolean showKeyboard;
 
+	/** Enables the touch D-pad portion of the virtual controls overlay. */
+	@SerializedName("VirtualDpadEnabled")
+	public boolean virtualDpadEnabled = true;
+
+	/** Enables the touch analog stick portion of the virtual controls overlay. */
+	@SerializedName("VirtualAnalogEnabled")
+	public boolean virtualAnalogEnabled = false;
+
 	@SerializedName("VirtualKeyboardType")
 	public int vkType;
 
@@ -231,6 +239,8 @@ public class ProfileModel {
 		fontAA = true;
 
 		showKeyboard = true;
+		virtualDpadEnabled = true;
+		virtualAnalogEnabled = false;
 		touchInput = true;
 
 		vkButtonShape = VirtualKeyboard.SHAPE_ROUND_RECT;

@@ -588,9 +588,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	public void doHideNotify() {
-		PointerEvent.cancel(this);
-		guestKeyLedger.endVisibility();
-		resetControllerBoundaryState();
+		cancelInput();
 		hideNotify();
 		visible = false;
 		cancelAmbientHostTick();
@@ -884,9 +882,7 @@ public abstract class Canvas extends Displayable {
 
 	@Override
 	public void clearDisplayableView() {
-		PointerEvent.cancel(this);
-		guestKeyLedger.endVisibility();
-		resetControllerBoundaryState();
+		cancelInput();
 		super.clearDisplayableView();
 		cancelAmbientHostTick();
 		layout = null;
@@ -1231,10 +1227,15 @@ public abstract class Canvas extends Displayable {
 	protected void pointerReleased(int x, int y) {
 	}
 
-	void setInvisible() {
+	/** Cancels all host, touch, and virtual-control input owned by this Canvas. */
+	public void cancelInput() {
 		PointerEvent.cancel(this);
 		guestKeyLedger.endVisibility();
 		resetControllerBoundaryState();
+	}
+
+	void setInvisible() {
+		cancelInput();
 		this.visible = false;
 		cancelAmbientHostTick();
 	}

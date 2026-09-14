@@ -89,9 +89,11 @@
     <string name="invalid_resolution_not_saved">Invalid resolution; changes were not saved!</string>
     <string name="layout_edit_finish">Finish Edit Mode</string>
     <string name="layout_edit_finished">Edit mode finished</string>
-    <string name="layout_edit_mode">Key Layout Edit Mode</string>
-    <string name="layout_scale_mode">Key Layout Resize Mode</string>
-    <string name="layout_switch">Switch Key Layout</string>
+    <string name="layout_edit_mode">Universal Virtual Control Layout</string>
+    <string name="layout_scale_mode">Universal Virtual Control Resize</string>
+    <string name="layout_virtual_controls">Edit Universal Virtual Control Layout</string>
+    <string name="config_virtual_controls_save_alert">Replace the existing universal virtual control layout with the current one?\nSave?</string>
+    <string name="layout_switch">Switch Virtual Control Layout</string>
     <string name="licenses">Licenses</string>
     <string name="licenses_unavailable">License details are temporarily unavailable.</string>
     <string name="loading_apps">Loading apps</string>
@@ -318,7 +320,7 @@
     <string name="config_gamepad_joystick_mode_summary">Choose a fixed location or place the joystick where you touch.</string>
     <string name="config_gamepad_joystick_fixed">Fixed</string>
     <string name="config_gamepad_joystick_floating">Floating</string>
-    <string name="config_gamepad_keypad_title">Virtual Keypad</string>
+    <string name="config_gamepad_keypad_title">Universal Keypad</string>
     <string name="config_gamepad_capture">Remap</string>
     <string name="config_gamepad_capture_waiting">Waiting for one controller control…</string>
     <string name="config_gamepad_capture_axis_not_assignable">Axis capture is diagnostic only. Use a button or D-pad direction for a digital assignment.</string>
@@ -449,7 +451,7 @@
     <string name="PREF_TOUCH_INPUT">Touch Input</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Enable Vibration</string>
-    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtual Keyboard</string>
+    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtual Controls</string>
     <string name="PREF_VK_ALPHA">Opacity</string>
     <string name="PREF_VK_BACK">Key Color</string>
     <string name="PREF_VK_FEEDBACK">Haptic Feedback</string>
@@ -458,7 +460,7 @@
     <string name="PREF_VK_HIDE_DELAY">Auto-Hide Delay</string>
     <string name="pref_vk_hide_hint">Disabled</string>
     <string name="PREF_VK_OUTLINE">Outline Color</string>
-    <string name="pref_vk_save_alert">Replace the existing custom keyboard with the current one?\nSave?</string>
+    <string name="pref_vk_save_alert">Replace the existing universal virtual control layout with the current one?\nSave?</string>
     <string name="PREF_VK_SEL_BACK">Pressed Key Color</string>
     <string name="PREF_VK_SEL_FORE">Pressed Label Color</string>
     <string name="pref_vk_type_arrows">Arrows</string>

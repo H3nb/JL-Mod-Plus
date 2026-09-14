@@ -372,8 +372,8 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onEditVirtualKeyboardLayout() {
-						setVirtualKeyboardEditMode(VirtualKeyboard.LAYOUT_KEYS,
-								R.string.layout_edit_mode);
+						setVirtualKeyboardEditMode(VirtualKeyboard.LAYOUT_CONTROLS,
+								R.string.layout_virtual_controls);
 					}
 
 					@Override
@@ -539,6 +539,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void onPause() {
+		if (current instanceof Canvas canvas) {
+			canvas.cancelInput();
+		}
 		if (controllerInputRouter != null) {
 			controllerInputRouter.clear();
 		}
@@ -557,6 +560,10 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
+		if (current instanceof Canvas canvas) {
+			canvas.cancelInput();
+		}
+		ContextHolder.setVk(null);
 		if (controllerInputRouter != null) {
 			controllerInputRouter.close();
 			controllerInputRouter = null;
@@ -663,6 +670,9 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
+		if (!hasFocus && current instanceof Canvas canvas) {
+			canvas.cancelInput();
+		}
 		if (!hasFocus && controllerInputRouter != null) {
 			controllerInputRouter.clear();
 		}

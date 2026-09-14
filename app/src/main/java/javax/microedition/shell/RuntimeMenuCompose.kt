@@ -346,7 +346,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             return buildList {
                 add(ControllerMenuItem("vk.back") { virtualKeyboardPage = false; controllerFocusIndex = 0 })
                 add(ControllerMenuItem("vk.edit") { closeMenu(); actions.onEditVirtualKeyboardLayout() })
-                add(ControllerMenuItem("vk.resize") { closeMenu(); actions.onResizeVirtualKeyboardLayout() })
                 if (state.virtualKeyboardEditing) {
                     add(ControllerMenuItem("vk.finish") { closeMenu(); actions.onFinishVirtualKeyboardLayout() })
                 }
@@ -723,7 +722,7 @@ private fun RuntimeMenuDialog(
         title = {
             Text(
                 text = if (virtualKeyboardPage) {
-                    stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS)
+                    stringResource(R.string.config_virtual_controls_title)
                 } else {
                     state.title
                 },
@@ -793,17 +792,12 @@ private fun LazyListScope.runtimeMenuItems(
         }
         val editFocused = nextFocused()
         item {
-            RuntimeActionItem(R.string.layout_edit_mode, onDismiss, actions::onEditVirtualKeyboardLayout,
-                leadingIcon = R.drawable.ic_edit, focused = editFocused)
-        }
-        val resizeFocused = nextFocused()
-        item {
             RuntimeActionItem(
-                R.string.layout_scale_mode,
+                R.string.layout_virtual_controls,
                 onDismiss,
-                actions::onResizeVirtualKeyboardLayout,
-                leadingIcon = R.drawable.ic_runtime_resize,
-                focused = resizeFocused,
+                actions::onEditVirtualKeyboardLayout,
+                leadingIcon = R.drawable.ic_edit,
+                focused = editFocused,
             )
         }
         if (state.virtualKeyboardEditing) {
@@ -922,7 +916,7 @@ private fun LazyListScope.runtimeMenuItems(
             val vkFocused = nextFocused()
             item {
                 RuntimeMenuItem(
-                    label = R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
+                    label = R.string.config_virtual_controls_title,
                     leadingIcon = R.drawable.ic_runtime_virtual_keyboard,
                     focused = vkFocused,
                     onClick = onOpenVirtualKeyboardPage,

@@ -78,6 +78,8 @@ public final class ConfigFormState {
 	public final boolean fontApplyDimensions;
 	public final boolean fontAA;
 	public final boolean showKeyboard;
+	public final boolean virtualDpadEnabled;
+	public final boolean virtualAnalogEnabled;
 	public final boolean vkFeedback;
 	public final boolean vkForceOpacity;
 	public final boolean touchInput;
@@ -121,6 +123,8 @@ public final class ConfigFormState {
 		fontApplyDimensions = builder.fontApplyDimensions;
 		fontAA = builder.fontAA;
 		showKeyboard = builder.showKeyboard;
+		virtualDpadEnabled = builder.virtualDpadEnabled;
+		virtualAnalogEnabled = builder.virtualAnalogEnabled;
 		vkFeedback = builder.vkFeedback;
 		vkForceOpacity = builder.vkForceOpacity;
 		touchInput = builder.touchInput;
@@ -164,6 +168,8 @@ public final class ConfigFormState {
 				.fontApplyDimensions(params.fontApplyDimensions)
 				.fontAA(params.fontAA)
 				.showKeyboard(params.showKeyboard)
+				.virtualDpadEnabled(params.virtualDpadEnabled)
+				.virtualAnalogEnabled(params.virtualAnalogEnabled)
 				.vkFeedback(params.vkFeedback)
 				.vkForceOpacity(params.vkForceOpacity)
 				.touchInput(params.touchInput)
@@ -212,6 +218,8 @@ public final class ConfigFormState {
 		params.fontApplyDimensions = fontApplyDimensions;
 		params.fontAA = fontAA;
 		params.showKeyboard = showKeyboard;
+		params.virtualDpadEnabled = virtualDpadEnabled;
+		params.virtualAnalogEnabled = virtualAnalogEnabled;
 		params.vkFeedback = vkFeedback;
 		params.vkForceOpacity = vkForceOpacity;
 		params.touchInput = touchInput;
@@ -316,6 +324,8 @@ public final class ConfigFormState {
 		private boolean fontApplyDimensions;
 		private boolean fontAA;
 		private boolean showKeyboard;
+		private boolean virtualDpadEnabled = true;
+		private boolean virtualAnalogEnabled;
 		private boolean vkFeedback;
 		private boolean vkForceOpacity;
 		private boolean touchInput;
@@ -362,6 +372,8 @@ public final class ConfigFormState {
 			fontApplyDimensions = source.fontApplyDimensions;
 			fontAA = source.fontAA;
 			showKeyboard = source.showKeyboard;
+			virtualDpadEnabled = source.virtualDpadEnabled;
+			virtualAnalogEnabled = source.virtualAnalogEnabled;
 			vkFeedback = source.vkFeedback;
 			vkForceOpacity = source.vkForceOpacity;
 			touchInput = source.touchInput;
@@ -408,6 +420,8 @@ public final class ConfigFormState {
 		public Builder fontApplyDimensions(boolean value) { fontApplyDimensions = value; return this; }
 		public Builder fontAA(boolean value) { fontAA = value; return this; }
 		public Builder showKeyboard(boolean value) { showKeyboard = value; return this; }
+		public Builder virtualDpadEnabled(boolean value) { virtualDpadEnabled = value; return this; }
+		public Builder virtualAnalogEnabled(boolean value) { virtualAnalogEnabled = value; return this; }
 		public Builder vkFeedback(boolean value) { vkFeedback = value; return this; }
 		public Builder vkForceOpacity(boolean value) { vkForceOpacity = value; return this; }
 		public Builder touchInput(boolean value) { touchInput = value; return this; }

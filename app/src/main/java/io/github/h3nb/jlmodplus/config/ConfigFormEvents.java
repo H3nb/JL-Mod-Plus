@@ -60,7 +60,7 @@ public interface ConfigFormEvents {
 		return true;
 	}
 
-	/** Saves application settings and optionally the separate virtual keyboard layout artifact. */
+	/** Saves application settings and optionally the separate virtual control layout artifact. */
 	default boolean onSaveTemplate(@NonNull String name, boolean includeKeyboard) {
 		return true;
 	}
@@ -69,7 +69,7 @@ public interface ConfigFormEvents {
 	default void onSaveKeyboardLayout() {
 	}
 
-	/** Saves only the current virtual keyboard layout as a reusable layout entry. */
+	/** Saves only the current virtual control layout as a reusable layout entry. */
 	default boolean onSaveKeyboardLayout(@NonNull String name) {
 		return true;
 	}

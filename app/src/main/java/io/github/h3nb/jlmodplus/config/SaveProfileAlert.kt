@@ -30,7 +30,7 @@ import androidx.fragment.app.DialogFragment
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.ThemedToast
 
-/** Compose presentation for saving a virtual keyboard layout with overwrite confirmation. */
+/** Compose presentation for saving a virtual control layout with overwrite confirmation. */
 class SaveProfileAlert : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val existingProfileNames = ProfilesManager.getProfiles()

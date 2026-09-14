@@ -402,7 +402,7 @@ private fun SaveVirtualKeyboardDialog(
                         .heightIn(max = maxContentHeight)
                         .verticalScroll(scrollState),
                 ) {
-                    Text(stringResource(R.string.pref_vk_save_alert))
+                    Text(stringResource(R.string.config_virtual_controls_save_alert))
                     if (state.phone) {
                         ListItem(
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),

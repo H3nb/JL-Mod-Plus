@@ -51,9 +51,11 @@
     <string name="invalid_resolution_not_saved">Resolusi tidak valid; perubahan tidak disimpan!</string>
     <string name="layout_edit_finish">Akhiri Mode Ubah</string>
     <string name="layout_edit_finished">Mode ubah telah selesai</string>
-    <string name="layout_edit_mode">Ubah Letak Tombol</string>
-    <string name="layout_scale_mode">Ubah Ukuran Tombol</string>
-    <string name="layout_switch">Tukar Letak Tombol</string>
+    <string name="layout_edit_mode">Tata Letak Kontrol Virtual Universal</string>
+    <string name="layout_scale_mode">Ubah Ukuran Kontrol Virtual Universal</string>
+    <string name="layout_virtual_controls">Ubah Tata Letak Kontrol Virtual Universal</string>
+    <string name="config_virtual_controls_save_alert">Ganti tata letak kontrol virtual universal yang ada dengan tata letak saat ini?\nSimpan?</string>
+    <string name="layout_switch">Tukar Tata Letak Kontrol Virtual</string>
     <string name="licenses">Lisensi</string>
     <string name="licenses_unavailable">Detail lisensi sementara tidak tersedia.</string>
     <string name="loading_apps">Memuat aplikasi</string>
@@ -269,7 +271,7 @@
     <string name="config_gamepad_joystick_mode_summary">Pilih lokasi tetap atau letakkan joystick di titik sentuhan.</string>
     <string name="config_gamepad_joystick_fixed">Tetap</string>
     <string name="config_gamepad_joystick_floating">Mengambang</string>
-    <string name="config_gamepad_keypad_title">Keypad Virtual</string>
+    <string name="config_gamepad_keypad_title">Keypad Universal</string>
     <string name="config_gamepad_capture">Rekam</string>
     <string name="config_gamepad_capture_waiting">Menunggu satu kontrol pengontrol…</string>
     <string name="config_gamepad_capture_axis_not_assignable">Perekaman sumbu hanya untuk diagnosis. Gunakan tombol atau arah D-pad untuk penetapan digital.</string>
@@ -395,7 +397,7 @@
     <string name="PREF_TOUCH_INPUT">Input Sentuh</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Aktifkan Getaran</string>
-    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Papan Ketik Virtual</string>
+    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Kontrol Virtual</string>
     <string name="PREF_VK_ALPHA">Opasitas</string>
     <string name="PREF_VK_BACK">Warna Tombol</string>
     <string name="PREF_VK_FEEDBACK">Umpan Balik Haptik</string>
@@ -404,7 +406,7 @@
     <string name="PREF_VK_HIDE_DELAY">Jeda Sembunyi Otomatis</string>
     <string name="pref_vk_hide_hint">Dinonaktifkan</string>
     <string name="PREF_VK_OUTLINE">Warna Garis Tepi</string>
-    <string name="pref_vk_save_alert">Papan ketik kustom akan menggantikan papan ketik saat ini.\nSimpan?</string>
+    <string name="pref_vk_save_alert">Ganti tata letak kontrol virtual universal yang ada dengan tata letak saat ini?\nSimpan?</string>
     <string name="PREF_VK_SEL_BACK">Warna Tombol Saat Ditekan</string>
     <string name="PREF_VK_SEL_FORE">Warna Label Saat Ditekan</string>
     <string name="pref_vk_type_arrows">Arah Panah</string>
