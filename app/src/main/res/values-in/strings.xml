@@ -49,11 +49,11 @@
     <string name="installer_error_message">Aplikasi yang dipilih tidak dapat diinstal. Pilih file MIDlet yang valid lalu coba lagi.</string>
     <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD tersebut dan tetap pasang?</string>
     <string name="invalid_resolution_not_saved">Resolusi tidak valid; perubahan tidak disimpan!</string>
-    <string name="layout_edit_finish">Akhiri Mode Ubah</string>
-    <string name="layout_edit_finished">Mode ubah telah selesai</string>
-    <string name="layout_edit_mode">Ubah Letak Tombol</string>
-    <string name="layout_scale_mode">Ubah Ukuran Tombol</string>
-    <string name="layout_switch">Tukar Letak Tombol</string>
+    <string name="layout_edit_finish">Selesai Mengedit</string>
+    <string name="layout_edit_finished">Pengeditan kontrol virtual selesai</string>
+    <string name="layout_edit_mode">Mode edit kontrol virtual: geser untuk memindahkan, cubit untuk mengubah ukuran</string>
+    <string name="layout_scale_mode">Mode edit kontrol virtual: geser untuk memindahkan, cubit untuk mengubah ukuran</string>
+    <string name="layout_switch">Ganti Tata Letak Kontrol</string>
     <string name="licenses">Lisensi</string>
     <string name="licenses_unavailable">Detail lisensi sementara tidak tersedia.</string>
     <string name="loading_apps">Memuat aplikasi</string>
@@ -395,7 +395,7 @@
     <string name="PREF_TOUCH_INPUT">Input Sentuh</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Aktifkan Getaran</string>
-    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Papan Ketik Virtual</string>
+    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Kontrol Virtual</string>
     <string name="PREF_VK_ALPHA">Opasitas</string>
     <string name="PREF_VK_BACK">Warna Tombol</string>
     <string name="PREF_VK_FEEDBACK">Umpan Balik Haptik</string>
@@ -404,7 +404,7 @@
     <string name="PREF_VK_HIDE_DELAY">Jeda Sembunyi Otomatis</string>
     <string name="pref_vk_hide_hint">Dinonaktifkan</string>
     <string name="PREF_VK_OUTLINE">Warna Garis Tepi</string>
-    <string name="pref_vk_save_alert">Papan ketik kustom akan menggantikan papan ketik saat ini.\nSimpan?</string>
+    <string name="pref_vk_save_alert">Ganti tata letak kontrol virtual khusus yang ada dengan tata letak saat ini.\nSimpan?</string>
     <string name="PREF_VK_SEL_BACK">Warna Tombol Saat Ditekan</string>
     <string name="PREF_VK_SEL_FORE">Warna Label Saat Ditekan</string>
     <string name="pref_vk_type_arrows">Arah Panah</string>
@@ -426,7 +426,7 @@
     <string name="reinstall_newest">Perbarui aplikasi ini ke versi %1$s?\n\nYang kini terpasang: %2$s\nSemua data akan disimpan.</string>
     <string name="reinstall_older">Timpa aplikasi ini dengan versi %1$s?\n\nYang kini terpasang: %2$s\nVersi lama mungkin tidak berjalan dengan baik menggunakan data yang tersimpan.</string>
     <string name="reset">Atur ulang</string>
-    <string name="RESET_LAYOUT_CMD">Atur Ulang Tata Letak Tombol</string>
+    <string name="RESET_LAYOUT_CMD">Atur Ulang Tata Letak Kontrol</string>
     <string name="RESET_SETTINGS_CMD">Atur Ulang Pengaturan</string>
     <string name="retry">Coba Lagi</string>
     <string name="save">Simpan</string>
