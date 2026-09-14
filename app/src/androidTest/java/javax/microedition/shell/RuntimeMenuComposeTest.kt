@@ -202,7 +202,7 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("D-pad").assertIsDisplayed()
         composeRule.onNodeWithText("Analog stick").assertIsDisplayed()
         composeRule.onNodeWithText("Edit Virtual Controls").assertIsDisplayed()
-        composeRule.onNodeWithText("Finish Edit Mode").assertIsDisplayed()
+        composeRule.onNodeWithText("Finish Editing").assertIsDisplayed()
         composeRule.onNodeWithText("Show or Hide Buttons").assertIsDisplayed()
         composeRule.onAllNodesWithText("Key Layout Resize Mode").assertCountEquals(0)
     }
