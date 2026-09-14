@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -108,8 +107,6 @@ internal fun GamepadSection(
             if (opaqueController || !resolved.isSupported) ConfigMessageLevel.Warning
             else ConfigMessageLevel.Info,
         )
-        // Editing/selecting a controller option is disabled when Android does not expose a
-        // compatible device. Reset and help remain available so an opaque payload is recoverable.
         ConfigActionPreference(
             title = androidx.compose.ui.res.stringResource(R.string.config_gamepad_editor),
             description = androidx.compose.ui.res.stringResource(R.string.config_gamepad_editor_summary),
@@ -138,6 +135,25 @@ internal fun GamepadSection(
             description = androidx.compose.ui.res.stringResource(R.string.config_gamepad_reset_summary),
             destructive = true,
             onClick = { resetVisible = true },
+        )
+    }
+
+    ConfigSection(
+        title = androidx.compose.ui.res.stringResource(R.string.config_virtual_controls_movement),
+        accentTitle = false,
+    ) {
+        ConfigMessageBlock(
+            androidx.compose.ui.res.stringResource(R.string.config_virtual_dpad_available),
+            ConfigMessageLevel.Info,
+        )
+        ConfigSwitchPreference(
+            title = androidx.compose.ui.res.stringResource(R.string.config_virtual_analog_stick),
+            description = androidx.compose.ui.res.stringResource(R.string.config_virtual_analog_stick_summary),
+            checked = form.virtualAnalogEnabled,
+            enabled = form.showKeyboard,
+            onCheckedChange = { enabled ->
+                onFormChanged(form.toBuilder().virtualAnalogEnabled(enabled).build())
+            },
         )
     }
 
