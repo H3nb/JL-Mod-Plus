@@ -111,6 +111,10 @@ interface RuntimeMenuActions {
     fun onResetEmulationSpeed()
     fun onMemoryEditor()
     fun onEditVirtualKeyboardLayout()
+
+    /** Legacy source-compatibility hook. The runtime UI no longer exposes a separate resize mode. */
+    fun onResizeVirtualKeyboardLayout() {}
+
     fun onFinishVirtualKeyboardLayout()
     fun onSwitchVirtualKeyboardLayout()
     fun onHideVirtualKeyboardButtons()
