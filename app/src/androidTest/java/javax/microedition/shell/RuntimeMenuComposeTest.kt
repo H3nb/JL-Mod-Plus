@@ -131,7 +131,7 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("Save Log").assertIsDisplayed()
         composeRule.onNodeWithText("Lock Screen Rotation").assertIsDisplayed()
         composeRule.onAllNodesWithText("Limit FPS").assertCountEquals(0)
-        composeRule.onAllNodesWithText("Virtual Keyboard").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Virtual Controls").assertCountEquals(0)
     }
 
     @Test
@@ -174,7 +174,7 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun fullscreenCanvasMenu_exposesCanvasAndVirtualKeyboardActions() {
+    fun fullscreenCanvasMenu_exposesVirtualControlsWithoutSeparateResizeMode() {
         composeRule.setContent {
             JLModPlusTheme {
                 RuntimeMenuHost(
@@ -185,6 +185,8 @@ class RuntimeMenuComposeTest {
                         imeAvailable = true,
                         virtualKeyboardAvailable = true,
                         virtualKeyboardEditing = true,
+                        virtualDpadEnabled = true,
+                        virtualAnalogEnabled = false,
                     ),
                     menuVisible = true,
                     actions = RecordingRuntimeMenuActions(),
@@ -196,9 +198,44 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("Keyboard (IME)").assertIsDisplayed()
         composeRule.onNodeWithText("Take Screenshot").assertIsDisplayed()
         composeRule.onNodeWithText("Limit FPS").assertIsDisplayed()
-        composeRule.onNodeWithText("Virtual Keyboard").performScrollTo().performClick()
+        composeRule.onNodeWithText("Virtual Controls").performScrollTo().performClick()
+        composeRule.onNodeWithText("D-pad").assertIsDisplayed()
+        composeRule.onNodeWithText("Analog stick").assertIsDisplayed()
+        composeRule.onNodeWithText("Edit Virtual Controls").assertIsDisplayed()
         composeRule.onNodeWithText("Finish Edit Mode").assertIsDisplayed()
-        composeRule.onNodeWithText("Hide Buttons").assertIsDisplayed()
+        composeRule.onNodeWithText("Show or Hide Buttons").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Key Layout Resize Mode").assertCountEquals(0)
+    }
+
+    @Test
+    fun virtualControlSwitchesStayOnRuntimePageAndDispatchTheirOwnCallbacks() {
+        var dpadToggles = 0
+        var analogToggles = 0
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = RuntimeMenuUiState(
+                        title = "Canvas MIDlet",
+                        isCanvas = true,
+                        virtualKeyboardAvailable = true,
+                        virtualDpadEnabled = true,
+                        virtualAnalogEnabled = false,
+                    ),
+                    menuVisible = true,
+                    virtualKeyboardPage = true,
+                    actions = RecordingRuntimeMenuActions(),
+                    onDismissMenu = {},
+                    onToggleVirtualDpad = { dpadToggles++ },
+                    onToggleVirtualAnalog = { analogToggles++ },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("D-pad").performClick()
+        composeRule.onNodeWithText("Analog stick").performClick()
+        composeRule.onNodeWithText("Virtual Controls").assertIsDisplayed()
+        assertEquals(1, dpadToggles)
+        assertEquals(1, analogToggles)
     }
 
     @Test
@@ -282,9 +319,6 @@ class RuntimeMenuComposeTest {
         }
 
         composeRule.onNodeWithText("Exit").assertIsDisplayed()
-        // The platform Dialog owns the physical Back event. This test verifies the
-        // composable boundary it invokes without depending on a focused platform
-        // dialog window, which is not guaranteed by the Compose test manifest.
         composeRule.runOnIdle { dismissMenu() }
         composeRule.waitUntil(timeoutMillis = 5_000) { !visible.value }
         assertEquals(listOf("dismiss"), events)
@@ -292,7 +326,7 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-	fun fpsDialog_keepsNumericConfirmAndResetValues() {
+    fun fpsDialog_keepsNumericConfirmAndResetValues() {
         var confirmed: Int? = null
         var resets = 0
         composeRule.setContent {
@@ -310,8 +344,8 @@ class RuntimeMenuComposeTest {
         assertEquals(60, confirmed)
 
         composeRule.onNodeWithText("Reset").performClick()
-		assertEquals(1, resets)
-	}
+        assertEquals(1, resets)
+    }
 
     @Test
     fun emulationSpeedDialog_canSelectUncappedAutoMode() {
@@ -334,43 +368,43 @@ class RuntimeMenuComposeTest {
         assertEquals(true, confirmedAuto)
     }
 
-	@Test
-	fun runtimeExitDialog_keepsCancelSeparateFromExplicitExit() {
-		val events = mutableListOf<String>()
-		composeRule.setContent {
-			JLModPlusTheme {
-				RuntimeHostDialogs(
-					state = RuntimeHostDialogState.ExitConfirmation,
-					actions = RecordingRuntimeHostDialogActions(events),
-					onDismiss = { events += "dismiss" },
-				)
-			}
-		}
+    @Test
+    fun runtimeExitDialog_keepsCancelSeparateFromExplicitExit() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.ExitConfirmation,
+                    actions = RecordingRuntimeHostDialogActions(events),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
 
-		composeRule.onNodeWithText("Cancel").performClick()
-		assertEquals(listOf("dismiss"), events)
-	}
+        composeRule.onNodeWithText("Cancel").performClick()
+        assertEquals(listOf("dismiss"), events)
+    }
 
-	@Test
-	fun runtimeLayoutDialog_dispatchesOnlyTheConfirmedSelection() {
-		val events = mutableListOf<String>()
-		composeRule.setContent {
-			JLModPlusTheme {
-				RuntimeHostDialogs(
-					state = RuntimeHostDialogState.LayoutSelection(
-						entries = listOf("Phone", "Tablet"),
-						selected = 0,
-					),
-					actions = RecordingRuntimeHostDialogActions(events),
-					onDismiss = { events += "dismiss" },
-				)
-			}
-		}
+    @Test
+    fun runtimeLayoutDialog_dispatchesOnlyTheConfirmedSelection() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.LayoutSelection(
+                        entries = listOf("Phone", "Tablet"),
+                        selected = 0,
+                    ),
+                    actions = RecordingRuntimeHostDialogActions(events),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
 
-		composeRule.onNodeWithText("Tablet").performClick()
-		composeRule.onNodeWithText("OK").performClick()
-		assertEquals(listOf("dismiss", "layout:1"), events)
-	}
+        composeRule.onNodeWithText("Tablet").performClick()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(listOf("dismiss", "layout:1"), events)
+    }
 }
 
 private class RecordingRuntimeMenuActions(
@@ -450,33 +484,33 @@ private class RecordingRuntimeMenuActions(
 }
 
 private class RecordingRuntimeHostDialogActions(
-	private val events: MutableList<String>,
+    private val events: MutableList<String>,
 ) : RuntimeHostDialogActions {
-	override fun onMidletSelected(index: Int) {
-		events += "midlet:$index"
-	}
+    override fun onMidletSelected(index: Int) {
+        events += "midlet:$index"
+    }
 
-	override fun onMidletCancelled() {
-		events += "midlet-cancel"
-	}
+    override fun onMidletCancelled() {
+        events += "midlet-cancel"
+    }
 
-	override fun onErrorAcknowledged() {
-		events += "error"
-	}
+    override fun onErrorAcknowledged() {
+        events += "error"
+    }
 
-	override fun onExitConfirmed(openSettings: Boolean) {
-		events += if (openSettings) "settings" else "exit"
-	}
+    override fun onExitConfirmed(openSettings: Boolean) {
+        events += if (openSettings) "settings" else "exit"
+    }
 
-	override fun onHideButtonsConfirmed(states: BooleanArray) {
-		events += "hide"
-	}
+    override fun onHideButtonsConfirmed(states: BooleanArray) {
+        events += "hide"
+    }
 
-	override fun onSaveVirtualKeyboard(saveScreenParams: Boolean) {
-		events += "save"
-	}
+    override fun onSaveVirtualKeyboard(saveScreenParams: Boolean) {
+        events += "save"
+    }
 
-	override fun onLayoutSelected(index: Int) {
-		events += "layout:$index"
-	}
+    override fun onLayoutSelected(index: Int) {
+        events += "layout:$index"
+    }
 }
