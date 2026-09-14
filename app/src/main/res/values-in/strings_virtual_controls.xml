@@ -6,6 +6,10 @@
     <string name="config_virtual_movement_dpad">D-pad</string>
     <string name="config_virtual_movement_analog">Stik analog</string>
     <string name="config_virtual_dpad_available">D-pad tersedia sebagai satu kontrol gerakan virtual yang utuh.</string>
+    <string name="config_virtual_dpad">D-pad</string>
+    <string name="config_virtual_dpad_summary">Tampilkan D-pad 8 arah sebagai satu kontrol utuh. Pindahkan dan ubah ukuran seluruh D-pad melalui editor tata letak kontrol virtual.</string>
     <string name="config_virtual_analog_stick">Stik analog</string>
-    <string name="config_virtual_analog_stick_summary">Stik analog memakai pemrosesan deadzone dan arah yang sama dengan pengontrol fisik, lalu menghasilkan arah J2ME.</string>
+    <string name="config_virtual_analog_stick_summary">Tampilkan stik analog sebagai satu kontrol utuh. Stik memakai pemrosesan deadzone/arah yang sama dan dapat dipindah atau diubah ukurannya sekaligus.</string>
+    <string name="config_gamepad_directions_numeric_v2">Numerik</string>
+    <string name="config_gamepad_mapping_help_body_v2">Gunakan D-pad atau stik kiri untuk menavigasi JL-Mod Plus, A untuk memilih, dan B untuk kembali. Saat MIDlet berjalan, tombol keypad/keyboard/gamepad fisik memakai Pemetaan Tombol yang sama. Petakan tombol fisik apa pun ke M bila ingin tombol itu membuka menu runtime MIDlet. Stik analog, trigger, input pointer, kalibrasi, dan kontrol virtual dikonfigurasi secara terpisah.</string>
 </resources>
