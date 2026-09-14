@@ -278,6 +278,13 @@ public object StickProcessor {
         EIGHT_WAY,
     }
 
+    /**
+     * CARDINALS emits J2ME navigation actions. NUMBER_KEYS emits the complete
+     * phone-keypad direction layout: 7/8/9, 4/6, 1/2/3.
+     *
+     * The historical enum name is retained for profile/API compatibility even
+     * though NUMBER_KEYS now affects cardinal directions as well as diagonals.
+     */
     public enum class DiagonalOutputMode {
         CARDINALS,
         NUMBER_KEYS,
@@ -306,8 +313,12 @@ public object StickProcessor {
         LEFT,
         RIGHT,
         NUM1,
+        NUM2,
         NUM3,
+        NUM4,
+        NUM6,
         NUM7,
+        NUM8,
         NUM9,
     }
 
@@ -652,31 +663,30 @@ public object StickProcessor {
     private fun keysFor(
         direction: StickDirection,
         diagonalOutput: DiagonalOutputMode,
-    ): List<DirectionKey> = when (direction) {
-        StickDirection.NEUTRAL -> emptyList()
-        StickDirection.UP -> listOf(DirectionKey.UP)
-        StickDirection.RIGHT -> listOf(DirectionKey.RIGHT)
-        StickDirection.DOWN -> listOf(DirectionKey.DOWN)
-        StickDirection.LEFT -> listOf(DirectionKey.LEFT)
-        StickDirection.UP_LEFT -> if (diagonalOutput == DiagonalOutputMode.NUMBER_KEYS) {
-            listOf(DirectionKey.NUM7)
-        } else {
-            listOf(DirectionKey.UP, DirectionKey.LEFT)
+    ): List<DirectionKey> {
+        if (diagonalOutput == DiagonalOutputMode.NUMBER_KEYS) {
+            return when (direction) {
+                StickDirection.NEUTRAL -> emptyList()
+                StickDirection.UP -> listOf(DirectionKey.NUM2)
+                StickDirection.UP_RIGHT -> listOf(DirectionKey.NUM9)
+                StickDirection.RIGHT -> listOf(DirectionKey.NUM6)
+                StickDirection.DOWN_RIGHT -> listOf(DirectionKey.NUM3)
+                StickDirection.DOWN -> listOf(DirectionKey.NUM8)
+                StickDirection.DOWN_LEFT -> listOf(DirectionKey.NUM1)
+                StickDirection.LEFT -> listOf(DirectionKey.NUM4)
+                StickDirection.UP_LEFT -> listOf(DirectionKey.NUM7)
+            }
         }
-        StickDirection.UP_RIGHT -> if (diagonalOutput == DiagonalOutputMode.NUMBER_KEYS) {
-            listOf(DirectionKey.NUM9)
-        } else {
-            listOf(DirectionKey.UP, DirectionKey.RIGHT)
-        }
-        StickDirection.DOWN_LEFT -> if (diagonalOutput == DiagonalOutputMode.NUMBER_KEYS) {
-            listOf(DirectionKey.NUM1)
-        } else {
-            listOf(DirectionKey.DOWN, DirectionKey.LEFT)
-        }
-        StickDirection.DOWN_RIGHT -> if (diagonalOutput == DiagonalOutputMode.NUMBER_KEYS) {
-            listOf(DirectionKey.NUM3)
-        } else {
-            listOf(DirectionKey.DOWN, DirectionKey.RIGHT)
+        return when (direction) {
+            StickDirection.NEUTRAL -> emptyList()
+            StickDirection.UP -> listOf(DirectionKey.UP)
+            StickDirection.RIGHT -> listOf(DirectionKey.RIGHT)
+            StickDirection.DOWN -> listOf(DirectionKey.DOWN)
+            StickDirection.LEFT -> listOf(DirectionKey.LEFT)
+            StickDirection.UP_LEFT -> listOf(DirectionKey.UP, DirectionKey.LEFT)
+            StickDirection.UP_RIGHT -> listOf(DirectionKey.UP, DirectionKey.RIGHT)
+            StickDirection.DOWN_LEFT -> listOf(DirectionKey.DOWN, DirectionKey.LEFT)
+            StickDirection.DOWN_RIGHT -> listOf(DirectionKey.DOWN, DirectionKey.RIGHT)
         }
     }
 
