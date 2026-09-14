@@ -53,7 +53,8 @@ import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 
 /**
  * Controls → Gamepad. Digital button mapping lives in the shared KeyMapper screen; this section
- * edits only analog sticks, trigger adaptation, pointer output, calibration, and diagnosis.
+ * edits only physical-controller analog sticks, trigger adaptation, pointer output, calibration,
+ * and diagnosis. Touch D-pad/analog visibility belongs to the runtime Virtual Controls menu.
  */
 @Composable
 internal fun GamepadSection(
@@ -135,30 +136,6 @@ internal fun GamepadSection(
             description = androidx.compose.ui.res.stringResource(R.string.config_gamepad_reset_summary),
             destructive = true,
             onClick = { resetVisible = true },
-        )
-    }
-
-    ConfigSection(
-        title = androidx.compose.ui.res.stringResource(R.string.config_virtual_controls_movement),
-        accentTitle = false,
-    ) {
-        ConfigSwitchPreference(
-            title = androidx.compose.ui.res.stringResource(R.string.config_virtual_dpad),
-            description = androidx.compose.ui.res.stringResource(R.string.config_virtual_dpad_summary),
-            checked = form.virtualDpadEnabled,
-            enabled = form.showKeyboard,
-            onCheckedChange = { enabled ->
-                onFormChanged(form.toBuilder().virtualDpadEnabled(enabled).build())
-            },
-        )
-        ConfigSwitchPreference(
-            title = androidx.compose.ui.res.stringResource(R.string.config_virtual_analog_stick),
-            description = androidx.compose.ui.res.stringResource(R.string.config_virtual_analog_stick_summary),
-            checked = form.virtualAnalogEnabled,
-            enabled = form.showKeyboard,
-            onCheckedChange = { enabled ->
-                onFormChanged(form.toBuilder().virtualAnalogEnabled(enabled).build())
-            },
         )
     }
 
