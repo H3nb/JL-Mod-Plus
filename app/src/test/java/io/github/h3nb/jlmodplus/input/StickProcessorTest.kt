@@ -124,6 +124,33 @@ class StickProcessorTest {
     }
 
     @Test
+    fun numericModeUsesCompletePhoneKeypadDirectionLayout() {
+        val stickConfig = StickProcessor.StickConfig(innerDeadzone = 0.0f, outerClamp = 1.0f)
+        val numeric = StickProcessor.DirectionConfig(
+            mode = StickProcessor.DirectionMode.EIGHT_WAY,
+            diagonalOutput = StickProcessor.DiagonalOutputMode.NUMBER_KEYS,
+            pressRadius = 0.1f,
+            releaseRadius = 0.05f,
+            angularHysteresisDegrees = 0.0f,
+        )
+
+        fun keys(x: Float, y: Float): List<StickProcessor.DirectionKey> =
+            StickProcessor.resolveDirection(
+                StickProcessor.processNormalizedStick(x, y, stickConfig),
+                config = numeric,
+            ).keys
+
+        assertEquals(listOf(StickProcessor.DirectionKey.NUM7), keys(-1f, -1f))
+        assertEquals(listOf(StickProcessor.DirectionKey.NUM2), keys(0f, -1f))
+        assertEquals(listOf(StickProcessor.DirectionKey.NUM9), keys(1f, -1f))
+        assertEquals(listOf(StickProcessor.DirectionKey.NUM4), keys(-1f, 0f))
+        assertEquals(listOf(StickProcessor.DirectionKey.NUM6), keys(1f, 0f))
+        assertEquals(listOf(StickProcessor.DirectionKey.NUM1), keys(-1f, 1f))
+        assertEquals(listOf(StickProcessor.DirectionKey.NUM8), keys(0f, 1f))
+        assertEquals(listOf(StickProcessor.DirectionKey.NUM3), keys(1f, 1f))
+    }
+
+    @Test
     fun fourWayAndEightWayUseDigitalThresholdBeforeResponseCurve() {
         val curved = StickProcessor.processNormalizedStick(
             normalizedX = 0.60f,
