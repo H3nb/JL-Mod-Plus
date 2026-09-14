@@ -87,11 +87,11 @@
     <string name="file_picker_create_folder_failed">Unable to create the folder.</string>
     <string name="file_picker_selection_unavailable">The selected item is no longer available.</string>
     <string name="invalid_resolution_not_saved">Invalid resolution; changes were not saved!</string>
-    <string name="layout_edit_finish">Finish Edit Mode</string>
-    <string name="layout_edit_finished">Edit mode finished</string>
-    <string name="layout_edit_mode">Key Layout Edit Mode</string>
-    <string name="layout_scale_mode">Key Layout Resize Mode</string>
-    <string name="layout_switch">Switch Key Layout</string>
+    <string name="layout_edit_finish">Finish Editing</string>
+    <string name="layout_edit_finished">Virtual controls editing finished</string>
+    <string name="layout_edit_mode">Virtual controls edit mode: drag to move, pinch to resize</string>
+    <string name="layout_scale_mode">Virtual controls edit mode: drag to move, pinch to resize</string>
+    <string name="layout_switch">Switch Control Layout</string>
     <string name="licenses">Licenses</string>
     <string name="licenses_unavailable">License details are temporarily unavailable.</string>
     <string name="loading_apps">Loading apps</string>
@@ -145,9 +145,7 @@
     <string name="library_grid_spacing_standard">Standard (8 dp)</string>
     <string name="library_grid_spacing_spacious">Spacious (12 dp)</string>
     <string name="library_hide_grid_titles">Hide MIDlet Titles</string>
-    <string name="library_hide_grid_titles_summary">Show only MIDlet icons in grid view.</string>
     <string name="library_show_list_description">Show MIDlet Descriptions</string>
-    <string name="library_show_list_description_summary">Show each MIDlet description below its title and version.</string>
     <string name="library_collections_empty_title">No Collections Yet</string>
     <string name="library_collections_empty_message">Collections and folders will be available in a future update.</string>
     <string name="library_expand_description">Expand description</string>
@@ -449,7 +447,7 @@
     <string name="PREF_TOUCH_INPUT">Touch Input</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Enable Vibration</string>
-    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtual Keyboard</string>
+    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtual Controls</string>
     <string name="PREF_VK_ALPHA">Opacity</string>
     <string name="PREF_VK_BACK">Key Color</string>
     <string name="PREF_VK_FEEDBACK">Haptic Feedback</string>
@@ -458,7 +456,7 @@
     <string name="PREF_VK_HIDE_DELAY">Auto-Hide Delay</string>
     <string name="pref_vk_hide_hint">Disabled</string>
     <string name="PREF_VK_OUTLINE">Outline Color</string>
-    <string name="pref_vk_save_alert">Replace the existing custom keyboard with the current one?\nSave?</string>
+    <string name="pref_vk_save_alert">Replace the existing custom virtual-controls layout with the current one?\nSave?</string>
     <string name="PREF_VK_SEL_BACK">Pressed Key Color</string>
     <string name="PREF_VK_SEL_FORE">Pressed Label Color</string>
     <string name="pref_vk_type_arrows">Arrows</string>
@@ -476,7 +474,7 @@
     <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s\nAll data will be saved.</string>
     <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nThe older version may not work correctly with the recorded data.</string>
     <string name="reset">Reset</string>
-    <string name="RESET_LAYOUT_CMD">Reset Key Layout</string>
+    <string name="RESET_LAYOUT_CMD">Reset Control Layout</string>
     <string name="RESET_SETTINGS_CMD">Reset Settings</string>
     <string name="retry">Retry</string>
     <string name="save">Save</string>
