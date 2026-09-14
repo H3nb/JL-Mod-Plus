@@ -27,6 +27,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import io.github.h3nb.jlmodplus.config.ProfileModel;
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.keyboard.KeyMapper;
 
@@ -100,8 +101,24 @@ public class KeyMapperMappingRulesTest {
 		assertTrue(KeyMapperMappingRules.containsValue(defaults, KeyMapper.KEY_OPTIONS_MENU));
 
 		SparseIntArray withoutMenu = defaults.clone();
-		withoutMenu.removeAt(withoutMenu.indexOfKey(android.view.KeyEvent.KEYCODE_BACK));
+		withoutMenu.removeAt(withoutMenu.indexOfKey(KeyEvent.KEYCODE_BACK));
 		assertFalse(KeyMapperMappingRules.containsValue(withoutMenu, KeyMapper.KEY_OPTIONS_MENU));
+	}
+
+	@Test
+	public void runtimeMenuTargetRecognizesMultiplePhysicalSources() {
+		ProfileModel profile = new ProfileModel();
+		profile.keyMappings = new SparseIntArray();
+		profile.keyMappings.put(KeyEvent.KEYCODE_F1, KeyMapper.KEY_OPTIONS_MENU);
+		profile.keyMappings.put(KeyEvent.KEYCODE_BUTTON_START, KeyMapper.KEY_OPTIONS_MENU);
+
+		KeyMapper.setKeyMapping(profile);
+
+		// Default Back remains valid and both user assignments join the same host-only M target.
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BACK));
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_F1));
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BUTTON_START));
+		assertFalse(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BUTTON_SELECT));
 	}
 
 	@Test
