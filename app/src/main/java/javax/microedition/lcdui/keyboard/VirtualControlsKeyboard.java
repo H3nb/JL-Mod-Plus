@@ -16,7 +16,6 @@ package javax.microedition.lcdui.keyboard;
 import android.graphics.RectF;
 import android.view.View;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -155,9 +154,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public boolean pointerPressed(int pointer, float x, float y) {
-		if (getLayoutEditMode() != LAYOUT_EOF && beginGroupedEdit(pointer, x, y)) {
-			return true;
-		}
+		if (getLayoutEditMode() != LAYOUT_EOF && beginGroupedEdit(pointer, x, y)) return true;
 		if (getLayoutEditMode() == LAYOUT_EOF) {
 			if (beginDpad(pointer, x, y)) return true;
 			if (beginAnalog(pointer, x, y)) return true;
@@ -173,17 +170,14 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			return true;
 		}
 		if (pointer == dpadPointer && dpadToken != null) {
-			VirtualDpadGeometry geometry = dpadGeometry();
-			Set<VirtualDpadDirection> directions = dpadController.move(dpadToken, geometry, x, y);
+			Set<VirtualDpadDirection> directions = dpadController.move(dpadToken, dpadGeometry(), x, y);
 			updateDpadOutput(directions);
 			invalidateOverlay();
 			return true;
 		}
 		if (pointer == analogPointer && analogToken != null) {
 			VirtualAnalogSample sample = analogStick.move(
-					analogToken,
-					x - screenBounds.left,
-					y - screenBounds.top);
+					analogToken, x - screenBounds.left, y - screenBounds.top);
 			if (sample != null) {
 				updateAnalogOutput(sample);
 				invalidateOverlay();
@@ -238,14 +232,12 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			return false;
 		}
 		long generation = target.inputGeneration();
-		PointerSourceToken token = new PointerSourceToken(
-				PointerSourceKind.VIRTUAL, pointer, target, generation);
+		PointerSourceToken token = new PointerSourceToken(PointerSourceKind.VIRTUAL, pointer, target, generation);
 		dpadPointer = pointer;
 		dpadToken = token;
 		dpadSequence = dpadSequence == Long.MAX_VALUE ? 1L : dpadSequence + 1L;
 		dpadChannel = "virtual-dpad-group:" + dpadSequence + ":" + pointer;
-		Set<VirtualDpadDirection> directions = dpadController.begin(token, dpadGeometry(), x, y);
-		updateDpadOutput(directions);
+		updateDpadOutput(dpadController.begin(token, dpadGeometry(), x, y));
 		feedback();
 		invalidateOverlay();
 		return true;
@@ -289,23 +281,17 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	private boolean beginAnalog(int pointer, float x, float y) {
 		if (!settings.virtualAnalogEnabled || target == null || viewport == null || screenBounds == null ||
-				analogPointer >= 0 || pointer < 0 || !insideAnalog(x, y, CONTROL_HIT_SCALE)) {
-			return false;
-		}
+				analogPointer >= 0 || pointer < 0 || !insideAnalog(x, y, CONTROL_HIT_SCALE)) return false;
 		long generation = target.inputGeneration();
-		PointerSourceToken token = new PointerSourceToken(
-				PointerSourceKind.VIRTUAL, pointer, target, generation);
+		PointerSourceToken token = new PointerSourceToken(PointerSourceKind.VIRTUAL, pointer, target, generation);
 		if (analogStick.begin(token, viewport, null, null) == null) return false;
 		analogPointer = pointer;
 		analogToken = token;
 		analogSequence = analogSequence == Long.MAX_VALUE ? 1L : analogSequence + 1L;
 		analogChannel = "virtual-analog:" + analogSequence + ":" + pointer;
 		feedback();
-
 		VirtualAnalogSample sample = analogStick.move(
-				token,
-				x - screenBounds.left,
-				y - screenBounds.top);
+				token, x - screenBounds.left, y - screenBounds.top);
 		if (sample != null) updateAnalogOutput(sample);
 		invalidateOverlay();
 		return true;
@@ -383,7 +369,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			VirtualDpadGeometry geometry = editControl == EditControl.DPAD ? dpadGeometry() : analogGeometry();
 			float distance = (float) Math.hypot(x - geometry.getCenterX(), y - geometry.getCenterY());
 			float radius = editStartRadius * distance / Math.max(1.0f, editStartDistance);
-			radius = snapPixels(radius, gridStep()).coerceAtLeast(shortest * MIN_RADIUS_FRACTION);
+			radius = Math.max(snapPixels(radius, gridStep()), shortest * MIN_RADIUS_FRACTION);
 			radius = Math.min(radius, shortest * MAX_RADIUS_FRACTION);
 			setControlRadius(editControl, radius / shortest);
 		} else {
