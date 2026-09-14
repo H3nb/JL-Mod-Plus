@@ -65,7 +65,10 @@ class HostInputRouter(
                     return false
                 }
                 captured[physicalKey] = command
-                if (handled || modal || !canvasVisible || command.isGlobalShortcut) {
+                // Only a real gamepad interaction should reveal an auto-hidden touch overlay.
+                // Keyboard/phone keys mapped to M share the host command but retain their old UI
+                // feedback behavior.
+                if (gamepadEvent && (handled || modal || !canvasVisible || command.isGlobalShortcut)) {
                     host.onControllerInputAccepted()
                 }
                 return true
