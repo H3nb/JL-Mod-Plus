@@ -54,7 +54,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_ANALOG_CENTER_Y = 0.78f;
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
-	private static final float RESIZE_HANDLE_RADIUS_FRACTION = 0.20f;
+	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
 	private static final float MIN_RADIUS_FRACTION = 0.07f;
 	private static final float MAX_RADIUS_FRACTION = 0.34f;
 	private static final int GRID_DIVISIONS = 24;
@@ -84,18 +84,46 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private long analogSequence;
 
 	private int editPointer = -1;
+	private int editPinchPointer = -1;
 	private EditControl editControl = EditControl.NONE;
-	private boolean editResize;
+	private float editPointerX;
+	private float editPointerY;
+	private float editPinchX;
+	private float editPinchY;
 	private float editOffsetX;
 	private float editOffsetY;
-	private float editStartRadius;
-	private float editStartDistance;
+	private float pinchStartRadius;
+	private float pinchStartDistance;
 
 	public VirtualControlsKeyboard(ProfileModel settings) {
 		super(settings);
 		this.settings = settings;
 		sanitizeStoredGeometry();
 		rebuildAnalogStick();
+	}
+
+	public boolean isVirtualDpadEnabled() {
+		return settings.virtualDpadEnabled;
+	}
+
+	public boolean isVirtualAnalogEnabled() {
+		return settings.virtualAnalogEnabled;
+	}
+
+	public void setVirtualDpadEnabled(boolean enabled) {
+		if (settings.virtualDpadEnabled == enabled) return;
+		if (!enabled) endDpad();
+		settings.virtualDpadEnabled = enabled;
+		ProfilesManager.saveConfig(settings);
+		invalidateOverlay();
+	}
+
+	public void setVirtualAnalogEnabled(boolean enabled) {
+		if (settings.virtualAnalogEnabled == enabled) return;
+		if (!enabled) endAnalog();
+		settings.virtualAnalogEnabled = enabled;
+		ProfilesManager.saveConfig(settings);
+		invalidateOverlay();
 	}
 
 	@Override
@@ -154,7 +182,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public boolean pointerPressed(int pointer, float x, float y) {
-		if (getLayoutEditMode() != LAYOUT_EOF && beginGroupedEdit(pointer, x, y)) return true;
+		if (getLayoutEditMode() != LAYOUT_EOF) {
+			if (beginGroupedPinch(pointer, x, y)) return true;
+			if (beginGroupedEdit(pointer, x, y)) return true;
+		}
 		if (getLayoutEditMode() == LAYOUT_EOF) {
 			if (beginDpad(pointer, x, y)) return true;
 			if (beginAnalog(pointer, x, y)) return true;
@@ -164,10 +195,22 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public boolean pointerDragged(int pointer, float x, float y) {
-		if (pointer == editPointer && editControl != EditControl.NONE) {
-			updateGroupedEdit(x, y);
-			invalidateOverlay();
-			return true;
+		if (editControl != EditControl.NONE) {
+			if (pointer == editPointer) {
+				editPointerX = x;
+				editPointerY = y;
+				if (editPinchPointer >= 0) updateGroupedPinch();
+				else updateGroupedMove(x, y);
+				invalidateOverlay();
+				return true;
+			}
+			if (pointer == editPinchPointer) {
+				editPinchX = x;
+				editPinchY = y;
+				updateGroupedPinch();
+				invalidateOverlay();
+				return true;
+			}
 		}
 		if (pointer == dpadPointer && dpadToken != null) {
 			Set<VirtualDpadDirection> directions = dpadController.move(dpadToken, dpadGeometry(), x, y);
@@ -189,7 +232,22 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public boolean pointerReleased(int pointer, float x, float y) {
+		if (pointer == editPinchPointer) {
+			editPinchPointer = -1;
+			resetMoveOffsetFromPrimary();
+			invalidateOverlay();
+			return true;
+		}
 		if (pointer == editPointer) {
+			if (editPinchPointer >= 0) {
+				editPointer = editPinchPointer;
+				editPointerX = editPinchX;
+				editPointerY = editPinchY;
+				editPinchPointer = -1;
+				resetMoveOffsetFromPrimary();
+				invalidateOverlay();
+				return true;
+			}
 			finishGroupedEdit();
 			return true;
 		}
@@ -207,8 +265,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	@Override
 	public void cancel() {
 		editPointer = -1;
+		editPinchPointer = -1;
 		editControl = EditControl.NONE;
-		editResize = false;
 		endDpad();
 		endAnalog();
 		super.cancel();
@@ -348,48 +406,73 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		if (selected == EditControl.NONE || geometry == null) return false;
 
 		editPointer = pointer;
+		editPinchPointer = -1;
 		editControl = selected;
-		float dx = x - geometry.getCenterX();
-		float dy = y - geometry.getCenterY();
-		float distance = (float) Math.hypot(dx, dy);
-		float handleDistance = geometry.getRadius() * (1.0f - RESIZE_HANDLE_RADIUS_FRACTION);
-		editResize = getLayoutEditMode() == LAYOUT_SCALES || distance >= handleDistance;
-		editStartRadius = geometry.getRadius();
-		editStartDistance = Math.max(distance, geometry.getRadius() * 0.25f);
+		editPointerX = x;
+		editPointerY = y;
 		editOffsetX = x - geometry.getCenterX();
 		editOffsetY = y - geometry.getCenterY();
 		invalidateOverlay();
 		return true;
 	}
 
-	private void updateGroupedEdit(float x, float y) {
+	private boolean beginGroupedPinch(int pointer, float x, float y) {
+		if (screenBounds == null || pointer < 0 || editControl == EditControl.NONE ||
+				editPointer < 0 || editPinchPointer >= 0 || pointer == editPointer) return false;
+		VirtualDpadGeometry geometry = currentEditGeometry();
+		if (geometry == null || !insideControl(x, y, geometry, EDIT_SECOND_FINGER_HIT_SCALE)) return false;
+		editPinchPointer = pointer;
+		editPinchX = x;
+		editPinchY = y;
+		pinchStartDistance = Math.max(1.0f,
+				(float) Math.hypot(editPinchX - editPointerX, editPinchY - editPointerY));
+		pinchStartRadius = geometry.getRadius();
+		return true;
+	}
+
+	private void updateGroupedMove(float x, float y) {
 		if (screenBounds == null || editControl == EditControl.NONE) return;
+		float cx = snapPixels(x - editOffsetX, gridStep());
+		float cy = snapPixels(y - editOffsetY, gridStep());
+		float radius = controlRadiusPixels(editControl);
+		cx = clamp(cx, screenBounds.left + radius, screenBounds.right - radius);
+		cy = clamp(cy, screenBounds.top + radius, screenBounds.bottom - radius);
+		setControlCenter(
+				editControl,
+				(cx - screenBounds.left) / Math.max(1.0f, screenBounds.width()),
+				(cy - screenBounds.top) / Math.max(1.0f, screenBounds.height()));
+	}
+
+	private void updateGroupedPinch() {
+		if (screenBounds == null || editControl == EditControl.NONE || editPinchPointer < 0) return;
+		float distance = (float) Math.hypot(editPinchX - editPointerX, editPinchY - editPointerY);
+		float radius = pinchStartRadius * distance / Math.max(1.0f, pinchStartDistance);
 		float shortest = Math.max(1.0f, Math.min(screenBounds.width(), screenBounds.height()));
-		if (editResize) {
-			VirtualDpadGeometry geometry = editControl == EditControl.DPAD ? dpadGeometry() : analogGeometry();
-			float distance = (float) Math.hypot(x - geometry.getCenterX(), y - geometry.getCenterY());
-			float radius = editStartRadius * distance / Math.max(1.0f, editStartDistance);
-			radius = Math.max(snapPixels(radius, gridStep()), shortest * MIN_RADIUS_FRACTION);
-			radius = Math.min(radius, shortest * MAX_RADIUS_FRACTION);
-			setControlRadius(editControl, radius / shortest);
-		} else {
-			float cx = snapPixels(x - editOffsetX, gridStep());
-			float cy = snapPixels(y - editOffsetY, gridStep());
-			float radius = controlRadiusPixels(editControl);
-			cx = clamp(cx, screenBounds.left + radius, screenBounds.right - radius);
-			cy = clamp(cy, screenBounds.top + radius, screenBounds.bottom - radius);
-			setControlCenter(
-					editControl,
-					(cx - screenBounds.left) / Math.max(1.0f, screenBounds.width()),
-					(cy - screenBounds.top) / Math.max(1.0f, screenBounds.height()));
-		}
+		setControlRadius(editControl, radius / shortest);
+		if (editControl == EditControl.ANALOG) rebuildAnalogStick();
+	}
+
+	private void resetMoveOffsetFromPrimary() {
+		VirtualDpadGeometry geometry = currentEditGeometry();
+		if (geometry == null) return;
+		editOffsetX = editPointerX - geometry.getCenterX();
+		editOffsetY = editPointerY - geometry.getCenterY();
+	}
+
+	private VirtualDpadGeometry currentEditGeometry() {
+		if (screenBounds == null) return null;
+		return switch (editControl) {
+			case DPAD -> dpadGeometry();
+			case ANALOG -> analogGeometry();
+			default -> null;
+		};
 	}
 
 	private void finishGroupedEdit() {
 		if (editControl == EditControl.ANALOG) rebuildAnalogStick();
 		editPointer = -1;
+		editPinchPointer = -1;
 		editControl = EditControl.NONE;
-		editResize = false;
 		ProfilesManager.saveConfig(settings);
 		invalidateOverlay();
 	}
@@ -434,7 +517,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		graphics.drawString("↓", cx, cy + r * 0.62f);
 		graphics.drawString("←", cx - r * 0.62f, cy);
 		graphics.drawString("→", cx + r * 0.62f, cy);
-		if (getLayoutEditMode() != LAYOUT_EOF) paintResizeHandle(graphics, geometry, selected);
 	}
 
 	private void paintAnalog(CanvasWrapper graphics) {
@@ -462,17 +544,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		graphics.fillArc(thumb, 0, 360);
 		graphics.setDrawColor((alpha << 24) | (settings.vkFgColor & 0x00FFFFFF));
 		graphics.drawArc(thumb, 0, 360);
-		if (getLayoutEditMode() != LAYOUT_EOF) paintResizeHandle(graphics, analogGeometry(), selected);
-	}
-
-	private void paintResizeHandle(CanvasWrapper graphics, VirtualDpadGeometry geometry, boolean selected) {
-		float handleRadius = Math.max(6.0f, geometry.getRadius() * 0.11f);
-		float hx = geometry.getCenterX() + geometry.getRadius() * 0.76f;
-		float hy = geometry.getCenterY() + geometry.getRadius() * 0.76f;
-		int color = selected ? settings.vkFgColorSelected : settings.vkFgColor;
-		graphics.setFillColor((0xE0 << 24) | (color & 0x00FFFFFF));
-		graphics.fillArc(new RectF(hx - handleRadius, hy - handleRadius,
-				hx + handleRadius, hy + handleRadius), 0, 360);
 	}
 
 	private VirtualDpadGeometry dpadGeometry() {
