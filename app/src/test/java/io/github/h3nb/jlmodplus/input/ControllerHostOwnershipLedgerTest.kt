@@ -21,8 +21,8 @@ import org.junit.Test
 class ControllerHostOwnershipLedgerTest {
     private val target = ControllerHostTarget("screen", 2L)
     private val newerTarget = ControllerHostTarget("screen", 3L)
-    private val fire = ControllerHostOutput.GuestKey(53)
-    private val activate = ControllerHostOutput.Action(HostAction.ACTIVATE)
+    private val navigate = ControllerHostOutput.Command(HostCommand.NavigateLeft)
+    private val activate = ControllerHostOutput.Command(HostCommand.Activate)
 
     @Test
     fun manyToOneReleasesOnlyAfterLastHostOwner() {
@@ -31,15 +31,15 @@ class ControllerHostOwnershipLedgerTest {
         val first = source("a", "first")
         val second = source("b", "second")
 
-        ledger.down(first, target, listOf(fire))
-        ledger.down(second, target, listOf(fire))
+        ledger.down(first, target, listOf(navigate))
+        ledger.down(second, target, listOf(navigate))
         ledger.up(first)
         ledger.up(second)
 
         assertEquals(
             listOf(
-                event(ControllerHostEventType.DOWN, target, fire),
-                event(ControllerHostEventType.UP, target, fire),
+                event(ControllerHostEventType.DOWN, target, navigate),
+                event(ControllerHostEventType.UP, target, navigate),
             ),
             sink.events,
         )
@@ -51,18 +51,18 @@ class ControllerHostOwnershipLedgerTest {
         val ledger = ControllerHostOwnershipLedger(sink)
         val source = source("pad", "direction")
 
-        ledger.down(source, target, listOf(fire, activate))
-        ledger.update(source, newerTarget, listOf(fire))
+        ledger.down(source, target, listOf(navigate, activate))
+        ledger.update(source, newerTarget, listOf(navigate))
         ledger.up(source)
 
         assertEquals(
             listOf(
-                event(ControllerHostEventType.DOWN, target, fire),
                 event(ControllerHostEventType.DOWN, target, activate),
-                event(ControllerHostEventType.UP, target, fire),
+                event(ControllerHostEventType.DOWN, target, navigate),
                 event(ControllerHostEventType.UP, target, activate),
-                event(ControllerHostEventType.DOWN, newerTarget, fire),
-                event(ControllerHostEventType.UP, newerTarget, fire),
+                event(ControllerHostEventType.UP, target, navigate),
+                event(ControllerHostEventType.DOWN, newerTarget, navigate),
+                event(ControllerHostEventType.UP, newerTarget, navigate),
             ),
             sink.events,
         )
@@ -76,7 +76,7 @@ class ControllerHostOwnershipLedgerTest {
         val ledger = ControllerHostOwnershipLedger(sink, clock)
         val source = source("pad", "dpad")
 
-        ledger.down(source, target, listOf(fire), RepeatSpec(100L, 50L, true))
+        ledger.down(source, target, listOf(navigate), RepeatSpec(100L, 50L, true))
         clock.advanceBy(99L)
         clock.advanceBy(1L)
         ledger.up(source)
@@ -84,9 +84,9 @@ class ControllerHostOwnershipLedgerTest {
 
         assertEquals(
             listOf(
-                event(ControllerHostEventType.DOWN, target, fire),
-                event(ControllerHostEventType.REPEAT, target, fire),
-                event(ControllerHostEventType.UP, target, fire),
+                event(ControllerHostEventType.DOWN, target, navigate),
+                event(ControllerHostEventType.REPEAT, target, navigate),
+                event(ControllerHostEventType.UP, target, navigate),
             ),
             sink.events,
         )

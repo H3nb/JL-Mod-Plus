@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.microedition.lcdui.Command;
-import javax.microedition.lcdui.Canvas;
+import io.github.h3nb.jlmodplus.input.HostCommand;
 import javax.microedition.lcdui.Screen;
 
 public class ScreenSoftBar extends AbstractSoftKeysBar {
@@ -61,8 +61,8 @@ public class ScreenSoftBar extends AbstractSoftKeysBar {
 		return controller.isControllerMenuVisible();
 	}
 
-	public boolean handleControllerInput(String control, boolean pressed) {
-		return controller.handleControllerInput(control, pressed);
+	public boolean handleHostCommand(HostCommand command, boolean pressed) {
+		return controller.handleHostCommand(command, pressed);
 	}
 
 	public boolean handleControllerMotion(MotionEvent event) {
@@ -71,12 +71,6 @@ public class ScreenSoftBar extends AbstractSoftKeysBar {
 
 	public boolean handleControllerBack() {
 		return controller.handleControllerBack();
-	}
-
-	public boolean handleControllerSoftKey(int keyCode) {
-		if (keyCode == Canvas.KEY_SOFT_LEFT) return controller.handleControllerSoftKey("soft_left");
-		if (keyCode == Canvas.KEY_SOFT_RIGHT) return controller.handleControllerSoftKey("soft_right");
-		return false;
 	}
 
 	@Override

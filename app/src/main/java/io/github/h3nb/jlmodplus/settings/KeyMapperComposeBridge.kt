@@ -45,6 +45,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -81,9 +82,14 @@ data class KeyMapperButton(
     val canvasKey: Int,
 )
 
+data class KeyMapperAssignedInput(
+    val androidKeyCode: Int,
+    val name: String,
+)
+
 data class KeyMapperMappingDialog(
     val canvasKey: Int,
-    val currentKeyName: String,
+    val assignedInputs: List<KeyMapperAssignedInput>,
 )
 
 data class KeyMapperUiState(
@@ -94,6 +100,7 @@ data class KeyMapperUiState(
 interface KeyMapperActions {
     fun onVirtualKey(canvasKey: Int)
     fun onDismissMapping()
+    fun onRemoveMappedKey(androidKeyCode: Int) {}
 
     fun onBack() {}
 
@@ -127,8 +134,8 @@ class KeyMapperComposeController(
         }
     }
 
-    fun showMappingDialog(canvasKey: Int, currentKeyName: String) {
-        state = state.copy(mappingDialog = KeyMapperMappingDialog(canvasKey, currentKeyName))
+    fun showMappingDialog(canvasKey: Int, assignedInputs: List<KeyMapperAssignedInput>) {
+        state = state.copy(mappingDialog = KeyMapperMappingDialog(canvasKey, assignedInputs))
     }
 
     fun hideMappingDialog() {
@@ -305,7 +312,7 @@ private fun KeyRow(
             ) {
                 Text(
                     text = stringResource(button.labelRes),
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
         }
@@ -371,11 +378,42 @@ private fun MappingOverlay(
                             style = MaterialTheme.typography.titleLarge,
                         )
                         Text(
-                            text = stringResource(
-                                R.string.mapping_dialog_message,
-                                dialog.currentKeyName,
-                            ),
-                            style = MaterialTheme.typography.bodyLarge,
+                            text = stringResource(R.string.mapping_dialog_message),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        Text(
+                            text = stringResource(R.string.mapping_dialog_assigned_inputs),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        if (dialog.assignedInputs.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.mapping_dialog_key_not_specified),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        } else {
+                            dialog.assignedInputs.forEach { assigned ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = assigned.name,
+                                        modifier = Modifier.weight(1f),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                    TextButton(
+                                        onClick = { actions.onRemoveMappedKey(assigned.androidKeyCode) },
+                                    ) {
+                                        Text(stringResource(R.string.mapping_dialog_remove))
+                                    }
+                                }
+                            }
+                        }
+                        Text(
+                            text = stringResource(R.string.mapping_dialog_add_input),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     ScrollableContentHint(

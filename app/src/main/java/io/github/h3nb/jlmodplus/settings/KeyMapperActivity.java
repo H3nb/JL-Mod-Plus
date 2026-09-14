@@ -107,6 +107,12 @@ public class KeyMapperActivity extends AppCompatActivity {
 			}
 
 			@Override
+			public void onRemoveMappedKey(int androidKeyCode) {
+				androidToMIDP = KeyMapperMappingRules.removeBinding(androidToMIDP, androidKeyCode);
+				showMappingDialog(canvasKey);
+			}
+
+			@Override
 			public void onBack() {
 				getOnBackPressedDispatcher().onBackPressed();
 			}
@@ -160,15 +166,15 @@ public class KeyMapperActivity extends AppCompatActivity {
 
 	private void showMappingDialog(int canvasKey) {
 		this.canvasKey = canvasKey;
-		SparseIntArray androidToMIDP = this.androidToMIDP;
-		int idx = androidToMIDP.indexOfValue(canvasKey);
-		String keyName;
-		if (idx < 0) {
-			keyName = getString(R.string.mapping_dialog_key_not_specified);
-		} else {
-			keyName = KeyEvent.keyCodeToString(androidToMIDP.keyAt(idx));
+		java.util.ArrayList<KeyMapperAssignedInput> assigned = new java.util.ArrayList<>();
+		for (int index = 0; index < androidToMIDP.size(); index++) {
+			if (androidToMIDP.valueAt(index) == canvasKey) {
+				int androidKeyCode = androidToMIDP.keyAt(index);
+				assigned.add(new KeyMapperAssignedInput(
+						androidKeyCode, KeyEvent.keyCodeToString(androidKeyCode)));
+			}
 		}
-		composeController.showMappingDialog(canvasKey, keyName);
+		composeController.showMappingDialog(canvasKey, assigned);
 	}
 
 	private void dismissMappingDialog() {

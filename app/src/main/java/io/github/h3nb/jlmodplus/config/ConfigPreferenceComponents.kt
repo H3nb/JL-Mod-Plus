@@ -48,6 +48,7 @@ internal enum class ConfigMessageLevel { Info, Warning, Danger }
 internal fun ConfigSection(
     title: String,
     highlighted: Boolean = false,
+    accentTitle: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -55,7 +56,11 @@ internal fun ConfigSection(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
+            color = if (accentTitle) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
             modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
         )
         Surface(
@@ -99,14 +104,14 @@ internal fun ConfigValuePreference(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
             color = if (enabled) MaterialTheme.colorScheme.onSurface
             else MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = description,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (message != null) {
@@ -158,14 +163,14 @@ internal fun ConfigSwitchPreference(
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Medium,
                 color = if (enabled) Color.Unspecified
                 else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (message != null) {
@@ -302,10 +307,10 @@ internal fun ConfigColorPreference(
             .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+        Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
         Text(
             text = description,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(
@@ -355,7 +360,7 @@ internal fun ConfigActionPreference(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Medium,
                 color = if (destructive) MaterialTheme.colorScheme.error
                 else if (enabled) MaterialTheme.colorScheme.onSurface
@@ -363,7 +368,7 @@ internal fun ConfigActionPreference(
             )
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -387,10 +392,10 @@ internal fun ConfigDisclosurePreference(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

@@ -18,9 +18,8 @@ import java.util.ArrayDeque
 
 /** A host-side output that can be shared by several controller sources. */
 sealed interface ControllerHostOutput {
-    data class GuestKey(val code: Int) : ControllerHostOutput
-
-    data class Action(val action: HostAction) : ControllerHostOutput
+    /** A host command is independent from MIDP/Canvas key codes. */
+    data class Command(val command: HostCommand) : ControllerHostOutput
 }
 
 data class ControllerHostTarget(
@@ -391,14 +390,9 @@ class ControllerHostOwnershipLedger(
 
     companion object {
         private val outputComparator = Comparator<ControllerHostOutput> { first, second ->
-            outputRank(first).compareTo(outputRank(second)).takeIf { it != 0 }
-                ?: when {
-                    first is ControllerHostOutput.GuestKey && second is ControllerHostOutput.GuestKey ->
-                        first.code.compareTo(second.code)
-                    first is ControllerHostOutput.Action && second is ControllerHostOutput.Action ->
-                        first.action.name.compareTo(second.action.name)
-                    else -> 0
-                }
+            (first as ControllerHostOutput.Command).command.name.compareTo(
+                (second as ControllerHostOutput.Command).command.name,
+            )
         }
 
         private val targetedComparator = Comparator<ControllerHostTargetedOutput> { first, second ->
@@ -406,10 +400,6 @@ class ControllerHostOwnershipLedger(
             if (target != 0) target else outputComparator.compare(first.output, second.output)
         }
 
-        private fun outputRank(output: ControllerHostOutput): Int = when (output) {
-            is ControllerHostOutput.GuestKey -> 0
-            is ControllerHostOutput.Action -> 1
-        }
     }
 }
 

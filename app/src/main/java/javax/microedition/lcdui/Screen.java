@@ -29,6 +29,7 @@ import androidx.annotation.Nullable;
 import java.util.ArrayList;
 
 import javax.microedition.lcdui.commands.ScreenSoftBar;
+import io.github.h3nb.jlmodplus.input.HostCommand;
 
 public abstract class Screen extends Displayable {
 
@@ -65,9 +66,14 @@ public abstract class Screen extends Displayable {
 		return controllerBar != null && controllerBar.isControllerMenuVisible();
 	}
 
-	public boolean handleControllerInput(String control, boolean pressed) {
+	/** Routes host navigation directly to the app-owned soft-menu surface. */
+	public boolean handleHostCommand(HostCommand command, boolean pressed) {
 		ScreenSoftBar controllerBar = controllerSoftBar();
-		return controllerBar != null && controllerBar.handleControllerInput(control, pressed);
+		if (controllerBar == null) return false;
+		if (command == HostCommand.Back && !controllerBar.isControllerMenuVisible()) {
+			return pressed && controllerBar.handleControllerBack();
+		}
+		return controllerBar.handleHostCommand(command, pressed);
 	}
 
 	public boolean handleControllerMotion(MotionEvent event) {
@@ -79,17 +85,6 @@ public abstract class Screen extends Displayable {
 	public boolean handleControllerBack() {
 		ScreenSoftBar controllerBar = controllerSoftBar();
 		return controllerBar != null && controllerBar.handleControllerBack();
-	}
-
-	/** Delivers remapped soft keys through the explicit command policy, not command-list indexes. */
-	public boolean handleControllerGuestKey(int keyCode, boolean pressed) {
-		ScreenSoftBar controllerBar = controllerSoftBar();
-		if (controllerBar == null || !pressed) return controllerBar != null &&
-				(keyCode == Canvas.KEY_SOFT_LEFT || keyCode == Canvas.KEY_SOFT_RIGHT);
-		if (keyCode == Canvas.KEY_SOFT_LEFT || keyCode == Canvas.KEY_SOFT_RIGHT) {
-			return controllerBar.handleControllerSoftKey(keyCode);
-		}
-		return false;
 	}
 
 	@Nullable

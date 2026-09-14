@@ -33,7 +33,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.SystemClock;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
@@ -85,7 +84,7 @@ import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.input.ControllerHostSink;
 import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
-import io.github.h3nb.jlmodplus.input.HostAction;
+import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
 import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -219,18 +218,8 @@ public class MicroActivity extends AppCompatActivity {
 			}
 
 			@Override
-			public boolean onHostAction(@NonNull HostAction action, boolean pressed) {
-				return handleControllerHostAction(action, pressed);
-			}
-
-			@Override
-			public boolean dispatchGuestKey(int keyCode, boolean pressed) {
-				return dispatchControllerGuestKey(keyCode, pressed);
-			}
-
-			@Override
-			public boolean dispatchGuestKeyRepeated(int keyCode) {
-				return dispatchControllerGuestKeyRepeated(keyCode);
+			public boolean onHostCommand(@NonNull HostCommand command, boolean pressed) {
+				return handleHostCommand(command, pressed);
 			}
 
 			@Override
@@ -249,21 +238,17 @@ public class MicroActivity extends AppCompatActivity {
 			@Override
 			public boolean isControllerModalActive() {
 				return (runtimeMenuController != null && runtimeMenuController.isMenuVisible())
-						|| (current instanceof Screen && ((Screen) current).isControllerModalActive());
-			}
-
-			@Override
-			public boolean onControllerModalInput(@NonNull String control, boolean pressed) {
-				if (runtimeMenuController != null && runtimeMenuController.isMenuVisible()) {
-					return runtimeMenuController.handleControllerInput(control, pressed);
-				}
-				return current instanceof Screen && ((Screen) current).handleControllerInput(control, pressed);
+						|| (current instanceof Screen && ((Screen) current).isControllerModalActive())
+						|| (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible());
 			}
 
 			@Override
 			public boolean onControllerModalMotion(@NonNull MotionEvent event) {
 				if (runtimeMenuController != null && runtimeMenuController.isMenuVisible()) {
 					return runtimeMenuController.handleControllerMotion(event);
+				}
+				if (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible()) {
+					return ((Canvas) current).handleHostMotion(event);
 				}
 				if (current instanceof Screen) {
 					return ((Screen) current).handleControllerMotion(event);
@@ -1199,113 +1184,44 @@ public class MicroActivity extends AppCompatActivity {
 		return appName;
 	}
 
-	private boolean handleControllerHostAction(@NonNull HostAction action, boolean pressed) {
-		switch (action) {
-			case OPEN_MENU:
+	private boolean handleHostCommand(@NonNull HostCommand command, boolean pressed) {
+		// A visible app-owned modal owns every controller command. This keeps a command from
+		// falling through to a MIDlet while the runtime menu or Screen soft menu is open.
+		if (runtimeMenuController != null && runtimeMenuController.isMenuVisible()) {
+			return runtimeMenuController.handleHostCommand(command, pressed);
+		}
+		if (current instanceof Screen && ((Screen) current).isControllerModalActive()) {
+			return ((Screen) current).handleHostCommand(command, pressed);
+		}
+		if (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible()) {
+			return ((Canvas) current).handleHostCommand(command, pressed);
+		}
+		switch (command) {
+			case OpenMenu:
 				if (pressed) toggleRuntimeMenuFromInput();
 				return true;
-			case OPEN_MAPPING_HELP:
-				return true;
-			case BACK:
-				if (pressed && current instanceof Screen && ((Screen) current).handleControllerBack()) {
+			case Back:
+				if (pressed && current instanceof Screen && ((Screen) current).handleHostCommand(command, true)) {
 					return true;
 				}
 				if (pressed) getOnBackPressedDispatcher().onBackPressed();
 				return true;
-			case ACTIVATE:
-				return dispatchControllerGuestKey(Canvas.KEY_FIRE, pressed);
-			case NEXT_TAB:
-				return dispatchHostKey(KeyEvent.KEYCODE_TAB, pressed, false);
-			case PREVIOUS_TAB:
-				return dispatchHostKey(KeyEvent.KEYCODE_TAB, pressed, true);
-			case OPEN_KEYPAD:
+			case Activate:
+			case NavigateUp:
+			case NavigateDown:
+			case NavigateLeft:
+			case NavigateRight:
+			case NextTab:
+			case PreviousTab:
+				return current instanceof Screen &&
+						((Screen) current).handleHostCommand(command, pressed);
+			case OpenKeypad:
 				if (pressed && current instanceof Canvas) {
 					((Canvas) current).openControllerKeypad();
 				}
 				return true;
 			default:
 				return true;
-		}
-	}
-
-	private boolean dispatchControllerGuestKey(int keyCode, boolean pressed) {
-		if (current instanceof Canvas) {
-			return false;
-		}
-		if (current instanceof Screen) {
-			boolean handled = ((Screen) current).handleControllerGuestKey(keyCode, pressed);
-			if (handled) return true;
-		}
-		if (current == null || binding == null) {
-			return false;
-		}
-		int androidKeyCode = androidKeyCodeForGuestKey(keyCode);
-		if (androidKeyCode == KeyEvent.KEYCODE_UNKNOWN) {
-			return false;
-		}
-		return dispatchHostKey(androidKeyCode, pressed, false);
-	}
-
-	private boolean dispatchControllerGuestKeyRepeated(int keyCode) {
-		if (current instanceof Canvas) {
-			return false;
-		}
-		// Repeating a Screen soft command would execute the command more than once. The softbar
-		// consumes the held key at DOWN/UP, while text/list-like host controls still receive a
-		// genuine Android repeated DOWN below.
-		if (current instanceof Screen &&
-				(keyCode == Canvas.KEY_SOFT_LEFT || keyCode == Canvas.KEY_SOFT_RIGHT)) {
-			return true;
-		}
-		int androidKeyCode = androidKeyCodeForGuestKey(keyCode);
-		if (androidKeyCode == KeyEvent.KEYCODE_UNKNOWN) {
-			return false;
-		}
-		return dispatchHostKey(androidKeyCode, true, false, true);
-	}
-
-	private boolean dispatchHostKey(int androidKeyCode, boolean pressed, boolean shift) {
-		return dispatchHostKey(androidKeyCode, pressed, shift, false);
-	}
-
-	private boolean dispatchHostKey(int androidKeyCode, boolean pressed, boolean shift, boolean repeated) {
-		if (binding == null) return false;
-		long now = SystemClock.uptimeMillis();
-		KeyEvent event = new KeyEvent(
-				now,
-			now,
-				pressed ? KeyEvent.ACTION_DOWN : KeyEvent.ACTION_UP,
-				androidKeyCode,
-				repeated ? 1 : 0,
-				shift ? KeyEvent.META_SHIFT_ON : 0);
-		return binding.displayableContainer.dispatchKeyEvent(event);
-	}
-
-	private static int androidKeyCodeForGuestKey(int keyCode) {
-		switch (keyCode) {
-			case Canvas.KEY_NUM0: return KeyEvent.KEYCODE_0;
-			case Canvas.KEY_NUM1: return KeyEvent.KEYCODE_1;
-			case Canvas.KEY_NUM2: return KeyEvent.KEYCODE_2;
-			case Canvas.KEY_NUM3: return KeyEvent.KEYCODE_3;
-			case Canvas.KEY_NUM4: return KeyEvent.KEYCODE_4;
-			case Canvas.KEY_NUM5: return KeyEvent.KEYCODE_5;
-			case Canvas.KEY_NUM6: return KeyEvent.KEYCODE_6;
-			case Canvas.KEY_NUM7: return KeyEvent.KEYCODE_7;
-			case Canvas.KEY_NUM8: return KeyEvent.KEYCODE_8;
-			case Canvas.KEY_NUM9: return KeyEvent.KEYCODE_9;
-			case Canvas.KEY_STAR: return KeyEvent.KEYCODE_STAR;
-			case Canvas.KEY_POUND: return KeyEvent.KEYCODE_POUND;
-			case Canvas.KEY_UP: return KeyEvent.KEYCODE_DPAD_UP;
-			case Canvas.KEY_DOWN: return KeyEvent.KEYCODE_DPAD_DOWN;
-			case Canvas.KEY_LEFT: return KeyEvent.KEYCODE_DPAD_LEFT;
-			case Canvas.KEY_RIGHT: return KeyEvent.KEYCODE_DPAD_RIGHT;
-			case Canvas.KEY_FIRE: return KeyEvent.KEYCODE_DPAD_CENTER;
-			case Canvas.KEY_SOFT_LEFT: return KeyEvent.KEYCODE_SOFT_LEFT;
-			case Canvas.KEY_SOFT_RIGHT: return KeyEvent.KEYCODE_SOFT_RIGHT;
-			case Canvas.KEY_CLEAR: return KeyEvent.KEYCODE_DEL;
-			case Canvas.KEY_SEND: return KeyEvent.KEYCODE_CALL;
-			case Canvas.KEY_END: return KeyEvent.KEYCODE_ENDCALL;
-			default: return KeyEvent.KEYCODE_UNKNOWN;
 		}
 	}
 

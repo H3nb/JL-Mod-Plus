@@ -72,6 +72,7 @@ import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.clearNavigationFocusOnTouch
 import io.github.h3nb.jlmodplus.ui.showNavigationFocusForKey
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
+import io.github.h3nb.jlmodplus.input.HostCommand
 import javax.microedition.shell.timing.EmulationSpeed
 import android.view.MotionEvent
 import kotlin.math.roundToInt
@@ -257,29 +258,35 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     }
 
     /** Routes controller focus while the runtime menu or one of its dialogs owns the input. */
-    fun handleControllerInput(control: String, pressed: Boolean): Boolean {
+    fun handleHostCommand(command: HostCommand, pressed: Boolean): Boolean {
         if (!isMenuVisible()) return false
         if (!pressed) return true
         controllerFocusVisible = true
         if (hostDialogState != null || limitFpsVisible || emulationSpeedVisible) {
-            if (control == io.github.h3nb.jlmodplus.input.ControllerInputRouter.CONTROL_BUTTON_B ||
-                control == io.github.h3nb.jlmodplus.input.ControllerInputRouter.CONTROL_BUTTON_START ||
-                control == io.github.h3nb.jlmodplus.input.ControllerInputRouter.CONTROL_BUTTON_SELECT
+            if (command == HostCommand.Back ||
+                command == HostCommand.OpenMenu ||
+                command == HostCommand.OpenKeypad
             ) {
                 dismissControllerDialog()
-            } else if (control == io.github.h3nb.jlmodplus.input.ControllerInputRouter.CONTROL_BUTTON_A) {
+            } else if (command == HostCommand.Activate) {
                 activateControllerDialog()
             }
             return true
         }
-        val input = io.github.h3nb.jlmodplus.input.ControllerInputRouter
-        when (control) {
-            input.CONTROL_DPAD_UP -> moveControllerFocus(-1)
-            input.CONTROL_DPAD_DOWN -> moveControllerFocus(1)
-            input.CONTROL_BUTTON_B,
-            input.CONTROL_BUTTON_START,
-            input.CONTROL_BUTTON_SELECT -> closeMenu()
-            input.CONTROL_BUTTON_A -> controllerItems().getOrNull(controllerFocusIndex)?.activate?.invoke()
+        when (command) {
+            HostCommand.NavigateUp,
+            HostCommand.NavigateLeft,
+            HostCommand.PreviousTab,
+            -> moveControllerFocus(-1)
+            HostCommand.NavigateDown,
+            HostCommand.NavigateRight,
+            HostCommand.NextTab,
+            -> moveControllerFocus(1)
+            HostCommand.Back,
+            HostCommand.OpenMenu,
+            HostCommand.OpenKeypad,
+            -> closeMenu()
+            HostCommand.Activate -> controllerItems().getOrNull(controllerFocusIndex)?.activate?.invoke()
         }
         return true
     }
@@ -955,7 +962,7 @@ private fun RuntimeToggleItem(
         headlineContent = {
             Text(
                 text = stringResource(label),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Medium,
             )
         },
@@ -1003,7 +1010,7 @@ private fun RuntimeMenuItem(
         headlineContent = {
             Text(
                 text = stringResource(label),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Medium,
             )
         },

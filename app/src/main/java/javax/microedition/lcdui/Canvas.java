@@ -2,7 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2019-2025 Yury Kharchenko
- * Modified in 2026 for guest/render frame telemetry.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import io.github.h3nb.jlmodplus.input.HostCommand;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -509,6 +511,12 @@ public abstract class Canvas extends Displayable {
 		guestKeyLedger.press(deviceId, sessionId, kind, channel, keyCodes, true);
 	}
 
+	/** Enters the ownership path with an explicit producer repeat policy. */
+	public void inputPressedWithRepeat(String deviceId, long sessionId, String kind, String channel,
+			boolean repeat, int... keyCodes) {
+		guestKeyLedger.press(deviceId, sessionId, kind, channel, keyCodes, repeat);
+	}
+
 	/** Updates a producer's output set, used by diagonal/analog transitions. */
 	public void inputUpdated(String deviceId, long sessionId, String kind, String channel,
 			int... keyCodes) {
@@ -544,10 +552,20 @@ public abstract class Canvas extends Displayable {
 		}
 	}
 
-	/** Gives the controller modal first refusal over normal guest key routing. */
-	public boolean handleControllerKeypad(String control, boolean pressed) {
+	public boolean isControllerKeypadVisible() {
+		return overlay instanceof VirtualKeyboard keyboard && keyboard.isControllerKeypadVisible();
+	}
+
+	/** Gives the host keypad modal first refusal over normal guest key routing. */
+	public boolean handleHostCommand(HostCommand command, boolean pressed) {
 		return overlay instanceof VirtualKeyboard keyboard
-				&& keyboard.handleControllerKey(control, pressed);
+				&& keyboard.handleHostCommand(command, pressed);
+	}
+
+	/** Gives the host keypad modal first refusal over normal guest motion routing. */
+	public boolean handleHostMotion(MotionEvent event) {
+		return overlay instanceof VirtualKeyboard keyboard
+				&& keyboard.handleHostMotion(event);
 	}
 
 	/** Installs the current controller pointer arbiter for this Canvas target. */
@@ -1588,14 +1606,14 @@ public abstract class Canvas extends Displayable {
 			}
 			if (event.getRepeatCount() == 0) {
 				if (overlay == null || !overlay.keyPressed(keyCode)) {
-					inputPressed(Integer.toString(event.getDeviceId()), inputGeneration(),
-							"keyboard", Integer.toString(androidKeyCode), keyCode);
+					inputPressedWithRepeat(Integer.toString(event.getDeviceId()), inputGeneration(),
+							"keyboard", Integer.toString(androidKeyCode), false, keyCode);
 				}
 			} else {
-				// Android repeat is intentionally not a second producer. The shared ledger owns one
-				// repeat stream for this target/source, while the overlay may still update its visual
-				// highlight.
+				// Physical keyboard repeat is owned by Android. Do not replace its timing with the
+				// virtual/analog ledger schedule; deliver the native repeat edge directly.
 				if (overlay != null) overlay.keyRepeated(keyCode);
+				postKeyRepeated(keyCode);
 			}
 			return true;
 		}

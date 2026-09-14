@@ -13,7 +13,6 @@
  */
 package io.github.h3nb.jlmodplus.input
 
-import kotlin.math.hypot
 import kotlin.math.roundToInt
 
 /** Guest-coordinate bounds used by both pointer producers. */
@@ -175,6 +174,7 @@ data class VirtualJoystickSettings(
     val centerXFraction: Float = 0.5f,
     val centerYFraction: Float = 0.5f,
     val radiusFractionOfShortestSide: Float = 0.15f,
+    val mode: VirtualAnalogStickMode = VirtualAnalogStickMode.FIXED,
 ) {
     init {
         require(centerXFraction.isFinite() && centerXFraction in 0.0f..1.0f) {
@@ -198,12 +198,6 @@ data class VirtualJoystickVisualState(
     val active: Boolean,
 )
 
-private data class ResolvedJoystick(
-    val centerX: Float,
-    val centerY: Float,
-    val radius: Float,
-)
-
 /**
  * Android-free virtual touch joystick producer.
  *
@@ -217,19 +211,33 @@ class VirtualTouchJoystickController(
     private val lease: PointerLeaseController,
     private val settings: VirtualJoystickSettings = VirtualJoystickSettings(),
 ) {
+    private val analog = VirtualAnalogStick(
+        VirtualAnalogStickSettings(
+            centerXFraction = settings.centerXFraction,
+            centerYFraction = settings.centerYFraction,
+            radiusFractionOfShortestSide = settings.radiusFractionOfShortestSide,
+            mode = settings.mode,
+        ),
+    )
     private var viewport: GuestViewport? = null
-    private var resolved: ResolvedJoystick? = null
     private var activeToken: PointerSourceToken? = null
     private var currentPoint: GuestPoint? = null
 
-    fun begin(token: PointerSourceToken, viewport: GuestViewport): List<PointerLeaseAction> {
-        if (activeToken != null) return emptyList()
+    fun begin(
+        token: PointerSourceToken,
+        viewport: GuestViewport,
+        touchX: Float? = null,
+        touchY: Float? = null,
+    ): List<PointerLeaseAction> {
+        analog.begin(token, viewport, touchX, touchY) ?: return emptyList()
         this.viewport = viewport
-        val geometry = resolve(viewport)
-        resolved = geometry
-        val center = viewport.point(geometry.centerX, geometry.centerY)
+        val visual = analog.visualState(viewport)
+        val center = viewport.point(visual.centerX, visual.centerY)
         val actions = lease.beginVirtual(token, center.x, center.y)
-        if (actions.isEmpty()) return emptyList()
+        if (actions.isEmpty()) {
+            analog.end(token)
+            return emptyList()
+        }
         activeToken = token
         currentPoint = center
         return actions
@@ -237,10 +245,10 @@ class VirtualTouchJoystickController(
 
     fun move(token: PointerSourceToken, touchX: Float, touchY: Float): List<PointerLeaseAction> {
         if (activeToken != token) return emptyList()
-        val currentViewport = viewport ?: return emptyList()
-        val geometry = resolved ?: return emptyList()
-        val clamped = clampToCircle(geometry, touchX, touchY)
-        val point = currentViewport.point(clamped[0], clamped[1])
+        val currentViewport = currentViewport() ?: return emptyList()
+        analog.move(token, touchX, touchY) ?: return emptyList()
+        val visual = analog.visualState(currentViewport)
+        val point = currentViewport.point(visual.thumbX, visual.thumbY)
         if (point == currentPoint) return emptyList()
         currentPoint = point
         return lease.updateVirtual(token, point.x, point.y)
@@ -252,8 +260,9 @@ class VirtualTouchJoystickController(
      * to duplicate the relative-guest geometry.
      */
     fun moveVector(token: PointerSourceToken, vectorX: Float, vectorY: Float): List<PointerLeaseAction> {
-        if (activeToken != token) return emptyList()
-        val geometry = resolved ?: return emptyList()
+        if (!analog.hasGesture()) return emptyList()
+        val currentViewport = currentViewport() ?: return emptyList()
+        val geometry = analog.visualState(currentViewport)
         val safeX = if (vectorX.isFinite()) vectorX.coerceIn(-1.0f, 1.0f) else 0.0f
         val safeY = if (vectorY.isFinite()) vectorY.coerceIn(-1.0f, 1.0f) else 0.0f
         return move(
@@ -265,9 +274,10 @@ class VirtualTouchJoystickController(
 
     fun end(token: PointerSourceToken): List<PointerLeaseAction> {
         if (activeToken != token) return emptyList()
-        val currentViewport = viewport ?: return emptyList()
-        val geometry = resolved ?: return emptyList()
-        val center = currentViewport.point(geometry.centerX, geometry.centerY)
+        val currentViewport = currentViewport() ?: return emptyList()
+        val visual = analog.visualState(currentViewport)
+        if (analog.end(token) == null) return emptyList()
+        val center = currentViewport.point(visual.centerX, visual.centerY)
         val actions = ArrayList<PointerLeaseAction>(2)
         if (currentPoint != center) {
             actions += lease.updateVirtual(token, center.x, center.y)
@@ -294,42 +304,20 @@ class VirtualTouchJoystickController(
 
     fun reset(): List<PointerLeaseAction> = activeToken?.let(::end) ?: emptyList()
 
-    fun hasGesture(): Boolean = activeToken != null
+    fun hasGesture(): Boolean = analog.hasGesture()
 
     /** Snapshot used by the Canvas overlay; it has no input or guest-dispatch side effects. */
     fun visualState(viewport: GuestViewport): VirtualJoystickVisualState {
-        val geometry = resolved ?: resolve(viewport)
-        val center = viewport.point(geometry.centerX, geometry.centerY)
-        val thumb = currentPoint ?: center
+        val visual = analog.visualState(viewport)
         return VirtualJoystickVisualState(
-            centerX = geometry.centerX,
-            centerY = geometry.centerY,
-            radius = geometry.radius,
-            thumbX = thumb.x.toFloat(),
-            thumbY = thumb.y.toFloat(),
-            active = activeToken != null,
+            centerX = visual.centerX,
+            centerY = visual.centerY,
+            radius = visual.radius,
+            thumbX = visual.thumbX,
+            thumbY = visual.thumbY,
+            active = visual.active,
         )
     }
 
-    private fun resolve(viewport: GuestViewport): ResolvedJoystick = ResolvedJoystick(
-        centerX = settings.centerXFraction * viewport.width,
-        centerY = settings.centerYFraction * viewport.height,
-        radius = settings.radiusFractionOfShortestSide * viewport.shortestSide,
-    )
-
-    private fun clampToCircle(geometry: ResolvedJoystick, x: Float, y: Float): FloatArray {
-        val safeX = if (x.isFinite()) x else geometry.centerX
-        val safeY = if (y.isFinite()) y else geometry.centerY
-        val dx = safeX - geometry.centerX
-        val dy = safeY - geometry.centerY
-        val distance = hypot(dx.toDouble(), dy.toDouble()).toFloat()
-        if (distance <= geometry.radius || distance == 0.0f) {
-            return floatArrayOf(safeX, safeY)
-        }
-        val scale = geometry.radius / distance
-        return floatArrayOf(
-            geometry.centerX + dx * scale,
-            geometry.centerY + dy * scale,
-        )
-    }
+    private fun currentViewport(): GuestViewport? = viewport
 }

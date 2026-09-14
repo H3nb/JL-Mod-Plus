@@ -16,19 +16,8 @@ package io.github.h3nb.jlmodplus.applist
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import javax.microedition.lcdui.Canvas
 
 class LibraryControllerNavigationTest {
-    @Test
-    fun guestKeysUseTheHostCommandAdapter() {
-        assertEquals(LibraryControllerCommand.MoveUp, LibraryControllerCommand.fromGuestKey(Canvas.KEY_UP))
-        assertEquals(LibraryControllerCommand.Activate, LibraryControllerCommand.fromGuestKey(Canvas.KEY_FIRE))
-        assertEquals(
-            LibraryControllerCommand.PreviousTab,
-            LibraryControllerCommand.fromGuestKey(Canvas.KEY_SOFT_LEFT),
-        )
-    }
-
     @Test
     fun stableDatabaseIdSurvivesSortChanges() {
         val apps = listOf(

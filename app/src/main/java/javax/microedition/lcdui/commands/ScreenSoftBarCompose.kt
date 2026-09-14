@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import android.view.MotionEvent
 import javax.microedition.lcdui.Command
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.clearNavigationFocusOnTouch
 import io.github.h3nb.jlmodplus.ui.showNavigationFocusForKey
@@ -118,34 +119,29 @@ internal class ScreenSoftBarComposeController(
 
     fun isControllerMenuVisible(): Boolean = menuVisible
 
-    fun handleControllerInput(control: String, pressed: Boolean): Boolean {
+    fun handleHostCommand(command: HostCommand, pressed: Boolean): Boolean {
         if (!menuVisible) return false
         if (!pressed) return true
         menuFocusVisible = true
-        when (control) {
-            "dpad_up", "dpad_left" -> moveFocus(-1)
-            "dpad_down", "dpad_right" -> moveFocus(1)
-            "button_a" -> presentation.overflow.getOrNull(menuFocusIndex)?.let {
+        when (command) {
+            HostCommand.NavigateUp,
+            HostCommand.NavigateLeft,
+            HostCommand.PreviousTab,
+            -> moveFocus(-1)
+            HostCommand.NavigateDown,
+            HostCommand.NavigateRight,
+            HostCommand.NextTab,
+            -> moveFocus(1)
+            HostCommand.Activate -> presentation.overflow.getOrNull(menuFocusIndex)?.let {
                 closeMenu()
                 actions.onCommand(it)
             }
-            "button_b", "button_start", "button_select" -> closeMenu()
+            HostCommand.Back,
+            HostCommand.OpenMenu,
+            HostCommand.OpenKeypad,
+            -> closeMenu()
         }
         return true
-    }
-
-    fun handleControllerSoftKey(control: String): Boolean {
-        val command = when (control) {
-            "soft_left" -> presentation.left
-            "soft_right" -> presentation.right
-            else -> null
-        }
-        if (command != null) {
-            actions.onCommand(command)
-        } else if (presentation.overflow.isNotEmpty()) {
-            openMenu(showNavigationFocus = true)
-        }
-        return command != null || presentation.overflow.isNotEmpty()
     }
 
     fun handleControllerBack(): Boolean {

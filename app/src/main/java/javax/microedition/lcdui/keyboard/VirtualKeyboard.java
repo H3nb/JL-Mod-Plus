@@ -27,6 +27,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.view.View;
+import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
 
@@ -37,6 +38,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
@@ -47,6 +52,13 @@ import javax.microedition.util.ContextHolder;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.input.HostCommand;
+import io.github.h3nb.jlmodplus.input.PointerSourceKind;
+import io.github.h3nb.jlmodplus.input.PointerSourceToken;
+import io.github.h3nb.jlmodplus.input.VirtualDpadController;
+import io.github.h3nb.jlmodplus.input.VirtualDpadDirection;
+import io.github.h3nb.jlmodplus.input.VirtualDpadGeometry;
 
 public class VirtualKeyboard implements Overlay, Runnable {
 	private static final String TAG = VirtualKeyboard.class.getSimpleName();
@@ -200,7 +212,27 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private boolean controllerKeypadVisible;
 	private int controllerKeypadSelection;
 	private VirtualKey controllerKeypadPressed;
+	private final EnumSet<HostCommand> controllerKeypadMotionCommands =
+			EnumSet.noneOf(HostCommand.class);
+	private final VirtualDpadController virtualDpad = new VirtualDpadController();
+	private final Map<Integer, VirtualDpadContact> virtualDpadContacts = new HashMap<>();
 	private long pointerSourceSequence;
+	private long virtualDpadSequence;
+
+	private static final class VirtualDpadContact {
+		final PointerSourceToken token;
+		final VirtualDpadGeometry geometry;
+		final String channel;
+		final Canvas canvas;
+
+		VirtualDpadContact(PointerSourceToken token, VirtualDpadGeometry geometry, String channel,
+				Canvas canvas) {
+			this.token = token;
+			this.geometry = geometry;
+			this.channel = channel;
+			this.canvas = canvas;
+		}
+	}
 
 	public VirtualKeyboard(ProfileModel settings) {
 		this.settings = settings;
@@ -765,23 +797,29 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		return controllerKeypadVisible;
 	}
 
-	/** Handles the modal controller keypad; normal Canvas/keypad routing is blocked while open. */
-	public boolean handleControllerKey(String control, boolean pressed) {
+	/** Handles generic host navigation; normal Canvas/keypad routing is blocked while open. */
+	public boolean handleHostCommand(HostCommand command, boolean pressed) {
 		if (!controllerKeypadVisible) return false;
-		if ("dpad_up".equals(control) || "dpad_down".equals(control)
-				|| "dpad_left".equals(control) || "dpad_right".equals(control)) {
-			if (pressed && controllerKeypadPressed == null) {
-				int delta = switch (control) {
-					case "dpad_left" -> -1;
-					case "dpad_right" -> 1;
-					case "dpad_up" -> -3;
+		HostCommand navigationCommand = switch (command) {
+			case PreviousTab -> HostCommand.NavigateLeft;
+			case NextTab -> HostCommand.NavigateRight;
+		default -> command;
+		};
+		if (navigationCommand == HostCommand.NavigateUp || navigationCommand == HostCommand.NavigateDown
+				|| navigationCommand == HostCommand.NavigateLeft
+				|| navigationCommand == HostCommand.NavigateRight) {
+			if (pressed) {
+				int delta = switch (navigationCommand) {
+					case NavigateLeft -> -1;
+					case NavigateRight -> 1;
+					case NavigateUp -> -3;
 					default -> 3;
 				};
 				moveControllerKeypadSelection(delta);
 			}
 			return true;
 		}
-		if ("button_a".equals(control)) {
+		if (command == HostCommand.Activate) {
 			if (pressed) {
 				if (controllerKeypadPressed == null) {
 					controllerKeypadPressed = keypad[CONTROLLER_KEYPAD_ORDER[controllerKeypadSelection]];
@@ -795,14 +833,41 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 			return true;
 		}
-		if (("button_b".equals(control) || "button_start".equals(control)) && pressed) {
+		if ((command == HostCommand.Back || command == HostCommand.OpenMenu
+				|| command == HostCommand.OpenKeypad) && pressed) {
 			closeControllerKeypad();
 			return true;
 		}
-		if ("button_select".equals(control) && pressed) {
-			closeControllerKeypad();
-			return true;
+		return true;
+	}
+
+	/**
+	 * Converts a centered HAT/stick sample into edge-triggered keypad navigation. A held axis
+	 * moves once; crossing into another sector moves again, and returning to center releases the
+	 * synthetic navigation contacts. The same generic command path is used by keys and future
+	 * accessibility/remote sources.
+	 */
+	public boolean handleHostMotion(MotionEvent event) {
+		if (!controllerKeypadVisible) return false;
+		if (event.getActionMasked() != MotionEvent.ACTION_MOVE
+				&& event.getActionMasked() != MotionEvent.ACTION_HOVER_MOVE) return true;
+		float hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X);
+		float hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y);
+		float x = Math.abs(hatX) >= 0.5f ? hatX : event.getAxisValue(MotionEvent.AXIS_X);
+		float y = Math.abs(hatY) >= 0.5f ? hatY : event.getAxisValue(MotionEvent.AXIS_Y);
+		EnumSet<HostCommand> next = EnumSet.noneOf(HostCommand.class);
+		if (y <= -0.5f) next.add(HostCommand.NavigateUp);
+		if (y >= 0.5f) next.add(HostCommand.NavigateDown);
+		if (x <= -0.5f) next.add(HostCommand.NavigateLeft);
+		if (x >= 0.5f) next.add(HostCommand.NavigateRight);
+		for (HostCommand previous : EnumSet.copyOf(controllerKeypadMotionCommands)) {
+			if (!next.contains(previous)) handleHostCommand(previous, false);
 		}
+		for (HostCommand current : next) {
+			if (!controllerKeypadMotionCommands.contains(current)) handleHostCommand(current, true);
+		}
+		controllerKeypadMotionCommands.clear();
+		controllerKeypadMotionCommands.addAll(next);
 		return true;
 	}
 
@@ -825,6 +890,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			controllerKeypadPressed = null;
 		}
 		controllerKeypadVisible = false;
+		controllerKeypadMotionCommands.clear();
 		for (int index : CONTROLLER_KEYPAD_ORDER) keypad[index].selected = false;
 		if (overlayView != null) overlayView.postInvalidate();
 	}
@@ -1018,7 +1084,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				left + width + cellWidth * 0.12f, top + height + cellHeight * 0.12f),
 				Math.max(8, (int) (cellWidth * 0.10f)), Math.max(8, (int) (cellWidth * 0.10f)));
 		g.setTextColor(0xFFFFFFFF);
-		g.drawString("Gamepad keypad", screen.centerX(), top - cellHeight * 0.28f);
+		g.drawString(ContextHolder.getActivity().getString(R.string.config_gamepad_keypad_title),
+				screen.centerX(), top - cellHeight * 0.28f);
 		for (int i = 0; i < CONTROLLER_KEYPAD_ORDER.length; i++) {
 			int column = i % 3;
 			int row = i / 3;
@@ -1048,6 +1115,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				if (pointer < 0 || pointer >= associatedKeys.length) {
 					return false;
 				}
+				endVirtualDpad(pointer);
 				VirtualKey previous = associatedKeys[pointer];
 				if (previous != null) {
 					String previousSource = sourceForPointer(pointer);
@@ -1055,7 +1123,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					associatedSources[pointer] = null;
 					previous.onUp(previousSource);
 				}
-				for (VirtualKey key : keypad) {
+				if (beginVirtualDpad(pointer, x, y)) {
+					consumed = true;
+				} else for (VirtualKey key : keypad) {
 					if (key.contains(x, y)) {
 						vibrate();
 						associatedKeys[pointer] = key;
@@ -1118,6 +1188,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		case LAYOUT_EOF -> {
 				if (pointer < 0 || pointer >= associatedKeys.length) {
 					return false;
+				}
+				if (moveVirtualDpad(pointer, x, y)) {
+					return true;
 				}
 				VirtualKey aKey = associatedKeys[pointer];
 				if (aKey == null) {
@@ -1213,6 +1286,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			if (pointer < 0 || pointer >= associatedKeys.length) {
 				return false;
 			}
+			if (endVirtualDpad(pointer)) {
+				if (overlayView != null) overlayView.postInvalidate();
+				return true;
+			}
 			VirtualKey key = associatedKeys[pointer];
 			if (key != null) {
 				String source = sourceForPointer(pointer);
@@ -1283,6 +1360,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	@Override
 	public void cancel() {
 		closeControllerKeypad();
+		cancelVirtualDpadContacts();
 		for (int pointer = 0; pointer < associatedKeys.length; pointer++) {
 			VirtualKey key = associatedKeys[pointer];
 			if (key != null) {
@@ -1301,6 +1379,89 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			key.selected = false;
 		}
 		if (overlayView != null) overlayView.postInvalidate();
+	}
+
+	private boolean beginVirtualDpad(int pointer, float x, float y) {
+		RectF bounds = virtualDpadBounds();
+		if (bounds == null || !bounds.contains(x, y)) return false;
+		float radius = Math.max(bounds.width(), bounds.height()) / 2.0f;
+		VirtualDpadGeometry geometry = new VirtualDpadGeometry(
+				bounds.centerX(), bounds.centerY(), Math.max(radius, 1.0f));
+		String source = newSourceForPointer(pointer);
+		String channel = source + ":virtual-dpad:" + (++virtualDpadSequence);
+		PointerSourceToken token = new PointerSourceToken(
+				PointerSourceKind.VIRTUAL,
+				pointer,
+				target == null ? this : target,
+				target == null ? 0L : target.inputGeneration());
+		virtualDpadContacts.put(pointer, new VirtualDpadContact(token, geometry, channel, target));
+		Set<VirtualDpadDirection> directions = virtualDpad.begin(token, geometry, x, y);
+		updateVirtualDpadOutput(virtualDpadContacts.get(pointer), directions);
+		return true;
+	}
+
+	private boolean moveVirtualDpad(int pointer, float x, float y) {
+		VirtualDpadContact contact = virtualDpadContacts.get(pointer);
+		if (contact == null) return false;
+		Set<VirtualDpadDirection> directions =
+				virtualDpad.move(contact.token, contact.geometry, x, y);
+		updateVirtualDpadOutput(contact, directions);
+		return true;
+	}
+
+	private boolean endVirtualDpad(int pointer) {
+		VirtualDpadContact contact = virtualDpadContacts.remove(pointer);
+		if (contact == null) return false;
+		virtualDpad.end(contact.token);
+		if (contact.canvas != null) {
+			contact.canvas.inputReleased(
+					"vk@" + Integer.toHexString(System.identityHashCode(this)),
+					contact.token.getGeneration(), "virtual-dpad", contact.channel);
+		}
+		return true;
+	}
+
+	private void cancelVirtualDpadContacts() {
+		Integer[] pointers = virtualDpadContacts.keySet().toArray(new Integer[0]);
+		for (int pointer : pointers) endVirtualDpad(pointer);
+		virtualDpad.cancelAll();
+	}
+
+	private void updateVirtualDpadOutput(VirtualDpadContact contact,
+			Set<VirtualDpadDirection> directions) {
+		if (contact == null || contact.canvas == null) return;
+		int[] keyCodes = new int[directions.size()];
+		int offset = 0;
+		for (VirtualDpadDirection direction : directions) {
+			keyCodes[offset++] = virtualDpadKeyCode(direction);
+		}
+		contact.canvas.inputUpdated(
+				"vk@" + Integer.toHexString(System.identityHashCode(this)),
+				contact.token.getGeneration(), "virtual-dpad", contact.channel, keyCodes);
+	}
+
+	private int virtualDpadKeyCode(VirtualDpadDirection direction) {
+		return switch (direction) {
+			case UP -> Canvas.KEY_UP;
+			case DOWN -> Canvas.KEY_DOWN;
+			case LEFT -> Canvas.KEY_LEFT;
+			case RIGHT -> Canvas.KEY_RIGHT;
+		};
+	}
+
+	private RectF virtualDpadBounds() {
+		int[] keys = {
+				KEY_UP_LEFT, KEY_UP, KEY_UP_RIGHT,
+				KEY_LEFT, KEY_RIGHT,
+				KEY_DOWN_LEFT, KEY_DOWN, KEY_DOWN_RIGHT,
+		};
+		RectF bounds = null;
+		for (int key : keys) {
+			if (!keypad[key].visible) continue;
+			if (bounds == null) bounds = new RectF(keypad[key].rect);
+			else bounds.union(keypad[key].rect);
+		}
+		return bounds;
 	}
 
 	@Override

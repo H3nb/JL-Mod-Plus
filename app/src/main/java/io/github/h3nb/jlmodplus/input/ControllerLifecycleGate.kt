@@ -36,23 +36,21 @@ data class ControllerLifecycleSnapshot(
     val activeDeviceId: Int?,
     val waitingDeviceId: Int?,
     val generation: Long,
-    val waitingDigitalKeys: Set<Int>,
+    /** Always empty: the lifecycle barrier is intentionally analog-only. */
+    val waitingDigitalKeys: Set<Int> = emptySet(),
 )
 
 /**
  * Pure lifecycle barrier for controller ownership.
  *
- * A newly selected or reconnected device cannot emit gameplay until a neutral motion sample has
- * been observed. Digital contacts seen while the barrier is closed are tracked as opening noise;
- * their matching UP closes the set, but an unrelated/stale UP never opens the gate. The gate does
- * not deliver guest events; its only job is to make the Android adapter's ownership decisions
- * observable and deterministic.
+ * A newly selected or reconnected device cannot emit analog gameplay until a neutral motion
+ * sample has been observed. Digital contacts are deliberately outside this barrier: a first
+ * button press after resume must never be sacrificed to activate the controller.
  */
 class ControllerLifecycleGate {
     private var state = ControllerLifecycleState.INACTIVE
     private var activeDeviceId: Int? = null
     private var waitingDeviceId: Int? = null
-    private val waitingDigitalKeys = LinkedHashSet<Int>()
     private var generation = 0L
 
     @Synchronized
@@ -61,7 +59,7 @@ class ControllerLifecycleGate {
         activeDeviceId = activeDeviceId,
         waitingDeviceId = waitingDeviceId,
         generation = generation,
-        waitingDigitalKeys = waitingDigitalKeys.toSet(),
+        waitingDigitalKeys = emptySet(),
     )
 
     @Synchronized
@@ -69,13 +67,11 @@ class ControllerLifecycleGate {
         state = ControllerLifecycleState.INACTIVE
         activeDeviceId = null
         waitingDeviceId = null
-        waitingDigitalKeys.clear()
         generation = nextGeneration(generation)
     }
 
     @Synchronized
     fun beginBoundary(waitForNeutral: Boolean, nextDeviceId: Int? = activeDeviceId) {
-        waitingDigitalKeys.clear()
         generation = nextGeneration(generation)
         if (waitForNeutral && nextDeviceId != null) {
             activeDeviceId = nextDeviceId
@@ -115,44 +111,12 @@ class ControllerLifecycleGate {
     }
 
     @Synchronized
+    @Deprecated("Digital key events are not lifecycle-gated")
     fun offerDigital(
         deviceId: Int,
         keyCode: Int,
         down: Boolean,
-    ): ControllerLifecycleDecision {
-        when (state) {
-            ControllerLifecycleState.INACTIVE -> {
-                beginWaiting(deviceId)
-                if (down) waitingDigitalKeys += keyCode
-                return ControllerLifecycleDecision.CONSUMED
-            }
-
-            ControllerLifecycleState.WAIT_NEUTRAL -> {
-                if (waitingDeviceId != deviceId) {
-                    return ControllerLifecycleDecision.CONSUMED
-                }
-                if (down) {
-                    waitingDigitalKeys += keyCode
-                    return ControllerLifecycleDecision.CONSUMED
-                }
-                val wasWaiting = waitingDigitalKeys.remove(keyCode)
-                return if (wasWaiting && waitingDigitalKeys.isEmpty()) {
-                    activate()
-                } else {
-                    ControllerLifecycleDecision.CONSUMED
-                }
-            }
-
-            ControllerLifecycleState.ACTIVE -> {
-                if (activeDeviceId != null && activeDeviceId != deviceId) {
-                    beginWaiting(deviceId)
-                    return ControllerLifecycleDecision.CONSUMED
-                }
-                activeDeviceId = deviceId
-                return ControllerLifecycleDecision.ACTIVE
-            }
-        }
-    }
+    ): ControllerLifecycleDecision = ControllerLifecycleDecision.ACTIVE
 
     @Synchronized
     fun onDeviceChanged(deviceId: Int) {
@@ -171,14 +135,12 @@ class ControllerLifecycleGate {
     private fun beginWaiting(deviceId: Int) {
         activeDeviceId = deviceId
         waitingDeviceId = deviceId
-        waitingDigitalKeys.clear()
         state = ControllerLifecycleState.WAIT_NEUTRAL
         generation = nextGeneration(generation)
     }
 
     private fun activate(): ControllerLifecycleDecision {
         waitingDeviceId = null
-        waitingDigitalKeys.clear()
         state = if (activeDeviceId == null) {
             ControllerLifecycleState.INACTIVE
         } else {

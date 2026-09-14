@@ -196,6 +196,7 @@ import io.github.h3nb.jlmodplus.ui.jlModPlusFilterChipColors
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationBarItemColors
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
+import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
 import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
@@ -204,7 +205,6 @@ import io.github.h3nb.jlmodplus.ui.isNavigationKeyEvent
 import io.github.h3nb.jlmodplus.ui.showNavigationFocusForKey
 import kotlin.math.roundToInt
 import kotlin.math.abs
-import javax.microedition.lcdui.Canvas
 
 enum class LibraryLayout {
     List,
@@ -253,18 +253,6 @@ enum class LibraryControllerCommand {
 
     ;
 
-    companion object {
-        fun fromGuestKey(keyCode: Int): LibraryControllerCommand? = when (keyCode) {
-            Canvas.KEY_UP -> MoveUp
-            Canvas.KEY_DOWN -> MoveDown
-            Canvas.KEY_LEFT -> MoveLeft
-            Canvas.KEY_RIGHT -> MoveRight
-            Canvas.KEY_FIRE -> Activate
-            Canvas.KEY_SOFT_LEFT -> PreviousTab
-            Canvas.KEY_SOFT_RIGHT -> NextTab
-            else -> null
-        }
-    }
 }
 
 data class LibraryControllerEvent(
@@ -550,63 +538,27 @@ class LibraryComposeController(
         noticeState.show(message)
     }
 
-    /** Host adapter for the controller; guest key codes never enter the library composable. */
-    fun onControllerGuestKey(keyCode: Int, pressed: Boolean, repeated: Boolean): Boolean {
-        val command = LibraryControllerCommand.fromGuestKey(keyCode) ?: return false
-        if (pressed && !(repeated && command == LibraryControllerCommand.Activate)) {
-            controllerEventSequence = if (controllerEventSequence == Long.MAX_VALUE) 1L
-            else controllerEventSequence + 1L
-            controllerEventHub.offer(LibraryControllerEvent(controllerEventSequence, command))
+    /** Host navigation enters the library without passing through MIDP/Canvas key codes. */
+    fun onHostCommand(command: HostCommand, pressed: Boolean): Boolean {
+        if (!pressed) return true
+        val libraryCommand = when (command) {
+            HostCommand.NavigateUp -> LibraryControllerCommand.MoveUp
+            HostCommand.NavigateDown -> LibraryControllerCommand.MoveDown
+            HostCommand.NavigateLeft -> LibraryControllerCommand.MoveLeft
+            HostCommand.NavigateRight -> LibraryControllerCommand.MoveRight
+            HostCommand.Activate -> LibraryControllerCommand.Activate
+            HostCommand.Back -> {
+                if (!controllerBackAvailable) return false
+                LibraryControllerCommand.Back
+            }
+            HostCommand.OpenMenu -> LibraryControllerCommand.OpenActions
+            HostCommand.NextTab -> LibraryControllerCommand.NextTab
+            HostCommand.PreviousTab -> LibraryControllerCommand.PreviousTab
+            HostCommand.OpenKeypad -> return true
         }
-        return true
-    }
-
-    fun onControllerActivate(pressed: Boolean): Boolean {
-        if (pressed) {
-            controllerEventSequence = if (controllerEventSequence == Long.MAX_VALUE) 1L
-            else controllerEventSequence + 1L
-            controllerEventHub.offer(
-                LibraryControllerEvent(controllerEventSequence, LibraryControllerCommand.Activate),
-            )
-        }
-        return true
-    }
-
-    fun onControllerMenu(pressed: Boolean): Boolean {
-        if (pressed) {
-            controllerEventSequence = if (controllerEventSequence == Long.MAX_VALUE) 1L
-            else controllerEventSequence + 1L
-            controllerEventHub.offer(
-                LibraryControllerEvent(controllerEventSequence, LibraryControllerCommand.OpenActions),
-            )
-        }
-        return true
-    }
-
-    fun onControllerTab(next: Boolean, pressed: Boolean): Boolean {
-        if (pressed) {
-            controllerEventSequence = if (controllerEventSequence == Long.MAX_VALUE) 1L
-            else controllerEventSequence + 1L
-            controllerEventHub.offer(
-                LibraryControllerEvent(
-                    controllerEventSequence,
-                    if (next) LibraryControllerCommand.NextTab
-                    else LibraryControllerCommand.PreviousTab,
-                ),
-            )
-        }
-        return true
-    }
-
-    fun onControllerBack(pressed: Boolean): Boolean {
-        if (!controllerBackAvailable) return false
-        if (pressed) {
-            controllerEventSequence = if (controllerEventSequence == Long.MAX_VALUE) 1L
-            else controllerEventSequence + 1L
-            controllerEventHub.offer(
-                LibraryControllerEvent(controllerEventSequence, LibraryControllerCommand.Back),
-            )
-        }
+        controllerEventSequence = if (controllerEventSequence == Long.MAX_VALUE) 1L
+        else controllerEventSequence + 1L
+        controllerEventHub.offer(LibraryControllerEvent(controllerEventSequence, libraryCommand))
         return true
     }
 
@@ -2727,7 +2679,7 @@ private fun LibraryGridItem(
                 Text(
                     text = app.title,
                     modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
@@ -2810,7 +2762,7 @@ private fun LibraryListItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = app.title,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

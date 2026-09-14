@@ -19,19 +19,15 @@ import android.hardware.input.InputManager
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.util.SparseIntArray
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
-import com.google.gson.JsonObject
 import javax.microedition.lcdui.Canvas
 import javax.microedition.lcdui.Displayable
 import javax.microedition.lcdui.event.PointerEvent
-import javax.microedition.lcdui.keyboard.KeyMapper
 import io.github.h3nb.jlmodplus.config.ProfileModel
 import io.github.h3nb.jlmodplus.R
 import java.util.EnumMap
-import java.util.Locale
 import kotlin.math.abs
 
 /**
@@ -43,12 +39,8 @@ interface ControllerHostSink {
     fun currentDisplayable(): Displayable?
     /** Optional host-only target for Activities whose current surface is not a MIDP Displayable. */
     fun currentControllerTarget(): ControllerHostTarget? = null
-    fun onHostAction(action: HostAction, pressed: Boolean): Boolean
-    fun dispatchGuestKey(keyCode: Int, pressed: Boolean): Boolean
-    /** Delivers a ledger repeat without converting it into a second DOWN/UP pair. */
-    fun dispatchGuestKeyRepeated(keyCode: Int): Boolean = dispatchGuestKey(keyCode, true)
-    /** Host actions normally disable repeat, but custom sinks can preserve its event identity. */
-    fun onHostActionRepeated(action: HostAction): Boolean = onHostAction(action, true)
+    /** Delivers an Android-host command without translating through MIDP/Canvas key codes. */
+    fun onHostCommand(command: HostCommand, pressed: Boolean): Boolean = false
     fun onControllerInputAccepted()
     fun onControllerNotice(message: String)
 
@@ -57,9 +49,6 @@ interface ControllerHostSink {
 
     /** True while an app-owned runtime modal owns controller focus. */
     fun isControllerModalActive(): Boolean = false
-
-    /** Gives a runtime modal first refusal before guest Screen/gameplay routing. */
-    fun onControllerModalInput(control: String, pressed: Boolean): Boolean = false
 
     /** Motion is consumed by a modal by default; no guest analog state may leak through it. */
     fun onControllerModalMotion(event: MotionEvent): Boolean = false
@@ -94,21 +83,6 @@ class ControllerInputRouter(
 ) : InputManager.InputDeviceListener, ControllerPointerConsumer {
     private enum class LifecycleState { INACTIVE, WAIT_NEUTRAL, ACTIVE }
 
-    private data class PhysicalKey(val deviceId: Int, val keyCode: Int)
-
-    private data class CapturedDigital(
-        val physicalKey: PhysicalKey,
-        val control: String,
-        val binding: Binding?,
-        val canvas: Canvas?,
-        val deviceId: Int,
-        val generation: Long,
-        val sessionId: Long,
-        val channel: String,
-        val directional: Boolean,
-        val hostTarget: ControllerHostTarget?,
-    )
-
     private data class DirectionalSource(
         val channel: String,
         val movementGroup: String,
@@ -118,18 +92,22 @@ class ControllerInputRouter(
         val sessionId: Long,
         val hostTarget: ControllerHostTarget?,
         var requestedControls: Set<String> = emptySet(),
-        val bindings: LinkedHashMap<String, Binding> = LinkedHashMap(),
     )
 
     private data class BinarySource(
         val channel: String,
         val control: String,
-        val binding: Binding,
+        val code: Int,
         val canvas: Canvas?,
         val deviceId: Int,
         val generation: Long,
         val sessionId: Long,
         val hostTarget: ControllerHostTarget?,
+    )
+
+    private data class PointerClickKey(
+        val deviceId: Int,
+        val keyCode: Int,
     )
 
     private data class StickRuntime(
@@ -139,27 +117,24 @@ class ControllerInputRouter(
     private val appContext = context.applicationContext
     private val inputManager = context.getSystemService(Context.INPUT_SERVICE) as? InputManager
     private val inputHandler = Handler(Looper.getMainLooper())
+    private val hostInputRouter = HostInputRouter(host)
+    private val capabilityCache = ControllerCapabilityCache()
     private var config: ControllerConfig = resolveProfile(profile)
     private val lifecycleGate = ControllerLifecycleGate()
     private var lifecycleState = LifecycleState.INACTIVE
     private var activeDeviceId: Int? = null
     private var waitingDeviceId: Int? = null
-    private var waitingDigitalKeys = LinkedHashSet<PhysicalKey>()
     private var sessionId = 0L
     private var lastTarget: TargetSnapshot? = null
-    private val digital = LinkedHashMap<PhysicalKey, CapturedDigital>()
     private val directional = LinkedHashMap<String, DirectionalSource>()
     private val binary = LinkedHashMap<String, BinarySource>()
-    // Modal/keypad consumers must retain ownership through ACTION_UP, even when the DOWN closes
-    // the modal before Android delivers the matching release.
-    private val modalKeys = LinkedHashSet<PhysicalKey>()
     private val triggerStates = EnumMap<TriggerSide, StickProcessor.TriggerState>(TriggerSide::class.java)
     private val stickStates = EnumMap<StickId, StickRuntime>(StickId::class.java)
     private val axes = LinkedHashMap<String, Float>()
     private var pointerCanvas: Canvas? = null
     private var pointerViewport: GuestViewport? = null
     private val pointerClickOwners = LinkedHashSet<PointerSourceToken>()
-    private val directionalPointerOwners = LinkedHashMap<SourceToken, Set<PointerAction>>()
+    private val pointerClickKeys = LinkedHashSet<PointerClickKey>()
     private val pointerPhysicalTokens = LinkedHashMap<Int, PointerSourceToken>()
     private var pointerJoystickToken: PointerSourceToken? = null
     // The guest MIDP compatibility boundary deliberately uses its single-pointer channel 0.
@@ -177,20 +152,16 @@ class ControllerInputRouter(
             centerXFraction = config.pointer.centerX.toFloat(),
             centerYFraction = config.pointer.centerY.toFloat(),
             radiusFractionOfShortestSide = config.pointer.radius.toFloat(),
+            mode = config.pointer.joystickMode,
         ),
     )
     private val hostLedger = ControllerHostOwnershipLedger(
         sink = ControllerHostOutputSink { event ->
             when (val output = event.output) {
-                is ControllerHostOutput.GuestKey -> when (event.type) {
-                    ControllerHostEventType.DOWN -> host.dispatchGuestKey(output.code, true)
-                    ControllerHostEventType.UP -> host.dispatchGuestKey(output.code, false)
-                    ControllerHostEventType.REPEAT -> host.dispatchGuestKeyRepeated(output.code)
-                }
-                is ControllerHostOutput.Action -> when (event.type) {
-                    ControllerHostEventType.DOWN -> host.onHostAction(output.action, true)
-                    ControllerHostEventType.UP -> host.onHostAction(output.action, false)
-                    ControllerHostEventType.REPEAT -> host.onHostActionRepeated(output.action)
+                is ControllerHostOutput.Command -> when (event.type) {
+                    ControllerHostEventType.DOWN -> host.onHostCommand(output.command, true)
+                    ControllerHostEventType.UP -> host.onHostCommand(output.command, false)
+                    ControllerHostEventType.REPEAT -> host.onHostCommand(output.command, true)
                 }
             }
         },
@@ -229,13 +200,13 @@ class ControllerInputRouter(
 
     /** Focus loss, pause, and destruction use an inactive barrier. */
     fun clear() {
+        hostInputRouter.clear()
         detachPointerConsumer()
         releaseAll()
         lifecycleGate.clear()
         lifecycleState = LifecycleState.INACTIVE
         activeDeviceId = null
         waitingDeviceId = null
-        waitingDigitalKeys.clear()
         lastTarget = null
     }
 
@@ -249,7 +220,7 @@ class ControllerInputRouter(
         deviceId = activeDeviceId,
         deviceName = activeDeviceId?.let { InputDevice.getDevice(it)?.name },
         sessionId = sessionId,
-        activeDigitalControls = digital.values.mapTo(LinkedHashSet()) { it.control },
+        activeDigitalControls = emptySet(),
         activeAnalogControls = binary.values.mapTo(LinkedHashSet()) { it.control } +
             directional.values.flatMapTo(LinkedHashSet()) { it.requestedControls },
         lastAxes = LinkedHashMap(axes),
@@ -257,107 +228,60 @@ class ControllerInputRouter(
         configNotice = config.notice,
     )
 
-    /** Handles controller button events before Activity/View dispatch. */
+    /** Handles host-owned controller buttons, then the configured virtual pointer click. */
     fun onKeyEvent(event: KeyEvent): Boolean {
-        if (!isControllerSource(event.source)) return false
-        val control = controlTokenForKeyCode(event.keyCode) ?: return true
-        val deviceId = event.deviceId
-        val physicalKey = PhysicalKey(deviceId, event.keyCode)
+        if (hostInputRouter.onKeyEvent(event)) return true
+        if (!isGamepadEvent(event) || !config.enabled) return false
+        if (config.pointer.mode != PointerMode.CURSOR ||
+            config.pointer.clickAction != PointerAction.CLICK ||
+            host.currentCanvas() == null
+        ) return false
+        if (HostCommand.fromAndroidKeyCode(event.keyCode) != HostCommand.Activate) return false
 
-        // Legacy gameplay remains on Android's established key-mapping path. Only an explicitly
-        // host-owned action is intercepted here, so enabling the compatibility mode cannot make
-        // old guest key mappings disappear or cause a second guest dispatch.
-        val captured = digital[physicalKey]
-        val configuredBinding = config.binding(control)
-        if (config.legacy && captured == null &&
-            (configuredBinding == null || configuredBinding.kind != BindingKind.HOST_ACTION)
-        ) {
-            return false
-        }
-
-        val lifecycleDecision = lifecycleGate.offerDigital(
-            deviceId = deviceId,
-            keyCode = event.keyCode,
-            down = event.action == KeyEvent.ACTION_DOWN,
-        )
-        applyLifecycleDecision(lifecycleDecision)
-        if (lifecycleDecision != ControllerLifecycleDecision.ACTIVE) {
-            return true
-        }
-        if (!ensureActiveDevice(deviceId)) return true
-        if (!ensureTarget()) return true
-
-        val targetCanvas = host.currentCanvas()
-        val keypadHandled = targetCanvas != null &&
-            targetCanvas.handleControllerKeypad(
-                control,
-                event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0,
-            )
-        if (keypadHandled) {
-            when (event.action) {
-                KeyEvent.ACTION_DOWN -> if (event.repeatCount == 0) modalKeys += physicalKey
-                KeyEvent.ACTION_UP -> modalKeys.remove(physicalKey)
-            }
-            if (event.action == KeyEvent.ACTION_DOWN) host.onControllerInputAccepted()
-            return true
-        }
-
-        // A release must always close the source captured by its DOWN, even when the host modal
-        // became visible in between. Modal routing is for new contacts; it must not strand a
-        // gameplay/menu binding in the ledger.
-        if (event.action == KeyEvent.ACTION_UP && captured != null) {
-            releaseDigital(physicalKey)
-            return true
-        }
-        if (event.action == KeyEvent.ACTION_UP && modalKeys.remove(physicalKey)) {
-            return true
-        }
-        if (host.isControllerModalActive()) {
-            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
-                modalKeys += physicalKey
-            }
-            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount != 0) return true
-            host.onControllerModalInput(control, event.action == KeyEvent.ACTION_DOWN)
-            return true
-        }
-
-        // Android's repeat flag is not a second ownership source. The ledger's monotonic repeat
-        // producer is the only repeat path for a captured controller contact.
-        if (event.repeatCount != 0) return true
-
-        when (event.action) {
+        val key = PointerClickKey(event.deviceId, event.keyCode)
+        return when (event.action) {
             KeyEvent.ACTION_DOWN -> {
-                if (digital.containsKey(physicalKey)) return true
-                host.onControllerInputAccepted()
-                captureDigital(physicalKey, control)
+                if (event.repeatCount != 0) return true
+                if (!pointerClickKeys.add(key)) return true
+                handlePointerClickBinding(
+                    event.deviceId,
+                    sessionId,
+                    pointerClickChannel(key),
+                    down = true,
+                )
+                true
             }
             KeyEvent.ACTION_UP -> {
-                releaseDigital(physicalKey)
+                if (!pointerClickKeys.remove(key)) return false
+                handlePointerClickBinding(
+                    event.deviceId,
+                    sessionId,
+                    pointerClickChannel(key),
+                    down = false,
+                )
+                true
             }
-            else -> return true
+            else -> false
         }
-        return true
     }
 
     /** Closes a key contact captured before a host modal took ownership of subsequent events. */
     fun releaseCapturedKey(event: KeyEvent): Boolean {
-        if (!isControllerSource(event.source) || event.action != KeyEvent.ACTION_UP) return false
-        val physicalKey = PhysicalKey(event.deviceId, event.keyCode)
-        if (!digital.containsKey(physicalKey)) return false
-        releaseDigital(physicalKey)
-        return true
+        if (!isGamepadEvent(event)) return false
+        return hostInputRouter.releaseCapturedKey(event)
     }
 
     /** Handles HAT, stick, and trigger samples. */
     fun onGenericMotionEvent(event: MotionEvent): Boolean {
         if (!isControllerSource(event.source)) return false
-        if (config.legacy) return false
+        if (!config.enabled) return false
         val deviceId = event.deviceId
         val device = InputDevice.getDevice(deviceId)
         if (device == null) {
             if (activeDeviceId == deviceId) clear()
             return true
         }
+        if (!isGamepadDevice(device)) return false
         val neutral = isNeutralMotion(event, device)
         val lifecycleDecision = lifecycleGate.offerMotion(deviceId, neutral)
         applyLifecycleDecision(lifecycleDecision)
@@ -387,22 +311,25 @@ class ControllerInputRouter(
     }
 
     override fun onInputDeviceAdded(deviceId: Int) {
+        capabilityCache.invalidate(deviceId)
         notifyControllerAvailability()
     }
 
     override fun onInputDeviceChanged(deviceId: Int) {
+        capabilityCache.invalidate(deviceId)
         if (activeDeviceId == deviceId) beginBoundary(waitForNeutral = true)
         notifyControllerAvailability()
     }
 
     override fun onInputDeviceRemoved(deviceId: Int) {
+        capabilityCache.invalidate(deviceId)
         if (activeDeviceId == deviceId || waitingDeviceId == deviceId) clear()
         notifyControllerAvailability()
     }
 
     private fun notifyControllerAvailability() {
         val available = InputDevice.getDeviceIds().any { deviceId ->
-            InputDevice.getDevice(deviceId)?.let { isControllerSource(it.sources) } == true
+            InputDevice.getDevice(deviceId)?.let { isGamepadDevice(it) } == true
         }
         host.onControllerAvailabilityChanged(available)
     }
@@ -446,7 +373,7 @@ class ControllerInputRouter(
         val rawY = axisValue(event, axesPair.second, history)
         val xRange = motionRange(device, event.source, axesPair.first)
         val yRange = motionRange(device, event.source, axesPair.second)
-        val calibration = config.calibrations[capabilitySignatureFor(device, event.source)]
+        val calibration = config.calibrations[capabilityCache.signature(device, event.source)]
         val xCalibration = calibration?.immutableChannels[if (stick == StickId.LEFT) {
             CalibrationChannel.LEFT_X
         } else {
@@ -575,10 +502,16 @@ class ControllerInputRouter(
         history: Int,
     ): Boolean {
         val axis = triggerAxis(device, event.source, side) ?: return false
+        if (!config.triggers.enabled) {
+            val previous = triggerStates.getValue(side)
+            if (previous.pressed) releaseBinary("trigger:${side.name.lowercase()}")
+            triggerStates[side] = StickProcessor.TriggerState()
+            return false
+        }
         val raw = axisValue(event, axis, history)
         val range = motionRange(device, event.source, axis, trigger = true)
             ?: StickProcessor.MotionRangeLike(0.0f, 1.0f)
-        val calibration = config.calibrations[capabilitySignatureFor(device, event.source)]
+        val calibration = config.calibrations[capabilityCache.signature(device, event.source)]
         val calibrationChannel = if (side == TriggerSide.LEFT) {
             CalibrationChannel.LEFT_TRIGGER
         } else {
@@ -598,7 +531,11 @@ class ControllerInputRouter(
         val control = if (side == TriggerSide.LEFT) CONTROL_BUTTON_L2 else CONTROL_BUTTON_R2
         val channel = "trigger:${side.name.lowercase()}"
         if (next.pressed && !previous.pressed) {
-            captureBinary(channel, control)
+            captureBinary(
+                channel = channel,
+                control = control,
+                code = if (side == TriggerSide.LEFT) Canvas.KEY_STAR else Canvas.KEY_POUND,
+            )
         } else if (!next.pressed && previous.pressed) {
             releaseBinary(channel)
         }
@@ -608,56 +545,13 @@ class ControllerInputRouter(
     private fun eventTime(event: MotionEvent, history: Int): Long =
         if (history < 0) event.eventTime else event.getHistoricalEventTime(history)
 
-    private fun captureDigital(physicalKey: PhysicalKey, control: String) {
-        val binding = effectiveBindingForControl(control)
-        if (binding?.kind == BindingKind.HOST_ACTION &&
-            binding.hostAction == HostAction.OPEN_MENU
-        ) {
-            // Opening a host modal is an ownership boundary. Do this before inserting the opener
-            // into the new ledger so the opener itself receives a single, well-ordered DOWN.
-            releaseAll()
-        }
-        val canvas = host.currentCanvas()
-        val generation = canvas?.inputGeneration() ?: 0L
-        val channel = "button:${physicalKey.keyCode}"
-        val captured = CapturedDigital(
-            physicalKey = physicalKey,
-            control = control,
-            binding = binding,
-            canvas = canvas,
-            deviceId = physicalKey.deviceId,
-            generation = generation,
-            sessionId = sessionId,
-            channel = channel,
-            directional = isDpadControl(control),
-            hostTarget = currentHostTarget(),
-        )
-        digital[physicalKey] = captured
-        if (captured.directional) {
-            updateDirectional(channel, setOf(control))
-        } else {
-            emitBinding(captured.binding, canvas, captured.deviceId, generation,
-                captured.sessionId, channel, captured.hostTarget, down = true)
-        }
-    }
-
-    private fun releaseDigital(physicalKey: PhysicalKey) {
-        val captured = digital.remove(physicalKey) ?: return
-        if (captured.directional) {
-            updateDirectional(captured.channel, emptySet())
-        } else {
-            emitBinding(captured.binding, captured.canvas, captured.deviceId, captured.generation,
-                captured.sessionId, captured.channel, captured.hostTarget, down = false)
-        }
-    }
-
-    private fun captureBinary(channel: String, control: String) {
+    private fun captureBinary(channel: String, control: String, code: Int) {
         if (binary.containsKey(channel)) return
         val canvas = host.currentCanvas()
         val captured = BinarySource(
             channel = channel,
             control = control,
-            binding = effectiveBindingForControl(control) ?: Binding.none(),
+            code = code,
             canvas = canvas,
             deviceId = activeDeviceId ?: -1,
             generation = canvas?.inputGeneration() ?: 0L,
@@ -665,14 +559,23 @@ class ControllerInputRouter(
             hostTarget = currentHostTarget(),
         )
         binary[channel] = captured
-        emitBinding(captured.binding, captured.canvas, captured.deviceId, captured.generation,
-            captured.sessionId, channel, captured.hostTarget, down = true)
+        captured.canvas?.inputPressed(
+            CONTROLLER_DEVICE_PREFIX + captured.deviceId,
+            captured.sessionId,
+            CONTROLLER_KIND,
+            captured.channel,
+            captured.code,
+        )
     }
 
     private fun releaseBinary(channel: String) {
         val captured = binary.remove(channel) ?: return
-        emitBinding(captured.binding, captured.canvas, captured.deviceId, captured.generation,
-            captured.sessionId, channel, captured.hostTarget, down = false)
+        captured.canvas?.inputReleased(
+            CONTROLLER_DEVICE_PREFIX + captured.deviceId,
+            captured.sessionId,
+            CONTROLLER_KIND,
+            captured.channel,
+        )
     }
 
     private fun updateDirectional(
@@ -695,11 +598,6 @@ class ControllerInputRouter(
                 hostTarget = currentHostTarget(),
             )
             directional[channel] = source
-        }
-        for (control in controls) {
-            if (!source.bindings.containsKey(control)) {
-                source.bindings[control] = bindingForDirectionControl(control)
-            }
         }
         source.requestedControls = controls.toSet()
         rebuildDirectional()
@@ -725,21 +623,10 @@ class ControllerInputRouter(
         for (source in directional.values.sortedBy { it.channel }) {
             val effectiveControls = source.requestedControls -
                 (neutralizedByGroup[source.movementGroup] ?: emptySet())
-            val guestCodes = LinkedHashSet<Int>()
-            val hostActions = LinkedHashSet<HostAction>()
-            val pointerActions = LinkedHashSet<PointerAction>()
-            for (control in effectiveControls) {
-                when (val binding = source.bindings[control] ?: Binding.none()) {
-                    else -> when (binding.kind) {
-                        BindingKind.GUEST_KEY -> binding.guestKey?.let { guestCodes += guestKeyCode(it) }
-                        BindingKind.HOST_ACTION -> binding.hostAction?.let(hostActions::add)
-                        BindingKind.POINTER_ACTION -> binding.pointerAction?.let(pointerActions::add)
-                        BindingKind.NONE -> Unit
-                    }
-                }
-            }
-            val nextGuestCodes = guestCodes.toSet()
             if (source.canvas != null) {
+                // HAT/stick quantization is an analog adapter. Its output is canonical MIDP
+                // input, while digital controller KeyEvents still travel through KeyMapper.
+                val nextGuestCodes = effectiveControls.mapNotNullTo(LinkedHashSet(), ::guestCodeForDirection)
                 source.canvas.inputUpdated(
                     CONTROLLER_DEVICE_PREFIX + source.deviceId,
                     source.sessionId,
@@ -749,103 +636,16 @@ class ControllerInputRouter(
                 )
             } else {
                 val target = source.hostTarget ?: currentHostTarget() ?: continue
-                val outputs = nextGuestCodes.mapTo(ArrayList()) { ControllerHostOutput.GuestKey(it) }
+                val outputs = effectiveControls.mapNotNullTo(ArrayList(), ::hostCommandForDirection)
+                    .map { ControllerHostOutput.Command(it) }
                 hostLedger.update(
-                    sourceToken(source.deviceId, source.sessionId, source.channel),
+                    sourceToken(source.deviceId, source.sessionId, source.channel + ":host"),
                     target,
                     outputs,
-                    if (outputs.isEmpty()) RepeatSpec.Disabled else RepeatSpec.Default,
-                )
-            }
-            if (source.canvas == null) {
-                val target = source.hostTarget ?: currentHostTarget() ?: continue
-                hostLedger.update(
-                    sourceToken(source.deviceId, source.sessionId, source.channel + ":host"),
-                    target,
-                    hostActions.map { ControllerHostOutput.Action(it) },
-                    RepeatSpec.Disabled,
-                )
-            } else {
-                // Host actions are still owned by the host ledger even while a Canvas is shown;
-                // this keeps menu/help mappings from bypassing aggregate ownership.
-                hostLedger.update(
-                    sourceToken(source.deviceId, source.sessionId, source.channel + ":host"),
-                    ControllerHostTarget("canvas@${System.identityHashCode(source.canvas)}",
-                        source.generation),
-                    hostActions.map { ControllerHostOutput.Action(it) },
                     RepeatSpec.Disabled,
                 )
             }
-            updateDirectionalPointerActions(source, pointerActions)
         }
-    }
-
-    private fun emitBinding(
-        binding: Binding?,
-        canvas: Canvas?,
-        deviceId: Int,
-        generation: Long,
-        sourceSession: Long,
-        channel: String,
-        capturedHostTarget: ControllerHostTarget?,
-        down: Boolean,
-    ) {
-        when (binding?.kind) {
-            BindingKind.GUEST_KEY -> {
-                val key = binding.guestKey ?: return
-                if (canvas != null) {
-                    val sourceDevice = CONTROLLER_DEVICE_PREFIX + deviceId
-                    if (down) {
-                        canvas.inputPressed(sourceDevice, sourceSession, CONTROLLER_KIND, channel,
-                            guestKeyCode(key))
-                    } else {
-                            canvas.inputReleased(sourceDevice, sourceSession, CONTROLLER_KIND, channel)
-                        }
-                } else {
-                    val target = capturedHostTarget ?: currentHostTarget() ?: return
-                    val source = sourceToken(deviceId, sourceSession, channel)
-                    val output = ControllerHostOutput.GuestKey(guestKeyCode(key))
-                    if (down) {
-                        hostLedger.down(source, target, listOf(output), RepeatSpec.Default)
-                    } else {
-                        hostLedger.up(source)
-                    }
-                }
-            }
-            BindingKind.HOST_ACTION -> binding.hostAction?.let { action ->
-                val target = capturedHostTarget ?: currentHostTarget() ?: return
-                val source = sourceToken(deviceId, sourceSession, channel)
-                val output = ControllerHostOutput.Action(action)
-                if (down) hostLedger.down(source, target, listOf(output), RepeatSpec.Disabled)
-                else hostLedger.up(source)
-            }
-            BindingKind.POINTER_ACTION -> binding.pointerAction?.let {
-                handlePointerClickBinding(deviceId, sourceSession, channel, down)
-            }
-            BindingKind.NONE, null -> Unit
-        }
-    }
-
-    private fun updateDirectionalPointerActions(
-        source: DirectionalSource,
-        next: Set<PointerAction>,
-    ) {
-        val pointerSource = sourceToken(
-            source.deviceId,
-            source.sessionId,
-            source.channel + ":pointer",
-        )
-        val previous = directionalPointerOwners[pointerSource].orEmpty()
-        (previous - next).forEach {
-            handlePointerClickBinding(source.deviceId, source.sessionId,
-                pointerSource.channel, down = false)
-        }
-        (next - previous).forEach {
-            handlePointerClickBinding(source.deviceId, source.sessionId,
-                pointerSource.channel, down = true)
-        }
-        if (next.isEmpty()) directionalPointerOwners.remove(pointerSource)
-        else directionalPointerOwners[pointerSource] = next.toSet()
     }
 
     private fun handlePointerClickBinding(
@@ -854,7 +654,9 @@ class ControllerInputRouter(
         channel: String,
         down: Boolean,
     ) {
-        if (config.pointer.mode != PointerMode.CURSOR) return
+        if (config.pointer.mode != PointerMode.CURSOR ||
+            config.pointer.clickAction != PointerAction.CLICK
+        ) return
         val canvas = pointerCanvas ?: host.currentCanvas() ?: return
         configurePointerViewport(canvas)
         val targetId = pointerTargetId(canvas)
@@ -924,12 +726,24 @@ class ControllerInputRouter(
     private fun pointerContactId(sourceSession: Long, channel: String): Int =
         31 * sourceSession.hashCode() + channel.hashCode()
 
+    private fun pointerClickChannel(key: PointerClickKey): String =
+        "cursor-click:${key.deviceId}:${key.keyCode}"
+
     private fun resetPointerState() {
+        val clickKeys = pointerClickKeys.toList()
+        pointerClickKeys.clear()
+        for (key in clickKeys) {
+            handlePointerClickBinding(
+                key.deviceId,
+                sessionId,
+                pointerClickChannel(key),
+                down = false,
+            )
+        }
         applyPointerActions(cursorController.reset())
         applyPointerActions(joystickController.reset())
         activeCursorClickToken = null
         pointerClickOwners.clear()
-        directionalPointerOwners.clear()
         pointerPhysicalTokens.clear()
         pointerJoystickToken = null
         pointerLease.reset(releaseVirtual = false)
@@ -947,6 +761,7 @@ class ControllerInputRouter(
                 centerXFraction = config.pointer.centerX.toFloat(),
                 centerYFraction = config.pointer.centerY.toFloat(),
                 radiusFractionOfShortestSide = config.pointer.radius.toFloat(),
+                mode = config.pointer.joystickMode,
             ),
         )
         pointerViewport = null
@@ -1001,7 +816,16 @@ class ControllerInputRouter(
                 pointerTargetId(canvas),
                 generation,
             )
-            val actions = joystickController.begin(token, pointerViewport ?: return false)
+            val actions = if (config.pointer.joystickMode == VirtualAnalogStickMode.FLOATING) {
+                joystickController.begin(
+                    token,
+                    pointerViewport ?: return false,
+                    x.toFloat(),
+                    y.toFloat(),
+                )
+            } else {
+                joystickController.begin(token, pointerViewport ?: return false)
+            }
             if (actions.isNotEmpty()) {
                 pointerJoystickToken = token
                 applyPointerActions(actions)
@@ -1093,6 +917,7 @@ class ControllerInputRouter(
     }
 
     private fun isInsideJoystickStart(canvas: Canvas, x: Int, y: Int): Boolean {
+        if (config.pointer.joystickMode == VirtualAnalogStickMode.FLOATING) return true
         val width = canvas.width.coerceAtLeast(1).toFloat()
         val height = canvas.height.coerceAtLeast(1).toFloat()
         val centerX = config.pointer.centerX.toFloat() * width
@@ -1148,12 +973,10 @@ class ControllerInputRouter(
         if (waitForNeutral && nextDeviceId != null) {
             activeDeviceId = nextDeviceId
             waitingDeviceId = nextDeviceId
-            waitingDigitalKeys.clear()
             lifecycleState = LifecycleState.WAIT_NEUTRAL
         } else {
             activeDeviceId = null
             waitingDeviceId = null
-            waitingDigitalKeys.clear()
             lifecycleState = LifecycleState.INACTIVE
         }
     }
@@ -1188,33 +1011,24 @@ class ControllerInputRouter(
         }
         activeDeviceId = snapshot.activeDeviceId
         waitingDeviceId = snapshot.waitingDeviceId
-        val waitingDevice = snapshot.waitingDeviceId ?: snapshot.activeDeviceId
-        waitingDigitalKeys = snapshot.waitingDigitalKeys.mapTo(LinkedHashSet()) {
-            PhysicalKey(waitingDevice ?: -1, it)
-        }
     }
 
     private fun releaseAll() {
         // Host outputs have their own typed ledger because non-Canvas Screens cannot receive
         // Canvas.postKey* callbacks. Clear it first; subsequent source UPs are idempotent.
         hostLedger.clear()
-        modalKeys.clear()
         val directionalChannels = directional.keys.toList()
         for (channel in directionalChannels) updateDirectional(channel, emptySet())
         directional.clear()
         val binarySources = binary.values.toList()
         binary.clear()
         for (source in binarySources) {
-            emitBinding(source.binding, source.canvas, source.deviceId, source.generation,
-                source.sessionId, source.channel, source.hostTarget, down = false)
-        }
-        val digitalSources = digital.values.toList()
-        digital.clear()
-        for (source in digitalSources) {
-            if (!source.directional) {
-                emitBinding(source.binding, source.canvas, source.deviceId, source.generation,
-                    source.sessionId, source.channel, source.hostTarget, down = false)
-            }
+            source.canvas?.inputReleased(
+                CONTROLLER_DEVICE_PREFIX + source.deviceId,
+                source.sessionId,
+                CONTROLLER_KIND,
+                source.channel,
+            )
         }
         for (runtime in stickStates.values) runtime.directionState = StickProcessor.DirectionState()
         triggerStates[TriggerSide.LEFT] = StickProcessor.TriggerState()
@@ -1301,35 +1115,24 @@ class ControllerInputRouter(
         }
     }
 
-    private fun bindingForDirectionControl(control: String): Binding {
-        return when (control) {
-            DIRECTION_NUM1 -> Binding.guestKey(GuestKey.NUM1)
-            DIRECTION_NUM3 -> Binding.guestKey(GuestKey.NUM3)
-            DIRECTION_NUM7 -> Binding.guestKey(GuestKey.NUM7)
-            DIRECTION_NUM9 -> Binding.guestKey(GuestKey.NUM9)
-            else -> config.binding(control) ?: Binding.none()
-        }
+    private fun guestCodeForDirection(control: String): Int? = when (control) {
+        CONTROL_DPAD_UP -> Canvas.KEY_UP
+        CONTROL_DPAD_DOWN -> Canvas.KEY_DOWN
+        CONTROL_DPAD_LEFT -> Canvas.KEY_LEFT
+        CONTROL_DPAD_RIGHT -> Canvas.KEY_RIGHT
+        DIRECTION_NUM1 -> Canvas.KEY_NUM1
+        DIRECTION_NUM3 -> Canvas.KEY_NUM3
+        DIRECTION_NUM7 -> Canvas.KEY_NUM7
+        DIRECTION_NUM9 -> Canvas.KEY_NUM9
+        else -> null
     }
 
-    /**
-     * Resolves the binding once, at the DOWN edge, so a later profile or pointer-mode change
-     * cannot alter the UP edge.  The explicit cursor click setting is the A-control override;
-     * NONE leaves the normal A mapping intact and therefore remains backwards-compatible.
-     */
-    private fun effectiveBindingForControl(control: String): Binding? {
-        // B is a host-context Back action on Screen and app-owned surfaces.  Gameplay still uses
-        // the configured B binding (normally NUM0), while an explicit Canvas target preserves the
-        // guest mapping exactly as configured.
-        if (control == CONTROL_BUTTON_B && host.currentCanvas() == null && !config.legacy) {
-            return Binding.hostAction(HostAction.BACK)
-        }
-        if (control == CONTROL_BUTTON_A &&
-            config.pointer.mode == PointerMode.CURSOR &&
-            config.pointer.clickBinding.kind == BindingKind.POINTER_ACTION
-        ) {
-            return config.pointer.clickBinding
-        }
-        return config.binding(control)
+    private fun hostCommandForDirection(control: String): HostCommand? = when (control) {
+        CONTROL_DPAD_UP -> HostCommand.NavigateUp
+        CONTROL_DPAD_DOWN -> HostCommand.NavigateDown
+        CONTROL_DPAD_LEFT -> HostCommand.NavigateLeft
+        CONTROL_DPAD_RIGHT -> HostCommand.NavigateRight
+        else -> null
     }
 
     private fun directionControl(key: StickProcessor.DirectionKey): String = when (key) {
@@ -1342,9 +1145,6 @@ class ControllerInputRouter(
         StickProcessor.DirectionKey.NUM7 -> DIRECTION_NUM7
         StickProcessor.DirectionKey.NUM9 -> DIRECTION_NUM9
     }
-
-    private fun isDpadControl(control: String): Boolean = control == CONTROL_DPAD_UP ||
-        control == CONTROL_DPAD_DOWN || control == CONTROL_DPAD_LEFT || control == CONTROL_DPAD_RIGHT
 
     private data class TargetSnapshot(
         val canvas: Canvas?,
@@ -1397,49 +1197,32 @@ class ControllerInputRouter(
                 source and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK ||
                 source and InputDevice.SOURCE_DPAD == InputDevice.SOURCE_DPAD
 
+        /** True only for an input event backed by a connected gamepad/joystick device. */
+        @JvmStatic
+        fun isGamepadEvent(event: KeyEvent): Boolean =
+            isControllerSource(event.source) &&
+                InputDevice.getDevice(event.deviceId)?.let(::isGamepadDevice) == true
+
+        /** True only for a motion event backed by a connected gamepad/joystick device. */
+        @JvmStatic
+        fun isGamepadMotionEvent(event: MotionEvent): Boolean =
+            isControllerSource(event.source) &&
+                InputDevice.getDevice(event.deviceId)?.let(::isGamepadDevice) == true
+
+        /** True when an input device should be presented as a gamepad in app-owned UI. */
+        @JvmStatic
+        fun isGamepadDevice(device: InputDevice): Boolean =
+            device.sources and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD ||
+                device.sources and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK
+
         /**
          * Stable calibration key: Android device ids are process-local and are deliberately not
          * part of this value. Descriptor plus the complete reported motion capability set keeps a
          * profile attached to a physical controller/capability shape across reconnects.
          */
         @JvmStatic
-        fun capabilitySignatureFor(device: InputDevice, source: Int): String = buildString {
-            append("descriptor=")
-            append(device.descriptor.orEmpty().ifBlank { "unknown" }.replace("|", "%7C"))
-            append(";source=")
-            append(source)
-            device.motionRanges
-                .sortedWith(
-                    compareBy<InputDevice.MotionRange>(
-                        { it.axis },
-                        { it.source },
-                        { it.min },
-                        { it.max },
-                        { it.flat },
-                        { it.fuzz },
-                        { it.resolution },
-                    ),
-                )
-                .forEach { range ->
-                    append(";axis=")
-                    append(range.axis)
-                    append(',')
-                    append(range.source)
-                    append(',')
-                    append(capabilityNumber(range.min))
-                    append(',')
-                    append(capabilityNumber(range.max))
-                    append(',')
-                    append(capabilityNumber(range.flat))
-                    append(',')
-                    append(capabilityNumber(range.fuzz))
-                    append(',')
-                    append(capabilityNumber(range.resolution))
-                }
-        }
-
-        private fun capabilityNumber(value: Float): String =
-            if (value.isFinite()) String.format(Locale.US, "%.6f", value) else "nan"
+        fun capabilitySignatureFor(device: InputDevice, source: Int): String =
+            ControllerCapabilityCache.buildSignature(device, source)
 
         @JvmStatic
         fun controlTokenForKeyCode(keyCode: Int): String? = when (keyCode) {
@@ -1461,107 +1244,10 @@ class ControllerInputRouter(
             else -> null
         }
 
-        @JvmStatic
-        fun guestKeyCode(key: GuestKey): Int = when (key) {
-            GuestKey.NUM0 -> Canvas.KEY_NUM0
-            GuestKey.NUM1 -> Canvas.KEY_NUM1
-            GuestKey.NUM2 -> Canvas.KEY_NUM2
-            GuestKey.NUM3 -> Canvas.KEY_NUM3
-            GuestKey.NUM4 -> Canvas.KEY_NUM4
-            GuestKey.NUM5 -> Canvas.KEY_NUM5
-            GuestKey.NUM6 -> Canvas.KEY_NUM6
-            GuestKey.NUM7 -> Canvas.KEY_NUM7
-            GuestKey.NUM8 -> Canvas.KEY_NUM8
-            GuestKey.NUM9 -> Canvas.KEY_NUM9
-            GuestKey.STAR -> Canvas.KEY_STAR
-            GuestKey.POUND -> Canvas.KEY_POUND
-            GuestKey.UP -> Canvas.KEY_UP
-            GuestKey.DOWN -> Canvas.KEY_DOWN
-            GuestKey.LEFT -> Canvas.KEY_LEFT
-            GuestKey.RIGHT -> Canvas.KEY_RIGHT
-            GuestKey.FIRE -> Canvas.KEY_FIRE
-            GuestKey.SOFT_LEFT -> Canvas.KEY_SOFT_LEFT
-            GuestKey.SOFT_RIGHT -> Canvas.KEY_SOFT_RIGHT
-            GuestKey.CLEAR -> Canvas.KEY_CLEAR
-            GuestKey.SEND -> Canvas.KEY_SEND
-            GuestKey.END -> Canvas.KEY_END
-            GuestKey.GAME_A -> KeyMapper.getKeyCode(Canvas.GAME_A)
-            GuestKey.GAME_B -> KeyMapper.getKeyCode(Canvas.GAME_B)
-            GuestKey.GAME_C -> KeyMapper.getKeyCode(Canvas.GAME_C)
-            GuestKey.GAME_D -> KeyMapper.getKeyCode(Canvas.GAME_D)
-        }
-
-        /** Maps a canonical guest key to an Android key for host-only focus surfaces. */
-        @JvmStatic
-        fun androidKeyCodeForGuestKey(keyCode: Int): Int = when (keyCode) {
-            Canvas.KEY_NUM0 -> KeyEvent.KEYCODE_0
-            Canvas.KEY_NUM1 -> KeyEvent.KEYCODE_1
-            Canvas.KEY_NUM2 -> KeyEvent.KEYCODE_2
-            Canvas.KEY_NUM3 -> KeyEvent.KEYCODE_3
-            Canvas.KEY_NUM4 -> KeyEvent.KEYCODE_4
-            Canvas.KEY_NUM5 -> KeyEvent.KEYCODE_5
-            Canvas.KEY_NUM6 -> KeyEvent.KEYCODE_6
-            Canvas.KEY_NUM7 -> KeyEvent.KEYCODE_7
-            Canvas.KEY_NUM8 -> KeyEvent.KEYCODE_8
-            Canvas.KEY_NUM9 -> KeyEvent.KEYCODE_9
-            Canvas.KEY_STAR -> KeyEvent.KEYCODE_STAR
-            Canvas.KEY_POUND -> KeyEvent.KEYCODE_POUND
-            Canvas.KEY_UP -> KeyEvent.KEYCODE_DPAD_UP
-            Canvas.KEY_DOWN -> KeyEvent.KEYCODE_DPAD_DOWN
-            Canvas.KEY_LEFT -> KeyEvent.KEYCODE_DPAD_LEFT
-            Canvas.KEY_RIGHT -> KeyEvent.KEYCODE_DPAD_RIGHT
-            Canvas.KEY_FIRE -> KeyEvent.KEYCODE_DPAD_CENTER
-            Canvas.KEY_SOFT_LEFT -> KeyEvent.KEYCODE_SOFT_LEFT
-            Canvas.KEY_SOFT_RIGHT -> KeyEvent.KEYCODE_SOFT_RIGHT
-            Canvas.KEY_CLEAR -> KeyEvent.KEYCODE_DEL
-            Canvas.KEY_SEND -> KeyEvent.KEYCODE_CALL
-            Canvas.KEY_END -> KeyEvent.KEYCODE_ENDCALL
-            else -> KeyEvent.KEYCODE_UNKNOWN
-        }
-
         private fun resolveProfile(profile: ProfileModel?): ControllerConfig {
             if (profile == null) return ControllerConfig.defaultNavigation()
             val controller = profile.controller?.takeIf { it.isJsonObject }?.asJsonObject
-            return ControllerConfig.resolve(controller, legacyMappings(profile.keyMappings))
-        }
-
-        private fun legacyMappings(mappings: SparseIntArray?): Map<String, String> {
-            if (mappings == null || mappings.size() == 0) return emptyMap()
-            val result = LinkedHashMap<String, String>()
-            for (index in 0 until mappings.size()) {
-                val androidCode = mappings.keyAt(index)
-                val control = controlTokenForKeyCode(androidCode) ?: continue
-                val token = legacyGuestToken(mappings.valueAt(index)) ?: continue
-                result[control] = token
-            }
-            return result
-        }
-
-        private fun legacyGuestToken(keyCode: Int): String? = when (keyCode) {
-            KeyMapper.KEY_OPTIONS_MENU -> "LEGACY_MENU"
-            Canvas.KEY_NUM0 -> GuestKey.NUM0.token
-            Canvas.KEY_NUM1 -> GuestKey.NUM1.token
-            Canvas.KEY_NUM2 -> GuestKey.NUM2.token
-            Canvas.KEY_NUM3 -> GuestKey.NUM3.token
-            Canvas.KEY_NUM4 -> GuestKey.NUM4.token
-            Canvas.KEY_NUM5 -> GuestKey.NUM5.token
-            Canvas.KEY_NUM6 -> GuestKey.NUM6.token
-            Canvas.KEY_NUM7 -> GuestKey.NUM7.token
-            Canvas.KEY_NUM8 -> GuestKey.NUM8.token
-            Canvas.KEY_NUM9 -> GuestKey.NUM9.token
-            Canvas.KEY_STAR -> GuestKey.STAR.token
-            Canvas.KEY_POUND -> GuestKey.POUND.token
-            Canvas.KEY_UP -> GuestKey.UP.token
-            Canvas.KEY_DOWN -> GuestKey.DOWN.token
-            Canvas.KEY_LEFT -> GuestKey.LEFT.token
-            Canvas.KEY_RIGHT -> GuestKey.RIGHT.token
-            Canvas.KEY_FIRE -> GuestKey.FIRE.token
-            Canvas.KEY_SOFT_LEFT -> GuestKey.SOFT_LEFT.token
-            Canvas.KEY_SOFT_RIGHT -> GuestKey.SOFT_RIGHT.token
-            Canvas.KEY_CLEAR -> GuestKey.CLEAR.token
-            Canvas.KEY_SEND -> GuestKey.SEND.token
-            Canvas.KEY_END -> GuestKey.END.token
-            else -> null
+            return ControllerConfig.resolve(controller)
         }
 
         private fun nextSession(current: Long): Long =

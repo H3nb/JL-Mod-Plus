@@ -84,6 +84,7 @@ import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView;
+import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferActions;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferIntents;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
@@ -224,31 +225,11 @@ public class AppsListFragment extends Fragment {
         super.onDestroyView();
     }
 
-    /** Host-only controller adapter; the Compose library never receives guest Canvas callbacks. */
-    public boolean onControllerGuestKey(int keyCode, boolean pressed, boolean repeated) {
-        LibraryComposeController controller = composeController;
-        return controller != null && controller.onControllerGuestKey(keyCode, pressed, repeated);
-    }
-
-    public boolean onControllerActivate(boolean pressed) {
-        LibraryComposeController controller = composeController;
-        return controller != null && controller.onControllerActivate(pressed);
-    }
-
-    public boolean onControllerMenu(boolean pressed) {
-        LibraryComposeController controller = composeController;
-        return controller != null && controller.onControllerMenu(pressed);
-    }
-
-    public boolean onControllerTab(boolean next, boolean pressed) {
-        LibraryComposeController controller = composeController;
-        return controller != null && controller.onControllerTab(next, pressed);
-    }
-
-    public boolean onControllerBack(boolean pressed) {
-        LibraryComposeController controller = composeController;
-        return controller != null && controller.onControllerBack(pressed);
-    }
+	/** Routes host commands directly; no Canvas/MIDP key translation is involved. */
+	public boolean onHostCommand(@NonNull HostCommand command, boolean pressed) {
+		LibraryComposeController controller = composeController;
+		return controller != null && controller.onHostCommand(command, pressed);
+	}
 
     @Override
     public void onStart() {

@@ -16,7 +16,6 @@ package io.github.h3nb.jlmodplus.input
 
 import android.view.InputDevice
 import android.view.KeyEvent
-import javax.microedition.lcdui.Canvas
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -24,19 +23,13 @@ import org.junit.Test
 
 class ControllerInputRouterTest {
     @Test
-    fun mapsControllerButtonsToStableControlTokens() {
-        assertEquals(
-            ControllerInputRouter.CONTROL_BUTTON_A,
-            ControllerInputRouter.controlTokenForKeyCode(KeyEvent.KEYCODE_BUTTON_A),
-        )
-        assertEquals(
-            ControllerInputRouter.CONTROL_BUTTON_START,
-            ControllerInputRouter.controlTokenForKeyCode(KeyEvent.KEYCODE_BUTTON_START),
-        )
-        assertEquals(
-            ControllerInputRouter.CONTROL_DPAD_LEFT,
-            ControllerInputRouter.controlTokenForKeyCode(KeyEvent.KEYCODE_DPAD_LEFT),
-        )
+    fun mapsStandardControllerKeysToHostCommands() {
+        assertEquals(HostCommand.Activate, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_A))
+        assertEquals(HostCommand.Back, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_B))
+        assertEquals(HostCommand.NavigateLeft, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_DPAD_LEFT))
+        assertEquals(HostCommand.OpenMenu, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_START))
+        assertEquals(HostCommand.OpenKeypad, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_SELECT))
+        assertEquals(null, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_11))
     }
 
     @Test
@@ -45,13 +38,5 @@ class ControllerInputRouterTest {
         assertTrue(ControllerInputRouter.isControllerSource(InputDevice.SOURCE_JOYSTICK))
         assertTrue(ControllerInputRouter.isControllerSource(InputDevice.SOURCE_DPAD))
         assertFalse(ControllerInputRouter.isControllerSource(InputDevice.SOURCE_KEYBOARD))
-    }
-
-    @Test
-    fun canonicalGuestKeysPreserveZeroAndMenuAsDifferentValues() {
-        assertEquals(Canvas.KEY_NUM0, ControllerInputRouter.guestKeyCode(GuestKey.NUM0))
-        assertEquals(Canvas.KEY_FIRE, ControllerInputRouter.guestKeyCode(GuestKey.FIRE))
-        assertTrue(Canvas.KEY_NUM0 != 0)
-        assertTrue(ControllerInputRouter.guestKeyCode(GuestKey.NUM0) != 0)
     }
 }

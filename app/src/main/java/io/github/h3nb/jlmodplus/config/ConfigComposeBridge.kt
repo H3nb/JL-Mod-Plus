@@ -52,6 +52,7 @@ import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
+import io.github.h3nb.jlmodplus.input.HostCommand
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -138,7 +139,6 @@ class ConfigComposeController @JvmOverloads constructor(
     private var state by mutableStateOf(initialState)
     private var colorPicker by mutableStateOf<ColorPickerRequest?>(null)
     private var encodingPicker by mutableStateOf<EncodingPickerRequest?>(null)
-    private var gamepadCapture by mutableStateOf<GamepadCaptureUiState?>(null)
     private var gamepadHelpVisible by mutableStateOf(false)
     private var gamepadDiagnosis by mutableStateOf<String?>(null)
     private var gamepadCalibration by mutableStateOf<GamepadCalibrationUiState?>(null)
@@ -160,7 +160,6 @@ class ConfigComposeController @JvmOverloads constructor(
                     menuActions = menuActions,
                     colorPicker = colorPicker,
                     encodingPicker = encodingPicker,
-                    gamepadCapture = gamepadCapture,
                     gamepadHelpVisible = gamepadHelpVisible,
                     gamepadDiagnosis = gamepadDiagnosis,
                     gamepadCalibration = gamepadCalibration,
@@ -173,14 +172,6 @@ class ConfigComposeController @JvmOverloads constructor(
                     onEncodingSelected = { charset ->
                         encodingPicker = null
                         events.onEncodingSelected(charset)
-                    },
-                    onGamepadCaptureCancel = {
-                        gamepadCapture = null
-                        events.onGamepadCaptureCancel()
-                    },
-                    onGamepadCaptureCommit = { target, candidate ->
-                        gamepadCapture = null
-                        events.onGamepadCaptureCommit(target, candidate)
                     },
                     onGamepadHelpDismiss = { gamepadHelpVisible = false },
                     onGamepadDiagnosisDismiss = { gamepadDiagnosis = null },
@@ -213,38 +204,39 @@ class ConfigComposeController @JvmOverloads constructor(
         encodingPicker = EncodingPickerRequest(options, selected)
     }
 
-    fun showGamepadCapture(targetControl: String, phase: String = "ARMED", candidate: String? = null,
-                           candidateKind: String? = null, message: String? = null) {
-        gamepadCapture = GamepadCaptureUiState(targetControl, phase, candidate, candidateKind, message)
-    }
-
-    fun updateGamepadCapture(state: GamepadCaptureUiState?) {
-        gamepadCapture = state
-    }
-
-    fun dismissGamepadCapture() {
-        gamepadCapture = null
-    }
-
-    fun isControllerModalActive(): Boolean = gamepadCapture != null ||
+    fun isControllerModalActive(): Boolean =
         gamepadHelpVisible || gamepadDiagnosis != null || gamepadCalibration != null
 
-    /** Consumes controller focus while a gamepad-owned modal is visible. */
-    fun handleControllerInput(control: String, pressed: Boolean): Boolean {
+    /** Consumes host commands while a controller-owned modal is visible. */
+    fun handleHostCommand(command: HostCommand, pressed: Boolean): Boolean {
         if (!isControllerModalActive()) return false
-        if (pressed && (control == "button_a" || control == "button_b" ||
-                control == "button_start" || control == "button_select")) {
+        if (pressed) {
             when {
-                gamepadCapture != null -> {
-                    gamepadCapture = null
-                    events.onGamepadCaptureCancel()
+                gamepadCalibration != null -> when (command) {
+                    HostCommand.Activate -> {
+                        val calibration = gamepadCalibration ?: return true
+                        when {
+                            calibration.canSave -> events.onGamepadCalibrationSave()
+                            calibration.canAdvance -> events.onGamepadCalibrationAdvance()
+                        }
+                    }
+                    HostCommand.Back,
+                    HostCommand.OpenMenu,
+                    HostCommand.OpenKeypad,
+                    -> {
+                        gamepadCalibration = null
+                        events.onGamepadCalibrationCancel()
+                    }
+                    else -> Unit
                 }
-                gamepadCalibration != null -> {
-                    gamepadCalibration = null
-                    events.onGamepadCalibrationCancel()
+                gamepadHelpVisible && (command == HostCommand.Activate || command == HostCommand.Back ||
+                    command == HostCommand.OpenMenu || command == HostCommand.OpenKeypad) -> {
+                    gamepadHelpVisible = false
                 }
-                gamepadHelpVisible -> gamepadHelpVisible = false
-                gamepadDiagnosis != null -> gamepadDiagnosis = null
+                gamepadDiagnosis != null && (command == HostCommand.Activate || command == HostCommand.Back ||
+                    command == HostCommand.OpenMenu || command == HostCommand.OpenKeypad) -> {
+                    gamepadDiagnosis = null
+                }
             }
         }
         return true
@@ -308,7 +300,6 @@ internal fun ConfigScreen(
     menuActions: ConfigMenuActions? = null,
     colorPicker: ColorPickerRequest? = null,
     encodingPicker: EncodingPickerRequest? = null,
-    gamepadCapture: GamepadCaptureUiState? = null,
     gamepadHelpVisible: Boolean = false,
     gamepadDiagnosis: String? = null,
     gamepadCalibration: GamepadCalibrationUiState? = null,
@@ -316,8 +307,6 @@ internal fun ConfigScreen(
     onColorPicked: (ConfigFormEvents.ColorField, String) -> Unit = { _, _ -> },
     onEncodingPickerDismiss: () -> Unit = {},
     onEncodingSelected: (String) -> Unit = {},
-    onGamepadCaptureCancel: () -> Unit = {},
-    onGamepadCaptureCommit: (String, String) -> Unit = { _, _ -> },
     onGamepadHelpDismiss: () -> Unit = {},
     onGamepadDiagnosisDismiss: () -> Unit = {},
     onGamepadCalibrationDismiss: () -> Unit = {},
@@ -470,13 +459,6 @@ internal fun ConfigScreen(
         )
     }
 
-    gamepadCapture?.let { capture ->
-        GamepadCaptureDialog(
-            state = capture,
-            onCancel = onGamepadCaptureCancel,
-            onCommit = onGamepadCaptureCommit,
-        )
-    }
     if (gamepadHelpVisible) {
         GamepadHelpDialog(onDismiss = onGamepadHelpDismiss)
     }

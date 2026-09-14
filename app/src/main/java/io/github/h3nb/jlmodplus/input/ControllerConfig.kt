@@ -25,22 +25,19 @@ import java.util.LinkedHashMap
 import java.util.Locale
 
 /**
- * Immutable, Android-free controller configuration.
+ * Immutable, Android-free analog controller configuration.
  *
- * This is deliberately a subtree model rather than a ProfileModel replacement.  The profile
- * integration can keep the subtree as a Gson JsonElement until the authoritative persistence path
- * is extended.  Keeping the original object here also lets a supported config round-trip fields
- * that this version does not know about.  An unsupported config is never rewritten implicitly:
- * its original JSON is returned until the user explicitly calls [reset] or changes a field.
+ * Digital gamepad buttons are deliberately absent from this model. ProfileModel.keyMappings and
+ * KeyMapper remain the one guest digital mapping, while HostCommand owns application navigation.
+ * This subtree stores only analog processing, pointer output, trigger adaptation, and calibration.
+ * Unknown fields are retained until an explicit edit/reset so future config data is not silently
+ * discarded.
  */
 class ControllerConfig private constructor(
-    val mode: ControllerMode,
-    val preset: Preset,
-    val directionMode: DirectionMode,
+    val enabled: Boolean,
     val leftStick: StickSettings,
     val rightStick: StickSettings,
     val triggers: TriggerSettings,
-    bindings: Map<String, Binding>,
     val pointer: PointerSettings,
     calibrations: Map<String, GamepadCalibration>,
     val schemaVersion: Int,
@@ -49,24 +46,13 @@ class ControllerConfig private constructor(
     val shouldWriteController: Boolean,
     val resolutionSource: ResolutionSource,
 ) {
-    /** True when the controller router may use the new mapping. */
-    val enabled: Boolean
-        get() = mode == ControllerMode.ENABLED
-
-    /** True when the explicit or compatibility fallback mode is Legacy. */
-    val legacy: Boolean
-        get() = mode == ControllerMode.LEGACY
-
-    /** False for a newer/invalid payload that must stay opaque at runtime. */
+    /** False for a newer/invalid payload that remains opaque at runtime. */
     val isSupported: Boolean
         get() = unsupportedReason == null
 
     /** A clear user-facing explanation for an unsupported payload, when one exists. */
     val notice: String?
         get() = unsupportedReason
-
-    /** Effective bindings are exposed through an unmodifiable insertion-ordered map. */
-    val bindings: Map<String, Binding> = immutableBindings(bindings)
 
     /** Validated, device-independent calibration profiles keyed by descriptor/capability. */
     val calibrations: Map<String, GamepadCalibration> = immutableCalibrations(calibrations)
@@ -75,22 +61,13 @@ class ControllerConfig private constructor(
     val rawJson: JsonObject?
         get() = originalJson?.deepCopy()
 
-    /** Convenient lookup that does not expose mutable JSON state. */
-    fun binding(controlToken: String): Binding? = bindings[controlToken]
-
-    /**
-     * Validate a config assembled by the editor/builder.
-     *
-     * Many-to-one bindings are intentionally valid.  Validation concerns malformed thresholds,
-     * unsupported mode state, and the existence of an explicit controller menu path.
-     */
     fun validate(): ValidationResult {
         val issues = ArrayList<ValidationIssue>()
         if (unsupportedReason != null) {
             issues.add(ValidationIssue("controller", unsupportedReason))
             return ValidationResult(issues)
         }
-        if (schemaVersion != CURRENT_SCHEMA_VERSION) {
+        if (schemaVersion > CURRENT_SCHEMA_VERSION) {
             issues.add(
                 ValidationIssue(
                     "schemaVersion",
@@ -102,46 +79,13 @@ class ControllerConfig private constructor(
         issues += leftStick.validationIssues("sticks.left")
         issues += rightStick.validationIssues("sticks.right")
         issues += pointer.validationIssues("pointer")
-        bindings.forEach { (control, binding) ->
-            if (control.trim().isEmpty()) {
-                issues.add(ValidationIssue("bindings", "control token must not be blank"))
-            }
-            if (binding.kind == BindingKind.NONE && binding.token != null) {
-                issues.add(
-                    ValidationIssue(
-                        "bindings.$control",
-                        "none bindings must not contain an action",
-                    ),
-                )
-            }
-        }
-        if (mode == ControllerMode.ENABLED &&
-            bindings.values.none {
-                it.kind == BindingKind.HOST_ACTION &&
-                    it.token == HostAction.OPEN_MENU.token
-            }
-        ) {
-            issues.add(
-                ValidationIssue(
-                    "bindings",
-                    "enabled controller config must retain a host OPEN_MENU binding",
-                ),
-            )
-        }
         return ValidationResult(issues)
     }
 
-    /** Creates an editor builder retaining opaque fields from a supported source JSON object. */
     fun toBuilder(): Builder = Builder(this)
 
-    /** Explicit, reset-friendly recovery from an unsupported or unwanted mapping. */
+    /** Explicit recovery from an unsupported payload or a user-requested reset. */
     fun reset(): ControllerConfig = defaultNavigation(shouldWrite = true)
-
-    fun withBinding(controlToken: String, binding: Binding): ControllerConfig =
-        toBuilder().binding(controlToken, binding).build()
-
-    fun withoutBinding(controlToken: String): ControllerConfig =
-        toBuilder().removeBinding(controlToken).build()
 
     fun withCalibration(signature: String, calibration: GamepadCalibration): ControllerConfig =
         toBuilder().calibration(signature, calibration).build()
@@ -150,8 +94,9 @@ class ControllerConfig private constructor(
         toBuilder().removeCalibration(signature).build()
 
     /**
-     * Merge known fields into the original source JSON.  Unknown top-level and nested fields are
-     * retained.  For an unsupported source the exact original subtree is returned instead.
+     * Merge the analog model into the source JSON. The emitted representation is clean schema v2:
+     * legacy mode/preset/direction/bindings fields are removed and digital ownership is not
+     * reconstructed. Unknown unrelated fields remain intact.
      */
     fun toJson(): JsonObject {
         if (unsupportedReason != null && originalJson != null) {
@@ -159,22 +104,24 @@ class ControllerConfig private constructor(
         }
 
         val root = originalJson?.deepCopy() ?: JsonObject()
-        root.addProperty(KEY_SCHEMA_VERSION, schemaVersion)
-        root.addProperty(KEY_MODE, mode.token)
-        root.addProperty(KEY_PRESET, preset.token)
-        root.addProperty(KEY_DIRECTION_MODE, directionMode.token)
-        root.addProperty(KEY_TRIGGER_PRESS, triggers.pressThreshold)
-        root.addProperty(KEY_TRIGGER_RELEASE, triggers.releaseThreshold)
+        root.addProperty(KEY_SCHEMA_VERSION, CURRENT_SCHEMA_VERSION)
+        root.addProperty(KEY_ENABLED, enabled)
+        root.remove(KEY_MODE)
+        root.remove(KEY_PRESET)
+        root.remove(KEY_DIRECTION_MODE)
+        root.remove(KEY_BINDINGS)
+        root.remove(KEY_TRIGGER)
+        root.remove(KEY_TRIGGER_PRESS)
+        root.remove(KEY_TRIGGER_RELEASE)
 
         val sticks = mergeObject(root, KEY_STICKS)
         writeStick(sticks, STICK_LEFT, leftStick)
         writeStick(sticks, STICK_RIGHT, rightStick)
 
-        val bindingObject = mergeObject(root, KEY_BINDINGS)
-        bindings.forEach { (control, binding) ->
-            val existing = bindingObject.get(control)
-            bindingObject.add(control, mergeBinding(existing, binding))
-        }
+        val triggerObject = mergeObject(root, KEY_TRIGGERS)
+        triggerObject.addProperty(KEY_TRIGGER_PRESS, triggers.pressThreshold)
+        triggerObject.addProperty(KEY_TRIGGER_RELEASE, triggers.releaseThreshold)
+        triggerObject.addProperty(KEY_TRIGGER_ENABLED, triggers.enabled)
 
         val pointerObject = mergeObject(root, KEY_POINTER)
         writePointer(pointerObject, pointer)
@@ -198,26 +145,20 @@ class ControllerConfig private constructor(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ControllerConfig) return false
-        return mode == other.mode &&
-            preset == other.preset &&
-            directionMode == other.directionMode &&
+        return enabled == other.enabled &&
             leftStick == other.leftStick &&
             rightStick == other.rightStick &&
             triggers == other.triggers &&
-            bindings == other.bindings &&
             pointer == other.pointer &&
             calibrations == other.calibrations &&
             schemaVersion == other.schemaVersion
     }
 
     override fun hashCode(): Int {
-        var result = mode.hashCode()
-        result = 31 * result + preset.hashCode()
-        result = 31 * result + directionMode.hashCode()
+        var result = enabled.hashCode()
         result = 31 * result + leftStick.hashCode()
         result = 31 * result + rightStick.hashCode()
         result = 31 * result + triggers.hashCode()
-        result = 31 * result + bindings.hashCode()
         result = 31 * result + pointer.hashCode()
         result = 31 * result + calibrations.hashCode()
         result = 31 * result + schemaVersion
@@ -225,19 +166,15 @@ class ControllerConfig private constructor(
     }
 
     override fun toString(): String =
-        "ControllerConfig(mode=$mode, preset=$preset, directionMode=$directionMode, " +
-            "bindings=$bindings, pointer=$pointer, calibrations=${calibrations.keys}, " +
-            "schemaVersion=$schemaVersion, " +
-            "unsupportedReason=$unsupportedReason)"
+        "ControllerConfig(enabled=$enabled, leftStick=$leftStick, rightStick=$rightStick, " +
+            "triggers=$triggers, pointer=$pointer, calibrations=${calibrations.keys}, " +
+            "schemaVersion=$schemaVersion, unsupportedReason=$unsupportedReason)"
 
     class Builder internal constructor(
-        private var mode: ControllerMode,
-        private var preset: Preset,
-        private var directionMode: DirectionMode,
+        private var enabled: Boolean,
         private var leftStick: StickSettings,
         private var rightStick: StickSettings,
         private var triggers: TriggerSettings,
-        bindings: Map<String, Binding>,
         private var pointer: PointerSettings,
         calibrations: Map<String, GamepadCalibration>,
         private var schemaVersion: Int,
@@ -247,18 +184,14 @@ class ControllerConfig private constructor(
         private var resolutionSource: ResolutionSource,
         private var preserveUnsupportedPayload: Boolean,
     ) {
-        private var mutableBindings = LinkedHashMap(bindings)
         private var mutableCalibrations = LinkedHashMap(calibrations)
         private var modified = false
 
         constructor() : this(
-            mode = ControllerMode.ENABLED,
-            preset = Preset.NAVIGATION,
-            directionMode = DirectionMode.EIGHT,
+            enabled = true,
             leftStick = defaultLeftStick(),
             rightStick = defaultRightStick(),
             triggers = TriggerSettings(),
-            bindings = defaultBindings(Preset.NAVIGATION),
             pointer = PointerSettings(),
             calibrations = emptyMap(),
             schemaVersion = CURRENT_SCHEMA_VERSION,
@@ -270,13 +203,10 @@ class ControllerConfig private constructor(
         )
 
         internal constructor(source: ControllerConfig) : this(
-            mode = source.mode,
-            preset = source.preset,
-            directionMode = source.directionMode,
+            enabled = source.enabled,
             leftStick = source.leftStick,
             rightStick = source.rightStick,
             triggers = source.triggers,
-            bindings = source.bindings,
             pointer = source.pointer,
             calibrations = source.calibrations,
             schemaVersion = source.schemaVersion,
@@ -297,30 +227,8 @@ class ControllerConfig private constructor(
             }
         }
 
-        fun mode(value: ControllerMode): Builder = apply {
-            mode = value
-            markModified()
-        }
-
         fun enabled(value: Boolean): Builder = apply {
-            mode = if (value) ControllerMode.ENABLED else ControllerMode.LEGACY
-            markModified()
-        }
-
-        fun legacy(value: Boolean): Builder = apply {
-            mode = if (value) ControllerMode.LEGACY else ControllerMode.ENABLED
-            markModified()
-        }
-
-        fun preset(value: Preset): Builder = apply {
-            preset = value
-            markModified()
-        }
-
-        fun directionMode(value: DirectionMode): Builder = apply {
-            directionMode = value
-            leftStick = leftStick.copy(directionMode = value)
-            rightStick = rightStick.copy(directionMode = value)
+            enabled = value
             markModified()
         }
 
@@ -346,22 +254,7 @@ class ControllerConfig private constructor(
         }
 
         fun triggerThresholds(pressThreshold: Double, releaseThreshold: Double): Builder =
-            triggers(TriggerSettings(pressThreshold, releaseThreshold))
-
-        fun bindings(values: Map<String, Binding>): Builder = apply {
-            mutableBindings = LinkedHashMap(values)
-            markModified()
-        }
-
-        fun binding(controlToken: String, value: Binding): Builder = apply {
-            mutableBindings[controlToken] = value
-            markModified()
-        }
-
-        fun removeBinding(controlToken: String): Builder = apply {
-            mutableBindings.remove(controlToken)
-            markModified()
-        }
+            triggers(TriggerSettings(pressThreshold, releaseThreshold, triggers.enabled))
 
         fun pointer(value: PointerSettings): Builder = apply {
             pointer = value
@@ -381,10 +274,6 @@ class ControllerConfig private constructor(
 
         fun removeCalibration(signature: String): Builder = apply {
             mutableCalibrations.remove(signature)
-            val calibrationObject = originalJson?.get(KEY_CALIBRATIONS)
-                ?.takeIf(JsonElement::isJsonObject)
-                ?.asJsonObject
-            calibrationObject?.remove(signature)
             markModified()
         }
 
@@ -396,13 +285,10 @@ class ControllerConfig private constructor(
         fun build(): ControllerConfig {
             val keepOpaque = preserveUnsupportedPayload && !modified
             val candidate = ControllerConfig(
-                mode = mode,
-                preset = preset,
-                directionMode = directionMode,
+                enabled = enabled,
                 leftStick = leftStick,
                 rightStick = rightStick,
                 triggers = triggers,
-                bindings = mutableBindings,
                 pointer = pointer,
                 calibrations = mutableCalibrations,
                 schemaVersion = schemaVersion,
@@ -425,13 +311,10 @@ class ControllerConfig private constructor(
 
         fun validation(): ValidationResult {
             val candidate = ControllerConfig(
-                mode = mode,
-                preset = preset,
-                directionMode = directionMode,
+                enabled = enabled,
                 leftStick = leftStick,
                 rightStick = rightStick,
                 triggers = triggers,
-                bindings = mutableBindings,
                 pointer = pointer,
                 calibrations = mutableCalibrations,
                 schemaVersion = schemaVersion,
@@ -445,19 +328,13 @@ class ControllerConfig private constructor(
     }
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 1
+        const val CURRENT_SCHEMA_VERSION: Int = 2
 
         @JvmStatic
         fun builder(): Builder = Builder()
 
         @JvmStatic
         fun defaultNavigation(): ControllerConfig = defaultNavigation(shouldWrite = false)
-
-        @JvmStatic
-        fun defaultGame(): ControllerConfig = createDefault(Preset.GAME, shouldWrite = false)
-
-        @JvmStatic
-        fun defaultNumeric(): ControllerConfig = createDefault(Preset.NUMERIC, shouldWrite = false)
 
         @JvmStatic
         fun parse(json: JsonObject?): ControllerConfig {
@@ -499,92 +376,18 @@ class ControllerConfig private constructor(
             }
         }
 
-        /**
-         * Resolve the new controller config without importing Android's SparseIntArray into the
-         * pure model.  Legacy entries use stable control tokens and canonical guest-key tokens.
-         * When no controller subtree exists, a read-only resolution never requires a new write.
-         */
+        /** Resolve only the analog subtree; legacy digital mappings are intentionally ignored. */
         @JvmStatic
-        @JvmOverloads
-        fun resolve(
-            controllerJson: JsonObject?,
-            legacyMappings: Map<String, String>? = null,
-            options: ResolveOptions = ResolveOptions(),
-        ): ControllerConfig {
-            if (controllerJson != null) return parse(controllerJson)
-            val selectedPreset = options.explicitPreset ?: Preset.NAVIGATION
-            val selectedMode = options.explicitMode ?: ControllerMode.ENABLED
-            val effective = overlayLegacy(
-                base = defaultBindings(selectedPreset),
-                legacyMappings = legacyMappings,
-            )
-            return create(
-                mode = selectedMode,
-                preset = selectedPreset,
-                directionMode = DirectionMode.EIGHT,
-                leftStick = defaultLeftStick(),
-                rightStick = defaultRightStick(),
-                triggers = TriggerSettings(),
-                bindings = effective,
-                pointer = PointerSettings(),
-                calibrations = emptyMap(),
-                schemaVersion = CURRENT_SCHEMA_VERSION,
-                originalJson = null,
-                unsupportedReason = null,
-                shouldWriteController = options.explicitMode != null || options.explicitPreset != null,
-                resolutionSource = if (legacyMappings.isNullOrEmpty()) {
-                    ResolutionSource.DEFAULT
-                } else {
-                    ResolutionSource.LEGACY_MAP
-                },
-            )
-        }
-
-        /** Same resolver for callers that have already translated legacy values to bindings. */
-        @JvmStatic
-        fun resolveBindings(
-            controllerJson: JsonObject?,
-            legacyBindings: Map<String, Binding>?,
-            options: ResolveOptions = ResolveOptions(),
-        ): ControllerConfig {
-            if (controllerJson != null) return parse(controllerJson)
-            val selectedPreset = options.explicitPreset ?: Preset.NAVIGATION
-            val selectedMode = options.explicitMode ?: ControllerMode.ENABLED
-            val effective = LinkedHashMap(defaultBindings(selectedPreset))
-            legacyBindings.orEmpty().entries.sortedBy { it.key }.forEach { (control, binding) ->
-                effective[control] = binding
-            }
-            return create(
-                mode = selectedMode,
-                preset = selectedPreset,
-                directionMode = DirectionMode.EIGHT,
-                leftStick = defaultLeftStick(),
-                rightStick = defaultRightStick(),
-                triggers = TriggerSettings(),
-                bindings = effective,
-                pointer = PointerSettings(),
-                calibrations = emptyMap(),
-                schemaVersion = CURRENT_SCHEMA_VERSION,
-                originalJson = null,
-                unsupportedReason = null,
-                shouldWriteController = options.explicitMode != null || options.explicitPreset != null,
-                resolutionSource = if (legacyBindings.isNullOrEmpty()) {
-                    ResolutionSource.DEFAULT
-                } else {
-                    ResolutionSource.LEGACY_MAP
-                },
-            )
-        }
+        fun resolve(controllerJson: JsonObject?): ControllerConfig =
+            if (controllerJson == null) defaultNavigation() else parse(controllerJson)
 
         private fun parseSupported(json: JsonObject, original: JsonObject): ControllerConfig {
             val schemaVersion = readSchemaVersion(json)
             if (schemaVersion > CURRENT_SCHEMA_VERSION) {
                 throw ParseFailure("unsupported controller schemaVersion $schemaVersion")
             }
-
-            val mode = readEnum(json, KEY_MODE, ControllerMode.ENABLED.token, ControllerMode::fromToken)
-            val preset = readEnum(json, KEY_PRESET, Preset.NAVIGATION.token, Preset::fromToken)
-            val directionMode = readEnum(
+            val enabled = readEnabled(json)
+            val rootDirectionMode = readEnum(
                 json,
                 KEY_DIRECTION_MODE,
                 DirectionMode.EIGHT.token,
@@ -599,13 +402,13 @@ class ControllerConfig private constructor(
             val left = parseStick(
                 stickObject?.get(STICK_LEFT),
                 defaultMode = StickMode.DIRECTIONS,
-                defaultDirectionMode = directionMode,
+                defaultDirectionMode = rootDirectionMode,
                 path = "sticks.left",
             )
             val right = parseStick(
                 stickObject?.get(STICK_RIGHT),
                 defaultMode = StickMode.UNASSIGNED,
-                defaultDirectionMode = directionMode,
+                defaultDirectionMode = rootDirectionMode,
                 path = "sticks.right",
             )
 
@@ -614,40 +417,27 @@ class ControllerConfig private constructor(
                 json.get(KEY_TRIGGER)?.isJsonObject == true -> json.getAsJsonObject(KEY_TRIGGER)
                 else -> null
             }
-            val press = readNumber(
-                json,
-                KEY_TRIGGER_PRESS,
-                triggerObject?.get(KEY_TRIGGER_PRESS),
-                TriggerSettings.DEFAULT_PRESS,
-            )
-            val release = readNumber(
-                json,
-                KEY_TRIGGER_RELEASE,
-                triggerObject?.get(KEY_TRIGGER_RELEASE),
-                TriggerSettings.DEFAULT_RELEASE,
-            )
-            val triggers = TriggerSettings(press, release)
-
-            val bindingsElement = json.get(KEY_BINDINGS)
-            if (bindingsElement != null && !bindingsElement.isJsonObject) {
-                throw ParseFailure("bindings must be a JSON object")
+            val press = if (triggerObject != null) {
+                readNumber(triggerObject, KEY_TRIGGER_PRESS, json.get(KEY_TRIGGER_PRESS), TriggerSettings.DEFAULT_PRESS)
+            } else {
+                readNumber(json, KEY_TRIGGER_PRESS, null, TriggerSettings.DEFAULT_PRESS)
             }
-            val overrides = parseBindings(bindingsElement?.asJsonObject)
-            val effectiveBindings = LinkedHashMap(defaultBindings(preset))
-            overrides.forEach { (control, binding) -> effectiveBindings[control] = binding }
+            val release = if (triggerObject != null) {
+                readNumber(triggerObject, KEY_TRIGGER_RELEASE, json.get(KEY_TRIGGER_RELEASE), TriggerSettings.DEFAULT_RELEASE)
+            } else {
+                readNumber(json, KEY_TRIGGER_RELEASE, null, TriggerSettings.DEFAULT_RELEASE)
+            }
+            val triggerEnabled = triggerObject?.let {
+                readBoolean(it, KEY_TRIGGER_ENABLED, false)
+            } ?: readBoolean(json, KEY_TRIGGER_ENABLED, false)
 
-            val pointer = parsePointer(json.get(KEY_POINTER))
-            val calibrations = parseCalibrations(json.get(KEY_CALIBRATIONS))
             val config = create(
-                mode = mode,
-                preset = preset,
-                directionMode = directionMode,
+                enabled = enabled,
                 leftStick = left,
                 rightStick = right,
-                triggers = triggers,
-                bindings = effectiveBindings,
-                pointer = pointer,
-                calibrations = calibrations,
+                triggers = TriggerSettings(press, release, triggerEnabled),
+                pointer = parsePointer(json.get(KEY_POINTER)),
+                calibrations = parseCalibrations(json.get(KEY_CALIBRATIONS)),
                 schemaVersion = schemaVersion,
                 originalJson = original,
                 unsupportedReason = null,
@@ -659,6 +449,24 @@ class ControllerConfig private constructor(
                 throw ParseFailure(validation.messages().joinToString("; "))
             }
             return config
+        }
+
+        private fun readEnabled(json: JsonObject): Boolean {
+            json.get(KEY_ENABLED)?.let {
+                val primitive = it.asPrimitiveOrNull()
+                if (primitive == null || !primitive.isBoolean) {
+                    throw ParseFailure("enabled must be a boolean")
+                }
+                return primitive.asBoolean
+            }
+            // The old experimental mode is accepted as a one-time read compatibility aid, but
+            // it is never emitted and it never reintroduces the removed digital mapping table.
+            val mode = readString(json, KEY_MODE, required = false, path = KEY_MODE) ?: return true
+            return when (normalize(mode)) {
+                "ENABLED" -> true
+                "LEGACY" -> false
+                else -> throw ParseFailure("mode has unknown token '$mode'")
+            }
         }
 
         private fun parseStick(
@@ -718,12 +526,18 @@ class ControllerConfig private constructor(
                 StickId.RIGHT.token,
                 StickId::fromToken,
             )
-            val clickElement = json.get(KEY_CLICK_BINDING)
-            val clickBinding = if (clickElement == null) Binding.none() else parseBinding(clickElement, "pointer.clickBinding")
+            val clickAction = readPointerAction(json)
+            val joystickMode = readEnum(
+                json,
+                KEY_JOYSTICK_MODE,
+                VirtualAnalogStickMode.FIXED.token,
+                VirtualAnalogStickMode::fromToken,
+            )
             val pointer = PointerSettings(
                 mode = mode,
                 sourceStick = sourceStick,
-                clickBinding = clickBinding,
+                clickAction = clickAction,
+                joystickMode = joystickMode,
                 speed = readNumber(json, KEY_POINTER_SPEED, null, PointerSettings.DEFAULT_SPEED),
                 centerX = readNumber(json, KEY_CENTER_X, null, PointerSettings.DEFAULT_CENTER),
                 centerY = readNumber(json, KEY_CENTER_Y, null, PointerSettings.DEFAULT_CENTER),
@@ -734,11 +548,27 @@ class ControllerConfig private constructor(
             return pointer
         }
 
-        /**
-         * Reads only validated calibration entries. A malformed optional calibration is ignored
-         * at runtime and remains in [originalJson], so changing an unrelated setting does not
-         * destroy data written by a newer build. Explicit reset is the only path that removes it.
-         */
+        private fun readPointerAction(json: JsonObject): PointerAction? {
+            val direct = json.get(KEY_CLICK_ACTION)
+            if (direct != null) {
+                val token = readString(json, KEY_CLICK_ACTION, required = true, path = KEY_CLICK_ACTION)
+                    ?: return null
+                return PointerAction.fromToken(token)
+                    ?: throw ParseFailure("$KEY_CLICK_ACTION has unknown token '$token'")
+            }
+            // Read the former pointer-only wrapper so a pre-refactor cursor click survives one
+            // edit. Guest and host binding kinds are intentionally ignored, never imported.
+            val legacy = json.get(KEY_CLICK_BINDING)
+            if (legacy == null || !legacy.isJsonObject) return null
+            val legacyObject = legacy.asJsonObject
+            val kind = readString(legacyObject, KEY_BINDING_KIND, required = false, path = "clickBinding.kind")
+                ?: return null
+            if (normalize(kind) !in setOf("POINTERINTERACTION", "POINTER")) return null
+            val action = readString(legacyObject, KEY_BINDING_ACTION, required = false, path = "clickBinding.action")
+                ?: return null
+            return PointerAction.fromToken(action)
+        }
+
         private fun parseCalibrations(element: JsonElement?): LinkedHashMap<String, GamepadCalibration> {
             if (element == null) return LinkedHashMap()
             if (!element.isJsonObject) throw ParseFailure("calibrations must be a JSON object")
@@ -750,8 +580,7 @@ class ControllerConfig private constructor(
                 )
                 val channelObject = entry.value.asJsonObject
                 CalibrationChannel.entries.forEach { channel ->
-                    val channelElement = channelObject.get(calibrationToken(channel))
-                    val parsed = parseCalibrationChannel(channelElement, channel)
+                    val parsed = parseCalibrationChannel(channelObject.get(calibrationToken(channel)), channel)
                     if (parsed != null) channels[channel] = parsed
                 }
                 if (channels.isNotEmpty()) result[entry.key] = GamepadCalibration(channels)
@@ -773,11 +602,9 @@ class ControllerConfig private constructor(
                 val samples = optionalCalibrationNumber(json, "samples", 1.0)
                 val interior = readBoolean(json, "restMustBeInterior", channel.isStick)
                 val range = StickProcessor.MotionRangeLike(min.toFloat(), max.toFloat())
-                val validRest = rest >= min && rest <= max &&
-                    (!interior || (rest > min && rest < max))
-                if (!range.isValid || !rest.isFinite() || !spread.isFinite() ||
-                    spread < 0.0 || samples < 1.0 || samples != samples.toInt().toDouble() ||
-                    !validRest
+                val validRest = rest >= min && rest <= max && (!interior || (rest > min && rest < max))
+                if (!range.isValid || !rest.isFinite() || !spread.isFinite() || spread < 0.0 ||
+                    samples < 1.0 || samples != samples.toInt().toDouble() || !validRest
                 ) {
                     null
                 } else {
@@ -803,11 +630,7 @@ class ControllerConfig private constructor(
             return value.asDouble
         }
 
-        private fun optionalCalibrationNumber(
-            json: JsonObject,
-            key: String,
-            fallback: Double,
-        ): Double {
+        private fun optionalCalibrationNumber(json: JsonObject, key: String, fallback: Double): Double {
             val value = json.get(key) ?: return fallback
             val primitive = value.asPrimitiveOrNull()
                 ?: throw ParseFailure("calibration.$key must be a finite number")
@@ -815,51 +638,6 @@ class ControllerConfig private constructor(
                 throw ParseFailure("calibration.$key must be a finite number")
             }
             return primitive.asDouble
-        }
-
-        private fun parseBindings(json: JsonObject?): LinkedHashMap<String, Binding> {
-            val bindings = LinkedHashMap<String, Binding>()
-            if (json == null) return bindings
-            json.entrySet().toList().sortedBy { it.key }.forEach { entry ->
-                if (entry.key.trim().isEmpty()) throw ParseFailure("bindings contains a blank control token")
-                bindings[entry.key] = parseBinding(entry.value, "bindings.${entry.key}")
-            }
-            return bindings
-        }
-
-        private fun parseBinding(element: JsonElement, path: String): Binding {
-            if (!element.isJsonObject) throw ParseFailure("$path must be a binding object")
-            val json = element.asJsonObject
-            val kindToken = readString(json, KEY_BINDING_KIND, required = true, path = "$path.kind")
-                ?: throw ParseFailure("$path is missing binding kind")
-            val kind = BindingKind.fromToken(kindToken)
-                ?: throw ParseFailure("$path has unknown binding kind '$kindToken'")
-            return when (kind) {
-                BindingKind.NONE -> Binding.none()
-                BindingKind.GUEST_KEY -> {
-                    val keyToken = readString(json, KEY_BINDING_KEY, required = true, path = "$path.key")
-                        ?: throw ParseFailure("$path is missing guest key")
-                    try {
-                        Binding.guestKey(keyToken)
-                    } catch (_: IllegalArgumentException) {
-                        throw ParseFailure("$path has unknown guest key '$keyToken'")
-                    }
-                }
-                BindingKind.HOST_ACTION -> {
-                    val actionToken = readString(json, KEY_BINDING_ACTION, required = true, path = "$path.action")
-                        ?: throw ParseFailure("$path is missing host action")
-                    val action = HostAction.fromToken(actionToken)
-                        ?: throw ParseFailure("$path has unknown host action '$actionToken'")
-                    Binding.hostAction(action)
-                }
-                BindingKind.POINTER_ACTION -> {
-                    val actionToken = readString(json, KEY_BINDING_ACTION, required = true, path = "$path.action")
-                        ?: throw ParseFailure("$path is missing pointer action")
-                    val action = PointerAction.fromToken(actionToken)
-                        ?: throw ParseFailure("$path has unknown pointer action '$actionToken'")
-                    Binding.pointerAction(action)
-                }
-            }
         }
 
         private fun readSchemaVersion(json: JsonObject): Int {
@@ -933,40 +711,26 @@ class ControllerConfig private constructor(
             return primitive.asBoolean
         }
 
-        private fun unsupported(
-            original: JsonObject,
-            reason: String,
-            schemaVersion: Int,
-        ): ControllerConfig {
-            val clearReason =
-                "Controller configuration is unsupported ($reason). Runtime falls back to Legacy; " +
-                    "reset the controller mapping to enable it."
-            return create(
-                mode = ControllerMode.LEGACY,
-                preset = Preset.NAVIGATION,
-                directionMode = DirectionMode.EIGHT,
-                leftStick = defaultLeftStick(),
-                rightStick = defaultRightStick(),
-                triggers = TriggerSettings(),
-                bindings = defaultBindings(Preset.NAVIGATION),
-                pointer = PointerSettings(),
-                calibrations = emptyMap(),
-                schemaVersion = schemaVersion,
-                originalJson = original,
-                unsupportedReason = clearReason,
-                shouldWriteController = false,
-                resolutionSource = ResolutionSource.CONTROLLER,
-            )
-        }
-
-        private fun createDefault(preset: Preset, shouldWrite: Boolean): ControllerConfig = create(
-            mode = ControllerMode.ENABLED,
-            preset = preset,
-            directionMode = DirectionMode.EIGHT,
+        private fun unsupported(original: JsonObject, reason: String, schemaVersion: Int): ControllerConfig = create(
+            enabled = false,
             leftStick = defaultLeftStick(),
             rightStick = defaultRightStick(),
             triggers = TriggerSettings(),
-            bindings = defaultBindings(preset),
+            pointer = PointerSettings(),
+            calibrations = emptyMap(),
+            schemaVersion = schemaVersion,
+            originalJson = original,
+            unsupportedReason =
+                "Controller configuration is unsupported ($reason). Reset it to enable analog controls.",
+            shouldWriteController = false,
+            resolutionSource = ResolutionSource.CONTROLLER,
+        )
+
+        private fun defaultNavigation(shouldWrite: Boolean): ControllerConfig = create(
+            enabled = true,
+            leftStick = defaultLeftStick(),
+            rightStick = defaultRightStick(),
+            triggers = TriggerSettings(),
             pointer = PointerSettings(),
             calibrations = emptyMap(),
             schemaVersion = CURRENT_SCHEMA_VERSION,
@@ -976,17 +740,11 @@ class ControllerConfig private constructor(
             resolutionSource = ResolutionSource.DEFAULT,
         )
 
-        private fun defaultNavigation(shouldWrite: Boolean): ControllerConfig =
-            createDefault(Preset.NAVIGATION, shouldWrite)
-
         private fun create(
-            mode: ControllerMode,
-            preset: Preset,
-            directionMode: DirectionMode,
+            enabled: Boolean,
             leftStick: StickSettings,
             rightStick: StickSettings,
             triggers: TriggerSettings,
-            bindings: Map<String, Binding>,
             pointer: PointerSettings,
             calibrations: Map<String, GamepadCalibration>,
             schemaVersion: Int,
@@ -995,13 +753,10 @@ class ControllerConfig private constructor(
             shouldWriteController: Boolean,
             resolutionSource: ResolutionSource,
         ): ControllerConfig = ControllerConfig(
-            mode = mode,
-            preset = preset,
-            directionMode = directionMode,
+            enabled = enabled,
             leftStick = leftStick,
             rightStick = rightStick,
             triggers = triggers,
-            bindings = bindings,
             pointer = pointer,
             calibrations = calibrations,
             schemaVersion = schemaVersion,
@@ -1010,37 +765,6 @@ class ControllerConfig private constructor(
             shouldWriteController = shouldWriteController,
             resolutionSource = resolutionSource,
         )
-
-        private fun overlayLegacy(
-            base: Map<String, Binding>,
-            legacyMappings: Map<String, String>?,
-        ): LinkedHashMap<String, Binding> {
-            val result = LinkedHashMap(base)
-            legacyMappings.orEmpty().entries.sortedBy { it.key }.forEach { (control, keyToken) ->
-                val binding = legacyBinding(keyToken) ?: return@forEach
-                result[control] = binding
-            }
-            return result
-        }
-
-        private fun legacyBinding(token: String): Binding? {
-            val normalized = normalize(token)
-            if (normalized == "NONE") return Binding.none()
-            if (normalized == "KEY_OPTIONS_MENU" || normalized == "LEGACY_MENU") {
-                return Binding.hostAction(HostAction.OPEN_MENU)
-            }
-            val canonical = when {
-                token.trim().matches(Regex("[0-9]")) -> "NUM${token.trim()}"
-                token.trim() == "*" -> GuestKey.STAR.token
-                token.trim() == "#" -> GuestKey.POUND.token
-                else -> token
-            }
-            return try {
-                Binding.guestKey(canonical)
-            } catch (_: IllegalArgumentException) {
-                null
-            }
-        }
 
         private fun defaultLeftStick(): StickSettings = StickSettings(
             mode = StickMode.DIRECTIONS,
@@ -1052,27 +776,8 @@ class ControllerConfig private constructor(
             directionMode = DirectionMode.EIGHT,
         )
 
-        private fun defaultBindings(preset: Preset): LinkedHashMap<String, Binding> {
-            val numeric = preset == Preset.NUMERIC
-            return linkedMapOf(
-                CONTROL_DPAD_UP to Binding.guestKey(if (numeric) GuestKey.NUM2 else GuestKey.UP),
-                CONTROL_DPAD_DOWN to Binding.guestKey(if (numeric) GuestKey.NUM8 else GuestKey.DOWN),
-                CONTROL_DPAD_LEFT to Binding.guestKey(if (numeric) GuestKey.NUM4 else GuestKey.LEFT),
-                CONTROL_DPAD_RIGHT to Binding.guestKey(if (numeric) GuestKey.NUM6 else GuestKey.RIGHT),
-                CONTROL_BUTTON_A to Binding.guestKey(if (numeric) GuestKey.NUM5 else GuestKey.FIRE),
-                CONTROL_BUTTON_B to Binding.guestKey(GuestKey.NUM0),
-                CONTROL_BUTTON_X to Binding.guestKey(GuestKey.NUM1),
-                CONTROL_BUTTON_Y to Binding.guestKey(GuestKey.NUM3),
-                CONTROL_BUTTON_L1 to Binding.guestKey(GuestKey.SOFT_LEFT),
-                CONTROL_BUTTON_R1 to Binding.guestKey(GuestKey.SOFT_RIGHT),
-                CONTROL_BUTTON_L2 to Binding.guestKey(GuestKey.STAR),
-                CONTROL_BUTTON_R2 to Binding.guestKey(GuestKey.POUND),
-                CONTROL_BUTTON_START to Binding.hostAction(HostAction.OPEN_MENU),
-                CONTROL_BUTTON_SELECT to Binding.hostAction(HostAction.OPEN_MAPPING_HELP),
-            )
-        }
-
         private const val KEY_SCHEMA_VERSION = "schemaVersion"
+        private const val KEY_ENABLED = "enabled"
         private const val KEY_MODE = "mode"
         private const val KEY_PRESET = "preset"
         private const val KEY_DIRECTION_MODE = "directionMode"
@@ -1080,8 +785,9 @@ class ControllerConfig private constructor(
         private const val KEY_BINDINGS = "bindings"
         private const val KEY_TRIGGERS = "triggers"
         private const val KEY_TRIGGER = "trigger"
-        private const val KEY_TRIGGER_PRESS = "triggerPressThreshold"
-        private const val KEY_TRIGGER_RELEASE = "triggerReleaseThreshold"
+        private const val KEY_TRIGGER_PRESS = "pressThreshold"
+        private const val KEY_TRIGGER_RELEASE = "releaseThreshold"
+        private const val KEY_TRIGGER_ENABLED = "enabled"
         private const val KEY_POINTER = "pointer"
         private const val KEY_CALIBRATIONS = "calibrations"
         private const val KEY_STICK_MODE = "mode"
@@ -1096,61 +802,17 @@ class ControllerConfig private constructor(
         private const val KEY_SWAP_AXES = "swapAxes"
         private const val KEY_POINTER_MODE = "mode"
         private const val KEY_POINTER_STICK = "stick"
+        private const val KEY_CLICK_ACTION = "clickAction"
+        private const val KEY_JOYSTICK_MODE = "joystickMode"
         private const val KEY_CLICK_BINDING = "clickBinding"
+        private const val KEY_BINDING_KIND = "kind"
+        private const val KEY_BINDING_ACTION = "action"
         private const val KEY_POINTER_SPEED = "speed"
         private const val KEY_CENTER_X = "centerX"
         private const val KEY_CENTER_Y = "centerY"
         private const val KEY_RADIUS = "radius"
-        private const val KEY_BINDING_KIND = "kind"
-        private const val KEY_BINDING_KEY = "key"
-        private const val KEY_BINDING_ACTION = "action"
         private const val STICK_LEFT = "left"
         private const val STICK_RIGHT = "right"
-
-        private const val CONTROL_DPAD_UP = "dpad_up"
-        private const val CONTROL_DPAD_DOWN = "dpad_down"
-        private const val CONTROL_DPAD_LEFT = "dpad_left"
-        private const val CONTROL_DPAD_RIGHT = "dpad_right"
-        private const val CONTROL_BUTTON_A = "button_a"
-        private const val CONTROL_BUTTON_B = "button_b"
-        private const val CONTROL_BUTTON_X = "button_x"
-        private const val CONTROL_BUTTON_Y = "button_y"
-        private const val CONTROL_BUTTON_L1 = "button_l1"
-        private const val CONTROL_BUTTON_R1 = "button_r1"
-        private const val CONTROL_BUTTON_L2 = "button_l2"
-        private const val CONTROL_BUTTON_R2 = "button_r2"
-        private const val CONTROL_BUTTON_START = "button_start"
-        private const val CONTROL_BUTTON_SELECT = "button_select"
-    }
-}
-
-enum class ControllerMode(val token: String) {
-    ENABLED("enabled"),
-    LEGACY("legacy");
-
-    companion object {
-        fun fromToken(token: String): ControllerMode? = when (normalize(token)) {
-            "ENABLED" -> ENABLED
-            "LEGACY" -> LEGACY
-            else -> null
-        }
-    }
-}
-
-enum class Preset(val token: String) {
-    NAVIGATION("navigation"),
-    GAME("game"),
-    NUMERIC("numeric"),
-    CUSTOM("custom");
-
-    companion object {
-        fun fromToken(token: String): Preset? = when (normalize(token)) {
-            "NAVIGATION" -> NAVIGATION
-            "GAME" -> GAME
-            "NUMERIC", "KEYPAD", "NUMBER" -> NUMERIC
-            "CUSTOM", "MANUAL" -> CUSTOM
-            else -> null
-        }
     }
 }
 
@@ -1212,75 +874,6 @@ enum class PointerMode(val token: String) {
     }
 }
 
-enum class BindingKind(val token: String) {
-    GUEST_KEY("guestKey"),
-    HOST_ACTION("hostAction"),
-    POINTER_ACTION("pointerAction"),
-    NONE("none");
-
-    companion object {
-        fun fromToken(token: String): BindingKind? = when (normalize(token)) {
-            "GUESTKEY" -> GUEST_KEY
-            "HOSTACTION" -> HOST_ACTION
-            "POINTERACTION" -> POINTER_ACTION
-            "NONE" -> NONE
-            else -> null
-        }
-    }
-}
-
-enum class GuestKey(val token: String) {
-    NUM0("NUM0"),
-    NUM1("NUM1"),
-    NUM2("NUM2"),
-    NUM3("NUM3"),
-    NUM4("NUM4"),
-    NUM5("NUM5"),
-    NUM6("NUM6"),
-    NUM7("NUM7"),
-    NUM8("NUM8"),
-    NUM9("NUM9"),
-    STAR("STAR"),
-    POUND("POUND"),
-    UP("UP"),
-    DOWN("DOWN"),
-    LEFT("LEFT"),
-    RIGHT("RIGHT"),
-    FIRE("FIRE"),
-    SOFT_LEFT("SOFT_LEFT"),
-    SOFT_RIGHT("SOFT_RIGHT"),
-    CLEAR("CLEAR"),
-    SEND("SEND"),
-    END("END"),
-    GAME_A("GAME_A"),
-    GAME_B("GAME_B"),
-    GAME_C("GAME_C"),
-    GAME_D("GAME_D");
-
-    companion object {
-        fun fromToken(token: String): GuestKey? {
-            val normalized = normalize(token)
-            return entries.firstOrNull { normalize(it.token) == normalized }
-        }
-    }
-}
-
-enum class HostAction(val token: String) {
-    OPEN_MENU("OPEN_MENU"),
-    OPEN_MAPPING_HELP("OPEN_MAPPING_HELP"),
-    BACK("BACK"),
-    ACTIVATE("ACTIVATE"),
-    NEXT_TAB("NEXT_TAB"),
-    PREVIOUS_TAB("PREVIOUS_TAB"),
-    OPEN_KEYPAD("OPEN_KEYPAD");
-
-    companion object {
-        fun fromToken(token: String): HostAction? = entries.firstOrNull {
-            normalize(it.token) == normalize(token)
-        }
-    }
-}
-
 enum class PointerAction(val token: String) {
     CLICK("CLICK");
 
@@ -1288,54 +881,6 @@ enum class PointerAction(val token: String) {
         fun fromToken(token: String): PointerAction? = entries.firstOrNull {
             normalize(it.token) == normalize(token)
         }
-    }
-}
-
-/** A typed assignment.  The token is always canonical for the selected kind. */
-class Binding private constructor(
-    val kind: BindingKind,
-    val token: String?,
-) {
-    val guestKey: GuestKey?
-        get() = if (kind == BindingKind.GUEST_KEY) GuestKey.fromToken(token.orEmpty()) else null
-
-    val hostAction: HostAction?
-        get() = if (kind == BindingKind.HOST_ACTION) HostAction.fromToken(token.orEmpty()) else null
-
-    val pointerAction: PointerAction?
-        get() = if (kind == BindingKind.POINTER_ACTION) PointerAction.fromToken(token.orEmpty()) else null
-
-    companion object {
-        @JvmStatic
-        fun none(): Binding = Binding(BindingKind.NONE, null)
-
-        @JvmStatic
-        fun guestKey(key: GuestKey): Binding = Binding(BindingKind.GUEST_KEY, key.token)
-
-        @JvmStatic
-        fun guestKey(token: String): Binding {
-            val key = GuestKey.fromToken(token)
-                ?: throw IllegalArgumentException("unknown guest key '$token'")
-            return Binding(BindingKind.GUEST_KEY, key.token)
-        }
-
-        @JvmStatic
-        fun hostAction(action: HostAction): Binding = Binding(BindingKind.HOST_ACTION, action.token)
-
-        @JvmStatic
-        fun pointerAction(action: PointerAction): Binding =
-            Binding(BindingKind.POINTER_ACTION, action.token)
-    }
-
-    override fun equals(other: Any?): Boolean =
-        other is Binding && kind == other.kind && token == other.token
-
-    override fun hashCode(): Int = 31 * kind.hashCode() + (token?.hashCode() ?: 0)
-
-    override fun toString(): String = if (token == null) {
-        "Binding(${kind.token})"
-    } else {
-        "Binding(${kind.token}:$token)"
     }
 }
 
@@ -1391,16 +936,15 @@ data class StickSettings(
 data class TriggerSettings(
     val pressThreshold: Double = DEFAULT_PRESS,
     val releaseThreshold: Double = DEFAULT_RELEASE,
+    /** Trigger-to-digital adaptation is opt-in; standard MIDP has no analog trigger API. */
+    val enabled: Boolean = false,
 ) {
     internal fun validationIssues(path: String): List<ValidationIssue> {
         val issues = ArrayList<ValidationIssue>()
         if (!pressThreshold.isFinite() || pressThreshold > 1.0 || pressThreshold < 0.0) {
             issues.add(ValidationIssue("$path.pressThreshold", "must be finite and in [0, 1]"))
         }
-        if (!releaseThreshold.isFinite() ||
-            releaseThreshold < 0.0 ||
-            releaseThreshold >= pressThreshold
-        ) {
+        if (!releaseThreshold.isFinite() || releaseThreshold < 0.0 || releaseThreshold >= pressThreshold) {
             issues.add(ValidationIssue("$path.releaseThreshold", "must satisfy 0 <= releaseThreshold < pressThreshold"))
         }
         return issues
@@ -1415,7 +959,8 @@ data class TriggerSettings(
 data class PointerSettings(
     val mode: PointerMode = PointerMode.OFF,
     val sourceStick: StickId = StickId.RIGHT,
-    val clickBinding: Binding = Binding.none(),
+    val clickAction: PointerAction? = null,
+    val joystickMode: VirtualAnalogStickMode = VirtualAnalogStickMode.FIXED,
     val speed: Double = DEFAULT_SPEED,
     val centerX: Double = DEFAULT_CENTER,
     val centerY: Double = DEFAULT_CENTER,
@@ -1435,9 +980,6 @@ data class PointerSettings(
         if (!radius.isFinite() || radius <= 0.0 || radius > 1.0) {
             issues.add(ValidationIssue("$path.radius", "must be finite and in (0, 1]"))
         }
-        if (clickBinding.kind != BindingKind.NONE && clickBinding.kind != BindingKind.POINTER_ACTION) {
-            issues.add(ValidationIssue("$path.clickBinding", "must be none or a pointerAction binding"))
-        }
         return issues
     }
 
@@ -1451,8 +993,7 @@ data class PointerSettings(
 data class ValidationIssue(val path: String, val message: String)
 
 class ValidationResult internal constructor(issues: List<ValidationIssue>) {
-    val issues: List<ValidationIssue> =
-        Collections.unmodifiableList(ArrayList(issues))
+    val issues: List<ValidationIssue> = Collections.unmodifiableList(ArrayList(issues))
     val isValid: Boolean
         get() = issues.isEmpty()
 
@@ -1463,14 +1004,8 @@ class ValidationResult internal constructor(issues: List<ValidationIssue>) {
     }
 }
 
-data class ResolveOptions(
-    val explicitMode: ControllerMode? = null,
-    val explicitPreset: Preset? = null,
-)
-
 enum class ResolutionSource {
     DEFAULT,
-    LEGACY_MAP,
     CONTROLLER,
     EXPLICIT,
 }
@@ -1483,9 +1018,6 @@ private fun normalize(value: String): String = value
     .replace("_", "")
     .replace(" ", "")
     .uppercase(Locale.US)
-
-private fun immutableBindings(values: Map<String, Binding>): Map<String, Binding> =
-    Collections.unmodifiableMap(LinkedHashMap(values))
 
 private fun immutableCalibrations(
     values: Map<String, GamepadCalibration>,
@@ -1525,36 +1057,14 @@ private fun writeStick(parent: JsonObject, key: String, settings: StickSettings)
 private fun writePointer(parent: JsonObject, pointer: PointerSettings) {
     parent.addProperty("mode", pointer.mode.token)
     parent.addProperty("stick", pointer.sourceStick.token)
-    val existing = parent.get("clickBinding")
-    parent.add("clickBinding", mergeBinding(existing, pointer.clickBinding))
+    if (pointer.clickAction == null) parent.remove("clickAction")
+    else parent.addProperty("clickAction", pointer.clickAction.token)
+    parent.addProperty("joystickMode", pointer.joystickMode.token)
+    parent.remove("clickBinding")
     parent.addProperty("speed", pointer.speed)
     parent.addProperty("centerX", pointer.centerX)
     parent.addProperty("centerY", pointer.centerY)
     parent.addProperty("radius", pointer.radius)
-}
-
-private fun mergeBinding(existing: JsonElement?, binding: Binding): JsonObject {
-    val result = if (existing != null && existing.isJsonObject) {
-        existing.asJsonObject.deepCopy()
-    } else {
-        JsonObject()
-    }
-    result.addProperty("kind", binding.kind.token)
-    when (binding.kind) {
-        BindingKind.NONE -> {
-            result.remove("key")
-            result.remove("action")
-        }
-        BindingKind.GUEST_KEY -> {
-            result.addProperty("key", binding.token)
-            result.remove("action")
-        }
-        BindingKind.HOST_ACTION, BindingKind.POINTER_ACTION -> {
-            result.addProperty("action", binding.token)
-            result.remove("key")
-        }
-    }
-    return result
 }
 
 private fun calibrationToken(channel: CalibrationChannel): String = when (channel) {
@@ -1570,14 +1080,9 @@ private fun mergeCalibration(
     existing: JsonElement?,
     calibration: GamepadCalibration,
 ): JsonObject {
-    val result = if (existing != null && existing.isJsonObject) {
-        existing.asJsonObject.deepCopy()
-    } else {
-        JsonObject()
-    }
+    val result = if (existing != null && existing.isJsonObject) existing.asJsonObject.deepCopy() else JsonObject()
     calibration.immutableChannels.forEach { (channel, value) ->
-        val key = calibrationToken(channel)
-        result.add(key, mergeCalibrationChannel(result.get(key), value))
+        result.add(calibrationToken(channel), mergeCalibrationChannel(result.get(calibrationToken(channel)), value))
     }
     return result
 }
@@ -1586,11 +1091,7 @@ private fun mergeCalibrationChannel(
     existing: JsonElement?,
     calibration: StickProcessor.ValidatedCalibration,
 ): JsonObject {
-    val result = if (existing != null && existing.isJsonObject) {
-        existing.asJsonObject.deepCopy()
-    } else {
-        JsonObject()
-    }
+    val result = if (existing != null && existing.isJsonObject) existing.asJsonObject.deepCopy() else JsonObject()
     result.addProperty("min", calibration.range.min)
     result.addProperty("max", calibration.range.max)
     result.addProperty("rest", calibration.rest)

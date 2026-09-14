@@ -76,25 +76,21 @@ import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.ui.ThemedToast;
 import ru.woesss.util.TextUtils;
 import io.github.h3nb.jlmodplus.jar.Descriptor;
-import io.github.h3nb.jlmodplus.input.Binding;
-import io.github.h3nb.jlmodplus.input.CaptureCancelReason;
-import io.github.h3nb.jlmodplus.input.CaptureCandidateKind;
-import io.github.h3nb.jlmodplus.input.CaptureSource;
-import io.github.h3nb.jlmodplus.input.ControllerCaptureSession;
 import io.github.h3nb.jlmodplus.input.ControllerConfig;
 import io.github.h3nb.jlmodplus.input.ControllerHostSink;
 import io.github.h3nb.jlmodplus.input.ControllerHostTarget;
 import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
-import io.github.h3nb.jlmodplus.input.CaptureOpening;
-import io.github.h3nb.jlmodplus.input.CaptureStep;
 import io.github.h3nb.jlmodplus.input.CalibrationChannel;
 import io.github.h3nb.jlmodplus.input.CalibrationEvent;
 import io.github.h3nb.jlmodplus.input.CalibrationPhase;
 import io.github.h3nb.jlmodplus.input.CalibrationStep;
 import io.github.h3nb.jlmodplus.input.GamepadCalibration;
 import io.github.h3nb.jlmodplus.input.GamepadCalibrationSession;
-import io.github.h3nb.jlmodplus.input.HostAction;
+import io.github.h3nb.jlmodplus.input.HostCommand;
+import io.github.h3nb.jlmodplus.input.PointerMode;
+import io.github.h3nb.jlmodplus.input.ResolutionSource;
 import io.github.h3nb.jlmodplus.input.StickProcessor;
+import io.github.h3nb.jlmodplus.input.StickMode;
 import static io.github.h3nb.jlmodplus.config.ConfigFormEvents.ColorField;
 
 public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert.Callback {
@@ -150,21 +146,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private int profileCacheGeneration;
 	private final ExecutorService profileMetadataExecutor = Executors.newSingleThreadExecutor();
 	@Nullable private String profileOrigin;
-	@Nullable private ControllerCaptureSession gamepadCapture;
-	@Nullable private String gamepadCaptureTarget;
-	private long gamepadCaptureSession;
-	private static final class ControllerOpeningSeed {
-		final int deviceId;
-		final int keyCode;
-		final String token;
-
-		ControllerOpeningSeed(int deviceId, int keyCode, @NonNull String token) {
-			this.deviceId = deviceId;
-			this.keyCode = keyCode;
-			this.token = token;
-		}
-	}
-	@Nullable private ControllerOpeningSeed pendingControllerOpening;
 	@Nullable private GamepadCalibrationSession gamepadCalibration;
 	@Nullable private ControllerInputRouter controllerInputRouter;
 	private long controllerTargetGeneration = 1L;
@@ -174,20 +155,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private boolean gamepadCalibrationPending;
 	private Set<CalibrationChannel> gamepadCalibrationChannels = Collections.emptySet();
 	private Map<CalibrationChannel, Float> lastCalibrationValues = Collections.emptyMap();
-	private final Runnable gamepadCaptureTicker = new Runnable() {
-		@Override
-		public void run() {
-			ControllerCaptureSession capture = gamepadCapture;
-			if (capture == null || composeController == null) return;
-			CaptureStep step = capture.tick(SystemClock.elapsedRealtime());
-			if (step.getEvent() == io.github.h3nb.jlmodplus.input.CaptureEvent.TIMED_OUT) {
-				finishGamepadCapture(false);
-				return;
-			}
-			publishGamepadCapture(step);
-			getWindow().getDecorView().postDelayed(this, 250L);
-		}
-	};
 	private final Runnable gamepadCalibrationTicker = new Runnable() {
 		@Override
 		public void run() {
@@ -295,22 +262,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		@Override
 		public void onChooseKeyboardLayout() {
 			showKeyboardLayoutPicker();
-		}
-
-		@Override
-		public void onGamepadCapture(@NonNull String controlToken) {
-			startGamepadCapture(controlToken);
-		}
-
-		@Override
-		public void onGamepadCaptureCancel() {
-			cancelGamepadCapture();
-		}
-
-		@Override
-		public void onGamepadCaptureCommit(@NonNull String targetControl,
-				@NonNull String candidateControl) {
-			commitGamepadCapture(targetControl, candidateControl);
 		}
 
 		@Override
@@ -562,37 +513,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			}
 
 			@Override
-			public boolean onHostAction(@NonNull HostAction action, boolean pressed) {
-				switch (action) {
-					case OPEN_MENU:
-					case OPEN_MAPPING_HELP:
-						if (pressed && composeController != null) composeController.showGamepadHelp();
-						return true;
-					case BACK:
-						if (pressed) getOnBackPressedDispatcher().onBackPressed();
-						return true;
-					case ACTIVATE:
-						return dispatchControllerKey(javax.microedition.lcdui.Canvas.KEY_FIRE,
-								pressed, false);
-					case NEXT_TAB:
-						return dispatchControllerAndroidKey(KeyEvent.KEYCODE_TAB, pressed, false, false);
-					case PREVIOUS_TAB:
-						return dispatchControllerAndroidKey(KeyEvent.KEYCODE_TAB, pressed, false, true);
-					case OPEN_KEYPAD:
-						return true;
-					default:
-						return true;
+			public boolean onHostCommand(@NonNull HostCommand command, boolean pressed) {
+				if (composeController != null && composeController.isControllerModalActive()) {
+					return composeController.handleHostCommand(command, pressed);
 				}
-			}
-
-			@Override
-			public boolean dispatchGuestKey(int keyCode, boolean pressed) {
-				return dispatchControllerKey(keyCode, pressed, false);
-			}
-
-			@Override
-			public boolean dispatchGuestKeyRepeated(int keyCode) {
-				return dispatchControllerKey(keyCode, true, true);
+				if (command == HostCommand.Back) {
+					if (pressed) getOnBackPressedDispatcher().onBackPressed();
+					return true;
+				}
+				return composeController != null && composeController.handleHostCommand(command, pressed);
 			}
 
 			@Override
@@ -606,21 +535,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 			@Override
 			public void onControllerAvailabilityChanged(boolean available) {
-				if (!available) {
-					cancelGamepadCapture();
-					cancelGamepadCalibration();
-				}
+				if (!available) cancelGamepadCalibration();
 				if (composeController != null) composeController.update(createUiState());
 			}
 
 			@Override
 			public boolean isControllerModalActive() {
 				return composeController != null && composeController.isControllerModalActive();
-			}
-
-			@Override
-			public boolean onControllerModalInput(@NonNull String control, boolean pressed) {
-				return composeController != null && composeController.handleControllerInput(control, pressed);
 			}
 
 			@Override
@@ -632,234 +553,22 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
-		if (gamepadCapture != null && ControllerInputRouter.isControllerSource(event.getSource())) {
-			if (event.getAction() == KeyEvent.ACTION_UP && controllerInputRouter != null) {
-				controllerInputRouter.releaseCapturedKey(event);
-			}
-			return handleGamepadCaptureKey(event);
+		if (controllerInputRouter != null && controllerInputRouter.onKeyEvent(event)) {
+			return true;
 		}
-		if ((gamepadCalibration != null || gamepadCalibrationPending)
-				&& ControllerInputRouter.isControllerSource(event.getSource())) {
-			if (event.getAction() == KeyEvent.ACTION_UP && controllerInputRouter != null) {
-				controllerInputRouter.releaseCapturedKey(event);
-			}
-			return handleGamepadCalibrationKey(event);
-		}
-		boolean controllerEvent = ControllerInputRouter.isControllerSource(event.getSource());
-		if (controllerEvent && event.getAction() == KeyEvent.ACTION_DOWN
-				&& event.getRepeatCount() == 0) {
-			String token = ControllerInputRouter.controlTokenForKeyCode(event.getKeyCode());
-			if (token != null) {
-				pendingControllerOpening = new ControllerOpeningSeed(
-						event.getDeviceId(), event.getKeyCode(), token);
-			}
-		}
-		try {
-			if (controllerInputRouter != null && controllerInputRouter.onKeyEvent(event)) {
-				return true;
-			}
-			return super.dispatchKeyEvent(event);
-		} finally {
-			pendingControllerOpening = null;
-		}
+		return super.dispatchKeyEvent(event);
 	}
 
 	@Override
 	public boolean dispatchGenericMotionEvent(MotionEvent event) {
-		if (gamepadCapture != null && ControllerInputRouter.isControllerSource(event.getSource())) {
-			return handleGamepadCaptureMotion(event);
-		}
 		if ((gamepadCalibration != null || gamepadCalibrationPending)
-				&& ControllerInputRouter.isControllerSource(event.getSource())) {
+				&& ControllerInputRouter.isGamepadMotionEvent(event)) {
 			return handleGamepadCalibrationMotion(event);
 		}
 		if (controllerInputRouter != null && controllerInputRouter.onGenericMotionEvent(event)) {
 			return true;
 		}
 		return super.dispatchGenericMotionEvent(event);
-	}
-
-	private boolean dispatchControllerKey(int keyCode, boolean pressed, boolean repeated) {
-		return dispatchControllerAndroidKey(
-				ControllerInputRouter.androidKeyCodeForGuestKey(keyCode),
-				pressed, repeated, false);
-	}
-
-	private boolean dispatchControllerAndroidKey(
-				int keyCode, boolean pressed, boolean repeated, boolean shift) {
-		if (keyCode == KeyEvent.KEYCODE_UNKNOWN) return false;
-		long now = SystemClock.uptimeMillis();
-		int metaState = shift ? KeyEvent.META_SHIFT_ON : 0;
-		KeyEvent synthetic = new KeyEvent(
-				now, now, pressed ? KeyEvent.ACTION_DOWN : KeyEvent.ACTION_UP,
-				keyCode, repeated ? 1 : 0, metaState);
-		return super.dispatchKeyEvent(synthetic);
-	}
-
-	private void startGamepadCapture(@NonNull String targetControl) {
-		if (composeController == null) return;
-		cancelGamepadCapture();
-		gamepadCaptureTarget = targetControl;
-		gamepadCaptureSession = gamepadCaptureSession == Long.MAX_VALUE
-				? 1L : gamepadCaptureSession + 1L;
-		long now = SystemClock.elapsedRealtime();
-		ControllerOpeningSeed openingSeed = pendingControllerOpening;
-		pendingControllerOpening = null;
-		CaptureSource openingSource = openingSeed == null
-				? new CaptureSource("config-ui", gamepadCaptureSession, "opening")
-				: new CaptureSource("android:" + openingSeed.deviceId,
-						gamepadCaptureSession, "key:" + openingSeed.keyCode);
-		String openingToken = openingSeed == null ? "config-ui" : openingSeed.token;
-		ControllerCaptureSession capture = new ControllerCaptureSession(
-				new CaptureOpening(openingSource, openingToken), now, 10_000L, 0.50f);
-		// Touch/keyboard activation has no controller contact to release. A controller opener stays
-		// behind the explicit release barrier until its matching ACTION_UP reaches this modal.
-		CaptureStep step = openingSeed == null
-				? capture.onButton(openingSource, openingToken, false, now)
-				: capture.snapshot(io.github.h3nb.jlmodplus.input.CaptureEvent.NO_CHANGE);
-		gamepadCapture = capture;
-		publishGamepadCapture(step);
-		getWindow().getDecorView().postDelayed(gamepadCaptureTicker, 250L);
-	}
-
-	private boolean handleGamepadCaptureKey(@NonNull KeyEvent event) {
-		ControllerCaptureSession capture = gamepadCapture;
-		if (capture == null) return false;
-		if (event.getRepeatCount() != 0) return true;
-		String control = ControllerInputRouter.controlTokenForKeyCode(event.getKeyCode());
-		if (control == null) return true;
-		CaptureSource source = new CaptureSource(
-				"android:" + event.getDeviceId(), gamepadCaptureSession,
-				"key:" + event.getKeyCode());
-		boolean pressed = event.getAction() == KeyEvent.ACTION_DOWN;
-		CaptureStep step = capture.onButton(
-				source, control, pressed, SystemClock.elapsedRealtime());
-		if (step.getEvent() == io.github.h3nb.jlmodplus.input.CaptureEvent.CANDIDATE_FOUND) {
-			// The candidate is sampled while held.  Move it behind the release barrier before
-			// returning to the UI so the same physical press can never be committed accidentally.
-			step = capture.beginReview(SystemClock.elapsedRealtime());
-		}
-		publishGamepadCapture(step);
-		if (step.getEvent() == io.github.h3nb.jlmodplus.input.CaptureEvent.TIMED_OUT
-				|| step.getEvent() == io.github.h3nb.jlmodplus.input.CaptureEvent.CANCELLED) {
-			finishGamepadCapture(false);
-		}
-		return true;
-	}
-
-	private boolean handleGamepadCaptureMotion(@NonNull MotionEvent event) {
-		ControllerCaptureSession capture = gamepadCapture;
-		if (capture == null) return false;
-		if (event.getActionMasked() != MotionEvent.ACTION_MOVE
-				&& event.getActionMasked() != MotionEvent.ACTION_HOVER_MOVE) {
-			return true;
-		}
-		int[] axes = {
-				MotionEvent.AXIS_X, MotionEvent.AXIS_Y,
-				MotionEvent.AXIS_Z, MotionEvent.AXIS_RZ,
-				MotionEvent.AXIS_RX, MotionEvent.AXIS_RY,
-				MotionEvent.AXIS_HAT_X, MotionEvent.AXIS_HAT_Y,
-				MotionEvent.AXIS_LTRIGGER, MotionEvent.AXIS_RTRIGGER,
-				MotionEvent.AXIS_BRAKE, MotionEvent.AXIS_GAS,
-		};
-		CaptureStep last = capture.snapshot(
-				io.github.h3nb.jlmodplus.input.CaptureEvent.NO_CHANGE);
-		for (int axis : axes) {
-			float value = event.getAxisValue(axis);
-			CaptureSource source = new CaptureSource(
-					"android:" + event.getDeviceId(), gamepadCaptureSession,
-					"axis:" + axis);
-			last = capture.onAxis(source, "axis:" + axis, value, SystemClock.elapsedRealtime());
-			if (last.getEvent() == io.github.h3nb.jlmodplus.input.CaptureEvent.CANDIDATE_FOUND) {
-				last = capture.beginReview(SystemClock.elapsedRealtime());
-				break;
-			}
-			if (last.getEvent() == io.github.h3nb.jlmodplus.input.CaptureEvent.AMBIGUOUS
-					|| last.getEvent() == io.github.h3nb.jlmodplus.input.CaptureEvent.REVIEW_READY) {
-				break;
-			}
-		}
-		publishGamepadCapture(last);
-		if (last.getEvent() == io.github.h3nb.jlmodplus.input.CaptureEvent.TIMED_OUT
-				|| last.getEvent() == io.github.h3nb.jlmodplus.input.CaptureEvent.CANCELLED) {
-			finishGamepadCapture(false);
-		}
-		return true;
-	}
-
-	private void publishGamepadCapture(@NonNull CaptureStep step) {
-		if (composeController == null || gamepadCaptureTarget == null) return;
-		String message = captureMessage(step.getCancelReason());
-		composeController.updateGamepadCapture(new GamepadCaptureUiState(
-				gamepadCaptureTarget,
-				step.getPhase().name(),
-				step.getCandidate() == null ? null : step.getCandidate().getToken(),
-				step.getCandidate() == null ? null : step.getCandidate().getKind().name(),
-				message));
-	}
-
-	@Nullable
-	private String captureMessage(@Nullable CaptureCancelReason reason) {
-		if (reason == null || reason == CaptureCancelReason.USER) return null;
-		switch (reason) {
-			case RESERVED_START:
-				return getString(R.string.config_gamepad_capture_reserved_start);
-			case AMBIGUOUS:
-				return getString(R.string.config_gamepad_capture_ambiguous);
-			case TIMEOUT:
-				return getString(R.string.config_gamepad_capture_timeout);
-			default:
-				return null;
-		}
-	}
-
-	private void cancelGamepadCapture() {
-		ControllerCaptureSession capture = gamepadCapture;
-		if (capture != null) capture.cancel(
-				io.github.h3nb.jlmodplus.input.CaptureCancelReason.USER);
-		finishGamepadCapture(false);
-	}
-
-	private void finishGamepadCapture(boolean committed) {
-		getWindow().getDecorView().removeCallbacks(gamepadCaptureTicker);
-		gamepadCapture = null;
-		gamepadCaptureTarget = null;
-		if (composeController != null) composeController.dismissGamepadCapture();
-		if (!committed) {
-			// Cancellation is intentionally quiet so a user can close a capture without a stale
-			// toast obscuring the next settings action.
-		}
-	}
-
-	private void commitGamepadCapture(@NonNull String targetControl,
-			@NonNull String candidateControl) {
-		ControllerCaptureSession capture = gamepadCapture;
-		if (capture == null || capture.getPhase() != io.github.h3nb.jlmodplus.input.CapturePhase.REVIEW
-				|| !targetControl.equals(gamepadCaptureTarget)) {
-			return;
-		}
-		CaptureCandidateKind candidateKind = capture.getCandidate() == null
-				? null : capture.getCandidate().getKind();
-		if (candidateKind != CaptureCandidateKind.BUTTON) {
-			// Axis capture is useful for diagnosis, but this editor currently stores digital
-			// control bindings only.  Do not turn an axis capture into a silent no-op.
-			return;
-		}
-		ControllerConfig current = ControllerConfig.parse(
-				currentForm == null || currentForm.controller == null
-						? null
-						: currentForm.controller.getAsJsonObject());
-		Binding targetBinding = current.binding(targetControl);
-		if (targetBinding != null) {
-			// The model is intentionally physical-control -> action.  Capture therefore copies
-			// the target row's action onto the newly captured physical control, preserving
-			// many-to-one mappings and leaving the previous source usable until the user edits it.
-			updateForm(currentForm.toBuilder()
-					.controller(current.withBinding(candidateControl, targetBinding).toJson())
-					.build());
-			capture.commit();
-			finishGamepadCapture(true);
-		}
 	}
 
 	private void startGamepadCalibration() {
@@ -886,7 +595,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private InputDevice firstControllerDevice() {
 		for (int deviceId : InputDevice.getDeviceIds()) {
 			InputDevice device = InputDevice.getDevice(deviceId);
-			if (device != null && ControllerInputRouter.isControllerSource(device.getSources())) {
+			if (device != null && ControllerInputRouter.isGamepadDevice(device)) {
 				return device;
 			}
 		}
@@ -920,15 +629,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		getWindow().getDecorView().postDelayed(gamepadCalibrationTicker, 250L);
 		publishGamepadCalibration(null,
 				getString(R.string.config_gamepad_calibration_start));
-	}
-
-	private boolean handleGamepadCalibrationKey(@NonNull KeyEvent event) {
-		if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0
-				&& ControllerInputRouter.CONTROL_BUTTON_B.equals(
-						ControllerInputRouter.controlTokenForKeyCode(event.getKeyCode()))) {
-			cancelGamepadCalibration();
-		}
-		return true;
 	}
 
 	private boolean handleGamepadCalibrationMotion(@NonNull MotionEvent event) {
@@ -1053,7 +753,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			if (step != null && step.getValidation() != null
 					&& !step.getValidation().getAccepted()) {
 				text = getString(R.string.config_gamepad_calibration_rejected,
-						step.getValidation().getIssue().name());
+						localizedCalibrationIssue(step.getValidation().getIssue()));
 			} else {
 				text = calibrationInstructions(phase);
 			}
@@ -1097,25 +797,34 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		ControllerConfig controller = currentControllerConfig();
 		StringBuilder text = new StringBuilder();
 		text.append(getString(R.string.config_gamepad_diagnosis_header)).append('\n');
+		String enabled = controller.getEnabled()
+				? getString(R.string.config_gamepad_status_enabled)
+				: getString(R.string.config_gamepad_status_disabled);
 		text.append(getString(R.string.config_gamepad_diagnosis_mode,
-				controller.getMode(), controller.getPreset(), controller.getResolutionSource()))
+				enabled, localizedResolutionSource(controller.getResolutionSource())))
 				.append('\n');
 		if (controller.getNotice() != null) {
-			text.append(getString(R.string.config_gamepad_diagnosis_notice, controller.getNotice()))
+			text.append(getString(R.string.config_gamepad_diagnosis_notice,
+					getString(R.string.config_gamepad_unsupported_summary)))
 					.append('\n');
 		}
-		text.append(getString(R.string.config_gamepad_diagnosis_bindings)).append('\n');
-		for (Map.Entry<String, Binding> entry : controller.getBindings().entrySet()) {
-			text.append("  ").append(entry.getKey()).append(" -> ")
-					.append(entry.getValue()).append('\n');
-		}
+		text.append(getString(R.string.config_gamepad_diagnosis_analog_settings)).append('\n');
+		text.append("  ").append(getString(R.string.config_gamepad_diagnosis_left_stick))
+				.append(": ").append(localizedStickMode(controller.getLeftStick().getMode())).append('\n');
+		text.append("  ").append(getString(R.string.config_gamepad_diagnosis_right_stick))
+				.append(": ").append(localizedStickMode(controller.getRightStick().getMode())).append('\n');
+		text.append("  ").append(getString(R.string.config_gamepad_diagnosis_triggers))
+				.append(": ").append(localizedStatus(controller.getTriggers().getEnabled())).append('\n');
+		text.append("  ").append(getString(R.string.config_gamepad_diagnosis_pointer))
+				.append(": ").append(localizedPointerMode(controller.getPointer().getMode())).append('\n');
 		text.append(getString(R.string.config_gamepad_diagnosis_capabilities)).append('\n');
 		boolean found = false;
 		for (int deviceId : InputDevice.getDeviceIds()) {
 			InputDevice device = InputDevice.getDevice(deviceId);
-			if (device == null || !ControllerInputRouter.isControllerSource(device.getSources())) continue;
+			if (device == null || !ControllerInputRouter.isGamepadDevice(device)) continue;
 			found = true;
-			text.append("  ").append(device.getName()).append(" (#").append(deviceId).append(")\n");
+			text.append("  ").append(getString(R.string.config_gamepad_diagnosis_device,
+					device.getName(), deviceId)).append('\n');
 			text.append("    ").append(getString(R.string.config_gamepad_diagnosis_descriptor,
 					device.getDescriptor())).append('\n');
 			text.append("    ").append(getString(R.string.config_gamepad_diagnosis_signature,
@@ -1136,6 +845,73 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				R.string.config_gamepad_diagnosis_no_controller)).append('\n');
 		text.append(getString(R.string.config_gamepad_diagnosis_samples_not_sent));
 		return text.toString();
+	}
+
+	private String localizedStatus(boolean enabled) {
+		return getString(enabled ? R.string.config_gamepad_status_enabled
+				: R.string.config_gamepad_status_disabled);
+	}
+
+	@NonNull
+	private String localizedResolutionSource(@NonNull ResolutionSource source) {
+		switch (source) {
+			case CONTROLLER:
+				return getString(R.string.config_gamepad_diagnosis_source_controller);
+			case EXPLICIT:
+				return getString(R.string.config_gamepad_diagnosis_source_explicit);
+			case DEFAULT:
+			default:
+				return getString(R.string.config_gamepad_diagnosis_source_default);
+		}
+	}
+
+	@NonNull
+	private String localizedStickMode(@NonNull StickMode mode) {
+		switch (mode) {
+			case POINTER:
+				return getString(R.string.config_gamepad_stick_pointer);
+			case UNASSIGNED:
+				return getString(R.string.config_gamepad_stick_unassigned);
+			case DIRECTIONS:
+			default:
+				return getString(R.string.config_gamepad_stick_directions);
+		}
+	}
+
+	@NonNull
+	private String localizedPointerMode(@NonNull PointerMode mode) {
+		switch (mode) {
+			case CURSOR:
+				return getString(R.string.config_gamepad_pointer_cursor);
+			case TOUCH_JOYSTICK:
+				return getString(R.string.config_gamepad_pointer_joystick);
+			case OFF:
+			default:
+				return getString(R.string.config_gamepad_pointer_off);
+		}
+	}
+
+	@NonNull
+	private String localizedCalibrationIssue(@NonNull StickProcessor.CalibrationIssue issue) {
+		switch (issue) {
+			case NO_CHANNELS:
+				return getString(R.string.config_gamepad_calibration_issue_no_channels);
+			case INVALID_CONSTRAINTS:
+				return getString(R.string.config_gamepad_calibration_issue_invalid_constraints);
+			case NON_FINITE:
+				return getString(R.string.config_gamepad_calibration_issue_non_finite);
+			case INSUFFICIENT_SAMPLES:
+				return getString(R.string.config_gamepad_calibration_issue_insufficient_samples);
+			case INVALID_RANGE:
+				return getString(R.string.config_gamepad_calibration_issue_invalid_range);
+			case REST_OUTSIDE_RANGE:
+				return getString(R.string.config_gamepad_calibration_issue_rest_outside_range);
+			case REST_TOO_NOISY:
+				return getString(R.string.config_gamepad_calibration_issue_rest_too_noisy);
+			case NONE:
+			default:
+				return getString(R.string.config_gamepad_calibration_phase_unknown);
+		}
 	}
 
 	@NonNull
@@ -1487,8 +1263,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	@Override
 	public void onPause() {
-		pendingControllerOpening = null;
-		cancelGamepadCapture();
 		cancelGamepadCalibration();
 		if (controllerInputRouter != null) {
 			controllerInputRouter.clear();
@@ -1517,12 +1291,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	@Override
 	protected void onDestroy() {
-		pendingControllerOpening = null;
 		if (controllerInputRouter != null) {
 			controllerInputRouter.close();
 			controllerInputRouter = null;
 		}
-		getWindow().getDecorView().removeCallbacks(gamepadCaptureTicker);
 		getWindow().getDecorView().removeCallbacks(gamepadCalibrationTicker);
 		profileMetadataExecutor.shutdownNow();
 		if (isProfile && profileEditDraftDir != null && !isChangingConfigurations()) {
@@ -1540,7 +1312,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		if (!hasFocus && controllerInputRouter != null) {
-			pendingControllerOpening = null;
 			controllerInputRouter.clear();
 			controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
 					? 1L : controllerTargetGeneration + 1L;

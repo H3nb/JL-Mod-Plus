@@ -72,7 +72,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryAppBundleImporter;
 import io.github.h3nb.jlmodplus.input.ControllerHostSink;
 import io.github.h3nb.jlmodplus.input.ControllerHostTarget;
 import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
-import io.github.h3nb.jlmodplus.input.HostAction;
+import io.github.h3nb.jlmodplus.input.HostCommand;
 import javax.microedition.lcdui.Canvas;
 
 public class MainActivity extends AppCompatActivity {
@@ -199,50 +199,16 @@ public class MainActivity extends AppCompatActivity {
 			}
 
 			@Override
-			public boolean onHostAction(@NonNull HostAction action, boolean pressed) {
-				switch (action) {
-					case OPEN_MENU:
-						AppsListFragment apps = currentAppsListFragment();
-						if (apps != null && apps.onControllerMenu(pressed)) return true;
-						return true;
-					case OPEN_MAPPING_HELP:
-						return true;
-					case BACK:
-						AppsListFragment currentApps = currentAppsListFragment();
-						if (currentApps != null && currentApps.onControllerBack(pressed)) return true;
-						if (pressed) getOnBackPressedDispatcher().onBackPressed();
-						return true;
-					case ACTIVATE:
-						apps = currentAppsListFragment();
-						if (apps != null && apps.onControllerActivate(pressed)) return true;
-						return dispatchControllerKey(Canvas.KEY_FIRE, pressed, false);
-					case NEXT_TAB:
-						apps = currentAppsListFragment();
-						if (apps != null && apps.onControllerTab(true, pressed)) return true;
-						return dispatchControllerAndroidKey(KeyEvent.KEYCODE_TAB, pressed, false, false);
-					case PREVIOUS_TAB:
-						apps = currentAppsListFragment();
-						if (apps != null && apps.onControllerTab(false, pressed)) return true;
-						return dispatchControllerAndroidKey(KeyEvent.KEYCODE_TAB, pressed, false, true);
-					case OPEN_KEYPAD:
-						return true;
-					default:
-						return true;
+			public boolean onHostCommand(@NonNull HostCommand command, boolean pressed) {
+				AppsListFragment apps = currentAppsListFragment();
+				if (mainComposeController != null && mainComposeController.isDialogVisible()) {
+					return mainComposeController.handleHostCommand(command, pressed);
 				}
-			}
-
-			@Override
-			public boolean dispatchGuestKey(int keyCode, boolean pressed) {
-				AppsListFragment apps = currentAppsListFragment();
-				if (apps != null && apps.onControllerGuestKey(keyCode, pressed, false)) return true;
-				return dispatchControllerKey(keyCode, pressed, false);
-			}
-
-			@Override
-			public boolean dispatchGuestKeyRepeated(int keyCode) {
-				AppsListFragment apps = currentAppsListFragment();
-				if (apps != null && apps.onControllerGuestKey(keyCode, true, true)) return true;
-				return dispatchControllerKey(keyCode, true, true);
+				if (apps != null && apps.onHostCommand(command, pressed)) return true;
+				if (command == HostCommand.Back && pressed) {
+					getOnBackPressedDispatcher().onBackPressed();
+				}
+				return true;
 			}
 
 			@Override
@@ -258,12 +224,6 @@ public class MainActivity extends AppCompatActivity {
 			@Override
 			public boolean isControllerModalActive() {
 				return mainComposeController != null && mainComposeController.isDialogVisible();
-			}
-
-			@Override
-			public boolean onControllerModalInput(@NonNull String control, boolean pressed) {
-				return mainComposeController != null &&
-						mainComposeController.handleControllerInput(control, pressed);
 			}
 
 			@Override
@@ -659,33 +619,10 @@ public class MainActivity extends AppCompatActivity {
 		requestInstaller(intent.getData());
 	}
 
-	private boolean dispatchControllerKey(int keyCode, boolean pressed, boolean repeated) {
-		return dispatchControllerAndroidKey(
-				ControllerInputRouter.androidKeyCodeForGuestKey(keyCode),
-				pressed,
-				repeated,
-				false);
-	}
-
 	@Nullable
 	private AppsListFragment currentAppsListFragment() {
 		androidx.fragment.app.Fragment fragment =
 				getSupportFragmentManager().findFragmentById(R.id.container);
 		return fragment instanceof AppsListFragment ? (AppsListFragment) fragment : null;
-	}
-
-	private boolean dispatchControllerAndroidKey(
-				int keyCode, boolean pressed, boolean repeated, boolean shift) {
-		if (keyCode == KeyEvent.KEYCODE_UNKNOWN) return false;
-		long now = SystemClock.uptimeMillis();
-		int metaState = shift ? KeyEvent.META_SHIFT_ON : 0;
-		KeyEvent synthetic = new KeyEvent(
-				now,
-				now,
-				pressed ? KeyEvent.ACTION_DOWN : KeyEvent.ACTION_UP,
-				keyCode,
-				repeated ? 1 : 0,
-				metaState);
-		return super.dispatchKeyEvent(synthetic);
 	}
 }

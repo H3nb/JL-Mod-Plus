@@ -223,6 +223,22 @@ public class KeyMapper {
 		map.append(KeyEvent.KEYCODE_DPAD_DOWN, KEY_DOWN);
 		map.append(KeyEvent.KEYCODE_DPAD_LEFT, KEY_LEFT);
 		map.append(KeyEvent.KEYCODE_DPAD_RIGHT, KEY_RIGHT);
+		// Common controller buttons use the same authoritative guest mapping as
+		// keyboard and keypad inputs. START/SELECT intentionally remain host
+		// shortcuts and are not assigned to a MIDP key here.
+		map.append(KeyEvent.KEYCODE_DPAD_CENTER, KEY_FIRE);
+		map.append(KeyEvent.KEYCODE_BUTTON_A, KEY_FIRE);
+		map.append(KeyEvent.KEYCODE_BUTTON_1, KEY_FIRE);
+		map.append(KeyEvent.KEYCODE_BUTTON_B, KEY_NUM0);
+		map.append(KeyEvent.KEYCODE_BUTTON_2, KEY_NUM0);
+		map.append(KeyEvent.KEYCODE_BUTTON_X, KEY_NUM1);
+		map.append(KeyEvent.KEYCODE_BUTTON_3, KEY_NUM1);
+		map.append(KeyEvent.KEYCODE_BUTTON_Y, KEY_NUM3);
+		map.append(KeyEvent.KEYCODE_BUTTON_4, KEY_NUM3);
+		map.append(KeyEvent.KEYCODE_BUTTON_L1, KEY_SOFT_LEFT);
+		map.append(KeyEvent.KEYCODE_BUTTON_5, KEY_SOFT_LEFT);
+		map.append(KeyEvent.KEYCODE_BUTTON_R1, KEY_SOFT_RIGHT);
+		map.append(KeyEvent.KEYCODE_BUTTON_6, KEY_SOFT_RIGHT);
 		map.append(KeyEvent.KEYCODE_ENTER, KEY_FIRE);
 		map.append(KeyEvent.KEYCODE_DEL, KEY_CLEAR);
 		return map;

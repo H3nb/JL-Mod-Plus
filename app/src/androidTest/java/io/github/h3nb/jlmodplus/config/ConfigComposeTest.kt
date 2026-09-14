@@ -116,11 +116,11 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Enable Controller Mapping").assertIsNotEnabled()
+        composeRule.onNodeWithText("Enable Analog Controls").assertIsNotEnabled()
         composeRule.onNodeWithText(
-            "No compatible gamepad is connected. Gamepad mapping stays inactive until one is detected.",
+            "No compatible gamepad is connected. Gamepad controls stay inactive until one is detected.",
         ).assertExists()
-        composeRule.onNodeWithText("Reset Gamepad Mapping")
+        composeRule.onNodeWithText("Reset Analog Controls")
             .performScrollTo()
             .assertExists()
     }

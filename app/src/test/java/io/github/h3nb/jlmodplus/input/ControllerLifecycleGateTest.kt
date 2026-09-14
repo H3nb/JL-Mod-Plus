@@ -36,19 +36,18 @@ class ControllerLifecycleGateTest {
     }
 
     @Test
-    fun staleUpCannotOpenDigitalNeutralGate() {
+    fun digitalButtonsAreNotSacrificedToTheAnalogNeutralGate() {
         val gate = ControllerLifecycleGate()
-        gate.offerDigital(7, keyCode = 10, down = true)
 
         assertEquals(
-            ControllerLifecycleDecision.CONSUMED,
-            gate.offerDigital(7, keyCode = 11, down = false),
+            ControllerLifecycleDecision.ACTIVE,
+            gate.offerDigital(7, keyCode = 10, down = true),
         )
-        assertEquals(ControllerLifecycleState.WAIT_NEUTRAL, gate.snapshot().state)
         assertEquals(
-            ControllerLifecycleDecision.ACTIVATED,
+            ControllerLifecycleDecision.ACTIVE,
             gate.offerDigital(7, keyCode = 10, down = false),
         )
+        assertEquals(ControllerLifecycleState.INACTIVE, gate.snapshot().state)
         assertTrue(gate.snapshot().waitingDigitalKeys.isEmpty())
     }
 
@@ -83,24 +82,16 @@ class ControllerLifecycleGateTest {
     }
 
     @Test
-    fun inputFromAnotherActiveDeviceIsConsumedUntilThatDeviceIsNeutral() {
+    fun digitalInputDoesNotStealAnalogOwnershipFromAnotherDevice() {
         val gate = ControllerLifecycleGate()
         assertEquals(ControllerLifecycleDecision.ACTIVATED, gate.offerMotion(1, neutral = true))
 
         assertEquals(
-            ControllerLifecycleDecision.CONSUMED,
+            ControllerLifecycleDecision.ACTIVE,
             gate.offerDigital(deviceId = 2, keyCode = 10, down = true),
         )
-        assertEquals(ControllerLifecycleState.WAIT_NEUTRAL, gate.snapshot().state)
-        assertEquals(2, gate.snapshot().waitingDeviceId)
         assertTrue(gate.snapshot().waitingDigitalKeys.isEmpty())
-        assertEquals(
-            ControllerLifecycleDecision.CONSUMED,
-            gate.offerDigital(deviceId = 1, keyCode = 10, down = false),
-        )
-        assertEquals(
-            ControllerLifecycleDecision.ACTIVATED,
-            gate.offerMotion(deviceId = 2, neutral = true),
-        )
+        assertEquals(ControllerLifecycleState.ACTIVE, gate.snapshot().state)
+        assertEquals(1, gate.snapshot().activeDeviceId)
     }
 }
