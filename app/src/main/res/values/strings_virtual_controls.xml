@@ -2,8 +2,10 @@
 <resources>
     <string name="config_virtual_controls_movement">Virtual Controls</string>
     <string name="config_virtual_movement_control">Movement Control</string>
-    <string name="config_virtual_movement_control_summary">Choose the touch movement surface used by this MIDlet. Both modes feed the same guest direction ownership path.</string>
+    <string name="config_virtual_movement_control_summary">Choose the touch movement control used by this MIDlet. D-pad and analog stick share the same guest input ownership path.</string>
     <string name="config_virtual_movement_dpad">D-pad</string>
     <string name="config_virtual_movement_analog">Analog stick</string>
+    <string name="config_virtual_dpad_available">The D-pad is available as one grouped virtual movement control.</string>
+    <string name="config_virtual_analog_stick">Analog stick</string>
     <string name="config_virtual_analog_stick_summary">The analog stick uses the same deadzone and direction processing as a physical controller, then outputs J2ME directions.</string>
 </resources>
