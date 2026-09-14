@@ -142,9 +142,14 @@ internal fun GamepadSection(
         title = androidx.compose.ui.res.stringResource(R.string.config_virtual_controls_movement),
         accentTitle = false,
     ) {
-        ConfigMessageBlock(
-            androidx.compose.ui.res.stringResource(R.string.config_virtual_dpad_available),
-            ConfigMessageLevel.Info,
+        ConfigSwitchPreference(
+            title = androidx.compose.ui.res.stringResource(R.string.config_virtual_dpad),
+            description = androidx.compose.ui.res.stringResource(R.string.config_virtual_dpad_summary),
+            checked = form.virtualDpadEnabled,
+            enabled = form.showKeyboard,
+            onCheckedChange = { enabled ->
+                onFormChanged(form.toBuilder().virtualDpadEnabled(enabled).build())
+            },
         )
         ConfigSwitchPreference(
             title = androidx.compose.ui.res.stringResource(R.string.config_virtual_analog_stick),
@@ -254,7 +259,7 @@ private fun GamepadEditorDialog(
                     val directionOptions = listOf(
                         androidx.compose.ui.res.stringResource(R.string.config_gamepad_directions_four),
                         androidx.compose.ui.res.stringResource(R.string.config_gamepad_directions_eight),
-                        androidx.compose.ui.res.stringResource(R.string.config_gamepad_directions_diagonal),
+                        androidx.compose.ui.res.stringResource(R.string.config_gamepad_directions_numeric_v2),
                     )
                     ConfigChoicePreference(
                         title = androidx.compose.ui.res.stringResource(R.string.config_gamepad_direction_mode),
@@ -750,7 +755,7 @@ internal fun GamepadHelpDialog(onDismiss: () -> Unit) {
         },
         text = {
             Text(
-                androidx.compose.ui.res.stringResource(R.string.config_gamepad_mapping_help_body),
+                androidx.compose.ui.res.stringResource(R.string.config_gamepad_mapping_help_body_v2),
                 style = MaterialTheme.typography.bodyMedium,
             )
         },
