@@ -141,12 +141,17 @@ fun ConfigQuickDarkScreenshot() {
 @Composable
 fun ConfigGamepadUnavailableScreenshot() {
     JLModPlusTheme {
-        GamepadSection(
-            form = PreviewConfigState.form,
-            controllerAvailable = false,
-            onFormChanged = {},
-            events = NoOpConfigEvents,
-        )
+        // GamepadSection emits more than one section. The production Controls page already places
+        // it in a Column; mirror that parent here so standalone screenshot previews do not stack
+        // sibling sections on top of each other.
+        Column {
+            GamepadSection(
+                form = PreviewConfigState.form,
+                controllerAvailable = false,
+                onFormChanged = {},
+                events = NoOpConfigEvents,
+            )
+        }
     }
 }
 
