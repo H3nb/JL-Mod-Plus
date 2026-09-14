@@ -684,7 +684,7 @@ private fun PointerClickDialog(
     )
 }
 
-internal fun updateController(
+private fun updateController(
     form: ConfigFormState,
     onFormChanged: (ConfigFormState) -> Unit,
     change: ControllerConfig.Builder.() -> Unit,

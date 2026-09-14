@@ -116,11 +116,13 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Analog Controls").assertIsNotEnabled()
+        composeRule.onNodeWithText("Enable Analog Controls").assertIsNotEnabled()
         composeRule.onNodeWithText(
-            "Connect a compatible controller to enable analog controls.",
+            "No compatible gamepad is connected. Gamepad controls stay inactive until one is detected.",
         ).assertExists()
-        composeRule.onNodeWithText("Gamepad").assertDoesNotExist()
+        composeRule.onNodeWithText("Reset Analog Controls")
+            .performScrollTo()
+            .assertExists()
     }
 
     @Test
@@ -657,8 +659,6 @@ class ConfigComposeTest {
             .vkOutline("FFFFFF")
             .systemProperties("microedition.platform: test\n")
             .showKeyboard(true)
-            .virtualDpadEnabled(true)
-            .virtualAnalogEnabled(false)
             .touchInput(true)
             .vkAlpha(64)
             .graphicsMode(1)

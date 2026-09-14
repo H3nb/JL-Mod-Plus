@@ -54,7 +54,7 @@ public final class ConfigUiState {
 	public final List<ProfileTemplate> keyboardLayouts;
 	/** True when the current MIDlet artifact can execute the timing bridge. */
 	public final boolean timingControlsEnabled;
-	/** True when the current application owns a separate virtual control layout artifact. */
+	/** True when the current application owns a separate virtual keyboard layout artifact. */
 	public final boolean hasKeyboardLayout;
 	/** Names already occupied by profiles, including layout-only and unavailable entries. */
 	@NonNull

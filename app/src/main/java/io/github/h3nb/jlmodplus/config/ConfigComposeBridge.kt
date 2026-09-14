@@ -53,7 +53,6 @@ import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 import io.github.h3nb.jlmodplus.input.HostCommand
-import io.github.h3nb.jlmodplus.input.ControllerConfig
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -634,6 +633,14 @@ private fun GeneralDestination(
         )
     }
     ConfigSection(title = stringResource(R.string.config_basic_input)) {
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            description = stringResource(R.string.config_help_virtual_keyboard),
+            checked = form.showKeyboard,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().showKeyboard(checked).build())
+            },
+        )
         ConfigSwitchPreference(
             title = stringResource(R.string.PREF_TOUCH_INPUT),
             description = stringResource(R.string.config_help_touch_input),
@@ -1373,6 +1380,12 @@ private fun InputSection(
     onRequestAction: (ConfigAction) -> Unit,
     showLayoutActions: Boolean,
 ) {
+    GamepadSection(
+        form = form,
+        controllerAvailable = state.controllerAvailable,
+        onFormChanged = onFormChanged,
+        events = events,
+    )
     ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
         val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
         ConfigChoicePreference(
@@ -1401,54 +1414,15 @@ private fun InputSection(
             description = stringResource(R.string.config_help_key_mapping),
             onClick = events::onKeyMappings,
         )
-
-        val opaqueController = form.controller?.let { !it.isJsonObject } == true
-        val controller = remember(form.controller) {
-            ControllerConfig.parse(form.controller?.takeIf { it.isJsonObject }?.asJsonObject)
-        }
-        val controllerUnsupported = opaqueController || !controller.isSupported
-        val analogEnabled = state.controllerAvailable && !controllerUnsupported && controller.enabled
-        val analogDescription = when {
-            !state.controllerAvailable -> stringResource(R.string.config_analog_controls_no_controller)
-            controllerUnsupported -> stringResource(R.string.config_analog_controls_unsupported)
-            else -> stringResource(R.string.config_analog_controls_summary)
-        }
-        ConfigSwitchPreference(
-            title = stringResource(R.string.config_analog_controls),
-            description = analogDescription,
-            checked = analogEnabled,
-            enabled = state.controllerAvailable && !controllerUnsupported,
-            onCheckedChange = { enabled ->
-                if (state.controllerAvailable && !controllerUnsupported) {
-                    updateController(form, onFormChanged) { enabled(enabled) }
-                }
-            },
-        )
     }
-    ConfigSection(title = stringResource(R.string.config_virtual_controls_title)) {
+    ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard)) {
         ConfigSwitchPreference(
-            title = stringResource(R.string.config_virtual_controls_title),
-            description = stringResource(R.string.config_virtual_controls_help),
+            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            description = stringResource(R.string.config_help_virtual_keyboard),
             checked = form.showKeyboard,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().showKeyboard(checked).build()) },
         )
         if (form.showKeyboard) {
-            ConfigSwitchPreference(
-                title = stringResource(R.string.config_virtual_dpad),
-                description = stringResource(R.string.config_virtual_dpad_summary),
-                checked = form.virtualDpadEnabled,
-                onCheckedChange = { checked ->
-                    onFormChanged(form.toBuilder().virtualDpadEnabled(checked).build())
-                },
-            )
-            ConfigSwitchPreference(
-                title = stringResource(R.string.config_virtual_analog),
-                description = stringResource(R.string.config_virtual_analog_summary),
-                checked = form.virtualAnalogEnabled,
-                onCheckedChange = { checked ->
-                    onFormChanged(form.toBuilder().virtualAnalogEnabled(checked).build())
-                },
-            )
             val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()
             ConfigChoicePreference(
                 title = stringResource(R.string.pref_button_shape_title),
@@ -1487,7 +1461,7 @@ private fun InputSection(
             )
         }
     }
-    ConfigSection(title = stringResource(R.string.config_virtual_controls_appearance)) {
+    ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard_colors)) {
         if (form.showKeyboard) {
             ConfigColorPreference(
                 title = stringResource(R.string.PREF_VK_FORE),

@@ -131,7 +131,7 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("Save Log").assertIsDisplayed()
         composeRule.onNodeWithText("Lock Screen Rotation").assertIsDisplayed()
         composeRule.onAllNodesWithText("Limit FPS").assertCountEquals(0)
-        composeRule.onAllNodesWithText("Virtual Controls").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Virtual Keyboard").assertCountEquals(0)
     }
 
     @Test
@@ -196,8 +196,7 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("Keyboard (IME)").assertIsDisplayed()
         composeRule.onNodeWithText("Take Screenshot").assertIsDisplayed()
         composeRule.onNodeWithText("Limit FPS").assertIsDisplayed()
-        composeRule.onNodeWithText("Virtual Controls").performScrollTo().performClick()
-        composeRule.onNodeWithText("Edit Universal Virtual Control Layout").assertIsDisplayed()
+        composeRule.onNodeWithText("Virtual Keyboard").performScrollTo().performClick()
         composeRule.onNodeWithText("Finish Edit Mode").assertIsDisplayed()
         composeRule.onNodeWithText("Hide Buttons").assertIsDisplayed()
     }

@@ -69,11 +69,7 @@ public class ContextHolder {
 	}
 
 	public static void setVk(VirtualKeyboard vk) {
-		VirtualKeyboard previous = ContextHolder.vk;
 		ContextHolder.vk = vk;
-		if (previous != null && previous != vk) {
-			previous.close();
-		}
 	}
 
 	private static Display getDisplay() {

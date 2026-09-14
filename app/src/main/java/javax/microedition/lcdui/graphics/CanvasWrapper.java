@@ -24,8 +24,9 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.RectF;
 import android.graphics.Region;
-import android.graphics.Typeface;
 import android.os.Build;
+
+import androidx.core.content.res.ResourcesCompat;
 
 import javax.microedition.lcdui.Image;
 import javax.microedition.util.ContextHolder;
@@ -53,8 +54,7 @@ public class CanvasWrapper {
 
 		// init text paint
 		Context context = ContextHolder.getAppContext();
-		// Keep the renderer on Android's system typeface so the keypad follows the host device.
-		textPaint.setTypeface(Typeface.DEFAULT);
+		textPaint.setTypeface(ResourcesCompat.getFont(context, R.font.roboto_regular));
 		textSize = context.getResources().getDimension(R.dimen._22sp);
 		textPaint.setTextSize(textSize);
 		textPaint.setTextAlign(Paint.Align.CENTER);

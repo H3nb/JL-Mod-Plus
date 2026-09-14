@@ -27,7 +27,7 @@ import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.DialogFragment
 
-/** Compose presentation for selecting a saved virtual control layout. */
+/** Compose presentation for selecting a saved virtual keyboard layout. */
 class LoadProfileAlert : DialogFragment() {
     private var profiles: List<Profile> = emptyList()
 

@@ -56,8 +56,6 @@ public class ConfigFormStateTest {
 				.graphicsMode(1)
 				.screenFilter(true)
 				.showKeyboard(true)
-				.virtualDpadEnabled(false)
-				.virtualAnalogEnabled(true)
 				.vkFeedback(true)
 				.systemProperties("z: old\na: one\nz: new\nmalformed")
 				.build();
@@ -83,8 +81,6 @@ public class ConfigFormStateTest {
 		assertEquals(0x010203, model.vkOutlineColor);
 		assertTrue(model.screenFilter);
 		assertTrue(model.showKeyboard);
-		assertFalse(model.virtualDpadEnabled);
-		assertTrue(model.virtualAnalogEnabled);
 		assertTrue(model.vkFeedback);
 		assertNull(model.shader);
 		assertEquals("a: one\nz: new\n", model.systemProperties);
@@ -103,8 +99,6 @@ public class ConfigFormStateTest {
 		model.vkHideDelay = 250;
 		model.vkBgColor = 0x010203;
 		model.showKeyboard = true;
-		model.virtualDpadEnabled = false;
-		model.virtualAnalogEnabled = true;
 		model.vkAlpha = 64;
 
 		ConfigFormState state = ConfigFormState.fromProfile(model, "microedition.locale: en\n");
@@ -120,8 +114,6 @@ public class ConfigFormStateTest {
 		assertEquals("010203", state.vkBackground);
 		assertEquals("64", Integer.toString(state.vkAlpha));
 		assertTrue(state.showKeyboard);
-		assertFalse(state.virtualDpadEnabled);
-		assertTrue(state.virtualAnalogEnabled);
 		assertEquals("microedition.locale: en\n", state.systemProperties);
 	}
 
