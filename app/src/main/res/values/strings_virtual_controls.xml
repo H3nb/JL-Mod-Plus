@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="config_virtual_controls_movement">Virtual Controls</string>
-    <string name="config_virtual_dpad_available">Directional controls already behave as a sliding virtual D-pad when the arrow keys are visible.</string>
-    <string name="config_virtual_analog_stick">Virtual Analog Stick</string>
-    <string name="config_virtual_analog_stick_summary">Adds a touch analog stick for movement. Its vector uses the same deadzone and direction processing as a physical controller, then outputs J2ME directions.</string>
+    <string name="config_virtual_movement_control">Movement Control</string>
+    <string name="config_virtual_movement_control_summary">Choose the touch movement surface used by this MIDlet. Both modes feed the same guest direction ownership path.</string>
+    <string name="config_virtual_movement_dpad">D-pad</string>
+    <string name="config_virtual_movement_analog">Analog stick</string>
+    <string name="config_virtual_analog_stick_summary">The analog stick uses the same deadzone and direction processing as a physical controller, then outputs J2ME directions.</string>
 </resources>
