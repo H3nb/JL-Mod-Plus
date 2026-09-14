@@ -15,13 +15,15 @@
 package io.github.h3nb.jlmodplus.input
 
 import android.view.KeyEvent
+import javax.microedition.lcdui.keyboard.KeyMapper
 
 /**
  * Routes only host-owned controller key edges.
  *
  * Ordinary controller keys are deliberately returned to Android/View dispatch when a MIDP
  * Canvas is active. Canvas then applies the universal KeyMapper, which is the sole digital guest
- * mapping. This class owns modal/global shortcuts and nothing else.
+ * mapping. The one runtime host action exposed through that same map is `M`: any physical
+ * controller key assigned to KeyMapper.KEY_OPTIONS_MENU becomes [HostCommand.OpenMenu].
  */
 class HostInputRouter(
     private val host: ControllerHostSink,
@@ -36,11 +38,17 @@ class HostInputRouter(
         val physicalKey = PhysicalKey(event.deviceId, event.keyCode)
         val modal = host.isControllerModalActive()
         val canvasVisible = host.currentCanvas() != null
-        val command = HostCommand.fromAndroidKeyCode(event.keyCode)
-        val hostOwned = modal || !canvasVisible || command?.isGlobalShortcut == true
+        val mappedMenu = KeyMapper.isOptionsMenuKey(event.keyCode)
+        val command = if (mappedMenu) {
+            HostCommand.OpenMenu
+        } else {
+            HostCommand.fromAndroidKeyCode(event.keyCode)
+        }
+        val hostOwned = mappedMenu || modal || !canvasVisible || command?.isGlobalShortcut == true
 
         // Unknown vendor/controller keys must remain available to KeyMapper. A modal is the one
         // exception: its host ownership prevents an arbitrary key from leaking into the guest.
+        // A key explicitly mapped to M is also host-owned even while a Canvas is visible.
         if (!hostOwned) return false
 
         when (event.action) {
