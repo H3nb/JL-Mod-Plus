@@ -2,10 +2,14 @@
 <resources>
     <string name="config_virtual_controls_movement">Virtual Controls</string>
     <string name="config_virtual_movement_control">Movement Control</string>
-    <string name="config_virtual_movement_control_summary">Choose the touch movement control used by this MIDlet. D-pad and analog stick share the same guest input ownership path.</string>
+    <string name="config_virtual_movement_control_summary">Choose the touch movement controls used by this MIDlet. D-pad and analog stick share the same guest input ownership path.</string>
     <string name="config_virtual_movement_dpad">D-pad</string>
     <string name="config_virtual_movement_analog">Analog stick</string>
     <string name="config_virtual_dpad_available">The D-pad is available as one grouped virtual movement control.</string>
+    <string name="config_virtual_dpad">D-pad</string>
+    <string name="config_virtual_dpad_summary">Show a grouped 8-way D-pad. Move and resize the whole D-pad in the virtual-controls layout editor.</string>
     <string name="config_virtual_analog_stick">Analog stick</string>
-    <string name="config_virtual_analog_stick_summary">The analog stick uses the same deadzone and direction processing as a physical controller, then outputs J2ME directions.</string>
+    <string name="config_virtual_analog_stick_summary">Show a grouped analog stick. It uses the shared deadzone/direction processor and can be moved or resized as one control.</string>
+    <string name="config_gamepad_directions_numeric_v2">Numeric</string>
+    <string name="config_gamepad_mapping_help_body_v2">Use the D-pad or left stick to navigate JL-Mod Plus, A to activate, and B to go back. During MIDlet runtime, physical keyboard/keypad/gamepad buttons use the same Key Mappings. Map any physical button to M if you want it to open the runtime MIDlet menu. Analog sticks, triggers, pointer input, calibration, and virtual controls are configured separately.</string>
 </resources>
