@@ -10,6 +10,13 @@
     <string name="config_virtual_dpad_summary">Show a grouped 8-way D-pad. Move and resize the whole D-pad in the virtual-controls layout editor.</string>
     <string name="config_virtual_analog_stick">Analog stick</string>
     <string name="config_virtual_analog_stick_summary">Show a grouped analog stick. It uses the shared deadzone/direction processor and can be moved or resized as one control.</string>
+    <string name="runtime_virtual_controls_title">Virtual Controls</string>
+    <string name="runtime_virtual_controls_dpad">D-pad</string>
+    <string name="runtime_virtual_controls_analog">Analog stick</string>
+    <string name="runtime_virtual_controls_edit">Edit Virtual Controls</string>
+    <string name="runtime_virtual_controls_edit_started">Virtual controls edit mode: drag to move, pinch to resize</string>
+    <string name="runtime_virtual_controls_switch_layout">Switch Control Layout</string>
+    <string name="runtime_virtual_controls_hide_buttons">Show or Hide Buttons</string>
     <string name="config_gamepad_directions_numeric_v2">Numeric</string>
     <string name="config_gamepad_mapping_help_body_v2">Use the D-pad or left stick to navigate JL-Mod Plus, A to activate, and B to go back. During MIDlet runtime, physical keyboard/keypad/gamepad buttons use the same Key Mappings. Map any physical button to M if you want it to open the runtime MIDlet menu. Analog sticks, triggers, pointer input, calibration, and virtual controls are configured separately.</string>
 </resources>
