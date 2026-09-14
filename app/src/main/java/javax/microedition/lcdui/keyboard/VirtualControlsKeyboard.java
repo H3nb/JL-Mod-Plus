@@ -286,8 +286,12 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			case LEFT -> Canvas.KEY_LEFT;
 			case RIGHT -> Canvas.KEY_RIGHT;
 			case NUM1 -> Canvas.KEY_NUM1;
+			case NUM2 -> Canvas.KEY_NUM2;
 			case NUM3 -> Canvas.KEY_NUM3;
+			case NUM4 -> Canvas.KEY_NUM4;
+			case NUM6 -> Canvas.KEY_NUM6;
 			case NUM7 -> Canvas.KEY_NUM7;
+			case NUM8 -> Canvas.KEY_NUM8;
 			case NUM9 -> Canvas.KEY_NUM9;
 		};
 	}
