@@ -18,18 +18,24 @@ import android.view.InputDevice
 import android.view.KeyEvent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ControllerInputRouterTest {
     @Test
-    fun mapsStandardControllerKeysToHostCommands() {
+    fun mapsOnlyMinimalControllerButtonsToHostNavigation() {
         assertEquals(HostCommand.Activate, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_A))
         assertEquals(HostCommand.Back, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_B))
         assertEquals(HostCommand.NavigateLeft, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_DPAD_LEFT))
-        assertEquals(HostCommand.OpenMenu, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_START))
-        assertEquals(HostCommand.OpenKeypad, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_SELECT))
-        assertEquals(null, HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_11))
+
+        // These remain ordinary physical inputs. Users can assign them through the shared
+        // KeyMapper, including assigning any of them to the sole runtime-menu target M.
+        assertNull(HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_START))
+        assertNull(HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_SELECT))
+        assertNull(HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_L1))
+        assertNull(HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_R1))
+        assertNull(HostCommand.fromAndroidKeyCode(KeyEvent.KEYCODE_BUTTON_11))
     }
 
     @Test
