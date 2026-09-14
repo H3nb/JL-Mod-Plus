@@ -92,6 +92,40 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun gamepadSelectionStaysInactiveWithoutController() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            base.profileStatus,
+            base.profileTemplates,
+            base.timingControlsEnabled,
+            base.hasKeyboardLayout,
+            base.profileNames,
+            base.keyboardLayouts,
+            false,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents(), initialDestination = ConfigDestination.Controls)
+            }
+        }
+
+        composeRule.onNodeWithText("Enable Controller Mapping").assertIsNotEnabled()
+        composeRule.onNodeWithText(
+            "No compatible gamepad is connected. Gamepad mapping stays inactive until one is detected.",
+        ).assertExists()
+        composeRule.onNodeWithText("Reset Gamepad Mapping")
+            .performScrollTo()
+            .assertExists()
+    }
+
+    @Test
     fun configDestinationsSupportHorizontalSwipe() {
         composeRule.setContent {
             JLModPlusTheme {

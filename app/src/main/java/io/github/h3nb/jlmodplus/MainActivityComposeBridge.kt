@@ -109,6 +109,15 @@ internal class MainActivityComposeController(
     fun showPermissionFailure() {
         state = MainHostUiState(MainHostDialog.PermissionFailure)
     }
+
+    fun handleControllerInput(control: String, pressed: Boolean): Boolean {
+        if (state.dialog == null) return false
+        if (pressed && (control == "button_a" || control == "button_b" ||
+                control == "button_start" || control == "button_select")) {
+            dismiss()
+        }
+        return true
+    }
 }
 
 private data class MainHostDialogLayout(

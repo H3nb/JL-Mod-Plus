@@ -78,6 +78,43 @@ public interface ConfigFormEvents {
 	default void onChooseKeyboardLayout() {
 	}
 
+	/** Starts a controller capture for the supplied stable control token. */
+	default void onGamepadCapture(@NonNull String controlToken) {
+	}
+
+	/** Cancels the active controller capture without changing the draft. */
+	default void onGamepadCaptureCancel() {
+	}
+
+	/** Commits a reviewed candidate control to the requested mapping row. */
+	default void onGamepadCaptureCommit(@NonNull String targetControl,
+			@NonNull String candidateControl) {
+	}
+
+	/** Starts the host-owned controller calibration flow. */
+	default void onGamepadCalibration() {
+	}
+
+	default void onGamepadCalibrationAdvance() {
+	}
+
+	default void onGamepadCalibrationSave() {
+	}
+
+	default void onGamepadCalibrationCancel() {
+	}
+
+	default void onGamepadCalibrationReset() {
+	}
+
+	/** Opens a non-delivering controller diagnosis surface. */
+	default void onGamepadDiagnosis() {
+	}
+
+	/** Opens the controller mapping help surface. */
+	default void onGamepadHelp() {
+	}
+
 	enum PresetApplyScope {
 		SETTINGS,
 		KEYBOARD_LAYOUT,

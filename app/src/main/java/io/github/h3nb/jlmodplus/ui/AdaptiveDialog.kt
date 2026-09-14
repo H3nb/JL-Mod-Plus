@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.focusable
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,9 +44,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
@@ -109,6 +113,7 @@ internal fun adaptiveDialogLayout(
 internal fun AdaptiveAlertDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    onControllerKeyEvent: ((android.view.KeyEvent) -> Boolean)? = null,
     confirmButton: (@Composable () -> Unit)? = null,
     dismissButton: (@Composable () -> Unit)? = null,
     dismissButtonBelowWrappedActions: Boolean = false,
@@ -143,8 +148,30 @@ internal fun AdaptiveAlertDialog(
             decorFitsSystemWindows = properties.decorFitsSystemWindows,
         ),
     ) {
+        val controllerFocusRequester = if (onControllerKeyEvent != null) {
+            remember { FocusRequester() }
+        } else {
+            null
+        }
+        LaunchedEffect(controllerFocusRequester) {
+            controllerFocusRequester?.requestFocus()
+        }
         Surface(
-            modifier = Modifier.fillMaxWidth().testTag("adaptive-dialog-surface"),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("adaptive-dialog-surface")
+                .then(
+                    if (controllerFocusRequester != null) {
+                        Modifier
+                            .focusRequester(controllerFocusRequester)
+                            .focusable()
+                            .onPreviewKeyEvent { event ->
+                                onControllerKeyEvent?.invoke(event.nativeKeyEvent) == true
+                            }
+                    } else {
+                        Modifier
+                    },
+                ),
             shape = shape,
             color = containerColor,
             contentColor = textContentColor,

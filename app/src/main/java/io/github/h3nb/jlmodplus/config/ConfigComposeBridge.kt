@@ -138,6 +138,10 @@ class ConfigComposeController @JvmOverloads constructor(
     private var state by mutableStateOf(initialState)
     private var colorPicker by mutableStateOf<ColorPickerRequest?>(null)
     private var encodingPicker by mutableStateOf<EncodingPickerRequest?>(null)
+    private var gamepadCapture by mutableStateOf<GamepadCaptureUiState?>(null)
+    private var gamepadHelpVisible by mutableStateOf(false)
+    private var gamepadDiagnosis by mutableStateOf<String?>(null)
+    private var gamepadCalibration by mutableStateOf<GamepadCalibrationUiState?>(null)
     private var backRequest by mutableIntStateOf(0)
 
     init {
@@ -156,6 +160,10 @@ class ConfigComposeController @JvmOverloads constructor(
                     menuActions = menuActions,
                     colorPicker = colorPicker,
                     encodingPicker = encodingPicker,
+                    gamepadCapture = gamepadCapture,
+                    gamepadHelpVisible = gamepadHelpVisible,
+                    gamepadDiagnosis = gamepadDiagnosis,
+                    gamepadCalibration = gamepadCalibration,
                     onColorPickerDismiss = { colorPicker = null },
                     onColorPicked = { field, value ->
                         colorPicker = null
@@ -166,6 +174,23 @@ class ConfigComposeController @JvmOverloads constructor(
                         encodingPicker = null
                         events.onEncodingSelected(charset)
                     },
+                    onGamepadCaptureCancel = {
+                        gamepadCapture = null
+                        events.onGamepadCaptureCancel()
+                    },
+                    onGamepadCaptureCommit = { target, candidate ->
+                        gamepadCapture = null
+                        events.onGamepadCaptureCommit(target, candidate)
+                    },
+                    onGamepadHelpDismiss = { gamepadHelpVisible = false },
+                    onGamepadDiagnosisDismiss = { gamepadDiagnosis = null },
+                    onGamepadCalibrationDismiss = {
+                        gamepadCalibration = null
+                        events.onGamepadCalibrationCancel()
+                    },
+                    onGamepadCalibrationReset = { events.onGamepadCalibrationReset() },
+                    onGamepadCalibrationAdvance = { events.onGamepadCalibrationAdvance() },
+                    onGamepadCalibrationSave = { events.onGamepadCalibrationSave() },
                 )
             }
         }
@@ -186,6 +211,59 @@ class ConfigComposeController @JvmOverloads constructor(
 
     fun showEncodingPicker(options: List<String>, selected: String?) {
         encodingPicker = EncodingPickerRequest(options, selected)
+    }
+
+    fun showGamepadCapture(targetControl: String, phase: String = "ARMED", candidate: String? = null,
+                           candidateKind: String? = null, message: String? = null) {
+        gamepadCapture = GamepadCaptureUiState(targetControl, phase, candidate, candidateKind, message)
+    }
+
+    fun updateGamepadCapture(state: GamepadCaptureUiState?) {
+        gamepadCapture = state
+    }
+
+    fun dismissGamepadCapture() {
+        gamepadCapture = null
+    }
+
+    fun isControllerModalActive(): Boolean = gamepadCapture != null ||
+        gamepadHelpVisible || gamepadDiagnosis != null || gamepadCalibration != null
+
+    /** Consumes controller focus while a gamepad-owned modal is visible. */
+    fun handleControllerInput(control: String, pressed: Boolean): Boolean {
+        if (!isControllerModalActive()) return false
+        if (pressed && (control == "button_a" || control == "button_b" ||
+                control == "button_start" || control == "button_select")) {
+            when {
+                gamepadCapture != null -> {
+                    gamepadCapture = null
+                    events.onGamepadCaptureCancel()
+                }
+                gamepadCalibration != null -> {
+                    gamepadCalibration = null
+                    events.onGamepadCalibrationCancel()
+                }
+                gamepadHelpVisible -> gamepadHelpVisible = false
+                gamepadDiagnosis != null -> gamepadDiagnosis = null
+            }
+        }
+        return true
+    }
+
+    fun showGamepadHelp() {
+        gamepadHelpVisible = true
+    }
+
+    fun showGamepadDiagnosis(text: String) {
+        gamepadDiagnosis = text
+    }
+
+    fun showGamepadCalibration(state: GamepadCalibrationUiState) {
+        gamepadCalibration = state
+    }
+
+    fun updateGamepadCalibration(state: GamepadCalibrationUiState?) {
+        gamepadCalibration = state
     }
 
     /** Routes the system Back event through the same draft/discard policy as the top bar. */
@@ -230,10 +308,22 @@ internal fun ConfigScreen(
     menuActions: ConfigMenuActions? = null,
     colorPicker: ColorPickerRequest? = null,
     encodingPicker: EncodingPickerRequest? = null,
+    gamepadCapture: GamepadCaptureUiState? = null,
+    gamepadHelpVisible: Boolean = false,
+    gamepadDiagnosis: String? = null,
+    gamepadCalibration: GamepadCalibrationUiState? = null,
     onColorPickerDismiss: () -> Unit = {},
     onColorPicked: (ConfigFormEvents.ColorField, String) -> Unit = { _, _ -> },
     onEncodingPickerDismiss: () -> Unit = {},
     onEncodingSelected: (String) -> Unit = {},
+    onGamepadCaptureCancel: () -> Unit = {},
+    onGamepadCaptureCommit: (String, String) -> Unit = { _, _ -> },
+    onGamepadHelpDismiss: () -> Unit = {},
+    onGamepadDiagnosisDismiss: () -> Unit = {},
+    onGamepadCalibrationDismiss: () -> Unit = {},
+    onGamepadCalibrationReset: () -> Unit = {},
+    onGamepadCalibrationAdvance: () -> Unit = {},
+    onGamepadCalibrationSave: () -> Unit = {},
 ) {
     val form = state.form
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
@@ -377,6 +467,29 @@ internal fun ConfigScreen(
             onSelected = { index ->
                 request.options.getOrNull(index)?.let(onEncodingSelected)
             },
+        )
+    }
+
+    gamepadCapture?.let { capture ->
+        GamepadCaptureDialog(
+            state = capture,
+            onCancel = onGamepadCaptureCancel,
+            onCommit = onGamepadCaptureCommit,
+        )
+    }
+    if (gamepadHelpVisible) {
+        GamepadHelpDialog(onDismiss = onGamepadHelpDismiss)
+    }
+    gamepadDiagnosis?.let { diagnosis ->
+        GamepadDiagnosisDialog(diagnosis, onGamepadDiagnosisDismiss)
+    }
+    gamepadCalibration?.let { calibration ->
+        GamepadCalibrationDialog(
+            state = calibration,
+            onCancel = onGamepadCalibrationDismiss,
+            onReset = onGamepadCalibrationReset,
+            onAdvance = onGamepadCalibrationAdvance,
+            onSave = onGamepadCalibrationSave,
         )
     }
 
@@ -726,7 +839,7 @@ private fun ScreenSection(
         if (backgroundMode == BackgroundMode.CUSTOM) {
             ConfigColorPreference(
                 title = stringResource(R.string.config_background_custom_color),
-                description = stringResource(R.string.config_help_background),
+                description = stringResource(R.string.config_help_background_custom_color),
                 value = form.screenBackground,
                 onClick = { events.onColorPicker(ConfigFormEvents.ColorField.SCREEN_BACKGROUND) },
             )
@@ -1101,6 +1214,7 @@ internal fun CustomResolutionDialog(
                 }
                 SwitchRow(
                     title = stringResource(R.string.config_lock_custom_resolution_ratio),
+                    description = stringResource(R.string.config_help_lock_custom_resolution_ratio),
                     checked = lockAspect,
                     onCheckedChange = { checked ->
                         if (checked) {
@@ -1284,6 +1398,12 @@ private fun InputSection(
     onRequestAction: (ConfigAction) -> Unit,
     showLayoutActions: Boolean,
 ) {
+    GamepadSection(
+        form = form,
+        controllerAvailable = state.controllerAvailable,
+        onFormChanged = onFormChanged,
+        events = events,
+    )
     ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
         val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
         ConfigChoicePreference(
@@ -2047,12 +2167,13 @@ internal fun ConfigChoiceDialog(
 @Composable
 private fun SwitchRow(
     title: String,
+    description: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     ConfigSwitchPreference(
         title = title,
-        description = stringResource(R.string.config_help_generic_toggle),
+        description = description,
         checked = checked,
         onCheckedChange = onCheckedChange,
     )

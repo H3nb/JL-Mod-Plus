@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2018 Nikita Shakarun
  * Copyright 2022-2026 Yury Kharchenko
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +21,10 @@ package javax.microedition.lcdui;
 
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.MotionEvent;
 import android.widget.LinearLayout;
+
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 
@@ -53,6 +57,44 @@ public abstract class Screen extends Displayable {
 			softBar = null;
 		}
 		clearScreenView();
+	}
+
+	/** Controller boundary for an app-owned Screen soft-menu modal. */
+	public boolean isControllerModalActive() {
+		ScreenSoftBar controllerBar = controllerSoftBar();
+		return controllerBar != null && controllerBar.isControllerMenuVisible();
+	}
+
+	public boolean handleControllerInput(String control, boolean pressed) {
+		ScreenSoftBar controllerBar = controllerSoftBar();
+		return controllerBar != null && controllerBar.handleControllerInput(control, pressed);
+	}
+
+	public boolean handleControllerMotion(MotionEvent event) {
+		ScreenSoftBar controllerBar = controllerSoftBar();
+		return controllerBar != null && controllerBar.handleControllerMotion(event);
+	}
+
+	/** Gives a presented BACK/EXIT command first refusal of the controller's contextual Back. */
+	public boolean handleControllerBack() {
+		ScreenSoftBar controllerBar = controllerSoftBar();
+		return controllerBar != null && controllerBar.handleControllerBack();
+	}
+
+	/** Delivers remapped soft keys through the explicit command policy, not command-list indexes. */
+	public boolean handleControllerGuestKey(int keyCode, boolean pressed) {
+		ScreenSoftBar controllerBar = controllerSoftBar();
+		if (controllerBar == null || !pressed) return controllerBar != null &&
+				(keyCode == Canvas.KEY_SOFT_LEFT || keyCode == Canvas.KEY_SOFT_RIGHT);
+		if (keyCode == Canvas.KEY_SOFT_LEFT || keyCode == Canvas.KEY_SOFT_RIGHT) {
+			return controllerBar.handleControllerSoftKey(keyCode);
+		}
+		return false;
+	}
+
+	@Nullable
+	private ScreenSoftBar controllerSoftBar() {
+		return softBar instanceof ScreenSoftBar ? (ScreenSoftBar) softBar : null;
 	}
 
 	abstract View getScreenView();

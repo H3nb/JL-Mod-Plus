@@ -410,6 +410,11 @@ public class MicroLoader {
 		return params.orientation;
 	}
 
+	/** Returns the loaded profile snapshot used by the runtime input router. */
+	ProfileModel getProfile() {
+		return params;
+	}
+
 	void applyConfiguration() {
 		try {
 			// Apply configuration to the launching MIDlet

@@ -131,6 +131,26 @@ fun ConfigQuickDarkScreenshot() {
 }
 
 @PreviewTest
+@Preview(
+    name = "Config gamepad unavailable large font",
+    widthDp = 360,
+    heightDp = 800,
+    fontScale = 1.5f,
+    showBackground = true,
+)
+@Composable
+fun ConfigGamepadUnavailableScreenshot() {
+    JLModPlusTheme {
+        GamepadSection(
+            form = PreviewConfigState.form,
+            controllerAvailable = false,
+            onFormChanged = {},
+            events = NoOpConfigEvents,
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Config preference components", widthDp = 360, heightDp = 520, showBackground = true)
 @Composable
 fun ConfigPreferenceComponentsScreenshot() {

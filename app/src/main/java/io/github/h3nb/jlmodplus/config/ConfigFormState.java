@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.config;
 
+import com.google.gson.JsonElement;
+
 import androidx.annotation.Nullable;
 
 import javax.microedition.shell.timing.TimingMode;
@@ -54,6 +56,9 @@ public final class ConfigFormState {
 	public final String soundBank;
 	@Nullable
 	public final ShaderInfo shader;
+	/** Opaque controller subtree; known controller editors merge into it instead of dropping fields. */
+	@Nullable
+	public final JsonElement controller;
 
 	public final int orientation;
 	public final int screenBackgroundMode;
@@ -98,6 +103,7 @@ public final class ConfigFormState {
 		screenBackgroundImage = builder.screenBackgroundImage;
 		soundBank = builder.soundBank;
 		shader = builder.shader;
+		controller = builder.controller == null ? null : builder.controller.deepCopy();
 		orientation = builder.orientation;
 		screenBackgroundMode = BackgroundMode.sanitize(builder.screenBackgroundMode);
 		screenScaleType = builder.screenScaleType;
@@ -148,6 +154,7 @@ public final class ConfigFormState {
 				.forceFullscreen(params.forceFullscreen)
 				.graphicsMode(params.graphicsMode)
 				.shader(params.shader)
+				.controller(params.controller == null ? null : params.controller.deepCopy())
 				.showFps(params.showFps)
 				.timingMode(TimingMode.sanitize(params.timingMode))
 				.fpsLimit(optionalInt(params.fpsLimit))
@@ -220,6 +227,7 @@ public final class ConfigFormState {
 		params.vkOutlineColor = parseHexOrKeep(vkOutline, params.vkOutlineColor);
 		params.skipResumeCall = skipResumeCall;
 		params.soundBank = soundBank;
+		params.controller = controller == null ? null : controller.deepCopy();
 		params.systemProperties = normalizeSystemProperties(systemProperties);
 		return params;
 	}
@@ -290,6 +298,7 @@ public final class ConfigFormState {
 		private String screenBackgroundImage;
 		private String soundBank;
 		private ShaderInfo shader;
+		private JsonElement controller;
 		private int orientation;
 		private int screenBackgroundMode = BackgroundMode.CUSTOM;
 		private int screenScaleType;
@@ -335,6 +344,7 @@ public final class ConfigFormState {
 			screenBackgroundImage = source.screenBackgroundImage;
 			soundBank = source.soundBank;
 			shader = source.shader;
+			controller = source.controller == null ? null : source.controller.deepCopy();
 			orientation = source.orientation;
 			screenBackgroundMode = source.screenBackgroundMode;
 			screenScaleType = source.screenScaleType;
@@ -377,6 +387,10 @@ public final class ConfigFormState {
 		public Builder screenBackgroundImage(String value) { screenBackgroundImage = value; return this; }
 		public Builder soundBank(String value) { soundBank = value; return this; }
 		public Builder shader(ShaderInfo value) { shader = value; return this; }
+		public Builder controller(JsonElement value) {
+			controller = value == null ? null : value.deepCopy();
+			return this;
+		}
 		public Builder orientation(int value) { orientation = value; return this; }
 		public Builder screenBackgroundMode(int value) { screenBackgroundMode = BackgroundMode.sanitize(value); return this; }
 		public Builder screenScaleType(int value) { screenScaleType = value; return this; }

@@ -24,6 +24,7 @@ import android.content.res.Configuration;
 import android.util.SparseIntArray;
 
 import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.File;
@@ -185,6 +186,14 @@ public class ProfileModel {
 	@JsonAdapter(SparseIntArrayAdapter.class)
 	@SerializedName("KeyMappings")
 	public SparseIntArray keyMappings;
+
+	/**
+	 * Optional per-profile controller configuration. The subtree is deliberately kept as JSON so
+	 * a newer controller schema can round-trip through older settings editors without losing
+	 * fields that this build does not understand.
+	 */
+	@SerializedName(value = "Controller", alternate = {"controller"})
+	public JsonElement controller;
 
 	@SerializedName("SoundBank")
 	public String soundBank;

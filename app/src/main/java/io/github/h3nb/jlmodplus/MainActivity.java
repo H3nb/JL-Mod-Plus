@@ -26,8 +26,12 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
@@ -65,6 +69,11 @@ import io.github.h3nb.jlmodplus.util.StoragePermissionHelper;
 import io.github.h3nb.jlmodplus.installer.InstallerDialog;
 import io.github.h3nb.jlmodplus.installer.BulkInstallerDialog;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppBundleImporter;
+import io.github.h3nb.jlmodplus.input.ControllerHostSink;
+import io.github.h3nb.jlmodplus.input.ControllerHostTarget;
+import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
+import io.github.h3nb.jlmodplus.input.HostAction;
+import javax.microedition.lcdui.Canvas;
 
 public class MainActivity extends AppCompatActivity {
 	private static final long DIAGNOSTIC_RECOVERY_RETRY_MILLIS = 200L;
@@ -97,6 +106,8 @@ public class MainActivity extends AppCompatActivity {
 
 	private LibraryViewModel libraryViewModel;
 	private MainActivityComposeController mainComposeController;
+	private ControllerInputRouter controllerInputRouter;
+	private long controllerTargetGeneration = 1L;
 	private String lastRecoveryNoticeId;
 	private boolean diagnosticRecoveryRetryScheduled;
 	private boolean installerStateSnapshotExists;
@@ -169,7 +180,97 @@ public class MainActivity extends AppCompatActivity {
 				mainComposeController.dismiss();
 				finish();
 			}
+
 		});
+		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
+			@Override
+			public Canvas currentCanvas() {
+				return null;
+			}
+
+			@Override
+			public javax.microedition.lcdui.Displayable currentDisplayable() {
+				return null;
+			}
+
+			@Override
+			public ControllerHostTarget currentControllerTarget() {
+				return new ControllerHostTarget("main-activity", controllerTargetGeneration);
+			}
+
+			@Override
+			public boolean onHostAction(@NonNull HostAction action, boolean pressed) {
+				switch (action) {
+					case OPEN_MENU:
+						AppsListFragment apps = currentAppsListFragment();
+						if (apps != null && apps.onControllerMenu(pressed)) return true;
+						return true;
+					case OPEN_MAPPING_HELP:
+						return true;
+					case BACK:
+						AppsListFragment currentApps = currentAppsListFragment();
+						if (currentApps != null && currentApps.onControllerBack(pressed)) return true;
+						if (pressed) getOnBackPressedDispatcher().onBackPressed();
+						return true;
+					case ACTIVATE:
+						apps = currentAppsListFragment();
+						if (apps != null && apps.onControllerActivate(pressed)) return true;
+						return dispatchControllerKey(Canvas.KEY_FIRE, pressed, false);
+					case NEXT_TAB:
+						apps = currentAppsListFragment();
+						if (apps != null && apps.onControllerTab(true, pressed)) return true;
+						return dispatchControllerAndroidKey(KeyEvent.KEYCODE_TAB, pressed, false, false);
+					case PREVIOUS_TAB:
+						apps = currentAppsListFragment();
+						if (apps != null && apps.onControllerTab(false, pressed)) return true;
+						return dispatchControllerAndroidKey(KeyEvent.KEYCODE_TAB, pressed, false, true);
+					case OPEN_KEYPAD:
+						return true;
+					default:
+						return true;
+				}
+			}
+
+			@Override
+			public boolean dispatchGuestKey(int keyCode, boolean pressed) {
+				AppsListFragment apps = currentAppsListFragment();
+				if (apps != null && apps.onControllerGuestKey(keyCode, pressed, false)) return true;
+				return dispatchControllerKey(keyCode, pressed, false);
+			}
+
+			@Override
+			public boolean dispatchGuestKeyRepeated(int keyCode) {
+				AppsListFragment apps = currentAppsListFragment();
+				if (apps != null && apps.onControllerGuestKey(keyCode, true, true)) return true;
+				return dispatchControllerKey(keyCode, true, true);
+			}
+
+			@Override
+			public void onControllerInputAccepted() {
+				// MainActivity has no virtual keypad; accepted input is still consumed by the router.
+			}
+
+			@Override
+			public void onControllerNotice(@NonNull String message) {
+				Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+			}
+
+			@Override
+			public boolean isControllerModalActive() {
+				return mainComposeController != null && mainComposeController.isDialogVisible();
+			}
+
+			@Override
+			public boolean onControllerModalInput(@NonNull String control, boolean pressed) {
+				return mainComposeController != null &&
+						mainComposeController.handleControllerInput(control, pressed);
+			}
+
+			@Override
+			public boolean onControllerModalMotion(@NonNull MotionEvent event) {
+				return isControllerModalActive();
+			}
+		}, null);
 
 		libraryViewModel = new ViewModelProvider(this).get(LibraryViewModel.class);
 		libraryViewModel.observe(this, ignored -> maybeShowPendingInstaller());
@@ -191,12 +292,47 @@ public class MainActivity extends AppCompatActivity {
 		if (libraryViewModel != null) libraryViewModel.refreshPlayStats();
 	}
 
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent event) {
+		if (controllerInputRouter != null && controllerInputRouter.onKeyEvent(event)) {
+			return true;
+		}
+		return super.dispatchKeyEvent(event);
+	}
+
+	/** Routes controller keys from a Compose dialog window through the same input owner. */
+	public boolean dispatchControllerKeyEventFromDialog(@NonNull KeyEvent event) {
+		return controllerInputRouter != null && controllerInputRouter.onKeyEvent(event);
+	}
+
+	@Override
+	public boolean dispatchGenericMotionEvent(MotionEvent event) {
+		if (controllerInputRouter != null && controllerInputRouter.onGenericMotionEvent(event)) {
+			return true;
+		}
+		return super.dispatchGenericMotionEvent(event);
+	}
+
+	@Override
+	protected void onPause() {
+		if (controllerInputRouter != null) {
+			controllerInputRouter.clear();
+			controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
+					? 1L : controllerTargetGeneration + 1L;
+		}
+		super.onPause();
+	}
+
 	private void updateRecentTaskDescription() {
 		setTaskDescription(new ActivityManager.TaskDescription(getString(R.string.app_name)));
 	}
 
 	@Override
 	protected void onDestroy() {
+		if (controllerInputRouter != null) {
+			controllerInputRouter.close();
+			controllerInputRouter = null;
+		}
 		if (bundleRouting != null) {
 			bundleRouting.dispose();
 			bundleRouting = null;
@@ -234,6 +370,10 @@ public class MainActivity extends AppCompatActivity {
 			maybeShowPendingInstaller();
 			CrashReporter.requestDiagnosticRefresh(getApplication());
 			maybeShowDiagnosticRecovery();
+		} else if (controllerInputRouter != null) {
+			controllerInputRouter.clear();
+			controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
+					? 1L : controllerTargetGeneration + 1L;
 		}
 	}
 
@@ -517,5 +657,35 @@ public class MainActivity extends AppCompatActivity {
 		super.onNewIntent(intent);
 		setIntent(intent);
 		requestInstaller(intent.getData());
+	}
+
+	private boolean dispatchControllerKey(int keyCode, boolean pressed, boolean repeated) {
+		return dispatchControllerAndroidKey(
+				ControllerInputRouter.androidKeyCodeForGuestKey(keyCode),
+				pressed,
+				repeated,
+				false);
+	}
+
+	@Nullable
+	private AppsListFragment currentAppsListFragment() {
+		androidx.fragment.app.Fragment fragment =
+				getSupportFragmentManager().findFragmentById(R.id.container);
+		return fragment instanceof AppsListFragment ? (AppsListFragment) fragment : null;
+	}
+
+	private boolean dispatchControllerAndroidKey(
+				int keyCode, boolean pressed, boolean repeated, boolean shift) {
+		if (keyCode == KeyEvent.KEYCODE_UNKNOWN) return false;
+		long now = SystemClock.uptimeMillis();
+		int metaState = shift ? KeyEvent.META_SHIFT_ON : 0;
+		KeyEvent synthetic = new KeyEvent(
+				now,
+				now,
+				pressed ? KeyEvent.ACTION_DOWN : KeyEvent.ACTION_UP,
+				keyCode,
+				repeated ? 1 : 0,
+				metaState);
+		return super.dispatchKeyEvent(synthetic);
 	}
 }

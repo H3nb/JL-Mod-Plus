@@ -23,6 +23,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -131,6 +132,45 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("Lock Screen Rotation").assertIsDisplayed()
         composeRule.onAllNodesWithText("Limit FPS").assertCountEquals(0)
         composeRule.onAllNodesWithText("Virtual Keyboard").assertCountEquals(0)
+    }
+
+    @Test
+    fun touchOpenedRuntimeMenuDoesNotShowControllerFocusIndicator() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = RuntimeMenuUiState(title = "MIDlet"),
+                    menuVisible = true,
+                    actions = RecordingRuntimeMenuActions(),
+                    onDismissMenu = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithTag("runtime-controller-focus-indicator")
+            .assertCountEquals(0)
+    }
+
+    @Test
+    fun runtimeMenu_keepsGamepadHelpAndDiagnosisOutOfMidletOptions() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = RuntimeMenuUiState(
+                        title = "Canvas MIDlet",
+                        isCanvas = true,
+                        imeAvailable = true,
+                        virtualKeyboardAvailable = true,
+                    ),
+                    menuVisible = true,
+                    actions = RecordingRuntimeMenuActions(),
+                    onDismissMenu = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithText("Gamepad Mapping Help").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Test Controller").assertCountEquals(0)
     }
 
     @Test

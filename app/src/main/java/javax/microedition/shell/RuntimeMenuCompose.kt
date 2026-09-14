@@ -48,6 +48,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,8 +69,11 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
+import io.github.h3nb.jlmodplus.ui.clearNavigationFocusOnTouch
+import io.github.h3nb.jlmodplus.ui.showNavigationFocusForKey
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import javax.microedition.shell.timing.EmulationSpeed
+import android.view.MotionEvent
 import kotlin.math.roundToInt
 
 /** Android-host menu state only; Java ME Displayable and Command state stay in the runtime. */
@@ -122,6 +126,9 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private var limitFpsVisible by mutableStateOf(false)
     private var emulationSpeedVisible by mutableStateOf(false)
     private var hostDialogState by mutableStateOf<RuntimeHostDialogState?>(null)
+    private var virtualKeyboardPage by mutableStateOf(false)
+    private var controllerFocusIndex by mutableIntStateOf(0)
+    private var controllerFocusVisible by mutableStateOf(false)
     private val menuActions = object : RuntimeMenuActions by actions {
         override fun onLimitFps() {
             closeMenu()
@@ -144,8 +151,19 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                 RuntimeMenuHost(
                     state = state,
                     menuVisible = menuVisible,
+                    virtualKeyboardPage = virtualKeyboardPage,
+                    controllerFocusIndex = controllerFocusIndex.takeIf { controllerFocusVisible } ?: -1,
                     actions = menuActions,
                     onDismissMenu = ::closeMenu,
+                    onOpenVirtualKeyboardPage = {
+                        virtualKeyboardPage = true
+                        controllerFocusIndex = 0
+                    },
+                    onCloseVirtualKeyboardPage = {
+                        virtualKeyboardPage = false
+                        controllerFocusIndex = 0
+                    },
+                    onNavigationFocusChanged = { controllerFocusVisible = it },
                 )
                 if (limitFpsVisible) {
                     RuntimeLimitFpsDialog(
@@ -217,6 +235,9 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
 
     fun openMenu() {
         menuVisible = true
+        virtualKeyboardPage = false
+        controllerFocusIndex = 0
+        controllerFocusVisible = false
     }
 
     /** Allows the Activity's legacy Back/key paths to dismiss an already-open host menu. */
@@ -230,6 +251,118 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         limitFpsVisible = false
         emulationSpeedVisible = false
         hostDialogState = null
+        virtualKeyboardPage = false
+        controllerFocusIndex = 0
+        controllerFocusVisible = false
+    }
+
+    /** Routes controller focus while the runtime menu or one of its dialogs owns the input. */
+    fun handleControllerInput(control: String, pressed: Boolean): Boolean {
+        if (!isMenuVisible()) return false
+        if (!pressed) return true
+        controllerFocusVisible = true
+        if (hostDialogState != null || limitFpsVisible || emulationSpeedVisible) {
+            if (control == io.github.h3nb.jlmodplus.input.ControllerInputRouter.CONTROL_BUTTON_B ||
+                control == io.github.h3nb.jlmodplus.input.ControllerInputRouter.CONTROL_BUTTON_START ||
+                control == io.github.h3nb.jlmodplus.input.ControllerInputRouter.CONTROL_BUTTON_SELECT
+            ) {
+                dismissControllerDialog()
+            } else if (control == io.github.h3nb.jlmodplus.input.ControllerInputRouter.CONTROL_BUTTON_A) {
+                activateControllerDialog()
+            }
+            return true
+        }
+        val input = io.github.h3nb.jlmodplus.input.ControllerInputRouter
+        when (control) {
+            input.CONTROL_DPAD_UP -> moveControllerFocus(-1)
+            input.CONTROL_DPAD_DOWN -> moveControllerFocus(1)
+            input.CONTROL_BUTTON_B,
+            input.CONTROL_BUTTON_START,
+            input.CONTROL_BUTTON_SELECT -> closeMenu()
+            input.CONTROL_BUTTON_A -> controllerItems().getOrNull(controllerFocusIndex)?.activate?.invoke()
+        }
+        return true
+    }
+
+    /** Converts a centered left-stick/HAT sample to one menu-focus step. */
+    fun handleControllerMotion(event: MotionEvent): Boolean {
+        if (!isMenuVisible()) return false
+        if (hostDialogState != null || limitFpsVisible || emulationSpeedVisible) return true
+        val hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X)
+        val hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y)
+        val x = if (kotlin.math.abs(hatX) >= 0.5f) hatX else event.getAxisValue(MotionEvent.AXIS_X)
+        val y = if (kotlin.math.abs(hatY) >= 0.5f) hatY else event.getAxisValue(MotionEvent.AXIS_Y)
+        if (kotlin.math.abs(y) >= 0.5f) {
+            controllerFocusVisible = true
+            moveControllerFocus(if (y < 0f) -1 else 1)
+        } else if (kotlin.math.abs(x) >= 0.5f) {
+            controllerFocusVisible = true
+            moveControllerFocus(if (x < 0f) -1 else 1)
+        }
+        return true
+    }
+
+    private fun dismissControllerDialog() {
+        when (hostDialogState) {
+            is RuntimeHostDialogState.MidletSelection -> hostDialogActions?.onMidletCancelled()
+            is RuntimeHostDialogState.Error -> hostDialogActions?.onErrorAcknowledged()
+            else -> Unit
+        }
+        closeMenu()
+    }
+
+    private fun activateControllerDialog() {
+        when (hostDialogState) {
+            is RuntimeHostDialogState.Error -> {
+                val error = hostDialogState is RuntimeHostDialogState.Error
+                closeMenu()
+                if (error) hostDialogActions?.onErrorAcknowledged()
+            }
+            RuntimeHostDialogState.ExitConfirmation -> {
+                closeMenu()
+                hostDialogActions?.onExitConfirmed(false)
+            }
+            else -> Unit
+        }
+    }
+
+    private fun moveControllerFocus(delta: Int) {
+        val count = controllerItems().size
+        if (count == 0) return
+        controllerFocusIndex = (controllerFocusIndex + delta).mod(count)
+    }
+
+    private data class ControllerMenuItem(val id: String, val activate: () -> Unit)
+
+    private fun controllerItems(): List<ControllerMenuItem> {
+        if (virtualKeyboardPage) {
+            return buildList {
+                add(ControllerMenuItem("vk.back") { virtualKeyboardPage = false; controllerFocusIndex = 0 })
+                add(ControllerMenuItem("vk.edit") { closeMenu(); actions.onEditVirtualKeyboardLayout() })
+                add(ControllerMenuItem("vk.resize") { closeMenu(); actions.onResizeVirtualKeyboardLayout() })
+                if (state.virtualKeyboardEditing) {
+                    add(ControllerMenuItem("vk.finish") { closeMenu(); actions.onFinishVirtualKeyboardLayout() })
+                }
+                add(ControllerMenuItem("vk.switch") { closeMenu(); actions.onSwitchVirtualKeyboardLayout() })
+                add(ControllerMenuItem("vk.hide") { closeMenu(); actions.onHideVirtualKeyboardButtons() })
+            }
+        }
+        return buildList {
+            add(ControllerMenuItem("exit") { closeMenu(); actions.onExit() })
+            add(ControllerMenuItem("save") { closeMenu(); actions.onSaveLog() })
+            add(ControllerMenuItem("orientation") { closeMenu(); actions.onToggleOrientationLock() })
+            add(ControllerMenuItem("memory") { closeMenu(); actions.onMemoryEditor() })
+            if (state.isCanvas) {
+                if (state.imeAvailable) add(ControllerMenuItem("ime") { closeMenu(); actions.onOpenImeKeyboard() })
+                add(ControllerMenuItem("screenshot") { closeMenu(); actions.onTakeScreenshot() })
+                add(ControllerMenuItem("fps") { menuActions.onLimitFps() })
+                if (state.emulationSpeedAvailable) add(ControllerMenuItem("speed") { menuActions.onEmulationSpeed() })
+                if (state.virtualKeyboardAvailable) add(ControllerMenuItem("vk") {
+                    virtualKeyboardPage = true
+                    controllerFocusIndex = 0
+                })
+            }
+        }
     }
 
     fun showMidletDialog(names: Array<String>) {
@@ -459,11 +592,21 @@ internal fun RuntimeEmulationSpeedDialog(
 internal fun RuntimeMenuHost(
     state: RuntimeMenuUiState,
     menuVisible: Boolean,
+    virtualKeyboardPage: Boolean = false,
+    controllerFocusIndex: Int = -1,
     actions: RuntimeMenuActions,
     onDismissMenu: () -> Unit,
+    onOpenVirtualKeyboardPage: () -> Unit = {},
+    onCloseVirtualKeyboardPage: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onNavigationFocusChanged: (Boolean) -> Unit = {},
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .clearNavigationFocusOnTouch { onNavigationFocusChanged(false) }
+            .showNavigationFocusForKey { onNavigationFocusChanged(true) },
+    ) {
         if (state.toolbarVisible) {
             RuntimeToolbar(
                 state = state,
@@ -475,7 +618,12 @@ internal fun RuntimeMenuHost(
             RuntimeMenuDialog(
                 state = state,
                 actions = actions,
+                virtualKeyboardPage = virtualKeyboardPage,
+                controllerFocusIndex = controllerFocusIndex,
                 onDismiss = onDismissMenu,
+                onOpenVirtualKeyboardPage = onOpenVirtualKeyboardPage,
+                onCloseVirtualKeyboardPage = onCloseVirtualKeyboardPage,
+                onNavigationFocusChanged = onNavigationFocusChanged,
             )
         }
     }
@@ -550,13 +698,19 @@ private fun RuntimeToolbarAction(
 private fun RuntimeMenuDialog(
     state: RuntimeMenuUiState,
     actions: RuntimeMenuActions,
+    virtualKeyboardPage: Boolean,
+    controllerFocusIndex: Int,
     onDismiss: () -> Unit,
+    onOpenVirtualKeyboardPage: () -> Unit,
+    onCloseVirtualKeyboardPage: () -> Unit,
+    onNavigationFocusChanged: (Boolean) -> Unit,
 ) {
-    var virtualKeyboardPage by remember { mutableStateOf(false) }
     val layout = runtimeMenuDialogLayout()
     AlertDialog(
         textScrollable = false,
-        modifier = layout.modifier,
+        modifier = layout.modifier
+            .clearNavigationFocusOnTouch { onNavigationFocusChanged(false) }
+            .showNavigationFocusForKey { onNavigationFocusChanged(true) },
         properties = layout.properties,
         onDismissRequest = onDismiss,
         title = {
@@ -589,9 +743,10 @@ private fun RuntimeMenuDialog(
                         state = state,
                         includeCanvasShortcuts = true,
                         virtualKeyboardPage = virtualKeyboardPage,
+                        focusedIndex = controllerFocusIndex,
                         actions = actions,
-                        onOpenVirtualKeyboardPage = { virtualKeyboardPage = true },
-                        onCloseVirtualKeyboardPage = { virtualKeyboardPage = false },
+                        onOpenVirtualKeyboardPage = onOpenVirtualKeyboardPage,
+                        onCloseVirtualKeyboardPage = onCloseVirtualKeyboardPage,
                         onDismiss = onDismiss,
                     )
                 }
@@ -610,68 +765,100 @@ private fun LazyListScope.runtimeMenuItems(
     state: RuntimeMenuUiState,
     includeCanvasShortcuts: Boolean,
     virtualKeyboardPage: Boolean,
+    focusedIndex: Int,
     actions: RuntimeMenuActions,
     onOpenVirtualKeyboardPage: () -> Unit,
     onCloseVirtualKeyboardPage: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    var rowIndex = 0
+    fun nextFocused(): Boolean = focusedIndex == rowIndex++
+
     if (virtualKeyboardPage) {
+        val backFocused = nextFocused()
         item {
             RuntimeMenuItem(
                 label = R.string.action_back,
                 leadingIcon = R.drawable.ic_arrow_back,
+                focused = backFocused,
                 onClick = onCloseVirtualKeyboardPage,
             )
         }
+        val editFocused = nextFocused()
         item {
-            RuntimeActionItem(R.string.layout_edit_mode, onDismiss, actions::onEditVirtualKeyboardLayout, leadingIcon = R.drawable.ic_edit)
+            RuntimeActionItem(R.string.layout_edit_mode, onDismiss, actions::onEditVirtualKeyboardLayout,
+                leadingIcon = R.drawable.ic_edit, focused = editFocused)
         }
+        val resizeFocused = nextFocused()
         item {
-            RuntimeActionItem(R.string.layout_scale_mode, onDismiss, actions::onResizeVirtualKeyboardLayout,
-                leadingIcon = R.drawable.ic_runtime_resize)
+            RuntimeActionItem(
+                R.string.layout_scale_mode,
+                onDismiss,
+                actions::onResizeVirtualKeyboardLayout,
+                leadingIcon = R.drawable.ic_runtime_resize,
+                focused = resizeFocused,
+            )
         }
         if (state.virtualKeyboardEditing) {
+            val finishFocused = nextFocused()
             item {
                 RuntimeActionItem(
                     R.string.layout_edit_finish,
                     onDismiss,
                     actions::onFinishVirtualKeyboardLayout,
                     leadingIcon = R.drawable.ic_runtime_done,
+                    focused = finishFocused,
                 )
             }
         }
+        val switchFocused = nextFocused()
         item {
-            RuntimeActionItem(R.string.layout_switch, onDismiss, actions::onSwitchVirtualKeyboardLayout, leadingIcon = R.drawable.ic_runtime_switch)
+            RuntimeActionItem(R.string.layout_switch, onDismiss, actions::onSwitchVirtualKeyboardLayout,
+                leadingIcon = R.drawable.ic_runtime_switch, focused = switchFocused)
         }
+        val hideFocused = nextFocused()
         item {
-            RuntimeActionItem(R.string.hide_buttons, onDismiss, actions::onHideVirtualKeyboardButtons,
-                leadingIcon = R.drawable.ic_runtime_hide)
+            RuntimeActionItem(
+                R.string.hide_buttons,
+                onDismiss,
+                actions::onHideVirtualKeyboardButtons,
+                leadingIcon = R.drawable.ic_runtime_hide,
+                focused = hideFocused,
+            )
         }
         return
     }
 
+    val exitFocused = nextFocused()
     item {
-        RuntimeActionItem(R.string.exit, onDismiss, actions::onExit, leadingIcon = R.drawable.ic_logout)
+        RuntimeActionItem(R.string.exit, onDismiss, actions::onExit, leadingIcon = R.drawable.ic_logout,
+            focused = exitFocused)
     }
+    val saveFocused = nextFocused()
     item {
-        RuntimeActionItem(R.string.save_log, onDismiss, actions::onSaveLog, leadingIcon = R.drawable.ic_save)
+        RuntimeActionItem(R.string.save_log, onDismiss, actions::onSaveLog, leadingIcon = R.drawable.ic_save,
+            focused = saveFocused)
     }
+    val orientationFocused = nextFocused()
     item {
         RuntimeToggleItem(
             label = R.string.action_lock_orientation,
             checked = state.orientationLocked,
             leadingIcon = R.drawable.ic_screen_lock_rotation,
+            focused = orientationFocused,
             onClick = {
                 onDismiss()
                 actions.onToggleOrientationLock()
             },
         )
     }
+    val memoryFocused = nextFocused()
     item {
         RuntimeToggleItem(
             label = R.string.memory_editor_bubble,
             checked = state.memoryEditorBubbleEnabled,
             leadingIcon = R.drawable.ic_runtime_memory,
+            focused = memoryFocused,
             onClick = {
                 onDismiss()
                 actions.onMemoryEditor()
@@ -680,10 +867,12 @@ private fun LazyListScope.runtimeMenuItems(
     }
     if (state.isCanvas) {
         if (includeCanvasShortcuts && state.imeAvailable) {
+            val imeFocused = nextFocused()
             item {
                 RuntimeMenuItem(
                     label = R.string.action_keyboard_ime,
                     leadingIcon = R.drawable.ic_action_keyboard,
+                    focused = imeFocused,
                     onClick = {
                         onDismiss()
                         actions.onOpenImeKeyboard()
@@ -692,10 +881,12 @@ private fun LazyListScope.runtimeMenuItems(
             }
         }
         if (includeCanvasShortcuts) {
+            val screenshotFocused = nextFocused()
             item {
                 RuntimeMenuItem(
                     label = R.string.take_screenshot,
                     leadingIcon = R.drawable.ic_action_screenshot,
+                    focused = screenshotFocused,
                     onClick = {
                         onDismiss()
                         actions.onTakeScreenshot()
@@ -703,24 +894,30 @@ private fun LazyListScope.runtimeMenuItems(
                 )
             }
         }
+        val fpsFocused = nextFocused()
         item {
-            RuntimeActionItem(R.string.PREF_LIMIT_FPS, onDismiss, actions::onLimitFps, leadingIcon = R.drawable.ic_runtime_fps)
+            RuntimeActionItem(R.string.PREF_LIMIT_FPS, onDismiss, actions::onLimitFps,
+                leadingIcon = R.drawable.ic_runtime_fps, focused = fpsFocused)
         }
         if (state.emulationSpeedAvailable) {
+            val speedFocused = nextFocused()
             item {
                 RuntimeActionItem(
                     R.string.PREF_EMULATION_SPEED,
                     onDismiss,
                     actions::onEmulationSpeed,
                     leadingIcon = R.drawable.ic_speed,
+                    focused = speedFocused,
                 )
             }
         }
         if (state.virtualKeyboardAvailable) {
+            val vkFocused = nextFocused()
             item {
                 RuntimeMenuItem(
                     label = R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
                     leadingIcon = R.drawable.ic_runtime_virtual_keyboard,
+                    focused = vkFocused,
                     onClick = onOpenVirtualKeyboardPage,
                 )
             }
@@ -734,8 +931,9 @@ private fun RuntimeActionItem(
     onDismiss: () -> Unit,
     action: () -> Unit,
     leadingIcon: Int? = null,
+    focused: Boolean = false,
 ) {
-    RuntimeMenuItem(label = label, leadingIcon = leadingIcon) {
+    RuntimeMenuItem(label = label, leadingIcon = leadingIcon, focused = focused) {
         onDismiss()
         action()
     }
@@ -746,10 +944,14 @@ private fun RuntimeToggleItem(
     label: Int,
     checked: Boolean,
     leadingIcon: Int? = null,
+    focused: Boolean = false,
     onClick: () -> Unit,
 ) {
     ListItem(
-        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+        colors = ListItemDefaults.colors(
+            containerColor = if (focused) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+            else androidx.compose.ui.graphics.Color.Transparent,
+        ),
         headlineContent = {
             Text(
                 text = stringResource(label),
@@ -774,6 +976,10 @@ private fun RuntimeToggleItem(
         },
         modifier = Modifier
             .fillMaxWidth()
+            .then(
+                if (focused) Modifier.testTag("runtime-controller-focus-indicator")
+                else Modifier,
+            )
             .toggleable(
                 value = checked,
                 role = Role.Switch,
@@ -786,10 +992,14 @@ private fun RuntimeToggleItem(
 private fun RuntimeMenuItem(
     label: Int,
     leadingIcon: Int? = null,
+    focused: Boolean = false,
     onClick: () -> Unit,
 ) {
     ListItem(
-        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+        colors = ListItemDefaults.colors(
+            containerColor = if (focused) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+            else androidx.compose.ui.graphics.Color.Transparent,
+        ),
         headlineContent = {
             Text(
                 text = stringResource(label),
@@ -808,6 +1018,10 @@ private fun RuntimeMenuItem(
         },
         modifier = Modifier
             .fillMaxWidth()
+            .then(
+                if (focused) Modifier.testTag("runtime-controller-focus-indicator")
+                else Modifier,
+            )
             .clickable(
                 role = Role.Button,
                 onClick = onClick,

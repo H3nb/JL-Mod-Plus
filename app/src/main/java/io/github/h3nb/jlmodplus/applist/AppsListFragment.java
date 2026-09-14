@@ -202,15 +202,52 @@ public class AppsListFragment extends Fragment {
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
                 preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true),
                 gridSpacing,
-                ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()));
+                ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()),
+                new LibraryControllerKeyEventHandler() {
+                    @Override
+                    public boolean onControllerKeyEvent(android.view.KeyEvent event) {
+                        Activity activity = getActivity();
+                        return activity instanceof MainActivity &&
+                                ((MainActivity) activity).dispatchControllerKeyEventFromDialog(event);
+                    }
+                });
         libraryViewModel.observe(getViewLifecycleOwner(), this::onLibraryState);
     }
 
     @Override
     public void onDestroyView() {
+        if (composeController != null) {
+            composeController.close();
+        }
         composeController = null;
         clearUiRows();
         super.onDestroyView();
+    }
+
+    /** Host-only controller adapter; the Compose library never receives guest Canvas callbacks. */
+    public boolean onControllerGuestKey(int keyCode, boolean pressed, boolean repeated) {
+        LibraryComposeController controller = composeController;
+        return controller != null && controller.onControllerGuestKey(keyCode, pressed, repeated);
+    }
+
+    public boolean onControllerActivate(boolean pressed) {
+        LibraryComposeController controller = composeController;
+        return controller != null && controller.onControllerActivate(pressed);
+    }
+
+    public boolean onControllerMenu(boolean pressed) {
+        LibraryComposeController controller = composeController;
+        return controller != null && controller.onControllerMenu(pressed);
+    }
+
+    public boolean onControllerTab(boolean next, boolean pressed) {
+        LibraryComposeController controller = composeController;
+        return controller != null && controller.onControllerTab(next, pressed);
+    }
+
+    public boolean onControllerBack(boolean pressed) {
+        LibraryComposeController controller = composeController;
+        return controller != null && controller.onControllerBack(pressed);
     }
 
     @Override
