@@ -2,8 +2,10 @@
 <resources>
     <string name="config_virtual_controls_movement">Kontrol Virtual</string>
     <string name="config_virtual_movement_control">Kontrol Gerakan</string>
-    <string name="config_virtual_movement_control_summary">Pilih permukaan kontrol gerakan sentuh untuk MIDlet ini. Kedua mode memakai jalur ownership arah guest yang sama.</string>
+    <string name="config_virtual_movement_control_summary">Pilih kontrol gerakan sentuh untuk MIDlet ini. D-pad dan stik analog memakai jalur kepemilikan input guest yang sama.</string>
     <string name="config_virtual_movement_dpad">D-pad</string>
     <string name="config_virtual_movement_analog">Stik analog</string>
+    <string name="config_virtual_dpad_available">D-pad tersedia sebagai satu kontrol gerakan virtual yang utuh.</string>
+    <string name="config_virtual_analog_stick">Stik analog</string>
     <string name="config_virtual_analog_stick_summary">Stik analog memakai pemrosesan deadzone dan arah yang sama dengan pengontrol fisik, lalu menghasilkan arah J2ME.</string>
 </resources>
