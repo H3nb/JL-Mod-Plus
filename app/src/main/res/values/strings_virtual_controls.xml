@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_virtual_controls_movement">Virtual Controls</string>
+    <string name="config_virtual_dpad_available">Directional controls already behave as a sliding virtual D-pad when the arrow keys are visible.</string>
+    <string name="config_virtual_analog_stick">Virtual Analog Stick</string>
+    <string name="config_virtual_analog_stick_summary">Adds a touch analog stick for movement. Its vector uses the same deadzone and direction processing as a physical controller, then outputs J2ME directions.</string>
+</resources>
