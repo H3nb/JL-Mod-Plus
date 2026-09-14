@@ -368,6 +368,7 @@ class ControllerInputRouter(
         history: Int,
     ): Boolean {
         val settings = if (stick == StickId.LEFT) config.leftStick else config.rightStick
+        val guestCanvas = host.currentCanvas()
         val axesPair = stickAxes(device, event.source, stick) ?: return false
         val rawX = axisValue(event, axesPair.first, history)
         val rawY = axisValue(event, axesPair.second, history)
@@ -415,13 +416,14 @@ class ControllerInputRouter(
                 config = processorConfig,
             )
         }
-        if (config.pointer.sourceStick == stick) {
+        // Pointer mode is a guest/runtime concern. A stick must never lose its ability to
+        // navigate JL-Mod Plus simply because this MIDlet profile assigns that stick to a pointer.
+        if (guestCanvas != null && config.pointer.sourceStick == stick) {
             // A pointer-configured stick is a continuous producer. It must not also become a
             // digital movement source, otherwise one physical stick can own two unrelated
             // guest outputs during the same sample.
             updateDirectional("stick:${stick.name.lowercase()}", emptySet())
-            val canvas = pointerCanvas ?: host.currentCanvas()
-            if (canvas == null) return false
+            val canvas = pointerCanvas ?: guestCanvas
             attachPointerConsumer(canvas)
             val now = eventTime(event, history)
             when (config.pointer.mode) {
@@ -468,16 +470,25 @@ class ControllerInputRouter(
                 PointerMode.OFF -> return false
             }
         }
-        if (settings.mode != StickMode.DIRECTIONS) {
+        // Stick assignment is likewise guest-only. Host surfaces always retain basic movement
+        // navigation even if the MIDlet itself marks this stick unassigned.
+        if (guestCanvas != null && settings.mode != StickMode.DIRECTIONS) {
             updateDirectional("stick:${stick.name.lowercase()}", emptySet())
             return processed.magnitude >= settings.pressRadius.toFloat()
         }
+        val hostNavigation = guestCanvas == null
         val directionConfig = StickProcessor.DirectionConfig(
-            mode = when (settings.directionMode) {
-                DirectionMode.FOUR -> StickProcessor.DirectionMode.FOUR_WAY
-                else -> StickProcessor.DirectionMode.EIGHT_WAY
+            mode = if (hostNavigation) {
+                StickProcessor.DirectionMode.FOUR_WAY
+            } else {
+                when (settings.directionMode) {
+                    DirectionMode.FOUR -> StickProcessor.DirectionMode.FOUR_WAY
+                    else -> StickProcessor.DirectionMode.EIGHT_WAY
+                }
             },
-            diagonalOutput = if (settings.directionMode == DirectionMode.DIAGONAL_NUMBER) {
+            diagonalOutput = if (!hostNavigation &&
+                settings.directionMode == DirectionMode.DIAGONAL_NUMBER
+            ) {
                 StickProcessor.DiagonalOutputMode.NUMBER_KEYS
             } else {
                 StickProcessor.DiagonalOutputMode.CARDINALS
@@ -1121,8 +1132,12 @@ class ControllerInputRouter(
         CONTROL_DPAD_LEFT -> Canvas.KEY_LEFT
         CONTROL_DPAD_RIGHT -> Canvas.KEY_RIGHT
         DIRECTION_NUM1 -> Canvas.KEY_NUM1
+        DIRECTION_NUM2 -> Canvas.KEY_NUM2
         DIRECTION_NUM3 -> Canvas.KEY_NUM3
+        DIRECTION_NUM4 -> Canvas.KEY_NUM4
+        DIRECTION_NUM6 -> Canvas.KEY_NUM6
         DIRECTION_NUM7 -> Canvas.KEY_NUM7
+        DIRECTION_NUM8 -> Canvas.KEY_NUM8
         DIRECTION_NUM9 -> Canvas.KEY_NUM9
         else -> null
     }
@@ -1141,8 +1156,12 @@ class ControllerInputRouter(
         StickProcessor.DirectionKey.LEFT -> CONTROL_DPAD_LEFT
         StickProcessor.DirectionKey.RIGHT -> CONTROL_DPAD_RIGHT
         StickProcessor.DirectionKey.NUM1 -> DIRECTION_NUM1
+        StickProcessor.DirectionKey.NUM2 -> DIRECTION_NUM2
         StickProcessor.DirectionKey.NUM3 -> DIRECTION_NUM3
+        StickProcessor.DirectionKey.NUM4 -> DIRECTION_NUM4
+        StickProcessor.DirectionKey.NUM6 -> DIRECTION_NUM6
         StickProcessor.DirectionKey.NUM7 -> DIRECTION_NUM7
+        StickProcessor.DirectionKey.NUM8 -> DIRECTION_NUM8
         StickProcessor.DirectionKey.NUM9 -> DIRECTION_NUM9
     }
 
@@ -1171,8 +1190,12 @@ class ControllerInputRouter(
         const val CONTROL_BUTTON_SELECT = "button_select"
 
         private const val DIRECTION_NUM1 = "__direction_num1"
+        private const val DIRECTION_NUM2 = "__direction_num2"
         private const val DIRECTION_NUM3 = "__direction_num3"
+        private const val DIRECTION_NUM4 = "__direction_num4"
+        private const val DIRECTION_NUM6 = "__direction_num6"
         private const val DIRECTION_NUM7 = "__direction_num7"
+        private const val DIRECTION_NUM8 = "__direction_num8"
         private const val DIRECTION_NUM9 = "__direction_num9"
         private const val CONTROLLER_KIND = "controller"
         private const val CONTROLLER_DEVICE_PREFIX = "android:"
