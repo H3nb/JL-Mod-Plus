@@ -58,6 +58,11 @@ internal fun GamepadSection(
         ControllerConfig.parse(form.controller?.takeIf { it.isJsonObject }?.asJsonObject)
     }
     val supported = !opaqueController && resolved.isSupported
+    val compatibilityMessage = when {
+        opaqueController -> androidx.compose.ui.res.stringResource(R.string.config_gamepad_opaque_summary)
+        !resolved.isSupported -> androidx.compose.ui.res.stringResource(R.string.config_gamepad_unsupported_summary)
+        else -> null
+    }
     val options = listOf(
         androidx.compose.ui.res.stringResource(R.string.config_analog_stick_off),
         androidx.compose.ui.res.stringResource(R.string.config_gamepad_directions_four),
@@ -77,6 +82,8 @@ internal fun GamepadSection(
         selected = options[selectedIndex],
         options = options,
         enabled = supported,
+        message = compatibilityMessage,
+        messageLevel = ConfigMessageLevel.Warning,
         onSelected = { index ->
             if (!supported) return@ConfigChoicePreference
             val nextLeft = when (index) {
@@ -102,16 +109,6 @@ internal fun GamepadSection(
             onFormChanged(form.toBuilder().controller(next.toJson()).build())
         },
     )
-
-    if (!supported) {
-        ConfigMessageBlock(
-            androidx.compose.ui.res.stringResource(
-                if (opaqueController) R.string.config_gamepad_opaque_summary
-                else R.string.config_gamepad_unsupported_summary,
-            ),
-            ConfigMessageLevel.Warning,
-        )
-    }
 }
 
 @Composable
