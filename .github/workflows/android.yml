@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
@@ -70,55 +70,6 @@ jobs:
 
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
-
-      # One-shot maintenance path. The marker is removed by the generated baseline commit;
-      # this workflow change is restored by the caller immediately afterwards.
-      - name: Refresh screenshot baselines once
-        if: ${{ github.event_name == 'pull_request' && hashFiles('.ci/update-screenshot-baselines') != '' }}
-        shell: bash
-        env:
-          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          git fetch --no-tags origin "+refs/heads/${PR_HEAD_REF}:refs/remotes/origin/${PR_HEAD_REF}"
-          git checkout -B "${PR_HEAD_REF}" "refs/remotes/origin/${PR_HEAD_REF}"
-
-          ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
-
-          cat > /tmp/expected-goldens.txt <<'EOF'
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigCompactLandscapeScreenshot_Config compact landscape_d8f6b225_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigCustomResolutionScreenshot_Config custom resolution_719f0007_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigDarkPhoneScreenshot_Config dark phone_7b24fbbd_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigGamepadUnavailableScreenshot_Config gamepad unavailable large font_b00c7e4e_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigLandscapeScreenshot_Config landscape_75b9c080_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigLargeFontFormScreenshot_Config large font form_ea9d3c41_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigLightPhoneScreenshot_Config light phone_d64d007f_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigMediaEmptyScreenshot_Config media empty_05f2e3b0_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigMediumPortraitScreenshot_Config medium portrait_11f22425_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigPreferenceComponentsScreenshot_Config preference components_c84baa18_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigQuickDarkScreenshot_Config quick dark_758f3757_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigQuickScreenshot_Config quick light_dc46fefc_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigSystemPropertiesScreenshot_Config system properties_07ad818e_0.png
-          app/src/screenshotTestEmulatorDebug/reference/javax/microedition/shell/RuntimeMenuScreenshotTestKt/RuntimeLayoutSelectionScreenshot_Runtime layout selection dark landscape_2dae70f6_0.png
-          EOF
-          sed -i 's/^          //' /tmp/expected-goldens.txt
-          git diff --name-only -- app/src/screenshotTestEmulatorDebug/reference | sort > /tmp/actual-goldens.txt
-          sort /tmp/expected-goldens.txt -o /tmp/expected-goldens.txt
-          if ! diff -u /tmp/expected-goldens.txt /tmp/actual-goldens.txt; then
-            echo 'Refusing to commit: screenshot update changed an unexpected reference set.' >&2
-            exit 1
-          fi
-
-          git rm .ci/update-screenshot-baselines
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app/src/screenshotTestEmulatorDebug/reference
-          git commit -m 'Update screenshot baselines'
-
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git push origin "HEAD:${PR_HEAD_REF}"
 
       - name: Lint, test, and assemble
         env:
