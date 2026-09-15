@@ -122,3 +122,5 @@ Recommended physical smoke matrix:
 7. Pointer modes for profiles that already contain compatible pointer configuration.
 
 Until that matrix is run, describe the implementation as architecturally/automatically validated, not universally hardware-certified.
+
+- The grouped virtual controls use a physical-controller-inspired visual treatment: a layered blue-ring analog well and four separated D-pad arms with a center pivot. Pressed D-pad arms light independently, so diagonal input visibly highlights both directions; profile opacity, normalized geometry, drag/pinch editing, and input hysteresis remain intact.

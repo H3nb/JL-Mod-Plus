@@ -62,11 +62,22 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final int GRID_DIVISIONS = 24;
 	private static final int FEEDBACK_DURATION_MS = 50;
 
+	// Physical-controller-inspired palette. Existing profile colors subtly tint the hardware
+	// surfaces so custom themes remain recognizable without losing the reference identity.
+	private static final int CONTROL_SHELL_DARK = 0x11161D;
+	private static final int CONTROL_FACE_DARK = 0x202630;
+	private static final int CONTROL_INNER_DARK = 0x0A0E13;
+	private static final int CONTROL_EDGE_LIGHT = 0x8995A5;
+	private static final int CONTROL_ICON_LIGHT = 0xE1E7EF;
+	private static final int ANALOG_ACCENT_BLUE = 0x4D9FFF;
+	private static final int DPAD_ACCENT_RED = 0xFF4D5C;
+
 	private enum EditControl { NONE, DPAD, ANALOG }
 
 	private final ProfileModel settings;
 	private final VirtualDpadController dpadController = new VirtualDpadController();
 	private final VirtualAnalogDirectionAdapter directionAdapter = new VirtualAnalogDirectionAdapter();
+	private final RectF paintRect = new RectF();
 
 	private VirtualAnalogStick analogStick;
 	private Canvas target;
@@ -639,23 +650,109 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float r = geometry.getRadius();
 		int alpha = controlAlpha();
 		boolean selected = editControl == EditControl.DPAD;
-		int fill = selected ? settings.vkBgColorSelected : settings.vkBgColor;
-		int text = selected ? settings.vkFgColorSelected : settings.vkFgColor;
-		graphics.setFillColor((alpha << 24) | (fill & 0x00FFFFFF));
-		graphics.setDrawColor((alpha << 24) | (settings.vkOutlineColor & 0x00FFFFFF));
-		graphics.setTextColor((alpha << 24) | (text & 0x00FFFFFF));
-		float arm = r * 0.38f;
-		int round = Math.max(4, (int) (r * 0.16f));
-		RectF horizontal = new RectF(cx - r, cy - arm, cx + r, cy + arm);
-		RectF vertical = new RectF(cx - arm, cy - r, cx + arm, cy + r);
-		graphics.fillRoundRect(horizontal, round, round);
-		graphics.fillRoundRect(vertical, round, round);
-		graphics.drawRoundRect(horizontal, round, round);
-		graphics.drawRoundRect(vertical, round, round);
-		graphics.drawString("↑", cx, cy - r * 0.62f);
-		graphics.drawString("↓", cx, cy + r * 0.62f);
-		graphics.drawString("←", cx - r * 0.62f, cy);
-		graphics.drawString("→", cx + r * 0.62f, cy);
+		Set<VirtualDpadDirection> pressed = dpadToken == null
+				? java.util.Collections.emptySet()
+				: dpadController.state(dpadToken);
+
+		int shell = blendRgb(CONTROL_SHELL_DARK, settings.vkBgColor, 0.18f);
+		int face = blendRgb(CONTROL_FACE_DARK, settings.vkBgColor, 0.24f);
+		int edge = blendRgb(CONTROL_EDGE_LIGHT, settings.vkOutlineColor, 0.32f);
+		int icon = blendRgb(CONTROL_ICON_LIGHT, settings.vkFgColor, 0.34f);
+		int active = blendRgb(DPAD_ACCENT_RED, settings.vkBgColorSelected, 0.14f);
+
+		// A quiet circular cradle makes the four separated arms read as one controller control
+		// while leaving the corner zones visually open for diagonal slides.
+		if (selected) {
+			fillCircle(graphics, cx, cy, r * 1.10f,
+					colorWithAlpha(settings.vkBgColorSelected, scaledAlpha(alpha, 0.16f)));
+		}
+		fillCircle(graphics, cx, cy, r * 1.03f,
+				colorWithAlpha(shell, scaledAlpha(alpha, 0.30f)));
+		drawCircle(graphics, cx, cy, r * 1.03f,
+				colorWithAlpha(edge, scaledAlpha(alpha, 0.30f)));
+
+		float halfArm = r * 0.38f;
+		float centerGap = r * 0.11f;
+		int round = Math.max(5, Math.round(r * 0.14f));
+
+		paintDpadButton(graphics,
+				cx - halfArm, cy - r, cx + halfArm, cy - centerGap,
+				round, pressed.contains(VirtualDpadDirection.UP), face, edge, active, alpha, r);
+		paintDpadButton(graphics,
+				cx - halfArm, cy + centerGap, cx + halfArm, cy + r,
+				round, pressed.contains(VirtualDpadDirection.DOWN), face, edge, active, alpha, r);
+		paintDpadButton(graphics,
+				cx - r, cy - halfArm, cx - centerGap, cy + halfArm,
+				round, pressed.contains(VirtualDpadDirection.LEFT), face, edge, active, alpha, r);
+		paintDpadButton(graphics,
+				cx + centerGap, cy - halfArm, cx + r, cy + halfArm,
+				round, pressed.contains(VirtualDpadDirection.RIGHT), face, edge, active, alpha, r);
+
+		// Raised center pivot, matching the familiar physical D-pad silhouette.
+		fillCircle(graphics, cx, cy, r * 0.27f,
+				colorWithAlpha(CONTROL_INNER_DARK, scaledAlpha(alpha, 0.92f)));
+		fillCircle(graphics, cx, cy, r * 0.21f,
+				colorWithAlpha(face, scaledAlpha(alpha, 0.78f)));
+		drawCircle(graphics, cx, cy, r * 0.27f,
+				colorWithAlpha(edge, scaledAlpha(alpha, 0.34f)));
+
+		float textScale = clamp(r / 120.0f, 0.68f, 1.08f);
+		graphics.setTextScale(textScale);
+		paintDpadGlyph(graphics, "▲", cx, cy - r * 0.57f,
+				pressed.contains(VirtualDpadDirection.UP), icon, active, alpha);
+		paintDpadGlyph(graphics, "▼", cx, cy + r * 0.57f,
+				pressed.contains(VirtualDpadDirection.DOWN), icon, active, alpha);
+		paintDpadGlyph(graphics, "◀", cx - r * 0.57f, cy,
+				pressed.contains(VirtualDpadDirection.LEFT), icon, active, alpha);
+		paintDpadGlyph(graphics, "▶", cx + r * 0.57f, cy,
+				pressed.contains(VirtualDpadDirection.RIGHT), icon, active, alpha);
+		graphics.setTextScale(1.0f);
+	}
+
+	private void paintDpadButton(
+			CanvasWrapper graphics,
+			float left, float top, float right, float bottom,
+			int round, boolean active,
+			int face, int edge, int accent, int alpha, float radius) {
+		float shadowOffset = Math.max(1.0f, radius * 0.045f);
+		paintRect.set(left, top + shadowOffset, right, bottom + shadowOffset);
+		graphics.setFillColor(colorWithAlpha(0x000000, scaledAlpha(alpha, 0.48f)));
+		graphics.fillRoundRect(paintRect, round, round);
+
+		if (active) {
+			float glow = Math.max(1.0f, radius * 0.055f);
+			paintRect.set(left - glow, top - glow, right + glow, bottom + glow);
+			graphics.setFillColor(colorWithAlpha(accent, scaledAlpha(alpha, 0.30f)));
+			graphics.fillRoundRect(paintRect, round + Math.round(glow), round + Math.round(glow));
+		}
+
+		paintRect.set(left, top, right, bottom);
+		int activeFace = active ? blendRgb(face, accent, 0.24f) : face;
+		graphics.setFillColor(colorWithAlpha(activeFace, scaledAlpha(alpha, active ? 0.94f : 0.82f)));
+		graphics.fillRoundRect(paintRect, round, round);
+		graphics.setDrawColor(colorWithAlpha(active ? accent : edge,
+				scaledAlpha(alpha, active ? 0.98f : 0.60f)));
+		graphics.drawRoundRect(paintRect, round, round);
+
+		// Narrow top highlight gives each arm a tactile, slightly raised surface without a bitmap.
+		float highlightHeight = Math.max(1.0f, radius * 0.018f);
+		float inset = Math.max(2.0f, radius * 0.10f);
+		paintRect.set(left + inset, top + inset * 0.55f, right - inset,
+				Math.min(bottom, top + inset * 0.55f + highlightHeight));
+		graphics.setFillColor(colorWithAlpha(0xFFFFFF,
+				scaledAlpha(alpha, active ? 0.18f : 0.10f)));
+		graphics.fillRoundRect(paintRect, Math.max(1, round / 3), Math.max(1, round / 3));
+	}
+
+	private void paintDpadGlyph(
+			CanvasWrapper graphics,
+			String glyph,
+			float x, float y,
+			boolean active,
+			int icon, int accent, int alpha) {
+		graphics.setTextColor(colorWithAlpha(active ? accent : icon,
+				scaledAlpha(alpha, active ? 1.0f : 0.82f)));
+		graphics.drawString(glyph, x, y);
 	}
 
 	private void paintAnalog(CanvasWrapper graphics) {
@@ -663,26 +760,119 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float centerX = screenBounds.left + visual.getCenterX();
 		float centerY = screenBounds.top + visual.getCenterY();
 		float radius = visual.getRadius();
-		int alpha = controlAlpha();
+		float rawThumbX = screenBounds.left + visual.getThumbX();
+		float rawThumbY = screenBounds.top + visual.getThumbY();
+		// A physical stick knob cannot travel to the outer rim with its full diameter. Keep the
+		// input normalization untouched, but compress visual travel so the thumb stays inside the
+		// chassis like the reference controller.
+		float thumbX = centerX + (rawThumbX - centerX) * 0.50f;
+		float thumbY = centerY + (rawThumbY - centerY) * 0.50f;
+		boolean active = visual.getActive();
 		boolean selected = editControl == EditControl.ANALOG;
-		int base = selected ? settings.vkBgColorSelected : settings.vkBgColor;
-		graphics.setFillColor((alpha << 24) | (base & 0x00FFFFFF));
-		graphics.setDrawColor((alpha << 24) | (settings.vkOutlineColor & 0x00FFFFFF));
-		RectF ring = new RectF(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
-		graphics.fillArc(ring, 0, 360);
-		graphics.drawArc(ring, 0, 360);
+		int alpha = controlAlpha();
 
-		float thumbRadius = radius * 0.42f;
-		float thumbX = screenBounds.left + visual.getThumbX();
-		float thumbY = screenBounds.top + visual.getThumbY();
-		RectF thumb = new RectF(
-				thumbX - thumbRadius, thumbY - thumbRadius,
-				thumbX + thumbRadius, thumbY + thumbRadius);
-		int thumbColor = visual.getActive() ? settings.vkBgColorSelected : settings.vkBgColor;
-		graphics.setFillColor((alpha << 24) | (thumbColor & 0x00FFFFFF));
-		graphics.fillArc(thumb, 0, 360);
-		graphics.setDrawColor((alpha << 24) | (settings.vkFgColor & 0x00FFFFFF));
-		graphics.drawArc(thumb, 0, 360);
+		int shell = blendRgb(CONTROL_SHELL_DARK, settings.vkBgColor, 0.18f);
+		int face = blendRgb(CONTROL_FACE_DARK, settings.vkBgColor, 0.24f);
+		int inner = blendRgb(CONTROL_INNER_DARK, settings.vkBgColor, 0.12f);
+		int edge = blendRgb(CONTROL_EDGE_LIGHT, settings.vkOutlineColor, 0.30f);
+		int accent = blendRgb(ANALOG_ACCENT_BLUE, settings.vkBgColorSelected, 0.16f);
+
+		if (selected) {
+			fillCircle(graphics, centerX, centerY, radius * 1.10f,
+					colorWithAlpha(settings.vkBgColorSelected, scaledAlpha(alpha, 0.15f)));
+		}
+
+		// Outer translucent halo and chassis.
+		fillCircle(graphics, centerX, centerY, radius * 1.04f,
+				colorWithAlpha(accent, scaledAlpha(alpha, active ? 0.18f : 0.10f)));
+		fillCircle(graphics, centerX, centerY, radius * 0.94f,
+				colorWithAlpha(shell, scaledAlpha(alpha, 0.66f)));
+		drawCircle(graphics, centerX, centerY, radius * 0.94f,
+				colorWithAlpha(edge, scaledAlpha(alpha, 0.52f)));
+
+		// Blue guide ring, built from concentric discs so it stays visible at any density.
+		fillCircle(graphics, centerX, centerY, radius * 0.77f,
+				colorWithAlpha(accent, scaledAlpha(alpha, active ? 0.74f : 0.46f)));
+		fillCircle(graphics, centerX, centerY, radius * 0.715f,
+				colorWithAlpha(shell, scaledAlpha(alpha, 0.90f)));
+		fillCircle(graphics, centerX, centerY, radius * 0.63f,
+				colorWithAlpha(inner, scaledAlpha(alpha, 0.76f)));
+
+		paintAnalogTicks(graphics, centerX, centerY, radius, accent, alpha);
+
+		float thumbRadius = radius * 0.43f;
+		// Thumb shadow follows the moving knob and makes the control readable over bright games.
+		fillCircle(graphics, thumbX, thumbY + radius * 0.045f, thumbRadius * 1.02f,
+				colorWithAlpha(0x000000, scaledAlpha(alpha, 0.52f)));
+		fillCircle(graphics, thumbX, thumbY, thumbRadius * 1.13f,
+				colorWithAlpha(accent, scaledAlpha(alpha, active ? 0.32f : 0.13f)));
+		fillCircle(graphics, thumbX, thumbY, thumbRadius,
+				colorWithAlpha(accent, scaledAlpha(alpha, active ? 0.86f : 0.54f)));
+		fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.86f,
+				colorWithAlpha(face, scaledAlpha(alpha, 0.96f)));
+		fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.69f,
+				colorWithAlpha(blendRgb(face, edge, 0.12f), scaledAlpha(alpha, 0.96f)));
+		drawCircle(graphics, thumbX, thumbY, thumbRadius * 0.86f,
+				colorWithAlpha(edge, scaledAlpha(alpha, 0.52f)));
+
+		// Subtle specular spot: enough depth to echo the reference without obscuring gameplay.
+		fillCircle(graphics,
+				thumbX - thumbRadius * 0.18f,
+				thumbY - thumbRadius * 0.20f,
+				thumbRadius * 0.30f,
+				colorWithAlpha(0xFFFFFF, scaledAlpha(alpha, 0.07f)));
+	}
+
+	private void paintAnalogTicks(
+			CanvasWrapper graphics,
+			float cx, float cy, float radius,
+			int accent, int alpha) {
+		float offset = radius * 0.84f;
+		float length = Math.max(3.0f, radius * 0.105f);
+		float thickness = Math.max(1.5f, radius * 0.018f);
+		graphics.setFillColor(colorWithAlpha(accent, scaledAlpha(alpha, 0.84f)));
+
+		paintRect.set(cx - thickness / 2f, cy - offset - length / 2f,
+				cx + thickness / 2f, cy - offset + length / 2f);
+		graphics.fillRect(paintRect);
+		paintRect.set(cx - thickness / 2f, cy + offset - length / 2f,
+				cx + thickness / 2f, cy + offset + length / 2f);
+		graphics.fillRect(paintRect);
+		paintRect.set(cx - offset - length / 2f, cy - thickness / 2f,
+				cx - offset + length / 2f, cy + thickness / 2f);
+		graphics.fillRect(paintRect);
+		paintRect.set(cx + offset - length / 2f, cy - thickness / 2f,
+				cx + offset + length / 2f, cy + thickness / 2f);
+		graphics.fillRect(paintRect);
+	}
+
+	private void fillCircle(CanvasWrapper graphics, float cx, float cy, float radius, int color) {
+		paintRect.set(cx - radius, cy - radius, cx + radius, cy + radius);
+		graphics.setFillColor(color);
+		graphics.fillArc(paintRect, 0, 360);
+	}
+
+	private void drawCircle(CanvasWrapper graphics, float cx, float cy, float radius, int color) {
+		paintRect.set(cx - radius, cy - radius, cx + radius, cy + radius);
+		graphics.setDrawColor(color);
+		graphics.drawArc(paintRect, 0, 360);
+	}
+
+	private static int colorWithAlpha(int rgb, int alpha) {
+		return ((alpha & 0xFF) << 24) | (rgb & 0x00FFFFFF);
+	}
+
+	private static int scaledAlpha(int alpha, float factor) {
+		return Math.max(0, Math.min(0xFF, Math.round(alpha * factor)));
+	}
+
+	private static int blendRgb(int first, int second, float secondWeight) {
+		float weight = clamp(secondWeight, 0.0f, 1.0f);
+		float firstWeight = 1.0f - weight;
+		int red = Math.round(((first >> 16) & 0xFF) * firstWeight + ((second >> 16) & 0xFF) * weight);
+		int green = Math.round(((first >> 8) & 0xFF) * firstWeight + ((second >> 8) & 0xFF) * weight);
+		int blue = Math.round((first & 0xFF) * firstWeight + (second & 0xFF) * weight);
+		return (red << 16) | (green << 8) | blue;
 	}
 
 	private VirtualDpadGeometry dpadGeometry() {
