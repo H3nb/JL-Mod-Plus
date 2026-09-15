@@ -1380,12 +1380,6 @@ private fun InputSection(
     onRequestAction: (ConfigAction) -> Unit,
     showLayoutActions: Boolean,
 ) {
-    GamepadSection(
-        form = form,
-        controllerAvailable = state.controllerAvailable,
-        onFormChanged = onFormChanged,
-        events = events,
-    )
     ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
         val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
         ConfigChoicePreference(
@@ -1413,6 +1407,12 @@ private fun InputSection(
             title = stringResource(R.string.pref_map_keys),
             description = stringResource(R.string.config_help_key_mapping),
             onClick = events::onKeyMappings,
+        )
+        GamepadInputPreferences(
+            form = form,
+            controllerAvailable = state.controllerAvailable,
+            onFormChanged = onFormChanged,
+            events = events,
         )
     }
     ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard)) {
@@ -1997,6 +1997,7 @@ internal fun ConfigSliderDialog(
                                 .shadow(2.dp, CircleShape)
                                 .background(MaterialTheme.colorScheme.primary, CircleShape),
                         )
+                    },
                     },
                 )
                 OutlinedTextField(
