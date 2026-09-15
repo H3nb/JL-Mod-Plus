@@ -74,9 +74,7 @@ import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.clearNavigationFocusOnTouch
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import io.github.h3nb.jlmodplus.ui.showNavigationFocusForKey
-import javax.microedition.lcdui.keyboard.VirtualControlsKeyboard
 import javax.microedition.shell.timing.EmulationSpeed
-import javax.microedition.util.ContextHolder
 import kotlin.math.roundToInt
 
 /** Android-host menu state only; Java ME Displayable and Command state stay in the runtime. */
@@ -164,7 +162,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                     actions = menuActions,
                     onDismissMenu = ::closeMenu,
                     onOpenVirtualKeyboardPage = {
-                        refreshVirtualControlState()
                         virtualKeyboardPage = true
                         controllerFocusIndex = 0
                     },
@@ -172,8 +169,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                         virtualKeyboardPage = false
                         controllerFocusIndex = 0
                     },
-                    onToggleVirtualDpad = ::toggleVirtualDpad,
-                    onToggleVirtualAnalog = ::toggleVirtualAnalog,
                     onNavigationFocusChanged = { controllerFocusVisible = it },
                 )
                 if (limitFpsVisible) {
@@ -229,7 +224,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         emulationSpeedAuto: Boolean,
         memoryEditorBubbleEnabled: Boolean,
     ) {
-        val controls = activeVirtualControls()
         state = RuntimeMenuUiState(
             title = title,
             isCanvas = isCanvas,
@@ -237,8 +231,8 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             imeAvailable = imeAvailable,
             virtualKeyboardAvailable = virtualKeyboardAvailable,
             virtualKeyboardEditing = virtualKeyboardEditing,
-            virtualDpadEnabled = controls?.isVirtualDpadEnabled() ?: state.virtualDpadEnabled,
-            virtualAnalogEnabled = controls?.isVirtualAnalogEnabled() ?: state.virtualAnalogEnabled,
+            virtualDpadEnabled = state.virtualDpadEnabled,
+            virtualAnalogEnabled = state.virtualAnalogEnabled,
             orientationLocked = orientationLocked,
             emulationSpeedAvailable = emulationSpeedAvailable,
             emulationSpeedPercent = emulationSpeedPercent,
@@ -248,34 +242,10 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     }
 
     fun openMenu() {
-        refreshVirtualControlState()
         menuVisible = true
         virtualKeyboardPage = false
         controllerFocusIndex = 0
         controllerFocusVisible = false
-    }
-
-    private fun activeVirtualControls(): VirtualControlsKeyboard? =
-        ContextHolder.getVk() as? VirtualControlsKeyboard
-
-    private fun refreshVirtualControlState() {
-        val controls = activeVirtualControls() ?: return
-        state = state.copy(
-            virtualDpadEnabled = controls.isVirtualDpadEnabled(),
-            virtualAnalogEnabled = controls.isVirtualAnalogEnabled(),
-        )
-    }
-
-    private fun toggleVirtualDpad() {
-        val controls = activeVirtualControls() ?: return
-        controls.setVirtualDpadEnabled(!controls.isVirtualDpadEnabled())
-        refreshVirtualControlState()
-    }
-
-    private fun toggleVirtualAnalog() {
-        val controls = activeVirtualControls() ?: return
-        controls.setVirtualAnalogEnabled(!controls.isVirtualAnalogEnabled())
-        refreshVirtualControlState()
     }
 
     /** Allows the Activity's legacy Back/key paths to dismiss an already-open host menu. */
@@ -317,9 +287,14 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             HostCommand.NextTab,
             -> moveControllerFocus(1)
             HostCommand.Back,
-            HostCommand.OpenMenu,
             HostCommand.OpenKeypad,
-            -> closeMenu()
+            -> if (virtualKeyboardPage) {
+                virtualKeyboardPage = false
+                controllerFocusIndex = 0
+            } else {
+                closeMenu()
+            }
+            HostCommand.OpenMenu -> closeMenu()
             HostCommand.Activate -> controllerItems().getOrNull(controllerFocusIndex)?.activate?.invoke()
         }
         return true
@@ -378,13 +353,11 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private fun controllerItems(): List<ControllerMenuItem> {
         if (virtualKeyboardPage) {
             return buildList {
-                add(ControllerMenuItem("vc.back") { virtualKeyboardPage = false; controllerFocusIndex = 0 })
-                add(ControllerMenuItem("vc.dpad") { toggleVirtualDpad() })
-                add(ControllerMenuItem("vc.analog") { toggleVirtualAnalog() })
-                add(ControllerMenuItem("vc.edit") { closeMenu(); actions.onEditVirtualKeyboardLayout() })
-                if (state.virtualKeyboardEditing) {
-                    add(ControllerMenuItem("vc.finish") { closeMenu(); actions.onFinishVirtualKeyboardLayout() })
-                }
+                add(ControllerMenuItem("vc.edit") {
+                    closeMenu()
+                    if (state.virtualKeyboardEditing) actions.onFinishVirtualKeyboardLayout()
+                    else actions.onEditVirtualKeyboardLayout()
+                })
                 add(ControllerMenuItem("vc.switch") { closeMenu(); actions.onSwitchVirtualKeyboardLayout() })
                 add(ControllerMenuItem("vc.hide") { closeMenu(); actions.onHideVirtualKeyboardButtons() })
             }
@@ -400,7 +373,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                 add(ControllerMenuItem("fps") { menuActions.onLimitFps() })
                 if (state.emulationSpeedAvailable) add(ControllerMenuItem("speed") { menuActions.onEmulationSpeed() })
                 if (state.virtualKeyboardAvailable) add(ControllerMenuItem("vc") {
-                    refreshVirtualControlState()
                     virtualKeyboardPage = true
                     controllerFocusIndex = 0
                 })
@@ -624,8 +596,6 @@ internal fun RuntimeMenuHost(
     onDismissMenu: () -> Unit,
     onOpenVirtualKeyboardPage: () -> Unit = {},
     onCloseVirtualKeyboardPage: () -> Unit = {},
-    onToggleVirtualDpad: () -> Unit = {},
-    onToggleVirtualAnalog: () -> Unit = {},
     modifier: Modifier = Modifier,
     onNavigationFocusChanged: (Boolean) -> Unit = {},
 ) {
@@ -648,8 +618,6 @@ internal fun RuntimeMenuHost(
                 onDismiss = onDismissMenu,
                 onOpenVirtualKeyboardPage = onOpenVirtualKeyboardPage,
                 onCloseVirtualKeyboardPage = onCloseVirtualKeyboardPage,
-                onToggleVirtualDpad = onToggleVirtualDpad,
-                onToggleVirtualAnalog = onToggleVirtualAnalog,
                 onNavigationFocusChanged = onNavigationFocusChanged,
             )
         }
@@ -724,8 +692,6 @@ private fun RuntimeMenuDialog(
     onDismiss: () -> Unit,
     onOpenVirtualKeyboardPage: () -> Unit,
     onCloseVirtualKeyboardPage: () -> Unit,
-    onToggleVirtualDpad: () -> Unit,
-    onToggleVirtualAnalog: () -> Unit,
     onNavigationFocusChanged: (Boolean) -> Unit,
 ) {
     val layout = runtimeMenuDialogLayout()
@@ -737,15 +703,33 @@ private fun RuntimeMenuDialog(
         properties = layout.properties,
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = if (virtualKeyboardPage) {
-                    stringResource(R.string.runtime_virtual_controls_title)
-                } else {
-                    state.title
-                },
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (virtualKeyboardPage) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    IconButton(
+                        onClick = onCloseVirtualKeyboardPage,
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_back),
+                            contentDescription = stringResource(R.string.action_back),
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.runtime_virtual_controls_title),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            } else {
+                Text(
+                    text = state.title,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         },
         text = {
             val listState = rememberLazyListState()
@@ -763,9 +747,6 @@ private fun RuntimeMenuDialog(
                         focusedIndex = controllerFocusIndex,
                         actions = actions,
                         onOpenVirtualKeyboardPage = onOpenVirtualKeyboardPage,
-                        onCloseVirtualKeyboardPage = onCloseVirtualKeyboardPage,
-                        onToggleVirtualDpad = onToggleVirtualDpad,
-                        onToggleVirtualAnalog = onToggleVirtualAnalog,
                         onDismiss = onDismiss,
                     )
                 }
@@ -786,63 +767,23 @@ private fun LazyListScope.runtimeMenuItems(
     focusedIndex: Int,
     actions: RuntimeMenuActions,
     onOpenVirtualKeyboardPage: () -> Unit,
-    onCloseVirtualKeyboardPage: () -> Unit,
-    onToggleVirtualDpad: () -> Unit,
-    onToggleVirtualAnalog: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     var rowIndex = 0
     fun nextFocused(): Boolean = focusedIndex == rowIndex++
 
     if (virtualKeyboardPage) {
-        val backFocused = nextFocused()
-        item {
-            RuntimeMenuItem(
-                label = R.string.action_back,
-                leadingIcon = R.drawable.ic_arrow_back,
-                focused = backFocused,
-                onClick = onCloseVirtualKeyboardPage,
-            )
-        }
-        val dpadFocused = nextFocused()
-        item {
-            RuntimeToggleItem(
-                label = R.string.runtime_virtual_controls_dpad,
-                checked = state.virtualDpadEnabled,
-                focused = dpadFocused,
-                onClick = onToggleVirtualDpad,
-            )
-        }
-        val analogFocused = nextFocused()
-        item {
-            RuntimeToggleItem(
-                label = R.string.runtime_virtual_controls_analog,
-                checked = state.virtualAnalogEnabled,
-                focused = analogFocused,
-                onClick = onToggleVirtualAnalog,
-            )
-        }
         val editFocused = nextFocused()
         item {
             RuntimeActionItem(
-                R.string.runtime_virtual_controls_edit,
+                if (state.virtualKeyboardEditing) R.string.layout_edit_finish
+                else R.string.runtime_virtual_controls_edit,
                 onDismiss,
-                actions::onEditVirtualKeyboardLayout,
-                leadingIcon = R.drawable.ic_edit,
+                if (state.virtualKeyboardEditing) actions::onFinishVirtualKeyboardLayout
+                else actions::onEditVirtualKeyboardLayout,
+                leadingIcon = if (state.virtualKeyboardEditing) R.drawable.ic_runtime_done else R.drawable.ic_edit,
                 focused = editFocused,
             )
-        }
-        if (state.virtualKeyboardEditing) {
-            val finishFocused = nextFocused()
-            item {
-                RuntimeActionItem(
-                    R.string.layout_edit_finish,
-                    onDismiss,
-                    actions::onFinishVirtualKeyboardLayout,
-                    leadingIcon = R.drawable.ic_runtime_done,
-                    focused = finishFocused,
-                )
-            }
         }
         val switchFocused = nextFocused()
         item {
