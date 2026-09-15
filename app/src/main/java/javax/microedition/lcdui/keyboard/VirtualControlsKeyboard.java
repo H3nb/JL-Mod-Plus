@@ -16,6 +16,7 @@ package javax.microedition.lcdui.keyboard;
 import android.graphics.RectF;
 import android.view.View;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -23,6 +24,7 @@ import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
 import javax.microedition.util.ContextHolder;
 
+import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.input.GuestViewport;
@@ -49,12 +51,20 @@ import io.github.h3nb.jlmodplus.input.VirtualDpadGeometry;
  * snapping behavior.
  */
 public final class VirtualControlsKeyboard extends VirtualKeyboard {
+	public static final int TYPE_DPAD_STANDARD = 7;
+	public static final int TYPE_ANALOG_STANDARD = 8;
+
+	private static final int LEGACY_TEMPLATE_NUMBERS_ARROWS = 3;
+	private static final int GROUPED_CONTROL_COUNT = 2;
 	private static final float DEFAULT_DPAD_CENTER_X = 0.82f;
 	private static final float DEFAULT_DPAD_CENTER_Y = 0.78f;
 	private static final float DEFAULT_DPAD_RADIUS = 0.16f;
 	private static final float DEFAULT_ANALOG_CENTER_X = 0.18f;
 	private static final float DEFAULT_ANALOG_CENTER_Y = 0.78f;
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
+	private static final float STANDARD_MOVEMENT_CENTER_X = 0.18f;
+	private static final float STANDARD_MOVEMENT_CENTER_Y = 0.78f;
+	private static final float STANDARD_MOVEMENT_RADIUS = 0.16f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
 	private static final float MIN_RADIUS_FRACTION = 0.07f;
@@ -153,15 +163,97 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	/**
+	 * Expose grouped movement controls through the same hide/show contract as legacy virtual keys.
+	 * The returned visibility array keeps the historical convention: true means hidden.
+	 */
+	@Override
+	public String[] getKeyNames() {
+		String[] legacyNames = super.getKeyNames();
+		String[] names = Arrays.copyOf(legacyNames, legacyNames.length + GROUPED_CONTROL_COUNT);
+		names[legacyNames.length] = ContextHolder.getAppContext().getString(R.string.runtime_virtual_controls_dpad);
+		names[legacyNames.length + 1] = ContextHolder.getAppContext().getString(R.string.runtime_virtual_controls_analog);
+		return names;
+	}
+
+	@Override
+	public boolean[] getKeysVisibility() {
+		boolean[] legacyStates = super.getKeysVisibility();
+		boolean[] states = Arrays.copyOf(legacyStates, legacyStates.length + GROUPED_CONTROL_COUNT);
+		states[legacyStates.length] = !settings.virtualDpadEnabled;
+		states[legacyStates.length + 1] = !settings.virtualAnalogEnabled;
+		return states;
+	}
+
+	/**
 	 * The old eight independent arrow buttons are implementation details of VirtualKeyboard.
 	 * VirtualControlsKeyboard replaces them with one grouped D-pad, so they stay hidden even when
-	 * the generic hide/show dialog modifies other virtual-key visibility.
+	 * the universal hide/show dialog modifies other virtual-control visibility.
 	 */
 	@Override
 	public void setKeysVisibility(boolean[] states) {
-		boolean[] next = states == null ? null : states.clone();
-		if (next != null) forceLegacyDirectionsHidden(next);
-		super.setKeysVisibility(next == null ? states : next);
+		if (states == null) return;
+		int legacyCount = super.getKeyNames().length;
+		if (states.length < legacyCount) {
+			super.setKeysVisibility(states);
+			return;
+		}
+
+		boolean[] legacyStates = Arrays.copyOf(states, legacyCount);
+		forceLegacyDirectionsHidden(legacyStates);
+		super.setKeysVisibility(legacyStates);
+
+		if (states.length < legacyCount + GROUPED_CONTROL_COUNT) return;
+		boolean nextDpadEnabled = !states[legacyCount];
+		boolean nextAnalogEnabled = !states[legacyCount + 1];
+		boolean groupedChanged = nextDpadEnabled != settings.virtualDpadEnabled ||
+				nextAnalogEnabled != settings.virtualAnalogEnabled;
+		if (!groupedChanged) return;
+
+		if (!nextDpadEnabled) endDpad();
+		if (!nextAnalogEnabled) endAnalog();
+		settings.virtualDpadEnabled = nextDpadEnabled;
+		settings.virtualAnalogEnabled = nextAnalogEnabled;
+		ProfilesManager.saveConfig(settings);
+		invalidateOverlay();
+	}
+
+	@Override
+	public void setLayout(int variant) {
+		if (variant != TYPE_DPAD_STANDARD && variant != TYPE_ANALOG_STANDARD) {
+			super.setLayout(variant);
+			return;
+		}
+
+		endDpad();
+		endAnalog();
+		// Start from the long-standing Numbers & Arrows geometry so existing templates and default
+		// behavior stay untouched. A template application becomes a normal custom layout afterward.
+		super.setLayout(LEGACY_TEMPLATE_NUMBERS_ARROWS);
+
+		String[] legacyNames = super.getKeyNames();
+		boolean[] hidden = new boolean[legacyNames.length];
+		Arrays.fill(hidden, true);
+		for (int i = 0; i < legacyNames.length; i++) {
+			String name = legacyNames[i];
+			if ("F".equals(name) || "L".equals(name) || "R".equals(name)) {
+				hidden[i] = false;
+			}
+		}
+		forceLegacyDirectionsHidden(hidden);
+		super.setKeysVisibility(hidden);
+
+		settings.virtualDpadEnabled = variant == TYPE_DPAD_STANDARD;
+		settings.virtualAnalogEnabled = variant == TYPE_ANALOG_STANDARD;
+		settings.virtualDpadCenterX = STANDARD_MOVEMENT_CENTER_X;
+		settings.virtualDpadCenterY = STANDARD_MOVEMENT_CENTER_Y;
+		settings.virtualDpadRadius = STANDARD_MOVEMENT_RADIUS;
+		settings.virtualAnalogCenterX = STANDARD_MOVEMENT_CENTER_X;
+		settings.virtualAnalogCenterY = STANDARD_MOVEMENT_CENTER_Y;
+		settings.virtualAnalogRadius = STANDARD_MOVEMENT_RADIUS;
+		rebuildAnalogStick();
+		ProfilesManager.saveConfig(settings);
+		super.onLayoutChanged(TYPE_CUSTOM);
+		invalidateOverlay();
 	}
 
 	@Override
@@ -521,7 +613,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float radius = pinchStartRadius * distance / Math.max(1.0f, pinchStartDistance);
 		float shortest = Math.max(1.0f, Math.min(screenBounds.width(), screenBounds.height()));
 		setControlRadius(editControl, radius / shortest);
-		if (editControl == EditControl.ANALOG) rebuildAnalogStick();
 	}
 
 	private void resetMoveOffsetFromPrimary() {
@@ -756,17 +847,37 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	private void paintAnalog(CanvasWrapper graphics) {
-		VirtualAnalogVisualState visual = analogStick.visualState(viewport);
-		float centerX = screenBounds.left + visual.getCenterX();
-		float centerY = screenBounds.top + visual.getCenterY();
-		float radius = visual.getRadius();
-		float rawThumbX = screenBounds.left + visual.getThumbX();
-		float rawThumbY = screenBounds.top + visual.getThumbY();
+		boolean editingAnalog = getLayoutEditMode() != LAYOUT_EOF && editControl == EditControl.ANALOG;
+		float centerX;
+		float centerY;
+		float radius;
+		float rawThumbX;
+		float rawThumbY;
+		boolean active;
+		if (editingAnalog) {
+			// The editor mutates normalized geometry directly. Read that live geometry instead of the
+			// immutable gameplay stick snapshot so drag/pinch tracks the finger without rebuilding an
+			// object on every motion event.
+			VirtualDpadGeometry geometry = analogGeometry();
+			centerX = geometry.getCenterX();
+			centerY = geometry.getCenterY();
+			radius = geometry.getRadius();
+			rawThumbX = centerX;
+			rawThumbY = centerY;
+			active = false;
+		} else {
+			VirtualAnalogVisualState visual = analogStick.visualState(viewport);
+			centerX = screenBounds.left + visual.getCenterX();
+			centerY = screenBounds.top + visual.getCenterY();
+			radius = visual.getRadius();
+			rawThumbX = screenBounds.left + visual.getThumbX();
+			rawThumbY = screenBounds.top + visual.getThumbY();
+			active = visual.getActive();
+		}
 		// Preserve full input range but compress visual travel so the thumb never appears to leave
 		// its physical well.
 		float thumbX = centerX + (rawThumbX - centerX) * 0.47f;
 		float thumbY = centerY + (rawThumbY - centerY) * 0.47f;
-		boolean active = visual.getActive();
 		boolean selected = editControl == EditControl.ANALOG;
 		int alpha = controlAlpha();
 
@@ -1005,14 +1116,14 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	private void hideLegacyDirectionButtons() {
-		boolean[] hidden = getKeysVisibility();
+		boolean[] hidden = super.getKeysVisibility();
 		forceLegacyDirectionsHidden(hidden);
 		super.setKeysVisibility(hidden);
 	}
 
 	private void forceLegacyDirectionsHidden(boolean[] hidden) {
 		if (hidden == null) return;
-		String[] names = getKeyNames();
+		String[] names = super.getKeyNames();
 		for (int i = 0; i < Math.min(hidden.length, names.length); i++) {
 			String name = names[i];
 			if ("↑".equals(name) || "↓".equals(name) || "←".equals(name) || "→".equals(name) ||
