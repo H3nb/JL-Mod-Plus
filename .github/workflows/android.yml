@@ -94,8 +94,8 @@ jobs:
           app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigGamepadUnavailableScreenshot_Config gamepad unavailable large font_b00c7e4e_0.png
           app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigLandscapeScreenshot_Config landscape_75b9c080_0.png
           app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigLargeFontFormScreenshot_Config large font form_ea9d3c41_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigLightPhoneScreenshot_Config light phone_d64d007f_0.png
-          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigMediaEmptyScreenshot_Config media empty_05f2e3b0_0.png
+          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigLightPhoneScreenshot_Config light phone_d64d007f_0.png
+          app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigMediaEmptyScreenshot_Config media empty_05f2e3b0_0.png
           app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigMediumPortraitScreenshot_Config medium portrait_11f22425_0.png
           app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigPreferenceComponentsScreenshot_Config preference components_c84baa18_0.png
           app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigQuickDarkScreenshot_Config quick dark_758f3757_0.png
