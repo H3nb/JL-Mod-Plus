@@ -1998,7 +1998,6 @@ internal fun ConfigSliderDialog(
                                 .background(MaterialTheme.colorScheme.primary, CircleShape),
                         )
                     },
-                    },
                 )
                 OutlinedTextField(
                     value = draftText,
