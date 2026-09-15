@@ -121,7 +121,7 @@ Android instrumentation includes `KeyMapperMappingRulesTest`, the runtime-menu v
 
 The obsolete standalone gamepad-section screenshot was removed after the analog controls were integrated into Key Input. Existing screenshot references are otherwise left unchanged; a new reference should only be accepted after the current integrated Controls screen has been rendered and visually reviewed.
 
-GitHub Actions remains the authoritative final gate: compile Kotlin/Java and Android-test sources, run JVM tests, lint, assemble app/test APKs, verify native packaging, and validate screenshot references. As of this checkpoint, GitHub reports no Actions run for the latest PR head, so older successful or superseded runs are not evidence for the current state.
+Android CI run 1469 completed successfully on source/test commit `2ea5de58dc3e39f87194cb2ba54b176de0125c5a`: lint, JVM tests, screenshot validation, emulator debug APK assembly, and instrumentation APK assembly all passed. The following commit only records this validation result in documentation and does not alter source, tests, resources, or build configuration.
 
 ## 8. Hardware validation boundary
 
@@ -139,6 +139,6 @@ Recommended physical smoke matrix:
 8. Key Input calibration availability with controller disconnect/reconnect.
 9. D-pad Standard and Analog Standard template selection without changing the legacy default layout.
 
-Until that matrix is run, describe the implementation as source-reviewed and test-covered, not current-head CI-validated or universally hardware-certified.
+Until that matrix is run, describe the implementation as CI-validated for the automated checks above, not universally hardware-certified.
 
 - The grouped virtual controls use a physical-controller-inspired visual treatment: a layered blue-ring analog well and four separated D-pad arms with a center pivot. Pressed D-pad arms light independently, so diagonal input visibly highlights both directions; profile opacity, normalized geometry, drag/pinch editing, and input hysteresis remain intact.
