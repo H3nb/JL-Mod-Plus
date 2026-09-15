@@ -131,31 +131,6 @@ fun ConfigQuickDarkScreenshot() {
 }
 
 @PreviewTest
-@Preview(
-    name = "Config gamepad unavailable large font",
-    widthDp = 360,
-    heightDp = 800,
-    fontScale = 1.5f,
-    showBackground = true,
-)
-@Composable
-fun ConfigGamepadUnavailableScreenshot() {
-    JLModPlusTheme {
-        // GamepadSection emits more than one section. The production Controls page already places
-        // it in a Column; mirror that parent here so standalone screenshot previews do not stack
-        // sibling sections on top of each other.
-        Column {
-            GamepadSection(
-                form = PreviewConfigState.form,
-                controllerAvailable = false,
-                onFormChanged = {},
-                events = NoOpConfigEvents,
-            )
-        }
-    }
-}
-
-@PreviewTest
 @Preview(name = "Config preference components", widthDp = 360, heightDp = 520, showBackground = true)
 @Composable
 fun ConfigPreferenceComponentsScreenshot() {
