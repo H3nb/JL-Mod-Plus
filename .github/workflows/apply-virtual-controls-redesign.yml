@@ -1,0 +1,58 @@
+name: Apply Virtual Controls Redesign
+
+on:
+  pull_request:
+    branches:
+      - alpha
+    paths:
+      - '.ci/apply-virtual-controls-reference'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Apply reference redesign and push clean commit
+        shell: bash
+        env:
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "+refs/heads/${PR_HEAD_REF}:refs/remotes/origin/${PR_HEAD_REF}"
+          git checkout -B "${PR_HEAD_REF}" "refs/remotes/origin/${PR_HEAD_REF}"
+
+          python3 -c "from pathlib import Path; p=Path('.ci/apply-virtual-controls-reference.py'); s=p.read_text(); p.write_text(s.replace(\"new_block = r'''\", \"new_block = '''\", 1))"
+          python3 .ci/apply-virtual-controls-reference.py
+
+          cat > /tmp/expected-source.txt <<'EOF'
+          app/src/main/java/javax/microedition/lcdui/keyboard/VirtualControlsKeyboard.java
+          docs/gamepad-implementation-status.md
+          EOF
+          sed -i 's/^          //' /tmp/expected-source.txt
+          git diff --name-only -- app/src/main/java docs | sort > /tmp/actual-source.txt
+          sort /tmp/expected-source.txt -o /tmp/expected-source.txt
+          diff -u /tmp/expected-source.txt /tmp/actual-source.txt
+
+          git rm .github/workflows/apply-virtual-controls-redesign.yml \
+                 .ci/apply-virtual-controls-reference \
+                 .ci/apply-virtual-controls-reference.py
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/javax/microedition/lcdui/keyboard/VirtualControlsKeyboard.java \
+                  docs/gamepad-implementation-status.md
+          git commit -m 'Redesign virtual analog and D-pad controls'
+
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin "HEAD:${PR_HEAD_REF}"
