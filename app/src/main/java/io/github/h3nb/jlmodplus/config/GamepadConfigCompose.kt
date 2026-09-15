@@ -28,6 +28,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.input.ControllerConfig
 import io.github.h3nb.jlmodplus.input.DirectionMode
@@ -191,7 +192,7 @@ internal fun GamepadCalibrationDialog(
                     .heightIn(max = adaptiveDialogLayout().maxHeight)
                     .verticalScroll(rememberScrollState()),
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(androidx.compose.ui.unit.dp(8f))) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(calibrationPhaseLabel(state.phase), style = MaterialTheme.typography.labelMedium)
                     state.signature?.let {
                         Text(
@@ -208,7 +209,7 @@ internal fun GamepadCalibrationDialog(
             }
         },
         dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(androidx.compose.ui.unit.dp(4f))) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(onClick = onReset) {
                     Text(androidx.compose.ui.res.stringResource(R.string.reset))
                 }
@@ -218,7 +219,7 @@ internal fun GamepadCalibrationDialog(
             }
         },
         confirmButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(androidx.compose.ui.unit.dp(4f))) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(enabled = state.canAdvance, onClick = onAdvance) {
                     Text(androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibration_next))
                 }
