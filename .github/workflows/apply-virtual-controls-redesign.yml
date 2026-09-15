@@ -44,9 +44,9 @@ jobs:
           sort /tmp/expected-source.txt -o /tmp/expected-source.txt
           diff -u /tmp/expected-source.txt /tmp/actual-source.txt
 
-          git rm .github/workflows/apply-virtual-controls-redesign.yml \
-                 .ci/apply-virtual-controls-reference \
-                 .ci/apply-virtual-controls-reference.py
+          git rm -f .github/workflows/apply-virtual-controls-redesign.yml \
+                    .ci/apply-virtual-controls-reference \
+                    .ci/apply-virtual-controls-reference.py
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
