@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Runtime rendering uses the physical-controller-inspired grouped controls in VirtualControlsKeyboard. -->
+    <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
     <string name="config_virtual_controls_movement">Virtual Controls</string>
     <string name="config_virtual_movement_control">Movement Control</string>
     <string name="config_virtual_movement_control_summary">Choose the touch movement controls used by this MIDlet. D-pad and analog stick share the same guest input ownership path.</string>
