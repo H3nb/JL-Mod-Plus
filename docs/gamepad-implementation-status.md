@@ -1,9 +1,9 @@
 # Gamepad and virtual controls checkpoint
 
 Working branch: `feature/extend-gamepad-support`  
-Pull request: #124 → `alpha`
+Pull request: `H3nb/JL-Mod-Plus#124` → `alpha`
 
-This checkpoint describes the current architecture after the controller-input redesign. It intentionally separates JL-Mod Plus host navigation from MIDlet guest input even when both originate from the same keyboard/gamepad.
+This checkpoint describes the current controller/virtual-control architecture. JL-Mod Plus host navigation and MIDlet guest input remain separate even when both originate from the same keyboard or gamepad.
 
 ## 1. Input ownership
 
@@ -18,7 +18,7 @@ A host modal owns input while visible; its key/motion events must not leak to th
 
 Digital keyboard/gamepad mapping remains in the existing `KeyMapper` / `ProfileModel.keyMappings`. There is no second user-facing gamepad-button mapping table.
 
-The user-facing logical targets are exactly:
+The user-facing logical targets are:
 
 - `0`–`9`, `*`, `#`
 - `Up`, `Down`, `Left`, `Right`, `Fire`
@@ -26,54 +26,66 @@ The user-facing logical targets are exactly:
 - `A`, `B`, `C`, `D`
 - `M` — opens/closes the runtime MIDlet menu
 
-Multiple physical inputs may map to the same logical target. Common gamepad buttons are included in the shared default guest map, while START/SELECT/L1/R1 are not reserved as emulator shortcuts and remain assignable through Key Mapping.
+Multiple physical inputs may map to the same logical target. Common gamepad buttons are included in the shared default guest map, while START/SELECT/L1/R1 remain ordinary assignable inputs. A physical button mapped to `M` opens the runtime menu through the same KeyMapper contract. Android Back retains its established Activity/Back behavior.
 
-`M` is the only additional host action exposed through this mapping. User-added keyboard, phone-key, gamepad, and vendor-button bindings to `M` are detected through `KeyMapper.isOptionsMenuKey()`. Android BACK intentionally retains its established Activity/Back-dispatch path so existing short/long-press behavior is not changed by the controller router.
+## 3. Compact analog configuration
 
-## 3. Analog direction modes
+There is no dedicated Gamepad configuration section in the MIDlet settings UI.
 
-Standard MIDP has no portable analog-axis API, so directional analog support is an adapter from continuous Android axes to guest digital controls.
+The Controls page exposes one compact **Analog Stick** choice for guest directional output:
 
-Supported output modes:
+- **Off** — the primary stick does not emit MIDlet directions.
+- **4-Way** — Up/Down/Left/Right.
+- **8-Way** — cardinal directions plus simultaneous diagonal pairs.
+- **Numeric** — `7/2/9`, `4/6`, `1/8/3`.
 
-- **4-Way:** Up, Down, Left, Right.
-- **8-Way:** Up+Left, Up, Up+Right, Left, Right, Down+Left, Down, Down+Right.
-- **Numeric:** `7/2/9`, `4/6`, `1/8/3` where 2=Up, 4=Left, 6=Right, 8=Down.
+The option is profile configuration, not hardware discovery, so it can be edited before a controller is connected. Digital gamepad buttons continue to use Key Mapping regardless of this setting.
 
-`StickProcessor` applies normalization, deadzone, press/release hysteresis, angular hysteresis, calibration and response shaping before direction quantization. The capability signature used for calibration lookup is cached by `(deviceId, source)` and invalidated when the Android input device changes or is removed.
+`ControllerConfig` remains an opaque-compatible persistence subtree so existing/future calibration or advanced fields can round-trip safely. Editing the compact option changes only the primary stick's guest-direction behavior instead of rebuilding unrelated controller state.
 
-When a JL-Mod Plus HOST surface owns input, analog navigation remains host navigation and does not inherit the MIDlet's 4-Way/8-Way/Numeric output mode.
+Host analog navigation is independent from the MIDlet's selected analog output mode.
 
-## 4. Virtual controls
+## 4. Analog processing
 
-`VirtualControlsKeyboard` keeps legacy numeric/soft/game buttons while replacing the old independent direction buttons with grouped movement controls:
+`StickProcessor` handles normalization, radial deadzone, outer saturation, response shaping, press/release hysteresis, angular hysteresis, calibration, and direction quantization.
+
+The capability signature used for calibration lookup is cached by `(deviceId, source)` and invalidated when the Android input device changes or is removed.
+
+Standard MIDP has no portable analog-axis API, so analog guest support intentionally adapts continuous Android axes to MIDlet directional controls rather than inventing a non-standard Java ME axis contract.
+
+## 5. Virtual controls
+
+`VirtualControlsKeyboard` keeps legacy numeric/soft/game buttons while replacing independent direction buttons with two grouped movement controls:
 
 - one grouped virtual **D-pad**;
 - one grouped virtual **analog stick**.
 
-Each grouped control has one normalized center and one normalized radius. During layout editing:
+Each grouped control has one normalized center and radius. During layout editing:
 
-- dragging the body moves the entire control;
-- dragging its resize edge/handle resizes the entire control proportionally;
-- movement and radius snap to the edit grid;
-- geometry is stored in the MIDlet profile so it scales with viewport/orientation changes.
+- dragging the control moves the whole control;
+- pinch-resizing changes the whole control proportionally;
+- movement/radius use the edit grid and normalized persistent geometry;
+- geometry remains stable across viewport/orientation changes.
 
-The legacy keypad resize mode remains available for ordinary keypad buttons; grouped D-pad/analog resizing is not implemented as four/eight independent buttons.
+The D-pad uses press/release radial hysteresis and angular hysteresis so a thumb near the center or sector boundary does not chatter between neutral/cardinal/diagonal output.
 
-Pure behavior is covered by `VirtualDpadTest`, `VirtualAnalogStickTest`, `VirtualAnalogDirectionAdapterTest`, and `StickProcessorTest`.
+The virtual analog stick clamps its thumb to the configured circular gate and emits normalized samples through the shared stick processing stages.
 
-## 5. Compatibility hardening
+The runtime Virtual Controls menu owns visibility and layout editing. There is no second gamepad-specific virtual-control editor.
+
+## 6. Compatibility hardening
 
 The redesign preserves existing non-gamepad behavior:
 
-- Physical-keyboard repeat continues to use Android's native repeat events.
-- Legacy virtual-keypad repeat retains its previous cadence instead of inheriting controller repeat timing.
-- The controller neutral gate applies to analog takeover; digital DOWN is not sacrificed merely to activate a controller after resume/focus changes.
-- Unknown/vendor gamepad key codes remain available to the universal `KeyMapper` instead of being swallowed by a canonical-button whitelist.
-- Digital bindings no longer live in `ControllerConfig`; that schema now owns analog/controller settings only, avoiding two competing sources of truth.
-- Calibration capability signatures are cached off the motion hot path.
+- physical-keyboard repeat continues to use Android native repeat events;
+- legacy virtual-keypad repeat retains its established cadence;
+- the controller neutral gate applies to analog takeover; digital DOWN is not sacrificed merely to activate a controller after resume/focus changes;
+- unknown/vendor gamepad key codes remain available to KeyMapper instead of being swallowed by a canonical-button whitelist;
+- digital bindings do not live in `ControllerConfig`;
+- held outputs are released across focus, target and device ownership changes;
+- controller capability signatures are cached off the motion hot path.
 
-## 6. Automated evidence
+## 7. Automated evidence
 
 Relevant pure/unit coverage includes:
 
@@ -86,28 +98,27 @@ Relevant pure/unit coverage includes:
 - `VirtualAnalogStickTest`
 - `VirtualAnalogDirectionAdapterTest`
 - `LegacyVirtualKeypadRepeatTest`
-- `PointerLeaseControllerTest`
-- `PointerControllersTest`
+- pointer controller/lease tests
 - `GameCanvasKeyStateTest`
 - `ControllerConfigTest`
-- `ProfilesManagerAtomicSaveTest`
+- profile persistence tests
 
-Android instrumentation also contains `KeyMapperMappingRulesTest`, including the explicit many-to-one `M` contract.
+Android instrumentation contains `KeyMapperMappingRulesTest`, including the many-to-one `M` contract.
 
-GitHub Actions is the authoritative final gate for the current PR head: compile Kotlin/Java and Android-test sources, run the JVM suite, lint, assemble the app/test APKs, verify native packaging, and validate screenshot references. Do not infer a green current head from an older cancelled/superseded run.
+GitHub Actions remains the authoritative final gate for the current PR head: compile Kotlin/Java and Android-test sources, run JVM tests, lint, assemble app/test APKs, verify native packaging, and validate screenshot references. A cancelled/superseded run is not evidence for the current head.
 
-## 7. Hardware limitations
+## 8. Hardware validation boundary
 
-Physical controller behavior is still not claimed as fully hardware-verified because no gamepad is available in the development environment. Connected Android instrumentation and a real MIDlet/controller smoke matrix remain release evidence to collect when hardware is available.
+No physical gamepad is available in the development environment, so this PR does not claim universal hardware certification.
 
 Recommended physical smoke matrix:
 
 1. D-pad and A/B/X/Y through Key Mapping.
 2. START or another button remapped to `M`.
-3. Left stick in 4-Way, 8-Way and Numeric modes.
+3. Primary analog stick in Off, 4-Way, 8-Way and Numeric modes.
 4. Focus loss/resume and controller disconnect/reconnect while controls are held.
 5. Runtime menu/modal isolation: host navigation must not fire guest actions behind the menu.
-6. Grouped touch D-pad/analog move, resize, orientation change and persistence.
-7. Pointer/cursor modes where configured.
+6. Grouped touch D-pad/analog move, pinch-resize, orientation change and persistence.
+7. Pointer modes for profiles that already contain compatible pointer configuration.
 
-Until that matrix is run, the implementation should be described as architecturally complete with automated coverage, but not universally hardware-certified across controller models.
+Until that matrix is run, describe the implementation as architecturally/automatically validated, not universally hardware-certified.
