@@ -70,4 +70,39 @@ class VirtualDpadTest {
         assertEquals(setOf(VirtualDpadDirection.LEFT), cancelled[second])
         assertTrue(!dpad.hasContact(first))
     }
+
+    @Test
+    fun heldDirectionUsesRadialAndAngularHysteresis() {
+        val dpad = VirtualDpadController(
+            VirtualDpadSettings(
+                directionMode = VirtualDpadDirectionMode.EIGHT_WAY,
+                deadzoneFraction = 0.20f,
+                releaseDeadzoneFraction = 0.12f,
+                angularHysteresisDegrees = 8.0f,
+            ),
+        )
+
+        assertEquals(
+            setOf(VirtualDpadDirection.RIGHT),
+            dpad.begin(first, geometry, 100.0f, 50.0f),
+        )
+        // Nominally beyond the 22.5-degree boundary, but still inside the retained sector.
+        assertEquals(
+            setOf(VirtualDpadDirection.RIGHT),
+            dpad.move(first, geometry, 95.0f, 72.0f),
+        )
+        assertEquals(
+            linkedSetOf(VirtualDpadDirection.DOWN, VirtualDpadDirection.RIGHT),
+            dpad.move(first, geometry, 88.0f, 82.0f),
+        )
+        // Moving back through the press/release band keeps the held direction stable.
+        assertEquals(
+            linkedSetOf(VirtualDpadDirection.DOWN, VirtualDpadDirection.RIGHT),
+            dpad.move(first, geometry, 57.0f, 55.0f),
+        )
+        assertEquals(
+            emptySet<VirtualDpadDirection>(),
+            dpad.move(first, geometry, 54.0f, 53.0f),
+        )
+    }
 }
