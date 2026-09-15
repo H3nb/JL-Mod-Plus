@@ -174,7 +174,7 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun fullscreenCanvasMenu_exposesVirtualControlsWithoutSeparateResizeMode() {
+    fun fullscreenCanvasMenu_exposesOnlyThreeVirtualControlCustomizations() {
         composeRule.setContent {
             JLModPlusTheme {
                 RuntimeMenuHost(
@@ -185,8 +185,6 @@ class RuntimeMenuComposeTest {
                         imeAvailable = true,
                         virtualKeyboardAvailable = true,
                         virtualKeyboardEditing = true,
-                        virtualDpadEnabled = true,
-                        virtualAnalogEnabled = false,
                     ),
                     menuVisible = true,
                     actions = RecordingRuntimeMenuActions(),
@@ -199,18 +197,20 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("Take Screenshot").assertIsDisplayed()
         composeRule.onNodeWithText("Limit FPS").assertIsDisplayed()
         composeRule.onNodeWithText("Virtual Controls").performScrollTo().performClick()
-        composeRule.onNodeWithText("D-pad").assertIsDisplayed()
-        composeRule.onNodeWithText("Analog stick").assertIsDisplayed()
-        composeRule.onNodeWithText("Edit Virtual Controls").assertIsDisplayed()
         composeRule.onNodeWithText("Finish Editing").assertIsDisplayed()
-        composeRule.onNodeWithText("Show or Hide Buttons").assertIsDisplayed()
+        composeRule.onNodeWithText("Layout Templates").assertIsDisplayed()
+        composeRule.onNodeWithText("Show Or Hide Controls").assertIsDisplayed()
+        composeRule.onAllNodesWithText("D-pad").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Analog Stick").assertCountEquals(0)
         composeRule.onAllNodesWithText("Key Layout Resize Mode").assertCountEquals(0)
+        composeRule.onNodeWithContentDescription("Back")
+            .assertWidthIsAtLeast(48.dp)
+            .assertHeightIsAtLeast(48.dp)
     }
 
     @Test
-    fun virtualControlSwitchesStayOnRuntimePageAndDispatchTheirOwnCallbacks() {
-        var dpadToggles = 0
-        var analogToggles = 0
+    fun virtualControlActionsDismissBeforeDispatchingTheirCallbacks() {
+        val events = mutableListOf<String>()
         composeRule.setContent {
             JLModPlusTheme {
                 RuntimeMenuHost(
@@ -218,24 +218,22 @@ class RuntimeMenuComposeTest {
                         title = "Canvas MIDlet",
                         isCanvas = true,
                         virtualKeyboardAvailable = true,
-                        virtualDpadEnabled = true,
-                        virtualAnalogEnabled = false,
                     ),
                     menuVisible = true,
                     virtualKeyboardPage = true,
-                    actions = RecordingRuntimeMenuActions(),
-                    onDismissMenu = {},
-                    onToggleVirtualDpad = { dpadToggles++ },
-                    onToggleVirtualAnalog = { analogToggles++ },
+                    actions = RecordingRuntimeMenuActions(events),
+                    onDismissMenu = { events += "dismiss" },
                 )
             }
         }
 
-        composeRule.onNodeWithText("D-pad").performClick()
-        composeRule.onNodeWithText("Analog stick").performClick()
-        composeRule.onNodeWithText("Virtual Controls").assertIsDisplayed()
-        assertEquals(1, dpadToggles)
-        assertEquals(1, analogToggles)
+        composeRule.onNodeWithText("Edit Layout").performClick()
+        composeRule.onNodeWithText("Layout Templates").performClick()
+        composeRule.onNodeWithText("Show Or Hide Controls").performClick()
+        assertEquals(
+            listOf("dismiss", "edit", "dismiss", "switch", "dismiss", "hide"),
+            events,
+        )
     }
 
     @Test
