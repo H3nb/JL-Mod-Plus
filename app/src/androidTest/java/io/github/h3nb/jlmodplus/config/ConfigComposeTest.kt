@@ -92,7 +92,7 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun gamepadSelectionStaysInactiveWithoutController() {
+    fun analogSelectionRemainsAvailableWithoutController() {
         val base = sampleState()
         val state = ConfigUiState(
             base.form,
@@ -116,13 +116,18 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Enable Analog Controls").assertIsNotEnabled()
+        composeRule.onNodeWithText("Analog Stick").assertIsEnabled()
+        composeRule.onNodeWithText("Configure Gamepad").assertDoesNotExist()
+        composeRule.onNodeWithText("Reset Analog Controls").assertDoesNotExist()
         composeRule.onNodeWithText(
             "No compatible gamepad is connected. Gamepad controls stay inactive until one is detected.",
-        ).assertExists()
-        composeRule.onNodeWithText("Reset Analog Controls")
-            .performScrollTo()
-            .assertExists()
+        ).assertDoesNotExist()
+
+        composeRule.onNodeWithText("Analog Stick").performClick()
+        composeRule.onNodeWithText("Off").assertExists()
+        composeRule.onNodeWithText("4-Way").assertExists()
+        composeRule.onNodeWithText("8-Way").assertExists()
+        composeRule.onNodeWithText("Numeric").assertExists()
     }
 
     @Test
