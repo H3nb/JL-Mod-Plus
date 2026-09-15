@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,17 +37,15 @@ import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 
 /**
- * Compact MIDlet analog configuration.
+ * Compact physical-input preferences shown inside the Key Input section.
  *
- * Digital keyboard, phone-key and gamepad-button mappings deliberately remain in KeyMapper. This
- * surface only controls how the primary physical analog stick becomes guest directions. It does
- * not depend on a controller being connected, so a profile can be prepared before runtime.
- * Existing advanced/unknown controller fields are preserved unless the user explicitly changes
- * this one setting.
+ * Digital keyboard, phone-key and gamepad-button mappings deliberately remain in KeyMapper. The
+ * analog direction choice can be prepared without a connected controller, while calibration is
+ * offered only when compatible hardware is currently available. Existing advanced/unknown
+ * controller fields are preserved unless the user explicitly changes the analog setting.
  */
-@Suppress("UNUSED_PARAMETER")
 @Composable
-internal fun GamepadSection(
+internal fun GamepadInputPreferences(
     form: ConfigFormState,
     controllerAvailable: Boolean,
     onFormChanged: (ConfigFormState) -> Unit,
@@ -77,45 +74,45 @@ internal fun GamepadSection(
         else -> 2
     }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        ConfigChoicePreference(
-            title = androidx.compose.ui.res.stringResource(R.string.config_analog_stick),
-            description = androidx.compose.ui.res.stringResource(R.string.config_analog_stick_summary),
-            selected = options[selectedIndex],
-            options = options,
-            enabled = supported,
-            message = compatibilityMessage,
-            messageLevel = ConfigMessageLevel.Warning,
-            onSelected = { index ->
-                if (!supported) return@ConfigChoicePreference
-                val nextLeft = when (index) {
-                    0 -> resolved.leftStick.copy(mode = StickMode.UNASSIGNED)
-                    1 -> resolved.leftStick.copy(
-                        mode = StickMode.DIRECTIONS,
-                        directionMode = DirectionMode.FOUR,
-                    )
-                    3 -> resolved.leftStick.copy(
-                        mode = StickMode.DIRECTIONS,
-                        directionMode = DirectionMode.DIAGONAL_NUMBER,
-                    )
-                    else -> resolved.leftStick.copy(
-                        mode = StickMode.DIRECTIONS,
-                        directionMode = DirectionMode.EIGHT,
-                    )
-                }
-                val next = resolved.toBuilder()
-                    .enabled(true)
-                    .leftStick(nextLeft)
-                    .buildOrNull()
-                    ?: resolved
-                onFormChanged(form.toBuilder().controller(next.toJson()).build())
-            },
-        )
-    }
+    ConfigChoicePreference(
+        title = androidx.compose.ui.res.stringResource(R.string.config_analog_stick),
+        description = androidx.compose.ui.res.stringResource(R.string.config_analog_stick_summary),
+        selected = options[selectedIndex],
+        options = options,
+        enabled = supported,
+        message = compatibilityMessage,
+        messageLevel = ConfigMessageLevel.Warning,
+        onSelected = { index ->
+            if (!supported) return@ConfigChoicePreference
+            val nextLeft = when (index) {
+                0 -> resolved.leftStick.copy(mode = StickMode.UNASSIGNED)
+                1 -> resolved.leftStick.copy(
+                    mode = StickMode.DIRECTIONS,
+                    directionMode = DirectionMode.FOUR,
+                )
+                3 -> resolved.leftStick.copy(
+                    mode = StickMode.DIRECTIONS,
+                    directionMode = DirectionMode.DIAGONAL_NUMBER,
+                )
+                else -> resolved.leftStick.copy(
+                    mode = StickMode.DIRECTIONS,
+                    directionMode = DirectionMode.EIGHT,
+                )
+            }
+            val next = resolved.toBuilder()
+                .enabled(true)
+                .leftStick(nextLeft)
+                .buildOrNull()
+                ?: resolved
+            onFormChanged(form.toBuilder().controller(next.toJson()).build())
+        },
+    )
+    ConfigActionPreference(
+        title = androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibrate),
+        description = androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibrate_summary),
+        enabled = supported && controllerAvailable,
+        onClick = events::onGamepadCalibration,
+    )
 }
 
 @Composable
