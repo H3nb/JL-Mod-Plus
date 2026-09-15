@@ -37,7 +37,7 @@ data class VirtualDpadSettings(
     val directionMode: VirtualDpadDirectionMode = VirtualDpadDirectionMode.EIGHT_WAY,
     val deadzoneFraction: Float = 0.18f,
     /** Smaller radius used to release an already-held direction. */
-    val releaseDeadzoneFraction: Float = 0.12f,
+    val releaseDeadzoneFraction: Float = deadzoneFraction * (2.0f / 3.0f),
     /** Extra angle retained around the currently-held sector to prevent edge chatter. */
     val angularHysteresisDegrees: Float = 7.5f,
 ) {
