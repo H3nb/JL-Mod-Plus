@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -76,39 +77,45 @@ internal fun GamepadSection(
         else -> 2
     }
 
-    ConfigChoicePreference(
-        title = androidx.compose.ui.res.stringResource(R.string.config_analog_stick),
-        description = androidx.compose.ui.res.stringResource(R.string.config_analog_stick_summary),
-        selected = options[selectedIndex],
-        options = options,
-        enabled = supported,
-        message = compatibilityMessage,
-        messageLevel = ConfigMessageLevel.Warning,
-        onSelected = { index ->
-            if (!supported) return@ConfigChoicePreference
-            val nextLeft = when (index) {
-                0 -> resolved.leftStick.copy(mode = StickMode.UNASSIGNED)
-                1 -> resolved.leftStick.copy(
-                    mode = StickMode.DIRECTIONS,
-                    directionMode = DirectionMode.FOUR,
-                )
-                3 -> resolved.leftStick.copy(
-                    mode = StickMode.DIRECTIONS,
-                    directionMode = DirectionMode.DIAGONAL_NUMBER,
-                )
-                else -> resolved.leftStick.copy(
-                    mode = StickMode.DIRECTIONS,
-                    directionMode = DirectionMode.EIGHT,
-                )
-            }
-            val next = resolved.toBuilder()
-                .enabled(true)
-                .leftStick(nextLeft)
-                .buildOrNull()
-                ?: resolved
-            onFormChanged(form.toBuilder().controller(next.toJson()).build())
-        },
-    )
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        ConfigChoicePreference(
+            title = androidx.compose.ui.res.stringResource(R.string.config_analog_stick),
+            description = androidx.compose.ui.res.stringResource(R.string.config_analog_stick_summary),
+            selected = options[selectedIndex],
+            options = options,
+            enabled = supported,
+            message = compatibilityMessage,
+            messageLevel = ConfigMessageLevel.Warning,
+            onSelected = { index ->
+                if (!supported) return@ConfigChoicePreference
+                val nextLeft = when (index) {
+                    0 -> resolved.leftStick.copy(mode = StickMode.UNASSIGNED)
+                    1 -> resolved.leftStick.copy(
+                        mode = StickMode.DIRECTIONS,
+                        directionMode = DirectionMode.FOUR,
+                    )
+                    3 -> resolved.leftStick.copy(
+                        mode = StickMode.DIRECTIONS,
+                        directionMode = DirectionMode.DIAGONAL_NUMBER,
+                    )
+                    else -> resolved.leftStick.copy(
+                        mode = StickMode.DIRECTIONS,
+                        directionMode = DirectionMode.EIGHT,
+                    )
+                }
+                val next = resolved.toBuilder()
+                    .enabled(true)
+                    .leftStick(nextLeft)
+                    .buildOrNull()
+                    ?: resolved
+                onFormChanged(form.toBuilder().controller(next.toJson()).build())
+            },
+        )
+    }
 }
 
 @Composable
