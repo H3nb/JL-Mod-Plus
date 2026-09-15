@@ -121,7 +121,7 @@ Android instrumentation includes `KeyMapperMappingRulesTest`, the runtime-menu v
 
 The obsolete standalone gamepad-section screenshot was removed after the analog controls were integrated into Key Input. Existing screenshot references are otherwise left unchanged; a new reference should only be accepted after the current integrated Controls screen has been rendered and visually reviewed.
 
-GitHub Actions remains the authoritative final gate for the current PR head: compile Kotlin/Java and Android-test sources, run JVM tests, lint, assemble app/test APKs, verify native packaging, and validate screenshot references. A cancelled/superseded run is not evidence for the current head.
+GitHub Actions remains the authoritative final gate: compile Kotlin/Java and Android-test sources, run JVM tests, lint, assemble app/test APKs, verify native packaging, and validate screenshot references. The latest follow-up commits still require a current-head Actions run; older successful or superseded runs are not evidence for this head.
 
 ## 8. Hardware validation boundary
 
