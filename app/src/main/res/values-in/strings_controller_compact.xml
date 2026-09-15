@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_analog_stick">Stik Analog</string>
+    <string name="config_analog_stick_summary">Pilih bagaimana stik analog utama mengirim gerakan ke MIDlet ini. Tombol gamepad menggunakan Pemetaan Tombol.</string>
+    <string name="config_analog_stick_off">Nonaktif</string>
+    <string name="config_controller_help_body_compact">Tombol gamepad menggunakan Pemetaan Tombol yang sama dengan keyboard dan tombol ponsel. Opsi Stik Analog hanya mengatur keluaran arah stik untuk MIDlet. Tombol Kembali Android tetap memakai perilaku host normal, dan tombol fisik apa pun yang dipetakan ke M akan membuka menu runtime MIDlet.</string>
+</resources>
