@@ -139,6 +139,6 @@ Recommended physical smoke matrix:
 8. Key Input calibration availability with controller disconnect/reconnect.
 9. D-pad Standard and Analog Standard template selection without changing the legacy default layout.
 
-Until that matrix is run, describe the implementation as architecturally/automatically validated, not universally hardware-certified.
+Until that matrix is run, describe the implementation as source-reviewed and test-covered, not current-head CI-validated or universally hardware-certified.
 
 - The grouped virtual controls use a physical-controller-inspired visual treatment: a layered blue-ring analog well and four separated D-pad arms with a center pivot. Pressed D-pad arms light independently, so diagonal input visibly highlights both directions; profile opacity, normalized geometry, drag/pinch editing, and input hysteresis remain intact.
