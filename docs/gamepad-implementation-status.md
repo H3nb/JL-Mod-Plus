@@ -30,9 +30,9 @@ Multiple physical inputs may map to the same logical target. Common gamepad butt
 
 ## 3. Compact analog configuration
 
-There is no dedicated Gamepad configuration section in the MIDlet settings UI.
+There is no dedicated Gamepad configuration section in the MIDlet settings UI. Analog controls live with the rest of the input configuration under **Controls > Key Input**.
 
-The Controls page exposes one compact **Analog Stick** choice for guest directional output:
+Key Input exposes one compact **Analog Stick** choice for guest directional output:
 
 - **Off** — the primary stick does not emit MIDlet directions.
 - **4-Way** — Up/Down/Left/Right.
@@ -40,6 +40,8 @@ The Controls page exposes one compact **Analog Stick** choice for guest directio
 - **Numeric** — `7/2/9`, `4/6`, `1/8/3`.
 
 The option is profile configuration, not hardware discovery, so it can be edited before a controller is connected. Digital gamepad buttons continue to use Key Mapping regardless of this setting.
+
+**Calibrate Controller** also lives in Key Input. It becomes available when a compatible physical controller is connected, while the Analog Stick mode remains configurable without hardware attached. Calibration keeps its existing staged capture/save flow and changes only the controller calibration profile when the user explicitly saves it.
 
 `ControllerConfig` remains an opaque-compatible persistence subtree so existing/future calibration or advanced fields can round-trip safely. Editing the compact option changes only the primary stick's guest-direction behavior instead of rebuilding unrelated controller state.
 
@@ -67,11 +69,23 @@ Each grouped control has one normalized center and radius. During layout editing
 - movement/radius use the edit grid and normalized persistent geometry;
 - geometry remains stable across viewport/orientation changes.
 
+The analog editor reads the live normalized geometry while a drag or pinch is active. It does not rebuild the gameplay `VirtualAnalogStick` object for every motion event; the gameplay object is rebuilt after the edit is committed. This keeps the visual control tracking the gesture while avoiding unnecessary work on the touch/render hot path.
+
 The D-pad uses press/release radial hysteresis and angular hysteresis so a thumb near the center or sector boundary does not chatter between neutral/cardinal/diagonal output.
 
 The virtual analog stick clamps its thumb to the configured circular gate and emits normalized samples through the shared stick processing stages.
 
-The runtime Virtual Controls menu owns visibility and layout editing. There is no second gamepad-specific virtual-control editor.
+The runtime **Virtual Controls** menu intentionally exposes only three customization actions:
+
+- **Edit Layout** (or **Finish Editing** while edit mode is active);
+- **Layout Templates**;
+- **Show Or Hide Controls**.
+
+The visibility dialog includes the grouped D-pad and analog stick alongside the existing virtual buttons, so visibility is configured in one place instead of through separate D-pad/analog switches.
+
+The existing layout templates keep their original order and behavior. **D-pad Standard** and **Analog Standard** are appended as additional templates; neither replaces the existing default. Applying either standard movement template starts from the established Numbers & Arrows geometry and then becomes a normal custom layout, preserving the legacy template/default contract.
+
+There is no second gamepad-specific virtual-control editor.
 
 ## 6. Compatibility hardening
 
@@ -103,7 +117,9 @@ Relevant pure/unit coverage includes:
 - `ControllerConfigTest`
 - profile persistence tests
 
-Android instrumentation contains `KeyMapperMappingRulesTest`, including the many-to-one `M` contract.
+Android instrumentation includes `KeyMapperMappingRulesTest`, the runtime-menu virtual-control interaction coverage in `RuntimeMenuComposeTest`, and `GamepadInputPreferencesComposeTest` for offline analog selection, controller-gated calibration, and preservation of the legacy template order.
+
+The obsolete standalone gamepad-section screenshot was removed after the analog controls were integrated into Key Input. Existing screenshot references are otherwise left unchanged; a new reference should only be accepted after the current integrated Controls screen has been rendered and visually reviewed.
 
 GitHub Actions remains the authoritative final gate for the current PR head: compile Kotlin/Java and Android-test sources, run JVM tests, lint, assemble app/test APKs, verify native packaging, and validate screenshot references. A cancelled/superseded run is not evidence for the current head.
 
@@ -120,6 +136,8 @@ Recommended physical smoke matrix:
 5. Runtime menu/modal isolation: host navigation must not fire guest actions behind the menu.
 6. Grouped touch D-pad/analog move, pinch-resize, orientation change and persistence.
 7. Pointer modes for profiles that already contain compatible pointer configuration.
+8. Key Input calibration availability with controller disconnect/reconnect.
+9. D-pad Standard and Analog Standard template selection without changing the legacy default layout.
 
 Until that matrix is run, describe the implementation as architecturally/automatically validated, not universally hardware-certified.
 
