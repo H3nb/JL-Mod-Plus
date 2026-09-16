@@ -63,14 +63,15 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_ANALOG_CENTER_Y = 0.78f;
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
 	private static final float STANDARD_MOVEMENT_CENTER_X = 0.28f;
-	private static final float STANDARD_MOVEMENT_CENTER_Y = 0.72f;
-	private static final float STANDARD_MOVEMENT_RADIUS = 0.22f;
+	private static final float STANDARD_MOVEMENT_CENTER_Y_FALLBACK = 0.84f;
+	private static final float STANDARD_MOVEMENT_RADIUS = 0.18f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
 	private static final float MIN_RADIUS_FRACTION = 0.07f;
 	private static final float MAX_RADIUS_FRACTION = 0.34f;
 	private static final int GRID_DIVISIONS = 24;
 	private static final int FEEDBACK_DURATION_MS = 50;
+	private static final int TEMPLATE_POINTER_ID = 0;
 
 	private enum EditControl { NONE, DPAD, ANALOG }
 
@@ -242,19 +243,72 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		}
 		forceLegacyDirectionsHidden(hidden);
 		super.setKeysVisibility(hidden);
+		arrangeStandardLegacyButtons();
 
+		float movementCenterY = standardMovementCenterY();
 		settings.virtualDpadEnabled = variant == TYPE_DPAD_STANDARD;
 		settings.virtualAnalogEnabled = variant == TYPE_ANALOG_STANDARD;
 		settings.virtualDpadCenterX = STANDARD_MOVEMENT_CENTER_X;
-		settings.virtualDpadCenterY = STANDARD_MOVEMENT_CENTER_Y;
+		settings.virtualDpadCenterY = movementCenterY;
 		settings.virtualDpadRadius = STANDARD_MOVEMENT_RADIUS;
 		settings.virtualAnalogCenterX = STANDARD_MOVEMENT_CENTER_X;
-		settings.virtualAnalogCenterY = STANDARD_MOVEMENT_CENTER_Y;
+		settings.virtualAnalogCenterY = movementCenterY;
 		settings.virtualAnalogRadius = STANDARD_MOVEMENT_RADIUS;
 		rebuildAnalogStick();
 		ProfilesManager.saveConfig(settings);
 		super.onLayoutChanged(TYPE_CUSTOM);
 		invalidateOverlay();
+	}
+
+	/**
+	 * Keep the compact standard-template keypad cluster on the right: L/R at the top, movement and
+	 * F on one row, then * below L and 0 below R. Existing templates are never routed through this
+	 * helper, so their historical geometry remains untouched.
+	 */
+	private void arrangeStandardLegacyButtons() {
+		if (screenBounds == null || overlayView == null) return;
+		float keySize = standardLegacyKeySize();
+		float bottomRowY = screenBounds.bottom - keySize * 0.5f;
+		float starSourceX = screenBounds.left + keySize * 0.5f;
+		float zeroSourceX = screenBounds.left + keySize * 1.5f;
+		float starTargetX = screenBounds.right - keySize * 2.5f;
+		float zeroTargetX = screenBounds.right - keySize * 0.5f;
+		int previousMode = getLayoutEditMode();
+
+		super.setLayoutEditMode(LAYOUT_KEYS);
+		try {
+			// Move 0 first because the legacy Numbers & Arrows layout initially snaps it to *.
+			moveLegacyTemplateKey(zeroSourceX, bottomRowY, zeroTargetX, bottomRowY);
+			moveLegacyTemplateKey(starSourceX, bottomRowY, starTargetX, bottomRowY);
+		} finally {
+			super.setLayoutEditMode(previousMode);
+			clearLegacyEditTracking();
+		}
+	}
+
+	private void moveLegacyTemplateKey(float sourceX, float sourceY, float targetX, float targetY) {
+		if (!super.pointerPressed(TEMPLATE_POINTER_ID, sourceX, sourceY)) return;
+		super.pointerDragged(TEMPLATE_POINTER_ID, targetX, targetY);
+		super.pointerReleased(TEMPLATE_POINTER_ID, targetX, targetY);
+	}
+
+	private float standardMovementCenterY() {
+		if (screenBounds == null) return STANDARD_MOVEMENT_CENTER_Y_FALLBACK;
+		float keySize = standardLegacyKeySize();
+		float fireCenterY = screenBounds.bottom - keySize * 1.5f;
+		return clamp(
+				(fireCenterY - screenBounds.top) / Math.max(1.0f, screenBounds.height()),
+				0.0f,
+				1.0f);
+	}
+
+	private float standardLegacyKeySize() {
+		if (screenBounds == null) return 1.0f;
+		float width = Math.max(1.0f, screenBounds.width());
+		float height = Math.max(1.0f, screenBounds.height());
+		return width > height
+				? Math.min(width / 12.0f, height / 6.0f)
+				: Math.min(width / 6.0f, height / 12.0f);
 	}
 
 	@Override
