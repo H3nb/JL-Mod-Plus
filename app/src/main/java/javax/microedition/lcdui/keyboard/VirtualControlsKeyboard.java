@@ -62,9 +62,9 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_ANALOG_CENTER_X = 0.18f;
 	private static final float DEFAULT_ANALOG_CENTER_Y = 0.78f;
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
-	private static final float STANDARD_MOVEMENT_CENTER_X = 0.18f;
-	private static final float STANDARD_MOVEMENT_CENTER_Y = 0.78f;
-	private static final float STANDARD_MOVEMENT_RADIUS = 0.16f;
+	private static final float STANDARD_MOVEMENT_CENTER_X = 0.28f;
+	private static final float STANDARD_MOVEMENT_CENTER_Y = 0.72f;
+	private static final float STANDARD_MOVEMENT_RADIUS = 0.22f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
 	private static final float MIN_RADIUS_FRACTION = 0.07f;
@@ -235,7 +235,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		Arrays.fill(hidden, true);
 		for (int i = 0; i < legacyNames.length; i++) {
 			String name = legacyNames[i];
-			if ("F".equals(name) || "L".equals(name) || "R".equals(name)) {
+			if ("F".equals(name) || "L".equals(name) || "R".equals(name) ||
+					"*".equals(name) || "0".equals(name)) {
 				hidden[i] = false;
 			}
 		}
