@@ -261,14 +261,17 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	/**
-	 * Keep the compact standard-template keypad cluster on the right: L/R at the top, movement and
-	 * F on one row, then * below L and 0 below R. Existing templates are never routed through this
-	 * helper, so their historical geometry remains untouched.
+	 * Keep the compact standard-template keypad cluster on the right: L/R at the top, F centered
+	 * between the two rows, then * below L and 0 below R. Existing templates are never routed
+	 * through this helper, so their historical geometry remains untouched.
 	 */
 	private void arrangeStandardLegacyButtons() {
 		if (screenBounds == null || overlayView == null) return;
 		float keySize = standardLegacyKeySize();
 		float bottomRowY = screenBounds.bottom - keySize * 0.5f;
+		float fireSourceX = screenBounds.right - keySize * 1.5f;
+		float fireSourceY = screenBounds.bottom - keySize * 1.5f;
+		float fireTargetY = screenBounds.bottom - keySize * 2.0f;
 		float starSourceX = screenBounds.left + keySize * 0.5f;
 		float zeroSourceX = screenBounds.left + keySize * 1.5f;
 		float starTargetX = screenBounds.right - keySize * 2.5f;
@@ -280,6 +283,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			// Move 0 first because the legacy Numbers & Arrows layout initially snaps it to *.
 			moveLegacyTemplateKey(zeroSourceX, bottomRowY, zeroTargetX, bottomRowY);
 			moveLegacyTemplateKey(starSourceX, bottomRowY, starTargetX, bottomRowY);
+			moveLegacyTemplateKey(fireSourceX, fireSourceY, fireSourceX, fireTargetY);
 		} finally {
 			super.setLayoutEditMode(previousMode);
 			clearLegacyEditTracking();
@@ -295,7 +299,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private float standardMovementCenterY() {
 		if (screenBounds == null) return STANDARD_MOVEMENT_CENTER_Y_FALLBACK;
 		float keySize = standardLegacyKeySize();
-		float fireCenterY = screenBounds.bottom - keySize * 1.5f;
+		float fireCenterY = screenBounds.bottom - keySize * 2.0f;
 		return clamp(
 				(fireCenterY - screenBounds.top) / Math.max(1.0f, screenBounds.height()),
 				0.0f,
