@@ -62,8 +62,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_ANALOG_CENTER_X = 0.18f;
 	private static final float DEFAULT_ANALOG_CENTER_Y = 0.78f;
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
-	private static final float STANDARD_MOVEMENT_CENTER_X = 0.28f;
-	private static final float STANDARD_MOVEMENT_CENTER_Y_FALLBACK = 0.84f;
 	private static final float STANDARD_MOVEMENT_RADIUS = 0.18f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
@@ -79,6 +77,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private final VirtualDpadController dpadController = new VirtualDpadController();
 	private final VirtualAnalogDirectionAdapter directionAdapter = new VirtualAnalogDirectionAdapter();
 	private final RectF paintRect = new RectF();
+	private final RectF guestBounds = new RectF();
 
 	private VirtualAnalogStick analogStick;
 	private Canvas target;
@@ -175,8 +174,12 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public void setView(View view) {
 		super.setView(view);
 		overlayView = view;
-		if (isStandardTemplate(getLayout())) {
+		int layout = getLayout();
+		if (isStandardTemplate(layout)) {
 			applyStandardLegacyVisibility();
+			if (screenBounds != null && !standardTemplateEdited) {
+				scheduleStandardTemplateReflow(layout);
+			}
 		}
 	}
 
@@ -253,21 +256,26 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		try {
 			endDpad();
 			endAnalog();
-			// Build the standard templates from the long-standing Numbers & Arrows geometry, then
-			// persist their own template id. That identity lets resize() regenerate the deterministic
-			// geometry after an orientation/bounds change instead of stretching portrait offsets.
+			// Start from the long-standing Numbers & Arrows geometry, then place only the five
+			// standard action keys using the free space around the actual MIDlet viewport.
 			super.setLayout(LEGACY_TEMPLATE_NUMBERS_ARROWS);
 			applyStandardLegacyVisibility();
-			arrangeStandardLegacyButtons();
+			StandardVirtualControlsLayout layout = standardTemplateLayout();
+			arrangeStandardLegacyButtons(layout);
 
-			float movementCenterY = standardMovementCenterY();
+			float width = Math.max(1.0f, screenBounds == null ? 1.0f : screenBounds.width());
+			float height = Math.max(1.0f, screenBounds == null ? 1.0f : screenBounds.height());
+			float left = screenBounds == null ? 0.0f : screenBounds.left;
+			float top = screenBounds == null ? 0.0f : screenBounds.top;
+			float movementCenterX = (layout.movementCenterX - left) / width;
+			float movementCenterY = (layout.movementCenterY - top) / height;
 			settings.virtualDpadEnabled = variant == TYPE_DPAD_STANDARD;
 			settings.virtualAnalogEnabled = variant == TYPE_ANALOG_STANDARD;
-			settings.virtualDpadCenterX = STANDARD_MOVEMENT_CENTER_X;
-			settings.virtualDpadCenterY = movementCenterY;
+			settings.virtualDpadCenterX = clamp(movementCenterX, 0.0f, 1.0f);
+			settings.virtualDpadCenterY = clamp(movementCenterY, 0.0f, 1.0f);
 			settings.virtualDpadRadius = STANDARD_MOVEMENT_RADIUS;
-			settings.virtualAnalogCenterX = STANDARD_MOVEMENT_CENTER_X;
-			settings.virtualAnalogCenterY = movementCenterY;
+			settings.virtualAnalogCenterX = clamp(movementCenterX, 0.0f, 1.0f);
+			settings.virtualAnalogCenterY = clamp(movementCenterY, 0.0f, 1.0f);
 			settings.virtualAnalogRadius = STANDARD_MOVEMENT_RADIUS;
 			rebuildAnalogStick();
 			ProfilesManager.saveConfig(settings);
@@ -297,30 +305,57 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		super.setKeysVisibility(hidden);
 	}
 
+	private StandardVirtualControlsLayout standardTemplateLayout() {
+		float screenLeft = screenBounds == null ? 0.0f : screenBounds.left;
+		float screenTop = screenBounds == null ? 0.0f : screenBounds.top;
+		float screenRight = screenBounds == null ? 1.0f : screenBounds.right;
+		float screenBottom = screenBounds == null ? 1.0f : screenBounds.bottom;
+		boolean validGuest = guestBounds.width() > 0.0f && guestBounds.height() > 0.0f;
+		float guestLeft = validGuest ? guestBounds.left : screenLeft;
+		float guestTop = validGuest ? guestBounds.top : screenTop;
+		float guestRight = validGuest ? guestBounds.right : screenRight;
+		float guestBottom = validGuest ? guestBounds.bottom : screenBottom;
+		float shortest = Math.max(1.0f,
+				Math.min(screenRight - screenLeft, screenBottom - screenTop));
+		return StandardVirtualControlsLayout.resolve(
+				screenLeft, screenTop, screenRight, screenBottom,
+				guestLeft, guestTop, guestRight, guestBottom,
+				STANDARD_MOVEMENT_RADIUS * shortest);
+	}
+
 	/**
-	 * Keep the compact standard-template keypad cluster on the right: L/R at the top, F centered
-	 * between the two rows, then * below L and 0 below R. Existing templates are never routed
-	 * through this helper, so their historical geometry remains untouched.
+	 * Lay out the compact standard action cluster as one ergonomic unit. Wide screens prefer the
+	 * gutter to the right of the MIDlet; tall screens prefer the free deck below it. The movement
+	 * control uses the matching left-hand zone and shares F's center line.
 	 */
-	private void arrangeStandardLegacyButtons() {
-		if (screenBounds == null || overlayView == null) return;
-		float keySize = standardLegacyKeySize();
+	private void arrangeStandardLegacyButtons(StandardVirtualControlsLayout layout) {
+		if (screenBounds == null || overlayView == null || layout == null) return;
+		float keySize = layout.keySize;
 		float bottomRowY = screenBounds.bottom - keySize * 0.5f;
 		float fireSourceX = screenBounds.right - keySize * 1.5f;
 		float fireSourceY = screenBounds.bottom - keySize * 1.5f;
-		float fireTargetY = screenBounds.bottom - keySize * 2.0f;
+		float softLeftSourceX = screenBounds.right - keySize * 2.5f;
+		float softRightSourceX = screenBounds.right - keySize * 0.5f;
+		float softSourceY = screenBounds.bottom - keySize * 3.5f;
 		float starSourceX = screenBounds.left + keySize * 0.5f;
 		float zeroSourceX = screenBounds.left + keySize * 1.5f;
-		float starTargetX = screenBounds.right - keySize * 2.5f;
-		float zeroTargetX = screenBounds.right - keySize * 0.5f;
 		int previousMode = getLayoutEditMode();
 
 		super.setLayoutEditMode(LAYOUT_KEYS);
 		try {
-			// Move 0 first because the legacy Numbers & Arrows layout initially snaps it to *.
-			moveLegacyTemplateKey(zeroSourceX, bottomRowY, zeroTargetX, bottomRowY);
-			moveLegacyTemplateKey(starSourceX, bottomRowY, starTargetX, bottomRowY);
-			moveLegacyTemplateKey(fireSourceX, fireSourceY, fireSourceX, fireTargetY);
+			// Move F first so the compact right-hand target area cannot cover its legacy source before
+			// it is picked up. The remaining sources are disjoint in the Numbers & Arrows template.
+			moveLegacyTemplateKey(
+					fireSourceX, fireSourceY, layout.actionCenterX, layout.actionCenterY);
+			moveLegacyTemplateKey(
+					softLeftSourceX, softSourceY, layout.leftColumnX, layout.topRowY);
+			moveLegacyTemplateKey(
+					softRightSourceX, softSourceY, layout.rightColumnX, layout.topRowY);
+			// Move 0 before * because the legacy Numbers & Arrows layout initially snaps them together.
+			moveLegacyTemplateKey(
+					zeroSourceX, bottomRowY, layout.rightColumnX, layout.bottomRowY);
+			moveLegacyTemplateKey(
+					starSourceX, bottomRowY, layout.leftColumnX, layout.bottomRowY);
 		} finally {
 			super.setLayoutEditMode(previousMode);
 			clearLegacyEditTracking();
@@ -331,25 +366,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		if (!super.pointerPressed(TEMPLATE_POINTER_ID, sourceX, sourceY)) return;
 		super.pointerDragged(TEMPLATE_POINTER_ID, targetX, targetY);
 		super.pointerReleased(TEMPLATE_POINTER_ID, targetX, targetY);
-	}
-
-	private float standardMovementCenterY() {
-		if (screenBounds == null) return STANDARD_MOVEMENT_CENTER_Y_FALLBACK;
-		float keySize = standardLegacyKeySize();
-		float fireCenterY = screenBounds.bottom - keySize * 2.0f;
-		return clamp(
-				(fireCenterY - screenBounds.top) / Math.max(1.0f, screenBounds.height()),
-				0.0f,
-				1.0f);
-	}
-
-	private float standardLegacyKeySize() {
-		if (screenBounds == null) return 1.0f;
-		float width = Math.max(1.0f, screenBounds.width());
-		float height = Math.max(1.0f, screenBounds.height());
-		return width > height
-				? Math.min(width / 12.0f, height / 6.0f)
-				: Math.min(width / 6.0f, height / 12.0f);
 	}
 
 	@Override
@@ -366,20 +382,28 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public void resize(RectF screen, float left, float top, float right, float bottom) {
 		endDpad();
 		endAnalog();
-		boolean boundsChanged = screenBounds == null ||
-				Math.abs(screenBounds.width() - screen.width()) > 0.5f ||
-				Math.abs(screenBounds.height() - screen.height()) > 0.5f;
+		boolean boundsChanged = rectChanged(screenBounds, screen.left, screen.top, screen.right, screen.bottom) ||
+				rectChanged(guestBounds, left, top, right, bottom);
 		int layout = getLayout();
 		boolean reflowStandardTemplate = !applyingStandardTemplate && !standardTemplateEdited &&
 				isStandardTemplate(layout) && boundsChanged;
 
 		super.resize(screen, left, top, right, bottom);
 		screenBounds = new RectF(screen);
+		guestBounds.set(left, top, right, bottom);
 		viewport = new GuestViewport(
 				Math.max(1, Math.round(screen.width())),
 				Math.max(1, Math.round(screen.height())));
 		rebuildAnalogStick();
 		if (reflowStandardTemplate) scheduleStandardTemplateReflow(layout);
+	}
+
+	private static boolean rectChanged(RectF rect, float left, float top, float right, float bottom) {
+		if (rect == null || rect.width() <= 0.0f || rect.height() <= 0.0f) return true;
+		return Math.abs(rect.left - left) > 0.5f ||
+				Math.abs(rect.top - top) > 0.5f ||
+				Math.abs(rect.right - right) > 0.5f ||
+				Math.abs(rect.bottom - bottom) > 0.5f;
 	}
 
 	private void scheduleStandardTemplateReflow(int variant) {
@@ -760,7 +784,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	private boolean beginLegacyPinch(int pointer, float x, float y) {
 		if (getLayoutEditMode() != LAYOUT_KEYS || legacyEditPointer < 0 ||
-				legacyPinchPointer >= 0 || pointer == editPointer) return false;
+				legacyPinchPointer >= 0 || pointer == legacyEditPointer) return false;
 
 		/* Finalize the current move before handing the selected key's scale group to the legacy
 		 * resize engine. The second finger itself is not forwarded to VirtualKeyboard. */
@@ -864,8 +888,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		int active = blendRgb(accent, outline, 0.08f);
 		int activeFace = blendRgb(face, accent, 0.24f);
 
-		// The cradle is deliberately quiet: it unifies the four buttons without becoming a large
-		// fifth control over the game image.
 		if (selected) {
 			fillCircle(graphics, cx, cy, r * 1.03f,
 					colorWithAlpha(accent, scaledAlpha(alpha, 0.08f)));
@@ -875,7 +897,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		drawCircle(graphics, cx, cy, r * 0.94f,
 				colorWithAlpha(edge, scaledAlpha(alpha, 0.18f)));
 
-		// Compact proportions keep the four arms visually connected to the center pivot.
 		float halfArm = r * 0.32f;
 		float centerGap = r * 0.055f;
 		int round = Math.max(5, Math.round(r * 0.15f));
@@ -897,7 +918,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				round, pressed.contains(VirtualDpadDirection.RIGHT),
 				face, activeFace, edge, active, alpha, r);
 
-		// A stronger two-layer pivot visually locks the separate arms into one physical D-pad.
 		fillCircle(graphics, cx, cy, r * 0.245f,
 				colorWithAlpha(darkenRgb(base, 0.50f), scaledAlpha(alpha, 0.96f)));
 		fillCircle(graphics, cx, cy, r * 0.185f,
@@ -973,9 +993,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float rawThumbY;
 		boolean active;
 		if (editingAnalog) {
-			// The editor mutates normalized geometry directly. Read that live geometry instead of the
-			// immutable gameplay stick snapshot so drag/pinch tracks the finger without rebuilding an
-			// object on every motion event.
 			VirtualDpadGeometry geometry = analogGeometry();
 			centerX = geometry.getCenterX();
 			centerY = geometry.getCenterY();
@@ -992,8 +1009,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			rawThumbY = screenBounds.top + visual.getThumbY();
 			active = visual.getActive();
 		}
-		// Preserve full input range but compress visual travel so the thumb never appears to leave
-		// its physical well.
 		float thumbX = centerX + (rawThumbX - centerX) * 0.47f;
 		float thumbY = centerY + (rawThumbY - centerY) * 0.47f;
 		boolean selected = editControl == EditControl.ANALOG;
@@ -1014,8 +1029,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 					colorWithAlpha(accent, scaledAlpha(alpha, 0.08f)));
 		}
 
-		// One clear chassis, one accent ring and one inner bowl: fewer competing circles than the
-		// previous renderer, while retaining enough depth to read over light or dark games.
 		fillCircle(graphics, centerX, centerY, radius * 0.93f,
 				colorWithAlpha(shell, scaledAlpha(alpha, 0.84f)));
 		drawCircle(graphics, centerX, centerY, radius * 0.93f,
