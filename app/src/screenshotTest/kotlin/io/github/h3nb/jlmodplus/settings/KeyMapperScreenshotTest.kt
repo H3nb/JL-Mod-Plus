@@ -63,7 +63,7 @@ fun KeyMapperMappingPromptScreenshot() {
             state = KeyMapperUiState(
                 mappingDialog = KeyMapperMappingDialog(
                     canvasKey = 0,
-                    currentKeyName = "KEYCODE_BACK",
+                    assignedInputs = listOf(KeyMapperAssignedInput(4, "KEYCODE_BACK")),
                 ),
             ),
             actions = NoOpKeyMapperActions,
@@ -86,7 +86,7 @@ fun KeyMapperMappingPromptDarkScreenshot() {
             state = KeyMapperUiState(
                 mappingDialog = KeyMapperMappingDialog(
                     canvasKey = 0,
-                    currentKeyName = "KEYCODE_BACK",
+                    assignedInputs = listOf(KeyMapperAssignedInput(4, "KEYCODE_BACK")),
                 ),
             ),
             actions = NoOpKeyMapperActions,

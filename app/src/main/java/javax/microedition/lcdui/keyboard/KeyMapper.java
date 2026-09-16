@@ -31,6 +31,7 @@ import java.util.List;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 
 public class KeyMapper {
+	/** Host-only logical target used by the universal digital mapper to open the runtime menu. */
 	public static final int KEY_OPTIONS_MENU = 0;
 	public static final int SE_KEY_SPECIAL_GAMING_A = -13;
 	public static final int SE_KEY_SPECIAL_GAMING_B = -14;
@@ -79,8 +80,13 @@ public class KeyMapper {
 		mapKeyName(KEY_SOFT_LEFT, "SOFT1");
 		mapKeyName(KEY_SOFT_RIGHT, "SOFT2");
 		mapKeyName(KEY_CLEAR, "CLEAR");
-		mapKeyName(KEY_SEND, "SEND");
-		mapKeyName(KEY_END, "END");
+		// The mapper presents A/B/C/D as logical J2ME game controls. A/B retain the
+		// long-standing Sony Ericsson compatibility codes; the otherwise-unused SEND/END
+		// logical slots provide stable C/D key codes while getGameAction() exposes GAME_C/D.
+		mapKey(SE_KEY_SPECIAL_GAMING_A, GAME_A, "A");
+		mapKey(SE_KEY_SPECIAL_GAMING_B, GAME_B, "B");
+		mapKey(KEY_END, GAME_C, "C");
+		mapKey(KEY_SEND, GAME_D, "D");
 	}
 
 	private static void remapKeys(ProfileModel params) {
@@ -184,6 +190,13 @@ public class KeyMapper {
 		remapKeys(params);
 	}
 
+	/** True when this physical input is assigned to the host-only `M` target. */
+	public static boolean isOptionsMenuKey(int androidKeyCode) {
+		return androidToMIDP != null
+				&& androidToMIDP.indexOfKey(androidKeyCode) >= 0
+				&& androidToMIDP.get(androidKeyCode) == KEY_OPTIONS_MENU;
+	}
+
 	public static int getKeyCode(int gameAction) {
 		return gameActionToKeyCode.get(gameAction, Integer.MAX_VALUE);
 	}
@@ -205,8 +218,6 @@ public class KeyMapper {
 		map.append(KeyEvent.KEYCODE_SOFT_LEFT, KEY_SOFT_LEFT);
 		map.append(KeyEvent.KEYCODE_SOFT_RIGHT, KEY_SOFT_RIGHT);
 		map.append(KeyEvent.KEYCODE_BACK, KEY_OPTIONS_MENU);
-		map.append(KeyEvent.KEYCODE_CALL, KEY_SEND);
-		map.append(KeyEvent.KEYCODE_ENDCALL, KEY_END);
 		map.append(KeyEvent.KEYCODE_0, KEY_NUM0);
 		map.append(KeyEvent.KEYCODE_1, KEY_NUM1);
 		map.append(KeyEvent.KEYCODE_2, KEY_NUM2);
@@ -223,8 +234,24 @@ public class KeyMapper {
 		map.append(KeyEvent.KEYCODE_DPAD_DOWN, KEY_DOWN);
 		map.append(KeyEvent.KEYCODE_DPAD_LEFT, KEY_LEFT);
 		map.append(KeyEvent.KEYCODE_DPAD_RIGHT, KEY_RIGHT);
+		// Common controller buttons use the same authoritative guest mapping as
+		// keyboard and keypad inputs. No START/SELECT/shoulder host shortcut is
+		// injected here; users may assign those physical buttons to any logical
+		// target, including M, through the same Key Mapper.
+		map.append(KeyEvent.KEYCODE_DPAD_CENTER, KEY_FIRE);
+		map.append(KeyEvent.KEYCODE_BUTTON_A, KEY_FIRE);
+		map.append(KeyEvent.KEYCODE_BUTTON_1, KEY_FIRE);
+		map.append(KeyEvent.KEYCODE_BUTTON_B, KEY_NUM0);
+		map.append(KeyEvent.KEYCODE_BUTTON_2, KEY_NUM0);
+		map.append(KeyEvent.KEYCODE_BUTTON_X, KEY_NUM1);
+		map.append(KeyEvent.KEYCODE_BUTTON_3, KEY_NUM1);
+		map.append(KeyEvent.KEYCODE_BUTTON_Y, KEY_NUM3);
+		map.append(KeyEvent.KEYCODE_BUTTON_4, KEY_NUM3);
+		map.append(KeyEvent.KEYCODE_BUTTON_L1, KEY_SOFT_LEFT);
+		map.append(KeyEvent.KEYCODE_BUTTON_5, KEY_SOFT_LEFT);
+		map.append(KeyEvent.KEYCODE_BUTTON_R1, KEY_SOFT_RIGHT);
+		map.append(KeyEvent.KEYCODE_BUTTON_6, KEY_SOFT_RIGHT);
 		map.append(KeyEvent.KEYCODE_ENTER, KEY_FIRE);
-		map.append(KeyEvent.KEYCODE_DEL, KEY_CLEAR);
 		return map;
 	}
 }

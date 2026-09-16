@@ -55,7 +55,7 @@ class KeyMapperComposeTest {
     }
 
     @Test
-    fun mappingPromptShowsCurrentHardwareKeyAndCanBeDismissed() {
+    fun mappingPromptShowsAllHardwareKeysAndCanBeDismissed() {
         var dismissed = false
         composeRule.setContent {
             JLModPlusTheme {
@@ -63,7 +63,10 @@ class KeyMapperComposeTest {
                     state = KeyMapperUiState(
                         mappingDialog = KeyMapperMappingDialog(
                             canvasKey = KeyMapper.KEY_OPTIONS_MENU,
-                            currentKeyName = "KEYCODE_BACK",
+                            assignedInputs = listOf(
+                                KeyMapperAssignedInput(4, "KEYCODE_BACK"),
+                                KeyMapperAssignedInput(96, "KEYCODE_BUTTON_A"),
+                            ),
                         ),
                     ),
                     actions = recordingActions(onDismiss = { dismissed = true }),
@@ -72,7 +75,9 @@ class KeyMapperComposeTest {
         }
 
         composeRule.onNodeWithText("Press A Key").assertIsDisplayed()
-        composeRule.onNodeWithText("Current mapping:\nKEYCODE_BACK").assertIsDisplayed()
+        composeRule.onNodeWithText("Assigned inputs").assertIsDisplayed()
+        composeRule.onNodeWithText("KEYCODE_BACK").assertIsDisplayed()
+        composeRule.onNodeWithText("KEYCODE_BUTTON_A").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Dismiss mapping")
             .performSemanticsAction(SemanticsActions.OnClick)
         assertTrue(dismissed)

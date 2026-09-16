@@ -36,6 +36,7 @@ import android.os.IBinder;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -65,6 +66,7 @@ import java.util.Map;
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Form;
+import javax.microedition.lcdui.Screen;
 import javax.microedition.lcdui.ViewHandler;
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
@@ -80,6 +82,9 @@ import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
+import io.github.h3nb.jlmodplus.input.ControllerHostSink;
+import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
+import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
 import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -111,6 +116,7 @@ public class MicroActivity extends AppCompatActivity {
 	private String appPath;
 	private RuntimeHostView binding;
 	private RuntimeMenuComposeController runtimeMenuController;
+	private ControllerInputRouter controllerInputRouter;
 	private MemoryEditorBubbleController memoryEditorController;
 	private TransientNoticeComposeController runtimeNoticeController;
 	private WindowInsetsCompat lastWindowInsets;
@@ -200,6 +206,56 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		MidletKeepAliveService.start(this);
 		microLoader.applyConfiguration();
+		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
+			@Override
+			public Canvas currentCanvas() {
+				return current instanceof Canvas ? (Canvas) current : null;
+			}
+
+			@Override
+			public Displayable currentDisplayable() {
+				return current;
+			}
+
+			@Override
+			public boolean onHostCommand(@NonNull HostCommand command, boolean pressed) {
+				return handleHostCommand(command, pressed);
+			}
+
+			@Override
+			public void onControllerInputAccepted() {
+				Canvas canvas = currentCanvas();
+				if (canvas != null) {
+					canvas.controllerInputAccepted();
+				}
+			}
+
+			@Override
+			public void onControllerNotice(@NonNull String message) {
+				toast(message);
+			}
+
+			@Override
+			public boolean isControllerModalActive() {
+				return (runtimeMenuController != null && runtimeMenuController.isMenuVisible())
+						|| (current instanceof Screen && ((Screen) current).isControllerModalActive())
+						|| (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible());
+			}
+
+			@Override
+			public boolean onControllerModalMotion(@NonNull MotionEvent event) {
+				if (runtimeMenuController != null && runtimeMenuController.isMenuVisible()) {
+					return runtimeMenuController.handleControllerMotion(event);
+				}
+				if (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible()) {
+					return ((Canvas) current).handleHostMotion(event);
+				}
+				if (current instanceof Screen) {
+					return ((Screen) current).handleControllerMotion(event);
+				}
+				return false;
+			}
+		}, microLoader.getProfile());
 		SkinLayer skinLayer = SkinLayer.getInstance();
 		if (skinLayer != null) {
 			skinLayerAvailable = true;
@@ -483,6 +539,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void onPause() {
+		if (controllerInputRouter != null) {
+			controllerInputRouter.clear();
+		}
 		if (memoryEditorController != null) {
 			memoryEditorController.onHostPaused();
 		}
@@ -498,6 +557,10 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
+		if (controllerInputRouter != null) {
+			controllerInputRouter.close();
+			controllerInputRouter = null;
+		}
 		if (defaultPreferences != null) {
 			defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
 			defaultPreferences = null;
@@ -600,6 +663,9 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
+		if (!hasFocus && controllerInputRouter != null) {
+			controllerInputRouter.clear();
+		}
 		if (hasFocus && current instanceof Canvas) {
 			applySystemUi(getRuntimeChrome(current), current);
 		}
@@ -848,6 +914,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
+		if (controllerInputRouter != null && controllerInputRouter.onKeyEvent(event)) {
+			return true;
+		}
 		// KEYCODE_MENU is a host command, not a guest Canvas key. SurfaceView consumes the
 		// event before Activity.onKeyLongPress() on recent Android releases, so handle the
 		// tracking sequence here before dispatching to the Canvas child.
@@ -872,6 +941,14 @@ public class MicroActivity extends AppCompatActivity {
 			return true;
 		}
 		return super.dispatchKeyEvent(event);
+	}
+
+	@Override
+	public boolean dispatchGenericMotionEvent(MotionEvent event) {
+		if (controllerInputRouter != null && controllerInputRouter.onGenericMotionEvent(event)) {
+			return true;
+		}
+		return super.dispatchGenericMotionEvent(event);
 	}
 
 	@Override
@@ -1107,6 +1184,47 @@ public class MicroActivity extends AppCompatActivity {
 		return appName;
 	}
 
+	private boolean handleHostCommand(@NonNull HostCommand command, boolean pressed) {
+		// A visible app-owned modal owns every controller command. This keeps a command from
+		// falling through to a MIDlet while the runtime menu or Screen soft menu is open.
+		if (runtimeMenuController != null && runtimeMenuController.isMenuVisible()) {
+			return runtimeMenuController.handleHostCommand(command, pressed);
+		}
+		if (current instanceof Screen && ((Screen) current).isControllerModalActive()) {
+			return ((Screen) current).handleHostCommand(command, pressed);
+		}
+		if (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible()) {
+			return ((Canvas) current).handleHostCommand(command, pressed);
+		}
+		switch (command) {
+			case OpenMenu:
+				if (pressed) toggleRuntimeMenuFromInput();
+				return true;
+			case Back:
+				if (pressed && current instanceof Screen && ((Screen) current).handleHostCommand(command, true)) {
+					return true;
+				}
+				if (pressed) getOnBackPressedDispatcher().onBackPressed();
+				return true;
+			case Activate:
+			case NavigateUp:
+			case NavigateDown:
+			case NavigateLeft:
+			case NavigateRight:
+			case NextTab:
+			case PreviousTab:
+				return current instanceof Screen &&
+						((Screen) current).handleHostCommand(command, pressed);
+			case OpenKeypad:
+				if (pressed && current instanceof Canvas) {
+					((Canvas) current).openControllerKeypad();
+				}
+				return true;
+			default:
+				return true;
+		}
+	}
+
 	public void toast(@StringRes int message) {
 		toast(getString(message));
 	}
@@ -1131,6 +1249,9 @@ public class MicroActivity extends AppCompatActivity {
 		@Override
 		public void process() {
 			closeOptionsMenu();
+			if (controllerInputRouter != null) {
+				controllerInputRouter.onTargetChanged();
+			}
 			if (current != null) {
 				current.clearDisplayableView();
 			}

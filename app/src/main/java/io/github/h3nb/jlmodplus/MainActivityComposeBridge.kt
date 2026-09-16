@@ -40,6 +40,7 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
+import io.github.h3nb.jlmodplus.input.HostCommand
 
 /** Actions stay in MainActivity so permission, picker, recovery, and Fragment contracts remain host-owned. */
 internal interface MainHostActions {
@@ -109,6 +110,16 @@ internal class MainActivityComposeController(
     fun showPermissionFailure() {
         state = MainHostUiState(MainHostDialog.PermissionFailure)
     }
+
+    fun handleHostCommand(command: HostCommand, pressed: Boolean): Boolean {
+        if (state.dialog == null) return false
+        if (pressed && (command == HostCommand.Activate || command == HostCommand.Back ||
+                command == HostCommand.OpenMenu || command == HostCommand.OpenKeypad)) {
+            dismiss()
+        }
+        return true
+    }
+
 }
 
 private data class MainHostDialogLayout(

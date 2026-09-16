@@ -25,13 +25,36 @@ public final class KeyMapperMappingRules {
 			SparseIntArray current,
 			int canvasKey,
 			int androidKeyCode) {
+		return addBinding(current, androidKeyCode, canvasKey);
+	}
+
+	/** Adds or replaces one physical-key binding without removing other inputs for the target. */
+	public static SparseIntArray addBinding(
+			SparseIntArray current,
+			int androidKeyCode,
+			int canvasKey) {
+		SparseIntArray updated = current == null ? new SparseIntArray() : current.clone();
+		updated.put(androidKeyCode, canvasKey);
+		return updated;
+	}
+
+	/** Removes exactly one physical-key binding. */
+	public static SparseIntArray removeBinding(
+			SparseIntArray current,
+			int androidKeyCode) {
+		SparseIntArray updated = current == null ? new SparseIntArray() : current.clone();
+		updated.delete(androidKeyCode);
+		return updated;
+	}
+
+	/** Removes all bindings for a target only when the caller explicitly requests it. */
+	public static SparseIntArray removeBindingsForTarget(
+			SparseIntArray current,
+			int canvasKey) {
 		SparseIntArray updated = current == null ? new SparseIntArray() : current.clone();
 		for (int i = updated.size() - 1; i >= 0; i--) {
-			if (updated.valueAt(i) == canvasKey) {
-				updated.removeAt(i);
-			}
+			if (updated.valueAt(i) == canvasKey) updated.removeAt(i);
 		}
-		updated.put(androidKeyCode, canvasKey);
 		return updated;
 	}
 

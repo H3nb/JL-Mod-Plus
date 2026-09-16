@@ -26,8 +26,11 @@ import com.google.gson.JsonElement;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +46,8 @@ import io.github.h3nb.jlmodplus.util.XmlUtils;
 public class ProfilesManager {
 
 	private static final String TAG = ProfilesManager.class.getName();
+	private static final String ATOMIC_NEW_SUFFIX = ".new";
+	private static final String ATOMIC_BACKUP_SUFFIX = ".bak";
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 	/** Identifies whether legacy linkage metadata is meaningful for a config load. */
@@ -517,6 +522,7 @@ public class ProfilesManager {
 	public static ProfileModel loadConfig(File dir, boolean persistMigrations,
 			@NonNull BackgroundMigrationContext context, boolean legacyThemeLinked) {
 		File file = new File(dir, Config.MIDLET_CONFIG_FILE);
+		recoverAtomicConfig(file);
 		ProfileModel params = null;
 		File oldFile = new File(dir, "config.xml");
 		boolean loadedLegacyFile = false;
@@ -600,14 +606,72 @@ public class ProfilesManager {
 	}
 
 	public static boolean saveConfig(ProfileModel p) {
-		try (FileWriter writer = new FileWriter(new File(p.dir, Config.MIDLET_CONFIG_FILE))) {
-			gson.toJson(p, writer);
-			writer.close();
+		if (p == null || p.dir == null) {
+			return false;
+		}
+		File file = new File(p.dir, Config.MIDLET_CONFIG_FILE);
+		File parent = file.getParentFile();
+		File temporary = atomicSibling(file, ATOMIC_NEW_SUFFIX);
+		File backup = atomicSibling(file, ATOMIC_BACKUP_SUFFIX);
+		try {
+			recoverAtomicConfig(file);
+			if (parent != null && !parent.isDirectory() && !parent.mkdirs() && !parent.isDirectory()) {
+				throw new IOException("Unable to create profile directory: " + parent);
+			}
+			if (temporary.exists() && !temporary.delete()) {
+				throw new IOException("Unable to remove stale profile write: " + temporary);
+			}
+			if (backup.exists() && !backup.delete()) {
+				throw new IOException("Unable to remove stale profile backup: " + backup);
+			}
+			if (file.exists() && !file.renameTo(backup)) {
+				throw new IOException("Unable to stage existing profile configuration");
+			}
+			try (FileOutputStream output = new FileOutputStream(temporary);
+				 Writer writer = new OutputStreamWriter(output, StandardCharsets.UTF_8)) {
+				gson.toJson(p, writer);
+				writer.flush();
+				output.getFD().sync();
+			}
+			if (!temporary.renameTo(file)) {
+				throw new IOException("Unable to publish profile configuration");
+			}
+			if (backup.exists() && !backup.delete()) {
+				// The new config is already committed.  Keep the recoverable backup for the next load
+				// rather than reporting a failed save after publishing valid data.
+				Log.w(TAG, "Unable to remove profile configuration backup " + backup);
+			}
 			return true;
 		} catch (Exception e) {
+			if (temporary.exists() && !temporary.delete()) {
+				Log.w(TAG, "saveConfig: unable to remove temporary file " + temporary);
+			}
+			if (!file.exists() && backup.exists() && !backup.renameTo(file)) {
+				Log.e(TAG, "saveConfig: unable to restore previous configuration " + file);
+			}
 			Log.e(TAG, "saveConfig: ", e);
 		}
 		return false;
+	}
+
+	private static File atomicSibling(@NonNull File file, @NonNull String suffix) {
+		return new File(file.getPath() + suffix);
+	}
+
+	/** Restores the last committed config after an interrupted temp/backup rename sequence. */
+	private static void recoverAtomicConfig(@NonNull File file) {
+		File temporary = atomicSibling(file, ATOMIC_NEW_SUFFIX);
+		File backup = atomicSibling(file, ATOMIC_BACKUP_SUFFIX);
+		if (backup.exists()) {
+			if (file.exists()) {
+				if (!backup.delete()) Log.w(TAG, "Unable to remove stale profile backup " + backup);
+			} else if (!backup.renameTo(file)) {
+				Log.w(TAG, "Unable to restore profile backup " + backup);
+			}
+		}
+		if (temporary.exists() && file.exists() && !temporary.delete()) {
+			Log.w(TAG, "Unable to remove stale profile write " + temporary);
+		}
 	}
 
 	public static void updateSystemProperties(ProfileModel params) {

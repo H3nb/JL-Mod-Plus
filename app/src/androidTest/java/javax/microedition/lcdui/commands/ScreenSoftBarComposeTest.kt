@@ -16,8 +16,10 @@ package javax.microedition.lcdui.commands
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.assertCountEquals
 import javax.microedition.lcdui.Command
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -78,6 +80,47 @@ class ScreenSoftBarComposeTest {
         composeRule.onNodeWithText("Help").performClick()
 
         assertSame(fourth, selected)
+    }
+
+    @Test
+    fun overflowFocusIndicatorIsOptInForNavigationModality() {
+        val first = Command("Options", Command.SCREEN, 1)
+        val second = Command("Help", Command.ITEM, 1)
+        val presentation = ScreenSoftBarPolicy.present(listOf(first, second))
+
+        composeRule.setContent {
+            JLModPlusTheme {
+                ScreenSoftBarContent(
+                    presentation = presentation,
+                    menuVisible = true,
+                    menuFocusIndex = 0,
+                    menuFocusVisible = false,
+                    onOpenMenu = {},
+                    onDismissMenu = {},
+                    onCommand = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithTag("screen-controller-focus-indicator")
+            .assertCountEquals(0)
+
+        composeRule.setContent {
+            JLModPlusTheme {
+                ScreenSoftBarContent(
+                    presentation = presentation,
+                    menuVisible = true,
+                    menuFocusIndex = 0,
+                    menuFocusVisible = true,
+                    onOpenMenu = {},
+                    onDismissMenu = {},
+                    onCommand = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithTag("screen-controller-focus-indicator")
+            .assertCountEquals(1)
     }
 
     @Test

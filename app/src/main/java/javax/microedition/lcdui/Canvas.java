@@ -2,7 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2019-2025 Yury Kharchenko
- * Modified in 2026 for guest/render frame telemetry.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,12 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import io.github.h3nb.jlmodplus.input.HostCommand;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -93,6 +97,8 @@ import io.github.h3nb.jlmodplus.config.BackgroundMode;
 import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
 import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
+import io.github.h3nb.jlmodplus.input.GuestKeyLedgerAdapter;
+import io.github.h3nb.jlmodplus.input.ControllerPointerConsumer;
 import javax.microedition.lcdui.graphics.AmbientCanvasRenderer;
 import javax.microedition.lcdui.graphics.AmbientColorField;
 import javax.microedition.lcdui.graphics.AmbientColorSampler;
@@ -192,6 +198,13 @@ public abstract class Canvas extends Displayable {
 	private final Runnable ambientHostRunnable = this::runAmbientHostTick;
 	private Handler uiHandler;
 	private Overlay overlay;
+	private OverlayView controllerOverlayView;
+	private final ControllerJoystickOverlay controllerJoystickOverlay =
+			new ControllerJoystickOverlay();
+	/** Optional controller-owned virtual pointer arbiter; null preserves the legacy touch path. */
+	private volatile ControllerPointerConsumer controllerPointerConsumer;
+	/** All host/keyboard/virtual-keypad key producers share this per-Canvas ledger. */
+	private final GuestKeyLedgerAdapter guestKeyLedger = new GuestKeyLedgerAdapter(this);
 	private FpsCounter fpsCounter;
 	private boolean skipLeftSoft;
 	private boolean skipRightSoft;
@@ -492,6 +505,82 @@ public abstract class Canvas extends Displayable {
 				KeyMapper.convertKeyCode(keyCode)));
 	}
 
+	/** Enters the shared ownership path for a non-legacy input producer. */
+	public void inputPressed(String deviceId, long sessionId, String kind, String channel,
+			int... keyCodes) {
+		guestKeyLedger.press(deviceId, sessionId, kind, channel, keyCodes, true);
+	}
+
+	/** Enters the ownership path with an explicit producer repeat policy. */
+	public void inputPressedWithRepeat(String deviceId, long sessionId, String kind, String channel,
+			boolean repeat, int... keyCodes) {
+		guestKeyLedger.press(deviceId, sessionId, kind, channel, keyCodes, repeat);
+	}
+
+	/** Updates a producer's output set, used by diagonal/analog transitions. */
+	public void inputUpdated(String deviceId, long sessionId, String kind, String channel,
+			int... keyCodes) {
+		guestKeyLedger.update(deviceId, sessionId, kind, channel, keyCodes, true);
+	}
+
+	/** Releases the exact source snapshot captured by its DOWN event. */
+	public void inputReleased(String deviceId, long sessionId, String kind, String channel) {
+		guestKeyLedger.release(deviceId, sessionId, kind, channel);
+	}
+
+	/** Invalidates all producer state at a visibility/target boundary. */
+	public void clearInputState() {
+		guestKeyLedger.endVisibility();
+	}
+
+	/** Returns the source-session generation used to reject late releases from an old view. */
+	public long inputGeneration() {
+		return guestKeyLedger.currentGeneration();
+	}
+
+	/** Reveals an auto-hidden keypad only after a controller event was actually accepted. */
+	public void controllerInputAccepted() {
+		if (overlay != null) {
+			overlay.show();
+		}
+	}
+
+	/** Opens the controller-owned numeric keypad modal when the current overlay supports it. */
+	public void openControllerKeypad() {
+		if (overlay instanceof VirtualKeyboard keyboard) {
+			keyboard.openControllerKeypad();
+		}
+	}
+
+	public boolean isControllerKeypadVisible() {
+		return overlay instanceof VirtualKeyboard keyboard && keyboard.isControllerKeypadVisible();
+	}
+
+	/** Gives the host keypad modal first refusal over normal guest key routing. */
+	public boolean handleHostCommand(HostCommand command, boolean pressed) {
+		return overlay instanceof VirtualKeyboard keyboard
+				&& keyboard.handleHostCommand(command, pressed);
+	}
+
+	/** Gives the host keypad modal first refusal over normal guest motion routing. */
+	public boolean handleHostMotion(MotionEvent event) {
+		return overlay instanceof VirtualKeyboard keyboard
+				&& keyboard.handleHostMotion(event);
+	}
+
+	/** Installs the current controller pointer arbiter for this Canvas target. */
+	public void setControllerPointerConsumer(ControllerPointerConsumer consumer) {
+		controllerPointerConsumer = consumer;
+	}
+
+	/** Draws the explicitly configured touch-joystick affordance in guest-relative coordinates. */
+	public void setControllerJoystickOverlay(boolean visible, float centerX, float centerY,
+			float radius, float thumbX, float thumbY, boolean active) {
+		controllerJoystickOverlay.set(visible, centerX, centerY, radius, thumbX, thumbY, active);
+		OverlayView view = controllerOverlayView;
+		if (view != null) view.postInvalidate();
+	}
+
 	public void doShowNotify() {
 		visible = true;
 		showNotify();
@@ -499,6 +588,9 @@ public abstract class Canvas extends Displayable {
 	}
 
 	public void doHideNotify() {
+		PointerEvent.cancel(this);
+		guestKeyLedger.endVisibility();
+		resetControllerBoundaryState();
 		hideNotify();
 		visible = false;
 		cancelAmbientHostTick();
@@ -792,6 +884,9 @@ public abstract class Canvas extends Displayable {
 
 	@Override
 	public void clearDisplayableView() {
+		PointerEvent.cancel(this);
+		guestKeyLedger.endVisibility();
+		resetControllerBoundaryState();
 		super.clearDisplayableView();
 		cancelAmbientHostTick();
 		layout = null;
@@ -1137,8 +1232,26 @@ public abstract class Canvas extends Displayable {
 	}
 
 	void setInvisible() {
+		PointerEvent.cancel(this);
+		guestKeyLedger.endVisibility();
+		resetControllerBoundaryState();
 		this.visible = false;
 		cancelAmbientHostTick();
+	}
+
+	/**
+	 * Clears state owned by the current Canvas boundary after the shared ledger has emitted its
+	 * final releases. This is also used by hide/target replacement paths that do not destroy the
+	 * Android surface, so a VirtualKeyboard contact or soft-key suppression flag cannot leak into
+	 * the next visible target.
+	 */
+	private void resetControllerBoundaryState() {
+		skipLeftSoft = false;
+		skipRightSoft = false;
+		if (overlay != null) {
+			overlay.cancel();
+		}
+		setControllerJoystickOverlay(false, 0f, 0f, 0f, 0f, 0f, false);
 	}
 
 	public void doKeyPressed(int keyCode) {
@@ -1447,6 +1560,8 @@ public abstract class Canvas extends Displayable {
 
 	private class ViewCallbacks implements View.OnTouchListener, SurfaceHolder.Callback, View.OnKeyListener {
 		private final View mView;
+		private final Set<Integer> overlayPointers = new HashSet<>();
+		private final Set<Integer> controllerPointers = new HashSet<>();
 		OverlayView overlayView;
 
 		public ViewCallbacks(View view) {
@@ -1470,8 +1585,11 @@ public abstract class Canvas extends Displayable {
 					String characters = event.getCharacters();
 					for (int i = 0, len = characters.length(); i < len; ) {
 						int cp = characters.codePointAt(i);
-						postKeyPressed(cp);
-						postKeyReleased(cp);
+						String channel = "ime:" + i + ":" + cp;
+						inputPressed("ime:" + event.getDeviceId(), inputGeneration(),
+								"ime", channel, cp);
+						inputReleased("ime:" + event.getDeviceId(), inputGeneration(),
+								"ime", channel);
 						i += Character.charCount(cp);
 					}
 					return true;
@@ -1481,29 +1599,34 @@ public abstract class Canvas extends Displayable {
 		}
 
 		public boolean onKeyDown(int keyCode, KeyEvent event) {
+			int androidKeyCode = keyCode;
 			keyCode = KeyMapper.convertAndroidKeyCode(keyCode, event);
 			if (keyCode == 0) {
 				return false;
 			}
 			if (event.getRepeatCount() == 0) {
 				if (overlay == null || !overlay.keyPressed(keyCode)) {
-					postKeyPressed(keyCode);
+					inputPressedWithRepeat(Integer.toString(event.getDeviceId()), inputGeneration(),
+							"keyboard", Integer.toString(androidKeyCode), false, keyCode);
 				}
 			} else {
-				if (overlay == null || !overlay.keyRepeated(keyCode)) {
-					postKeyRepeated(keyCode);
-				}
+				// Physical keyboard repeat is owned by Android. Do not replace its timing with the
+				// virtual/analog ledger schedule; deliver the native repeat edge directly.
+				if (overlay != null) overlay.keyRepeated(keyCode);
+				postKeyRepeated(keyCode);
 			}
 			return true;
 		}
 
 		public boolean onKeyUp(int keyCode, KeyEvent event) {
+			int androidKeyCode = keyCode;
 			int midpKeyCode = KeyMapper.convertAndroidKeyCode(keyCode, event);
 			if (midpKeyCode == 0) {
 				return false;
 			}
 			if (overlay == null || !overlay.keyReleased(midpKeyCode)) {
-				postKeyReleased(midpKeyCode);
+				inputReleased(Integer.toString(event.getDeviceId()), inputGeneration(),
+						"keyboard", Integer.toString(androidKeyCode));
 			}
 			return true;
 		}
@@ -1521,10 +1644,16 @@ public abstract class Canvas extends Displayable {
 					int id = event.getPointerId(index);
 					float x = event.getX(index);
 					float y = event.getY(index);
-					if (overlay != null) {
-						overlay.pointerPressed(id, x, y);
+					boolean overlayConsumed = overlay != null && overlay.pointerPressed(id, x, y);
+					if (overlayConsumed) overlayPointers.add(id);
+					boolean controllerConsumed = false;
+					ControllerPointerConsumer pointerConsumer = controllerPointerConsumer;
+					if (!overlayConsumed && pointerConsumer != null) {
+						controllerConsumed = pointerConsumer.onPhysicalPointerPressed(
+								id, convertPointerX(x), convertPointerY(y));
+						if (controllerConsumed) controllerPointers.add(id);
 					}
-					if (settings.touchInput && virtualScreen.contains(x, y)) {
+					if (!overlayConsumed && !controllerConsumed && settings.touchInput && virtualScreen.contains(x, y)) {
 						PointerEvent.sendPressed(Canvas.this,
 								id,
 								convertPointerX(x),
@@ -1540,10 +1669,17 @@ public abstract class Canvas extends Displayable {
 							int id = event.getPointerId(p);
 							float x = event.getHistoricalX(p, h);
 							float y = event.getHistoricalY(p, h);
-							if (overlay != null) {
-								overlay.pointerDragged(id, x, y);
+							boolean overlayConsumed = overlayPointers.contains(id);
+							if (overlayConsumed && overlay != null) overlay.pointerDragged(id, x, y);
+							boolean wasController = controllerPointers.contains(id);
+							boolean controllerConsumed = false;
+							ControllerPointerConsumer pointerConsumer = controllerPointerConsumer;
+							if (!overlayConsumed && pointerConsumer != null) {
+								controllerConsumed = pointerConsumer.onPhysicalPointerDragged(
+										id, convertPointerX(x), convertPointerY(y));
+								if (wasController && !controllerConsumed) controllerPointers.remove(id);
 							}
-							if (settings.touchInput) {
+							if (!overlayConsumed && !controllerConsumed && !wasController && settings.touchInput) {
 								PointerEvent.sendDragged(Canvas.this,
 										id,
 										convertPointerX(x),
@@ -1555,10 +1691,17 @@ public abstract class Canvas extends Displayable {
 						int id = event.getPointerId(p);
 						float x = event.getX(p);
 						float y = event.getY(p);
-						if (overlay != null) {
-							overlay.pointerDragged(id, x, y);
+						boolean overlayConsumed = overlayPointers.contains(id);
+						if (overlayConsumed && overlay != null) overlay.pointerDragged(id, x, y);
+						boolean wasController = controllerPointers.contains(id);
+						boolean controllerConsumed = false;
+						ControllerPointerConsumer pointerConsumer = controllerPointerConsumer;
+						if (!overlayConsumed && pointerConsumer != null) {
+							controllerConsumed = pointerConsumer.onPhysicalPointerDragged(
+									id, convertPointerX(x), convertPointerY(y));
+							if (wasController && !controllerConsumed) controllerPointers.remove(id);
 						}
-						if (settings.touchInput) {
+						if (!overlayConsumed && !controllerConsumed && !wasController && settings.touchInput) {
 							PointerEvent.sendDragged(Canvas.this,
 									id,
 									convertPointerX(x),
@@ -1576,10 +1719,16 @@ public abstract class Canvas extends Displayable {
 					int id = event.getPointerId(index);
 					float x = event.getX(index);
 					float y = event.getY(index);
-					if (overlay != null) {
-						overlay.pointerReleased(id, x, y);
+					boolean overlayConsumed = overlayPointers.remove(id);
+					if (overlayConsumed && overlay != null) overlay.pointerReleased(id, x, y);
+					boolean wasController = controllerPointers.remove(id);
+					boolean controllerConsumed = false;
+					ControllerPointerConsumer pointerConsumer = controllerPointerConsumer;
+					if (!overlayConsumed && pointerConsumer != null) {
+						controllerConsumed = pointerConsumer.onPhysicalPointerReleased(
+								id, convertPointerX(x), convertPointerY(y));
 					}
-					if (settings.touchInput) {
+					if (!overlayConsumed && !controllerConsumed && !wasController && settings.touchInput) {
 						PointerEvent.sendReleased(Canvas.this,
 								id,
 								convertPointerX(x),
@@ -1588,6 +1737,11 @@ public abstract class Canvas extends Displayable {
 					break;
 				}
 				case MotionEvent.ACTION_CANCEL:
+					ControllerPointerConsumer pointerConsumer = controllerPointerConsumer;
+					if (pointerConsumer != null) pointerConsumer.onPhysicalPointerCancelled();
+					PointerEvent.cancel(Canvas.this);
+					overlayPointers.clear();
+					controllerPointers.clear();
 					if (overlay != null) {
 						overlay.cancel();
 					}
@@ -1621,6 +1775,8 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder holder) {
+			PointerEvent.cancel(Canvas.this);
+			guestKeyLedger.resetForShow();
 			presentationMailbox.begin();
 			if (renderer != null) {
 				renderer.start();
@@ -1644,6 +1800,8 @@ public abstract class Canvas extends Displayable {
 			Display.postEvent(CanvasEvent.getInstance(Canvas.this, CanvasEvent.SHOW_NOTIFY));
 			repaintInternal();
 			overlayView.addLayer(softBar, 0);
+		controllerOverlayView = overlayView;
+		overlayView.addLayer(controllerJoystickOverlay);
 			overlayView.setVisibility(true);
 			overlay = ContextHolder.getVk();
 			if (overlay != null) {
@@ -1654,6 +1812,8 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+			PointerEvent.cancel(Canvas.this);
+			guestKeyLedger.endVisibility();
 			cancelAmbientHostTick();
 			if (autoSpeedController != null) {
 				autoSpeedController.setFrameSourceActive(false);
@@ -1675,11 +1835,13 @@ public abstract class Canvas extends Displayable {
 			frameMetrics = null;
 			publishedFrameSequence = 0L;
 			overlayView.removeLayer(softBar);
+			overlayView.removeLayer(controllerJoystickOverlay);
+		controllerOverlayView = null;
 			softBar.closeMenu();
 			overlayView.setVisibility(false);
+			resetControllerBoundaryState();
 			if (overlay != null) {
 				overlay.setTarget(null);
-				overlay.cancel();
 				overlay = null;
 			}
 		}
@@ -1737,6 +1899,47 @@ public abstract class Canvas extends Displayable {
 			} else {
 				uiHandler.sendEmptyMessage(0);
 			}
+		}
+	}
+
+	private final class ControllerJoystickOverlay implements Layer {
+		private volatile boolean visible;
+		private volatile float centerX;
+		private volatile float centerY;
+		private volatile float radius;
+		private volatile float thumbX;
+		private volatile float thumbY;
+		private volatile boolean active;
+
+		private void set(boolean visible, float centerX, float centerY, float radius,
+				float thumbX, float thumbY, boolean active) {
+			this.visible = visible;
+			this.centerX = centerX;
+			this.centerY = centerY;
+			this.radius = radius;
+			this.thumbX = thumbX;
+			this.thumbY = thumbY;
+			this.active = active;
+		}
+
+		@Override
+		public void paint(CanvasWrapper g) {
+			if (!visible || radius <= 0f || onWidth <= 0 || onHeight <= 0) return;
+			float scaleX = onWidth / (float) Math.max(1, width);
+			float scaleY = onHeight / (float) Math.max(1, height);
+			float scale = Math.min(scaleX, scaleY);
+			float cx = onX + centerX * scaleX;
+			float cy = onY + centerY * scaleY;
+			float rr = radius * scale;
+			RectF ring = new RectF(cx - rr, cy - rr, cx + rr, cy + rr);
+			g.setDrawColor(Color.argb(190, 255, 255, 255));
+			g.drawArc(ring, 0, 360);
+			float tx = onX + thumbX * scaleX;
+			float ty = onY + thumbY * scaleY;
+			float tr = Math.max(6f, rr * 0.28f);
+			g.setFillColor(active ? Color.argb(150, 80, 160, 255)
+					: Color.argb(90, 255, 255, 255));
+			g.fillArc(new RectF(tx - tr, ty - tr, tx + tr, ty + tr), 0, 360);
 		}
 	}
 

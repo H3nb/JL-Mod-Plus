@@ -78,6 +78,30 @@ public interface ConfigFormEvents {
 	default void onChooseKeyboardLayout() {
 	}
 
+	/** Starts the host-owned controller calibration flow. */
+	default void onGamepadCalibration() {
+	}
+
+	default void onGamepadCalibrationAdvance() {
+	}
+
+	default void onGamepadCalibrationSave() {
+	}
+
+	default void onGamepadCalibrationCancel() {
+	}
+
+	default void onGamepadCalibrationReset() {
+	}
+
+	/** Opens a non-delivering controller diagnosis surface. */
+	default void onGamepadDiagnosis() {
+	}
+
+	/** Opens the controller mapping help surface. */
+	default void onGamepadHelp() {
+	}
+
 	enum PresetApplyScope {
 		SETTINGS,
 		KEYBOARD_LAYOUT,

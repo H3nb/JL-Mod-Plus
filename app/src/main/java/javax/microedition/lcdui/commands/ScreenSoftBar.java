@@ -1,5 +1,6 @@
 /*
  * Copyright 2019-2023 Yury Kharchenko
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +18,7 @@
 package javax.microedition.lcdui.commands;
 
 import android.view.ViewGroup;
+import android.view.MotionEvent;
 
 import androidx.compose.ui.platform.ComposeView;
 
@@ -24,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.microedition.lcdui.Command;
+import io.github.h3nb.jlmodplus.input.HostCommand;
 import javax.microedition.lcdui.Screen;
 
 public class ScreenSoftBar extends AbstractSoftKeysBar {
@@ -52,6 +55,22 @@ public class ScreenSoftBar extends AbstractSoftKeysBar {
 
 	public void showMenu() {
 		controller.openMenu();
+	}
+
+	public boolean isControllerMenuVisible() {
+		return controller.isControllerMenuVisible();
+	}
+
+	public boolean handleHostCommand(HostCommand command, boolean pressed) {
+		return controller.handleHostCommand(command, pressed);
+	}
+
+	public boolean handleControllerMotion(MotionEvent event) {
+		return controller.handleControllerMotion(event);
+	}
+
+	public boolean handleControllerBack() {
+		return controller.handleControllerBack();
 	}
 
 	@Override
