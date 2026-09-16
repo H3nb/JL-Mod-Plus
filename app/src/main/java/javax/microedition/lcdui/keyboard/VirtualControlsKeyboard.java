@@ -86,6 +86,9 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private RectF screenBounds;
 	private GuestViewport viewport;
 	private boolean overlayVisible = true;
+	private boolean applyingStandardTemplate;
+	private boolean standardTemplateReflowPosted;
+	private boolean standardTemplateEdited;
 
 	private int dpadPointer = -1;
 	private PointerSourceToken dpadToken;
@@ -128,6 +131,16 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public VirtualControlsKeyboard(ProfileModel settings) {
 		super(settings);
 		this.settings = settings;
+		int layout = getLayout();
+		if (isStandardTemplate(layout)) {
+			settings.virtualDpadEnabled = layout == TYPE_DPAD_STANDARD;
+			settings.virtualAnalogEnabled = layout == TYPE_ANALOG_STANDARD;
+		} else if (layout != TYPE_CUSTOM) {
+			// Existing built-in templates keep their historical controls. Grouped movement belongs
+			// only to the two new standard templates unless the user explicitly customizes a layout.
+			settings.virtualDpadEnabled = false;
+			settings.virtualAnalogEnabled = false;
+		}
 		sanitizeStoredGeometry();
 		rebuildAnalogStick();
 	}
@@ -143,6 +156,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public void setVirtualDpadEnabled(boolean enabled) {
 		if (settings.virtualDpadEnabled == enabled) return;
 		if (!enabled) endDpad();
+		standardTemplateEdited |= isStandardTemplate(getLayout());
 		settings.virtualDpadEnabled = enabled;
 		ProfilesManager.saveConfig(settings);
 		invalidateOverlay();
@@ -151,6 +165,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public void setVirtualAnalogEnabled(boolean enabled) {
 		if (settings.virtualAnalogEnabled == enabled) return;
 		if (!enabled) endAnalog();
+		standardTemplateEdited |= isStandardTemplate(getLayout());
 		settings.virtualAnalogEnabled = enabled;
 		ProfilesManager.saveConfig(settings);
 		invalidateOverlay();
@@ -160,7 +175,9 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public void setView(View view) {
 		super.setView(view);
 		overlayView = view;
-		hideLegacyDirectionButtons();
+		if (isStandardTemplate(getLayout())) {
+			applyStandardLegacyVisibility();
+		}
 	}
 
 	/**
@@ -185,11 +202,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		return states;
 	}
 
-	/**
-	 * The old eight independent arrow buttons are implementation details of VirtualKeyboard.
-	 * VirtualControlsKeyboard replaces them with one grouped D-pad, so they stay hidden even when
-	 * the universal hide/show dialog modifies other virtual-control visibility.
-	 */
 	@Override
 	public void setKeysVisibility(boolean[] states) {
 		if (states == null) return;
@@ -199,8 +211,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			return;
 		}
 
+		boolean standardTemplate = isStandardTemplate(getLayout());
+		if (standardTemplate) standardTemplateEdited = true;
 		boolean[] legacyStates = Arrays.copyOf(states, legacyCount);
-		forceLegacyDirectionsHidden(legacyStates);
+		if (standardTemplate) forceLegacyDirectionsHidden(legacyStates);
 		super.setKeysVisibility(legacyStates);
 
 		if (states.length < legacyCount + GROUPED_CONTROL_COUNT) return;
@@ -220,17 +234,55 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public void setLayout(int variant) {
-		if (variant != TYPE_DPAD_STANDARD && variant != TYPE_ANALOG_STANDARD) {
+		if (!isStandardTemplate(variant)) {
+			standardTemplateEdited = false;
+			endDpad();
+			endAnalog();
+			if (variant != TYPE_CUSTOM) {
+				settings.virtualDpadEnabled = false;
+				settings.virtualAnalogEnabled = false;
+			}
 			super.setLayout(variant);
+			if (variant != TYPE_CUSTOM) ProfilesManager.saveConfig(settings);
+			invalidateOverlay();
 			return;
 		}
 
-		endDpad();
-		endAnalog();
-		// Start from the long-standing Numbers & Arrows geometry so existing templates and default
-		// behavior stay untouched. A template application becomes a normal custom layout afterward.
-		super.setLayout(LEGACY_TEMPLATE_NUMBERS_ARROWS);
+		applyingStandardTemplate = true;
+		standardTemplateEdited = false;
+		try {
+			endDpad();
+			endAnalog();
+			// Build the standard templates from the long-standing Numbers & Arrows geometry, then
+			// persist their own template id. That identity lets resize() regenerate the deterministic
+			// geometry after an orientation/bounds change instead of stretching portrait offsets.
+			super.setLayout(LEGACY_TEMPLATE_NUMBERS_ARROWS);
+			applyStandardLegacyVisibility();
+			arrangeStandardLegacyButtons();
 
+			float movementCenterY = standardMovementCenterY();
+			settings.virtualDpadEnabled = variant == TYPE_DPAD_STANDARD;
+			settings.virtualAnalogEnabled = variant == TYPE_ANALOG_STANDARD;
+			settings.virtualDpadCenterX = STANDARD_MOVEMENT_CENTER_X;
+			settings.virtualDpadCenterY = movementCenterY;
+			settings.virtualDpadRadius = STANDARD_MOVEMENT_RADIUS;
+			settings.virtualAnalogCenterX = STANDARD_MOVEMENT_CENTER_X;
+			settings.virtualAnalogCenterY = movementCenterY;
+			settings.virtualAnalogRadius = STANDARD_MOVEMENT_RADIUS;
+			rebuildAnalogStick();
+			ProfilesManager.saveConfig(settings);
+			super.onLayoutChanged(variant);
+			invalidateOverlay();
+		} finally {
+			applyingStandardTemplate = false;
+		}
+	}
+
+	private static boolean isStandardTemplate(int variant) {
+		return variant == TYPE_DPAD_STANDARD || variant == TYPE_ANALOG_STANDARD;
+	}
+
+	private void applyStandardLegacyVisibility() {
 		String[] legacyNames = super.getKeyNames();
 		boolean[] hidden = new boolean[legacyNames.length];
 		Arrays.fill(hidden, true);
@@ -243,21 +295,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		}
 		forceLegacyDirectionsHidden(hidden);
 		super.setKeysVisibility(hidden);
-		arrangeStandardLegacyButtons();
-
-		float movementCenterY = standardMovementCenterY();
-		settings.virtualDpadEnabled = variant == TYPE_DPAD_STANDARD;
-		settings.virtualAnalogEnabled = variant == TYPE_ANALOG_STANDARD;
-		settings.virtualDpadCenterX = STANDARD_MOVEMENT_CENTER_X;
-		settings.virtualDpadCenterY = movementCenterY;
-		settings.virtualDpadRadius = STANDARD_MOVEMENT_RADIUS;
-		settings.virtualAnalogCenterX = STANDARD_MOVEMENT_CENTER_X;
-		settings.virtualAnalogCenterY = movementCenterY;
-		settings.virtualAnalogRadius = STANDARD_MOVEMENT_RADIUS;
-		rebuildAnalogStick();
-		ProfilesManager.saveConfig(settings);
-		super.onLayoutChanged(TYPE_CUSTOM);
-		invalidateOverlay();
 	}
 
 	/**
@@ -329,12 +366,32 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public void resize(RectF screen, float left, float top, float right, float bottom) {
 		endDpad();
 		endAnalog();
+		boolean boundsChanged = screenBounds == null ||
+				Math.abs(screenBounds.width() - screen.width()) > 0.5f ||
+				Math.abs(screenBounds.height() - screen.height()) > 0.5f;
+		int layout = getLayout();
+		boolean reflowStandardTemplate = !applyingStandardTemplate && !standardTemplateEdited &&
+				isStandardTemplate(layout) && boundsChanged;
+
 		super.resize(screen, left, top, right, bottom);
 		screenBounds = new RectF(screen);
 		viewport = new GuestViewport(
 				Math.max(1, Math.round(screen.width())),
 				Math.max(1, Math.round(screen.height())));
 		rebuildAnalogStick();
+		if (reflowStandardTemplate) scheduleStandardTemplateReflow(layout);
+	}
+
+	private void scheduleStandardTemplateReflow(int variant) {
+		if (standardTemplateReflowPosted || overlayView == null) return;
+		standardTemplateReflowPosted = true;
+		overlayView.post(() -> {
+			standardTemplateReflowPosted = false;
+			if (!applyingStandardTemplate && !standardTemplateEdited && getLayout() == variant &&
+					isStandardTemplate(variant)) {
+				setLayout(variant);
+			}
+		});
 	}
 
 	@Override
@@ -386,6 +443,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	@Override
 	public boolean pointerDragged(int pointer, float x, float y) {
 		if (editControl != EditControl.NONE) {
+			standardTemplateEdited |= isStandardTemplate(getLayout());
 			if (pointer == editPointer) {
 				editPointerX = x;
 				editPointerY = y;
@@ -403,6 +461,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			}
 		}
 		if (legacyEditPointer >= 0) {
+			standardTemplateEdited |= isStandardTemplate(getLayout());
 			if (pointer == legacyEditPointer) {
 				legacyEditX = x;
 				legacyEditY = y;
@@ -701,7 +760,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	private boolean beginLegacyPinch(int pointer, float x, float y) {
 		if (getLayoutEditMode() != LAYOUT_KEYS || legacyEditPointer < 0 ||
-				legacyPinchPointer >= 0 || pointer == legacyEditPointer) return false;
+				legacyPinchPointer >= 0 || pointer == editPointer) return false;
 
 		/* Finalize the current move before handing the selected key's scale group to the legacy
 		 * resize engine. The second finger itself is not forwarded to VirtualKeyboard. */
@@ -1172,12 +1231,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	private static float clamp(float value, float min, float max) {
 		return Math.max(min, Math.min(max, value));
-	}
-
-	private void hideLegacyDirectionButtons() {
-		boolean[] hidden = super.getKeysVisibility();
-		forceLegacyDirectionsHidden(hidden);
-		super.setKeysVisibility(hidden);
 	}
 
 	private void forceLegacyDirectionsHidden(boolean[] hidden) {
