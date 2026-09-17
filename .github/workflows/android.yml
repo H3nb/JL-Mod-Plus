@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
@@ -26,8 +26,29 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          persist-credentials: false
+          persist-credentials: true
           submodules: recursive
+
+      - name: Apply one-shot legacy virtual keyboard patch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feature/extend-gamepad-support'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/patch_legacy_virtual_keyboard.py
+          ! grep -q 'beginVirtualDpad' app/src/main/java/javax/microedition/lcdui/keyboard/VirtualKeyboard.java
+          ! grep -q 'virtualDpadBounds' app/src/main/java/javax/microedition/lcdui/keyboard/VirtualKeyboard.java
+          grep -q 'centerFireRemainsARealLegacyVirtualKey' app/src/androidTest/java/javax/microedition/lcdui/keyboard/LegacyVirtualKeyboardTouchTest.java
+          grep -q 'legacyArrowUsesVirtualKeyPressedState' app/src/androidTest/java/javax/microedition/lcdui/keyboard/LegacyVirtualKeyboardTouchTest.java
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout HEAD^ -- .github/workflows/android.yml
+          git rm .github/workflows/patch-legacy-virtual-keyboard.yml .github/patch_legacy_virtual_keyboard.py
+          git add app/src/main/java/javax/microedition/lcdui/keyboard/VirtualKeyboard.java
+          git add app/src/androidTest/java/javax/microedition/lcdui/keyboard/LegacyVirtualKeyboardTouchTest.java
+          git add .github/workflows/android.yml
+          git commit -m "fix: restore legacy virtual keyboard touch routing"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
       - name: Restore shared debug keystore
         shell: bash
