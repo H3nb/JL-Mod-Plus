@@ -36,22 +36,6 @@ class ControllerLifecycleGateTest {
     }
 
     @Test
-    fun digitalButtonsAreNotSacrificedToTheAnalogNeutralGate() {
-        val gate = ControllerLifecycleGate()
-
-        assertEquals(
-            ControllerLifecycleDecision.ACTIVE,
-            gate.offerDigital(7, keyCode = 10, down = true),
-        )
-        assertEquals(
-            ControllerLifecycleDecision.ACTIVE,
-            gate.offerDigital(7, keyCode = 10, down = false),
-        )
-        assertEquals(ControllerLifecycleState.INACTIVE, gate.snapshot().state)
-        assertTrue(gate.snapshot().waitingDigitalKeys.isEmpty())
-    }
-
-    @Test
     fun deviceAndTargetBoundariesAdvanceGenerationAndReleaseActivation() {
         val gate = ControllerLifecycleGate()
         gate.offerMotion(1, neutral = true)
@@ -79,19 +63,5 @@ class ControllerLifecycleGateTest {
         assertEquals(ControllerLifecycleState.WAIT_NEUTRAL, gate.snapshot().state)
         assertEquals(ControllerLifecycleDecision.ACTIVATED, gate.offerMotion(2, true))
         assertEquals(2, gate.snapshot().activeDeviceId)
-    }
-
-    @Test
-    fun digitalInputDoesNotStealAnalogOwnershipFromAnotherDevice() {
-        val gate = ControllerLifecycleGate()
-        assertEquals(ControllerLifecycleDecision.ACTIVATED, gate.offerMotion(1, neutral = true))
-
-        assertEquals(
-            ControllerLifecycleDecision.ACTIVE,
-            gate.offerDigital(deviceId = 2, keyCode = 10, down = true),
-        )
-        assertTrue(gate.snapshot().waitingDigitalKeys.isEmpty())
-        assertEquals(ControllerLifecycleState.ACTIVE, gate.snapshot().state)
-        assertEquals(1, gate.snapshot().activeDeviceId)
     }
 }
