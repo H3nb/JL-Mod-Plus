@@ -39,9 +39,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
@@ -54,11 +51,6 @@ import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.input.HostCommand;
-import io.github.h3nb.jlmodplus.input.PointerSourceKind;
-import io.github.h3nb.jlmodplus.input.PointerSourceToken;
-import io.github.h3nb.jlmodplus.input.VirtualDpadController;
-import io.github.h3nb.jlmodplus.input.VirtualDpadDirection;
-import io.github.h3nb.jlmodplus.input.VirtualDpadGeometry;
 
 public class VirtualKeyboard implements Overlay, Runnable {
 	private static final String TAG = VirtualKeyboard.class.getSimpleName();
@@ -214,25 +206,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private VirtualKey controllerKeypadPressed;
 	private final EnumSet<HostCommand> controllerKeypadMotionCommands =
 			EnumSet.noneOf(HostCommand.class);
-	private final VirtualDpadController virtualDpad = new VirtualDpadController();
-	private final Map<Integer, VirtualDpadContact> virtualDpadContacts = new HashMap<>();
 	private long pointerSourceSequence;
-	private long virtualDpadSequence;
-
-	private static final class VirtualDpadContact {
-		final PointerSourceToken token;
-		final VirtualDpadGeometry geometry;
-		final String channel;
-		final Canvas canvas;
-
-		VirtualDpadContact(PointerSourceToken token, VirtualDpadGeometry geometry, String channel,
-				Canvas canvas) {
-			this.token = token;
-			this.geometry = geometry;
-			this.channel = channel;
-			this.canvas = canvas;
-		}
-	}
 
 	public VirtualKeyboard(ProfileModel settings) {
 		this.settings = settings;
@@ -1115,7 +1089,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				if (pointer < 0 || pointer >= associatedKeys.length) {
 					return false;
 				}
-				endVirtualDpad(pointer);
 				VirtualKey previous = associatedKeys[pointer];
 				if (previous != null) {
 					String previousSource = sourceForPointer(pointer);
@@ -1123,9 +1096,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					associatedSources[pointer] = null;
 					previous.onUp(previousSource);
 				}
-				if (beginVirtualDpad(pointer, x, y)) {
-					consumed = true;
-				} else for (VirtualKey key : keypad) {
+				for (VirtualKey key : keypad) {
 					if (key.contains(x, y)) {
 						vibrate();
 						associatedKeys[pointer] = key;
@@ -1188,9 +1159,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		case LAYOUT_EOF -> {
 				if (pointer < 0 || pointer >= associatedKeys.length) {
 					return false;
-				}
-				if (moveVirtualDpad(pointer, x, y)) {
-					return true;
 				}
 				VirtualKey aKey = associatedKeys[pointer];
 				if (aKey == null) {
@@ -1286,10 +1254,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			if (pointer < 0 || pointer >= associatedKeys.length) {
 				return false;
 			}
-			if (endVirtualDpad(pointer)) {
-				if (overlayView != null) overlayView.postInvalidate();
-				return true;
-			}
 			VirtualKey key = associatedKeys[pointer];
 			if (key != null) {
 				String source = sourceForPointer(pointer);
@@ -1360,7 +1324,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	@Override
 	public void cancel() {
 		closeControllerKeypad();
-		cancelVirtualDpadContacts();
 		for (int pointer = 0; pointer < associatedKeys.length; pointer++) {
 			VirtualKey key = associatedKeys[pointer];
 			if (key != null) {
@@ -1379,89 +1342,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			key.selected = false;
 		}
 		if (overlayView != null) overlayView.postInvalidate();
-	}
-
-	private boolean beginVirtualDpad(int pointer, float x, float y) {
-		RectF bounds = virtualDpadBounds();
-		if (bounds == null || !bounds.contains(x, y)) return false;
-		float radius = Math.max(bounds.width(), bounds.height()) / 2.0f;
-		VirtualDpadGeometry geometry = new VirtualDpadGeometry(
-				bounds.centerX(), bounds.centerY(), Math.max(radius, 1.0f));
-		String source = newSourceForPointer(pointer);
-		String channel = source + ":virtual-dpad:" + (++virtualDpadSequence);
-		PointerSourceToken token = new PointerSourceToken(
-				PointerSourceKind.VIRTUAL,
-				pointer,
-				target == null ? this : target,
-				target == null ? 0L : target.inputGeneration());
-		virtualDpadContacts.put(pointer, new VirtualDpadContact(token, geometry, channel, target));
-		Set<VirtualDpadDirection> directions = virtualDpad.begin(token, geometry, x, y);
-		updateVirtualDpadOutput(virtualDpadContacts.get(pointer), directions);
-		return true;
-	}
-
-	private boolean moveVirtualDpad(int pointer, float x, float y) {
-		VirtualDpadContact contact = virtualDpadContacts.get(pointer);
-		if (contact == null) return false;
-		Set<VirtualDpadDirection> directions =
-				virtualDpad.move(contact.token, contact.geometry, x, y);
-		updateVirtualDpadOutput(contact, directions);
-		return true;
-	}
-
-	private boolean endVirtualDpad(int pointer) {
-		VirtualDpadContact contact = virtualDpadContacts.remove(pointer);
-		if (contact == null) return false;
-		virtualDpad.end(contact.token);
-		if (contact.canvas != null) {
-			contact.canvas.inputReleased(
-					"vk@" + Integer.toHexString(System.identityHashCode(this)),
-					contact.token.getGeneration(), "virtual-dpad", contact.channel);
-		}
-		return true;
-	}
-
-	private void cancelVirtualDpadContacts() {
-		Integer[] pointers = virtualDpadContacts.keySet().toArray(new Integer[0]);
-		for (int pointer : pointers) endVirtualDpad(pointer);
-		virtualDpad.cancelAll();
-	}
-
-	private void updateVirtualDpadOutput(VirtualDpadContact contact,
-			Set<VirtualDpadDirection> directions) {
-		if (contact == null || contact.canvas == null) return;
-		int[] keyCodes = new int[directions.size()];
-		int offset = 0;
-		for (VirtualDpadDirection direction : directions) {
-			keyCodes[offset++] = virtualDpadKeyCode(direction);
-		}
-		contact.canvas.inputUpdated(
-				"vk@" + Integer.toHexString(System.identityHashCode(this)),
-				contact.token.getGeneration(), "virtual-dpad", contact.channel, keyCodes);
-	}
-
-	private int virtualDpadKeyCode(VirtualDpadDirection direction) {
-		return switch (direction) {
-			case UP -> Canvas.KEY_UP;
-			case DOWN -> Canvas.KEY_DOWN;
-			case LEFT -> Canvas.KEY_LEFT;
-			case RIGHT -> Canvas.KEY_RIGHT;
-		};
-	}
-
-	private RectF virtualDpadBounds() {
-		int[] keys = {
-				KEY_UP_LEFT, KEY_UP, KEY_UP_RIGHT,
-				KEY_LEFT, KEY_RIGHT,
-				KEY_DOWN_LEFT, KEY_DOWN, KEY_DOWN_RIGHT,
-		};
-		RectF bounds = null;
-		for (int key : keys) {
-			if (!keypad[key].visible) continue;
-			if (bounds == null) bounds = new RectF(keypad[key].rect);
-			else bounds.union(keypad[key].rect);
-		}
-		return bounds;
 	}
 
 	@Override
