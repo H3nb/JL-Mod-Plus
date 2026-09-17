@@ -20,8 +20,9 @@ jobs:
           fetch-depth: 0
 
       - name: Restore legacy virtual-key routing
-        shell: python
+        shell: bash
         run: |
+          python3 <<'PY'
           from pathlib import Path
           import re
 
@@ -229,9 +230,7 @@ jobs:
 
               private Object keyByLabel(String expected) throws Exception {
                   for (Object key : keypad) {
-                      Field label = key.getClass().getSuperclass() == Object.class
-                              ? key.getClass().getDeclaredField("label")
-                              : VirtualKeyboard.class.getDeclaredClasses()[0].getDeclaredField("label");
+                      Field label = findField(key.getClass(), "label");
                       label.setAccessible(true);
                       if (expected.equals(label.get(key))) return key;
                   }
@@ -269,6 +268,7 @@ jobs:
               }
           }
           ''', encoding="utf-8")
+          PY
 
       - name: Sanity-check patch contents
         shell: bash
