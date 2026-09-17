@@ -80,6 +80,41 @@ class GamepadCalibrationSessionTest {
     }
 
     @Test
+    fun offsetCenteredStickCalibrationDoesNotRequireZeroCrossing() {
+        val session = GamepadCalibrationSession(
+            neutralDurationMillis = 1L,
+            minimumSamples = 1,
+            requiredChannels = setOf(
+                CalibrationChannel.LEFT_X,
+                CalibrationChannel.LEFT_Y,
+            ),
+        )
+        val neutral = mapOf(
+            CalibrationChannel.LEFT_X to 127.0f,
+            CalibrationChannel.LEFT_Y to 127.0f,
+        )
+        assertEquals(CalibrationEvent.NEUTRAL_STARTED, session.observeNeutral(0L, neutral, true).event)
+        assertEquals(CalibrationEvent.NEUTRAL_READY, session.observeNeutral(1L, neutral, true).event)
+        session.observeRange(
+            mapOf(
+                CalibrationChannel.LEFT_X to 0.0f,
+                CalibrationChannel.LEFT_Y to 0.0f,
+            ),
+        )
+        session.observeRange(
+            mapOf(
+                CalibrationChannel.LEFT_X to 255.0f,
+                CalibrationChannel.LEFT_Y to 255.0f,
+            ),
+        )
+        assertEquals(CalibrationEvent.RANGE_ACCEPTED, session.finishSticks().event)
+        val review = session.finishTriggers()
+        assertEquals(CalibrationEvent.REVIEW_READY, review.event)
+        assertEquals(CalibrationPhase.REVIEW, review.phase)
+        assertNotNull(session.candidateProfile)
+    }
+
+    @Test
     fun invalidCandidateAndCancelDoNotOverwritePreviousProfile() {
         val previous = buildValidProfile()
         val session = GamepadCalibrationSession(previous = previous, minimumSamples = 2)

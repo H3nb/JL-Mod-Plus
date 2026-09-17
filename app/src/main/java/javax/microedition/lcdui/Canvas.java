@@ -203,6 +203,8 @@ public abstract class Canvas extends Displayable {
 			new ControllerJoystickOverlay();
 	/** Optional controller-owned virtual pointer arbiter; null preserves the legacy touch path. */
 	private volatile ControllerPointerConsumer controllerPointerConsumer;
+	/** Callback state survives surface reuse, so lifecycle boundaries must be able to cancel it. */
+	private ViewCallbacks viewCallbacks;
 	/** All host/keyboard/virtual-keypad key producers share this per-Canvas ledger. */
 	private final GuestKeyLedgerAdapter guestKeyLedger = new GuestKeyLedgerAdapter(this);
 	private FpsCounter fpsCounter;
@@ -871,10 +873,10 @@ public abstract class Canvas extends Displayable {
 				canvasView.getHolder().setFormat(PixelFormat.RGBA_8888);
 				innerView = canvasView;
 			}
-			ViewCallbacks callback = new ViewCallbacks(innerView);
-			innerView.getHolder().addCallback(callback);
-			innerView.setOnTouchListener(callback);
-			innerView.setOnKeyListener(callback);
+			viewCallbacks = new ViewCallbacks(innerView);
+			innerView.getHolder().addCallback(viewCallbacks);
+			innerView.setOnTouchListener(viewCallbacks);
+			innerView.setOnKeyListener(viewCallbacks);
 			innerView.setFocusableInTouchMode(true);
 			layout.addView(innerView);
 			innerView.requestFocus();
@@ -891,6 +893,7 @@ public abstract class Canvas extends Displayable {
 		cancelAmbientHostTick();
 		layout = null;
 		innerView = null;
+		viewCallbacks = null;
 	}
 
 	public void setFullScreenMode(boolean flag) {
@@ -1248,6 +1251,8 @@ public abstract class Canvas extends Displayable {
 	private void resetControllerBoundaryState() {
 		skipLeftSoft = false;
 		skipRightSoft = false;
+		ViewCallbacks callbacks = viewCallbacks;
+		if (callbacks != null) callbacks.cancelPointerOwnership();
 		if (overlay != null) {
 			overlay.cancel();
 		}
@@ -1569,6 +1574,13 @@ public abstract class Canvas extends Displayable {
 			overlayView = ContextHolder.getActivity().findViewById(R.id.overlay);
 		}
 
+		private void cancelPointerOwnership() {
+			ControllerPointerConsumer pointerConsumer = controllerPointerConsumer;
+			if (pointerConsumer != null) pointerConsumer.onPhysicalPointerCancelled();
+			overlayPointers.clear();
+			controllerPointers.clear();
+		}
+
 		@Override
 		public boolean onKey(View v, int keyCode, KeyEvent event) {
 			switch (event.getAction()) {
@@ -1610,10 +1622,14 @@ public abstract class Canvas extends Displayable {
 							"keyboard", Integer.toString(androidKeyCode), false, keyCode);
 				}
 			} else {
-				// Physical keyboard repeat is owned by Android. Do not replace its timing with the
-				// virtual/analog ledger schedule; deliver the native repeat edge directly.
-				if (overlay != null) overlay.keyRepeated(keyCode);
-				postKeyRepeated(keyCode);
+				// Android owns physical-key timing, but a repeat is valid only while the same
+				// source still owns a guest DOWN. Host/modal boundaries may have released it.
+				boolean overlayConsumed = overlay != null && overlay.keyRepeated(keyCode);
+				if (!overlayConsumed && guestKeyLedger.isActive(
+						Integer.toString(event.getDeviceId()), inputGeneration(),
+						"keyboard", Integer.toString(androidKeyCode))) {
+					postKeyRepeated(keyCode);
+				}
 			}
 			return true;
 		}
@@ -1737,11 +1753,8 @@ public abstract class Canvas extends Displayable {
 					break;
 				}
 				case MotionEvent.ACTION_CANCEL:
-					ControllerPointerConsumer pointerConsumer = controllerPointerConsumer;
-					if (pointerConsumer != null) pointerConsumer.onPhysicalPointerCancelled();
+					cancelPointerOwnership();
 					PointerEvent.cancel(Canvas.this);
-					overlayPointers.clear();
-					controllerPointers.clear();
 					if (overlay != null) {
 						overlay.cancel();
 					}

@@ -18,34 +18,36 @@ import android.view.InputDevice
 import java.util.Locale
 
 /**
- * Caches the stable calibration identity for one Android device/source pair.
+ * Caches the stable calibration identity for one Android controller capability set.
  *
- * Motion events are high frequency. Building, sorting, and formatting the capability signature
- * therefore happens on first use and after an InputDevice callback, never for every sample.
+ * MotionEvent.source is deliberately excluded from the persistent identity: Android may report
+ * HAT, stick, and trigger ranges under different compatible sources for the same physical device.
+ * Device id remains only an in-process cache key and is invalidated by InputDevice callbacks.
  */
 class ControllerCapabilityCache {
-    private val signatures = HashMap<Key, String>()
+    private val signatures = HashMap<Int, String>()
 
-    fun signature(device: InputDevice, source: Int): String {
-        val key = Key(device.id, source)
-        return signatures[key] ?: buildSignature(device, source).also { signatures[key] = it }
+    fun signature(device: InputDevice, _source: Int): String = signature(device)
+
+    fun signature(device: InputDevice): String {
+        return signatures[device.id] ?: buildSignature(device).also { signatures[device.id] = it }
     }
 
     fun invalidate(deviceId: Int) {
-        signatures.keys.removeAll { it.deviceId == deviceId }
+        signatures.remove(deviceId)
     }
 
     fun clear() = signatures.clear()
 
-    private data class Key(val deviceId: Int, val source: Int)
-
     companion object {
+        /** Compatibility overload for existing Java/Kotlin call sites; source is non-identifying. */
         @JvmStatic
-        fun buildSignature(device: InputDevice, source: Int): String = buildString {
+        fun buildSignature(device: InputDevice, _source: Int): String = buildSignature(device)
+
+        @JvmStatic
+        fun buildSignature(device: InputDevice): String = buildString {
             append("descriptor=")
             append(device.descriptor.orEmpty().ifBlank { "unknown" }.replace("|", "%7C"))
-            append(";source=")
-            append(source)
             device.motionRanges
                 .sortedWith(
                     compareBy<InputDevice.MotionRange>(

@@ -156,13 +156,6 @@ class GamepadCalibrationSession @JvmOverloads constructor(
         if (!hasMinimumSamplesForSticks()) {
             return invalidStep(StickProcessor.CalibrationIssue.INSUFFICIENT_SAMPLES)
         }
-        if (requiredChannels.any {
-                it.isStick &&
-                    ((ranges[it]?.min ?: 0.0f) >= 0.0f ||
-                        (ranges[it]?.max ?: 0.0f) <= 0.0f)
-            }) {
-            return invalidStep(StickProcessor.CalibrationIssue.INVALID_RANGE)
-        }
         currentPhase = CalibrationPhase.TRIGGER_RANGE
         return step(CalibrationEvent.RANGE_ACCEPTED)
     }

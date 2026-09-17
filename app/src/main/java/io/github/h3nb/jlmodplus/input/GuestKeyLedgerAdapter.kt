@@ -104,6 +104,10 @@ class GuestKeyLedgerAdapter @JvmOverloads constructor(
         ledger.up(source)
     }
 
+    /** True only while this exact producer currently owns a delivered/requested output set. */
+    fun isActive(deviceId: String, sessionId: Long, kind: String, channel: String): Boolean =
+        ledger.isActive(SourceToken(deviceId, sessionId, kind, channel))
+
     /** Ends the current visibility generation and releases all outputs before the next one. */
     fun endVisibility() {
         cancelLegacyKeypadRepeats()

@@ -230,7 +230,19 @@ class ControllerInputRouter(
 
     /** Handles host-owned controller buttons, then the configured virtual pointer click. */
     fun onKeyEvent(event: KeyEvent): Boolean {
-        if (hostInputRouter.onKeyEvent(event)) return true
+        // A modal can take ownership after a guest key DOWN but before its UP. Close the
+        // guest side first so the modal may consume the physical UP without leaving the
+        // MIDlet key ledger latched.
+        if (host.isControllerModalActive()) {
+            releaseGuestStateForModal(event)
+        }
+        val hostHandled = hostInputRouter.onKeyEvent(event)
+        if (hostHandled) {
+            // OpenMenu/OpenKeypad can synchronously create a modal during this call. Close
+            // analog/pointer guest state at that exact ownership boundary as well.
+            if (host.isControllerModalActive()) releaseGuestStateForModal(event)
+            return true
+        }
         if (!isGamepadEvent(event) || !config.enabled) return false
         if (config.pointer.mode != PointerMode.CURSOR ||
             config.pointer.clickAction != PointerAction.CLICK ||
@@ -271,6 +283,23 @@ class ControllerInputRouter(
         return hostInputRouter.releaseCapturedKey(event)
     }
 
+    private fun releaseGuestStateForModal(event: KeyEvent? = null) {
+        releaseAll()
+        resetPointerState()
+        val canvas = host.currentCanvas()
+        if (event?.action == KeyEvent.ACTION_UP && canvas != null && isGamepadEvent(event)) {
+            // Digital gamepad buttons intentionally use Canvas' universal keyboard/KeyMapper
+            // source. Releasing that exact source makes modal takeover edge-safe without
+            // introducing a second digital mapping/ownership system in this router.
+            canvas.inputReleased(
+                event.deviceId.toString(),
+                canvas.inputGeneration(),
+                "keyboard",
+                event.keyCode.toString(),
+            )
+        }
+    }
+
     /** Handles HAT, stick, and trigger samples. */
     fun onGenericMotionEvent(event: MotionEvent): Boolean {
         if (!isControllerSource(event.source)) return false
@@ -291,6 +320,9 @@ class ControllerInputRouter(
         if (!ensureActiveDevice(deviceId)) return true
         if (!ensureTarget()) return true
         if (host.isControllerModalActive()) {
+            // A neutral/release sample can arrive only after the modal has taken focus. Close
+            // every previously delivered guest output before the modal consumes this sample.
+            releaseGuestStateForModal()
             // Diagnosis remains live while a host modal owns the input. Record raw samples before
             // handing the event to the modal, but never run the guest/output processors here.
             recordDiagnosticMotion(event, device)
@@ -354,8 +386,8 @@ class ControllerInputRouter(
         if (y > HAT_THRESHOLD) controls += CONTROL_DPAD_DOWN
         if (x < -HAT_THRESHOLD) controls += CONTROL_DPAD_LEFT
         if (x > HAT_THRESHOLD) controls += CONTROL_DPAD_RIGHT
-        val present = device.getMotionRange(MotionEvent.AXIS_HAT_X, event.source) != null ||
-            device.getMotionRange(MotionEvent.AXIS_HAT_Y, event.source) != null
+        val present = findMotionRange(device, event.source, MotionEvent.AXIS_HAT_X) != null ||
+            findMotionRange(device, event.source, MotionEvent.AXIS_HAT_Y) != null
         if (!present) return false
         updateDirectional("hat", controls)
         return controls.isNotEmpty()
@@ -1051,12 +1083,12 @@ class ControllerInputRouter(
         val hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y)
         if (abs(hatX) > HAT_THRESHOLD || abs(hatY) > HAT_THRESHOLD) return false
         for (axis in STICK_AXES) {
-            if (device.getMotionRange(axis, event.source) != null &&
+            if (findMotionRange(device, event.source, axis) != null &&
                 abs(event.getAxisValue(axis)) > NEUTRAL_AXIS_THRESHOLD
             ) return false
         }
         for (axis in TRIGGER_AXES) {
-            val range = device.getMotionRange(axis, event.source) ?: continue
+            val range = findMotionRange(device, event.source, axis) ?: continue
             if (StickProcessor.normalizeTrigger(event.getAxisValue(axis),
                     StickProcessor.MotionRangeLike(range.min, range.max)) > TRIGGER_NEUTRAL_THRESHOLD
             ) return false
@@ -1081,13 +1113,20 @@ class ControllerInputRouter(
         if (history < 0) event.getAxisValue(axis)
         else event.getHistoricalAxisValue(axis, history)
 
+    private fun findMotionRange(
+        device: InputDevice,
+        source: Int,
+        axis: Int,
+    ): InputDevice.MotionRange? =
+        device.getMotionRange(axis, source) ?: device.getMotionRange(axis)
+
     private fun motionRange(
         device: InputDevice,
         source: Int,
         axis: Int,
         trigger: Boolean = false,
     ): StickProcessor.MotionRangeLike {
-        val range = device.getMotionRange(axis, source) ?: device.getMotionRange(axis)
+        val range = findMotionRange(device, source, axis)
         if (range != null && range.min < range.max && range.min.isFinite() && range.max.isFinite()) {
             return StickProcessor.MotionRangeLike(range.min, range.max)
         }
@@ -1103,15 +1142,13 @@ class ControllerInputRouter(
         val axes = if (stick == StickId.LEFT) {
             MotionEvent.AXIS_X to MotionEvent.AXIS_Y
         } else {
-            val z = device.getMotionRange(MotionEvent.AXIS_Z, source) != null
-            val rz = device.getMotionRange(MotionEvent.AXIS_RZ, source) != null
+            val z = findMotionRange(device, source, MotionEvent.AXIS_Z) != null
+            val rz = findMotionRange(device, source, MotionEvent.AXIS_RZ) != null
             if (z && rz) MotionEvent.AXIS_Z to MotionEvent.AXIS_RZ
             else MotionEvent.AXIS_RX to MotionEvent.AXIS_RY
         }
-        val hasX = device.getMotionRange(axes.first, source) != null ||
-            device.getMotionRange(axes.first) != null
-        val hasY = device.getMotionRange(axes.second, source) != null ||
-            device.getMotionRange(axes.second) != null
+        val hasX = findMotionRange(device, source, axes.first) != null
+        val hasY = findMotionRange(device, source, axes.second) != null
         return if (hasX && hasY) axes else null
     }
 
@@ -1122,7 +1159,7 @@ class ControllerInputRouter(
             intArrayOf(MotionEvent.AXIS_RTRIGGER, MotionEvent.AXIS_GAS)
         }
         return preferred.firstOrNull {
-            device.getMotionRange(it, source) != null || device.getMotionRange(it) != null
+            findMotionRange(device, source, it) != null
         }
     }
 
@@ -1277,6 +1314,3 @@ class ControllerInputRouter(
             if (current == Long.MAX_VALUE) 1L else current + 1L
     }
 }
-
-private fun InputDevice.getMotionRange(axis: Int, source: Int): InputDevice.MotionRange? =
-    getMotionRange(axis, source) ?: getMotionRange(axis)
