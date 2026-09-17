@@ -34,6 +34,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
+          # Pull-request workflows check out GitHub's synthetic merge ref. Move to the real
+          # PR head before creating the patch commit so the feature branch stays linear.
+          git fetch --no-tags origin "${{ github.event.pull_request.head.sha }}"
+          git checkout -B "${{ github.event.pull_request.head.ref }}" "${{ github.event.pull_request.head.sha }}"
+
           python3 .github/patch_legacy_virtual_keyboard.py
           ! grep -q 'beginVirtualDpad' app/src/main/java/javax/microedition/lcdui/keyboard/VirtualKeyboard.java
           ! grep -q 'virtualDpadBounds' app/src/main/java/javax/microedition/lcdui/keyboard/VirtualKeyboard.java
@@ -42,13 +48,17 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout HEAD^ -- .github/workflows/android.yml
+
+          # 81d5e407 is the temporary-script commit immediately before android.yml was modified;
+          # restore the normal CI definition from it, then remove all one-shot machinery.
+          git fetch --no-tags origin 81d5e40799eb479f8e6c84b2b17683cdd832fa0e
+          git checkout 81d5e40799eb479f8e6c84b2b17683cdd832fa0e -- .github/workflows/android.yml
           git rm .github/workflows/patch-legacy-virtual-keyboard.yml .github/patch_legacy_virtual_keyboard.py
           git add app/src/main/java/javax/microedition/lcdui/keyboard/VirtualKeyboard.java
           git add app/src/androidTest/java/javax/microedition/lcdui/keyboard/LegacyVirtualKeyboardTouchTest.java
           git add .github/workflows/android.yml
           git commit -m "fix: restore legacy virtual keyboard touch routing"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git push origin HEAD:"${{ github.event.pull_request.head.ref }}"
 
       - name: Restore shared debug keystore
         shell: bash
