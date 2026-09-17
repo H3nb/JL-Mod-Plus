@@ -36,16 +36,15 @@ data class ControllerLifecycleSnapshot(
     val activeDeviceId: Int?,
     val waitingDeviceId: Int?,
     val generation: Long,
-    /** Always empty: the lifecycle barrier is intentionally analog-only. */
-    val waitingDigitalKeys: Set<Int> = emptySet(),
 )
 
 /**
- * Pure lifecycle barrier for controller ownership.
+ * Pure lifecycle barrier for analog controller ownership.
  *
  * A newly selected or reconnected device cannot emit analog gameplay until a neutral motion
- * sample has been observed. Digital contacts are deliberately outside this barrier: a first
- * button press after resume must never be sacrificed to activate the controller.
+ * sample has been observed. Digital contacts deliberately bypass this barrier entirely: their
+ * ownership is handled by the normal KeyMapper/Canvas path, so a first button press after resume
+ * is never sacrificed just to activate the analog lifecycle.
  */
 class ControllerLifecycleGate {
     private var state = ControllerLifecycleState.INACTIVE
@@ -59,7 +58,6 @@ class ControllerLifecycleGate {
         activeDeviceId = activeDeviceId,
         waitingDeviceId = waitingDeviceId,
         generation = generation,
-        waitingDigitalKeys = emptySet(),
     )
 
     @Synchronized
@@ -109,14 +107,6 @@ class ControllerLifecycleGate {
             }
         }
     }
-
-    @Synchronized
-    @Deprecated("Digital key events are not lifecycle-gated")
-    fun offerDigital(
-        deviceId: Int,
-        keyCode: Int,
-        down: Boolean,
-    ): ControllerLifecycleDecision = ControllerLifecycleDecision.ACTIVE
 
     @Synchronized
     fun onDeviceChanged(deviceId: Int) {
