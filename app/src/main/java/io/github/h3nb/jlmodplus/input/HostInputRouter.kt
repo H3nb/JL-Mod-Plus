@@ -62,9 +62,6 @@ class HostInputRouter(
                 if (command == null) return modal
                 if (captured.containsKey(physicalKey)) return true
                 val handled = host.onHostCommand(command, true)
-                // OpenMenu/OpenKeypad may synchronously create a host modal. Re-check after the
-                // command so the guest ledger is released at the same edge that opened it.
-                syncModalBoundary()
                 // A Screen without an app-owned modal may still be a native/View-backed guest
                 // surface. Let its ordinary gamepad navigation continue through Android dispatch
                 // when the host has no command owner, just as Canvas keys do.
