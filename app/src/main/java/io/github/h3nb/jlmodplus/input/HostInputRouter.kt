@@ -91,14 +91,6 @@ class HostInputRouter(
         }
     }
 
-    /** Releases only host contacts captured by this router; stale UP events are ignored. */
-    fun releaseCapturedKey(event: KeyEvent): Boolean {
-        if (event.action != KeyEvent.ACTION_UP) return false
-        val physicalKey = PhysicalKey(event.deviceId, event.keyCode)
-        val command = captured.remove(physicalKey) ?: return false
-        host.onHostCommand(command, false)
-        return true
-    }
 
 
     fun clear() {
