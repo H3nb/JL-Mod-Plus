@@ -589,7 +589,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		gamepadCalibrationDevice = device;
 		gamepadCalibrationSource = source;
 		gamepadCalibrationChannels = channels;
-		gamepadCalibrationSignature = ControllerInputRouter.capabilitySignatureFor(device, source);
+		gamepadCalibrationSignature = ControllerInputRouter.capabilitySignatureFor(device);
 		if (channels.isEmpty()) {
 			gamepadCalibrationPending = false;
 			gamepadCalibration = null;
@@ -813,7 +813,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			text.append("    ").append(getString(R.string.config_gamepad_diagnosis_descriptor,
 					device.getDescriptor())).append('\n');
 			text.append("    ").append(getString(R.string.config_gamepad_diagnosis_signature,
-					ControllerInputRouter.capabilitySignatureFor(device, calibrationSource(device))))
+					ControllerInputRouter.capabilitySignatureFor(device)))
 					.append('\n');
 			for (InputDevice.MotionRange range : device.getMotionRanges()) {
 				if (!ControllerInputRouter.isControllerSource(range.getSource())) continue;
