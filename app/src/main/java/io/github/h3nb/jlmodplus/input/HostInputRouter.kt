@@ -31,14 +31,8 @@ class HostInputRouter(
     private data class PhysicalKey(val deviceId: Int, val keyCode: Int)
 
     private val captured = LinkedHashMap<PhysicalKey, HostCommand>()
-    private var modalBoundaryActive = false
 
     fun onKeyEvent(event: KeyEvent): Boolean {
-        // A modal may have been opened by touch/toolbar since the previous controller event.
-        // Close the whole guest key ledger exactly once on the ownership transition so keys that
-        // were DOWN before the modal cannot remain logically pressed behind it.
-        syncModalBoundary()
-
         // BACK is the built-in default M binding, but MicroActivity deliberately owns its legacy
         // short/long-press behavior and Android's system Back callback. Only additional physical
         // bindings to M are intercepted here.
@@ -91,7 +85,6 @@ class HostInputRouter(
                 val capturedCommand = captured.remove(physicalKey)
                 if (capturedCommand != null) {
                     host.onHostCommand(capturedCommand, false)
-                    syncModalBoundary()
                     return true
                 }
                 return modal
@@ -107,25 +100,13 @@ class HostInputRouter(
         val physicalKey = PhysicalKey(event.deviceId, event.keyCode)
         val command = captured.remove(physicalKey) ?: return false
         host.onHostCommand(command, false)
-        syncModalBoundary()
         return true
     }
 
-    fun onModalChanged(active: Boolean): Boolean {
-        if (active == modalBoundaryActive) return false
-        if (active) host.currentCanvas()?.clearInputState()
-        modalBoundaryActive = active
-        return true
-    }
-
-    private fun syncModalBoundary() {
-        onModalChanged(host.isControllerModalActive())
-    }
 
     fun clear() {
         val active = captured.values.toList()
         captured.clear()
         active.forEach { host.onHostCommand(it, false) }
-        modalBoundaryActive = false
     }
 }
