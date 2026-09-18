@@ -464,10 +464,6 @@ private class RecordingRuntimeMenuActions(
         events += "edit"
     }
 
-    override fun onResizeVirtualKeyboardLayout() {
-        events += "resize"
-    }
-
     override fun onFinishVirtualKeyboardLayout() {
         events += "finish"
     }
