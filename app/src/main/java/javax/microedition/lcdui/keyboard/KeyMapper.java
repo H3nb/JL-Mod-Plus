@@ -168,6 +168,14 @@ public class KeyMapper {
 		return event.getUnicodeChar() & KeyCharacterMap.COMBINING_ACCENT_MASK;
 	}
 
+	public static boolean isOptionsMenuKey(int androidKeyCode) {
+		if (androidToMIDP == null) {
+			return false;
+		}
+		int index = androidToMIDP.indexOfKey(androidKeyCode);
+		return index >= 0 && androidToMIDP.valueAt(index) == KEY_OPTIONS_MENU;
+	}
+
 	public static int convertKeyCode(int keyCode) {
 		return keyCodeToCustom.get(keyCode, keyCode);
 	}

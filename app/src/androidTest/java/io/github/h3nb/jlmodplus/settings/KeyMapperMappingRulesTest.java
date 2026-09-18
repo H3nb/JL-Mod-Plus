@@ -260,6 +260,40 @@ public class KeyMapperMappingRulesTest {
 		assertFalse(KeyMapperMappingRules.containsValue(withoutAnyMenu, KeyMapper.KEY_OPTIONS_MENU));
 	}
 
+
+	@Test
+	public void runtimeMenuDetectionRecognizesDefaultAndAdditionalEffectiveMappings() {
+		KeyMapper.setKeyMapping(new ProfileModel());
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BACK));
+		assertFalse(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BUTTON_A));
+
+		ProfileModel profile = new ProfileModel();
+		profile.keyMappings = new SparseIntArray();
+		profile.keyMappings.put(KeyEvent.KEYCODE_BUTTON_START, KeyMapper.KEY_OPTIONS_MENU);
+		KeyMapper.setKeyMapping(profile);
+
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BACK));
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BUTTON_START));
+	}
+
+	@Test
+	public void runtimeMenuDetectionHonorsRemovedAndRemappedBack() {
+		ProfileModel removed = new ProfileModel();
+		removed.keyMappings = new SparseIntArray();
+		removed.keyMappings.put(KeyEvent.KEYCODE_BACK, KeyMapper.KEY_MAPPING_REMOVED);
+		KeyMapper.setKeyMapping(removed);
+
+		assertFalse(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BACK));
+		assertFalse(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BUTTON_A));
+
+		ProfileModel remapped = new ProfileModel();
+		remapped.keyMappings = new SparseIntArray();
+		remapped.keyMappings.put(KeyEvent.KEYCODE_BACK, Canvas.KEY_FIRE);
+		KeyMapper.setKeyMapping(remapped);
+
+		assertFalse(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BACK));
+	}
+
 	@Test
 	public void equalityDistinguishesNullAndDefaultForPersistence() {
 		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();

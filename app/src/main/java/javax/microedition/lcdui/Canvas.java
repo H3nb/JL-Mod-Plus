@@ -1447,6 +1447,7 @@ public abstract class Canvas extends Displayable {
 
 	private class ViewCallbacks implements View.OnTouchListener, SurfaceHolder.Callback, View.OnKeyListener {
 		private final View mView;
+		private final DigitalKeyOwnership keyOwnership = new DigitalKeyOwnership();
 		OverlayView overlayView;
 
 		public ViewCallbacks(View view) {
@@ -1481,28 +1482,40 @@ public abstract class Canvas extends Displayable {
 		}
 
 		public boolean onKeyDown(int keyCode, KeyEvent event) {
-			keyCode = KeyMapper.convertAndroidKeyCode(keyCode, event);
-			if (keyCode == 0) {
+			long sourceToken = DigitalKeyOwnership.sourceToken(event.getDeviceId(), keyCode);
+			if (event.getRepeatCount() == 0) {
+				if (keyOwnership.targetOf(sourceToken) != 0) {
+					return true;
+				}
+				int midpKeyCode = KeyMapper.convertAndroidKeyCode(keyCode, event);
+				if (midpKeyCode == 0) {
+					return false;
+				}
+				if (keyOwnership.acquire(sourceToken, midpKeyCode)
+						&& (overlay == null || !overlay.keyPressed(midpKeyCode))) {
+					postKeyPressed(midpKeyCode);
+				}
+				return true;
+			}
+
+			int midpKeyCode = keyOwnership.targetOf(sourceToken);
+			if (midpKeyCode == 0) {
 				return false;
 			}
-			if (event.getRepeatCount() == 0) {
-				if (overlay == null || !overlay.keyPressed(keyCode)) {
-					postKeyPressed(keyCode);
-				}
-			} else {
-				if (overlay == null || !overlay.keyRepeated(keyCode)) {
-					postKeyRepeated(keyCode);
-				}
+			if (overlay == null || !overlay.keyRepeated(midpKeyCode)) {
+				postKeyRepeated(midpKeyCode);
 			}
 			return true;
 		}
 
 		public boolean onKeyUp(int keyCode, KeyEvent event) {
-			int midpKeyCode = KeyMapper.convertAndroidKeyCode(keyCode, event);
+			long sourceToken = DigitalKeyOwnership.sourceToken(event.getDeviceId(), keyCode);
+			int midpKeyCode = keyOwnership.targetOf(sourceToken);
 			if (midpKeyCode == 0) {
 				return false;
 			}
-			if (overlay == null || !overlay.keyReleased(midpKeyCode)) {
+			if (keyOwnership.release(sourceToken)
+					&& (overlay == null || !overlay.keyReleased(midpKeyCode))) {
 				postKeyReleased(midpKeyCode);
 			}
 			return true;
