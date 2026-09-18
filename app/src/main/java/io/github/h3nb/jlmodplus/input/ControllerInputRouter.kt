@@ -1212,16 +1212,8 @@ class ControllerInputRouter(
         const val CONTROL_DPAD_DOWN = "dpad_down"
         const val CONTROL_DPAD_LEFT = "dpad_left"
         const val CONTROL_DPAD_RIGHT = "dpad_right"
-        const val CONTROL_BUTTON_A = "button_a"
-        const val CONTROL_BUTTON_B = "button_b"
-        const val CONTROL_BUTTON_X = "button_x"
-        const val CONTROL_BUTTON_Y = "button_y"
-        const val CONTROL_BUTTON_L1 = "button_l1"
-        const val CONTROL_BUTTON_R1 = "button_r1"
         const val CONTROL_BUTTON_L2 = "button_l2"
         const val CONTROL_BUTTON_R2 = "button_r2"
-        const val CONTROL_BUTTON_START = "button_start"
-        const val CONTROL_BUTTON_SELECT = "button_select"
 
         private const val DIRECTION_NUM1 = "__direction_num1"
         private const val DIRECTION_NUM2 = "__direction_num2"
@@ -1238,11 +1230,6 @@ class ControllerInputRouter(
         private const val HAT_THRESHOLD = 0.5f
         private const val NEUTRAL_AXIS_THRESHOLD = 0.15f
         private const val TRIGGER_NEUTRAL_THRESHOLD = 0.40f
-        private val STICK_AXES = intArrayOf(
-            MotionEvent.AXIS_X, MotionEvent.AXIS_Y,
-            MotionEvent.AXIS_RX, MotionEvent.AXIS_RY,
-            MotionEvent.AXIS_Z, MotionEvent.AXIS_RZ,
-        )
         private val TRIGGER_AXES = intArrayOf(
             MotionEvent.AXIS_LTRIGGER, MotionEvent.AXIS_RTRIGGER,
             MotionEvent.AXIS_BRAKE, MotionEvent.AXIS_GAS,
@@ -1281,25 +1268,6 @@ class ControllerInputRouter(
         fun capabilitySignatureFor(device: InputDevice): String =
             ControllerCapabilityCache.buildSignature(device)
 
-        @JvmStatic
-        fun controlTokenForKeyCode(keyCode: Int): String? = when (keyCode) {
-            KeyEvent.KEYCODE_DPAD_UP -> CONTROL_DPAD_UP
-            KeyEvent.KEYCODE_DPAD_DOWN -> CONTROL_DPAD_DOWN
-            KeyEvent.KEYCODE_DPAD_LEFT -> CONTROL_DPAD_LEFT
-            KeyEvent.KEYCODE_DPAD_RIGHT -> CONTROL_DPAD_RIGHT
-            KeyEvent.KEYCODE_DPAD_CENTER -> CONTROL_BUTTON_A
-            KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_BUTTON_1 -> CONTROL_BUTTON_A
-            KeyEvent.KEYCODE_BUTTON_B, KeyEvent.KEYCODE_BUTTON_2 -> CONTROL_BUTTON_B
-            KeyEvent.KEYCODE_BUTTON_X, KeyEvent.KEYCODE_BUTTON_3 -> CONTROL_BUTTON_X
-            KeyEvent.KEYCODE_BUTTON_Y, KeyEvent.KEYCODE_BUTTON_4 -> CONTROL_BUTTON_Y
-            KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_5 -> CONTROL_BUTTON_L1
-            KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_BUTTON_6 -> CONTROL_BUTTON_R1
-            KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_7 -> CONTROL_BUTTON_L2
-            KeyEvent.KEYCODE_BUTTON_R2, KeyEvent.KEYCODE_BUTTON_8 -> CONTROL_BUTTON_R2
-            KeyEvent.KEYCODE_BUTTON_START, KeyEvent.KEYCODE_BUTTON_9 -> CONTROL_BUTTON_START
-            KeyEvent.KEYCODE_BUTTON_SELECT, KeyEvent.KEYCODE_BUTTON_10 -> CONTROL_BUTTON_SELECT
-            else -> null
-        }
 
         private fun resolveProfile(profile: ProfileModel?): ControllerConfig {
             if (profile == null) return ControllerConfig.defaultNavigation()
