@@ -24,14 +24,63 @@ import android.view.KeyEvent;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import io.github.h3nb.jlmodplus.config.ProfileModel;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.keyboard.KeyMapper;
 
 @RunWith(AndroidJUnit4.class)
 public class KeyMapperMappingRulesTest {
+	@After
+	public void restoreDefaultRuntimeMapping() {
+		KeyMapper.setKeyMapping(new ProfileModel());
+	}
+
+	@Test
+	public void defaultMapKeepsRepresentativeKeyboardMappings() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+
+		assertEquals(Canvas.KEY_UP, defaults.get(KeyEvent.KEYCODE_DPAD_UP));
+		assertEquals(Canvas.KEY_DOWN, defaults.get(KeyEvent.KEYCODE_DPAD_DOWN));
+		assertEquals(Canvas.KEY_LEFT, defaults.get(KeyEvent.KEYCODE_DPAD_LEFT));
+		assertEquals(Canvas.KEY_RIGHT, defaults.get(KeyEvent.KEYCODE_DPAD_RIGHT));
+		assertEquals(Canvas.KEY_FIRE, defaults.get(KeyEvent.KEYCODE_ENTER));
+		assertEquals(Canvas.KEY_NUM5, defaults.get(KeyEvent.KEYCODE_5));
+	}
+
+	@Test
+	public void runtimeMappingAcceptsGamepadButtonFromProfile() {
+		ProfileModel profile = new ProfileModel();
+		profile.keyMappings = new SparseIntArray();
+		profile.keyMappings.put(KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+
+		KeyMapper.setKeyMapping(profile);
+
+		assertEquals(Canvas.KEY_FIRE, KeyMapper.convertAndroidKeyCode(
+				KeyEvent.KEYCODE_BUTTON_A,
+				new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_A)));
+	}
+
+	@Test
+	public void customGamepadFireMappingCoexistsWithDefaultKeyboardFireMapping() {
+		ProfileModel profile = new ProfileModel();
+		profile.keyMappings = new SparseIntArray();
+		profile.keyMappings.put(KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+
+		KeyMapper.setKeyMapping(profile);
+
+		assertEquals(Canvas.KEY_FIRE, KeyMapper.convertAndroidKeyCode(
+				KeyEvent.KEYCODE_BUTTON_A,
+				new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_A)));
+		assertEquals(Canvas.KEY_FIRE, KeyMapper.convertAndroidKeyCode(
+				KeyEvent.KEYCODE_ENTER,
+				new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)));
+	}
+
 	@Test
 	public void assignmentRemovesExistingDuplicateCanvasKey() {
 		SparseIntArray original = new SparseIntArray();
@@ -74,6 +123,20 @@ public class KeyMapperMappingRulesTest {
 	}
 
 	@Test
+	public void dispatchAcceptsControllerButtons() {
+		assertTrue(KeyMapperDispatchRules.isAssignableKey(
+				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_A));
+		assertTrue(KeyMapperDispatchRules.isAssignableKey(
+				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_START));
+		assertTrue(KeyMapperDispatchRules.isAssignableKey(
+				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_SELECT));
+		assertTrue(KeyMapperDispatchRules.isAssignableKey(
+				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_L1));
+		assertTrue(KeyMapperDispatchRules.isAssignableKey(
+				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_R1));
+	}
+
+	@Test
 	public void dispatchKeepsProtectedHardwareKeysOutsideMapper() {
 		assertTrue(KeyMapperDispatchRules.isAssignableKey(
 				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A));
@@ -81,6 +144,8 @@ public class KeyMapperMappingRulesTest {
 				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_HOME));
 		assertFalse(KeyMapperDispatchRules.isAssignableKey(
 				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_VOLUME_UP));
+		assertFalse(KeyMapperDispatchRules.isAssignableKey(
+				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_VOLUME_DOWN));
 		assertFalse(KeyMapperDispatchRules.isAssignableKey(
 				KeyEvent.ACTION_UP, KeyEvent.KEYCODE_A));
 	}
