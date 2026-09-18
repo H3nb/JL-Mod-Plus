@@ -51,7 +51,7 @@ Host analog navigation is independent from the MIDlet's selected analog output m
 
 `StickProcessor` handles normalization, radial deadzone, outer saturation, response shaping, press/release hysteresis, angular hysteresis, calibration, and direction quantization.
 
-The capability signature used for calibration lookup is cached by `(deviceId, source)` and invalidated when the Android input device changes or is removed.
+The capability signature used for calibration lookup excludes transient `MotionEvent.source`; it is cached by device id in-process and invalidated when the Android input device changes or is removed.
 
 Standard MIDP has no portable analog-axis API, so analog guest support intentionally adapts continuous Android axes to MIDlet directional controls rather than inventing a non-standard Java ME axis contract.
 
