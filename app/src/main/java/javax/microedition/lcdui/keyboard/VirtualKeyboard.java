@@ -783,13 +783,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				|| navigationCommand == HostCommand.NavigateLeft
 				|| navigationCommand == HostCommand.NavigateRight) {
 			if (pressed) {
-				int delta = switch (navigationCommand) {
-					case NavigateLeft -> -1;
-					case NavigateRight -> 1;
-					case NavigateUp -> -3;
-					default -> 3;
-				};
-				moveControllerKeypadSelection(delta);
+				moveControllerKeypadSelection(navigationCommand);
 			}
 			return true;
 		}
@@ -845,10 +839,28 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		return true;
 	}
 
-	private void moveControllerKeypadSelection(int delta) {
+	private void moveControllerKeypadSelection(HostCommand direction) {
 		int size = CONTROLLER_KEYPAD_ORDER.length;
-		controllerKeypadSelection = (controllerKeypadSelection + delta) % size;
-		if (controllerKeypadSelection < 0) controllerKeypadSelection += size;
+		int row = controllerKeypadSelection / 3;
+		int column = controllerKeypadSelection % 3;
+		int lastRow = (size - 1) / 3;
+		switch (direction) {
+			case NavigateLeft -> controllerKeypadSelection =
+					Math.max(row * 3, controllerKeypadSelection - 1);
+			case NavigateRight -> controllerKeypadSelection =
+					Math.min(Math.min(size - 1, row * 3 + 2), controllerKeypadSelection + 1);
+			case NavigateUp -> {
+				int targetRow = Math.max(0, row - 1);
+				controllerKeypadSelection = Math.min(size - 1, targetRow * 3 + column);
+			}
+			case NavigateDown -> {
+				int targetRow = Math.min(lastRow, row + 1);
+				controllerKeypadSelection = Math.min(size - 1, targetRow * 3 + column);
+			}
+			default -> {
+				return;
+			}
+		}
 		selectControllerKeypadKey();
 		if (overlayView != null) overlayView.postInvalidate();
 	}
