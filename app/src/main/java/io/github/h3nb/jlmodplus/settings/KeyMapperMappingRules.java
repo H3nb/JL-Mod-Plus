@@ -38,6 +38,45 @@ public final class KeyMapperMappingRules {
 		return updated;
 	}
 
+	/** Resolves persisted overrides on top of defaults. A zero value is an explicit tombstone. */
+	public static SparseIntArray resolve(
+			SparseIntArray defaults,
+			SparseIntArray overrides) {
+		SparseIntArray resolved = defaults == null ? new SparseIntArray() : defaults.clone();
+		if (overrides == null) return resolved;
+		for (int i = 0; i < overrides.size(); i++) {
+			int key = overrides.keyAt(i);
+			int value = overrides.valueAt(i);
+			if (value == 0) resolved.delete(key);
+			else resolved.put(key, value);
+		}
+		return resolved;
+	}
+
+	/**
+	 * Stores only differences from defaults. Missing keys inherit defaults; value zero explicitly
+	 * removes a default binding.
+	 */
+	public static SparseIntArray diff(
+			SparseIntArray defaults,
+			SparseIntArray effective) {
+		SparseIntArray result = new SparseIntArray();
+		SparseIntArray base = defaults == null ? new SparseIntArray() : defaults;
+		SparseIntArray current = effective == null ? new SparseIntArray() : effective;
+		for (int i = 0; i < base.size(); i++) {
+			int key = base.keyAt(i);
+			int defaultValue = base.valueAt(i);
+			int index = current.indexOfKey(key);
+			if (index < 0) result.put(key, 0);
+			else if (current.valueAt(index) != defaultValue) result.put(key, current.valueAt(index));
+		}
+		for (int i = 0; i < current.size(); i++) {
+			int key = current.keyAt(i);
+			if (base.indexOfKey(key) < 0) result.put(key, current.valueAt(i));
+		}
+		return result;
+	}
+
 	/** Removes exactly one physical-key binding. */
 	public static SparseIntArray removeBinding(
 			SparseIntArray current,
