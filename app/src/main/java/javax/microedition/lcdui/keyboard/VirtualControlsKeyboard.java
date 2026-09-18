@@ -215,7 +215,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	@Override
 	public void onLayoutChanged(int variant) {
 		super.onLayoutChanged(variant);
-		ProfilesManager.saveConfig(settings);
+		if (!applyingStandardTemplate) ProfilesManager.saveConfig(settings);
 	}
 
 	@Override
@@ -229,7 +229,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				settings.virtualAnalogEnabled = false;
 			}
 			super.setLayout(variant);
-			if (variant != TYPE_CUSTOM) ProfilesManager.saveConfig(settings);
 			invalidateOverlay();
 			return;
 		}
