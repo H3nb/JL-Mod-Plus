@@ -151,10 +151,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private long controllerTargetGeneration = 1L;
 	@Nullable private String gamepadCalibrationSignature;
 	@Nullable private InputDevice gamepadCalibrationDevice;
-	private int gamepadCalibrationSource;
 	private boolean gamepadCalibrationPending;
 	private Set<CalibrationChannel> gamepadCalibrationChannels = Collections.emptySet();
-	private Map<CalibrationChannel, Float> lastCalibrationValues = Collections.emptyMap();
 	private final Runnable gamepadCalibrationTicker = new Runnable() {
 		@Override
 		public void run() {
@@ -573,7 +571,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		gamepadCalibrationDevice = null;
 		gamepadCalibrationSignature = null;
 		gamepadCalibrationChannels = Collections.emptySet();
-		lastCalibrationValues = Collections.emptyMap();
 		if (composeController != null) {
 			composeController.showGamepadCalibration(new GamepadCalibrationUiState(
 					"WAIT_NEUTRAL",
@@ -587,7 +584,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private void beginGamepadCalibration(@NonNull InputDevice device, int source) {
 		Set<CalibrationChannel> channels = calibrationChannels(device, source);
 		gamepadCalibrationDevice = device;
-		gamepadCalibrationSource = source;
 		gamepadCalibrationChannels = channels;
 		gamepadCalibrationSignature = ControllerInputRouter.capabilitySignatureFor(device);
 		if (channels.isEmpty()) {
@@ -633,7 +629,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		Map<CalibrationChannel, Float> values = calibrationValues(event, device, event.getSource());
 		if (values.isEmpty()) return true;
-		lastCalibrationValues = values;
 		CalibrationStep step;
 		if (calibration.getPhase() == CalibrationPhase.WAIT_NEUTRAL) {
 			step = calibration.observeNeutral(
