@@ -183,7 +183,10 @@ public class KeyMapper {
 		SparseIntArray customKeyMap = params.keyMappings;
 		if (customKeyMap != null) {
 			for (int i = 0, size = customKeyMap.size(); i < size; i++) {
-				map.put(customKeyMap.keyAt(i), customKeyMap.valueAt(i));
+				int key = customKeyMap.keyAt(i);
+				int value = customKeyMap.valueAt(i);
+				if (value == 0) map.delete(key);
+				else map.put(key, value);
 			}
 		}
 		androidToMIDP = map;
