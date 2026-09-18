@@ -85,8 +85,6 @@ internal data class RuntimeMenuUiState(
     val imeAvailable: Boolean = false,
     val virtualKeyboardAvailable: Boolean = false,
     val virtualKeyboardEditing: Boolean = false,
-    val virtualDpadEnabled: Boolean = true,
-    val virtualAnalogEnabled: Boolean = false,
     val orientationLocked: Boolean = false,
     val emulationSpeedAvailable: Boolean = false,
     val emulationSpeedPercent: Int = EmulationSpeed.NORMAL_PERCENT,
@@ -109,9 +107,6 @@ interface RuntimeMenuActions {
     fun onResetEmulationSpeed()
     fun onMemoryEditor()
     fun onEditVirtualKeyboardLayout()
-
-    /** Legacy source-compatibility hook. The runtime UI no longer exposes a separate resize mode. */
-    fun onResizeVirtualKeyboardLayout() {}
 
     fun onFinishVirtualKeyboardLayout()
     fun onSwitchVirtualKeyboardLayout()
@@ -231,8 +226,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             imeAvailable = imeAvailable,
             virtualKeyboardAvailable = virtualKeyboardAvailable,
             virtualKeyboardEditing = virtualKeyboardEditing,
-            virtualDpadEnabled = state.virtualDpadEnabled,
-            virtualAnalogEnabled = state.virtualAnalogEnabled,
             orientationLocked = orientationLocked,
             emulationSpeedAvailable = emulationSpeedAvailable,
             emulationSpeedPercent = emulationSpeedPercent,
@@ -348,31 +341,31 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         controllerFocusIndex = (controllerFocusIndex + delta).mod(count)
     }
 
-    private data class ControllerMenuItem(val id: String, val activate: () -> Unit)
+    private data class ControllerMenuItem(val activate: () -> Unit)
 
     private fun controllerItems(): List<ControllerMenuItem> {
         if (virtualKeyboardPage) {
             return buildList {
-                add(ControllerMenuItem("vc.edit") {
+                add(ControllerMenuItem {
                     closeMenu()
                     if (state.virtualKeyboardEditing) actions.onFinishVirtualKeyboardLayout()
                     else actions.onEditVirtualKeyboardLayout()
                 })
-                add(ControllerMenuItem("vc.switch") { closeMenu(); actions.onSwitchVirtualKeyboardLayout() })
-                add(ControllerMenuItem("vc.hide") { closeMenu(); actions.onHideVirtualKeyboardButtons() })
+                add(ControllerMenuItem { closeMenu(); actions.onSwitchVirtualKeyboardLayout() })
+                add(ControllerMenuItem { closeMenu(); actions.onHideVirtualKeyboardButtons() })
             }
         }
         return buildList {
-            add(ControllerMenuItem("exit") { closeMenu(); actions.onExit() })
-            add(ControllerMenuItem("save") { closeMenu(); actions.onSaveLog() })
-            add(ControllerMenuItem("orientation") { closeMenu(); actions.onToggleOrientationLock() })
-            add(ControllerMenuItem("memory") { closeMenu(); actions.onMemoryEditor() })
+            add(ControllerMenuItem { closeMenu(); actions.onExit() })
+            add(ControllerMenuItem { closeMenu(); actions.onSaveLog() })
+            add(ControllerMenuItem { closeMenu(); actions.onToggleOrientationLock() })
+            add(ControllerMenuItem { closeMenu(); actions.onMemoryEditor() })
             if (state.isCanvas) {
-                if (state.imeAvailable) add(ControllerMenuItem("ime") { closeMenu(); actions.onOpenImeKeyboard() })
-                add(ControllerMenuItem("screenshot") { closeMenu(); actions.onTakeScreenshot() })
-                add(ControllerMenuItem("fps") { menuActions.onLimitFps() })
-                if (state.emulationSpeedAvailable) add(ControllerMenuItem("speed") { menuActions.onEmulationSpeed() })
-                if (state.virtualKeyboardAvailable) add(ControllerMenuItem("vc") {
+                if (state.imeAvailable) add(ControllerMenuItem { closeMenu(); actions.onOpenImeKeyboard() })
+                add(ControllerMenuItem { closeMenu(); actions.onTakeScreenshot() })
+                add(ControllerMenuItem { menuActions.onLimitFps() })
+                if (state.emulationSpeedAvailable) add(ControllerMenuItem { menuActions.onEmulationSpeed() })
+                if (state.virtualKeyboardAvailable) add(ControllerMenuItem {
                     virtualKeyboardPage = true
                     controllerFocusIndex = 0
                 })
