@@ -43,10 +43,6 @@ enum class HostCommand {
     val isGlobalShortcut: Boolean
         get() = this == OpenMenu || this == OpenKeypad
 
-    /** Host commands are edge-triggered; no Android repeat should be synthesized for them. */
-    val isOneShot: Boolean
-        get() = true
-
     companion object {
         @JvmStatic
         fun fromAndroidKeyCode(keyCode: Int): HostCommand? = when (keyCode) {
