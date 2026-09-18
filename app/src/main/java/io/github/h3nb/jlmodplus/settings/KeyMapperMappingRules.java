@@ -38,20 +38,6 @@ public final class KeyMapperMappingRules {
 		return updated;
 	}
 
-	public static SparseIntArray assign(
-			SparseIntArray current,
-			int canvasKey,
-			int androidKeyCode) {
-		SparseIntArray updated = current == null ? new SparseIntArray() : current.clone();
-		for (int i = updated.size() - 1; i >= 0; i--) {
-			if (updated.valueAt(i) == canvasKey) {
-				updated.removeAt(i);
-			}
-		}
-		updated.put(androidKeyCode, canvasKey);
-		return updated;
-	}
-
 	public static boolean containsValue(SparseIntArray map, int value) {
 		return map != null && map.indexOfValue(value) >= 0;
 	}

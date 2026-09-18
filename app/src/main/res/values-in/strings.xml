@@ -62,7 +62,10 @@
     <string name="log_saved">Log telah disimpan</string>
     <string name="mapping_dialog_key_not_specified">Tak ditentukan</string>
     <string name="mapping_dialog_message">Pemetaan saat ini:\n%1$s</string>
+    <string name="mapping_dialog_current_mappings">Pemetaan Saat Ini</string>
     <string name="mapping_dialog_title">Tekan Tombol</string>
+    <string name="mapping_remove_binding">Hapus %1$s</string>
+    <string name="remove">Hapus</string>
     <string name="message_clear_data">Apakah Anda yakin ingin menghapus data aplikasi?</string>
     <string name="message_delete">Apakah Anda yakin ingin menghapus aplikasi ini?</string>
     <string name="midlet_name"><b>Nama: </b></string>

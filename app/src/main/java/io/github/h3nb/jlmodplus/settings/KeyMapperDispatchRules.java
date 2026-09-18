@@ -39,4 +39,12 @@ public final class KeyMapperDispatchRules {
 	public static boolean isInsidePopup(Rect popupBounds, int x, int y) {
 		return popupBounds != null && popupBounds.contains(x, y);
 	}
+
+	public static boolean shouldDismissMappingPopup(
+			int action,
+			Rect popupBounds,
+			int x,
+			int y) {
+		return action == KeyEvent.ACTION_DOWN && !isInsidePopup(popupBounds, x, y);
+	}
 }

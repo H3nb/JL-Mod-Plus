@@ -207,20 +207,28 @@ public class KeyMapperMappingRulesTest {
 	}
 
 	@Test
-	public void addOrReplaceBindingAllowsManyPhysicalSourcesForOneTarget() {
+	public void addOrReplaceBindingKeepsExistingSiblingForSameTarget() {
 		SparseIntArray original = new SparseIntArray();
 		original.put(KeyEvent.KEYCODE_ENTER, Canvas.KEY_FIRE);
 
-		SparseIntArray withGamepad = KeyMapperMappingRules.addOrReplaceBinding(
+		SparseIntArray updated = KeyMapperMappingRules.addOrReplaceBinding(
 				original, KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
-		SparseIntArray reassigned = KeyMapperMappingRules.addOrReplaceBinding(
-				withGamepad, KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_NUM5);
 
-		assertEquals(Canvas.KEY_FIRE, withGamepad.get(KeyEvent.KEYCODE_ENTER));
-		assertEquals(Canvas.KEY_FIRE, withGamepad.get(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(Canvas.KEY_FIRE, updated.get(KeyEvent.KEYCODE_ENTER));
+		assertEquals(Canvas.KEY_FIRE, updated.get(KeyEvent.KEYCODE_BUTTON_A));
 		assertEquals(-1, original.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
-		assertEquals(Canvas.KEY_FIRE, reassigned.get(KeyEvent.KEYCODE_ENTER));
-		assertEquals(Canvas.KEY_NUM5, reassigned.get(KeyEvent.KEYCODE_BUTTON_A));
+	}
+
+	@Test
+	public void addOrReplaceBindingReassignsSamePhysicalSource() {
+		SparseIntArray original = new SparseIntArray();
+		original.put(KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_NUM5);
+
+		SparseIntArray updated = KeyMapperMappingRules.addOrReplaceBinding(
+				original, KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+
+		assertEquals(Canvas.KEY_FIRE, updated.get(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(Canvas.KEY_NUM5, original.get(KeyEvent.KEYCODE_BUTTON_A));
 	}
 
 	@Test
@@ -238,36 +246,18 @@ public class KeyMapperMappingRulesTest {
 	}
 
 	@Test
-	public void assignmentRemovesExistingDuplicateCanvasKey() {
-		SparseIntArray original = new SparseIntArray();
-		original.put(10, Canvas.KEY_LEFT);
-		original.put(11, Canvas.KEY_LEFT);
-		original.put(12, Canvas.KEY_RIGHT);
-
-		SparseIntArray updated = KeyMapperMappingRules.assign(original, Canvas.KEY_LEFT, 13);
-
-		assertEquals(Canvas.KEY_LEFT, updated.get(13));
-		assertEquals(1, countValue(updated, Canvas.KEY_LEFT));
-		assertEquals(Canvas.KEY_RIGHT, updated.get(12));
-		assertEquals(Canvas.KEY_LEFT, original.get(10));
-	}
-
-	private static int countValue(SparseIntArray map, int value) {
-		int count = 0;
-		for (int i = 0; i < map.size(); i++) {
-			if (map.valueAt(i) == value) count++;
-		}
-		return count;
-	}
-
-	@Test
 	public void menuKeyPresenceControlsSafeBackContract() {
 		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
-		assertTrue(KeyMapperMappingRules.containsValue(defaults, KeyMapper.KEY_OPTIONS_MENU));
+		SparseIntArray withSecondMenu = KeyMapperMappingRules.addOrReplaceBinding(
+				defaults, KeyEvent.KEYCODE_BUTTON_START, KeyMapper.KEY_OPTIONS_MENU);
+		SparseIntArray withoutBack = KeyMapperMappingRules.removeBinding(
+				withSecondMenu, KeyEvent.KEYCODE_BACK);
+		SparseIntArray withoutAnyMenu = KeyMapperMappingRules.removeBinding(
+				withoutBack, KeyEvent.KEYCODE_BUTTON_START);
 
-		SparseIntArray withoutMenu = defaults.clone();
-		withoutMenu.removeAt(withoutMenu.indexOfKey(android.view.KeyEvent.KEYCODE_BACK));
-		assertFalse(KeyMapperMappingRules.containsValue(withoutMenu, KeyMapper.KEY_OPTIONS_MENU));
+		assertTrue(KeyMapperMappingRules.containsValue(defaults, KeyMapper.KEY_OPTIONS_MENU));
+		assertTrue(KeyMapperMappingRules.containsValue(withoutBack, KeyMapper.KEY_OPTIONS_MENU));
+		assertFalse(KeyMapperMappingRules.containsValue(withoutAnyMenu, KeyMapper.KEY_OPTIONS_MENU));
 	}
 
 	@Test
@@ -314,5 +304,17 @@ public class KeyMapperMappingRulesTest {
 		assertFalse(KeyMapperDispatchRules.isInsidePopup(popup, 99, 200));
 		assertFalse(KeyMapperDispatchRules.isInsidePopup(popup, 300, 400));
 		assertFalse(KeyMapperDispatchRules.isInsidePopup(null, 100, 200));
+	}
+
+	@Test
+	public void popupTouchBoundaryConsumesOutsideDownButLeavesInsideInteractive() {
+		Rect popup = new Rect(100, 200, 300, 400);
+
+		assertTrue(KeyMapperDispatchRules.shouldDismissMappingPopup(
+				KeyEvent.ACTION_DOWN, popup, 99, 200));
+		assertFalse(KeyMapperDispatchRules.shouldDismissMappingPopup(
+				KeyEvent.ACTION_DOWN, popup, 150, 250));
+		assertFalse(KeyMapperDispatchRules.shouldDismissMappingPopup(
+				KeyEvent.ACTION_UP, popup, 99, 200));
 	}
 }

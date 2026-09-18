@@ -37,6 +37,7 @@ import androidx.preference.PreferenceManager;
 import com.google.gson.GsonBuilder;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import javax.microedition.lcdui.keyboard.KeyMapper;
 
@@ -105,6 +106,12 @@ public class KeyMapperActivity extends AppCompatActivity {
 			}
 
 			@Override
+			public void onRemoveMapping(int androidKeyCode) {
+				androidToMIDP = KeyMapperMappingRules.removeBinding(androidToMIDP, androidKeyCode);
+				showMappingDialog(canvasKey);
+			}
+
+			@Override
 			public void onBack() {
 				getOnBackPressedDispatcher().onBackPressed();
 			}
@@ -160,15 +167,15 @@ public class KeyMapperActivity extends AppCompatActivity {
 
 	private void showMappingDialog(int canvasKey) {
 		this.canvasKey = canvasKey;
-		SparseIntArray androidToMIDP = this.androidToMIDP;
-		int idx = androidToMIDP.indexOfValue(canvasKey);
-		String keyName;
-		if (idx < 0) {
-			keyName = getString(R.string.mapping_dialog_key_not_specified);
-		} else {
-			keyName = KeyEvent.keyCodeToString(androidToMIDP.keyAt(idx));
+		ArrayList<KeyMapperPhysicalBinding> bindings = new ArrayList<>();
+		for (int i = 0, size = androidToMIDP.size(); i < size; i++) {
+			if (androidToMIDP.valueAt(i) == canvasKey) {
+				int androidKeyCode = androidToMIDP.keyAt(i);
+				bindings.add(new KeyMapperPhysicalBinding(
+						androidKeyCode, KeyEvent.keyCodeToString(androidKeyCode)));
+			}
 		}
-		composeController.showMappingDialog(canvasKey, keyName);
+		composeController.showMappingDialog(bindings);
 	}
 
 	private void dismissMappingDialog() {
@@ -192,8 +199,8 @@ public class KeyMapperActivity extends AppCompatActivity {
 	public boolean dispatchKeyEvent(KeyEvent event) {
 		if (composeController != null && composeController.isMappingDialogVisible()
 				&& KeyMapperDispatchRules.isAssignableKey(event.getAction(), event.getKeyCode())) {
-			androidToMIDP = KeyMapperMappingRules.assign(
-					androidToMIDP, canvasKey, event.getKeyCode());
+			androidToMIDP = KeyMapperMappingRules.addOrReplaceBinding(
+					androidToMIDP, event.getKeyCode(), canvasKey);
 			dismissMappingDialog();
 			return true;
 		}
@@ -203,11 +210,10 @@ public class KeyMapperActivity extends AppCompatActivity {
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent event) {
 		if (composeController != null && composeController.isMappingDialogVisible()
-				&& event.getAction() == MotionEvent.ACTION_DOWN) {
-			if (!KeyMapperDispatchRules.isInsidePopup(
-					composeController.getPopupBounds(), (int) event.getX(), (int) event.getY())) {
-				dismissMappingDialog();
-			}
+				&& KeyMapperDispatchRules.shouldDismissMappingPopup(
+						event.getAction(), composeController.getPopupBounds(),
+						(int) event.getX(), (int) event.getY())) {
+			dismissMappingDialog();
 			return true;
 		}
 		return super.dispatchTouchEvent(event);

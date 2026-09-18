@@ -45,6 +45,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -81,9 +82,13 @@ data class KeyMapperButton(
     val canvasKey: Int,
 )
 
+data class KeyMapperPhysicalBinding(
+    val androidKeyCode: Int,
+    val displayName: String,
+)
+
 data class KeyMapperMappingDialog(
-    val canvasKey: Int,
-    val currentKeyName: String,
+    val bindings: List<KeyMapperPhysicalBinding>,
 )
 
 data class KeyMapperUiState(
@@ -94,6 +99,7 @@ data class KeyMapperUiState(
 interface KeyMapperActions {
     fun onVirtualKey(canvasKey: Int)
     fun onDismissMapping()
+    fun onRemoveMapping(androidKeyCode: Int)
 
     fun onBack() {}
 
@@ -127,8 +133,8 @@ class KeyMapperComposeController(
         }
     }
 
-    fun showMappingDialog(canvasKey: Int, currentKeyName: String) {
-        state = state.copy(mappingDialog = KeyMapperMappingDialog(canvasKey, currentKeyName))
+    fun showMappingDialog(bindings: List<KeyMapperPhysicalBinding>) {
+        state = state.copy(mappingDialog = KeyMapperMappingDialog(bindings.toList()))
     }
 
     fun hideMappingDialog() {
@@ -371,12 +377,41 @@ private fun MappingOverlay(
                             style = MaterialTheme.typography.titleLarge,
                         )
                         Text(
-                            text = stringResource(
-                                R.string.mapping_dialog_message,
-                                dialog.currentKeyName,
-                            ),
-                            style = MaterialTheme.typography.bodyLarge,
+                            text = stringResource(R.string.mapping_dialog_current_mappings),
+                            style = MaterialTheme.typography.titleMedium,
                         )
+                        if (dialog.bindings.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.mapping_dialog_key_not_specified),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        } else {
+                            dialog.bindings.forEach { binding ->
+                                val removeDescription = stringResource(
+                                    R.string.mapping_remove_binding,
+                                    binding.displayName,
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = binding.displayName,
+                                        modifier = Modifier.weight(1f),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                    TextButton(
+                                        onClick = { actions.onRemoveMapping(binding.androidKeyCode) },
+                                        modifier = Modifier.semantics {
+                                            contentDescription = removeDescription
+                                        },
+                                    ) {
+                                        Text(stringResource(R.string.remove))
+                                    }
+                                }
+                            }
+                        }
                     }
                     ScrollableContentHint(
                         visible = canScrollForward,

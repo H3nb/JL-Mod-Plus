@@ -28,6 +28,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import android.view.KeyEvent
 import javax.microedition.lcdui.keyboard.KeyMapper
 
 @RunWith(AndroidJUnit4::class)
@@ -55,24 +56,47 @@ class KeyMapperComposeTest {
     }
 
     @Test
-    fun mappingPromptShowsCurrentHardwareKeyAndCanBeDismissed() {
-        var dismissed = false
+    fun mappingPromptShowsMultipleBindingsAndRemovesSelectedPhysicalKey() {
+        var removed: Int? = null
         composeRule.setContent {
             JLModPlusTheme {
                 KeyMapperScreen(
                     state = KeyMapperUiState(
                         mappingDialog = KeyMapperMappingDialog(
-                            canvasKey = KeyMapper.KEY_OPTIONS_MENU,
-                            currentKeyName = "KEYCODE_BACK",
+                            bindings = listOf(
+                                KeyMapperPhysicalBinding(KeyEvent.KEYCODE_ENTER, "KEYCODE_ENTER"),
+                                KeyMapperPhysicalBinding(KeyEvent.KEYCODE_BUTTON_A, "KEYCODE_BUTTON_A"),
+                            ),
                         ),
+                    ),
+                    actions = recordingActions(onRemove = { removed = it }),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Press A Key").assertIsDisplayed()
+        composeRule.onNodeWithText("Current Mappings").assertIsDisplayed()
+        composeRule.onNodeWithText("KEYCODE_ENTER").assertIsDisplayed()
+        composeRule.onNodeWithText("KEYCODE_BUTTON_A").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Remove KEYCODE_BUTTON_A").performClick()
+        assertEquals(KeyEvent.KEYCODE_BUTTON_A, removed)
+    }
+
+    @Test
+    fun mappingPromptShowsUnderstandableEmptyStateAndCanBeDismissed() {
+        var dismissed = false
+        composeRule.setContent {
+            JLModPlusTheme {
+                KeyMapperScreen(
+                    state = KeyMapperUiState(
+                        mappingDialog = KeyMapperMappingDialog(bindings = emptyList()),
                     ),
                     actions = recordingActions(onDismiss = { dismissed = true }),
                 )
             }
         }
 
-        composeRule.onNodeWithText("Press A Key").assertIsDisplayed()
-        composeRule.onNodeWithText("Current mapping:\nKEYCODE_BACK").assertIsDisplayed()
+        composeRule.onNodeWithText("Not specified").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Dismiss mapping")
             .performSemanticsAction(SemanticsActions.OnClick)
         assertTrue(dismissed)
@@ -103,11 +127,13 @@ class KeyMapperComposeTest {
     private fun recordingActions(
         onVirtualKey: (Int) -> Unit = {},
         onDismiss: () -> Unit = {},
+        onRemove: (Int) -> Unit = {},
         onDismissWarning: () -> Unit = {},
         onSave: () -> Unit = {},
     ) = object : KeyMapperActions {
         override fun onVirtualKey(canvasKey: Int) = onVirtualKey(canvasKey)
         override fun onDismissMapping() = onDismiss()
+        override fun onRemoveMapping(androidKeyCode: Int) = onRemove(androidKeyCode)
         override fun onDismissWarning() = onDismissWarning()
         override fun onSaveAndExit() = onSave()
     }
