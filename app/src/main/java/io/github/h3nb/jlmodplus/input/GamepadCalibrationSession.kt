@@ -131,6 +131,16 @@ class GamepadCalibrationSession @JvmOverloads constructor(
         return step(CalibrationEvent.NEUTRAL_READY)
     }
 
+    /** Advances the neutral timer without fabricating another hardware sample. */
+    fun tickNeutral(nowMillis: Long): CalibrationStep {
+        if (currentPhase != CalibrationPhase.WAIT_NEUTRAL) return step()
+        val started = neutralStartedAt ?: return step()
+        val elapsed = if (nowMillis >= started) nowMillis - started else 0L
+        if (elapsed < neutralDurationMillis || !hasMinimumRestSamples()) return step()
+        currentPhase = CalibrationPhase.STICK_RANGE
+        return step(CalibrationEvent.NEUTRAL_READY)
+    }
+
     fun observeRange(
         values: Map<CalibrationChannel, Float>,
     ): CalibrationStep {
