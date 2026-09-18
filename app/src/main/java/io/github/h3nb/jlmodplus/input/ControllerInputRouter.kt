@@ -417,7 +417,7 @@ class ControllerInputRouter(
         val rawY = axisValue(event, axesPair.second, history)
         val xRange = motionRange(device, event.source, axesPair.first)
         val yRange = motionRange(device, event.source, axesPair.second)
-        val calibration = config.calibrations[capabilityCache.signature(device, event.source)]
+        val calibration = config.calibrations[capabilityCache.signature(device)]
         val xCalibration = calibration?.immutableChannels[if (stick == StickId.LEFT) {
             CalibrationChannel.LEFT_X
         } else {
@@ -568,7 +568,7 @@ class ControllerInputRouter(
         val raw = axisValue(event, axis, history)
         val range = motionRange(device, event.source, axis, trigger = true)
             ?: StickProcessor.MotionRangeLike(0.0f, 1.0f)
-        val calibration = config.calibrations[capabilityCache.signature(device, event.source)]
+        val calibration = config.calibrations[capabilityCache.signature(device)]
         val calibrationChannel = if (side == TriggerSide.LEFT) {
             CalibrationChannel.LEFT_TRIGGER
         } else {
@@ -1307,8 +1307,8 @@ class ControllerInputRouter(
          * profile attached to a physical controller/capability shape across reconnects.
          */
         @JvmStatic
-        fun capabilitySignatureFor(device: InputDevice, source: Int): String =
-            ControllerCapabilityCache.buildSignature(device, source)
+        fun capabilitySignatureFor(device: InputDevice): String =
+            ControllerCapabilityCache.buildSignature(device)
 
         @JvmStatic
         fun controlTokenForKeyCode(keyCode: Int): String? = when (keyCode) {
