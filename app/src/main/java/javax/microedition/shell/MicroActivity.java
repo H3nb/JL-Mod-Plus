@@ -958,6 +958,7 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		if (runtimeMenuController != null) {
 			runtimeMenuController.openMenu();
+			if (controllerInputRouter != null) controllerInputRouter.onHostModalChanged(true);
 		} else {
 			super.openOptionsMenu();
 		}
@@ -979,6 +980,7 @@ public class MicroActivity extends AppCompatActivity {
 	public void closeOptionsMenu() {
 		if (runtimeMenuController != null) {
 			runtimeMenuController.closeMenu();
+			if (controllerInputRouter != null) controllerInputRouter.onHostModalChanged(false);
 		} else {
 			super.closeOptionsMenu();
 		}
