@@ -160,12 +160,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		public void run() {
 			GamepadCalibrationSession calibration = gamepadCalibration;
 			if (calibration == null || composeController == null) return;
-			if (calibration.getPhase() == CalibrationPhase.WAIT_NEUTRAL
-					&& !lastCalibrationValues.isEmpty()) {
-				CalibrationStep step = calibration.observeNeutral(
-						SystemClock.elapsedRealtime(), lastCalibrationValues,
-						isCalibrationNeutral(lastCalibrationValues, gamepadCalibrationDevice,
-								gamepadCalibrationSource));
+			if (calibration.getPhase() == CalibrationPhase.WAIT_NEUTRAL) {
+				CalibrationStep step = calibration.tickNeutral(SystemClock.elapsedRealtime());
 				publishGamepadCalibration(step, null);
 			}
 			getWindow().getDecorView().postDelayed(this, 250L);
@@ -578,10 +574,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		gamepadCalibrationSignature = null;
 		gamepadCalibrationChannels = Collections.emptySet();
 		lastCalibrationValues = Collections.emptyMap();
-		InputDevice device = firstControllerDevice();
-		if (device != null) {
-			beginGamepadCalibration(device, calibrationSource(device));
-		} else if (composeController != null) {
+		if (composeController != null) {
 			composeController.showGamepadCalibration(new GamepadCalibrationUiState(
 					"WAIT_NEUTRAL",
 					getString(R.string.config_gamepad_calibration_waiting_controller),
@@ -589,17 +582,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					false,
 					false));
 		}
-	}
-
-	@Nullable
-	private InputDevice firstControllerDevice() {
-		for (int deviceId : InputDevice.getDeviceIds()) {
-			InputDevice device = InputDevice.getDevice(deviceId);
-			if (device != null && ControllerInputRouter.isGamepadDevice(device)) {
-				return device;
-			}
-		}
-		return null;
 	}
 
 	private void beginGamepadCalibration(@NonNull InputDevice device, int source) {
@@ -639,6 +621,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		InputDevice device = InputDevice.getDevice(event.getDeviceId());
 		if (device == null) return true;
 		if (gamepadCalibrationPending || gamepadCalibration == null) {
+			if (calibrationChannels(device, event.getSource()).isEmpty()) {
+				return true;
+			}
 			beginGamepadCalibration(device, event.getSource());
 		}
 		GamepadCalibrationSession calibration = gamepadCalibration;
