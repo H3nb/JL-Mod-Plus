@@ -231,8 +231,13 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		if (!nextAnalogEnabled) endAnalog();
 		settings.virtualDpadEnabled = nextDpadEnabled;
 		settings.virtualAnalogEnabled = nextAnalogEnabled;
-		ProfilesManager.saveConfig(settings);
 		invalidateOverlay();
+	}
+
+	@Override
+	public void onLayoutChanged(int variant) {
+		super.onLayoutChanged(variant);
+		ProfilesManager.saveConfig(settings);
 	}
 
 	@Override
@@ -778,7 +783,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		editPointer = -1;
 		editPinchPointer = -1;
 		editControl = EditControl.NONE;
-		ProfilesManager.saveConfig(settings);
 		invalidateOverlay();
 	}
 
