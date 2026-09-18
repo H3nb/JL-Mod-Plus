@@ -112,6 +112,7 @@ class ControllerInputRouter(
     private var activeDeviceId: Int? = null
     private var waitingDeviceId: Int? = null
     private var sessionId = 0L
+    private var hostModalActive = false
     private var lastTarget: TargetSnapshot? = null
     private val directional = LinkedHashMap<String, DirectionalSource>()
     private val binary = LinkedHashMap<String, BinarySource>()
@@ -169,13 +170,7 @@ class ControllerInputRouter(
 
     /** Applies an explicit host-modal ownership transition instead of waiting for another event. */
     fun onHostModalChanged(active: Boolean) {
-        if (!hostInputRouter.onModalChanged(active)) return
-        if (active) {
-            releaseAll()
-            resetPointerState()
-        } else {
-            beginBoundary(waitForNeutral = true)
-        }
+        syncHostModalBoundary(active)
     }
 
     /** Called before a Displayable/surface target is replaced. */
@@ -193,6 +188,7 @@ class ControllerInputRouter(
         activeDeviceId = null
         waitingDeviceId = null
         lastTarget = null
+        hostModalActive = false
     }
 
     fun close() {
@@ -202,17 +198,10 @@ class ControllerInputRouter(
 
     /** Handles host-owned controller buttons, then the configured virtual pointer click. */
     fun onKeyEvent(event: KeyEvent): Boolean {
-        // A modal can take ownership after a guest key DOWN but before its UP. Close the
-        // guest side first so the modal may consume the physical UP without leaving the
-        // MIDlet key ledger latched.
-        if (host.isControllerModalActive()) {
-            releaseGuestStateForModal(event)
-        }
+        syncHostModalBoundary()
         val hostHandled = hostInputRouter.onKeyEvent(event)
+        syncHostModalBoundary()
         if (hostHandled) {
-            // OpenMenu/OpenKeypad can synchronously create a modal during this call. Close
-            // analog/pointer guest state at that exact ownership boundary as well.
-            if (host.isControllerModalActive()) releaseGuestStateForModal(event)
             return true
         }
         if (!isGamepadEvent(event) || !config.enabled) return false
@@ -252,23 +241,20 @@ class ControllerInputRouter(
     /** Closes a key contact captured before a host modal took ownership of subsequent events. */
     fun releaseCapturedKey(event: KeyEvent): Boolean {
         if (!isGamepadEvent(event)) return false
-        return hostInputRouter.releaseCapturedKey(event)
+        val handled = hostInputRouter.releaseCapturedKey(event)
+        syncHostModalBoundary()
+        return handled
     }
 
-    private fun releaseGuestStateForModal(event: KeyEvent? = null) {
-        releaseAll()
-        resetPointerState()
-        val canvas = host.currentCanvas()
-        if (event?.action == KeyEvent.ACTION_UP && canvas != null && isGamepadEvent(event)) {
-            // Digital gamepad buttons intentionally use Canvas' universal keyboard/KeyMapper
-            // source. Releasing that exact source makes modal takeover edge-safe without
-            // introducing a second digital mapping/ownership system in this router.
-            canvas.inputReleased(
-                event.deviceId.toString(),
-                canvas.inputGeneration(),
-                "keyboard",
-                event.keyCode.toString(),
-            )
+    private fun syncHostModalBoundary(active: Boolean = host.isControllerModalActive()) {
+        if (active == hostModalActive) return
+        hostModalActive = active
+        if (active) {
+            host.currentCanvas()?.clearInputState()
+            releaseAll()
+            resetPointerState()
+        } else {
+            beginBoundary(waitForNeutral = true)
         }
     }
 
@@ -282,6 +268,7 @@ class ControllerInputRouter(
             return true
         }
         if (!isGamepadDevice(device)) return false
+        syncHostModalBoundary()
         val neutral = isNeutralMotion(event, device)
         val lifecycleDecision = lifecycleGate.offerMotion(deviceId, neutral)
         applyLifecycleDecision(lifecycleDecision)
@@ -291,10 +278,8 @@ class ControllerInputRouter(
         if (!ensureActiveDevice(deviceId)) return true
         if (!ensureTarget()) return true
         if (host.isControllerModalActive()) {
-            // A neutral/release sample can arrive only after the modal has taken focus. Close
-            // every previously delivered guest output before the modal consumes this sample.
-            releaseGuestStateForModal()
             host.onControllerModalMotion(event)
+            syncHostModalBoundary()
             return true
         }
         if (!config.enabled && host.currentCanvas() != null) return false
