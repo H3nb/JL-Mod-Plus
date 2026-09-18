@@ -119,7 +119,7 @@ class ControllerInputRouter(
     private val inputHandler = Handler(Looper.getMainLooper())
     private val hostInputRouter = HostInputRouter(host)
     private val capabilityCache = ControllerCapabilityCache()
-    private var config: ControllerConfig = resolveProfile(profile)
+    private val config: ControllerConfig = resolveProfile(profile)
     private val lifecycleGate = ControllerLifecycleGate()
     private var lifecycleState = LifecycleState.INACTIVE
     private var activeDeviceId: Int? = null
@@ -142,11 +142,11 @@ class ControllerInputRouter(
     // Android pointer id or used as a second guest pointer channel.
     private val pointerLease = PointerLeaseController(guestPointerId = 0)
     private var activeCursorClickToken: PointerSourceToken? = null
-    private var cursorController = ProportionalCursorController(
+    private val cursorController = ProportionalCursorController(
         pointerLease,
         CursorSettings(speedPerShortestSidePerSecond = config.pointer.speed.toFloat()),
     )
-    private var joystickController = VirtualTouchJoystickController(
+    private val joystickController = VirtualTouchJoystickController(
         pointerLease,
         VirtualJoystickSettings(
             centerXFraction = config.pointer.centerX.toFloat(),
@@ -180,18 +180,6 @@ class ControllerInputRouter(
         )
     }
 
-    /** Updates the immutable mapping snapshot. Active presses retain their captured binding. */
-    fun updateConfig(next: ControllerConfig) {
-        if (next == config) return
-        beginBoundary(waitForNeutral = true)
-        config = next
-        recreatePointerControllers()
-        if (next.notice != null) host.onControllerNotice(
-            appContext.getString(R.string.config_gamepad_unsupported_summary),
-        )
-    }
-
-    fun currentConfig(): ControllerConfig = config
 
     /** Applies an explicit host-modal ownership transition instead of waiting for another event. */
     fun onHostModalChanged(active: Boolean) {
@@ -807,23 +795,6 @@ class ControllerInputRouter(
         updatePointerOverlay()
     }
 
-    private fun recreatePointerControllers() {
-        cursorController = ProportionalCursorController(
-            pointerLease,
-            CursorSettings(speedPerShortestSidePerSecond = config.pointer.speed.toFloat()),
-        )
-        joystickController = VirtualTouchJoystickController(
-            pointerLease,
-            VirtualJoystickSettings(
-                centerXFraction = config.pointer.centerX.toFloat(),
-                centerYFraction = config.pointer.centerY.toFloat(),
-                radiusFractionOfShortestSide = config.pointer.radius.toFloat(),
-                mode = config.pointer.joystickMode,
-            ),
-        )
-        pointerViewport = null
-        updatePointerOverlay()
-    }
 
     private fun attachPointerConsumer(canvas: Canvas?) {
         if (pointerCanvas !== canvas) {
