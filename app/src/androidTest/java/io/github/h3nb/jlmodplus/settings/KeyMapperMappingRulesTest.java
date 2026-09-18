@@ -128,6 +128,7 @@ public class KeyMapperMappingRulesTest {
 		effective.delete(KeyEvent.KEYCODE_BUTTON_A);
 
 		SparseIntArray persisted = KeyMapperMappingRules.diff(defaults, effective);
+		assertTrue(persisted.indexOfKey(KeyEvent.KEYCODE_BUTTON_A) >= 0);
 		assertEquals(0, persisted.get(KeyEvent.KEYCODE_BUTTON_A));
 		SparseIntArray restored = KeyMapperMappingRules.resolve(defaults, persisted);
 		assertEquals(-1, restored.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
