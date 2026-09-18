@@ -303,7 +303,6 @@ class ControllerInputRouter(
     /** Handles HAT, stick, and trigger samples. */
     fun onGenericMotionEvent(event: MotionEvent): Boolean {
         if (!isControllerSource(event.source)) return false
-        if (!config.enabled) return false
         val deviceId = event.deviceId
         val device = InputDevice.getDevice(deviceId)
         if (device == null) {
@@ -329,6 +328,7 @@ class ControllerInputRouter(
             host.onControllerModalMotion(event)
             return true
         }
+        if (!config.enabled && host.currentCanvas() != null) return false
         if (event.actionMasked != MotionEvent.ACTION_MOVE &&
             event.actionMasked != MotionEvent.ACTION_HOVER_MOVE
         ) return true
@@ -450,7 +450,10 @@ class ControllerInputRouter(
         }
         // Pointer mode is a guest/runtime concern. A stick must never lose its ability to
         // navigate JL-Mod Plus simply because this MIDlet profile assigns that stick to a pointer.
-        if (guestCanvas != null && config.pointer.sourceStick == stick) {
+        if (guestCanvas != null &&
+            config.pointer.mode != PointerMode.OFF &&
+            config.pointer.sourceStick == stick
+        ) {
             // A pointer-configured stick is a continuous producer. It must not also become a
             // digital movement source, otherwise one physical stick can own two unrelated
             // guest outputs during the same sample.
@@ -1082,10 +1085,22 @@ class ControllerInputRouter(
         val hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X)
         val hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y)
         if (abs(hatX) > HAT_THRESHOLD || abs(hatY) > HAT_THRESHOLD) return false
-        for (axis in STICK_AXES) {
-            if (findMotionRange(device, event.source, axis) != null &&
-                abs(event.getAxisValue(axis)) > NEUTRAL_AXIS_THRESHOLD
-            ) return false
+        val calibration = config.calibrations[capabilityCache.signature(device)]
+        for (stick in StickId.entries) {
+            val pair = stickAxes(device, event.source, stick) ?: continue
+            val xChannel = if (stick == StickId.LEFT) CalibrationChannel.LEFT_X else CalibrationChannel.RIGHT_X
+            val yChannel = if (stick == StickId.LEFT) CalibrationChannel.LEFT_Y else CalibrationChannel.RIGHT_Y
+            val x = StickProcessor.normalizeCalibratedAxis(
+                event.getAxisValue(pair.first),
+                calibration?.immutableChannels?.get(xChannel),
+                motionRange(device, event.source, pair.first),
+            )
+            val y = StickProcessor.normalizeCalibratedAxis(
+                event.getAxisValue(pair.second),
+                calibration?.immutableChannels?.get(yChannel),
+                motionRange(device, event.source, pair.second),
+            )
+            if (abs(x) > NEUTRAL_AXIS_THRESHOLD || abs(y) > NEUTRAL_AXIS_THRESHOLD) return false
         }
         for (axis in TRIGGER_AXES) {
             val range = findMotionRange(device, event.source, axis) ?: continue
