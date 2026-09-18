@@ -156,6 +156,24 @@ class GamepadCalibrationSessionTest {
         assertEquals(previous, session.profile)
     }
 
+    @Test
+    fun calibrationDefensivelyCopiesChannels() {
+        val value = StickProcessor.ValidatedCalibration(
+            range = StickProcessor.MotionRangeLike(-1.0f, 1.0f),
+            rest = 0.0f,
+            restSpread = 0.0f,
+            sampleCount = 4,
+            restMustBeInterior = true,
+        )
+        val source = mutableMapOf(CalibrationChannel.LEFT_X to value)
+        val calibration = GamepadCalibration(source)
+
+        source.clear()
+
+        assertEquals(mapOf(CalibrationChannel.LEFT_X to value), calibration.channels)
+        assertEquals(GamepadCalibration(mapOf(CalibrationChannel.LEFT_X to value)), calibration)
+    }
+
     private fun buildValidProfile(): GamepadCalibration {
         val channels = CalibrationChannel.entries.associateWith {
             StickProcessor.ValidatedCalibration(

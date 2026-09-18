@@ -1081,7 +1081,7 @@ private fun mergeCalibration(
     calibration: GamepadCalibration,
 ): JsonObject {
     val result = if (existing != null && existing.isJsonObject) existing.asJsonObject.deepCopy() else JsonObject()
-    calibration.immutableChannels.forEach { (channel, value) ->
+    calibration.channels.forEach { (channel, value) ->
         result.add(calibrationToken(channel), mergeCalibrationChannel(result.get(calibrationToken(channel)), value))
     }
     return result

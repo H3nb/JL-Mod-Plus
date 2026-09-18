@@ -352,12 +352,12 @@ class ControllerInputRouter(
         val xRange = motionRange(device, event.source, axesPair.first)
         val yRange = motionRange(device, event.source, axesPair.second)
         val calibration = config.calibrations[capabilityCache.signature(device)]
-        val xCalibration = calibration?.immutableChannels[if (stick == StickId.LEFT) {
+        val xCalibration = calibration?.channels[if (stick == StickId.LEFT) {
             CalibrationChannel.LEFT_X
         } else {
             CalibrationChannel.RIGHT_X
         }]
-        val yCalibration = calibration?.immutableChannels[if (stick == StickId.LEFT) {
+        val yCalibration = calibration?.channels[if (stick == StickId.LEFT) {
             CalibrationChannel.LEFT_Y
         } else {
             CalibrationChannel.RIGHT_Y
@@ -506,7 +506,7 @@ class ControllerInputRouter(
         } else {
             CalibrationChannel.RIGHT_TRIGGER
         }
-        val normalized = calibration?.immutableChannels[calibrationChannel]?.let {
+        val normalized = calibration?.channels[calibrationChannel]?.let {
             StickProcessor.normalizeTrigger(raw, it.range)
         } ?: StickProcessor.normalizeTrigger(raw, range)
         val thresholds = StickProcessor.TriggerThresholds(
@@ -1017,12 +1017,12 @@ class ControllerInputRouter(
             val yChannel = if (stick == StickId.LEFT) CalibrationChannel.LEFT_Y else CalibrationChannel.RIGHT_Y
             val x = StickProcessor.normalizeCalibratedAxis(
                 event.getAxisValue(pair.first),
-                calibration?.immutableChannels?.get(xChannel),
+                calibration?.channels?.get(xChannel),
                 motionRange(device, event.source, pair.first),
             )
             val y = StickProcessor.normalizeCalibratedAxis(
                 event.getAxisValue(pair.second),
-                calibration?.immutableChannels?.get(yChannel),
+                calibration?.channels?.get(yChannel),
                 motionRange(device, event.source, pair.second),
             )
             if (abs(x) > NEUTRAL_AXIS_THRESHOLD || abs(y) > NEUTRAL_AXIS_THRESHOLD) return false

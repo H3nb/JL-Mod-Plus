@@ -23,15 +23,26 @@ enum class CalibrationChannel(
     RIGHT_TRIGGER(false),
 }
 
-data class GamepadCalibration(
-    val channels: Map<CalibrationChannel, StickProcessor.ValidatedCalibration>,
+class GamepadCalibration(
+    channels: Map<CalibrationChannel, StickProcessor.ValidatedCalibration>,
 ) {
+    val channels: Map<CalibrationChannel, StickProcessor.ValidatedCalibration> =
+        Collections.unmodifiableMap(
+            EnumMap<CalibrationChannel, StickProcessor.ValidatedCalibration>(
+                CalibrationChannel::class.java,
+            ).also { it.putAll(channels) },
+        )
+
     init {
-        require(channels.isNotEmpty()) { "calibration must contain at least one channel" }
+        require(this.channels.isNotEmpty()) { "calibration must contain at least one channel" }
     }
 
-    val immutableChannels: Map<CalibrationChannel, StickProcessor.ValidatedCalibration> =
-        Collections.unmodifiableMap(EnumMap(channels))
+    override fun equals(other: Any?): Boolean =
+        this === other || other is GamepadCalibration && channels == other.channels
+
+    override fun hashCode(): Int = channels.hashCode()
+
+    override fun toString(): String = "GamepadCalibration(channels=$channels)"
 }
 
 enum class CalibrationEvent {
