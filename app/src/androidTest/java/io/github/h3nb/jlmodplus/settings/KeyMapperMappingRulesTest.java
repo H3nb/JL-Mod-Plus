@@ -122,6 +122,19 @@ public class KeyMapperMappingRulesTest {
 	}
 
 	@Test
+	public void removedDefaultBindingRoundTripsAsTombstone() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		SparseIntArray effective = defaults.clone();
+		effective.delete(KeyEvent.KEYCODE_BUTTON_A);
+
+		SparseIntArray persisted = KeyMapperMappingRules.diff(defaults, effective);
+		assertEquals(0, persisted.get(KeyEvent.KEYCODE_BUTTON_A));
+		SparseIntArray restored = KeyMapperMappingRules.resolve(defaults, persisted);
+		assertEquals(-1, restored.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(Canvas.KEY_FIRE, restored.get(KeyEvent.KEYCODE_ENTER));
+	}
+
+	@Test
 	public void equalityDistinguishesNullAndDefaultForPersistence() {
 		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
 		assertTrue(KeyMapperMappingRules.equalMaps(defaults, defaults.clone()));
