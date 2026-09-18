@@ -111,12 +111,15 @@ class HostInputRouter(
         return true
     }
 
+    fun onModalChanged(active: Boolean): Boolean {
+        if (active == modalBoundaryActive) return false
+        if (active) host.currentCanvas()?.clearInputState()
+        modalBoundaryActive = active
+        return true
+    }
+
     private fun syncModalBoundary() {
-        val modal = host.isControllerModalActive()
-        if (modal && !modalBoundaryActive) {
-            host.currentCanvas()?.clearInputState()
-        }
-        modalBoundaryActive = modal
+        onModalChanged(host.isControllerModalActive())
     }
 
     fun clear() {
