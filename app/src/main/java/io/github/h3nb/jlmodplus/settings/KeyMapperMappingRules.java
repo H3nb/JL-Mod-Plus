@@ -21,6 +21,23 @@ public final class KeyMapperMappingRules {
 	private KeyMapperMappingRules() {
 	}
 
+	public static SparseIntArray addOrReplaceBinding(
+			SparseIntArray current,
+			int androidKeyCode,
+			int target) {
+		SparseIntArray updated = current == null ? new SparseIntArray() : current.clone();
+		updated.put(androidKeyCode, target);
+		return updated;
+	}
+
+	public static SparseIntArray removeBinding(
+			SparseIntArray current,
+			int androidKeyCode) {
+		SparseIntArray updated = current == null ? new SparseIntArray() : current.clone();
+		updated.delete(androidKeyCode);
+		return updated;
+	}
+
 	public static SparseIntArray assign(
 			SparseIntArray current,
 			int canvasKey,

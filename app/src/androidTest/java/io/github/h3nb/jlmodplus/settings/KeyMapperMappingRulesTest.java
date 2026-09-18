@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.util.SparseIntArray;
 import android.graphics.Rect;
+import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -79,6 +80,161 @@ public class KeyMapperMappingRulesTest {
 		assertEquals(Canvas.KEY_FIRE, KeyMapper.convertAndroidKeyCode(
 				KeyEvent.KEYCODE_ENTER,
 				new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)));
+	}
+
+	@Test
+	public void resolveWithoutOverridesClonesDefaults() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		SparseIntArray snapshot = defaults.clone();
+
+		SparseIntArray effective = KeyMapper.resolveKeyMappings(defaults, null);
+
+		assertTrue(KeyMapperMappingRules.equalMaps(defaults, effective));
+		effective.put(KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+		assertTrue(KeyMapperMappingRules.equalMaps(snapshot, defaults));
+	}
+
+	@Test
+	public void resolveAdditionalBindingPreservesKeyboardDefaultAndInputs() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		SparseIntArray defaultSnapshot = defaults.clone();
+		SparseIntArray overrides = new SparseIntArray();
+		overrides.put(KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+		SparseIntArray overrideSnapshot = overrides.clone();
+
+		SparseIntArray effective = KeyMapper.resolveKeyMappings(defaults, overrides);
+
+		assertEquals(Canvas.KEY_FIRE, effective.get(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(Canvas.KEY_FIRE, effective.get(KeyEvent.KEYCODE_ENTER));
+		assertTrue(KeyMapperMappingRules.equalMaps(defaultSnapshot, defaults));
+		assertTrue(KeyMapperMappingRules.equalMaps(overrideSnapshot, overrides));
+	}
+
+	@Test
+	public void resolveOverrideReplacesOnlyThatPhysicalSource() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		SparseIntArray overrides = new SparseIntArray();
+		overrides.put(KeyEvent.KEYCODE_ENTER, Canvas.KEY_NUM5);
+
+		SparseIntArray effective = KeyMapper.resolveKeyMappings(defaults, overrides);
+
+		assertEquals(Canvas.KEY_NUM5, effective.get(KeyEvent.KEYCODE_ENTER));
+		assertEquals(Canvas.KEY_UP, effective.get(KeyEvent.KEYCODE_DPAD_UP));
+	}
+
+	@Test
+	public void explicitRemovalDeletesDefaultPhysicalBinding() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		SparseIntArray overrides = new SparseIntArray();
+		overrides.put(KeyEvent.KEYCODE_ENTER, KeyMapper.KEY_MAPPING_REMOVED);
+
+		SparseIntArray effective = KeyMapper.resolveKeyMappings(defaults, overrides);
+
+		assertEquals(-1, effective.indexOfKey(KeyEvent.KEYCODE_ENTER));
+		assertEquals(Canvas.KEY_UP, effective.get(KeyEvent.KEYCODE_DPAD_UP));
+	}
+
+	@Test
+	public void menuTargetZeroSurvivesResolveAndDiff() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		SparseIntArray overrides = new SparseIntArray();
+		overrides.put(KeyEvent.KEYCODE_BUTTON_START, KeyMapper.KEY_OPTIONS_MENU);
+
+		SparseIntArray effective = KeyMapper.resolveKeyMappings(defaults, overrides);
+		SparseIntArray persisted = KeyMapper.getKeyMappingOverrides(defaults, effective);
+		SparseIntArray roundTrip = KeyMapper.resolveKeyMappings(defaults, persisted);
+
+		int startIndex = effective.indexOfKey(KeyEvent.KEYCODE_BUTTON_START);
+		assertTrue(startIndex >= 0);
+		assertEquals(KeyMapper.KEY_OPTIONS_MENU, effective.valueAt(startIndex));
+		int persistedIndex = persisted.indexOfKey(KeyEvent.KEYCODE_BUTTON_START);
+		assertTrue(persistedIndex >= 0);
+		assertEquals(KeyMapper.KEY_OPTIONS_MENU, persisted.valueAt(persistedIndex));
+		assertTrue(KeyMapper.KEY_OPTIONS_MENU != KeyMapper.KEY_MAPPING_REMOVED);
+		assertTrue(KeyMapperMappingRules.equalMaps(effective, roundTrip));
+	}
+
+	@Test
+	public void effectiveMapDiffRoundTripsAddChangeRemovalAndMenu() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		SparseIntArray effective = defaults.clone();
+		effective.delete(KeyEvent.KEYCODE_ENTER);
+		effective.put(KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+		effective.put(KeyEvent.KEYCODE_DPAD_UP, Canvas.KEY_NUM2);
+		effective.put(KeyEvent.KEYCODE_BUTTON_START, KeyMapper.KEY_OPTIONS_MENU);
+
+		SparseIntArray overrides = KeyMapper.getKeyMappingOverrides(defaults, effective);
+		SparseIntArray roundTrip = KeyMapper.resolveKeyMappings(defaults, overrides);
+
+		assertEquals(KeyMapper.KEY_MAPPING_REMOVED, overrides.get(KeyEvent.KEYCODE_ENTER));
+		assertEquals(Canvas.KEY_FIRE, overrides.get(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(Canvas.KEY_NUM2, overrides.get(KeyEvent.KEYCODE_DPAD_UP));
+		assertTrue(KeyMapperMappingRules.equalMaps(effective, roundTrip));
+	}
+
+	@Test
+	public void unchangedEffectiveMapProducesNoOverrides() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+
+		SparseIntArray overrides = KeyMapper.getKeyMappingOverrides(defaults, defaults.clone());
+
+		assertEquals(0, overrides.size());
+	}
+
+	@Test
+	public void legacyPersistedMapStillInheritsMissingDefaults() {
+		SparseIntArray legacyPersisted = new SparseIntArray();
+		legacyPersisted.put(KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+
+		SparseIntArray effective =
+				KeyMapper.resolveKeyMappings(KeyMapper.getDefaultKeyMap(), legacyPersisted);
+
+		assertEquals(Canvas.KEY_FIRE, effective.get(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(Canvas.KEY_FIRE, effective.get(KeyEvent.KEYCODE_ENTER));
+	}
+
+	@Test
+	public void runtimeSetKeyMappingAppliesExplicitRemovalInsteadOfLeakingMarker() {
+		ProfileModel profile = new ProfileModel();
+		profile.keyMappings = new SparseIntArray();
+		profile.keyMappings.put(KeyEvent.KEYCODE_ENTER, KeyMapper.KEY_MAPPING_REMOVED);
+		KeyEvent enter = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER);
+		int fallback = enter.getUnicodeChar() & KeyCharacterMap.COMBINING_ACCENT_MASK;
+
+		KeyMapper.setKeyMapping(profile);
+
+		assertEquals(fallback, KeyMapper.convertAndroidKeyCode(KeyEvent.KEYCODE_ENTER, enter));
+	}
+
+	@Test
+	public void addOrReplaceBindingAllowsManyPhysicalSourcesForOneTarget() {
+		SparseIntArray original = new SparseIntArray();
+		original.put(KeyEvent.KEYCODE_ENTER, Canvas.KEY_FIRE);
+
+		SparseIntArray withGamepad = KeyMapperMappingRules.addOrReplaceBinding(
+				original, KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+		SparseIntArray reassigned = KeyMapperMappingRules.addOrReplaceBinding(
+				withGamepad, KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_NUM5);
+
+		assertEquals(Canvas.KEY_FIRE, withGamepad.get(KeyEvent.KEYCODE_ENTER));
+		assertEquals(Canvas.KEY_FIRE, withGamepad.get(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(-1, original.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(Canvas.KEY_FIRE, reassigned.get(KeyEvent.KEYCODE_ENTER));
+		assertEquals(Canvas.KEY_NUM5, reassigned.get(KeyEvent.KEYCODE_BUTTON_A));
+	}
+
+	@Test
+	public void removeBindingLeavesOtherSourcesForSameTargetIntact() {
+		SparseIntArray original = new SparseIntArray();
+		original.put(KeyEvent.KEYCODE_ENTER, Canvas.KEY_FIRE);
+		original.put(KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+
+		SparseIntArray updated =
+				KeyMapperMappingRules.removeBinding(original, KeyEvent.KEYCODE_BUTTON_A);
+
+		assertEquals(Canvas.KEY_FIRE, updated.get(KeyEvent.KEYCODE_ENTER));
+		assertEquals(-1, updated.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(Canvas.KEY_FIRE, original.get(KeyEvent.KEYCODE_BUTTON_A));
 	}
 
 	@Test

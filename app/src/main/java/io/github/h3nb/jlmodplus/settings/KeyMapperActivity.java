@@ -79,15 +79,13 @@ public class KeyMapperActivity extends AppCompatActivity {
 				legacyThemeLinked);
 
 		if (savedInstanceState == null) {
-			SparseIntArray keyMap = params.keyMappings;
-			androidToMIDP = keyMap == null ? defaultKeyMap.clone() : keyMap.clone();
+			androidToMIDP = KeyMapper.resolveKeyMappings(defaultKeyMap, params.keyMappings);
 		} else {
 			String save = savedInstanceState.getString(KEY_SAVE);
 			if (save == null) {
 				androidToMIDP = defaultKeyMap.clone();
 			} else if (save.isEmpty()) {
-				SparseIntArray keyMap = params.keyMappings;
-				androidToMIDP = keyMap == null ? defaultKeyMap.clone() : keyMap.clone();
+				androidToMIDP = KeyMapper.resolveKeyMappings(defaultKeyMap, params.keyMappings);
 			} else {
 				androidToMIDP = new GsonBuilder()
 						.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
@@ -144,7 +142,9 @@ public class KeyMapperActivity extends AppCompatActivity {
 	@Override
 	protected void onSaveInstanceState(@NonNull Bundle outState) {
 		if (!KeyMapperMappingRules.equalMaps(androidToMIDP, defaultKeyMap)) {
-			if (!KeyMapperMappingRules.equalMaps(params.keyMappings, androidToMIDP)) {
+			SparseIntArray persistedEffective =
+					KeyMapper.resolveKeyMappings(defaultKeyMap, params.keyMappings);
+			if (!KeyMapperMappingRules.equalMaps(persistedEffective, androidToMIDP)) {
 				String currMap = new GsonBuilder()
 						.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
 						.create()
@@ -177,9 +177,9 @@ public class KeyMapperActivity extends AppCompatActivity {
 
 
 	private void save() {
-		SparseIntArray newMap = androidToMIDP;
+		SparseIntArray newMap = KeyMapper.getKeyMappingOverrides(defaultKeyMap, androidToMIDP);
 		SparseIntArray oldMap = params.keyMappings;
-		if (KeyMapperMappingRules.equalMaps(newMap, defaultKeyMap)) {
+		if (newMap.size() == 0) {
 			newMap = null;
 		}
 		if (!KeyMapperMappingRules.equalMaps(oldMap, newMap)) {

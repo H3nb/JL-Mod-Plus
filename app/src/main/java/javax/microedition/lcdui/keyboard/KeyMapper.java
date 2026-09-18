@@ -32,6 +32,7 @@ import io.github.h3nb.jlmodplus.config.ProfileModel;
 
 public class KeyMapper {
 	public static final int KEY_OPTIONS_MENU = 0;
+	public static final int KEY_MAPPING_REMOVED = Integer.MIN_VALUE;
 	public static final int SE_KEY_SPECIAL_GAMING_A = -13;
 	public static final int SE_KEY_SPECIAL_GAMING_B = -14;
 
@@ -171,16 +172,54 @@ public class KeyMapper {
 		return keyCodeToCustom.get(keyCode, keyCode);
 	}
 
-	public static void setKeyMapping(ProfileModel params) {
-		layoutType = params.keyCodesLayout;
-		SparseIntArray map = getDefaultKeyMap();
-		SparseIntArray customKeyMap = params.keyMappings;
-		if (customKeyMap != null) {
-			for (int i = 0, size = customKeyMap.size(); i < size; i++) {
-				map.put(customKeyMap.keyAt(i), customKeyMap.valueAt(i));
+	public static SparseIntArray resolveKeyMappings(
+			SparseIntArray defaults,
+			SparseIntArray overrides) {
+		SparseIntArray resolved = defaults == null ? new SparseIntArray() : defaults.clone();
+		if (overrides == null) {
+			return resolved;
+		}
+		for (int i = 0, size = overrides.size(); i < size; i++) {
+			int androidKeyCode = overrides.keyAt(i);
+			int target = overrides.valueAt(i);
+			if (target == KEY_MAPPING_REMOVED) {
+				resolved.delete(androidKeyCode);
+			} else {
+				resolved.put(androidKeyCode, target);
 			}
 		}
-		androidToMIDP = map;
+		return resolved;
+	}
+
+	public static SparseIntArray getKeyMappingOverrides(
+			SparseIntArray defaults,
+			SparseIntArray effective) {
+		SparseIntArray overrides = new SparseIntArray();
+		if (defaults != null) {
+			for (int i = 0, size = defaults.size(); i < size; i++) {
+				int androidKeyCode = defaults.keyAt(i);
+				int effectiveIndex = effective == null ? -1 : effective.indexOfKey(androidKeyCode);
+				if (effectiveIndex < 0) {
+					overrides.put(androidKeyCode, KEY_MAPPING_REMOVED);
+				} else if (effective.valueAt(effectiveIndex) != defaults.valueAt(i)) {
+					overrides.put(androidKeyCode, effective.valueAt(effectiveIndex));
+				}
+			}
+		}
+		if (effective != null) {
+			for (int i = 0, size = effective.size(); i < size; i++) {
+				int androidKeyCode = effective.keyAt(i);
+				if (defaults == null || defaults.indexOfKey(androidKeyCode) < 0) {
+					overrides.put(androidKeyCode, effective.valueAt(i));
+				}
+			}
+		}
+		return overrides;
+	}
+
+	public static void setKeyMapping(ProfileModel params) {
+		layoutType = params.keyCodesLayout;
+		androidToMIDP = resolveKeyMappings(getDefaultKeyMap(), params.keyMappings);
 		remapKeys(params);
 	}
 
