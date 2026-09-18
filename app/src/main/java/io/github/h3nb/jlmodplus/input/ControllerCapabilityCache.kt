@@ -27,8 +27,6 @@ import java.util.Locale
 class ControllerCapabilityCache {
     private val signatures = HashMap<Int, String>()
 
-    fun signature(device: InputDevice, _source: Int): String = signature(device)
-
     fun signature(device: InputDevice): String {
         return signatures[device.id] ?: buildSignature(device).also { signatures[device.id] = it }
     }
@@ -40,10 +38,6 @@ class ControllerCapabilityCache {
     fun clear() = signatures.clear()
 
     companion object {
-        /** Compatibility overload for existing Java/Kotlin call sites; source is non-identifying. */
-        @JvmStatic
-        fun buildSignature(device: InputDevice, _source: Int): String = buildSignature(device)
-
         @JvmStatic
         fun buildSignature(device: InputDevice): String = buildString {
             append("descriptor=")
