@@ -376,11 +376,6 @@ public class MicroActivity extends AppCompatActivity {
 								R.string.layout_edit_mode);
 					}
 
-					@Override
-					public void onResizeVirtualKeyboardLayout() {
-						setVirtualKeyboardEditMode(VirtualKeyboard.LAYOUT_SCALES,
-								R.string.layout_scale_mode);
-					}
 
 					@Override
 					public void onFinishVirtualKeyboardLayout() {
