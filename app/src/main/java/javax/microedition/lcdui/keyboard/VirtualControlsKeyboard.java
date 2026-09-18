@@ -144,31 +144,9 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		rebuildAnalogStick();
 	}
 
-	public boolean isVirtualDpadEnabled() {
-		return settings.virtualDpadEnabled;
-	}
 
-	public boolean isVirtualAnalogEnabled() {
-		return settings.virtualAnalogEnabled;
-	}
 
-	public void setVirtualDpadEnabled(boolean enabled) {
-		if (settings.virtualDpadEnabled == enabled) return;
-		if (!enabled) endDpad();
-		standardTemplateEdited |= isStandardTemplate(getLayout());
-		settings.virtualDpadEnabled = enabled;
-		ProfilesManager.saveConfig(settings);
-		invalidateOverlay();
-	}
 
-	public void setVirtualAnalogEnabled(boolean enabled) {
-		if (settings.virtualAnalogEnabled == enabled) return;
-		if (!enabled) endAnalog();
-		standardTemplateEdited |= isStandardTemplate(getLayout());
-		settings.virtualAnalogEnabled = enabled;
-		ProfilesManager.saveConfig(settings);
-		invalidateOverlay();
-	}
 
 	@Override
 	public void setView(View view) {
