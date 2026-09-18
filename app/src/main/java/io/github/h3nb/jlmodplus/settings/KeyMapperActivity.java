@@ -145,17 +145,16 @@ public class KeyMapperActivity extends AppCompatActivity {
 
 	@Override
 	protected void onSaveInstanceState(@NonNull Bundle outState) {
-		if (!KeyMapperMappingRules.equalMaps(androidToMIDP, defaultKeyMap)) {
-			SparseIntArray currentOverrides = KeyMapperMappingRules.diff(defaultKeyMap, androidToMIDP);
-			if (!KeyMapperMappingRules.equalMaps(params.keyMappings, currentOverrides)) {
-				String currMap = new GsonBuilder()
-						.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
-						.create()
-						.toJson(androidToMIDP);
-				outState.putString(KEY_SAVE, currMap);
-			} else {
-				outState.putString(KEY_SAVE, "");
-			}
+		SparseIntArray currentOverrides = KeyMapperMappingRules.diff(defaultKeyMap, androidToMIDP);
+		SparseIntArray persistedOverrides = currentOverrides.size() == 0 ? null : currentOverrides;
+		if (!KeyMapperMappingRules.equalMaps(params.keyMappings, persistedOverrides)) {
+			String currMap = new GsonBuilder()
+					.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
+					.create()
+					.toJson(androidToMIDP);
+			outState.putString(KEY_SAVE, currMap);
+		} else {
+			outState.putString(KEY_SAVE, "");
 		}
 
 		super.onSaveInstanceState(outState);
