@@ -32,6 +32,26 @@ class GamepadCalibrationSessionTest {
     }
 
     @Test
+    fun neutralTickerDoesNotFabricateHardwareSamples() {
+        val session = GamepadCalibrationSession(
+            neutralDurationMillis = 1_000L,
+            minimumSamples = 2,
+            requiredChannels = setOf(CalibrationChannel.LEFT_X, CalibrationChannel.LEFT_Y),
+        )
+        val neutral = mapOf(
+            CalibrationChannel.LEFT_X to 0.0f,
+            CalibrationChannel.LEFT_Y to 0.0f,
+        )
+
+        session.observeNeutral(0L, neutral, true)
+        assertEquals(CalibrationPhase.WAIT_NEUTRAL, session.tickNeutral(1_000L).phase)
+        assertEquals(
+            CalibrationEvent.NEUTRAL_READY,
+            session.observeNeutral(1_001L, neutral, true).event,
+        )
+    }
+
+    @Test
     fun validStickAndTriggerRangesProduceReviewableCandidate() {
         val session = GamepadCalibrationSession(
             neutralDurationMillis = 0L + 1L,
