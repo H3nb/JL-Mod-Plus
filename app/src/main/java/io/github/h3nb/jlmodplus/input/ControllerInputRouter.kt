@@ -54,19 +54,6 @@ interface ControllerHostSink {
     fun onControllerModalMotion(event: MotionEvent): Boolean = false
 }
 
-/** A compact, user-facing snapshot used by the diagnosis surface and tests. */
-data class ControllerDiagnosticSnapshot(
-    val state: String,
-    val deviceId: Int?,
-    val deviceName: String?,
-    val sessionId: Long,
-    val activeDigitalControls: Set<String>,
-    val activeAnalogControls: Set<String>,
-    val lastAxes: Map<String, Float>,
-    val configSource: ResolutionSource,
-    val configNotice: String?,
-)
-
 /**
  * Android controller input adapter.
  *
@@ -130,7 +117,6 @@ class ControllerInputRouter(
     private val binary = LinkedHashMap<String, BinarySource>()
     private val triggerStates = EnumMap<TriggerSide, StickProcessor.TriggerState>(TriggerSide::class.java)
     private val stickStates = EnumMap<StickId, StickRuntime>(StickId::class.java)
-    private val axes = LinkedHashMap<String, Float>()
     private var pointerCanvas: Canvas? = null
     private var pointerViewport: GuestViewport? = null
     private val pointerClickOwners = LinkedHashSet<PointerSourceToken>()
@@ -213,19 +199,6 @@ class ControllerInputRouter(
         clear()
         inputManager?.unregisterInputDeviceListener(this)
     }
-
-    fun diagnostics(): ControllerDiagnosticSnapshot = ControllerDiagnosticSnapshot(
-        state = lifecycleState.name,
-        deviceId = activeDeviceId,
-        deviceName = activeDeviceId?.let { InputDevice.getDevice(it)?.name },
-        sessionId = sessionId,
-        activeDigitalControls = emptySet(),
-        activeAnalogControls = binary.values.mapTo(LinkedHashSet()) { it.control } +
-            directional.values.flatMapTo(LinkedHashSet()) { it.requestedControls },
-        lastAxes = LinkedHashMap(axes),
-        configSource = config.resolutionSource,
-        configNotice = config.notice,
-    )
 
     /** Handles host-owned controller buttons, then the configured virtual pointer click. */
     fun onKeyEvent(event: KeyEvent): Boolean {
@@ -321,9 +294,6 @@ class ControllerInputRouter(
             // A neutral/release sample can arrive only after the modal has taken focus. Close
             // every previously delivered guest output before the modal consumes this sample.
             releaseGuestStateForModal()
-            // Diagnosis remains live while a host modal owns the input. Record raw samples before
-            // handing the event to the modal, but never run the guest/output processors here.
-            recordDiagnosticMotion(event, device)
             host.onControllerModalMotion(event)
             return true
         }
@@ -378,8 +348,6 @@ class ControllerInputRouter(
     private fun updateHat(event: MotionEvent, device: InputDevice, history: Int): Boolean {
         val x = axisValue(event, MotionEvent.AXIS_HAT_X, history)
         val y = axisValue(event, MotionEvent.AXIS_HAT_Y, history)
-        axes["hat_x"] = x
-        axes["hat_y"] = y
         val controls = LinkedHashSet<String>()
         if (y < -HAT_THRESHOLD) controls += CONTROL_DPAD_UP
         if (y > HAT_THRESHOLD) controls += CONTROL_DPAD_DOWN
@@ -416,8 +384,6 @@ class ControllerInputRouter(
         } else {
             CalibrationChannel.RIGHT_Y
         }]
-        axes["${stick.name.lowercase()}_x"] = rawX
-        axes["${stick.name.lowercase()}_y"] = rawY
         val swapped = settings.swapAxes
         val processorConfig = StickProcessor.StickConfig(
             innerDeadzone = settings.innerDeadzone.toFloat(),
@@ -565,7 +531,6 @@ class ControllerInputRouter(
         val normalized = calibration?.immutableChannels[calibrationChannel]?.let {
             StickProcessor.normalizeTrigger(raw, it.range)
         } ?: StickProcessor.normalizeTrigger(raw, range)
-        axes[if (side == TriggerSide.LEFT) "trigger_left" else "trigger_right"] = normalized
         val thresholds = StickProcessor.TriggerThresholds(
             press = config.triggers.pressThreshold.toFloat(),
             release = config.triggers.releaseThreshold.toFloat(),
@@ -1091,19 +1056,6 @@ class ControllerInputRouter(
             ) return false
         }
         return true
-    }
-
-    private fun recordDiagnosticMotion(event: MotionEvent, device: InputDevice) {
-        device.motionRanges.forEach { range ->
-            if (range.source == 0 || range.source and event.source != 0) {
-                val value = event.getAxisValue(range.axis)
-                if (value.isFinite()) axes["axis_${range.axis}"] = value
-            }
-        }
-        val hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X)
-        val hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y)
-        if (hatX.isFinite()) axes["hat_x"] = hatX
-        if (hatY.isFinite()) axes["hat_y"] = hatY
     }
 
     private fun axisValue(event: MotionEvent, axis: Int, history: Int): Float =
