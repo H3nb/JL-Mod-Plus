@@ -106,7 +106,7 @@ public class MicroActivity extends AppCompatActivity {
 	private String appName;
 	private String[] pendingMidletClasses;
 	private InputMethodManager inputMethodManager;
-	private boolean menuKeyLongPressHandled;
+	private final MenuLongPressState menuLongPressState = new MenuLongPressState();
 	private int imeToggleRequest;
 	private String appPath;
 	private RuntimeHostView binding;
@@ -851,19 +851,19 @@ public class MicroActivity extends AppCompatActivity {
 		// keys. Intercept their tracking sequence before dispatching to the Canvas child.
 		int keyCode = event.getKeyCode();
 		if (keyCode == KeyEvent.KEYCODE_MENU || KeyMapper.isOptionsMenuKey(keyCode)) {
+			int deviceId = event.getDeviceId();
 			if (event.getAction() == KeyEvent.ACTION_DOWN) {
 				if (event.getRepeatCount() == 0) {
-					menuKeyLongPressHandled = false;
+					menuLongPressState.begin(deviceId, keyCode);
 					event.startTracking();
 					return true;
 				}
 				if (event.isLongPress()) {
-					menuKeyLongPressHandled = true;
+					menuLongPressState.markHandled(deviceId, keyCode);
 					return onKeyLongPress(keyCode, event);
 				}
 			} else if (event.getAction() == KeyEvent.ACTION_UP) {
-				if (menuKeyLongPressHandled) {
-					menuKeyLongPressHandled = false;
+				if (menuLongPressState.consumeHandled(deviceId, keyCode)) {
 					return true;
 				}
 				return onKeyUp(keyCode, event);
