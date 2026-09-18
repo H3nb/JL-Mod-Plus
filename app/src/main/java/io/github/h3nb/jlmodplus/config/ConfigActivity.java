@@ -709,7 +709,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		gamepadCalibrationDevice = null;
 		gamepadCalibrationSignature = null;
 		gamepadCalibrationChannels = Collections.emptySet();
-		lastCalibrationValues = Collections.emptyMap();
 		if (composeController != null) composeController.updateGamepadCalibration(null);
 	}
 
@@ -964,6 +963,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private boolean hasMotionRange(@NonNull InputDevice device, int source, int axis) {
 		return device.getMotionRange(axis, source) != null || device.getMotionRange(axis) != null;
+	}
+
+	private boolean hasControllerDevice() {
+		for (int deviceId : InputDevice.getDeviceIds()) {
+			InputDevice device = InputDevice.getDevice(deviceId);
+			if (device != null && ControllerInputRouter.isGamepadDevice(device)) return true;
+		}
+		return false;
 	}
 
 	private int calibrationSource(@NonNull InputDevice device) {
@@ -1840,7 +1847,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
 				KeyboardLayoutValidator.validate(keylayoutFile) == null,
-				profileNames, keyboardLayouts, firstControllerDevice() != null);
+				profileNames, keyboardLayouts, hasControllerDevice());
 	}
 
 	private boolean hasCompatibleTimingTransform() {
