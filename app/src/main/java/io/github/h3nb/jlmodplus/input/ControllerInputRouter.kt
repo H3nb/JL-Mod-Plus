@@ -193,6 +193,17 @@ class ControllerInputRouter(
 
     fun currentConfig(): ControllerConfig = config
 
+    /** Applies an explicit host-modal ownership transition instead of waiting for another event. */
+    fun onHostModalChanged(active: Boolean) {
+        if (!hostInputRouter.onModalChanged(active)) return
+        if (active) {
+            releaseAll()
+            resetPointerState()
+        } else {
+            beginBoundary(waitForNeutral = true)
+        }
+    }
+
     /** Called before a Displayable/surface target is replaced. */
     fun onTargetChanged() {
         beginBoundary(waitForNeutral = true)
