@@ -238,13 +238,6 @@ class ControllerInputRouter(
         }
     }
 
-    /** Closes a key contact captured before a host modal took ownership of subsequent events. */
-    fun releaseCapturedKey(event: KeyEvent): Boolean {
-        if (!isGamepadEvent(event)) return false
-        val handled = hostInputRouter.releaseCapturedKey(event)
-        syncHostModalBoundary()
-        return handled
-    }
 
     private fun syncHostModalBoundary(active: Boolean = host.isControllerModalActive()) {
         if (active == hostModalActive) return
