@@ -238,15 +238,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		try {
 			endDpad();
 			endAnalog();
-			// Start from the long-standing Numbers & Arrows geometry, then place only the five
-			// standard action keys using the free space around the actual MIDlet viewport.
+			// Reuse the legacy key set, then apply deterministic standard-template geometry.
 			super.setLayout(LEGACY_TEMPLATE_NUMBERS_ARROWS);
 			applyStandardLegacyVisibility();
 			StandardVirtualControlsLayout layout = standardTemplateLayout();
-			setKeyGroupScaleByLabel(
-					"L",
-					layout.shoulderWidth / Math.max(1.0f, layout.keySize),
-					layout.shoulderHeight / Math.max(1.0f, layout.keySize));
 			arrangeStandardLegacyButtons(layout);
 
 			float width = Math.max(1.0f, screenBounds == null ? 1.0f : screenBounds.width());
