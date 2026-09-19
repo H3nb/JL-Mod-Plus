@@ -24,11 +24,10 @@ public class DirectionalControlGeometryTest {
 	private static final float CENTER_X = 100.0f;
 	private static final float CENTER_Y = 200.0f;
 	private static final float RADIUS = 50.0f;
-	private static final float THUMB_RADIUS = 18.0f;
 
 	@Test
 	public void centerProducesNeutralVectorAndCenteredThumb() {
-		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.sample(
+		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.analogSample(
 				CENTER_X, CENTER_Y, RADIUS, CENTER_X, CENTER_Y);
 
 		assertEquals(0.0f, sample.x, EPSILON);
@@ -48,7 +47,7 @@ public class DirectionalControlGeometryTest {
 
 	@Test
 	public void diagonalClampsToCircularBoundary() {
-		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.sample(
+		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.analogSample(
 				CENTER_X, CENTER_Y, RADIUS,
 				CENTER_X + RADIUS, CENTER_Y - RADIUS);
 
@@ -62,65 +61,84 @@ public class DirectionalControlGeometryTest {
 	}
 
 	@Test
-	public void touchBeyondRadiusKeepsThumbClamped() {
-		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.sample(
-				CENTER_X, CENTER_Y, RADIUS, CENTER_X + RADIUS * 3.0f, CENTER_Y);
+	public void analogTouchDownIsNeutralUntilFirstMove() {
+		DirectionalControlGeometry.Sample down = DirectionalControlGeometry.gestureSample(
+				true, false, CENTER_X, CENTER_Y, RADIUS,
+				CENTER_X + RADIUS, CENTER_Y);
+		assertEquals(0.0f, down.x, EPSILON);
+		assertEquals(0.0f, down.y, EPSILON);
+		assertEquals(CENTER_X, down.thumbX, EPSILON);
+		assertEquals(CENTER_Y, down.thumbY, EPSILON);
 
-		assertEquals(1.0f, sample.x, EPSILON);
-		assertEquals(CENTER_X + RADIUS, sample.thumbX, EPSILON);
+		DirectionalControlGeometry.Sample move = DirectionalControlGeometry.gestureSample(
+				true, true, CENTER_X, CENTER_Y, RADIUS,
+				CENTER_X + RADIUS, CENTER_Y);
+		assertEquals(1.0f, move.x, EPSILON);
+		assertEquals(0.0f, move.y, EPSILON);
+		assertEquals(CENTER_X + RADIUS, move.thumbX, EPSILON);
 	}
 
 	@Test
-	public void analogFullDeflectionKeepsNormalizedMagnitudeOneAndThumbInsideBase() {
+	public void dpadTouchDownRemainsImmediate() {
+		DirectionalControlGeometry.Sample down = DirectionalControlGeometry.gestureSample(
+				false, false, CENTER_X, CENTER_Y, RADIUS,
+				CENTER_X + RADIUS, CENTER_Y);
+
+		assertEquals(1.0f, down.x, EPSILON);
+		assertEquals(0.0f, down.y, EPSILON);
+	}
+
+	@Test
+	public void analogHalfDeflectionProducesHalfVisualTravel() {
 		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.analogSample(
-				CENTER_X, CENTER_Y, RADIUS, THUMB_RADIUS,
+				CENTER_X, CENTER_Y, RADIUS,
+				CENTER_X + RADIUS * 0.5f, CENTER_Y);
+
+		assertEquals(0.5f, sample.x, EPSILON);
+		assertEquals(CENTER_X + RADIUS * 0.5f, sample.thumbX, EPSILON);
+		assertEquals(CENTER_Y, sample.thumbY, EPSILON);
+	}
+
+	@Test
+	public void analogFullDeflectionMovesThumbCenterToBaseRadius() {
+		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.analogSample(
+				CENTER_X, CENTER_Y, RADIUS,
 				CENTER_X + RADIUS, CENTER_Y);
 
 		assertEquals(1.0f, (float) Math.hypot(sample.x, sample.y), EPSILON);
-		assertEquals(RADIUS - THUMB_RADIUS, sample.thumbX - CENTER_X, EPSILON);
-		assertTrue(Math.hypot(sample.thumbX - CENTER_X, sample.thumbY - CENTER_Y)
-				+ THUMB_RADIUS <= RADIUS + EPSILON);
+		assertEquals(RADIUS, sample.thumbX - CENTER_X, EPSILON);
 	}
 
 	@Test
-	public void analogDiagonalFullDeflectionKeepsThumbInsideBase() {
-		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.analogSample(
-				CENTER_X, CENTER_Y, RADIUS, THUMB_RADIUS,
-				CENTER_X + RADIUS, CENTER_Y + RADIUS);
-
-		assertEquals(1.0f, (float) Math.hypot(sample.x, sample.y), EPSILON);
-		assertTrue(Math.hypot(sample.thumbX - CENTER_X, sample.thumbY - CENTER_Y)
-				+ THUMB_RADIUS <= RADIUS + EPSILON);
+	public void analogThumbRadiusUsesSmallerFixedScale() {
+		assertEquals(0.28f, DirectionalControlGeometry.ANALOG_THUMB_RADIUS_SCALE, EPSILON);
+		assertEquals(RADIUS * 0.28f,
+				DirectionalControlGeometry.analogThumbRadius(RADIUS), EPSILON);
+		assertTrue(DirectionalControlGeometry.analogThumbRadius(RADIUS) < RADIUS * 0.44f);
 	}
 
 	@Test
-	public void radialHitTestRejectsBoundingSquareCorners() {
-		assertTrue(DirectionalControlGeometry.containsRadially(
-				CENTER_X, CENTER_Y, RADIUS, CENTER_X, CENTER_Y));
-		assertTrue(DirectionalControlGeometry.containsRadially(
-				CENTER_X, CENTER_Y, RADIUS, CENTER_X + RADIUS * 0.9f, CENTER_Y));
-		assertTrue(!DirectionalControlGeometry.containsRadially(
+	public void radialCaptureScaleRemainsOnePointZeroFive() {
+		assertEquals(1.05f, DirectionalControlGeometry.ANALOG_CAPTURE_RADIUS_SCALE, EPSILON);
+		assertTrue(DirectionalControlGeometry.containsAnalogCapture(
+				CENTER_X, CENTER_Y, RADIUS,
+				CENTER_X + RADIUS * 1.04f, CENTER_Y));
+		assertTrue(!DirectionalControlGeometry.containsAnalogCapture(
+				CENTER_X, CENTER_Y, RADIUS,
+				CENTER_X + RADIUS * 1.06f, CENTER_Y));
+		assertTrue(!DirectionalControlGeometry.containsAnalogCapture(
 				CENTER_X, CENTER_Y, RADIUS,
 				CENTER_X + RADIUS * 0.9f, CENTER_Y + RADIUS * 0.9f));
 	}
 
 	@Test
 	public void samplingOutsideCaptureAreaStillClampsForCapturedDrag() {
-		assertTrue(!DirectionalControlGeometry.containsRadially(
-				CENTER_X, CENTER_Y, RADIUS, CENTER_X + RADIUS * 2.0f, CENTER_Y));
 		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.analogSample(
-				CENTER_X, CENTER_Y, RADIUS, THUMB_RADIUS,
+				CENTER_X, CENTER_Y, RADIUS,
 				CENTER_X + RADIUS * 2.0f, CENTER_Y);
+
 		assertEquals(1.0f, sample.x, EPSILON);
 		assertEquals(0.0f, sample.y, EPSILON);
-	}
-
-	@Test
-	public void releaseOrCancelCenterSampleIsNeutral() {
-		DirectionalControlGeometry.Sample centered = DirectionalControlGeometry.sample(
-				CENTER_X, CENTER_Y, RADIUS, CENTER_X, CENTER_Y);
-
-		assertEquals(0.0f, centered.x, EPSILON);
-		assertEquals(0.0f, centered.y, EPSILON);
+		assertEquals(CENTER_X + RADIUS, sample.thumbX, EPSILON);
 	}
 }

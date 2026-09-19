@@ -530,7 +530,7 @@ public abstract class Canvas extends Displayable {
 
 	public void updateVirtualAnalog(float x, float y) {
 		int mode = ProfileModel.sanitizeAnalogDirectionMode(settings.analogDirectionMode);
-		DirectionalInterpreter.Direction direction = virtualAnalogDirection.update(
+		DirectionalInterpreter.Direction direction = virtualAnalogDirection.updateAnalog(
 				x, y, AnalogDirectionMapper.sectorCountForMode(mode));
 		applyGuestTransition(keyOwnership.setVirtualDirection(
 				VIRTUAL_DIRECTION_ANALOG_X, AnalogDirectionMapper.horizontalKey(direction, mode)));
@@ -597,7 +597,7 @@ public abstract class Canvas extends Displayable {
 		}
 
 		int mode = ProfileModel.sanitizeAnalogDirectionMode(settings.analogDirectionMode);
-		DirectionalInterpreter.Direction direction = interpreter.update(
+		DirectionalInterpreter.Direction direction = interpreter.updateAnalog(
 				x, y, AnalogDirectionMapper.sectorCountForMode(mode));
 		applyGuestTransition(keyOwnership.setDeviceDirection(
 				deviceId, DEVICE_DIRECTION_STICK_X,

@@ -21,6 +21,10 @@ final class DirectionalInterpreter {
 	static final float PRESS_RADIUS = 0.20f;
 	static final float RELEASE_RADIUS = 0.14f;
 	static final float ANGULAR_HYSTERESIS_RADIANS = (float) Math.toRadians(6.0);
+	static final float ANALOG_PRESS_RADIUS = 0.50f;
+	static final float ANALOG_RELEASE_RADIUS = 0.35f;
+	static final float ANALOG_ANGULAR_HYSTERESIS_RADIANS = (float) Math.toRadians(7.5);
+	private static final float ANALOG_THRESHOLD_EPSILON = 0.000001f;
 
 	private static final int FOUR_WAY_SECTORS = 4;
 	private static final int EIGHT_WAY_SECTORS = 8;
@@ -71,6 +75,14 @@ final class DirectionalInterpreter {
 	}
 
 	Direction update(float x, float y, int requestedSectorCount) {
+		return update(x, y, requestedSectorCount, false);
+	}
+
+	Direction updateAnalog(float x, float y, int requestedSectorCount) {
+		return update(x, y, requestedSectorCount, true);
+	}
+
+	private Direction update(float x, float y, int requestedSectorCount, boolean analog) {
 		int nextSectorCount = requestedSectorCount == FOUR_WAY_SECTORS
 				? FOUR_WAY_SECTORS : EIGHT_WAY_SECTORS;
 		if (sectorCount != nextSectorCount) {
@@ -80,16 +92,22 @@ final class DirectionalInterpreter {
 
 		float safeX = sanitize(x);
 		float safeY = sanitize(y);
-		float magnitude = (float) Math.hypot(safeX, safeY);
+		float rawMagnitude = (float) Math.hypot(safeX, safeY);
+		float magnitude = analog
+				? AnalogRadialProcessor.processMagnitude(rawMagnitude) : rawMagnitude;
+		float pressRadius = analog ? ANALOG_PRESS_RADIUS : PRESS_RADIUS;
+		float releaseRadius = analog ? ANALOG_RELEASE_RADIUS : RELEASE_RADIUS;
+		float angularHysteresis = analog
+				? ANALOG_ANGULAR_HYSTERESIS_RADIANS : ANGULAR_HYSTERESIS_RADIANS;
 		if (current == Direction.CENTER) {
-			if (magnitude < PRESS_RADIUS) {
+			if (magnitude < pressRadius - (analog ? ANALOG_THRESHOLD_EPSILON : 0.0f)) {
 				return current;
 			}
 			current = nearestDirection(angleOf(safeX, safeY), sectorCount);
 			return current;
 		}
 
-		if (magnitude <= RELEASE_RADIUS) {
+		if (magnitude <= releaseRadius + (analog ? ANALOG_THRESHOLD_EPSILON : 0.0f)) {
 			current = Direction.CENTER;
 			return current;
 		}
@@ -98,7 +116,7 @@ final class DirectionalInterpreter {
 		Direction[] sectors = sectors(sectorCount);
 		float step = TWO_PI / sectors.length;
 		float currentCenter = indexOf(sectors, current) * step;
-		if (angularDistance(angle, currentCenter) <= step / 2.0f + ANGULAR_HYSTERESIS_RADIANS) {
+		if (angularDistance(angle, currentCenter) <= step / 2.0f + angularHysteresis) {
 			return current;
 		}
 		current = nearestDirection(angle, sectorCount);

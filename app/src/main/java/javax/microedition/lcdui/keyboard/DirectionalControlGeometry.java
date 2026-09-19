@@ -16,6 +16,9 @@ package javax.microedition.lcdui.keyboard;
 
 /** Pure geometry shared by the grouped virtual D-pad and analog stick. */
 final class DirectionalControlGeometry {
+	static final float ANALOG_CAPTURE_RADIUS_SCALE = 1.05f;
+	static final float ANALOG_THUMB_RADIUS_SCALE = 0.28f;
+
 	static final class Sample {
 		final float x;
 		final float y;
@@ -46,21 +49,42 @@ final class DirectionalControlGeometry {
 			float centerX,
 			float centerY,
 			float baseRadius,
-			float thumbRadius,
 			float touchX,
 			float touchY) {
-		if (!(baseRadius > 0.0f) || !Float.isFinite(baseRadius)) {
-			return new Sample(0.0f, 0.0f, centerX, centerY);
+		return sampleWithTravel(centerX, centerY, baseRadius, baseRadius, touchX, touchY);
+	}
+
+	static Sample gestureSample(
+			boolean analog,
+			boolean movementSample,
+			float centerX,
+			float centerY,
+			float radius,
+			float touchX,
+			float touchY) {
+		if (analog && !movementSample) {
+			return sample(centerX, centerY, radius, centerX, centerY);
 		}
-		float safeThumbRadius = Float.isFinite(thumbRadius)
-				? Math.max(0.0f, Math.min(baseRadius, thumbRadius)) : 0.0f;
-		return sampleWithTravel(
-				centerX,
-				centerY,
-				baseRadius,
-				baseRadius - safeThumbRadius,
-				touchX,
-				touchY);
+		return analog
+				? analogSample(centerX, centerY, radius, touchX, touchY)
+				: sample(centerX, centerY, radius, touchX, touchY);
+	}
+
+	static float analogThumbRadius(float baseRadius) {
+		if (!(baseRadius > 0.0f) || !Float.isFinite(baseRadius)) {
+			return 0.0f;
+		}
+		return baseRadius * ANALOG_THUMB_RADIUS_SCALE;
+	}
+
+	static boolean containsAnalogCapture(
+			float centerX,
+			float centerY,
+			float baseRadius,
+			float x,
+			float y) {
+		return containsRadially(
+				centerX, centerY, baseRadius * ANALOG_CAPTURE_RADIUS_SCALE, x, y);
 	}
 
 	static boolean containsRadially(

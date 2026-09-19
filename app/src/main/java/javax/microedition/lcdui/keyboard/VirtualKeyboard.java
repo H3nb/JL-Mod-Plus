@@ -121,8 +121,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private static final int KEYBOARD_SIZE = 28;
 
 	private static final float SCALE_SNAP_RADIUS = 0.05f;
-	private static final float ANALOG_CAPTURE_RADIUS_SCALE = 1.05f;
-
 	private static final int FEEDBACK_DURATION = 50;
 
 	private final float[] keyScales = {
@@ -1055,7 +1053,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 						&& isDirectionalControlVisible() && isDirectionalCaptureHit(x, y)) {
 					directionalPointer = pointer;
 					vibrate();
-					updateDirectionalTouch(x, y);
+					updateDirectionalTouch(x, y, false);
 					return true;
 				}
 				for (int i = 0; i < keypad.length; i++) {
@@ -1121,7 +1119,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					return false;
 				}
 				if (pointer == directionalPointer) {
-					updateDirectionalTouch(x, y);
+					updateDirectionalTouch(x, y, true);
 					return true;
 				}
 				VirtualKey aKey = associatedKeys.get(pointer);
@@ -1334,29 +1332,29 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			return directionalBounds.contains(x, y);
 		}
 		float baseRadius = Math.min(groupedCircle.width(), groupedCircle.height()) / 2.0f;
-		return DirectionalControlGeometry.containsRadially(
-				groupedCircle.centerX(),
-				groupedCircle.centerY(),
-				baseRadius * ANALOG_CAPTURE_RADIUS_SCALE,
-				x,
-				y);
+		return DirectionalControlGeometry.containsAnalogCapture(
+				groupedCircle.centerX(), groupedCircle.centerY(), baseRadius, x, y);
 	}
 
 	private float analogThumbRadius() {
-		return Math.min(groupedCircle.width(), groupedCircle.height()) * 0.22f;
+		float baseRadius = Math.min(groupedCircle.width(), groupedCircle.height()) / 2.0f;
+		return DirectionalControlGeometry.analogThumbRadius(baseRadius);
 	}
 
-	private void updateDirectionalTouch(float x, float y) {
+	private void updateDirectionalTouch(float x, float y, boolean movementSample) {
 		if (target == null || directionalBounds.isEmpty()) {
 			return;
 		}
 		RectF control = layoutVariant == TYPE_ANALOG ? groupedCircle : directionalBounds;
 		float radius = Math.min(control.width(), control.height()) / 2.0f;
-		DirectionalControlGeometry.Sample sample = layoutVariant == TYPE_ANALOG
-				? DirectionalControlGeometry.analogSample(
-						control.centerX(), control.centerY(), radius, analogThumbRadius(), x, y)
-				: DirectionalControlGeometry.sample(
-						control.centerX(), control.centerY(), radius, x, y);
+		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.gestureSample(
+				layoutVariant == TYPE_ANALOG,
+				movementSample,
+				control.centerX(),
+				control.centerY(),
+				radius,
+				x,
+				y);
 		directionalThumbX = sample.thumbX;
 		directionalThumbY = sample.thumbY;
 		if (layoutVariant == TYPE_DPAD) {
