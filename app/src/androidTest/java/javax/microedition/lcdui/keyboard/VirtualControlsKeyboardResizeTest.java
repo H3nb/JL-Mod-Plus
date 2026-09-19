@@ -52,7 +52,7 @@ public class VirtualControlsKeyboardResizeTest {
 
         settings = new ProfileModel();
         settings.dir = profileDir;
-        settings.vkType = VirtualKeyboard.TYPE_NUM_ARR;
+        settings.vkType = 3; // Numbers & Arrows legacy template.
         settings.vkFeedback = false;
         settings.vkAlpha = 255;
 
