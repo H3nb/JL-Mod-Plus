@@ -14,7 +14,6 @@
 
 package javax.microedition.shell
 
-import android.view.MotionEvent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -289,24 +288,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             }
             HostCommand.OpenMenu -> closeMenu()
             HostCommand.Activate -> controllerItems().getOrNull(controllerFocusIndex)?.activate?.invoke()
-        }
-        return true
-    }
-
-    /** Converts a centered left-stick/HAT sample to one menu-focus step. */
-    fun handleControllerMotion(event: MotionEvent): Boolean {
-        if (!isMenuVisible()) return false
-        if (hostDialogState != null || limitFpsVisible || emulationSpeedVisible) return true
-        val hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X)
-        val hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y)
-        val x = if (kotlin.math.abs(hatX) >= 0.5f) hatX else event.getAxisValue(MotionEvent.AXIS_X)
-        val y = if (kotlin.math.abs(hatY) >= 0.5f) hatY else event.getAxisValue(MotionEvent.AXIS_Y)
-        if (kotlin.math.abs(y) >= 0.5f) {
-            controllerFocusVisible = true
-            moveControllerFocus(if (y < 0f) -1 else 1)
-        } else if (kotlin.math.abs(x) >= 0.5f) {
-            controllerFocusVisible = true
-            moveControllerFocus(if (x < 0f) -1 else 1)
         }
         return true
     }

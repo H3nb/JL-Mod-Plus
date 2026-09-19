@@ -44,7 +44,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import android.view.MotionEvent
 import javax.microedition.lcdui.Command
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.input.HostCommand
@@ -157,22 +156,6 @@ internal class ScreenSoftBarComposeController(
             return true
         }
         return false
-    }
-
-    fun handleControllerMotion(event: MotionEvent): Boolean {
-        if (!menuVisible) return false
-        val hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X)
-        val hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y)
-        val x = if (kotlin.math.abs(hatX) >= 0.5f) hatX else event.getAxisValue(MotionEvent.AXIS_X)
-        val y = if (kotlin.math.abs(hatY) >= 0.5f) hatY else event.getAxisValue(MotionEvent.AXIS_Y)
-        if (kotlin.math.abs(y) >= 0.5f) {
-            menuFocusVisible = true
-            moveFocus(if (y < 0f) -1 else 1)
-        } else if (kotlin.math.abs(x) >= 0.5f) {
-            menuFocusVisible = true
-            moveFocus(if (x < 0f) -1 else 1)
-        }
-        return true
     }
 
     private fun moveFocus(delta: Int) {
