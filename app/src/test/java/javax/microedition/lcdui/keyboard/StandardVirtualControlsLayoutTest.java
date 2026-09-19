@@ -74,6 +74,17 @@ public class StandardVirtualControlsLayoutTest {
 	}
 
 	@Test
+	public void portraitUsesACompactBottomDeckForTheTwoRowActionCluster() {
+		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
+				0.0f, 0.0f, 864.0f, 1600.0f,
+				0.0f, 0.0f, 864.0f, 1300.0f,
+				0.20f * 864.0f);
+
+		assertTrue(layout.actionCenterY - layout.keySize * 0.5f > 1300.0f);
+		assertTrue(layout.bottomRowY + layout.keySize * 0.5f < 1600.0f);
+	}
+
+	@Test
 	public void fullScreenLandscapeStaysInsideHostBounds() {
 		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
 				0.0f, 0.0f, 1920.0f, 1080.0f,

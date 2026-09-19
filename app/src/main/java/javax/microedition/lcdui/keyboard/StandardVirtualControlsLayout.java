@@ -179,8 +179,8 @@ final class StandardVirtualControlsLayout {
 		} else {
 			float minCenterY = screenTop + halfKey + edgeMargin;
 			float maxCenterY = screenBottom - portraitRowOffset - halfKey - edgeMargin;
-			float fullClusterHeight = portraitRowOffset * 2.0f + keySize + edgeMargin * 2.0f;
-			float preferredActionY = bottomDeck >= fullClusterHeight
+			float actionClusterHeight = keySize + portraitRowOffset + edgeMargin;
+			float preferredActionY = bottomDeck >= actionClusterHeight
 					? safeGuestBottom + bottomDeck * BOTTOM_DECK_CENTER_FRACTION
 					: screenTop + height * PORTRAIT_ACTION_Y_FRACTION;
 			actionCenterX = clamp(
