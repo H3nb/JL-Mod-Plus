@@ -125,7 +125,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private float legacyPinchY;
 	private float legacyPinchOriginX;
 	private float legacyPinchOriginY;
-	private float legacyPinchStartDistance;
+	private float legacyPinchStartSpanX;
+	private float legacyPinchStartSpanY;
 
 	public VirtualControlsKeyboard(ProfileModel settings) {
 		super(settings);
@@ -784,21 +785,26 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		legacyPinchY = y;
 		legacyPinchOriginX = legacyEditX;
 		legacyPinchOriginY = legacyEditY;
-		legacyPinchStartDistance = Math.max(1.0f,
-				(float) Math.hypot(legacyPinchX - legacyEditX, legacyPinchY - legacyEditY));
+		legacyPinchStartSpanX = Math.abs(legacyPinchX - legacyEditX);
+		legacyPinchStartSpanY = Math.abs(legacyPinchY - legacyEditY);
 		return true;
 	}
 
 	private void updateLegacyPinch() {
 		if (legacyEditPointer < 0 || legacyPinchPointer < 0 || getLayoutEditMode() != LAYOUT_SCALES) return;
-		float distance = (float) Math.hypot(legacyPinchX - legacyEditX, legacyPinchY - legacyEditY);
-		float delta = distance - legacyPinchStartDistance;
-		/* LAYOUT_SCALES interprets +X and -Y as larger X/Y scales. Feeding the same pixel delta
-		 * to both axes turns its established group-resize implementation into a uniform pinch. */
+		float spanX = Math.abs(legacyPinchX - legacyEditX);
+		float spanY = Math.abs(legacyPinchY - legacyEditY);
+		float deltaX = spanX - legacyPinchStartSpanX;
+		float deltaY = spanY - legacyPinchStartSpanY;
+		/*
+		 * VirtualKeyboard's legacy scale engine already persists independent X/Y scales. Feed
+		 * horizontal and vertical finger separation independently so a horizontal gesture changes
+		 * only width, a vertical gesture changes only height, and a diagonal gesture changes both.
+		 */
 		super.pointerDragged(
 				legacyEditPointer,
-				legacyPinchOriginX + delta,
-				legacyPinchOriginY - delta);
+				legacyPinchOriginX + deltaX,
+				legacyPinchOriginY - deltaY);
 	}
 
 	private void finishLegacyPinchAndResumeMove(boolean primaryReleased) {
@@ -828,7 +834,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		legacyPinchY = 0.0f;
 		legacyPinchOriginX = 0.0f;
 		legacyPinchOriginY = 0.0f;
-		legacyPinchStartDistance = 0.0f;
+		legacyPinchStartSpanX = 0.0f;
+		legacyPinchStartSpanY = 0.0f;
 	}
 
 	private void paintEditGrid(CanvasWrapper graphics) {

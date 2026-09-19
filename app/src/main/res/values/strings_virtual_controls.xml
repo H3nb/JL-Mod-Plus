@@ -16,7 +16,7 @@
     <string name="runtime_virtual_controls_analog">Analog Stick</string>
     <string name="runtime_virtual_controls_edit">Edit Layout</string>
     <string name="runtime_virtual_controls_edit_guide_title">Edit Layout Guide</string>
-    <string name="runtime_virtual_controls_edit_guide_message">Drag controls to move them, and pinch with two fingers to resize them. Tap Finish Editing when you are done.</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Drag controls to move them. For buttons, move two fingers horizontally or vertically to change width or height, or diagonally to change both. D-pad and analog stick resize proportionally. Tap Finish Editing when you are done.</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Do Not Show Again</string>
     <string name="runtime_virtual_controls_edit_started">Virtual controls edit mode: drag to move, pinch to resize.</string>
     <string name="runtime_virtual_controls_switch_layout">Layout Templates</string>
