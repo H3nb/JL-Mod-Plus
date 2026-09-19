@@ -22,11 +22,12 @@ package javax.microedition.lcdui.keyboard;
  * is available, the same model falls back to a compact overlay near the lower corners.
  */
 final class StandardVirtualControlsLayout {
-	private static final float COLUMN_OFFSET_KEYS = 0.85f;
-	private static final float ROW_OFFSET_KEYS = 1.40f;
+	private static final float COLUMN_OFFSET_KEYS = 1.00f;
+	private static final float ROW_OFFSET_KEYS = 1.00f;
 	private static final float EDGE_MARGIN_KEYS = 0.16f;
 	private static final float PORTRAIT_MOVEMENT_X_FRACTION = 0.27f;
-	private static final float SIDE_CENTER_Y_FRACTION = 0.64f;
+	private static final float SIDE_ACTION_CENTER_Y_FRACTION = 0.66f;
+	private static final float SIDE_MOVEMENT_Y_OFFSET_KEYS = 0.15f;
 	private static final float BOTTOM_DECK_CENTER_FRACTION = 0.58f;
 
 	final float keySize;
@@ -107,13 +108,20 @@ final class StandardVirtualControlsLayout {
 		float actionCenterY;
 		float fullClusterHeight = rowOffset * 2.0f + keySize + edgeMargin * 2.0f;
 		if (sideErgonomics) {
-			actionCenterY = screenTop + height * SIDE_CENTER_Y_FRACTION;
+			actionCenterY = screenTop + height * SIDE_ACTION_CENTER_Y_FRACTION;
 		} else if (bottomDeck >= fullClusterHeight) {
 			actionCenterY = safeGuestBottom + bottomDeck * BOTTOM_DECK_CENTER_FRACTION;
 		} else {
 			actionCenterY = screenBottom - rowOffset - halfKey - edgeMargin;
 		}
 		actionCenterY = clamp(actionCenterY, minCenterY, maxCenterY);
+		float movementCenterY = actionCenterY;
+		if (sideErgonomics) {
+			movementCenterY = clamp(
+					actionCenterY - keySize * SIDE_MOVEMENT_Y_OFFSET_KEYS,
+					screenTop + movementRadius + edgeMargin,
+					screenBottom - movementRadius - edgeMargin);
+		}
 
 		float movementCenterX;
 		if (movementUsesLeftGutter) {
@@ -144,7 +152,7 @@ final class StandardVirtualControlsLayout {
 		return new StandardVirtualControlsLayout(
 				keySize,
 				movementCenterX,
-				actionCenterY,
+				movementCenterY,
 				actionCenterX - columnOffset,
 				actionCenterX + columnOffset,
 				actionCenterX,

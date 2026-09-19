@@ -34,7 +34,13 @@ public class StandardVirtualControlsLayoutTest {
 		assertTrue(layout.movementCenterX < 590.0f);
 		assertTrue(layout.leftColumnX > 1190.0f);
 		assertTrue(layout.rightColumnX < 1820.0f);
-		assertEquals(layout.actionCenterY, layout.movementCenterY, EPS);
+		assertTrue(layout.movementCenterY < layout.actionCenterY);
+		assertEquals(layout.keySize * 0.15f,
+				layout.actionCenterY - layout.movementCenterY, EPS);
+		assertEquals(layout.keySize, layout.actionCenterX - layout.leftColumnX, EPS);
+		assertEquals(layout.keySize, layout.rightColumnX - layout.actionCenterX, EPS);
+		assertEquals(layout.keySize, layout.actionCenterY - layout.topRowY, EPS);
+		assertEquals(layout.keySize, layout.bottomRowY - layout.actionCenterY, EPS);
 		assertEquals(layout.actionCenterX,
 				(layout.leftColumnX + layout.rightColumnX) * 0.5f, EPS);
 	}

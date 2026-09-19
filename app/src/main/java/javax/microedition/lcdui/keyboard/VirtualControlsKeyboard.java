@@ -308,7 +308,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	/**
 	 * Lay out the compact standard action cluster as one ergonomic unit. Wide screens prefer the
 	 * gutter to the right of the MIDlet; tall screens prefer the free deck below it. The movement
-	 * control uses the matching left-hand zone and shares F's center line.
+	 * control uses the matching left-hand zone and sits slightly above F on side-gutter layouts.
 	 */
 	private void arrangeStandardLegacyButtons(StandardVirtualControlsLayout layout) {
 		if (screenBounds == null || overlayView == null || layout == null) return;
