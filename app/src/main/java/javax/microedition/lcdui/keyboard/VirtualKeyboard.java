@@ -1063,6 +1063,11 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 	}
 
+	/** Current base size used by legacy key scale groups. */
+	protected final float getCurrentKeySize() {
+		return keySize;
+	}
+
 	@Override
 	public void paint(CanvasWrapper g) {
 		if (visible && (layoutEditMode != LAYOUT_EOF || settings.vkAlpha > 0)) {

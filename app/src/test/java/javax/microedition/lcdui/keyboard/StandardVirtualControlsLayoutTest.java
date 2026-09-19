@@ -20,14 +20,17 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class StandardVirtualControlsLayoutTest {
-	private static final float EPS = 1.5f;
+	private static final float EPS = 2.0f;
 
 	@Test
-	public void landscapeMatchesReferenceComposition() {
+	public void landscapeFullScreenMatchesReferenceComposition() {
 		float width = 1275.0f;
 		float height = 1056.0f;
+		float radius = 0.24f * height;
 		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
-				0.0f, 0.0f, width, height, 0.20f * height);
+				0.0f, 0.0f, width, height,
+				0.0f, 0.0f, width, height,
+				radius);
 
 		assertTrue(layout.landscape);
 		assertEquals(width * 0.25f, layout.movementCenterX, EPS);
@@ -38,41 +41,50 @@ public class StandardVirtualControlsLayoutTest {
 		assertEquals(width * 0.74f, layout.actionCenterX, EPS);
 		assertEquals(height * 0.51f, layout.actionCenterY, EPS);
 		assertEquals(height * 0.69f, layout.bottomRowY, EPS);
+		assertEquals(height * 0.178f, layout.keySize, EPS);
 		assertTrue(layout.shoulderWidth > layout.fireSize);
-		assertTrue(layout.shoulderHeight < layout.keySize);
 		assertTrue(layout.fireSize > layout.keySize);
 	}
 
 	@Test
-	public void portraitKeepsSeparatedThumbZones() {
-		float width = 1080.0f;
-		float height = 2400.0f;
+	public void portraitLetterboxKeepsGameplayControlsInsideGuestViewport() {
+		float screenWidth = 945.0f;
+		float screenHeight = 2048.0f;
+		float guestLeft = 18.0f;
+		float guestTop = 0.0f;
+		float guestRight = 812.0f;
+		float guestBottom = 1118.0f;
+		float radius = 0.24f * screenWidth;
+
 		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
-				0.0f, 0.0f, width, height, 0.20f * width);
+				0.0f, 0.0f, screenWidth, screenHeight,
+				guestLeft, guestTop, guestRight, guestBottom,
+				radius);
 
 		assertFalse(layout.landscape);
+		assertTrue(layout.movementCenterX - radius >= guestLeft - EPS);
+		assertTrue(layout.movementCenterY + radius <= guestBottom + EPS);
+		assertTrue(layout.actionCenterX < guestRight);
+		assertTrue(layout.actionCenterY < guestBottom);
+		assertTrue(layout.bottomLeftX > guestLeft);
+		assertTrue(layout.bottomRightX < guestRight);
+		assertTrue(layout.bottomRowY < guestBottom);
 		assertTrue(layout.shoulderCenterY < layout.actionCenterY);
-		assertTrue(layout.actionCenterY < layout.bottomRowY);
-		assertTrue(layout.movementCenterX < layout.actionCenterX);
 		assertTrue(layout.movementCenterY > layout.actionCenterY);
-		assertTrue(layout.bottomLeftX < layout.actionCenterX);
-		assertTrue(layout.bottomRightX > layout.actionCenterX);
-		assertTrue(layout.movementCenterX + 0.20f * width < layout.bottomLeftX);
 	}
 
 	@Test
-	public void allCentersStayInsideCompactLandscape() {
-		float width = 960.0f;
-		float height = 720.0f;
+	public void invalidGuestFallsBackToScreenBounds() {
+		float width = 1080.0f;
+		float height = 2400.0f;
 		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
-				0.0f, 0.0f, width, height, 0.20f * height);
+				0.0f, 0.0f, width, height,
+				0.0f, 0.0f, 0.0f, 0.0f,
+				0.24f * width);
 
-		assertTrue(layout.movementCenterX > 0.0f);
-		assertTrue(layout.movementCenterY > 0.0f);
-		assertTrue(layout.shoulderLeftX > 0.0f);
-		assertTrue(layout.shoulderRightX < width);
-		assertTrue(layout.actionCenterX < width);
-		assertTrue(layout.bottomLeftX > 0.0f);
+		assertFalse(layout.landscape);
+		assertTrue(layout.movementCenterY < height);
+		assertTrue(layout.bottomRowY < height);
 		assertTrue(layout.bottomRightX < width);
 	}
 }

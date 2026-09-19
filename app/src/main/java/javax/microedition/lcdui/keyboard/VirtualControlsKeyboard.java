@@ -62,7 +62,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_ANALOG_CENTER_X = 0.18f;
 	private static final float DEFAULT_ANALOG_CENTER_Y = 0.78f;
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
-	private static final float STANDARD_MOVEMENT_RADIUS = 0.20f;
+	private static final float STANDARD_MOVEMENT_RADIUS = 0.24f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
 	private static final float MIN_RADIUS_FRACTION = 0.07f;
@@ -291,10 +291,15 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float screenTop = screenBounds == null ? 0.0f : screenBounds.top;
 		float screenRight = screenBounds == null ? 1.0f : screenBounds.right;
 		float screenBottom = screenBounds == null ? 1.0f : screenBounds.bottom;
+		float guestLeft = guestBounds.width() > 1.0f ? guestBounds.left : screenLeft;
+		float guestTop = guestBounds.height() > 1.0f ? guestBounds.top : screenTop;
+		float guestRight = guestBounds.width() > 1.0f ? guestBounds.right : screenRight;
+		float guestBottom = guestBounds.height() > 1.0f ? guestBounds.bottom : screenBottom;
 		float shortest = Math.max(1.0f,
 				Math.min(screenRight - screenLeft, screenBottom - screenTop));
 		return StandardVirtualControlsLayout.resolve(
 				screenLeft, screenTop, screenRight, screenBottom,
+				guestLeft, guestTop, guestRight, guestBottom,
 				STANDARD_MOVEMENT_RADIUS * shortest);
 	}
 
@@ -305,14 +310,19 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private void arrangeStandardLegacyButtons(StandardVirtualControlsLayout layout) {
 		if (screenBounds == null || overlayView == null || layout == null) return;
 
+		float baseKeySize = Math.max(1.0f, getCurrentKeySize());
 		setKeyGroupScaleByLabel(
 				"L",
-				layout.shoulderWidth / Math.max(1.0f, layout.keySize),
-				layout.shoulderHeight / Math.max(1.0f, layout.keySize));
+				layout.shoulderWidth / baseKeySize,
+				layout.shoulderHeight / baseKeySize);
 		setKeyGroupScaleByLabel(
 				"F",
-				layout.fireSize / Math.max(1.0f, layout.keySize),
-				layout.fireSize / Math.max(1.0f, layout.keySize));
+				layout.fireSize / baseKeySize,
+				layout.fireSize / baseKeySize);
+		setKeyGroupScaleByLabel(
+				"*",
+				layout.keySize / baseKeySize,
+				layout.keySize / baseKeySize);
 
 		setKeyCenterByLabel("L", layout.shoulderLeftX, layout.shoulderCenterY);
 		setKeyCenterByLabel("R", layout.shoulderRightX, layout.shoulderCenterY);
