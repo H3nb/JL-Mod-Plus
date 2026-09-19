@@ -29,6 +29,7 @@ internal object KeyboardLayoutValidator {
     private const val SCALES = 1
     private const val TYPE = 3
     private const val MAX_KEYS = 28
+    private const val MAX_LAYOUT_VARIANT = 8
     private const val MAX_BLOCKS = 1024
 
     /** Returns null for a layout accepted by the runtime, or a short diagnostic otherwise. */
@@ -60,7 +61,7 @@ internal object KeyboardLayoutValidator {
                         TYPE -> {
                             if (length < 1) return "layout type block is empty"
                             val variant = input.readUnsignedByte()
-                            if (variant > 6) return "layout type is invalid"
+                            if (variant > MAX_LAYOUT_VARIANT) return "layout type is invalid"
                             skipFully(input, length - 1)
                             hasType = true
                         }

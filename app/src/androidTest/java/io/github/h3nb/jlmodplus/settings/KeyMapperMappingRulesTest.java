@@ -85,7 +85,7 @@ public class KeyMapperMappingRulesTest {
 		};
 
 		for (int keyCode : freeButtons) {
-			assertEquals(-1, defaults.indexOfKey(keyCode));
+			assertTrue(defaults.indexOfKey(keyCode) < 0);
 		}
 	}
 
@@ -114,7 +114,7 @@ public class KeyMapperMappingRulesTest {
 		int overrideIndex = overrides.indexOfKey(KeyEvent.KEYCODE_BUTTON_A);
 		assertTrue(overrideIndex >= 0);
 		assertEquals(KeyMapper.KEY_MAPPING_REMOVED, overrides.valueAt(overrideIndex));
-		assertEquals(-1, roundTrip.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
+		assertTrue(roundTrip.indexOfKey(KeyEvent.KEYCODE_BUTTON_A) < 0);
 	}
 
 	@Test
@@ -194,7 +194,7 @@ public class KeyMapperMappingRulesTest {
 
 		SparseIntArray effective = KeyMapper.resolveKeyMappings(defaults, overrides);
 
-		assertEquals(-1, effective.indexOfKey(KeyEvent.KEYCODE_ENTER));
+		assertTrue(effective.indexOfKey(KeyEvent.KEYCODE_ENTER) < 0);
 		assertEquals(Canvas.KEY_UP, effective.get(KeyEvent.KEYCODE_DPAD_UP));
 	}
 
@@ -280,7 +280,7 @@ public class KeyMapperMappingRulesTest {
 
 		assertEquals(Canvas.KEY_FIRE, updated.get(KeyEvent.KEYCODE_ENTER));
 		assertEquals(Canvas.KEY_FIRE, updated.get(KeyEvent.KEYCODE_BUTTON_A));
-		assertEquals(-1, original.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
+		assertTrue(original.indexOfKey(KeyEvent.KEYCODE_BUTTON_A) < 0);
 	}
 
 	@Test
@@ -305,7 +305,7 @@ public class KeyMapperMappingRulesTest {
 				KeyMapperMappingRules.removeBinding(original, KeyEvent.KEYCODE_BUTTON_A);
 
 		assertEquals(Canvas.KEY_FIRE, updated.get(KeyEvent.KEYCODE_ENTER));
-		assertEquals(-1, updated.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
+		assertTrue(updated.indexOfKey(KeyEvent.KEYCODE_BUTTON_A) < 0);
 		assertEquals(Canvas.KEY_FIRE, original.get(KeyEvent.KEYCODE_BUTTON_A));
 	}
 
