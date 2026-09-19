@@ -14,6 +14,9 @@
     <string name="runtime_virtual_controls_dpad">D-pad</string>
     <string name="runtime_virtual_controls_analog">Stik Analog</string>
     <string name="runtime_virtual_controls_edit">Edit Tata Letak</string>
+    <string name="runtime_virtual_controls_edit_guide_title">Panduan Edit Tata Letak</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Geser kontrol untuk memindahkannya, lalu cubit dengan dua jari untuk mengubah ukurannya. Ketuk Selesai Mengedit setelah selesai.</string>
+    <string name="runtime_virtual_controls_edit_guide_dont_show_again">Jangan Tampilkan Lagi</string>
     <string name="runtime_virtual_controls_edit_started">Mode edit kontrol virtual: geser untuk memindahkan, cubit untuk mengubah ukuran.</string>
     <string name="runtime_virtual_controls_switch_layout">Template Tata Letak</string>
     <string name="runtime_virtual_controls_hide_buttons">Tampilkan Atau Sembunyikan Kontrol</string>

@@ -377,6 +377,10 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     fun showLayoutSelection(entries: Array<String>, selected: Int) {
         hostDialogState = RuntimeHostDialogState.LayoutSelection(entries.toList(), selected)
     }
+
+    fun showLayoutEditGuide() {
+        hostDialogState = RuntimeHostDialogState.LayoutEditGuide
+    }
 }
 
 private data class RuntimeMenuDialogLayout(
