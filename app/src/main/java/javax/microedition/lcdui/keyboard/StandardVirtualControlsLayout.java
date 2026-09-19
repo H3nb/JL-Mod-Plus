@@ -17,7 +17,7 @@ package javax.microedition.lcdui.keyboard;
  * Pure geometry resolver for the built-in D-pad/analog standard templates.
  *
  * Landscape keeps shoulder buttons near the upper corners, movement in the lower-left thumb zone,
- * and the F/*/0 action cluster in the lower-right. Portrait keeps the compact bottom-deck fallback.
+ * and the F, *, and 0 action cluster in the lower-right. Portrait keeps the compact bottom-deck fallback.
  */
 final class StandardVirtualControlsLayout {
 	private static final float BOTTOM_COLUMN_OFFSET_KEYS = 0.85f;

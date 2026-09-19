@@ -312,7 +312,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	/**
 	 * Lay out the standard controls as two ergonomic zones: shoulder buttons across the upper
-	 * corners, movement in the lower-left, and F/*/0 in the lower-right.
+	 * corners, movement in the lower-left, and F, *, and 0 in the lower-right.
 	 */
 	private void arrangeStandardLegacyButtons(StandardVirtualControlsLayout layout) {
 		if (screenBounds == null || overlayView == null || layout == null) return;
