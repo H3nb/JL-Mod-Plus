@@ -242,19 +242,6 @@ public class MicroActivity extends AppCompatActivity {
 						|| (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible());
 			}
 
-			@Override
-			public boolean onControllerModalMotion(@NonNull MotionEvent event) {
-				if (runtimeMenuController != null && runtimeMenuController.isMenuVisible()) {
-					return runtimeMenuController.handleControllerMotion(event);
-				}
-				if (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible()) {
-					return ((Canvas) current).handleHostMotion(event);
-				}
-				if (current instanceof Screen) {
-					return ((Screen) current).handleControllerMotion(event);
-				}
-				return false;
-			}
 		}, microLoader.getProfile());
 		SkinLayer skinLayer = SkinLayer.getInstance();
 		if (skinLayer != null) {

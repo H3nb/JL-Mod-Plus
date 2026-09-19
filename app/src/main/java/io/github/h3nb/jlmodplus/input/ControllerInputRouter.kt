@@ -50,8 +50,6 @@ interface ControllerHostSink {
     /** True while an app-owned runtime modal owns controller focus. */
     fun isControllerModalActive(): Boolean = false
 
-    /** Motion is consumed by a modal by default; no guest analog state may leak through it. */
-    fun onControllerModalMotion(event: MotionEvent): Boolean = false
 }
 
 /**
