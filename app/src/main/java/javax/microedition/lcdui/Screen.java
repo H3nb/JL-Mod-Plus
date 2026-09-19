@@ -21,7 +21,6 @@ package javax.microedition.lcdui;
 
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.MotionEvent;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
@@ -76,10 +75,6 @@ public abstract class Screen extends Displayable {
 		return controllerBar.handleHostCommand(command, pressed);
 	}
 
-	public boolean handleControllerMotion(MotionEvent event) {
-		ScreenSoftBar controllerBar = controllerSoftBar();
-		return controllerBar != null && controllerBar.handleControllerMotion(event);
-	}
 
 	/** Gives a presented BACK/EXIT command first refusal of the controller's contextual Back. */
 	public boolean handleControllerBack() {

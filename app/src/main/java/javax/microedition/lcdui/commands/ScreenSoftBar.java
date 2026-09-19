@@ -18,7 +18,6 @@
 package javax.microedition.lcdui.commands;
 
 import android.view.ViewGroup;
-import android.view.MotionEvent;
 
 import androidx.compose.ui.platform.ComposeView;
 
@@ -65,9 +64,6 @@ public class ScreenSoftBar extends AbstractSoftKeysBar {
 		return controller.handleHostCommand(command, pressed);
 	}
 
-	public boolean handleControllerMotion(MotionEvent event) {
-		return controller.handleControllerMotion(event);
-	}
 
 	public boolean handleControllerBack() {
 		return controller.handleControllerBack();
