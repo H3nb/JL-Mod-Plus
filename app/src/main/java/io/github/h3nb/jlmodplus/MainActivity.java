@@ -226,10 +226,6 @@ public class MainActivity extends AppCompatActivity {
 				return mainComposeController != null && mainComposeController.isDialogVisible();
 			}
 
-			@Override
-			public boolean onControllerModalMotion(@NonNull MotionEvent event) {
-				return isControllerModalActive();
-			}
 		}, null);
 
 		libraryViewModel = new ViewModelProvider(this).get(LibraryViewModel.class);

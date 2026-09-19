@@ -538,10 +538,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				return composeController != null && composeController.isControllerModalActive();
 			}
 
-			@Override
-			public boolean onControllerModalMotion(@NonNull MotionEvent event) {
-				return isControllerModalActive();
-			}
 		}, null);
 	}
 
