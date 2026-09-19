@@ -384,6 +384,26 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
+    fun layoutEditGuide_confirmsDontShowAgainBeforeEditing() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.LayoutEditGuide,
+                    actions = RecordingRuntimeHostDialogActions(events),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Edit Layout Guide").assertIsDisplayed()
+        composeRule.onNodeWithText("Do Not Show Again").performClick()
+        composeRule.onNodeWithText("OK").performClick()
+
+        assertEquals(listOf("dismiss", "layout-guide:true"), events)
+    }
+
+    @Test
     fun runtimeLayoutDialog_dispatchesOnlyTheConfirmedSelection() {
         val events = mutableListOf<String>()
         composeRule.setContent {
@@ -506,5 +526,9 @@ private class RecordingRuntimeHostDialogActions(
 
     override fun onLayoutSelected(index: Int) {
         events += "layout:$index"
+    }
+
+    override fun onLayoutEditGuideConfirmed(dontShowAgain: Boolean) {
+        events += "layout-guide:$dontShowAgain"
     }
 }

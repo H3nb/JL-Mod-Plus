@@ -100,6 +100,8 @@ public class MicroActivity extends AppCompatActivity {
 	private static final int MIN_RUNTIME_TOOLBAR_TOUCH_TARGET_DP = 48;
 	private static final int MAX_IME_REQUEST_ATTEMPTS = 30;
 	private static final long IME_REQUEST_RETRY_DELAY_MILLIS = 100L;
+	private static final String PREF_HIDE_LAYOUT_EDIT_GUIDE =
+			"pref_runtime_hide_layout_edit_guide";
 
 	private Displayable current;
 	private boolean runtimeToolbarEnabled;
@@ -359,8 +361,14 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onEditVirtualKeyboardLayout() {
-						setVirtualKeyboardEditMode(VirtualKeyboard.LAYOUT_KEYS,
-								R.string.layout_edit_mode);
+						if (defaultPreferences != null &&
+								defaultPreferences.getBoolean(PREF_HIDE_LAYOUT_EDIT_GUIDE, false)) {
+							startVirtualKeyboardLayoutEdit();
+						} else if (runtimeMenuController != null) {
+							runtimeMenuController.showLayoutEditGuide();
+						} else {
+							startVirtualKeyboardLayoutEdit();
+						}
 					}
 
 
@@ -426,6 +434,16 @@ public class MicroActivity extends AppCompatActivity {
 					@Override
 					public void onLayoutSelected(int index) {
 						applyLayoutSelection(index);
+					}
+
+					@Override
+					public void onLayoutEditGuideConfirmed(boolean dontShowAgain) {
+						if (dontShowAgain && defaultPreferences != null) {
+							defaultPreferences.edit()
+									.putBoolean(PREF_HIDE_LAYOUT_EDIT_GUIDE, true)
+									.apply();
+						}
+						startVirtualKeyboardLayoutEdit();
 					}
 				});
 		setRuntimeToolbarHeight(getRuntimeToolbarHeight(getRuntimeChrome(current)));
@@ -1035,13 +1053,12 @@ public class MicroActivity extends AppCompatActivity {
 		updateRuntimeMenuState(current);
 	}
 
-	private void setVirtualKeyboardEditMode(int mode, @StringRes int toastMessage) {
+	private void startVirtualKeyboardLayoutEdit() {
 		VirtualKeyboard vk = ContextHolder.getVk();
 		if (vk == null) {
 			return;
 		}
-		vk.setLayoutEditMode(mode);
-		toast(toastMessage);
+		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
 		updateRuntimeMenuState(current);
 	}
 
