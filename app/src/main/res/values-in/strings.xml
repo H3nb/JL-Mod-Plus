@@ -130,6 +130,11 @@
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Kotak</string>
     <string name="pref_button_shape_round">Kotak Membulat</string>
+    <string name="pref_analog_direction_mode_title">Mode Arah Analog</string>
+    <string name="pref_analog_direction_mode_4_way">4 Arah</string>
+    <string name="pref_analog_direction_mode_8_way">8 Arah</string>
+    <string name="pref_analog_direction_mode_numeric">Numerik</string>
+    <string name="config_help_analog_direction_mode">Pilih cara stik analog fisik dan virtual dipetakan ke input arah J2ME.</string>
     <string name="pref_button_shape_title">Bentuk Tombol</string>
     <string name="pref_category_experimental">Opsi Eksperimental/Sementara</string>
     <string name="pref_emulator_dir">Direktori Kerja</string>

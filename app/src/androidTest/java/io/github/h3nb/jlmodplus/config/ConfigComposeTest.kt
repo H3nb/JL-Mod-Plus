@@ -582,6 +582,23 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun analogDirectionModeChoiceUpdatesDraft() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Controls)
+            }
+        }
+
+        composeRule.onNodeWithText("Analog Direction Mode").performScrollTo().performClick()
+        composeRule.onNode(
+            hasText("Numeric") and hasAnyAncestor(isDialog()),
+        ).performClick()
+
+        assertEquals(ProfileModel.ANALOG_DIRECTION_NUMERIC, events.lastForm?.analogDirectionMode)
+    }
+
+    @Test
     fun systemPropertiesUseFocusedEditorAndHideDelayUsesMilliseconds() {
         val events = RecordingConfigEvents()
         val baseState = sampleState()
@@ -626,6 +643,7 @@ class ConfigComposeTest {
             .systemProperties("microedition.platform: test\n")
             .showKeyboard(true)
             .touchInput(true)
+            .analogDirectionMode(ProfileModel.ANALOG_DIRECTION_8_WAY)
             .vkAlpha(64)
             .graphicsMode(1)
             .build()

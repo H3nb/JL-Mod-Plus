@@ -41,6 +41,9 @@ import io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter;
 import javax.microedition.shell.timing.TimingMode;
 public class ProfileModel {
 	public static final int VERSION = 7;
+	public static final int ANALOG_DIRECTION_4_WAY = 0;
+	public static final int ANALOG_DIRECTION_8_WAY = 1;
+	public static final int ANALOG_DIRECTION_NUMERIC = 2;
 
 	/** Stable preference key used to keep the built-in palette linked to the host theme. */
 	public static String builtInThemePreferenceKey(File configDir) {
@@ -146,6 +149,9 @@ public class ProfileModel {
 	@SerializedName("VirtualKeyboardType")
 	public int vkType;
 
+	@SerializedName("AnalogDirectionMode")
+	public int analogDirectionMode = ANALOG_DIRECTION_8_WAY;
+
 	@SerializedName("ButtonShape")
 	public int vkButtonShape;
 
@@ -233,6 +239,13 @@ public class ProfileModel {
 		vkFgColorSelected = 0xFFFFFF;
 		vkOutlineColor = 0xFFFFFF;
 		systemProperties = ContextHolder.getAssetAsString("defaults/system.props");
+	}
+
+	public static int sanitizeAnalogDirectionMode(int mode) {
+		return switch (mode) {
+			case ANALOG_DIRECTION_4_WAY, ANALOG_DIRECTION_8_WAY, ANALOG_DIRECTION_NUMERIC -> mode;
+			default -> ANALOG_DIRECTION_8_WAY;
+		};
 	}
 
 	/** Applies the theme-owned colors used by the app-provided profile template. */

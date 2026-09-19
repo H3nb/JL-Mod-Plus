@@ -50,9 +50,12 @@ virtual analog stick.
 - Digital physical buttons resolve through `KeyMapper`. Its effective map is
   the default map plus persisted overrides, including explicit removal
   tombstones. Multiple physical inputs may map to the same guest logical key.
-- Gamepad HAT and left-stick axes are not Key Mapper entries. They normalize to
-  directional intent directly. The virtual D-pad and virtual analog control use
-  the same directional interpreter.
+- Gamepad HAT and left-stick axes are not Key Mapper entries. HAT and the
+  virtual D-pad remain normal 8-way J2ME game directions. Physical and virtual
+  analog sticks use radial activation hysteresis followed by angle-based
+  quantization. Analog Direction Mode selects 4-way, 8-way (the default), or
+  Numeric output; Numeric uses the raw phone-keypad direction keys 1/2/3/4/6/7/8/9.
+  No low-pass or time-based smoothing is applied.
 - All guest logical keys share first-owner/last-owner ownership in Canvas. A
   second source holding the same key does not emit another press, and releasing
   one source cannot release the key while another owner remains.

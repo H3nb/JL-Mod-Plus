@@ -39,7 +39,51 @@ final class DirectionalControlGeometry {
 			float radius,
 			float touchX,
 			float touchY) {
-		if (!(radius > 0.0f) || !Float.isFinite(radius)) {
+		return sampleWithTravel(centerX, centerY, radius, radius, touchX, touchY);
+	}
+
+	static Sample analogSample(
+			float centerX,
+			float centerY,
+			float baseRadius,
+			float thumbRadius,
+			float touchX,
+			float touchY) {
+		if (!(baseRadius > 0.0f) || !Float.isFinite(baseRadius)) {
+			return new Sample(0.0f, 0.0f, centerX, centerY);
+		}
+		float safeThumbRadius = Float.isFinite(thumbRadius)
+				? Math.max(0.0f, Math.min(baseRadius, thumbRadius)) : 0.0f;
+		return sampleWithTravel(
+				centerX,
+				centerY,
+				baseRadius,
+				baseRadius - safeThumbRadius,
+				touchX,
+				touchY);
+	}
+
+	static boolean containsRadially(
+			float centerX,
+			float centerY,
+			float radius,
+			float x,
+			float y) {
+		if (!(radius > 0.0f) || !Float.isFinite(radius)
+				|| !Float.isFinite(x) || !Float.isFinite(y)) {
+			return false;
+		}
+		return Math.hypot(x - centerX, y - centerY) <= radius;
+	}
+
+	private static Sample sampleWithTravel(
+			float centerX,
+			float centerY,
+			float inputRadius,
+			float thumbTravelRadius,
+			float touchX,
+			float touchY) {
+		if (!(inputRadius > 0.0f) || !Float.isFinite(inputRadius)) {
 			return new Sample(0.0f, 0.0f, centerX, centerY);
 		}
 		float x = Float.isFinite(touchX) ? touchX : centerX;
@@ -47,13 +91,16 @@ final class DirectionalControlGeometry {
 		float dx = x - centerX;
 		float dy = y - centerY;
 		float distance = (float) Math.hypot(dx, dy);
-		float scale = distance > radius && distance > 0.0f ? radius / distance : 1.0f;
-		float clampedX = dx * scale;
-		float clampedY = dy * scale;
+		float inputScale = distance > inputRadius && distance > 0.0f
+				? inputRadius / distance : 1.0f;
+		float normalizedX = dx * inputScale / inputRadius;
+		float normalizedY = dy * inputScale / inputRadius;
+		float visualTravel = Float.isFinite(thumbTravelRadius)
+				? Math.max(0.0f, thumbTravelRadius) : 0.0f;
 		return new Sample(
-				clampedX / radius,
-				clampedY / radius,
-				centerX + clampedX,
-				centerY + clampedY);
+				normalizedX,
+				normalizedY,
+				centerX + normalizedX * visualTravel,
+				centerY + normalizedY * visualTravel);
 	}
 }

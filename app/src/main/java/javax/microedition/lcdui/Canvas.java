@@ -112,10 +112,12 @@ public abstract class Canvas extends Displayable {
 	private static final int DEVICE_DIRECTION_HAT_Y = 2;
 	private static final int DEVICE_DIRECTION_STICK_X = 3;
 	private static final int DEVICE_DIRECTION_STICK_Y = 4;
+	private static final int DEVICE_DIRECTION_STICK_NUMERIC = 5;
 	private static final int VIRTUAL_DIRECTION_DPAD_X = 1;
 	private static final int VIRTUAL_DIRECTION_DPAD_Y = 2;
 	private static final int VIRTUAL_DIRECTION_ANALOG_X = 3;
 	private static final int VIRTUAL_DIRECTION_ANALOG_Y = 4;
+	private static final int VIRTUAL_DIRECTION_ANALOG_NUMERIC = 5;
 
 	public static final int KEY_POUND = 35;
 	public static final int KEY_STAR = 42;
@@ -527,12 +529,15 @@ public abstract class Canvas extends Displayable {
 	}
 
 	public void updateVirtualAnalog(float x, float y) {
-		applyVirtualDirectional(
-				virtualAnalogDirection,
-				VIRTUAL_DIRECTION_ANALOG_X,
-				VIRTUAL_DIRECTION_ANALOG_Y,
-				x,
-				y);
+		int mode = ProfileModel.sanitizeAnalogDirectionMode(settings.analogDirectionMode);
+		DirectionalInterpreter.Direction direction = virtualAnalogDirection.update(
+				x, y, AnalogDirectionMapper.sectorCountForMode(mode));
+		applyGuestTransition(keyOwnership.setVirtualDirection(
+				VIRTUAL_DIRECTION_ANALOG_X, AnalogDirectionMapper.horizontalKey(direction, mode)));
+		applyGuestTransition(keyOwnership.setVirtualDirection(
+				VIRTUAL_DIRECTION_ANALOG_Y, AnalogDirectionMapper.verticalKey(direction, mode)));
+		applyGuestTransition(keyOwnership.setVirtualDirection(
+				VIRTUAL_DIRECTION_ANALOG_NUMERIC, AnalogDirectionMapper.numericKey(direction, mode)));
 	}
 
 	public void releaseVirtualGuestInputs() {
@@ -582,13 +587,27 @@ public abstract class Canvas extends Displayable {
 			interpreter = new DirectionalInterpreter();
 			states.put(deviceId, interpreter);
 		}
-		DirectionalInterpreter.Direction direction = interpreter.update(x, y);
-		int horizontalSource = hat ? DEVICE_DIRECTION_HAT_X : DEVICE_DIRECTION_STICK_X;
-		int verticalSource = hat ? DEVICE_DIRECTION_HAT_Y : DEVICE_DIRECTION_STICK_Y;
+		if (hat) {
+			DirectionalInterpreter.Direction direction = interpreter.update(x, y);
+			applyGuestTransition(keyOwnership.setDeviceDirection(
+					deviceId, DEVICE_DIRECTION_HAT_X, horizontalKey(direction.horizontal)));
+			applyGuestTransition(keyOwnership.setDeviceDirection(
+					deviceId, DEVICE_DIRECTION_HAT_Y, verticalKey(direction.vertical)));
+			return;
+		}
+
+		int mode = ProfileModel.sanitizeAnalogDirectionMode(settings.analogDirectionMode);
+		DirectionalInterpreter.Direction direction = interpreter.update(
+				x, y, AnalogDirectionMapper.sectorCountForMode(mode));
 		applyGuestTransition(keyOwnership.setDeviceDirection(
-				deviceId, horizontalSource, horizontalKey(direction.horizontal)));
+				deviceId, DEVICE_DIRECTION_STICK_X,
+				AnalogDirectionMapper.horizontalKey(direction, mode)));
 		applyGuestTransition(keyOwnership.setDeviceDirection(
-				deviceId, verticalSource, verticalKey(direction.vertical)));
+				deviceId, DEVICE_DIRECTION_STICK_Y,
+				AnalogDirectionMapper.verticalKey(direction, mode)));
+		applyGuestTransition(keyOwnership.setDeviceDirection(
+				deviceId, DEVICE_DIRECTION_STICK_NUMERIC,
+				AnalogDirectionMapper.numericKey(direction, mode)));
 	}
 
 	private static int horizontalKey(int direction) {

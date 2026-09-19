@@ -15,22 +15,27 @@
 package javax.microedition.lcdui;
 
 /**
- * Stateful 8-way digital direction interpreter with per-axis hysteresis.
+ * Stateful radial digital-direction quantizer with angular-sector hysteresis.
  */
 final class DirectionalInterpreter {
-	static final float PRESS_THRESHOLD = 0.40f;
-	static final float RELEASE_THRESHOLD = 0.28f;
+	static final float PRESS_RADIUS = 0.20f;
+	static final float RELEASE_RADIUS = 0.14f;
+	static final float ANGULAR_HYSTERESIS_RADIANS = (float) Math.toRadians(6.0);
+
+	private static final int FOUR_WAY_SECTORS = 4;
+	private static final int EIGHT_WAY_SECTORS = 8;
+	private static final float TWO_PI = (float) (Math.PI * 2.0);
 
 	static final class Direction {
 		static final Direction CENTER = new Direction(0, 0);
-		private static final Direction LEFT = new Direction(-1, 0);
-		private static final Direction RIGHT = new Direction(1, 0);
-		private static final Direction UP = new Direction(0, -1);
-		private static final Direction DOWN = new Direction(0, 1);
-		private static final Direction UP_LEFT = new Direction(-1, -1);
-		private static final Direction UP_RIGHT = new Direction(1, -1);
-		private static final Direction DOWN_LEFT = new Direction(-1, 1);
-		private static final Direction DOWN_RIGHT = new Direction(1, 1);
+		static final Direction RIGHT = new Direction(1, 0);
+		static final Direction DOWN_RIGHT = new Direction(1, 1);
+		static final Direction DOWN = new Direction(0, 1);
+		static final Direction DOWN_LEFT = new Direction(-1, 1);
+		static final Direction LEFT = new Direction(-1, 0);
+		static final Direction UP_LEFT = new Direction(-1, -1);
+		static final Direction UP = new Direction(0, -1);
+		static final Direction UP_RIGHT = new Direction(1, -1);
 
 		final int horizontal;
 		final int vertical;
@@ -41,48 +46,98 @@ final class DirectionalInterpreter {
 		}
 	}
 
-	private int horizontal;
-	private int vertical;
+	private static final Direction[] FOUR_WAY = {
+			Direction.RIGHT,
+			Direction.DOWN,
+			Direction.LEFT,
+			Direction.UP,
+	};
+	private static final Direction[] EIGHT_WAY = {
+			Direction.RIGHT,
+			Direction.DOWN_RIGHT,
+			Direction.DOWN,
+			Direction.DOWN_LEFT,
+			Direction.LEFT,
+			Direction.UP_LEFT,
+			Direction.UP,
+			Direction.UP_RIGHT,
+	};
+
+	private Direction current = Direction.CENTER;
+	private int sectorCount = EIGHT_WAY_SECTORS;
 
 	Direction update(float x, float y) {
-		horizontal = updateAxis(horizontal, sanitize(x));
-		vertical = updateAxis(vertical, sanitize(y));
-		return directionFor(horizontal, vertical);
+		return update(x, y, EIGHT_WAY_SECTORS);
+	}
+
+	Direction update(float x, float y, int requestedSectorCount) {
+		int nextSectorCount = requestedSectorCount == FOUR_WAY_SECTORS
+				? FOUR_WAY_SECTORS : EIGHT_WAY_SECTORS;
+		if (sectorCount != nextSectorCount) {
+			sectorCount = nextSectorCount;
+			current = Direction.CENTER;
+		}
+
+		float safeX = sanitize(x);
+		float safeY = sanitize(y);
+		float magnitude = (float) Math.hypot(safeX, safeY);
+		if (current == Direction.CENTER) {
+			if (magnitude < PRESS_RADIUS) {
+				return current;
+			}
+			current = nearestDirection(angleOf(safeX, safeY), sectorCount);
+			return current;
+		}
+
+		if (magnitude <= RELEASE_RADIUS) {
+			current = Direction.CENTER;
+			return current;
+		}
+
+		float angle = angleOf(safeX, safeY);
+		Direction[] sectors = sectors(sectorCount);
+		float step = TWO_PI / sectors.length;
+		float currentCenter = indexOf(sectors, current) * step;
+		if (angularDistance(angle, currentCenter) <= step / 2.0f + ANGULAR_HYSTERESIS_RADIANS) {
+			return current;
+		}
+		current = nearestDirection(angle, sectorCount);
+		return current;
 	}
 
 	void reset() {
-		horizontal = 0;
-		vertical = 0;
+		current = Direction.CENTER;
+		sectorCount = EIGHT_WAY_SECTORS;
 	}
 
-	private static Direction directionFor(int horizontal, int vertical) {
-		if (horizontal < 0) {
-			if (vertical < 0) return Direction.UP_LEFT;
-			if (vertical > 0) return Direction.DOWN_LEFT;
-			return Direction.LEFT;
-		}
-		if (horizontal > 0) {
-			if (vertical < 0) return Direction.UP_RIGHT;
-			if (vertical > 0) return Direction.DOWN_RIGHT;
-			return Direction.RIGHT;
-		}
-		if (vertical < 0) return Direction.UP;
-		if (vertical > 0) return Direction.DOWN;
-		return Direction.CENTER;
+	private static Direction nearestDirection(float angle, int sectorCount) {
+		Direction[] sectors = sectors(sectorCount);
+		float step = TWO_PI / sectors.length;
+		int index = (int) Math.floor((angle + step / 2.0f) / step) % sectors.length;
+		return sectors[index];
 	}
 
-	private static int updateAxis(int current, float value) {
-		if (current == 0) {
-			if (value >= PRESS_THRESHOLD) return 1;
-			if (value <= -PRESS_THRESHOLD) return -1;
-			return 0;
+	private static Direction[] sectors(int sectorCount) {
+		return sectorCount == FOUR_WAY_SECTORS ? FOUR_WAY : EIGHT_WAY;
+	}
+
+	private static int indexOf(Direction[] sectors, Direction direction) {
+		for (int i = 0; i < sectors.length; i++) {
+			if (sectors[i] == direction) {
+				return i;
+			}
 		}
-		if (current > 0) {
-			if (value <= -PRESS_THRESHOLD) return -1;
-			return value < RELEASE_THRESHOLD ? 0 : 1;
-		}
-		if (value >= PRESS_THRESHOLD) return 1;
-		return value > -RELEASE_THRESHOLD ? 0 : -1;
+		return 0;
+	}
+
+	private static float angleOf(float x, float y) {
+		float angle = (float) Math.atan2(y, x);
+		return angle < 0.0f ? angle + TWO_PI : angle;
+	}
+
+	private static float angularDistance(float first, float second) {
+		float distance = Math.abs(first - second);
+		return distance > Math.PI ? TWO_PI - distance : distance;
 	}
 
 	private static float sanitize(float value) {

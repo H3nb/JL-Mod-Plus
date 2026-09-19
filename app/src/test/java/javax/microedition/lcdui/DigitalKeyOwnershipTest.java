@@ -199,6 +199,86 @@ public class DigitalKeyOwnershipTest {
 
 
 	@Test
+	public void analogUpToDiagonalToRightPreservesUnchangedComponentOwners() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+		int xSource = 3;
+		int ySource = 4;
+
+		DigitalKeyOwnership.Transition up =
+				ownership.setDeviceDirection(DEVICE_ONE, ySource, Canvas.KEY_UP);
+		assertEquals(Canvas.KEY_UP, up.pressedKey);
+
+		DigitalKeyOwnership.Transition addRight =
+				ownership.setDeviceDirection(DEVICE_ONE, xSource, Canvas.KEY_RIGHT);
+		DigitalKeyOwnership.Transition keepUp =
+				ownership.setDeviceDirection(DEVICE_ONE, ySource, Canvas.KEY_UP);
+		assertEquals(Canvas.KEY_RIGHT, addRight.pressedKey);
+		assertEquals(0, keepUp.pressedKey);
+		assertEquals(0, keepUp.releasedKey);
+
+		DigitalKeyOwnership.Transition keepRight =
+				ownership.setDeviceDirection(DEVICE_ONE, xSource, Canvas.KEY_RIGHT);
+		DigitalKeyOwnership.Transition releaseUp =
+				ownership.setDeviceDirection(DEVICE_ONE, ySource, 0);
+		assertEquals(0, keepRight.pressedKey);
+		assertEquals(0, keepRight.releasedKey);
+		assertEquals(Canvas.KEY_UP, releaseUp.releasedKey);
+		assertEquals(Canvas.KEY_RIGHT,
+				ownership.setDeviceDirection(DEVICE_ONE, xSource, 0).releasedKey);
+	}
+
+	@Test
+	public void switchingAnalogOutputModeCannotLeaveStaleDirectionalOwnership() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+		int xSource = 3;
+		int ySource = 4;
+		int numericSource = 5;
+		DirectionalInterpreter.Direction upRight = DirectionalInterpreter.Direction.UP_RIGHT;
+
+		int eightWay = io.github.h3nb.jlmodplus.config.ProfileModel.ANALOG_DIRECTION_8_WAY;
+		ownership.setDeviceDirection(
+				DEVICE_ONE, xSource, AnalogDirectionMapper.horizontalKey(upRight, eightWay));
+		ownership.setDeviceDirection(
+				DEVICE_ONE, ySource, AnalogDirectionMapper.verticalKey(upRight, eightWay));
+
+		int numeric = io.github.h3nb.jlmodplus.config.ProfileModel.ANALOG_DIRECTION_NUMERIC;
+		assertEquals(Canvas.KEY_RIGHT,
+				ownership.setDeviceDirection(
+						DEVICE_ONE, xSource,
+						AnalogDirectionMapper.horizontalKey(upRight, numeric)).releasedKey);
+		assertEquals(Canvas.KEY_UP,
+				ownership.setDeviceDirection(
+						DEVICE_ONE, ySource,
+						AnalogDirectionMapper.verticalKey(upRight, numeric)).releasedKey);
+		assertEquals(Canvas.KEY_NUM3,
+				ownership.setDeviceDirection(
+						DEVICE_ONE, numericSource,
+						AnalogDirectionMapper.numericKey(upRight, numeric)).pressedKey);
+
+		assertEquals(Canvas.KEY_NUM3,
+				ownership.setDeviceDirection(DEVICE_ONE, numericSource, 0).releasedKey);
+	}
+
+	@Test
+	public void numericAnalogTransitionReleasesPreviousKeyBeforePressingNext() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+		int numericSource = 5;
+
+		DigitalKeyOwnership.Transition upRight =
+				ownership.setDeviceDirection(DEVICE_ONE, numericSource, Canvas.KEY_NUM3);
+		assertEquals(Canvas.KEY_NUM3, upRight.pressedKey);
+		assertEquals(0, upRight.releasedKey);
+
+		DigitalKeyOwnership.Transition right =
+				ownership.setDeviceDirection(DEVICE_ONE, numericSource, Canvas.KEY_NUM6);
+		assertEquals(Canvas.KEY_NUM3, right.releasedKey);
+		assertEquals(Canvas.KEY_NUM6, right.pressedKey);
+
+		assertEquals(Canvas.KEY_NUM6,
+				ownership.setDeviceDirection(DEVICE_ONE, numericSource, 0).releasedKey);
+	}
+
+	@Test
 	public void physicalAndSyntheticNamespacesCannotCollide() {
 		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
 
