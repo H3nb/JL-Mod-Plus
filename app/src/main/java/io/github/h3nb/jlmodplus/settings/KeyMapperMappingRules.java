@@ -18,6 +18,9 @@ import android.util.SparseIntArray;
 
 /** Pure map operations shared by the host boundary and characterization tests. */
 public final class KeyMapperMappingRules {
+	/** Persisted sentinel meaning "explicitly remove the inherited default binding". */
+	public static final int UNMAPPED_TOMBSTONE = Integer.MIN_VALUE;
+
 	private KeyMapperMappingRules() {
 	}
 
@@ -25,13 +28,75 @@ public final class KeyMapperMappingRules {
 			SparseIntArray current,
 			int canvasKey,
 			int androidKeyCode) {
+		return addBinding(current, androidKeyCode, canvasKey);
+	}
+
+	/** Adds or replaces one physical-key binding without removing other inputs for the target. */
+	public static SparseIntArray addBinding(
+			SparseIntArray current,
+			int androidKeyCode,
+			int canvasKey) {
+		SparseIntArray updated = current == null ? new SparseIntArray() : current.clone();
+		updated.put(androidKeyCode, canvasKey);
+		return updated;
+	}
+
+	/** Resolves persisted overrides on top of defaults. */
+	public static SparseIntArray resolve(
+			SparseIntArray defaults,
+			SparseIntArray overrides) {
+		SparseIntArray resolved = defaults == null ? new SparseIntArray() : defaults.clone();
+		if (overrides == null) return resolved;
+		for (int i = 0; i < overrides.size(); i++) {
+			int key = overrides.keyAt(i);
+			int value = overrides.valueAt(i);
+			if (value == UNMAPPED_TOMBSTONE) resolved.delete(key);
+			else resolved.put(key, value);
+		}
+		return resolved;
+	}
+
+	/**
+	 * Stores only differences from defaults. Missing keys inherit defaults; the tombstone
+	 * explicitly removes a default binding.
+	 */
+	public static SparseIntArray diff(
+			SparseIntArray defaults,
+			SparseIntArray effective) {
+		SparseIntArray result = new SparseIntArray();
+		SparseIntArray base = defaults == null ? new SparseIntArray() : defaults;
+		SparseIntArray current = effective == null ? new SparseIntArray() : effective;
+		for (int i = 0; i < base.size(); i++) {
+			int key = base.keyAt(i);
+			int defaultValue = base.valueAt(i);
+			int index = current.indexOfKey(key);
+			if (index < 0) result.put(key, UNMAPPED_TOMBSTONE);
+			else if (current.valueAt(index) != defaultValue) result.put(key, current.valueAt(index));
+		}
+		for (int i = 0; i < current.size(); i++) {
+			int key = current.keyAt(i);
+			if (base.indexOfKey(key) < 0) result.put(key, current.valueAt(i));
+		}
+		return result;
+	}
+
+	/** Removes exactly one physical-key binding. */
+	public static SparseIntArray removeBinding(
+			SparseIntArray current,
+			int androidKeyCode) {
+		SparseIntArray updated = current == null ? new SparseIntArray() : current.clone();
+		updated.delete(androidKeyCode);
+		return updated;
+	}
+
+	/** Removes all bindings for a target only when the caller explicitly requests it. */
+	public static SparseIntArray removeBindingsForTarget(
+			SparseIntArray current,
+			int canvasKey) {
 		SparseIntArray updated = current == null ? new SparseIntArray() : current.clone();
 		for (int i = updated.size() - 1; i >= 0; i--) {
-			if (updated.valueAt(i) == canvasKey) {
-				updated.removeAt(i);
-			}
+			if (updated.valueAt(i) == canvasKey) updated.removeAt(i);
 		}
-		updated.put(androidKeyCode, canvasKey);
 		return updated;
 	}
 

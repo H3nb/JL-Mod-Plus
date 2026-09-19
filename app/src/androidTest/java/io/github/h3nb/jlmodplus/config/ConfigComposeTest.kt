@@ -92,6 +92,45 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun analogSelectionRemainsAvailableWithoutController() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            base.profileStatus,
+            base.profileTemplates,
+            base.timingControlsEnabled,
+            base.hasKeyboardLayout,
+            base.profileNames,
+            base.keyboardLayouts,
+            false,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents(), initialDestination = ConfigDestination.Controls)
+            }
+        }
+
+        composeRule.onNodeWithText("Analog Stick").assertIsEnabled()
+        composeRule.onNodeWithText("Configure Gamepad").assertDoesNotExist()
+        composeRule.onNodeWithText("Reset Analog Controls").assertDoesNotExist()
+        composeRule.onNodeWithText(
+            "No compatible gamepad is connected. Gamepad controls stay inactive until one is detected.",
+        ).assertDoesNotExist()
+
+        composeRule.onNodeWithText("Analog Stick").performClick()
+        composeRule.onNodeWithText("Off").assertExists()
+        composeRule.onNodeWithText("4-Way").assertExists()
+        composeRule.onNodeWithText("8-Way").assertExists()
+        composeRule.onNodeWithText("Numeric").assertExists()
+    }
+
+    @Test
     fun configDestinationsSupportHorizontalSwipe() {
         composeRule.setContent {
             JLModPlusTheme {

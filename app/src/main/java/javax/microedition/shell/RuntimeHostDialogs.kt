@@ -71,6 +71,7 @@ interface RuntimeHostDialogActions {
     fun onHideButtonsConfirmed(states: BooleanArray)
     fun onSaveVirtualKeyboard(saveScreenParams: Boolean)
     fun onLayoutSelected(index: Int)
+    fun onLayoutEditGuideConfirmed(dontShowAgain: Boolean) = Unit
 }
 
 internal sealed interface RuntimeHostDialogState {
@@ -83,6 +84,7 @@ internal sealed interface RuntimeHostDialogState {
         val keepScreenPreferred: Boolean,
     ) : RuntimeHostDialogState
     data class LayoutSelection(val entries: List<String>, val selected: Int) : RuntimeHostDialogState
+    data object LayoutEditGuide : RuntimeHostDialogState
 }
 
 @Composable
@@ -121,6 +123,10 @@ internal fun RuntimeHostDialogs(
         )
         is RuntimeHostDialogState.LayoutSelection -> LayoutSelectionDialog(
             state = state,
+            actions = actions,
+            onDismiss = onDismiss,
+        )
+        RuntimeHostDialogState.LayoutEditGuide -> LayoutEditGuideDialog(
             actions = actions,
             onDismiss = onDismiss,
         )
@@ -437,6 +443,50 @@ private fun SaveVirtualKeyboardDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(android.R.string.no))
+            }
+        },
+    )
+}
+
+@Composable
+private fun LayoutEditGuideDialog(
+    actions: RuntimeHostDialogActions,
+    onDismiss: () -> Unit,
+) {
+    var dontShowAgain by remember { mutableStateOf(false) }
+    val layout = runtimeDialogLayout()
+    AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
+        onDismissRequest = onDismiss,
+        title = {
+            Text(stringResource(R.string.runtime_virtual_controls_edit_guide_title))
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.runtime_virtual_controls_edit_guide_message))
+                ListItem(
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    headlineContent = {
+                        Text(stringResource(R.string.runtime_virtual_controls_edit_guide_dont_show_again))
+                    },
+                    leadingContent = {
+                        Checkbox(checked = dontShowAgain, onCheckedChange = null)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(value = dontShowAgain, role = Role.Checkbox) {
+                            dontShowAgain = !dontShowAgain
+                        },
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onDismiss()
+                actions.onLayoutEditGuideConfirmed(dontShowAgain)
+            }) {
+                Text(stringResource(android.R.string.ok))
             }
         },
     )

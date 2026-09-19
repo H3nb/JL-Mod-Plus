@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
+    <string name="config_virtual_controls_movement">Virtual Controls</string>
+    <string name="config_virtual_movement_control">Movement Control</string>
+    <string name="config_virtual_movement_control_summary">Choose the touch movement controls used by this MIDlet. D-pad and analog stick share the same guest input ownership path.</string>
+    <string name="config_virtual_movement_dpad">D-pad</string>
+    <string name="config_virtual_movement_analog">Analog Stick</string>
+    <string name="config_virtual_dpad_available">The D-pad is available as one grouped virtual movement control.</string>
+    <string name="config_virtual_dpad">D-pad</string>
+    <string name="config_virtual_dpad_summary">Show a grouped 8-way D-pad. Move and resize the whole D-pad in the virtual-controls layout editor.</string>
+    <string name="config_virtual_analog_stick">Analog Stick</string>
+    <string name="config_virtual_analog_stick_summary">Show a grouped analog stick. It uses the shared deadzone/direction processor and can be moved or resized as one control.</string>
+    <string name="runtime_virtual_controls_title">Virtual Controls</string>
+    <string name="runtime_virtual_controls_dpad">D-pad</string>
+    <string name="runtime_virtual_controls_analog">Analog Stick</string>
+    <string name="runtime_virtual_controls_edit">Edit Layout</string>
+    <string name="runtime_virtual_controls_edit_guide_title">Edit Layout Guide</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Drag controls to move them. For buttons, move two fingers horizontally or vertically to change width or height, or diagonally to change both. D-pad and analog stick resize proportionally. Tap Finish Editing when you are done.</string>
+    <string name="runtime_virtual_controls_edit_guide_dont_show_again">Do Not Show Again</string>
+    <string name="runtime_virtual_controls_edit_started">Virtual controls edit mode: drag to move, pinch to resize.</string>
+    <string name="runtime_virtual_controls_switch_layout">Layout Templates</string>
+    <string name="runtime_virtual_controls_hide_buttons">Show Or Hide Controls</string>
+    <string name="runtime_virtual_controls_template_dpad_standard">D-pad Standard</string>
+    <string name="runtime_virtual_controls_template_analog_standard">Analog Standard</string>
+    <string name="config_gamepad_directions_numeric_v2">Numeric</string>
+    <string name="config_gamepad_mapping_help_body_v2">Use the D-pad or left stick to navigate JL-Mod Plus, A to activate, and B to go back. During MIDlet runtime, physical keyboard/keypad/gamepad buttons use the same Key Mappings. Map any physical button to M if you want it to open the runtime MIDlet menu. Analog sticks, triggers, pointer input, calibration, and virtual controls are configured separately.</string>
+</resources>

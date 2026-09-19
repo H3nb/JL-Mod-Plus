@@ -1,5 +1,6 @@
 /*
  * Copyright 2017-2018 Nikita Shakarun
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +36,7 @@ public class GameCanvas extends Canvas {
 	private final Image image;
 	private final boolean suppressCommands;
 
-	private int keyState;
-	private int currentKeyState;
+	private final GameCanvasKeyState keyState = new GameCanvasKeyState();
 
 	public GameCanvas(boolean suppressCommands) {
 		super();
@@ -99,7 +99,7 @@ public class GameCanvas extends Canvas {
 	public void postKeyReleased(int keyCode) {
 		int code = convertGameKeyCode(keyCode);
 		if (code != 0) {
-			currentKeyState &= ~code;
+			keyState.release(keyCode, code);
 			if (suppressCommands) {
 				return;
 			}
@@ -112,16 +112,13 @@ public class GameCanvas extends Canvas {
 		if (code == 0) {
 			return false;
 		}
-		this.keyState |= code;
-		this.currentKeyState |= code;
+		keyState.press(keyCode, code);
 		return suppressCommands;
 	}
 
 	@SuppressWarnings("unused")
 	public int getKeyStates() {
-		int keyStates = isShown() ? this.keyState | this.currentKeyState : 0;
-		this.keyState = 0;
-		return keyStates;
+		return keyState.poll(isShown());
 	}
 
 	public Graphics getGraphics() {
@@ -140,8 +137,28 @@ public class GameCanvas extends Canvas {
 
 	@Override
 	public void doShowNotify() {
-		keyState = 0;
-		currentKeyState = 0;
+		keyState.reset();
 		super.doShowNotify();
+	}
+
+	@Override
+	public void doHideNotify() {
+		keyState.reset();
+		super.doHideNotify();
+	}
+
+	static int bitForKeyCode(int keyCode) {
+		return switch (keyCode) {
+			case KEY_LEFT, KEY_NUM4 -> LEFT_PRESSED;
+			case KEY_UP, KEY_NUM2 -> UP_PRESSED;
+			case KEY_RIGHT, KEY_NUM6 -> RIGHT_PRESSED;
+			case KEY_DOWN, KEY_NUM8 -> DOWN_PRESSED;
+			case KEY_FIRE, KEY_NUM5 -> FIRE_PRESSED;
+			case KEY_NUM7 -> GAME_A_PRESSED;
+			case KEY_NUM9 -> GAME_B_PRESSED;
+			case KEY_STAR -> GAME_C_PRESSED;
+			case KEY_POUND -> GAME_D_PRESSED;
+			default -> 0;
+		};
 	}
 }

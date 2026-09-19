@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_hide_grid_titles_summary">Show only MIDlet icons in grid view.</string>
+    <string name="library_show_list_description_summary">Show each MIDlet description below its title and version.</string>
+</resources>
