@@ -52,6 +52,7 @@ public class StandardVirtualControlsLayoutTest {
 		assertFalse(layout.actionsUseRightGutter);
 		assertTrue(layout.movementCenterY > 1820.0f * 0.55f);
 		assertTrue(layout.actionCenterY > 1820.0f * 0.45f);
+		assertTrue(layout.actionCenterY - layout.keySize * 0.5f > 1110.0f);
 		assertTrue(layout.shoulderCenterY < layout.actionCenterY);
 		assertTrue(layout.bottomRowY > layout.actionCenterY);
 		assertTrue(layout.movementCenterX < layout.bottomLeftX);
