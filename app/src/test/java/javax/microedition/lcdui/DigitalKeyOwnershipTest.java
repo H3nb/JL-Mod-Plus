@@ -24,6 +24,7 @@ import org.junit.Test;
 public class DigitalKeyOwnershipTest {
 	private static final int DEVICE_ONE = 1;
 	private static final int DEVICE_TWO = 2;
+	private static final int KEYCODE_DPAD_UP = 19;
 	private static final int KEYCODE_ENTER = 66;
 	private static final int KEYCODE_BUTTON_A = 96;
 
@@ -65,6 +66,128 @@ public class DigitalKeyOwnershipTest {
 		assertTrue(ownership.release(source));
 		assertFalse(ownership.release(source));
 	}
+
+	@Test
+	public void physicalAndVirtualOwnersShareOneGuestTarget() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+
+		DigitalKeyOwnership.Transition physical =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_ENTER, Canvas.KEY_FIRE);
+		assertEquals(Canvas.KEY_FIRE, physical.pressedKey);
+		assertEquals(0, physical.releasedKey);
+
+		DigitalKeyOwnership.Transition virtual =
+				ownership.setVirtualKey(7, 0, Canvas.KEY_FIRE);
+		assertEquals(0, virtual.pressedKey);
+		assertEquals(0, virtual.releasedKey);
+
+		DigitalKeyOwnership.Transition physicalUp =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_ENTER, 0);
+		assertEquals(0, physicalUp.releasedKey);
+
+		DigitalKeyOwnership.Transition virtualUp = ownership.setVirtualKey(7, 0, 0);
+		assertEquals(Canvas.KEY_FIRE, virtualUp.releasedKey);
+	}
+
+	@Test
+	public void deviceCleanupDoesNotReleaseTargetStillOwnedElsewhere() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+		ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+		ownership.setPhysicalKey(DEVICE_TWO, KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+
+		assertEquals(0, ownership.releaseDevice(DEVICE_ONE).length);
+		assertEquals(Canvas.KEY_FIRE,
+				ownership.physicalKeyTarget(DEVICE_TWO, KEYCODE_BUTTON_A));
+
+		int[] released = ownership.releaseDevice(DEVICE_TWO);
+		assertEquals(1, released.length);
+		assertEquals(Canvas.KEY_FIRE, released[0]);
+	}
+
+	@Test
+	public void virtualCleanupLeavesPhysicalOwnerIntact() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+		ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_ENTER, Canvas.KEY_FIRE);
+		ownership.setVirtualKey(3, 0, Canvas.KEY_FIRE);
+
+		assertEquals(0, ownership.releaseVirtual().length);
+		DigitalKeyOwnership.Transition release =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_ENTER, 0);
+		assertEquals(Canvas.KEY_FIRE, release.releasedKey);
+	}
+
+	@Test
+	public void changingDirectionalSourceReleasesOldAndAcquiresNewTarget() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+
+		DigitalKeyOwnership.Transition left =
+				ownership.setDeviceDirection(DEVICE_ONE, 1, Canvas.KEY_LEFT);
+		assertEquals(Canvas.KEY_LEFT, left.pressedKey);
+
+		DigitalKeyOwnership.Transition right =
+				ownership.setDeviceDirection(DEVICE_ONE, 1, Canvas.KEY_RIGHT);
+		assertEquals(Canvas.KEY_LEFT, right.releasedKey);
+		assertEquals(Canvas.KEY_RIGHT, right.pressedKey);
+	}
+
+	@Test
+	public void physicalDpadAndHatCanOwnSameDirectionIndependently() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+
+		DigitalKeyOwnership.Transition dpad =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_DPAD_UP, Canvas.KEY_UP);
+		DigitalKeyOwnership.Transition hat =
+				ownership.setDeviceDirection(DEVICE_ONE, 1, Canvas.KEY_UP);
+		assertEquals(Canvas.KEY_UP, dpad.pressedKey);
+		assertEquals(0, hat.pressedKey);
+
+		DigitalKeyOwnership.Transition dpadUp =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_DPAD_UP, 0);
+		assertEquals(0, dpadUp.releasedKey);
+
+		DigitalKeyOwnership.Transition hatCenter =
+				ownership.setDeviceDirection(DEVICE_ONE, 1, 0);
+		assertEquals(Canvas.KEY_UP, hatCenter.releasedKey);
+	}
+
+	@Test
+	public void hatAndStickCanOwnSameDirectionIndependently() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+
+		DigitalKeyOwnership.Transition hat =
+				ownership.setDeviceDirection(DEVICE_ONE, 1, Canvas.KEY_UP);
+		DigitalKeyOwnership.Transition stick =
+				ownership.setDeviceDirection(DEVICE_ONE, 2, Canvas.KEY_UP);
+		assertEquals(Canvas.KEY_UP, hat.pressedKey);
+		assertEquals(0, stick.pressedKey);
+
+		DigitalKeyOwnership.Transition hatCenter =
+				ownership.setDeviceDirection(DEVICE_ONE, 1, 0);
+		assertEquals(0, hatCenter.releasedKey);
+
+		DigitalKeyOwnership.Transition stickCenter =
+				ownership.setDeviceDirection(DEVICE_ONE, 2, 0);
+		assertEquals(Canvas.KEY_UP, stickCenter.releasedKey);
+	}
+
+
+	@Test
+	public void physicalAndSyntheticNamespacesCannotCollide() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+
+		DigitalKeyOwnership.Transition physical =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_ENTER, Canvas.KEY_FIRE);
+		DigitalKeyOwnership.Transition virtual =
+				ownership.setVirtualKey(DEVICE_ONE, KEYCODE_ENTER, Canvas.KEY_UP);
+
+		assertEquals(Canvas.KEY_FIRE, physical.pressedKey);
+		assertEquals(Canvas.KEY_UP, virtual.pressedKey);
+		assertEquals(Canvas.KEY_FIRE,
+				ownership.physicalKeyTarget(DEVICE_ONE, KEYCODE_ENTER));
+		assertEquals(Canvas.KEY_UP,
+				ownership.virtualKeyTarget(DEVICE_ONE, KEYCODE_ENTER));
+	}
+
 
 	@Test
 	public void sameAndroidKeyFromDifferentDevicesRemainsIndependent() {

@@ -170,8 +170,8 @@ fun RuntimeLayoutSelectionScreenshot() {
     JLModPlusTheme(darkTheme = true) {
         RuntimeHostDialogs(
             state = RuntimeHostDialogState.LayoutSelection(
-                entries = listOf("Default", "Phone", "Tablet", "Custom"),
-                selected = 0,
+                entries = listOf("Arrows", "D-pad", "Analog Stick", "Custom"),
+                selected = 1,
             ),
             actions = NoOpRuntimeHostDialogActions,
             onDismiss = {},

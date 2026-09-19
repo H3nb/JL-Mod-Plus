@@ -482,6 +482,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void onPause() {
+		if (current instanceof Canvas canvas) {
+			canvas.releaseGuestInputs();
+		}
 		if (memoryEditorController != null) {
 			memoryEditorController.onHostPaused();
 		}
@@ -497,6 +500,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
+		if (current instanceof Canvas canvas) {
+			canvas.releaseGuestInputs();
+		}
 		if (defaultPreferences != null) {
 			defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
 			defaultPreferences = null;
@@ -599,8 +605,12 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
-		if (hasFocus && current instanceof Canvas) {
-			applySystemUi(getRuntimeChrome(current), current);
+		if (current instanceof Canvas canvas) {
+			if (hasFocus) {
+				applySystemUi(getRuntimeChrome(current), current);
+			} else {
+				canvas.releaseGuestInputs();
+			}
 		}
 	}
 
@@ -1063,7 +1073,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (saveScreenParams && vk.isPhone()) {
 			vk.saveScreenParams();
 		}
-		vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+		vk.commitLayoutEdits();
 	}
 
 	private void applyLayoutSelection(int index) {
