@@ -969,6 +969,33 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 	}
 
+	/**
+	 * Applies a persisted scale pair to the group containing the named legacy key. Standard
+	 * templates use this to establish non-square defaults before their keys are repositioned.
+	 */
+	protected final boolean setKeyGroupScaleByLabel(String label, float scaleX, float scaleY) {
+		if (label == null || scaleX <= 0.0f || scaleY <= 0.0f) return false;
+		int keyIndex = -1;
+		for (int i = 0; i < keypad.length; i++) {
+			if (label.equals(keypad[i].label)) {
+				keyIndex = i;
+				break;
+			}
+		}
+		if (keyIndex < 0) return false;
+		for (int group = 0; group < keyScaleGroups.length; group++) {
+			for (int key : keyScaleGroups[group]) {
+				if (key == keyIndex) {
+					keyScales[group * 2] = scaleX;
+					keyScales[group * 2 + 1] = scaleY;
+					resizeKeyGroup(group);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	@Override
 	public void resize(RectF screen, float left, float top, float right, float bottom) {
 		this.screen = screen;

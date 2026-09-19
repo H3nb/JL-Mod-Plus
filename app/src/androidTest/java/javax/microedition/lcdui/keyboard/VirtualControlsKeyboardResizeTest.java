@@ -39,6 +39,7 @@ public class VirtualControlsKeyboardResizeTest {
     private static final float EPS = 0.5f;
 
     private VirtualControlsKeyboard keyboard;
+    private ProfileModel settings;
     private Object[] keypad;
     private File profileDir;
 
@@ -49,7 +50,7 @@ public class VirtualControlsKeyboardResizeTest {
                 "virtual-controls-resize-" + System.nanoTime());
         assertTrue(profileDir.mkdirs());
 
-        ProfileModel settings = new ProfileModel();
+        settings = new ProfileModel();
         settings.dir = profileDir;
         settings.vkType = VirtualKeyboard.TYPE_NUM_ARR;
         settings.vkFeedback = false;
@@ -90,6 +91,25 @@ public class VirtualControlsKeyboardResizeTest {
         RectF after = rectField(keyByLabel("L"));
         assertTrue(after.width() > before.width());
         assertEquals(before.height(), after.height(), EPS);
+    }
+
+    @Test
+    public void standardTemplateUsesRectangularShouldersAndLargerMovementControl() throws Exception {
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+
+        RectF left = rectField(keyByLabel("L"));
+        RectF right = rectField(keyByLabel("R"));
+        RectF fire = rectField(keyByLabel("F"));
+        RectF star = rectField(keyByLabel("*"));
+        RectF zero = rectField(keyByLabel("0"));
+
+        assertTrue(left.width() > left.height() * 1.4f);
+        assertTrue(right.width() > right.height() * 1.4f);
+        assertTrue(left.centerY() < fire.centerY());
+        assertTrue(right.centerY() < fire.centerY());
+        assertTrue(star.centerY() > fire.centerY());
+        assertTrue(zero.centerY() > fire.centerY());
+        assertEquals(0.20f, settings.virtualDpadRadius, 0.0001f);
     }
 
     @Test

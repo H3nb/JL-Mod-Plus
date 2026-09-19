@@ -46,9 +46,9 @@ import io.github.h3nb.jlmodplus.input.VirtualDpadGeometry;
  *
  * Numeric/soft/game buttons remain ordinary legacy virtual keys. Movement controls are owned here
  * as two cohesive widgets: one D-pad and one analog stick. The user-facing editor has one gesture
- * model for all controls: drag with one finger to move and pinch with two fingers to resize. The
- * legacy keypad scale engine remains underneath so existing saved layouts keep their format and
- * snapping behavior.
+ * model for all controls: drag with one finger to move. Legacy buttons use two-finger horizontal
+ * and vertical spans for independent width/height resizing, while grouped D-pad/analog controls
+ * keep proportional pinch resizing. The existing keypad scale format remains unchanged.
  */
 public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public static final int TYPE_DPAD_STANDARD = 7;
@@ -62,7 +62,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_ANALOG_CENTER_X = 0.18f;
 	private static final float DEFAULT_ANALOG_CENTER_Y = 0.78f;
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
-	private static final float STANDARD_MOVEMENT_RADIUS = 0.18f;
+	private static final float STANDARD_MOVEMENT_RADIUS = 0.20f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
 	private static final float MIN_RADIUS_FRACTION = 0.07f;
@@ -244,6 +244,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			super.setLayout(LEGACY_TEMPLATE_NUMBERS_ARROWS);
 			applyStandardLegacyVisibility();
 			StandardVirtualControlsLayout layout = standardTemplateLayout();
+			setKeyGroupScaleByLabel(
+					"L",
+					layout.shoulderWidth / Math.max(1.0f, layout.keySize),
+					layout.shoulderHeight / Math.max(1.0f, layout.keySize));
 			arrangeStandardLegacyButtons(layout);
 
 			float width = Math.max(1.0f, screenBounds == null ? 1.0f : screenBounds.width());
@@ -307,14 +311,13 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	/**
-	 * Lay out the compact standard action cluster as one ergonomic unit. Wide screens prefer the
-	 * gutter to the right of the MIDlet; tall screens prefer the free deck below it. The movement
-	 * control uses the matching left-hand zone and sits slightly above F on side-gutter layouts.
+	 * Lay out the standard controls as two ergonomic zones: shoulder buttons across the upper
+	 * corners, movement in the lower-left, and F/*/0 in the lower-right.
 	 */
 	private void arrangeStandardLegacyButtons(StandardVirtualControlsLayout layout) {
 		if (screenBounds == null || overlayView == null || layout == null) return;
 		float keySize = layout.keySize;
-		float bottomRowY = screenBounds.bottom - keySize * 0.5f;
+		float sourceBottomRowY = screenBounds.bottom - keySize * 0.5f;
 		float fireSourceX = screenBounds.right - keySize * 1.5f;
 		float fireSourceY = screenBounds.bottom - keySize * 1.5f;
 		float softLeftSourceX = screenBounds.right - keySize * 2.5f;
@@ -322,23 +325,29 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float softSourceY = screenBounds.bottom - keySize * 3.5f;
 		float starSourceX = screenBounds.left + keySize * 0.5f;
 		float zeroSourceX = screenBounds.left + keySize * 1.5f;
+		float shoulderScaleX = layout.shoulderWidth / Math.max(1.0f, keySize);
+		float shoulderScaleY = layout.shoulderHeight / Math.max(1.0f, keySize);
+		float shoulderPointerOffsetX = (shoulderScaleX - 1.0f) * keySize * 0.5f;
+		float shoulderPointerOffsetY = (shoulderScaleY - 1.0f) * keySize * 0.5f;
 		int previousMode = getLayoutEditMode();
 
 		super.setLayoutEditMode(LAYOUT_KEYS);
 		try {
-			// Move F first so the compact right-hand target area cannot cover its legacy source before
-			// it is picked up. The remaining sources are disjoint in the Numbers & Arrows template.
 			moveLegacyTemplateKey(
 					fireSourceX, fireSourceY, layout.actionCenterX, layout.actionCenterY);
 			moveLegacyTemplateKey(
-					softLeftSourceX, softSourceY, layout.leftColumnX, layout.topRowY);
+					softLeftSourceX, softSourceY,
+					layout.shoulderLeftX - shoulderPointerOffsetX,
+					layout.shoulderCenterY - shoulderPointerOffsetY);
 			moveLegacyTemplateKey(
-					softRightSourceX, softSourceY, layout.rightColumnX, layout.topRowY);
+					softRightSourceX, softSourceY,
+					layout.shoulderRightX - shoulderPointerOffsetX,
+					layout.shoulderCenterY - shoulderPointerOffsetY);
 			// Move 0 before * because the legacy Numbers & Arrows layout initially snaps them together.
 			moveLegacyTemplateKey(
-					zeroSourceX, bottomRowY, layout.rightColumnX, layout.bottomRowY);
+					zeroSourceX, sourceBottomRowY, layout.bottomRightX, layout.bottomRowY);
 			moveLegacyTemplateKey(
-					starSourceX, bottomRowY, layout.leftColumnX, layout.bottomRowY);
+					starSourceX, sourceBottomRowY, layout.bottomLeftX, layout.bottomRowY);
 		} finally {
 			super.setLayoutEditMode(previousMode);
 			clearLegacyEditTracking();
