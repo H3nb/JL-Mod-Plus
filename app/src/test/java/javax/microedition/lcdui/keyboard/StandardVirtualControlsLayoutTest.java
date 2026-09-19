@@ -32,6 +32,7 @@ public class StandardVirtualControlsLayoutTest {
 		assertTrue(layout.movementUsesLeftGutter);
 		assertTrue(layout.actionsUseRightGutter);
 		assertTrue(layout.movementCenterX < 590.0f);
+		assertTrue(layout.movementCenterX < 295.0f);
 		assertTrue(layout.leftColumnX > 1190.0f);
 		assertTrue(layout.rightColumnX < 1820.0f);
 		assertTrue(layout.movementCenterY < layout.actionCenterY);

@@ -27,6 +27,7 @@ final class StandardVirtualControlsLayout {
 	private static final float EDGE_MARGIN_KEYS = 0.16f;
 	private static final float PORTRAIT_MOVEMENT_X_FRACTION = 0.27f;
 	private static final float SIDE_ACTION_CENTER_Y_FRACTION = 0.66f;
+	private static final float SIDE_MOVEMENT_X_OFFSET_KEYS = 0.07f;
 	private static final float SIDE_MOVEMENT_Y_OFFSET_KEYS = 0.15f;
 	private static final float BOTTOM_DECK_CENTER_FRACTION = 0.58f;
 
@@ -127,7 +128,9 @@ final class StandardVirtualControlsLayout {
 		if (movementUsesLeftGutter) {
 			float min = screenLeft + movementRadius + edgeMargin;
 			float max = safeGuestLeft - movementRadius - edgeMargin;
-			movementCenterX = clamp((screenLeft + safeGuestLeft) * 0.5f, min, max);
+			float preferred = (screenLeft + safeGuestLeft) * 0.5f
+					- keySize * SIDE_MOVEMENT_X_OFFSET_KEYS;
+			movementCenterX = clamp(preferred, min, max);
 		} else {
 			float preferred = screenLeft + width * PORTRAIT_MOVEMENT_X_FRACTION;
 			movementCenterX = clamp(
