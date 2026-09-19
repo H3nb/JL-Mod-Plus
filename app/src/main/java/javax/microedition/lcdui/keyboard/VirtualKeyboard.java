@@ -27,7 +27,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.view.View;
-import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
 
@@ -38,7 +37,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
-import java.util.EnumSet;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
@@ -204,8 +202,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private boolean controllerKeypadVisible;
 	private int controllerKeypadSelection;
 	private VirtualKey controllerKeypadPressed;
-	private final EnumSet<HostCommand> controllerKeypadMotionCommands =
-			EnumSet.noneOf(HostCommand.class);
 	private long pointerSourceSequence;
 
 	public VirtualKeyboard(ProfileModel settings) {
@@ -809,35 +805,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		return true;
 	}
 
-	/**
-	 * Converts a centered HAT/stick sample into edge-triggered keypad navigation. A held axis
-	 * moves once; crossing into another sector moves again, and returning to center releases the
-	 * synthetic navigation contacts. The same generic command path is used by keys and future
-	 * accessibility/remote sources.
-	 */
-	public boolean handleHostMotion(MotionEvent event) {
-		if (!controllerKeypadVisible) return false;
-		if (event.getActionMasked() != MotionEvent.ACTION_MOVE
-				&& event.getActionMasked() != MotionEvent.ACTION_HOVER_MOVE) return true;
-		float hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X);
-		float hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y);
-		float x = Math.abs(hatX) >= 0.5f ? hatX : event.getAxisValue(MotionEvent.AXIS_X);
-		float y = Math.abs(hatY) >= 0.5f ? hatY : event.getAxisValue(MotionEvent.AXIS_Y);
-		EnumSet<HostCommand> next = EnumSet.noneOf(HostCommand.class);
-		if (y <= -0.5f) next.add(HostCommand.NavigateUp);
-		if (y >= 0.5f) next.add(HostCommand.NavigateDown);
-		if (x <= -0.5f) next.add(HostCommand.NavigateLeft);
-		if (x >= 0.5f) next.add(HostCommand.NavigateRight);
-		for (HostCommand previous : EnumSet.copyOf(controllerKeypadMotionCommands)) {
-			if (!next.contains(previous)) handleHostCommand(previous, false);
-		}
-		for (HostCommand current : next) {
-			if (!controllerKeypadMotionCommands.contains(current)) handleHostCommand(current, true);
-		}
-		controllerKeypadMotionCommands.clear();
-		controllerKeypadMotionCommands.addAll(next);
-		return true;
-	}
 
 	private void moveControllerKeypadSelection(HostCommand direction) {
 		int size = CONTROLLER_KEYPAD_ORDER.length;
@@ -876,7 +843,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			controllerKeypadPressed = null;
 		}
 		controllerKeypadVisible = false;
-		controllerKeypadMotionCommands.clear();
 		for (int index : CONTROLLER_KEYPAD_ORDER) keypad[index].selected = false;
 		if (overlayView != null) overlayView.postInvalidate();
 	}

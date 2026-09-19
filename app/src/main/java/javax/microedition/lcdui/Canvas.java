@@ -564,11 +564,6 @@ public abstract class Canvas extends Displayable {
 				&& keyboard.handleHostCommand(command, pressed);
 	}
 
-	/** Gives the host keypad modal first refusal over normal guest motion routing. */
-	public boolean handleHostMotion(MotionEvent event) {
-		return overlay instanceof VirtualKeyboard keyboard
-				&& keyboard.handleHostMotion(event);
-	}
 
 	/** Installs the current controller pointer arbiter for this Canvas target. */
 	public void setControllerPointerConsumer(ControllerPointerConsumer consumer) {
