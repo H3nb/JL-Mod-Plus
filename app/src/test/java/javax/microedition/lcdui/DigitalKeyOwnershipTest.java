@@ -31,40 +31,67 @@ public class DigitalKeyOwnershipTest {
 	@Test
 	public void sharedTargetUsesFirstAcquireAndLastReleaseTransitions() {
 		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
-		long enter = DigitalKeyOwnership.sourceToken(DEVICE_ONE, KEYCODE_ENTER);
-		long buttonA = DigitalKeyOwnership.sourceToken(DEVICE_ONE, KEYCODE_BUTTON_A);
 
-		assertTrue(ownership.acquire(enter, Canvas.KEY_FIRE));
-		assertFalse(ownership.acquire(buttonA, Canvas.KEY_FIRE));
-		assertFalse(ownership.release(enter));
-		assertEquals(Canvas.KEY_FIRE, ownership.targetOf(buttonA));
-		assertTrue(ownership.release(buttonA));
+		DigitalKeyOwnership.Transition enter =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_ENTER, Canvas.KEY_FIRE);
+		DigitalKeyOwnership.Transition buttonA =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+		assertEquals(Canvas.KEY_FIRE, enter.pressedKey);
+		assertEquals(0, buttonA.pressedKey);
+
+		DigitalKeyOwnership.Transition enterUp =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_ENTER, 0);
+		assertEquals(0, enterUp.releasedKey);
+		assertEquals(Canvas.KEY_FIRE,
+				ownership.physicalKeyTarget(DEVICE_ONE, KEYCODE_BUTTON_A));
+
+		DigitalKeyOwnership.Transition buttonAUp =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_BUTTON_A, 0);
+		assertEquals(Canvas.KEY_FIRE, buttonAUp.releasedKey);
 	}
 
 	@Test
 	public void independentTargetsDoNotShareOwnership() {
 		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
-		long fireSource = DigitalKeyOwnership.sourceToken(DEVICE_ONE, KEYCODE_ENTER);
-		long upSource = DigitalKeyOwnership.sourceToken(DEVICE_ONE, KEYCODE_BUTTON_A);
 
-		assertTrue(ownership.acquire(fireSource, Canvas.KEY_FIRE));
-		assertTrue(ownership.acquire(upSource, Canvas.KEY_UP));
-		assertTrue(ownership.release(fireSource));
-		assertEquals(Canvas.KEY_UP, ownership.targetOf(upSource));
-		assertTrue(ownership.release(upSource));
+		DigitalKeyOwnership.Transition fire =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_ENTER, Canvas.KEY_FIRE);
+		DigitalKeyOwnership.Transition up =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_BUTTON_A, Canvas.KEY_UP);
+		assertEquals(Canvas.KEY_FIRE, fire.pressedKey);
+		assertEquals(Canvas.KEY_UP, up.pressedKey);
+
+		DigitalKeyOwnership.Transition fireUp =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_ENTER, 0);
+		assertEquals(Canvas.KEY_FIRE, fireUp.releasedKey);
+		assertEquals(Canvas.KEY_UP,
+				ownership.physicalKeyTarget(DEVICE_ONE, KEYCODE_BUTTON_A));
+
+		DigitalKeyOwnership.Transition upRelease =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_BUTTON_A, 0);
+		assertEquals(Canvas.KEY_UP, upRelease.releasedKey);
 	}
 
 	@Test
-	public void duplicateAcquireDoesNotChangePressTimeTargetOrOwnerCount() {
+	public void duplicatePhysicalSetIsIdempotent() {
 		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
-		long source = DigitalKeyOwnership.sourceToken(DEVICE_ONE, KEYCODE_BUTTON_A);
 
-		assertTrue(ownership.acquire(source, Canvas.KEY_FIRE));
-		assertFalse(ownership.acquire(source, Canvas.KEY_FIRE));
-		assertFalse(ownership.acquire(source, Canvas.KEY_UP));
-		assertEquals(Canvas.KEY_FIRE, ownership.targetOf(source));
-		assertTrue(ownership.release(source));
-		assertFalse(ownership.release(source));
+		DigitalKeyOwnership.Transition first =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+		DigitalKeyOwnership.Transition duplicate =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+		assertEquals(Canvas.KEY_FIRE, first.pressedKey);
+		assertEquals(0, duplicate.pressedKey);
+		assertEquals(0, duplicate.releasedKey);
+		assertEquals(Canvas.KEY_FIRE,
+				ownership.physicalKeyTarget(DEVICE_ONE, KEYCODE_BUTTON_A));
+
+		DigitalKeyOwnership.Transition release =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_BUTTON_A, 0);
+		assertEquals(Canvas.KEY_FIRE, release.releasedKey);
+		DigitalKeyOwnership.Transition lateRelease =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_BUTTON_A, 0);
+		assertEquals(0, lateRelease.releasedKey);
 	}
 
 	@Test
@@ -192,14 +219,22 @@ public class DigitalKeyOwnershipTest {
 	@Test
 	public void sameAndroidKeyFromDifferentDevicesRemainsIndependent() {
 		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
-		long firstDevice = DigitalKeyOwnership.sourceToken(DEVICE_ONE, KEYCODE_BUTTON_A);
-		long secondDevice = DigitalKeyOwnership.sourceToken(DEVICE_TWO, KEYCODE_BUTTON_A);
 
-		assertNotEquals(firstDevice, secondDevice);
-		assertTrue(ownership.acquire(firstDevice, Canvas.KEY_FIRE));
-		assertFalse(ownership.acquire(secondDevice, Canvas.KEY_FIRE));
-		assertFalse(ownership.release(firstDevice));
-		assertEquals(Canvas.KEY_FIRE, ownership.targetOf(secondDevice));
-		assertTrue(ownership.release(secondDevice));
+		DigitalKeyOwnership.Transition firstDevice =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+		DigitalKeyOwnership.Transition secondDevice =
+				ownership.setPhysicalKey(DEVICE_TWO, KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+		assertEquals(Canvas.KEY_FIRE, firstDevice.pressedKey);
+		assertEquals(0, secondDevice.pressedKey);
+
+		DigitalKeyOwnership.Transition firstRelease =
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_BUTTON_A, 0);
+		assertEquals(0, firstRelease.releasedKey);
+		assertEquals(Canvas.KEY_FIRE,
+				ownership.physicalKeyTarget(DEVICE_TWO, KEYCODE_BUTTON_A));
+
+		DigitalKeyOwnership.Transition secondRelease =
+				ownership.setPhysicalKey(DEVICE_TWO, KEYCODE_BUTTON_A, 0);
+		assertEquals(Canvas.KEY_FIRE, secondRelease.releasedKey);
 	}
 }

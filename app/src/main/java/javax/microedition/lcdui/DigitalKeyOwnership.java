@@ -40,27 +40,6 @@ final class DigitalKeyOwnership {
 	private final LongSparseArray<Integer> virtualKeyTargets = new LongSparseArray<>();
 	private final LongSparseArray<Integer> virtualDirectionalTargets = new LongSparseArray<>();
 
-	static long sourceToken(int deviceId, int androidKeyCode) {
-		return pairToken(deviceId, androidKeyCode);
-	}
-
-	boolean acquire(long sourceToken, int logicalKey) {
-		if (logicalKey == 0 || physicalKeyTargets.indexOfKey(sourceToken) >= 0) {
-			return false;
-		}
-		return setTarget(physicalKeyTargets, sourceToken, logicalKey).pressedKey == logicalKey;
-	}
-
-	int targetOf(long sourceToken) {
-		return targetOf(physicalKeyTargets, sourceToken);
-	}
-
-	boolean release(long sourceToken) {
-		int logicalKey = targetOf(sourceToken);
-		return logicalKey != 0
-				&& setTarget(physicalKeyTargets, sourceToken, 0).releasedKey == logicalKey;
-	}
-
 	Transition setPhysicalKey(int deviceId, int androidKeyCode, int logicalKey) {
 		return setTarget(physicalKeyTargets, pairToken(deviceId, androidKeyCode), logicalKey);
 	}
