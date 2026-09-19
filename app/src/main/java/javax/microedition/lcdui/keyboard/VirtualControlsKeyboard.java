@@ -62,8 +62,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_ANALOG_CENTER_X = 0.18f;
 	private static final float DEFAULT_ANALOG_CENTER_Y = 0.78f;
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
-	private static final float STANDARD_MOVEMENT_RADIUS_LANDSCAPE = 0.24f;
-	private static final float STANDARD_MOVEMENT_RADIUS_PORTRAIT = 0.20f;
+	private static final float STANDARD_MOVEMENT_RADIUS = 0.238f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
 	private static final float MIN_RADIUS_FRACTION = 0.07f;
@@ -293,23 +292,15 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float screenTop = screenBounds == null ? 0.0f : screenBounds.top;
 		float screenRight = screenBounds == null ? 1.0f : screenBounds.right;
 		float screenBottom = screenBounds == null ? 1.0f : screenBounds.bottom;
-		float guestLeft = guestBounds.width() > 1.0f ? guestBounds.left : screenLeft;
-		float guestTop = guestBounds.height() > 1.0f ? guestBounds.top : screenTop;
-		float guestRight = guestBounds.width() > 1.0f ? guestBounds.right : screenRight;
-		float guestBottom = guestBounds.height() > 1.0f ? guestBounds.bottom : screenBottom;
 		float shortest = Math.max(1.0f,
 				Math.min(screenRight - screenLeft, screenBottom - screenTop));
 		return StandardVirtualControlsLayout.resolve(
 				screenLeft, screenTop, screenRight, screenBottom,
-				guestLeft, guestTop, guestRight, guestBottom,
-				standardMovementRadius() * shortest);
+				STANDARD_MOVEMENT_RADIUS * shortest);
 	}
 
 	private float standardMovementRadius() {
-		if (screenBounds != null && screenBounds.width() > screenBounds.height()) {
-			return STANDARD_MOVEMENT_RADIUS_LANDSCAPE;
-		}
-		return STANDARD_MOVEMENT_RADIUS_PORTRAIT;
+		return STANDARD_MOVEMENT_RADIUS;
 	}
 
 	/**
@@ -355,11 +346,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public void resize(RectF screen, float left, float top, float right, float bottom) {
 		endDpad();
 		endAnalog();
-		boolean boundsChanged = rectChanged(screenBounds, screen.left, screen.top, screen.right, screen.bottom) ||
-				rectChanged(guestBounds, left, top, right, bottom);
+		boolean screenChanged = rectChanged(
+				screenBounds, screen.left, screen.top, screen.right, screen.bottom);
 		int layout = getLayout();
 		boolean reflowStandardTemplate = !applyingStandardTemplate && !standardTemplateEdited &&
-				isStandardTemplate(layout) && boundsChanged;
+				isStandardTemplate(layout) && screenChanged;
 
 		super.resize(screen, left, top, right, bottom);
 		screenBounds = new RectF(screen);

@@ -109,7 +109,30 @@ public class VirtualControlsKeyboardResizeTest {
         assertTrue(right.centerY() < fire.centerY());
         assertTrue(star.centerY() > fire.centerY());
         assertTrue(zero.centerY() > fire.centerY());
-        assertEquals(0.20f, settings.virtualDpadRadius, 0.0001f);
+        assertEquals(0.238f, settings.virtualDpadRadius, 0.0001f);
+    }
+
+    @Test
+    public void standardTemplateStaysScreenRelativeWithLetterboxedGuest() throws Exception {
+        keyboard.resize(new RectF(0f, 0f, 945f, 2048f), 18f, 0f, 812f, 1118f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+
+        RectF fire = rectField(keyByLabel("F"));
+        RectF star = rectField(keyByLabel("*"));
+        RectF zero = rectField(keyByLabel("0"));
+
+        assertEquals(945f * 0.740f, fire.centerX(), 3f);
+        assertEquals(2048f * 0.509f, fire.centerY(), 3f);
+        assertEquals(945f * 0.592f, star.centerX(), 3f);
+        assertEquals(2048f * 0.690f, star.centerY(), 3f);
+        assertEquals(945f * 0.885f, zero.centerX(), 3f);
+        assertEquals(2048f * 0.690f, zero.centerY(), 3f);
+
+        // The standard overlay intentionally ignores the guest's bottom edge (1118px).
+        assertTrue(star.centerY() > 1118f);
+        assertTrue(zero.centerY() > 1118f);
+        assertEquals(0.248f, settings.virtualDpadCenterX, 0.02f);
+        assertEquals(0.552f, settings.virtualDpadCenterY, 0.01f);
     }
 
     @Test
