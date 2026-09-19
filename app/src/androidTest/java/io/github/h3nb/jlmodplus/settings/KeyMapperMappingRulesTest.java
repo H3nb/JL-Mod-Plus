@@ -129,10 +129,28 @@ public class KeyMapperMappingRulesTest {
 
 		SparseIntArray persisted = KeyMapperMappingRules.diff(defaults, effective);
 		assertTrue(persisted.indexOfKey(KeyEvent.KEYCODE_BUTTON_A) >= 0);
-		assertEquals(0, persisted.get(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(KeyMapperMappingRules.UNMAPPED_TOMBSTONE,
+				persisted.get(KeyEvent.KEYCODE_BUTTON_A));
 		SparseIntArray restored = KeyMapperMappingRules.resolve(defaults, persisted);
 		assertEquals(-1, restored.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
 		assertEquals(Canvas.KEY_FIRE, restored.get(KeyEvent.KEYCODE_ENTER));
+	}
+
+	@Test
+	public void menuTargetRoundTripsWithoutCollidingWithTombstone() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		SparseIntArray effective = defaults.clone();
+		effective.put(KeyEvent.KEYCODE_BUTTON_START, KeyMapper.KEY_OPTIONS_MENU);
+
+		SparseIntArray persisted = KeyMapperMappingRules.diff(defaults, effective);
+		assertEquals(KeyMapper.KEY_OPTIONS_MENU,
+				persisted.get(KeyEvent.KEYCODE_BUTTON_START));
+		assertTrue(persisted.get(KeyEvent.KEYCODE_BUTTON_START)
+				!= KeyMapperMappingRules.UNMAPPED_TOMBSTONE);
+
+		SparseIntArray restored = KeyMapperMappingRules.resolve(defaults, persisted);
+		assertEquals(KeyMapper.KEY_OPTIONS_MENU,
+				restored.get(KeyEvent.KEYCODE_BUTTON_START));
 	}
 
 	@Test

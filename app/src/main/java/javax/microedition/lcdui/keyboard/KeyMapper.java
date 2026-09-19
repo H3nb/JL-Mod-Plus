@@ -29,6 +29,7 @@ import androidx.collection.SparseArrayCompat;
 import java.util.List;
 
 import io.github.h3nb.jlmodplus.config.ProfileModel;
+import io.github.h3nb.jlmodplus.settings.KeyMapperMappingRules;
 
 public class KeyMapper {
 	/** Host-only logical target used by the universal digital mapper to open the runtime menu. */
@@ -185,7 +186,7 @@ public class KeyMapper {
 			for (int i = 0, size = customKeyMap.size(); i < size; i++) {
 				int key = customKeyMap.keyAt(i);
 				int value = customKeyMap.valueAt(i);
-				if (value == 0) map.delete(key);
+				if (value == KeyMapperMappingRules.UNMAPPED_TOMBSTONE) map.delete(key);
 				else map.put(key, value);
 			}
 		}

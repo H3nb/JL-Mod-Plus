@@ -18,6 +18,9 @@ import android.util.SparseIntArray;
 
 /** Pure map operations shared by the host boundary and characterization tests. */
 public final class KeyMapperMappingRules {
+	/** Persisted sentinel meaning "explicitly remove the inherited default binding". */
+	public static final int UNMAPPED_TOMBSTONE = Integer.MIN_VALUE;
+
 	private KeyMapperMappingRules() {
 	}
 
@@ -38,7 +41,7 @@ public final class KeyMapperMappingRules {
 		return updated;
 	}
 
-	/** Resolves persisted overrides on top of defaults. A zero value is an explicit tombstone. */
+	/** Resolves persisted overrides on top of defaults. */
 	public static SparseIntArray resolve(
 			SparseIntArray defaults,
 			SparseIntArray overrides) {
@@ -47,15 +50,15 @@ public final class KeyMapperMappingRules {
 		for (int i = 0; i < overrides.size(); i++) {
 			int key = overrides.keyAt(i);
 			int value = overrides.valueAt(i);
-			if (value == 0) resolved.delete(key);
+			if (value == UNMAPPED_TOMBSTONE) resolved.delete(key);
 			else resolved.put(key, value);
 		}
 		return resolved;
 	}
 
 	/**
-	 * Stores only differences from defaults. Missing keys inherit defaults; value zero explicitly
-	 * removes a default binding.
+	 * Stores only differences from defaults. Missing keys inherit defaults; the tombstone
+	 * explicitly removes a default binding.
 	 */
 	public static SparseIntArray diff(
 			SparseIntArray defaults,
@@ -67,7 +70,7 @@ public final class KeyMapperMappingRules {
 			int key = base.keyAt(i);
 			int defaultValue = base.valueAt(i);
 			int index = current.indexOfKey(key);
-			if (index < 0) result.put(key, 0);
+			if (index < 0) result.put(key, UNMAPPED_TOMBSTONE);
 			else if (current.valueAt(index) != defaultValue) result.put(key, current.valueAt(index));
 		}
 		for (int i = 0; i < current.size(); i++) {
