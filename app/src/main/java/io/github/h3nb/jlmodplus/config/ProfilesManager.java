@@ -587,11 +587,16 @@ public class ProfilesManager {
 		int normalizedTimingMode = TimingMode.sanitize(params.timingMode);
 		boolean timingModeNeedsMigration = params.timingMode != normalizedTimingMode;
 		params.timingMode = normalizedTimingMode;
+		int normalizedAnalogCenterMode =
+				ProfileModel.sanitizeVirtualAnalogCenterMode(params.virtualAnalogCenterMode);
+		boolean analogCenterModeNeedsMigration =
+				params.virtualAnalogCenterMode != normalizedAnalogCenterMode;
+		params.virtualAnalogCenterMode = normalizedAnalogCenterMode;
 		if (versionNeedsMigration) {
 			params.version = ProfileModel.VERSION;
 		}
 		if (persistMigrations && (versionNeedsMigration || timingModeNeedsMigration
-				|| backgroundModeNeedsMigration)) {
+				|| backgroundModeNeedsMigration || analogCenterModeNeedsMigration)) {
 			if (saveConfig(params) && loadedLegacyFile && oldFile.delete()) {
 				Log.d(TAG, "loadConfig: old config file deleted");
 			}

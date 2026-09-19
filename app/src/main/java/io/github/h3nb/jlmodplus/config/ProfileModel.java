@@ -44,6 +44,8 @@ public class ProfileModel {
 	public static final int ANALOG_DIRECTION_4_WAY = 0;
 	public static final int ANALOG_DIRECTION_8_WAY = 1;
 	public static final int ANALOG_DIRECTION_NUMERIC = 2;
+	public static final int VIRTUAL_ANALOG_CENTER_FIXED = 0;
+	public static final int VIRTUAL_ANALOG_CENTER_RELATIVE = 1;
 
 	/** Stable preference key used to keep the built-in palette linked to the host theme. */
 	public static String builtInThemePreferenceKey(File configDir) {
@@ -152,6 +154,9 @@ public class ProfileModel {
 	@SerializedName("AnalogDirectionMode")
 	public int analogDirectionMode = ANALOG_DIRECTION_8_WAY;
 
+	@SerializedName("VirtualAnalogCenterMode")
+	public int virtualAnalogCenterMode = VIRTUAL_ANALOG_CENTER_FIXED;
+
 	@SerializedName("ButtonShape")
 	public int vkButtonShape;
 
@@ -246,6 +251,11 @@ public class ProfileModel {
 			case ANALOG_DIRECTION_4_WAY, ANALOG_DIRECTION_8_WAY, ANALOG_DIRECTION_NUMERIC -> mode;
 			default -> ANALOG_DIRECTION_8_WAY;
 		};
+	}
+
+	public static int sanitizeVirtualAnalogCenterMode(int mode) {
+		return mode == VIRTUAL_ANALOG_CENTER_RELATIVE
+				? VIRTUAL_ANALOG_CENTER_RELATIVE : VIRTUAL_ANALOG_CENTER_FIXED;
 	}
 
 	/** Applies the theme-owned colors used by the app-provided profile template. */

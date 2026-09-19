@@ -61,21 +61,69 @@ public class DirectionalControlGeometryTest {
 	}
 
 	@Test
-	public void analogTouchDownIsNeutralUntilFirstMove() {
+	public void fixedAnalogDownIsNeutralAndMoveUsesConfiguredCenter() {
+		DirectionalControlGeometry.AnalogCenterState center =
+				new DirectionalControlGeometry.AnalogCenterState();
+		center.begin(false, CENTER_X, CENTER_Y, CENTER_X + 30.0f, CENTER_Y + 20.0f);
+
 		DirectionalControlGeometry.Sample down = DirectionalControlGeometry.gestureSample(
-				true, false, CENTER_X, CENTER_Y, RADIUS,
-				CENTER_X + RADIUS, CENTER_Y);
+				true, false,
+				center.centerX(CENTER_X), center.centerY(CENTER_Y), RADIUS,
+				CENTER_X + 30.0f, CENTER_Y + 20.0f);
 		assertEquals(0.0f, down.x, EPSILON);
 		assertEquals(0.0f, down.y, EPSILON);
 		assertEquals(CENTER_X, down.thumbX, EPSILON);
 		assertEquals(CENTER_Y, down.thumbY, EPSILON);
 
 		DirectionalControlGeometry.Sample move = DirectionalControlGeometry.gestureSample(
-				true, true, CENTER_X, CENTER_Y, RADIUS,
-				CENTER_X + RADIUS, CENTER_Y);
-		assertEquals(1.0f, move.x, EPSILON);
+				true, true,
+				center.centerX(CENTER_X), center.centerY(CENTER_Y), RADIUS,
+				CENTER_X + RADIUS * 0.5f, CENTER_Y);
+		assertEquals(0.5f, move.x, EPSILON);
 		assertEquals(0.0f, move.y, EPSILON);
-		assertEquals(CENTER_X + RADIUS, move.thumbX, EPSILON);
+		assertEquals(CENTER_X + RADIUS * 0.5f, move.thumbX, EPSILON);
+	}
+
+	@Test
+	public void relativeAnalogUsesInitialTouchAsFixedGestureCenter() {
+		DirectionalControlGeometry.AnalogCenterState center =
+				new DirectionalControlGeometry.AnalogCenterState();
+		center.begin(true, 100.0f, 100.0f, 160.0f, 140.0f);
+
+		assertTrue(center.hasTemporaryCenter());
+		assertEquals(160.0f, center.centerX(100.0f), EPSILON);
+		assertEquals(140.0f, center.centerY(100.0f), EPSILON);
+
+		DirectionalControlGeometry.Sample down = DirectionalControlGeometry.gestureSample(
+				true, false, center.centerX(100.0f), center.centerY(100.0f), RADIUS,
+				160.0f, 140.0f);
+		assertEquals(0.0f, down.x, EPSILON);
+		assertEquals(0.0f, down.y, EPSILON);
+		assertEquals(160.0f, down.thumbX, EPSILON);
+		assertEquals(140.0f, down.thumbY, EPSILON);
+
+		DirectionalControlGeometry.Sample fullRight = DirectionalControlGeometry.gestureSample(
+				true, true, center.centerX(100.0f), center.centerY(100.0f), RADIUS,
+				210.0f, 140.0f);
+		assertEquals(1.0f, fullRight.x, EPSILON);
+		assertEquals(0.0f, fullRight.y, EPSILON);
+
+		DirectionalControlGeometry.Sample firstMove = DirectionalControlGeometry.gestureSample(
+				true, true, center.centerX(100.0f), center.centerY(100.0f), RADIUS,
+				180.0f, 140.0f);
+		DirectionalControlGeometry.Sample secondMove = DirectionalControlGeometry.gestureSample(
+				true, true, center.centerX(100.0f), center.centerY(100.0f), RADIUS,
+				200.0f, 160.0f);
+		assertEquals(0.4f, firstMove.x, EPSILON);
+		assertEquals(0.8f, secondMove.x, EPSILON);
+		assertEquals(0.4f, secondMove.y, EPSILON);
+		assertEquals(160.0f, center.centerX(100.0f), EPSILON);
+		assertEquals(140.0f, center.centerY(100.0f), EPSILON);
+
+		center.clear();
+		assertTrue(!center.hasTemporaryCenter());
+		assertEquals(100.0f, center.centerX(100.0f), EPSILON);
+		assertEquals(100.0f, center.centerY(100.0f), EPSILON);
 	}
 
 	@Test
@@ -115,6 +163,23 @@ public class DirectionalControlGeometryTest {
 		assertEquals(RADIUS * 0.28f,
 				DirectionalControlGeometry.analogThumbRadius(RADIUS), EPSILON);
 		assertTrue(DirectionalControlGeometry.analogThumbRadius(RADIUS) < RADIUS * 0.44f);
+	}
+
+	@Test
+	public void relativeCaptureUsesDirectionalAllocationWithoutBecomingGlobal() {
+		float left = CENTER_X - RADIUS;
+		float top = CENTER_Y - RADIUS;
+		float right = CENTER_X + RADIUS;
+		float bottom = CENTER_Y + RADIUS;
+		float cornerX = CENTER_X + RADIUS * 0.9f;
+		float cornerY = CENTER_Y - RADIUS * 0.9f;
+
+		assertTrue(!DirectionalControlGeometry.containsAnalogCapture(
+				CENTER_X, CENTER_Y, RADIUS, cornerX, cornerY));
+		assertTrue(DirectionalControlGeometry.containsRelativeCapture(
+				left, top, right, bottom, cornerX, cornerY));
+		assertTrue(!DirectionalControlGeometry.containsRelativeCapture(
+				left, top, right, bottom, right + 1.0f, CENTER_Y));
 	}
 
 	@Test

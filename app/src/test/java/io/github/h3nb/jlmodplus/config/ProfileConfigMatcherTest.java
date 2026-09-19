@@ -168,6 +168,39 @@ public class ProfileConfigMatcherTest {
 	}
 
 	@Test
+	public void virtualAnalogCenterModeDefaultsSanitizesAndPersists() throws Exception {
+		File directory = Files.createTempDirectory("jlmod-analog-center").toFile();
+		directory.deleteOnExit();
+		File config = new File(directory, Config.MIDLET_CONFIG_FILE);
+		Gson gson = new Gson();
+
+		Files.write(config.toPath(),
+				"{\"Version\":7}".getBytes(StandardCharsets.UTF_8));
+		ProfileModel legacy = ProfilesManager.loadConfig(directory, false,
+				ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false);
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_FIXED, legacy.virtualAnalogCenterMode);
+
+		JsonObject invalid = new JsonObject();
+		invalid.addProperty("Version", ProfileModel.VERSION);
+		invalid.addProperty("VirtualAnalogCenterMode", 99);
+		Files.write(config.toPath(), gson.toJson(invalid).getBytes(StandardCharsets.UTF_8));
+		ProfileModel sanitized = ProfilesManager.loadConfig(directory);
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_FIXED, sanitized.virtualAnalogCenterMode);
+		String normalized = new String(Files.readAllBytes(config.toPath()), StandardCharsets.UTF_8);
+		assertTrue(normalized.contains("\"VirtualAnalogCenterMode\": 0"));
+
+		sanitized.virtualAnalogCenterMode = ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE;
+		assertTrue(ProfilesManager.saveConfig(sanitized));
+		ProfileModel relative = ProfilesManager.loadConfig(directory, false);
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE, relative.virtualAnalogCenterMode);
+
+		relative.virtualAnalogCenterMode = ProfileModel.VIRTUAL_ANALOG_CENTER_FIXED;
+		assertTrue(ProfilesManager.saveConfig(relative));
+		ProfileModel fixed = ProfilesManager.loadConfig(directory, false);
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_FIXED, fixed.virtualAnalogCenterMode);
+	}
+
+	@Test
 	public void builtInThemeSwitchUpdatesOnlyThemeOwnedPalette() {
 		ProfileModel profile = new ProfileModel();
 		profile.screenWidth = 360;

@@ -181,7 +181,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private final RectF dpadCenter = new RectF();
 	private final RectF dpadRight = new RectF();
 	private final RectF dpadDown = new RectF();
+	private final RectF analogBase = new RectF();
 	private final RectF analogThumb = new RectF();
+	private final DirectionalControlGeometry.AnalogCenterState analogCenter =
+			new DirectionalControlGeometry.AnalogCenterState();
 
 	private Canvas target;
 	private View overlayView;
@@ -1012,8 +1015,16 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		g.setDrawColor(alpha | settings.vkOutlineColor);
 
 		if (layoutVariant == TYPE_ANALOG) {
-			g.fillArc(groupedCircle, 0, 360);
-			g.drawArc(groupedCircle, 0, 360);
+			float baseRadius = analogBaseRadius();
+			float baseCenterX = analogCenter.centerX(groupedCircle.centerX());
+			float baseCenterY = analogCenter.centerY(groupedCircle.centerY());
+			analogBase.set(
+					baseCenterX - baseRadius,
+					baseCenterY - baseRadius,
+					baseCenterX + baseRadius,
+					baseCenterY + baseRadius);
+			g.fillArc(analogBase, 0, 360);
+			g.drawArc(analogBase, 0, 360);
 			float thumbRadius = analogThumbRadius();
 			analogThumb.set(
 					directionalThumbX - thumbRadius,
@@ -1052,6 +1063,14 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				if (isGroupedDirectionalLayout() && directionalPointer < 0
 						&& isDirectionalControlVisible() && isDirectionalCaptureHit(x, y)) {
 					directionalPointer = pointer;
+					if (layoutVariant == TYPE_ANALOG) {
+						analogCenter.begin(
+								isRelativeAnalogCenter(),
+								groupedCircle.centerX(),
+								groupedCircle.centerY(),
+								x,
+								y);
+					}
 					vibrate();
 					updateDirectionalTouch(x, y, false);
 					return true;
@@ -1273,6 +1292,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 		associatedKeys.clear();
 		directionalPointer = -1;
+		analogCenter.clear();
 		centerDirectionalThumb();
 		for (VirtualKey key : keypad) {
 			key.cancelState();
@@ -1331,27 +1351,51 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		if (layoutVariant != TYPE_ANALOG) {
 			return directionalBounds.contains(x, y);
 		}
-		float baseRadius = Math.min(groupedCircle.width(), groupedCircle.height()) / 2.0f;
+		if (isRelativeAnalogCenter()) {
+			return DirectionalControlGeometry.containsRelativeCapture(
+					directionalBounds.left,
+					directionalBounds.top,
+					directionalBounds.right,
+					directionalBounds.bottom,
+					x,
+					y);
+		}
 		return DirectionalControlGeometry.containsAnalogCapture(
-				groupedCircle.centerX(), groupedCircle.centerY(), baseRadius, x, y);
+				groupedCircle.centerX(), groupedCircle.centerY(), analogBaseRadius(), x, y);
+	}
+
+	private boolean isRelativeAnalogCenter() {
+		return ProfileModel.sanitizeVirtualAnalogCenterMode(settings.virtualAnalogCenterMode)
+				== ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE;
+	}
+
+	private float analogBaseRadius() {
+		return Math.min(groupedCircle.width(), groupedCircle.height()) / 2.0f;
 	}
 
 	private float analogThumbRadius() {
-		float baseRadius = Math.min(groupedCircle.width(), groupedCircle.height()) / 2.0f;
-		return DirectionalControlGeometry.analogThumbRadius(baseRadius);
+		return DirectionalControlGeometry.analogThumbRadius(analogBaseRadius());
 	}
 
 	private void updateDirectionalTouch(float x, float y, boolean movementSample) {
 		if (target == null || directionalBounds.isEmpty()) {
 			return;
 		}
-		RectF control = layoutVariant == TYPE_ANALOG ? groupedCircle : directionalBounds;
-		float radius = Math.min(control.width(), control.height()) / 2.0f;
+		boolean analog = layoutVariant == TYPE_ANALOG;
+		float radius = analog
+				? analogBaseRadius()
+				: Math.min(directionalBounds.width(), directionalBounds.height()) / 2.0f;
+		float centerX = analog
+				? analogCenter.centerX(groupedCircle.centerX())
+				: directionalBounds.centerX();
+		float centerY = analog
+				? analogCenter.centerY(groupedCircle.centerY())
+				: directionalBounds.centerY();
 		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.gestureSample(
-				layoutVariant == TYPE_ANALOG,
+				analog,
 				movementSample,
-				control.centerX(),
-				control.centerY(),
+				centerX,
+				centerY,
 				radius,
 				x,
 				y);
@@ -1374,6 +1418,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 		}
 		directionalPointer = -1;
+		analogCenter.clear();
 		centerDirectionalThumb();
 		overlayView.postInvalidate();
 	}

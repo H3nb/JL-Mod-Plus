@@ -176,6 +176,10 @@
     <string name="pref_analog_direction_mode_8_way">8-way</string>
     <string name="pref_analog_direction_mode_numeric">Numeric</string>
     <string name="config_help_analog_direction_mode">Choose how physical and virtual analog sticks map to J2ME directional input.</string>
+    <string name="pref_virtual_analog_center_title">Analog Center</string>
+    <string name="pref_virtual_analog_center_fixed">Fixed</string>
+    <string name="pref_virtual_analog_center_relative">Relative</string>
+    <string name="config_help_virtual_analog_center">Choose whether the virtual analog uses its layout center or the initial touch.</string>
     <string name="pref_button_shape_title">Button Shape</string>
     <string name="pref_category_experimental">Experimental/Temporary Options</string>
     <string name="pref_emulator_dir">Working Directory</string>

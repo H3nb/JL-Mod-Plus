@@ -599,6 +599,26 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun virtualAnalogCenterChoiceUpdatesDraft() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Controls)
+            }
+        }
+
+        composeRule.onNodeWithText("Analog Center").performScrollTo().performClick()
+        composeRule.onNode(
+            hasText("Relative") and hasAnyAncestor(isDialog()),
+        ).performClick()
+
+        assertEquals(
+            ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE,
+            events.lastForm?.virtualAnalogCenterMode,
+        )
+    }
+
+    @Test
     fun systemPropertiesUseFocusedEditorAndHideDelayUsesMilliseconds() {
         val events = RecordingConfigEvents()
         val baseState = sampleState()

@@ -134,6 +134,25 @@ public class ConfigFormStateTest {
 	}
 
 	@Test
+	public void virtualAnalogCenterDefaultsSanitizesAndRoundTripsThroughForm() {
+		ProfileModel legacy = new Gson().fromJson("{\"Version\":7}", ProfileModel.class);
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_FIXED, legacy.virtualAnalogCenterMode);
+
+		ConfigFormState invalid = ConfigFormState.builder()
+				.virtualAnalogCenterMode(99)
+				.build();
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_FIXED, invalid.virtualAnalogCenterMode);
+
+		legacy.virtualAnalogCenterMode = ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE;
+		ConfigFormState state = ConfigFormState.fromProfile(legacy, "");
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE, state.virtualAnalogCenterMode);
+
+		ProfileModel applied = new ProfileModel();
+		state.applyTo(applied);
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE, applied.virtualAnalogCenterMode);
+	}
+
+	@Test
 	public void systemPropertiesKeepLastValueAndSortKeys() {
 		assertEquals(
 				"a: second\nb: value\n",

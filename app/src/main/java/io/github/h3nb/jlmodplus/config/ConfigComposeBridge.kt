@@ -1325,6 +1325,19 @@ private fun InputSection(
                 onFormChanged(form.toBuilder().analogDirectionMode(index).build())
             },
         )
+        val analogCenterOptions =
+            stringArrayResource(R.array.pref_virtual_analog_center_entries).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_virtual_analog_center_title),
+            description = stringResource(R.string.config_help_virtual_analog_center),
+            selected = analogCenterOptions.getOrElse(form.virtualAnalogCenterMode) {
+                analogCenterOptions.getOrElse(ProfileModel.VIRTUAL_ANALOG_CENTER_FIXED) { "" }
+            },
+            options = analogCenterOptions,
+            onSelected = { index ->
+                onFormChanged(form.toBuilder().virtualAnalogCenterMode(index).build())
+            },
+        )
     }
     ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard)) {
         ConfigSwitchPreference(

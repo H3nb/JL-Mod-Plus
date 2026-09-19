@@ -56,6 +56,10 @@ virtual analog stick.
   quantization. Analog Direction Mode selects 4-way, 8-way (the default), or
   Numeric output; Numeric uses the raw phone-keypad direction keys 1/2/3/4/6/7/8/9.
   No low-pass or time-based smoothing is applied.
+- The virtual analog supports Fixed and Relative center modes. Relative uses the
+  initial touch as the center for that gesture only, then returns the base and
+  thumb to the configured layout center on release or cancellation. Center
+  selection happens before the unchanged analog radial and direction processing.
 - All guest logical keys share first-owner/last-owner ownership in Canvas. A
   second source holding the same key does not emit another press, and releasing
   one source cannot release the key while another owner remains.

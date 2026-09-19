@@ -33,6 +33,39 @@ final class DirectionalControlGeometry {
 		}
 	}
 
+	static final class AnalogCenterState {
+		private boolean temporary;
+		private float centerX;
+		private float centerY;
+
+		void begin(
+				boolean relative,
+				float configuredCenterX,
+				float configuredCenterY,
+				float touchX,
+				float touchY) {
+			temporary = relative && Float.isFinite(touchX) && Float.isFinite(touchY);
+			centerX = temporary ? touchX : configuredCenterX;
+			centerY = temporary ? touchY : configuredCenterY;
+		}
+
+		float centerX(float configuredCenterX) {
+			return temporary ? centerX : configuredCenterX;
+		}
+
+		float centerY(float configuredCenterY) {
+			return temporary ? centerY : configuredCenterY;
+		}
+
+		boolean hasTemporaryCenter() {
+			return temporary;
+		}
+
+		void clear() {
+			temporary = false;
+		}
+	}
+
 	private DirectionalControlGeometry() {
 	}
 
@@ -85,6 +118,20 @@ final class DirectionalControlGeometry {
 			float y) {
 		return containsRadially(
 				centerX, centerY, baseRadius * ANALOG_CAPTURE_RADIUS_SCALE, x, y);
+	}
+
+	static boolean containsRelativeCapture(
+			float left,
+			float top,
+			float right,
+			float bottom,
+			float x,
+			float y) {
+		return Float.isFinite(left) && Float.isFinite(top)
+				&& Float.isFinite(right) && Float.isFinite(bottom)
+				&& Float.isFinite(x) && Float.isFinite(y)
+				&& left <= right && top <= bottom
+				&& x >= left && x <= right && y >= top && y <= bottom;
 	}
 
 	static boolean containsRadially(
