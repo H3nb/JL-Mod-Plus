@@ -42,7 +42,7 @@ public class StandardVirtualControlsLayoutTest {
 	}
 
 	@Test
-	public void portraitKeepsCompactBottomDeckFallback() {
+	public void portraitKeepsMovementAndActionZonesSeparated() {
 		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
 				0.0f, 0.0f, 864.0f, 1820.0f,
 				0.0f, 0.0f, 864.0f, 1110.0f,
@@ -50,11 +50,26 @@ public class StandardVirtualControlsLayoutTest {
 
 		assertFalse(layout.movementUsesLeftGutter);
 		assertFalse(layout.actionsUseRightGutter);
-		assertTrue(layout.actionCenterY > 1110.0f);
-		assertEquals(layout.actionCenterY, layout.movementCenterY, EPS);
+		assertTrue(layout.movementCenterY > 1820.0f * 0.55f);
+		assertTrue(layout.actionCenterY > 1820.0f * 0.45f);
 		assertTrue(layout.shoulderCenterY < layout.actionCenterY);
 		assertTrue(layout.bottomRowY > layout.actionCenterY);
 		assertTrue(layout.movementCenterX < layout.bottomLeftX);
+	}
+
+	@Test
+	public void portraitPlacesShouldersAtTopAndMovementAtBottom() {
+		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
+				0.0f, 0.0f, 864.0f, 1820.0f,
+				0.0f, 0.0f, 864.0f, 1110.0f,
+				0.20f * 864.0f);
+
+		assertTrue(layout.shoulderCenterY < 1820.0f * 0.25f);
+		assertTrue(layout.shoulderLeftX < 864.0f * 0.35f);
+		assertTrue(layout.shoulderRightX > 864.0f * 0.65f);
+		assertTrue(layout.movementCenterY > 1820.0f * 0.55f);
+		assertTrue(layout.actionCenterY > 1820.0f * 0.45f);
+		assertTrue(layout.bottomRowY > layout.actionCenterY);
 	}
 
 	@Test

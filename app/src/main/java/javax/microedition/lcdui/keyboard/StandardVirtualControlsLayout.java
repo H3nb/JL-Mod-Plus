@@ -17,23 +17,28 @@ package javax.microedition.lcdui.keyboard;
  * Pure geometry resolver for the built-in D-pad/analog standard templates.
  *
  * Landscape keeps shoulder buttons near the upper corners, movement in the lower-left thumb zone,
- * and the F, *, and 0 action cluster in the lower-right. Portrait keeps the compact bottom-deck fallback.
+ * and the F, *, and 0 action cluster in the lower-right. Portrait uses the same zones in a
+ * vertically stacked arrangement so the shoulders stay clear of the movement and action controls.
  */
 final class StandardVirtualControlsLayout {
 	private static final float BOTTOM_COLUMN_OFFSET_KEYS = 0.85f;
-	private static final float PORTRAIT_ROW_OFFSET_KEYS = 1.00f;
 	private static final float EDGE_MARGIN_KEYS = 0.16f;
 	private static final float PORTRAIT_MOVEMENT_X_FRACTION = 0.27f;
+	private static final float PORTRAIT_MOVEMENT_Y_FRACTION = 0.70f;
+	private static final float PORTRAIT_ACTION_X_FRACTION = 0.74f;
+	private static final float PORTRAIT_ACTION_Y_FRACTION = 0.56f;
+	private static final float PORTRAIT_BOTTOM_Y_FRACTION = 0.78f;
+	private static final float PORTRAIT_SHOULDER_X_FRACTION = 0.19f;
+	private static final float PORTRAIT_SHOULDER_Y_FRACTION = 0.12f;
 	private static final float LANDSCAPE_MOVEMENT_X_FRACTION = 0.26f;
-	private static final float LANDSCAPE_MOVEMENT_Y_FRACTION = 0.65f;
+	private static final float LANDSCAPE_MOVEMENT_Y_FRACTION = 0.60f;
 	private static final float LANDSCAPE_ACTION_X_FRACTION = 0.75f;
-	private static final float LANDSCAPE_ACTION_Y_FRACTION = 0.56f;
-	private static final float LANDSCAPE_BOTTOM_Y_FRACTION = 0.76f;
-	private static final float LANDSCAPE_SHOULDER_X_FRACTION = 0.12f;
+	private static final float LANDSCAPE_ACTION_Y_FRACTION = 0.54f;
+	private static final float LANDSCAPE_BOTTOM_Y_FRACTION = 0.74f;
+	private static final float LANDSCAPE_SHOULDER_X_FRACTION = 0.16f;
 	private static final float LANDSCAPE_SHOULDER_Y_FRACTION = 0.15f;
-	private static final float SHOULDER_WIDTH_KEYS = 1.55f;
+	private static final float SHOULDER_WIDTH_KEYS = 2.05f;
 	private static final float SHOULDER_HEIGHT_KEYS = 0.90f;
-	private static final float BOTTOM_DECK_CENTER_FRACTION = 0.58f;
 
 	final float keySize;
 	final float movementCenterX;
@@ -103,17 +108,13 @@ final class StandardVirtualControlsLayout {
 		float halfKey = keySize * 0.5f;
 		float edgeMargin = keySize * EDGE_MARGIN_KEYS;
 		float bottomColumnOffset = keySize * BOTTOM_COLUMN_OFFSET_KEYS;
-		float portraitRowOffset = keySize * PORTRAIT_ROW_OFFSET_KEYS;
 		float shoulderWidth = keySize * SHOULDER_WIDTH_KEYS;
 		float shoulderHeight = keySize * SHOULDER_HEIGHT_KEYS;
 
 		float safeGuestLeft = clamp(guestLeft, screenLeft, screenRight);
-		float safeGuestTop = clamp(guestTop, screenTop, screenBottom);
 		float safeGuestRight = clamp(guestRight, safeGuestLeft, screenRight);
-		float safeGuestBottom = clamp(guestBottom, safeGuestTop, screenBottom);
 		float leftGutter = Math.max(0.0f, safeGuestLeft - screenLeft);
 		float rightGutter = Math.max(0.0f, screenRight - safeGuestRight);
-		float bottomDeck = Math.max(0.0f, screenBottom - safeGuestBottom);
 		float movementFit = movementRadius * 2.0f + edgeMargin * 2.0f;
 		float actionHalfWidth = bottomColumnOffset + halfKey;
 		float actionFit = actionHalfWidth * 2.0f + edgeMargin * 2.0f;
@@ -171,31 +172,43 @@ final class StandardVirtualControlsLayout {
 					screenTop + shoulderHalfHeight + edgeMargin,
 					screenBottom - shoulderHalfHeight - edgeMargin);
 		} else {
-			float minCenterY = screenTop + portraitRowOffset + halfKey + edgeMargin;
-			float maxCenterY = screenBottom - portraitRowOffset - halfKey - edgeMargin;
-			float fullClusterHeight = portraitRowOffset * 2.0f + keySize + edgeMargin * 2.0f;
-			if (bottomDeck >= fullClusterHeight) {
-				actionCenterY = safeGuestBottom + bottomDeck * BOTTOM_DECK_CENTER_FRACTION;
-			} else {
-				actionCenterY = screenBottom - portraitRowOffset - halfKey - edgeMargin;
-			}
-			actionCenterY = clamp(actionCenterY, minCenterY, maxCenterY);
-			bottomRowY = actionCenterY + portraitRowOffset;
-			shoulderCenterY = actionCenterY - portraitRowOffset;
+			float minCenterY = screenTop + halfKey + edgeMargin;
+			float maxCenterY = screenBottom - halfKey - edgeMargin;
+			actionCenterX = clamp(
+					screenLeft + width * PORTRAIT_ACTION_X_FRACTION,
+					screenLeft + actionHalfWidth + edgeMargin,
+					screenRight - actionHalfWidth - edgeMargin);
+			actionCenterY = clamp(
+					screenTop + height * PORTRAIT_ACTION_Y_FRACTION,
+					minCenterY,
+					maxCenterY);
+			bottomRowY = clamp(
+					screenTop + height * PORTRAIT_BOTTOM_Y_FRACTION,
+					actionCenterY + halfKey + edgeMargin,
+					maxCenterY);
+			shoulderCenterY = clamp(
+					screenTop + height * PORTRAIT_SHOULDER_Y_FRACTION,
+					screenTop + shoulderHeight * 0.5f + edgeMargin,
+					screenBottom - shoulderHeight * 0.5f - edgeMargin);
 
 			movementCenterX = clamp(
 					screenLeft + width * PORTRAIT_MOVEMENT_X_FRACTION,
 					screenLeft + movementRadius + edgeMargin,
 					screenRight - movementRadius - edgeMargin);
-			movementCenterY = actionCenterY;
+			movementCenterY = clamp(
+					screenTop + height * PORTRAIT_MOVEMENT_Y_FRACTION,
+					screenTop + movementRadius + edgeMargin,
+					screenBottom - movementRadius - edgeMargin);
 
-			actionCenterX = screenRight - actionHalfWidth - edgeMargin;
-			actionCenterX = clamp(
-					actionCenterX,
-					screenLeft + actionHalfWidth + edgeMargin,
-					screenRight - actionHalfWidth - edgeMargin);
-			shoulderLeftX = actionCenterX - bottomColumnOffset;
-			shoulderRightX = actionCenterX + bottomColumnOffset;
+			float shoulderHalfWidth = shoulderWidth * 0.5f;
+			shoulderLeftX = clamp(
+					screenLeft + width * PORTRAIT_SHOULDER_X_FRACTION,
+					screenLeft + shoulderHalfWidth + edgeMargin,
+					screenRight - shoulderHalfWidth - edgeMargin);
+			shoulderRightX = clamp(
+					screenRight - width * PORTRAIT_SHOULDER_X_FRACTION,
+					screenLeft + shoulderHalfWidth + edgeMargin,
+					screenRight - shoulderHalfWidth - edgeMargin);
 		}
 
 		return new StandardVirtualControlsLayout(
