@@ -170,6 +170,8 @@ public abstract class Canvas extends Displayable {
 	private final SparseArray<DirectionalInterpreter> stickDirections = new SparseArray<>();
 	private final DirectionalInterpreter virtualDpadDirection = new DirectionalInterpreter();
 	private final DirectionalInterpreter virtualAnalogDirection = new DirectionalInterpreter();
+	private final Handler syntheticRepeatHandler;
+	private final SyntheticDirectionalRepeater syntheticDirectionalRepeater;
 
 	protected int width, height;
 	protected int maxHeight;
@@ -222,6 +224,20 @@ public abstract class Canvas extends Displayable {
 
 	protected Canvas(boolean fullscreen) {
 		this.fullscreen = fullscreen;
+		syntheticRepeatHandler = new Handler(Looper.getMainLooper());
+		syntheticDirectionalRepeater = new SyntheticDirectionalRepeater(
+				new SyntheticDirectionalRepeater.Scheduler() {
+					@Override
+					public void postDelayed(Runnable task, long delayMillis) {
+						syntheticRepeatHandler.postDelayed(task, delayMillis);
+					}
+
+					@Override
+					public void removeCallbacks(Runnable task) {
+						syntheticRepeatHandler.removeCallbacks(task);
+					}
+				},
+				this::dispatchGuestKeyRepeated);
 		themeBackgroundArgb = AppBackgroundColors.argb(
 				ProfileModel.isDarkTheme(ContextHolder.getActivity()));
 		super.softBar = softBar;
@@ -532,23 +548,25 @@ public abstract class Canvas extends Displayable {
 		int mode = ProfileModel.sanitizeAnalogDirectionMode(settings.analogDirectionMode);
 		DirectionalInterpreter.Direction direction = virtualAnalogDirection.updateAnalog(
 				x, y, AnalogDirectionMapper.sectorCountForMode(mode));
-		applyGuestTransition(keyOwnership.setVirtualDirection(
-				VIRTUAL_DIRECTION_ANALOG_X, AnalogDirectionMapper.horizontalKey(direction, mode)));
-		applyGuestTransition(keyOwnership.setVirtualDirection(
-				VIRTUAL_DIRECTION_ANALOG_Y, AnalogDirectionMapper.verticalKey(direction, mode)));
-		applyGuestTransition(keyOwnership.setVirtualDirection(
-				VIRTUAL_DIRECTION_ANALOG_NUMERIC, AnalogDirectionMapper.numericKey(direction, mode)));
+		setVirtualDirectionalTarget(
+				VIRTUAL_DIRECTION_ANALOG_X, AnalogDirectionMapper.horizontalKey(direction, mode));
+		setVirtualDirectionalTarget(
+				VIRTUAL_DIRECTION_ANALOG_Y, AnalogDirectionMapper.verticalKey(direction, mode));
+		setVirtualDirectionalTarget(
+				VIRTUAL_DIRECTION_ANALOG_NUMERIC, AnalogDirectionMapper.numericKey(direction, mode));
 	}
 
 	public void releaseVirtualGuestInputs() {
 		virtualDpadDirection.reset();
 		virtualAnalogDirection.reset();
+		syntheticDirectionalRepeater.releaseVirtual();
 		dispatchReleasedKeys(keyOwnership.releaseVirtual());
 	}
 
 	public void releaseGuestInputsForDevice(int deviceId) {
 		hatDirections.remove(deviceId);
 		stickDirections.remove(deviceId);
+		syntheticDirectionalRepeater.releaseDevice(deviceId);
 		dispatchReleasedKeys(keyOwnership.releaseDevice(deviceId));
 	}
 
@@ -560,7 +578,18 @@ public abstract class Canvas extends Displayable {
 		stickDirections.clear();
 		virtualDpadDirection.reset();
 		virtualAnalogDirection.reset();
+		syntheticDirectionalRepeater.releaseAll();
 		dispatchReleasedKeys(keyOwnership.releaseAll());
+	}
+
+	private void setVirtualDirectionalTarget(int sourceId, int keyCode) {
+		syntheticDirectionalRepeater.setVirtualSource(sourceId, keyCode);
+		applyGuestTransition(keyOwnership.setVirtualDirection(sourceId, keyCode));
+	}
+
+	private void setDeviceDirectionalTarget(int deviceId, int sourceId, int keyCode) {
+		syntheticDirectionalRepeater.setDeviceSource(deviceId, sourceId, keyCode);
+		applyGuestTransition(keyOwnership.setDeviceDirection(deviceId, sourceId, keyCode));
 	}
 
 	private void applyVirtualDirectional(
@@ -570,10 +599,8 @@ public abstract class Canvas extends Displayable {
 			float x,
 			float y) {
 		DirectionalInterpreter.Direction direction = interpreter.update(x, y);
-		applyGuestTransition(keyOwnership.setVirtualDirection(
-				horizontalSource, horizontalKey(direction.horizontal)));
-		applyGuestTransition(keyOwnership.setVirtualDirection(
-				verticalSource, verticalKey(direction.vertical)));
+		setVirtualDirectionalTarget(horizontalSource, horizontalKey(direction.horizontal));
+		setVirtualDirectionalTarget(verticalSource, verticalKey(direction.vertical));
 	}
 
 	private void applyDeviceDirectional(
@@ -589,25 +616,25 @@ public abstract class Canvas extends Displayable {
 		}
 		if (hat) {
 			DirectionalInterpreter.Direction direction = interpreter.update(x, y);
-			applyGuestTransition(keyOwnership.setDeviceDirection(
-					deviceId, DEVICE_DIRECTION_HAT_X, horizontalKey(direction.horizontal)));
-			applyGuestTransition(keyOwnership.setDeviceDirection(
-					deviceId, DEVICE_DIRECTION_HAT_Y, verticalKey(direction.vertical)));
+			setDeviceDirectionalTarget(
+					deviceId, DEVICE_DIRECTION_HAT_X, horizontalKey(direction.horizontal));
+			setDeviceDirectionalTarget(
+					deviceId, DEVICE_DIRECTION_HAT_Y, verticalKey(direction.vertical));
 			return;
 		}
 
 		int mode = ProfileModel.sanitizeAnalogDirectionMode(settings.analogDirectionMode);
 		DirectionalInterpreter.Direction direction = interpreter.updateAnalog(
 				x, y, AnalogDirectionMapper.sectorCountForMode(mode));
-		applyGuestTransition(keyOwnership.setDeviceDirection(
+		setDeviceDirectionalTarget(
 				deviceId, DEVICE_DIRECTION_STICK_X,
-				AnalogDirectionMapper.horizontalKey(direction, mode)));
-		applyGuestTransition(keyOwnership.setDeviceDirection(
+				AnalogDirectionMapper.horizontalKey(direction, mode));
+		setDeviceDirectionalTarget(
 				deviceId, DEVICE_DIRECTION_STICK_Y,
-				AnalogDirectionMapper.verticalKey(direction, mode)));
-		applyGuestTransition(keyOwnership.setDeviceDirection(
+				AnalogDirectionMapper.verticalKey(direction, mode));
+		setDeviceDirectionalTarget(
 				deviceId, DEVICE_DIRECTION_STICK_NUMERIC,
-				AnalogDirectionMapper.numericKey(direction, mode)));
+				AnalogDirectionMapper.numericKey(direction, mode));
 	}
 
 	private static int horizontalKey(int direction) {
@@ -1715,22 +1742,39 @@ public abstract class Canvas extends Displayable {
 			}
 
 			InputDevice device = event.getDevice();
+			int historySize = event.getHistorySize();
+			int sampleCount = ControllerSampleOrder.sampleCount(historySize);
+			for (int sample = 0; sample < sampleCount; sample++) {
+				processControllerSample(
+						event,
+						device,
+						ControllerSampleOrder.historyIndexAt(sample, historySize));
+			}
+			return true;
+		}
+
+		private void processControllerSample(
+				MotionEvent event,
+				InputDevice device,
+				int historyIndex) {
 			int deviceId = event.getDeviceId();
-			float hatX = readAxis(event, device, MotionEvent.AXIS_HAT_X, true);
-			float hatY = readAxis(event, device, MotionEvent.AXIS_HAT_Y, true);
-			float stickX = readAxis(event, device, MotionEvent.AXIS_X, false);
-			float stickY = readAxis(event, device, MotionEvent.AXIS_Y, false);
+			float hatX = readAxis(event, device, MotionEvent.AXIS_HAT_X, true, historyIndex);
+			float hatY = readAxis(event, device, MotionEvent.AXIS_HAT_Y, true, historyIndex);
+			float stickX = readAxis(event, device, MotionEvent.AXIS_X, false, historyIndex);
+			float stickY = readAxis(event, device, MotionEvent.AXIS_Y, false, historyIndex);
 			applyDeviceDirectional(deviceId, true, hatX, hatY);
 			applyDeviceDirectional(deviceId, false, stickX, stickY);
-			return true;
 		}
 
 		private float readAxis(
 				MotionEvent event,
 				InputDevice device,
 				int axis,
-				boolean discreteFallback) {
-			float value = event.getAxisValue(axis);
+				boolean discreteFallback,
+				int historyIndex) {
+			float value = historyIndex == ControllerSampleOrder.CURRENT
+					? event.getAxisValue(axis)
+					: event.getHistoricalAxisValue(axis, historyIndex);
 			InputDevice.MotionRange range =
 					device == null ? null : device.getMotionRange(axis, event.getSource());
 			if (range == null) {

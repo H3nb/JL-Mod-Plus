@@ -144,6 +144,32 @@ public class DigitalKeyOwnershipTest {
 	}
 
 	@Test
+	public void virtualDirectionalCleanupReleasesHeldGuestDirection() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+		ownership.setVirtualDirection(1, Canvas.KEY_RIGHT);
+
+		int[] released = ownership.releaseVirtual();
+
+		assertEquals(1, released.length);
+		assertEquals(Canvas.KEY_RIGHT, released[0]);
+	}
+
+	@Test
+	public void virtualDirectionalCleanupLeavesPhysicalOwnerIntact() {
+		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
+		ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_DPAD_UP, Canvas.KEY_UP);
+		ownership.setVirtualDirection(1, Canvas.KEY_UP);
+
+		assertEquals(0, ownership.releaseVirtual().length);
+		assertEquals(
+				Canvas.KEY_UP,
+				ownership.physicalKeyTarget(DEVICE_ONE, KEYCODE_DPAD_UP));
+		assertEquals(
+				Canvas.KEY_UP,
+				ownership.setPhysicalKey(DEVICE_ONE, KEYCODE_DPAD_UP, 0).releasedKey);
+	}
+
+	@Test
 	public void changingDirectionalSourceReleasesOldAndAcquiresNewTarget() {
 		DigitalKeyOwnership ownership = new DigitalKeyOwnership();
 

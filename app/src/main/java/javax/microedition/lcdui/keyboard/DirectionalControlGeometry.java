@@ -75,7 +75,7 @@ final class DirectionalControlGeometry {
 			float radius,
 			float touchX,
 			float touchY) {
-		return sampleWithTravel(centerX, centerY, radius, radius, touchX, touchY);
+		return sampleInternal(centerX, centerY, radius, touchX, touchY);
 	}
 
 	static Sample analogSample(
@@ -84,7 +84,7 @@ final class DirectionalControlGeometry {
 			float baseRadius,
 			float touchX,
 			float touchY) {
-		return sampleWithTravel(centerX, centerY, baseRadius, baseRadius, touchX, touchY);
+		return sampleInternal(centerX, centerY, baseRadius, touchX, touchY);
 	}
 
 	static Sample gestureSample(
@@ -147,14 +147,13 @@ final class DirectionalControlGeometry {
 		return Math.hypot(x - centerX, y - centerY) <= radius;
 	}
 
-	private static Sample sampleWithTravel(
+	private static Sample sampleInternal(
 			float centerX,
 			float centerY,
-			float inputRadius,
-			float thumbTravelRadius,
+			float radius,
 			float touchX,
 			float touchY) {
-		if (!(inputRadius > 0.0f) || !Float.isFinite(inputRadius)) {
+		if (!(radius > 0.0f) || !Float.isFinite(radius)) {
 			return new Sample(0.0f, 0.0f, centerX, centerY);
 		}
 		float x = Float.isFinite(touchX) ? touchX : centerX;
@@ -162,16 +161,13 @@ final class DirectionalControlGeometry {
 		float dx = x - centerX;
 		float dy = y - centerY;
 		float distance = (float) Math.hypot(dx, dy);
-		float inputScale = distance > inputRadius && distance > 0.0f
-				? inputRadius / distance : 1.0f;
-		float normalizedX = dx * inputScale / inputRadius;
-		float normalizedY = dy * inputScale / inputRadius;
-		float visualTravel = Float.isFinite(thumbTravelRadius)
-				? Math.max(0.0f, thumbTravelRadius) : 0.0f;
+		float scale = distance > radius && distance > 0.0f ? radius / distance : 1.0f;
+		float normalizedX = dx * scale / radius;
+		float normalizedY = dy * scale / radius;
 		return new Sample(
 				normalizedX,
 				normalizedY,
-				centerX + normalizedX * visualTravel,
-				centerY + normalizedY * visualTravel);
+				centerX + normalizedX * radius,
+				centerY + normalizedY * radius);
 	}
 }

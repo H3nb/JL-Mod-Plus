@@ -60,6 +60,11 @@ virtual analog stick.
   initial touch as the center for that gesture only, then returns the base and
   thumb to the configured layout center on release or cancellation. Center
   selection happens before the unchanged analog radial and direction processing.
+- Joystick MotionEvent history is processed oldest-to-newest before the current
+  sample, using the same MotionRange normalization and HAT/left-stick paths.
+- HAT, left-stick, virtual D-pad, and virtual analog outputs synthesize held-key
+  repeat after the initial delay, with one repeat stream per guest logical key.
+  Ordinary Android keys and legacy virtual keys retain their existing repeat paths.
 - All guest logical keys share first-owner/last-owner ownership in Canvas. A
   second source holding the same key does not emit another press, and releasing
   one source cannot release the key while another owner remains.

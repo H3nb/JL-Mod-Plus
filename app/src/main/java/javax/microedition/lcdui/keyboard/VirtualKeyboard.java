@@ -523,6 +523,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	public void setLayout(int variant) {
+		cancel();
 		int previousVariant = layoutVariant;
 		resetLayout(variant);
 		if (storesLayoutGeometry(variant) && saveFile.isFile()) {
@@ -761,6 +762,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	public void setKeysVisibility(boolean[] states) {
+		cancel();
 		for (int i = 0; i < KEYBOARD_SIZE; i++) {
 			keypad[i].visible = !states[i];
 		}
@@ -920,6 +922,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	public void setLayoutEditMode(int mode) {
+		if (layoutEditMode == LAYOUT_EOF && mode != LAYOUT_EOF) {
+			cancel();
+		}
 		layoutEditMode = mode;
 		editedIndex = -1;
 		highlightGroup(-1);
@@ -1598,6 +1603,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		void cancelState() {
 			activePointer = -1;
 			repeatCount = 0;
+			selected = false;
 			handler.removeCallbacks(this);
 		}
 	}

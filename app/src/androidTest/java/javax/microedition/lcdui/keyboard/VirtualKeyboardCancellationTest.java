@@ -14,11 +14,14 @@
 
 package javax.microedition.lcdui.keyboard;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.graphics.RectF;
 import android.os.Handler;
+import android.view.View;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -48,9 +51,13 @@ public class VirtualKeyboardCancellationTest {
 
 		ProfileModel settings = new ProfileModel();
 		settings.dir = profileDir;
-		settings.vkType = 3;
+		settings.vkType = layoutType("TYPE_ANALOG");
+		settings.virtualAnalogCenterMode = ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE;
 		settings.vkFeedback = false;
 		keyboard = new VirtualKeyboard(settings);
+		keyboard.setView(new View(context));
+		keyboard.resize(new RectF(0.0f, 0.0f, 600.0f, 600.0f),
+				100.0f, 100.0f, 500.0f, 500.0f);
 
 		Field keypadField = VirtualKeyboard.class.getDeclaredField("keypad");
 		keypadField.setAccessible(true);
@@ -73,6 +80,64 @@ public class VirtualKeyboardCancellationTest {
 	}
 
 	@Test
+	public void analogToDpadLayoutSwitchClearsDirectionalGestureAndRelativeCenter() throws Exception {
+		assertTrue(acquireDirectionalPointer(7));
+		assertTrue(analogCenter().hasTemporaryCenter());
+
+		keyboard.setLayout(layoutType("TYPE_DPAD"));
+
+		assertEquals(-1, directionalPointer());
+		assertFalse(analogCenter().hasTemporaryCenter());
+	}
+
+	@Test
+	public void dpadToAnalogLayoutSwitchClearsDirectionalPointer() throws Exception {
+		keyboard.setLayout(layoutType("TYPE_DPAD"));
+		assertTrue(acquireDirectionalPointer(8));
+
+		keyboard.setLayout(layoutType("TYPE_ANALOG"));
+
+		assertEquals(-1, directionalPointer());
+		assertFalse(analogCenter().hasTemporaryCenter());
+	}
+
+	@Test
+	public void enteringLayoutEditModeClearsHeldDirectionalGesture() throws Exception {
+		assertTrue(acquireDirectionalPointer(9));
+		assertTrue(analogCenter().hasTemporaryCenter());
+
+		keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
+
+		assertEquals(-1, directionalPointer());
+		assertFalse(analogCenter().hasTemporaryCenter());
+	}
+
+	@Test
+	public void layoutSwitchClearsLegacyKeyPointerSelectionAndRepeatState() throws Exception {
+		keyboard.setLayout(layoutType("TYPE_NUM_ARR"));
+		Object key = keyByLabel("5");
+		setLegacyHeldState(key, 11, 3);
+
+		keyboard.setLayout(layoutType("TYPE_ANALOG"));
+
+		assertLegacyReleasedState(key);
+	}
+
+	@Test
+	public void visibilityChangeCancelsActiveLegacyKey() throws Exception {
+		keyboard.setLayout(layoutType("TYPE_NUM_ARR"));
+		Object key = keyByLabel("5");
+		setLegacyHeldState(key, 12, 2);
+
+		boolean[] hidden = keyboard.getKeysVisibility();
+		int keyIndex = keyIndex(key);
+		hidden[keyIndex] = !hidden[keyIndex];
+		keyboard.setKeysVisibility(hidden);
+
+		assertLegacyReleasedState(key);
+	}
+
+	@Test
 	public void cancelClearsDualKeyLocalSelection() throws Exception {
 		Object upLeft = keyByLabel("↖");
 		Field selected = findField(upLeft.getClass(), "selected");
@@ -82,6 +147,67 @@ public class VirtualKeyboardCancellationTest {
 		keyboard.cancel();
 
 		assertFalse(selected.getBoolean(upLeft));
+	}
+
+	private void setLegacyHeldState(Object key, int pointer, int repeatCount) throws Exception {
+		Field selected = findField(key.getClass(), "selected");
+		Field activePointer = findField(key.getClass(), "activePointer");
+		Field repeat = findField(key.getClass(), "repeatCount");
+		selected.setAccessible(true);
+		activePointer.setAccessible(true);
+		repeat.setAccessible(true);
+		selected.setBoolean(key, true);
+		activePointer.setInt(key, pointer);
+		repeat.setInt(key, repeatCount);
+	}
+
+	private void assertLegacyReleasedState(Object key) throws Exception {
+		Field selected = findField(key.getClass(), "selected");
+		Field activePointer = findField(key.getClass(), "activePointer");
+		Field repeat = findField(key.getClass(), "repeatCount");
+		selected.setAccessible(true);
+		activePointer.setAccessible(true);
+		repeat.setAccessible(true);
+		assertFalse(selected.getBoolean(key));
+		assertEquals(-1, activePointer.getInt(key));
+		assertEquals(0, repeat.getInt(key));
+	}
+
+	private int keyIndex(Object key) {
+		for (int i = 0; i < keypad.length; i++) {
+			if (keypad[i] == key) {
+				return i;
+			}
+		}
+		throw new AssertionError("Missing key instance");
+	}
+
+	private boolean acquireDirectionalPointer(int pointer) throws Exception {
+		Field boundsField = VirtualKeyboard.class.getDeclaredField("directionalBounds");
+		boundsField.setAccessible(true);
+		RectF bounds = (RectF) boundsField.get(keyboard);
+		return keyboard.pointerPressed(
+				pointer,
+				bounds.left + bounds.width() * 0.25f,
+				bounds.top + bounds.height() * 0.25f);
+	}
+
+	private int directionalPointer() throws Exception {
+		Field field = VirtualKeyboard.class.getDeclaredField("directionalPointer");
+		field.setAccessible(true);
+		return field.getInt(keyboard);
+	}
+
+	private DirectionalControlGeometry.AnalogCenterState analogCenter() throws Exception {
+		Field field = VirtualKeyboard.class.getDeclaredField("analogCenter");
+		field.setAccessible(true);
+		return (DirectionalControlGeometry.AnalogCenterState) field.get(keyboard);
+	}
+
+	private static int layoutType(String name) throws Exception {
+		Field field = VirtualKeyboard.class.getDeclaredField(name);
+		field.setAccessible(true);
+		return field.getInt(null);
 	}
 
 	private Object keyByLabel(String expected) throws Exception {
