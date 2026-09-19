@@ -69,7 +69,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float MAX_RADIUS_FRACTION = 0.34f;
 	private static final int GRID_DIVISIONS = 24;
 	private static final int FEEDBACK_DURATION_MS = 50;
-	private static final int TEMPLATE_POINTER_ID = 0;
 
 	private enum EditControl { NONE, DPAD, ANALOG }
 
@@ -297,16 +296,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float screenTop = screenBounds == null ? 0.0f : screenBounds.top;
 		float screenRight = screenBounds == null ? 1.0f : screenBounds.right;
 		float screenBottom = screenBounds == null ? 1.0f : screenBounds.bottom;
-		boolean validGuest = guestBounds.width() > 0.0f && guestBounds.height() > 0.0f;
-		float guestLeft = validGuest ? guestBounds.left : screenLeft;
-		float guestTop = validGuest ? guestBounds.top : screenTop;
-		float guestRight = validGuest ? guestBounds.right : screenRight;
-		float guestBottom = validGuest ? guestBounds.bottom : screenBottom;
 		float shortest = Math.max(1.0f,
 				Math.min(screenRight - screenLeft, screenBottom - screenTop));
 		return StandardVirtualControlsLayout.resolve(
 				screenLeft, screenTop, screenRight, screenBottom,
-				guestLeft, guestTop, guestRight, guestBottom,
 				STANDARD_MOVEMENT_RADIUS * shortest);
 	}
 
@@ -316,48 +309,22 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	 */
 	private void arrangeStandardLegacyButtons(StandardVirtualControlsLayout layout) {
 		if (screenBounds == null || overlayView == null || layout == null) return;
-		float keySize = layout.keySize;
-		float sourceBottomRowY = screenBounds.bottom - keySize * 0.5f;
-		float fireSourceX = screenBounds.right - keySize * 1.5f;
-		float fireSourceY = screenBounds.bottom - keySize * 1.5f;
-		float softLeftSourceX = screenBounds.right - keySize * 2.5f;
-		float softRightSourceX = screenBounds.right - keySize * 0.5f;
-		float softSourceY = screenBounds.bottom - keySize * 3.5f;
-		float starSourceX = screenBounds.left + keySize * 0.5f;
-		float zeroSourceX = screenBounds.left + keySize * 1.5f;
-		float shoulderScaleX = layout.shoulderWidth / Math.max(1.0f, keySize);
-		float shoulderScaleY = layout.shoulderHeight / Math.max(1.0f, keySize);
-		float shoulderPointerOffsetX = (shoulderScaleX - 1.0f) * keySize * 0.5f;
-		float shoulderPointerOffsetY = (shoulderScaleY - 1.0f) * keySize * 0.5f;
-		int previousMode = getLayoutEditMode();
 
-		super.setLayoutEditMode(LAYOUT_KEYS);
-		try {
-			moveLegacyTemplateKey(
-					fireSourceX, fireSourceY, layout.actionCenterX, layout.actionCenterY);
-			moveLegacyTemplateKey(
-					softLeftSourceX, softSourceY,
-					layout.shoulderLeftX - shoulderPointerOffsetX,
-					layout.shoulderCenterY - shoulderPointerOffsetY);
-			moveLegacyTemplateKey(
-					softRightSourceX, softSourceY,
-					layout.shoulderRightX - shoulderPointerOffsetX,
-					layout.shoulderCenterY - shoulderPointerOffsetY);
-			// Move 0 before * because the legacy Numbers & Arrows layout initially snaps them together.
-			moveLegacyTemplateKey(
-					zeroSourceX, sourceBottomRowY, layout.bottomRightX, layout.bottomRowY);
-			moveLegacyTemplateKey(
-					starSourceX, sourceBottomRowY, layout.bottomLeftX, layout.bottomRowY);
-		} finally {
-			super.setLayoutEditMode(previousMode);
-			clearLegacyEditTracking();
-		}
-	}
+		setKeyGroupScaleByLabel(
+				"L",
+				layout.shoulderWidth / Math.max(1.0f, layout.keySize),
+				layout.shoulderHeight / Math.max(1.0f, layout.keySize));
+		setKeyGroupScaleByLabel(
+				"F",
+				layout.fireSize / Math.max(1.0f, layout.keySize),
+				layout.fireSize / Math.max(1.0f, layout.keySize));
 
-	private void moveLegacyTemplateKey(float sourceX, float sourceY, float targetX, float targetY) {
-		if (!super.pointerPressed(TEMPLATE_POINTER_ID, sourceX, sourceY)) return;
-		super.pointerDragged(TEMPLATE_POINTER_ID, targetX, targetY);
-		super.pointerReleased(TEMPLATE_POINTER_ID, targetX, targetY);
+		setKeyCenterByLabel("L", layout.shoulderLeftX, layout.shoulderCenterY);
+		setKeyCenterByLabel("R", layout.shoulderRightX, layout.shoulderCenterY);
+		setKeyCenterByLabel("F", layout.actionCenterX, layout.actionCenterY);
+		setKeyCenterByLabel("*", layout.bottomLeftX, layout.bottomRowY);
+		setKeyCenterByLabel("0", layout.bottomRightX, layout.bottomRowY);
+		refreshDirectKeyLayout();
 	}
 
 	@Override

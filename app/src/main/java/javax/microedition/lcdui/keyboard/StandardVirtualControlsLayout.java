@@ -13,27 +13,33 @@
  */
 package javax.microedition.lcdui.keyboard;
 
-/**
- * Pure geometry resolver for the built-in D-pad/analog standard templates.
- *
- * Landscape keeps shoulder buttons near the upper corners, movement in the lower-left thumb zone,
- * and the F, *, and 0 action cluster in the lower-right. Portrait keeps the compact bottom-deck fallback.
- */
+/** Pure responsive geometry for the built-in D-pad/analog templates. */
 final class StandardVirtualControlsLayout {
-	private static final float BOTTOM_COLUMN_OFFSET_KEYS = 0.85f;
-	private static final float PORTRAIT_ROW_OFFSET_KEYS = 1.00f;
-	private static final float EDGE_MARGIN_KEYS = 0.16f;
-	private static final float PORTRAIT_MOVEMENT_X_FRACTION = 0.27f;
-	private static final float LANDSCAPE_MOVEMENT_X_FRACTION = 0.26f;
-	private static final float LANDSCAPE_MOVEMENT_Y_FRACTION = 0.65f;
-	private static final float LANDSCAPE_ACTION_X_FRACTION = 0.75f;
-	private static final float LANDSCAPE_ACTION_Y_FRACTION = 0.56f;
-	private static final float LANDSCAPE_BOTTOM_Y_FRACTION = 0.76f;
-	private static final float LANDSCAPE_SHOULDER_X_FRACTION = 0.12f;
-	private static final float LANDSCAPE_SHOULDER_Y_FRACTION = 0.15f;
-	private static final float SHOULDER_WIDTH_KEYS = 1.55f;
-	private static final float SHOULDER_HEIGHT_KEYS = 0.90f;
-	private static final float BOTTOM_DECK_CENTER_FRACTION = 0.58f;
+	private static final float EDGE_MARGIN_KEYS = 0.14f;
+
+	private static final float LANDSCAPE_MOVEMENT_X = 0.25f;
+	private static final float LANDSCAPE_MOVEMENT_Y = 0.55f;
+	private static final float LANDSCAPE_SHOULDER_LEFT_X = 0.165f;
+	private static final float LANDSCAPE_SHOULDER_RIGHT_X = 0.835f;
+	private static final float LANDSCAPE_SHOULDER_Y = 0.125f;
+	private static final float LANDSCAPE_ACTION_X = 0.74f;
+	private static final float LANDSCAPE_ACTION_Y = 0.51f;
+	private static final float LANDSCAPE_BOTTOM_OFFSET_X = 0.145f;
+	private static final float LANDSCAPE_BOTTOM_Y = 0.69f;
+
+	private static final float PORTRAIT_MOVEMENT_X = 0.27f;
+	private static final float PORTRAIT_MOVEMENT_Y = 0.69f;
+	private static final float PORTRAIT_SHOULDER_LEFT_X = 0.24f;
+	private static final float PORTRAIT_SHOULDER_RIGHT_X = 0.76f;
+	private static final float PORTRAIT_SHOULDER_Y = 0.14f;
+	private static final float PORTRAIT_ACTION_X = 0.72f;
+	private static final float PORTRAIT_ACTION_Y = 0.57f;
+	private static final float PORTRAIT_BOTTOM_OFFSET_X = 0.13f;
+	private static final float PORTRAIT_BOTTOM_Y = 0.76f;
+
+	private static final float SHOULDER_WIDTH_KEYS = 1.65f;
+	private static final float SHOULDER_HEIGHT_KEYS = 0.72f;
+	private static final float FIRE_SIZE_KEYS = 1.25f;
 
 	final float keySize;
 	final float movementCenterX;
@@ -43,13 +49,13 @@ final class StandardVirtualControlsLayout {
 	final float shoulderCenterY;
 	final float shoulderWidth;
 	final float shoulderHeight;
+	final float fireSize;
 	final float bottomLeftX;
 	final float bottomRightX;
 	final float actionCenterX;
 	final float actionCenterY;
 	final float bottomRowY;
-	final boolean movementUsesLeftGutter;
-	final boolean actionsUseRightGutter;
+	final boolean landscape;
 
 	private StandardVirtualControlsLayout(
 			float keySize,
@@ -60,13 +66,13 @@ final class StandardVirtualControlsLayout {
 			float shoulderCenterY,
 			float shoulderWidth,
 			float shoulderHeight,
+			float fireSize,
 			float bottomLeftX,
 			float bottomRightX,
 			float actionCenterX,
 			float actionCenterY,
 			float bottomRowY,
-			boolean movementUsesLeftGutter,
-			boolean actionsUseRightGutter) {
+			boolean landscape) {
 		this.keySize = keySize;
 		this.movementCenterX = movementCenterX;
 		this.movementCenterY = movementCenterY;
@@ -75,13 +81,13 @@ final class StandardVirtualControlsLayout {
 		this.shoulderCenterY = shoulderCenterY;
 		this.shoulderWidth = shoulderWidth;
 		this.shoulderHeight = shoulderHeight;
+		this.fireSize = fireSize;
 		this.bottomLeftX = bottomLeftX;
 		this.bottomRightX = bottomRightX;
 		this.actionCenterX = actionCenterX;
 		this.actionCenterY = actionCenterY;
 		this.bottomRowY = bottomRowY;
-		this.movementUsesLeftGutter = movementUsesLeftGutter;
-		this.actionsUseRightGutter = actionsUseRightGutter;
+		this.landscape = landscape;
 	}
 
 	static StandardVirtualControlsLayout resolve(
@@ -89,10 +95,6 @@ final class StandardVirtualControlsLayout {
 			float screenTop,
 			float screenRight,
 			float screenBottom,
-			float guestLeft,
-			float guestTop,
-			float guestRight,
-			float guestBottom,
 			float movementRadius) {
 		float width = Math.max(1.0f, screenRight - screenLeft);
 		float height = Math.max(1.0f, screenBottom - screenTop);
@@ -100,103 +102,68 @@ final class StandardVirtualControlsLayout {
 		float keySize = landscape
 				? Math.min(width / 12.0f, height / 6.0f)
 				: Math.min(width / 6.0f, height / 12.0f);
-		float halfKey = keySize * 0.5f;
 		float edgeMargin = keySize * EDGE_MARGIN_KEYS;
-		float bottomColumnOffset = keySize * BOTTOM_COLUMN_OFFSET_KEYS;
-		float portraitRowOffset = keySize * PORTRAIT_ROW_OFFSET_KEYS;
 		float shoulderWidth = keySize * SHOULDER_WIDTH_KEYS;
 		float shoulderHeight = keySize * SHOULDER_HEIGHT_KEYS;
+		float fireSize = keySize * FIRE_SIZE_KEYS;
 
-		float safeGuestLeft = clamp(guestLeft, screenLeft, screenRight);
-		float safeGuestTop = clamp(guestTop, screenTop, screenBottom);
-		float safeGuestRight = clamp(guestRight, safeGuestLeft, screenRight);
-		float safeGuestBottom = clamp(guestBottom, safeGuestTop, screenBottom);
-		float leftGutter = Math.max(0.0f, safeGuestLeft - screenLeft);
-		float rightGutter = Math.max(0.0f, screenRight - safeGuestRight);
-		float bottomDeck = Math.max(0.0f, screenBottom - safeGuestBottom);
-		float movementFit = movementRadius * 2.0f + edgeMargin * 2.0f;
-		float actionHalfWidth = bottomColumnOffset + halfKey;
-		float actionFit = actionHalfWidth * 2.0f + edgeMargin * 2.0f;
-		boolean movementUsesLeftGutter = landscape && leftGutter >= movementFit;
-		boolean actionsUseRightGutter = landscape && rightGutter >= actionFit;
+		float movementX = landscape ? LANDSCAPE_MOVEMENT_X : PORTRAIT_MOVEMENT_X;
+		float movementY = landscape ? LANDSCAPE_MOVEMENT_Y : PORTRAIT_MOVEMENT_Y;
+		float shoulderLeft = landscape ? LANDSCAPE_SHOULDER_LEFT_X : PORTRAIT_SHOULDER_LEFT_X;
+		float shoulderRight = landscape ? LANDSCAPE_SHOULDER_RIGHT_X : PORTRAIT_SHOULDER_RIGHT_X;
+		float shoulderY = landscape ? LANDSCAPE_SHOULDER_Y : PORTRAIT_SHOULDER_Y;
+		float actionX = landscape ? LANDSCAPE_ACTION_X : PORTRAIT_ACTION_X;
+		float actionY = landscape ? LANDSCAPE_ACTION_Y : PORTRAIT_ACTION_Y;
+		float bottomOffset = width * (landscape ? LANDSCAPE_BOTTOM_OFFSET_X : PORTRAIT_BOTTOM_OFFSET_X);
+		float bottomY = landscape ? LANDSCAPE_BOTTOM_Y : PORTRAIT_BOTTOM_Y;
 
-		float movementCenterX;
-		float movementCenterY;
-		float actionCenterX;
-		float actionCenterY;
-		float bottomRowY;
-		float shoulderLeftX;
-		float shoulderRightX;
-		float shoulderCenterY;
+		float movementCenterX = clamp(
+				screenLeft + width * movementX,
+				screenLeft + movementRadius + edgeMargin,
+				screenRight - movementRadius - edgeMargin);
+		float movementCenterY = clamp(
+				screenTop + height * movementY,
+				screenTop + movementRadius + edgeMargin,
+				screenBottom - movementRadius - edgeMargin);
 
-		if (landscape) {
-			float preferredMovementX = screenLeft + width * LANDSCAPE_MOVEMENT_X_FRACTION;
-			float movementMinX = screenLeft + movementRadius + edgeMargin;
-			float movementMaxX = screenRight - movementRadius - edgeMargin;
-			if (movementUsesLeftGutter) {
-				movementMaxX = Math.min(movementMaxX,
-						safeGuestLeft - movementRadius - edgeMargin);
-			}
-			movementCenterX = clamp(preferredMovementX, movementMinX, movementMaxX);
-			movementCenterY = clamp(
-					screenTop + height * LANDSCAPE_MOVEMENT_Y_FRACTION,
-					screenTop + movementRadius + edgeMargin,
-					screenBottom - movementRadius - edgeMargin);
+		float shoulderHalfWidth = shoulderWidth * 0.5f;
+		float shoulderHalfHeight = shoulderHeight * 0.5f;
+		float shoulderLeftX = clamp(
+				screenLeft + width * shoulderLeft,
+				screenLeft + shoulderHalfWidth + edgeMargin,
+				screenRight - shoulderHalfWidth - edgeMargin);
+		float shoulderRightX = clamp(
+				screenLeft + width * shoulderRight,
+				screenLeft + shoulderHalfWidth + edgeMargin,
+				screenRight - shoulderHalfWidth - edgeMargin);
+		float shoulderCenterY = clamp(
+				screenTop + height * shoulderY,
+				screenTop + shoulderHalfHeight + edgeMargin,
+				screenBottom - shoulderHalfHeight - edgeMargin);
 
-			actionCenterX = clamp(
-					screenLeft + width * LANDSCAPE_ACTION_X_FRACTION,
-					screenLeft + actionHalfWidth + edgeMargin,
-					screenRight - actionHalfWidth - edgeMargin);
-			actionCenterY = clamp(
-					screenTop + height * LANDSCAPE_ACTION_Y_FRACTION,
-					screenTop + halfKey + edgeMargin,
-					screenBottom - halfKey - edgeMargin);
-			bottomRowY = clamp(
-					screenTop + height * LANDSCAPE_BOTTOM_Y_FRACTION,
-					actionCenterY + halfKey,
-					screenBottom - halfKey - edgeMargin);
+		float fireHalf = fireSize * 0.5f;
+		float actionCenterX = clamp(
+				screenLeft + width * actionX,
+				screenLeft + fireHalf + edgeMargin,
+				screenRight - fireHalf - edgeMargin);
+		float actionCenterY = clamp(
+				screenTop + height * actionY,
+				screenTop + fireHalf + edgeMargin,
+				screenBottom - fireHalf - edgeMargin);
 
-			float shoulderHalfWidth = shoulderWidth * 0.5f;
-			float shoulderHalfHeight = shoulderHeight * 0.5f;
-			shoulderLeftX = clamp(
-					screenLeft + width * LANDSCAPE_SHOULDER_X_FRACTION,
-					screenLeft + shoulderHalfWidth + edgeMargin,
-					screenRight - shoulderHalfWidth - edgeMargin);
-			shoulderRightX = clamp(
-					screenRight - width * LANDSCAPE_SHOULDER_X_FRACTION,
-					screenLeft + shoulderHalfWidth + edgeMargin,
-					screenRight - shoulderHalfWidth - edgeMargin);
-			shoulderCenterY = clamp(
-					screenTop + height * LANDSCAPE_SHOULDER_Y_FRACTION,
-					screenTop + shoulderHalfHeight + edgeMargin,
-					screenBottom - shoulderHalfHeight - edgeMargin);
-		} else {
-			float minCenterY = screenTop + portraitRowOffset + halfKey + edgeMargin;
-			float maxCenterY = screenBottom - portraitRowOffset - halfKey - edgeMargin;
-			float fullClusterHeight = portraitRowOffset * 2.0f + keySize + edgeMargin * 2.0f;
-			if (bottomDeck >= fullClusterHeight) {
-				actionCenterY = safeGuestBottom + bottomDeck * BOTTOM_DECK_CENTER_FRACTION;
-			} else {
-				actionCenterY = screenBottom - portraitRowOffset - halfKey - edgeMargin;
-			}
-			actionCenterY = clamp(actionCenterY, minCenterY, maxCenterY);
-			bottomRowY = actionCenterY + portraitRowOffset;
-			shoulderCenterY = actionCenterY - portraitRowOffset;
-
-			movementCenterX = clamp(
-					screenLeft + width * PORTRAIT_MOVEMENT_X_FRACTION,
-					screenLeft + movementRadius + edgeMargin,
-					screenRight - movementRadius - edgeMargin);
-			movementCenterY = actionCenterY;
-
-			actionCenterX = screenRight - actionHalfWidth - edgeMargin;
-			actionCenterX = clamp(
-					actionCenterX,
-					screenLeft + actionHalfWidth + edgeMargin,
-					screenRight - actionHalfWidth - edgeMargin);
-			shoulderLeftX = actionCenterX - bottomColumnOffset;
-			shoulderRightX = actionCenterX + bottomColumnOffset;
-		}
+		float bottomHalf = keySize * 0.5f;
+		float bottomRowY = clamp(
+				screenTop + height * bottomY,
+				screenTop + bottomHalf + edgeMargin,
+				screenBottom - bottomHalf - edgeMargin);
+		float bottomLeftX = clamp(
+				actionCenterX - bottomOffset,
+				screenLeft + bottomHalf + edgeMargin,
+				screenRight - bottomHalf - edgeMargin);
+		float bottomRightX = clamp(
+				actionCenterX + bottomOffset,
+				screenLeft + bottomHalf + edgeMargin,
+				screenRight - bottomHalf - edgeMargin);
 
 		return new StandardVirtualControlsLayout(
 				keySize,
@@ -207,13 +174,13 @@ final class StandardVirtualControlsLayout {
 				shoulderCenterY,
 				shoulderWidth,
 				shoulderHeight,
-				actionCenterX - bottomColumnOffset,
-				actionCenterX + bottomColumnOffset,
+				fireSize,
+				bottomLeftX,
+				bottomRightX,
 				actionCenterX,
 				actionCenterY,
 				bottomRowY,
-				movementUsesLeftGutter,
-				actionsUseRightGutter);
+				landscape);
 	}
 
 	private static float clamp(float value, float min, float max) {

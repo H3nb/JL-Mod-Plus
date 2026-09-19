@@ -20,57 +20,59 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class StandardVirtualControlsLayoutTest {
-	private static final float EPS = 0.01f;
+	private static final float EPS = 1.5f;
 
 	@Test
-	public void landscapeSpreadsShouldersAndKeepsActionClusterOnRight() {
+	public void landscapeMatchesReferenceComposition() {
+		float width = 1275.0f;
+		float height = 1056.0f;
 		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
-				0.0f, 0.0f, 1820.0f, 864.0f,
-				590.0f, 0.0f, 1190.0f, 785.0f,
-				0.20f * 864.0f);
+				0.0f, 0.0f, width, height, 0.20f * height);
 
-		assertTrue(layout.movementUsesLeftGutter);
-		assertTrue(layout.actionsUseRightGutter);
-		assertTrue(layout.shoulderLeftX < 590.0f);
-		assertTrue(layout.shoulderRightX > 1190.0f);
-		assertTrue(layout.shoulderWidth > layout.shoulderHeight);
+		assertTrue(layout.landscape);
+		assertEquals(width * 0.25f, layout.movementCenterX, EPS);
+		assertEquals(height * 0.55f, layout.movementCenterY, EPS);
+		assertEquals(width * 0.165f, layout.shoulderLeftX, EPS);
+		assertEquals(width * 0.835f, layout.shoulderRightX, EPS);
+		assertEquals(height * 0.125f, layout.shoulderCenterY, EPS);
+		assertEquals(width * 0.74f, layout.actionCenterX, EPS);
+		assertEquals(height * 0.51f, layout.actionCenterY, EPS);
+		assertEquals(height * 0.69f, layout.bottomRowY, EPS);
+		assertTrue(layout.shoulderWidth > layout.fireSize);
+		assertTrue(layout.shoulderHeight < layout.keySize);
+		assertTrue(layout.fireSize > layout.keySize);
+	}
+
+	@Test
+	public void portraitKeepsSeparatedThumbZones() {
+		float width = 1080.0f;
+		float height = 2400.0f;
+		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
+				0.0f, 0.0f, width, height, 0.20f * width);
+
+		assertFalse(layout.landscape);
+		assertTrue(layout.shoulderCenterY < layout.actionCenterY);
+		assertTrue(layout.actionCenterY < layout.bottomRowY);
 		assertTrue(layout.movementCenterX < layout.actionCenterX);
 		assertTrue(layout.movementCenterY > layout.actionCenterY);
-		assertTrue(layout.bottomRowY > layout.actionCenterY);
-		assertEquals(layout.actionCenterX,
-				(layout.bottomLeftX + layout.bottomRightX) * 0.5f, EPS);
+		assertTrue(layout.bottomLeftX < layout.actionCenterX);
+		assertTrue(layout.bottomRightX > layout.actionCenterX);
+		assertTrue(layout.movementCenterX + 0.20f * width < layout.bottomLeftX);
 	}
 
 	@Test
-	public void portraitKeepsCompactBottomDeckFallback() {
+	public void allCentersStayInsideCompactLandscape() {
+		float width = 960.0f;
+		float height = 720.0f;
 		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
-				0.0f, 0.0f, 864.0f, 1820.0f,
-				0.0f, 0.0f, 864.0f, 1110.0f,
-				0.20f * 864.0f);
+				0.0f, 0.0f, width, height, 0.20f * height);
 
-		assertFalse(layout.movementUsesLeftGutter);
-		assertFalse(layout.actionsUseRightGutter);
-		assertTrue(layout.actionCenterY > 1110.0f);
-		assertEquals(layout.actionCenterY, layout.movementCenterY, EPS);
-		assertTrue(layout.shoulderCenterY < layout.actionCenterY);
-		assertTrue(layout.bottomRowY > layout.actionCenterY);
-		assertTrue(layout.movementCenterX < layout.bottomLeftX);
-	}
-
-	@Test
-	public void fullScreenLandscapeStaysInsideHostBounds() {
-		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
-				0.0f, 0.0f, 1920.0f, 1080.0f,
-				0.0f, 0.0f, 1920.0f, 1080.0f,
-				0.20f * 1080.0f);
-
-		assertFalse(layout.movementUsesLeftGutter);
-		assertFalse(layout.actionsUseRightGutter);
-		assertTrue(layout.movementCenterX - 216.0f > 0.0f);
-		assertTrue(layout.movementCenterX + 216.0f < 1920.0f);
-		assertTrue(layout.shoulderLeftX - layout.shoulderWidth * 0.5f > 0.0f);
-		assertTrue(layout.shoulderRightX + layout.shoulderWidth * 0.5f < 1920.0f);
+		assertTrue(layout.movementCenterX > 0.0f);
+		assertTrue(layout.movementCenterY > 0.0f);
+		assertTrue(layout.shoulderLeftX > 0.0f);
+		assertTrue(layout.shoulderRightX < width);
+		assertTrue(layout.actionCenterX < width);
 		assertTrue(layout.bottomLeftX > 0.0f);
-		assertTrue(layout.bottomRightX < 1920.0f);
+		assertTrue(layout.bottomRightX < width);
 	}
 }

@@ -996,6 +996,33 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		return false;
 	}
 
+	/** Places a built-in-template key by center without routing through the interactive editor. */
+	protected final boolean setKeyCenterByLabel(String label, float centerX, float centerY) {
+		if (label == null) return false;
+		for (VirtualKey key : keypad) {
+			if (!label.equals(key.label)) continue;
+			float width = key.rect.width();
+			float height = key.rect.height();
+			key.rect.set(
+					centerX - width * 0.5f,
+					centerY - height * 0.5f,
+					centerX + width * 0.5f,
+					centerY + height * 0.5f);
+			key.snapOrigin = SCREEN;
+			key.snapMode = RectSnap.NO_SNAP;
+			key.snapOffset.set(0.0f, 0.0f);
+			key.snapValid = true;
+			return true;
+		}
+		return false;
+	}
+
+	/** Recomputes corner radii, overlap state, and drawing after direct template placement. */
+	protected final void refreshDirectKeyLayout() {
+		snapKeys();
+		if (overlayView != null) overlayView.postInvalidate();
+	}
+
 	@Override
 	public void resize(RectF screen, float left, float top, float right, float bottom) {
 		this.screen = screen;
