@@ -270,21 +270,31 @@ class ControllerInputRouter(
         }
         if (!ensureActiveDevice(deviceId)) return true
         if (!ensureTarget()) return true
-        if (host.isControllerModalActive()) {
-            host.onControllerModalMotion(event)
-            syncHostModalBoundary()
-            return true
+
+        val modalActive = host.isControllerModalActive()
+        // A plain MIDP Screen is not a router-owned analog target. Let its Android/View layer
+        // receive generic motion unless an explicit host target or modal owns the controller.
+        if (!modalActive && host.currentCanvas() == null && host.currentControllerTarget() == null) {
+            return false
         }
-        if (!config.enabled && host.currentCanvas() != null) return false
+        if (!modalActive && !config.enabled && host.currentCanvas() != null) return false
         if (event.actionMasked != MotionEvent.ACTION_MOVE &&
             event.actionMasked != MotionEvent.ACTION_HOVER_MOVE
         ) return true
 
         var meaningful = false
         for (history in 0 until event.historySize) {
-            meaningful = processMotion(event, device, history) || meaningful
+            meaningful = if (modalActive) {
+                processHostMotion(event, device, history) || meaningful
+            } else {
+                processMotion(event, device, history) || meaningful
+            }
         }
-        meaningful = processMotion(event, device, -1) || meaningful
+        meaningful = if (modalActive) {
+            processHostMotion(event, device, -1) || meaningful
+        } else {
+            processMotion(event, device, -1) || meaningful
+        }
         if (meaningful) host.onControllerInputAccepted()
         return true
     }
@@ -323,7 +333,29 @@ class ControllerInputRouter(
         return meaningful
     }
 
-    private fun updateHat(event: MotionEvent, device: InputDevice, history: Int): Boolean {
+    private fun processHostMotion(
+        event: MotionEvent,
+        device: InputDevice,
+        history: Int,
+    ): Boolean {
+        var meaningful = false
+        meaningful = updateHat(event, device, history, hostOnly = true) || meaningful
+        meaningful = updateStick(
+            event,
+            device,
+            StickId.LEFT,
+            history,
+            hostOnly = true,
+        ) || meaningful
+        return meaningful
+    }
+
+    private fun updateHat(
+        event: MotionEvent,
+        device: InputDevice,
+        history: Int,
+        hostOnly: Boolean = false,
+    ): Boolean {
         val x = axisValue(event, MotionEvent.AXIS_HAT_X, history)
         val y = axisValue(event, MotionEvent.AXIS_HAT_Y, history)
         val controls = LinkedHashSet<String>()
@@ -334,7 +366,7 @@ class ControllerInputRouter(
         val present = findMotionRange(device, event.source, MotionEvent.AXIS_HAT_X) != null ||
             findMotionRange(device, event.source, MotionEvent.AXIS_HAT_Y) != null
         if (!present) return false
-        updateDirectional("hat", controls)
+        updateDirectional("hat", controls, hostOnly = hostOnly)
         return controls.isNotEmpty()
     }
 
@@ -343,9 +375,16 @@ class ControllerInputRouter(
         device: InputDevice,
         stick: StickId,
         history: Int,
+        hostOnly: Boolean = false,
     ): Boolean {
-        val settings = if (stick == StickId.LEFT) config.leftStick else config.rightStick
-        val guestCanvas = host.currentCanvas()
+        val settings = if (hostOnly) {
+            HOST_STICK_SETTINGS
+        } else if (stick == StickId.LEFT) {
+            config.leftStick
+        } else {
+            config.rightStick
+        }
+        val guestCanvas = if (hostOnly) null else host.currentCanvas()
         val axesPair = stickAxes(device, event.source, stick) ?: return false
         val rawX = axisValue(event, axesPair.first, history)
         val rawY = axisValue(event, axesPair.second, history)
@@ -400,7 +439,7 @@ class ControllerInputRouter(
             // A pointer-configured stick is a continuous producer. It must not also become a
             // digital movement source, otherwise one physical stick can own two unrelated
             // guest outputs during the same sample.
-            updateDirectional("stick:${stick.name.lowercase()}", emptySet())
+            updateDirectional("stick:${stick.name.lowercase()}", emptySet(), hostOnly = hostOnly)
             val canvas = pointerCanvas ?: guestCanvas
             attachPointerConsumer(canvas)
             val now = eventTime(event, history)
@@ -451,7 +490,7 @@ class ControllerInputRouter(
         // Stick assignment is likewise guest-only. Host surfaces always retain basic movement
         // navigation even if the MIDlet itself marks this stick unassigned.
         if (guestCanvas != null && settings.mode != StickMode.DIRECTIONS) {
-            updateDirectional("stick:${stick.name.lowercase()}", emptySet())
+            updateDirectional("stick:${stick.name.lowercase()}", emptySet(), hostOnly = hostOnly)
             return processed.magnitude >= settings.pressRadius.toFloat()
         }
         val hostNavigation = guestCanvas == null
@@ -480,7 +519,7 @@ class ControllerInputRouter(
         val result = StickProcessor.resolveDirection(processed, runtime.directionState, directionConfig)
         runtime.directionState = result.state
         val controls = result.keys.mapTo(LinkedHashSet(), ::directionControl)
-        updateDirectional("stick:${stick.name.lowercase()}", controls)
+        updateDirectional("stick:${stick.name.lowercase()}", controls, hostOnly = hostOnly)
         return controls.isNotEmpty()
     }
 
@@ -571,11 +610,12 @@ class ControllerInputRouter(
         controls: Set<String>,
         movementGroup: String = if (channel == "stick:right") RIGHT_MOVEMENT_GROUP
         else LEFT_MOVEMENT_GROUP,
+        hostOnly: Boolean = false,
     ) {
         var source = directional[channel]
         if (source == null) {
             if (controls.isEmpty()) return
-            val canvas = host.currentCanvas()
+            val canvas = if (hostOnly) null else host.currentCanvas()
             source = DirectionalSource(
                 channel = channel,
                 movementGroup = movementGroup,
@@ -1158,6 +1198,7 @@ class ControllerInputRouter(
         private const val LEFT_MOVEMENT_GROUP = "left-movement"
         private const val RIGHT_MOVEMENT_GROUP = "right-movement"
         private const val HAT_THRESHOLD = 0.5f
+        private val HOST_STICK_SETTINGS = StickSettings(directionMode = DirectionMode.FOUR)
         private const val NEUTRAL_AXIS_THRESHOLD = 0.15f
         private const val TRIGGER_NEUTRAL_THRESHOLD = 0.40f
         private val TRIGGER_AXES = intArrayOf(
