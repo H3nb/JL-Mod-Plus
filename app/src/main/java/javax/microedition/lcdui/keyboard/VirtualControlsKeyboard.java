@@ -62,7 +62,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_ANALOG_CENTER_X = 0.18f;
 	private static final float DEFAULT_ANALOG_CENTER_Y = 0.78f;
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
-	private static final float STANDARD_MOVEMENT_RADIUS = 0.24f;
+	private static final float STANDARD_MOVEMENT_RADIUS_LANDSCAPE = 0.24f;
+	private static final float STANDARD_MOVEMENT_RADIUS_PORTRAIT = 0.20f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
 	private static final float MIN_RADIUS_FRACTION = 0.07f;
@@ -254,10 +255,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			settings.virtualAnalogEnabled = variant == TYPE_ANALOG_STANDARD;
 			settings.virtualDpadCenterX = clamp(movementCenterX, 0.0f, 1.0f);
 			settings.virtualDpadCenterY = clamp(movementCenterY, 0.0f, 1.0f);
-			settings.virtualDpadRadius = STANDARD_MOVEMENT_RADIUS;
+			float movementRadius = standardMovementRadius();
+			settings.virtualDpadRadius = movementRadius;
 			settings.virtualAnalogCenterX = clamp(movementCenterX, 0.0f, 1.0f);
 			settings.virtualAnalogCenterY = clamp(movementCenterY, 0.0f, 1.0f);
-			settings.virtualAnalogRadius = STANDARD_MOVEMENT_RADIUS;
+			settings.virtualAnalogRadius = movementRadius;
 			rebuildAnalogStick();
 			ProfilesManager.saveConfig(settings);
 			super.onLayoutChanged(variant);
@@ -300,7 +302,14 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		return StandardVirtualControlsLayout.resolve(
 				screenLeft, screenTop, screenRight, screenBottom,
 				guestLeft, guestTop, guestRight, guestBottom,
-				STANDARD_MOVEMENT_RADIUS * shortest);
+				standardMovementRadius() * shortest);
+	}
+
+	private float standardMovementRadius() {
+		if (screenBounds != null && screenBounds.width() > screenBounds.height()) {
+			return STANDARD_MOVEMENT_RADIUS_LANDSCAPE;
+		}
+		return STANDARD_MOVEMENT_RADIUS_PORTRAIT;
 	}
 
 	/**

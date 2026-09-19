@@ -35,7 +35,7 @@ final class StandardVirtualControlsLayout {
 	private static final float PORTRAIT_SHOULDER_Y = 0.14f;
 	private static final float PORTRAIT_ACTION_X = 0.75f;
 	private static final float PORTRAIT_ACTION_Y = 0.55f;
-	private static final float PORTRAIT_BOTTOM_OFFSET_X = 0.15f;
+	private static final float PORTRAIT_BOTTOM_OFFSET_X = 0.11f;
 	private static final float PORTRAIT_BOTTOM_Y = 0.78f;
 
 	private static final float SHOULDER_WIDTH_KEYS = 1.65f;

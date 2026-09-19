@@ -54,7 +54,7 @@ public class StandardVirtualControlsLayoutTest {
 		float guestTop = 0.0f;
 		float guestRight = 812.0f;
 		float guestBottom = 1118.0f;
-		float radius = 0.24f * screenWidth;
+		float radius = 0.20f * screenWidth;
 
 		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
 				0.0f, 0.0f, screenWidth, screenHeight,
@@ -68,6 +68,8 @@ public class StandardVirtualControlsLayoutTest {
 		assertTrue(layout.actionCenterY < guestBottom);
 		assertTrue(layout.bottomLeftX > guestLeft);
 		assertTrue(layout.bottomRightX < guestRight);
+		assertTrue(layout.bottomLeftX - layout.keySize * 0.5f
+				> layout.movementCenterX + radius);
 		assertTrue(layout.bottomRowY < guestBottom);
 		assertTrue(layout.shoulderCenterY < layout.actionCenterY);
 		assertTrue(layout.movementCenterY > layout.actionCenterY);
@@ -80,7 +82,7 @@ public class StandardVirtualControlsLayoutTest {
 		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
 				0.0f, 0.0f, width, height,
 				0.0f, 0.0f, 0.0f, 0.0f,
-				0.24f * width);
+				0.20f * width);
 
 		assertFalse(layout.landscape);
 		assertTrue(layout.movementCenterY < height);
