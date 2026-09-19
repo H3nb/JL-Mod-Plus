@@ -100,7 +100,10 @@
     <string name="log_saved">Log has been saved</string>
     <string name="mapping_dialog_key_not_specified">Not specified</string>
     <string name="mapping_dialog_message">Current mapping:\n%1$s</string>
+    <string name="mapping_dialog_current_mappings">Current Mappings</string>
     <string name="mapping_dialog_title">Press A Key</string>
+    <string name="mapping_remove_binding">Remove %1$s</string>
+    <string name="remove">Remove</string>
     <string name="message_clear_data">Do you really want to clear app data?</string>
     <string name="message_reset_settings">Reset all configuration settings to their defaults?</string>
     <string name="message_reset_layout">Reset the button layout to its default?</string>
@@ -168,6 +171,15 @@
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Rectangle</string>
     <string name="pref_button_shape_round">Rounded Rectangle</string>
+    <string name="pref_analog_direction_mode_title">Analog Direction Mode</string>
+    <string name="pref_analog_direction_mode_4_way">4-way</string>
+    <string name="pref_analog_direction_mode_8_way">8-way</string>
+    <string name="pref_analog_direction_mode_numeric">Numeric</string>
+    <string name="config_help_analog_direction_mode">Choose how physical and virtual analog sticks map to J2ME directional input.</string>
+    <string name="pref_virtual_analog_center_title">Analog Center</string>
+    <string name="pref_virtual_analog_center_fixed">Fixed</string>
+    <string name="pref_virtual_analog_center_relative">Relative</string>
+    <string name="config_help_virtual_analog_center">Choose whether the virtual analog uses its layout center or the initial touch.</string>
     <string name="pref_button_shape_title">Button Shape</string>
     <string name="pref_category_experimental">Experimental/Temporary Options</string>
     <string name="pref_emulator_dir">Working Directory</string>
@@ -263,6 +275,8 @@
     <string name="PREF_VK_SEL_BACK">Pressed Key Color</string>
     <string name="PREF_VK_SEL_FORE">Pressed Label Color</string>
     <string name="pref_vk_type_arrows">Arrows</string>
+    <string name="pref_vk_type_dpad">D-pad</string>
+    <string name="pref_vk_type_analog">Analog Stick</string>
     <string name="pref_vk_type_arrows_numbers">Arrows &amp; Numbers</string>
     <string name="pref_vk_type_custom">Custom</string>
     <string name="pref_vk_type_numbers">Numbers</string>

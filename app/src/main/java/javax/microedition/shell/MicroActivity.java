@@ -67,6 +67,7 @@ import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Form;
 import javax.microedition.lcdui.ViewHandler;
 import javax.microedition.lcdui.event.SimpleEvent;
+import javax.microedition.lcdui.keyboard.KeyMapper;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.timing.EmulationSpeed;
@@ -105,8 +106,7 @@ public class MicroActivity extends AppCompatActivity {
 	private String appName;
 	private String[] pendingMidletClasses;
 	private InputMethodManager inputMethodManager;
-	private int menuKey;
-	private boolean menuKeyLongPressHandled;
+	private final MenuLongPressState menuLongPressState = new MenuLongPressState();
 	private int imeToggleRequest;
 	private String appPath;
 	private RuntimeHostView binding;
@@ -218,7 +218,6 @@ public class MicroActivity extends AppCompatActivity {
 			}
 		}
 		setOrientation(orientation);
-		menuKey = microLoader.getMenuKeyCode();
 		ViewCompat.requestApplyInsets(binding.getRoot());
 		binding.getRoot().post(this::updateOverlayLocation);
 
@@ -483,6 +482,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void onPause() {
+		if (current instanceof Canvas canvas) {
+			canvas.releaseGuestInputs();
+		}
 		if (memoryEditorController != null) {
 			memoryEditorController.onHostPaused();
 		}
@@ -498,6 +500,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
+		if (current instanceof Canvas canvas) {
+			canvas.releaseGuestInputs();
+		}
 		if (defaultPreferences != null) {
 			defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
 			defaultPreferences = null;
@@ -600,8 +605,12 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
-		if (hasFocus && current instanceof Canvas) {
-			applySystemUi(getRuntimeChrome(current), current);
+		if (current instanceof Canvas canvas) {
+			if (hasFocus) {
+				applySystemUi(getRuntimeChrome(current), current);
+			} else {
+				canvas.releaseGuestInputs();
+			}
 		}
 	}
 
@@ -848,26 +857,26 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
-		// KEYCODE_MENU is a host command, not a guest Canvas key. SurfaceView consumes the
-		// event before Activity.onKeyLongPress() on recent Android releases, so handle the
-		// tracking sequence here before dispatching to the Canvas child.
-		if (event.getKeyCode() == KeyEvent.KEYCODE_MENU) {
+		// KEYCODE_MENU and every effective M mapping are host commands, not guest Canvas
+		// keys. Intercept their tracking sequence before dispatching to the Canvas child.
+		int keyCode = event.getKeyCode();
+		if (keyCode == KeyEvent.KEYCODE_MENU || KeyMapper.isOptionsMenuKey(keyCode)) {
+			int deviceId = event.getDeviceId();
 			if (event.getAction() == KeyEvent.ACTION_DOWN) {
 				if (event.getRepeatCount() == 0) {
-					menuKeyLongPressHandled = false;
+					menuLongPressState.begin(deviceId, keyCode);
 					event.startTracking();
 					return true;
 				}
 				if (event.isLongPress()) {
-					menuKeyLongPressHandled = true;
-					return onKeyLongPress(event.getKeyCode(), event);
+					menuLongPressState.markHandled(deviceId, keyCode);
+					return onKeyLongPress(keyCode, event);
 				}
 			} else if (event.getAction() == KeyEvent.ACTION_UP) {
-				if (menuKeyLongPressHandled) {
-					menuKeyLongPressHandled = false;
+				if (menuLongPressState.consumeHandled(deviceId, keyCode)) {
 					return true;
 				}
-				return onKeyUp(event.getKeyCode(), event);
+				return onKeyUp(keyCode, event);
 			}
 			return true;
 		}
@@ -923,7 +932,7 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public boolean onKeyLongPress(int keyCode, KeyEvent event) {
-		if (keyCode == menuKey || keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_MENU) {
+		if (keyCode == KeyEvent.KEYCODE_MENU || KeyMapper.isOptionsMenuKey(keyCode)) {
 			toggleRuntimeMenuFromInput();
 			return true;
 		}
@@ -931,16 +940,8 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if (keyCode == KeyEvent.KEYCODE_MENU) {
-			return false;
-		}
-		return super.onKeyDown(keyCode, event);
-	}
-
-	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		if ((keyCode == menuKey || keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_MENU)
+		if ((keyCode == KeyEvent.KEYCODE_MENU || KeyMapper.isOptionsMenuKey(keyCode))
 				&& (event.getFlags() & (KeyEvent.FLAG_LONG_PRESS | KeyEvent.FLAG_CANCELED)) == 0) {
 			toggleRuntimeMenuFromInput();
 			return true;
@@ -1072,7 +1073,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (saveScreenParams && vk.isPhone()) {
 			vk.saveScreenParams();
 		}
-		vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+		vk.commitLayoutEdits();
 	}
 
 	private void applyLayoutSelection(int index) {

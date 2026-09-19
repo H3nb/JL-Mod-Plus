@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +41,7 @@ public interface Overlay extends Layer {
 	void resize(RectF screen, float left, float top, float right, float bottom);
 
 	/**
-	 * Called when the hardware key is pressed for the first time.
+	 * Called when a guest logical key becomes effectively pressed.
 	 *
 	 * @param keyCode the code of the pressed key
 	 * @return true, if the pressing is processed here and no further handling is necessary
@@ -48,7 +49,7 @@ public interface Overlay extends Layer {
 	boolean keyPressed(int keyCode);
 
 	/**
-	 * Called when the hardware key is pressed again (2, 3, etc.).
+	 * Called when a guest logical key is repeated.
 	 *
 	 * @param keyCode the code of the pressed key
 	 * @return true, if the pressing is processed here and no further handling is necessary
@@ -56,7 +57,7 @@ public interface Overlay extends Layer {
 	boolean keyRepeated(int keyCode);
 
 	/**
-	 * Called when the hardware key is released.
+	 * Called when a guest logical key becomes effectively released.
 	 *
 	 * @param keyCode the code of the pressed key
 	 * @return true, if the pressing is processed here and no further handling is necessary

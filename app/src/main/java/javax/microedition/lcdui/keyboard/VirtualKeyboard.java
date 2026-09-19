@@ -26,6 +26,7 @@ import android.graphics.RectF;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -80,6 +81,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private static final int TYPE_ARR_NUM = 4;
 	private static final int TYPE_NUMBERS = 5;
 	private static final int TYPE_ARROWS = 6;
+	private static final int TYPE_DPAD = 7;
+	private static final int TYPE_ANALOG = 8;
 
 	private static final float PHONE_KEY_ROWS = 5;
 	private static final float PHONE_KEY_SCALE_X = 2.0f;
@@ -118,7 +121,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private static final int KEYBOARD_SIZE = 28;
 
 	private static final float SCALE_SNAP_RADIUS = 0.05f;
-
 	private static final int FEEDBACK_DURATION = 50;
 
 	private final float[] keyScales = {
@@ -165,14 +167,24 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			KEY_MENU
 	}};
 	private final VirtualKey[] keypad = new VirtualKey[KEYBOARD_SIZE];
-	// the average user usually has no more than 10 fingers...
-	private final VirtualKey[] associatedKeys = new VirtualKey[10];
+	private final SparseArray<VirtualKey> associatedKeys = new SparseArray<>();
 	private final int[] snapStack = new int[KEYBOARD_SIZE];
 
 	private final Handler handler;
 	private final File saveFile;
 	private final ProfileModel settings;
 	private final RectF virtualScreen = new RectF();
+	private final RectF directionalBounds = new RectF();
+	private final RectF groupedCircle = new RectF();
+	private final RectF dpadUp = new RectF();
+	private final RectF dpadLeft = new RectF();
+	private final RectF dpadCenter = new RectF();
+	private final RectF dpadRight = new RectF();
+	private final RectF dpadDown = new RectF();
+	private final RectF analogBase = new RectF();
+	private final RectF analogThumb = new RectF();
+	private final DirectionalControlGeometry.AnalogCenterState analogCenter =
+			new DirectionalControlGeometry.AnalogCenterState();
 
 	private Canvas target;
 	private View overlayView;
@@ -189,6 +201,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			Math.min(ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight()) / 6.0f;
 	private float snapRadius;
 	private int layoutVariant;
+	private int directionalPointer = -1;
+	private float directionalThumbX;
+	private float directionalThumbY;
 
 	public VirtualKeyboard(ProfileModel settings) {
 		this.settings = settings;
@@ -233,7 +248,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 		}
 		resetLayout(layoutVariant);
-		if (layoutVariant == TYPE_CUSTOM) {
+		if (storesLayoutGeometry(layoutVariant) && saveFile.isFile()) {
 			try {
 				readLayout();
 			} catch (IOException e) {
@@ -273,6 +288,11 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	private void resetLayout(int variant) {
+		if (variant == TYPE_DPAD || variant == TYPE_ANALOG) {
+			resetLayout(TYPE_NUM_ARR);
+			setSnap(KEY_FIRE, KEY_SOFT_RIGHT, RectSnap.EXT_NORTH, true);
+			return;
+		}
 		switch (variant) {
 			case TYPE_PHONE -> {
 				for (int j = 0, len = keyScales.length; j < len; ) {
@@ -486,13 +506,27 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		return layoutVariant;
 	}
 
+	private boolean isGroupedDirectionalLayout() {
+		return layoutVariant == TYPE_DPAD || layoutVariant == TYPE_ANALOG;
+	}
+
+	private static boolean storesLayoutGeometry(int variant) {
+		return variant == TYPE_CUSTOM || variant == TYPE_DPAD || variant == TYPE_ANALOG;
+	}
+
+	public void commitLayoutEdits() {
+		onLayoutChanged(isGroupedDirectionalLayout() ? layoutVariant : TYPE_CUSTOM);
+	}
+
 	public float getPhoneKeyboardHeight(float w, float h) {
 		return PHONE_KEY_ROWS * getKeySize(w, h) * PHONE_KEY_SCALE_Y;
 	}
 
 	public void setLayout(int variant) {
+		cancel();
+		int previousVariant = layoutVariant;
 		resetLayout(variant);
-		if (variant == TYPE_CUSTOM) {
+		if (storesLayoutGeometry(variant) && saveFile.isFile()) {
 			try {
 				readLayout();
 			} catch (IOException ioe) {
@@ -500,6 +534,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				resetLayout(layoutVariant);
 				return;
 			}
+		}
+		if ((variant == TYPE_DPAD || variant == TYPE_ANALOG)
+				&& previousVariant != TYPE_DPAD && previousVariant != TYPE_ANALOG) {
+			setSnap(KEY_FIRE, KEY_SOFT_RIGHT, RectSnap.EXT_NORTH, true);
 		}
 		layoutVariant = variant;
 		onLayoutChanged(variant);
@@ -516,7 +554,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private void saveLayout() {
 		try (RandomAccessFile raf = new RandomAccessFile(saveFile, "rw")) {
 			int variant = layoutVariant;
-			if (variant != TYPE_CUSTOM && raf.length() > 16) {
+			if (!storesLayoutGeometry(variant) && raf.length() > 16) {
 				try {
 					if (raf.readInt() != LAYOUT_SIGNATURE) {
 						throw new IOException("file signature not found");
@@ -562,7 +600,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			raf.writeInt(LAYOUT_TYPE);
 			raf.writeInt(1);
 			raf.write(variant);
-			if (variant != TYPE_CUSTOM) {
+			if (!storesLayoutGeometry(variant)) {
 				raf.writeInt(LAYOUT_EOF);
 				raf.writeInt(0);
 				raf.setLength(raf.getFilePointer());
@@ -724,6 +762,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	public void setKeysVisibility(boolean[] states) {
+		cancel();
 		for (int i = 0; i < KEYBOARD_SIZE; i++) {
 			keypad[i].visible = !states[i];
 		}
@@ -732,6 +771,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	@Override
 	public void setTarget(Canvas canvas) {
+		if (target != null && target != canvas) {
+			cancel();
+		}
 		target = canvas;
 		highlightGroup(-1);
 	}
@@ -802,6 +844,62 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				key.opaque = settings.vkForceOpacity;
 			}
 		}
+		updateDirectionalBounds();
+	}
+
+	private void updateDirectionalBounds() {
+		directionalBounds.setEmpty();
+		for (int index : keyScaleGroups[0]) {
+			RectF rect = keypad[index].rect;
+			if (directionalBounds.isEmpty()) {
+				directionalBounds.set(rect);
+			} else {
+				directionalBounds.union(rect);
+			}
+		}
+		float diameter = Math.min(directionalBounds.width(), directionalBounds.height());
+		float half = diameter / 2.0f;
+		groupedCircle.set(
+				directionalBounds.centerX() - half,
+				directionalBounds.centerY() - half,
+				directionalBounds.centerX() + half,
+				directionalBounds.centerY() + half);
+		float cellW = directionalBounds.width() / 3.0f;
+		float cellH = directionalBounds.height() / 3.0f;
+		dpadUp.set(
+				directionalBounds.left + cellW, directionalBounds.top,
+				directionalBounds.right - cellW, directionalBounds.top + cellH);
+		dpadLeft.set(
+				directionalBounds.left, directionalBounds.top + cellH,
+				directionalBounds.left + cellW, directionalBounds.bottom - cellH);
+		dpadCenter.set(
+				directionalBounds.left + cellW, directionalBounds.top + cellH,
+				directionalBounds.right - cellW, directionalBounds.bottom - cellH);
+		dpadRight.set(
+				directionalBounds.right - cellW, directionalBounds.top + cellH,
+				directionalBounds.right, directionalBounds.bottom - cellH);
+		dpadDown.set(
+				directionalBounds.left + cellW, directionalBounds.bottom - cellH,
+				directionalBounds.right - cellW, directionalBounds.bottom);
+		centerDirectionalThumb();
+	}
+
+	private boolean isDirectionIndex(int index) {
+		return index >= KEY_UP_LEFT && index <= KEY_DOWN_RIGHT;
+	}
+
+	private boolean isDirectionalControlVisible() {
+		for (int index : keyScaleGroups[0]) {
+			if (keypad[index].visible) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void centerDirectionalThumb() {
+		directionalThumbX = directionalBounds.centerX();
+		directionalThumbY = directionalBounds.centerY();
 	}
 
 	public boolean isPhone() {
@@ -824,6 +922,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	public void setLayoutEditMode(int mode) {
+		if (layoutEditMode == LAYOUT_EOF && mode != LAYOUT_EOF) {
+			cancel();
+		}
 		layoutEditMode = mode;
 		editedIndex = -1;
 		highlightGroup(-1);
@@ -868,10 +969,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		overlayView.postInvalidate();
 		int delay = settings.vkHideDelay;
 		if (delay > 0 && obscuresVirtualScreen && layoutEditMode == LAYOUT_EOF) {
-			for (VirtualKey key : associatedKeys) {
-				if (key != null) {
-					return;
-				}
+			if (associatedKeys.size() > 0 || directionalPointer >= 0) {
+				return;
 			}
 			handler.postDelayed(this, delay);
 		}
@@ -889,27 +988,107 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	@Override
 	public void paint(CanvasWrapper g) {
-		if (visible && (layoutEditMode != LAYOUT_EOF || settings.vkAlpha > 0)) {
-			for (VirtualKey key : keypad) {
-				if (key.visible) {
-					key.paint(g);
-				}
+		if (!visible || (layoutEditMode == LAYOUT_EOF && settings.vkAlpha <= 0)) {
+			return;
+		}
+		boolean grouped = isGroupedDirectionalLayout() && layoutEditMode == LAYOUT_EOF;
+		for (int i = 0; i < keypad.length; i++) {
+			if (grouped && isDirectionIndex(i)) {
+				continue;
+			}
+			VirtualKey key = keypad[i];
+			if (key.visible) {
+				key.paint(g);
 			}
 		}
+		if (grouped && isDirectionalControlVisible()) {
+			paintGroupedDirectional(g);
+		}
+	}
+
+	private void paintGroupedDirectional(CanvasWrapper g) {
+		if (directionalBounds.isEmpty()) {
+			return;
+		}
+		boolean active = directionalPointer >= 0;
+		boolean opaque = keypad[KEY_UP].opaque;
+		int alpha = (opaque ? 0xFF : settings.vkAlpha) << 24;
+		int bgColor = active ? settings.vkBgColorSelected : settings.vkBgColor;
+		int fgColor = active ? settings.vkFgColorSelected : settings.vkFgColor;
+		g.setFillColor(alpha | bgColor);
+		g.setTextColor(alpha | fgColor);
+		g.setDrawColor(alpha | settings.vkOutlineColor);
+
+		if (layoutVariant == TYPE_ANALOG) {
+			float baseRadius = analogBaseRadius();
+			float baseCenterX = analogCenter.centerX(groupedCircle.centerX());
+			float baseCenterY = analogCenter.centerY(groupedCircle.centerY());
+			analogBase.set(
+					baseCenterX - baseRadius,
+					baseCenterY - baseRadius,
+					baseCenterX + baseRadius,
+					baseCenterY + baseRadius);
+			g.fillArc(analogBase, 0, 360);
+			g.drawArc(analogBase, 0, 360);
+			float thumbRadius = analogThumbRadius();
+			analogThumb.set(
+					directionalThumbX - thumbRadius,
+					directionalThumbY - thumbRadius,
+					directionalThumbX + thumbRadius,
+					directionalThumbY + thumbRadius);
+			g.fillArc(analogThumb, 0, 360);
+			g.drawArc(analogThumb, 0, 360);
+			return;
+		}
+
+		paintDpadPart(g, dpadUp);
+		paintDpadPart(g, dpadLeft);
+		paintDpadPart(g, dpadCenter);
+		paintDpadPart(g, dpadRight);
+		paintDpadPart(g, dpadDown);
+		g.drawString(ARROW_UP, dpadUp.centerX(), dpadUp.centerY());
+		g.drawString(ARROW_LEFT, dpadLeft.centerX(), dpadLeft.centerY());
+		g.drawString(ARROW_RIGHT, dpadRight.centerX(), dpadRight.centerY());
+		g.drawString(ARROW_DOWN, dpadDown.centerX(), dpadDown.centerY());
+	}
+
+	private void paintDpadPart(CanvasWrapper g, RectF part) {
+		int radius = (int) (Math.min(part.width(), part.height()) * 0.18f);
+		g.fillRoundRect(part, radius, radius);
+		g.drawRoundRect(part, radius, radius);
 	}
 
 	@Override
 	public boolean pointerPressed(int pointer, float x, float y) {
 		switch (layoutEditMode) {
 			case LAYOUT_EOF -> {
-				if (pointer > associatedKeys.length) {
+				if (pointer < 0) {
 					return false;
 				}
-				for (VirtualKey key : keypad) {
-					if (key.contains(x, y)) {
+				if (isGroupedDirectionalLayout() && directionalPointer < 0
+						&& isDirectionalControlVisible() && isDirectionalCaptureHit(x, y)) {
+					directionalPointer = pointer;
+					if (layoutVariant == TYPE_ANALOG) {
+						analogCenter.begin(
+								isRelativeAnalogCenter(),
+								groupedCircle.centerX(),
+								groupedCircle.centerY(),
+								x,
+								y);
+					}
+					vibrate();
+					updateDirectionalTouch(x, y, false);
+					return true;
+				}
+				for (int i = 0; i < keypad.length; i++) {
+					if (isGroupedDirectionalLayout() && isDirectionIndex(i)) {
+						continue;
+					}
+					VirtualKey key = keypad[i];
+					if (key.contains(x, y) && key.canAcquire(pointer)) {
 						vibrate();
-						associatedKeys[pointer] = key;
-						key.onDown();
+						associatedKeys.put(pointer, key);
+						key.onDown(pointer);
 						overlayView.postInvalidate();
 						break;
 					}
@@ -960,15 +1139,19 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	public boolean pointerDragged(int pointer, float x, float y) {
 		switch (layoutEditMode) {
 			case LAYOUT_EOF -> {
-				if (pointer > associatedKeys.length) {
+				if (pointer < 0) {
 					return false;
 				}
-				VirtualKey aKey = associatedKeys[pointer];
+				if (pointer == directionalPointer) {
+					updateDirectionalTouch(x, y, true);
+					return true;
+				}
+				VirtualKey aKey = associatedKeys.get(pointer);
 				if (aKey == null) {
 					pointerPressed(pointer, x, y);
 				} else if (!aKey.contains(x, y)) {
-					associatedKeys[pointer] = null;
-					aKey.onUp();
+					associatedKeys.remove(pointer);
+					aKey.onUp(pointer);
 					overlayView.postInvalidate();
 					pointerPressed(pointer, x, y);
 				}
@@ -1046,13 +1229,17 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	@Override
 	public boolean pointerReleased(int pointer, float x, float y) {
 		if (layoutEditMode == LAYOUT_EOF) {
-			if (pointer > associatedKeys.length) {
+			if (pointer < 0) {
 				return false;
 			}
-			VirtualKey key = associatedKeys[pointer];
+			if (pointer == directionalPointer) {
+				releaseDirectionalTouch();
+				return true;
+			}
+			VirtualKey key = associatedKeys.get(pointer);
 			if (key != null) {
-				associatedKeys[pointer] = null;
-				key.onUp();
+				associatedKeys.remove(pointer);
+				key.onUp(pointer);
 				overlayView.postInvalidate();
 			}
 		} else if (layoutEditMode == LAYOUT_KEYS) {
@@ -1105,9 +1292,18 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	@Override
 	public void cancel() {
+		if (target != null) {
+			target.releaseVirtualGuestInputs();
+		}
+		associatedKeys.clear();
+		directionalPointer = -1;
+		analogCenter.clear();
+		centerDirectionalThumb();
 		for (VirtualKey key : keypad) {
-			key.selected = false;
-			handler.removeCallbacks(key);
+			key.cancelState();
+		}
+		if (overlayView != null) {
+			overlayView.postInvalidate();
 		}
 	}
 
@@ -1154,6 +1350,82 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	public void setView(View view) {
 		overlayView = view;
+	}
+
+	private boolean isDirectionalCaptureHit(float x, float y) {
+		if (layoutVariant != TYPE_ANALOG) {
+			return directionalBounds.contains(x, y);
+		}
+		if (isRelativeAnalogCenter()) {
+			return DirectionalControlGeometry.containsRelativeCapture(
+					directionalBounds.left,
+					directionalBounds.top,
+					directionalBounds.right,
+					directionalBounds.bottom,
+					x,
+					y);
+		}
+		return DirectionalControlGeometry.containsAnalogCapture(
+				groupedCircle.centerX(), groupedCircle.centerY(), analogBaseRadius(), x, y);
+	}
+
+	private boolean isRelativeAnalogCenter() {
+		return ProfileModel.sanitizeVirtualAnalogCenterMode(settings.virtualAnalogCenterMode)
+				== ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE;
+	}
+
+	private float analogBaseRadius() {
+		return Math.min(groupedCircle.width(), groupedCircle.height()) / 2.0f;
+	}
+
+	private float analogThumbRadius() {
+		return DirectionalControlGeometry.analogThumbRadius(analogBaseRadius());
+	}
+
+	private void updateDirectionalTouch(float x, float y, boolean movementSample) {
+		if (target == null || directionalBounds.isEmpty()) {
+			return;
+		}
+		boolean analog = layoutVariant == TYPE_ANALOG;
+		float radius = analog
+				? analogBaseRadius()
+				: Math.min(directionalBounds.width(), directionalBounds.height()) / 2.0f;
+		float centerX = analog
+				? analogCenter.centerX(groupedCircle.centerX())
+				: directionalBounds.centerX();
+		float centerY = analog
+				? analogCenter.centerY(groupedCircle.centerY())
+				: directionalBounds.centerY();
+		DirectionalControlGeometry.Sample sample = DirectionalControlGeometry.gestureSample(
+				analog,
+				movementSample,
+				centerX,
+				centerY,
+				radius,
+				x,
+				y);
+		directionalThumbX = sample.thumbX;
+		directionalThumbY = sample.thumbY;
+		if (layoutVariant == TYPE_DPAD) {
+			target.updateVirtualDpad(sample.x, sample.y);
+		} else {
+			target.updateVirtualAnalog(sample.x, sample.y);
+		}
+		overlayView.postInvalidate();
+	}
+
+	private void releaseDirectionalTouch() {
+		if (target != null) {
+			if (layoutVariant == TYPE_DPAD) {
+				target.updateVirtualDpad(0.0f, 0.0f);
+			} else if (layoutVariant == TYPE_ANALOG) {
+				target.updateVirtualAnalog(0.0f, 0.0f);
+			}
+		}
+		directionalPointer = -1;
+		analogCenter.clear();
+		centerDirectionalThumb();
+		overlayView.postInvalidate();
 	}
 
 	public int getKeyStatesVodafone() {
@@ -1219,6 +1491,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		int corners;
 		private final int hashCode;
 		private int repeatCount;
+		int activePointer = -1;
 
 		VirtualKey(int keyCode, String label) {
 			this.keyCode = keyCode;
@@ -1278,7 +1551,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 		@Override
 		public void run() {
-			if (target == null) {
+			if (target == null || activePointer < 0) {
 				selected = false;
 				repeatCount = 0;
 				return;
@@ -1290,21 +1563,48 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 		}
 
-		public void onRepeat() {
-			handler.postDelayed(this, repeatCount > 6 ? 80 : REPEAT_INTERVALS[repeatCount++]);
-			target.postKeyRepeated(keyCode);
+		boolean canAcquire(int pointer) {
+			return activePointer < 0 || activePointer == pointer;
 		}
 
-		protected void onDown() {
-			selected = true;
-			target.postKeyPressed(keyCode);
+		public void onRepeat() {
+			handler.postDelayed(this, repeatCount > 6 ? 80 : REPEAT_INTERVALS[repeatCount++]);
+			int pointer = activePointer;
+			if (target != null && pointer >= 0 && overlayView != null) {
+				overlayView.post(() -> {
+					if (target != null && activePointer == pointer && selected) {
+						target.repeatVirtualKey(pointer, 0);
+					}
+				});
+			}
+		}
+
+		protected void onDown(int pointer) {
+			if (target == null || !canAcquire(pointer) || activePointer >= 0) {
+				return;
+			}
+			activePointer = pointer;
+			target.setVirtualKeyTarget(pointer, 0, keyCode);
 			handler.postDelayed(this, 400);
 		}
 
-		public void onUp() {
+		public void onUp(int pointer) {
+			if (pointer != activePointer) {
+				return;
+			}
+			handler.removeCallbacks(this);
+			activePointer = -1;
+			repeatCount = 0;
+			if (target != null) {
+				target.setVirtualKeyTarget(pointer, 0, 0);
+			}
+		}
+
+		void cancelState() {
+			activePointer = -1;
+			repeatCount = 0;
 			selected = false;
 			handler.removeCallbacks(this);
-			target.postKeyReleased(keyCode);
 		}
 	}
 
@@ -1321,21 +1621,46 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 
 		@Override
-		protected void onDown() {
-			super.onDown();
-			target.postKeyPressed(secondKeyCode);
+		protected void onDown(int pointer) {
+			if (!canAcquire(pointer) || activePointer >= 0) {
+				return;
+			}
+			super.onDown(pointer);
+			selected = true;
+			if (target != null && activePointer == pointer) {
+				target.setVirtualKeyTarget(pointer, 1, secondKeyCode);
+			}
 		}
 
 		@Override
-		public void onUp() {
-			super.onUp();
-			target.postKeyReleased(secondKeyCode);
+		public void onUp(int pointer) {
+			if (pointer != activePointer) {
+				return;
+			}
+			selected = false;
+			if (target != null) {
+				target.setVirtualKeyTarget(pointer, 1, 0);
+			}
+			super.onUp(pointer);
 		}
 
 		@Override
 		public void onRepeat() {
 			super.onRepeat();
-			target.postKeyRepeated(secondKeyCode);
+			int pointer = activePointer;
+			if (target != null && pointer >= 0 && overlayView != null) {
+				overlayView.post(() -> {
+					if (target != null && activePointer == pointer && selected) {
+						target.repeatVirtualKey(pointer, 1);
+					}
+				});
+			}
+		}
+
+		@Override
+		void cancelState() {
+			super.cancelState();
+			selected = false;
 		}
 
 		@Override
@@ -1351,13 +1676,21 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 
 		@Override
-		protected void onDown() {
+		protected void onDown(int pointer) {
+			if (activePointer >= 0) {
+				return;
+			}
+			activePointer = pointer;
 			selected = true;
 			handler.postDelayed(this, 500);
 		}
 
 		@Override
-		public void onUp() {
+		public void onUp(int pointer) {
+			if (pointer != activePointer) {
+				return;
+			}
+			activePointer = -1;
 			if (selected) {
 				selected = false;
 				handler.removeCallbacks(this);
@@ -1366,6 +1699,12 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					activity.openOptionsMenu();
 				}
 			}
+		}
+
+		@Override
+		void cancelState() {
+			super.cancelState();
+			selected = false;
 		}
 
 		@Override

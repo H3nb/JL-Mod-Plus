@@ -26,8 +26,6 @@ import android.graphics.Bitmap;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.util.Log;
-import android.util.SparseIntArray;
-import android.view.KeyEvent;
 
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
@@ -486,17 +484,6 @@ public class MicroLoader {
 				.subscribe(observer);
 	}
 
-	public int getMenuKeyCode() {
-		SparseIntArray mappings = params.keyMappings;
-		if (mappings == null) {
-			return KeyEvent.KEYCODE_BACK;
-		}
-		int i = mappings.indexOfValue(KeyMapper.KEY_OPTIONS_MENU);
-		if (i < 0) {
-			return KeyEvent.KEYCODE_BACK;
-		}
-		return mappings.keyAt(i);
-	}
 
 	public static String getSoundBank() {
 		return soundBank;

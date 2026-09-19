@@ -19,6 +19,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.google.gson.Gson;
+
 import org.junit.Test;
 
 import javax.microedition.shell.timing.TimingMode;
@@ -115,6 +117,39 @@ public class ConfigFormStateTest {
 		assertEquals("64", Integer.toString(state.vkAlpha));
 		assertTrue(state.showKeyboard);
 		assertEquals("microedition.locale: en\n", state.systemProperties);
+	}
+
+	@Test
+	public void analogDirectionModeDefaultsToEightWayAndRoundTripsThroughForm() {
+		ProfileModel legacy = new Gson().fromJson("{\"Version\":7}", ProfileModel.class);
+		assertEquals(ProfileModel.ANALOG_DIRECTION_8_WAY, legacy.analogDirectionMode);
+
+		legacy.analogDirectionMode = ProfileModel.ANALOG_DIRECTION_NUMERIC;
+		ConfigFormState state = ConfigFormState.fromProfile(legacy, "");
+		assertEquals(ProfileModel.ANALOG_DIRECTION_NUMERIC, state.analogDirectionMode);
+
+		ProfileModel applied = new ProfileModel();
+		state.applyTo(applied);
+		assertEquals(ProfileModel.ANALOG_DIRECTION_NUMERIC, applied.analogDirectionMode);
+	}
+
+	@Test
+	public void virtualAnalogCenterDefaultsSanitizesAndRoundTripsThroughForm() {
+		ProfileModel legacy = new Gson().fromJson("{\"Version\":7}", ProfileModel.class);
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_FIXED, legacy.virtualAnalogCenterMode);
+
+		ConfigFormState invalid = ConfigFormState.builder()
+				.virtualAnalogCenterMode(99)
+				.build();
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_FIXED, invalid.virtualAnalogCenterMode);
+
+		legacy.virtualAnalogCenterMode = ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE;
+		ConfigFormState state = ConfigFormState.fromProfile(legacy, "");
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE, state.virtualAnalogCenterMode);
+
+		ProfileModel applied = new ProfileModel();
+		state.applyTo(applied);
+		assertEquals(ProfileModel.VIRTUAL_ANALOG_CENTER_RELATIVE, applied.virtualAnalogCenterMode);
 	}
 
 	@Test

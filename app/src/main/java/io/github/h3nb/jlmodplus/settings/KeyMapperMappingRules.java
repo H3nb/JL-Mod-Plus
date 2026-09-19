@@ -21,17 +21,20 @@ public final class KeyMapperMappingRules {
 	private KeyMapperMappingRules() {
 	}
 
-	public static SparseIntArray assign(
+	public static SparseIntArray addOrReplaceBinding(
 			SparseIntArray current,
-			int canvasKey,
+			int androidKeyCode,
+			int target) {
+		SparseIntArray updated = current == null ? new SparseIntArray() : current.clone();
+		updated.put(androidKeyCode, target);
+		return updated;
+	}
+
+	public static SparseIntArray removeBinding(
+			SparseIntArray current,
 			int androidKeyCode) {
 		SparseIntArray updated = current == null ? new SparseIntArray() : current.clone();
-		for (int i = updated.size() - 1; i >= 0; i--) {
-			if (updated.valueAt(i) == canvasKey) {
-				updated.removeAt(i);
-			}
-		}
-		updated.put(androidKeyCode, canvasKey);
+		updated.delete(androidKeyCode);
 		return updated;
 	}
 

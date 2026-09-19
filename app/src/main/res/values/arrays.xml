@@ -55,6 +55,17 @@
         <item>@string/pref_vk_type_arrows_numbers</item>
         <item>@string/pref_vk_type_numbers</item>
         <item>@string/pref_vk_type_arrows</item>
+        <item>@string/pref_vk_type_dpad</item>
+        <item>@string/pref_vk_type_analog</item>
+    </string-array>
+    <string-array name="pref_analog_direction_mode_entries">
+        <item>@string/pref_analog_direction_mode_4_way</item>
+        <item>@string/pref_analog_direction_mode_8_way</item>
+        <item>@string/pref_analog_direction_mode_numeric</item>
+    </string-array>
+    <string-array name="pref_virtual_analog_center_entries">
+        <item>@string/pref_virtual_analog_center_fixed</item>
+        <item>@string/pref_virtual_analog_center_relative</item>
     </string-array>
     <string-array name="pref_button_shape_entries">
         <item>@string/pref_button_shape_oval</item>

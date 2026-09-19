@@ -61,6 +61,8 @@ public final class ConfigFormState {
 	public final int screenGravity;
 	public final int graphicsMode;
 	public final int keyCodesLayout;
+	public final int analogDirectionMode;
+	public final int virtualAnalogCenterMode;
 	public final int vkButtonShape;
 	public final int vkAlpha;
 
@@ -104,6 +106,9 @@ public final class ConfigFormState {
 		screenGravity = builder.screenGravity;
 		graphicsMode = builder.graphicsMode;
 		keyCodesLayout = builder.keyCodesLayout;
+		analogDirectionMode = ProfileModel.sanitizeAnalogDirectionMode(builder.analogDirectionMode);
+		virtualAnalogCenterMode =
+				ProfileModel.sanitizeVirtualAnalogCenterMode(builder.virtualAnalogCenterMode);
 		vkButtonShape = builder.vkButtonShape;
 		vkAlpha = builder.vkAlpha;
 		screenFilter = builder.screenFilter;
@@ -161,6 +166,8 @@ public final class ConfigFormState {
 				.vkForceOpacity(params.vkForceOpacity)
 				.touchInput(params.touchInput)
 				.keyCodesLayout(params.keyCodesLayout)
+				.analogDirectionMode(params.analogDirectionMode)
+				.virtualAnalogCenterMode(params.virtualAnalogCenterMode)
 				.vkButtonShape(params.vkButtonShape)
 				.vkAlpha(params.vkAlpha)
 				.vkHideDelay(optionalInt(params.vkHideDelay))
@@ -210,6 +217,9 @@ public final class ConfigFormState {
 		params.touchInput = touchInput;
 
 		params.keyCodesLayout = keyCodesLayout;
+		params.analogDirectionMode = ProfileModel.sanitizeAnalogDirectionMode(analogDirectionMode);
+		params.virtualAnalogCenterMode =
+				ProfileModel.sanitizeVirtualAnalogCenterMode(virtualAnalogCenterMode);
 		params.vkButtonShape = vkButtonShape;
 		params.vkAlpha = vkAlpha;
 		params.vkHideDelay = parseInt(vkHideDelay, 0);
@@ -296,6 +306,8 @@ public final class ConfigFormState {
 		private int screenGravity;
 		private int graphicsMode;
 		private int keyCodesLayout;
+		private int analogDirectionMode = ProfileModel.ANALOG_DIRECTION_8_WAY;
+		private int virtualAnalogCenterMode = ProfileModel.VIRTUAL_ANALOG_CENTER_FIXED;
 		private int vkButtonShape;
 		private int vkAlpha;
 		private boolean screenFilter;
@@ -341,6 +353,8 @@ public final class ConfigFormState {
 			screenGravity = source.screenGravity;
 			graphicsMode = source.graphicsMode;
 			keyCodesLayout = source.keyCodesLayout;
+			analogDirectionMode = source.analogDirectionMode;
+			virtualAnalogCenterMode = source.virtualAnalogCenterMode;
 			vkButtonShape = source.vkButtonShape;
 			vkAlpha = source.vkAlpha;
 			screenFilter = source.screenFilter;
@@ -383,6 +397,14 @@ public final class ConfigFormState {
 		public Builder screenGravity(int value) { screenGravity = value; return this; }
 		public Builder graphicsMode(int value) { graphicsMode = value; return this; }
 		public Builder keyCodesLayout(int value) { keyCodesLayout = value; return this; }
+		public Builder analogDirectionMode(int value) {
+			analogDirectionMode = ProfileModel.sanitizeAnalogDirectionMode(value);
+			return this;
+		}
+		public Builder virtualAnalogCenterMode(int value) {
+			virtualAnalogCenterMode = ProfileModel.sanitizeVirtualAnalogCenterMode(value);
+			return this;
+		}
 		public Builder vkButtonShape(int value) { vkButtonShape = value; return this; }
 		public Builder vkAlpha(int value) { vkAlpha = value; return this; }
 		public Builder screenFilter(boolean value) { screenFilter = value; return this; }

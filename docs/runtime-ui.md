@@ -39,6 +39,46 @@ The finish-layout item is visible only while the virtual keyboard is in an
 edit mode. The Canvas-only group remains absent on `Form` and other
 non-Canvas Displayables.
 
+## Guest input boundary
+
+Guest digital input is owned by the runtime Canvas boundary, not by Compose.
+The supported guest-input sources are Android keyboard/keypad `KeyEvent`s,
+gamepad digital `KeyEvent`s, gamepad HAT motion, the physical left analog
+stick, legacy virtual-keyboard buttons, the grouped virtual D-pad, and the
+virtual analog stick.
+
+- Digital physical buttons resolve through `KeyMapper`. Its effective map is
+  the default map plus persisted overrides, including explicit removal
+  tombstones. Multiple physical inputs may map to the same guest logical key.
+- Gamepad HAT and left-stick axes are not Key Mapper entries. HAT and the
+  virtual D-pad remain normal 8-way J2ME game directions. Physical and virtual
+  analog sticks use radial activation hysteresis followed by angle-based
+  quantization. Analog Direction Mode selects 4-way, 8-way (the default), or
+  Numeric output; Numeric uses the raw phone-keypad direction keys 1/2/3/4/6/7/8/9.
+  No low-pass or time-based smoothing is applied.
+- The virtual analog supports Fixed and Relative center modes. Relative uses the
+  initial touch as the center for that gesture only, then returns the base and
+  thumb to the configured layout center on release or cancellation. Center
+  selection happens before the unchanged analog radial and direction processing.
+- Joystick MotionEvent history is processed oldest-to-newest before the current
+  sample, using the same MotionRange normalization and HAT/left-stick paths.
+- HAT, left-stick, virtual D-pad, and virtual analog outputs synthesize held-key
+  repeat after the initial delay, with one repeat stream per guest logical key.
+  Ordinary Android keys and legacy virtual keys retain their existing repeat paths.
+- All guest logical keys share first-owner/last-owner ownership in Canvas. A
+  second source holding the same key does not emit another press, and releasing
+  one source cannot release the key while another owner remains.
+- `M` (`KeyMapper.KEY_OPTIONS_MENU`) is host-only. Any effective digital
+  mapping to `M`, plus Android's dedicated `KEYCODE_MENU` path, opens the
+  runtime menu before guest dispatch. START and SELECT are not reserved host
+  buttons and remain ordinary mappable inputs unless the user explicitly maps
+  them.
+- Runtime teardown, focus loss, surface destruction, virtual cancellation, and
+  physical-device removal release the corresponding guest ownership so stale
+  inputs cannot remain held.
+- Physical controller behavior still requires device smoke testing because
+  Android key/axis reporting and `MotionRange` values vary across hardware.
+
 ## Geometry and lifecycle safeguards
 
 - The runtime hierarchy is constructed by `RuntimeHostView`;

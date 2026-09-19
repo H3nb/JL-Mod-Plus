@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.settings
 
 import android.content.res.Configuration
+import android.view.KeyEvent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
@@ -23,7 +24,17 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 private val NoOpKeyMapperActions = object : KeyMapperActions {
     override fun onVirtualKey(canvasKey: Int) = Unit
     override fun onDismissMapping() = Unit
+    override fun onRemoveMapping(androidKeyCode: Int) = Unit
 }
+
+private fun mappingPromptState() = KeyMapperUiState(
+    mappingDialog = KeyMapperMappingDialog(
+        bindings = listOf(
+            KeyMapperPhysicalBinding(KeyEvent.KEYCODE_BACK, "KEYCODE_BACK"),
+            KeyMapperPhysicalBinding(KeyEvent.KEYCODE_BUTTON_START, "KEYCODE_BUTTON_START"),
+        ),
+    ),
+)
 
 @PreviewTest
 @Preview(name = "Key mapper light phone", widthDp = 360, heightDp = 640, showBackground = true)
@@ -60,12 +71,7 @@ fun KeyMapperDarkPhoneScreenshot() {
 fun KeyMapperMappingPromptScreenshot() {
     JLModPlusTheme {
         KeyMapperScreen(
-            state = KeyMapperUiState(
-                mappingDialog = KeyMapperMappingDialog(
-                    canvasKey = 0,
-                    currentKeyName = "KEYCODE_BACK",
-                ),
-            ),
+            state = mappingPromptState(),
             actions = NoOpKeyMapperActions,
         )
     }
@@ -83,12 +89,7 @@ fun KeyMapperMappingPromptScreenshot() {
 fun KeyMapperMappingPromptDarkScreenshot() {
     JLModPlusTheme(darkTheme = true) {
         KeyMapperScreen(
-            state = KeyMapperUiState(
-                mappingDialog = KeyMapperMappingDialog(
-                    canvasKey = 0,
-                    currentKeyName = "KEYCODE_BACK",
-                ),
-            ),
+            state = mappingPromptState(),
             actions = NoOpKeyMapperActions,
         )
     }

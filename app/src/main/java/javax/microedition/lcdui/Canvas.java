@@ -22,6 +22,8 @@ package javax.microedition.lcdui;
 import static android.opengl.GLES20.*;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.hardware.input.InputManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -37,8 +39,10 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -104,6 +108,16 @@ public abstract class Canvas extends Displayable {
 	private static final String TAG = Canvas.class.getName();
 	private static final int MAX_SYNCHRONOUS_DRAIN = 4;
 	private static final long AMBIENT_HOST_INTERVAL_NS = 33_333_333L;
+	private static final int DEVICE_DIRECTION_HAT_X = 1;
+	private static final int DEVICE_DIRECTION_HAT_Y = 2;
+	private static final int DEVICE_DIRECTION_STICK_X = 3;
+	private static final int DEVICE_DIRECTION_STICK_Y = 4;
+	private static final int DEVICE_DIRECTION_STICK_NUMERIC = 5;
+	private static final int VIRTUAL_DIRECTION_DPAD_X = 1;
+	private static final int VIRTUAL_DIRECTION_DPAD_Y = 2;
+	private static final int VIRTUAL_DIRECTION_ANALOG_X = 3;
+	private static final int VIRTUAL_DIRECTION_ANALOG_Y = 4;
+	private static final int VIRTUAL_DIRECTION_ANALOG_NUMERIC = 5;
 
 	public static final int KEY_POUND = 35;
 	public static final int KEY_STAR = 42;
@@ -151,11 +165,19 @@ public abstract class Canvas extends Displayable {
 	private final SoftBar softBar = new SoftBar();
 	private final CanvasWrapper canvasWrapper = new CanvasWrapper(settings.screenFilter);
 	private final RectF virtualScreen = new RectF();
+	private final DigitalKeyOwnership keyOwnership = new DigitalKeyOwnership();
+	private final SparseArray<DirectionalInterpreter> hatDirections = new SparseArray<>();
+	private final SparseArray<DirectionalInterpreter> stickDirections = new SparseArray<>();
+	private final DirectionalInterpreter virtualDpadDirection = new DirectionalInterpreter();
+	private final DirectionalInterpreter virtualAnalogDirection = new DirectionalInterpreter();
+	private final Handler syntheticRepeatHandler;
+	private final SyntheticDirectionalRepeater syntheticDirectionalRepeater;
 
 	protected int width, height;
 	protected int maxHeight;
 	private LinearLayout layout;
 	private SurfaceView innerView;
+	private ViewCallbacks viewCallbacks;
 	private Surface surface;
 	private GLRenderer renderer;
 	private int displayWidth;
@@ -202,6 +224,20 @@ public abstract class Canvas extends Displayable {
 
 	protected Canvas(boolean fullscreen) {
 		this.fullscreen = fullscreen;
+		syntheticRepeatHandler = new Handler(Looper.getMainLooper());
+		syntheticDirectionalRepeater = new SyntheticDirectionalRepeater(
+				new SyntheticDirectionalRepeater.Scheduler() {
+					@Override
+					public void postDelayed(Runnable task, long delayMillis) {
+						syntheticRepeatHandler.postDelayed(task, delayMillis);
+					}
+
+					@Override
+					public void removeCallbacks(Runnable task) {
+						syntheticRepeatHandler.removeCallbacks(task);
+					}
+				},
+				this::dispatchGuestKeyRepeated);
 		themeBackgroundArgb = AppBackgroundColors.argb(
 				ProfileModel.isDarkTheme(ContextHolder.getActivity()));
 		super.softBar = softBar;
@@ -453,6 +489,164 @@ public abstract class Canvas extends Displayable {
 		} else {
 			throw new IllegalArgumentException("unknown keycode " + keyCode);
 		}
+	}
+
+	private void applyGuestTransition(DigitalKeyOwnership.Transition transition) {
+		if (transition.releasedKey != 0) {
+			dispatchGuestKeyReleased(transition.releasedKey);
+		}
+		if (transition.pressedKey != 0) {
+			dispatchGuestKeyPressed(transition.pressedKey);
+		}
+	}
+
+	private void dispatchGuestKeyPressed(int keyCode) {
+		if (overlay == null || !overlay.keyPressed(keyCode)) {
+			postKeyPressed(keyCode);
+		}
+	}
+
+	private void dispatchGuestKeyRepeated(int keyCode) {
+		if (overlay == null || !overlay.keyRepeated(keyCode)) {
+			postKeyRepeated(keyCode);
+		}
+	}
+
+	private void dispatchGuestKeyReleased(int keyCode) {
+		if (overlay == null || !overlay.keyReleased(keyCode)) {
+			postKeyReleased(keyCode);
+		}
+	}
+
+	private void dispatchReleasedKeys(int[] keyCodes) {
+		for (int keyCode : keyCodes) {
+			dispatchGuestKeyReleased(keyCode);
+		}
+	}
+
+	public void setVirtualKeyTarget(int pointerId, int component, int keyCode) {
+		applyGuestTransition(keyOwnership.setVirtualKey(pointerId, component, keyCode));
+	}
+
+	public void repeatVirtualKey(int pointerId, int component) {
+		int keyCode = keyOwnership.virtualKeyTarget(pointerId, component);
+		if (keyCode != 0) {
+			dispatchGuestKeyRepeated(keyCode);
+		}
+	}
+
+	public void updateVirtualDpad(float x, float y) {
+		applyVirtualDirectional(
+				virtualDpadDirection,
+				VIRTUAL_DIRECTION_DPAD_X,
+				VIRTUAL_DIRECTION_DPAD_Y,
+				x,
+				y);
+	}
+
+	public void updateVirtualAnalog(float x, float y) {
+		int mode = ProfileModel.sanitizeAnalogDirectionMode(settings.analogDirectionMode);
+		DirectionalInterpreter.Direction direction = virtualAnalogDirection.updateAnalog(
+				x, y, AnalogDirectionMapper.sectorCountForMode(mode));
+		setVirtualDirectionalTarget(
+				VIRTUAL_DIRECTION_ANALOG_X, AnalogDirectionMapper.horizontalKey(direction, mode));
+		setVirtualDirectionalTarget(
+				VIRTUAL_DIRECTION_ANALOG_Y, AnalogDirectionMapper.verticalKey(direction, mode));
+		setVirtualDirectionalTarget(
+				VIRTUAL_DIRECTION_ANALOG_NUMERIC, AnalogDirectionMapper.numericKey(direction, mode));
+	}
+
+	public void releaseVirtualGuestInputs() {
+		virtualDpadDirection.reset();
+		virtualAnalogDirection.reset();
+		syntheticDirectionalRepeater.releaseVirtual();
+		dispatchReleasedKeys(keyOwnership.releaseVirtual());
+	}
+
+	public void releaseGuestInputsForDevice(int deviceId) {
+		hatDirections.remove(deviceId);
+		stickDirections.remove(deviceId);
+		syntheticDirectionalRepeater.releaseDevice(deviceId);
+		dispatchReleasedKeys(keyOwnership.releaseDevice(deviceId));
+	}
+
+	public void releaseGuestInputs() {
+		if (overlay != null) {
+			overlay.cancel();
+		}
+		hatDirections.clear();
+		stickDirections.clear();
+		virtualDpadDirection.reset();
+		virtualAnalogDirection.reset();
+		syntheticDirectionalRepeater.releaseAll();
+		dispatchReleasedKeys(keyOwnership.releaseAll());
+	}
+
+	private void setVirtualDirectionalTarget(int sourceId, int keyCode) {
+		syntheticDirectionalRepeater.setVirtualSource(sourceId, keyCode);
+		applyGuestTransition(keyOwnership.setVirtualDirection(sourceId, keyCode));
+	}
+
+	private void setDeviceDirectionalTarget(int deviceId, int sourceId, int keyCode) {
+		syntheticDirectionalRepeater.setDeviceSource(deviceId, sourceId, keyCode);
+		applyGuestTransition(keyOwnership.setDeviceDirection(deviceId, sourceId, keyCode));
+	}
+
+	private void applyVirtualDirectional(
+			DirectionalInterpreter interpreter,
+			int horizontalSource,
+			int verticalSource,
+			float x,
+			float y) {
+		DirectionalInterpreter.Direction direction = interpreter.update(x, y);
+		setVirtualDirectionalTarget(horizontalSource, horizontalKey(direction.horizontal));
+		setVirtualDirectionalTarget(verticalSource, verticalKey(direction.vertical));
+	}
+
+	private void applyDeviceDirectional(
+			int deviceId,
+			boolean hat,
+			float x,
+			float y) {
+		SparseArray<DirectionalInterpreter> states = hat ? hatDirections : stickDirections;
+		DirectionalInterpreter interpreter = states.get(deviceId);
+		if (interpreter == null) {
+			interpreter = new DirectionalInterpreter();
+			states.put(deviceId, interpreter);
+		}
+		if (hat) {
+			DirectionalInterpreter.Direction direction = interpreter.update(x, y);
+			setDeviceDirectionalTarget(
+					deviceId, DEVICE_DIRECTION_HAT_X, horizontalKey(direction.horizontal));
+			setDeviceDirectionalTarget(
+					deviceId, DEVICE_DIRECTION_HAT_Y, verticalKey(direction.vertical));
+			return;
+		}
+
+		int mode = ProfileModel.sanitizeAnalogDirectionMode(settings.analogDirectionMode);
+		DirectionalInterpreter.Direction direction = interpreter.updateAnalog(
+				x, y, AnalogDirectionMapper.sectorCountForMode(mode));
+		setDeviceDirectionalTarget(
+				deviceId, DEVICE_DIRECTION_STICK_X,
+				AnalogDirectionMapper.horizontalKey(direction, mode));
+		setDeviceDirectionalTarget(
+				deviceId, DEVICE_DIRECTION_STICK_Y,
+				AnalogDirectionMapper.verticalKey(direction, mode));
+		setDeviceDirectionalTarget(
+				deviceId, DEVICE_DIRECTION_STICK_NUMERIC,
+				AnalogDirectionMapper.numericKey(direction, mode));
+	}
+
+	private static int horizontalKey(int direction) {
+		if (direction < 0) return KEY_LEFT;
+		if (direction > 0) return KEY_RIGHT;
+		return 0;
+	}
+
+	private static int verticalKey(int direction) {
+		if (direction < 0) return KEY_UP;
+		if (direction > 0) return KEY_DOWN;
+		return 0;
 	}
 
 	public void postKeyPressed(int keyCode) {
@@ -780,9 +974,11 @@ public abstract class Canvas extends Displayable {
 				innerView = canvasView;
 			}
 			ViewCallbacks callback = new ViewCallbacks(innerView);
+			viewCallbacks = callback;
 			innerView.getHolder().addCallback(callback);
 			innerView.setOnTouchListener(callback);
 			innerView.setOnKeyListener(callback);
+			innerView.setOnGenericMotionListener(callback);
 			innerView.setFocusableInTouchMode(true);
 			layout.addView(innerView);
 			innerView.requestFocus();
@@ -792,6 +988,11 @@ public abstract class Canvas extends Displayable {
 
 	@Override
 	public void clearDisplayableView() {
+		releaseGuestInputs();
+		if (viewCallbacks != null) {
+			viewCallbacks.unregisterInputDeviceListener();
+			viewCallbacks = null;
+		}
 		super.clearDisplayableView();
 		cancelAmbientHostTick();
 		layout = null;
@@ -1445,13 +1646,31 @@ public abstract class Canvas extends Displayable {
 		}
 	}
 
-	private class ViewCallbacks implements View.OnTouchListener, SurfaceHolder.Callback, View.OnKeyListener {
+	private class ViewCallbacks implements View.OnTouchListener, View.OnKeyListener,
+			View.OnGenericMotionListener, SurfaceHolder.Callback, InputManager.InputDeviceListener {
 		private final View mView;
+		private final InputManager inputManager;
+		private boolean inputDeviceListenerRegistered;
 		OverlayView overlayView;
 
 		public ViewCallbacks(View view) {
 			mView = view;
+			inputManager = (InputManager) view.getContext().getSystemService(Context.INPUT_SERVICE);
 			overlayView = ContextHolder.getActivity().findViewById(R.id.overlay);
+		}
+
+		private void registerInputDeviceListener() {
+			if (!inputDeviceListenerRegistered && inputManager != null) {
+				inputManager.registerInputDeviceListener(this, null);
+				inputDeviceListenerRegistered = true;
+			}
+		}
+
+		private void unregisterInputDeviceListener() {
+			if (inputDeviceListenerRegistered && inputManager != null) {
+				inputManager.unregisterInputDeviceListener(this);
+				inputDeviceListenerRegistered = false;
+			}
 		}
 
 		@Override
@@ -1481,31 +1700,105 @@ public abstract class Canvas extends Displayable {
 		}
 
 		public boolean onKeyDown(int keyCode, KeyEvent event) {
-			keyCode = KeyMapper.convertAndroidKeyCode(keyCode, event);
-			if (keyCode == 0) {
+			int deviceId = event.getDeviceId();
+			if (event.getRepeatCount() == 0) {
+				if (keyOwnership.physicalKeyTarget(deviceId, keyCode) != 0) {
+					return true;
+				}
+				int midpKeyCode = KeyMapper.convertAndroidKeyCode(keyCode, event);
+				if (midpKeyCode == 0) {
+					return false;
+				}
+				applyGuestTransition(
+						keyOwnership.setPhysicalKey(deviceId, keyCode, midpKeyCode));
+				return true;
+			}
+
+			int midpKeyCode = keyOwnership.physicalKeyTarget(deviceId, keyCode);
+			if (midpKeyCode == 0) {
 				return false;
 			}
-			if (event.getRepeatCount() == 0) {
-				if (overlay == null || !overlay.keyPressed(keyCode)) {
-					postKeyPressed(keyCode);
-				}
-			} else {
-				if (overlay == null || !overlay.keyRepeated(keyCode)) {
-					postKeyRepeated(keyCode);
-				}
-			}
+			dispatchGuestKeyRepeated(midpKeyCode);
 			return true;
 		}
 
 		public boolean onKeyUp(int keyCode, KeyEvent event) {
-			int midpKeyCode = KeyMapper.convertAndroidKeyCode(keyCode, event);
-			if (midpKeyCode == 0) {
+			int deviceId = event.getDeviceId();
+			if (keyOwnership.physicalKeyTarget(deviceId, keyCode) == 0) {
 				return false;
 			}
-			if (overlay == null || !overlay.keyReleased(midpKeyCode)) {
-				postKeyReleased(midpKeyCode);
+			applyGuestTransition(keyOwnership.setPhysicalKey(deviceId, keyCode, 0));
+			return true;
+		}
+
+		@Override
+		public boolean onGenericMotion(View v, MotionEvent event) {
+			int source = event.getSource();
+			boolean controllerSource =
+					(source & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK
+							|| (source & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD;
+			if (!controllerSource || event.getActionMasked() != MotionEvent.ACTION_MOVE) {
+				return false;
+			}
+
+			InputDevice device = event.getDevice();
+			int historySize = event.getHistorySize();
+			int sampleCount = ControllerSampleOrder.sampleCount(historySize);
+			for (int sample = 0; sample < sampleCount; sample++) {
+				processControllerSample(
+						event,
+						device,
+						ControllerSampleOrder.historyIndexAt(sample, historySize));
 			}
 			return true;
+		}
+
+		private void processControllerSample(
+				MotionEvent event,
+				InputDevice device,
+				int historyIndex) {
+			int deviceId = event.getDeviceId();
+			float hatX = readAxis(event, device, MotionEvent.AXIS_HAT_X, true, historyIndex);
+			float hatY = readAxis(event, device, MotionEvent.AXIS_HAT_Y, true, historyIndex);
+			float stickX = readAxis(event, device, MotionEvent.AXIS_X, false, historyIndex);
+			float stickY = readAxis(event, device, MotionEvent.AXIS_Y, false, historyIndex);
+			applyDeviceDirectional(deviceId, true, hatX, hatY);
+			applyDeviceDirectional(deviceId, false, stickX, stickY);
+		}
+
+		private float readAxis(
+				MotionEvent event,
+				InputDevice device,
+				int axis,
+				boolean discreteFallback,
+				int historyIndex) {
+			float value = historyIndex == ControllerSampleOrder.CURRENT
+					? event.getAxisValue(axis)
+					: event.getHistoricalAxisValue(axis, historyIndex);
+			InputDevice.MotionRange range =
+					device == null ? null : device.getMotionRange(axis, event.getSource());
+			if (range == null) {
+				if (!discreteFallback || !Float.isFinite(value)) {
+					return 0.0f;
+				}
+				return Math.max(-1.0f, Math.min(1.0f, value));
+			}
+			return AxisNormalizer.normalize(
+					value, range.getMin(), range.getMax(), range.getFlat());
+		}
+
+		@Override
+		public void onInputDeviceAdded(int deviceId) {
+		}
+
+		@Override
+		public void onInputDeviceChanged(int deviceId) {
+			releaseGuestInputsForDevice(deviceId);
+		}
+
+		@Override
+		public void onInputDeviceRemoved(int deviceId) {
+			releaseGuestInputsForDevice(deviceId);
 		}
 
 		@Override
@@ -1621,6 +1914,7 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder holder) {
+			registerInputDeviceListener();
 			presentationMailbox.begin();
 			if (renderer != null) {
 				renderer.start();
@@ -1654,6 +1948,8 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+			unregisterInputDeviceListener();
+			releaseGuestInputs();
 			cancelAmbientHostTick();
 			if (autoSpeedController != null) {
 				autoSpeedController.setFrameSourceActive(false);
@@ -1679,7 +1975,6 @@ public abstract class Canvas extends Displayable {
 			overlayView.setVisibility(false);
 			if (overlay != null) {
 				overlay.setTarget(null);
-				overlay.cancel();
 				overlay = null;
 			}
 		}
