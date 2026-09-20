@@ -31,10 +31,14 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.util.Log;
 import android.view.Display;
+import android.view.InputDevice;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -50,9 +54,11 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -70,6 +76,21 @@ import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.ui.ThemedToast;
 import ru.woesss.util.TextUtils;
 import io.github.h3nb.jlmodplus.jar.Descriptor;
+import io.github.h3nb.jlmodplus.input.ControllerConfig;
+import io.github.h3nb.jlmodplus.input.ControllerHostSink;
+import io.github.h3nb.jlmodplus.input.ControllerHostTarget;
+import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
+import io.github.h3nb.jlmodplus.input.CalibrationChannel;
+import io.github.h3nb.jlmodplus.input.CalibrationEvent;
+import io.github.h3nb.jlmodplus.input.CalibrationPhase;
+import io.github.h3nb.jlmodplus.input.CalibrationStep;
+import io.github.h3nb.jlmodplus.input.GamepadCalibration;
+import io.github.h3nb.jlmodplus.input.GamepadCalibrationSession;
+import io.github.h3nb.jlmodplus.input.HostCommand;
+import io.github.h3nb.jlmodplus.input.PointerMode;
+import io.github.h3nb.jlmodplus.input.ResolutionSource;
+import io.github.h3nb.jlmodplus.input.StickProcessor;
+import io.github.h3nb.jlmodplus.input.StickMode;
 import static io.github.h3nb.jlmodplus.config.ConfigFormEvents.ColorField;
 
 public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert.Callback {
@@ -125,6 +146,25 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private int profileCacheGeneration;
 	private final ExecutorService profileMetadataExecutor = Executors.newSingleThreadExecutor();
 	@Nullable private String profileOrigin;
+	@Nullable private GamepadCalibrationSession gamepadCalibration;
+	@Nullable private ControllerInputRouter controllerInputRouter;
+	private long controllerTargetGeneration = 1L;
+	@Nullable private String gamepadCalibrationSignature;
+	@Nullable private InputDevice gamepadCalibrationDevice;
+	private boolean gamepadCalibrationPending;
+	private Set<CalibrationChannel> gamepadCalibrationChannels = Collections.emptySet();
+	private final Runnable gamepadCalibrationTicker = new Runnable() {
+		@Override
+		public void run() {
+			GamepadCalibrationSession calibration = gamepadCalibration;
+			if (calibration == null || composeController == null) return;
+			if (calibration.getPhase() == CalibrationPhase.WAIT_NEUTRAL) {
+				CalibrationStep step = calibration.tickNeutral(SystemClock.elapsedRealtime());
+				publishGamepadCalibration(step, null);
+			}
+			getWindow().getDecorView().postDelayed(this, 250L);
+		}
+	};
 
 	private final ConfigFormEvents formEvents = new ConfigFormEvents() {
 		@Override
@@ -216,6 +256,43 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		@Override
 		public void onChooseKeyboardLayout() {
 			showKeyboardLayoutPicker();
+		}
+
+		@Override
+		public void onGamepadCalibration() {
+			startGamepadCalibration();
+		}
+
+		@Override
+		public void onGamepadCalibrationAdvance() {
+			advanceGamepadCalibration();
+		}
+
+		@Override
+		public void onGamepadCalibrationSave() {
+			saveGamepadCalibration();
+		}
+
+		@Override
+		public void onGamepadCalibrationCancel() {
+			cancelGamepadCalibration();
+		}
+
+		@Override
+		public void onGamepadCalibrationReset() {
+			resetGamepadCalibration();
+		}
+
+		@Override
+		public void onGamepadDiagnosis() {
+			if (composeController != null) {
+				composeController.showGamepadDiagnosis(buildConfigGamepadDiagnosis());
+			}
+		}
+
+		@Override
+		public void onGamepadHelp() {
+			if (composeController != null) composeController.showGamepadHelp();
 		}
 
 	};
@@ -413,6 +490,519 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				}
 			}
 		});
+		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
+			@Override
+			public javax.microedition.lcdui.Canvas currentCanvas() {
+				return null;
+			}
+
+			@Override
+			public javax.microedition.lcdui.Displayable currentDisplayable() {
+				return null;
+			}
+
+			@Override
+			public ControllerHostTarget currentControllerTarget() {
+				return new ControllerHostTarget("config-activity", controllerTargetGeneration);
+			}
+
+			@Override
+			public boolean onHostCommand(@NonNull HostCommand command, boolean pressed) {
+				if (composeController != null && composeController.isControllerModalActive()) {
+					return composeController.handleHostCommand(command, pressed);
+				}
+				if (command == HostCommand.Back) {
+					if (pressed) getOnBackPressedDispatcher().onBackPressed();
+					return true;
+				}
+				return composeController != null && composeController.handleHostCommand(command, pressed);
+			}
+
+			@Override
+			public void onControllerInputAccepted() {
+			}
+
+			@Override
+			public void onControllerNotice(@NonNull String message) {
+				Toast.makeText(ConfigActivity.this, message, Toast.LENGTH_SHORT).show();
+			}
+
+			@Override
+			public void onControllerAvailabilityChanged(boolean available) {
+				if (!available) cancelGamepadCalibration();
+				if (composeController != null) composeController.update(createUiState());
+			}
+
+			@Override
+			public boolean isControllerModalActive() {
+				return composeController != null && composeController.isControllerModalActive();
+			}
+
+		}, null);
+	}
+
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent event) {
+		if (controllerInputRouter != null && controllerInputRouter.onKeyEvent(event)) {
+			return true;
+		}
+		return super.dispatchKeyEvent(event);
+	}
+
+	@Override
+	public boolean dispatchGenericMotionEvent(MotionEvent event) {
+		if ((gamepadCalibration != null || gamepadCalibrationPending)
+				&& ControllerInputRouter.isGamepadMotionEvent(event)) {
+			return handleGamepadCalibrationMotion(event);
+		}
+		if (controllerInputRouter != null && controllerInputRouter.onGenericMotionEvent(event)) {
+			return true;
+		}
+		return super.dispatchGenericMotionEvent(event);
+	}
+
+	private void startGamepadCalibration() {
+		finishGamepadCalibration();
+		gamepadCalibrationPending = true;
+		gamepadCalibrationDevice = null;
+		gamepadCalibrationSignature = null;
+		gamepadCalibrationChannels = Collections.emptySet();
+		if (composeController != null) {
+			composeController.showGamepadCalibration(new GamepadCalibrationUiState(
+					"WAIT_NEUTRAL",
+					getString(R.string.config_gamepad_calibration_waiting_controller),
+					null,
+					false,
+					false));
+		}
+	}
+
+	private void beginGamepadCalibration(@NonNull InputDevice device, int source) {
+		Set<CalibrationChannel> channels = calibrationChannels(device, source);
+		gamepadCalibrationDevice = device;
+		gamepadCalibrationChannels = channels;
+		gamepadCalibrationSignature = ControllerInputRouter.capabilitySignatureFor(device);
+		if (channels.isEmpty()) {
+			gamepadCalibrationPending = false;
+			gamepadCalibration = null;
+			publishGamepadCalibration(null,
+					getString(R.string.config_gamepad_calibration_no_analog_ranges));
+			return;
+		}
+		ControllerConfig current = currentControllerConfig();
+		GamepadCalibration previous = current.getCalibrations().get(gamepadCalibrationSignature);
+		gamepadCalibration = new GamepadCalibrationSession(
+				previous,
+				GamepadCalibrationSession.DEFAULT_NEUTRAL_DURATION_MILLIS,
+				GamepadCalibrationSession.DEFAULT_MINIMUM_SAMPLES,
+				GamepadCalibrationSession.DEFAULT_MINIMUM_SPAN,
+				GamepadCalibrationSession.DEFAULT_MAXIMUM_REST_SPREAD,
+				channels);
+		gamepadCalibrationPending = false;
+		getWindow().getDecorView().removeCallbacks(gamepadCalibrationTicker);
+		getWindow().getDecorView().postDelayed(gamepadCalibrationTicker, 250L);
+		publishGamepadCalibration(null,
+				getString(R.string.config_gamepad_calibration_start));
+	}
+
+	private boolean handleGamepadCalibrationMotion(@NonNull MotionEvent event) {
+		if (event.getActionMasked() != MotionEvent.ACTION_MOVE
+				&& event.getActionMasked() != MotionEvent.ACTION_HOVER_MOVE) {
+			return true;
+		}
+		InputDevice device = InputDevice.getDevice(event.getDeviceId());
+		if (device == null) return true;
+		if (gamepadCalibrationPending || gamepadCalibration == null) {
+			if (calibrationChannels(device, event.getSource()).isEmpty()) {
+				return true;
+			}
+			beginGamepadCalibration(device, event.getSource());
+		}
+		GamepadCalibrationSession calibration = gamepadCalibration;
+		if (calibration == null || gamepadCalibrationDevice == null
+				|| gamepadCalibrationDevice.getId() != device.getId()) {
+			return true;
+		}
+		Map<CalibrationChannel, Float> values = calibrationValues(event, device, event.getSource());
+		if (values.isEmpty()) return true;
+		CalibrationStep step;
+		if (calibration.getPhase() == CalibrationPhase.WAIT_NEUTRAL) {
+			step = calibration.observeNeutral(
+					SystemClock.elapsedRealtime(), values,
+					isCalibrationNeutral(values, device, event.getSource()));
+		} else {
+			step = calibration.observeRange(values);
+		}
+		publishGamepadCalibration(step, null);
+		return true;
+	}
+
+	private void advanceGamepadCalibration() {
+		GamepadCalibrationSession calibration = gamepadCalibration;
+		if (calibration == null) return;
+		CalibrationStep step;
+		if (calibration.getPhase() == CalibrationPhase.STICK_RANGE) {
+			step = calibration.finishSticks();
+			if (step.getPhase() == CalibrationPhase.TRIGGER_RANGE
+					&& !containsTriggerChannel(gamepadCalibrationChannels)) {
+				step = calibration.finishTriggers();
+			}
+		} else if (calibration.getPhase() == CalibrationPhase.TRIGGER_RANGE) {
+			step = calibration.finishTriggers();
+		} else {
+			return;
+		}
+		publishGamepadCalibration(step, null);
+	}
+
+	private void saveGamepadCalibration() {
+		GamepadCalibrationSession calibration = gamepadCalibration;
+		GamepadCalibration profile = calibration == null ? null : calibration.getCandidateProfile();
+		if (calibration == null || calibration.getPhase() != CalibrationPhase.REVIEW
+				|| profile == null || gamepadCalibrationSignature == null || currentForm == null) {
+			return;
+		}
+		try {
+			ControllerConfig next = currentControllerConfig().withCalibration(
+					gamepadCalibrationSignature, profile);
+			updateForm(currentForm.toBuilder().controller(next.toJson()).build());
+			calibration.commit();
+			finishGamepadCalibration();
+		} catch (RuntimeException failure) {
+			Log.e(TAG, "saveGamepadCalibration", failure);
+			publishGamepadCalibration(
+					new CalibrationStep(
+							CalibrationEvent.INVALID,
+							calibration.getPhase(),
+							calibration.getLastValidation(),
+							profile),
+					getString(R.string.config_gamepad_calibration_save_failed));
+		}
+	}
+
+	private void resetGamepadCalibration() {
+		if (currentForm != null && gamepadCalibrationSignature != null) {
+			try {
+				ControllerConfig next = currentControllerConfig()
+						.withoutCalibration(gamepadCalibrationSignature);
+				updateForm(currentForm.toBuilder().controller(next.toJson()).build());
+			} catch (RuntimeException failure) {
+				Log.e(TAG, "resetGamepadCalibration", failure);
+			}
+		}
+		startGamepadCalibration();
+	}
+
+	private void cancelGamepadCalibration() {
+		if (gamepadCalibration != null) gamepadCalibration.cancel();
+		finishGamepadCalibration();
+	}
+
+	private void finishGamepadCalibration() {
+		getWindow().getDecorView().removeCallbacks(gamepadCalibrationTicker);
+		gamepadCalibration = null;
+		gamepadCalibrationPending = false;
+		gamepadCalibrationDevice = null;
+		gamepadCalibrationSignature = null;
+		gamepadCalibrationChannels = Collections.emptySet();
+		if (composeController != null) composeController.updateGamepadCalibration(null);
+	}
+
+	private void publishGamepadCalibration(@Nullable CalibrationStep step,
+			@Nullable String overrideText) {
+		if (composeController == null) return;
+		if (gamepadCalibration == null) {
+			composeController.showGamepadCalibration(new GamepadCalibrationUiState(
+					"NO_ANALOG_RANGES",
+					overrideText == null
+							? getString(R.string.config_gamepad_calibration_no_supported_ranges)
+							: overrideText,
+					gamepadCalibrationSignature,
+					false,
+					false));
+			return;
+		}
+		CalibrationPhase phase = gamepadCalibration.getPhase();
+		String text = overrideText;
+		if (text == null) {
+			if (step != null && step.getValidation() != null
+					&& !step.getValidation().getAccepted()) {
+				text = getString(R.string.config_gamepad_calibration_rejected,
+						localizedCalibrationIssue(step.getValidation().getIssue()));
+			} else {
+				text = calibrationInstructions(phase);
+			}
+		}
+		boolean canAdvance = phase == CalibrationPhase.STICK_RANGE
+				|| phase == CalibrationPhase.TRIGGER_RANGE;
+		boolean canSave = phase == CalibrationPhase.REVIEW
+				&& gamepadCalibration.getCandidateProfile() != null;
+		composeController.updateGamepadCalibration(new GamepadCalibrationUiState(
+				phase.name(), text, gamepadCalibrationSignature, canAdvance, canSave));
+	}
+
+	private String calibrationInstructions(@NonNull CalibrationPhase phase) {
+		switch (phase) {
+			case WAIT_NEUTRAL:
+				return getString(R.string.config_gamepad_calibration_neutral_instructions);
+			case STICK_RANGE:
+				return getString(R.string.config_gamepad_calibration_stick_instructions);
+			case TRIGGER_RANGE:
+				return getString(R.string.config_gamepad_calibration_trigger_instructions);
+			case REVIEW:
+				return getString(R.string.config_gamepad_calibration_review_instructions);
+			case COMMITTED:
+				return getString(R.string.config_gamepad_calibration_saved);
+			case CANCELLED:
+				return getString(R.string.config_gamepad_calibration_cancelled);
+			default:
+				return getString(R.string.config_gamepad_calibration_waiting_samples);
+		}
+	}
+
+	private ControllerConfig currentControllerConfig() {
+		if (currentForm == null || currentForm.controller == null
+				|| !currentForm.controller.isJsonObject()) {
+			return ControllerConfig.defaultNavigation();
+		}
+		return ControllerConfig.parse(currentForm.controller.getAsJsonObject());
+	}
+
+	private String buildConfigGamepadDiagnosis() {
+		ControllerConfig controller = currentControllerConfig();
+		StringBuilder text = new StringBuilder();
+		text.append(getString(R.string.config_gamepad_diagnosis_header)).append('\n');
+		String enabled = controller.getEnabled()
+				? getString(R.string.config_gamepad_status_enabled)
+				: getString(R.string.config_gamepad_status_disabled);
+		text.append(getString(R.string.config_gamepad_diagnosis_mode,
+				enabled, localizedResolutionSource(controller.getResolutionSource())))
+				.append('\n');
+		if (controller.getNotice() != null) {
+			text.append(getString(R.string.config_gamepad_diagnosis_notice,
+					getString(R.string.config_gamepad_unsupported_summary)))
+					.append('\n');
+		}
+		text.append(getString(R.string.config_gamepad_diagnosis_analog_settings)).append('\n');
+		text.append("  ").append(getString(R.string.config_gamepad_diagnosis_left_stick))
+				.append(": ").append(localizedStickMode(controller.getLeftStick().getMode())).append('\n');
+		text.append("  ").append(getString(R.string.config_gamepad_diagnosis_right_stick))
+				.append(": ").append(localizedStickMode(controller.getRightStick().getMode())).append('\n');
+		text.append("  ").append(getString(R.string.config_gamepad_diagnosis_triggers))
+				.append(": ").append(localizedStatus(controller.getTriggers().getEnabled())).append('\n');
+		text.append("  ").append(getString(R.string.config_gamepad_diagnosis_pointer))
+				.append(": ").append(localizedPointerMode(controller.getPointer().getMode())).append('\n');
+		text.append(getString(R.string.config_gamepad_diagnosis_capabilities)).append('\n');
+		boolean found = false;
+		for (int deviceId : InputDevice.getDeviceIds()) {
+			InputDevice device = InputDevice.getDevice(deviceId);
+			if (device == null || !ControllerInputRouter.isGamepadDevice(device)) continue;
+			found = true;
+			text.append("  ").append(getString(R.string.config_gamepad_diagnosis_device,
+					device.getName(), deviceId)).append('\n');
+			text.append("    ").append(getString(R.string.config_gamepad_diagnosis_descriptor,
+					device.getDescriptor())).append('\n');
+			text.append("    ").append(getString(R.string.config_gamepad_diagnosis_signature,
+					ControllerInputRouter.capabilitySignatureFor(device)))
+					.append('\n');
+			for (InputDevice.MotionRange range : device.getMotionRanges()) {
+				if (!ControllerInputRouter.isControllerSource(range.getSource())) continue;
+				text.append("    ").append(getString(R.string.config_gamepad_diagnosis_axis,
+						range.getAxis(),
+						String.format(java.util.Locale.US, "%.3f", range.getMin()),
+						String.format(java.util.Locale.US, "%.3f", range.getMax()),
+						String.format(java.util.Locale.US, "%.3f", range.getFlat()),
+						String.format(java.util.Locale.US, "%.3f", range.getFuzz())))
+						.append('\n');
+			}
+		}
+		if (!found) text.append("  ").append(getString(
+				R.string.config_gamepad_diagnosis_no_controller)).append('\n');
+		text.append(getString(R.string.config_gamepad_diagnosis_samples_not_sent));
+		return text.toString();
+	}
+
+	private String localizedStatus(boolean enabled) {
+		return getString(enabled ? R.string.config_gamepad_status_enabled
+				: R.string.config_gamepad_status_disabled);
+	}
+
+	@NonNull
+	private String localizedResolutionSource(@NonNull ResolutionSource source) {
+		switch (source) {
+			case CONTROLLER:
+				return getString(R.string.config_gamepad_diagnosis_source_controller);
+			case EXPLICIT:
+				return getString(R.string.config_gamepad_diagnosis_source_explicit);
+			case DEFAULT:
+			default:
+				return getString(R.string.config_gamepad_diagnosis_source_default);
+		}
+	}
+
+	@NonNull
+	private String localizedStickMode(@NonNull StickMode mode) {
+		switch (mode) {
+			case POINTER:
+				return getString(R.string.config_gamepad_stick_pointer);
+			case UNASSIGNED:
+				return getString(R.string.config_gamepad_stick_unassigned);
+			case DIRECTIONS:
+			default:
+				return getString(R.string.config_gamepad_stick_directions);
+		}
+	}
+
+	@NonNull
+	private String localizedPointerMode(@NonNull PointerMode mode) {
+		switch (mode) {
+			case CURSOR:
+				return getString(R.string.config_gamepad_pointer_cursor);
+			case TOUCH_JOYSTICK:
+				return getString(R.string.config_gamepad_pointer_joystick);
+			case OFF:
+			default:
+				return getString(R.string.config_gamepad_pointer_off);
+		}
+	}
+
+	@NonNull
+	private String localizedCalibrationIssue(@NonNull StickProcessor.CalibrationIssue issue) {
+		switch (issue) {
+			case NO_CHANNELS:
+				return getString(R.string.config_gamepad_calibration_issue_no_channels);
+			case INVALID_CONSTRAINTS:
+				return getString(R.string.config_gamepad_calibration_issue_invalid_constraints);
+			case NON_FINITE:
+				return getString(R.string.config_gamepad_calibration_issue_non_finite);
+			case INSUFFICIENT_SAMPLES:
+				return getString(R.string.config_gamepad_calibration_issue_insufficient_samples);
+			case INVALID_RANGE:
+				return getString(R.string.config_gamepad_calibration_issue_invalid_range);
+			case REST_OUTSIDE_RANGE:
+				return getString(R.string.config_gamepad_calibration_issue_rest_outside_range);
+			case REST_TOO_NOISY:
+				return getString(R.string.config_gamepad_calibration_issue_rest_too_noisy);
+			case NONE:
+			default:
+				return getString(R.string.config_gamepad_calibration_phase_unknown);
+		}
+	}
+
+	@NonNull
+	private Set<CalibrationChannel> calibrationChannels(@NonNull InputDevice device, int source) {
+		EnumSet<CalibrationChannel> channels = EnumSet.noneOf(CalibrationChannel.class);
+		if (hasMotionRange(device, source, MotionEvent.AXIS_X)
+				&& hasMotionRange(device, source, MotionEvent.AXIS_Y)) {
+			channels.add(CalibrationChannel.LEFT_X);
+			channels.add(CalibrationChannel.LEFT_Y);
+		}
+		boolean zPair = hasMotionRange(device, source, MotionEvent.AXIS_Z)
+				&& hasMotionRange(device, source, MotionEvent.AXIS_RZ);
+		if ((zPair || (hasMotionRange(device, source, MotionEvent.AXIS_RX)
+				&& hasMotionRange(device, source, MotionEvent.AXIS_RY)))) {
+			channels.add(CalibrationChannel.RIGHT_X);
+			channels.add(CalibrationChannel.RIGHT_Y);
+		}
+		if (hasMotionRange(device, source, MotionEvent.AXIS_LTRIGGER)
+				|| hasMotionRange(device, source, MotionEvent.AXIS_BRAKE)) {
+			channels.add(CalibrationChannel.LEFT_TRIGGER);
+		}
+		if (hasMotionRange(device, source, MotionEvent.AXIS_RTRIGGER)
+				|| hasMotionRange(device, source, MotionEvent.AXIS_GAS)) {
+			channels.add(CalibrationChannel.RIGHT_TRIGGER);
+		}
+		return Collections.unmodifiableSet(channels);
+	}
+
+	private boolean containsTriggerChannel(@NonNull Set<CalibrationChannel> channels) {
+		return channels.contains(CalibrationChannel.LEFT_TRIGGER)
+				|| channels.contains(CalibrationChannel.RIGHT_TRIGGER);
+	}
+
+	@NonNull
+	private Map<CalibrationChannel, Float> calibrationValues(
+			@NonNull MotionEvent event, @NonNull InputDevice device, int source) {
+		java.util.EnumMap<CalibrationChannel, Float> values =
+				new java.util.EnumMap<>(CalibrationChannel.class);
+		for (CalibrationChannel channel : gamepadCalibrationChannels) {
+			int axis = calibrationAxis(device, source, channel);
+			if (axis == -1) continue;
+			float value = event.getAxisValue(axis);
+			if (!Float.isNaN(value) && !Float.isInfinite(value)) values.put(channel, value);
+		}
+		return values;
+	}
+
+	private int calibrationAxis(@NonNull InputDevice device, int source,
+			@NonNull CalibrationChannel channel) {
+		switch (channel) {
+			case LEFT_X: return MotionEvent.AXIS_X;
+			case LEFT_Y: return MotionEvent.AXIS_Y;
+			case RIGHT_X:
+				return hasMotionRange(device, source, MotionEvent.AXIS_Z)
+						&& hasMotionRange(device, source, MotionEvent.AXIS_RZ)
+						? MotionEvent.AXIS_Z : MotionEvent.AXIS_RX;
+			case RIGHT_Y:
+				return hasMotionRange(device, source, MotionEvent.AXIS_Z)
+						&& hasMotionRange(device, source, MotionEvent.AXIS_RZ)
+						? MotionEvent.AXIS_RZ : MotionEvent.AXIS_RY;
+			case LEFT_TRIGGER:
+				return hasMotionRange(device, source, MotionEvent.AXIS_LTRIGGER)
+						? MotionEvent.AXIS_LTRIGGER : MotionEvent.AXIS_BRAKE;
+			case RIGHT_TRIGGER:
+				return hasMotionRange(device, source, MotionEvent.AXIS_RTRIGGER)
+						? MotionEvent.AXIS_RTRIGGER : MotionEvent.AXIS_GAS;
+			default: return -1;
+		}
+	}
+
+	private boolean hasMotionRange(@NonNull InputDevice device, int source, int axis) {
+		return device.getMotionRange(axis, source) != null || device.getMotionRange(axis) != null;
+	}
+
+	private boolean hasControllerDevice() {
+		for (int deviceId : InputDevice.getDeviceIds()) {
+			InputDevice device = InputDevice.getDevice(deviceId);
+			if (device != null && ControllerInputRouter.isGamepadDevice(device)) return true;
+		}
+		return false;
+	}
+
+	private int calibrationSource(@NonNull InputDevice device) {
+		for (InputDevice.MotionRange range : device.getMotionRanges()) {
+			if (range.getSource() != 0
+					&& ControllerInputRouter.isControllerSource(range.getSource())) {
+				return range.getSource();
+			}
+		}
+		return device.getSources();
+	}
+
+	private boolean isCalibrationNeutral(@NonNull Map<CalibrationChannel, Float> values,
+			@Nullable InputDevice device, int source) {
+		if (device == null || values.size() < gamepadCalibrationChannels.size()) return false;
+		for (Map.Entry<CalibrationChannel, Float> entry : values.entrySet()) {
+			float value = entry.getValue();
+			if (entry.getKey().isStick()) {
+				int axis = calibrationAxis(device, source, entry.getKey());
+				InputDevice.MotionRange range = device.getMotionRange(axis, source);
+				if (range == null) range = device.getMotionRange(axis);
+				float center = range != null && range.getMin() >= 0.0f
+						? (range.getMin() + range.getMax()) / 2.0f : 0.0f;
+				float tolerance = range == null ? 0.15f
+						: Math.max(0.15f, (range.getMax() - range.getMin()) * 0.15f);
+				if (Math.abs(value - center) > tolerance) return false;
+			} else {
+				int axis = calibrationAxis(device, source, entry.getKey());
+				InputDevice.MotionRange range = device.getMotionRange(axis, source);
+				if (range == null) range = device.getMotionRange(axis);
+				float normalized = range == null || range.getMax() <= range.getMin()
+						? 0.0f : (value - range.getMin()) / (range.getMax() - range.getMin());
+				if (Math.max(0.0f, Math.min(1.0f, normalized)) > 0.40f) return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
@@ -656,6 +1246,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	@Override
 	public void onPause() {
+		cancelGamepadCalibration();
+		if (controllerInputRouter != null) {
+			controllerInputRouter.clear();
+			controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
+					? 1L : controllerTargetGeneration + 1L;
+		}
 		if (needShow && configDir != null && !operationRunning) {
 			saveParams();
 		}
@@ -678,6 +1274,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	@Override
 	protected void onDestroy() {
+		if (controllerInputRouter != null) {
+			controllerInputRouter.close();
+			controllerInputRouter = null;
+		}
+		getWindow().getDecorView().removeCallbacks(gamepadCalibrationTicker);
 		profileMetadataExecutor.shutdownNow();
 		if (isProfile && profileEditDraftDir != null && !isChangingConfigurations()) {
 			FileUtils.deleteDirectory(profileEditDraftDir);
@@ -688,6 +1289,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			hostPreferences = null;
 		}
 		super.onDestroy();
+	}
+
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (!hasFocus && controllerInputRouter != null) {
+			controllerInputRouter.clear();
+			controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
+					? 1L : controllerTargetGeneration + 1L;
+		}
 	}
 
 	@Override
@@ -1232,7 +1843,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
 				KeyboardLayoutValidator.validate(keylayoutFile) == null,
-				profileNames, keyboardLayouts);
+				profileNames, keyboardLayouts, hasControllerDevice());
 	}
 
 	private boolean hasCompatibleTimingTransform() {

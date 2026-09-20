@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2018 Nikita Shakarun
  * Copyright 2022-2026 Yury Kharchenko
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +23,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
 
 import javax.microedition.lcdui.commands.ScreenSoftBar;
+import io.github.h3nb.jlmodplus.input.HostCommand;
 
 public abstract class Screen extends Displayable {
 
@@ -53,6 +57,34 @@ public abstract class Screen extends Displayable {
 			softBar = null;
 		}
 		clearScreenView();
+	}
+
+	/** Controller boundary for an app-owned Screen soft-menu modal. */
+	public boolean isControllerModalActive() {
+		ScreenSoftBar controllerBar = controllerSoftBar();
+		return controllerBar != null && controllerBar.isControllerMenuVisible();
+	}
+
+	/** Routes host navigation directly to the app-owned soft-menu surface. */
+	public boolean handleHostCommand(HostCommand command, boolean pressed) {
+		ScreenSoftBar controllerBar = controllerSoftBar();
+		if (controllerBar == null) return false;
+		if (command == HostCommand.Back && !controllerBar.isControllerMenuVisible()) {
+			return pressed && controllerBar.handleControllerBack();
+		}
+		return controllerBar.handleHostCommand(command, pressed);
+	}
+
+
+	/** Gives a presented BACK/EXIT command first refusal of the controller's contextual Back. */
+	public boolean handleControllerBack() {
+		ScreenSoftBar controllerBar = controllerSoftBar();
+		return controllerBar != null && controllerBar.handleControllerBack();
+	}
+
+	@Nullable
+	private ScreenSoftBar controllerSoftBar() {
+		return softBar instanceof ScreenSoftBar ? (ScreenSoftBar) softBar : null;
 	}
 
 	abstract View getScreenView();

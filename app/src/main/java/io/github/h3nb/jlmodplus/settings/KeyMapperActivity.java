@@ -79,15 +79,11 @@ public class KeyMapperActivity extends AppCompatActivity {
 				legacyThemeLinked);
 
 		if (savedInstanceState == null) {
-			SparseIntArray keyMap = params.keyMappings;
-			androidToMIDP = keyMap == null ? defaultKeyMap.clone() : keyMap.clone();
+			androidToMIDP = KeyMapperMappingRules.resolve(defaultKeyMap, params.keyMappings);
 		} else {
 			String save = savedInstanceState.getString(KEY_SAVE);
-			if (save == null) {
-				androidToMIDP = defaultKeyMap.clone();
-			} else if (save.isEmpty()) {
-				SparseIntArray keyMap = params.keyMappings;
-				androidToMIDP = keyMap == null ? defaultKeyMap.clone() : keyMap.clone();
+			if (save == null || save.isEmpty()) {
+				androidToMIDP = KeyMapperMappingRules.resolve(defaultKeyMap, params.keyMappings);
 			} else {
 				androidToMIDP = new GsonBuilder()
 						.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
@@ -95,6 +91,9 @@ public class KeyMapperActivity extends AppCompatActivity {
 						.fromJson(save, SparseIntArray.class);
 			}
 		}
+		// Back is a host-reserved runtime control. Normalize older profile overrides in the
+		// editor too, so the visible/effective map agrees with runtime dispatch.
+		androidToMIDP.put(KeyEvent.KEYCODE_BACK, KeyMapper.KEY_OPTIONS_MENU);
 		composeController = new KeyMapperComposeController(composeView, new KeyMapperActions() {
 			@Override
 			public void onVirtualKey(int canvasKey) {
@@ -104,6 +103,13 @@ public class KeyMapperActivity extends AppCompatActivity {
 			@Override
 			public void onDismissMapping() {
 				dismissMappingDialog();
+			}
+
+			@Override
+			public void onRemoveMappedKey(int androidKeyCode) {
+				if (androidKeyCode == KeyEvent.KEYCODE_BACK) return;
+				androidToMIDP = KeyMapperMappingRules.removeBinding(androidToMIDP, androidKeyCode);
+				showMappingDialog(canvasKey);
 			}
 
 			@Override
@@ -143,16 +149,16 @@ public class KeyMapperActivity extends AppCompatActivity {
 
 	@Override
 	protected void onSaveInstanceState(@NonNull Bundle outState) {
-		if (!KeyMapperMappingRules.equalMaps(androidToMIDP, defaultKeyMap)) {
-			if (!KeyMapperMappingRules.equalMaps(params.keyMappings, androidToMIDP)) {
-				String currMap = new GsonBuilder()
-						.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
-						.create()
-						.toJson(androidToMIDP);
-				outState.putString(KEY_SAVE, currMap);
-			} else {
-				outState.putString(KEY_SAVE, "");
-			}
+		SparseIntArray currentOverrides = KeyMapperMappingRules.diff(defaultKeyMap, androidToMIDP);
+		SparseIntArray persistedOverrides = currentOverrides.size() == 0 ? null : currentOverrides;
+		if (!KeyMapperMappingRules.equalMaps(params.keyMappings, persistedOverrides)) {
+			String currMap = new GsonBuilder()
+					.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
+					.create()
+					.toJson(androidToMIDP);
+			outState.putString(KEY_SAVE, currMap);
+		} else {
+			outState.putString(KEY_SAVE, "");
 		}
 
 		super.onSaveInstanceState(outState);
@@ -160,15 +166,15 @@ public class KeyMapperActivity extends AppCompatActivity {
 
 	private void showMappingDialog(int canvasKey) {
 		this.canvasKey = canvasKey;
-		SparseIntArray androidToMIDP = this.androidToMIDP;
-		int idx = androidToMIDP.indexOfValue(canvasKey);
-		String keyName;
-		if (idx < 0) {
-			keyName = getString(R.string.mapping_dialog_key_not_specified);
-		} else {
-			keyName = KeyEvent.keyCodeToString(androidToMIDP.keyAt(idx));
+		java.util.ArrayList<KeyMapperAssignedInput> assigned = new java.util.ArrayList<>();
+		for (int index = 0; index < androidToMIDP.size(); index++) {
+			if (androidToMIDP.valueAt(index) == canvasKey) {
+				int androidKeyCode = androidToMIDP.keyAt(index);
+				assigned.add(new KeyMapperAssignedInput(
+						androidKeyCode, KeyEvent.keyCodeToString(androidKeyCode)));
+			}
 		}
-		composeController.showMappingDialog(canvasKey, keyName);
+		composeController.showMappingDialog(canvasKey, assigned);
 	}
 
 	private void dismissMappingDialog() {
@@ -177,9 +183,9 @@ public class KeyMapperActivity extends AppCompatActivity {
 
 
 	private void save() {
-		SparseIntArray newMap = androidToMIDP;
+		SparseIntArray newMap = KeyMapperMappingRules.diff(defaultKeyMap, androidToMIDP);
 		SparseIntArray oldMap = params.keyMappings;
-		if (KeyMapperMappingRules.equalMaps(newMap, defaultKeyMap)) {
+		if (newMap.size() == 0) {
 			newMap = null;
 		}
 		if (!KeyMapperMappingRules.equalMaps(oldMap, newMap)) {

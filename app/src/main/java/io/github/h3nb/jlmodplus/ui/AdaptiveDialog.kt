@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.focusable
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +36,8 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,20 +46,54 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import io.github.h3nb.jlmodplus.input.HostCommand
+import android.view.KeyEvent as AndroidKeyEvent
+import android.view.MotionEvent as AndroidMotionEvent
+import android.view.View
 
 private val DialogMaximumWidth = 720.dp
 private val DialogHorizontalMargin = 24.dp
 private val DialogCompactHorizontalMargin = 16.dp
+
+internal typealias ControllerHostCommandHandler = (HostCommand, Boolean) -> Boolean
+
+private val LocalControllerDialogKeyEvent =
+    compositionLocalOf<((android.view.KeyEvent) -> Boolean)?> { null }
+private val LocalControllerDialogMotionEvent =
+    compositionLocalOf<((AndroidMotionEvent) -> Boolean)?> { null }
+private val LocalControllerHostCommandHandlerChanged =
+    compositionLocalOf<((ControllerHostCommandHandler?) -> Unit)?> { null }
+
+@Composable
+internal fun ControllerDialogInputScope(
+    onControllerKeyEvent: (android.view.KeyEvent) -> Boolean,
+    onControllerMotionEvent: (AndroidMotionEvent) -> Boolean = { false },
+    onControllerHostCommandHandlerChanged: (ControllerHostCommandHandler?) -> Unit,
+    content: @Composable () -> Unit,
+) {
+    CompositionLocalProvider(
+        LocalControllerDialogKeyEvent provides onControllerKeyEvent,
+        LocalControllerDialogMotionEvent provides onControllerMotionEvent,
+        LocalControllerHostCommandHandlerChanged provides onControllerHostCommandHandlerChanged,
+        content = content,
+    )
+}
 
 /** Shared modal bounds: one width policy, content-wrapped height, and a safe maximum height. */
 @Immutable
@@ -109,6 +146,8 @@ internal fun adaptiveDialogLayout(
 internal fun AdaptiveAlertDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    onControllerKeyEvent: ((android.view.KeyEvent) -> Boolean)? = null,
+    onControllerHostCommandHandlerChanged: ((ControllerHostCommandHandler?) -> Unit)? = null,
     confirmButton: (@Composable () -> Unit)? = null,
     dismissButton: (@Composable () -> Unit)? = null,
     dismissButtonBelowWrappedActions: Boolean = false,
@@ -125,6 +164,10 @@ internal fun AdaptiveAlertDialog(
     properties: DialogProperties = DialogProperties(),
     maxWidth: Dp = DialogMaximumWidth,
 ) {
+    val effectiveControllerKeyEvent = onControllerKeyEvent ?: LocalControllerDialogKeyEvent.current
+    val effectiveControllerMotionEvent = LocalControllerDialogMotionEvent.current
+    val effectiveHostCommandHandlerChanged =
+        onControllerHostCommandHandlerChanged ?: LocalControllerHostCommandHandlerChanged.current
     val layout = adaptiveDialogLayout(
         availableWidth = availableWindowWidthDp(),
         availableHeight = availableWindowHeightDp(),
@@ -143,8 +186,116 @@ internal fun AdaptiveAlertDialog(
             decorFitsSystemWindows = properties.decorFitsSystemWindows,
         ),
     ) {
+        val focusManager = LocalFocusManager.current
+        val dialogView = LocalView.current
+        val controllerFocusRequester = if (effectiveControllerKeyEvent != null) {
+            remember { FocusRequester() }
+        } else {
+            null
+        }
+        val controllerHostCommandHandler: ControllerHostCommandHandler? =
+            if (effectiveHostCommandHandlerChanged != null) {
+                remember(focusManager, dialogView, onDismissRequest) {
+                    { command: HostCommand, pressed: Boolean ->
+                        when (command) {
+                            HostCommand.NavigateUp -> {
+                                if (pressed) focusManager.moveFocus(FocusDirection.Up)
+                                true
+                            }
+                            HostCommand.NavigateDown -> {
+                                if (pressed) focusManager.moveFocus(FocusDirection.Down)
+                                true
+                            }
+                            HostCommand.NavigateLeft -> {
+                                if (pressed) focusManager.moveFocus(FocusDirection.Left)
+                                true
+                            }
+                            HostCommand.NavigateRight -> {
+                                if (pressed) focusManager.moveFocus(FocusDirection.Right)
+                                true
+                            }
+                            HostCommand.PreviousTab -> {
+                                if (pressed) focusManager.moveFocus(FocusDirection.Previous)
+                                true
+                            }
+                            HostCommand.NextTab -> {
+                                if (pressed) focusManager.moveFocus(FocusDirection.Next)
+                                true
+                            }
+                            HostCommand.Activate -> {
+                                // Reuse the focused Compose control's own click/toggle semantics.
+                                dialogView.dispatchKeyEvent(
+                                    AndroidKeyEvent(
+                                        if (pressed) AndroidKeyEvent.ACTION_DOWN else AndroidKeyEvent.ACTION_UP,
+                                        AndroidKeyEvent.KEYCODE_ENTER,
+                                    ),
+                                )
+                                true
+                            }
+                            HostCommand.Back,
+                            HostCommand.OpenMenu,
+                            HostCommand.OpenKeypad,
+                            -> {
+                                if (pressed) onDismissRequest()
+                                true
+                            }
+                        }
+                    }
+                }
+            } else {
+                null
+            }
+        DisposableEffect(dialogView, effectiveControllerMotionEvent) {
+            if (effectiveControllerMotionEvent != null) {
+                dialogView.setOnGenericMotionListener(
+                    View.OnGenericMotionListener { _, event ->
+                        effectiveControllerMotionEvent(event)
+                    },
+                )
+            }
+            onDispose {
+                if (effectiveControllerMotionEvent != null) {
+                    dialogView.setOnGenericMotionListener(null)
+                }
+            }
+        }
+        DisposableEffect(effectiveHostCommandHandlerChanged, controllerHostCommandHandler) {
+            effectiveHostCommandHandlerChanged?.invoke(controllerHostCommandHandler)
+            onDispose {
+                effectiveHostCommandHandlerChanged?.invoke(null)
+            }
+        }
+        LaunchedEffect(controllerFocusRequester) {
+            if (controllerFocusRequester != null) {
+                controllerFocusRequester.requestFocus()
+                focusManager.moveFocus(FocusDirection.Next)
+            }
+        }
         Surface(
-            modifier = Modifier.fillMaxWidth().testTag("adaptive-dialog-surface"),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("adaptive-dialog-surface")
+                .then(
+                    if (controllerFocusRequester != null) {
+                        Modifier
+                            .focusRequester(controllerFocusRequester)
+                            .focusable()
+                            .onPreviewKeyEvent { event ->
+                                val native = event.nativeKeyEvent
+                                if (native.keyCode == AndroidKeyEvent.KEYCODE_ENTER ||
+                                    native.keyCode == AndroidKeyEvent.KEYCODE_NUMPAD_ENTER
+                                ) {
+                                    // Enter belongs to the focused Compose control and synthetic
+                                    // Activate must not recurse through the controller router.
+                                    false
+                                } else {
+                                    effectiveControllerKeyEvent?.invoke(native) == true
+                                }
+                            }
+                    } else {
+                        Modifier
+                    },
+                ),
             shape = shape,
             color = containerColor,
             contentColor = textContentColor,

@@ -26,8 +26,12 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
@@ -65,6 +69,11 @@ import io.github.h3nb.jlmodplus.util.StoragePermissionHelper;
 import io.github.h3nb.jlmodplus.installer.InstallerDialog;
 import io.github.h3nb.jlmodplus.installer.BulkInstallerDialog;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppBundleImporter;
+import io.github.h3nb.jlmodplus.input.ControllerHostSink;
+import io.github.h3nb.jlmodplus.input.ControllerHostTarget;
+import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
+import io.github.h3nb.jlmodplus.input.HostCommand;
+import javax.microedition.lcdui.Canvas;
 
 public class MainActivity extends AppCompatActivity {
 	private static final long DIAGNOSTIC_RECOVERY_RETRY_MILLIS = 200L;
@@ -97,6 +106,8 @@ public class MainActivity extends AppCompatActivity {
 
 	private LibraryViewModel libraryViewModel;
 	private MainActivityComposeController mainComposeController;
+	private ControllerInputRouter controllerInputRouter;
+	private long controllerTargetGeneration = 1L;
 	private String lastRecoveryNoticeId;
 	private boolean diagnosticRecoveryRetryScheduled;
 	private boolean installerStateSnapshotExists;
@@ -169,7 +180,57 @@ public class MainActivity extends AppCompatActivity {
 				mainComposeController.dismiss();
 				finish();
 			}
-		});
+
+		}, this::dispatchControllerKeyEventFromDialog,
+				this::dispatchControllerGenericMotionEventFromDialog,
+				this::beginControllerHostTargetChange);
+		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
+			@Override
+			public Canvas currentCanvas() {
+				return null;
+			}
+
+			@Override
+			public javax.microedition.lcdui.Displayable currentDisplayable() {
+				return null;
+			}
+
+			@Override
+			public ControllerHostTarget currentControllerTarget() {
+				String surface = mainComposeController != null && mainComposeController.isDialogVisible()
+						? "main-dialog" : "main-activity";
+				return new ControllerHostTarget(surface, controllerTargetGeneration);
+			}
+
+			@Override
+			public boolean onHostCommand(@NonNull HostCommand command, boolean pressed) {
+				AppsListFragment apps = currentAppsListFragment();
+				if (mainComposeController != null && mainComposeController.isDialogVisible()) {
+					return mainComposeController.handleHostCommand(command, pressed);
+				}
+				if (apps != null && apps.onHostCommand(command, pressed)) return true;
+				if (command == HostCommand.Back && pressed) {
+					getOnBackPressedDispatcher().onBackPressed();
+				}
+				return true;
+			}
+
+			@Override
+			public void onControllerInputAccepted() {
+				// MainActivity has no virtual keypad; accepted input is still consumed by the router.
+			}
+
+			@Override
+			public void onControllerNotice(@NonNull String message) {
+				Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+			}
+
+			@Override
+			public boolean isControllerModalActive() {
+				return mainComposeController != null && mainComposeController.isDialogVisible();
+			}
+
+		}, null);
 
 		libraryViewModel = new ViewModelProvider(this).get(LibraryViewModel.class);
 		libraryViewModel.observe(this, ignored -> maybeShowPendingInstaller());
@@ -191,12 +252,58 @@ public class MainActivity extends AppCompatActivity {
 		if (libraryViewModel != null) libraryViewModel.refreshPlayStats();
 	}
 
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent event) {
+		if (controllerInputRouter != null && controllerInputRouter.onKeyEvent(event)) {
+			return true;
+		}
+		return super.dispatchKeyEvent(event);
+	}
+
+	/** Routes only controller-owned keys from a Compose dialog window. */
+	public boolean dispatchControllerKeyEventFromDialog(@NonNull KeyEvent event) {
+		return controllerInputRouter != null && controllerInputRouter.onDialogKeyEvent(event);
+	}
+
+	/** Routes controller axis/HAT input from a dialog window without stealing other motion. */
+	public boolean dispatchControllerGenericMotionEventFromDialog(@NonNull MotionEvent event) {
+		return controllerInputRouter != null && controllerInputRouter.onDialogGenericMotionEvent(event);
+	}
+
+	private void beginControllerHostTargetChange() {
+		if (controllerInputRouter != null) controllerInputRouter.onHostTargetChanging();
+		controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
+				? 1L : controllerTargetGeneration + 1L;
+	}
+
+	@Override
+	public boolean dispatchGenericMotionEvent(MotionEvent event) {
+		if (controllerInputRouter != null && controllerInputRouter.onGenericMotionEvent(event)) {
+			return true;
+		}
+		return super.dispatchGenericMotionEvent(event);
+	}
+
+	@Override
+	protected void onPause() {
+		if (controllerInputRouter != null) {
+			controllerInputRouter.clear();
+			controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
+					? 1L : controllerTargetGeneration + 1L;
+		}
+		super.onPause();
+	}
+
 	private void updateRecentTaskDescription() {
 		setTaskDescription(new ActivityManager.TaskDescription(getString(R.string.app_name)));
 	}
 
 	@Override
 	protected void onDestroy() {
+		if (controllerInputRouter != null) {
+			controllerInputRouter.close();
+			controllerInputRouter = null;
+		}
 		if (bundleRouting != null) {
 			bundleRouting.dispose();
 			bundleRouting = null;
@@ -234,6 +341,10 @@ public class MainActivity extends AppCompatActivity {
 			maybeShowPendingInstaller();
 			CrashReporter.requestDiagnosticRefresh(getApplication());
 			maybeShowDiagnosticRecovery();
+		} else if (controllerInputRouter != null) {
+			controllerInputRouter.clear();
+			controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
+					? 1L : controllerTargetGeneration + 1L;
 		}
 	}
 
@@ -517,5 +628,12 @@ public class MainActivity extends AppCompatActivity {
 		super.onNewIntent(intent);
 		setIntent(intent);
 		requestInstaller(intent.getData());
+	}
+
+	@Nullable
+	private AppsListFragment currentAppsListFragment() {
+		androidx.fragment.app.Fragment fragment =
+				getSupportFragmentManager().findFragmentById(R.id.container);
+		return fragment instanceof AppsListFragment ? (AppsListFragment) fragment : null;
 	}
 }

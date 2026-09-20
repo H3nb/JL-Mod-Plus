@@ -27,13 +27,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import io.github.h3nb.jlmodplus.config.ProfileModel;
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.keyboard.KeyMapper;
 
 @RunWith(AndroidJUnit4.class)
 public class KeyMapperMappingRulesTest {
 	@Test
-	public void assignmentRemovesExistingDuplicateCanvasKey() {
+	public void assignmentPreservesExistingManyToOneBindings() {
 		SparseIntArray original = new SparseIntArray();
 		original.put(10, Canvas.KEY_LEFT);
 		original.put(11, Canvas.KEY_LEFT);
@@ -42,9 +43,48 @@ public class KeyMapperMappingRulesTest {
 		SparseIntArray updated = KeyMapperMappingRules.assign(original, Canvas.KEY_LEFT, 13);
 
 		assertEquals(Canvas.KEY_LEFT, updated.get(13));
-		assertEquals(1, countValue(updated, Canvas.KEY_LEFT));
+		assertEquals(3, countValue(updated, Canvas.KEY_LEFT));
 		assertEquals(Canvas.KEY_RIGHT, updated.get(12));
 		assertEquals(Canvas.KEY_LEFT, original.get(10));
+	}
+
+	@Test
+	public void removalIsExplicitAndTargetResetDoesNotAffectOtherTargets() {
+		SparseIntArray original = new SparseIntArray();
+		original.put(KeyEvent.KEYCODE_ENTER, Canvas.KEY_FIRE);
+		original.put(KeyEvent.KEYCODE_BUTTON_A, Canvas.KEY_FIRE);
+		original.put(KeyEvent.KEYCODE_DPAD_UP, Canvas.KEY_UP);
+
+		SparseIntArray removed = KeyMapperMappingRules.removeBinding(
+				original, KeyEvent.KEYCODE_BUTTON_A);
+		assertEquals(Canvas.KEY_FIRE, removed.get(KeyEvent.KEYCODE_ENTER));
+		assertEquals(-1, removed.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
+
+		SparseIntArray reset = KeyMapperMappingRules.removeBindingsForTarget(
+				original, Canvas.KEY_FIRE);
+		assertEquals(-1, reset.indexOfKey(KeyEvent.KEYCODE_ENTER));
+		assertEquals(-1, reset.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(Canvas.KEY_UP, reset.get(KeyEvent.KEYCODE_DPAD_UP));
+	}
+
+	@Test
+	public void commonGamepadDefaultsUseTheUniversalGuestMap() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		assertEquals(Canvas.KEY_FIRE, defaults.get(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(Canvas.KEY_FIRE, defaults.get(KeyEvent.KEYCODE_BUTTON_1));
+		assertEquals(Canvas.KEY_NUM0, defaults.get(KeyEvent.KEYCODE_BUTTON_B));
+		assertEquals(Canvas.KEY_NUM0, defaults.get(KeyEvent.KEYCODE_BUTTON_2));
+		assertEquals(Canvas.KEY_NUM1, defaults.get(KeyEvent.KEYCODE_BUTTON_X));
+		assertEquals(Canvas.KEY_NUM1, defaults.get(KeyEvent.KEYCODE_BUTTON_3));
+		assertEquals(Canvas.KEY_NUM3, defaults.get(KeyEvent.KEYCODE_BUTTON_Y));
+		assertEquals(Canvas.KEY_NUM3, defaults.get(KeyEvent.KEYCODE_BUTTON_4));
+		assertEquals(Canvas.KEY_SOFT_LEFT, defaults.get(KeyEvent.KEYCODE_BUTTON_L1));
+		assertEquals(Canvas.KEY_SOFT_LEFT, defaults.get(KeyEvent.KEYCODE_BUTTON_5));
+		assertEquals(Canvas.KEY_SOFT_RIGHT, defaults.get(KeyEvent.KEYCODE_BUTTON_R1));
+		assertEquals(Canvas.KEY_SOFT_RIGHT, defaults.get(KeyEvent.KEYCODE_BUTTON_6));
+		assertEquals(4, countValue(defaults, Canvas.KEY_FIRE));
+		assertEquals(-1, defaults.indexOfKey(KeyEvent.KEYCODE_BUTTON_START));
+		assertEquals(-1, defaults.indexOfKey(KeyEvent.KEYCODE_BUTTON_SELECT));
 	}
 
 	private static int countValue(SparseIntArray map, int value) {
@@ -61,8 +101,70 @@ public class KeyMapperMappingRulesTest {
 		assertTrue(KeyMapperMappingRules.containsValue(defaults, KeyMapper.KEY_OPTIONS_MENU));
 
 		SparseIntArray withoutMenu = defaults.clone();
-		withoutMenu.removeAt(withoutMenu.indexOfKey(android.view.KeyEvent.KEYCODE_BACK));
+		withoutMenu.removeAt(withoutMenu.indexOfKey(KeyEvent.KEYCODE_BACK));
 		assertFalse(KeyMapperMappingRules.containsValue(withoutMenu, KeyMapper.KEY_OPTIONS_MENU));
+	}
+
+	@Test
+	public void runtimeMenuTargetRecognizesMultiplePhysicalSources() {
+		ProfileModel profile = new ProfileModel();
+		profile.keyMappings = new SparseIntArray();
+		profile.keyMappings.put(KeyEvent.KEYCODE_F1, KeyMapper.KEY_OPTIONS_MENU);
+		profile.keyMappings.put(KeyEvent.KEYCODE_5, KeyMapper.KEY_OPTIONS_MENU);
+		profile.keyMappings.put(KeyEvent.KEYCODE_BUTTON_START, KeyMapper.KEY_OPTIONS_MENU);
+
+		KeyMapper.setKeyMapping(profile);
+
+		// M stays source-agnostic: keyboard, phone/keypad and gamepad inputs may all target it.
+		// Android Back is merely the reserved built-in host binding, not the only way to open M.
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BACK));
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_F1));
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_5));
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BUTTON_START));
+		assertFalse(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BUTTON_SELECT));
+	}
+
+	@Test
+	public void runtimeBackBindingCannotBeOverriddenByProfile() {
+		ProfileModel profile = new ProfileModel();
+		profile.keyMappings = new SparseIntArray();
+		profile.keyMappings.put(KeyEvent.KEYCODE_BACK, Canvas.KEY_FIRE);
+
+		KeyMapper.setKeyMapping(profile);
+
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BACK));
+	}
+
+	@Test
+	public void removedDefaultBindingRoundTripsAsTombstone() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		SparseIntArray effective = defaults.clone();
+		effective.delete(KeyEvent.KEYCODE_BUTTON_A);
+
+		SparseIntArray persisted = KeyMapperMappingRules.diff(defaults, effective);
+		assertTrue(persisted.indexOfKey(KeyEvent.KEYCODE_BUTTON_A) >= 0);
+		assertEquals(KeyMapperMappingRules.UNMAPPED_TOMBSTONE,
+				persisted.get(KeyEvent.KEYCODE_BUTTON_A));
+		SparseIntArray restored = KeyMapperMappingRules.resolve(defaults, persisted);
+		assertEquals(-1, restored.indexOfKey(KeyEvent.KEYCODE_BUTTON_A));
+		assertEquals(Canvas.KEY_FIRE, restored.get(KeyEvent.KEYCODE_ENTER));
+	}
+
+	@Test
+	public void menuTargetRoundTripsWithoutCollidingWithTombstone() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		SparseIntArray effective = defaults.clone();
+		effective.put(KeyEvent.KEYCODE_BUTTON_START, KeyMapper.KEY_OPTIONS_MENU);
+
+		SparseIntArray persisted = KeyMapperMappingRules.diff(defaults, effective);
+		assertEquals(KeyMapper.KEY_OPTIONS_MENU,
+				persisted.get(KeyEvent.KEYCODE_BUTTON_START));
+		assertTrue(persisted.get(KeyEvent.KEYCODE_BUTTON_START)
+				!= KeyMapperMappingRules.UNMAPPED_TOMBSTONE);
+
+		SparseIntArray restored = KeyMapperMappingRules.resolve(defaults, persisted);
+		assertEquals(KeyMapper.KEY_OPTIONS_MENU,
+				restored.get(KeyEvent.KEYCODE_BUTTON_START));
 	}
 
 	@Test
@@ -79,6 +181,8 @@ public class KeyMapperMappingRulesTest {
 				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A));
 		assertFalse(KeyMapperDispatchRules.isAssignableKey(
 				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_HOME));
+		assertFalse(KeyMapperDispatchRules.isAssignableKey(
+				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK));
 		assertFalse(KeyMapperDispatchRules.isAssignableKey(
 				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_VOLUME_UP));
 		assertFalse(KeyMapperDispatchRules.isAssignableKey(

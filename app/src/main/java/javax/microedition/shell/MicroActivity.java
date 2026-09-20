@@ -27,6 +27,7 @@ import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.RectF;
 import android.media.AudioManager;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -36,11 +37,13 @@ import android.os.IBinder;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.activity.OnBackPressedCallback;
@@ -59,15 +62,19 @@ import androidx.preference.PreferenceManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Form;
+import javax.microedition.lcdui.Screen;
 import javax.microedition.lcdui.ViewHandler;
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
+import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutSnapshot;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
@@ -80,6 +87,9 @@ import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
+import io.github.h3nb.jlmodplus.input.ControllerHostSink;
+import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
+import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
 import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -95,6 +105,8 @@ public class MicroActivity extends AppCompatActivity {
 	private static final int MIN_RUNTIME_TOOLBAR_TOUCH_TARGET_DP = 48;
 	private static final int MAX_IME_REQUEST_ATTEMPTS = 30;
 	private static final long IME_REQUEST_RETRY_DELAY_MILLIS = 100L;
+	private static final String PREF_HIDE_LAYOUT_EDIT_GUIDE =
+			"pref_runtime_hide_layout_edit_guide";
 
 	private Displayable current;
 	private boolean runtimeToolbarEnabled;
@@ -111,6 +123,8 @@ public class MicroActivity extends AppCompatActivity {
 	private String appPath;
 	private RuntimeHostView binding;
 	private RuntimeMenuComposeController runtimeMenuController;
+	private ControllerInputRouter controllerInputRouter;
+	private long controllerTargetGeneration = 1L;
 	private MemoryEditorBubbleController memoryEditorController;
 	private TransientNoticeComposeController runtimeNoticeController;
 	private WindowInsetsCompat lastWindowInsets;
@@ -121,6 +135,11 @@ public class MicroActivity extends AppCompatActivity {
 	private int virtualDisplayPaddingBottom;
 	private View overlayAnchor;
 	private SharedPreferences defaultPreferences;
+	private VirtualKeyboardEditTransaction virtualKeyboardEditTransaction;
+	private EditorDonePlacement.Box layoutEditDonePlacement;
+	private EditorDonePlacement.Box layoutEditDoneEditorBounds;
+	private final Runnable virtualKeyboardEditorChromeUpdate =
+			this::refreshVirtualKeyboardEditorChrome;
 	private final SharedPreferences.OnSharedPreferenceChangeListener canvasThemeListener =
 			(sharedPreferences, key) -> {
 				if (PREF_THEME.equals(key)) refreshCanvasBackground();
@@ -137,6 +156,7 @@ public class MicroActivity extends AppCompatActivity {
 		ContextHolder.setCurrentActivity(this);
 		binding = new RuntimeHostView(this);
 		setContentView(binding.getRoot());
+		binding.layoutEditDone.setOnClickListener(ignored -> requestFinishVirtualKeyboardEdit());
 		runtimeNoticeController = new TransientNoticeComposeController(binding.notices);
 		virtualDisplayPaddingLeft = binding.virtualDisplay.getPaddingLeft();
 		virtualDisplayPaddingTop = binding.virtualDisplay.getPaddingTop();
@@ -200,6 +220,64 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		MidletKeepAliveService.start(this);
 		microLoader.applyConfiguration();
+		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
+			@Override
+			public Canvas currentCanvas() {
+				return current instanceof Canvas ? (Canvas) current : null;
+			}
+
+			@Override
+			public Displayable currentDisplayable() {
+				return current;
+			}
+
+			@Override
+			public io.github.h3nb.jlmodplus.input.ControllerHostTarget currentControllerTarget() {
+				String displayableId = Integer.toHexString(System.identityHashCode(current));
+				if (runtimeMenuController != null && runtimeMenuController.isMenuVisible()) {
+					return new io.github.h3nb.jlmodplus.input.ControllerHostTarget(
+							"runtime-host@" + displayableId, controllerTargetGeneration);
+				}
+				if (current instanceof Screen && ((Screen) current).isControllerModalActive()) {
+					return new io.github.h3nb.jlmodplus.input.ControllerHostTarget(
+							"screen-modal@" + displayableId, controllerTargetGeneration);
+				}
+				if (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible()) {
+					return new io.github.h3nb.jlmodplus.input.ControllerHostTarget(
+							"controller-keypad@" + displayableId, controllerTargetGeneration);
+				}
+				// Preserve the established plain Screen/Canvas routing policy. ControllerInputRouter
+				// falls back to Displayable/Canvas identity for ownership without making an ordinary
+				// MIDP Screen an explicit analog-host target.
+				return null;
+			}
+
+			@Override
+			public boolean onHostCommand(@NonNull HostCommand command, boolean pressed) {
+				return handleHostCommand(command, pressed);
+			}
+
+			@Override
+			public void onControllerInputAccepted() {
+				Canvas canvas = currentCanvas();
+				if (canvas != null) {
+					canvas.controllerInputAccepted();
+				}
+			}
+
+			@Override
+			public void onControllerNotice(@NonNull String message) {
+				toast(message);
+			}
+
+			@Override
+			public boolean isControllerModalActive() {
+				return (runtimeMenuController != null && runtimeMenuController.isMenuVisible())
+						|| (current instanceof Screen && ((Screen) current).isControllerModalActive())
+						|| (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible());
+			}
+
+		}, microLoader.getProfile());
 		SkinLayer skinLayer = SkinLayer.getInstance();
 		if (skinLayer != null) {
 			skinLayerAvailable = true;
@@ -212,6 +290,7 @@ public class MicroActivity extends AppCompatActivity {
 		int orientation = microLoader.getOrientation();
 		if (vk != null) {
 			vk.setView(binding.overlay);
+			vk.setLayoutEditObserver(this::scheduleVirtualKeyboardEditorChromeUpdate);
 			binding.overlay.addLayer(vk);
 			if (vk.isPhone()) {
 				orientation = ORIENTATION_PORTRAIT;
@@ -225,10 +304,12 @@ public class MicroActivity extends AppCompatActivity {
 		getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
 			@Override
 			public void handleOnBackPressed() {
-				// Android system Back is distinct from physical/remapped key events. Keep the
-				// established short-Back action without synthesizing a KEYCODE_BACK event.
+				// A visible host surface keeps first refusal. On the bare editing surface, short
+				// Back requests the same transactional finish flow as the floating Done control.
 				if (isRuntimeMenuVisible()) {
 					closeOptionsMenu();
+				} else if (isVirtualKeyboardLayoutEditing()) {
+					requestFinishVirtualKeyboardEdit();
 				} else {
 					openOptionsMenu();
 				}
@@ -316,19 +397,20 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onEditVirtualKeyboardLayout() {
-						setVirtualKeyboardEditMode(VirtualKeyboard.LAYOUT_KEYS,
-								R.string.layout_edit_mode);
+						if (defaultPreferences != null &&
+								defaultPreferences.getBoolean(PREF_HIDE_LAYOUT_EDIT_GUIDE, false)) {
+							startVirtualKeyboardLayoutEdit();
+						} else if (runtimeMenuController != null) {
+							runtimeMenuController.showLayoutEditGuide();
+						} else {
+							startVirtualKeyboardLayoutEdit();
+						}
 					}
 
-					@Override
-					public void onResizeVirtualKeyboardLayout() {
-						setVirtualKeyboardEditMode(VirtualKeyboard.LAYOUT_SCALES,
-								R.string.layout_scale_mode);
-					}
 
 					@Override
 					public void onFinishVirtualKeyboardLayout() {
-						finishVirtualKeyboardEdit();
+						requestFinishVirtualKeyboardEdit();
 					}
 
 					@Override
@@ -386,10 +468,37 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
+					public void onVirtualKeyboardEditSaved(boolean saveScreenParams) {
+						saveVirtualKeyboardEdit(saveScreenParams);
+					}
+
+					@Override
+					public void onVirtualKeyboardEditDiscarded() {
+						discardVirtualKeyboardEdit();
+					}
+
+					@Override
+					public void onVirtualKeyboardEditContinued() {
+						continueVirtualKeyboardEdit();
+					}
+
+					@Override
 					public void onLayoutSelected(int index) {
 						applyLayoutSelection(index);
 					}
-				});
+
+					@Override
+					public void onLayoutEditGuideConfirmed(boolean dontShowAgain) {
+						if (dontShowAgain && defaultPreferences != null) {
+							defaultPreferences.edit()
+									.putBoolean(PREF_HIDE_LAYOUT_EDIT_GUIDE, true)
+									.apply();
+						}
+						startVirtualKeyboardLayoutEdit();
+					}
+				}, this::dispatchControllerKeyEventFromDialog,
+				this::dispatchControllerGenericMotionEventFromDialog,
+				this::beginControllerHostTargetChange);
 		setRuntimeToolbarHeight(getRuntimeToolbarHeight(getRuntimeChrome(current)));
 		updateRuntimeMenuState(current);
 	}
@@ -483,6 +592,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void onPause() {
+		if (controllerInputRouter != null) {
+			controllerInputRouter.clear();
+		}
 		if (memoryEditorController != null) {
 			memoryEditorController.onHostPaused();
 		}
@@ -494,10 +606,19 @@ public class MicroActivity extends AppCompatActivity {
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 		refreshCanvasBackground();
+		if (binding != null) binding.getRoot().post(this::updateOverlayLocation);
+		scheduleVirtualKeyboardEditorChromeUpdate();
 	}
 
 	@Override
 	protected void onDestroy() {
+		if (binding != null) binding.getRoot().removeCallbacks(virtualKeyboardEditorChromeUpdate);
+		VirtualKeyboard vk = ContextHolder.getVk();
+		if (vk != null) vk.setLayoutEditObserver(null);
+		if (controllerInputRouter != null) {
+			controllerInputRouter.close();
+			controllerInputRouter = null;
+		}
 		if (defaultPreferences != null) {
 			defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
 			defaultPreferences = null;
@@ -600,6 +721,9 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
+		if (!hasFocus && controllerInputRouter != null) {
+			controllerInputRouter.clear();
+		}
 		if (hasFocus && current instanceof Canvas) {
 			applySystemUi(getRuntimeChrome(current), current);
 		}
@@ -620,6 +744,19 @@ public class MicroActivity extends AppCompatActivity {
 			case ORIENTATION_LANDSCAPE -> SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
 			default -> SCREEN_ORIENTATION_UNSPECIFIED;
 		});
+	}
+
+	private void applyVirtualKeyboardOrientationPolicy(@Nullable VirtualKeyboard vk) {
+		switch (VirtualKeyboardOrientationPolicy.resolve(
+				orientationLocked, vk != null && vk.isPhone())) {
+			case KEEP_CURRENT -> {
+				// Runtime Orientation Lock owns requestedOrientation until explicitly disabled.
+			}
+			case PHONE_PORTRAIT -> setOrientation(ORIENTATION_PORTRAIT);
+			case MIDLET_POLICY -> {
+				if (microLoader != null) setOrientation(microLoader.getOrientation());
+			}
+		}
 	}
 
 	private void loadMIDlet() {
@@ -782,6 +919,7 @@ public class MicroActivity extends AppCompatActivity {
 		binding.overlay.setLocation(
 				containerLocation[0] - overlayLocation[0],
 				containerLocation[1] - overlayLocation[1]);
+		scheduleVirtualKeyboardEditorChromeUpdate();
 	}
 
 	@Nullable
@@ -848,6 +986,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
+		if (controllerInputRouter != null && controllerInputRouter.onKeyEvent(event)) {
+			return true;
+		}
 		// KEYCODE_MENU is a host command, not a guest Canvas key. SurfaceView consumes the
 		// event before Activity.onKeyLongPress() on recent Android releases, so handle the
 		// tracking sequence here before dispatching to the Canvas child.
@@ -874,6 +1015,31 @@ public class MicroActivity extends AppCompatActivity {
 		return super.dispatchKeyEvent(event);
 	}
 
+	/** Routes only controller-owned keys from a Compose dialog window. */
+	public boolean dispatchControllerKeyEventFromDialog(@NonNull KeyEvent event) {
+		return controllerInputRouter != null && controllerInputRouter.onDialogKeyEvent(event);
+	}
+
+	/** Routes controller axis/HAT input from a dialog window without stealing other motion. */
+	public boolean dispatchControllerGenericMotionEventFromDialog(@NonNull MotionEvent event) {
+		return controllerInputRouter != null && controllerInputRouter.onDialogGenericMotionEvent(event);
+	}
+
+	private void beginControllerHostTargetChange() {
+		if (controllerInputRouter != null) controllerInputRouter.onHostTargetChanging();
+		controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
+				? 1L : controllerTargetGeneration + 1L;
+		scheduleVirtualKeyboardEditorChromeUpdate();
+	}
+
+	@Override
+	public boolean dispatchGenericMotionEvent(MotionEvent event) {
+		if (controllerInputRouter != null && controllerInputRouter.onGenericMotionEvent(event)) {
+			return true;
+		}
+		return super.dispatchGenericMotionEvent(event);
+	}
+
 	@Override
 	public void openOptionsMenu() {
 		if (!runtimeToolbarEnabled && current instanceof Canvas) {
@@ -881,6 +1047,7 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		if (runtimeMenuController != null) {
 			runtimeMenuController.openMenu();
+			if (controllerInputRouter != null) controllerInputRouter.onHostModalChanged(true);
 		} else {
 			super.openOptionsMenu();
 		}
@@ -902,6 +1069,7 @@ public class MicroActivity extends AppCompatActivity {
 	public void closeOptionsMenu() {
 		if (runtimeMenuController != null) {
 			runtimeMenuController.closeMenu();
+			if (controllerInputRouter != null) controllerInputRouter.onHostModalChanged(false);
 		} else {
 			super.closeOptionsMenu();
 		}
@@ -940,8 +1108,15 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		boolean shortPress =
+				(event.getFlags() & (KeyEvent.FLAG_LONG_PRESS | KeyEvent.FLAG_CANCELED)) == 0;
+		if (keyCode == KeyEvent.KEYCODE_BACK && shortPress &&
+				!isRuntimeMenuVisible() && isVirtualKeyboardLayoutEditing()) {
+			requestFinishVirtualKeyboardEdit();
+			return true;
+		}
 		if ((keyCode == menuKey || keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_MENU)
-				&& (event.getFlags() & (KeyEvent.FLAG_LONG_PRESS | KeyEvent.FLAG_CANCELED)) == 0) {
+				&& shortPress) {
 			toggleRuntimeMenuFromInput();
 			return true;
 		}
@@ -962,11 +1137,8 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void toggleOrientationLock() {
 		if (orientationLocked) {
-			VirtualKeyboard vk = ContextHolder.getVk();
-			int orientation = vk != null && vk.isPhone()
-					? ORIENTATION_PORTRAIT : microLoader.getOrientation();
-			setOrientation(orientation);
 			orientationLocked = false;
+			applyVirtualKeyboardOrientationPolicy(ContextHolder.getVk());
 		} else {
 			setRequestedOrientation(SCREEN_ORIENTATION_LOCKED);
 			orientationLocked = true;
@@ -974,25 +1146,200 @@ public class MicroActivity extends AppCompatActivity {
 		updateRuntimeMenuState(current);
 	}
 
-	private void setVirtualKeyboardEditMode(int mode, @StringRes int toastMessage) {
+	private void startVirtualKeyboardLayoutEdit() {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk == null) {
+		if (vk == null) return;
+		if (virtualKeyboardEditTransaction == null) {
+			virtualKeyboardEditTransaction =
+					new VirtualKeyboardEditTransaction(vk.captureLayoutSnapshot());
+			layoutEditDonePlacement = null;
+			layoutEditDoneEditorBounds = null;
+		}
+		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
+		updateRuntimeMenuState(current);
+		scheduleVirtualKeyboardEditorChromeUpdate();
+	}
+
+	private boolean isVirtualKeyboardLayoutEditing() {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		return virtualKeyboardEditTransaction != null &&
+				virtualKeyboardEditTransaction.isActive() &&
+				vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF;
+	}
+
+	private void requestFinishVirtualKeyboardEdit() {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
+		if (vk == null || transaction == null || !transaction.isActive() ||
+				vk.getLayoutEditMode() == VirtualKeyboard.LAYOUT_EOF) {
 			return;
 		}
-		vk.setLayoutEditMode(mode);
-		toast(toastMessage);
+		if (transaction.requestFinish(vk.captureLayoutSnapshot()) ==
+				VirtualKeyboardEditTransaction.FinishRequest.CLEAN) {
+			finishCleanVirtualKeyboardEdit(vk);
+			return;
+		}
+		if (runtimeMenuController == null) {
+			transaction.continueEditing();
+			return;
+		}
+		hideVirtualKeyboardEditorDone();
+		runtimeMenuController.showFinishVirtualKeyboardEdit(vk.isPhone(), false);
+	}
+
+	private void finishCleanVirtualKeyboardEdit(VirtualKeyboard vk) {
+		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+		clearVirtualKeyboardEditTransaction();
+		toast(R.string.layout_edit_finished);
 		updateRuntimeMenuState(current);
 	}
 
-	private void finishVirtualKeyboardEdit() {
+	private void saveVirtualKeyboardEdit(boolean saveScreenParams) {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk == null) {
-			return;
-		}
+		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
+		if (vk == null || transaction == null || !transaction.isActive()) return;
+		transaction.save();
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+		applyVirtualKeyboardSave(saveScreenParams);
+		clearVirtualKeyboardEditTransaction();
 		toast(R.string.layout_edit_finished);
 		updateRuntimeMenuState(current);
-		showSaveVkAlert(false);
+	}
+
+	private void discardVirtualKeyboardEdit() {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
+		if (vk == null || transaction == null || !transaction.isActive()) return;
+		VirtualKeyboardLayoutSnapshot baseline = transaction.discard();
+		vk.restoreLayoutSnapshot(baseline);
+		applyVirtualKeyboardOrientationPolicy(vk);
+		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+		clearVirtualKeyboardEditTransaction();
+		toast(R.string.layout_edit_finished);
+		updateRuntimeMenuState(current);
+	}
+
+	private void continueVirtualKeyboardEdit() {
+		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
+		if (transaction == null || !transaction.isActive()) return;
+		transaction.continueEditing();
+		updateRuntimeMenuState(current);
+		scheduleVirtualKeyboardEditorChromeUpdate();
+	}
+
+	private void clearVirtualKeyboardEditTransaction() {
+		virtualKeyboardEditTransaction = null;
+		layoutEditDonePlacement = null;
+		layoutEditDoneEditorBounds = null;
+		hideVirtualKeyboardEditorDone();
+	}
+
+	private void scheduleVirtualKeyboardEditorChromeUpdate() {
+		if (binding == null) return;
+		binding.getRoot().removeCallbacks(virtualKeyboardEditorChromeUpdate);
+		binding.getRoot().post(virtualKeyboardEditorChromeUpdate);
+	}
+
+	private void refreshVirtualKeyboardEditorChrome() {
+		if (binding == null || !isVirtualKeyboardLayoutEditing() ||
+				(virtualKeyboardEditTransaction != null &&
+						virtualKeyboardEditTransaction.isFinishPending()) ||
+				isRuntimeMenuVisible() ||
+				!(current instanceof Canvas)) {
+			hideVirtualKeyboardEditorDone();
+			return;
+		}
+		VirtualKeyboard vk = ContextHolder.getVk();
+		View anchor = overlayAnchor;
+		View root = binding.getRoot();
+		if (vk == null || anchor == null || !anchor.isLaidOut() || !root.isLaidOut() ||
+				vk.isLayoutManipulationActive()) {
+			hideVirtualKeyboardEditorDone();
+			return;
+		}
+
+		RectF localEditorBounds = vk.getLayoutEditBounds();
+		if (localEditorBounds == null || localEditorBounds.width() <= 0.0f ||
+				localEditorBounds.height() <= 0.0f) {
+			hideVirtualKeyboardEditorDone();
+			return;
+		}
+
+		int[] anchorLocation = new int[2];
+		int[] rootLocation = new int[2];
+		anchor.getLocationOnScreen(anchorLocation);
+		root.getLocationOnScreen(rootLocation);
+		float offsetX = anchorLocation[0] - rootLocation[0];
+		float offsetY = anchorLocation[1] - rootLocation[1];
+
+		RectF editorBounds = new RectF(localEditorBounds);
+		editorBounds.offset(offsetX, offsetY);
+		if (!editorBounds.intersect(0.0f, 0.0f, root.getWidth(), root.getHeight()) ||
+				editorBounds.width() <= 0.0f || editorBounds.height() <= 0.0f) {
+			hideVirtualKeyboardEditorDone();
+			return;
+		}
+
+		EditorDonePlacement.Box usable = toPlacementBox(editorBounds);
+		if (layoutEditDoneEditorBounds != null &&
+				(Math.abs(layoutEditDoneEditorBounds.width() - usable.width()) > 0.5f ||
+						Math.abs(layoutEditDoneEditorBounds.height() - usable.height()) > 0.5f)) {
+			// Orientation/viewport-size changes get a fresh spatial choice; semantic baseline stays.
+			layoutEditDonePlacement = null;
+		}
+		layoutEditDoneEditorBounds = usable;
+
+		List<EditorDonePlacement.Box> obstacles = new ArrayList<>();
+		for (RectF localControl : vk.getVisibleLayoutControlBounds()) {
+			RectF control = new RectF(localControl);
+			control.offset(offsetX, offsetY);
+			obstacles.add(toPlacementBox(control));
+		}
+
+		View done = binding.layoutEditDone;
+		done.measure(
+				View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+				View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+		float desiredWidth = Math.max(done.getMeasuredWidth(), dpToPx(80));
+		float desiredHeight = Math.max(done.getMeasuredHeight(), dpToPx(48));
+		EditorDonePlacement.Box placement = EditorDonePlacement.place(
+				usable,
+				desiredWidth,
+				desiredHeight,
+				dpToPx(10),
+				obstacles,
+				layoutEditDonePlacement);
+		if (placement == null) {
+			hideVirtualKeyboardEditorDone();
+			return;
+		}
+
+		FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) done.getLayoutParams();
+		params.width = Math.max(1, Math.round(placement.width()));
+		params.height = Math.max(1, Math.round(placement.height()));
+		done.setLayoutParams(params);
+		done.setX(placement.left);
+		done.setY(placement.top);
+		done.setEnabled(true);
+		done.setVisibility(View.VISIBLE);
+		layoutEditDonePlacement = placement;
+	}
+
+	private void hideVirtualKeyboardEditorDone() {
+		if (binding == null) return;
+		binding.layoutEditDone.setEnabled(false);
+		binding.layoutEditDone.setVisibility(View.GONE);
+	}
+
+	private EditorDonePlacement.Box toPlacementBox(RectF rect) {
+		return new EditorDonePlacement.Box(rect.left, rect.top, rect.right, rect.bottom);
+	}
+
+	private int dpToPx(int value) {
+		return Math.round(TypedValue.applyDimension(
+				TypedValue.COMPLEX_UNIT_DIP,
+				value,
+				getResources().getDisplayMetrics()));
 	}
 
 	@SuppressLint("CheckResult")
@@ -1061,7 +1408,11 @@ public class MicroActivity extends AppCompatActivity {
 			return;
 		}
 		vk.setKeysVisibility(changed.clone());
-		showSaveVkAlert(true);
+		if (isVirtualKeyboardLayoutEditing()) {
+			scheduleVirtualKeyboardEditorChromeUpdate();
+		} else {
+			showSaveVkAlert(true);
+		}
 	}
 
 	private void applyVirtualKeyboardSave(boolean saveScreenParams) {
@@ -1081,12 +1432,9 @@ public class MicroActivity extends AppCompatActivity {
 				.getStringArray(R.array.PREF_VK_TYPE_ENTRIES).length) {
 			return;
 		}
-		vk.setLayout(index);
-		if (vk.isPhone()) {
-			setOrientation(ORIENTATION_PORTRAIT);
-		} else if (microLoader != null) {
-			setOrientation(microLoader.getOrientation());
-		}
+		if (isVirtualKeyboardLayoutEditing()) vk.setLayoutForEditing(index);
+		else vk.setLayout(index);
+		applyVirtualKeyboardOrientationPolicy(vk);
 	}
 
 	@Override
@@ -1105,6 +1453,52 @@ public class MicroActivity extends AppCompatActivity {
 
 	public String getAppName() {
 		return appName;
+	}
+
+	private boolean handleHostCommand(@NonNull HostCommand command, boolean pressed) {
+		// A visible app-owned modal owns every controller command. This keeps a command from
+		// falling through to a MIDlet while the runtime menu or Screen soft menu is open.
+		if (runtimeMenuController != null && runtimeMenuController.isMenuVisible()) {
+			return runtimeMenuController.handleHostCommand(command, pressed);
+		}
+		if (current instanceof Screen && ((Screen) current).isControllerModalActive()) {
+			return ((Screen) current).handleHostCommand(command, pressed);
+		}
+		if (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible()) {
+			if (pressed && (command == HostCommand.Back || command == HostCommand.OpenMenu
+					|| command == HostCommand.OpenKeypad)) {
+				beginControllerHostTargetChange();
+			}
+			return ((Canvas) current).handleHostCommand(command, pressed);
+		}
+		switch (command) {
+			case OpenMenu:
+				if (pressed) toggleRuntimeMenuFromInput();
+				return true;
+			case Back:
+				if (pressed && current instanceof Screen && ((Screen) current).handleHostCommand(command, true)) {
+					return true;
+				}
+				if (pressed) getOnBackPressedDispatcher().onBackPressed();
+				return true;
+			case Activate:
+			case NavigateUp:
+			case NavigateDown:
+			case NavigateLeft:
+			case NavigateRight:
+			case NextTab:
+			case PreviousTab:
+				return current instanceof Screen &&
+						((Screen) current).handleHostCommand(command, pressed);
+			case OpenKeypad:
+				if (pressed && current instanceof Canvas) {
+					beginControllerHostTargetChange();
+					((Canvas) current).openControllerKeypad();
+				}
+				return true;
+			default:
+				return true;
+		}
 	}
 
 	public void toast(@StringRes int message) {
@@ -1131,6 +1525,9 @@ public class MicroActivity extends AppCompatActivity {
 		@Override
 		public void process() {
 			closeOptionsMenu();
+			if (controllerInputRouter != null) {
+				controllerInputRouter.onTargetChanged();
+			}
 			if (current != null) {
 				current.clearDisplayableView();
 			}

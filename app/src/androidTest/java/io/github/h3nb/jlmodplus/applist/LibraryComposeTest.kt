@@ -25,6 +25,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -36,6 +37,7 @@ import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -74,6 +76,41 @@ class LibraryComposeTest {
         }
 
         composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(0)
+    }
+
+    @Test
+    fun appActionsShowFocusOnlyAfterControllerNavigation() {
+        val controllerEvents = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 8)
+        composeRule.setContent {
+            JLModPlusTheme {
+                AppActionsDialog(
+                    app = LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                    controllerEvents = controllerEvents,
+                    onDismiss = {},
+                    onShortcut = {},
+                    onRename = {},
+                    onSettings = {},
+                    onReinstall = {},
+                    onDelete = {},
+                    onEditMetadata = {},
+                    onAddToCollection = {},
+                    onShareApp = {},
+                    onExportAppBundle = {},
+                    onSelect = {},
+                )
+            }
+        }
+
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(0)
+
+        controllerEvents.tryEmit(
+            LibraryControllerEvent(1L, LibraryControllerCommand.MoveDown),
+        )
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(1)
     }
 
     @Test
@@ -158,6 +195,40 @@ class LibraryComposeTest {
         composeRule.onNode(hasSetTextAction()).performTextInput(" Updated")
         composeRule.onNodeWithText("OK").performClick()
         assertEquals(7 to "Demo MIDlet Updated", actions.renamed)
+    }
+
+    @Test
+    fun controllerEventsMoveStableFocusAndActivateOnce() {
+        val actions = RecordingLibraryActions()
+        val controllerEvents = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 8)
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryScreen(
+                    state = LibraryUiState(
+                        loading = false,
+                        apps = listOf(
+                            LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                            LibraryAppUiItem(8, "Second MIDlet", "Example Vendor", "1.0", null, true),
+                        ),
+                    ),
+                    actions = actions,
+                    controllerEvents = controllerEvents,
+                )
+            }
+        }
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(0)
+
+        controllerEvents.tryEmit(
+            LibraryControllerEvent(1L, LibraryControllerCommand.MoveDown),
+        )
+        composeRule.waitForIdle()
+        controllerEvents.tryEmit(
+            LibraryControllerEvent(2L, LibraryControllerCommand.Activate),
+        )
+        composeRule.waitForIdle()
+
+        assertEquals(8, actions.openedId)
     }
 
     @Test

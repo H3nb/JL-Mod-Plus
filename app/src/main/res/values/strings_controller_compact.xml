@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_analog_stick">Analog Stick</string>
+    <string name="config_analog_stick_summary">Choose how the primary analog stick sends movement to this MIDlet. Gamepad buttons use Key Mapping.</string>
+    <string name="config_analog_stick_off">Off</string>
+    <string name="config_controller_help_body_compact">Gamepad buttons use the same Key Mapping as keyboards and phone keys. The Analog Stick option controls only directional stick output for the MIDlet. Android Back keeps its normal host behavior, and any physical button mapped to M opens the runtime MIDlet menu.</string>
+</resources>

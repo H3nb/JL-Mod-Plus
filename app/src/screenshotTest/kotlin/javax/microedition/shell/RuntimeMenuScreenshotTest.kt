@@ -37,7 +37,6 @@ private object NoOpRuntimeMenuActions : RuntimeMenuActions {
     override fun onResetEmulationSpeed() = Unit
     override fun onMemoryEditor() = Unit
     override fun onEditVirtualKeyboardLayout() = Unit
-    override fun onResizeVirtualKeyboardLayout() = Unit
     override fun onFinishVirtualKeyboardLayout() = Unit
     override fun onSwitchVirtualKeyboardLayout() = Unit
     override fun onHideVirtualKeyboardButtons() = Unit

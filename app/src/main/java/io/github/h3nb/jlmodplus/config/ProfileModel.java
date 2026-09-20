@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.util.SparseIntArray;
 
+import com.google.gson.JsonElement;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 
@@ -31,6 +32,7 @@ import java.util.List;
 
 import javax.microedition.lcdui.keyboard.KeyModel;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
+import javax.microedition.shell.timing.TimingMode;
 import javax.microedition.util.ContextHolder;
 
 import androidx.preference.PreferenceManager;
@@ -38,7 +40,7 @@ import androidx.preference.PreferenceManager;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
 import io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter;
-import javax.microedition.shell.timing.TimingMode;
+
 public class ProfileModel {
 	public static final int VERSION = 7;
 
@@ -46,7 +48,8 @@ public class ProfileModel {
 	public static String builtInThemePreferenceKey(File configDir) {
 		return "config_profile_builtin_theme:" + configDir.getAbsolutePath();
 	}
-	/** True if this is a new profile (not yet saved to file) */
+
+	/** True if this is a new profile (not yet saved to file). */
 	public final transient boolean isNew;
 
 	public transient File dir;
@@ -143,6 +146,33 @@ public class ProfileModel {
 	@SerializedName("ShowKeyboard")
 	public boolean showKeyboard;
 
+	/** Enables the grouped touch D-pad portion of the virtual controls overlay. */
+	@SerializedName("VirtualDpadEnabled")
+	public boolean virtualDpadEnabled = false;
+
+	/** Enables the grouped touch analog-stick portion of the virtual controls overlay. */
+	@SerializedName("VirtualAnalogEnabled")
+	public boolean virtualAnalogEnabled = false;
+
+	/** Normalized grouped-control geometry. Values are relative to the guest control viewport. */
+	@SerializedName("VirtualDpadCenterX")
+	public float virtualDpadCenterX = 0.82f;
+
+	@SerializedName("VirtualDpadCenterY")
+	public float virtualDpadCenterY = 0.78f;
+
+	@SerializedName("VirtualDpadRadius")
+	public float virtualDpadRadius = 0.16f;
+
+	@SerializedName("VirtualAnalogCenterX")
+	public float virtualAnalogCenterX = 0.18f;
+
+	@SerializedName("VirtualAnalogCenterY")
+	public float virtualAnalogCenterY = 0.78f;
+
+	@SerializedName("VirtualAnalogRadius")
+	public float virtualAnalogRadius = 0.16f;
+
 	@SerializedName("VirtualKeyboardType")
 	public int vkType;
 
@@ -186,6 +216,14 @@ public class ProfileModel {
 	@SerializedName("KeyMappings")
 	public SparseIntArray keyMappings;
 
+	/**
+	 * Optional per-profile controller configuration. The subtree is deliberately kept as JSON so
+	 * a newer controller schema can round-trip through older settings editors without losing
+	 * fields that this build does not understand.
+	 */
+	@SerializedName(value = "Controller", alternate = {"controller"})
+	public JsonElement controller;
+
 	@SerializedName("SoundBank")
 	public String soundBank;
 
@@ -222,6 +260,8 @@ public class ProfileModel {
 		fontAA = true;
 
 		showKeyboard = true;
+		virtualDpadEnabled = false;
+		virtualAnalogEnabled = false;
 		touchInput = true;
 
 		vkButtonShape = VirtualKeyboard.SHAPE_ROUND_RECT;

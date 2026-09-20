@@ -84,6 +84,7 @@ import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView;
+import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferActions;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferIntents;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
@@ -202,16 +203,33 @@ public class AppsListFragment extends Fragment {
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
                 preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true),
                 gridSpacing,
-                ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()));
+                ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()),
+                new LibraryControllerKeyEventHandler() {
+                    @Override
+                    public boolean onControllerKeyEvent(android.view.KeyEvent event) {
+                        Activity activity = getActivity();
+                        return activity instanceof MainActivity &&
+                                ((MainActivity) activity).dispatchControllerKeyEventFromDialog(event);
+                    }
+                });
         libraryViewModel.observe(getViewLifecycleOwner(), this::onLibraryState);
     }
 
     @Override
     public void onDestroyView() {
+        if (composeController != null) {
+            composeController.close();
+        }
         composeController = null;
         clearUiRows();
         super.onDestroyView();
     }
+
+	/** Routes host commands directly; no Canvas/MIDP key translation is involved. */
+	public boolean onHostCommand(@NonNull HostCommand command, boolean pressed) {
+		LibraryComposeController controller = composeController;
+		return controller != null && controller.onHostCommand(command, pressed);
+	}
 
     @Override
     public void onStart() {

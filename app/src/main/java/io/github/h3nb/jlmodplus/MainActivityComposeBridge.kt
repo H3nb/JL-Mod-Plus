@@ -40,6 +40,11 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
+import io.github.h3nb.jlmodplus.ui.ControllerDialogInputScope
+import io.github.h3nb.jlmodplus.ui.ControllerHostCommandHandler
+import io.github.h3nb.jlmodplus.input.HostCommand
+import android.view.KeyEvent
+import android.view.MotionEvent
 
 /** Actions stay in MainActivity so permission, picker, recovery, and Fragment contracts remain host-owned. */
 internal interface MainHostActions {
@@ -53,7 +58,7 @@ internal interface MainHostActions {
     fun onExit()
 }
 
-private sealed interface MainHostDialog {
+internal sealed interface MainHostDialog {
     data class MidletFailure(val message: String) : MainHostDialog
     data class ProcessExit(val message: String) : MainHostDialog
     data class DirectoryFailure(val message: String) : MainHostDialog
@@ -61,7 +66,7 @@ private sealed interface MainHostDialog {
     data object PermissionFailure : MainHostDialog
 }
 
-private data class MainHostUiState(
+internal data class MainHostUiState(
     val dialog: MainHostDialog? = null,
 )
 
@@ -69,8 +74,12 @@ private data class MainHostUiState(
 internal class MainActivityComposeController(
     composeView: ComposeView,
     private val actions: MainHostActions,
+    private val dialogKeyDispatcher: (KeyEvent) -> Boolean,
+    private val dialogMotionDispatcher: (MotionEvent) -> Boolean,
+    private val onControllerTargetChanging: Runnable,
 ) {
     private var state by mutableStateOf(MainHostUiState())
+    private var dialogHostCommandHandler: ControllerHostCommandHandler? = null
 
     init {
         composeView.id = R.id.main_host_compose_root
@@ -79,36 +88,51 @@ internal class MainActivityComposeController(
         )
         composeView.setContent {
             JLModPlusTheme {
-                MainHostDialogs(state = state, actions = actions)
+                ControllerDialogInputScope(
+                    onControllerKeyEvent = dialogKeyDispatcher,
+                    onControllerMotionEvent = dialogMotionDispatcher,
+                    onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
+                ) {
+                    MainHostDialogs(state = state, actions = actions)
+                }
             }
         }
     }
 
     fun isDialogVisible(): Boolean = state.dialog != null
 
-    fun dismiss() {
-        state = MainHostUiState()
+    private fun replaceDialog(dialog: MainHostDialog?) {
+        if (state.dialog == dialog) return
+        // This may run re-entrantly from controller Activate; release old semantics first.
+        onControllerTargetChanging.run()
+        dialogHostCommandHandler = null
+        state = MainHostUiState(dialog)
     }
 
-    fun showMidletFailure(message: String) {
-        state = MainHostUiState(MainHostDialog.MidletFailure(message))
+    fun dismiss() = replaceDialog(null)
+
+    fun showMidletFailure(message: String) =
+        replaceDialog(MainHostDialog.MidletFailure(message))
+
+    fun showProcessExit(message: String) =
+        replaceDialog(MainHostDialog.ProcessExit(message))
+
+    fun showDirectoryFailure(message: String) =
+        replaceDialog(MainHostDialog.DirectoryFailure(message))
+
+    fun showDirectoryMissing(message: String) =
+        replaceDialog(MainHostDialog.DirectoryMissing(message))
+
+    fun showPermissionFailure() =
+        replaceDialog(MainHostDialog.PermissionFailure)
+
+    fun handleHostCommand(command: HostCommand, pressed: Boolean): Boolean {
+        if (state.dialog == null) return false
+        // The focused Compose control owns the selected action; do not reduce multi-action
+        // dialogs to a generic dismiss.
+        return dialogHostCommandHandler?.invoke(command, pressed) ?: true
     }
 
-    fun showProcessExit(message: String) {
-        state = MainHostUiState(MainHostDialog.ProcessExit(message))
-    }
-
-    fun showDirectoryFailure(message: String) {
-        state = MainHostUiState(MainHostDialog.DirectoryFailure(message))
-    }
-
-    fun showDirectoryMissing(message: String) {
-        state = MainHostUiState(MainHostDialog.DirectoryMissing(message))
-    }
-
-    fun showPermissionFailure() {
-        state = MainHostUiState(MainHostDialog.PermissionFailure)
-    }
 }
 
 private data class MainHostDialogLayout(
@@ -160,7 +184,7 @@ private fun MainHostWarningIcon() {
 }
 
 @Composable
-private fun MainHostDialogs(
+internal fun MainHostDialogs(
     state: MainHostUiState,
     actions: MainHostActions,
 ) {
