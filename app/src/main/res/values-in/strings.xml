@@ -270,7 +270,7 @@
     <string name="config_gamepad_joystick_fixed">Tetap</string>
     <string name="config_gamepad_joystick_floating">Mengambang</string>
     <string name="config_gamepad_keypad_title">Keypad Virtual</string>
-    <string name="config_gamepad_capture">Rekam</string>
+    <string name="config_gamepad_capture">Petakan Ulang</string>
     <string name="config_gamepad_capture_waiting">Menunggu satu kontrol pengontrol…</string>
     <string name="config_gamepad_capture_axis_not_assignable">Perekaman sumbu hanya untuk diagnosis. Gunakan tombol atau arah D-pad untuk penetapan digital.</string>
     <string name="config_gamepad_calibration_next">Berikutnya</string>
@@ -304,7 +304,7 @@
     <string name="config_gamepad_guest_down">Bawah</string>
     <string name="config_gamepad_guest_left">Kiri</string>
     <string name="config_gamepad_guest_right">Kanan</string>
-    <string name="config_gamepad_guest_fire">Aktifkan</string>
+    <string name="config_gamepad_guest_fire">Tembak</string>
     <string name="config_gamepad_guest_soft_left">Soft Key Kiri</string>
     <string name="config_gamepad_guest_soft_right">Soft Key Kanan</string>
     <string name="config_gamepad_guest_clear">Hapus</string>
