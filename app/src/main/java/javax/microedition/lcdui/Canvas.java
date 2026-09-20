@@ -530,6 +530,11 @@ public abstract class Canvas extends Displayable {
 		guestKeyLedger.release(deviceId, sessionId, kind, channel);
 	}
 
+	/** Releases physical-key ownership for one disconnected Android input device. */
+	public void releaseInputDevice(int deviceId) {
+		guestKeyLedger.releaseDevice(Integer.toString(deviceId));
+	}
+
 	/** Invalidates all producer state at a visibility/target boundary. */
 	public void clearInputState() {
 		guestKeyLedger.endVisibility();
