@@ -91,8 +91,13 @@ class ControllerLifecycleGate {
             }
 
             ControllerLifecycleState.WAIT_NEUTRAL -> {
-                if (waitingDeviceId != deviceId || !neutral) {
+                if (!neutral) {
                     return ControllerLifecycleDecision.CONSUMED
+                }
+                if (waitingDeviceId != deviceId) {
+                    // A different controller that already proves neutral may take ownership.
+                    // Otherwise a noisy/disconnected first device could starve every other pad.
+                    beginWaiting(deviceId)
                 }
                 return activate()
             }
