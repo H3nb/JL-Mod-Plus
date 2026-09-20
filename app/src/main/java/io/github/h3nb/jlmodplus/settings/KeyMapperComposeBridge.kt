@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.settings
 
 import android.graphics.Rect
+import android.view.KeyEvent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -404,6 +405,7 @@ private fun MappingOverlay(
                                     )
                                     TextButton(
                                         onClick = { actions.onRemoveMappedKey(assigned.androidKeyCode) },
+                                        enabled = assigned.androidKeyCode != KeyEvent.KEYCODE_BACK,
                                     ) {
                                         Text(stringResource(R.string.mapping_dialog_remove))
                                     }
