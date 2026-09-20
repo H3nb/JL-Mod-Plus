@@ -213,7 +213,10 @@ class ControllerInputRouter(
      * replacement surface. The caller advances its ControllerHostTarget generation after this call.
      */
     fun onHostTargetChanging() {
-        releaseAll()
+        // A held analog direction must not immediately re-press on the replacement target.
+        // Keep digital physical captures in HostInputRouter as stale-edge tombstones, but put
+        // motion ownership behind the same neutral barrier used by other target boundaries.
+        beginBoundary(waitForNeutral = true, nextDeviceId = activeDeviceId)
     }
 
     /** Handles host-owned controller buttons, then the configured virtual pointer click. */

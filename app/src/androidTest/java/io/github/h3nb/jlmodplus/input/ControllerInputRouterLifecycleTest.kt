@@ -95,6 +95,73 @@ class ControllerInputRouterLifecycleTest {
         }
     }
 
+    @Test
+    fun hostTargetChangeReleasesAnalogOutputAndRequiresNeutralBeforeReactivation() {
+        val host = RecordingHost()
+        val router = ControllerInputRouter(
+            InstrumentationRegistry.getInstrumentation().targetContext,
+            host,
+            null,
+        )
+        try {
+            val gate = privateField<ControllerLifecycleGate>(router, "lifecycleGate")
+            val applyDecision = ControllerInputRouter::class.java.getDeclaredMethod(
+                "applyLifecycleDecision",
+                ControllerLifecycleDecision::class.java,
+            ).apply { isAccessible = true }
+            val updateDirectional = ControllerInputRouter::class.java.getDeclaredMethod(
+                "updateDirectional",
+                String::class.java,
+                Set::class.java,
+                String::class.java,
+                java.lang.Boolean.TYPE,
+            ).apply { isAccessible = true }
+
+            fun offer(deviceId: Int, neutral: Boolean): ControllerLifecycleDecision {
+                val decision = gate.offerMotion(deviceId, neutral)
+                applyDecision.invoke(router, decision)
+                return decision
+            }
+
+            assertEquals(ControllerLifecycleDecision.ACTIVATED, offer(1, neutral = true))
+            updateDirectional.invoke(
+                router,
+                "held-stick",
+                setOf(ControllerInputRouter.CONTROL_DPAD_RIGHT),
+                "left-movement",
+                true,
+            )
+            assertEquals(listOf(HostCommand.NavigateRight to true), host.commands)
+
+            router.onHostTargetChanging()
+
+            assertEquals(
+                listOf(
+                    HostCommand.NavigateRight to true,
+                    HostCommand.NavigateRight to false,
+                ),
+                host.commands,
+            )
+            assertEquals(ControllerLifecycleState.WAIT_NEUTRAL, gate.snapshot().state)
+            assertEquals(1, gate.snapshot().waitingDeviceId)
+
+            assertEquals(ControllerLifecycleDecision.CONSUMED, offer(1, neutral = false))
+            assertEquals(ControllerLifecycleState.WAIT_NEUTRAL, gate.snapshot().state)
+            assertEquals(
+                listOf(
+                    HostCommand.NavigateRight to true,
+                    HostCommand.NavigateRight to false,
+                ),
+                host.commands,
+            )
+
+            assertEquals(ControllerLifecycleDecision.ACTIVATED, offer(1, neutral = true))
+            assertEquals(ControllerLifecycleState.ACTIVE, gate.snapshot().state)
+        } finally {
+            router.close()
+        }
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun <T> privateField(instance: Any, name: String): T =
         instance.javaClass.getDeclaredField(name).let { field ->
