@@ -42,6 +42,13 @@
 # Keep dependency-specific reflection/JNI rules upstream instead of duplicating broad
 # package-wide keeps here.
 
+# R8 9.4.24 still generates invalid wide-register DEX when optimizing this large
+# Compose method. Keep shrinking and obfuscation enabled, but retain the method's
+# bytecode shape until the upstream optimizer regression is fixed.
+-keepclassmembers,allowshrinking,allowobfuscation class io.github.h3nb.jlmodplus.memory.MemoryEditorRuntimeComposeKt {
+    void RuntimeChoiceMenu(...);
+}
+
 # Keep the existing compact obfuscation dictionary for application-internal code.
 -obfuscationdictionary dictionary.pro
 -classobfuscationdictionary dictionary.pro
