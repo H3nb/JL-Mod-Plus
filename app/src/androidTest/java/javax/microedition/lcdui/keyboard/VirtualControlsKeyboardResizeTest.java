@@ -13,7 +13,9 @@
  */
 package javax.microedition.lcdui.keyboard;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -76,6 +78,56 @@ public class VirtualControlsKeyboardResizeTest {
             handler.getLooper().quitSafely();
         }
         if (profileDir != null) profileDir.delete();
+    }
+
+    @Test
+    public void newProfileKeepsGroupedControlsDisabled() {
+        ProfileModel profile = new ProfileModel(new File(profileDir, "new-profile"));
+
+        assertFalse(profile.virtualDpadEnabled);
+        assertFalse(profile.virtualAnalogEnabled);
+    }
+
+    @Test
+    public void standardTemplatesEnableOnlyTheirIntendedGroupedControl() {
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        assertTrue(settings.virtualDpadEnabled);
+        assertFalse(settings.virtualAnalogEnabled);
+
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD);
+        assertFalse(settings.virtualDpadEnabled);
+        assertTrue(settings.virtualAnalogEnabled);
+    }
+
+    @Test
+    public void legacyBuiltInTemplateDisablesGroupedControls() {
+        settings.virtualDpadEnabled = true;
+        settings.virtualAnalogEnabled = true;
+
+        keyboard.setLayout(3);
+
+        assertFalse(settings.virtualDpadEnabled);
+        assertFalse(settings.virtualAnalogEnabled);
+    }
+
+    @Test
+    public void customLayoutPreservesExplicitGroupedSelections() {
+        settings.virtualDpadEnabled = true;
+        settings.virtualAnalogEnabled = true;
+
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+
+        assertTrue(settings.virtualDpadEnabled);
+        assertTrue(settings.virtualAnalogEnabled);
+    }
+
+    @Test
+    public void malformedShortVisibilityArrayIsSafeNoOp() {
+        boolean[] before = keyboard.getKeysVisibility();
+
+        keyboard.setKeysVisibility(new boolean[] { true });
+
+        assertArrayEquals(before, keyboard.getKeysVisibility());
     }
 
     @Test

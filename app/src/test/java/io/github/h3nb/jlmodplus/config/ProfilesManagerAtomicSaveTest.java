@@ -66,4 +66,32 @@ public class ProfilesManagerAtomicSaveTest {
 		assertTrue(config.isFile());
 		assertFalse(backup.exists());
 	}
+	@Test
+	public void groupedVirtualControlsDefaultOffForLegacyJson() {
+		ProfileModel defaults = new ProfileModel();
+		assertFalse(defaults.virtualDpadEnabled);
+		assertFalse(defaults.virtualAnalogEnabled);
+
+		ProfileModel legacy = new Gson().fromJson(
+				"{\"VirtualKeyboardType\":3}", ProfileModel.class);
+		assertNotNull(legacy);
+		assertFalse(legacy.virtualDpadEnabled);
+		assertFalse(legacy.virtualAnalogEnabled);
+	}
+
+	@Test
+	public void explicitGroupedVirtualControlStateSurvivesDeserialization() {
+		ProfileModel dpad = new Gson().fromJson(
+				"{\"VirtualDpadEnabled\":true,\"VirtualAnalogEnabled\":false}",
+				ProfileModel.class);
+		assertTrue(dpad.virtualDpadEnabled);
+		assertFalse(dpad.virtualAnalogEnabled);
+
+		ProfileModel analog = new Gson().fromJson(
+				"{\"VirtualDpadEnabled\":false,\"VirtualAnalogEnabled\":true}",
+				ProfileModel.class);
+		assertFalse(analog.virtualDpadEnabled);
+		assertTrue(analog.virtualAnalogEnabled);
+	}
+
 }

@@ -148,7 +148,7 @@ public class ProfileModel {
 
 	/** Enables the grouped touch D-pad portion of the virtual controls overlay. */
 	@SerializedName("VirtualDpadEnabled")
-	public boolean virtualDpadEnabled = true;
+	public boolean virtualDpadEnabled = false;
 
 	/** Enables the grouped touch analog-stick portion of the virtual controls overlay. */
 	@SerializedName("VirtualAnalogEnabled")
@@ -260,7 +260,7 @@ public class ProfileModel {
 		fontAA = true;
 
 		showKeyboard = true;
-		virtualDpadEnabled = true;
+		virtualDpadEnabled = false;
 		virtualAnalogEnabled = false;
 		touchInput = true;
 

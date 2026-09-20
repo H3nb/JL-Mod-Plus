@@ -73,7 +73,6 @@ class ControllerInputRouter(
         val movementGroup: String,
         val canvas: Canvas?,
         val deviceId: Int,
-        val generation: Long,
         val sessionId: Long,
         val hostTarget: ControllerHostTarget?,
         var requestedControls: Set<String> = emptySet(),
@@ -81,13 +80,10 @@ class ControllerInputRouter(
 
     private data class BinarySource(
         val channel: String,
-        val control: String,
         val code: Int,
         val canvas: Canvas?,
         val deviceId: Int,
-        val generation: Long,
         val sessionId: Long,
-        val hostTarget: ControllerHostTarget?,
     )
 
     private data class PointerClickKey(
@@ -184,9 +180,7 @@ class ControllerInputRouter(
         detachPointerConsumer()
         releaseAll()
         lifecycleGate.clear()
-        lifecycleState = LifecycleState.INACTIVE
-        activeDeviceId = null
-        waitingDeviceId = null
+        syncLifecycleFields()
         lastTarget = null
         hostModalActive = false
     }
@@ -549,12 +543,10 @@ class ControllerInputRouter(
         val previous = triggerStates.getValue(side)
         val next = StickProcessor.updateTrigger(normalized, previous, thresholds)
         triggerStates[side] = next
-        val control = if (side == TriggerSide.LEFT) CONTROL_BUTTON_L2 else CONTROL_BUTTON_R2
         val channel = "trigger:${side.name.lowercase()}"
         if (next.pressed && !previous.pressed) {
             captureBinary(
                 channel = channel,
-                control = control,
                 code = if (side == TriggerSide.LEFT) Canvas.KEY_STAR else Canvas.KEY_POUND,
             )
         } else if (!next.pressed && previous.pressed) {
@@ -566,18 +558,15 @@ class ControllerInputRouter(
     private fun eventTime(event: MotionEvent, history: Int): Long =
         if (history < 0) event.eventTime else event.getHistoricalEventTime(history)
 
-    private fun captureBinary(channel: String, control: String, code: Int) {
+    private fun captureBinary(channel: String, code: Int) {
         if (binary.containsKey(channel)) return
         val canvas = host.currentCanvas()
         val captured = BinarySource(
             channel = channel,
-            control = control,
             code = code,
             canvas = canvas,
             deviceId = activeDeviceId ?: -1,
-            generation = canvas?.inputGeneration() ?: 0L,
             sessionId = sessionId,
-            hostTarget = currentHostTarget(),
         )
         binary[channel] = captured
         captured.canvas?.inputPressed(
@@ -615,7 +604,6 @@ class ControllerInputRouter(
                 movementGroup = movementGroup,
                 canvas = canvas,
                 deviceId = activeDeviceId ?: -1,
-                generation = canvas?.inputGeneration() ?: 0L,
                 sessionId = sessionId,
                 hostTarget = currentHostTarget(),
             )
@@ -1204,8 +1192,6 @@ class ControllerInputRouter(
         const val CONTROL_DPAD_DOWN = "dpad_down"
         const val CONTROL_DPAD_LEFT = "dpad_left"
         const val CONTROL_DPAD_RIGHT = "dpad_right"
-        const val CONTROL_BUTTON_L2 = "button_l2"
-        const val CONTROL_BUTTON_R2 = "button_r2"
 
         private const val DIRECTION_NUM1 = "__direction_num1"
         private const val DIRECTION_NUM2 = "__direction_num2"

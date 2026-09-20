@@ -187,7 +187,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		if (states == null) return;
 		int legacyCount = super.getKeyNames().length;
 		if (states.length < legacyCount) {
-			super.setKeysVisibility(states);
+			// The superclass requires the complete legacy array. Reject malformed callers without
+			// partially changing visibility or risking ArrayIndexOutOfBoundsException.
 			return;
 		}
 
