@@ -688,17 +688,6 @@ fun LibraryScreen(
         )
         controllerFocusedAppIndex = focus.index
         controllerFocusedAppId = focus.databaseId
-        withFrameNanos { }
-        val targetItemIndex = focus.index + 1
-        if (state.layout == LibraryLayout.List) {
-            if (appsListState.layoutInfo.visibleItemsInfo.none { it.index == targetItemIndex }) {
-                appsListState.scrollToItem(targetItemIndex)
-            }
-        } else {
-            if (appsGridState.layoutInfo.visibleItemsInfo.none { it.index == targetItemIndex }) {
-                appsGridState.scrollToItem(targetItemIndex)
-            }
-        }
     }
 
     suspend fun moveControllerFocus(command: LibraryControllerCommand) {
