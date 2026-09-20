@@ -218,6 +218,35 @@ class KeyOwnershipLedgerTest {
     }
 
     @Test
+    fun releaseDeviceOnlyReleasesSourcesOwnedByThatDevice() {
+        val sink = RecordingSink()
+        val ledger = KeyOwnershipLedger(sink)
+        val firstDevice = source("pad-a", 1L, "button-a")
+        val sameDevice = source("pad-a", 2L, "button-b")
+        val otherDevice = source("pad-b", 1L, "button-a")
+
+        ledger.down(firstDevice, target, listOf(left))
+        ledger.down(sameDevice, target, listOf(right))
+        ledger.down(otherDevice, target, listOf(up))
+        ledger.releaseDevice("pad-a")
+
+        assertEquals(
+            listOf(
+                event(KeyEventType.DOWN, target, left),
+                event(KeyEventType.DOWN, target, right),
+                event(KeyEventType.DOWN, target, up),
+                event(KeyEventType.UP, target, left),
+                event(KeyEventType.UP, target, right),
+            ),
+            sink.events,
+        )
+        assertFalse(ledger.isActive(firstDevice))
+        assertFalse(ledger.isActive(sameDevice))
+        assertTrue(ledger.isActive(otherDevice))
+        assertEquals(setOf(TargetedOutputKey(target, up)), ledger.deliveredState())
+    }
+
+    @Test
     fun clearReleasesAllOutputsInDeterministicOrder() {
         val sink = RecordingSink()
         val ledger = KeyOwnershipLedger(sink)
