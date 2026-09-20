@@ -39,10 +39,12 @@ class HostInputRouter(
         val mappedMenu = event.keyCode != KeyEvent.KEYCODE_BACK &&
             KeyMapper.isOptionsMenuKey(event.keyCode)
         val gamepadEvent = ControllerInputRouter.isGamepadEvent(event)
-        if (!mappedMenu && !gamepadEvent) return false
+        val modal = host.isControllerModalActive()
+        // A host modal owns every physical key source, including ordinary keyboards. Check the
+        // modal before the source-class early return so keys cannot leak into the guest behind it.
+        if (!mappedMenu && !gamepadEvent && !modal) return false
 
         val physicalKey = PhysicalKey(event.deviceId, event.keyCode)
-        val modal = host.isControllerModalActive()
         val canvasVisible = host.currentCanvas() != null
         val command = if (mappedMenu) {
             HostCommand.OpenMenu
@@ -92,6 +94,17 @@ class HostInputRouter(
     }
 
 
+
+    fun releaseDevice(deviceId: Int) {
+        val entries = captured.entries
+            .filter { it.key.deviceId == deviceId }
+            .sortedWith(compareBy({ it.key.keyCode }, { it.value.ordinal }))
+        for ((key, command) in entries) {
+            if (captured.remove(key) != null) {
+                host.onHostCommand(command, false)
+            }
+        }
+    }
 
     fun clear() {
         val active = captured.values.toList()
