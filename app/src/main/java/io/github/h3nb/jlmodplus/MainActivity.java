@@ -181,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
 				finish();
 			}
 
-		});
+		}, this::dispatchControllerKeyEventFromDialog);
 		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
 			@Override
 			public Canvas currentCanvas() {

@@ -33,11 +33,10 @@ class HostInputRouter(
     private val captured = LinkedHashMap<PhysicalKey, HostCommand>()
 
     fun onKeyEvent(event: KeyEvent): Boolean {
-        // BACK is the built-in default M binding, but MicroActivity deliberately owns its legacy
-        // short/long-press behavior and Android's system Back callback. Only additional physical
-        // bindings to M are intercepted here.
-        val mappedMenu = event.keyCode != KeyEvent.KEYCODE_BACK &&
-            KeyMapper.isOptionsMenuKey(event.keyCode)
+        // Physical Android Back belongs to Activity/System back dispatch, even while a host modal
+        // is visible. Logical M remains independently assignable from every non-Back physical key.
+        if (event.keyCode == KeyEvent.KEYCODE_BACK) return false
+        val mappedMenu = KeyMapper.isOptionsMenuKey(event.keyCode)
         val gamepadEvent = ControllerInputRouter.isGamepadEvent(event)
         val modal = host.isControllerModalActive()
         // A host modal owns every physical key source, including ordinary keyboards. Check the
@@ -63,6 +62,13 @@ class HostInputRouter(
                 if (event.repeatCount != 0) return true
                 if (command == null) return modal
                 if (captured.containsKey(physicalKey)) return true
+                if (captured.containsValue(command)) {
+                    // The command is already down through another physical source. Capture this
+                    // source without emitting a duplicate DOWN; the final owner will emit the UP.
+                    captured[physicalKey] = command
+                    if (gamepadEvent) host.onControllerInputAccepted()
+                    return true
+                }
                 val handled = host.onHostCommand(command, true)
                 // A Screen without an app-owned modal may still be a native/View-backed guest
                 // surface. Let its ordinary gamepad navigation continue through Android dispatch
@@ -83,7 +89,9 @@ class HostInputRouter(
             KeyEvent.ACTION_UP -> {
                 val capturedCommand = captured.remove(physicalKey)
                 if (capturedCommand != null) {
-                    host.onHostCommand(capturedCommand, false)
+                    if (!captured.containsValue(capturedCommand)) {
+                        host.onHostCommand(capturedCommand, false)
+                    }
                     return true
                 }
                 return modal
@@ -96,19 +104,22 @@ class HostInputRouter(
 
 
     fun releaseDevice(deviceId: Int) {
-        val entries = captured.entries
+        val affected = LinkedHashSet<HostCommand>()
+        captured.entries
             .filter { it.key.deviceId == deviceId }
             .sortedWith(compareBy({ it.key.keyCode }, { it.value.ordinal }))
-        for ((key, command) in entries) {
-            if (captured.remove(key) != null) {
-                host.onHostCommand(command, false)
+            .forEach { (key, command) ->
+                if (captured.remove(key) != null) affected += command
             }
+        affected.sortedBy { it.ordinal }.forEach { command ->
+            if (!captured.containsValue(command)) host.onHostCommand(command, false)
         }
     }
 
     fun clear() {
-        val active = captured.values.toList()
+        val active = captured.values.toSet().sortedBy { it.ordinal }
         captured.clear()
         active.forEach { host.onHostCommand(it, false) }
     }
 }
+

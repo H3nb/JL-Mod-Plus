@@ -445,7 +445,7 @@ public class MicroActivity extends AppCompatActivity {
 						}
 						startVirtualKeyboardLayoutEdit();
 					}
-				});
+				}, this::dispatchControllerKeyEventFromDialog);
 		setRuntimeToolbarHeight(getRuntimeToolbarHeight(getRuntimeChrome(current)));
 		updateRuntimeMenuState(current);
 	}
@@ -941,6 +941,11 @@ public class MicroActivity extends AppCompatActivity {
 			return true;
 		}
 		return super.dispatchKeyEvent(event);
+	}
+
+	/** Routes physical keys from a Compose dialog window through the same controller owner. */
+	public boolean dispatchControllerKeyEventFromDialog(@NonNull KeyEvent event) {
+		return controllerInputRouter != null && controllerInputRouter.onKeyEvent(event);
 	}
 
 	@Override

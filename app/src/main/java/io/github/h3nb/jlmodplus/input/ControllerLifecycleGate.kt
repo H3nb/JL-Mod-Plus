@@ -104,8 +104,15 @@ class ControllerLifecycleGate {
 
             ControllerLifecycleState.ACTIVE -> {
                 if (activeDeviceId != null && activeDeviceId != deviceId) {
-                    beginWaiting(deviceId)
-                    return ControllerLifecycleDecision.CONSUMED
+                    if (!neutral) {
+                        // A noisy foreign controller cannot disturb the active owner.
+                        return ControllerLifecycleDecision.CONSUMED
+                    }
+                    // Neutral is the proof required for a direct, safe takeover.
+                    activeDeviceId = deviceId
+                    waitingDeviceId = null
+                    generation = nextGeneration(generation)
+                    return ControllerLifecycleDecision.ACTIVATED
                 }
                 activeDeviceId = deviceId
                 return ControllerLifecycleDecision.ACTIVE

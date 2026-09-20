@@ -928,13 +928,8 @@ class ControllerInputRouter(
         return dx * dx + dy * dy <= radius * radius
     }
 
-    private fun ensureActiveDevice(deviceId: Int): Boolean {
-        if (activeDeviceId != null && activeDeviceId != deviceId) {
-            beginBoundary(waitForNeutral = true, nextDeviceId = deviceId)
-            return false
-        }
-        return lifecycleState == LifecycleState.ACTIVE
-    }
+    private fun ensureActiveDevice(deviceId: Int): Boolean =
+        lifecycleState == LifecycleState.ACTIVE && activeDeviceId == deviceId
 
     private fun ensureTarget(): Boolean {
         val canvas = host.currentCanvas()
@@ -970,15 +965,6 @@ class ControllerInputRouter(
         lifecycleGate.beginBoundary(waitForNeutral, nextDeviceId)
         syncLifecycleFields()
         lastTarget = null
-        if (waitForNeutral && nextDeviceId != null) {
-            activeDeviceId = nextDeviceId
-            waitingDeviceId = nextDeviceId
-            lifecycleState = LifecycleState.WAIT_NEUTRAL
-        } else {
-            activeDeviceId = null
-            waitingDeviceId = null
-            lifecycleState = LifecycleState.INACTIVE
-        }
     }
 
     private fun applyLifecycleDecision(decision: ControllerLifecycleDecision) {
@@ -986,12 +972,12 @@ class ControllerInputRouter(
         val previousDeviceId = activeDeviceId
         syncLifecycleFields()
         if (previousState == LifecycleState.ACTIVE &&
-            lifecycleState == LifecycleState.WAIT_NEUTRAL &&
-            previousDeviceId != null && previousDeviceId != activeDeviceId
+            lifecycleState == LifecycleState.ACTIVE &&
+            previousDeviceId != null && activeDeviceId != null &&
+            previousDeviceId != activeDeviceId
         ) {
-            // The gate consumes the first sample from a new device. Before doing so, close every
-            // output owned by the old device; its UP events are intentionally ignored while the
-            // new device proves neutral.
+            // The gate has observed a neutral sample from the new device. Close every output
+            // owned by the previous active device exactly once before starting the new session.
             detachPointerConsumer()
             releaseAll()
             lastTarget = null

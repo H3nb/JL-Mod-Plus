@@ -73,8 +73,52 @@ class ControllerLifecycleGateTest {
         assertEquals(ControllerLifecycleDecision.ACTIVATED, gate.offerMotion(1, true))
 
         assertEquals(ControllerLifecycleDecision.CONSUMED, gate.offerMotion(2, false))
-        assertEquals(ControllerLifecycleState.WAIT_NEUTRAL, gate.snapshot().state)
+        assertEquals(ControllerLifecycleState.ACTIVE, gate.snapshot().state)
+        assertEquals(1, gate.snapshot().activeDeviceId)
+
         assertEquals(ControllerLifecycleDecision.ACTIVATED, gate.offerMotion(2, true))
+        assertEquals(ControllerLifecycleState.ACTIVE, gate.snapshot().state)
         assertEquals(2, gate.snapshot().activeDeviceId)
     }
+    @Test
+    fun foreignDeflectionDoesNotChangeActiveOwnerOrGeneration() {
+        val gate = ControllerLifecycleGate()
+        gate.offerMotion(1, neutral = true)
+        val before = gate.snapshot()
+
+        assertEquals(ControllerLifecycleDecision.CONSUMED, gate.offerMotion(2, neutral = false))
+
+        assertEquals(before, gate.snapshot())
+    }
+
+    @Test
+    fun neutralForeignDeviceTakesOverDirectlyAndOnlyOnce() {
+        val gate = ControllerLifecycleGate()
+        gate.offerMotion(1, neutral = true)
+        val generationA = gate.snapshot().generation
+
+        assertEquals(ControllerLifecycleDecision.ACTIVATED, gate.offerMotion(2, neutral = true))
+        val takeover = gate.snapshot()
+        assertEquals(ControllerLifecycleState.ACTIVE, takeover.state)
+        assertEquals(2, takeover.activeDeviceId)
+        assertEquals(null, takeover.waitingDeviceId)
+        assertTrue(takeover.generation > generationA)
+
+        assertEquals(ControllerLifecycleDecision.ACTIVE, gate.offerMotion(2, neutral = false))
+        assertEquals(takeover, gate.snapshot())
+    }
+
+    @Test
+    fun removingActiveDeviceDoesNotStarveNextController() {
+        val gate = ControllerLifecycleGate()
+        gate.offerMotion(1, neutral = true)
+        gate.onDeviceRemoved(1)
+        assertEquals(ControllerLifecycleState.INACTIVE, gate.snapshot().state)
+
+        assertEquals(ControllerLifecycleDecision.CONSUMED, gate.offerMotion(2, neutral = false))
+        assertEquals(ControllerLifecycleState.WAIT_NEUTRAL, gate.snapshot().state)
+        assertEquals(ControllerLifecycleDecision.ACTIVATED, gate.offerMotion(2, neutral = true))
+        assertEquals(2, gate.snapshot().activeDeviceId)
+    }
+
 }

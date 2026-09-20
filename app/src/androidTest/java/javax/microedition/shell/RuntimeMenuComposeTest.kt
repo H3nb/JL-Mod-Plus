@@ -38,6 +38,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.input.HostCommand
+import io.github.h3nb.jlmodplus.ui.ControllerDialogInputScope
+import io.github.h3nb.jlmodplus.ui.ControllerHostCommandHandler
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 @OptIn(ExperimentalTestApi::class)
@@ -364,6 +367,63 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("OK").performClick()
 
         assertEquals(true, confirmedAuto)
+    }
+
+    @Test
+    fun controllerNavigatesMidletDialogAndActivatesFocusedEntry() {
+        val events = mutableListOf<String>()
+        var handler: ControllerHostCommandHandler? = null
+        composeRule.setContent {
+            JLModPlusTheme {
+                ControllerDialogInputScope(
+                    onControllerKeyEvent = { false },
+                    onControllerHostCommandHandlerChanged = { handler = it },
+                ) {
+                    RuntimeHostDialogs(
+                        state = RuntimeHostDialogState.MidletSelection(listOf("First", "Second")),
+                        actions = RecordingRuntimeHostDialogActions(events),
+                        onDismiss = { events += "dismiss" },
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle {
+            val current = checkNotNull(handler)
+            current(HostCommand.NavigateDown, true)
+            current(HostCommand.Activate, true)
+            current(HostCommand.Activate, false)
+        }
+
+        assertEquals(listOf("dismiss", "midlet:1"), events)
+    }
+
+    @Test
+    fun controllerBackUsesMidletDialogCancelSemantics() {
+        val events = mutableListOf<String>()
+        var handler: ControllerHostCommandHandler? = null
+        composeRule.setContent {
+            JLModPlusTheme {
+                ControllerDialogInputScope(
+                    onControllerKeyEvent = { false },
+                    onControllerHostCommandHandlerChanged = { handler = it },
+                ) {
+                    RuntimeHostDialogs(
+                        state = RuntimeHostDialogState.MidletSelection(listOf("First", "Second")),
+                        actions = RecordingRuntimeHostDialogActions(events),
+                        onDismiss = { events += "dismiss" },
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle {
+            checkNotNull(handler)(HostCommand.Back, true)
+        }
+
+        assertEquals(listOf("dismiss", "midlet-cancel"), events)
     }
 
     @Test

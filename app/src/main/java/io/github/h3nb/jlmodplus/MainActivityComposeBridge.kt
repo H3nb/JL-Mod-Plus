@@ -40,7 +40,10 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
+import io.github.h3nb.jlmodplus.ui.ControllerDialogInputScope
+import io.github.h3nb.jlmodplus.ui.ControllerHostCommandHandler
 import io.github.h3nb.jlmodplus.input.HostCommand
+import android.view.KeyEvent
 
 /** Actions stay in MainActivity so permission, picker, recovery, and Fragment contracts remain host-owned. */
 internal interface MainHostActions {
@@ -54,7 +57,7 @@ internal interface MainHostActions {
     fun onExit()
 }
 
-private sealed interface MainHostDialog {
+internal sealed interface MainHostDialog {
     data class MidletFailure(val message: String) : MainHostDialog
     data class ProcessExit(val message: String) : MainHostDialog
     data class DirectoryFailure(val message: String) : MainHostDialog
@@ -62,7 +65,7 @@ private sealed interface MainHostDialog {
     data object PermissionFailure : MainHostDialog
 }
 
-private data class MainHostUiState(
+internal data class MainHostUiState(
     val dialog: MainHostDialog? = null,
 )
 
@@ -70,8 +73,10 @@ private data class MainHostUiState(
 internal class MainActivityComposeController(
     composeView: ComposeView,
     private val actions: MainHostActions,
+    private val dialogKeyDispatcher: (KeyEvent) -> Boolean,
 ) {
     private var state by mutableStateOf(MainHostUiState())
+    private var dialogHostCommandHandler: ControllerHostCommandHandler? = null
 
     init {
         composeView.id = R.id.main_host_compose_root
@@ -80,7 +85,12 @@ internal class MainActivityComposeController(
         )
         composeView.setContent {
             JLModPlusTheme {
-                MainHostDialogs(state = state, actions = actions)
+                ControllerDialogInputScope(
+                    onControllerKeyEvent = dialogKeyDispatcher,
+                    onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
+                ) {
+                    MainHostDialogs(state = state, actions = actions)
+                }
             }
         }
     }
@@ -88,36 +98,40 @@ internal class MainActivityComposeController(
     fun isDialogVisible(): Boolean = state.dialog != null
 
     fun dismiss() {
+        dialogHostCommandHandler = null
         state = MainHostUiState()
     }
 
     fun showMidletFailure(message: String) {
+        dialogHostCommandHandler = null
         state = MainHostUiState(MainHostDialog.MidletFailure(message))
     }
 
     fun showProcessExit(message: String) {
+        dialogHostCommandHandler = null
         state = MainHostUiState(MainHostDialog.ProcessExit(message))
     }
 
     fun showDirectoryFailure(message: String) {
+        dialogHostCommandHandler = null
         state = MainHostUiState(MainHostDialog.DirectoryFailure(message))
     }
 
     fun showDirectoryMissing(message: String) {
+        dialogHostCommandHandler = null
         state = MainHostUiState(MainHostDialog.DirectoryMissing(message))
     }
 
     fun showPermissionFailure() {
+        dialogHostCommandHandler = null
         state = MainHostUiState(MainHostDialog.PermissionFailure)
     }
 
     fun handleHostCommand(command: HostCommand, pressed: Boolean): Boolean {
         if (state.dialog == null) return false
-        if (pressed && (command == HostCommand.Activate || command == HostCommand.Back ||
-                command == HostCommand.OpenMenu || command == HostCommand.OpenKeypad)) {
-            dismiss()
-        }
-        return true
+        // The focused Compose control owns the selected action; do not reduce multi-action
+        // dialogs to a generic dismiss.
+        return dialogHostCommandHandler?.invoke(command, pressed) ?: true
     }
 
 }
@@ -171,7 +185,7 @@ private fun MainHostWarningIcon() {
 }
 
 @Composable
-private fun MainHostDialogs(
+internal fun MainHostDialogs(
     state: MainHostUiState,
     actions: MainHostActions,
 ) {
