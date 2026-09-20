@@ -55,6 +55,19 @@ class ControllerLifecycleGateTest {
     }
 
     @Test
+    fun neutralSecondDeviceCanReplaceNoisyWaitingDevice() {
+        val gate = ControllerLifecycleGate()
+
+        assertEquals(ControllerLifecycleDecision.CONSUMED, gate.offerMotion(1, false))
+        assertEquals(1, gate.snapshot().waitingDeviceId)
+
+        assertEquals(ControllerLifecycleDecision.ACTIVATED, gate.offerMotion(2, true))
+        assertEquals(ControllerLifecycleState.ACTIVE, gate.snapshot().state)
+        assertEquals(2, gate.snapshot().activeDeviceId)
+        assertEquals(null, gate.snapshot().waitingDeviceId)
+    }
+
+    @Test
     fun differentDeviceCannotTakeOverUntilItsOwnNeutralSample() {
         val gate = ControllerLifecycleGate()
         assertEquals(ControllerLifecycleDecision.ACTIVATED, gate.offerMotion(1, true))
