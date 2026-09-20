@@ -48,6 +48,29 @@ public class MemoryDiscoveryBridgeTest {
 	}
 
 	@Test
+	public void guestDisplayableRootIgnoresParentOwnedReplacement() {
+		long token = 252L;
+		ClassLoader loader = getClass().getClassLoader();
+		Fixture midlet = new Fixture();
+		Fixture displayable = new Fixture();
+
+		MemoryDiscoveryBridge.install(token, loader);
+		try {
+			MemoryDiscoveryBridge.setMidletRoot(token, midlet);
+			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
+			MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshot(token);
+			assertTrue(snapshot.isAvailable());
+			assertSame(midlet, snapshot.root());
+			assertSame(displayable, snapshot.displayableRoot());
+
+			MemoryDiscoveryBridge.setCurrentDisplayable(new Object());
+			assertSame(displayable, MemoryDiscoveryBridge.snapshot(token).displayableRoot());
+		} finally {
+			MemoryDiscoveryBridge.close(token);
+		}
+	}
+
+	@Test
 	public void rootFromAnotherLoaderDisablesManagedDiscovery() {
 		long token = 303L;
 		MemoryDiscoveryBridge.install(token, getClass().getClassLoader());

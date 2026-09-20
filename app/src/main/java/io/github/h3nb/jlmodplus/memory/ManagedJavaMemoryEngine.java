@@ -119,6 +119,12 @@ final class ManagedJavaMemoryEngine {
 		return (int) Math.min((long) max, doubled);
 	}
 
+	private static void enqueueSnapshotRoots(ScanContext scan,
+	                                         MemoryDiscoveryBridge.Snapshot snapshot) {
+		scan.enqueue(snapshot.root());
+		scan.enqueue(snapshot.displayableRoot());
+	}
+
 	ManagedCapabilities capabilities(long token) {
 		MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshot(token);
 		long revision;
@@ -194,7 +200,7 @@ final class ManagedJavaMemoryEngine {
 		ScanContext scan = new ScanContext(token, operationEpoch, snapshot, plan,
 				retainedRevisionBytes);
 		try {
-			scan.enqueue(snapshot.root());
+			enqueueSnapshotRoots(scan, snapshot);
 			Class<?>[] classes = snapshot.classes();
 			if (classes.length > limits.maxClasses) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
@@ -265,7 +271,7 @@ final class ManagedJavaMemoryEngine {
 		ScanContext scan = new ScanContext(token, operationEpoch, snapshot, plan,
 				retainedRevisionBytes);
 		try {
-			scan.enqueue(snapshot.root());
+			enqueueSnapshotRoots(scan, snapshot);
 			Class<?>[] classes = snapshot.classes();
 			if (classes.length > limits.maxClasses) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
@@ -325,7 +331,7 @@ final class ManagedJavaMemoryEngine {
 		ScanContext scan = new ScanContext(token, operationEpoch, snapshot,
 				QueryPlan.unknown(type), retainedRevisionBytes, true);
 		try {
-			scan.enqueue(snapshot.root());
+			enqueueSnapshotRoots(scan, snapshot);
 			Class<?>[] classes = snapshot.classes();
 			if (classes.length > limits.maxClasses) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,
@@ -387,7 +393,7 @@ final class ManagedJavaMemoryEngine {
 		ScanContext scan = new ScanContext(token, operationEpoch, snapshot, plan,
 				retainedRevisionBytes);
 		try {
-			scan.enqueue(snapshot.root());
+			enqueueSnapshotRoots(scan, snapshot);
 			Class<?>[] classes = snapshot.classes();
 			if (classes.length > limits.maxClasses) {
 				return failure(token, MemoryEngineContract.RESULT_RESOURCE_LIMIT,

@@ -70,6 +70,35 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void exactScanFindsGuestStateOutsideTheMidletGraph() {
+		DetachedDisplayRoot displayRoot = new DetachedDisplayRoot();
+		MemoryDiscoveryBridge.setCurrentDisplayable(displayRoot);
+
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				424_242L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, result.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		assertEquals(1L, result.resultCount);
+		assertTrue(hasAddress(page, "escapedMatch"));
+	}
+
+	@Test
+	public void auxiliaryDisplayRootDoesNotDuplicateReachableObjects() {
+		root.child.childMatch = 707_070;
+		MemoryDiscoveryBridge.setCurrentDisplayable(root.child);
+
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				707_070L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, result.code);
+		assertEquals(1L, result.resultCount);
+		assertTrue(hasAddress(engine.resultPage(TOKEN, result.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE), "childMatch"));
+	}
+
+	@Test
 	public void autoKnownSearchUsesOneLogicalTraversalAcrossAllPrimitiveTypes() {
 		root.longMatch = 7L;
 		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN,
@@ -980,6 +1009,10 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	private static final class CustomVector extends Vector<FixtureChild> {
+	}
+
+	private static final class DetachedDisplayRoot {
+		private int escapedMatch = 424_242;
 	}
 
 	private static final class CapacityRoot {
