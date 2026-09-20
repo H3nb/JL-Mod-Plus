@@ -186,6 +186,9 @@ public class KeyMapper {
 			for (int i = 0, size = customKeyMap.size(); i < size; i++) {
 				int key = customKeyMap.keyAt(i);
 				int value = customKeyMap.valueAt(i);
+				// Android Back remains a host-reserved runtime control even when an older
+				// profile contains a tombstone or guest remap for it.
+				if (key == KeyEvent.KEYCODE_BACK) continue;
 				if (value == KeyMapperMappingRules.UNMAPPED_TOMBSTONE) map.delete(key);
 				else map.put(key, value);
 			}
