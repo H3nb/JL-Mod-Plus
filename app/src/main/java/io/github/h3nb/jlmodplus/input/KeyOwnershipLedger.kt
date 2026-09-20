@@ -305,6 +305,25 @@ class KeyOwnershipLedger(
         dispatchPending()
     }
 
+    /** Releases every source captured from exactly [deviceId] without disturbing other devices. */
+    fun releaseDevice(deviceId: String) {
+        synchronized(stateLock) {
+            val sources = bindings.keys
+                .asSequence()
+                .filter { it.deviceId == deviceId }
+                .sorted()
+                .toList()
+            val affected = LinkedHashSet<TargetedOutputKey>()
+            for (source in sources) {
+                val binding = bindings.remove(source) ?: continue
+                removeBinding(source, binding, affected)
+            }
+            reconcileRepeats(affected)
+            reconcileDelivered(affected)
+        }
+        dispatchPending()
+    }
+
     /** Releases every source and every delivered output, preserving target isolation. */
     fun clear() {
         synchronized(stateLock) {
