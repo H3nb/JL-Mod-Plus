@@ -108,6 +108,13 @@ class GuestKeyLedgerAdapter @JvmOverloads constructor(
     fun isActive(deviceId: String, sessionId: Long, kind: String, channel: String): Boolean =
         ledger.isActive(SourceToken(deviceId, sessionId, kind, channel))
 
+    /** Releases every captured physical key from one Android input device. */
+    fun releaseDevice(deviceId: String) {
+        val legacySources = legacyKeypadRepeats.keys.filter { it.deviceId == deviceId }
+        legacySources.forEach(::stopLegacyKeypadRepeat)
+        ledger.releaseDevice(deviceId)
+    }
+
     /** Ends the current visibility generation and releases all outputs before the next one. */
     fun endVisibility() {
         cancelLegacyKeypadRepeats()
