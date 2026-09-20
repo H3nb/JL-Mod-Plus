@@ -135,8 +135,7 @@ public class MicroActivity extends AppCompatActivity {
 	private int virtualDisplayPaddingBottom;
 	private View overlayAnchor;
 	private SharedPreferences defaultPreferences;
-	private VirtualKeyboardLayoutSnapshot virtualKeyboardEditBaseline;
-	private boolean virtualKeyboardEditFinishPending;
+	private VirtualKeyboardEditTransaction virtualKeyboardEditTransaction;
 	private EditorDonePlacement.Box layoutEditDonePlacement;
 	private EditorDonePlacement.Box layoutEditDoneEditorBounds;
 	private final Runnable virtualKeyboardEditorChromeUpdate =
@@ -1140,12 +1139,12 @@ public class MicroActivity extends AppCompatActivity {
 	private void startVirtualKeyboardLayoutEdit() {
 		VirtualKeyboard vk = ContextHolder.getVk();
 		if (vk == null) return;
-		if (virtualKeyboardEditBaseline == null) {
-			virtualKeyboardEditBaseline = vk.captureLayoutSnapshot();
+		if (virtualKeyboardEditTransaction == null) {
+			virtualKeyboardEditTransaction =
+					new VirtualKeyboardEditTransaction(vk.captureLayoutSnapshot());
 			layoutEditDonePlacement = null;
 			layoutEditDoneEditorBounds = null;
 		}
-		virtualKeyboardEditFinishPending = false;
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
 		updateRuntimeMenuState(current);
 		scheduleVirtualKeyboardEditorChromeUpdate();
@@ -1153,23 +1152,27 @@ public class MicroActivity extends AppCompatActivity {
 
 	private boolean isVirtualKeyboardLayoutEditing() {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		return virtualKeyboardEditBaseline != null &&
+		return virtualKeyboardEditTransaction != null &&
+				virtualKeyboardEditTransaction.isActive() &&
 				vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF;
 	}
 
 	private void requestFinishVirtualKeyboardEdit() {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		VirtualKeyboardLayoutSnapshot baseline = virtualKeyboardEditBaseline;
-		if (vk == null || baseline == null ||
+		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
+		if (vk == null || transaction == null || !transaction.isActive() ||
 				vk.getLayoutEditMode() == VirtualKeyboard.LAYOUT_EOF) {
 			return;
 		}
-		if (baseline.equals(vk.captureLayoutSnapshot())) {
+		if (transaction.requestFinish(vk.captureLayoutSnapshot()) ==
+				VirtualKeyboardEditTransaction.FinishRequest.CLEAN) {
 			finishCleanVirtualKeyboardEdit(vk);
 			return;
 		}
-		if (runtimeMenuController == null) return;
-		virtualKeyboardEditFinishPending = true;
+		if (runtimeMenuController == null) {
+			transaction.continueEditing();
+			return;
+		}
 		hideVirtualKeyboardEditorDone();
 		runtimeMenuController.showFinishVirtualKeyboardEdit(vk.isPhone(), false);
 	}
@@ -1183,7 +1186,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void saveVirtualKeyboardEdit(boolean saveScreenParams) {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk == null || virtualKeyboardEditBaseline == null) return;
+		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
+		if (vk == null || transaction == null || !transaction.isActive()) return;
+		transaction.save();
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
 		applyVirtualKeyboardSave(saveScreenParams);
 		clearVirtualKeyboardEditTransaction();
@@ -1193,8 +1198,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void discardVirtualKeyboardEdit() {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		VirtualKeyboardLayoutSnapshot baseline = virtualKeyboardEditBaseline;
-		if (vk == null || baseline == null) return;
+		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
+		if (vk == null || transaction == null || !transaction.isActive()) return;
+		VirtualKeyboardLayoutSnapshot baseline = transaction.discard();
 		vk.restoreLayoutSnapshot(baseline);
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
 		clearVirtualKeyboardEditTransaction();
@@ -1203,15 +1209,15 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void continueVirtualKeyboardEdit() {
-		if (!isVirtualKeyboardLayoutEditing()) return;
-		virtualKeyboardEditFinishPending = false;
+		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
+		if (transaction == null || !transaction.isActive()) return;
+		transaction.continueEditing();
 		updateRuntimeMenuState(current);
 		scheduleVirtualKeyboardEditorChromeUpdate();
 	}
 
 	private void clearVirtualKeyboardEditTransaction() {
-		virtualKeyboardEditBaseline = null;
-		virtualKeyboardEditFinishPending = false;
+		virtualKeyboardEditTransaction = null;
 		layoutEditDonePlacement = null;
 		layoutEditDoneEditorBounds = null;
 		hideVirtualKeyboardEditorDone();
@@ -1225,7 +1231,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void refreshVirtualKeyboardEditorChrome() {
 		if (binding == null || !isVirtualKeyboardLayoutEditing() ||
-				virtualKeyboardEditFinishPending || isRuntimeMenuVisible() ||
+				(virtualKeyboardEditTransaction != null &&
+						virtualKeyboardEditTransaction.isFinishPending()) ||
+				isRuntimeMenuVisible() ||
 				!(current instanceof Canvas)) {
 			hideVirtualKeyboardEditorDone();
 			return;

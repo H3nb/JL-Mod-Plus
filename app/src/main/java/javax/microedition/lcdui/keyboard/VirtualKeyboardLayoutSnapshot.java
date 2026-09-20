@@ -70,7 +70,7 @@ public final class VirtualKeyboardLayoutSnapshot {
 		this.standardTemplateEdited = standardTemplateEdited;
 	}
 
-	static VirtualKeyboardLayoutSnapshot legacy(
+	public static VirtualKeyboardLayoutSnapshot legacy(
 			int layoutVariant,
 			boolean[] visible,
 			int[] snapOrigins,
@@ -95,7 +95,7 @@ public final class VirtualKeyboardLayoutSnapshot {
 				false);
 	}
 
-	VirtualKeyboardLayoutSnapshot withGroupedControls(
+	public VirtualKeyboardLayoutSnapshot withGroupedControls(
 			boolean dpadEnabled,
 			boolean analogEnabled,
 			float dpadCenterX,
