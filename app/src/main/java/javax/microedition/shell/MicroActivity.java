@@ -746,6 +746,19 @@ public class MicroActivity extends AppCompatActivity {
 		});
 	}
 
+	private void applyVirtualKeyboardOrientationPolicy(@Nullable VirtualKeyboard vk) {
+		switch (VirtualKeyboardOrientationPolicy.resolve(
+				orientationLocked, vk != null && vk.isPhone())) {
+			case KEEP_CURRENT -> {
+				// Runtime Orientation Lock owns requestedOrientation until explicitly disabled.
+			}
+			case PHONE_PORTRAIT -> setOrientation(ORIENTATION_PORTRAIT);
+			case MIDLET_POLICY -> {
+				if (microLoader != null) setOrientation(microLoader.getOrientation());
+			}
+		}
+	}
+
 	private void loadMIDlet() {
 		Map<String, String> midlets;
 		try {
@@ -1124,11 +1137,8 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void toggleOrientationLock() {
 		if (orientationLocked) {
-			VirtualKeyboard vk = ContextHolder.getVk();
-			int orientation = vk != null && vk.isPhone()
-					? ORIENTATION_PORTRAIT : microLoader.getOrientation();
-			setOrientation(orientation);
 			orientationLocked = false;
+			applyVirtualKeyboardOrientationPolicy(ContextHolder.getVk());
 		} else {
 			setRequestedOrientation(SCREEN_ORIENTATION_LOCKED);
 			orientationLocked = true;
@@ -1202,6 +1212,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (vk == null || transaction == null || !transaction.isActive()) return;
 		VirtualKeyboardLayoutSnapshot baseline = transaction.discard();
 		vk.restoreLayoutSnapshot(baseline);
+		applyVirtualKeyboardOrientationPolicy(vk);
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
 		clearVirtualKeyboardEditTransaction();
 		toast(R.string.layout_edit_finished);
@@ -1423,11 +1434,7 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		if (isVirtualKeyboardLayoutEditing()) vk.setLayoutForEditing(index);
 		else vk.setLayout(index);
-		if (vk.isPhone()) {
-			setOrientation(ORIENTATION_PORTRAIT);
-		} else if (microLoader != null) {
-			setOrientation(microLoader.getOrientation());
-		}
+		applyVirtualKeyboardOrientationPolicy(vk);
 	}
 
 	@Override
