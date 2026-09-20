@@ -27,6 +27,7 @@ import javax.microedition.lcdui.event.Event;
 import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.event.RunnableEvent;
 import javax.microedition.midlet.MIDlet;
+import javax.microedition.shell.MemoryDiscoveryBridge;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
@@ -120,6 +121,7 @@ public class Display {
 			}
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			this.current = displayable;
+			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 			if (displayable instanceof Alert nextAlert) {
 				alert = nextAlert;
 				alert.setNextDisplayable(previous);
@@ -155,12 +157,14 @@ public class Display {
 			}
 			if (current == alert) {
 				alert.setNextDisplayable(displayable);
+				MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 				return;
 			}
 			previous = current;
 			alert.setNextDisplayable(displayable);
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			current = alert;
+			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 		}
 		if (previous instanceof Canvas canvas) {
 			canvas.setInvisible();
