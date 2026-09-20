@@ -927,7 +927,7 @@ private fun RuntimeToggleItem(
         headlineContent = {
             Text(
                 text = stringResource(label),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
         },
@@ -971,7 +971,7 @@ private fun RuntimeMenuItem(
         headlineContent = {
             Text(
                 text = stringResource(label),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
         },
