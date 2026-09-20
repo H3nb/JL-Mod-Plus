@@ -122,6 +122,17 @@ public class KeyMapperMappingRulesTest {
 	}
 
 	@Test
+	public void runtimeBackBindingCannotBeOverriddenByProfile() {
+		ProfileModel profile = new ProfileModel();
+		profile.keyMappings = new SparseIntArray();
+		profile.keyMappings.put(KeyEvent.KEYCODE_BACK, Canvas.KEY_FIRE);
+
+		KeyMapper.setKeyMapping(profile);
+
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BACK));
+	}
+
+	@Test
 	public void removedDefaultBindingRoundTripsAsTombstone() {
 		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
 		SparseIntArray effective = defaults.clone();
@@ -167,6 +178,8 @@ public class KeyMapperMappingRulesTest {
 				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A));
 		assertFalse(KeyMapperDispatchRules.isAssignableKey(
 				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_HOME));
+		assertFalse(KeyMapperDispatchRules.isAssignableKey(
+				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK));
 		assertFalse(KeyMapperDispatchRules.isAssignableKey(
 				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_VOLUME_UP));
 		assertFalse(KeyMapperDispatchRules.isAssignableKey(
