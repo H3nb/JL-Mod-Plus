@@ -181,7 +181,9 @@ public class MainActivity extends AppCompatActivity {
 				finish();
 			}
 
-		}, this::dispatchControllerKeyEventFromDialog);
+		}, this::dispatchControllerKeyEventFromDialog,
+				this::dispatchControllerGenericMotionEventFromDialog,
+				this::beginControllerHostTargetChange);
 		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
 			@Override
 			public Canvas currentCanvas() {
@@ -195,7 +197,9 @@ public class MainActivity extends AppCompatActivity {
 
 			@Override
 			public ControllerHostTarget currentControllerTarget() {
-				return new ControllerHostTarget("main-activity", controllerTargetGeneration);
+				String surface = mainComposeController != null && mainComposeController.isDialogVisible()
+						? "main-dialog" : "main-activity";
+				return new ControllerHostTarget(surface, controllerTargetGeneration);
 			}
 
 			@Override
@@ -256,9 +260,20 @@ public class MainActivity extends AppCompatActivity {
 		return super.dispatchKeyEvent(event);
 	}
 
-	/** Routes controller keys from a Compose dialog window through the same input owner. */
+	/** Routes only controller-owned keys from a Compose dialog window. */
 	public boolean dispatchControllerKeyEventFromDialog(@NonNull KeyEvent event) {
-		return controllerInputRouter != null && controllerInputRouter.onKeyEvent(event);
+		return controllerInputRouter != null && controllerInputRouter.onDialogKeyEvent(event);
+	}
+
+	/** Routes controller axis/HAT input from a dialog window without stealing other motion. */
+	public boolean dispatchControllerGenericMotionEventFromDialog(@NonNull MotionEvent event) {
+		return controllerInputRouter != null && controllerInputRouter.onDialogGenericMotionEvent(event);
+	}
+
+	private void beginControllerHostTargetChange() {
+		if (controllerInputRouter != null) controllerInputRouter.onHostTargetChanging();
+		controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
+				? 1L : controllerTargetGeneration + 1L;
 	}
 
 	@Override

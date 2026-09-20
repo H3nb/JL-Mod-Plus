@@ -64,6 +64,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import io.github.h3nb.jlmodplus.input.HostCommand
 import android.view.KeyEvent as AndroidKeyEvent
+import android.view.MotionEvent as AndroidMotionEvent
+import android.view.View
 
 private val DialogMaximumWidth = 720.dp
 private val DialogHorizontalMargin = 24.dp
@@ -73,17 +75,21 @@ internal typealias ControllerHostCommandHandler = (HostCommand, Boolean) -> Bool
 
 private val LocalControllerDialogKeyEvent =
     compositionLocalOf<((android.view.KeyEvent) -> Boolean)?> { null }
+private val LocalControllerDialogMotionEvent =
+    compositionLocalOf<((AndroidMotionEvent) -> Boolean)?> { null }
 private val LocalControllerHostCommandHandlerChanged =
     compositionLocalOf<((ControllerHostCommandHandler?) -> Unit)?> { null }
 
 @Composable
 internal fun ControllerDialogInputScope(
     onControllerKeyEvent: (android.view.KeyEvent) -> Boolean,
+    onControllerMotionEvent: (AndroidMotionEvent) -> Boolean = { false },
     onControllerHostCommandHandlerChanged: (ControllerHostCommandHandler?) -> Unit,
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
         LocalControllerDialogKeyEvent provides onControllerKeyEvent,
+        LocalControllerDialogMotionEvent provides onControllerMotionEvent,
         LocalControllerHostCommandHandlerChanged provides onControllerHostCommandHandlerChanged,
         content = content,
     )
@@ -159,6 +165,7 @@ internal fun AdaptiveAlertDialog(
     maxWidth: Dp = DialogMaximumWidth,
 ) {
     val effectiveControllerKeyEvent = onControllerKeyEvent ?: LocalControllerDialogKeyEvent.current
+    val effectiveControllerMotionEvent = LocalControllerDialogMotionEvent.current
     val effectiveHostCommandHandlerChanged =
         onControllerHostCommandHandlerChanged ?: LocalControllerHostCommandHandlerChanged.current
     val layout = adaptiveDialogLayout(
@@ -238,6 +245,20 @@ internal fun AdaptiveAlertDialog(
             } else {
                 null
             }
+        DisposableEffect(dialogView, effectiveControllerMotionEvent) {
+            if (effectiveControllerMotionEvent != null) {
+                dialogView.setOnGenericMotionListener(
+                    View.OnGenericMotionListener { _, event ->
+                        effectiveControllerMotionEvent(event)
+                    },
+                )
+            }
+            onDispose {
+                if (effectiveControllerMotionEvent != null) {
+                    dialogView.setOnGenericMotionListener(null)
+                }
+            }
+        }
         DisposableEffect(effectiveHostCommandHandlerChanged, controllerHostCommandHandler) {
             effectiveHostCommandHandlerChanged?.invoke(controllerHostCommandHandler)
             onDispose {

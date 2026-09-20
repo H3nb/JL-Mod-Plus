@@ -71,6 +71,7 @@ import io.github.h3nb.jlmodplus.ui.ControllerDialogInputScope
 import io.github.h3nb.jlmodplus.ui.ControllerHostCommandHandler
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import android.view.KeyEvent
+import android.view.MotionEvent
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.clearNavigationFocusOnTouch
@@ -124,6 +125,8 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private val actions: RuntimeMenuActions,
     private val hostDialogActions: RuntimeHostDialogActions? = null,
     private val dialogKeyDispatcher: (KeyEvent) -> Boolean = { false },
+    private val dialogMotionDispatcher: (MotionEvent) -> Boolean = { false },
+    private val onControllerTargetChanging: Runnable = Runnable {},
 ) {
     private var state by mutableStateOf(RuntimeMenuUiState())
     private var menuVisible by mutableStateOf(false)
@@ -134,18 +137,29 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private var controllerFocusIndex by mutableIntStateOf(0)
     private var controllerFocusVisible by mutableStateOf(false)
     private var dialogHostCommandHandler: ControllerHostCommandHandler? = null
+    private fun changeControllerSurface(change: () -> Unit) {
+        // Release the outgoing host domain before mutating state; this can be re-entrant from DOWN.
+        onControllerTargetChanging.run()
+        dialogHostCommandHandler = null
+        change()
+    }
+
     private val menuActions = object : RuntimeMenuActions by actions {
         override fun onLimitFps() {
-            closeMenu()
-            dialogHostCommandHandler = null
-            limitFpsVisible = true
+            changeControllerSurface {
+                menuVisible = false
+                virtualKeyboardPage = false
+                limitFpsVisible = true
+            }
         }
 
         override fun onEmulationSpeed() {
-            closeMenu()
             actions.onEmulationSpeed()
-            dialogHostCommandHandler = null
-            emulationSpeedVisible = true
+            changeControllerSurface {
+                menuVisible = false
+                virtualKeyboardPage = false
+                emulationSpeedVisible = true
+            }
         }
     }
 
@@ -175,16 +189,17 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                 if (limitFpsVisible) {
                     ControllerDialogInputScope(
                         onControllerKeyEvent = dialogKeyDispatcher,
+                        onControllerMotionEvent = dialogMotionDispatcher,
                         onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
                     ) {
                         RuntimeLimitFpsDialog(
-                            onDismiss = { limitFpsVisible = false },
+                            onDismiss = { changeControllerSurface { limitFpsVisible = false } },
                             onConfirm = { value ->
-                                limitFpsVisible = false
+                                changeControllerSurface { limitFpsVisible = false }
                                 actions.onSetFpsLimit(value)
                             },
                             onReset = {
-                                limitFpsVisible = false
+                                changeControllerSurface { limitFpsVisible = false }
                                 actions.onResetFpsLimit()
                             },
                         )
@@ -193,19 +208,20 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                 if (emulationSpeedVisible) {
                     ControllerDialogInputScope(
                         onControllerKeyEvent = dialogKeyDispatcher,
+                        onControllerMotionEvent = dialogMotionDispatcher,
                         onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
                     ) {
                         RuntimeEmulationSpeedDialog(
                             currentPercent = state.emulationSpeedPercent,
                             currentAutoEnabled = state.emulationSpeedAuto,
-                            onDismiss = { emulationSpeedVisible = false },
+                            onDismiss = { changeControllerSurface { emulationSpeedVisible = false } },
                             onConfirm = { value, autoEnabled ->
-                                emulationSpeedVisible = false
+                                changeControllerSurface { emulationSpeedVisible = false }
                                 if (autoEnabled) actions.onSetAutoEmulationSpeed()
                                 else actions.onSetEmulationSpeed(value)
                             },
                             onReset = {
-                                emulationSpeedVisible = false
+                                changeControllerSurface { emulationSpeedVisible = false }
                                 actions.onResetEmulationSpeed()
                             },
                         )
@@ -214,12 +230,13 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                 if (hostDialogActions != null) {
                     ControllerDialogInputScope(
                         onControllerKeyEvent = dialogKeyDispatcher,
+                        onControllerMotionEvent = dialogMotionDispatcher,
                         onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
                     ) {
                         RuntimeHostDialogs(
                             state = hostDialogState,
                             actions = hostDialogActions,
-                            onDismiss = { hostDialogState = null },
+                            onDismiss = { changeControllerSurface { hostDialogState = null } },
                         )
                     }
                 }
@@ -256,10 +273,12 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     }
 
     fun openMenu() {
-        menuVisible = true
-        virtualKeyboardPage = false
-        controllerFocusIndex = 0
-        controllerFocusVisible = false
+        changeControllerSurface {
+            menuVisible = true
+            virtualKeyboardPage = false
+            controllerFocusIndex = 0
+            controllerFocusVisible = false
+        }
     }
 
     /** Allows the Activity's legacy Back/key paths to dismiss an already-open host menu. */
@@ -269,14 +288,16 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             || hostDialogState != null
 
     fun closeMenu() {
-        menuVisible = false
-        limitFpsVisible = false
-        emulationSpeedVisible = false
-        hostDialogState = null
-        virtualKeyboardPage = false
-        controllerFocusIndex = 0
-        controllerFocusVisible = false
-        dialogHostCommandHandler = null
+        if (!isMenuVisible()) return
+        changeControllerSurface {
+            menuVisible = false
+            limitFpsVisible = false
+            emulationSpeedVisible = false
+            hostDialogState = null
+            virtualKeyboardPage = false
+            controllerFocusIndex = 0
+            controllerFocusVisible = false
+        }
     }
 
     /** Routes controller focus while the runtime menu or one of its dialogs owns the input. */
@@ -352,38 +373,39 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     }
 
     fun showMidletDialog(names: Array<String>) {
-        dialogHostCommandHandler = null
-        hostDialogState = RuntimeHostDialogState.MidletSelection(names.toList())
+        changeControllerSurface {
+            hostDialogState = RuntimeHostDialogState.MidletSelection(names.toList())
+        }
     }
 
     fun showErrorDialog(message: String) {
-        dialogHostCommandHandler = null
-        hostDialogState = RuntimeHostDialogState.Error(message)
+        changeControllerSurface { hostDialogState = RuntimeHostDialogState.Error(message) }
     }
 
     fun showExitConfirmation() {
-        dialogHostCommandHandler = null
-        hostDialogState = RuntimeHostDialogState.ExitConfirmation
+        changeControllerSurface { hostDialogState = RuntimeHostDialogState.ExitConfirmation }
     }
 
     fun showHideButtons(names: Array<String>, checked: BooleanArray) {
-        dialogHostCommandHandler = null
-        hostDialogState = RuntimeHostDialogState.HideButtons(names.toList(), checked.copyOf())
+        changeControllerSurface {
+            hostDialogState = RuntimeHostDialogState.HideButtons(names.toList(), checked.copyOf())
+        }
     }
 
     fun showSaveVirtualKeyboard(phone: Boolean, keepScreenPreferred: Boolean) {
-        dialogHostCommandHandler = null
-        hostDialogState = RuntimeHostDialogState.SaveVirtualKeyboard(phone, keepScreenPreferred)
+        changeControllerSurface {
+            hostDialogState = RuntimeHostDialogState.SaveVirtualKeyboard(phone, keepScreenPreferred)
+        }
     }
 
     fun showLayoutSelection(entries: Array<String>, selected: Int) {
-        dialogHostCommandHandler = null
-        hostDialogState = RuntimeHostDialogState.LayoutSelection(entries.toList(), selected)
+        changeControllerSurface {
+            hostDialogState = RuntimeHostDialogState.LayoutSelection(entries.toList(), selected)
+        }
     }
 
     fun showLayoutEditGuide() {
-        dialogHostCommandHandler = null
-        hostDialogState = RuntimeHostDialogState.LayoutEditGuide
+        changeControllerSurface { hostDialogState = RuntimeHostDialogState.LayoutEditGuide }
     }
 }
 

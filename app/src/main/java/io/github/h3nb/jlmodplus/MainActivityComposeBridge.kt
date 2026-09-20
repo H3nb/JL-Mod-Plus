@@ -44,6 +44,7 @@ import io.github.h3nb.jlmodplus.ui.ControllerDialogInputScope
 import io.github.h3nb.jlmodplus.ui.ControllerHostCommandHandler
 import io.github.h3nb.jlmodplus.input.HostCommand
 import android.view.KeyEvent
+import android.view.MotionEvent
 
 /** Actions stay in MainActivity so permission, picker, recovery, and Fragment contracts remain host-owned. */
 internal interface MainHostActions {
@@ -74,6 +75,8 @@ internal class MainActivityComposeController(
     composeView: ComposeView,
     private val actions: MainHostActions,
     private val dialogKeyDispatcher: (KeyEvent) -> Boolean,
+    private val dialogMotionDispatcher: (MotionEvent) -> Boolean,
+    private val onControllerTargetChanging: Runnable,
 ) {
     private var state by mutableStateOf(MainHostUiState())
     private var dialogHostCommandHandler: ControllerHostCommandHandler? = null
@@ -87,6 +90,7 @@ internal class MainActivityComposeController(
             JLModPlusTheme {
                 ControllerDialogInputScope(
                     onControllerKeyEvent = dialogKeyDispatcher,
+                    onControllerMotionEvent = dialogMotionDispatcher,
                     onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
                 ) {
                     MainHostDialogs(state = state, actions = actions)
@@ -97,35 +101,30 @@ internal class MainActivityComposeController(
 
     fun isDialogVisible(): Boolean = state.dialog != null
 
-    fun dismiss() {
+    private fun replaceDialog(dialog: MainHostDialog?) {
+        if (state.dialog == dialog) return
+        // This may run re-entrantly from controller Activate; release old semantics first.
+        onControllerTargetChanging.run()
         dialogHostCommandHandler = null
-        state = MainHostUiState()
+        state = MainHostUiState(dialog)
     }
 
-    fun showMidletFailure(message: String) {
-        dialogHostCommandHandler = null
-        state = MainHostUiState(MainHostDialog.MidletFailure(message))
-    }
+    fun dismiss() = replaceDialog(null)
 
-    fun showProcessExit(message: String) {
-        dialogHostCommandHandler = null
-        state = MainHostUiState(MainHostDialog.ProcessExit(message))
-    }
+    fun showMidletFailure(message: String) =
+        replaceDialog(MainHostDialog.MidletFailure(message))
 
-    fun showDirectoryFailure(message: String) {
-        dialogHostCommandHandler = null
-        state = MainHostUiState(MainHostDialog.DirectoryFailure(message))
-    }
+    fun showProcessExit(message: String) =
+        replaceDialog(MainHostDialog.ProcessExit(message))
 
-    fun showDirectoryMissing(message: String) {
-        dialogHostCommandHandler = null
-        state = MainHostUiState(MainHostDialog.DirectoryMissing(message))
-    }
+    fun showDirectoryFailure(message: String) =
+        replaceDialog(MainHostDialog.DirectoryFailure(message))
 
-    fun showPermissionFailure() {
-        dialogHostCommandHandler = null
-        state = MainHostUiState(MainHostDialog.PermissionFailure)
-    }
+    fun showDirectoryMissing(message: String) =
+        replaceDialog(MainHostDialog.DirectoryMissing(message))
+
+    fun showPermissionFailure() =
+        replaceDialog(MainHostDialog.PermissionFailure)
 
     fun handleHostCommand(command: HostCommand, pressed: Boolean): Boolean {
         if (state.dialog == null) return false

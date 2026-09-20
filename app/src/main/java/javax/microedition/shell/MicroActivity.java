@@ -119,6 +119,7 @@ public class MicroActivity extends AppCompatActivity {
 	private RuntimeHostView binding;
 	private RuntimeMenuComposeController runtimeMenuController;
 	private ControllerInputRouter controllerInputRouter;
+	private long controllerTargetGeneration = 1L;
 	private MemoryEditorBubbleController memoryEditorController;
 	private TransientNoticeComposeController runtimeNoticeController;
 	private WindowInsetsCompat lastWindowInsets;
@@ -217,6 +218,27 @@ public class MicroActivity extends AppCompatActivity {
 			@Override
 			public Displayable currentDisplayable() {
 				return current;
+			}
+
+			@Override
+			public io.github.h3nb.jlmodplus.input.ControllerHostTarget currentControllerTarget() {
+				String displayableId = Integer.toHexString(System.identityHashCode(current));
+				if (runtimeMenuController != null && runtimeMenuController.isMenuVisible()) {
+					return new io.github.h3nb.jlmodplus.input.ControllerHostTarget(
+							"runtime-host@" + displayableId, controllerTargetGeneration);
+				}
+				if (current instanceof Screen && ((Screen) current).isControllerModalActive()) {
+					return new io.github.h3nb.jlmodplus.input.ControllerHostTarget(
+							"screen-modal@" + displayableId, controllerTargetGeneration);
+				}
+				if (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible()) {
+					return new io.github.h3nb.jlmodplus.input.ControllerHostTarget(
+							"controller-keypad@" + displayableId, controllerTargetGeneration);
+				}
+				// Preserve the established plain Screen/Canvas routing policy. ControllerInputRouter
+				// falls back to Displayable/Canvas identity for ownership without making an ordinary
+				// MIDP Screen an explicit analog-host target.
+				return null;
 			}
 
 			@Override
@@ -445,7 +467,9 @@ public class MicroActivity extends AppCompatActivity {
 						}
 						startVirtualKeyboardLayoutEdit();
 					}
-				}, this::dispatchControllerKeyEventFromDialog);
+				}, this::dispatchControllerKeyEventFromDialog,
+				this::dispatchControllerGenericMotionEventFromDialog,
+				this::beginControllerHostTargetChange);
 		setRuntimeToolbarHeight(getRuntimeToolbarHeight(getRuntimeChrome(current)));
 		updateRuntimeMenuState(current);
 	}
@@ -943,9 +967,20 @@ public class MicroActivity extends AppCompatActivity {
 		return super.dispatchKeyEvent(event);
 	}
 
-	/** Routes physical keys from a Compose dialog window through the same controller owner. */
+	/** Routes only controller-owned keys from a Compose dialog window. */
 	public boolean dispatchControllerKeyEventFromDialog(@NonNull KeyEvent event) {
-		return controllerInputRouter != null && controllerInputRouter.onKeyEvent(event);
+		return controllerInputRouter != null && controllerInputRouter.onDialogKeyEvent(event);
+	}
+
+	/** Routes controller axis/HAT input from a dialog window without stealing other motion. */
+	public boolean dispatchControllerGenericMotionEventFromDialog(@NonNull MotionEvent event) {
+		return controllerInputRouter != null && controllerInputRouter.onDialogGenericMotionEvent(event);
+	}
+
+	private void beginControllerHostTargetChange() {
+		if (controllerInputRouter != null) controllerInputRouter.onHostTargetChanging();
+		controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
+				? 1L : controllerTargetGeneration + 1L;
 	}
 
 	@Override
@@ -1200,6 +1235,10 @@ public class MicroActivity extends AppCompatActivity {
 			return ((Screen) current).handleHostCommand(command, pressed);
 		}
 		if (current instanceof Canvas && ((Canvas) current).isControllerKeypadVisible()) {
+			if (pressed && (command == HostCommand.Back || command == HostCommand.OpenMenu
+					|| command == HostCommand.OpenKeypad)) {
+				beginControllerHostTargetChange();
+			}
 			return ((Canvas) current).handleHostCommand(command, pressed);
 		}
 		switch (command) {
@@ -1223,6 +1262,7 @@ public class MicroActivity extends AppCompatActivity {
 						((Screen) current).handleHostCommand(command, pressed);
 			case OpenKeypad:
 				if (pressed && current instanceof Canvas) {
+					beginControllerHostTargetChange();
 					((Canvas) current).openControllerKeypad();
 				}
 				return true;

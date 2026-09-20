@@ -152,6 +152,63 @@ class HostInputRouterTest {
     }
 
     @Test
+    fun staleReleaseIsNotReplayedIntoReplacementTarget() {
+        val host = RecordingHost(modal = true)
+        val router = HostInputRouter(host)
+
+        router.onKeyEvent(
+            keyEvent(40, KeyEvent.KEYCODE_BUTTON_A, KeyEvent.ACTION_DOWN, InputDevice.SOURCE_GAMEPAD),
+        )
+        host.commands.clear()
+        host.target = ControllerHostTarget("dialog", 2L)
+
+        router.onKeyEvent(
+            keyEvent(40, KeyEvent.KEYCODE_BUTTON_A, KeyEvent.ACTION_UP, InputDevice.SOURCE_GAMEPAD),
+        )
+
+        assertTrue(host.commands.isEmpty())
+    }
+
+    @Test
+    fun staleReleaseIsConsumedEvenAfterModalCloses() {
+        val host = RecordingHost(modal = true)
+        val router = HostInputRouter(host)
+
+        router.onKeyEvent(
+            keyEvent(43, KeyEvent.KEYCODE_BUTTON_A, KeyEvent.ACTION_DOWN, InputDevice.SOURCE_GAMEPAD),
+        )
+        host.commands.clear()
+        host.target = ControllerHostTarget("guest", 2L)
+        host.modal = false
+
+        assertTrue(
+            router.onKeyEvent(
+                keyEvent(43, KeyEvent.KEYCODE_BUTTON_A, KeyEvent.ACTION_UP, InputDevice.SOURCE_GAMEPAD),
+            ),
+        )
+        assertTrue(host.commands.isEmpty())
+    }
+
+    @Test
+    fun sameCommandOnNewTargetIsNotSuppressedByOldCapture() {
+        val host = RecordingHost(modal = true)
+        val router = HostInputRouter(host)
+
+        router.onKeyEvent(
+            keyEvent(41, KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.ACTION_DOWN, InputDevice.SOURCE_GAMEPAD),
+        )
+        host.target = ControllerHostTarget("dialog", 2L)
+        router.onKeyEvent(
+            keyEvent(42, KeyEvent.KEYCODE_BUTTON_A, KeyEvent.ACTION_DOWN, InputDevice.SOURCE_GAMEPAD),
+        )
+
+        assertEquals(
+            listOf(HostCommand.Activate to true, HostCommand.Activate to true),
+            host.commands,
+        )
+    }
+
+    @Test
     fun clearReleasesEachEffectiveCommandOnce() {
         val host = RecordingHost(modal = true)
         val router = HostInputRouter(host)
@@ -194,13 +251,17 @@ class HostInputRouterTest {
         )
 
     private class RecordingHost(
-        private val modal: Boolean,
+        modal: Boolean,
     ) : ControllerHostSink {
+        var modal = modal
         val commands = mutableListOf<Pair<HostCommand, Boolean>>()
+        var target = ControllerHostTarget("host", 1L)
 
         override fun currentCanvas(): Canvas? = null
 
         override fun currentDisplayable(): Displayable? = null
+
+        override fun currentControllerTarget(): ControllerHostTarget = target
 
         override fun onHostCommand(command: HostCommand, pressed: Boolean): Boolean {
             commands += command to pressed

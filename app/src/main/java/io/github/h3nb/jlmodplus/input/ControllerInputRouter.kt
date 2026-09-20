@@ -25,6 +25,7 @@ import android.view.MotionEvent
 import javax.microedition.lcdui.Canvas
 import javax.microedition.lcdui.Displayable
 import javax.microedition.lcdui.event.PointerEvent
+import javax.microedition.lcdui.keyboard.KeyMapper
 import io.github.h3nb.jlmodplus.config.ProfileModel
 import io.github.h3nb.jlmodplus.R
 import java.util.EnumMap
@@ -98,7 +99,7 @@ class ControllerInputRouter(
     private val appContext = context.applicationContext
     private val inputManager = context.getSystemService(Context.INPUT_SERVICE) as? InputManager
     private val inputHandler = Handler(Looper.getMainLooper())
-    private val hostInputRouter = HostInputRouter(host)
+    private val hostInputRouter = HostInputRouter(host, ::currentHostTarget)
     private val capabilityCache = ControllerCapabilityCache()
     private val config: ControllerConfig = resolveProfile(profile)
     private val lifecycleGate = ControllerLifecycleGate()
@@ -188,6 +189,31 @@ class ControllerInputRouter(
     fun close() {
         clear()
         inputManager?.unregisterInputDeviceListener(this)
+    }
+
+    /**
+     * Dialog-window key boundary: route only genuine controller keys or a non-BACK physical key
+     * explicitly mapped through KeyMapper to logical M. Ordinary keyboard/editing keys stay native.
+     */
+    fun onDialogKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode == KeyEvent.KEYCODE_BACK) return false
+        if (!isGamepadEvent(event) && !KeyMapper.isOptionsMenuKey(event.keyCode)) return false
+        return onKeyEvent(event)
+    }
+
+    /** Dialog-window motion boundary; unrelated mouse/touch/other motion remains native. */
+    fun onDialogGenericMotionEvent(event: MotionEvent): Boolean {
+        if (!isGamepadMotionEvent(event)) return false
+        return onGenericMotionEvent(event)
+    }
+
+    /**
+     * Ends analog host output before a logical host-surface replacement. Digital physical captures
+     * stay target-stamped until their matching UP, so a held key cannot leak an orphan UP into the
+     * replacement surface. The caller advances its ControllerHostTarget generation after this call.
+     */
+    fun onHostTargetChanging() {
+        releaseAll()
     }
 
     /** Handles host-owned controller buttons, then the configured virtual pointer click. */
@@ -948,6 +974,8 @@ class ControllerInputRouter(
         )
 
     private fun beginBoundary(waitForNeutral: Boolean, nextDeviceId: Int? = activeDeviceId) {
+        // Keep digital captures target-stamped until physical UP. The Displayable identity changes
+        // across this boundary, so their later UP is consumed as stale rather than replayed.
         detachPointerConsumer()
         releaseAll()
         lifecycleGate.beginBoundary(waitForNeutral, nextDeviceId)
