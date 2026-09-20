@@ -110,13 +110,16 @@ public class KeyMapperMappingRulesTest {
 		ProfileModel profile = new ProfileModel();
 		profile.keyMappings = new SparseIntArray();
 		profile.keyMappings.put(KeyEvent.KEYCODE_F1, KeyMapper.KEY_OPTIONS_MENU);
+		profile.keyMappings.put(KeyEvent.KEYCODE_5, KeyMapper.KEY_OPTIONS_MENU);
 		profile.keyMappings.put(KeyEvent.KEYCODE_BUTTON_START, KeyMapper.KEY_OPTIONS_MENU);
 
 		KeyMapper.setKeyMapping(profile);
 
-		// Default Back remains valid and both user assignments join the same host-only M target.
+		// M stays source-agnostic: keyboard, phone/keypad and gamepad inputs may all target it.
+		// Android Back is merely the reserved built-in host binding, not the only way to open M.
 		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BACK));
 		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_F1));
+		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_5));
 		assertTrue(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BUTTON_START));
 		assertFalse(KeyMapper.isOptionsMenuKey(KeyEvent.KEYCODE_BUTTON_SELECT));
 	}
