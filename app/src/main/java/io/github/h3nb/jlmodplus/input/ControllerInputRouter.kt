@@ -119,7 +119,9 @@ class ControllerInputRouter(
     private var pointerCanvas: Canvas? = null
     private var pointerViewport: GuestViewport? = null
     private val pointerClickOwners = LinkedHashSet<PointerSourceToken>()
-    private val pointerClickKeys = LinkedHashSet<PointerClickKey>()
+    // Keep the exact DOWN token (including its session/generation) until the matching UP.
+    // Null means the DOWN was consumed but no guest pointer lease could be started.
+    private val pointerClickBindings = LinkedHashMap<PointerClickKey, PointerSourceToken?>()
     private val pointerPhysicalTokens = LinkedHashMap<Int, PointerSourceToken>()
     private var pointerJoystickToken: PointerSourceToken? = null
     // The guest MIDP compatibility boundary deliberately uses its single-pointer channel 0.
@@ -213,23 +215,17 @@ class ControllerInputRouter(
         return when (event.action) {
             KeyEvent.ACTION_DOWN -> {
                 if (event.repeatCount != 0) return true
-                if (!pointerClickKeys.add(key)) return true
-                handlePointerClickBinding(
-                    event.deviceId,
+                if (pointerClickBindings.containsKey(key)) return true
+                pointerClickBindings[key] = beginPointerClickBinding(
                     sessionId,
                     pointerClickChannel(key),
-                    down = true,
                 )
                 true
             }
             KeyEvent.ACTION_UP -> {
-                if (!pointerClickKeys.remove(key)) return false
-                handlePointerClickBinding(
-                    event.deviceId,
-                    sessionId,
-                    pointerClickChannel(key),
-                    down = false,
-                )
+                if (!pointerClickBindings.containsKey(key)) return false
+                val token = pointerClickBindings.remove(key)
+                if (token != null) endPointerClickBinding(token)
                 true
             }
             else -> false
@@ -255,7 +251,7 @@ class ControllerInputRouter(
         val deviceId = event.deviceId
         val device = InputDevice.getDevice(deviceId)
         if (device == null) {
-            if (activeDeviceId == deviceId) clear()
+            releaseInputDeviceState(deviceId)
             return true
         }
         if (!isGamepadDevice(device)) return false
@@ -310,7 +306,7 @@ class ControllerInputRouter(
 
     override fun onInputDeviceRemoved(deviceId: Int) {
         capabilityCache.invalidate(deviceId)
-        if (activeDeviceId == deviceId || waitingDeviceId == deviceId) clear()
+        releaseInputDeviceState(deviceId)
         notifyControllerAvailability()
     }
 
@@ -674,38 +670,42 @@ class ControllerInputRouter(
         }
     }
 
-    private fun handlePointerClickBinding(
-        deviceId: Int,
+    private fun beginPointerClickBinding(
         sourceSession: Long,
         channel: String,
-        down: Boolean,
-    ) {
+    ): PointerSourceToken? {
         if (config.pointer.mode != PointerMode.CURSOR ||
             config.pointer.clickAction != PointerAction.CLICK
-        ) return
-        val canvas = pointerCanvas ?: host.currentCanvas() ?: return
+        ) return null
+        val canvas = pointerCanvas ?: host.currentCanvas() ?: return null
         configurePointerViewport(canvas)
-        val targetId = pointerTargetId(canvas)
         val token = PointerSourceToken(
             kind = PointerSourceKind.VIRTUAL,
             contactId = pointerContactId(sourceSession, channel),
-            targetId = targetId,
+            targetId = pointerTargetId(canvas),
             generation = canvas.inputGeneration(),
         )
-        if (down) {
-            if (!pointerClickOwners.add(token) || pointerClickOwners.size != 1) return
-            if (PointerEvent.hasActivePointer(canvas)) {
-                pointerClickOwners.remove(token)
-                return
-            }
-            val actions = cursorController.beginClick(token)
-            if (actions.isEmpty()) pointerClickOwners.remove(token)
-            else activeCursorClickToken = token
-        } else if (pointerClickOwners.remove(token) && pointerClickOwners.isEmpty()) {
-            val active = activeCursorClickToken
-            activeCursorClickToken = null
-            if (active != null) applyPointerActions(cursorController.endClick(active))
+        if (!pointerClickOwners.add(token)) return token
+        if (pointerClickOwners.size != 1) return token
+        if (PointerEvent.hasActivePointer(canvas)) {
+            pointerClickOwners.remove(token)
+            return null
         }
+        val actions = cursorController.beginClick(token)
+        if (actions.isEmpty()) {
+            pointerClickOwners.remove(token)
+            return null
+        }
+        activeCursorClickToken = token
+        applyPointerActions(actions)
+        return token
+    }
+
+    private fun endPointerClickBinding(token: PointerSourceToken) {
+        if (!pointerClickOwners.remove(token) || pointerClickOwners.isNotEmpty()) return
+        val active = activeCursorClickToken
+        activeCursorClickToken = null
+        if (active != null) applyPointerActions(cursorController.endClick(active))
     }
 
     private fun applyPointerActions(actions: List<PointerLeaseAction>) {
@@ -756,16 +756,7 @@ class ControllerInputRouter(
         "cursor-click:${key.deviceId}:${key.keyCode}"
 
     private fun resetPointerState() {
-        val clickKeys = pointerClickKeys.toList()
-        pointerClickKeys.clear()
-        for (key in clickKeys) {
-            handlePointerClickBinding(
-                key.deviceId,
-                sessionId,
-                pointerClickChannel(key),
-                down = false,
-            )
-        }
+        pointerClickBindings.clear()
         applyPointerActions(cursorController.reset())
         applyPointerActions(joystickController.reset())
         activeCursorClickToken = null
@@ -1044,22 +1035,65 @@ class ControllerInputRouter(
         triggerStates[TriggerSide.RIGHT] = StickProcessor.TriggerState()
     }
 
+    private fun releaseInputDeviceState(deviceId: Int) {
+        // Digital KeyEvents bypass the analog lifecycle gate, so release their captured Canvas
+        // ownership explicitly even when this device was never the active analog controller.
+        hostInputRouter.releaseDevice(deviceId)
+        host.currentCanvas()?.releaseInputDevice(deviceId)
+
+        val clickKeys = pointerClickBindings.keys.filter { it.deviceId == deviceId }
+        val removedClickTokens = clickKeys.mapNotNull { pointerClickBindings.remove(it) }
+        removedClickTokens.forEach(pointerClickOwners::remove)
+        if (pointerClickOwners.isEmpty()) {
+            val active = activeCursorClickToken
+            activeCursorClickToken = null
+            if (active != null) applyPointerActions(cursorController.endClick(active))
+        }
+
+        val directionalChannels = directional.values
+            .filter { it.deviceId == deviceId }
+            .map { it.channel }
+        for (channel in directionalChannels) updateDirectional(channel, emptySet())
+
+        val binaryChannels = binary.values
+            .filter { it.deviceId == deviceId }
+            .map { it.channel }
+        for (channel in binaryChannels) releaseBinary(channel)
+
+        if (activeDeviceId == deviceId || waitingDeviceId == deviceId) {
+            applyPointerActions(joystickController.reset())
+            pointerJoystickToken = null
+            for (runtime in stickStates.values) {
+                runtime.directionState = StickProcessor.DirectionState()
+            }
+            triggerStates[TriggerSide.LEFT] = StickProcessor.TriggerState()
+            triggerStates[TriggerSide.RIGHT] = StickProcessor.TriggerState()
+            lifecycleGate.onDeviceRemoved(deviceId)
+            syncLifecycleFields()
+            lastTarget = null
+        }
+    }
+
     private fun isNeutralMotion(event: MotionEvent, device: InputDevice): Boolean {
         val hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X)
         val hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y)
+        if (!hatX.isFinite() || !hatY.isFinite()) return false
         if (abs(hatX) > HAT_THRESHOLD || abs(hatY) > HAT_THRESHOLD) return false
         val calibration = config.calibrations[capabilityCache.signature(device)]
         for (stick in StickId.entries) {
             val pair = stickAxes(device, event.source, stick) ?: continue
             val xChannel = if (stick == StickId.LEFT) CalibrationChannel.LEFT_X else CalibrationChannel.RIGHT_X
             val yChannel = if (stick == StickId.LEFT) CalibrationChannel.LEFT_Y else CalibrationChannel.RIGHT_Y
+            val rawX = event.getAxisValue(pair.first)
+            val rawY = event.getAxisValue(pair.second)
+            if (!rawX.isFinite() || !rawY.isFinite()) return false
             val x = StickProcessor.normalizeCalibratedAxis(
-                event.getAxisValue(pair.first),
+                rawX,
                 calibration?.channels?.get(xChannel),
                 motionRange(device, event.source, pair.first),
             )
             val y = StickProcessor.normalizeCalibratedAxis(
-                event.getAxisValue(pair.second),
+                rawY,
                 calibration?.channels?.get(yChannel),
                 motionRange(device, event.source, pair.second),
             )
@@ -1067,8 +1101,12 @@ class ControllerInputRouter(
         }
         for (axis in TRIGGER_AXES) {
             val range = findMotionRange(device, event.source, axis) ?: continue
-            if (StickProcessor.normalizeTrigger(event.getAxisValue(axis),
-                    StickProcessor.MotionRangeLike(range.min, range.max)) > TRIGGER_NEUTRAL_THRESHOLD
+            val raw = event.getAxisValue(axis)
+            if (!raw.isFinite()) return false
+            if (StickProcessor.normalizeTrigger(
+                    raw,
+                    StickProcessor.MotionRangeLike(range.min, range.max),
+                ) > TRIGGER_NEUTRAL_THRESHOLD
             ) return false
         }
         return true
