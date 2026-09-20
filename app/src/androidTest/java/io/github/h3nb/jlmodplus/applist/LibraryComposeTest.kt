@@ -31,6 +31,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
@@ -229,6 +230,99 @@ class LibraryComposeTest {
         composeRule.waitForIdle()
 
         assertEquals(8, actions.openedId)
+    }
+
+    @Test
+    fun nonNavigationAppUpdateKeepsTouchScrolledListViewport() {
+        val actions = RecordingLibraryActions()
+        val apps = (0..24).map { index ->
+            LibraryAppUiItem(
+                id = index,
+                title = "Demo MIDlet $index",
+                author = "Example Vendor",
+                version = "1.0",
+                iconPath = null,
+                canReinstall = true,
+                databaseId = 100L + index,
+            )
+        }
+        val libraryState = mutableStateOf(
+            LibraryUiState(
+                loading = false,
+                apps = apps,
+                databaseControlsReady = true,
+                generation = 1L,
+            ),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryScreen(
+                    state = libraryState.value,
+                    actions = actions,
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Demo MIDlet 0").performTouchInput { swipeUp() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Demo MIDlet 1").performTouchInput { swipeUp() }
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithText("Demo MIDlet 0").assertCountEquals(0)
+
+        composeRule.runOnIdle {
+            libraryState.value = libraryState.value.copy(
+                apps = libraryState.value.apps.map { app ->
+                    if (app.id == 12) app.copy(favorite = true) else app
+                },
+            )
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithText("Demo MIDlet 0").assertCountEquals(0)
+    }
+
+    @Test
+    fun controllerNavigationStillScrollsFocusedAppIntoView() {
+        val actions = RecordingLibraryActions()
+        val controllerEvents = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 32)
+        val apps = (0..24).map { index ->
+            LibraryAppUiItem(
+                id = index,
+                title = "Demo MIDlet $index",
+                author = "Example Vendor",
+                version = "1.0",
+                iconPath = null,
+                canReinstall = true,
+                databaseId = 100L + index,
+            )
+        }
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryScreen(
+                    state = LibraryUiState(
+                        loading = false,
+                        apps = apps,
+                    ),
+                    actions = actions,
+                    controllerEvents = controllerEvents,
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        repeat(12) { index ->
+            controllerEvents.tryEmit(
+                LibraryControllerEvent(
+                    sequence = index.toLong() + 1L,
+                    command = LibraryControllerCommand.MoveDown,
+                ),
+            )
+            composeRule.waitForIdle()
+        }
+
+        composeRule.onNodeWithText("Demo MIDlet 12").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(1)
     }
 
     @Test
