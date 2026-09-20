@@ -138,7 +138,7 @@ public final class RuntimeHostView {
 		done.setPadding(dp(context, 16), dp(context, 8), dp(context, 16), dp(context, 8));
 		done.setElevation(dp(context, 8));
 		done.setVisibility(View.GONE);
-		done.setSupportBackgroundTintList(
+		done.setBackgroundTintList(
 				ColorStateList.valueOf(LegacyThemeColors.accent(context)));
 		root.addView(done, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
