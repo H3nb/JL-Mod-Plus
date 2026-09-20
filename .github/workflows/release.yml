@@ -1,10 +1,13 @@
 name: Release JL-Mod Plus
 
 on:
+  push:
+    branches:
+      - alpha
   workflow_dispatch:
     inputs:
       prerelease_suffix:
-        description: 'Required on alpha (for example: alpha.1); leave empty on main'
+        description: 'Optional alpha prerelease suffix (for example: alpha.1); automatic alpha pushes use dev.<run>.<attempt>.<commit>'
         required: false
         type: string
 
@@ -26,6 +29,10 @@ jobs:
         shell: bash
         env:
           BRANCH: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          BUILD_COMMIT: ${{ github.sha }}
           INPUT_SUFFIX: ${{ inputs.prerelease_suffix }}
         run: |
           set -euo pipefail
@@ -33,8 +40,11 @@ jobs:
           case "$BRANCH" in
             alpha)
               if [[ -z "$INPUT_SUFFIX" ]]; then
-                echo 'alpha releases require prerelease_suffix (for example: alpha.1).' >&2
-                exit 1
+                if [[ "$EVENT_NAME" != "push" ]]; then
+                  echo 'Manual alpha releases require prerelease_suffix (for example: alpha.1).' >&2
+                  exit 1
+                fi
+                INPUT_SUFFIX="dev.${RUN_NUMBER}.${RUN_ATTEMPT}.${BUILD_COMMIT:0:7}"
               fi
               if [[ ! "$INPUT_SUFFIX" =~ ^[0-9A-Za-z]+([.-][0-9A-Za-z]+)*$ ]]; then
                 echo 'Invalid prerelease_suffix. Use identifiers such as alpha.1, beta.1, or rc.1.' >&2

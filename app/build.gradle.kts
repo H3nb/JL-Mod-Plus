@@ -17,8 +17,11 @@ plugins {
 val secret = Properties().also { properties ->
     rootProject.file("keystore.properties").runCatching { inputStream().use(properties::load) }
 }
-// CI restores this key from ANDROID_DEBUG_KEYSTORE_BASE64. Never reuse it for release.
-val sharedDebugKeystore = rootProject.file("debug.keystore")
+// CI restores this key from ANDROID_DEBUG_KEYSTORE_BASE64. Local setups can set
+// debugStoreFile in keystore.properties to keep the shared debug key outside the checkout.
+val debugKeystorePath = secret.getProperty("debugStoreFile")?.trim()?.takeIf { it.isNotEmpty() }
+    ?: "debug.keystore"
+val sharedDebugKeystore = rootProject.file(debugKeystorePath)
 val hasSharedDebugKeystore = sharedDebugKeystore.isFile
 val runtimeTestAbi = providers.gradleProperty("jlmodRuntimeTestAbi").orNull
 require(runtimeTestAbi == null || runtimeTestAbi == "arm64-v8a" || runtimeTestAbi == "x86_64") {
