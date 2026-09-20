@@ -94,7 +94,7 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
-    public void standardTemplateUsesRectangularShouldersAndLargerMovementControl() throws Exception {
+    public void standardTemplateUsesRectangularShouldersAndCompactMovementControl() throws Exception {
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
 
         RectF left = rectField(keyByLabel("L"));
@@ -109,30 +109,68 @@ public class VirtualControlsKeyboardResizeTest {
         assertTrue(right.centerY() < fire.centerY());
         assertTrue(star.centerY() > fire.centerY());
         assertTrue(zero.centerY() > fire.centerY());
-        assertEquals(0.238f, settings.virtualDpadRadius, 0.0001f);
+        assertEquals(0.202f, settings.virtualDpadRadius, 0.002f);
     }
 
     @Test
-    public void standardTemplateStaysScreenRelativeWithLetterboxedGuest() throws Exception {
-        keyboard.resize(new RectF(0f, 0f, 945f, 2048f), 18f, 0f, 812f, 1118f);
+    public void standardTemplateUsesBottomDeckForPortraitGuest() throws Exception {
+        float guestBottom = 1118f;
+        keyboard.resize(new RectF(0f, 0f, 945f, 2048f), 18f, 0f, 812f, guestBottom);
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
 
+        RectF left = rectField(keyByLabel("L"));
+        RectF right = rectField(keyByLabel("R"));
         RectF fire = rectField(keyByLabel("F"));
         RectF star = rectField(keyByLabel("*"));
         RectF zero = rectField(keyByLabel("0"));
 
-        assertEquals(945f * 0.740f, fire.centerX(), 3f);
-        assertEquals(2048f * 0.509f, fire.centerY(), 3f);
-        assertEquals(945f * 0.592f, star.centerX(), 3f);
-        assertEquals(2048f * 0.690f, star.centerY(), 3f);
-        assertEquals(945f * 0.885f, zero.centerX(), 3f);
-        assertEquals(2048f * 0.690f, zero.centerY(), 3f);
+        assertTrue(left.top > guestBottom);
+        assertTrue(right.top > guestBottom);
+        assertTrue(fire.top > guestBottom);
+        assertTrue(star.top > guestBottom);
+        assertTrue(zero.top > guestBottom);
+        assertTrue(settings.virtualDpadCenterY * 2048f - settings.virtualDpadRadius * 945f
+                > guestBottom);
+    }
 
-        // The standard overlay intentionally ignores the guest's bottom edge (1118px).
-        assertTrue(star.centerY() > 1118f);
-        assertTrue(zero.centerY() > 1118f);
-        assertEquals(0.248f, settings.virtualDpadCenterX, 0.02f);
-        assertEquals(0.552f, settings.virtualDpadCenterY, 0.01f);
+    @Test
+    public void standardTemplateUsesSideGuttersForWideGuest() throws Exception {
+        float guestLeft = 503f;
+        float guestRight = 1034f;
+        keyboard.resize(
+                new RectF(0f, 0f, 1536f, 709f),
+                guestLeft, 0f, guestRight, 709f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+
+        RectF left = rectField(keyByLabel("L"));
+        RectF right = rectField(keyByLabel("R"));
+        RectF fire = rectField(keyByLabel("F"));
+        RectF star = rectField(keyByLabel("*"));
+        RectF zero = rectField(keyByLabel("0"));
+
+        float movementCenterX = settings.virtualDpadCenterX * 1536f;
+        float movementRadius = settings.virtualDpadRadius * 709f;
+        assertTrue(movementCenterX + movementRadius < guestLeft);
+        assertTrue(left.right < guestLeft);
+        assertTrue(right.left > guestRight);
+        assertTrue(fire.left > guestRight);
+        assertTrue(star.left > guestRight);
+        assertTrue(zero.left > guestRight);
+    }
+
+    @Test
+    public void standardTemplateReflowsWhenOnlyGuestViewportChanges() throws Exception {
+        RectF screen = new RectF(0f, 0f, 945f, 2048f);
+        keyboard.resize(screen, 0f, 0f, 945f, 2048f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        float before = rectField(keyByLabel("F")).centerY();
+
+        keyboard.resize(screen, 18f, 0f, 812f, 1118f);
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        float after = rectField(keyByLabel("F")).centerY();
+
+        assertTrue(Math.abs(after - before) > 100f);
+        assertTrue(rectField(keyByLabel("F")).top > 1118f);
     }
 
     @Test

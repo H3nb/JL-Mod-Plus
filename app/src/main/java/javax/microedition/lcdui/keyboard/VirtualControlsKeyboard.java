@@ -62,7 +62,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_ANALOG_CENTER_X = 0.18f;
 	private static final float DEFAULT_ANALOG_CENTER_Y = 0.78f;
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
-	private static final float STANDARD_MOVEMENT_RADIUS = 0.238f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
 	private static final float MIN_RADIUS_FRACTION = 0.07f;
@@ -254,7 +253,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			settings.virtualAnalogEnabled = variant == TYPE_ANALOG_STANDARD;
 			settings.virtualDpadCenterX = clamp(movementCenterX, 0.0f, 1.0f);
 			settings.virtualDpadCenterY = clamp(movementCenterY, 0.0f, 1.0f);
-			float movementRadius = standardMovementRadius();
+			float shortest = Math.max(1.0f, Math.min(width, height));
+			float movementRadius = clamp(
+					layout.movementRadius / shortest,
+					MIN_RADIUS_FRACTION,
+					MAX_RADIUS_FRACTION);
 			settings.virtualDpadRadius = movementRadius;
 			settings.virtualAnalogCenterX = clamp(movementCenterX, 0.0f, 1.0f);
 			settings.virtualAnalogCenterY = clamp(movementCenterY, 0.0f, 1.0f);
@@ -292,15 +295,15 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float screenTop = screenBounds == null ? 0.0f : screenBounds.top;
 		float screenRight = screenBounds == null ? 1.0f : screenBounds.right;
 		float screenBottom = screenBounds == null ? 1.0f : screenBounds.bottom;
-		float shortest = Math.max(1.0f,
-				Math.min(screenRight - screenLeft, screenBottom - screenTop));
+
+		float guestLeft = guestBounds.width() > 0.0f ? guestBounds.left : screenLeft;
+		float guestTop = guestBounds.height() > 0.0f ? guestBounds.top : screenTop;
+		float guestRight = guestBounds.width() > 0.0f ? guestBounds.right : screenRight;
+		float guestBottom = guestBounds.height() > 0.0f ? guestBounds.bottom : screenBottom;
+
 		return StandardVirtualControlsLayout.resolve(
 				screenLeft, screenTop, screenRight, screenBottom,
-				STANDARD_MOVEMENT_RADIUS * shortest);
-	}
-
-	private float standardMovementRadius() {
-		return STANDARD_MOVEMENT_RADIUS;
+				guestLeft, guestTop, guestRight, guestBottom);
 	}
 
 	/**
@@ -348,9 +351,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		endAnalog();
 		boolean screenChanged = rectChanged(
 				screenBounds, screen.left, screen.top, screen.right, screen.bottom);
+		boolean guestChanged = rectChanged(guestBounds, left, top, right, bottom);
 		int layout = getLayout();
 		boolean reflowStandardTemplate = !applyingStandardTemplate && !standardTemplateEdited &&
-				isStandardTemplate(layout) && screenChanged;
+				isStandardTemplate(layout) && (screenChanged || guestChanged);
 
 		super.resize(screen, left, top, right, bottom);
 		screenBounds = new RectF(screen);

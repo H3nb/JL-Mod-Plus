@@ -19,68 +19,91 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class StandardVirtualControlsLayoutTest {
-	private static final float EPS = 2.0f;
+	private static final float EPS = 4.0f;
 
 	@Test
-	public void referenceCanvasMatchesApprovedComposition() {
-		float width = 1275.0f;
-		float height = 1056.0f;
-		float radius = 0.238f * height;
-		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
-				0.0f, 0.0f, width, height, radius);
+	public void portraitReferenceUsesFreeBottomDeck() {
+		float width = 709.0f;
+		float height = 1536.0f;
+		float guestBottom = 944.0f;
 
-		assertEquals(width * 0.248f, layout.movementCenterX, EPS);
-		assertEquals(height * 0.552f, layout.movementCenterY, EPS);
-		assertEquals(width * 0.164f, layout.shoulderLeftX, EPS);
-		assertEquals(width * 0.837f, layout.shoulderRightX, EPS);
-		assertEquals(height * 0.122f, layout.shoulderCenterY, EPS);
-		assertEquals(width * 0.740f, layout.actionCenterX, EPS);
-		assertEquals(height * 0.509f, layout.actionCenterY, EPS);
-		assertEquals(width * 0.592f, layout.bottomLeftX, EPS);
-		assertEquals(width * 0.885f, layout.bottomRightX, EPS);
-		assertEquals(height * 0.690f, layout.bottomRowY, EPS);
-		assertEquals(height * 0.178f, layout.keySize, EPS);
-		assertEquals(layout.keySize * 1.66f, layout.shoulderWidth, EPS);
-		assertEquals(layout.keySize * 0.73f, layout.shoulderHeight, EPS);
-		assertEquals(layout.keySize * 1.25f, layout.fireSize, EPS);
+		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
+				0.0f, 0.0f, width, height,
+				0.0f, 0.0f, width, guestBottom);
+
+		assertEquals(
+				StandardVirtualControlsLayout.Placement.BOTTOM_DECK,
+				layout.placement);
+		assertEquals(101.0f, layout.keySize, EPS);
+		assertEquals(143.0f, layout.movementRadius, EPS);
+		assertEquals(177.0f, layout.movementCenterX, EPS);
+		assertEquals(1270.0f, layout.movementCenterY, EPS);
+		assertEquals(111.0f, layout.shoulderLeftX, EPS);
+		assertEquals(598.0f, layout.shoulderRightX, EPS);
+		assertEquals(1006.0f, layout.shoulderCenterY, EPS);
+		assertEquals(540.0f, layout.actionCenterX, EPS);
+		assertEquals(1221.0f, layout.actionCenterY, EPS);
+		assertEquals(449.0f, layout.bottomLeftX, EPS);
+		assertEquals(630.0f, layout.bottomRightX, EPS);
+		assertEquals(1328.0f, layout.bottomRowY, EPS);
+
+		assertTrue(layout.movementCenterY - layout.movementRadius > guestBottom);
+		assertTrue(layout.shoulderCenterY - layout.shoulderHeight * 0.5f > guestBottom);
+		assertTrue(layout.actionCenterY - layout.fireSize * 0.5f > guestBottom);
 	}
 
 	@Test
-	public void portraitUsesTheSameScreenSpaceComposition() {
-		float width = 945.0f;
-		float height = 2048.0f;
-		float radius = 0.238f * width;
+	public void landscapeReferenceUsesBothSideGutters() {
+		float width = 1536.0f;
+		float height = 709.0f;
+		float guestLeft = 503.0f;
+		float guestRight = 1034.0f;
+
 		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
-				0.0f, 0.0f, width, height, radius);
+				0.0f, 0.0f, width, height,
+				guestLeft, 0.0f, guestRight, height);
 
-		assertEquals(width * 0.248f, layout.movementCenterX, 15.0f);
-		assertEquals(height * 0.552f, layout.movementCenterY, EPS);
-		assertEquals(width * 0.740f, layout.actionCenterX, EPS);
-		assertEquals(height * 0.509f, layout.actionCenterY, EPS);
-		assertEquals(width * 0.592f, layout.bottomLeftX, EPS);
-		assertEquals(width * 0.885f, layout.bottomRightX, EPS);
-		assertEquals(height * 0.690f, layout.bottomRowY, EPS);
+		assertEquals(
+				StandardVirtualControlsLayout.Placement.SIDE_GUTTERS,
+				layout.placement);
+		assertEquals(236.0f, layout.movementCenterX, EPS);
+		assertEquals(416.0f, layout.movementCenterY, EPS);
+		assertEquals(236.0f, layout.shoulderLeftX, EPS);
+		assertEquals(1300.0f, layout.shoulderRightX, EPS);
+		assertEquals(146.0f, layout.shoulderCenterY, EPS);
+		assertEquals(1300.0f, layout.actionCenterX, EPS);
+		assertEquals(355.0f, layout.actionCenterY, EPS);
+		assertEquals(1191.0f, layout.bottomLeftX, EPS);
+		assertEquals(1409.0f, layout.bottomRightX, EPS);
+		assertEquals(464.0f, layout.bottomRowY, EPS);
 
-		float movementRight = layout.movementCenterX + radius;
-		float starLeft = layout.bottomLeftX - layout.keySize * 0.5f;
-		assertTrue(movementRight < starLeft);
+		assertTrue(layout.movementCenterX + layout.movementRadius < guestLeft);
+		assertTrue(layout.shoulderLeftX + layout.shoulderWidth * 0.5f < guestLeft);
+		assertTrue(layout.shoulderRightX - layout.shoulderWidth * 0.5f > guestRight);
+		assertTrue(layout.bottomLeftX - layout.keySize * 0.5f > guestRight);
 	}
 
 	@Test
-	public void compactScreenClampsControlsInsideSafeBounds() {
+	public void fullScreenGuestFallsBackToCompactOverlayInsideBounds() {
 		float width = 480.0f;
 		float height = 800.0f;
-		float radius = 0.238f * width;
-		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
-				0.0f, 0.0f, width, height, radius);
 
-		assertTrue(layout.movementCenterX - radius >= 0.0f);
-		assertTrue(layout.movementCenterY - radius >= 0.0f);
-		assertTrue(layout.movementCenterX + radius <= width);
-		assertTrue(layout.movementCenterY + radius <= height);
+		StandardVirtualControlsLayout layout = StandardVirtualControlsLayout.resolve(
+				0.0f, 0.0f, width, height,
+				0.0f, 0.0f, width, height);
+
+		assertEquals(
+				StandardVirtualControlsLayout.Placement.COMPACT_OVERLAY,
+				layout.placement);
+		assertTrue(layout.movementCenterX - layout.movementRadius >= 0.0f);
+		assertTrue(layout.movementCenterY - layout.movementRadius >= 0.0f);
+		assertTrue(layout.movementCenterX + layout.movementRadius <= width);
+		assertTrue(layout.movementCenterY + layout.movementRadius <= height);
 		assertTrue(layout.shoulderLeftX - layout.shoulderWidth * 0.5f >= 0.0f);
 		assertTrue(layout.shoulderRightX + layout.shoulderWidth * 0.5f <= width);
+		assertTrue(layout.actionCenterX + layout.fireSize * 0.5f <= width);
 		assertTrue(layout.bottomLeftX - layout.keySize * 0.5f >= 0.0f);
 		assertTrue(layout.bottomRightX + layout.keySize * 0.5f <= width);
+		assertTrue(layout.bottomRowY + layout.keySize * 0.5f <= height);
 	}
 }
