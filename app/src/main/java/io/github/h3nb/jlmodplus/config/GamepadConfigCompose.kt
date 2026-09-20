@@ -146,6 +146,7 @@ internal fun GamepadDiagnosisDialog(
 ) {
     AdaptiveAlertDialog(
         onDismissRequest = onDismiss,
+        textScrollable = false,
         title = {
             Text(
                 androidx.compose.ui.res.stringResource(R.string.config_gamepad_test),
@@ -180,6 +181,7 @@ internal fun GamepadCalibrationDialog(
 ) {
     AdaptiveAlertDialog(
         onDismissRequest = onCancel,
+        textScrollable = false,
         title = {
             Text(
                 androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibrate),
