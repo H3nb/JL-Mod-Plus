@@ -18,11 +18,13 @@ import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
 /**
- * Parent-owned ABI used by converted guest {@code <clinit>} methods to publish lifecycle tails.
+ * Parent-owned discovery bridge for managed guest-memory roots and converted class lifecycle tails.
  *
- * <p>The callback intentionally does not inspect the class or touch guest state. It only records
- * the class identity for a later worker-side snapshot. Keeping this ABI in the parent loader also
- * prevents a guest archive from shadowing the method emitted by the converter.</p>
+ * <p>Converted guest {@code <clinit>} methods publish completed class identities through
+ * {@link #tailSeen(Class)}, while parent-owned display code can publish guest-defined
+ * {@code Displayable} instances that escape into framework UI state. The bridge records only
+ * identities and roots; managed guest-state traversal remains worker-side. Keeping this bridge in
+ * the parent loader also prevents a guest archive from shadowing the converter ABI.</p>
  */
 public final class MemoryDiscoveryBridge {
 	private static final Object LOCK = new Object();
