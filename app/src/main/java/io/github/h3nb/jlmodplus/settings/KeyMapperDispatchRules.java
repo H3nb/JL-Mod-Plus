@@ -28,6 +28,7 @@ public final class KeyMapperDispatchRules {
 		}
 		switch (keyCode) {
 			case KeyEvent.KEYCODE_HOME:
+			case KeyEvent.KEYCODE_BACK:
 			case KeyEvent.KEYCODE_VOLUME_UP:
 			case KeyEvent.KEYCODE_VOLUME_DOWN:
 				return false;
