@@ -91,6 +91,9 @@ public class KeyMapperActivity extends AppCompatActivity {
 						.fromJson(save, SparseIntArray.class);
 			}
 		}
+		// Back is a host-reserved runtime control. Normalize older profile overrides in the
+		// editor too, so the visible/effective map agrees with runtime dispatch.
+		androidToMIDP.put(KeyEvent.KEYCODE_BACK, KeyMapper.KEY_OPTIONS_MENU);
 		composeController = new KeyMapperComposeController(composeView, new KeyMapperActions() {
 			@Override
 			public void onVirtualKey(int canvasKey) {
@@ -104,6 +107,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 
 			@Override
 			public void onRemoveMappedKey(int androidKeyCode) {
+				if (androidKeyCode == KeyEvent.KEYCODE_BACK) return;
 				androidToMIDP = KeyMapperMappingRules.removeBinding(androidToMIDP, androidKeyCode);
 				showMappingDialog(canvasKey);
 			}
