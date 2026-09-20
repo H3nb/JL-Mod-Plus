@@ -55,6 +55,27 @@ class ControllerLifecycleGateTest {
     }
 
     @Test
+    fun targetBoundaryRequiresNeutralBeforeSameControllerRearms() {
+        val gate = ControllerLifecycleGate()
+        assertEquals(ControllerLifecycleDecision.ACTIVATED, gate.offerMotion(1, neutral = true))
+        assertEquals(ControllerLifecycleDecision.ACTIVE, gate.offerMotion(1, neutral = false))
+
+        gate.beginBoundary(waitForNeutral = true, nextDeviceId = 1)
+        val waiting = gate.snapshot()
+        assertEquals(ControllerLifecycleState.WAIT_NEUTRAL, waiting.state)
+        assertEquals(1, waiting.activeDeviceId)
+        assertEquals(1, waiting.waitingDeviceId)
+
+        assertEquals(ControllerLifecycleDecision.CONSUMED, gate.offerMotion(1, neutral = false))
+        assertEquals(waiting, gate.snapshot())
+
+        assertEquals(ControllerLifecycleDecision.ACTIVATED, gate.offerMotion(1, neutral = true))
+        assertEquals(ControllerLifecycleState.ACTIVE, gate.snapshot().state)
+
+        assertEquals(ControllerLifecycleDecision.ACTIVE, gate.offerMotion(1, neutral = false))
+    }
+
+    @Test
     fun neutralSecondDeviceCanReplaceNoisyWaitingDevice() {
         val gate = ControllerLifecycleGate()
 

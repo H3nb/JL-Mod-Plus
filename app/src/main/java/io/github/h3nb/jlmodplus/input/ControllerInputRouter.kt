@@ -208,14 +208,11 @@ class ControllerInputRouter(
     }
 
     /**
-     * Ends analog host output before a logical host-surface replacement. Digital physical captures
-     * stay target-stamped until their matching UP, so a held key cannot leak an orphan UP into the
-     * replacement surface. The caller advances its ControllerHostTarget generation after this call.
+     * Re-arms continuous controller input across a logical host-surface replacement. Digital
+     * physical captures remain target-stamped until their matching UP, while motion ownership must
+     * return through neutral before the replacement target can accept another continuous output.
      */
     fun onHostTargetChanging() {
-        // A held analog direction must not immediately re-press on the replacement target.
-        // Keep digital physical captures in HostInputRouter as stale-edge tombstones, but put
-        // motion ownership behind the same neutral barrier used by other target boundaries.
         beginBoundary(waitForNeutral = true, nextDeviceId = activeDeviceId)
     }
 
@@ -259,13 +256,10 @@ class ControllerInputRouter(
     private fun syncHostModalBoundary(active: Boolean = host.isControllerModalActive()) {
         if (active == hostModalActive) return
         hostModalActive = active
-        if (active) {
-            host.currentCanvas()?.clearInputState()
-            releaseAll()
-            resetPointerState()
-        } else {
-            beginBoundary(waitForNeutral = true)
-        }
+        if (active) host.currentCanvas()?.clearInputState()
+        // Entering or leaving a host modal is also a continuous-input target boundary. This
+        // covers surfaces such as Screen soft menus that do not have an explicit target callback.
+        beginBoundary(waitForNeutral = true)
     }
 
     /** Handles HAT, stick, and trigger samples. */
@@ -977,8 +971,8 @@ class ControllerInputRouter(
         )
 
     private fun beginBoundary(waitForNeutral: Boolean, nextDeviceId: Int? = activeDeviceId) {
-        // Keep digital captures target-stamped until physical UP. The Displayable identity changes
-        // across this boundary, so their later UP is consumed as stale rather than replayed.
+        // Keep digital captures target-stamped until physical UP. The logical target identity or
+        // generation changes across this boundary, so later stale UP cannot be replayed into it.
         detachPointerConsumer()
         releaseAll()
         lifecycleGate.beginBoundary(waitForNeutral, nextDeviceId)
