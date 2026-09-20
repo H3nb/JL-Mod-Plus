@@ -88,6 +88,10 @@
     <string name="file_picker_selection_unavailable">The selected item is no longer available.</string>
     <string name="invalid_resolution_not_saved">Invalid resolution; changes were not saved!</string>
     <string name="layout_edit_finish">Finish Editing</string>
+    <string name="layout_edit_done">✓ Done</string>
+    <string name="layout_edit_save_changes">Save changes to virtual controls?</string>
+    <string name="layout_edit_discard">Discard</string>
+    <string name="layout_edit_continue">Continue Editing</string>
     <string name="layout_edit_finished">Virtual controls editing finished</string>
     <string name="layout_edit_mode">Virtual controls edit mode: drag to move, pinch to resize</string>
     <string name="layout_scale_mode">Virtual controls edit mode: drag to move, pinch to resize</string>

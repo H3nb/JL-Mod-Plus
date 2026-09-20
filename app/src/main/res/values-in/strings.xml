@@ -50,6 +50,10 @@
     <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD tersebut dan tetap pasang?</string>
     <string name="invalid_resolution_not_saved">Resolusi tidak valid; perubahan tidak disimpan!</string>
     <string name="layout_edit_finish">Selesai Mengedit</string>
+    <string name="layout_edit_done">✓ Selesai</string>
+    <string name="layout_edit_save_changes">Simpan perubahan kontrol virtual?</string>
+    <string name="layout_edit_discard">Buang Perubahan</string>
+    <string name="layout_edit_continue">Lanjut Mengedit</string>
     <string name="layout_edit_finished">Pengeditan kontrol virtual selesai</string>
     <string name="layout_edit_mode">Mode edit kontrol virtual: geser untuk memindahkan, cubit untuk mengubah ukuran</string>
     <string name="layout_scale_mode">Mode edit kontrol virtual: geser untuk memindahkan, cubit untuk mengubah ukuran</string>

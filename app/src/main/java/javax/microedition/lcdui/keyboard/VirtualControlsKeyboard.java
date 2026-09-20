@@ -16,6 +16,7 @@ package javax.microedition.lcdui.keyboard;
 import android.graphics.RectF;
 import android.view.View;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -220,6 +221,15 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public void setLayout(int variant) {
+		applyControlsLayout(variant, true);
+	}
+
+	@Override
+	public void setLayoutForEditing(int variant) {
+		applyControlsLayout(variant, false);
+	}
+
+	private void applyControlsLayout(int variant, boolean persist) {
 		if (!isStandardTemplate(variant)) {
 			standardTemplateEdited = false;
 			endDpad();
@@ -228,8 +238,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				settings.virtualDpadEnabled = false;
 				settings.virtualAnalogEnabled = false;
 			}
-			super.setLayout(variant);
+			if (persist) super.setLayout(variant);
+			else super.setLayoutForEditing(variant);
 			invalidateOverlay();
+			notifyLayoutEditStateChanged();
 			return;
 		}
 
@@ -238,8 +250,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		try {
 			endDpad();
 			endAnalog();
-			// Reuse the legacy key set, then apply deterministic standard-template geometry.
-			super.setLayout(LEGACY_TEMPLATE_NUMBERS_ARROWS);
+			// Build the template in memory first. Only the final Save/persistent selection writes it.
+			super.setLayoutForEditing(LEGACY_TEMPLATE_NUMBERS_ARROWS);
 			applyStandardLegacyVisibility();
 			StandardVirtualControlsLayout layout = standardTemplateLayout();
 			arrangeStandardLegacyButtons(layout);
@@ -264,9 +276,14 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			settings.virtualAnalogCenterY = clamp(movementCenterY, 0.0f, 1.0f);
 			settings.virtualAnalogRadius = movementRadius;
 			rebuildAnalogStick();
-			ProfilesManager.saveConfig(settings);
-			super.onLayoutChanged(variant);
+			if (persist) {
+				ProfilesManager.saveConfig(settings);
+				super.onLayoutChanged(variant);
+			} else {
+				setLayoutVariantInMemory(variant);
+			}
 			invalidateOverlay();
+			notifyLayoutEditStateChanged();
 		} finally {
 			applyingStandardTemplate = false;
 		}
@@ -337,6 +354,76 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	@Override
+	public VirtualKeyboardLayoutSnapshot captureLayoutSnapshot() {
+		return super.captureLayoutSnapshot().withGroupedControls(
+				settings.virtualDpadEnabled,
+				settings.virtualAnalogEnabled,
+				settings.virtualDpadCenterX,
+				settings.virtualDpadCenterY,
+				settings.virtualDpadRadius,
+				settings.virtualAnalogCenterX,
+				settings.virtualAnalogCenterY,
+				settings.virtualAnalogRadius,
+				isStandardTemplate(getLayout()),
+				standardTemplateEdited);
+	}
+
+	@Override
+	public void restoreLayoutSnapshot(VirtualKeyboardLayoutSnapshot snapshot) {
+		if (snapshot == null) return;
+		if (snapshot.isUneditedStandardTemplate()) {
+			applyControlsLayout(snapshot.layoutVariant, false);
+			return;
+		}
+		standardTemplateEdited = snapshot.standardTemplateEdited;
+		if (snapshot.hasGroupedControls) {
+			settings.virtualDpadEnabled = snapshot.dpadEnabled;
+			settings.virtualAnalogEnabled = snapshot.analogEnabled;
+			settings.virtualDpadCenterX = snapshot.dpadCenterX;
+			settings.virtualDpadCenterY = snapshot.dpadCenterY;
+			settings.virtualDpadRadius = snapshot.dpadRadius;
+			settings.virtualAnalogCenterX = snapshot.analogCenterX;
+			settings.virtualAnalogCenterY = snapshot.analogCenterY;
+			settings.virtualAnalogRadius = snapshot.analogRadius;
+		}
+		super.restoreLayoutSnapshot(snapshot);
+		sanitizeStoredGeometry();
+		rebuildAnalogStick();
+		invalidateOverlay();
+		notifyLayoutEditStateChanged();
+	}
+
+	@Override
+	public boolean isLayoutManipulationActive() {
+		return super.isLayoutManipulationActive() ||
+				editPointer >= 0 || editPinchPointer >= 0 ||
+				legacyEditPointer >= 0 || legacyPinchPointer >= 0;
+	}
+
+	@Override
+	public List<RectF> getVisibleLayoutControlBounds() {
+		ArrayList<RectF> bounds = new ArrayList<>(super.getVisibleLayoutControlBounds());
+		if (screenBounds == null) return bounds;
+		if (settings.virtualDpadEnabled) {
+			VirtualDpadGeometry geometry = dpadGeometry();
+			bounds.add(new RectF(
+					geometry.getCenterX() - geometry.getRadius(),
+					geometry.getCenterY() - geometry.getRadius(),
+					geometry.getCenterX() + geometry.getRadius(),
+					geometry.getCenterY() + geometry.getRadius()));
+		}
+		if (settings.virtualAnalogEnabled) {
+			VirtualDpadGeometry geometry = analogGeometry();
+			bounds.add(new RectF(
+					geometry.getCenterX() - geometry.getRadius(),
+					geometry.getCenterY() - geometry.getRadius(),
+					geometry.getCenterX() + geometry.getRadius(),
+					geometry.getCenterY() + geometry.getRadius()));
+		}
+		return bounds;
+	}
+
+	@Override
 	public void setTarget(Canvas canvas) {
 		if (target != canvas) {
 			endDpad();
@@ -382,7 +469,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			standardTemplateReflowPosted = false;
 			if (!applyingStandardTemplate && !standardTemplateEdited && getLayout() == variant &&
 					isStandardTemplate(variant)) {
-				setLayout(variant);
+				if (getLayoutEditMode() == LAYOUT_EOF) setLayout(variant);
+				else setLayoutForEditing(variant);
 			}
 		});
 	}
@@ -390,6 +478,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	@Override
 	public void setLayoutEditMode(int mode) {
 		clearLegacyEditTracking();
+		if (mode != LAYOUT_EOF) overlayVisible = true;
 		super.setLayoutEditMode(mode);
 	}
 
@@ -422,6 +511,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 					legacyPinchPointer = -1;
 					legacyEditX = x;
 					legacyEditY = y;
+					notifyLayoutEditStateChanged();
 				}
 				return consumed;
 			}
@@ -495,6 +585,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			editPinchPointer = -1;
 			resetMoveOffsetFromPrimary();
 			invalidateOverlay();
+			notifyLayoutEditStateChanged();
 			return true;
 		}
 		if (pointer == editPointer) {
@@ -545,6 +636,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		endDpad();
 		endAnalog();
 		super.cancel();
+		notifyLayoutEditStateChanged();
 	}
 
 	@Override
@@ -688,6 +780,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		editOffsetX = x - geometry.getCenterX();
 		editOffsetY = y - geometry.getCenterY();
 		invalidateOverlay();
+		notifyLayoutEditStateChanged();
 		return true;
 	}
 
@@ -702,6 +795,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		pinchStartDistance = Math.max(1.0f,
 				(float) Math.hypot(editPinchX - editPointerX, editPinchY - editPointerY));
 		pinchStartRadius = geometry.getRadius();
+		notifyLayoutEditStateChanged();
 		return true;
 	}
 
@@ -716,6 +810,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				editControl,
 				(cx - screenBounds.left) / Math.max(1.0f, screenBounds.width()),
 				(cy - screenBounds.top) / Math.max(1.0f, screenBounds.height()));
+		notifyLayoutEditStateChanged();
 	}
 
 	private void updateGroupedPinch() {
@@ -724,6 +819,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float radius = pinchStartRadius * distance / Math.max(1.0f, pinchStartDistance);
 		float shortest = Math.max(1.0f, Math.min(screenBounds.width(), screenBounds.height()));
 		setControlRadius(editControl, radius / shortest);
+		notifyLayoutEditStateChanged();
 	}
 
 	private void resetMoveOffsetFromPrimary() {
@@ -748,6 +844,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		editPinchPointer = -1;
 		editControl = EditControl.NONE;
 		invalidateOverlay();
+		notifyLayoutEditStateChanged();
 	}
 
 	private boolean beginLegacyPinch(int pointer, float x, float y) {
@@ -773,6 +870,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		legacyPinchOriginY = legacyEditY;
 		legacyPinchStartSpanX = Math.abs(legacyPinchX - legacyEditX);
 		legacyPinchStartSpanY = Math.abs(legacyPinchY - legacyEditY);
+		notifyLayoutEditStateChanged();
 		return true;
 	}
 
@@ -809,6 +907,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			clearLegacyEditTracking();
 		}
 		invalidateOverlay();
+		notifyLayoutEditStateChanged();
 	}
 
 	private void clearLegacyEditTracking() {
@@ -822,6 +921,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		legacyPinchOriginY = 0.0f;
 		legacyPinchStartSpanX = 0.0f;
 		legacyPinchStartSpanY = 0.0f;
+		notifyLayoutEditStateChanged();
 	}
 
 	private void paintEditGrid(CanvasWrapper graphics) {

@@ -36,7 +36,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
@@ -51,6 +53,10 @@ import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 
 public class VirtualKeyboard implements Overlay, Runnable {
+	public interface LayoutEditObserver {
+		void onLayoutEditStateChanged();
+	}
+
 	private static final String TAG = VirtualKeyboard.class.getSimpleName();
 
 	private static final String ARROW_LEFT = "←";
@@ -203,6 +209,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private int controllerKeypadSelection;
 	private VirtualKey controllerKeypadPressed;
 	private long pointerSourceSequence;
+	private LayoutEditObserver layoutEditObserver;
 
 	public VirtualKeyboard(ProfileModel settings) {
 		this.settings = settings;
@@ -500,31 +507,116 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		return layoutVariant;
 	}
 
+	public void setLayoutEditObserver(LayoutEditObserver observer) {
+		layoutEditObserver = observer;
+	}
+
+	protected final void notifyLayoutEditStateChanged() {
+		LayoutEditObserver observer = layoutEditObserver;
+		if (observer != null) observer.onLayoutEditStateChanged();
+	}
+
+	public boolean isLayoutManipulationActive() {
+		return editedIndex >= 0;
+	}
+
+	public RectF getLayoutEditBounds() {
+		return screen == null ? null : new RectF(screen);
+	}
+
+	public List<RectF> getVisibleLayoutControlBounds() {
+		ArrayList<RectF> bounds = new ArrayList<>();
+		for (VirtualKey key : keypad) {
+			if (key.visible) bounds.add(new RectF(key.rect));
+		}
+		return bounds;
+	}
+
+	public VirtualKeyboardLayoutSnapshot captureLayoutSnapshot() {
+		boolean[] visible = new boolean[keypad.length];
+		int[] snapOrigins = new int[keypad.length];
+		int[] snapModes = new int[keypad.length];
+		float[] snapOffsetX = new float[keypad.length];
+		float[] snapOffsetY = new float[keypad.length];
+		for (int i = 0; i < keypad.length; i++) {
+			VirtualKey key = keypad[i];
+			visible[i] = key.visible;
+			snapOrigins[i] = key.snapOrigin;
+			snapModes[i] = key.snapMode;
+			snapOffsetX[i] = key.snapOffset.x;
+			snapOffsetY[i] = key.snapOffset.y;
+		}
+		return VirtualKeyboardLayoutSnapshot.legacy(
+				layoutVariant,
+				visible,
+				snapOrigins,
+				snapModes,
+				snapOffsetX,
+				snapOffsetY,
+				keyScales);
+	}
+
+	public void restoreLayoutSnapshot(VirtualKeyboardLayoutSnapshot snapshot) {
+		if (snapshot == null || !snapshot.matchesLegacyShape(keypad.length, keyScales.length)) return;
+		layoutVariant = snapshot.layoutVariant;
+		for (int i = 0; i < keypad.length; i++) {
+			VirtualKey key = keypad[i];
+			key.visible = snapshot.visible[i];
+			key.snapOrigin = snapshot.snapOrigins[i];
+			key.snapMode = snapshot.snapModes[i];
+			key.snapOffset.set(snapshot.snapOffsetX[i], snapshot.snapOffsetY[i]);
+			key.snapValid = false;
+		}
+		System.arraycopy(snapshot.keyScales, 0, keyScales, 0, keyScales.length);
+		for (int group = 0; group < keyScaleGroups.length; group++) {
+			resizeKeyGroup(group);
+		}
+		if (screen != null) snapKeys();
+		if (overlayView != null) overlayView.postInvalidate();
+		if (target != null && target.isShown()) target.updateSize();
+		notifyLayoutEditStateChanged();
+	}
+
 	public float getPhoneKeyboardHeight(float w, float h) {
 		return PHONE_KEY_ROWS * getKeySize(w, h) * PHONE_KEY_SCALE_Y;
 	}
 
 	public void setLayout(int variant) {
+		applyLayout(variant, true);
+	}
+
+	/** Applies a layout for the active editor transaction without writing it to persistent storage. */
+	public void setLayoutForEditing(int variant) {
+		applyLayout(variant, false);
+	}
+
+	protected final void setLayoutVariantInMemory(int variant) {
+		layoutVariant = variant;
+	}
+
+	private void applyLayout(int variant, boolean persist) {
+		int previousVariant = layoutVariant;
 		resetLayout(variant);
 		if (variant == TYPE_CUSTOM) {
 			try {
 				readLayout();
 			} catch (IOException ioe) {
 				ioe.printStackTrace();
-				resetLayout(layoutVariant);
+				resetLayout(previousVariant);
 				return;
 			}
 		}
 		layoutVariant = variant;
-		onLayoutChanged(variant);
+		if (persist) onLayoutChanged(variant);
 		for (int group = 0; group < keyScaleGroups.length; group++) {
 			resizeKeyGroup(group);
 		}
-		snapKeys();
-		overlayView.postInvalidate();
+		if (screen != null) snapKeys();
+		if (overlayView != null) overlayView.postInvalidate();
 		if (target != null && target.isShown()) {
 			target.updateSize();
 		}
+		notifyLayoutEditStateChanged();
 	}
 
 	private void saveLayout() {
@@ -741,7 +833,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		for (int i = 0; i < KEYBOARD_SIZE; i++) {
 			keypad[i].visible = !states[i];
 		}
-		overlayView.postInvalidate();
+		if (overlayView != null) overlayView.postInvalidate();
+		if (layoutEditMode != LAYOUT_EOF) notifyLayoutEditStateChanged();
 	}
 
 	@Override
@@ -951,8 +1044,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		highlightGroup(-1);
 		handler.removeCallbacks(this);
 		visible = true;
-		overlayView.postInvalidate();
+		if (overlayView != null) overlayView.postInvalidate();
 		hide();
+		notifyLayoutEditStateChanged();
 	}
 
 	private void resizeKey(int key, float w, float h) {
@@ -1051,6 +1145,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 			handler.postDelayed(this, delay);
 		}
+		if (layoutEditMode != LAYOUT_EOF) notifyLayoutEditStateChanged();
 	}
 
 	private float getKeySize(float screenWidth, float screenHeight) {
@@ -1185,6 +1280,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				offsetY = y;
 			}
 		}
+		if (consumed && layoutEditMode != LAYOUT_EOF) notifyLayoutEditStateChanged();
 		return consumed;
 	}
 
@@ -1280,6 +1376,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				overlayView.postInvalidate();
 			}
 		}
+		if (consumed && layoutEditMode != LAYOUT_EOF) notifyLayoutEditStateChanged();
 		return consumed;
 	}
 
@@ -1331,6 +1428,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			editedIndex = -1;
 			highlightGroup(-1);
 		}
+		if (consumed && layoutEditMode != LAYOUT_EOF) notifyLayoutEditStateChanged();
 		return consumed;
 	}
 
@@ -1361,6 +1459,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	@Override
 	public void cancel() {
 		closeControllerKeypad();
+		editedIndex = -1;
+		highlightGroup(-1);
 		for (int pointer = 0; pointer < associatedKeys.length; pointer++) {
 			VirtualKey key = associatedKeys[pointer];
 			if (key != null) {
@@ -1379,6 +1479,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			key.selected = false;
 		}
 		if (overlayView != null) overlayView.postInvalidate();
+		notifyLayoutEditStateChanged();
 	}
 
 	@Override

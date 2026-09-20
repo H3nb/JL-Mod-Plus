@@ -70,6 +70,9 @@ interface RuntimeHostDialogActions {
     fun onExitConfirmed(openSettings: Boolean)
     fun onHideButtonsConfirmed(states: BooleanArray)
     fun onSaveVirtualKeyboard(saveScreenParams: Boolean)
+    fun onVirtualKeyboardEditSaved(saveScreenParams: Boolean) = Unit
+    fun onVirtualKeyboardEditDiscarded() = Unit
+    fun onVirtualKeyboardEditContinued() = Unit
     fun onLayoutSelected(index: Int)
     fun onLayoutEditGuideConfirmed(dontShowAgain: Boolean) = Unit
 }
@@ -80,6 +83,10 @@ internal sealed interface RuntimeHostDialogState {
     data object ExitConfirmation : RuntimeHostDialogState
     data class HideButtons(val names: List<String>, val checked: BooleanArray) : RuntimeHostDialogState
     data class SaveVirtualKeyboard(
+        val phone: Boolean,
+        val keepScreenPreferred: Boolean,
+    ) : RuntimeHostDialogState
+    data class FinishVirtualKeyboardEdit(
         val phone: Boolean,
         val keepScreenPreferred: Boolean,
     ) : RuntimeHostDialogState
@@ -117,6 +124,11 @@ internal fun RuntimeHostDialogs(
             onDismiss = onDismiss,
         )
         is RuntimeHostDialogState.SaveVirtualKeyboard -> SaveVirtualKeyboardDialog(
+            state = state,
+            actions = actions,
+            onDismiss = onDismiss,
+        )
+        is RuntimeHostDialogState.FinishVirtualKeyboardEdit -> FinishVirtualKeyboardEditDialog(
             state = state,
             actions = actions,
             onDismiss = onDismiss,
@@ -372,6 +384,93 @@ private fun HideButtonsDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun FinishVirtualKeyboardEditDialog(
+    state: RuntimeHostDialogState.FinishVirtualKeyboardEdit,
+    actions: RuntimeHostDialogActions,
+    onDismiss: () -> Unit,
+) {
+    var saveScreenParams by remember(state) { mutableStateOf(state.keepScreenPreferred) }
+    val layout = runtimeDialogLayout()
+    val maxContentHeight = runtimeDialogListHeight()
+
+    fun continueEditing() {
+        onDismiss()
+        actions.onVirtualKeyboardEditContinued()
+    }
+
+    AlertDialog(
+        textScrollable = false,
+        modifier = layout.modifier,
+        properties = layout.properties,
+        onDismissRequest = ::continueEditing,
+        title = { Text(stringResource(R.string.CONFIRMATION_REQUIRED)) },
+        text = {
+            val scrollState = rememberScrollState()
+            val canScrollForward = rememberScrollCanScrollForward(scrollState)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxContentHeight),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxContentHeight)
+                        .verticalScroll(scrollState),
+                ) {
+                    Text(stringResource(R.string.layout_edit_save_changes))
+                    if (state.phone) {
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            headlineContent = {
+                                Text(stringResource(R.string.opt_save_screen_params))
+                            },
+                            leadingContent = {
+                                Checkbox(checked = saveScreenParams, onCheckedChange = null)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .toggleable(value = saveScreenParams, role = Role.Checkbox) {
+                                    saveScreenParams = !saveScreenParams
+                                },
+                        )
+                    }
+                }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
+        },
+        confirmButton = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = {
+                    onDismiss()
+                    actions.onVirtualKeyboardEditDiscarded()
+                }) {
+                    Text(stringResource(R.string.layout_edit_discard))
+                }
+                TextButton(onClick = ::continueEditing) {
+                    Text(stringResource(R.string.layout_edit_continue))
+                }
+                Button(onClick = {
+                    onDismiss()
+                    actions.onVirtualKeyboardEditSaved(saveScreenParams)
+                }) {
+                    Text(stringResource(R.string.save))
+                }
             }
         },
     )

@@ -464,6 +464,83 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
+    fun finishVirtualKeyboardEditDialog_exposesExplicitTransactionalActions() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
+                        phone = false,
+                        keepScreenPreferred = false,
+                    ),
+                    actions = RecordingRuntimeHostDialogActions(events),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Save changes to virtual controls?").assertIsDisplayed()
+        composeRule.onNodeWithText("Discard").assertIsDisplayed()
+        composeRule.onNodeWithText("Continue Editing").assertIsDisplayed()
+        composeRule.onNodeWithText("Save").assertIsDisplayed()
+
+        composeRule.onNodeWithText("Continue Editing").performClick()
+        assertEquals(listOf("dismiss", "edit-continue"), events)
+    }
+
+    @Test
+    fun finishVirtualKeyboardEditDialog_controllerBackContinuesEditing() {
+        val events = mutableListOf<String>()
+        var handler: ControllerHostCommandHandler? = null
+        composeRule.setContent {
+            JLModPlusTheme {
+                ControllerDialogInputScope(
+                    onControllerKeyEvent = { false },
+                    onControllerHostCommandHandlerChanged = { handler = it },
+                ) {
+                    RuntimeHostDialogs(
+                        state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
+                            phone = false,
+                            keepScreenPreferred = false,
+                        ),
+                        actions = RecordingRuntimeHostDialogActions(events),
+                        onDismiss = { events += "dismiss" },
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle {
+            checkNotNull(handler)(HostCommand.Back, true)
+        }
+
+        assertEquals(listOf("dismiss", "edit-continue"), events)
+    }
+
+    @Test
+    fun finishVirtualKeyboardEditDialog_preservesSaveScreenParamsOption() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
+                        phone = true,
+                        keepScreenPreferred = false,
+                    ),
+                    actions = RecordingRuntimeHostDialogActions(events),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Save Screen Parameters").performClick()
+        composeRule.onNodeWithText("Save").performClick()
+
+        assertEquals(listOf("dismiss", "edit-save:true"), events)
+    }
+
+    @Test
     fun runtimeLayoutDialog_dispatchesOnlyTheConfirmedSelection() {
         val events = mutableListOf<String>()
         composeRule.setContent {
@@ -582,6 +659,18 @@ private class RecordingRuntimeHostDialogActions(
 
     override fun onSaveVirtualKeyboard(saveScreenParams: Boolean) {
         events += "save"
+    }
+
+    override fun onVirtualKeyboardEditSaved(saveScreenParams: Boolean) {
+        events += "edit-save:$saveScreenParams"
+    }
+
+    override fun onVirtualKeyboardEditDiscarded() {
+        events += "edit-discard"
+    }
+
+    override fun onVirtualKeyboardEditContinued() {
+        events += "edit-continue"
     }
 
     override fun onLayoutSelected(index: Int) {

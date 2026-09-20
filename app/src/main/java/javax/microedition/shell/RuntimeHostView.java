@@ -26,6 +26,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.core.content.ContextCompat;
@@ -43,6 +44,8 @@ public final class RuntimeHostView {
 	public final ComposeView toolbar;
 	public final FrameLayout displayableContainer;
 	public final OverlayView overlay;
+	/** Editor-only Activity-owned chrome. It never participates in virtual-key input/persistence. */
+	public final AppCompatButton layoutEditDone;
 	/** Small Activity-owned bubble. It is a normal View in :midlet, not a system overlay. */
 	public final View memoryEditorBubble;
 	public final View memoryEditorBubbleIcon;
@@ -119,6 +122,27 @@ public final class RuntimeHostView {
 		FrameLayout.LayoutParams noticeParams = new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
 		root.addView(notices, noticeParams);
+
+		// Layout editing is the only state that needs this control, so keep it out of the permanent
+		// toolbar and out of the virtual-key model. A plain Android Button is enough for one action.
+		AppCompatButton done = new AppCompatButton(context);
+		done.setText(context.getString(R.string.layout_edit_done));
+		done.setAllCaps(false);
+		done.setGravity(Gravity.CENTER);
+		done.setTextColor(resolveThemeColor(
+				context, android.R.attr.textColorPrimaryInverse, Color.WHITE));
+		done.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+		done.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+		done.setMinWidth(dp(context, 80));
+		done.setMinHeight(dp(context, 48));
+		done.setPadding(dp(context, 16), dp(context, 8), dp(context, 16), dp(context, 8));
+		done.setElevation(dp(context, 8));
+		done.setVisibility(View.GONE);
+		done.setSupportBackgroundTintList(
+				ColorStateList.valueOf(LegacyThemeColors.accent(context)));
+		root.addView(done, new FrameLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+		layoutEditDone = done;
 	}
 
 	private static int dp(Context context, int value) {

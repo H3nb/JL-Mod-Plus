@@ -27,6 +27,7 @@ import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.RectF;
 import android.media.AudioManager;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -42,6 +43,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.activity.OnBackPressedCallback;
@@ -60,7 +62,9 @@ import androidx.preference.PreferenceManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import javax.microedition.lcdui.Canvas;
@@ -70,6 +74,7 @@ import javax.microedition.lcdui.Screen;
 import javax.microedition.lcdui.ViewHandler;
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
+import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutSnapshot;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
@@ -130,6 +135,12 @@ public class MicroActivity extends AppCompatActivity {
 	private int virtualDisplayPaddingBottom;
 	private View overlayAnchor;
 	private SharedPreferences defaultPreferences;
+	private VirtualKeyboardLayoutSnapshot virtualKeyboardEditBaseline;
+	private boolean virtualKeyboardEditFinishPending;
+	private EditorDonePlacement.Box layoutEditDonePlacement;
+	private EditorDonePlacement.Box layoutEditDoneEditorBounds;
+	private final Runnable virtualKeyboardEditorChromeUpdate =
+			this::refreshVirtualKeyboardEditorChrome;
 	private final SharedPreferences.OnSharedPreferenceChangeListener canvasThemeListener =
 			(sharedPreferences, key) -> {
 				if (PREF_THEME.equals(key)) refreshCanvasBackground();
@@ -146,6 +157,7 @@ public class MicroActivity extends AppCompatActivity {
 		ContextHolder.setCurrentActivity(this);
 		binding = new RuntimeHostView(this);
 		setContentView(binding.getRoot());
+		binding.layoutEditDone.setOnClickListener(ignored -> requestFinishVirtualKeyboardEdit());
 		runtimeNoticeController = new TransientNoticeComposeController(binding.notices);
 		virtualDisplayPaddingLeft = binding.virtualDisplay.getPaddingLeft();
 		virtualDisplayPaddingTop = binding.virtualDisplay.getPaddingTop();
@@ -279,6 +291,7 @@ public class MicroActivity extends AppCompatActivity {
 		int orientation = microLoader.getOrientation();
 		if (vk != null) {
 			vk.setView(binding.overlay);
+			vk.setLayoutEditObserver(this::scheduleVirtualKeyboardEditorChromeUpdate);
 			binding.overlay.addLayer(vk);
 			if (vk.isPhone()) {
 				orientation = ORIENTATION_PORTRAIT;
@@ -292,10 +305,12 @@ public class MicroActivity extends AppCompatActivity {
 		getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
 			@Override
 			public void handleOnBackPressed() {
-				// Android system Back is distinct from physical/remapped key events. Keep the
-				// established short-Back action without synthesizing a KEYCODE_BACK event.
+				// A visible host surface keeps first refusal. On the bare editing surface, short
+				// Back requests the same transactional finish flow as the floating Done control.
 				if (isRuntimeMenuVisible()) {
 					closeOptionsMenu();
+				} else if (isVirtualKeyboardLayoutEditing()) {
+					requestFinishVirtualKeyboardEdit();
 				} else {
 					openOptionsMenu();
 				}
@@ -396,7 +411,7 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onFinishVirtualKeyboardLayout() {
-						finishVirtualKeyboardEdit();
+						requestFinishVirtualKeyboardEdit();
 					}
 
 					@Override
@@ -451,6 +466,21 @@ public class MicroActivity extends AppCompatActivity {
 					@Override
 					public void onSaveVirtualKeyboard(boolean saveScreenParams) {
 						applyVirtualKeyboardSave(saveScreenParams);
+					}
+
+					@Override
+					public void onVirtualKeyboardEditSaved(boolean saveScreenParams) {
+						saveVirtualKeyboardEdit(saveScreenParams);
+					}
+
+					@Override
+					public void onVirtualKeyboardEditDiscarded() {
+						discardVirtualKeyboardEdit();
+					}
+
+					@Override
+					public void onVirtualKeyboardEditContinued() {
+						continueVirtualKeyboardEdit();
 					}
 
 					@Override
@@ -577,10 +607,15 @@ public class MicroActivity extends AppCompatActivity {
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 		refreshCanvasBackground();
+		if (binding != null) binding.getRoot().post(this::updateOverlayLocation);
+		scheduleVirtualKeyboardEditorChromeUpdate();
 	}
 
 	@Override
 	protected void onDestroy() {
+		if (binding != null) binding.getRoot().removeCallbacks(virtualKeyboardEditorChromeUpdate);
+		VirtualKeyboard vk = ContextHolder.getVk();
+		if (vk != null) vk.setLayoutEditObserver(null);
 		if (controllerInputRouter != null) {
 			controllerInputRouter.close();
 			controllerInputRouter = null;
@@ -872,6 +907,7 @@ public class MicroActivity extends AppCompatActivity {
 		binding.overlay.setLocation(
 				containerLocation[0] - overlayLocation[0],
 				containerLocation[1] - overlayLocation[1]);
+		scheduleVirtualKeyboardEditorChromeUpdate();
 	}
 
 	@Nullable
@@ -981,6 +1017,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (controllerInputRouter != null) controllerInputRouter.onHostTargetChanging();
 		controllerTargetGeneration = controllerTargetGeneration == Long.MAX_VALUE
 				? 1L : controllerTargetGeneration + 1L;
+		scheduleVirtualKeyboardEditorChromeUpdate();
 	}
 
 	@Override
@@ -1059,8 +1096,15 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		boolean shortPress =
+				(event.getFlags() & (KeyEvent.FLAG_LONG_PRESS | KeyEvent.FLAG_CANCELED)) == 0;
+		if (keyCode == KeyEvent.KEYCODE_BACK && shortPress &&
+				!isRuntimeMenuVisible() && isVirtualKeyboardLayoutEditing()) {
+			requestFinishVirtualKeyboardEdit();
+			return true;
+		}
 		if ((keyCode == menuKey || keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_MENU)
-				&& (event.getFlags() & (KeyEvent.FLAG_LONG_PRESS | KeyEvent.FLAG_CANCELED)) == 0) {
+				&& shortPress) {
 			toggleRuntimeMenuFromInput();
 			return true;
 		}
@@ -1095,22 +1139,188 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void startVirtualKeyboardLayoutEdit() {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk == null) {
+		if (vk == null) return;
+		if (virtualKeyboardEditBaseline == null) {
+			virtualKeyboardEditBaseline = vk.captureLayoutSnapshot();
+			layoutEditDonePlacement = null;
+			layoutEditDoneEditorBounds = null;
+		}
+		virtualKeyboardEditFinishPending = false;
+		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
+		updateRuntimeMenuState(current);
+		scheduleVirtualKeyboardEditorChromeUpdate();
+	}
+
+	private boolean isVirtualKeyboardLayoutEditing() {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		return virtualKeyboardEditBaseline != null &&
+				vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF;
+	}
+
+	private void requestFinishVirtualKeyboardEdit() {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		VirtualKeyboardLayoutSnapshot baseline = virtualKeyboardEditBaseline;
+		if (vk == null || baseline == null ||
+				vk.getLayoutEditMode() == VirtualKeyboard.LAYOUT_EOF) {
 			return;
 		}
-		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
+		if (baseline.equals(vk.captureLayoutSnapshot())) {
+			finishCleanVirtualKeyboardEdit(vk);
+			return;
+		}
+		if (runtimeMenuController == null) return;
+		virtualKeyboardEditFinishPending = true;
+		hideVirtualKeyboardEditorDone();
+		runtimeMenuController.showFinishVirtualKeyboardEdit(vk.isPhone(), false);
+	}
+
+	private void finishCleanVirtualKeyboardEdit(VirtualKeyboard vk) {
+		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+		clearVirtualKeyboardEditTransaction();
+		toast(R.string.layout_edit_finished);
 		updateRuntimeMenuState(current);
 	}
 
-	private void finishVirtualKeyboardEdit() {
+	private void saveVirtualKeyboardEdit(boolean saveScreenParams) {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk == null) {
-			return;
-		}
+		if (vk == null || virtualKeyboardEditBaseline == null) return;
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+		applyVirtualKeyboardSave(saveScreenParams);
+		clearVirtualKeyboardEditTransaction();
 		toast(R.string.layout_edit_finished);
 		updateRuntimeMenuState(current);
-		showSaveVkAlert(false);
+	}
+
+	private void discardVirtualKeyboardEdit() {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		VirtualKeyboardLayoutSnapshot baseline = virtualKeyboardEditBaseline;
+		if (vk == null || baseline == null) return;
+		vk.restoreLayoutSnapshot(baseline);
+		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+		clearVirtualKeyboardEditTransaction();
+		toast(R.string.layout_edit_finished);
+		updateRuntimeMenuState(current);
+	}
+
+	private void continueVirtualKeyboardEdit() {
+		if (!isVirtualKeyboardLayoutEditing()) return;
+		virtualKeyboardEditFinishPending = false;
+		updateRuntimeMenuState(current);
+		scheduleVirtualKeyboardEditorChromeUpdate();
+	}
+
+	private void clearVirtualKeyboardEditTransaction() {
+		virtualKeyboardEditBaseline = null;
+		virtualKeyboardEditFinishPending = false;
+		layoutEditDonePlacement = null;
+		layoutEditDoneEditorBounds = null;
+		hideVirtualKeyboardEditorDone();
+	}
+
+	private void scheduleVirtualKeyboardEditorChromeUpdate() {
+		if (binding == null) return;
+		binding.getRoot().removeCallbacks(virtualKeyboardEditorChromeUpdate);
+		binding.getRoot().post(virtualKeyboardEditorChromeUpdate);
+	}
+
+	private void refreshVirtualKeyboardEditorChrome() {
+		if (binding == null || !isVirtualKeyboardLayoutEditing() ||
+				virtualKeyboardEditFinishPending || isRuntimeMenuVisible() ||
+				!(current instanceof Canvas)) {
+			hideVirtualKeyboardEditorDone();
+			return;
+		}
+		VirtualKeyboard vk = ContextHolder.getVk();
+		View anchor = overlayAnchor;
+		View root = binding.getRoot();
+		if (vk == null || anchor == null || !anchor.isLaidOut() || !root.isLaidOut() ||
+				vk.isLayoutManipulationActive()) {
+			hideVirtualKeyboardEditorDone();
+			return;
+		}
+
+		RectF localEditorBounds = vk.getLayoutEditBounds();
+		if (localEditorBounds == null || localEditorBounds.width() <= 0.0f ||
+				localEditorBounds.height() <= 0.0f) {
+			hideVirtualKeyboardEditorDone();
+			return;
+		}
+
+		int[] anchorLocation = new int[2];
+		int[] rootLocation = new int[2];
+		anchor.getLocationOnScreen(anchorLocation);
+		root.getLocationOnScreen(rootLocation);
+		float offsetX = anchorLocation[0] - rootLocation[0];
+		float offsetY = anchorLocation[1] - rootLocation[1];
+
+		RectF editorBounds = new RectF(localEditorBounds);
+		editorBounds.offset(offsetX, offsetY);
+		if (!editorBounds.intersect(0.0f, 0.0f, root.getWidth(), root.getHeight()) ||
+				editorBounds.width() <= 0.0f || editorBounds.height() <= 0.0f) {
+			hideVirtualKeyboardEditorDone();
+			return;
+		}
+
+		EditorDonePlacement.Box usable = toPlacementBox(editorBounds);
+		if (layoutEditDoneEditorBounds != null &&
+				(Math.abs(layoutEditDoneEditorBounds.width() - usable.width()) > 0.5f ||
+						Math.abs(layoutEditDoneEditorBounds.height() - usable.height()) > 0.5f)) {
+			// Orientation/viewport-size changes get a fresh spatial choice; semantic baseline stays.
+			layoutEditDonePlacement = null;
+		}
+		layoutEditDoneEditorBounds = usable;
+
+		List<EditorDonePlacement.Box> obstacles = new ArrayList<>();
+		for (RectF localControl : vk.getVisibleLayoutControlBounds()) {
+			RectF control = new RectF(localControl);
+			control.offset(offsetX, offsetY);
+			obstacles.add(toPlacementBox(control));
+		}
+
+		View done = binding.layoutEditDone;
+		done.measure(
+				View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+				View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+		float desiredWidth = Math.max(done.getMeasuredWidth(), dpToPx(80));
+		float desiredHeight = Math.max(done.getMeasuredHeight(), dpToPx(48));
+		EditorDonePlacement.Box placement = EditorDonePlacement.place(
+				usable,
+				desiredWidth,
+				desiredHeight,
+				dpToPx(10),
+				obstacles,
+				layoutEditDonePlacement);
+		if (placement == null) {
+			hideVirtualKeyboardEditorDone();
+			return;
+		}
+
+		FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) done.getLayoutParams();
+		params.width = Math.max(1, Math.round(placement.width()));
+		params.height = Math.max(1, Math.round(placement.height()));
+		done.setLayoutParams(params);
+		done.setX(placement.left);
+		done.setY(placement.top);
+		done.setEnabled(true);
+		done.setVisibility(View.VISIBLE);
+		layoutEditDonePlacement = placement;
+	}
+
+	private void hideVirtualKeyboardEditorDone() {
+		if (binding == null) return;
+		binding.layoutEditDone.setEnabled(false);
+		binding.layoutEditDone.setVisibility(View.GONE);
+	}
+
+	private EditorDonePlacement.Box toPlacementBox(RectF rect) {
+		return new EditorDonePlacement.Box(rect.left, rect.top, rect.right, rect.bottom);
+	}
+
+	private int dpToPx(int value) {
+		return Math.round(TypedValue.applyDimension(
+				TypedValue.COMPLEX_UNIT_DIP,
+				value,
+				getResources().getDisplayMetrics()));
 	}
 
 	@SuppressLint("CheckResult")
@@ -1179,7 +1389,11 @@ public class MicroActivity extends AppCompatActivity {
 			return;
 		}
 		vk.setKeysVisibility(changed.clone());
-		showSaveVkAlert(true);
+		if (isVirtualKeyboardLayoutEditing()) {
+			scheduleVirtualKeyboardEditorChromeUpdate();
+		} else {
+			showSaveVkAlert(true);
+		}
 	}
 
 	private void applyVirtualKeyboardSave(boolean saveScreenParams) {
@@ -1199,7 +1413,8 @@ public class MicroActivity extends AppCompatActivity {
 				.getStringArray(R.array.PREF_VK_TYPE_ENTRIES).length) {
 			return;
 		}
-		vk.setLayout(index);
+		if (isVirtualKeyboardLayoutEditing()) vk.setLayoutForEditing(index);
+		else vk.setLayout(index);
 		if (vk.isPhone()) {
 			setOrientation(ORIENTATION_PORTRAIT);
 		} else if (microLoader != null) {

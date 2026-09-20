@@ -289,6 +289,8 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
 
     fun closeMenu() {
         if (!isMenuVisible()) return
+        val continueVirtualKeyboardEdit =
+            hostDialogState is RuntimeHostDialogState.FinishVirtualKeyboardEdit
         changeControllerSurface {
             menuVisible = false
             limitFpsVisible = false
@@ -297,6 +299,9 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             virtualKeyboardPage = false
             controllerFocusIndex = 0
             controllerFocusVisible = false
+        }
+        if (continueVirtualKeyboardEdit) {
+            hostDialogActions?.onVirtualKeyboardEditContinued()
         }
     }
 
@@ -395,6 +400,15 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     fun showSaveVirtualKeyboard(phone: Boolean, keepScreenPreferred: Boolean) {
         changeControllerSurface {
             hostDialogState = RuntimeHostDialogState.SaveVirtualKeyboard(phone, keepScreenPreferred)
+        }
+    }
+
+    fun showFinishVirtualKeyboardEdit(phone: Boolean, keepScreenPreferred: Boolean) {
+        changeControllerSurface {
+            hostDialogState = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
+                phone,
+                keepScreenPreferred,
+            )
         }
     }
 

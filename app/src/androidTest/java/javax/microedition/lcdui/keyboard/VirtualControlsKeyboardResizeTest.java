@@ -240,6 +240,37 @@ public class VirtualControlsKeyboardResizeTest {
         assertTrue(after.height() > before.height());
     }
 
+    @Test
+    public void semanticSnapshotRestoresLegacyEditAfterViewportChange() throws Exception {
+        VirtualKeyboardLayoutSnapshot baseline = keyboard.captureLayoutSnapshot();
+        RectF key = rectField(keyByLabel("L"));
+
+        assertTrue(keyboard.pointerPressed(0, key.centerX(), key.centerY()));
+        assertTrue(keyboard.pointerDragged(0, key.centerX() + 120f, key.centerY() + 40f));
+        assertTrue(keyboard.pointerReleased(0, key.centerX() + 120f, key.centerY() + 40f));
+        assertFalse(baseline.equals(keyboard.captureLayoutSnapshot()));
+
+        keyboard.resize(new RectF(0f, 0f, 600f, 1200f), 0f, 0f, 600f, 1200f);
+        keyboard.restoreLayoutSnapshot(baseline);
+
+        assertEquals(baseline, keyboard.captureLayoutSnapshot());
+    }
+
+    @Test
+    public void untouchedStandardTemplateStaysCleanAcrossOrientationReflow() {
+        keyboard.resize(new RectF(0f, 0f, 945f, 2048f), 18f, 0f, 812f, 1118f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        VirtualKeyboardLayoutSnapshot baseline = keyboard.captureLayoutSnapshot();
+
+        keyboard.resize(
+                new RectF(0f, 0f, 1536f, 709f),
+                503f, 0f, 1034f, 709f);
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+        assertEquals(baseline, keyboard.captureLayoutSnapshot());
+    }
+
     private Object keyByLabel(String expected) throws Exception {
         for (Object key : keypad) {
             Field label = findField(key.getClass(), "label");
