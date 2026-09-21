@@ -803,8 +803,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	@Override
 	public boolean pointerDragged(int pointer, float x, float y) {
 		if (editControl != EditControl.NONE) {
-			standardTemplateEdited |= isStandardTemplate(getLayout());
 			if (pointer == editPointer) {
+				markActiveOrientationEdited();
 				editPointerX = x;
 				editPointerY = y;
 				if (editPinchPointer >= 0) updateGroupedPinch();
@@ -813,6 +813,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				return true;
 			}
 			if (pointer == editPinchPointer) {
+				markActiveOrientationEdited();
 				editPinchX = x;
 				editPinchY = y;
 				updateGroupedPinch();
@@ -821,8 +822,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			}
 		}
 		if (legacyEditPointer >= 0) {
-			standardTemplateEdited |= isStandardTemplate(getLayout());
 			if (pointer == legacyEditPointer) {
+				markActiveOrientationEdited();
 				legacyEditX = x;
 				legacyEditY = y;
 				if (legacyPinchPointer >= 0) {
@@ -832,6 +833,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				return super.pointerDragged(pointer, x, y);
 			}
 			if (pointer == legacyPinchPointer) {
+				markActiveOrientationEdited();
 				legacyPinchX = x;
 				legacyPinchY = y;
 				updateLegacyPinch();
