@@ -652,91 +652,137 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	private void saveLayout() {
 		int variant = layoutVariant;
-		if (variant == TYPE_CUSTOM && !prepareCustomLayoutForSave()) {
-			Log.w(TAG, "Refusing to persist Custom layout with unreconstructible key geometry");
-			return;
-		}
-		try (RandomAccessFile raf = new RandomAccessFile(saveFile, "rw")) {
-			if (variant != TYPE_CUSTOM && raf.length() > 16) {
-				try {
-					if (raf.readInt() != LAYOUT_SIGNATURE) {
-						throw new IOException("file signature not found");
-					}
-					int version = raf.readInt();
-					if (version < 1 || version > LAYOUT_VERSION) {
-						throw new IOException("incompatible file version");
-					}
-					loop:while (true) {
-						int block = raf.readInt();
-						int length = raf.readInt();
-						if (length < 0) break;
-						switch (block) {
-							case LAYOUT_EOF:
-								raf.seek(raf.getFilePointer() - 8);
-								raf.writeInt(LAYOUT_TYPE);
-								raf.writeInt(1);
-								raf.write(variant);
-								raf.writeInt(LAYOUT_EOF);
-								raf.writeInt(0);
-								return;
-							case LAYOUT_TYPE:
-								if (length < 1) break loop;
-								raf.write(variant);
-								return;
-							case LAYOUT_KEYS:
-								if (version >= 2) {
-									if (length < 4) break loop;
-									int count = raf.readInt();
-									if (count < 0 || count > KEYBOARD_SIZE) break loop;
-									length = count * KEY_RECORD_SIZE_V2;
-								}
-							default:
-								if (raf.skipBytes(length) != length) {
-									break loop;
-								}
-								break;
-						}
-					}
-				} catch (IOException e) {
-					Log.w(TAG, "Could not update existing layout type in place", e);
+		if (variant == TYPE_CUSTOM) {
+			if (storedCustomLayoutState == null) {
+				if (!prepareCustomLayoutForSave()) {
+					Log.w(TAG, "Refusing to persist Custom layout with unreconstructible key geometry");
+					return;
 				}
+				storedCustomLayoutState =
+						VirtualKeyboardLayoutState.migrated(captureLayoutSnapshot());
 			}
+			if (!isValidV4CustomState(storedCustomLayoutState)) {
+				Log.w(TAG, "Refusing to persist invalid orientation-aware Custom layout state");
+				return;
+			}
+		}
+
+		try (RandomAccessFile raf = new RandomAccessFile(saveFile, "rw")) {
 			raf.seek(0);
 			raf.writeInt(LAYOUT_SIGNATURE);
 			raf.writeInt(LAYOUT_VERSION);
 			raf.writeInt(LAYOUT_TYPE);
 			raf.writeInt(1);
 			raf.write(variant);
-			if (variant != TYPE_CUSTOM) {
-				raf.writeInt(LAYOUT_EOF);
-				raf.writeInt(0);
-				raf.setLength(raf.getFilePointer());
-				return;
-			}
-			raf.writeInt(LAYOUT_KEYS);
-			raf.writeInt(keypad.length * KEY_RECORD_SIZE_V2 + 4);
-			raf.writeInt(keypad.length);
-			for (VirtualKey key : keypad) {
-				raf.writeInt(key.hashCode());
-				raf.writeBoolean(key.visible);
-				raf.writeInt(key.snapOrigin);
-				raf.writeInt(key.snapMode);
-				PointF snapOffset = key.snapOffset;
-				raf.writeFloat(snapOffset.x);
-				raf.writeFloat(snapOffset.y);
-			}
-			raf.writeInt(LAYOUT_SCALES);
-			raf.writeInt(keyScales.length * 4 + 4);
-			raf.writeInt(keyScales.length);
-			for (float keyScale : keyScales) {
-				raf.writeFloat(keyScale);
+			if (variant == TYPE_CUSTOM) {
+				VirtualKeyboardLayoutState state = storedCustomLayoutState;
+				if (state.hasKnownBase()) {
+					raf.writeInt(LAYOUT_BASE_VARIANT);
+					raf.writeInt(1);
+					raf.write(state.baseVariant());
+				}
+				writeV4SnapshotBlock(
+						raf, LAYOUT_LEGACY_SHARED, state.legacySharedFallback());
+				writeV4SnapshotBlock(
+						raf, LAYOUT_PORTRAIT_OVERRIDE, state.portraitOverride());
+				writeV4SnapshotBlock(
+						raf, LAYOUT_LANDSCAPE_OVERRIDE, state.landscapeOverride());
 			}
 			raf.writeInt(LAYOUT_EOF);
 			raf.writeInt(0);
 			raf.setLength(raf.getFilePointer());
+			loadedLayoutVersion = LAYOUT_VERSION;
 		} catch (IOException e) {
 			Log.e(TAG, "Failed to save virtual keyboard layout", e);
 		}
+	}
+
+	private void writeV4SnapshotBlock(
+			RandomAccessFile raf, int block, VirtualKeyboardLayoutSnapshot snapshot) throws IOException {
+		if (snapshot == null) return;
+		if (!isValidSnapshotForV4(snapshot)) {
+			throw new IOException("invalid v4 virtual keyboard snapshot");
+		}
+		int payloadLength =
+				4 + keypad.length * KEY_RECORD_SIZE_V2 +
+				4 + keyScales.length * 4 +
+				2 + 6 * 4;
+		raf.writeInt(block);
+		raf.writeInt(payloadLength);
+		raf.writeInt(keypad.length);
+		for (int i = 0; i < keypad.length; i++) {
+			raf.writeInt(keypad[i].hashCode());
+			raf.writeBoolean(snapshot.visible[i]);
+			raf.writeInt(snapshot.snapOrigins[i]);
+			raf.writeInt(snapshot.snapModes[i]);
+			raf.writeFloat(snapshot.snapOffsetX[i]);
+			raf.writeFloat(snapshot.snapOffsetY[i]);
+		}
+		raf.writeInt(keyScales.length);
+		for (float scale : snapshot.keyScales) raf.writeFloat(scale);
+
+		boolean hasGrouped = snapshot.hasGroupedControls;
+		raf.writeBoolean(hasGrouped && snapshot.dpadEnabled);
+		raf.writeBoolean(hasGrouped && snapshot.analogEnabled);
+		if (hasGrouped) {
+			raf.writeFloat(snapshot.dpadCenterX);
+			raf.writeFloat(snapshot.dpadCenterY);
+			raf.writeFloat(snapshot.dpadRadius);
+			raf.writeFloat(snapshot.analogCenterX);
+			raf.writeFloat(snapshot.analogCenterY);
+			raf.writeFloat(snapshot.analogRadius);
+		} else {
+			// Base VirtualKeyboard has no grouped controls. Keep the v4 payload structurally complete
+			// without creating another persistence shape.
+			raf.writeFloat(0.5f);
+			raf.writeFloat(0.5f);
+			raf.writeFloat(0.16f);
+			raf.writeFloat(0.5f);
+			raf.writeFloat(0.5f);
+			raf.writeFloat(0.16f);
+		}
+	}
+
+	private boolean isValidV4CustomState(VirtualKeyboardLayoutState state) {
+		if (state == null) return false;
+		if (state.hasKnownBase() &&
+				!VirtualKeyboardLayoutState.isSupportedBaseVariant(state.baseVariant())) {
+			return false;
+		}
+		if (state.hasKnownBase() && state.legacySharedFallback() != null) {
+			return false;
+		}
+		if (!isValidSnapshotForV4(state.legacySharedFallback()) ||
+				!isValidSnapshotForV4(state.portraitOverride()) ||
+				!isValidSnapshotForV4(state.landscapeOverride())) {
+			return false;
+		}
+		return state.hasRenderableSourceFor(VirtualLayoutOrientation.PORTRAIT) &&
+				state.hasRenderableSourceFor(VirtualLayoutOrientation.LANDSCAPE);
+	}
+
+	private boolean isValidSnapshotForV4(VirtualKeyboardLayoutSnapshot snapshot) {
+		if (snapshot == null) return true;
+		if (!snapshot.matchesLegacyShape(keypad.length, keyScales.length) ||
+				!isValidSnapTopology(
+						snapshot.snapOrigins, snapshot.snapModes,
+						snapshot.snapOffsetX, snapshot.snapOffsetY)) {
+			return false;
+		}
+		for (float scale : snapshot.keyScales) {
+			if (!Float.isFinite(scale) || scale <= 0.0f) return false;
+		}
+		if (!snapshot.hasGroupedControls) return true;
+		return isValidGroupedGeometry(
+				snapshot.dpadCenterX, snapshot.dpadCenterY, snapshot.dpadRadius) &&
+				isValidGroupedGeometry(
+						snapshot.analogCenterX, snapshot.analogCenterY, snapshot.analogRadius);
+	}
+
+	private static boolean isValidGroupedGeometry(float x, float y, float radius) {
+		return Float.isFinite(x) && Float.isFinite(y) && Float.isFinite(radius) &&
+				x >= 0.0f && x <= 1.0f && y >= 0.0f && y <= 1.0f &&
+				radius > 0.0f && radius <= 0.5f;
 	}
 
 	protected final boolean prepareCustomLayoutForSave() {
