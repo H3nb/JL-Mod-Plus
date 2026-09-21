@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.util.ContextHolder;
 
 import androidx.annotation.NonNull;
@@ -163,10 +164,6 @@ public class ProfilesManager {
 		if (!config && !keyboard) {
 			return;
 		}
-		File targetDir = new File(toPath);
-		if (!targetDir.isDirectory() && !targetDir.mkdirs()) {
-			throw new IOException("Unable to create configuration directory");
-		}
 		ProfileInfo inspected = inspectProfile(from);
 		if (config && !inspected.settings.isReady()) {
 			throw new IOException("Profile configuration is not loadable");
@@ -174,13 +171,87 @@ public class ProfilesManager {
 		if (keyboard && !inspected.keyboardLayout.isReady()) {
 			throw new IOException("Profile keyboard layout is not loadable");
 		}
+		applySnapshotArtifacts(from.getDir(), new File(toPath), inspected.config,
+				config, keyboard, false);
+	}
+
+	/**
+	 * Mirrors one complete named preset into a MIDlet-local materialized snapshot.
+	 *
+	 * <p>Unlike partial preset application, layout absence is authoritative here: a source without
+	 * a keyboard artifact removes a stale destination layout. The source is validated before any
+	 * destination artifact is changed.</p>
+	 */
+	static void syncSnapshot(@NonNull Profile from, @NonNull String toPath) throws IOException {
+		syncSnapshot(from.getDir(), new File(toPath));
+	}
+
+	/** File-level entry point kept package-private so the transaction can be covered by JVM tests. */
+	static void syncSnapshot(@NonNull File sourceDir, @NonNull File targetDir) throws IOException {
+		CompleteSnapshot snapshot = inspectCompleteSnapshot(sourceDir);
+		applySnapshotArtifacts(sourceDir, targetDir, snapshot.config,
+				true, snapshot.hasKeyboardLayout, true);
+	}
+
+	private static final class CompleteSnapshot {
+		@NonNull final ProfileModel config;
+		final boolean hasKeyboardLayout;
+
+		CompleteSnapshot(@NonNull ProfileModel config, boolean hasKeyboardLayout) {
+			this.config = config;
+			this.hasKeyboardLayout = hasKeyboardLayout;
+		}
+	}
+
+	@NonNull
+	private static CompleteSnapshot inspectCompleteSnapshot(@NonNull File sourceDir)
+			throws IOException {
+		File sourceConfig = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
+		File legacyConfig = new File(sourceDir, "config.xml");
+		// A preset save can be interrupted between the same atomic config renames used elsewhere.
+		// Recover that last-known-good file before deciding whether the source snapshot is readable.
+		recoverAtomicConfig(sourceConfig);
+		if (sourceConfig.exists() && !isValidConfigFile(sourceConfig)) {
+			throw new IOException("Profile configuration is not loadable");
+		}
+		if (!sourceConfig.exists() && !legacyConfig.isFile()) {
+			throw new IOException("Profile configuration is missing");
+		}
+		ProfileModel config = loadConfig(
+				sourceDir, false, BackgroundMigrationContext.NAMED_PROFILE, false);
+		if (config == null) {
+			throw new IOException("Profile configuration is not loadable");
+		}
+
+		File sourceLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		boolean hasKeyboardLayout = sourceLayout.exists();
+		if (hasKeyboardLayout) {
+			String layoutError = KeyboardLayoutValidator.validate(sourceLayout);
+			if (layoutError != null) {
+				throw new IOException("Profile keyboard layout is not loadable: " + layoutError);
+			}
+		}
+		if (config.vkType == VirtualKeyboard.TYPE_CUSTOM && !hasKeyboardLayout) {
+			throw new IOException("Custom profile requires a keyboard layout");
+		}
+		return new CompleteSnapshot(config, hasKeyboardLayout);
+	}
+
+	private static void applySnapshotArtifacts(@NonNull File sourceDir, @NonNull File targetDir,
+			@Nullable ProfileModel sourceConfig, boolean config, boolean keyboard,
+			boolean exactKeyboardSnapshot) throws IOException {
+		if (!targetDir.isDirectory() && !targetDir.mkdirs()) {
+			throw new IOException("Unable to create configuration directory");
+		}
 		File staging = new File(targetDir, ".preset-apply.tmp");
 		File rollback = new File(targetDir, ".preset-apply.rollback");
 		deleteRecursively(staging);
 		deleteRecursively(rollback);
-		boolean configCommitStarted = false;
-		boolean keyboardCommitStarted = false;
+		boolean commitStarted = false;
 		boolean rollbackSucceeded = true;
+		boolean touchLayout = keyboard || exactKeyboardSnapshot;
+		File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
+		File dstKeyLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		try {
 			if (!staging.mkdirs() || !rollback.mkdirs()) {
 				throw new IOException("Unable to create preset staging directory");
@@ -188,22 +259,21 @@ public class ProfilesManager {
 			File stagedConfig = new File(staging, Config.MIDLET_CONFIG_FILE);
 			File stagedLayout = new File(staging, Config.MIDLET_KEY_LAYOUT_FILE);
 			if (config) {
-				File source = from.getConfig();
+				File source = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
 				if (source.isFile()) {
 					FileUtils.copyFileUsingChannel(source, stagedConfig);
 				} else {
-					ProfileModel params = inspected.config;
-					if (params == null) {
+					if (sourceConfig == null) {
 						throw new IOException("Profile configuration is not loadable");
 					}
-					File originalDir = params.dir;
+					File originalDir = sourceConfig.dir;
 					try {
-						params.dir = staging;
-						if (!saveConfig(params)) {
+						sourceConfig.dir = staging;
+						if (!saveConfig(sourceConfig)) {
 							throw new IOException("Unable to materialize profile configuration");
 						}
 					} finally {
-						params.dir = originalDir;
+						sourceConfig.dir = originalDir;
 					}
 				}
 				if (!isValidConfigFile(stagedConfig)) {
@@ -211,33 +281,45 @@ public class ProfilesManager {
 				}
 			}
 			if (keyboard) {
-				FileUtils.copyFileUsingChannel(from.getKeyLayout(), stagedLayout);
+				File sourceLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+				FileUtils.copyFileUsingChannel(sourceLayout, stagedLayout);
 				String layoutError = KeyboardLayoutValidator.validate(stagedLayout);
 				if (layoutError != null) {
 					throw new IOException("Profile keyboard layout changed while applying: " + layoutError);
 				}
 			}
-			File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
-			File dstKeyLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
+			if (exactKeyboardSnapshot) {
+				CompleteSnapshot current = inspectCompleteSnapshot(sourceDir);
+				if (current.hasKeyboardLayout != keyboard) {
+					throw new IOException("Profile keyboard layout changed while applying");
+				}
+			}
+
+			// Finish every backup before publishing the first destination artifact. This ensures a
+			// later layout failure can restore the whole local snapshot, not just the last file.
+			if (config) backupExisting(dstConfig, rollback, "config.json");
+			if (touchLayout) backupExisting(dstKeyLayout, rollback, "VirtualKeyboardLayout");
+			commitStarted = true;
+
 			if (config) {
-				backupExisting(dstConfig, rollback, "config.json");
-				configCommitStarted = true;
 				FileUtils.copyFileUsingChannel(stagedConfig, dstConfig);
 			}
-			if (keyboard) {
-				backupExisting(dstKeyLayout, rollback, "VirtualKeyboardLayout");
-				keyboardCommitStarted = true;
-				FileUtils.copyFileUsingChannel(stagedLayout, dstKeyLayout);
+			if (touchLayout) {
+				if (keyboard) {
+					FileUtils.copyFileUsingChannel(stagedLayout, dstKeyLayout);
+				} else if (dstKeyLayout.exists() && !dstKeyLayout.delete()) {
+					throw new IOException("Unable to remove stale key layout");
+				}
 			}
 		} catch (IOException | RuntimeException failure) {
-			File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
-			File dstKeyLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
-			if (configCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, dstConfig, rollback, "config.json");
-			}
-			if (keyboardCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, dstKeyLayout, rollback,
-						"VirtualKeyboardLayout");
+			if (commitStarted) {
+				if (config) {
+					rollbackSucceeded &= tryRestore(failure, dstConfig, rollback, "config.json");
+				}
+				if (touchLayout) {
+					rollbackSucceeded &= tryRestore(failure, dstKeyLayout, rollback,
+							"VirtualKeyboardLayout");
+				}
 			}
 			if (failure instanceof IOException) throw (IOException) failure;
 			throw failure;

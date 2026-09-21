@@ -146,6 +146,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private int profileCacheGeneration;
 	private final ExecutorService profileMetadataExecutor = Executors.newSingleThreadExecutor();
 	@Nullable private String profileOrigin;
+	@Nullable private PresetLinkage presetLinkage;
 	@Nullable private GamepadCalibrationSession gamepadCalibration;
 	@Nullable private ControllerInputRouter controllerInputRouter;
 	private long controllerTargetGeneration = 1L;
@@ -373,7 +374,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		configDir.mkdirs();
 		hostPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		hostPreferences.registerOnSharedPreferenceChangeListener(hostThemeListener);
-		profileOrigin = readProfileOrigin();
+		presetLinkage = isProfile ? null : new PresetLinkage(hostPreferences, configDir);
+		profileOrigin = presetLinkage == null ? null : presetLinkage.getOrigin();
 		setupArtifactExistedBeforeInitialization = hasConfigArtifact(configDir)
 				|| new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE).isFile()
 				|| profileOrigin != null
@@ -1578,10 +1580,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	private String profileOriginKey() {
-		return "config_profile_origin:" + configDir.getAbsolutePath();
-	}
-
 	private String builtInThemeKey() {
 		return ProfileModel.builtInThemePreferenceKey(configDir);
 	}
@@ -1601,22 +1599,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		editor.apply();
 	}
 
-	@Nullable
-	private String readProfileOrigin() {
-		if (isProfile || configDir == null) return null;
-		return PreferenceManager.getDefaultSharedPreferences(this).getString(profileOriginKey(), null);
-	}
-
 	private void setProfileOrigin(@Nullable String name) {
 		profileOrigin = name;
-		if (isProfile || configDir == null) return;
+		if (isProfile || configDir == null || presetLinkage == null) return;
 		if (name != null) {
 			setBuiltInThemeLinked(false);
+			presetLinkage.setOrigin(name);
+		} else {
+			presetLinkage.clear();
 		}
-		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-		if (name == null) editor.remove(profileOriginKey());
-		else editor.putString(profileOriginKey(), name);
-		editor.apply();
 	}
 
 	private void showKeyboardLayoutPicker() {
