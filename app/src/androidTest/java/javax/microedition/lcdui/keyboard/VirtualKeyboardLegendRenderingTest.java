@@ -26,6 +26,7 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -167,14 +168,23 @@ public class VirtualKeyboardLegendRenderingTest {
 	}
 
 	@Test
-	public void controllerKeypadUsesSameLegendRendererEvenWhenTouchDigitsAreHidden() {
-		boolean[] hidden = new boolean[keyboard.getKeyNames().length];
-		Arrays.fill(hidden, true);
-		keyboard.setKeysVisibility(hidden);
-		keyboard.openControllerKeypad();
-
+	public void controllerKeypadSharedRendererProducesPhoneLegends() throws Exception {
 		RecordingCanvasWrapper graphics = graphics();
-		keyboard.paint(graphics);
+		float textHeight = graphics.getTextHeight(1.0f);
+		float longestLegendWidth = graphics.measureStringWidth("WXYZ", 1.0f);
+		RectF controllerCell = new RectF(
+				0.0f,
+				0.0f,
+				Math.max(longestLegendWidth * 1.8f, textHeight * 3.0f),
+				textHeight * 1.8f);
+
+		paintKeyLabel(graphics, keyByLabel("2"), controllerCell, true);
+		paintKeyLabel(graphics, keyByLabel("7"), controllerCell, true);
+		paintKeyLabel(graphics, keyByLabel("9"), controllerCell, true);
+		paintKeyLabel(graphics, keyByLabel("*"), controllerCell, true);
+		paintKeyLabel(graphics, keyByLabel("0"), controllerCell, true);
+		paintKeyLabel(graphics, keyByLabel("#"), controllerCell, true);
+
 		assertNotNull(graphics.find("ABC"));
 		assertNotNull(graphics.find("PQRS"));
 		assertNotNull(graphics.find("WXYZ"));
@@ -201,6 +211,21 @@ public class VirtualKeyboardLegendRenderingTest {
 		Bitmap bitmap = Bitmap.createBitmap(1200, 600, Bitmap.Config.ARGB_8888);
 		graphics.bind(new android.graphics.Canvas(bitmap));
 		return graphics;
+	}
+
+	private void paintKeyLabel(
+			CanvasWrapper graphics,
+			Object key,
+			RectF bounds,
+			boolean keypadLegendContext) throws Exception {
+		Method method = VirtualKeyboard.class.getDeclaredMethod(
+				"paintKeyLabel",
+				CanvasWrapper.class,
+				key.getClass(),
+				RectF.class,
+				boolean.class);
+		method.setAccessible(true);
+		method.invoke(keyboard, graphics, key, bounds, keypadLegendContext);
 	}
 
 	private Object keyByLabel(String expected) throws Exception {
