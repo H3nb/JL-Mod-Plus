@@ -32,14 +32,9 @@ final class PresetSourceReplacement {
 		@Nullable String previousOrigin = preferences.getString(originKey, null);
 		boolean previousLinkedMarker = preferences.getBoolean(linkedKey, false);
 		boolean previousBuiltInThemeLinked = preferences.getBoolean(builtInKey, false);
-		boolean transitionNeeded = previousOrigin != null
-				|| previousLinkedMarker
-				|| previousBuiltInThemeLinked;
-		if (!transitionNeeded) {
-			return new Guard(preferences, configDir, previousOrigin, previousLinkedMarker,
-					previousBuiltInThemeLinked, false, true);
-		}
-
+		// Always perform the synchronous clear, even when the process-visible map is already empty.
+		// A preceding SharedPreferences.apply() may have changed memory before its disk write lands;
+		// source replacement needs a durability barrier, not only a logical state transition.
 		if (!clearOwnership(preferences, configDir)) {
 			// SharedPreferences may already expose a failed commit in memory. Restore the old
 			// source metadata best-effort because filesystem publication is still forbidden.

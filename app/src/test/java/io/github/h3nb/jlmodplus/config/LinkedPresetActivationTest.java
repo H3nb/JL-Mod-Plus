@@ -439,10 +439,150 @@ public class LinkedPresetActivationTest {
 		assertNull(new PresetLinkage(preferences, target).getOrigin());
 	}
 
+
+	@Test
+	public void localBuiltInEditDetachesDurablyBeforeConfigPublication() throws Exception {
+		File target = tempDir("local-builtin-edit");
+		ProfileModel current = configModel(target, 30);
+		assertTrue(ProfilesManager.saveConfig(current));
+		ProfileModel builtIn = ProfileConfigMatcher.copyConfig(current);
+		ConfigFormState draft = ConfigFormState.fromProfile(current, "")
+				.toBuilder()
+				.fpsLimit("60")
+				.build();
+		FakePreferences preferences = builtInOwned(target);
+		boolean detachRequired = ConfigActivity.shouldDetachBuiltInThemeLink(
+				true, false, current, draft, builtIn);
+
+		assertTrue(detachRequired);
+		assertTrue(ConfigActivity.persistConfigAfterBuiltInOwnershipBarrier(
+				detachRequired,
+				() -> ConfigActivity.commitBuiltInThemeOwnership(preferences, target, false),
+				() -> {
+					assertFalse(isBuiltInOwned(preferences, target));
+					ProfileModel candidate = ProfileConfigMatcher.effectiveConfig(current, draft);
+					return ProfilesManager.saveConfig(candidate);
+				},
+				() -> ConfigActivity.commitBuiltInThemeOwnership(preferences, target, true)));
+
+		assertFalse(isBuiltInOwned(preferences, target));
+		assertEquals(2, preferences.commitCount()); // fixture + durable detach before file publication.
+		assertEquals(60, readConfig(target).fpsLimit);
+	}
+
+	@Test
+	public void failedDurableBuiltInDetachBlocksConfigPublication() throws Exception {
+		File target = tempDir("local-builtin-detach-fail");
+		ProfileModel current = configModel(target, 30);
+		assertTrue(ProfilesManager.saveConfig(current));
+		ProfileModel builtIn = ProfileConfigMatcher.copyConfig(current);
+		ConfigFormState draft = ConfigFormState.fromProfile(current, "")
+				.toBuilder()
+				.fpsLimit("60")
+				.build();
+		FakePreferences preferences = builtInOwned(target);
+		preferences.failCommit(2); // built-in fixture #1, detach attempt #2.
+		boolean[] writeCalled = {false};
+		boolean detachRequired = ConfigActivity.shouldDetachBuiltInThemeLink(
+				true, false, current, draft, builtIn);
+
+		assertFalse(ConfigActivity.persistConfigAfterBuiltInOwnershipBarrier(
+				detachRequired,
+				() -> ConfigActivity.commitBuiltInThemeOwnership(preferences, target, false),
+				() -> {
+					writeCalled[0] = true;
+					return true;
+				},
+				() -> ConfigActivity.commitBuiltInThemeOwnership(preferences, target, true)));
+
+		assertFalse(writeCalled[0]);
+		assertEquals(30, readConfig(target).fpsLimit);
+	}
+
+	@Test
+	public void failedConfigWriteRestoresBuiltInOwnershipAfterSuccessfulDetach() throws Exception {
+		File target = tempDir("local-builtin-write-fail");
+		ProfileModel current = configModel(target, 30);
+		assertTrue(ProfilesManager.saveConfig(current));
+		FakePreferences preferences = builtInOwned(target);
+
+		assertFalse(ConfigActivity.persistConfigAfterBuiltInOwnershipBarrier(
+				true,
+				() -> ConfigActivity.commitBuiltInThemeOwnership(preferences, target, false),
+				() -> false,
+				() -> ConfigActivity.commitBuiltInThemeOwnership(preferences, target, true)));
+
+		assertTrue(isBuiltInOwned(preferences, target));
+		assertEquals(30, readConfig(target).fpsLimit);
+	}
+
+	@Test
+	public void noOpBuiltInLifecycleSaveKeepsOwnershipLinked() throws Exception {
+		File target = tempDir("local-builtin-noop");
+		ProfileModel current = configModel(target, 30);
+		ProfileModel builtIn = ProfileConfigMatcher.copyConfig(current);
+		ConfigFormState draft = ConfigFormState.fromProfile(current, "");
+		FakePreferences preferences = builtInOwned(target);
+		boolean detachRequired = ConfigActivity.shouldDetachBuiltInThemeLink(
+				true, false, current, draft, builtIn);
+		boolean[] detachCalled = {false};
+
+		assertFalse(detachRequired);
+		assertTrue(ConfigActivity.persistConfigAfterBuiltInOwnershipBarrier(
+				detachRequired,
+				() -> {
+					detachCalled[0] = true;
+					return ConfigActivity.commitBuiltInThemeOwnership(preferences, target, false);
+				},
+				() -> true,
+				() -> ConfigActivity.commitBuiltInThemeOwnership(preferences, target, true)));
+
+		assertFalse(detachCalled[0]);
+		assertTrue(isBuiltInOwned(preferences, target));
+		assertEquals(1, preferences.commitCount()); // fixture only; no-op save does not detach.
+	}
+
+	@Test
+	public void restoredDraftBeforeSaveKeepsBuiltInOwnershipLinked() throws Exception {
+		File target = tempDir("local-builtin-restored-draft");
+		ProfileModel current = configModel(target, 30);
+		ProfileModel builtIn = ProfileConfigMatcher.copyConfig(current);
+		ConfigFormState original = ConfigFormState.fromProfile(current, "");
+		ConfigFormState edited = original.toBuilder().fpsLimit("60").build();
+		ConfigFormState restored = edited.toBuilder().fpsLimit("30").build();
+
+		assertTrue(ConfigActivity.shouldDetachBuiltInThemeLink(
+				true, false, current, edited, builtIn));
+		assertFalse(ConfigActivity.shouldDetachBuiltInThemeLink(
+				true, false, current, restored, builtIn));
+	}
+
+	@Test
+	public void sourceReplacementAlwaysCommitsClearBarrierWhenOwnershipAppearsEmpty() throws Exception {
+		File target = tempDir("source-clear-empty");
+		FakePreferences preferences = new FakePreferences();
+
+		PresetSourceReplacement.Guard guard = PresetSourceReplacement.begin(preferences, target);
+
+		assertTrue(guard.canWrite());
+		assertEquals(1, preferences.commitCount());
+		assertFalse(isBuiltInOwned(preferences, target));
+		assertNull(new PresetLinkage(preferences, target).getOrigin());
+	}
+
 	private static File tempDir(String suffix) throws Exception {
 		File dir = Files.createTempDirectory("jlmod-activation-" + suffix).toFile();
 		dir.deleteOnExit();
 		return dir;
+	}
+
+	private static ProfileModel configModel(File dir, int fpsLimit) {
+		ProfileModel model = new ProfileModel();
+		model.dir = dir;
+		model.version = ProfileModel.VERSION;
+		model.fpsLimit = fpsLimit;
+		model.systemProperties = "";
+		return model;
 	}
 
 	private static void writeConfig(File dir, int screenWidth, int vkType) throws Exception {
@@ -521,6 +661,10 @@ public class LinkedPresetActivationTest {
 
 		void failCommit(int number) {
 			failedCommits.add(number);
+		}
+
+		int commitCount() {
+			return commitCount;
 		}
 
 		@Override

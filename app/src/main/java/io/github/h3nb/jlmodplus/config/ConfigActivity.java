@@ -95,6 +95,11 @@ import static io.github.h3nb.jlmodplus.config.ConfigFormEvents.ColorField;
 
 public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert.Callback {
 	private static final String TAG = ConfigActivity.class.getSimpleName();
+
+	@FunctionalInterface
+	interface BooleanOperation {
+		boolean run();
+	}
 	private static final String STATE_PROFILE_DRAFT_PATH = "profile_edit_draft_path";
 	private static final String STATE_PROFILE_DRAFT_DIRTY = "profile_edit_draft_dirty";
 
@@ -1457,9 +1462,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private boolean saveParams() {
 		try {
-			if (currentForm != null) {
-				reconcileBuiltInThemeLink();
-			}
 			if (isProfile) {
 				if (currentForm != null) currentForm.applyTo(params);
 				return ProfilesManager.saveConfig(params);
@@ -1479,8 +1481,17 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				}
 			}
 
-			params = candidate;
-			if (ProfilesManager.saveConfig(params)) {
+			boolean builtInDetachRequired = shouldDetachBuiltInThemeLink(
+					builtInThemeLinked, false, params, currentForm, builtInDefaultParams);
+			boolean saved = persistConfigAfterBuiltInOwnershipBarrier(
+					builtInDetachRequired,
+					this::reconcileBuiltInThemeLink,
+					() -> {
+						params = candidate;
+						return ProfilesManager.saveConfig(params);
+					},
+					() -> setBuiltInThemeLinked(true));
+			if (saved) {
 				persistedBaseline = ProfileConfigMatcher.copyConfig(params);
 				return true;
 			}
@@ -1635,6 +1646,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	/** Re-derives theme-owned built-in colors without turning the profile into a custom snapshot. */
 	private void syncLinkedBuiltInTheme() {
 		if (isProfile || !builtInThemeLinked || params == null || configDir == null) return;
+		if (currentForm != null && builtInDefaultParams != null
+				&& !ProfileConfigMatcher.sameEffectiveConfig(params, currentForm, builtInDefaultParams)) {
+			// The durable ownership remains built-in until persistence, but an unsaved custom draft
+			// must not be overwritten by an unrelated host-theme refresh. Still advance the built-in
+			// comparison baseline so a later save is judged against the current host theme.
+			builtInDefaultParams = newBuiltInProfile();
+			return;
+		}
 		ProfileModel.applyBuiltInTheme(params, isDarkTheme());
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
 		builtInDefaultParams = newBuiltInProfile();
@@ -1723,7 +1742,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					Log.e(TAG, "Unable to update preset editor provenance");
 				}
 			}
-			setBuiltInThemeLinked(false);
+			if (isProfile) setBuiltInThemeLinked(false);
 			loadParams(true);
 			return true;
 		} catch (IOException | RuntimeException e1) {
@@ -1776,13 +1795,45 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				.getBoolean(builtInThemeKey(), false);
 	}
 
-	private void setBuiltInThemeLinked(boolean linked) {
+	private boolean setBuiltInThemeLinked(boolean linked) {
+		if (isProfile) {
+			builtInThemeLinked = linked;
+			return true;
+		}
+		if (configDir == null || hostPreferences == null) {
+			return false;
+		}
+		if (!commitBuiltInThemeOwnership(hostPreferences, configDir, linked)) {
+			return false;
+		}
 		builtInThemeLinked = linked;
-		if (isProfile || configDir == null) return;
-		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-		if (linked) editor.putBoolean(builtInThemeKey(), true);
-		else editor.remove(builtInThemeKey());
-		editor.apply();
+		return true;
+	}
+
+	static boolean commitBuiltInThemeOwnership(
+			@NonNull SharedPreferences preferences,
+			@NonNull File configDir,
+			boolean linked) {
+		SharedPreferences.Editor editor = preferences.edit();
+		String key = ProfileModel.builtInThemePreferenceKey(configDir);
+		if (linked) editor.putBoolean(key, true);
+		else editor.remove(key);
+		return editor.commit();
+	}
+
+	static boolean persistConfigAfterBuiltInOwnershipBarrier(
+			boolean detachRequired,
+			@NonNull BooleanOperation detachOwnership,
+			@NonNull BooleanOperation writeConfig,
+			@NonNull BooleanOperation restoreOwnership) {
+		if (detachRequired && !detachOwnership.run()) {
+			return false;
+		}
+		boolean saved = writeConfig.run();
+		if (!saved && detachRequired) {
+			restoreOwnership.run();
+		}
+		return saved;
 	}
 
 	private boolean setProfileOrigin(@Nullable String name) {
@@ -1790,12 +1841,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			profileOrigin = name;
 			return true;
 		}
+		if (name != null && !setBuiltInThemeLinked(false)) {
+			return false;
+		}
 		boolean committed = name != null ? presetLinkage.setOrigin(name) : presetLinkage.clear();
 		if (!committed) {
 			return false;
 		}
 		profileOrigin = name;
-		if (name != null) setBuiltInThemeLinked(false);
 		return true;
 	}
 
@@ -1851,7 +1904,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			if (isProfile && !setProfileOrigin(null)) {
 				Log.e(TAG, "Unable to clear preset editor provenance");
 			}
-			setBuiltInThemeLinked(false);
+			if (isProfile) setBuiltInThemeLinked(false);
 			loadKeyLayout();
 			refreshProfileMatchCache();
 			if (composeController != null) composeController.update(createUiState());
@@ -1957,7 +2010,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (currentForm != null && currentForm.shader != null) {
 			if (isProfile) profileDraftDirty = true;
 			currentForm.shader.values = values;
-			reconcileBuiltInThemeLink();
 			if (composeController != null) {
 				composeController.update(createUiState());
 			}
@@ -2137,20 +2189,31 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			composeController.dismissColorPicker(ColorField.SCREEN_BACKGROUND);
 		}
 		if (isProfile) profileDraftDirty = true;
-		reconcileBuiltInThemeLink();
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
 	}
 
-	private void reconcileBuiltInThemeLink() {
-		if (!builtInThemeLinked || isProfile || params == null || currentForm == null
-				|| builtInDefaultParams == null) {
-			return;
+	private boolean reconcileBuiltInThemeLink() {
+		if (!shouldDetachBuiltInThemeLink(
+				builtInThemeLinked, isProfile, params, currentForm, builtInDefaultParams)) {
+			return true;
 		}
-		if (!ProfileConfigMatcher.sameEffectiveConfig(params, currentForm, builtInDefaultParams)) {
-			setBuiltInThemeLinked(false);
-		}
+		return setBuiltInThemeLinked(false);
+	}
+
+	static boolean shouldDetachBuiltInThemeLink(
+			boolean builtInThemeLinked,
+			boolean profileEditor,
+			@Nullable ProfileModel current,
+			@Nullable ConfigFormState draft,
+			@Nullable ProfileModel builtInDefault) {
+		return builtInThemeLinked
+				&& !profileEditor
+				&& current != null
+				&& draft != null
+				&& builtInDefault != null
+				&& !ProfileConfigMatcher.sameEffectiveConfig(current, draft, builtInDefault);
 	}
 
 	private void ensureShaderValues(ShaderInfo shader) {
