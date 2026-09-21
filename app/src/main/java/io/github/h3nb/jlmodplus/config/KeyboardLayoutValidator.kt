@@ -133,7 +133,7 @@ internal object KeyboardLayoutValidator {
     }
 
     private fun isPersistableSnapMode(mode: Int): Boolean {
-        if (mode == RectSnap.NO_SNAP || mode and RectSnap.FINE_MASK.inv() != 0) return false
+        if (mode == RectSnap.NO_SNAP || (mode and RectSnap.FINE_MASK.inv()) != 0) return false
         val horizontal = mode and RectSnap.HORIZONTAL_MASK
         val vertical = mode and RectSnap.VERTICAL_MASK
         return Integer.bitCount(horizontal) == 1 && Integer.bitCount(vertical) == 1
