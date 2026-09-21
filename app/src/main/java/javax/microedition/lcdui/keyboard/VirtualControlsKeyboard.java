@@ -381,6 +381,59 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				standardTemplateEdited);
 	}
 
+	private VirtualKeyboardLayoutSnapshot captureCurrentCustomSnapshot() {
+		return super.captureLayoutSnapshot().withGroupedControls(
+				settings.virtualDpadEnabled,
+				settings.virtualAnalogEnabled,
+				settings.virtualDpadCenterX,
+				settings.virtualDpadCenterY,
+				settings.virtualDpadRadius,
+				settings.virtualAnalogCenterX,
+				settings.virtualAnalogCenterY,
+				settings.virtualAnalogRadius,
+				false,
+				true).asCustomOverride();
+	}
+
+	@Override
+	public VirtualKeyboardLayoutEditState captureLayoutEditState() {
+		VirtualKeyboardLayoutState state = getStoredCustomLayoutState();
+		if (getLayout() != TYPE_CUSTOM || state == null) {
+			return super.captureLayoutEditState();
+		}
+		if (activeOrientationDirty && activeLayoutOrientation != null) {
+			state = state.withOverride(
+					activeLayoutOrientation, captureCurrentCustomSnapshot());
+		}
+		return VirtualKeyboardLayoutEditState.custom(state);
+	}
+
+	@Override
+	public void restoreLayoutEditState(VirtualKeyboardLayoutEditState state) {
+		if (state == null) return;
+		cancel();
+		if (!state.isCustom()) {
+			setStoredCustomLayoutState(null);
+			activeCustomSource = ActiveCustomSource.NONE;
+			activeOrientationDirty = false;
+			super.restoreLayoutEditState(state);
+			return;
+		}
+
+		setStoredCustomLayoutState(state.customLayout());
+		activeOrientationDirty = false;
+		setLayoutVariantInMemory(TYPE_CUSTOM);
+		activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+				screenBounds, activeLayoutOrientation);
+		if (screenBounds != null) {
+			applyCustomOrientationState(activeLayoutOrientation);
+		} else {
+			activeCustomSource = ActiveCustomSource.NONE;
+		}
+		invalidateOverlay();
+		notifyLayoutEditStateChanged();
+	}
+
 	@Override
 	public void restoreLayoutSnapshot(VirtualKeyboardLayoutSnapshot snapshot) {
 		if (snapshot == null) return;
@@ -389,21 +442,28 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			return;
 		}
 		standardTemplateEdited = snapshot.standardTemplateEdited;
-		if (snapshot.hasGroupedControls) {
-			settings.virtualDpadEnabled = snapshot.dpadEnabled;
-			settings.virtualAnalogEnabled = snapshot.analogEnabled;
-			settings.virtualDpadCenterX = snapshot.dpadCenterX;
-			settings.virtualDpadCenterY = snapshot.dpadCenterY;
-			settings.virtualDpadRadius = snapshot.dpadRadius;
-			settings.virtualAnalogCenterX = snapshot.analogCenterX;
-			settings.virtualAnalogCenterY = snapshot.analogCenterY;
-			settings.virtualAnalogRadius = snapshot.analogRadius;
-		}
+		applyGroupedSnapshot(snapshot);
 		super.restoreLayoutSnapshot(snapshot);
 		sanitizeStoredGeometry();
 		rebuildAnalogStick();
 		invalidateOverlay();
 		notifyLayoutEditStateChanged();
+	}
+
+	private void applyGroupedSnapshot(VirtualKeyboardLayoutSnapshot snapshot) {
+		if (!snapshot.hasGroupedControls) {
+			settings.virtualDpadEnabled = false;
+			settings.virtualAnalogEnabled = false;
+			return;
+		}
+		settings.virtualDpadEnabled = snapshot.dpadEnabled;
+		settings.virtualAnalogEnabled = snapshot.analogEnabled;
+		settings.virtualDpadCenterX = snapshot.dpadCenterX;
+		settings.virtualDpadCenterY = snapshot.dpadCenterY;
+		settings.virtualDpadRadius = snapshot.dpadRadius;
+		settings.virtualAnalogCenterX = snapshot.analogCenterX;
+		settings.virtualAnalogCenterY = snapshot.analogCenterY;
+		settings.virtualAnalogRadius = snapshot.analogRadius;
 	}
 
 	@Override
