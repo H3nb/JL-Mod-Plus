@@ -70,6 +70,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
 	private static final int LAYOUT_VERSION = 3;
+	private static final int MAX_LAYOUT_BLOCKS = 1024;
+	private static final int KEY_RECORD_SIZE_V1 = 20;
+	private static final int KEY_RECORD_SIZE_V2 = 21;
 	public static final int LAYOUT_EOF = -1;
 	public static final int LAYOUT_KEYS = 0;
 	public static final int LAYOUT_SCALES = 1;
@@ -620,8 +623,12 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	private void saveLayout() {
+		int variant = layoutVariant;
+		if (variant == TYPE_CUSTOM && !prepareCustomLayoutForSave()) {
+			Log.w(TAG, "Refusing to persist Custom layout with unreconstructible key geometry");
+			return;
+		}
 		try (RandomAccessFile raf = new RandomAccessFile(saveFile, "rw")) {
-			int variant = layoutVariant;
 			if (variant != TYPE_CUSTOM && raf.length() > 16) {
 				try {
 					if (raf.readInt() != LAYOUT_SIGNATURE) {
@@ -634,6 +641,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					loop:while (true) {
 						int block = raf.readInt();
 						int length = raf.readInt();
+						if (length < 0) break;
 						switch (block) {
 							case LAYOUT_EOF:
 								raf.seek(raf.getFilePointer() - 8);
@@ -644,12 +652,15 @@ public class VirtualKeyboard implements Overlay, Runnable {
 								raf.writeInt(0);
 								return;
 							case LAYOUT_TYPE:
+								if (length < 1) break loop;
 								raf.write(variant);
 								return;
 							case LAYOUT_KEYS:
 								if (version >= 2) {
+									if (length < 4) break loop;
 									int count = raf.readInt();
-									length = count * 21;
+									if (count < 0 || count > KEYBOARD_SIZE) break loop;
+									length = count * KEY_RECORD_SIZE_V2;
 								}
 							default:
 								if (raf.skipBytes(length) != length) {
@@ -659,7 +670,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 						}
 					}
 				} catch (IOException e) {
-					e.printStackTrace();
+					Log.w(TAG, "Could not update existing layout type in place", e);
 				}
 			}
 			raf.seek(0);
@@ -675,7 +686,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				return;
 			}
 			raf.writeInt(LAYOUT_KEYS);
-			raf.writeInt(keypad.length * 21 + 4);
+			raf.writeInt(keypad.length * KEY_RECORD_SIZE_V2 + 4);
 			raf.writeInt(keypad.length);
 			for (VirtualKey key : keypad) {
 				raf.writeInt(key.hashCode());
@@ -696,8 +707,83 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			raf.writeInt(0);
 			raf.setLength(raf.getFilePointer());
 		} catch (IOException e) {
-			e.printStackTrace();
+			Log.e(TAG, "Failed to save virtual keyboard layout", e);
 		}
+	}
+
+	private boolean prepareCustomLayoutForSave() {
+		for (VirtualKey key : keypad) {
+			if (key.snapMode == RectSnap.NO_SNAP && !materializeKeyPositionAgainstScreen(key)) {
+				return false;
+			}
+		}
+		return hasValidSnapTopology(keypad);
+	}
+
+	private boolean materializeKeyPositionAgainstScreen(VirtualKey key) {
+		if (key == null || !isUsableScreen(screen) || !isFiniteRect(key.rect)) return false;
+		key.snapOrigin = SCREEN;
+		key.snapMode = RectSnap.getSnap(key.rect, screen, key.snapOffset);
+		key.snapValid = false;
+		return isPersistableSnapMode(key.snapMode) &&
+				Float.isFinite(key.snapOffset.x) && Float.isFinite(key.snapOffset.y);
+	}
+
+	private static boolean isUsableScreen(RectF value) {
+		return value != null && Float.isFinite(value.left) && Float.isFinite(value.top) &&
+				Float.isFinite(value.right) && Float.isFinite(value.bottom) &&
+				value.width() > 0.0f && value.height() > 0.0f;
+	}
+
+	private static boolean isFiniteRect(RectF value) {
+		return value != null && Float.isFinite(value.left) && Float.isFinite(value.top) &&
+				Float.isFinite(value.right) && Float.isFinite(value.bottom) &&
+				value.width() > 0.0f && value.height() > 0.0f;
+	}
+
+	private static boolean isPersistableSnapMode(int mode) {
+		if (mode == RectSnap.NO_SNAP || (mode & ~RectSnap.FINE_MASK) != 0) return false;
+		int horizontal = mode & RectSnap.HORIZONTAL_MASK;
+		int vertical = mode & RectSnap.VERTICAL_MASK;
+		return Integer.bitCount(horizontal) == 1 && Integer.bitCount(vertical) == 1;
+	}
+
+	private boolean hasValidSnapTopology(VirtualKey[] keys) {
+		int[] origins = new int[keys.length];
+		int[] modes = new int[keys.length];
+		float[] offsetsX = new float[keys.length];
+		float[] offsetsY = new float[keys.length];
+		for (int i = 0; i < keys.length; i++) {
+			origins[i] = keys[i].snapOrigin;
+			modes[i] = keys[i].snapMode;
+			offsetsX[i] = keys[i].snapOffset.x;
+			offsetsY[i] = keys[i].snapOffset.y;
+		}
+		return isValidSnapTopology(origins, modes, offsetsX, offsetsY);
+	}
+
+	private static boolean isValidSnapTopology(
+			int[] origins, int[] modes, float[] offsetsX, float[] offsetsY) {
+		int size = origins.length;
+		for (int i = 0; i < size; i++) {
+			if (!isPersistableSnapMode(modes[i]) ||
+					!Float.isFinite(offsetsX[i]) || !Float.isFinite(offsetsY[i])) {
+				return false;
+			}
+			int origin = origins[i];
+			if (origin != SCREEN && (origin < 0 || origin >= size || origin == i)) return false;
+		}
+
+		for (int i = 0; i < size; i++) {
+			boolean[] visited = new boolean[size];
+			int current = i;
+			while (current != SCREEN) {
+				if (current < 0 || current >= size || visited[current]) return false;
+				visited[current] = true;
+				current = origins[current];
+			}
+		}
+		return true;
 	}
 
 	private int readLayoutType() {
@@ -710,48 +796,64 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				throw new IOException("incompatible file version");
 			}
 			int custom = 0;
-			while (true) {
+			for (int blockIndex = 0; blockIndex < MAX_LAYOUT_BLOCKS; blockIndex++) {
 				int block = dis.readInt();
 				int length = dis.readInt();
+				if (length < 0) return -1;
 				switch (block) {
 					case LAYOUT_EOF -> {
-						return custom == 3 ? 0 : -1;
+						return length == 0 && custom == 3 ? TYPE_CUSTOM : -1;
 					}
 					case LAYOUT_TYPE -> {
-						return dis.read();
+						if (length < 1) return -1;
+						int variant = dis.readUnsignedByte();
+						skipFully(dis, length - 1);
+						return variant;
 					}
 					case LAYOUT_KEYS -> {
 						if (version >= 2) {
+							if (length < 4) return -1;
 							int count = dis.readInt();
-							length = count * 21;
-						}
-						if (dis.skipBytes(length) != length) {
-							return -1;
+							long expected = 4L + (long) count * KEY_RECORD_SIZE_V2;
+							if (count < 0 || count > KEYBOARD_SIZE || expected != length) return -1;
+							skipFully(dis, length - 4);
+						} else {
+							skipFully(dis, length);
 						}
 						custom |= 1;
 					}
 					case LAYOUT_SCALES -> {
-						if (dis.skipBytes(length) != length) {
-							return -1;
-						}
+						skipFully(dis, length);
 						custom |= 2;
 					}
-					default -> {
-						if (dis.skipBytes(length) != length) {
-							return -1;
-						}
-					}
+					default -> skipFully(dis, length);
 				}
 			}
+			return -1;
 		} catch (FileNotFoundException e) {
 			Log.w(TAG, "readLayoutType() threw an FileNotFoundException: " + e.getMessage());
 		} catch (IOException e) {
-			e.printStackTrace();
+			Log.w(TAG, "Could not read virtual keyboard layout type", e);
 		}
 		return -1;
 	}
 
 	private void readLayout() throws IOException {
+		boolean[] stagedVisible = new boolean[keypad.length];
+		int[] stagedOrigins = new int[keypad.length];
+		int[] stagedModes = new int[keypad.length];
+		float[] stagedOffsetX = new float[keypad.length];
+		float[] stagedOffsetY = new float[keypad.length];
+		for (int i = 0; i < keypad.length; i++) {
+			VirtualKey key = keypad[i];
+			stagedVisible[i] = key.visible;
+			stagedOrigins[i] = key.snapOrigin;
+			stagedModes[i] = key.snapMode;
+			stagedOffsetX[i] = key.snapOffset.x;
+			stagedOffsetY[i] = key.snapOffset.y;
+		}
+		float[] stagedScales = keyScales.clone();
+
 		try (DataInputStream dis = new DataInputStream(new FileInputStream(saveFile))) {
 			if (dis.readInt() != LAYOUT_SIGNATURE) {
 				throw new IOException("file signature not found");
@@ -760,56 +862,151 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			if (version < 1 || version > LAYOUT_VERSION) {
 				throw new IOException("incompatible file version");
 			}
-			while (true) {
+			for (int blockIndex = 0; blockIndex < MAX_LAYOUT_BLOCKS; blockIndex++) {
 				int block = dis.readInt();
 				int length = dis.readInt();
-				int count;
+				if (length < 0) throw new IOException("negative layout block length");
 				switch (block) {
 					case LAYOUT_EOF -> {
+						if (length != 0) throw new IOException("invalid layout end block");
+						if (!isValidSnapTopology(
+								stagedOrigins, stagedModes, stagedOffsetX, stagedOffsetY)) {
+							throw new IOException("invalid key snap topology");
+						}
+						applyStagedLayout(
+								stagedVisible, stagedOrigins, stagedModes,
+								stagedOffsetX, stagedOffsetY, stagedScales);
 						return;
 					}
-					case LAYOUT_KEYS -> {
-						count = dis.readInt();
-						for (int i = 0; i < count; i++) {
-							int hash = dis.readInt();
-							boolean found = false;
-							for (VirtualKey key : keypad) {
-								if (key.hashCode() == hash) {
-									if (version >= 2) {
-										key.visible = dis.readBoolean();
-									}
-									key.snapOrigin = dis.readInt();
-									key.snapMode = dis.readInt();
-									key.snapOffset.x = dis.readFloat();
-									key.snapOffset.y = dis.readFloat();
-									found = true;
-									break;
-								}
-							}
-							if (!found) {
-								dis.skipBytes(version >= 2 ? 17 : 16);
-							}
-						}
+					case LAYOUT_TYPE -> {
+						if (length < 1) throw new IOException("empty layout type block");
+						dis.readUnsignedByte();
+						skipFully(dis, length - 1);
 					}
-					case LAYOUT_SCALES -> {
-						count = dis.readInt();
-						if (version >= 3) {
-							for (int i = 0; i < count; i++) {
-								keyScales[i] = dis.readFloat();
-							}
-						} else if (count * 2 <= keyScales.length) {
-							for (int i = 0, len = count * 2; i < len; ) {
-								float v = dis.readFloat();
-								keyScales[i++] = v;
-								keyScales[i++] = v;
-							}
-						} else {
-							dis.skipBytes(count * 4);
-						}
-					}
-					default -> dis.skipBytes(length);
+					case LAYOUT_KEYS -> readKeyBlock(
+							dis, version, length,
+							stagedVisible, stagedOrigins, stagedModes,
+							stagedOffsetX, stagedOffsetY);
+					case LAYOUT_SCALES -> readScaleBlock(dis, version, length, stagedScales);
+					default -> skipFully(dis, length);
 				}
 			}
+			throw new IOException("layout contains too many blocks");
+		}
+	}
+
+	private void readKeyBlock(
+			DataInputStream dis,
+			int version,
+			int length,
+			boolean[] visible,
+			int[] origins,
+			int[] modes,
+			float[] offsetX,
+			float[] offsetY) throws IOException {
+		int itemSize = version >= 2 ? KEY_RECORD_SIZE_V2 : KEY_RECORD_SIZE_V1;
+		int count = readCount(dis, length, itemSize);
+		if (count < 0 || count > KEYBOARD_SIZE) {
+			throw new IOException("invalid layout key count");
+		}
+		for (int i = 0; i < count; i++) {
+			int hash = dis.readInt();
+			boolean keyVisible = version >= 2 ? dis.readBoolean() : false;
+			int origin = dis.readInt();
+			int mode = dis.readInt();
+			float x = dis.readFloat();
+			float y = dis.readFloat();
+
+			int keyIndex = findKeyIndexByHash(hash);
+			if (keyIndex < 0) continue;
+			if (version >= 2) visible[keyIndex] = keyVisible;
+			if (!Float.isFinite(x) || !Float.isFinite(y)) {
+				throw new IOException("non-finite key snap offset");
+			}
+
+			// Older broken Standard-derived Custom files may contain SCREEN + NO_SNAP. The raw
+			// RectF was never persisted, so the exact lost position is unrecoverable. Keep the safe
+			// resetLayout(TYPE_CUSTOM) fallback topology instead of replacing it with NO_SNAP.
+			if (mode == RectSnap.NO_SNAP) continue;
+
+			if (!isPersistableSnapMode(mode) ||
+					(origin != SCREEN && (origin < 0 || origin >= KEYBOARD_SIZE || origin == keyIndex))) {
+				throw new IOException("invalid key snap state");
+			}
+			origins[keyIndex] = origin;
+			modes[keyIndex] = mode;
+			offsetX[keyIndex] = x;
+			offsetY[keyIndex] = y;
+		}
+	}
+
+	private void readScaleBlock(
+			DataInputStream dis, int version, int length, float[] scales) throws IOException {
+		int count = readCount(dis, length, 4);
+		int maxScales = version >= 3 ? scales.length : scales.length / 2;
+		if (count < 0 || count > maxScales) {
+			throw new IOException("invalid layout scale count");
+		}
+		if (version >= 3) {
+			for (int i = 0; i < count; i++) {
+				float value = dis.readFloat();
+				if (!Float.isFinite(value) || value <= 0.0f) {
+					throw new IOException("invalid key scale");
+				}
+				scales[i] = value;
+			}
+		} else {
+			for (int i = 0; i < count; i++) {
+				float value = dis.readFloat();
+				if (!Float.isFinite(value) || value <= 0.0f) {
+					throw new IOException("invalid legacy key scale");
+				}
+				scales[i * 2] = value;
+				scales[i * 2 + 1] = value;
+			}
+		}
+	}
+
+	private int findKeyIndexByHash(int hash) {
+		for (int i = 0; i < keypad.length; i++) {
+			if (keypad[i].hashCode() == hash) return i;
+		}
+		return -1;
+	}
+
+	private void applyStagedLayout(
+			boolean[] visible,
+			int[] origins,
+			int[] modes,
+			float[] offsetX,
+			float[] offsetY,
+			float[] scales) {
+		for (int i = 0; i < keypad.length; i++) {
+			VirtualKey key = keypad[i];
+			key.visible = visible[i];
+			key.snapOrigin = origins[i];
+			key.snapMode = modes[i];
+			key.snapOffset.set(offsetX[i], offsetY[i]);
+			key.snapValid = false;
+		}
+		System.arraycopy(scales, 0, keyScales, 0, keyScales.length);
+	}
+
+	private static int readCount(DataInputStream dis, int length, int itemSize) throws IOException {
+		if (length < 4) return -1;
+		int count = dis.readInt();
+		if (count < 0) return -1;
+		long expected = 4L + (long) count * itemSize;
+		return expected == length ? count : -1;
+	}
+
+	private static void skipFully(DataInputStream dis, int bytes) throws IOException {
+		if (bytes < 0) throw new IOException("negative layout payload");
+		int remaining = bytes;
+		while (remaining > 0) {
+			int skipped = dis.skipBytes(remaining);
+			if (skipped <= 0) throw new IOException("truncated layout payload");
+			remaining -= skipped;
 		}
 	}
 
@@ -992,6 +1189,12 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		if (vKey.snapOrigin == SCREEN) {
 			RectSnap.snap(vKey.rect, screen, vKey.snapMode, vKey.snapOffset);
 		} else {
+			if (vKey.snapOrigin < 0 || vKey.snapOrigin >= keypad.length ||
+					vKey.snapOrigin == key) {
+				Log.w(TAG, "Ignoring invalid snap origin " + vKey.snapOrigin + " for key " + key);
+				vKey.snapValid = true;
+				return;
+			}
 			if (!keypad[vKey.snapOrigin].snapValid) {
 				snapKey(vKey.snapOrigin, level + 1);
 			}
@@ -1092,7 +1295,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	/** Places a built-in-template key by center without routing through the interactive editor. */
 	protected final boolean setKeyCenterByLabel(String label, float centerX, float centerY) {
-		if (label == null) return false;
+		if (label == null || !isUsableScreen(screen) ||
+				!Float.isFinite(centerX) || !Float.isFinite(centerY)) {
+			return false;
+		}
 		for (VirtualKey key : keypad) {
 			if (!label.equals(key.label)) continue;
 			float width = key.rect.width();
@@ -1102,11 +1308,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					centerY - height * 0.5f,
 					centerX + width * 0.5f,
 					centerY + height * 0.5f);
-			key.snapOrigin = SCREEN;
-			key.snapMode = RectSnap.NO_SNAP;
-			key.snapOffset.set(0.0f, 0.0f);
-			key.snapValid = true;
-			return true;
+			return materializeKeyPositionAgainstScreen(key);
 		}
 		return false;
 	}
