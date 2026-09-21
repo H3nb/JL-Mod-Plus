@@ -11,12 +11,16 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import javax.microedition.lcdui.keyboard.VirtualControlsKeyboard;
+import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutEditState;
 import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutSnapshot;
+import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutState;
+import javax.microedition.lcdui.keyboard.VirtualLayoutOrientation;
 
 public class VirtualKeyboardEditTransactionTest {
 	@Test
 	public void enteringEditorCapturesOriginalBaseline() {
-		VirtualKeyboardLayoutSnapshot baseline = snapshot(3.0f);
+		VirtualKeyboardLayoutEditState baseline = edit(snapshot(3.0f));
 		VirtualKeyboardEditTransaction transaction = new VirtualKeyboardEditTransaction(baseline);
 
 		assertSame(baseline, transaction.baseline());
@@ -26,12 +30,12 @@ public class VirtualKeyboardEditTransactionTest {
 
 	@Test
 	public void cleanFinishNeedsNoConfirmationAndClosesTransaction() {
-		VirtualKeyboardLayoutSnapshot baseline = snapshot(3.0f);
+		VirtualKeyboardLayoutEditState baseline = edit(snapshot(3.0f));
 		VirtualKeyboardEditTransaction transaction = new VirtualKeyboardEditTransaction(baseline);
 
 		assertEquals(
 				VirtualKeyboardEditTransaction.FinishRequest.CLEAN,
-				transaction.requestFinish(snapshot(3.0f)));
+				transaction.requestFinish(edit(snapshot(3.0f))));
 		assertFalse(transaction.isActive());
 		assertFalse(transaction.isFinishPending());
 	}
@@ -39,20 +43,20 @@ public class VirtualKeyboardEditTransactionTest {
 	@Test
 	public void actualSemanticChangeRequestsConfirmation() {
 		VirtualKeyboardEditTransaction transaction =
-				new VirtualKeyboardEditTransaction(snapshot(3.0f));
+				new VirtualKeyboardEditTransaction(edit(snapshot(3.0f)));
 
 		assertEquals(
 				VirtualKeyboardEditTransaction.FinishRequest.CONFIRM,
-				transaction.requestFinish(snapshot(8.0f)));
+				transaction.requestFinish(edit(snapshot(8.0f))));
 		assertTrue(transaction.isActive());
 		assertTrue(transaction.isFinishPending());
 	}
 
 	@Test
 	public void saveClosesDirtyTransactionWithoutReplacingBaseline() {
-		VirtualKeyboardLayoutSnapshot baseline = snapshot(3.0f);
+		VirtualKeyboardLayoutEditState baseline = edit(snapshot(3.0f));
 		VirtualKeyboardEditTransaction transaction = new VirtualKeyboardEditTransaction(baseline);
-		transaction.requestFinish(snapshot(8.0f));
+		transaction.requestFinish(edit(snapshot(8.0f)));
 
 		transaction.save();
 
@@ -62,10 +66,11 @@ public class VirtualKeyboardEditTransactionTest {
 	}
 
 	@Test
-	public void discardReturnsExactOriginalBaselineAndClosesTransaction() {
-		VirtualKeyboardLayoutSnapshot baseline = snapshot(3.0f);
+	public void discardReturnsExactCompleteBaselineAndClosesTransaction() {
+		VirtualKeyboardLayoutEditState baseline = customState(
+				snapshot(3.0f), snapshot(8.0f));
 		VirtualKeyboardEditTransaction transaction = new VirtualKeyboardEditTransaction(baseline);
-		transaction.requestFinish(snapshot(8.0f));
+		transaction.requestFinish(customState(snapshot(14.0f), snapshot(21.0f)));
 
 		assertSame(baseline, transaction.discard());
 		assertFalse(transaction.isActive());
@@ -74,8 +79,8 @@ public class VirtualKeyboardEditTransactionTest {
 
 	@Test
 	public void continueKeepsEditsLiveAndOriginalBaselineUntouched() {
-		VirtualKeyboardLayoutSnapshot baseline = snapshot(3.0f);
-		VirtualKeyboardLayoutSnapshot edited = snapshot(8.0f);
+		VirtualKeyboardLayoutEditState baseline = edit(snapshot(3.0f));
+		VirtualKeyboardLayoutEditState edited = edit(snapshot(8.0f));
 		VirtualKeyboardEditTransaction transaction = new VirtualKeyboardEditTransaction(baseline);
 		transaction.requestFinish(edited);
 
@@ -91,27 +96,59 @@ public class VirtualKeyboardEditTransactionTest {
 
 	@Test
 	public void repeatedContinueThenDiscardStillRestoresPreSessionBaseline() {
-		VirtualKeyboardLayoutSnapshot baseline = snapshot(3.0f);
+		VirtualKeyboardLayoutEditState baseline = edit(snapshot(3.0f));
 		VirtualKeyboardEditTransaction transaction = new VirtualKeyboardEditTransaction(baseline);
 
-		transaction.requestFinish(snapshot(8.0f));
+		transaction.requestFinish(edit(snapshot(8.0f)));
 		transaction.continueEditing();
-		transaction.requestFinish(snapshot(14.0f));
+		transaction.requestFinish(edit(snapshot(14.0f)));
 		transaction.continueEditing();
-		transaction.requestFinish(snapshot(21.0f));
+		transaction.requestFinish(edit(snapshot(21.0f)));
 
 		assertSame(baseline, transaction.discard());
 	}
 
 	@Test
 	public void viewportOnlySemanticEquivalenceFinishesClean() {
-		VirtualKeyboardLayoutSnapshot portrait = standardSnapshot(3.0f, 0.20f, 0.82f);
-		VirtualKeyboardLayoutSnapshot landscape = standardSnapshot(120.0f, 0.14f, 0.55f);
+		VirtualKeyboardLayoutEditState portrait = edit(
+				standardSnapshot(3.0f, 0.20f, 0.82f));
+		VirtualKeyboardLayoutEditState landscape = edit(
+				standardSnapshot(120.0f, 0.14f, 0.55f));
 		VirtualKeyboardEditTransaction transaction = new VirtualKeyboardEditTransaction(portrait);
 
 		assertEquals(
 				VirtualKeyboardEditTransaction.FinishRequest.CLEAN,
 				transaction.requestFinish(landscape));
+	}
+
+	@Test
+	public void landscapeChangeRemainsDirtyAfterReturningToUnchangedPortrait() {
+		VirtualKeyboardLayoutSnapshot portrait = snapshot(3.0f).asCustomOverride();
+		VirtualKeyboardLayoutSnapshot landscape = snapshot(8.0f).asCustomOverride();
+		VirtualKeyboardLayoutEditState baseline = customState(portrait, landscape);
+		VirtualKeyboardEditTransaction transaction = new VirtualKeyboardEditTransaction(baseline);
+
+		VirtualKeyboardLayoutState changed = baseline.customLayout().withOverride(
+				VirtualLayoutOrientation.LANDSCAPE,
+				snapshot(99.0f).asCustomOverride());
+
+		assertEquals(
+				VirtualKeyboardEditTransaction.FinishRequest.CONFIRM,
+				transaction.requestFinish(VirtualKeyboardLayoutEditState.custom(changed)));
+	}
+
+	private static VirtualKeyboardLayoutEditState edit(VirtualKeyboardLayoutSnapshot snapshot) {
+		return VirtualKeyboardLayoutEditState.single(snapshot);
+	}
+
+	private static VirtualKeyboardLayoutEditState customState(
+			VirtualKeyboardLayoutSnapshot portrait,
+			VirtualKeyboardLayoutSnapshot landscape) {
+		VirtualKeyboardLayoutState state = VirtualKeyboardLayoutState
+				.forBase(VirtualControlsKeyboard.TYPE_DPAD_STANDARD)
+				.withOverride(VirtualLayoutOrientation.PORTRAIT, portrait.asCustomOverride())
+				.withOverride(VirtualLayoutOrientation.LANDSCAPE, landscape.asCustomOverride());
+		return VirtualKeyboardLayoutEditState.custom(state);
 	}
 
 	private static VirtualKeyboardLayoutSnapshot snapshot(float offset) {
