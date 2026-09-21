@@ -635,6 +635,37 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void editingBothOrientationsThenSingleSavePersistsBothDrafts() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+
+        dragGrouped("dpadGeometry", 30f, -18f);
+        dragLegacy("F", 18f, 0f);
+        // No save here. Rotation must stash the Portrait draft only in memory.
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        VirtualKeyboardLayoutState afterRotation =
+                keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(afterRotation.portraitOverride());
+        assertEquals(null, afterRotation.landscapeOverride());
+
+        dragGrouped("dpadGeometry", -30f, 18f);
+        dragLegacy("F", -18f, 0f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM); // one final Save
+        VirtualKeyboardLayoutState saved =
+                keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(saved.portraitOverride());
+        assertNotNull(saved.landscapeOverride());
+
+        recreateKeyboardFromDisk(portrait);
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+
+        recreateKeyboardFromDisk(landscape);
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
     public void editingBothOrientationsThenDiscardRestoresCompleteBaseline() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
@@ -652,6 +683,10 @@ public class VirtualControlsKeyboardResizeTest {
 
         keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
         assertEquals(baseline, keyboard.captureLayoutEditState());
+
+        // No editor mutation was persisted while the transaction was live.
+        recreateKeyboardFromDisk(portrait);
+        assertEquals(VirtualControlsKeyboard.TYPE_DPAD_STANDARD, keyboard.getLayout());
     }
 
     @Test
