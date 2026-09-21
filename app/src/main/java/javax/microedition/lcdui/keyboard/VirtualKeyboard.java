@@ -917,22 +917,25 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			float x = dis.readFloat();
 			float y = dis.readFloat();
 
-			int keyIndex = findKeyIndexByHash(hash);
-			if (keyIndex < 0) continue;
-			if (version >= 2) visible[keyIndex] = keyVisible;
 			if (!Float.isFinite(x) || !Float.isFinite(y)) {
 				throw new IOException("non-finite key snap offset");
 			}
+			if (mode != RectSnap.NO_SNAP &&
+					(!isPersistableSnapMode(mode) ||
+							(origin != SCREEN && (origin < 0 || origin >= KEYBOARD_SIZE)))) {
+				throw new IOException("invalid key snap state");
+			}
+
+			int keyIndex = findKeyIndexByHash(hash);
+			if (keyIndex < 0) continue;
+			if (version >= 2) visible[keyIndex] = keyVisible;
 
 			// Older broken Standard-derived Custom files may contain SCREEN + NO_SNAP. The raw
 			// RectF was never persisted, so the exact lost position is unrecoverable. Keep the safe
 			// resetLayout(TYPE_CUSTOM) fallback topology instead of replacing it with NO_SNAP.
 			if (mode == RectSnap.NO_SNAP) continue;
+			if (origin == keyIndex) throw new IOException("self-referencing key snap state");
 
-			if (!isPersistableSnapMode(mode) ||
-					(origin != SCREEN && (origin < 0 || origin >= KEYBOARD_SIZE || origin == keyIndex))) {
-				throw new IOException("invalid key snap state");
-			}
 			origins[keyIndex] = origin;
 			modes[keyIndex] = mode;
 			offsetX[keyIndex] = x;
