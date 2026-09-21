@@ -257,6 +257,188 @@ public class LinkedPresetActivationTest {
 		assertTrue(ConfigActivity.hasExistingSetupAfterRecovery(target, null, false));
 	}
 
+
+	@Test
+	public void builtInOwnedCompleteSnapshotWithLinkFailureRemainsCustom() throws Exception {
+		File source = tempDir("builtin-link-fail-source");
+		File target = tempDir("builtin-link-fail-target");
+		writeConfig(source, 480, 1);
+		writeConfig(target, 240, 1);
+		byte[] previous = Files.readAllBytes(configFile(target).toPath());
+		FakePreferences preferences = builtInOwned(target);
+		preferences.failCommit(3); // built-in fixture #1, ownership clear #2, link #3.
+
+		assertEquals(
+				LinkedPresetActivation.Result.APPLIED_CUSTOM,
+				LinkedPresetActivation.activate(preferences, target, source, "K800i"));
+
+		assertEquals(480, readConfig(target).screenWidth);
+		assertFalse(java.util.Arrays.equals(previous, Files.readAllBytes(configFile(target).toPath())));
+		assertFalse(isBuiltInOwned(preferences, target));
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+		assertEquals("K800i", new PresetLinkage(preferences, target).getOrigin());
+	}
+
+	@Test
+	public void crashAfterExactSnapshotBeforeNamedLinkCannotReviveBuiltInOwnership() throws Exception {
+		File profilesRoot = tempDir("crash-profiles-root");
+		File source = new File(profilesRoot, "K800i");
+		File target = tempDir("crash-after-snapshot");
+		assertTrue(source.mkdir());
+		writeConfig(source, 360, 1);
+		writeConfig(target, 176, 1);
+		FakePreferences preferences = builtInOwned(target);
+
+		PresetSourceReplacement.Guard guard = PresetSourceReplacement.begin(preferences, target);
+		assertTrue(guard.canWrite());
+		assertFalse(isBuiltInOwned(preferences, target));
+		ProfilesManager.syncSnapshot(source, target);
+
+		// Simulated process death here: no linkTo() and no later Activity callback.
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profilesRoot));
+		assertFalse(isBuiltInOwned(preferences, target));
+		assertNull(new PresetLinkage(preferences, target).getOrigin());
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+		assertTrue(ConfigActivity.hasExistingSetupAfterRecovery(target, null, false));
+	}
+
+	@Test
+	public void successfulCompleteActivationClearsBuiltInAndPublishesNamedLink() throws Exception {
+		File source = tempDir("builtin-success-source");
+		File target = tempDir("builtin-success-target");
+		writeConfig(source, 360, 1);
+		writeConfig(target, 176, 1);
+		FakePreferences preferences = builtInOwned(target);
+
+		assertEquals(
+				LinkedPresetActivation.Result.LINKED,
+				LinkedPresetActivation.activate(preferences, target, source, "K800i"));
+
+		assertFalse(isBuiltInOwned(preferences, target));
+		assertLinked(preferences, target, "K800i");
+	}
+
+	@Test
+	public void failedSafeExactActivationRestoresBuiltInOwnership() throws Exception {
+		File source = tempDir("builtin-failed-safe-source");
+		File target = tempDir("builtin-failed-safe-target");
+		writeConfig(source, 360, VirtualKeyboard.TYPE_CUSTOM);
+		writeConfig(target, 176, 1);
+		byte[] previous = Files.readAllBytes(configFile(target).toPath());
+		FakePreferences preferences = builtInOwned(target);
+
+		assertEquals(
+				LinkedPresetActivation.Result.FAILED_SAFE,
+				LinkedPresetActivation.activate(preferences, target, source, "K800i"));
+
+		assertArrayEquals(previous, Files.readAllBytes(configFile(target).toPath()));
+		assertTrue(isBuiltInOwned(preferences, target));
+		assertNull(new PresetLinkage(preferences, target).getOrigin());
+	}
+
+	@Test
+	public void failedUnsafeExactActivationDoesNotRestoreBuiltInOwnership() throws Exception {
+		File source = tempDir("builtin-failed-unsafe-source");
+		File target = tempDir("builtin-failed-unsafe-target");
+		writeConfig(source, 480, 1);
+		writeConfig(target, 240, 1);
+		File rollback = new File(target, ".preset-sync.rollback");
+		assertTrue(rollback.mkdir());
+		assertTrue(new File(rollback, "config.json.present").createNewFile());
+		assertTrue(new File(rollback, ".ready").createNewFile());
+		FakePreferences preferences = builtInOwned(target);
+
+		assertEquals(
+				LinkedPresetActivation.Result.FAILED_UNSAFE,
+				LinkedPresetActivation.activate(preferences, target, source, "K800i"));
+
+		assertFalse(isBuiltInOwned(preferences, target));
+		assertNull(new PresetLinkage(preferences, target).getOrigin());
+	}
+
+	@Test
+	public void failedDurableBuiltInClearBlocksExactFilesystemPublication() throws Exception {
+		File source = tempDir("builtin-clear-fail-source");
+		File target = tempDir("builtin-clear-fail-target");
+		writeConfig(source, 480, 1);
+		writeConfig(target, 240, 1);
+		byte[] previous = Files.readAllBytes(configFile(target).toPath());
+		FakePreferences preferences = builtInOwned(target);
+		preferences.failCommit(2);
+
+		assertEquals(
+				LinkedPresetActivation.Result.FAILED_SAFE,
+				LinkedPresetActivation.activate(preferences, target, source, "K800i"));
+
+		assertArrayEquals(previous, Files.readAllBytes(configFile(target).toPath()));
+		assertTrue(isBuiltInOwned(preferences, target));
+		assertNull(new PresetLinkage(preferences, target).getOrigin());
+	}
+
+	@Test
+	public void settingsOnlyReplacementClearsBuiltInBeforePublication() throws Exception {
+		File target = tempDir("settings-partial");
+		writeConfig(target, 176, 1);
+		FakePreferences preferences = builtInOwned(target);
+
+		PresetSourceReplacement.Guard guard = PresetSourceReplacement.begin(preferences, target);
+		assertTrue(guard.canWrite());
+		assertFalse(isBuiltInOwned(preferences, target));
+
+		writeConfig(target, 360, 1);
+		assertEquals(360, readConfig(target).screenWidth);
+		assertFalse(isBuiltInOwned(preferences, target));
+	}
+
+	@Test
+	public void keyboardOnlyReplacementClearsBuiltInBeforePublication() throws Exception {
+		File target = tempDir("keyboard-partial");
+		writeConfig(target, 176, 1);
+		writeLayout(target, 1);
+		FakePreferences preferences = builtInOwned(target);
+
+		PresetSourceReplacement.Guard guard = PresetSourceReplacement.begin(preferences, target);
+		assertTrue(guard.canWrite());
+		assertFalse(isBuiltInOwned(preferences, target));
+
+		writeLayout(target, 3);
+		assertFalse(isBuiltInOwned(preferences, target));
+	}
+
+	@Test
+	public void ambiguousPartialPublicationFailureNeverRestoresOldBuiltInOwnership() throws Exception {
+		File target = tempDir("partial-ambiguous");
+		writeConfig(target, 176, 1);
+		FakePreferences preferences = builtInOwned(target);
+
+		PresetSourceReplacement.Guard guard = PresetSourceReplacement.begin(preferences, target);
+		assertTrue(guard.canWrite());
+		Files.write(configFile(target).toPath(), "partial".getBytes(StandardCharsets.UTF_8));
+		// Publication may have begun, so the caller intentionally does not restore the guard.
+
+		assertFalse(isBuiltInOwned(preferences, target));
+		assertNull(new PresetLinkage(preferences, target).getOrigin());
+	}
+
+	@Test
+	public void intentionalBuiltInReplacementPublishesBuiltInOnlyAfterSnapshot() throws Exception {
+		File target = tempDir("intentional-builtin");
+		writeConfig(target, 240, 1);
+		FakePreferences preferences = linked(target, "K800i");
+
+		PresetSourceReplacement.Guard guard = PresetSourceReplacement.begin(preferences, target);
+		assertTrue(guard.canWrite());
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+		assertFalse(isBuiltInOwned(preferences, target));
+
+		writeConfig(target, 176, 1);
+		assertTrue(guard.publishBuiltInOwnership());
+
+		assertTrue(isBuiltInOwned(preferences, target));
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+		assertNull(new PresetLinkage(preferences, target).getOrigin());
+	}
+
 	private static File tempDir(String suffix) throws Exception {
 		File dir = Files.createTempDirectory("jlmod-activation-" + suffix).toFile();
 		dir.deleteOnExit();
@@ -312,6 +494,18 @@ public class LinkedPresetActivationTest {
 				.putBoolean(PresetLinkage.linkedPreferenceKey(target), true)
 				.commit());
 		return preferences;
+	}
+
+	private static FakePreferences builtInOwned(File target) {
+		FakePreferences preferences = new FakePreferences();
+		assertTrue(preferences.edit()
+				.putBoolean(ProfileModel.builtInThemePreferenceKey(target), true)
+				.commit());
+		return preferences;
+	}
+
+	private static boolean isBuiltInOwned(FakePreferences preferences, File target) {
+		return preferences.getBoolean(ProfileModel.builtInThemePreferenceKey(target), false);
 	}
 
 	private static void assertLinked(FakePreferences preferences, File target, String origin) {

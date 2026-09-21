@@ -36,8 +36,8 @@ final class LinkedPresetActivation {
 			@NonNull File targetConfigDir,
 			@NonNull File sourcePresetDir,
 			@NonNull String sourcePresetName) {
-		PresetLocalOverride.Guard previous =
-				PresetLocalOverride.clearBeforeReplacement(preferences, targetConfigDir);
+		PresetSourceReplacement.Guard previous =
+				PresetSourceReplacement.begin(preferences, targetConfigDir);
 		if (!previous.canWrite()) {
 			return Result.FAILED_SAFE;
 		}

@@ -431,7 +431,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				public void onResetSettings() {
 					if (operationRunning) return;
 					operationRunning = true;
-					PresetLocalOverride.Guard ownership = null;
+					PresetSourceReplacement.Guard ownership = null;
 					ProfileModel previousParams = params == null
 							? null : ProfileConfigMatcher.copyConfig(params);
 					ConfigFormState previousForm = currentForm;
@@ -440,26 +440,34 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 						if (isProfile) {
 							profileDraftDirty = true;
 						} else {
-							ownership = PresetLocalOverride.clearBeforeReplacement(
-									ConfigActivity.this, configDir);
+							ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
 							if (!ownership.canWrite()) {
 								ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
 								return;
 							}
 							profileOrigin = null;
+							builtInThemeLinked = false;
 						}
 						params = newBuiltInProfile();
-						setBuiltInThemeLinked(true);
 						loadParams(false);
 						if (!isProfile && !saveParams()) {
 							if (previousParams != null) params = previousParams;
 							currentForm = previousForm;
-							setBuiltInThemeLinked(previousBuiltInThemeLinked);
-							restorePresetAssociation(ownership);
+							restoreSourceOwnership(ownership);
 							if (composeController != null) {
 								composeController.update(createUiState());
 							}
 							ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
+							return;
+						}
+						if (isProfile) {
+							builtInThemeLinked = true;
+						} else if (ownership == null || !ownership.publishBuiltInOwnership()) {
+							builtInThemeLinked = false;
+							ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
+							return;
+						} else {
+							builtInThemeLinked = true;
 						}
 					} finally {
 						operationRunning = false;
@@ -1135,13 +1143,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					defaultWithSettings.getDir(),
 					defaultWithSettings.getName());
 			refreshProfileOriginFromMetadata();
+			builtInThemeLinked = readBuiltInThemeLinked();
 			if (activation == LinkedPresetActivation.Result.FAILED_UNSAFE) {
 				Log.e(TAG, "Default preset activation left an unsafe local snapshot");
 				return false;
 			}
 			if (activation == LinkedPresetActivation.Result.LINKED
 					|| activation == LinkedPresetActivation.Result.APPLIED_CUSTOM) {
-				setBuiltInThemeLinked(false);
+				builtInThemeLinked = false;
 				params = ProfilesManager.loadConfig(
 						configDir,
 						true,
@@ -1561,32 +1570,41 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			return false;
 		}
 		operationRunning = true;
-		PresetLocalOverride.Guard ownership = null;
+		PresetSourceReplacement.Guard ownership = null;
 		ProfileModel previousParams = params == null ? null : ProfileConfigMatcher.copyConfig(params);
 		ConfigFormState previousForm = currentForm;
 		boolean previousBuiltInThemeLinked = builtInThemeLinked;
 		boolean localDiverged = false;
 		try {
 			if (!isProfile) {
-				ownership = PresetLocalOverride.clearBeforeReplacement(this, configDir);
+				ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
 				if (!ownership.canWrite()) {
 					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 					return false;
 				}
 				profileOrigin = null;
+				builtInThemeLinked = false;
 			}
 			params = newBuiltInProfile();
-			setBuiltInThemeLinked(true);
 			currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
 			if (!saveParams()) {
 				if (previousParams != null) params = previousParams;
 				currentForm = previousForm;
-				setBuiltInThemeLinked(previousBuiltInThemeLinked);
-				restorePresetAssociation(ownership);
+				if (isProfile) builtInThemeLinked = previousBuiltInThemeLinked;
+				else restoreSourceOwnership(ownership);
 				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 				return false;
 			}
 			localDiverged = true;
+			if (isProfile) {
+				builtInThemeLinked = true;
+			} else if (ownership == null || !ownership.publishBuiltInOwnership()) {
+				builtInThemeLinked = false;
+				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+				return false;
+			} else {
+				builtInThemeLinked = true;
+			}
 			if (isProfile && !setProfileOrigin(null)) {
 				Log.e(TAG, "Unable to clear preset editor provenance");
 			}
@@ -1599,8 +1617,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			if (!localDiverged) {
 				if (previousParams != null) params = previousParams;
 				currentForm = previousForm;
-				setBuiltInThemeLinked(previousBuiltInThemeLinked);
-				restorePresetAssociation(ownership);
+				if (isProfile) builtInThemeLinked = previousBuiltInThemeLinked;
+				else restoreSourceOwnership(ownership);
 			}
 			Log.e(TAG, "applyBuiltInTemplate", e);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
@@ -1648,10 +1666,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				LinkedPresetActivation.Result activation = LinkedPresetActivation.activate(
 						hostPreferences, configDir, profile.getDir(), profile.getName());
 				refreshProfileOriginFromMetadata();
+				builtInThemeLinked = readBuiltInThemeLinked();
 				switch (activation) {
 					case LINKED:
 					case APPLIED_CUSTOM:
-						setBuiltInThemeLinked(false);
+						builtInThemeLinked = false;
 						loadKeyLayout();
 						loadParams(true);
 						return true;
@@ -1681,15 +1700,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		operationRunning = true;
-		PresetLocalOverride.Guard ownership = null;
+		PresetSourceReplacement.Guard ownership = null;
 		try {
 			if (!isProfile) {
-				ownership = PresetLocalOverride.clearBeforeReplacement(this, configDir);
+				ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
 				if (!ownership.canWrite()) {
 					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 					return false;
 				}
 				profileOrigin = null;
+				builtInThemeLinked = false;
 			}
 			ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
 			if (isProfile) {
@@ -1788,6 +1808,17 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
+	private void restoreSourceOwnership(@Nullable PresetSourceReplacement.Guard ownership) {
+		if (ownership == null) return;
+		if (ownership.restoreIfUnchanged()) {
+			profileOrigin = ownership.previousOrigin();
+			builtInThemeLinked = ownership.wasBuiltInThemeLinked();
+		} else {
+			profileOrigin = null;
+			builtInThemeLinked = false;
+		}
+	}
+
 	private void showKeyboardLayoutPicker() {
 		if (keylayoutFile == null) return;
 		LoadProfileAlert.newInstance()
@@ -1805,15 +1836,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			return false;
 		}
 		operationRunning = true;
-		PresetLocalOverride.Guard ownership = null;
+		PresetSourceReplacement.Guard ownership = null;
 		try {
 			if (!isProfile) {
-				ownership = PresetLocalOverride.clearBeforeReplacement(this, configDir);
+				ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
 				if (!ownership.canWrite()) {
 					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 					return false;
 				}
 				profileOrigin = null;
+				builtInThemeLinked = false;
 			}
 			ProfilesManager.load(profile, configDir.getPath(), false, true);
 			if (isProfile && !setProfileOrigin(null)) {
