@@ -891,22 +891,42 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			if (version < 1 || version > LAYOUT_VERSION) {
 				throw new IOException("incompatible file version");
 			}
-			int custom = 0;
+
+			int legacyCustomBlocks = 0;
+			int explicitType = -1;
+			boolean typeSeen = false;
+			boolean v4CustomStateSeen = false;
 			for (int blockIndex = 0; blockIndex < MAX_LAYOUT_BLOCKS; blockIndex++) {
 				int block = dis.readInt();
 				int length = dis.readInt();
 				if (length < 0) return -1;
 				switch (block) {
 					case LAYOUT_EOF -> {
-						return length == 0 && custom == 3 ? TYPE_CUSTOM : -1;
+						if (length != 0) return -1;
+						if (version == 4) {
+							if (!typeSeen) return -1;
+							if (explicitType != TYPE_CUSTOM && v4CustomStateSeen) return -1;
+							return explicitType;
+						}
+						return legacyCustomBlocks == 3 ? TYPE_CUSTOM : -1;
 					}
 					case LAYOUT_TYPE -> {
-						if (length < 1) return -1;
+						if (length < 1 || (version == 4 && (length != 1 || typeSeen))) return -1;
 						int variant = dis.readUnsignedByte();
+						if (variant < TYPE_CUSTOM ||
+								variant > VirtualControlsKeyboard.TYPE_ANALOG_STANDARD) {
+							return -1;
+						}
 						skipFully(dis, length - 1);
-						return variant;
+						if (version == 4) {
+							typeSeen = true;
+							explicitType = variant;
+						} else {
+							return variant;
+						}
 					}
 					case LAYOUT_KEYS -> {
+						if (version == 4) return -1;
 						if (version >= 2) {
 							if (length < 4) return -1;
 							int count = dis.readInt();
@@ -916,11 +936,21 @@ public class VirtualKeyboard implements Overlay, Runnable {
 						} else {
 							skipFully(dis, length);
 						}
-						custom |= 1;
+						legacyCustomBlocks |= 1;
 					}
 					case LAYOUT_SCALES -> {
+						if (version == 4) return -1;
 						skipFully(dis, length);
-						custom |= 2;
+						legacyCustomBlocks |= 2;
+					}
+					case LAYOUT_BASE_VARIANT, LAYOUT_LEGACY_SHARED,
+							LAYOUT_PORTRAIT_OVERRIDE, LAYOUT_LANDSCAPE_OVERRIDE -> {
+						if (version != 4) {
+							skipFully(dis, length);
+						} else {
+							v4CustomStateSeen = true;
+							skipFully(dis, length);
+						}
 					}
 					default -> skipFully(dis, length);
 				}
@@ -1054,6 +1084,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					landscapeOverride = readV4SnapshotBlock(dis, length);
 					landscapeSeen = true;
 				}
+				case LAYOUT_KEYS, LAYOUT_SCALES ->
+						throw new IOException("legacy layout blocks are invalid in v4");
 				default -> skipFully(dis, length);
 			}
 		}
