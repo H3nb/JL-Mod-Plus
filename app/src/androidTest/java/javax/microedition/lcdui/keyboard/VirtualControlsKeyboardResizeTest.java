@@ -674,6 +674,41 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void dormantV3PayloadWithBuiltInTypeMigratesBeforeAnyRewrite() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        dragGrouped("dpadGeometry", 24f, -18f);
+        dragLegacy("F", 18f, 0f);
+        writeLegacyV3Layout(keyboard.captureLayoutSnapshot());
+        patchLayoutType(3);
+
+        settings.virtualDpadEnabled = true;
+        settings.virtualAnalogEnabled = false;
+        ProfilesManager.saveConfig(settings);
+        recreateKeyboardFromDisk(portrait);
+
+        assertEquals(3, keyboard.getLayout());
+        VirtualKeyboardLayoutState dormant =
+                keyboard.captureLayoutEditState().dormantCustomLayout();
+        assertNotNull(dormant);
+        assertNotNull(dormant.legacySharedFallback());
+        assertTrue(dormant.legacySharedFallback().hasGroupedControls);
+        assertTrue(dormant.legacySharedFallback().dpadEnabled);
+
+        keyboard.setLayout(6);
+        recreateKeyboardFromDisk(portrait);
+        assertEquals(6, keyboard.getLayout());
+        assertNotNull(keyboard.captureLayoutEditState().dormantCustomLayout());
+
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+        VirtualKeyboardLayoutState restored =
+                keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(restored.legacySharedFallback());
+        assertTrue(restored.legacySharedFallback().dpadEnabled);
+    }
+
+    @Test
     public void migratedV3FallbackSurvivesDormantBuiltInRoundTrip() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
@@ -1367,6 +1402,25 @@ public class VirtualControlsKeyboardResizeTest {
             out.writeInt(VirtualKeyboard.LAYOUT_EOF);
             out.writeInt(0);
         }
+    }
+
+    private void patchLayoutType(int type) throws Exception {
+        try (RandomAccessFile raf = new RandomAccessFile(layoutFile(), "rw")) {
+            assertEquals(0x564B4C00, raf.readInt());
+            assertEquals(3, raf.readInt());
+            while (raf.getFilePointer() < raf.length()) {
+                int block = raf.readInt();
+                int length = raf.readInt();
+                if (block == VirtualKeyboard.LAYOUT_TYPE) {
+                    assertTrue(length >= 1);
+                    raf.writeByte(type);
+                    return;
+                }
+                if (block == VirtualKeyboard.LAYOUT_EOF) break;
+                raf.seek(raf.getFilePointer() + length);
+            }
+        }
+        throw new AssertionError("Layout type block was not found");
     }
 
     private void patchKeyAsNoSnap(int targetHash) throws Exception {
