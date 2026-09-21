@@ -720,6 +720,24 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void reselectingActiveCustomDoesNotDiscardUnsavedDraft() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        dragGrouped("dpadGeometry", 24f, -18f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+
+        dragLegacy("F", 30f, 0f);
+        VirtualKeyboardLayoutEditState draftBefore = keyboard.captureLayoutEditState();
+        float fireBefore = rectField(keyByLabel("F")).centerX();
+
+        keyboard.setLayoutForEditing(VirtualKeyboard.TYPE_CUSTOM);
+
+        assertEquals(draftBefore, keyboard.captureLayoutEditState());
+        assertEquals(fireBefore, rectField(keyByLabel("F")).centerX(), EPS);
+    }
+
+    @Test
     public void templateSwitchSavePersistsNewBaseWithoutStaleOverrides() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
