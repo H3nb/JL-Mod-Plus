@@ -720,6 +720,43 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void templateSwitchSavePersistsNewBaseWithoutStaleOverrides() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        dragGrouped("dpadGeometry", 24f, -18f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        dragGrouped("dpadGeometry", -24f, 18f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+
+        keyboard.setLayoutForEditing(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+
+        recreateKeyboardFromDisk(portrait);
+        VirtualKeyboardLayoutState portraitState =
+                keyboard.captureLayoutEditState().customLayout();
+        assertEquals(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD, portraitState.baseVariant());
+        assertEquals(null, portraitState.portraitOverride());
+        assertEquals(null, portraitState.landscapeOverride());
+        assertEquals(null, portraitState.legacySharedFallback());
+        assertTrue(settings.virtualAnalogEnabled);
+        assertFalse(settings.virtualDpadEnabled);
+        assertFreshStandardGeometry(
+                portrait, 0f, 0f, 600f, 1200f, "analogGeometry");
+
+        recreateKeyboardFromDisk(landscape);
+        VirtualKeyboardLayoutState landscapeState =
+                keyboard.captureLayoutEditState().customLayout();
+        assertEquals(portraitState, landscapeState);
+        assertTrue(settings.virtualAnalogEnabled);
+        assertFalse(settings.virtualDpadEnabled);
+        assertFreshStandardGeometry(
+                landscape, 0f, 0f, 1200f, 600f, "analogGeometry");
+    }
+
+    @Test
     public void v3MigrationKeepsSharedFallbackUntilBothOrientationsAreEdited() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
@@ -739,8 +776,15 @@ public class VirtualControlsKeyboardResizeTest {
         assertNotNull(portraitEdited.portraitOverride());
         assertEquals(null, portraitEdited.landscapeOverride());
         VirtualKeyboardLayoutSnapshot savedPortrait = portraitEdited.portraitOverride();
+        VirtualKeyboardLayoutSnapshot sharedFallback = portraitEdited.legacySharedFallback();
 
         keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        VirtualKeyboardLayoutState landscapeBeforeEdit =
+                keyboard.captureLayoutEditState().customLayout();
+        assertEquals(null, landscapeBeforeEdit.landscapeOverride());
+        assertEquals(sharedFallback, landscapeBeforeEdit.legacySharedFallback());
+        assertEquals(sharedFallback, keyboard.captureLayoutSnapshot().asCustomOverride());
+
         dragGrouped("dpadGeometry", -24f, 18f);
         keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
         VirtualKeyboardLayoutState both = keyboard.captureLayoutEditState().customLayout();
