@@ -229,7 +229,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	@Override
-	public void onLayoutChanged(int variant) {
+	public boolean onLayoutChanged(int variant) {
 		if (variant == TYPE_CUSTOM) {
 			if (getStoredCustomLayoutState() == null) {
 				int current = getLayout();
@@ -244,25 +244,21 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 							VirtualKeyboardLayoutState.migrated(captureCurrentCustomSnapshot()));
 				}
 			}
-			if (activeOrientationDirty) {
-				// Preserve PR #131's materialization invariant before the draft becomes persistent.
-				prepareCustomLayoutForSave();
-				stashActiveCustomDraft();
+			if (activeOrientationDirty && !stashActiveCustomDraft()) {
+				return false;
 			}
 			setLayoutVariantInMemory(TYPE_CUSTOM);
 		} else {
-			setStoredCustomLayoutState(null);
 			activeCustomSource = ActiveCustomSource.NONE;
 			activeOrientationDirty = false;
 		}
-		super.onLayoutChanged(variant);
-		if (!applyingStandardTemplate) ProfilesManager.saveConfig(settings);
+		if (!super.onLayoutChanged(variant)) return false;
+		return applyingStandardTemplate || ProfilesManager.saveConfig(settings);
 	}
 
 	@Override
 	public void setLayout(int variant) {
 		if (variant != TYPE_CUSTOM) {
-			setStoredCustomLayoutState(null);
 			activeCustomSource = ActiveCustomSource.NONE;
 			activeOrientationDirty = false;
 		}
@@ -332,7 +328,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			endDpad();
 			endAnalog();
 			if (variant == TYPE_CUSTOM) {
-				setStoredCustomLayoutState(null);
 				activeCustomSource = ActiveCustomSource.NONE;
 				activeOrientationDirty = false;
 			}
@@ -349,6 +344,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 						getStoredCustomLayoutState() == null) {
 					setStoredCustomLayoutState(
 							VirtualKeyboardLayoutState.migrated(captureCurrentCustomSnapshot()));
+				}
+				if (screenBounds != null && getStoredCustomLayoutState() != null) {
+					activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+							screenBounds, activeLayoutOrientation);
+					applyCustomOrientationState(activeLayoutOrientation);
 				}
 			}
 			invalidateOverlay();
@@ -388,8 +388,9 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			settings.virtualAnalogRadius = movementRadius;
 			rebuildAnalogStick();
 			if (persist) {
-				ProfilesManager.saveConfig(settings);
-				super.onLayoutChanged(variant);
+				if (super.onLayoutChanged(variant)) {
+					ProfilesManager.saveConfig(settings);
+				}
 			} else {
 				setLayoutVariantInMemory(variant);
 			}
@@ -511,7 +512,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		if (state == null) return;
 		cancel();
 		if (!state.isCustom()) {
-			setStoredCustomLayoutState(null);
 			activeCustomSource = ActiveCustomSource.NONE;
 			activeOrientationDirty = false;
 			super.restoreLayoutEditState(state);
@@ -536,7 +536,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public void restoreLayoutSnapshot(VirtualKeyboardLayoutSnapshot snapshot) {
 		if (snapshot == null) return;
 		if (snapshot.layoutVariant != TYPE_CUSTOM) {
-			setStoredCustomLayoutState(null);
 			activeCustomSource = ActiveCustomSource.NONE;
 			activeOrientationDirty = false;
 		}
@@ -668,13 +667,14 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		if (reflowStandardTemplate) scheduleStandardTemplateReflow(layout);
 	}
 
-	private void stashActiveCustomDraft() {
-		if (!activeOrientationDirty || activeLayoutOrientation == null) return;
+	private boolean stashActiveCustomDraft() {
+		if (!activeOrientationDirty || activeLayoutOrientation == null) return true;
 		VirtualKeyboardLayoutState state = getStoredCustomLayoutState();
-		if (state == null) return;
-		if (!prepareCustomLayoutForSave()) {
-			// Editor operations are expected to maintain reconstructible topology. Keep the in-memory
-			// draft visible rather than crashing; the v4 writer will still refuse invalid persistence.
+		if (state == null) return false;
+		boolean persistable = prepareCustomLayoutForSave();
+		if (!persistable) {
+			// Keep the visible draft in its orientation slot so rotation cannot lose user work.
+			// The invalid snapshot remains invalid and the v4 writer will reject Save.
 			android.util.Log.w(
 					VirtualControlsKeyboard.class.getSimpleName(),
 					"Orientation draft could not satisfy Custom persistence invariant");
@@ -683,6 +683,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				activeLayoutOrientation, captureCurrentCustomSnapshot()));
 		activeOrientationDirty = false;
 		activeCustomSource = ActiveCustomSource.OVERRIDE;
+		return persistable;
 	}
 
 	private void applyCustomOrientationState(VirtualLayoutOrientation orientation) {
