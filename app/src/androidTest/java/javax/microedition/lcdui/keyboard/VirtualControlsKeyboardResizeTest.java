@@ -609,6 +609,231 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void dormantCustomSurvivesBuiltInRestartAndRestoresBothOrientations() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        VirtualKeyboardLayoutState saved =
+                createAndSaveTwoOrientationDpadCustom(portrait, landscape);
+
+        keyboard.setLayout(3);
+        assertEquals(3, keyboard.getLayout());
+        assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
+
+        recreateKeyboardFromDisk(landscape);
+        assertEquals(3, keyboard.getLayout());
+        assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
+
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+        assertEquals(VirtualKeyboard.TYPE_CUSTOM, keyboard.getLayout());
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
+    public void multipleBuiltInSelectionsDoNotReplaceDormantCustomDefinition() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        VirtualKeyboardLayoutState saved =
+                createAndSaveTwoOrientationDpadCustom(portrait, landscape);
+
+        for (int type : new int[] { 3, 6, 2 }) {
+            keyboard.setLayout(type);
+            assertEquals(type, keyboard.getLayout());
+            assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
+        }
+
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
+    public void portraitOnlyOverrideSurvivesDormantBuiltInRestart() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        dragGrouped("dpadGeometry", 24f, -18f);
+        dragLegacy("F", 18f, 0f);
+        assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        VirtualKeyboardLayoutState saved = keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(saved.portraitOverride());
+        assertEquals(null, saved.landscapeOverride());
+
+        keyboard.setLayout(3);
+        recreateKeyboardFromDisk(landscape);
+        assertEquals(3, keyboard.getLayout());
+
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+        assertFreshStandardGeometry(
+                landscape, 0f, 0f, 1200f, 600f, "dpadGeometry");
+    }
+
+    @Test
+    public void migratedV3FallbackSurvivesDormantBuiltInRoundTrip() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        writeLegacyV3Layout(keyboard.captureLayoutSnapshot());
+
+        recreateKeyboardFromDisk(portrait);
+        VirtualKeyboardLayoutState migrated = keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(migrated.legacySharedFallback());
+
+        keyboard.setLayout(3);
+        recreateKeyboardFromDisk(portrait);
+        assertEquals(3, keyboard.getLayout());
+        assertEquals(migrated, keyboard.captureLayoutEditState().dormantCustomLayout());
+
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+        VirtualKeyboardLayoutState restored = keyboard.captureLayoutEditState().customLayout();
+        assertEquals(migrated, restored);
+        assertNotNull(restored.legacySharedFallback());
+    }
+
+    @Test
+    public void discardFromBuiltInRestoresPreviousDormantCustomState() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        VirtualKeyboardLayoutState saved =
+                createAndSaveTwoOrientationDpadCustom(portrait, landscape);
+        keyboard.setLayout(3);
+        VirtualKeyboardLayoutEditState baseline = keyboard.captureLayoutEditState();
+        assertEquals(saved, baseline.dormantCustomLayout());
+
+        keyboard.setLayoutForEditing(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD);
+        assertEquals(
+                VirtualControlsKeyboard.TYPE_ANALOG_STANDARD,
+                keyboard.captureLayoutEditState().customLayout().baseVariant());
+
+        keyboard.restoreLayoutEditState(baseline);
+        assertEquals(3, keyboard.getLayout());
+        assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
+
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
+    public void malformedDormantCustomStateRejectsWholeV4Artifact() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        createAndSaveTwoOrientationDpadCustom(portrait, landscape);
+        keyboard.setLayout(3);
+        truncateInsideV4LandscapeOverride();
+
+        settings.vkType = 6;
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        VirtualControlsKeyboard candidate = null;
+        try {
+            candidate = new VirtualControlsKeyboard(settings);
+            candidate.setView(new View(context));
+            candidate.resize(landscape, 0f, 0f, 1200f, 600f);
+            assertEquals(6, candidate.getLayout());
+        } finally {
+            disposeKeyboard(candidate);
+        }
+    }
+
+    @Test
+    public void failedInvariantSaveKeepsBothOrientationDraftsAndCanRetry() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+
+        dragGrouped("dpadGeometry", 24f, -18f);
+        dragLegacy("F", 18f, 0f);
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        dragGrouped("dpadGeometry", -24f, 18f);
+        dragLegacy("F", -18f, 0f);
+
+        PointF liveOffset = liveSnapOffset("F");
+        float originalX = liveOffset.x;
+        liveOffset.x = Float.NaN;
+        assertFalse(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+
+        VirtualKeyboardLayoutState failedDraft =
+                keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(failedDraft.portraitOverride());
+        assertNotNull(failedDraft.landscapeOverride());
+
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        VirtualControlsKeyboard persisted = null;
+        try {
+            ProfileModel persistedSettings = ProfilesManager.loadConfig(profileDir);
+            assertNotNull(persistedSettings);
+            persisted = new VirtualControlsKeyboard(persistedSettings);
+            persisted.setView(new View(context));
+            persisted.resize(landscape, 0f, 0f, 1200f, 600f);
+            assertEquals(VirtualControlsKeyboard.TYPE_DPAD_STANDARD, persisted.getLayout());
+        } finally {
+            disposeKeyboard(persisted);
+        }
+
+        liveOffset.x = originalX;
+        dragLegacy("F", 2f, 0f);
+        assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        VirtualKeyboardLayoutState saved = keyboard.captureLayoutEditState().customLayout();
+
+        recreateKeyboardFromDisk(portrait);
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+        recreateKeyboardFromDisk(landscape);
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
+    public void ioFailurePreservesPreviousLayoutFileAndRetryCommitsDraft() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        VirtualKeyboardLayoutState persistedState =
+                createAndSaveTwoOrientationDpadCustom(portrait, landscape);
+
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        dragLegacy("F", 16f, 0f);
+        VirtualKeyboardLayoutEditState dirty = keyboard.captureLayoutEditState();
+        assertNotEquals(
+                persistedState.portraitOverride(),
+                dirty.customLayout().portraitOverride());
+
+        File blocker = new File(layoutFile().getPath() + ".new");
+        assertTrue(blocker.mkdir());
+        File blockerChild = new File(blocker, "keep");
+        assertTrue(blockerChild.createNewFile());
+
+        assertFalse(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        VirtualKeyboardLayoutState retryState =
+                keyboard.captureLayoutEditState().customLayout();
+
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        VirtualControlsKeyboard candidate = null;
+        try {
+            ProfileModel persistedSettings = ProfilesManager.loadConfig(profileDir);
+            assertNotNull(persistedSettings);
+            candidate = new VirtualControlsKeyboard(persistedSettings);
+            candidate.setView(new View(context));
+            candidate.resize(portrait, 0f, 0f, 600f, 1200f);
+            assertEquals(VirtualKeyboard.TYPE_CUSTOM, candidate.getLayout());
+            assertEquals(
+                    persistedState,
+                    candidate.captureLayoutEditState().customLayout());
+        } finally {
+            disposeKeyboard(candidate);
+        }
+
+        assertTrue(blockerChild.delete());
+        assertTrue(blocker.delete());
+        assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+
+        recreateKeyboardFromDisk(portrait);
+        assertEquals(retryState, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
     public void absentStandardOverrideReflowsButExistingOverrideDoesNotRegenerate() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
@@ -924,6 +1149,31 @@ public class VirtualControlsKeyboardResizeTest {
         assertEquals(VirtualKeyboard.LAYOUT_KEYS, keyboard.getLayoutEditMode());
         assertEquals(-1, intField(keyboard, "legacyEditPointer"));
         assertEquals(-1, intField(keyboard, "legacyPinchPointer"));
+    }
+
+    private VirtualKeyboardLayoutState createAndSaveTwoOrientationDpadCustom(
+            RectF portrait, RectF landscape) throws Exception {
+        keyboard.resize(portrait, 0f, 0f, portrait.width(), portrait.height());
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        dragGrouped("dpadGeometry", 30f, -18f);
+        dragLegacy("F", 18f, 0f);
+
+        keyboard.resize(landscape, 0f, 0f, landscape.width(), landscape.height());
+        dragGrouped("dpadGeometry", -30f, 18f);
+        dragLegacy("F", -18f, 0f);
+        assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+
+        VirtualKeyboardLayoutState saved = keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(saved.portraitOverride());
+        assertNotNull(saved.landscapeOverride());
+        return saved;
+    }
+
+    private PointF liveSnapOffset(String label) throws Exception {
+        Object key = keyByLabel(label);
+        Field field = findField(key.getClass(), "snapOffset");
+        field.setAccessible(true);
+        return (PointF) field.get(key);
     }
 
     private void dragGrouped(String geometryMethod, float dx, float dy) throws Exception {
