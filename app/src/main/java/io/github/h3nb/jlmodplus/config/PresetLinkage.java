@@ -83,4 +83,17 @@ final class PresetLinkage {
 	static String linkedPreferenceKey(@NonNull File configDir) {
 		return LINKED_PREFIX + configDir.getAbsolutePath();
 	}
+
+	@NonNull
+	static String originPreferencePrefix() {
+		return ORIGIN_PREFIX;
+	}
+
+	@NonNull
+	static String linkedPreferenceKeyForOriginKey(@NonNull String originKey) {
+		if (!originKey.startsWith(ORIGIN_PREFIX)) {
+			throw new IllegalArgumentException("Not a preset origin preference key");
+		}
+		return LINKED_PREFIX + originKey.substring(ORIGIN_PREFIX.length());
+	}
 }

@@ -24,6 +24,7 @@ public class ProfileNameValidationTest {
 	public void acceptsNamesThatAreSafeForProfileCollections() {
 		assertTrue(Profile.isValidName("Comfortable layout"));
 		assertTrue(Profile.isValidName("  日本語  "));
+		assertTrue(Profile.isValidName(".historical-profile"));
 	}
 
 	@Test
@@ -36,5 +37,6 @@ public class ProfileNameValidationTest {
 		assertFalse(Profile.isValidName("nested/name"));
 		assertFalse(Profile.isValidName("nested\\name"));
 		assertFalse(Profile.isValidName("line\nname"));
+		assertFalse(Profile.isValidName(PresetLifecycle.RENAME_STAGING_PREFIX + "pending"));
 	}
 }

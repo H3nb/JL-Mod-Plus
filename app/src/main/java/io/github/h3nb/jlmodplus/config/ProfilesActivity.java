@@ -37,6 +37,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.preference.PreferenceManager;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -132,38 +133,41 @@ public class ProfilesActivity extends AppCompatActivity {
 
 			@Override
 			public void onRename(@NonNull String oldName, @NonNull String newName) {
-				Profile profile = profilesByName.get(oldName);
-				if (profile == null || !Profile.isValidName(newName)
-						|| ProfilesManager.profileNameExists(newName)) {
+				String normalizedName = newName.trim();
+				if (profilesByName.get(oldName) == null || !Profile.isValidName(normalizedName)
+						|| ProfilesManager.profileNameExists(normalizedName)) {
 					return;
 				}
-				if (!profile.renameTo(newName)) {
-					ThemedToast.show(ProfilesActivity.this,
-							R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-					return;
-				}
-				if (oldName.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
-					preferences.edit().putString(PREF_DEFAULT_PROFILE, newName).apply();
-				}
-				refreshProfiles();
+				profileExecutor.execute(() -> {
+					PresetLifecycle.Result result = PresetLifecycle.rename(
+							preferences,
+							new File(Config.getProfilesDir()),
+							oldName,
+							normalizedName);
+					runOnUiThread(() -> finishLifecycleOperation(result));
+				});
 			}
 
 			@Override
 			public void onDelete(@NonNull String name) {
-				Profile profile = profilesByName.get(name);
-				if (profile != null) {
-					if (!profile.delete()) {
-						ThemedToast.show(ProfilesActivity.this,
-								R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-						return;
-					}
-					if (name.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
-						preferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
-					}
-					refreshProfiles();
-				}
+				if (profilesByName.get(name) == null) return;
+				profileExecutor.execute(() -> {
+					PresetLifecycle.Result result = PresetLifecycle.delete(
+							preferences,
+							new File(Config.getProfilesDir()),
+							name);
+					runOnUiThread(() -> finishLifecycleOperation(result));
+				});
 			}
 		};
+	}
+
+	private void finishLifecycleOperation(@NonNull PresetLifecycle.Result result) {
+		if (isFinishing() || isDestroyed()) return;
+		if (result != PresetLifecycle.Result.SUCCESS) {
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+		}
+		refreshProfiles();
 	}
 
 	private void refreshProfiles() {

@@ -29,7 +29,7 @@
     <string name="profile_template_summary">Saved MIDlet settings</string>
     <string name="profile_name_label">Preset Name</string>
     <string name="profile_name_exists">A preset with this name already exists.</string>
-    <string name="profile_delete_template_message">Delete preset “%1$s”? This does not delete any MIDlet data.</string>
+    <string name="profile_delete_template_message">Delete preset “%1$s”? Applications using it keep their current settings, but they will stop following this preset.</string>
     <string name="profile_template_operation_failed">Could not update the MIDlet preset.</string>
     <string name="config_help_screen_size">Sets the virtual screen resolution exposed to the MIDlet.</string>
     <string name="config_help_orientation">Chooses the screen orientation while the MIDlet runs.</string>

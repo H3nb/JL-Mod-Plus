@@ -1100,14 +1100,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	boolean loadConfig() {
-		if (!isProfile && !MidletConfigLoadBoundary.prepare(hostPreferences, configDir)) {
-			Log.e(TAG, "Refusing to load MIDlet config after preset snapshot recovery failure");
-			return false;
+		if (!isProfile) {
+			if (!MidletConfigLoadBoundary.prepare(hostPreferences, configDir)) {
+				Log.e(TAG, "Refusing to load MIDlet config after preset snapshot recovery failure");
+				return false;
+			}
+			refreshProfileOriginFromMetadata();
 		}
 		boolean decidingInitializationNow = !initializationDecisionMade;
 		if (decidingInitializationNow) {
 			if (!isProfile) {
-				refreshProfileOriginFromMetadata();
 				setupArtifactExistedBeforeInitialization = hasExistingSetupAfterRecovery(
 						configDir, profileOrigin, readBuiltInThemeLinked());
 			}
@@ -2167,7 +2169,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private void refreshProfileOriginFromMetadata() {
-		profileOrigin = presetLinkage == null ? null : presetLinkage.getOrigin();
+		profileOrigin = profileOriginFromMetadata(hostPreferences, configDir);
+	}
+
+	@Nullable
+	static String profileOriginFromMetadata(
+			@NonNull SharedPreferences preferences,
+			@NonNull File configDir) {
+		return new PresetLinkage(preferences, configDir).getOrigin();
 	}
 
 	private static boolean hasConfigArtifact(@NonNull File dir) {

@@ -35,7 +35,7 @@
     <string name="profile_template_summary">Pengaturan MIDlet tersimpan</string>
     <string name="profile_name_label">Nama Prasetel</string>
     <string name="profile_name_exists">Prasetel dengan nama ini sudah ada.</string>
-    <string name="profile_delete_template_message">Hapus prasetel “%1$s”? Tindakan ini tidak menghapus data MIDlet.</string>
+    <string name="profile_delete_template_message">Hapus prasetel “%1$s”? Aplikasi yang menggunakannya tetap mempertahankan pengaturan saat ini, tetapi tidak lagi mengikuti prasetel ini.</string>
     <string name="profile_template_operation_failed">Prasetel MIDlet tidak dapat diperbarui.</string>
     <string name="config_help_screen_size">Menentukan resolusi layar virtual MIDlet.</string>
     <string name="config_help_orientation">Memilih orientasi layar saat MIDlet berjalan.</string>

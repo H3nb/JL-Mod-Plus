@@ -147,7 +147,7 @@ public class ProfilesManager {
 	}
 
 	@NonNull
-	private static ArrayList<Profile> getList(File root) {
+	static ArrayList<Profile> getList(File root) {
 		File[] dirs = root.listFiles();
 		if (dirs == null) {
 			return new ArrayList<>();
@@ -155,7 +155,7 @@ public class ProfilesManager {
 		int size = dirs.length;
 		ArrayList<Profile> result = new ArrayList<>(size);
 		for (File dir : dirs) {
-			if (dir.isDirectory()) {
+			if (dir.isDirectory() && !PresetLifecycle.isInternalRenameStagingName(dir.getName())) {
 				result.add(new Profile(dir.getName()));
 			}
 		}
