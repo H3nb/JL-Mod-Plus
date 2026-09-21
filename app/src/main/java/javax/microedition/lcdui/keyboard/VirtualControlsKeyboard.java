@@ -72,6 +72,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final int FEEDBACK_DURATION_MS = 50;
 
 	private enum EditControl { NONE, DPAD, ANALOG }
+	private enum ActiveCustomSource { NONE, OVERRIDE, BASE, LEGACY_SHARED }
 
 	private final ProfileModel settings;
 	private final VirtualDpadController dpadController = new VirtualDpadController();
@@ -88,6 +89,9 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private boolean applyingStandardTemplate;
 	private boolean standardTemplateReflowPosted;
 	private boolean standardTemplateEdited;
+	private VirtualLayoutOrientation activeLayoutOrientation;
+	private ActiveCustomSource activeCustomSource = ActiveCustomSource.NONE;
+	private boolean activeOrientationDirty;
 
 	private int dpadPointer = -1;
 	private PointerSourceToken dpadToken;
@@ -143,6 +147,14 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		}
 		sanitizeStoredGeometry();
 		rebuildAnalogStick();
+
+		// v1-v3 Custom artifacts had one shared semantic layout. Promote that state in memory only;
+		// the file is rewritten as v4 only after an explicit Save.
+		if (layout == TYPE_CUSTOM && getLoadedLayoutVersion() > 0 &&
+				getLoadedLayoutVersion() < 4 && getStoredCustomLayoutState() == null) {
+			setStoredCustomLayoutState(
+					VirtualKeyboardLayoutState.migrated(captureCurrentCustomSnapshot()));
+		}
 	}
 
 
@@ -330,7 +342,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	 * corners, movement in the lower-left, and F, *, and 0 in the lower-right.
 	 */
 	private void arrangeStandardLegacyButtons(StandardVirtualControlsLayout layout) {
-		if (screenBounds == null || overlayView == null || layout == null) return;
+		if (screenBounds == null || layout == null) return;
 
 		float baseKeySize = Math.max(1.0f, getCurrentKeySize());
 		setKeyGroupScaleByLabel(
