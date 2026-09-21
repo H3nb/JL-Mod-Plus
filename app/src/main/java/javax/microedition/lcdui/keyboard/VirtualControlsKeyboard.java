@@ -280,7 +280,13 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			activeOrientationDirty = false;
 		}
 		if (!super.onLayoutChanged(variant)) return false;
-		return applyingStandardTemplate || ProfilesManager.saveConfig(settings);
+		if (!applyingStandardTemplate) {
+			// The v4 layout artifact is authoritative for Custom geometry. ProfileModel keeps
+			// compatibility working values only, so its best-effort save must not turn an already
+			// committed layout write into a false "Save failed" result.
+			ProfilesManager.saveConfig(settings);
+		}
+		return true;
 	}
 
 	@Override
