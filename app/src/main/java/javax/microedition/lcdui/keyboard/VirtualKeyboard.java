@@ -69,7 +69,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private static final String ARROW_DOWN_RIGHT = "↘";
 
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
-	private static final int LAYOUT_VERSION = 3;
+	private static final int LAYOUT_VERSION = 4;
 	private static final int MAX_LAYOUT_BLOCKS = 1024;
 	private static final int KEY_RECORD_SIZE_V1 = 20;
 	private static final int KEY_RECORD_SIZE_V2 = 21;
@@ -79,6 +79,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	@SuppressWarnings("unused")
 	public static final int LAYOUT_COLORS = 2;
 	public static final int LAYOUT_TYPE = 3;
+	public static final int LAYOUT_BASE_VARIANT = 4;
+	public static final int LAYOUT_LEGACY_SHARED = 5;
+	public static final int LAYOUT_PORTRAIT_OVERRIDE = 6;
+	public static final int LAYOUT_LANDSCAPE_OVERRIDE = 7;
 
 	private static final int SHAPE_OVAL = 0;
 	private static final int SHAPE_RECT = 1;
@@ -208,6 +212,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			Math.min(ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight()) / 6.0f;
 	private float snapRadius;
 	private int layoutVariant;
+	private int loadedLayoutVersion = -1;
+	private VirtualKeyboardLayoutState storedCustomLayoutState;
 	private boolean controllerKeypadVisible;
 	private int controllerKeypadSelection;
 	private VirtualKey controllerKeypadPressed;
@@ -290,6 +296,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 		}
 		layoutVariant = variant;
+		if (variant != TYPE_CUSTOM) storedCustomLayoutState = null;
 		saveLayout();
 		if (target != null && target.isShown()) {
 			target.updateSize();
@@ -535,6 +542,27 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		return bounds;
 	}
 
+	public VirtualKeyboardLayoutEditState captureLayoutEditState() {
+		return VirtualKeyboardLayoutEditState.single(captureLayoutSnapshot());
+	}
+
+	public void restoreLayoutEditState(VirtualKeyboardLayoutEditState state) {
+		if (state == null || state.isCustom()) return;
+		restoreLayoutSnapshot(state.singleLayout());
+	}
+
+	protected final VirtualKeyboardLayoutState getStoredCustomLayoutState() {
+		return storedCustomLayoutState;
+	}
+
+	protected final void setStoredCustomLayoutState(VirtualKeyboardLayoutState state) {
+		storedCustomLayoutState = state;
+	}
+
+	protected final int getLoadedLayoutVersion() {
+		return loadedLayoutVersion;
+	}
+
 	public VirtualKeyboardLayoutSnapshot captureLayoutSnapshot() {
 		boolean[] visible = new boolean[keypad.length];
 		int[] snapOrigins = new int[keypad.length];
@@ -711,7 +739,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 	}
 
-	private boolean prepareCustomLayoutForSave() {
+	protected final boolean prepareCustomLayoutForSave() {
 		boolean materialized = false;
 		for (VirtualKey key : keypad) {
 			if (key.snapMode == RectSnap.NO_SNAP) {
