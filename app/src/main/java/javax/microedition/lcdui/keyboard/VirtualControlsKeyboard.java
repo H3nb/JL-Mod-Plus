@@ -326,6 +326,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			standardTemplateEdited = false;
 			endDpad();
 			endAnalog();
+			if (variant == TYPE_CUSTOM) {
+				setStoredCustomLayoutState(null);
+				activeCustomSource = ActiveCustomSource.NONE;
+				activeOrientationDirty = false;
+			}
 			if (variant != TYPE_CUSTOM) {
 				settings.virtualDpadEnabled = false;
 				settings.virtualAnalogEnabled = false;
