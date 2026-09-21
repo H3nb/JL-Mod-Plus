@@ -215,6 +215,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private float snapRadius;
 	private int layoutVariant;
 	private int loadedLayoutVersion = -1;
+	private boolean legacyCustomPayloadSeen;
 	private VirtualKeyboardLayoutState storedCustomLayoutState;
 	private boolean controllerKeypadVisible;
 	private int controllerKeypadSelection;
@@ -264,6 +265,20 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			if (layoutVariant == TYPE_CUSTOM) {
 				layoutVariant = TYPE_NUM_ARR;
 			}
+		}
+		if (loadedLayoutVersion > 0 && loadedLayoutVersion < 4 &&
+				layoutVariant != TYPE_CUSTOM && legacyCustomPayloadSeen) {
+			int activeVariant = layoutVariant;
+			resetLayout(TYPE_CUSTOM);
+			try {
+				readLayout();
+				storedCustomLayoutState = VirtualKeyboardLayoutState.migrated(
+						captureBaseLayoutSnapshot().asCustomOverride());
+			} catch (IOException e) {
+				Log.w(TAG, "Could not stage dormant legacy Custom layout", e);
+				storedCustomLayoutState = null;
+			}
+			layoutVariant = activeVariant;
 		}
 		resetLayout(layoutVariant);
 		if (layoutVariant == TYPE_CUSTOM) {
@@ -569,6 +584,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	public VirtualKeyboardLayoutSnapshot captureLayoutSnapshot() {
+		return captureBaseLayoutSnapshot();
+	}
+
+	private VirtualKeyboardLayoutSnapshot captureBaseLayoutSnapshot() {
 		boolean[] visible = new boolean[keypad.length];
 		int[] snapOrigins = new int[keypad.length];
 		int[] snapModes = new int[keypad.length];
@@ -966,6 +985,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 			int version = dis.readInt();
 			loadedLayoutVersion = version;
+			legacyCustomPayloadSeen = false;
 			if (version < 1 || version > LAYOUT_VERSION) {
 				throw new IOException("incompatible file version");
 			}
@@ -976,7 +996,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			int legacyCustomBlocks = 0;
 			int explicitType = -1;
 			boolean typeSeen = false;
-			boolean v4CustomStateSeen = false;
 			for (int blockIndex = 0; blockIndex < MAX_LAYOUT_BLOCKS; blockIndex++) {
 				int block = dis.readInt();
 				int length = dis.readInt();
@@ -984,30 +1003,22 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				switch (block) {
 					case LAYOUT_EOF -> {
 						if (length != 0) return -1;
-						if (version == 4) {
-							if (!typeSeen) return -1;
-							if (explicitType != TYPE_CUSTOM && v4CustomStateSeen) return -1;
-							return explicitType;
-						}
-						return legacyCustomBlocks == 3 ? TYPE_CUSTOM : -1;
+						legacyCustomPayloadSeen = legacyCustomBlocks == 3;
+						if (explicitType >= TYPE_CUSTOM) return explicitType;
+						return legacyCustomPayloadSeen ? TYPE_CUSTOM : -1;
 					}
 					case LAYOUT_TYPE -> {
-						if (length < 1 || (version == 4 && (length != 1 || typeSeen))) return -1;
+						if (typeSeen || length < 1) return -1;
 						int variant = dis.readUnsignedByte();
 						if (variant < TYPE_CUSTOM ||
 								variant > VirtualControlsKeyboard.TYPE_ANALOG_STANDARD) {
 							return -1;
 						}
 						skipFully(dis, length - 1);
-						if (version == 4) {
-							typeSeen = true;
-							explicitType = variant;
-						} else {
-							return variant;
-						}
+						typeSeen = true;
+						explicitType = variant;
 					}
 					case LAYOUT_KEYS -> {
-						if (version == 4) return -1;
 						if (version >= 2) {
 							if (length < 4) return -1;
 							int count = dis.readInt();
@@ -1020,18 +1031,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 						legacyCustomBlocks |= 1;
 					}
 					case LAYOUT_SCALES -> {
-						if (version == 4) return -1;
 						skipFully(dis, length);
 						legacyCustomBlocks |= 2;
-					}
-					case LAYOUT_BASE_VARIANT, LAYOUT_LEGACY_SHARED,
-							LAYOUT_PORTRAIT_OVERRIDE, LAYOUT_LANDSCAPE_OVERRIDE -> {
-						if (version != 4) {
-							skipFully(dis, length);
-						} else {
-							v4CustomStateSeen = true;
-							skipFully(dis, length);
-						}
 					}
 					default -> skipFully(dis, length);
 				}
