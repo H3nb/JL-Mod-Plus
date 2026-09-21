@@ -23,6 +23,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
 import android.graphics.Bitmap;
+import android.content.SharedPreferences;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.util.Log;
@@ -69,6 +70,7 @@ import kotlin.io.ConstantsKt;
 import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.config.MidletConfigLoadBoundary;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.config.ShaderInfo;
@@ -120,8 +122,13 @@ public class MicroLoader {
 
 	public boolean init() {
 		File config = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDirName);
-		boolean legacyThemeLinked = PreferenceManager.getDefaultSharedPreferences(
-				ContextHolder.getAppContext())
+		SharedPreferences preferences =
+				PreferenceManager.getDefaultSharedPreferences(ContextHolder.getAppContext());
+		if (!MidletConfigLoadBoundary.prepare(preferences, config)) {
+			Log.e(TAG, "Refusing to load an unsafe MIDlet configuration snapshot");
+			return false;
+		}
+		boolean legacyThemeLinked = preferences
 				.getBoolean(ProfileModel.builtInThemePreferenceKey(config), false);
 		this.params = ProfilesManager.loadConfig(
 				config,

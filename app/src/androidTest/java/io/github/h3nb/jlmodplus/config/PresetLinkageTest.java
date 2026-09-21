@@ -64,8 +64,25 @@ public class PresetLinkageTest {
 	}
 
 	@Test
+	public void durableMutationsReturnSuccessAndAreImmediatelyVisible() {
+		assertTrue(linkage.setOrigin("K800i"));
+		assertEquals("K800i", linkage.getOrigin());
+		assertFalse(linkage.isLinked());
+
+		assertTrue(linkage.linkTo("K800i"));
+		assertTrue(linkage.isLinked());
+
+		assertTrue(linkage.detach());
+		assertFalse(linkage.isLinked());
+		assertEquals("K800i", linkage.getOrigin());
+
+		assertTrue(linkage.clear());
+		assertNull(linkage.getOrigin());
+	}
+
+	@Test
 	public void linkingRecordsOriginAndLinkedStateTogether() {
-		linkage.linkTo("K800i");
+		assertTrue(linkage.linkTo("K800i"));
 
 		assertEquals("K800i", linkage.getOrigin());
 		assertTrue(linkage.isLinked());
@@ -78,7 +95,7 @@ public class PresetLinkageTest {
 	public void detachPreservesOrigin() {
 		linkage.linkTo("K800i");
 
-		linkage.detach();
+		assertTrue(linkage.detach());
 
 		assertEquals("K800i", linkage.getOrigin());
 		assertFalse(linkage.isLinked());
@@ -88,7 +105,7 @@ public class PresetLinkageTest {
 	public void provenanceChangeDoesNotKeepLiveLink() {
 		linkage.linkTo("K800i");
 
-		linkage.setOrigin("N95");
+		assertTrue(linkage.setOrigin("N95"));
 
 		assertEquals("N95", linkage.getOrigin());
 		assertFalse(linkage.isLinked());
@@ -98,7 +115,7 @@ public class PresetLinkageTest {
 	public void clearRemovesOriginAndLinkMarker() {
 		linkage.linkTo("K800i");
 
-		linkage.clear();
+		assertTrue(linkage.clear());
 
 		assertNull(linkage.getOrigin());
 		assertFalse(linkage.isLinked());

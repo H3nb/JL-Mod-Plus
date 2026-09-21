@@ -385,7 +385,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
 				.getString(PREF_DEFAULT_PROFILE, null);
-		loadConfig();
+		if (!loadConfig()) {
+			needShow = false;
+			finish();
+			return;
+		}
 		if (!params.isNew && !needShow) {
 			startMIDlet();
 			return;
@@ -1052,7 +1056,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	void loadConfig() {
+	boolean loadConfig() {
+		if (!isProfile && !MidletConfigLoadBoundary.prepare(hostPreferences, configDir)) {
+			Log.e(TAG, "Refusing to load MIDlet config after preset snapshot recovery failure");
+			return false;
+		}
 		boolean mayInitializeNewApp = !initializationDecisionMade
 				&& !setupArtifactExistedBeforeInitialization;
 		initializationDecisionMade = true;
@@ -1112,11 +1120,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			params = newBuiltInProfile();
 			setBuiltInThemeLinked(!isProfile && !loadedDefaultProfile
 					&& !setupArtifactExistedBeforeInitialization && profileOrigin == null);
-			return;
+			return true;
 		}
 		if (isProfile) {
 			builtInThemeLinked = false;
-			return;
+			return true;
 		}
 
 		boolean linked = readBuiltInThemeLinked();
@@ -1125,12 +1133,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		if (loadedLegacyDefaultLayout) {
 			setBuiltInThemeLinked(true);
-			return;
+			return true;
 		}
 		setBuiltInThemeLinked(linked);
 		if (builtInThemeLinked) {
 			ProfileModel.applyBuiltInTheme(params, isDarkTheme());
 		}
+		return true;
 	}
 
 	private void showShaderSettings() {
@@ -1369,8 +1378,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	public void loadParams(boolean reloadFromFile) {
-		if (reloadFromFile) {
-			loadConfig();
+		if (reloadFromFile && !loadConfig()) {
+			Log.e(TAG, "Keeping current in-memory params because persisted snapshot is unsafe");
+			return;
 		}
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
 		refreshProfileMatchCache();

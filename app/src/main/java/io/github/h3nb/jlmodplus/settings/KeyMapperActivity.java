@@ -21,6 +21,7 @@ package io.github.h3nb.jlmodplus.settings;
 import static io.github.h3nb.jlmodplus.util.Constants.ACTION_EDIT_PROFILE;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.SparseIntArray;
 import android.view.KeyEvent;
@@ -41,6 +42,7 @@ import java.io.File;
 import javax.microedition.lcdui.keyboard.KeyMapper;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.config.MidletConfigLoadBoundary;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -69,10 +71,17 @@ public class KeyMapperActivity extends AppCompatActivity {
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
 		boolean namedProfile = ACTION_EDIT_PROFILE.equals(intent.getAction());
-		boolean legacyThemeLinked = !namedProfile && PreferenceManager
-				.getDefaultSharedPreferences(getApplicationContext())
-				.getBoolean(ProfileModel.builtInThemePreferenceKey(new File(path)), false);
-		params = ProfilesManager.loadConfig(new File(path), true,
+		File configDir = new File(path);
+		SharedPreferences preferences = PreferenceManager
+				.getDefaultSharedPreferences(getApplicationContext());
+		if (!namedProfile && !MidletConfigLoadBoundary.prepare(preferences, configDir)) {
+			ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+			finish();
+			return;
+		}
+		boolean legacyThemeLinked = !namedProfile && preferences
+				.getBoolean(ProfileModel.builtInThemePreferenceKey(configDir), false);
+		params = ProfilesManager.loadConfig(configDir, true,
 				namedProfile
 						? ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE
 						: ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,

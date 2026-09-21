@@ -336,7 +336,7 @@ public class ProfilesManager {
 		return new CompleteSnapshot(config, hasKeyboardLayout);
 	}
 
-	private static void recoverInterruptedSnapshotSync(@NonNull File targetDir) throws IOException {
+	static void recoverInterruptedSnapshotSync(@NonNull File targetDir) throws IOException {
 		File rollback = new File(targetDir, PRESET_SYNC_ROLLBACK_DIR);
 		File staging = new File(targetDir, PRESET_SYNC_STAGING_DIR);
 		if (rollback.exists()) {

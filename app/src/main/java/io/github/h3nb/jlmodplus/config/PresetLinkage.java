@@ -46,35 +46,34 @@ final class PresetLinkage {
 	}
 
 	/** Stores provenance only. Any existing live link is explicitly detached. */
-	void setOrigin(@Nullable String name) {
+	boolean setOrigin(@Nullable String name) {
 		if (name == null) {
-			clear();
-			return;
+			return clear();
 		}
-		preferences.edit()
+		return preferences.edit()
 				.putString(originPreferenceKey(configDir), name)
 				.remove(linkedPreferenceKey(configDir))
-				.apply();
+				.commit();
 	}
 
-	/** Publishes origin and link state through one SharedPreferences editor transaction. */
-	void linkTo(@NonNull String name) {
-		preferences.edit()
+	/** Durably publishes origin and link state through one SharedPreferences editor transaction. */
+	boolean linkTo(@NonNull String name) {
+		return preferences.edit()
 				.putString(originPreferenceKey(configDir), name)
 				.putBoolean(linkedPreferenceKey(configDir), true)
-				.apply();
+				.commit();
 	}
 
 	/** Stops following the preset while retaining provenance. */
-	void detach() {
-		preferences.edit().remove(linkedPreferenceKey(configDir)).apply();
+	boolean detach() {
+		return preferences.edit().remove(linkedPreferenceKey(configDir)).commit();
 	}
 
-	void clear() {
-		preferences.edit()
+	boolean clear() {
+		return preferences.edit()
 				.remove(originPreferenceKey(configDir))
 				.remove(linkedPreferenceKey(configDir))
-				.apply();
+				.commit();
 	}
 
 	static String originPreferenceKey(@NonNull File configDir) {
