@@ -92,14 +92,13 @@ internal object KeyboardLayoutValidator {
                                 if (!offsetX.isFinite() || !offsetY.isFinite()) {
                                     return "layout key offset is invalid"
                                 }
+                                if (snapOrigin < -1 || snapOrigin >= MAX_KEYS) {
+                                    return "layout key snap origin is invalid"
+                                }
                                 // SCREEN + NO_SNAP is accepted for recovery of already-broken
                                 // Custom files. The runtime keeps its safe fallback topology.
-                                if (snapMode != RectSnap.NO_SNAP) {
-                                    if (snapOrigin < -1 || snapOrigin >= MAX_KEYS ||
-                                        !isPersistableSnapMode(snapMode)
-                                    ) {
-                                        return "layout key snap state is invalid"
-                                    }
+                                if (snapMode != RectSnap.NO_SNAP && !isPersistableSnapMode(snapMode)) {
+                                    return "layout key snap state is invalid"
                                 }
                             }
                         }
