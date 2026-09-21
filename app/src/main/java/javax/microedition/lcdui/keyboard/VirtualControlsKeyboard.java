@@ -66,8 +66,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
-	private static final float MIN_RADIUS_FRACTION = 0.07f;
-	private static final float MAX_RADIUS_FRACTION = 0.34f;
+	public static final float MIN_RADIUS_FRACTION = 0.07f;
+	public static final float MAX_RADIUS_FRACTION = 0.34f;
 	private static final int GRID_DIVISIONS = 24;
 	private static final int FEEDBACK_DURATION_MS = 50;
 
