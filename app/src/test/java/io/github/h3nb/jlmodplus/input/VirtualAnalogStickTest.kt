@@ -69,6 +69,31 @@ class VirtualAnalogStickTest {
     }
 
     @Test
+    fun fixedNearEdgeGeometryUsesSameResolvedCenterForVisualAndInput() {
+        val stick = VirtualAnalogStick(
+            VirtualAnalogStickSettings(
+                centerXFraction = 0.98f,
+                centerYFraction = 0.98f,
+                radiusFractionOfShortestSide = 0.34f,
+            ),
+        )
+
+        val visual = stick.visualState(viewport)
+        assertEquals(166.0f, visual.centerX, 0.0001f)
+        assertEquals(66.0f, visual.centerY, 0.0001f)
+        assertEquals(34.0f, visual.radius, 0.0001f)
+
+        assertEquals(VirtualAnalogSample(0.0f, 0.0f, true), stick.begin(first, viewport))
+        assertEquals(
+            VirtualAnalogSample(0.0f, 0.0f, true),
+            stick.move(first, visual.centerX, visual.centerY),
+        )
+        val activeVisual = stick.visualState(viewport)
+        assertEquals(visual.centerX, activeVisual.centerX, 0.0001f)
+        assertEquals(visual.centerY, activeVisual.centerY, 0.0001f)
+    }
+
+    @Test
     fun oneContactOwnsStickAndStaleReleaseCannotEndIt() {
         val stick = VirtualAnalogStick()
         assertTrue(stick.begin(first, viewport) != null)
