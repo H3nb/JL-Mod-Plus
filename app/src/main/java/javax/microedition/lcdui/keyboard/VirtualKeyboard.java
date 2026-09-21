@@ -870,6 +870,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				throw new IOException("file signature not found");
 			}
 			int version = dis.readInt();
+			loadedLayoutVersion = version;
 			if (version < 1 || version > LAYOUT_VERSION) {
 				throw new IOException("incompatible file version");
 			}
@@ -917,29 +918,35 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	private void readLayout() throws IOException {
-		boolean[] stagedVisible = new boolean[keypad.length];
-		int[] stagedOrigins = new int[keypad.length];
-		int[] stagedModes = new int[keypad.length];
-		float[] stagedOffsetX = new float[keypad.length];
-		float[] stagedOffsetY = new float[keypad.length];
-		for (int i = 0; i < keypad.length; i++) {
-			VirtualKey key = keypad[i];
-			stagedVisible[i] = key.visible;
-			stagedOrigins[i] = key.snapOrigin;
-			stagedModes[i] = key.snapMode;
-			stagedOffsetX[i] = key.snapOffset.x;
-			stagedOffsetY[i] = key.snapOffset.y;
-		}
-		float[] stagedScales = keyScales.clone();
-
 		try (DataInputStream dis = new DataInputStream(new FileInputStream(saveFile))) {
 			if (dis.readInt() != LAYOUT_SIGNATURE) {
 				throw new IOException("file signature not found");
 			}
 			int version = dis.readInt();
+			loadedLayoutVersion = version;
 			if (version < 1 || version > LAYOUT_VERSION) {
 				throw new IOException("incompatible file version");
 			}
+			if (version == 4) {
+				readV4CustomLayout(dis);
+				return;
+			}
+
+			boolean[] stagedVisible = new boolean[keypad.length];
+			int[] stagedOrigins = new int[keypad.length];
+			int[] stagedModes = new int[keypad.length];
+			float[] stagedOffsetX = new float[keypad.length];
+			float[] stagedOffsetY = new float[keypad.length];
+			for (int i = 0; i < keypad.length; i++) {
+				VirtualKey key = keypad[i];
+				stagedVisible[i] = key.visible;
+				stagedOrigins[i] = key.snapOrigin;
+				stagedModes[i] = key.snapMode;
+				stagedOffsetX[i] = key.snapOffset.x;
+				stagedOffsetY[i] = key.snapOffset.y;
+			}
+			float[] stagedScales = keyScales.clone();
+
 			for (int blockIndex = 0; blockIndex < MAX_LAYOUT_BLOCKS; blockIndex++) {
 				int block = dis.readInt();
 				int length = dis.readInt();
@@ -971,6 +978,163 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 			throw new IOException("layout contains too many blocks");
 		}
+	}
+
+	private void readV4CustomLayout(DataInputStream dis) throws IOException {
+		boolean typeSeen = false;
+		boolean baseSeen = false;
+		boolean legacySeen = false;
+		boolean portraitSeen = false;
+		boolean landscapeSeen = false;
+		int baseVariant = VirtualKeyboardLayoutState.BASE_UNKNOWN;
+		VirtualKeyboardLayoutSnapshot legacyFallback = null;
+		VirtualKeyboardLayoutSnapshot portraitOverride = null;
+		VirtualKeyboardLayoutSnapshot landscapeOverride = null;
+
+		for (int blockIndex = 0; blockIndex < MAX_LAYOUT_BLOCKS; blockIndex++) {
+			int block = dis.readInt();
+			int length = dis.readInt();
+			if (length < 0) throw new IOException("negative layout block length");
+			switch (block) {
+				case LAYOUT_EOF -> {
+					if (length != 0) throw new IOException("invalid layout end block");
+					if (!typeSeen) throw new IOException("layout type is missing");
+					VirtualKeyboardLayoutState state = new VirtualKeyboardLayoutState(
+							baseVariant, legacyFallback, portraitOverride, landscapeOverride);
+					if (!isValidV4CustomState(state)) {
+						throw new IOException("invalid orientation-aware Custom layout state");
+					}
+					storedCustomLayoutState = state;
+					return;
+				}
+				case LAYOUT_TYPE -> {
+					if (typeSeen || length != 1) throw new IOException("invalid duplicate layout type");
+					if (dis.readUnsignedByte() != TYPE_CUSTOM) {
+						throw new IOException("v4 Custom payload has non-Custom type");
+					}
+					typeSeen = true;
+				}
+				case LAYOUT_BASE_VARIANT -> {
+					if (baseSeen || length != 1) throw new IOException("invalid base-variant block");
+					baseVariant = dis.readUnsignedByte();
+					if (!VirtualKeyboardLayoutState.isSupportedBaseVariant(baseVariant)) {
+						throw new IOException("invalid Custom base variant");
+					}
+					baseSeen = true;
+				}
+				case LAYOUT_LEGACY_SHARED -> {
+					if (legacySeen) throw new IOException("duplicate legacy fallback block");
+					legacyFallback = readV4SnapshotBlock(dis, length);
+					legacySeen = true;
+				}
+				case LAYOUT_PORTRAIT_OVERRIDE -> {
+					if (portraitSeen) throw new IOException("duplicate portrait override block");
+					portraitOverride = readV4SnapshotBlock(dis, length);
+					portraitSeen = true;
+				}
+				case LAYOUT_LANDSCAPE_OVERRIDE -> {
+					if (landscapeSeen) throw new IOException("duplicate landscape override block");
+					landscapeOverride = readV4SnapshotBlock(dis, length);
+					landscapeSeen = true;
+				}
+				default -> skipFully(dis, length);
+			}
+		}
+		throw new IOException("layout contains too many blocks");
+	}
+
+	private VirtualKeyboardLayoutSnapshot readV4SnapshotBlock(
+			DataInputStream dis, int length) throws IOException {
+		int expectedLength =
+				4 + keypad.length * KEY_RECORD_SIZE_V2 +
+				4 + keyScales.length * 4 +
+				2 + 6 * 4;
+		if (length != expectedLength) throw new IOException("invalid v4 snapshot payload length");
+
+		int keyCount = dis.readInt();
+		if (keyCount != keypad.length) throw new IOException("invalid v4 key count");
+		boolean[] visible = new boolean[keypad.length];
+		int[] origins = new int[keypad.length];
+		int[] modes = new int[keypad.length];
+		float[] offsetX = new float[keypad.length];
+		float[] offsetY = new float[keypad.length];
+		boolean[] seenKeys = new boolean[keypad.length];
+
+		for (int i = 0; i < keyCount; i++) {
+			int hash = dis.readInt();
+			boolean keyVisible = dis.readBoolean();
+			int origin = dis.readInt();
+			int mode = dis.readInt();
+			float x = dis.readFloat();
+			float y = dis.readFloat();
+			int keyIndex = findKeyIndexByHash(hash);
+			if (keyIndex < 0 || seenKeys[keyIndex]) {
+				throw new IOException("invalid or duplicate v4 key identity");
+			}
+			if (origin != SCREEN && (origin < 0 || origin >= keypad.length) ||
+					!isPersistableSnapMode(mode) ||
+					!Float.isFinite(x) || !Float.isFinite(y)) {
+				throw new IOException("invalid v4 key snap state");
+			}
+			seenKeys[keyIndex] = true;
+			visible[keyIndex] = keyVisible;
+			origins[keyIndex] = origin;
+			modes[keyIndex] = mode;
+			offsetX[keyIndex] = x;
+			offsetY[keyIndex] = y;
+		}
+		for (boolean seen : seenKeys) {
+			if (!seen) throw new IOException("v4 snapshot is missing a key");
+		}
+		if (!isValidSnapTopology(origins, modes, offsetX, offsetY)) {
+			throw new IOException("invalid v4 key snap topology");
+		}
+
+		int scaleCount = dis.readInt();
+		if (scaleCount != keyScales.length) throw new IOException("invalid v4 scale count");
+		float[] scales = new float[keyScales.length];
+		for (int i = 0; i < scaleCount; i++) {
+			float scale = dis.readFloat();
+			if (!Float.isFinite(scale) || scale <= 0.0f) {
+				throw new IOException("invalid v4 key scale");
+			}
+			scales[i] = scale;
+		}
+
+		int dpadEnabled = dis.readUnsignedByte();
+		int analogEnabled = dis.readUnsignedByte();
+		if (dpadEnabled > 1 || analogEnabled > 1) {
+			throw new IOException("invalid v4 grouped-control flags");
+		}
+		float dpadCenterX = dis.readFloat();
+		float dpadCenterY = dis.readFloat();
+		float dpadRadius = dis.readFloat();
+		float analogCenterX = dis.readFloat();
+		float analogCenterY = dis.readFloat();
+		float analogRadius = dis.readFloat();
+		if (!isValidGroupedGeometry(dpadCenterX, dpadCenterY, dpadRadius) ||
+				!isValidGroupedGeometry(analogCenterX, analogCenterY, analogRadius)) {
+			throw new IOException("invalid v4 grouped-control geometry");
+		}
+
+		return VirtualKeyboardLayoutSnapshot.legacy(
+				TYPE_CUSTOM,
+				visible,
+				origins,
+				modes,
+				offsetX,
+				offsetY,
+				scales).withGroupedControls(
+				dpadEnabled != 0,
+				analogEnabled != 0,
+				dpadCenterX,
+				dpadCenterY,
+				dpadRadius,
+				analogCenterX,
+				analogCenterY,
+				analogRadius,
+				false,
+				true);
 	}
 
 	private void readKeyBlock(
