@@ -85,6 +85,7 @@ import io.reactivex.disposables.Disposable;
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.config.PresetLocalOverride;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.input.ControllerHostSink;
@@ -1423,13 +1424,21 @@ public class MicroActivity extends AppCompatActivity {
 
 	private boolean applyVirtualKeyboardSave(boolean saveScreenParams) {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk == null || !vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM)) {
+		File configDir = activeMidletConfigDir();
+		if (vk == null || configDir == null) {
 			return false;
 		}
-		if (saveScreenParams && vk.isPhone()) {
-			vk.saveScreenParams();
+		PresetLocalOverride.Guard ownership =
+				PresetLocalOverride.detachBeforeWrite(this, configDir);
+		if (!ownership.canWrite()) {
+			return false;
 		}
-		return true;
+		if (!vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM)) {
+			ownership.restoreIfUnchanged();
+			return false;
+		}
+		// The layout is now durably divergent. A later config-save failure must remain CUSTOM.
+		return !saveScreenParams || !vk.isPhone() || vk.saveScreenParams();
 	}
 
 	private void applyLayoutSelection(int index) {
@@ -1438,9 +1447,34 @@ public class MicroActivity extends AppCompatActivity {
 				.getStringArray(R.array.PREF_VK_TYPE_ENTRIES).length) {
 			return;
 		}
-		if (isVirtualKeyboardLayoutEditing()) vk.setLayoutForEditing(index);
-		else vk.setLayout(index);
+		if (isVirtualKeyboardLayoutEditing()) {
+			vk.setLayoutForEditing(index);
+			applyVirtualKeyboardOrientationPolicy(vk);
+			return;
+		}
+		if (vk.getLayout() == index) {
+			applyVirtualKeyboardOrientationPolicy(vk);
+			return;
+		}
+		File configDir = activeMidletConfigDir();
+		if (configDir == null) {
+			return;
+		}
+		PresetLocalOverride.Guard ownership =
+				PresetLocalOverride.detachBeforeWrite(this, configDir);
+		if (!ownership.canWrite()) {
+			return;
+		}
+		if (!vk.setLayout(index)) {
+			ownership.restoreIfUnchanged();
+			toast(R.string.virtual_controls_save_failed);
+		}
 		applyVirtualKeyboardOrientationPolicy(vk);
+	}
+
+	@Nullable
+	private File activeMidletConfigDir() {
+		return microLoader == null || microLoader.params == null ? null : microLoader.params.dir;
 	}
 
 	@Override

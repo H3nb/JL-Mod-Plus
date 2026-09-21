@@ -653,8 +653,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		return PHONE_KEY_ROWS * getKeySize(w, h) * PHONE_KEY_SCALE_Y;
 	}
 
-	public void setLayout(int variant) {
-		applyLayout(variant, true);
+	public boolean setLayout(int variant) {
+		return applyLayout(variant, true);
 	}
 
 	/** Applies a layout for the active editor transaction without writing it to persistent storage. */
@@ -666,7 +666,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		layoutVariant = variant;
 	}
 
-	private void applyLayout(int variant, boolean persist) {
+	private boolean applyLayout(int variant, boolean persist) {
 		int previousVariant = layoutVariant;
 		resetLayout(variant);
 		if (variant == TYPE_CUSTOM) {
@@ -675,11 +675,11 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			} catch (IOException ioe) {
 				ioe.printStackTrace();
 				resetLayout(previousVariant);
-				return;
+				return false;
 			}
 		}
 		layoutVariant = variant;
-		if (persist) onLayoutChanged(variant);
+		boolean persisted = !persist || onLayoutChanged(variant);
 		for (int group = 0; group < keyScaleGroups.length; group++) {
 			resizeKeyGroup(group);
 		}
@@ -689,6 +689,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			target.updateSize();
 		}
 		notifyLayoutEditStateChanged();
+		return persisted;
 	}
 
 	private boolean saveLayout() {
@@ -2203,11 +2204,11 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		};
 	}
 
-	public void saveScreenParams() {
+	public boolean saveScreenParams() {
 		float scale = virtualScreen.width() / screen.width();
 		settings.screenScaleRatio = Math.round(scale * 100);
 		settings.screenGravity = 1;
-		ProfilesManager.saveConfig(settings);
+		return ProfilesManager.saveConfig(settings);
 	}
 
 	private class VirtualKey {

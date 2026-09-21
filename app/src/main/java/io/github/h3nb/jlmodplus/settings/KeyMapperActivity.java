@@ -43,6 +43,7 @@ import javax.microedition.lcdui.keyboard.KeyMapper;
 
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.MidletConfigLoadBoundary;
+import io.github.h3nb.jlmodplus.config.PresetLocalOverride;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -54,6 +55,8 @@ public class KeyMapperActivity extends AppCompatActivity {
 	private final SparseIntArray defaultKeyMap = KeyMapper.getDefaultKeyMap();
 	private SparseIntArray androidToMIDP;
 	private ProfileModel params;
+	private File configDir;
+	private boolean namedProfile;
 	private int canvasKey;
 	private KeyMapperComposeController composeController;
 
@@ -70,8 +73,8 @@ public class KeyMapperActivity extends AppCompatActivity {
 		}
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
-		boolean namedProfile = ACTION_EDIT_PROFILE.equals(intent.getAction());
-		File configDir = new File(path);
+		namedProfile = ACTION_EDIT_PROFILE.equals(intent.getAction());
+		configDir = new File(path);
 		SharedPreferences preferences = PreferenceManager
 				.getDefaultSharedPreferences(getApplicationContext());
 		if (!namedProfile && !MidletConfigLoadBoundary.prepare(preferences, configDir)) {
@@ -134,8 +137,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 			@Override
 			public void onSaveAndExit() {
 				composeController.hideMenuKeyWarning();
-				save();
-				finish();
+				if (save()) finish();
 			}
 
 			@Override
@@ -150,8 +152,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 					composeController.showMenuKeyWarning();
 					return;
 				}
-				save();
-				finish();
+				if (save()) finish();
 			}
 		});
 	}
@@ -191,16 +192,33 @@ public class KeyMapperActivity extends AppCompatActivity {
 	}
 
 
-	private void save() {
+	private boolean save() {
 		SparseIntArray newMap = KeyMapperMappingRules.diff(defaultKeyMap, androidToMIDP);
 		SparseIntArray oldMap = params.keyMappings;
 		if (newMap.size() == 0) {
 			newMap = null;
 		}
-		if (!KeyMapperMappingRules.equalMaps(oldMap, newMap)) {
-			params.keyMappings = newMap;
-			ProfilesManager.saveConfig(params);
+		if (KeyMapperMappingRules.equalMaps(oldMap, newMap)) {
+			return true;
 		}
+
+		PresetLocalOverride.Guard ownership = null;
+		if (!namedProfile) {
+			ownership = PresetLocalOverride.detachBeforeWrite(this, configDir);
+			if (!ownership.canWrite()) {
+				ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+				return false;
+			}
+		}
+
+		params.keyMappings = newMap;
+		if (ProfilesManager.saveConfig(params)) {
+			return true;
+		}
+		params.keyMappings = oldMap;
+		if (ownership != null) ownership.restoreIfUnchanged();
+		ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+		return false;
 	}
 
 	@Override

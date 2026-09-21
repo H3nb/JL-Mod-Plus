@@ -359,6 +359,30 @@ public class ProfilesManager {
 		}
 	}
 
+	static boolean hasRecoverableLocalKeyboardLayout(@NonNull File configDir) {
+		File layout = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		return layout.exists() || atomicSibling(layout, ATOMIC_BACKUP_SUFFIX).exists();
+	}
+
+	/**
+	 * Removes one active MIDlet's persisted keyboard-layout family for an explicit local reset.
+	 *
+	 * <p>Sidecars are removed before the main layout so a sidecar-cleanup failure cannot delete the
+	 * currently effective main layout.</p>
+	 */
+	static boolean removeLocalKeyboardLayout(@NonNull File configDir) {
+		File layout = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		File temporary = atomicSibling(layout, ATOMIC_NEW_SUFFIX);
+		File backup = atomicSibling(layout, ATOMIC_BACKUP_SUFFIX);
+		if (temporary.exists() && !temporary.delete()) {
+			return false;
+		}
+		if (backup.exists() && !backup.delete()) {
+			return false;
+		}
+		return !layout.exists() || layout.delete();
+	}
+
 	/**
 	 * Applies the same effective recovery order as VirtualKeyboard.recoverLayoutFile(), but fails
 	 * closed so exact sync never captures an ambiguous layout family as its rollback baseline.

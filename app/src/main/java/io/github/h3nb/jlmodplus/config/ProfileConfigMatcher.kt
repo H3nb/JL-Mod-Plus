@@ -60,15 +60,21 @@ internal class ProfileConfigMatcher private constructor() {
         }
 
         @JvmStatic
+        fun copyConfig(source: ProfileModel): ProfileModel = copy(source)
+
+        @JvmStatic
+        fun effectiveConfig(current: ProfileModel, draft: ConfigFormState): ProfileModel {
+            val effective = copy(current)
+            draft.applyTo(effective)
+            return effective
+        }
+
+        @JvmStatic
         fun sameEffectiveConfig(
             current: ProfileModel,
             draft: ConfigFormState,
             candidate: ProfileModel,
-        ): Boolean {
-            val effective = copy(current)
-            draft.applyTo(effective)
-            return sameConfig(effective, candidate)
-        }
+        ): Boolean = sameConfig(effectiveConfig(current, draft), candidate)
 
         /** Builds matcher candidates from the shared capability inspection used by the UI and actions. */
         @JvmStatic
@@ -102,9 +108,7 @@ internal class ProfileConfigMatcher private constructor() {
             if (current == null || draft == null || candidate == null) {
                 return false
             }
-            val effective = copy(current)
-            draft.applyTo(effective)
-            return matchesCandidate(effective, candidate, currentKeyboard)
+            return matchesCandidate(effectiveConfig(current, draft), candidate, currentKeyboard)
         }
 
         @JvmStatic

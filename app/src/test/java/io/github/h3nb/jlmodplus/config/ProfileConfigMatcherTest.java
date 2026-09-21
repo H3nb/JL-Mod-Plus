@@ -56,6 +56,43 @@ public class ProfileConfigMatcherTest {
 	}
 
 	@Test
+	public void changedThenRestoredDraftMatchesPersistedBaseline() {
+		ProfileModel persisted = new ProfileModel();
+		persisted.version = ProfileModel.VERSION;
+		persisted.screenWidth = 240;
+		persisted.screenHeight = 320;
+		persisted.fpsLimit = 60;
+		persisted.systemProperties = "platform: test\n";
+		ProfileModel baseline = ProfileConfigMatcher.copyConfig(persisted);
+
+		ConfigFormState changed = ConfigFormState.fromProfile(persisted, persisted.systemProperties)
+				.toBuilder().fpsLimit("120").build();
+		assertFalse(ProfileConfigMatcher.sameEffectiveConfig(persisted, changed, baseline));
+
+		ConfigFormState restored = changed.toBuilder().fpsLimit("60").build();
+		assertTrue(ProfileConfigMatcher.sameEffectiveConfig(persisted, restored, baseline));
+	}
+
+	@Test
+	public void persistedBaselineIsDeepAndDetectsDirectNestedShaderMutation() {
+		ProfileModel working = new ProfileModel();
+		working.version = ProfileModel.VERSION;
+		working.screenWidth = 240;
+		working.screenHeight = 320;
+		working.systemProperties = "platform: test\n";
+		working.shader = new ShaderInfo("CRT", "tester");
+		working.shader.values = new float[] {1.0f, 2.0f};
+		ProfileModel baseline = ProfileConfigMatcher.copyConfig(working);
+		ConfigFormState form = ConfigFormState.fromProfile(working, working.systemProperties);
+
+		working.shader.values[0] = 9.0f;
+		form.shader.values[0] = 9.0f;
+
+		assertEquals(1.0f, baseline.shader.values[0], 0.0f);
+		assertFalse(ProfileConfigMatcher.sameEffectiveConfig(working, form, baseline));
+	}
+
+	@Test
 	public void candidateMatchingTreatsKeyboardAsPartOfProfilesThatOwnIt() {
 		ProfileModel current = new ProfileModel();
 		current.version = ProfileModel.VERSION;

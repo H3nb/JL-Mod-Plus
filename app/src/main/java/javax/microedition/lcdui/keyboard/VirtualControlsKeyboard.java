@@ -298,13 +298,13 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	@Override
-	public void setLayout(int variant) {
+	public boolean setLayout(int variant) {
 		abandonPendingRuntimeCustomization();
 		if (variant != TYPE_CUSTOM) {
 			activeCustomSource = ActiveCustomSource.NONE;
 			activeOrientationDirty = false;
 		}
-		applyControlsLayout(variant, true);
+		return applyControlsLayout(variant, true);
 	}
 
 	@Override
@@ -384,7 +384,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		runtimeCustomBaselineState = null;
 	}
 
-	private void applyControlsLayout(int variant, boolean persist) {
+	private boolean applyControlsLayout(int variant, boolean persist) {
 		if (!isStandardTemplate(variant)) {
 			standardTemplateEdited = false;
 			endDpad();
@@ -397,7 +397,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				settings.virtualDpadEnabled = false;
 				settings.virtualAnalogEnabled = false;
 			}
-			if (persist) super.setLayout(variant);
+			boolean persisted = true;
+			if (persist) persisted = super.setLayout(variant);
 			else super.setLayoutForEditing(variant);
 			if (variant == TYPE_CUSTOM && getLayout() == TYPE_CUSTOM) {
 				activeOrientationDirty = false;
@@ -415,9 +416,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			}
 			invalidateOverlay();
 			notifyLayoutEditStateChanged();
-			return;
+			return persisted;
 		}
 
+		boolean persisted = true;
 		applyingStandardTemplate = true;
 		standardTemplateEdited = false;
 		try {
@@ -450,7 +452,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			settings.virtualAnalogRadius = movementRadius;
 			rebuildAnalogStick();
 			if (persist) {
-				if (super.onLayoutChanged(variant)) {
+				persisted = super.onLayoutChanged(variant);
+				if (persisted) {
 					ProfilesManager.saveConfig(settings);
 				}
 			} else {
@@ -461,6 +464,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		} finally {
 			applyingStandardTemplate = false;
 		}
+		return persisted;
 	}
 
 	private static boolean isStandardTemplate(int variant) {
@@ -845,8 +849,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			standardTemplateReflowPosted = false;
 			if (!applyingStandardTemplate && !standardTemplateEdited && getLayout() == variant &&
 					isStandardTemplate(variant)) {
-				if (getLayoutEditMode() == LAYOUT_EOF) setLayout(variant);
-				else applyControlsLayout(variant, false);
+				// Viewport-driven reflow is automatic normalization, not a user-owned layout edit.
+				applyControlsLayout(variant, false);
 			}
 		});
 	}
