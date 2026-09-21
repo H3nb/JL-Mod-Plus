@@ -1541,6 +1541,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		ProfileModel previousParams = params == null ? null : ProfileConfigMatcher.copyConfig(params);
 		ConfigFormState previousForm = currentForm;
 		boolean previousBuiltInThemeLinked = builtInThemeLinked;
+		boolean localDiverged = false;
 		try {
 			if (!isProfile) {
 				ownership = PresetLocalOverride.clearBeforeReplacement(this, configDir);
@@ -1561,6 +1562,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 				return false;
 			}
+			localDiverged = true;
 			if (isProfile && !setProfileOrigin(null)) {
 				Log.e(TAG, "Unable to clear preset editor provenance");
 			}
@@ -1570,10 +1572,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			}
 			return true;
 		} catch (RuntimeException e) {
-			if (previousParams != null) params = previousParams;
-			currentForm = previousForm;
-			setBuiltInThemeLinked(previousBuiltInThemeLinked);
-			restorePresetAssociation(ownership);
+			if (!localDiverged) {
+				if (previousParams != null) params = previousParams;
+				currentForm = previousForm;
+				setBuiltInThemeLinked(previousBuiltInThemeLinked);
+				restorePresetAssociation(ownership);
+			}
 			Log.e(TAG, "applyBuiltInTemplate", e);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			return false;
@@ -1617,6 +1621,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		operationRunning = true;
 		PresetLocalOverride.Guard ownership = null;
+		boolean localDiverged = false;
 		try {
 			if (!isProfile) {
 				ownership = PresetLocalOverride.clearBeforeReplacement(this, configDir);
@@ -1627,6 +1632,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				profileOrigin = null;
 			}
 			ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
+			localDiverged = true;
 			// A source with any layout artifact is a combined preset, even when that artifact is
 			// unavailable. Applying only its settings is still a partial, standalone setup.
 			boolean sourceHasKeyboardArtifact =
@@ -1644,7 +1650,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			loadParams(true);
 			return true;
 		} catch (IOException | RuntimeException e1) {
-			restorePresetAssociation(ownership);
+			if (!localDiverged) restorePresetAssociation(ownership);
 			Log.e(TAG, "applyTemplate: " + name, e1);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			return false;
@@ -1742,6 +1748,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		operationRunning = true;
 		PresetLocalOverride.Guard ownership = null;
+		boolean localDiverged = false;
 		try {
 			if (!isProfile) {
 				ownership = PresetLocalOverride.clearBeforeReplacement(this, configDir);
@@ -1752,6 +1759,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				profileOrigin = null;
 			}
 			ProfilesManager.load(profile, configDir.getPath(), false, true);
+			localDiverged = true;
 			if (isProfile && !setProfileOrigin(null)) {
 				Log.e(TAG, "Unable to clear preset editor provenance");
 			}
@@ -1761,7 +1769,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			if (composeController != null) composeController.update(createUiState());
 			return true;
 		} catch (IOException | RuntimeException e1) {
-			restorePresetAssociation(ownership);
+			if (!localDiverged) restorePresetAssociation(ownership);
 			Log.e(TAG, "applyKeyboardLayout: " + name, e1);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			if (composeController != null) composeController.update(createUiState());
