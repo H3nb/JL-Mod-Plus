@@ -464,7 +464,9 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onSaveVirtualKeyboard(boolean saveScreenParams) {
-						applyVirtualKeyboardSave(saveScreenParams);
+						if (!applyVirtualKeyboardSave(saveScreenParams)) {
+							toast(R.string.virtual_controls_save_failed);
+						}
 					}
 
 					@Override
@@ -1198,9 +1200,13 @@ public class MicroActivity extends AppCompatActivity {
 		VirtualKeyboard vk = ContextHolder.getVk();
 		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
 		if (vk == null || transaction == null || !transaction.isActive()) return;
-		transaction.save();
+		if (!transaction.commitSave(() -> applyVirtualKeyboardSave(saveScreenParams))) {
+			toast(R.string.virtual_controls_save_failed);
+			updateRuntimeMenuState(current);
+			scheduleVirtualKeyboardEditorChromeUpdate();
+			return;
+		}
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
-		applyVirtualKeyboardSave(saveScreenParams);
 		clearVirtualKeyboardEditTransaction();
 		toast(R.string.layout_edit_finished);
 		updateRuntimeMenuState(current);
@@ -1415,15 +1421,15 @@ public class MicroActivity extends AppCompatActivity {
 		}
 	}
 
-	private void applyVirtualKeyboardSave(boolean saveScreenParams) {
+	private boolean applyVirtualKeyboardSave(boolean saveScreenParams) {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk == null) {
-			return;
+		if (vk == null || !vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM)) {
+			return false;
 		}
 		if (saveScreenParams && vk.isPhone()) {
 			vk.saveScreenParams();
 		}
-		vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+		return true;
 	}
 
 	private void applyLayoutSelection(int index) {
