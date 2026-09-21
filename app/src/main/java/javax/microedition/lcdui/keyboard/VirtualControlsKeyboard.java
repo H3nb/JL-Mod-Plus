@@ -332,6 +332,15 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			}
 			if (persist) super.setLayout(variant);
 			else super.setLayoutForEditing(variant);
+			if (variant == TYPE_CUSTOM) {
+				activeOrientationDirty = false;
+				activeCustomSource = ActiveCustomSource.NONE;
+				if (getLoadedLayoutVersion() > 0 && getLoadedLayoutVersion() < 4 &&
+						getStoredCustomLayoutState() == null) {
+					setStoredCustomLayoutState(
+							VirtualKeyboardLayoutState.migrated(captureCurrentCustomSnapshot()));
+				}
+			}
 			invalidateOverlay();
 			notifyLayoutEditStateChanged();
 			return;
