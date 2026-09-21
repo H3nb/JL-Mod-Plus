@@ -5,6 +5,7 @@
 package javax.microedition.shell;
 
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 
 import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutEditState;
 
@@ -39,10 +40,16 @@ final class VirtualKeyboardEditTransaction {
 		finishPending = false;
 	}
 
-	void save() {
-		if (!active) return;
+	boolean commitSave(BooleanSupplier persist) {
+		if (!active) return false;
+		Objects.requireNonNull(persist);
+		if (!persist.getAsBoolean()) {
+			finishPending = false;
+			return false;
+		}
 		active = false;
 		finishPending = false;
+		return true;
 	}
 
 	VirtualKeyboardLayoutEditState discard() {
