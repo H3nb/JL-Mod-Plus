@@ -26,8 +26,9 @@ import org.junit.Test
 class KeyboardLayoutValidatorTest {
     @Test
     fun standardLayoutTypesSevenAndEightAreValidButNineIsRejected() {
-        assertNull(KeyboardLayoutValidator.validate(layoutFile(version = 3, type = 7)))
-        assertNull(KeyboardLayoutValidator.validate(layoutFile(version = 3, type = 8)))
+        for (type in 0..8) {
+            assertNull(KeyboardLayoutValidator.validate(layoutFile(version = 3, type = type)))
+        }
         assertNotNull(KeyboardLayoutValidator.validate(layoutFile(version = 3, type = 9)))
     }
 
