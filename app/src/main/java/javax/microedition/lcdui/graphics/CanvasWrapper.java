@@ -39,6 +39,9 @@ public class CanvasWrapper {
 	private final Paint textPaint = new Paint();
 	private final Paint imgPaint = new Paint();
 	private final float textSize;
+	private final float baseTextAscent;
+	private final float baseTextCenterOffset;
+	private final float baseTextHeight;
 	private final boolean filterBitmap;
 
 	private float textAscent;
@@ -58,10 +61,13 @@ public class CanvasWrapper {
 		textSize = context.getResources().getDimension(R.dimen._22sp);
 		textPaint.setTextSize(textSize);
 		textPaint.setTextAlign(Paint.Align.CENTER);
-		textAscent = textPaint.ascent();
-		float descent = textPaint.descent();
-		textHeight = descent - textAscent;
-		textCenterOffset = ((descent + textAscent) / 2);
+		baseTextAscent = textPaint.ascent();
+		float baseTextDescent = textPaint.descent();
+		baseTextHeight = baseTextDescent - baseTextAscent;
+		baseTextCenterOffset = (baseTextDescent + baseTextAscent) / 2.0f;
+		textAscent = baseTextAscent;
+		textHeight = baseTextHeight;
+		textCenterOffset = baseTextCenterOffset;
 	}
 
 	public void bind(Canvas canvas) {
@@ -98,11 +104,16 @@ public class CanvasWrapper {
 	 * this scoped overload to setTextScale().
 	 */
 	public void drawString(String text, float x, float y, float scale) {
+		float normalizedScale = Math.max(0.001f, scale);
 		float previousTextSize = textPaint.getTextSize();
+		float targetTextSize = textSize * normalizedScale;
+		if (targetTextSize == previousTextSize) {
+			canvas.drawText(text, x, y - textCenterOffset, textPaint);
+			return;
+		}
 		try {
-			textPaint.setTextSize(textSize * Math.max(0.001f, scale));
-			Paint.FontMetrics metrics = textPaint.getFontMetrics();
-			canvas.drawText(text, x, y - ((metrics.descent + metrics.ascent) / 2.0f), textPaint);
+			textPaint.setTextSize(targetTextSize);
+			canvas.drawText(text, x, y - baseTextCenterOffset * normalizedScale, textPaint);
 		} finally {
 			textPaint.setTextSize(previousTextSize);
 		}
@@ -114,29 +125,34 @@ public class CanvasWrapper {
 	}
 
 	/**
-	 * Measures text at a scale relative to the normal overlay font and restores the previous text
-	 * size even if measurement fails.
+	 * Measures text at a scale relative to the normal overlay font without changing Paint state.
+	 * Text width scales linearly with Paint text size, so the current measurement can be normalized
+	 * back to the base size instead of temporarily resizing the Paint for every measurement.
 	 */
 	public float measureStringWidth(String text, float scale) {
-		float previousTextSize = textPaint.getTextSize();
+		float normalizedScale = Math.max(0.001f, scale);
+		float currentTextSize = textPaint.getTextSize();
+		float targetTextSize = textSize * normalizedScale;
+		if (targetTextSize == currentTextSize) {
+			return textPaint.measureText(text);
+		}
+		if (currentTextSize > 0.0f) {
+			return textPaint.measureText(text) * targetTextSize / currentTextSize;
+		}
+
+		// setTextScale(0) is legal existing behavior. Handle that uncommon state without division by
+		// zero while still restoring the caller's persistent text size.
 		try {
-			textPaint.setTextSize(textSize * Math.max(0.001f, scale));
+			textPaint.setTextSize(targetTextSize);
 			return textPaint.measureText(text);
 		} finally {
-			textPaint.setTextSize(previousTextSize);
+			textPaint.setTextSize(currentTextSize);
 		}
 	}
 
-	/** Measures scaled text height without changing the persistent CanvasWrapper text state. */
+	/** Measures scaled text height from immutable base metrics without mutating Paint state. */
 	public float getTextHeight(float scale) {
-		float previousTextSize = textPaint.getTextSize();
-		try {
-			textPaint.setTextSize(textSize * Math.max(0.001f, scale));
-			Paint.FontMetrics metrics = textPaint.getFontMetrics();
-			return metrics.descent - metrics.ascent;
-		} finally {
-			textPaint.setTextSize(previousTextSize);
-		}
+		return baseTextHeight * Math.max(0.001f, scale);
 	}
 
 	public void drawImage(Image image, RectF dst) {
@@ -235,10 +251,9 @@ public class CanvasWrapper {
 
 	public void setTextScale(float scale) {
 		textPaint.setTextSize(textSize * scale);
-		textAscent = textPaint.ascent();
-		float descent = textPaint.descent();
-		textHeight = descent - textAscent;
-		textCenterOffset = ((descent + textAscent) / 2);
+		textAscent = baseTextAscent * scale;
+		textHeight = baseTextHeight * scale;
+		textCenterOffset = baseTextCenterOffset * scale;
 	}
 
 	public void drawBackground(Bitmap bitmap, RectF dst, RectF exclude) {

@@ -106,6 +106,7 @@ public class VirtualKeyboardLegendRenderingTest {
 		assertNotNull(wideLegend);
 		assertEquals(widePrimary.y, wideLegend.y, EPS);
 		assertTrue(widePrimary.scale <= 1.0f);
+		assertFalse("normal-size primary should use ordinary drawString", widePrimary.scaled);
 		float primaryDrawWidth = wide.measureStringWidth("2", widePrimary.scale);
 		float legendDrawWidth = wide.measureStringWidth("ABC", wideLegend.scale);
 		float compositionLeft = widePrimary.x - primaryDrawWidth / 2.0f;
@@ -149,22 +150,32 @@ public class VirtualKeyboardLegendRenderingTest {
 	}
 
 	@Test
-	public void isolatedStarAndZeroRemainPlainWithoutNumericContext() {
-		String[] names = keyboard.getKeyNames();
-		boolean[] hidden = new boolean[names.length];
-		Arrays.fill(hidden, true);
-		for (int i = 0; i < names.length; i++) {
-			if ("*".equals(names[i]) || "0".equals(names[i])) hidden[i] = false;
-		}
-		keyboard.setKeysVisibility(hidden);
+	public void numericContextUsesSevenOfNineCanonicalDigits() {
+		setVisibleKeys("1", "2", "3", "4", "5", "6", "7", "8", "9");
+		assertTrue(keyboard.hasVisibleNumericKeypadContext());
 
+		setVisibleKeys("1", "2", "3", "4", "5", "6", "7", "8");
+		assertTrue(keyboard.hasVisibleNumericKeypadContext());
+
+		setVisibleKeys("1", "2", "3", "4", "5", "6", "7");
+		assertTrue(keyboard.hasVisibleNumericKeypadContext());
+
+		setVisibleKeys("1", "2", "3", "4", "5", "6");
 		assertFalse(keyboard.hasVisibleNumericKeypadContext());
-		RecordingCanvasWrapper graphics = graphics();
-		keyboard.paint(graphics);
-		assertNotNull(graphics.find("*"));
-		assertNotNull(graphics.find("0"));
-		assertNull(graphics.find("SYM"));
-		assertNull(graphics.find("+"));
+	}
+
+	@Test
+	public void fiveKeyActionClusterKeepsPhoneLegendsOff() {
+		setVisibleKeys("2", "4", "5", "6", "8", "*", "0", "#");
+		assertFalse(keyboard.hasVisibleNumericKeypadContext());
+		assertPlainActionRendering();
+	}
+
+	@Test
+	public void rowBalancedSixKeyActionClusterKeepsPhoneLegendsOff() {
+		setVisibleKeys("2", "3", "4", "5", "7", "8", "*", "0", "#");
+		assertFalse(keyboard.hasVisibleNumericKeypadContext());
+		assertPlainActionRendering();
 	}
 
 	@Test
@@ -194,16 +205,37 @@ public class VirtualKeyboardLegendRenderingTest {
 	}
 
 	@Test
-	public void scopedScaledTextOperationsRestorePreviousCanvasTextSize() {
+	public void scopedScaledTextOperationsRestorePreviousCanvasTextState() {
 		CanvasWrapper graphics = graphics();
 		graphics.setTextScale(0.75f);
-		float before = graphics.measureStringWidth("MMMM");
+		float widthBefore = graphics.measureStringWidth("MMMM");
+		float heightBefore = graphics.getTextHeight();
 
 		graphics.measureStringWidth("WXYZ", 0.35f);
 		graphics.getTextHeight(0.35f);
 		graphics.drawString("ABC", 100f, 100f, 0.35f);
 
-		assertEquals(before, graphics.measureStringWidth("MMMM"), EPS);
+		assertEquals(widthBefore, graphics.measureStringWidth("MMMM"), EPS);
+		assertEquals(heightBefore, graphics.getTextHeight(), EPS);
+	}
+
+	@Test
+	public void normalScaleScopedDrawMatchesOrdinaryDraw() {
+		Bitmap ordinaryBitmap = Bitmap.createBitmap(240, 120, Bitmap.Config.ARGB_8888);
+		CanvasWrapper ordinary = new CanvasWrapper(false);
+		ordinary.bind(new android.graphics.Canvas(ordinaryBitmap));
+		ordinary.setTextColor(0xFFFFFFFF);
+		ordinary.drawString("2", 120.0f, 60.0f);
+
+		Bitmap scopedBitmap = Bitmap.createBitmap(240, 120, Bitmap.Config.ARGB_8888);
+		CanvasWrapper scoped = new CanvasWrapper(false);
+		scoped.bind(new android.graphics.Canvas(scopedBitmap));
+		scoped.setTextColor(0xFFFFFFFF);
+		scoped.drawString("2", 120.0f, 60.0f, 1.0f);
+
+		assertEquals(ordinary.measureStringWidth("2"), scoped.measureStringWidth("2", 1.0f), EPS);
+		assertEquals(ordinary.getTextHeight(), scoped.getTextHeight(1.0f), EPS);
+		assertTrue(ordinaryBitmap.sameAs(scopedBitmap));
 	}
 
 	private RecordingCanvasWrapper graphics() {
@@ -226,6 +258,28 @@ public class VirtualKeyboardLegendRenderingTest {
 				boolean.class);
 		method.setAccessible(true);
 		method.invoke(keyboard, graphics, key, bounds, keypadLegendContext);
+	}
+
+	private void setVisibleKeys(String... visibleLabels) {
+		String[] names = keyboard.getKeyNames();
+		List<String> visible = Arrays.asList(visibleLabels);
+		boolean[] hidden = new boolean[names.length];
+		Arrays.fill(hidden, true);
+		for (int i = 0; i < names.length; i++) {
+			if (visible.contains(names[i])) hidden[i] = false;
+		}
+		keyboard.setKeysVisibility(hidden);
+	}
+
+	private void assertPlainActionRendering() {
+		RecordingCanvasWrapper graphics = graphics();
+		keyboard.paint(graphics);
+		assertNotNull(graphics.find("*"));
+		assertNotNull(graphics.find("0"));
+		assertNotNull(graphics.find("#"));
+		assertNull(graphics.find("SYM"));
+		assertNull(graphics.find("+"));
+		assertNull(graphics.find("Aa"));
 	}
 
 	private Object keyByLabel(String expected) throws Exception {
@@ -260,12 +314,14 @@ public class VirtualKeyboardLegendRenderingTest {
 		final float x;
 		final float y;
 		final float scale;
+		final boolean scaled;
 
-		TextDraw(String text, float x, float y, float scale) {
+		TextDraw(String text, float x, float y, float scale, boolean scaled) {
 			this.text = text;
 			this.x = x;
 			this.y = y;
 			this.scale = scale;
+			this.scaled = scaled;
 		}
 	}
 
@@ -278,13 +334,13 @@ public class VirtualKeyboardLegendRenderingTest {
 
 		@Override
 		public void drawString(String text, float x, float y) {
-			draws.add(new TextDraw(text, x, y, 1.0f));
+			draws.add(new TextDraw(text, x, y, 1.0f, false));
 			super.drawString(text, x, y);
 		}
 
 		@Override
 		public void drawString(String text, float x, float y, float scale) {
-			draws.add(new TextDraw(text, x, y, scale));
+			draws.add(new TextDraw(text, x, y, scale, true));
 			super.drawString(text, x, y, scale);
 		}
 

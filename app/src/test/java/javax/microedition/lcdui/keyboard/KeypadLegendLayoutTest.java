@@ -67,10 +67,17 @@ public class KeypadLegendLayoutTest {
 	}
 
 	@Test
-	public void isolatedActionKeysDoNotCreateNumericKeypadContext() {
-		assertTrue(!KeypadLegendLayout.hasNumericContext(0));
-		assertTrue(!KeypadLegendLayout.hasNumericContext(2));
-		assertTrue(KeypadLegendLayout.hasNumericContext(3));
+	public void numericContextRequiresAtLeastSevenOfNineCanonicalDigits() {
+		assertTrue(KeypadLegendLayout.hasNumericContext(9));
+		assertTrue(KeypadLegendLayout.hasNumericContext(8));
+		assertTrue(KeypadLegendLayout.hasNumericContext(7));
+		assertTrue(!KeypadLegendLayout.hasNumericContext(6));
+	}
+
+	@Test
+	public void commonFiveAndSixKeyActionClustersStayBelowPhoneContext() {
+		assertTrue(!KeypadLegendLayout.hasNumericContext(5));
+		assertTrue(!KeypadLegendLayout.hasNumericContext(6));
 	}
 
 	@Test

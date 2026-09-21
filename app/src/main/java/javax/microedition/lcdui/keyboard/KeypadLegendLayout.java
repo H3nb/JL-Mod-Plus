@@ -20,13 +20,13 @@ final class KeypadLegendLayout {
 	private static final float COMPARABLE_SCALE_DELTA = 0.04f;
 	private static final float CONTENT_PADDING_RATIO = 0.08f;
 	private static final float GAP_PRIMARY_HEIGHT_RATIO = 0.16f;
-	private static final int MIN_CONTEXT_DIGITS = 3;
+	private static final int MIN_VISIBLE_PHONE_DIGITS = 7;
 
 	private KeypadLegendLayout() {
 	}
 
-	static boolean hasNumericContext(int visibleDigitsTwoThroughNine) {
-		return visibleDigitsTwoThroughNine >= MIN_CONTEXT_DIGITS;
+	static boolean hasNumericContext(int visibleDigitsOneThroughNine) {
+		return visibleDigitsOneThroughNine >= MIN_VISIBLE_PHONE_DIGITS;
 	}
 
 	static float fitPrimaryScale(

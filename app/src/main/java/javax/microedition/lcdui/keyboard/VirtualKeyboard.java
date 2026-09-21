@@ -1459,10 +1459,23 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	boolean hasVisibleNumericKeypadContext() {
 		int visibleDigits = 0;
-		for (int i = KEY_NUM2; i <= KEY_NUM9; i++) {
+		for (int i = KEY_NUM1; i <= KEY_NUM9; i++) {
 			if (keypad[i].visible) visibleDigits++;
 		}
 		return KeypadLegendLayout.hasNumericContext(visibleDigits);
+	}
+
+	private static void drawKeyString(
+			CanvasWrapper g,
+			String text,
+			float x,
+			float y,
+			float scale) {
+		if (scale == 1.0f) {
+			g.drawString(text, x, y);
+		} else {
+			g.drawString(text, x, y, scale);
+		}
 	}
 
 	private void paintKeyLabel(
@@ -1476,7 +1489,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		if (legend == null) {
 			float primaryScale = KeypadLegendLayout.fitPrimaryScale(
 					bounds.width(), bounds.height(), primaryWidth, primaryHeight);
-			g.drawString(key.label, bounds.centerX(), bounds.centerY(), primaryScale);
+			drawKeyString(g, key.label, bounds.centerX(), bounds.centerY(), primaryScale);
 			return;
 		}
 
@@ -1493,19 +1506,20 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				limitingSecondaryWidth);
 
 		if (plan.mode() == KeypadLegendLayout.Mode.PRIMARY_ONLY) {
-			g.drawString(key.label, bounds.centerX(), bounds.centerY(), plan.primaryScale());
+			drawKeyString(g, key.label, bounds.centerX(), bounds.centerY(), plan.primaryScale());
 			return;
 		}
 
-		float scaledPrimaryWidth = g.measureStringWidth(key.label, plan.primaryScale());
-		float scaledPrimaryHeight = g.getTextHeight(plan.primaryScale());
-		float scaledSecondaryWidth = g.measureStringWidth(legend, plan.secondaryScale());
-		float scaledSecondaryHeight = g.getTextHeight(plan.secondaryScale());
+		float scaledPrimaryWidth = primaryWidth * plan.primaryScale();
+		float scaledPrimaryHeight = primaryHeight * plan.primaryScale();
+		float scaledSecondaryWidth = secondaryWidth * plan.secondaryScale();
+		float scaledSecondaryHeight = primaryHeight * plan.secondaryScale();
 
 		if (plan.mode() == KeypadLegendLayout.Mode.HORIZONTAL) {
 			float totalWidth = scaledPrimaryWidth + plan.gap() + scaledSecondaryWidth;
 			float left = bounds.centerX() - totalWidth / 2.0f;
-			g.drawString(
+			drawKeyString(
+					g,
 					key.label,
 					left + scaledPrimaryWidth / 2.0f,
 					bounds.centerY(),
@@ -1520,7 +1534,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 		float totalHeight = scaledPrimaryHeight + plan.gap() + scaledSecondaryHeight;
 		float top = bounds.centerY() - totalHeight / 2.0f;
-		g.drawString(
+		drawKeyString(
+				g,
 				key.label,
 				bounds.centerX(),
 				top + scaledPrimaryHeight / 2.0f,
