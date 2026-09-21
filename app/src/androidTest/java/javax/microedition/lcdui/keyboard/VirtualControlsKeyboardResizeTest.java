@@ -827,6 +827,31 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void rotationMidLegacyDragStashesReconstructiblePortraitOverride() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+
+        RectF fire = rectField(keyByLabel("F"));
+        assertTrue(keyboard.pointerPressed(0, fire.centerX(), fire.centerY()));
+        assertTrue(keyboard.pointerDragged(0, fire.centerX() + 30f, fire.centerY() - 18f));
+
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+
+        VirtualKeyboardLayoutState state = keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(state.portraitOverride());
+        for (int mode : state.portraitOverride().snapModes) {
+            assertNotEquals(RectSnap.NO_SNAP, mode);
+        }
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+
+        recreateKeyboardFromDisk(portrait);
+        assertNotNull(keyboard.captureLayoutEditState().customLayout().portraitOverride());
+        assertNotEquals(RectSnap.NO_SNAP, intField(keyByLabel("F"), "snapMode"));
+    }
+
+    @Test
     public void orientationSwitchCancelsLegacyPinchAndRestoresPublicEditMode() throws Exception {
         keyboard.setLayout(3);
         keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
