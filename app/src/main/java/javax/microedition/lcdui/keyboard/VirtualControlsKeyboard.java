@@ -932,6 +932,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public void cancel() {
+		boolean restorePublicEditMode = getLayoutEditMode() == LAYOUT_SCALES;
 		editPointer = -1;
 		editPinchPointer = -1;
 		editControl = EditControl.NONE;
@@ -939,6 +940,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		endDpad();
 		endAnalog();
 		super.cancel();
+		if (restorePublicEditMode) {
+			// LAYOUT_SCALES is only an internal bridge used during a legacy two-finger pinch.
+			// A lifecycle cancellation (including rotation) must not expose it to the new surface.
+			super.setLayoutEditMode(LAYOUT_KEYS);
+		}
 		notifyLayoutEditStateChanged();
 	}
 
