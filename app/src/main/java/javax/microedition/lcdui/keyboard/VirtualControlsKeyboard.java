@@ -38,6 +38,7 @@ import io.github.h3nb.jlmodplus.input.VirtualAnalogStick;
 import io.github.h3nb.jlmodplus.input.VirtualAnalogStickMode;
 import io.github.h3nb.jlmodplus.input.VirtualAnalogStickSettings;
 import io.github.h3nb.jlmodplus.input.VirtualAnalogVisualState;
+import io.github.h3nb.jlmodplus.input.VirtualControlGeometryResolver;
 import io.github.h3nb.jlmodplus.input.VirtualDpadController;
 import io.github.h3nb.jlmodplus.input.VirtualDpadDirection;
 import io.github.h3nb.jlmodplus.input.VirtualDpadGeometry;
@@ -819,6 +820,17 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float radius = pinchStartRadius * distance / Math.max(1.0f, pinchStartDistance);
 		float shortest = Math.max(1.0f, Math.min(screenBounds.width(), screenBounds.height()));
 		setControlRadius(editControl, radius / shortest);
+
+		// Pinch is an explicit edit. If the larger radius makes the preferred center impossible,
+		// commit the viewport-safe center together with the new radius rather than persisting a
+		// center/radius pair that can never be rendered fully on-screen.
+		VirtualDpadGeometry resolved = resolvedControlGeometry(editControl);
+		setControlCenter(
+				editControl,
+				(resolved.getCenterX() - screenBounds.left) /
+						Math.max(1.0f, screenBounds.width()),
+				(resolved.getCenterY() - screenBounds.top) /
+						Math.max(1.0f, screenBounds.height()));
 		notifyLayoutEditStateChanged();
 	}
 
@@ -1226,19 +1238,34 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	private VirtualDpadGeometry dpadGeometry() {
-		float shortest = Math.max(1.0f, Math.min(screenBounds.width(), screenBounds.height()));
-		return new VirtualDpadGeometry(
-				screenBounds.left + settings.virtualDpadCenterX * screenBounds.width(),
-				screenBounds.top + settings.virtualDpadCenterY * screenBounds.height(),
-				settings.virtualDpadRadius * shortest);
+		return resolveGroupedGeometry(
+				settings.virtualDpadCenterX,
+				settings.virtualDpadCenterY,
+				settings.virtualDpadRadius);
 	}
 
 	private VirtualDpadGeometry analogGeometry() {
-		float shortest = Math.max(1.0f, Math.min(screenBounds.width(), screenBounds.height()));
+		return resolveGroupedGeometry(
+				settings.virtualAnalogCenterX,
+				settings.virtualAnalogCenterY,
+				settings.virtualAnalogRadius);
+	}
+
+	private VirtualDpadGeometry resolvedControlGeometry(EditControl control) {
+		return control == EditControl.DPAD ? dpadGeometry() : analogGeometry();
+	}
+
+	private VirtualDpadGeometry resolveGroupedGeometry(float centerX, float centerY, float radius) {
+		VirtualDpadGeometry local = VirtualControlGeometryResolver.resolve(
+				Math.max(1.0f, screenBounds.width()),
+				Math.max(1.0f, screenBounds.height()),
+				centerX,
+				centerY,
+				radius);
 		return new VirtualDpadGeometry(
-				screenBounds.left + settings.virtualAnalogCenterX * screenBounds.width(),
-				screenBounds.top + settings.virtualAnalogCenterY * screenBounds.height(),
-				settings.virtualAnalogRadius * shortest);
+				screenBounds.left + local.getCenterX(),
+				screenBounds.top + local.getCenterY(),
+				local.getRadius());
 	}
 
 	private boolean insideAnalog(float x, float y, float scale) {
