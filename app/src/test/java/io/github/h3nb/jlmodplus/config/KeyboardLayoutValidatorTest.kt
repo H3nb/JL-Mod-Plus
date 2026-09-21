@@ -260,7 +260,7 @@ class KeyboardLayoutValidatorTest {
         val file = tempFile()
         DataOutputStream(FileOutputStream(file)).use { out ->
             writeHeader(out, 4)
-            writeType(out, 0)
+            writeType(out, type)
             if (base != null) writeBase(out, base)
             if (legacy) writeV4Snapshot(out, LEGACY_SHARED, keyCount, cycle, groupedX, groupedRadius)
             if (portrait) writeV4Snapshot(out, PORTRAIT_OVERRIDE, keyCount, cycle, groupedX, groupedRadius)
