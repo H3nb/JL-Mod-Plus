@@ -135,6 +135,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public VirtualControlsKeyboard(ProfileModel settings) {
 		super(settings);
 		this.settings = settings;
+		boolean legacyDpadEnabled = settings.virtualDpadEnabled;
+		boolean legacyAnalogEnabled = settings.virtualAnalogEnabled;
 		int layout = getLayout();
 		if (isStandardTemplate(layout)) {
 			settings.virtualDpadEnabled = layout == TYPE_DPAD_STANDARD;
@@ -147,6 +149,31 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		}
 		sanitizeStoredGeometry();
 		rebuildAnalogStick();
+
+		// A v1-v3 file may keep its Custom KEYS/SCALES dormant while a built-in TYPE is active.
+		// VirtualKeyboard stages that legacy payload before this constructor runs; enrich it with
+		// grouped-control values that historically lived only in ProfileModel before any active
+		// built-in normalization can erase those working flags.
+		VirtualKeyboardLayoutState legacyDormantState = getStoredCustomLayoutState();
+		if (getLoadedLayoutVersion() > 0 && getLoadedLayoutVersion() < 4 &&
+				legacyDormantState != null &&
+				legacyDormantState.baseVariant() == VirtualKeyboardLayoutState.BASE_UNKNOWN &&
+				legacyDormantState.legacySharedFallback() != null &&
+				!legacyDormantState.legacySharedFallback().hasGroupedControls) {
+			VirtualKeyboardLayoutSnapshot enriched =
+					legacyDormantState.legacySharedFallback().withGroupedControls(
+							legacyDpadEnabled,
+							legacyAnalogEnabled,
+							settings.virtualDpadCenterX,
+							settings.virtualDpadCenterY,
+							settings.virtualDpadRadius,
+							settings.virtualAnalogCenterX,
+							settings.virtualAnalogCenterY,
+							settings.virtualAnalogRadius,
+							false,
+							true).asCustomOverride();
+			setStoredCustomLayoutState(VirtualKeyboardLayoutState.migrated(enriched));
+		}
 
 		// v1-v3 Custom artifacts had one shared semantic layout. Promote that state in memory only;
 		// the file is rewritten as v4 only after an explicit Save.
