@@ -343,6 +343,202 @@ public class ProfilesManagerPresetSourceConcurrencyTest {
 		assertFalse(saveRollback(target).exists());
 	}
 
+	@Test
+	public void activePresetWriterBlocksEditorSourceCopyUntilCommit() throws Exception {
+		File source = tempDir("editor-live-source");
+		File draft = tempDir("editor-live-draft");
+		writeConfig(source, 176);
+		writeLayout(source, 1);
+		byte[] oldConfig = readConfigBytes(source);
+		byte[] oldLayout = readLayout(source);
+		CountDownLatch writerReady = new CountDownLatch(1);
+		CountDownLatch finishWriter = new CountDownLatch(1);
+		AtomicReference<Throwable> writerFailure = new AtomicReference<>();
+		AtomicReference<Throwable> editorFailure = new AtomicReference<>();
+
+		Thread writer = thread("editor-source-writer", writerFailure, () -> {
+			synchronized (ProfilesManager.presetSourceLock()) {
+				createLiveRollback(source, oldConfig, oldLayout, false);
+				writerReady.countDown();
+				if (!finishWriter.await(5, TimeUnit.SECONDS)) {
+					throw new AssertionError("Timed out waiting to finish preset writer");
+				}
+				writeConfig(source, 360);
+				writeLayout(source, 2);
+				commitLiveTransaction(source);
+			}
+		});
+		writer.start();
+		assertTrue(writerReady.await(5, TimeUnit.SECONDS));
+
+		Thread editor = thread("preset-editor-copy", editorFailure,
+				() -> ProfilesManager.copyPresetSourceForEdit(source, draft));
+		editor.start();
+		awaitBlocked(editor);
+
+		assertTrue(readyMarker(source).isFile());
+		assertFalse(configFile(draft).exists());
+		assertFalse(layoutFile(draft).exists());
+
+		finishWriter.countDown();
+		join(writer, writerFailure);
+		join(editor, editorFailure);
+
+		assertEquals(360, readConfig(draft).screenWidth);
+		assertArrayEquals(readLayout(source), readLayout(draft));
+	}
+
+	@Test
+	public void editorCopyCannotObserveConfigBeforeLaterLayoutPublication() throws Exception {
+		File source = tempDir("editor-between-source");
+		File draft = tempDir("editor-between-draft");
+		writeConfig(source, 176);
+		writeLayout(source, 1);
+		byte[] oldConfig = readConfigBytes(source);
+		byte[] oldLayout = readLayout(source);
+		CountDownLatch configPublished = new CountDownLatch(1);
+		CountDownLatch finishWriter = new CountDownLatch(1);
+		AtomicReference<Throwable> writerFailure = new AtomicReference<>();
+		AtomicReference<Throwable> editorFailure = new AtomicReference<>();
+
+		Thread writer = thread("editor-mid-publication-writer", writerFailure, () -> {
+			synchronized (ProfilesManager.presetSourceLock()) {
+				createLiveRollback(source, oldConfig, oldLayout, false);
+				writeConfig(source, 640);
+				configPublished.countDown();
+				if (!finishWriter.await(5, TimeUnit.SECONDS)) {
+					throw new AssertionError("Timed out waiting to finish preset writer");
+				}
+				writeLayout(source, 5);
+				commitLiveTransaction(source);
+			}
+		});
+		writer.start();
+		assertTrue(configPublished.await(5, TimeUnit.SECONDS));
+
+		Thread editor = thread("preset-editor-mid-publication", editorFailure,
+				() -> ProfilesManager.copyPresetSourceForEdit(source, draft));
+		editor.start();
+		awaitBlocked(editor);
+
+		assertEquals(640, readConfig(source).screenWidth);
+		assertArrayEquals(oldLayout, readLayout(source));
+		assertFalse(configFile(draft).exists());
+		assertFalse(layoutFile(draft).exists());
+
+		finishWriter.countDown();
+		join(writer, writerFailure);
+		join(editor, editorFailure);
+
+		assertEquals(640, readConfig(draft).screenWidth);
+		assertArrayEquals(readLayout(source), readLayout(draft));
+	}
+
+	@Test
+	public void editorCopyRecoversDeadProcessReadyBeforeCopying() throws Exception {
+		File source = tempDir("editor-dead-process-source");
+		File draft = tempDir("editor-dead-process-draft");
+		writeConfig(source, 176);
+		writeLayout(source, 1);
+		byte[] oldConfig = readConfigBytes(source);
+		byte[] oldLayout = readLayout(source);
+		createLiveRollback(source, oldConfig, oldLayout, false);
+		writeConfig(source, 999);
+		writeLayout(source, 6);
+
+		ProfilesManager.copyPresetSourceForEdit(source, draft);
+
+		assertArrayEquals(oldConfig, readConfigBytes(draft));
+		assertArrayEquals(oldLayout, readLayout(draft));
+		assertFalse(saveRollback(source).exists());
+	}
+
+	@Test
+	public void editorCopyRecoveryFailureCopiesNothing() throws Exception {
+		File source = tempDir("editor-recovery-fail-source");
+		File draft = tempDir("editor-recovery-fail-draft");
+		writeConfig(source, 999);
+		writeLayout(source, 6);
+		File rollback = saveRollback(source);
+		assertTrue(rollback.mkdir());
+		assertTrue(new File(rollback, "config.json.present").createNewFile());
+		assertTrue(readyMarker(source).createNewFile());
+
+		try {
+			ProfilesManager.copyPresetSourceForEdit(source, draft);
+			fail("Expected source recovery failure");
+		} catch (IOException expected) {
+			// Recovery failed before any source artifact was copied.
+		}
+
+		assertFalse(configFile(draft).exists());
+		assertFalse(new File(draft, "config.xml").exists());
+		assertFalse(layoutFile(draft).exists());
+		assertTrue(saveRollback(source).exists());
+	}
+
+	@Test
+	public void editorCopyPreservesConfigOnlyPresetWithoutFabricatingLayout() throws Exception {
+		File source = tempDir("editor-config-only-source");
+		File draft = tempDir("editor-config-only-draft");
+		writeConfig(source, 240);
+		byte[] config = readConfigBytes(source);
+
+		ProfilesManager.copyPresetSourceForEdit(source, draft);
+
+		assertArrayEquals(config, readConfigBytes(draft));
+		assertFalse(new File(draft, "config.xml").exists());
+		assertFalse(layoutFile(draft).exists());
+	}
+
+	@Test
+	public void editorCopyPreservesLegacyConfigBytes() throws Exception {
+		File source = tempDir("editor-legacy-source");
+		File draft = tempDir("editor-legacy-draft");
+		byte[] legacy = new byte[] {0, 1, 2, 3, 42, -1, 10};
+		Files.write(new File(source, "config.xml").toPath(), legacy);
+
+		ProfilesManager.copyPresetSourceForEdit(source, draft);
+
+		assertFalse(configFile(draft).exists());
+		assertArrayEquals(legacy, Files.readAllBytes(new File(draft, "config.xml").toPath()));
+		assertFalse(layoutFile(draft).exists());
+	}
+
+	@Test
+	public void editorSaveStillPublishesEditedWorkingCopy() throws Exception {
+		File source = tempDir("editor-save-source");
+		File draft = tempDir("editor-save-draft");
+		writeConfig(source, 176);
+		writeLayout(source, 1);
+		ProfilesManager.copyPresetSourceForEdit(source, draft);
+
+		writeConfig(draft, 480);
+		writeLayout(draft, 5);
+		ProfilesManager.saveEditedSnapshot(source, draft);
+
+		assertEquals(480, readConfig(source).screenWidth);
+		assertArrayEquals(readLayout(draft), readLayout(source));
+	}
+
+	@Test
+	public void editorDiscardLeavesPresetSourceUnchanged() throws Exception {
+		File source = tempDir("editor-discard-source");
+		File draft = tempDir("editor-discard-draft");
+		writeConfig(source, 176);
+		writeLayout(source, 1);
+		byte[] originalConfig = readConfigBytes(source);
+		byte[] originalLayout = readLayout(source);
+		ProfilesManager.copyPresetSourceForEdit(source, draft);
+
+		writeConfig(draft, 480);
+		writeLayout(draft, 5);
+		deleteTree(draft);
+
+		assertArrayEquals(originalConfig, readConfigBytes(source));
+		assertArrayEquals(originalLayout, readLayout(source));
+	}
+
 	private static Thread thread(
 			String name, AtomicReference<Throwable> failure, ThrowingRunnable action) {
 		return new Thread(() -> {

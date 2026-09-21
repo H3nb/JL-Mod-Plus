@@ -1517,14 +1517,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (!draft.mkdirs()) {
 			throw new IOException("Unable to create preset editor draft");
 		}
-		copyIfFile(profile.getConfig(), new File(draft, "config.json"));
-		copyIfFile(new File(profile.getDir(), "config.xml"), new File(draft, "config.xml"));
-		copyIfFile(profile.getKeyLayout(), new File(draft, "VirtualKeyboardLayout"));
-		return draft;
-	}
-
-	private static void copyIfFile(@NonNull File source, @NonNull File destination) throws IOException {
-		if (source.isFile()) FileUtils.copyFileUsingChannel(source, destination);
+		try {
+			ProfilesManager.copyPresetSourceForEdit(profile, draft);
+			return draft;
+		} catch (IOException | RuntimeException failure) {
+			FileUtils.clearDirectory(draft);
+			draft.delete();
+			throw failure;
+		}
 	}
 
 	private void handleBackRequest() {

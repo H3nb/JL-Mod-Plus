@@ -221,6 +221,33 @@ public class ProfilesManager {
 	}
 
 	/**
+	 * Creates a byte-preserving editor working copy from one coherent committed preset source.
+	 */
+	static void copyPresetSourceForEdit(@NonNull Profile profile, @NonNull File draftDir)
+			throws IOException {
+		copyPresetSourceForEdit(profile.getDir(), draftDir);
+	}
+
+	/** File-level entry point kept package-private for deterministic source-concurrency tests. */
+	static void copyPresetSourceForEdit(@NonNull File sourceDir, @NonNull File draftDir)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+		recoverInterruptedPresetSave(sourceDir);
+		copyPresetArtifactIfFile(new File(sourceDir, Config.MIDLET_CONFIG_FILE),
+				new File(draftDir, Config.MIDLET_CONFIG_FILE));
+		copyPresetArtifactIfFile(new File(sourceDir, "config.xml"),
+				new File(draftDir, "config.xml"));
+		copyPresetArtifactIfFile(new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE),
+				new File(draftDir, Config.MIDLET_KEY_LAYOUT_FILE));
+		}
+	}
+
+	private static void copyPresetArtifactIfFile(@NonNull File source, @NonNull File destination)
+			throws IOException {
+		if (source.isFile()) FileUtils.copyFileUsingChannel(source, destination);
+	}
+
+	/**
 	 * Mirrors one complete named preset into a MIDlet-local materialized snapshot.
 	 *
 	 * <p>Exact sync owns config.json and the complete VirtualKeyboardLayout atomic family. Its
