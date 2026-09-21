@@ -376,7 +376,7 @@ public class VirtualControlsKeyboardResizeTest {
         RectF screen = new RectF(0f, 0f, 1200f, 600f);
         keyboard.resize(screen, 0f, 0f, 1200f, 600f);
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
-        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        writeLegacyV3Layout(keyboard.captureLayoutSnapshot());
 
         Object fire = keyByLabel("F");
         int fireHash = fire.hashCode();
@@ -563,6 +563,29 @@ public class VirtualControlsKeyboardResizeTest {
 
     private File layoutFile() {
         return new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE);
+    }
+
+    private void writeLegacyV3Layout(VirtualKeyboardLayoutSnapshot snapshot) throws Exception {
+        try (DataOutputStream out = new DataOutputStream(new FileOutputStream(layoutFile()))) {
+            writeLayoutHeaderAndCustomType(out);
+            out.writeInt(VirtualKeyboard.LAYOUT_KEYS);
+            out.writeInt(4 + keypad.length * 21);
+            out.writeInt(keypad.length);
+            for (int i = 0; i < keypad.length; i++) {
+                out.writeInt(keypad[i].hashCode());
+                out.writeBoolean(snapshot.visible[i]);
+                out.writeInt(snapshot.snapOrigins[i]);
+                out.writeInt(snapshot.snapModes[i]);
+                out.writeFloat(snapshot.snapOffsetX[i]);
+                out.writeFloat(snapshot.snapOffsetY[i]);
+            }
+            out.writeInt(VirtualKeyboard.LAYOUT_SCALES);
+            out.writeInt(4 + snapshot.keyScales.length * 4);
+            out.writeInt(snapshot.keyScales.length);
+            for (float scale : snapshot.keyScales) out.writeFloat(scale);
+            out.writeInt(VirtualKeyboard.LAYOUT_EOF);
+            out.writeInt(0);
+        }
     }
 
     private void patchKeyAsNoSnap(int targetHash) throws Exception {
