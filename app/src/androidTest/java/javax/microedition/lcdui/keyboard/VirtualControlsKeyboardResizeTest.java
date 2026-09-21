@@ -897,9 +897,11 @@ public class VirtualControlsKeyboardResizeTest {
         keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
         keyboard.setLayout(3);
         assertEquals(null, keyboard.captureLayoutEditState().dormantCustomLayout());
+        assertFalse(isButtonHidden("F"));
 
         keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
         setButtonHidden("F", true);
+        assertTrue(isButtonHidden("F"));
         assertNotNull(keyboard.captureLayoutEditState().customLayout());
 
         keyboard.setLayout(6);
@@ -907,8 +909,10 @@ public class VirtualControlsKeyboardResizeTest {
         assertEquals(6, keyboard.getLayout());
         assertEquals(null, keyboard.captureLayoutEditState().dormantCustomLayout());
 
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
         keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
-        assertEquals(null, keyboard.captureLayoutEditState().customLayout());
+        assertNotNull(keyboard.captureLayoutEditState().customLayout());
+        assertFalse(isButtonHidden("F"));
     }
 
     @Test
