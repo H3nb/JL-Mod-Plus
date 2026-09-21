@@ -1230,11 +1230,51 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 	}
 
-	private int findKeyIndexByHash(int hash) {
-		for (int i = 0; i < keypad.length; i++) {
-			if (keypad[i].hashCode() == hash) return i;
+	public static int persistedKeyIndexForHash(int hash) {
+		for (int i = 0; i < KEYBOARD_SIZE; i++) {
+			if (persistedKeyHash(i) == hash) return i;
 		}
 		return -1;
+	}
+
+	private static int persistedKeyHash(int index) {
+		return switch (index) {
+			case KEY_NUM1, KEY_NUM2, KEY_NUM3, KEY_NUM4, KEY_NUM5,
+					KEY_NUM6, KEY_NUM7, KEY_NUM8, KEY_NUM9 ->
+					singleKeyHash(Canvas.KEY_NUM1 + index);
+			case KEY_NUM0 -> singleKeyHash(Canvas.KEY_NUM0);
+			case KEY_STAR -> singleKeyHash(Canvas.KEY_STAR);
+			case KEY_POUND -> singleKeyHash(Canvas.KEY_POUND);
+			case KEY_SOFT_LEFT -> singleKeyHash(Canvas.KEY_SOFT_LEFT);
+			case KEY_SOFT_RIGHT -> singleKeyHash(Canvas.KEY_SOFT_RIGHT);
+			case KEY_D -> singleKeyHash(Canvas.KEY_SEND);
+			case KEY_C -> singleKeyHash(Canvas.KEY_END);
+			case KEY_UP_LEFT -> dualKeyHash(Canvas.KEY_UP, Canvas.KEY_LEFT);
+			case KEY_UP -> singleKeyHash(Canvas.KEY_UP);
+			case KEY_UP_RIGHT -> dualKeyHash(Canvas.KEY_UP, Canvas.KEY_RIGHT);
+			case KEY_LEFT -> singleKeyHash(Canvas.KEY_LEFT);
+			case KEY_RIGHT -> singleKeyHash(Canvas.KEY_RIGHT);
+			case KEY_DOWN_LEFT -> dualKeyHash(Canvas.KEY_DOWN, Canvas.KEY_LEFT);
+			case KEY_DOWN -> singleKeyHash(Canvas.KEY_DOWN);
+			case KEY_DOWN_RIGHT -> dualKeyHash(Canvas.KEY_DOWN, Canvas.KEY_RIGHT);
+			case KEY_FIRE -> singleKeyHash(Canvas.KEY_FIRE);
+			case KEY_A -> singleKeyHash(SE_KEY_SPECIAL_GAMING_A);
+			case KEY_B -> singleKeyHash(SE_KEY_SPECIAL_GAMING_B);
+			case KEY_MENU -> singleKeyHash(KeyMapper.KEY_OPTIONS_MENU);
+			default -> Integer.MIN_VALUE;
+		};
+	}
+
+	private static int singleKeyHash(int keyCode) {
+		return 31 * (31 + keyCode);
+	}
+
+	private static int dualKeyHash(int keyCode, int secondKeyCode) {
+		return 31 * (31 + keyCode) + secondKeyCode;
+	}
+
+	private int findKeyIndexByHash(int hash) {
+		return persistedKeyIndexForHash(hash);
 	}
 
 	private void applyStagedLayout(
