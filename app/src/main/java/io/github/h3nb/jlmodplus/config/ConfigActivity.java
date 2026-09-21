@@ -1091,7 +1091,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			Log.e(TAG, "Refusing to load MIDlet config after preset snapshot recovery failure");
 			return false;
 		}
-		if (!initializationDecisionMade) {
+		boolean decidingInitializationNow = !initializationDecisionMade;
+		if (decidingInitializationNow) {
 			if (!isProfile) {
 				refreshProfileOriginFromMetadata();
 				setupArtifactExistedBeforeInitialization = hasExistingSetupAfterRecovery(
@@ -1099,7 +1100,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			}
 			initializationDecisionMade = true;
 		}
-		boolean mayInitializeNewApp = !isProfile && !setupArtifactExistedBeforeInitialization;
+		boolean mayInitializeNewApp = shouldInitializeNewApp(
+				decidingInitializationNow, isProfile, setupArtifactExistedBeforeInitialization);
 
 		String configuredDefault = hostPreferences.getString(PREF_DEFAULT_PROFILE, null);
 		Profile configuredProfile = isProfile ? null : ProfilesManager.findProfile(configuredDefault);
@@ -2025,6 +2027,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		} catch (IOException | RuntimeException e) {
 			return false;
 		}
+	}
+
+	static boolean shouldInitializeNewApp(
+			boolean decidingInitializationNow,
+			boolean isProfile,
+			boolean existingSetup) {
+		return decidingInitializationNow && !isProfile && !existingSetup;
 	}
 
 	static boolean hasApplicationSettingsArtifact(@Nullable ProfilesManager.ProfileInfo inspected) {

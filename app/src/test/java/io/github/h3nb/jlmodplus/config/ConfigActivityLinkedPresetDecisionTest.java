@@ -81,6 +81,14 @@ public class ConfigActivityLinkedPresetDecisionTest {
 	}
 
 	@Test
+	public void defaultInitializationDecisionIsOneShotPerActivityLoadSequence() {
+		assertTrue(ConfigActivity.shouldInitializeNewApp(true, false, false));
+		assertFalse(ConfigActivity.shouldInitializeNewApp(false, false, false));
+		assertFalse(ConfigActivity.shouldInitializeNewApp(true, false, true));
+		assertFalse(ConfigActivity.shouldInitializeNewApp(true, true, false));
+	}
+
+	@Test
 	public void abandonedNewSidecarAloneDoesNotMakeMidletExisting() throws Exception {
 		File target = tempDir("new-sidecar");
 		Files.write(new File(target, Config.MIDLET_KEY_LAYOUT_FILE + ".new").toPath(), new byte[] {1});
