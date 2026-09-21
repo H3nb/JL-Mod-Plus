@@ -7,13 +7,14 @@
 package io.github.h3nb.jlmodplus.config;
 
 import android.content.SharedPreferences;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Prepares one active MIDlet's materialized config snapshot before any local config/layout read.
@@ -23,7 +24,7 @@ import java.io.IOException;
  * failure is not.</p>
  */
 public final class MidletConfigLoadBoundary {
-	private static final String TAG = MidletConfigLoadBoundary.class.getSimpleName();
+	private static final Logger LOGGER = Logger.getLogger(MidletConfigLoadBoundary.class.getName());
 
 	private MidletConfigLoadBoundary() {
 	}
@@ -38,7 +39,7 @@ public final class MidletConfigLoadBoundary {
 		try {
 			ProfilesManager.recoverInterruptedSnapshotSync(configDir);
 		} catch (IOException | RuntimeException recoveryFailure) {
-			Log.e(TAG, "Unable to recover MIDlet preset snapshot before load", recoveryFailure);
+			LOGGER.log(Level.SEVERE, "Unable to recover MIDlet preset snapshot before load", recoveryFailure);
 			return false;
 		}
 
@@ -50,7 +51,7 @@ public final class MidletConfigLoadBoundary {
 		String origin = linkage.getOrigin();
 		File sourceDir = resolveProfileDirectory(profilesRoot, origin);
 		if (sourceDir == null) {
-			Log.w(TAG, "Linked preset is unavailable: " + origin);
+			LOGGER.warning("Linked preset is unavailable: " + origin);
 			return true;
 		}
 
@@ -62,11 +63,12 @@ public final class MidletConfigLoadBoundary {
 				ProfilesManager.recoverInterruptedSnapshotSync(configDir);
 			} catch (IOException | RuntimeException recoveryFailure) {
 				syncFailure.addSuppressed(recoveryFailure);
-				Log.e(TAG, "Linked preset sync left an unsafe local snapshot: " + origin, syncFailure);
+				LOGGER.log(Level.SEVERE, "Linked preset sync left an unsafe local snapshot: " + origin, syncFailure);
 				return false;
 			}
-			Log.e(TAG, "Unable to refresh linked preset; using last-known-good local snapshot: "
-					+ origin, syncFailure);
+			LOGGER.log(Level.WARNING,
+					"Unable to refresh linked preset; using last-known-good local snapshot: " + origin,
+					syncFailure);
 			return true;
 		}
 	}
