@@ -272,6 +272,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	@Override
 	public void setLayoutForEditing(int variant) {
 		if (variant == TYPE_CUSTOM) {
+			if (getLayout() == TYPE_CUSTOM && getStoredCustomLayoutState() != null) {
+				// Re-selecting the already-active Custom entry must not reload the last disk state and
+				// silently discard unsaved orientation drafts.
+				return;
+			}
 			applyControlsLayout(variant, false);
 			return;
 		}
