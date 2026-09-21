@@ -1621,7 +1621,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		operationRunning = true;
 		PresetLocalOverride.Guard ownership = null;
-		boolean localDiverged = false;
 		try {
 			if (!isProfile) {
 				ownership = PresetLocalOverride.clearBeforeReplacement(this, configDir);
@@ -1632,7 +1631,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				profileOrigin = null;
 			}
 			ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
-			localDiverged = true;
 			// A source with any layout artifact is a combined preset, even when that artifact is
 			// unavailable. Applying only its settings is still a partial, standalone setup.
 			boolean sourceHasKeyboardArtifact =
@@ -1650,7 +1648,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			loadParams(true);
 			return true;
 		} catch (IOException | RuntimeException e1) {
-			if (!localDiverged) restorePresetAssociation(ownership);
+			// ProfilesManager.load() does not expose whether publication began before failure.
+			// Keeping the already-cleared association CUSTOM is safer than restoring a stale link.
 			Log.e(TAG, "applyTemplate: " + name, e1);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			return false;
@@ -1748,7 +1747,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		operationRunning = true;
 		PresetLocalOverride.Guard ownership = null;
-		boolean localDiverged = false;
 		try {
 			if (!isProfile) {
 				ownership = PresetLocalOverride.clearBeforeReplacement(this, configDir);
@@ -1759,7 +1757,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				profileOrigin = null;
 			}
 			ProfilesManager.load(profile, configDir.getPath(), false, true);
-			localDiverged = true;
 			if (isProfile && !setProfileOrigin(null)) {
 				Log.e(TAG, "Unable to clear preset editor provenance");
 			}
@@ -1769,7 +1766,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			if (composeController != null) composeController.update(createUiState());
 			return true;
 		} catch (IOException | RuntimeException e1) {
-			if (!localDiverged) restorePresetAssociation(ownership);
+			// The partial preset transaction cannot prove to this caller that no publication began.
+			// Remain CUSTOM on failure rather than risk reviving stale ownership.
 			Log.e(TAG, "applyKeyboardLayout: " + name, e1);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			if (composeController != null) composeController.update(createUiState());
