@@ -1232,12 +1232,12 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	public static int persistedKeyIndexForHash(int hash) {
 		for (int i = 0; i < KEYBOARD_SIZE; i++) {
-			if (persistedKeyHash(i) == hash) return i;
+			if (persistedKeyHashForIndex(i) == hash) return i;
 		}
 		return -1;
 	}
 
-	private static int persistedKeyHash(int index) {
+	public static int persistedKeyHashForIndex(int index) {
 		return switch (index) {
 			case KEY_NUM1, KEY_NUM2, KEY_NUM3, KEY_NUM4, KEY_NUM5,
 					KEY_NUM6, KEY_NUM7, KEY_NUM8, KEY_NUM9 ->
