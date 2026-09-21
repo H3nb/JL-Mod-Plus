@@ -1310,6 +1310,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			if (!label.equals(key.label)) continue;
 			float width = key.rect.width();
 			float height = key.rect.height();
+			if (!Float.isFinite(width) || !Float.isFinite(height) ||
+					width <= 0.0f || height <= 0.0f) {
+				return false;
+			}
 			key.rect.set(
 					centerX - width * 0.5f,
 					centerY - height * 0.5f,
