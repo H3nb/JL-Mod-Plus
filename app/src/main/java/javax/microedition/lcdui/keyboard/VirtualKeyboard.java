@@ -799,7 +799,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private static boolean isValidGroupedGeometry(float x, float y, float radius) {
 		return Float.isFinite(x) && Float.isFinite(y) && Float.isFinite(radius) &&
 				x >= 0.0f && x <= 1.0f && y >= 0.0f && y <= 1.0f &&
-				radius > 0.0f && radius <= 0.5f;
+				radius >= VirtualControlsKeyboard.MIN_RADIUS_FRACTION &&
+				radius <= VirtualControlsKeyboard.MAX_RADIUS_FRACTION;
 	}
 
 	protected final boolean prepareCustomLayoutForSave() {
