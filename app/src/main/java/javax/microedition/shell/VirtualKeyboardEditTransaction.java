@@ -5,7 +5,6 @@
 package javax.microedition.shell;
 
 import java.util.Objects;
-import java.util.function.BooleanSupplier;
 
 import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutEditState;
 
@@ -14,6 +13,11 @@ import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutEditState;
  * rendering, persistence, and layout restoration remain with the existing runtime/keyboard owners.
  */
 final class VirtualKeyboardEditTransaction {
+	@FunctionalInterface
+	interface SaveAction {
+		boolean persist();
+	}
+
 	enum FinishRequest { CLEAN, CONFIRM }
 
 	private final VirtualKeyboardLayoutEditState baseline;
@@ -40,10 +44,10 @@ final class VirtualKeyboardEditTransaction {
 		finishPending = false;
 	}
 
-	boolean commitSave(BooleanSupplier persist) {
+	boolean commitSave(SaveAction persist) {
 		if (!active) return false;
 		Objects.requireNonNull(persist);
-		if (!persist.getAsBoolean()) {
+		if (!persist.persist()) {
 			finishPending = false;
 			return false;
 		}
