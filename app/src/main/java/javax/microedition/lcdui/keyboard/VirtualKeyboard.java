@@ -712,12 +712,16 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	private boolean prepareCustomLayoutForSave() {
+		boolean materialized = false;
 		for (VirtualKey key : keypad) {
-			if (key.snapMode == RectSnap.NO_SNAP && !materializeKeyPositionAgainstScreen(key)) {
-				return false;
+			if (key.snapMode == RectSnap.NO_SNAP) {
+				if (!materializeKeyPositionAgainstScreen(key)) return false;
+				materialized = true;
 			}
 		}
-		return hasValidSnapTopology(keypad);
+		if (!hasValidSnapTopology(keypad)) return false;
+		if (materialized && isUsableScreen(screen)) snapKeys();
+		return true;
 	}
 
 	private boolean materializeKeyPositionAgainstScreen(VirtualKey key) {
