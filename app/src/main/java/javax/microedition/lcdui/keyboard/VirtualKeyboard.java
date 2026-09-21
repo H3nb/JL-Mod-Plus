@@ -924,9 +924,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			if (!Float.isFinite(x) || !Float.isFinite(y)) {
 				throw new IOException("non-finite key snap offset");
 			}
-			if (mode != RectSnap.NO_SNAP &&
-					(!isPersistableSnapMode(mode) ||
-							(origin != SCREEN && (origin < 0 || origin >= KEYBOARD_SIZE)))) {
+			if (origin != SCREEN && (origin < 0 || origin >= KEYBOARD_SIZE)) {
+				throw new IOException("invalid key snap origin");
+			}
+			if (mode != RectSnap.NO_SNAP && !isPersistableSnapMode(mode)) {
 				throw new IOException("invalid key snap state");
 			}
 
