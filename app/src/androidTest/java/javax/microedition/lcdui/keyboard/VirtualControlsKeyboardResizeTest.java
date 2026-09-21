@@ -869,6 +869,163 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void unsavedHideButtonsCannotReplaceDormantCustomOnLaterLayoutSwitch() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        VirtualKeyboardLayoutState committed =
+                createAndSaveTwoOrientationDpadCustom(portrait, landscape);
+
+        keyboard.setLayout(3);
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+        setButtonHidden("F", true);
+        assertNotEquals(committed, keyboard.captureLayoutEditState().customLayout());
+
+        keyboard.setLayout(6);
+        assertEquals(committed, keyboard.captureLayoutEditState().dormantCustomLayout());
+
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+        assertEquals(committed, keyboard.captureLayoutEditState().customLayout());
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        assertEquals(committed, keyboard.captureLayoutEditState().customLayout());
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        assertEquals(committed, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
+    public void rejectedHideButtonsWithoutPreviousCustomCreatesNoDormantDefinition() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(3);
+        assertEquals(null, keyboard.captureLayoutEditState().dormantCustomLayout());
+
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+        setButtonHidden("F", true);
+        assertNotNull(keyboard.captureLayoutEditState().customLayout());
+
+        keyboard.setLayout(6);
+        recreateKeyboardFromDisk(portrait);
+        assertEquals(6, keyboard.getLayout());
+        assertEquals(null, keyboard.captureLayoutEditState().dormantCustomLayout());
+
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+        assertEquals(null, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
+    public void nonEditorHideButtonsSaveCommitsAndSurvivesRestart() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+
+        setButtonHidden("F", true);
+        assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        VirtualKeyboardLayoutState committed =
+                keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(committed.portraitOverride());
+        assertEquals(null, committed.landscapeOverride());
+
+        recreateKeyboardFromDisk(portrait);
+        assertEquals(VirtualKeyboard.TYPE_CUSTOM, keyboard.getLayout());
+        assertEquals(committed, keyboard.captureLayoutEditState().customLayout());
+        assertTrue(isButtonHidden("F"));
+    }
+
+    @Test
+    public void nonEditorHideButtonsSaveUpdatesOnlyActiveCustomOrientation() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        VirtualKeyboardLayoutState original =
+                createAndSaveTwoOrientationDpadCustom(portrait, landscape);
+
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+        setButtonHidden("F", true);
+        assertTrue(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+
+        VirtualKeyboardLayoutState committed =
+                keyboard.captureLayoutEditState().customLayout();
+        assertNotEquals(original.portraitOverride(), committed.portraitOverride());
+        assertEquals(original.landscapeOverride(), committed.landscapeOverride());
+
+        recreateKeyboardFromDisk(portrait);
+        assertEquals(committed, keyboard.captureLayoutEditState().customLayout());
+        assertTrue(isButtonHidden("F"));
+        recreateKeyboardFromDisk(landscape);
+        assertEquals(committed, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
+    public void failedNonEditorSaveKeepsWorkingMutationAndBaselineForRollback() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        VirtualKeyboardLayoutState original =
+                createAndSaveTwoOrientationDpadCustom(portrait, landscape);
+
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+        setButtonHidden("F", true);
+        assertTrue(isButtonHidden("F"));
+
+        File blocker = new File(layoutFile().getPath() + ".new");
+        assertTrue(blocker.mkdir());
+        File blockerChild = new File(blocker, "keep");
+        assertTrue(blockerChild.createNewFile());
+
+        assertFalse(keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+        assertTrue(isButtonHidden("F"));
+        assertNotEquals(original, keyboard.captureLayoutEditState().customLayout());
+
+        assertTrue(blockerChild.delete());
+        assertTrue(blocker.delete());
+
+        keyboard.setLayout(6);
+        assertEquals(original, keyboard.captureLayoutEditState().dormantCustomLayout());
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+        assertEquals(original, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
+    public void multipleUnsavedHideButtonMutationsKeepFirstCommittedBaseline() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        VirtualKeyboardLayoutState original =
+                createAndSaveTwoOrientationDpadCustom(portrait, landscape);
+
+        keyboard.setLayout(3);
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+        setButtonHidden("F", true);
+        setButtonHidden("L", true);
+        assertTrue(isButtonHidden("F"));
+        assertTrue(isButtonHidden("L"));
+
+        keyboard.setLayout(6);
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+        assertEquals(original, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
+    public void passiveRotationDoesNotCommitOrReplacePendingHideButtonsBaseline() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        VirtualKeyboardLayoutState original =
+                createAndSaveTwoOrientationDpadCustom(portrait, landscape);
+
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+        setButtonHidden("F", true);
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+
+        assertNotEquals(original, keyboard.captureLayoutEditState().customLayout());
+
+        keyboard.setLayout(3);
+        keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
+        assertEquals(original, keyboard.captureLayoutEditState().customLayout());
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        assertEquals(original, keyboard.captureLayoutEditState().customLayout());
+    }
+
+    @Test
     public void absentStandardOverrideReflowsButExistingOverrideDoesNotRegenerate() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
@@ -1184,6 +1341,28 @@ public class VirtualControlsKeyboardResizeTest {
         assertEquals(VirtualKeyboard.LAYOUT_KEYS, keyboard.getLayoutEditMode());
         assertEquals(-1, intField(keyboard, "legacyEditPointer"));
         assertEquals(-1, intField(keyboard, "legacyPinchPointer"));
+    }
+
+    private void setButtonHidden(String label, boolean hidden) {
+        String[] names = keyboard.getKeyNames();
+        boolean[] states = keyboard.getKeysVisibility();
+        for (int i = 0; i < names.length; i++) {
+            if (label.equals(names[i])) {
+                states[i] = hidden;
+                keyboard.setKeysVisibility(states);
+                return;
+            }
+        }
+        throw new AssertionError("Virtual key not found: " + label);
+    }
+
+    private boolean isButtonHidden(String label) {
+        String[] names = keyboard.getKeyNames();
+        boolean[] states = keyboard.getKeysVisibility();
+        for (int i = 0; i < names.length; i++) {
+            if (label.equals(names[i])) return states[i];
+        }
+        throw new AssertionError("Virtual key not found: " + label);
     }
 
     private VirtualKeyboardLayoutState createAndSaveTwoOrientationDpadCustom(

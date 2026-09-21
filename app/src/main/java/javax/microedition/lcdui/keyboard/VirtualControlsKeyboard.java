@@ -92,6 +92,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private VirtualLayoutOrientation activeLayoutOrientation;
 	private ActiveCustomSource activeCustomSource = ActiveCustomSource.NONE;
 	private boolean activeOrientationDirty;
+	private boolean runtimeCustomSavePending;
+	private VirtualKeyboardLayoutState runtimeCustomBaselineState;
 
 	private int dpadPointer = -1;
 	private PointerSourceToken dpadToken;
@@ -257,6 +259,9 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public boolean onLayoutChanged(int variant) {
+		if (variant != TYPE_CUSTOM) {
+			abandonPendingRuntimeCustomization();
+		}
 		if (variant == TYPE_CUSTOM) {
 			if (getStoredCustomLayoutState() == null) {
 				int current = getLayout();
@@ -280,6 +285,9 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			activeOrientationDirty = false;
 		}
 		if (!super.onLayoutChanged(variant)) return false;
+		if (variant == TYPE_CUSTOM) {
+			commitPendingRuntimeCustomization();
+		}
 		if (!applyingStandardTemplate) {
 			// The v4 layout artifact is authoritative for Custom geometry. ProfileModel keeps
 			// compatibility working values only, so its best-effort save must not turn an already
@@ -291,6 +299,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public void setLayout(int variant) {
+		abandonPendingRuntimeCustomization();
 		if (variant != TYPE_CUSTOM) {
 			activeCustomSource = ActiveCustomSource.NONE;
 			activeOrientationDirty = false;
@@ -333,6 +342,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	private void markActiveOrientationEdited() {
+		beginPendingRuntimeCustomizationIfNeeded();
 		activeLayoutOrientation = VirtualLayoutOrientation.resolve(
 				screenBounds, activeLayoutOrientation);
 		VirtualKeyboardLayoutState state = getStoredCustomLayoutState();
@@ -353,6 +363,25 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		activeCustomSource = ActiveCustomSource.OVERRIDE;
 		standardTemplateEdited = false;
 		notifyLayoutEditStateChanged();
+	}
+
+	private void beginPendingRuntimeCustomizationIfNeeded() {
+		if (getLayoutEditMode() != LAYOUT_EOF || runtimeCustomSavePending) return;
+		runtimeCustomBaselineState = getStoredCustomLayoutState();
+		runtimeCustomSavePending = true;
+	}
+
+	private void commitPendingRuntimeCustomization() {
+		if (!runtimeCustomSavePending) return;
+		runtimeCustomSavePending = false;
+		runtimeCustomBaselineState = null;
+	}
+
+	private void abandonPendingRuntimeCustomization() {
+		if (!runtimeCustomSavePending) return;
+		setStoredCustomLayoutState(runtimeCustomBaselineState);
+		runtimeCustomSavePending = false;
+		runtimeCustomBaselineState = null;
 	}
 
 	private void applyControlsLayout(int variant, boolean persist) {
