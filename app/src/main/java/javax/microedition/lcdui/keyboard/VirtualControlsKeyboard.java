@@ -667,6 +667,13 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		if (!activeOrientationDirty || activeLayoutOrientation == null) return;
 		VirtualKeyboardLayoutState state = getStoredCustomLayoutState();
 		if (state == null) return;
+		if (!prepareCustomLayoutForSave()) {
+			// Editor operations are expected to maintain reconstructible topology. Keep the in-memory
+			// draft visible rather than crashing; the v4 writer will still refuse invalid persistence.
+			android.util.Log.w(
+					VirtualControlsKeyboard.class.getSimpleName(),
+					"Orientation draft could not satisfy Custom persistence invariant");
+		}
 		setStoredCustomLayoutState(state.withOverride(
 				activeLayoutOrientation, captureCurrentCustomSnapshot()));
 		activeOrientationDirty = false;
