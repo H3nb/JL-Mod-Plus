@@ -39,6 +39,10 @@ public class ProfilesManagerSnapshotSyncTest {
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
 	private static final int LAYOUT_TYPE = 3;
 	private static final int LAYOUT_EOF = -1;
+	private static final String LAYOUT_NEW_SUFFIX = ".new";
+	private static final String LAYOUT_BACKUP_SUFFIX = ".bak";
+	private static final String SYNC_ROLLBACK_DIR = ".preset-sync.rollback";
+	private static final String SYNC_READY_MARKER = ".ready";
 
 	@Test
 	public void configAndValidLayoutAreMirrored() throws Exception {
@@ -67,6 +71,125 @@ public class ProfilesManagerSnapshotSyncTest {
 
 		assertEquals(360, readConfig(target).screenWidth);
 		assertFalse(layoutFile(target).exists());
+	}
+
+	@Test
+	public void configOnlySnapshotConsumesBackupOnlyLayoutBeforeRemovingFamily() throws Exception {
+		File source = tempDir("source-no-layout-backup-only");
+		File target = tempDir("target-backup-only");
+		writeConfig(source, 360, 1);
+		writeConfig(target, 176, 1);
+		writeLayout(target, 2);
+		File backup = layoutSidecar(target, LAYOUT_BACKUP_SUFFIX);
+		assertTrue(layoutFile(target).renameTo(backup));
+
+		ProfilesManager.syncSnapshot(source, target);
+
+		assertEquals(360, readConfig(target).screenWidth);
+		assertLayoutFamilyAbsent(target);
+	}
+
+	@Test
+	public void configOnlySnapshotRemovesCompleteStaleLayoutFamily() throws Exception {
+		File source = tempDir("source-no-layout-family");
+		File target = tempDir("target-layout-family");
+		writeConfig(source, 360, 1);
+		writeConfig(target, 176, 1);
+		writeLayout(target, 2);
+		writeLayoutFile(layoutSidecar(target, LAYOUT_NEW_SUFFIX), 3);
+		writeLayoutFile(layoutSidecar(target, LAYOUT_BACKUP_SUFFIX), 4);
+
+		ProfilesManager.syncSnapshot(source, target);
+
+		assertEquals(360, readConfig(target).screenWidth);
+		assertLayoutFamilyAbsent(target);
+	}
+
+	@Test
+	public void presetLayoutBecomesOnlyRecoverableLayoutWhenDestinationHasSidecars() throws Exception {
+		File source = tempDir("source-layout-sidecars");
+		File target = tempDir("target-layout-sidecars");
+		writeConfig(source, 360, 1);
+		writeLayout(source, 1);
+		writeConfig(target, 176, 1);
+		writeLayout(target, 2);
+		writeLayoutFile(layoutSidecar(target, LAYOUT_NEW_SUFFIX), 3);
+		writeLayoutFile(layoutSidecar(target, LAYOUT_BACKUP_SUFFIX), 4);
+
+		ProfilesManager.syncSnapshot(source, target);
+
+		assertEquals(360, readConfig(target).screenWidth);
+		assertArrayEquals(readLayout(source), readLayout(target));
+		assertFalse(layoutSidecar(target, LAYOUT_NEW_SUFFIX).exists());
+		assertFalse(layoutSidecar(target, LAYOUT_BACKUP_SUFFIX).exists());
+	}
+
+	@Test
+	public void readyInterruptedSyncRecoversOldSnapshotThenAppliesCurrentPreset() throws Exception {
+		File source = tempDir("source-after-interruption");
+		File target = tempDir("target-after-interruption");
+		writeConfig(source, 640, 1);
+		writeLayout(source, 1);
+		writeConfig(target, 176, 1);
+		writeLayout(target, 2);
+		byte[] oldConfig = Files.readAllBytes(configFile(target).toPath());
+		byte[] oldLayout = readLayout(target);
+		createInterruptedSyncRollback(target, oldConfig, oldLayout, true);
+
+		// Simulate process death after config publication but before layout publication.
+		writeConfig(target, 999, 1);
+
+		ProfilesManager.syncSnapshot(source, target);
+
+		assertEquals(640, readConfig(target).screenWidth);
+		assertArrayEquals(readLayout(source), readLayout(target));
+		assertFalse(syncRollbackDir(target).exists());
+	}
+
+	@Test
+	public void rollbackWithoutReadyMarkerDoesNotReplaceValidDestination() throws Exception {
+		File source = tempDir("source-invalid-before-ready");
+		File target = tempDir("target-before-ready");
+		File unrelatedBackup = tempDir("unpublished-backup");
+		writeConfig(target, 222, 1);
+		writeLayout(target, 2);
+		byte[] currentConfig = Files.readAllBytes(configFile(target).toPath());
+		byte[] currentLayout = readLayout(target);
+		writeConfig(unrelatedBackup, 111, 1);
+		writeLayout(unrelatedBackup, 1);
+		createInterruptedSyncRollback(
+				target,
+				Files.readAllBytes(configFile(unrelatedBackup).toPath()),
+				readLayout(unrelatedBackup),
+				false);
+		Files.write(configFile(source).toPath(), "{broken".getBytes(StandardCharsets.UTF_8));
+
+		expectSyncFailure(source, target);
+
+		assertArrayEquals(currentConfig, Files.readAllBytes(configFile(target).toPath()));
+		assertArrayEquals(currentLayout, readLayout(target));
+		assertFalse(syncRollbackDir(target).exists());
+	}
+
+	@Test
+	public void readyInterruptedSyncRecoversOldSnapshotBeforeRejectingMalformedSource() throws Exception {
+		File source = tempDir("source-invalid-after-ready");
+		File target = tempDir("target-ready-invalid-source");
+		writeConfig(target, 176, 1);
+		writeLayout(target, 2);
+		byte[] oldConfig = Files.readAllBytes(configFile(target).toPath());
+		byte[] oldLayout = readLayout(target);
+		createInterruptedSyncRollback(target, oldConfig, oldLayout, true);
+
+		// Simulate one already-published destination artifact from the interrupted sync.
+		writeConfig(target, 999, 1);
+		Files.write(configFile(source).toPath(), "{broken".getBytes(StandardCharsets.UTF_8));
+
+		expectSyncFailure(source, target);
+
+		assertArrayEquals(oldConfig, Files.readAllBytes(configFile(target).toPath()));
+		assertArrayEquals(oldLayout, readLayout(target));
+		assertFalse(syncRollbackDir(target).exists());
 	}
 
 	@Test
@@ -170,7 +293,11 @@ public class ProfilesManagerSnapshotSyncTest {
 	}
 
 	private static void writeLayout(File dir, int type) throws IOException {
-		try (DataOutputStream out = new DataOutputStream(new FileOutputStream(layoutFile(dir)))) {
+		writeLayoutFile(layoutFile(dir), type);
+	}
+
+	private static void writeLayoutFile(File file, int type) throws IOException {
+		try (DataOutputStream out = new DataOutputStream(new FileOutputStream(file))) {
 			out.writeInt(LAYOUT_SIGNATURE);
 			out.writeInt(1);
 			out.writeInt(LAYOUT_TYPE);
@@ -179,6 +306,28 @@ public class ProfilesManagerSnapshotSyncTest {
 			out.writeInt(LAYOUT_EOF);
 			out.writeInt(0);
 		}
+	}
+
+	private static void createInterruptedSyncRollback(
+			File target, byte[] previousConfig, byte[] previousLayout, boolean ready)
+			throws IOException {
+		File rollback = syncRollbackDir(target);
+		assertTrue(rollback.mkdir());
+		Files.write(new File(rollback, "config.json").toPath(), previousConfig);
+		assertTrue(new File(rollback, "config.json.present").createNewFile());
+		if (previousLayout != null) {
+			Files.write(new File(rollback, "VirtualKeyboardLayout").toPath(), previousLayout);
+			assertTrue(new File(rollback, "VirtualKeyboardLayout.present").createNewFile());
+		}
+		if (ready) {
+			assertTrue(new File(rollback, SYNC_READY_MARKER).createNewFile());
+		}
+	}
+
+	private static void assertLayoutFamilyAbsent(File dir) {
+		assertFalse(layoutFile(dir).exists());
+		assertFalse(layoutSidecar(dir, LAYOUT_NEW_SUFFIX).exists());
+		assertFalse(layoutSidecar(dir, LAYOUT_BACKUP_SUFFIX).exists());
 	}
 
 	private static byte[] readLayout(File dir) throws IOException {
@@ -191,5 +340,13 @@ public class ProfilesManagerSnapshotSyncTest {
 
 	private static File layoutFile(File dir) {
 		return new File(dir, "VirtualKeyboardLayout");
+	}
+
+	private static File layoutSidecar(File dir, String suffix) {
+		return new File(layoutFile(dir).getPath() + suffix);
+	}
+
+	private static File syncRollbackDir(File dir) {
+		return new File(dir, SYNC_ROLLBACK_DIR);
 	}
 }

@@ -49,6 +49,9 @@ public class ProfilesManager {
 	private static final String TAG = ProfilesManager.class.getName();
 	private static final String ATOMIC_NEW_SUFFIX = ".new";
 	private static final String ATOMIC_BACKUP_SUFFIX = ".bak";
+	private static final String PRESET_SYNC_STAGING_DIR = ".preset-sync.tmp";
+	private static final String PRESET_SYNC_ROLLBACK_DIR = ".preset-sync.rollback";
+	private static final String PRESET_SYNC_READY_MARKER = ".ready";
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 	/** Identifies whether legacy linkage metadata is meaningful for a config load. */
@@ -171,26 +174,122 @@ public class ProfilesManager {
 		if (keyboard && !inspected.keyboardLayout.isReady()) {
 			throw new IOException("Profile keyboard layout is not loadable");
 		}
-		applySnapshotArtifacts(from.getDir(), new File(toPath), inspected.config,
-				config, keyboard, false);
+		applySnapshotArtifacts(from.getDir(), new File(toPath), inspected.config, config, keyboard);
 	}
 
 	/**
 	 * Mirrors one complete named preset into a MIDlet-local materialized snapshot.
 	 *
-	 * <p>Unlike partial preset application, layout absence is authoritative here: a source without
-	 * a keyboard artifact removes a stale destination layout. The source is validated before any
-	 * destination artifact is changed.</p>
+	 * <p>Exact sync owns config.json and the complete VirtualKeyboardLayout atomic family. Its
+	 * rollback state is intentionally separate from partial preset application.</p>
 	 */
 	static void syncSnapshot(@NonNull Profile from, @NonNull String toPath) throws IOException {
 		syncSnapshot(from.getDir(), new File(toPath));
 	}
 
-	/** File-level entry point kept package-private so the transaction can be covered by JVM tests. */
+	/** File-level entry point kept package-private so crash-recovery state can be covered by JVM tests. */
 	static void syncSnapshot(@NonNull File sourceDir, @NonNull File targetDir) throws IOException {
+		if (!targetDir.isDirectory() && !targetDir.mkdirs()) {
+			throw new IOException("Unable to create configuration directory");
+		}
+
+		File staging = new File(targetDir, PRESET_SYNC_STAGING_DIR);
+		File rollback = new File(targetDir, PRESET_SYNC_ROLLBACK_DIR);
+		File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
+		File dstKeyLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
+
+		// Recover destination state before looking at the current source. A preset may have become
+		// unavailable since the interrupted operation, but the previous local snapshot is still owned.
+		recoverInterruptedSnapshotSync(targetDir);
+		normalizeVirtualKeyboardLayout(dstKeyLayout);
+
 		CompleteSnapshot snapshot = inspectCompleteSnapshot(sourceDir);
-		applySnapshotArtifacts(sourceDir, targetDir, snapshot.config,
-				true, snapshot.hasKeyboardLayout, true);
+		deleteRecursively(staging);
+		deleteRecursively(rollback);
+		if (staging.exists() || rollback.exists()) {
+			throw new IOException("Unable to clear stale preset sync state");
+		}
+
+		boolean rollbackSucceeded = true;
+		File ready = new File(rollback, PRESET_SYNC_READY_MARKER);
+		try {
+			if (!staging.mkdirs() || !rollback.mkdirs()) {
+				throw new IOException("Unable to create preset sync staging");
+			}
+
+			File stagedConfig = new File(staging, Config.MIDLET_CONFIG_FILE);
+			File stagedLayout = new File(staging, Config.MIDLET_KEY_LAYOUT_FILE);
+			File sourceConfig = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
+			if (sourceConfig.isFile()) {
+				FileUtils.copyFileUsingChannel(sourceConfig, stagedConfig);
+			} else {
+				File originalDir = snapshot.config.dir;
+				try {
+					snapshot.config.dir = staging;
+					if (!saveConfig(snapshot.config)) {
+						throw new IOException("Unable to materialize profile configuration");
+					}
+				} finally {
+					snapshot.config.dir = originalDir;
+				}
+			}
+			if (!isValidConfigFile(stagedConfig)) {
+				throw new IOException("Profile configuration changed while applying");
+			}
+
+			if (snapshot.hasKeyboardLayout) {
+				File sourceLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+				FileUtils.copyFileUsingChannel(sourceLayout, stagedLayout);
+				String layoutError = KeyboardLayoutValidator.validate(stagedLayout);
+				if (layoutError != null) {
+					throw new IOException("Profile keyboard layout changed while applying: " + layoutError);
+				}
+			}
+
+			CompleteSnapshot current = inspectCompleteSnapshot(sourceDir);
+			if (current.hasKeyboardLayout != snapshot.hasKeyboardLayout) {
+				throw new IOException("Profile keyboard layout changed while applying");
+			}
+
+			// Destination publication may not begin until the complete previous snapshot is recoverable.
+			backupExisting(dstConfig, rollback, "config.json");
+			backupExisting(dstKeyLayout, rollback, "VirtualKeyboardLayout");
+			if (!ready.createNewFile()) {
+				throw new IOException("Unable to mark preset sync ready for publication");
+			}
+
+			FileUtils.copyFileUsingChannel(stagedConfig, dstConfig);
+			if (snapshot.hasKeyboardLayout) {
+				FileUtils.copyFileUsingChannel(stagedLayout, dstKeyLayout);
+			} else if (dstKeyLayout.exists() && !dstKeyLayout.delete()) {
+				throw new IOException("Unable to remove stale key layout");
+			}
+			removeVirtualKeyboardLayoutSidecars(dstKeyLayout);
+
+			// Disarm recovery before directory cleanup. Failure to remove the marker is a failed
+			// transaction cleanup while the complete rollback snapshot is still available.
+			if (!ready.delete()) {
+				throw new IOException("Unable to clear preset sync publication marker");
+			}
+			deleteRecursively(rollback);
+		} catch (IOException | RuntimeException failure) {
+			if (ready.isFile()) {
+				rollbackSucceeded &= tryRestore(failure, dstConfig, rollback, "config.json");
+				rollbackSucceeded &= tryRestore(failure, dstKeyLayout, rollback,
+						"VirtualKeyboardLayout");
+				try {
+					removeVirtualKeyboardLayoutSidecars(dstKeyLayout);
+				} catch (IOException cleanupFailure) {
+					failure.addSuppressed(cleanupFailure);
+					rollbackSucceeded = false;
+				}
+			}
+			if (rollbackSucceeded) deleteRecursively(rollback);
+			if (failure instanceof IOException) throw (IOException) failure;
+			throw failure;
+		} finally {
+			deleteRecursively(staging);
+		}
 	}
 
 	private static final class CompleteSnapshot {
@@ -237,9 +336,63 @@ public class ProfilesManager {
 		return new CompleteSnapshot(config, hasKeyboardLayout);
 	}
 
+	private static void recoverInterruptedSnapshotSync(@NonNull File targetDir) throws IOException {
+		File rollback = new File(targetDir, PRESET_SYNC_ROLLBACK_DIR);
+		File staging = new File(targetDir, PRESET_SYNC_STAGING_DIR);
+		if (rollback.exists()) {
+			File ready = new File(rollback, PRESET_SYNC_READY_MARKER);
+			if (ready.isFile()) {
+				File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
+				File dstKeyLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
+				restoreExisting(dstConfig, rollback, "config.json");
+				restoreExisting(dstKeyLayout, rollback, "VirtualKeyboardLayout");
+				removeVirtualKeyboardLayoutSidecars(dstKeyLayout);
+			}
+			deleteRecursively(rollback);
+			if (rollback.exists()) {
+				throw new IOException("Unable to clear interrupted preset sync rollback state");
+			}
+		}
+		deleteRecursively(staging);
+		if (staging.exists()) {
+			throw new IOException("Unable to clear interrupted preset sync staging state");
+		}
+	}
+
+	/**
+	 * Applies the same effective recovery order as VirtualKeyboard.recoverLayoutFile(), but fails
+	 * closed so exact sync never captures an ambiguous layout family as its rollback baseline.
+	 */
+	private static void normalizeVirtualKeyboardLayout(@NonNull File layout) throws IOException {
+		File temporary = atomicSibling(layout, ATOMIC_NEW_SUFFIX);
+		File backup = atomicSibling(layout, ATOMIC_BACKUP_SUFFIX);
+		if (backup.exists()) {
+			if (layout.exists()) {
+				if (!backup.delete()) {
+					throw new IOException("Unable to remove stale virtual keyboard layout backup");
+				}
+			} else if (!backup.renameTo(layout)) {
+				throw new IOException("Unable to restore virtual keyboard layout backup");
+			}
+		}
+		if (temporary.exists() && !temporary.delete()) {
+			throw new IOException("Unable to remove stale virtual keyboard layout write");
+		}
+	}
+
+	private static void removeVirtualKeyboardLayoutSidecars(@NonNull File layout) throws IOException {
+		File temporary = atomicSibling(layout, ATOMIC_NEW_SUFFIX);
+		File backup = atomicSibling(layout, ATOMIC_BACKUP_SUFFIX);
+		if (temporary.exists() && !temporary.delete()) {
+			throw new IOException("Unable to remove virtual keyboard layout write sidecar");
+		}
+		if (backup.exists() && !backup.delete()) {
+			throw new IOException("Unable to remove virtual keyboard layout backup sidecar");
+		}
+	}
+
 	private static void applySnapshotArtifacts(@NonNull File sourceDir, @NonNull File targetDir,
-			@Nullable ProfileModel sourceConfig, boolean config, boolean keyboard,
-			boolean exactKeyboardSnapshot) throws IOException {
+			@Nullable ProfileModel sourceConfig, boolean config, boolean keyboard) throws IOException {
 		if (!targetDir.isDirectory() && !targetDir.mkdirs()) {
 			throw new IOException("Unable to create configuration directory");
 		}
@@ -249,7 +402,6 @@ public class ProfilesManager {
 		deleteRecursively(rollback);
 		boolean commitStarted = false;
 		boolean rollbackSucceeded = true;
-		boolean touchLayout = keyboard || exactKeyboardSnapshot;
 		File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
 		File dstKeyLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		try {
@@ -288,35 +440,23 @@ public class ProfilesManager {
 					throw new IOException("Profile keyboard layout changed while applying: " + layoutError);
 				}
 			}
-			if (exactKeyboardSnapshot) {
-				CompleteSnapshot current = inspectCompleteSnapshot(sourceDir);
-				if (current.hasKeyboardLayout != keyboard) {
-					throw new IOException("Profile keyboard layout changed while applying");
-				}
-			}
 
-			// Finish every backup before publishing the first destination artifact. This ensures a
-			// later layout failure can restore the whole local snapshot, not just the last file.
 			if (config) backupExisting(dstConfig, rollback, "config.json");
-			if (touchLayout) backupExisting(dstKeyLayout, rollback, "VirtualKeyboardLayout");
+			if (keyboard) backupExisting(dstKeyLayout, rollback, "VirtualKeyboardLayout");
 			commitStarted = true;
 
 			if (config) {
 				FileUtils.copyFileUsingChannel(stagedConfig, dstConfig);
 			}
-			if (touchLayout) {
-				if (keyboard) {
-					FileUtils.copyFileUsingChannel(stagedLayout, dstKeyLayout);
-				} else if (dstKeyLayout.exists() && !dstKeyLayout.delete()) {
-					throw new IOException("Unable to remove stale key layout");
-				}
+			if (keyboard) {
+				FileUtils.copyFileUsingChannel(stagedLayout, dstKeyLayout);
 			}
 		} catch (IOException | RuntimeException failure) {
 			if (commitStarted) {
 				if (config) {
 					rollbackSucceeded &= tryRestore(failure, dstConfig, rollback, "config.json");
 				}
-				if (touchLayout) {
+				if (keyboard) {
 					rollbackSucceeded &= tryRestore(failure, dstKeyLayout, rollback,
 							"VirtualKeyboardLayout");
 				}
