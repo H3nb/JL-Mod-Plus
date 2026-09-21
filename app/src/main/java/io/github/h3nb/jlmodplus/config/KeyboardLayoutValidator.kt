@@ -19,6 +19,8 @@ import java.io.DataInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
+import javax.microedition.lcdui.keyboard.RectSnap
+import javax.microedition.lcdui.keyboard.VirtualControlsKeyboard
 
 /** Validates the on-disk keyboard artifact using the format consumed by VirtualKeyboard. */
 internal object KeyboardLayoutValidator {
@@ -29,6 +31,10 @@ internal object KeyboardLayoutValidator {
     private const val SCALES = 1
     private const val TYPE = 3
     private const val MAX_KEYS = 28
+    private const val KEY_RECORD_SIZE_V1 = 20
+    private const val KEY_RECORD_SIZE_V2 = 21
+    private const val MAX_SCALE_VALUES_V3 = 12
+    private const val MAX_LEGACY_SCALE_GROUPS = 6
     private const val MAX_BLOCKS = 1024
 
     /** Returns null for a layout accepted by the runtime, or a short diagnostic otherwise. */
@@ -60,22 +66,59 @@ internal object KeyboardLayoutValidator {
                         TYPE -> {
                             if (length < 1) return "layout type block is empty"
                             val variant = input.readUnsignedByte()
-                            if (variant > 6) return "layout type is invalid"
+                            if (variant > VirtualControlsKeyboard.TYPE_ANALOG_STANDARD) {
+                                return "layout type is invalid"
+                            }
                             skipFully(input, length - 1)
                             hasType = true
                         }
                         KEYS -> {
-                            val keyCount = readCount(input, length, if (version >= 2) 21 else 16)
-                            if (keyCount < 0 || keyCount > MAX_KEYS) return "layout key count is invalid"
-                            skipFully(input, length - 4)
+                            val itemSize = if (version >= 2) {
+                                KEY_RECORD_SIZE_V2
+                            } else {
+                                KEY_RECORD_SIZE_V1
+                            }
+                            val keyCount = readCount(input, length, itemSize)
+                            if (keyCount < 0 || keyCount > MAX_KEYS) {
+                                return "layout key count is invalid"
+                            }
+                            repeat(keyCount) {
+                                input.readInt() // key hash
+                                if (version >= 2) input.readBoolean()
+                                val snapOrigin = input.readInt()
+                                val snapMode = input.readInt()
+                                val offsetX = input.readFloat()
+                                val offsetY = input.readFloat()
+                                if (!offsetX.isFinite() || !offsetY.isFinite()) {
+                                    return "layout key offset is invalid"
+                                }
+                                // SCREEN + NO_SNAP is accepted for recovery of already-broken
+                                // Custom files. The runtime keeps its safe fallback topology.
+                                if (snapMode != RectSnap.NO_SNAP) {
+                                    if (snapOrigin < -1 || snapOrigin >= MAX_KEYS ||
+                                        !isPersistableSnapMode(snapMode)
+                                    ) {
+                                        return "layout key snap state is invalid"
+                                    }
+                                }
+                            }
                         }
                         SCALES -> {
                             val scaleCount = readCount(input, length, 4)
-                            val maxScales = if (version >= 3) 6 else 12
+                            val maxScales = if (version >= 3) {
+                                MAX_SCALE_VALUES_V3
+                            } else {
+                                MAX_LEGACY_SCALE_GROUPS
+                            }
                             if (scaleCount < 0 || scaleCount > maxScales) {
                                 return "layout scale count is invalid"
                             }
-                            skipFully(input, length - 4)
+                            repeat(scaleCount) {
+                                val scale = input.readFloat()
+                                if (!scale.isFinite() || scale <= 0.0f) {
+                                    return "layout scale value is invalid"
+                                }
+                            }
                         }
                         else -> skipFully(input, length)
                     }
@@ -87,6 +130,13 @@ internal object KeyboardLayoutValidator {
         } catch (_: RuntimeException) {
             return "layout cannot be read"
         }
+    }
+
+    private fun isPersistableSnapMode(mode: Int): Boolean {
+        if (mode == RectSnap.NO_SNAP || mode and RectSnap.FINE_MASK.inv() != 0) return false
+        val horizontal = mode and RectSnap.HORIZONTAL_MASK
+        val vertical = mode and RectSnap.VERTICAL_MASK
+        return Integer.bitCount(horizontal) == 1 && Integer.bitCount(vertical) == 1
     }
 
     @Throws(IOException::class)
