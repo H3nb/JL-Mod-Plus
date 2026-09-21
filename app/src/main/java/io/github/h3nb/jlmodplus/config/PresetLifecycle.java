@@ -73,12 +73,13 @@ final class PresetLifecycle {
 	}
 
 	@NonNull
-	static synchronized Result rename(
+	static Result rename(
 			@NonNull SharedPreferences preferences,
 			@NonNull File profilesRoot,
 			@NonNull String oldName,
 			@NonNull String newName,
 			@NonNull FileActions fileActions) {
+		synchronized (ProfilesManager.presetSourceLock()) {
 		if (oldName.equals(newName)) return Result.SUCCESS;
 		if (!Profile.isValidName(newName) || isInternalRenameStagingName(oldName)) {
 			return Result.FAILED;
@@ -138,6 +139,7 @@ final class PresetLifecycle {
 		} catch (RuntimeException cleanupFailure) {
 			return Result.CLEANUP_FAILED;
 		}
+		}
 	}
 
 	@NonNull
@@ -149,11 +151,12 @@ final class PresetLifecycle {
 	}
 
 	@NonNull
-	static synchronized Result delete(
+	static Result delete(
 			@NonNull SharedPreferences preferences,
 			@NonNull File profilesRoot,
 			@NonNull String name,
 			@NonNull FileActions fileActions) {
+		synchronized (ProfilesManager.presetSourceLock()) {
 		File source = new File(profilesRoot, name);
 
 		ReferenceSnapshot references;
@@ -174,6 +177,7 @@ final class PresetLifecycle {
 					: Result.CLEANUP_FAILED;
 		} catch (RuntimeException cleanupFailure) {
 			return Result.CLEANUP_FAILED;
+		}
 		}
 	}
 

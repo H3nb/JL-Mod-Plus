@@ -55,7 +55,14 @@ public class ProfilesManager {
 	static final String PRESET_SAVE_ROLLBACK_DIR = ".preset-save.rollback";
 	static final String PRESET_SAVE_READY_MARKER = ".ready";
 	static final String PRESET_SAVE_NEW_PROFILE_MARKER = ".new-profile";
+	private static final Object PRESET_SOURCE_LOCK = new Object();
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+	/** Shared process-local monitor for all named-preset source reads, writes, and lifecycle changes. */
+	@NonNull
+	static Object presetSourceLock() {
+		return PRESET_SOURCE_LOCK;
+	}
 
 	/** Identifies whether legacy linkage metadata is meaningful for a config load. */
 	public enum BackgroundMigrationContext {
@@ -124,6 +131,7 @@ public class ProfilesManager {
 	/** File-level entry point kept package-private for deterministic source-recovery tests. */
 	@NonNull
 	static ProfileInfo inspectProfile(@NonNull Profile profile, @NonNull File profileDir) {
+		synchronized (PRESET_SOURCE_LOCK) {
 		try {
 			recoverInterruptedPresetSave(profileDir);
 		} catch (IOException | RuntimeException recoveryFailure) {
@@ -151,6 +159,7 @@ public class ProfilesManager {
 				: new Capability(layoutReason == null ? CapabilityStatus.READY : CapabilityStatus.UNAVAILABLE,
 						layoutReason);
 		return new ProfileInfo(profile, config, settings, layout);
+		}
 	}
 
 	/** Returns true when a directory or a saved layout already occupies this collection name. */
@@ -168,6 +177,7 @@ public class ProfilesManager {
 
 	@NonNull
 	static ArrayList<Profile> getList(File root) {
+		synchronized (PRESET_SOURCE_LOCK) {
 		File[] dirs = root.listFiles();
 		if (dirs == null) {
 			return new ArrayList<>();
@@ -190,10 +200,12 @@ public class ProfilesManager {
 			}
 		}
 		return result;
+		}
 	}
 
 	static void load(Profile from, String toPath, boolean config, boolean keyboard)
 			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
 		if (!config && !keyboard) {
 			return;
 		}
@@ -205,6 +217,7 @@ public class ProfilesManager {
 			throw new IOException("Profile keyboard layout is not loadable");
 		}
 		applySnapshotArtifacts(from.getDir(), new File(toPath), inspected.config, config, keyboard);
+		}
 	}
 
 	/**
@@ -219,6 +232,7 @@ public class ProfilesManager {
 
 	/** File-level entry point kept package-private so crash-recovery state can be covered by JVM tests. */
 	static void syncSnapshot(@NonNull File sourceDir, @NonNull File targetDir) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
 		if (!targetDir.isDirectory() && !targetDir.mkdirs()) {
 			throw new IOException("Unable to create configuration directory");
 		}
@@ -320,6 +334,7 @@ public class ProfilesManager {
 			throw failure;
 		} finally {
 			deleteRecursively(staging);
+		}
 		}
 	}
 
@@ -559,6 +574,7 @@ public class ProfilesManager {
 	}
 
 	static void recoverInterruptedPresetSave(@NonNull File profileDir) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
 		File rollback = new File(profileDir, PRESET_SAVE_ROLLBACK_DIR);
 		if (!rollback.exists()) return;
 		if (!rollback.isDirectory()) {
@@ -602,6 +618,7 @@ public class ProfilesManager {
 				}
 			}
 			throw new IOException("Unable to remove interrupted new preset directory");
+		}
 		}
 	}
 
@@ -729,6 +746,7 @@ public class ProfilesManager {
 	static void saveSnapshot(
 			@NonNull File profileDir, @NonNull File sourceDir, boolean includeKeyboard)
 			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
 		recoverInterruptedPresetSave(profileDir);
 
 		File srcConfig = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
@@ -768,6 +786,7 @@ public class ProfilesManager {
 			if (failure instanceof IOException) throw (IOException) failure;
 			throw failure;
 		}
+		}
 	}
 
 	/**
@@ -782,6 +801,7 @@ public class ProfilesManager {
 	/** File-level entry point kept package-private for deterministic preset-save recovery tests. */
 	static void saveEditedSnapshot(@NonNull File profileDir, @NonNull File sourceDir)
 			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
 		recoverInterruptedPresetSave(profileDir);
 
 		File srcConfig = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
@@ -815,6 +835,7 @@ public class ProfilesManager {
 			if (failure instanceof IOException) throw (IOException) failure;
 			throw failure;
 		}
+		}
 	}
 
 	/** Saves only the separate layout artifact, converting an explicitly overwritten entry to layout-only. */
@@ -825,6 +846,7 @@ public class ProfilesManager {
 	/** File-level entry point kept package-private for deterministic preset-save recovery tests. */
 	static void saveLayoutSnapshot(@NonNull File profileDir, @NonNull File sourceDir)
 			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
 		recoverInterruptedPresetSave(profileDir);
 
 		File source = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
@@ -854,6 +876,7 @@ public class ProfilesManager {
 			transaction.rollback(failure);
 			if (failure instanceof IOException) throw (IOException) failure;
 			throw failure;
+		}
 		}
 	}
 
