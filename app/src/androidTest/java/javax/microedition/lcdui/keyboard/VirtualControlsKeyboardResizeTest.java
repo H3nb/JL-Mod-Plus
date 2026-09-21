@@ -456,6 +456,314 @@ public class VirtualControlsKeyboardResizeTest {
         assertEquals(baseline, keyboard.captureLayoutSnapshot());
     }
 
+    @Test
+    public void portraitAndLandscapeDpadOverridesAreIndependentAndDriftFree() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+
+        dragGrouped("dpadGeometry", 36f, -24f);
+        dragLegacy("F", 24f, 0f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+
+        VirtualKeyboardLayoutState portraitOnly =
+                keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(portraitOnly.portraitOverride());
+        assertEquals(null, portraitOnly.landscapeOverride());
+        float portraitFireX = rectField(keyByLabel("F")).centerX();
+        float portraitFireY = rectField(keyByLabel("F")).centerY();
+        float portraitDpadX = geometry("dpadGeometry").getCenterX();
+        float portraitDpadY = geometry("dpadGeometry").getCenterY();
+
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        assertEquals(VirtualKeyboard.TYPE_CUSTOM, keyboard.getLayout());
+        assertFreshStandardGeometry(landscape, 0f, 0f, 1200f, 600f, "dpadGeometry");
+        assertEquals(null,
+                keyboard.captureLayoutEditState().customLayout().landscapeOverride());
+
+        dragGrouped("dpadGeometry", -42f, 18f);
+        dragLegacy("F", -30f, 0f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        VirtualKeyboardLayoutState both = keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(both.portraitOverride());
+        assertNotNull(both.landscapeOverride());
+        float landscapeFireX = rectField(keyByLabel("F")).centerX();
+        float landscapeFireY = rectField(keyByLabel("F")).centerY();
+        float landscapeDpadX = geometry("dpadGeometry").getCenterX();
+        float landscapeDpadY = geometry("dpadGeometry").getCenterY();
+
+        for (int i = 0; i < 3; i++) {
+            keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+            assertEquals(portraitFireX, rectField(keyByLabel("F")).centerX(), EPS);
+            assertEquals(portraitFireY, rectField(keyByLabel("F")).centerY(), EPS);
+            assertEquals(portraitDpadX, geometry("dpadGeometry").getCenterX(), EPS);
+            assertEquals(portraitDpadY, geometry("dpadGeometry").getCenterY(), EPS);
+            assertEquals(both, keyboard.captureLayoutEditState().customLayout());
+
+            keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+            assertEquals(landscapeFireX, rectField(keyByLabel("F")).centerX(), EPS);
+            assertEquals(landscapeFireY, rectField(keyByLabel("F")).centerY(), EPS);
+            assertEquals(landscapeDpadX, geometry("dpadGeometry").getCenterX(), EPS);
+            assertEquals(landscapeDpadY, geometry("dpadGeometry").getCenterY(), EPS);
+            assertEquals(both, keyboard.captureLayoutEditState().customLayout());
+        }
+    }
+
+    @Test
+    public void analogStandardUsesIndependentOrientationSlots() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD);
+
+        dragGrouped("analogGeometry", 24f, -36f);
+        dragLegacy("F", 18f, 0f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        VirtualKeyboardLayoutSnapshot portraitOverride =
+                keyboard.captureLayoutEditState().customLayout().portraitOverride();
+        assertNotNull(portraitOverride);
+
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        assertFreshStandardGeometry(
+                landscape, 0f, 0f, 1200f, 600f, "analogGeometry");
+        dragGrouped("analogGeometry", -36f, 24f);
+        dragLegacy("F", -24f, 0f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        VirtualKeyboardLayoutState state = keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(state.landscapeOverride());
+
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        assertEquals(portraitOverride, state.portraitOverride());
+        assertAnalogVisualMatchesResolvedGeometry();
+
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        assertEquals(state, keyboard.captureLayoutEditState().customLayout());
+        assertAnalogVisualMatchesResolvedGeometry();
+    }
+
+    @Test
+    public void onePortraitOverrideRestartsLandscapeFromFreshStandardBase() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        dragGrouped("dpadGeometry", 30f, -30f);
+        dragLegacy("F", 24f, 0f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        float portraitFire = rectField(keyByLabel("F")).centerX();
+
+        recreateKeyboardFromDisk(landscape);
+        VirtualKeyboardLayoutState loadedLandscape =
+                keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(loadedLandscape.portraitOverride());
+        assertEquals(null, loadedLandscape.landscapeOverride());
+        assertFreshStandardGeometry(landscape, 0f, 0f, 1200f, 600f, "dpadGeometry");
+
+        recreateKeyboardFromDisk(portrait);
+        assertEquals(portraitFire, rectField(keyByLabel("F")).centerX(), EPS);
+    }
+
+    @Test
+    public void bothOrientationOverridesSurviveRealDiskRecreation() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        dragGrouped("dpadGeometry", 30f, -18f);
+        dragLegacy("F", 18f, 0f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        dragGrouped("dpadGeometry", -30f, 18f);
+        dragLegacy("F", -18f, 0f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        VirtualKeyboardLayoutState saved = keyboard.captureLayoutEditState().customLayout();
+
+        recreateKeyboardFromDisk(portrait);
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+        float portraitFire = rectField(keyByLabel("F")).centerX();
+
+        recreateKeyboardFromDisk(landscape);
+        assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
+        assertNotEquals(portraitFire, rectField(keyByLabel("F")).centerX(), EPS);
+    }
+
+    @Test
+    public void absentStandardOverrideReflowsButExistingOverrideDoesNotRegenerate() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        dragLegacy("F", 24f, 0f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+
+        float portraitFireBefore = rectField(keyByLabel("F")).centerY();
+        VirtualKeyboardLayoutSnapshot portraitOverride =
+                keyboard.captureLayoutEditState().customLayout().portraitOverride();
+        keyboard.resize(portrait, 0f, 0f, 600f, 500f);
+        assertEquals(portraitFireBefore, rectField(keyByLabel("F")).centerY(), EPS);
+        assertEquals(portraitOverride,
+                keyboard.captureLayoutEditState().customLayout().portraitOverride());
+
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        float landscapeBefore = rectField(keyByLabel("F")).centerX();
+        keyboard.resize(landscape, 400f, 0f, 800f, 600f);
+        float landscapeAfter = rectField(keyByLabel("F")).centerX();
+        assertTrue(Math.abs(landscapeAfter - landscapeBefore) > 20f);
+        assertEquals(null,
+                keyboard.captureLayoutEditState().customLayout().landscapeOverride());
+    }
+
+    @Test
+    public void templateSwitchClearsDraftOverridesAndDiscardRestoresCompleteState() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        dragGrouped("dpadGeometry", 24f, -18f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        dragGrouped("dpadGeometry", -24f, 18f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        VirtualKeyboardLayoutEditState baseline = keyboard.captureLayoutEditState();
+
+        keyboard.setLayoutForEditing(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD);
+        VirtualKeyboardLayoutState draft = keyboard.captureLayoutEditState().customLayout();
+        assertEquals(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD, draft.baseVariant());
+        assertEquals(null, draft.portraitOverride());
+        assertEquals(null, draft.landscapeOverride());
+        assertEquals(null, draft.legacySharedFallback());
+        assertEquals(VirtualKeyboard.TYPE_CUSTOM, keyboard.getLayout());
+
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        assertTrue(settings.virtualAnalogEnabled);
+        assertFalse(settings.virtualDpadEnabled);
+        assertEquals(null,
+                keyboard.captureLayoutEditState().customLayout().portraitOverride());
+
+        keyboard.restoreLayoutEditState(baseline);
+        assertEquals(baseline, keyboard.captureLayoutEditState());
+    }
+
+    @Test
+    public void v3MigrationKeepsSharedFallbackUntilBothOrientationsAreEdited() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        writeLegacyV3Layout(keyboard.captureLayoutSnapshot());
+
+        recreateKeyboardFromDisk(portrait);
+        VirtualKeyboardLayoutState migrated = keyboard.captureLayoutEditState().customLayout();
+        assertEquals(VirtualKeyboardLayoutState.BASE_UNKNOWN, migrated.baseVariant());
+        assertNotNull(migrated.legacySharedFallback());
+
+        dragGrouped("dpadGeometry", 24f, -18f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        VirtualKeyboardLayoutState portraitEdited = keyboard.captureLayoutEditState().customLayout();
+        assertNotNull(portraitEdited.legacySharedFallback());
+        assertNotNull(portraitEdited.portraitOverride());
+        assertEquals(null, portraitEdited.landscapeOverride());
+        VirtualKeyboardLayoutSnapshot savedPortrait = portraitEdited.portraitOverride();
+
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        dragGrouped("dpadGeometry", -24f, 18f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        VirtualKeyboardLayoutState both = keyboard.captureLayoutEditState().customLayout();
+        assertEquals(null, both.legacySharedFallback());
+        assertEquals(savedPortrait, both.portraitOverride());
+        assertNotNull(both.landscapeOverride());
+    }
+
+    @Test
+    public void hostBoundsOwnOrientationAndSquareTransitionKeepsPreviousSlot() throws Exception {
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(landscape, 500f, 0f, 700f, 600f);
+        assertEquals(VirtualLayoutOrientation.LANDSCAPE, activeOrientation());
+
+        keyboard.resize(new RectF(0f, 0f, 800f, 800f), 300f, 0f, 500f, 800f);
+        assertEquals(VirtualLayoutOrientation.LANDSCAPE, activeOrientation());
+
+        keyboard.resize(new RectF(0f, 0f, 600f, 1200f), 200f, 0f, 400f, 1200f);
+        assertEquals(VirtualLayoutOrientation.PORTRAIT, activeOrientation());
+    }
+
+    @Test
+    public void orientationSwitchCancelsLegacyInputAndEditorGesture() throws Exception {
+        keyboard.setLayout(3);
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
+        RectF fire = rectField(keyByLabel("F"));
+        assertTrue(keyboard.pointerPressed(0, fire.centerX(), fire.centerY()));
+        assertTrue(booleanField(keyByLabel("F"), "selected"));
+
+        keyboard.resize(new RectF(0f, 0f, 600f, 1200f), 0f, 0f, 600f, 1200f);
+        assertFalse(booleanField(keyByLabel("F"), "selected"));
+
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
+        RectF left = rectField(keyByLabel("L"));
+        assertTrue(keyboard.pointerPressed(0, left.centerX(), left.centerY()));
+        assertTrue(intField(keyboard, "legacyEditPointer") >= 0);
+
+        keyboard.resize(new RectF(0f, 0f, 1200f, 600f), 0f, 0f, 1200f, 600f);
+        assertEquals(-1, intField(keyboard, "legacyEditPointer"));
+    }
+
+    private void dragGrouped(String geometryMethod, float dx, float dy) throws Exception {
+        VirtualDpadGeometry geometry = geometry(geometryMethod);
+        assertTrue(keyboard.pointerPressed(0, geometry.getCenterX(), geometry.getCenterY()));
+        assertTrue(keyboard.pointerDragged(
+                0, geometry.getCenterX() + dx, geometry.getCenterY() + dy));
+        assertTrue(keyboard.pointerReleased(
+                0, geometry.getCenterX() + dx, geometry.getCenterY() + dy));
+    }
+
+    private void dragLegacy(String label, float dx, float dy) throws Exception {
+        RectF key = rectField(keyByLabel(label));
+        assertTrue(keyboard.pointerPressed(0, key.centerX(), key.centerY()));
+        assertTrue(keyboard.pointerDragged(0, key.centerX() + dx, key.centerY() + dy));
+        assertTrue(keyboard.pointerReleased(0, key.centerX() + dx, key.centerY() + dy));
+    }
+
+    private void assertFreshStandardGeometry(
+            RectF screen,
+            float guestLeft,
+            float guestTop,
+            float guestRight,
+            float guestBottom,
+            String groupedMethod) throws Exception {
+        StandardVirtualControlsLayout expected = StandardVirtualControlsLayout.resolve(
+                screen.left, screen.top, screen.right, screen.bottom,
+                guestLeft, guestTop, guestRight, guestBottom);
+        RectF fire = rectField(keyByLabel("F"));
+        assertEquals(expected.actionCenterX, fire.centerX(), EPS);
+        assertEquals(expected.actionCenterY, fire.centerY(), EPS);
+        VirtualDpadGeometry grouped = geometry(groupedMethod);
+        assertEquals(expected.movementCenterX, grouped.getCenterX(), EPS);
+        assertEquals(expected.movementCenterY, grouped.getCenterY(), EPS);
+        assertEquals(expected.movementRadius, grouped.getRadius(), EPS);
+    }
+
+    private void assertAnalogVisualMatchesResolvedGeometry() throws Exception {
+        VirtualDpadGeometry effective = geometry("analogGeometry");
+        Field stickField = VirtualControlsKeyboard.class.getDeclaredField("analogStick");
+        stickField.setAccessible(true);
+        VirtualAnalogStick stick = (VirtualAnalogStick) stickField.get(keyboard);
+        Field viewportField = VirtualControlsKeyboard.class.getDeclaredField("viewport");
+        viewportField.setAccessible(true);
+        GuestViewport currentViewport = (GuestViewport) viewportField.get(keyboard);
+        VirtualAnalogVisualState visual = stick.visualState(currentViewport);
+        assertEquals(effective.getCenterX(), visual.getCenterX(), EPS);
+        assertEquals(effective.getCenterY(), visual.getCenterY(), EPS);
+        assertEquals(effective.getRadius(), visual.getRadius(), EPS);
+    }
+
+    private VirtualLayoutOrientation activeOrientation() throws Exception {
+        Field field = VirtualControlsKeyboard.class.getDeclaredField("activeLayoutOrientation");
+        field.setAccessible(true);
+        return (VirtualLayoutOrientation) field.get(keyboard);
+    }
+
     private void assertEditedStandardRotatesBeforeSave(int type, String geometryMethod)
             throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
@@ -546,6 +854,12 @@ public class VirtualControlsKeyboardResizeTest {
         assertTrue(geometry.getCenterY() - geometry.getRadius() >= screen.top - EPS);
         assertTrue(geometry.getCenterX() + geometry.getRadius() <= screen.right + EPS);
         assertTrue(geometry.getCenterY() + geometry.getRadius() <= screen.bottom + EPS);
+    }
+
+    private static boolean booleanField(Object target, String name) throws Exception {
+        Field field = findField(target.getClass(), name);
+        field.setAccessible(true);
+        return field.getBoolean(target);
     }
 
     private static int intField(Object target, String name) throws Exception {
