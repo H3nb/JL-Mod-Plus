@@ -267,10 +267,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			try {
 				readLayout();
 			} catch (IOException e) {
-				e.printStackTrace();
+				Log.w(TAG, "Could not load Custom virtual keyboard layout; using safe in-memory fallback", e);
+				storedCustomLayoutState = null;
 				resetLayout(TYPE_NUM_ARR);
 				layoutVariant = TYPE_NUM_ARR;
-				saveLayout();
 			}
 		}
 		HandlerThread thread = new HandlerThread("MidletVirtualKeyboard");
@@ -279,7 +279,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	public void onLayoutChanged(int variant) {
-		if (variant == TYPE_CUSTOM && isPhone()) {
+		if (variant == TYPE_CUSTOM && storedCustomLayoutState == null && isPhone() && screen != null) {
 			float min = screen.width();
 			float max = screen.height();
 			if (min > max) {
