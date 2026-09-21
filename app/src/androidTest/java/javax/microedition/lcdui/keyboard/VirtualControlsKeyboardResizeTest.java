@@ -600,6 +600,9 @@ public class VirtualControlsKeyboardResizeTest {
         assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
         float portraitFire = rectField(keyByLabel("F")).centerX();
 
+        // An unrelated profile save may capture only the current working geometry, but v4 remains
+        // authoritative for both orientation slots.
+        ProfilesManager.saveConfig(settings);
         recreateKeyboardFromDisk(landscape);
         assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
         assertNotEquals(portraitFire, rectField(keyByLabel("F")).centerX(), EPS);
@@ -706,6 +709,14 @@ public class VirtualControlsKeyboardResizeTest {
 
         keyboard.restoreLayoutEditState(baseline);
         assertEquals(baseline, keyboard.captureLayoutEditState());
+
+        keyboard.setLayoutForEditing(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        VirtualKeyboardLayoutState committed = keyboard.captureLayoutEditState().customLayout();
+        assertEquals(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD, committed.baseVariant());
+        assertEquals(null, committed.portraitOverride());
+        assertEquals(null, committed.landscapeOverride());
+        assertEquals(null, committed.legacySharedFallback());
     }
 
     @Test
