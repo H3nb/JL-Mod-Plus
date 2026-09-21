@@ -188,7 +188,7 @@ class KeyboardLayoutValidatorTest {
         val file = tempFile()
         DataOutputStream(FileOutputStream(file)).use { out ->
             writeHeader(out, 4)
-            writeType(out, type)
+            writeType(out, 0)
             writeBase(out, 7)
             writeBase(out, 8)
             writeEnd(out)
