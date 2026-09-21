@@ -138,6 +138,23 @@ class KeyboardLayoutValidatorTest {
     }
 
     @Test
+    fun v4KeepsActiveTypeOrthogonalToDormantCustomState() {
+        assertNull(KeyboardLayoutValidator.validate(v4File(type = 3)))
+        assertNull(KeyboardLayoutValidator.validate(v4File(type = 3, base = 7)))
+        assertNull(KeyboardLayoutValidator.validate(
+            v4File(type = 6, base = 8, portrait = true, landscape = true),
+        ))
+
+        assertNotNull(KeyboardLayoutValidator.validate(v4File(type = 0)))
+        assertNotNull(KeyboardLayoutValidator.validate(
+            v4File(type = 3, portrait = true),
+        ))
+        assertNotNull(KeyboardLayoutValidator.validate(
+            v4File(type = 3, base = 7, portrait = true, cycle = true),
+        ))
+    }
+
+    @Test
     fun v4AcceptsEverySupportedBaseWithOptionalOrientationOverrides() {
         for (base in 1..8) {
             assertNull(KeyboardLayoutValidator.validate(v4File(base = base)))
@@ -171,7 +188,7 @@ class KeyboardLayoutValidatorTest {
         val file = tempFile()
         DataOutputStream(FileOutputStream(file)).use { out ->
             writeHeader(out, 4)
-            writeType(out, 0)
+            writeType(out, type)
             writeBase(out, 7)
             writeBase(out, 8)
             writeEnd(out)
@@ -230,6 +247,7 @@ class KeyboardLayoutValidatorTest {
     }
 
     private fun v4File(
+        type: Int = 0,
         base: Int? = null,
         legacy: Boolean = false,
         portrait: Boolean = false,
