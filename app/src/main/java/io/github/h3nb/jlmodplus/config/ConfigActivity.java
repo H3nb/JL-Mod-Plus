@@ -438,13 +438,17 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				public void onResetSettings() {
 					if (operationRunning) return;
 					operationRunning = true;
+					PresetLocalOverride.Guard ownership = null;
+					ProfileModel previousParams = params == null
+							? null : ProfileConfigMatcher.copyConfig(params);
+					ConfigFormState previousForm = currentForm;
+					boolean previousBuiltInThemeLinked = builtInThemeLinked;
 					try {
 						if (isProfile) {
 							profileDraftDirty = true;
 						} else {
-							PresetLocalOverride.Guard ownership =
-									PresetLocalOverride.clearBeforeReplacement(
-											ConfigActivity.this, configDir);
+							ownership = PresetLocalOverride.clearBeforeReplacement(
+									ConfigActivity.this, configDir);
 							if (!ownership.canWrite()) {
 								ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
 								return;
@@ -454,6 +458,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 						params = newBuiltInProfile();
 						setBuiltInThemeLinked(true);
 						loadParams(false);
+						if (!isProfile && !saveParams()) {
+							if (previousParams != null) params = previousParams;
+							currentForm = previousForm;
+							setBuiltInThemeLinked(previousBuiltInThemeLinked);
+							restorePresetAssociation(ownership);
+							if (composeController != null) {
+								composeController.update(createUiState());
+							}
+							ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
+						}
 					} finally {
 						operationRunning = false;
 					}
