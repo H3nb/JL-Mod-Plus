@@ -616,6 +616,52 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void editingBothOrientationsThenDiscardRestoresCompleteBaseline() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        VirtualKeyboardLayoutEditState baseline = keyboard.captureLayoutEditState();
+
+        dragGrouped("dpadGeometry", 24f, -18f);
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        dragGrouped("dpadGeometry", -24f, 18f);
+        assertNotEquals(baseline, keyboard.captureLayoutEditState());
+
+        keyboard.restoreLayoutEditState(baseline);
+        assertEquals(baseline, keyboard.captureLayoutEditState());
+
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        assertEquals(baseline, keyboard.captureLayoutEditState());
+    }
+
+    @Test
+    public void malformedV4AfterValidPortraitBlockFallsBackWithoutPartialApply() throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        dragGrouped("dpadGeometry", 24f, -18f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        dragGrouped("dpadGeometry", -24f, 18f);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+
+        truncateInsideV4LandscapeOverride();
+
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        VirtualControlsKeyboard candidate = null;
+        try {
+            candidate = new VirtualControlsKeyboard(settings);
+            candidate.setView(new View(context));
+            candidate.resize(portrait, 0f, 0f, 600f, 1200f);
+            assertNotEquals(VirtualKeyboard.TYPE_CUSTOM, candidate.getLayout());
+        } finally {
+            disposeKeyboard(candidate);
+        }
+    }
+
+    @Test
     public void templateSwitchClearsDraftOverridesAndDiscardRestoresCompleteState() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
@@ -932,6 +978,24 @@ public class VirtualControlsKeyboardResizeTest {
             }
         }
         throw new AssertionError("Target key was not found in layout");
+    }
+
+    private void truncateInsideV4LandscapeOverride() throws Exception {
+        try (RandomAccessFile raf = new RandomAccessFile(layoutFile(), "rw")) {
+            assertEquals(0x564B4C00, raf.readInt());
+            assertEquals(4, raf.readInt());
+            while (raf.getFilePointer() < raf.length()) {
+                int block = raf.readInt();
+                int length = raf.readInt();
+                if (block == VirtualKeyboard.LAYOUT_LANDSCAPE_OVERRIDE) {
+                    raf.setLength(raf.getFilePointer() + Math.min(32, length));
+                    return;
+                }
+                if (block == VirtualKeyboard.LAYOUT_EOF) break;
+                raf.seek(raf.getFilePointer() + length);
+            }
+        }
+        throw new AssertionError("Landscape override block was not found");
     }
 
     private void writeExcessiveKeyCountLayout() throws Exception {
