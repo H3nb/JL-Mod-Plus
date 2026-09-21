@@ -276,6 +276,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			return;
 		}
 		if (!VirtualKeyboardLayoutState.isSupportedBaseVariant(variant)) return;
+		if (getLayout() != TYPE_CUSTOM && getStoredCustomLayoutState() == null &&
+				getLayout() == variant) {
+			applyControlsLayout(variant, false);
+			return;
+		}
 
 		cancel();
 		setStoredCustomLayoutState(VirtualKeyboardLayoutState.forBase(variant));
@@ -511,6 +516,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	@Override
 	public void restoreLayoutSnapshot(VirtualKeyboardLayoutSnapshot snapshot) {
 		if (snapshot == null) return;
+		if (snapshot.layoutVariant != TYPE_CUSTOM) {
+			setStoredCustomLayoutState(null);
+			activeCustomSource = ActiveCustomSource.NONE;
+			activeOrientationDirty = false;
+		}
 		if (snapshot.isUneditedStandardTemplate()) {
 			applyControlsLayout(snapshot.layoutVariant, false);
 			return;
