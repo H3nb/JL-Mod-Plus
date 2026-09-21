@@ -16,9 +16,12 @@ package javax.microedition.lcdui.keyboard;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.graphics.PointF;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.view.View;
@@ -31,10 +34,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
+import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
+import io.github.h3nb.jlmodplus.config.ProfilesManager;
+import io.github.h3nb.jlmodplus.input.GuestViewport;
+import io.github.h3nb.jlmodplus.input.VirtualAnalogStick;
+import io.github.h3nb.jlmodplus.input.VirtualAnalogVisualState;
+import io.github.h3nb.jlmodplus.input.VirtualDpadGeometry;
 
 @RunWith(AndroidJUnit4.class)
 public class VirtualControlsKeyboardResizeTest {
@@ -63,20 +76,12 @@ public class VirtualControlsKeyboardResizeTest {
         keyboard.resize(new RectF(0f, 0f, 1200f, 600f), 0f, 0f, 1200f, 600f);
         keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
 
-        Field keypadField = VirtualKeyboard.class.getDeclaredField("keypad");
-        keypadField.setAccessible(true);
-        keypad = (Object[]) keypadField.get(keyboard);
+        refreshKeypadReflection();
     }
 
     @After
     public void tearDown() throws Exception {
-        if (keyboard != null) {
-            keyboard.cancel();
-            Field handlerField = VirtualKeyboard.class.getDeclaredField("handler");
-            handlerField.setAccessible(true);
-            Handler handler = (Handler) handlerField.get(keyboard);
-            handler.getLooper().quitSafely();
-        }
+        disposeKeyboard(keyboard);
         if (profileDir != null) profileDir.delete();
     }
 
@@ -226,6 +231,186 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void standardDirectPlacementHasReconstructibleScreenSnapState() throws Exception {
+        RectF screen = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(screen, 0f, 0f, 1200f, 600f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+
+        for (String label : new String[] { "F", "L", "R", "*", "0" }) {
+            Object key = keyByLabel(label);
+            RectF generated = rectField(key);
+            int origin = intField(key, "snapOrigin");
+            int mode = intField(key, "snapMode");
+            PointF offset = pointField(key, "snapOffset");
+
+            assertEquals(-1, origin);
+            assertNotEquals(RectSnap.NO_SNAP, mode);
+
+            RectF reconstructed = new RectF(0f, 0f, generated.width(), generated.height());
+            RectSnap.snap(reconstructed, screen, mode, offset);
+            assertEquals(generated.centerX(), reconstructed.centerX(), EPS);
+            assertEquals(generated.centerY(), reconstructed.centerY(), EPS);
+        }
+    }
+
+    @Test
+    public void editedDpadStandardRotatesBeforeSaveWithoutStaleLegacyPixels() throws Exception {
+        assertEditedStandardRotatesBeforeSave(VirtualControlsKeyboard.TYPE_DPAD_STANDARD, "dpadGeometry");
+    }
+
+    @Test
+    public void editedAnalogStandardRotatesBeforeSaveWithoutStaleLegacyPixels() throws Exception {
+        assertEditedStandardRotatesBeforeSave(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD, "analogGeometry");
+    }
+
+    @Test
+    public void standardCustomizationSurvivesRealDiskRoundTrip() throws Exception {
+        RectF screen = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(screen, 0f, 0f, 1200f, 600f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+
+        VirtualDpadGeometry dpad = geometry("dpadGeometry");
+        assertTrue(keyboard.pointerPressed(0, dpad.getCenterX(), dpad.getCenterY()));
+        assertTrue(keyboard.pointerDragged(0, dpad.getCenterX() + 20f, dpad.getCenterY()));
+        assertTrue(keyboard.pointerReleased(0, dpad.getCenterX() + 20f, dpad.getCenterY()));
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+
+        float[][] before = legacyCenters();
+        recreateKeyboardFromDisk(screen);
+
+        assertEquals(VirtualKeyboard.TYPE_CUSTOM, keyboard.getLayout());
+        float[][] after = legacyCenters();
+        for (int i = 0; i < before.length; i++) {
+            assertEquals(before[i][0], after[i][0], EPS);
+            assertEquals(before[i][1], after[i][1], EPS);
+        }
+    }
+
+    @Test
+    public void analogVisualHitTestAndStickUseSameResolvedCenter() throws Exception {
+        settings.virtualDpadEnabled = false;
+        settings.virtualAnalogEnabled = true;
+        settings.virtualAnalogCenterX = 0.98f;
+        settings.virtualAnalogCenterY = 0.98f;
+        settings.virtualAnalogRadius = 0.34f;
+        RectF screen = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(screen, 0f, 0f, 1200f, 600f);
+
+        VirtualDpadGeometry effective = geometry("analogGeometry");
+        assertGeometryInside(effective, screen);
+        assertTrue(invokeInsideAnalog(effective.getCenterX(), effective.getCenterY(), 1.0f));
+
+        Field stickField = VirtualControlsKeyboard.class.getDeclaredField("analogStick");
+        stickField.setAccessible(true);
+        VirtualAnalogStick stick = (VirtualAnalogStick) stickField.get(keyboard);
+        Field viewportField = VirtualControlsKeyboard.class.getDeclaredField("viewport");
+        viewportField.setAccessible(true);
+        GuestViewport viewport = (GuestViewport) viewportField.get(keyboard);
+        VirtualAnalogVisualState visual = stick.visualState(viewport);
+
+        assertEquals(effective.getCenterX(), screen.left + visual.getCenterX(), EPS);
+        assertEquals(effective.getCenterY(), screen.top + visual.getCenterY(), EPS);
+        assertEquals(effective.getRadius(), visual.getRadius(), EPS);
+    }
+
+    @Test
+    public void passiveRotationResolvesGroupedControlWithoutStoredDrift() throws Exception {
+        settings.virtualDpadEnabled = true;
+        settings.virtualAnalogEnabled = false;
+        settings.virtualDpadCenterX = 0.50f;
+        settings.virtualDpadCenterY = 0.83f;
+        settings.virtualDpadRadius = 0.20f;
+
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        VirtualDpadGeometry firstPortrait = geometry("dpadGeometry");
+        assertGeometryInside(firstPortrait, portrait);
+
+        float preferredX = settings.virtualDpadCenterX;
+        float preferredY = settings.virtualDpadCenterY;
+        float preferredRadius = settings.virtualDpadRadius;
+
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        VirtualDpadGeometry landscapeGeometry = geometry("dpadGeometry");
+        assertGeometryInside(landscapeGeometry, landscape);
+        assertEquals(480f, landscapeGeometry.getCenterY(), EPS);
+        assertEquals(preferredX, settings.virtualDpadCenterX, 0.0001f);
+        assertEquals(preferredY, settings.virtualDpadCenterY, 0.0001f);
+        assertEquals(preferredRadius, settings.virtualDpadRadius, 0.0001f);
+
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        VirtualDpadGeometry secondPortrait = geometry("dpadGeometry");
+        assertGeometryInside(secondPortrait, portrait);
+        assertEquals(firstPortrait.getCenterX(), secondPortrait.getCenterX(), EPS);
+        assertEquals(firstPortrait.getCenterY(), secondPortrait.getCenterY(), EPS);
+        assertEquals(preferredY, settings.virtualDpadCenterY, 0.0001f);
+    }
+
+    @Test
+    public void nearEdgePinchCommitsAViewportSafePreferredCenter() throws Exception {
+        settings.virtualDpadEnabled = false;
+        settings.virtualAnalogEnabled = true;
+        settings.virtualAnalogCenterX = 0.90f;
+        settings.virtualAnalogCenterY = 0.90f;
+        settings.virtualAnalogRadius = 0.10f;
+        RectF screen = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(screen, 0f, 0f, 1200f, 600f);
+
+        VirtualDpadGeometry start = geometry("analogGeometry");
+        assertTrue(keyboard.pointerPressed(0, start.getCenterX(), start.getCenterY()));
+        assertTrue(keyboard.pointerPressed(1, start.getCenterX() + 30f, start.getCenterY()));
+        assertTrue(keyboard.pointerDragged(1, start.getCenterX() + 300f, start.getCenterY()));
+        assertTrue(keyboard.pointerReleased(1, start.getCenterX() + 300f, start.getCenterY()));
+        assertTrue(keyboard.pointerReleased(0, start.getCenterX(), start.getCenterY()));
+
+        VirtualDpadGeometry edited = geometry("analogGeometry");
+        assertGeometryInside(edited, screen);
+        assertTrue(settings.virtualAnalogRadius > 0.10f);
+        assertEquals(edited.getCenterX() / screen.width(), settings.virtualAnalogCenterX, 0.002f);
+        assertEquals(edited.getCenterY() / screen.height(), settings.virtualAnalogCenterY, 0.002f);
+    }
+
+    @Test
+    public void legacyCustomNoSnapEntryKeepsSafeFallbackTopology() throws Exception {
+        RectF screen = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(screen, 0f, 0f, 1200f, 600f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+
+        Object fire = keyByLabel("F");
+        int fireHash = fire.hashCode();
+        patchKeyAsNoSnap(fireHash);
+        recreateKeyboardFromDisk(screen);
+
+        Object recovered = keyByLabel("F");
+        assertNotEquals(RectSnap.NO_SNAP, intField(recovered, "snapMode"));
+        RectF recoveredRect = rectField(recovered);
+        assertTrue(recoveredRect.centerX() > 1f);
+        assertTrue(recoveredRect.centerY() > 1f);
+    }
+
+    @Test
+    public void malformedCustomLayoutFilesFallBackWithoutCrashing() throws Exception {
+        int knownHash = keyByLabel("F").hashCode();
+
+        writeExcessiveKeyCountLayout();
+        assertMalformedLayoutFallsBack();
+
+        writeExcessiveScaleCountLayout();
+        assertMalformedLayoutFallsBack();
+
+        writeSingleKeyLayout(knownHash, 99, RectSnap.INT_NORTHWEST, 0f, 0f);
+        assertMalformedLayoutFallsBack();
+
+        writeSingleKeyLayout(knownHash, -1, RectSnap.INT_NORTHWEST, Float.NaN, 0f);
+        assertMalformedLayoutFallsBack();
+
+        writeTruncatedLayout();
+        assertMalformedLayoutFallsBack();
+    }
+
+    @Test
     public void verticalTwoFingerResizeChangesHeightOnly() throws Exception {
         RectF before = rectField(keyByLabel("L"));
         float cx = before.centerX();
@@ -269,6 +454,213 @@ public class VirtualControlsKeyboardResizeTest {
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
         assertEquals(baseline, keyboard.captureLayoutSnapshot());
+    }
+
+    private void assertEditedStandardRotatesBeforeSave(int type, String geometryMethod)
+            throws Exception {
+        RectF portrait = new RectF(0f, 0f, 600f, 1200f);
+        keyboard.resize(portrait, 0f, 0f, 600f, 1200f);
+        keyboard.setLayout(type);
+
+        VirtualDpadGeometry grouped = geometry(geometryMethod);
+        assertTrue(keyboard.pointerPressed(0, grouped.getCenterX(), grouped.getCenterY()));
+        assertTrue(keyboard.pointerDragged(
+                0, grouped.getCenterX() + 20f, grouped.getCenterY() - 20f));
+        assertTrue(keyboard.pointerReleased(
+                0, grouped.getCenterX() + 20f, grouped.getCenterY() - 20f));
+
+        RectF landscape = new RectF(0f, 0f, 1200f, 600f);
+        keyboard.resize(landscape, 0f, 0f, 1200f, 600f);
+        assertLegacyControlsInside(landscape);
+        assertGeometryInside(geometry(geometryMethod), landscape);
+    }
+
+    private void assertLegacyControlsInside(RectF screen) throws Exception {
+        for (String label : new String[] { "F", "L", "R", "*", "0" }) {
+            RectF rect = rectField(keyByLabel(label));
+            assertTrue(Float.isFinite(rect.left));
+            assertTrue(Float.isFinite(rect.top));
+            assertTrue(rect.left >= screen.left - EPS);
+            assertTrue(rect.top >= screen.top - EPS);
+            assertTrue(rect.right <= screen.right + EPS);
+            assertTrue(rect.bottom <= screen.bottom + EPS);
+        }
+    }
+
+    private float[][] legacyCenters() throws Exception {
+        String[] labels = { "F", "L", "R", "*", "0" };
+        float[][] centers = new float[labels.length][2];
+        for (int i = 0; i < labels.length; i++) {
+            RectF rect = rectField(keyByLabel(labels[i]));
+            centers[i][0] = rect.centerX();
+            centers[i][1] = rect.centerY();
+        }
+        return centers;
+    }
+
+    private void recreateKeyboardFromDisk(RectF screen) throws Exception {
+        disposeKeyboard(keyboard);
+        keyboard = null;
+
+        ProfileModel loaded = ProfilesManager.loadConfig(profileDir);
+        assertNotNull(loaded);
+        settings = loaded;
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        keyboard = new VirtualControlsKeyboard(settings);
+        keyboard.setView(new View(context));
+        keyboard.resize(screen, 0f, 0f, screen.width(), screen.height());
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
+        refreshKeypadReflection();
+    }
+
+    private void refreshKeypadReflection() throws Exception {
+        Field keypadField = VirtualKeyboard.class.getDeclaredField("keypad");
+        keypadField.setAccessible(true);
+        keypad = (Object[]) keypadField.get(keyboard);
+    }
+
+    private static void disposeKeyboard(VirtualKeyboard value) throws Exception {
+        if (value == null) return;
+        value.cancel();
+        Field handlerField = VirtualKeyboard.class.getDeclaredField("handler");
+        handlerField.setAccessible(true);
+        Handler handler = (Handler) handlerField.get(value);
+        handler.getLooper().quitSafely();
+    }
+
+    private VirtualDpadGeometry geometry(String methodName) throws Exception {
+        Method method = VirtualControlsKeyboard.class.getDeclaredMethod(methodName);
+        method.setAccessible(true);
+        return (VirtualDpadGeometry) method.invoke(keyboard);
+    }
+
+    private boolean invokeInsideAnalog(float x, float y, float scale) throws Exception {
+        Method method = VirtualControlsKeyboard.class.getDeclaredMethod(
+                "insideAnalog", float.class, float.class, float.class);
+        method.setAccessible(true);
+        return (boolean) method.invoke(keyboard, x, y, scale);
+    }
+
+    private static void assertGeometryInside(VirtualDpadGeometry geometry, RectF screen) {
+        assertTrue(geometry.getCenterX() - geometry.getRadius() >= screen.left - EPS);
+        assertTrue(geometry.getCenterY() - geometry.getRadius() >= screen.top - EPS);
+        assertTrue(geometry.getCenterX() + geometry.getRadius() <= screen.right + EPS);
+        assertTrue(geometry.getCenterY() + geometry.getRadius() <= screen.bottom + EPS);
+    }
+
+    private static int intField(Object target, String name) throws Exception {
+        Field field = findField(target.getClass(), name);
+        field.setAccessible(true);
+        return field.getInt(target);
+    }
+
+    private static PointF pointField(Object target, String name) throws Exception {
+        Field field = findField(target.getClass(), name);
+        field.setAccessible(true);
+        PointF value = (PointF) field.get(target);
+        return new PointF(value.x, value.y);
+    }
+
+    private File layoutFile() {
+        return new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE);
+    }
+
+    private void patchKeyAsNoSnap(int targetHash) throws Exception {
+        try (RandomAccessFile raf = new RandomAccessFile(layoutFile(), "rw")) {
+            assertEquals(0x564B4C00, raf.readInt());
+            assertEquals(3, raf.readInt());
+            while (true) {
+                int block = raf.readInt();
+                int length = raf.readInt();
+                if (block == VirtualKeyboard.LAYOUT_KEYS) {
+                    int count = raf.readInt();
+                    for (int i = 0; i < count; i++) {
+                        int hash = raf.readInt();
+                        raf.readBoolean();
+                        long snapOriginPosition = raf.getFilePointer();
+                        if (hash == targetHash) {
+                            raf.seek(snapOriginPosition);
+                            raf.writeInt(-1);
+                            raf.writeInt(RectSnap.NO_SNAP);
+                            raf.writeFloat(0f);
+                            raf.writeFloat(0f);
+                            return;
+                        }
+                        raf.skipBytes(16);
+                    }
+                    return;
+                }
+                if (block == VirtualKeyboard.LAYOUT_EOF) return;
+                raf.skipBytes(length);
+            }
+        }
+        throw new AssertionError("Target key was not found in layout");
+    }
+
+    private void writeExcessiveKeyCountLayout() throws Exception {
+        try (DataOutputStream out = new DataOutputStream(new FileOutputStream(layoutFile()))) {
+            writeLayoutHeaderAndCustomType(out);
+            out.writeInt(VirtualKeyboard.LAYOUT_KEYS);
+            out.writeInt(4 + 29 * 21);
+            out.writeInt(29);
+        }
+    }
+
+    private void writeExcessiveScaleCountLayout() throws Exception {
+        try (DataOutputStream out = new DataOutputStream(new FileOutputStream(layoutFile()))) {
+            writeLayoutHeaderAndCustomType(out);
+            out.writeInt(VirtualKeyboard.LAYOUT_SCALES);
+            out.writeInt(4 + 13 * 4);
+            out.writeInt(13);
+        }
+    }
+
+    private void writeSingleKeyLayout(
+            int hash, int origin, int mode, float offsetX, float offsetY) throws Exception {
+        try (DataOutputStream out = new DataOutputStream(new FileOutputStream(layoutFile()))) {
+            writeLayoutHeaderAndCustomType(out);
+            out.writeInt(VirtualKeyboard.LAYOUT_KEYS);
+            out.writeInt(25);
+            out.writeInt(1);
+            out.writeInt(hash);
+            out.writeBoolean(true);
+            out.writeInt(origin);
+            out.writeInt(mode);
+            out.writeFloat(offsetX);
+            out.writeFloat(offsetY);
+            out.writeInt(VirtualKeyboard.LAYOUT_EOF);
+            out.writeInt(0);
+        }
+    }
+
+    private void writeTruncatedLayout() throws Exception {
+        try (DataOutputStream out = new DataOutputStream(new FileOutputStream(layoutFile()))) {
+            writeLayoutHeaderAndCustomType(out);
+            out.writeInt(VirtualKeyboard.LAYOUT_KEYS);
+            out.writeInt(25);
+            out.writeInt(1);
+        }
+    }
+
+    private static void writeLayoutHeaderAndCustomType(DataOutputStream out) throws Exception {
+        out.writeInt(0x564B4C00);
+        out.writeInt(3);
+        out.writeInt(VirtualKeyboard.LAYOUT_TYPE);
+        out.writeInt(1);
+        out.writeByte(VirtualKeyboard.TYPE_CUSTOM);
+    }
+
+    private void assertMalformedLayoutFallsBack() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        VirtualControlsKeyboard candidate = null;
+        try {
+            candidate = new VirtualControlsKeyboard(settings);
+            candidate.setView(new View(context));
+            candidate.resize(new RectF(0f, 0f, 1200f, 600f), 0f, 0f, 1200f, 600f);
+            assertNotEquals(VirtualKeyboard.TYPE_CUSTOM, candidate.getLayout());
+        } finally {
+            disposeKeyboard(candidate);
+        }
     }
 
     private Object keyByLabel(String expected) throws Exception {
