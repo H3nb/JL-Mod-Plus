@@ -747,7 +747,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			if (!applyingStandardTemplate && !standardTemplateEdited && getLayout() == variant &&
 					isStandardTemplate(variant)) {
 				if (getLayoutEditMode() == LAYOUT_EOF) setLayout(variant);
-				else setLayoutForEditing(variant);
+				else applyControlsLayout(variant, false);
 			}
 		});
 	}
