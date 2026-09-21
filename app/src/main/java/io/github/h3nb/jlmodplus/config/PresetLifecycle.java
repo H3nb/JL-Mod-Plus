@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -86,6 +87,11 @@ final class PresetLifecycle {
 		File oldSource = new File(profilesRoot, oldName);
 		File newSource = new File(profilesRoot, newName);
 		File staging = new File(profilesRoot, RENAME_STAGING_NAME);
+		try {
+			ProfilesManager.recoverInterruptedPresetSave(oldSource);
+		} catch (IOException | RuntimeException recoveryFailure) {
+			return Result.FAILED;
+		}
 		if (!oldSource.isDirectory() || newSource.exists()) {
 			return Result.FAILED;
 		}
