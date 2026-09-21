@@ -63,6 +63,13 @@ class KeyboardLayoutValidatorTest {
         val invalidOrigin = layoutWithSingleKey(origin = 28, offsetX = 0.0f)
         assertNotNull(KeyboardLayoutValidator.validate(invalidOrigin))
 
+        val invalidRecoveryOrigin = layoutWithSingleKey(
+            origin = 99,
+            mode = RectSnap.NO_SNAP,
+            offsetX = 0.0f,
+        )
+        assertNotNull(KeyboardLayoutValidator.validate(invalidRecoveryOrigin))
+
         val nonFinite = layoutWithSingleKey(origin = -1, offsetX = Float.NaN)
         assertNotNull(KeyboardLayoutValidator.validate(nonFinite))
     }
