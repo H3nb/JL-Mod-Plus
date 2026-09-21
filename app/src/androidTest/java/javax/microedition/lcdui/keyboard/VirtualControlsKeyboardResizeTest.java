@@ -782,6 +782,28 @@ public class VirtualControlsKeyboardResizeTest {
         assertEquals(-1, intField(keyboard, "legacyEditPointer"));
     }
 
+    @Test
+    public void orientationSwitchCancelsLegacyPinchAndRestoresPublicEditMode() throws Exception {
+        keyboard.setLayout(3);
+        keyboard.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
+
+        RectF left = rectField(keyByLabel("L"));
+        float cx = left.centerX();
+        float cy = left.centerY();
+        assertTrue(keyboard.pointerPressed(0, cx, cy));
+        assertTrue(keyboard.pointerPressed(1, cx + 100f, cy));
+        assertEquals(VirtualKeyboard.LAYOUT_SCALES, keyboard.getLayoutEditMode());
+        assertTrue(intField(keyboard, "legacyPinchPointer") >= 0);
+
+        keyboard.resize(
+                new RectF(0f, 0f, 600f, 1200f),
+                0f, 0f, 600f, 1200f);
+
+        assertEquals(VirtualKeyboard.LAYOUT_KEYS, keyboard.getLayoutEditMode());
+        assertEquals(-1, intField(keyboard, "legacyEditPointer"));
+        assertEquals(-1, intField(keyboard, "legacyPinchPointer"));
+    }
+
     private void dragGrouped(String geometryMethod, float dx, float dy) throws Exception {
         VirtualDpadGeometry geometry = geometry(geometryMethod);
         assertTrue(keyboard.pointerPressed(0, geometry.getCenterX(), geometry.getCenterY()));
