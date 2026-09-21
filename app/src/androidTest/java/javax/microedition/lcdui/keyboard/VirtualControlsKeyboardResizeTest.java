@@ -217,13 +217,21 @@ public class VirtualControlsKeyboardResizeTest {
 
     @Test
     public void standardTemplateReflowsWhenOnlyGuestViewportChanges() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        keyboard.setView(new View(context) {
+            @Override
+            public boolean post(Runnable action) {
+                action.run();
+                return true;
+            }
+        });
+
         RectF screen = new RectF(0f, 0f, 945f, 2048f);
         keyboard.resize(screen, 0f, 0f, 945f, 2048f);
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
         float before = rectField(keyByLabel("F")).centerY();
 
         keyboard.resize(screen, 18f, 0f, 812f, 1118f);
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
         float after = rectField(keyByLabel("F")).centerY();
 
         assertTrue(Math.abs(after - before) > 100f);
