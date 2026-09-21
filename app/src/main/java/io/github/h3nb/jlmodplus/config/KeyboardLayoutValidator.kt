@@ -11,6 +11,7 @@ import java.io.FileInputStream
 import java.io.IOException
 import javax.microedition.lcdui.keyboard.RectSnap
 import javax.microedition.lcdui.keyboard.VirtualControlsKeyboard
+import javax.microedition.lcdui.keyboard.VirtualKeyboard
 
 /** Validates the on-disk keyboard artifact using the format consumed by VirtualKeyboard. */
 internal object KeyboardLayoutValidator {
@@ -202,10 +203,13 @@ internal object KeyboardLayoutValidator {
 
         val origins = IntArray(MAX_KEYS)
         val modes = IntArray(MAX_KEYS)
-        val seenHashes = HashSet<Int>(MAX_KEYS)
-        repeat(MAX_KEYS) { index ->
+        val seenKeys = BooleanArray(MAX_KEYS)
+        repeat(MAX_KEYS) {
             val hash = input.readInt()
-            if (!seenHashes.add(hash)) return "layout orientation key identity is duplicated"
+            val keyIndex = VirtualKeyboard.persistedKeyIndexForHash(hash)
+            if (keyIndex !in 0 until MAX_KEYS || seenKeys[keyIndex]) {
+                return "layout orientation key identity is invalid"
+            }
             input.readBoolean()
             val origin = input.readInt()
             val mode = input.readInt()
@@ -220,9 +224,11 @@ internal object KeyboardLayoutValidator {
             if (!x.isFinite() || !y.isFinite()) {
                 return "layout orientation snap offset is invalid"
             }
-            origins[index] = origin
-            modes[index] = mode
+            seenKeys[keyIndex] = true
+            origins[keyIndex] = origin
+            modes[keyIndex] = mode
         }
+        if (seenKeys.any { !it }) return "layout orientation key identity is incomplete"
         if (!hasValidTopology(origins, modes)) {
             return "layout orientation snap topology is invalid"
         }
