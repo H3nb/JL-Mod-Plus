@@ -159,10 +159,18 @@ class VirtualAnalogStick @JvmOverloads constructor(
         )
     }
 
-    private fun fixedGeometry(viewport: GuestViewport): VirtualAnalogGeometry =
-        VirtualAnalogGeometry(
-            centerX = settings.centerXFraction * viewport.width,
-            centerY = settings.centerYFraction * viewport.height,
-            radius = settings.radiusFractionOfShortestSide * viewport.shortestSide,
+    private fun fixedGeometry(viewport: GuestViewport): VirtualAnalogGeometry {
+        val resolved = VirtualControlGeometryResolver.resolve(
+            width = viewport.width.toFloat(),
+            height = viewport.height.toFloat(),
+            preferredCenterXFraction = settings.centerXFraction,
+            preferredCenterYFraction = settings.centerYFraction,
+            radiusFractionOfShortestSide = settings.radiusFractionOfShortestSide,
         )
+        return VirtualAnalogGeometry(
+            centerX = resolved.centerX,
+            centerY = resolved.centerY,
+            radius = resolved.radius,
+        )
+    }
 }
