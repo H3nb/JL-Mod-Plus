@@ -70,6 +70,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
 	private static final int LAYOUT_VERSION = 4;
+	private static final String LAYOUT_TEMP_SUFFIX = ".new";
+	private static final String LAYOUT_BACKUP_SUFFIX = ".bak";
 	private static final int MAX_LAYOUT_BLOCKS = 1024;
 	private static final int KEY_RECORD_SIZE_V1 = 20;
 	private static final int KEY_RECORD_SIZE_V2 = 21;
@@ -223,6 +225,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	public VirtualKeyboard(ProfileModel settings) {
 		this.settings = settings;
 		this.saveFile = new File(settings.dir + Config.MIDLET_KEY_LAYOUT_FILE);
+		recoverLayoutFile();
 
 		for (int i = KEY_NUM1; i < 9; i++) {
 			keypad[i] = new VirtualKey(Canvas.KEY_NUM1 + i, Integer.toString(1 + i));
@@ -278,7 +281,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		handler = new Handler(thread.getLooper());
 	}
 
-	public void onLayoutChanged(int variant) {
+	public boolean onLayoutChanged(int variant) {
 		if (variant == TYPE_CUSTOM && storedCustomLayoutState == null && isPhone() && screen != null) {
 			float min = screen.width();
 			float max = screen.height();
@@ -296,11 +299,11 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 		}
 		layoutVariant = variant;
-		if (variant != TYPE_CUSTOM) storedCustomLayoutState = null;
-		saveLayout();
+		boolean saved = saveLayout();
 		if (target != null && target.isShown()) {
 			target.updateSize();
 		}
+		return saved;
 	}
 
 	private void resetLayout(int variant) {
@@ -543,11 +546,13 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	public VirtualKeyboardLayoutEditState captureLayoutEditState() {
-		return VirtualKeyboardLayoutEditState.single(captureLayoutSnapshot());
+		return VirtualKeyboardLayoutEditState.single(
+				captureLayoutSnapshot(), storedCustomLayoutState);
 	}
 
 	public void restoreLayoutEditState(VirtualKeyboardLayoutEditState state) {
 		if (state == null || state.isCustom()) return;
+		storedCustomLayoutState = state.dormantCustomLayout();
 		restoreLayoutSnapshot(state.singleLayout());
 	}
 
@@ -667,50 +672,122 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		notifyLayoutEditStateChanged();
 	}
 
-	private void saveLayout() {
+	private boolean saveLayout() {
 		int variant = layoutVariant;
-		if (variant == TYPE_CUSTOM) {
-			if (storedCustomLayoutState == null) {
-				if (!prepareCustomLayoutForSave()) {
-					Log.w(TAG, "Refusing to persist Custom layout with unreconstructible key geometry");
-					return;
-				}
-				storedCustomLayoutState =
-						VirtualKeyboardLayoutState.migrated(captureLayoutSnapshot());
+		VirtualKeyboardLayoutState state = storedCustomLayoutState;
+		if (variant == TYPE_CUSTOM && state == null) {
+			if (!prepareCustomLayoutForSave()) {
+				Log.w(TAG, "Refusing to persist Custom layout with unreconstructible key geometry");
+				return false;
 			}
-			if (!isValidV4CustomState(storedCustomLayoutState)) {
-				Log.w(TAG, "Refusing to persist invalid orientation-aware Custom layout state");
-				return;
+			state = VirtualKeyboardLayoutState.migrated(captureLayoutSnapshot());
+			storedCustomLayoutState = state;
+		}
+		if (state != null && !isValidV4CustomState(state)) {
+			Log.w(TAG, "Refusing to persist invalid orientation-aware Custom layout state");
+			return false;
+		}
+		return writeLayoutAtomically(variant, state);
+	}
+
+	private boolean writeLayoutAtomically(
+			int variant, VirtualKeyboardLayoutState customState) {
+		File parent = saveFile.getParentFile();
+		File temporary = layoutSibling(LAYOUT_TEMP_SUFFIX);
+		File backup = layoutSibling(LAYOUT_BACKUP_SUFFIX);
+		boolean backupStaged = false;
+		try {
+			if (parent != null && !parent.isDirectory() &&
+					!parent.mkdirs() && !parent.isDirectory()) {
+				throw new IOException("unable to create virtual keyboard layout directory");
+			}
+			if (temporary.exists() && !temporary.delete()) {
+				throw new IOException("unable to remove stale virtual keyboard layout write");
+			}
+			if (backup.exists() && !backup.delete()) {
+				throw new IOException("unable to remove stale virtual keyboard layout backup");
+			}
+
+			try (RandomAccessFile raf = new RandomAccessFile(temporary, "rw")) {
+				raf.setLength(0);
+				writeLayoutContents(raf, variant, customState);
+				raf.getFD().sync();
+			}
+
+			if (saveFile.exists()) {
+				if (!saveFile.renameTo(backup)) {
+					throw new IOException("unable to stage existing virtual keyboard layout");
+				}
+				backupStaged = true;
+			}
+			if (!temporary.renameTo(saveFile)) {
+				if (backupStaged && !backup.renameTo(saveFile)) {
+					Log.e(TAG, "Unable to restore previous virtual keyboard layout");
+				}
+				throw new IOException("unable to publish virtual keyboard layout");
+			}
+			if (backup.exists() && !backup.delete()) {
+				Log.w(TAG, "Unable to remove virtual keyboard layout backup " + backup);
+			}
+			loadedLayoutVersion = LAYOUT_VERSION;
+			return true;
+		} catch (IOException | RuntimeException e) {
+			if (temporary.exists() && !temporary.delete()) {
+				Log.w(TAG, "Unable to remove failed virtual keyboard layout write " + temporary);
+			}
+			if (backupStaged && !saveFile.exists() && backup.exists() &&
+					!backup.renameTo(saveFile)) {
+				Log.e(TAG, "Unable to restore previous virtual keyboard layout", e);
+			}
+			Log.e(TAG, "Failed to save virtual keyboard layout", e);
+			return false;
+		}
+	}
+
+	private void writeLayoutContents(
+			RandomAccessFile raf,
+			int variant,
+			VirtualKeyboardLayoutState customState) throws IOException {
+		raf.writeInt(LAYOUT_SIGNATURE);
+		raf.writeInt(LAYOUT_VERSION);
+		raf.writeInt(LAYOUT_TYPE);
+		raf.writeInt(1);
+		raf.write(variant);
+		if (customState != null) {
+			if (customState.hasKnownBase()) {
+				raf.writeInt(LAYOUT_BASE_VARIANT);
+				raf.writeInt(1);
+				raf.write(customState.baseVariant());
+			}
+			writeV4SnapshotBlock(
+					raf, LAYOUT_LEGACY_SHARED, customState.legacySharedFallback());
+			writeV4SnapshotBlock(
+					raf, LAYOUT_PORTRAIT_OVERRIDE, customState.portraitOverride());
+			writeV4SnapshotBlock(
+					raf, LAYOUT_LANDSCAPE_OVERRIDE, customState.landscapeOverride());
+		}
+		raf.writeInt(LAYOUT_EOF);
+		raf.writeInt(0);
+	}
+
+	private File layoutSibling(String suffix) {
+		return new File(saveFile.getPath() + suffix);
+	}
+
+	private void recoverLayoutFile() {
+		File temporary = layoutSibling(LAYOUT_TEMP_SUFFIX);
+		File backup = layoutSibling(LAYOUT_BACKUP_SUFFIX);
+		if (backup.exists()) {
+			if (saveFile.exists()) {
+				if (!backup.delete()) {
+					Log.w(TAG, "Unable to remove stale virtual keyboard layout backup " + backup);
+				}
+			} else if (!backup.renameTo(saveFile)) {
+				Log.w(TAG, "Unable to restore virtual keyboard layout backup " + backup);
 			}
 		}
-
-		try (RandomAccessFile raf = new RandomAccessFile(saveFile, "rw")) {
-			raf.seek(0);
-			raf.writeInt(LAYOUT_SIGNATURE);
-			raf.writeInt(LAYOUT_VERSION);
-			raf.writeInt(LAYOUT_TYPE);
-			raf.writeInt(1);
-			raf.write(variant);
-			if (variant == TYPE_CUSTOM) {
-				VirtualKeyboardLayoutState state = storedCustomLayoutState;
-				if (state.hasKnownBase()) {
-					raf.writeInt(LAYOUT_BASE_VARIANT);
-					raf.writeInt(1);
-					raf.write(state.baseVariant());
-				}
-				writeV4SnapshotBlock(
-						raf, LAYOUT_LEGACY_SHARED, state.legacySharedFallback());
-				writeV4SnapshotBlock(
-						raf, LAYOUT_PORTRAIT_OVERRIDE, state.portraitOverride());
-				writeV4SnapshotBlock(
-						raf, LAYOUT_LANDSCAPE_OVERRIDE, state.landscapeOverride());
-			}
-			raf.writeInt(LAYOUT_EOF);
-			raf.writeInt(0);
-			raf.setLength(raf.getFilePointer());
-			loadedLayoutVersion = LAYOUT_VERSION;
-		} catch (IOException e) {
-			Log.e(TAG, "Failed to save virtual keyboard layout", e);
+		if (temporary.exists() && !temporary.delete()) {
+			Log.w(TAG, "Unable to remove stale virtual keyboard layout write " + temporary);
 		}
 	}
 
@@ -892,6 +969,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			if (version < 1 || version > LAYOUT_VERSION) {
 				throw new IOException("incompatible file version");
 			}
+			if (version == 4) {
+				return readV4Layout(dis);
+			}
 
 			int legacyCustomBlocks = 0;
 			int explicitType = -1;
@@ -976,7 +1056,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				throw new IOException("incompatible file version");
 			}
 			if (version == 4) {
-				readV4CustomLayout(dis);
+				readV4Layout(dis);
 				return;
 			}
 
@@ -1028,12 +1108,13 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 	}
 
-	private void readV4CustomLayout(DataInputStream dis) throws IOException {
+	private int readV4Layout(DataInputStream dis) throws IOException {
 		boolean typeSeen = false;
 		boolean baseSeen = false;
 		boolean legacySeen = false;
 		boolean portraitSeen = false;
 		boolean landscapeSeen = false;
+		int activeType = -1;
 		int baseVariant = VirtualKeyboardLayoutState.BASE_UNKNOWN;
 		VirtualKeyboardLayoutSnapshot legacyFallback = null;
 		VirtualKeyboardLayoutSnapshot portraitOverride = null;
@@ -1047,18 +1128,28 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				case LAYOUT_EOF -> {
 					if (length != 0) throw new IOException("invalid layout end block");
 					if (!typeSeen) throw new IOException("layout type is missing");
-					VirtualKeyboardLayoutState state = new VirtualKeyboardLayoutState(
-							baseVariant, legacyFallback, portraitOverride, landscapeOverride);
-					if (!isValidV4CustomState(state)) {
-						throw new IOException("invalid orientation-aware Custom layout state");
+					boolean hasCustomState =
+							baseSeen || legacySeen || portraitSeen || landscapeSeen;
+					VirtualKeyboardLayoutState state = null;
+					if (hasCustomState) {
+						state = new VirtualKeyboardLayoutState(
+								baseVariant, legacyFallback, portraitOverride, landscapeOverride);
+						if (!isValidV4CustomState(state)) {
+							throw new IOException("invalid orientation-aware Custom layout state");
+						}
+					}
+					if (activeType == TYPE_CUSTOM && state == null) {
+						throw new IOException("Custom layout has no stored Custom state");
 					}
 					storedCustomLayoutState = state;
-					return;
+					return activeType;
 				}
 				case LAYOUT_TYPE -> {
 					if (typeSeen || length != 1) throw new IOException("invalid duplicate layout type");
-					if (dis.readUnsignedByte() != TYPE_CUSTOM) {
-						throw new IOException("v4 Custom payload has non-Custom type");
+					activeType = dis.readUnsignedByte();
+					if (activeType < TYPE_CUSTOM ||
+							activeType > VirtualControlsKeyboard.TYPE_ANALOG_STANDARD) {
+						throw new IOException("invalid layout type");
 					}
 					typeSeen = true;
 				}
