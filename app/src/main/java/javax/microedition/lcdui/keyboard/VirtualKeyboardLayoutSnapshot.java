@@ -127,6 +127,29 @@ public final class VirtualKeyboardLayoutSnapshot {
 				standardTemplateEdited);
 	}
 
+	/** Returns the same semantic geometry normalized as a persisted Custom-orientation override. */
+	public VirtualKeyboardLayoutSnapshot asCustomOverride() {
+		return new VirtualKeyboardLayoutSnapshot(
+				VirtualKeyboard.TYPE_CUSTOM,
+				visible,
+				snapOrigins,
+				snapModes,
+				snapOffsetX,
+				snapOffsetY,
+				keyScales,
+				hasGroupedControls,
+				dpadEnabled,
+				analogEnabled,
+				dpadCenterX,
+				dpadCenterY,
+				dpadRadius,
+				analogCenterX,
+				analogCenterY,
+				analogRadius,
+				false,
+				true);
+	}
+
 	boolean matchesLegacyShape(int keyCount, int scaleCount) {
 		return visible.length == keyCount &&
 				snapOrigins.length == keyCount &&
