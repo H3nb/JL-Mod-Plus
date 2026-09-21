@@ -19,6 +19,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
 import javax.microedition.lcdui.keyboard.RectSnap
+import javax.microedition.lcdui.keyboard.VirtualKeyboard
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -261,7 +262,7 @@ class KeyboardLayoutValidatorTest {
         out.writeInt(V4_SNAPSHOT_LENGTH)
         out.writeInt(keyCount)
         repeat(keyCount) { index ->
-            out.writeInt(1000 + index)
+            out.writeInt(VirtualKeyboard.persistedKeyHashForIndex(index))
             out.writeBoolean(true)
             val origin = when {
                 cycle && index == 0 -> 1
