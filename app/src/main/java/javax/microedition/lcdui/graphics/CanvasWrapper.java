@@ -92,6 +92,53 @@ public class CanvasWrapper {
 		canvas.drawText(text, x, y - textCenterOffset, textPaint);
 	}
 
+	/**
+	 * Draws text at a scale relative to the normal overlay font without changing the persistent
+	 * CanvasWrapper text state. Callers that need mixed typography in one paint pass should prefer
+	 * this scoped overload to setTextScale().
+	 */
+	public void drawString(String text, float x, float y, float scale) {
+		float previousTextSize = textPaint.getTextSize();
+		try {
+			textPaint.setTextSize(textSize * Math.max(0.001f, scale));
+			Paint.FontMetrics metrics = textPaint.getFontMetrics();
+			canvas.drawText(text, x, y - ((metrics.descent + metrics.ascent) / 2.0f), textPaint);
+		} finally {
+			textPaint.setTextSize(previousTextSize);
+		}
+	}
+
+	/** Returns the current text width without mutating text state. */
+	public float measureStringWidth(String text) {
+		return textPaint.measureText(text);
+	}
+
+	/**
+	 * Measures text at a scale relative to the normal overlay font and restores the previous text
+	 * size even if measurement fails.
+	 */
+	public float measureStringWidth(String text, float scale) {
+		float previousTextSize = textPaint.getTextSize();
+		try {
+			textPaint.setTextSize(textSize * Math.max(0.001f, scale));
+			return textPaint.measureText(text);
+		} finally {
+			textPaint.setTextSize(previousTextSize);
+		}
+	}
+
+	/** Measures scaled text height without changing the persistent CanvasWrapper text state. */
+	public float getTextHeight(float scale) {
+		float previousTextSize = textPaint.getTextSize();
+		try {
+			textPaint.setTextSize(textSize * Math.max(0.001f, scale));
+			Paint.FontMetrics metrics = textPaint.getFontMetrics();
+			return metrics.descent - metrics.ascent;
+		} finally {
+			textPaint.setTextSize(previousTextSize);
+		}
+	}
+
 	public void drawImage(Image image, RectF dst) {
 		Bitmap bitmap = image.getBitmap();
 		bitmap.prepareToDraw();
