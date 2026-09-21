@@ -190,6 +190,12 @@ class KeyboardLayoutValidatorTest {
         assertNotNull(KeyboardLayoutValidator.validate(
             v4File(base = 7, portrait = true, groupedX = Float.NaN),
         ))
+        assertNotNull(KeyboardLayoutValidator.validate(
+            v4File(base = 7, portrait = true, groupedRadius = 0.01f),
+        ))
+        assertNotNull(KeyboardLayoutValidator.validate(
+            v4File(base = 7, portrait = true, groupedRadius = 0.50f),
+        ))
     }
 
     @Test
@@ -231,15 +237,16 @@ class KeyboardLayoutValidatorTest {
         keyCount: Int = 28,
         cycle: Boolean = false,
         groupedX: Float = 0.25f,
+        groupedRadius: Float = 0.16f,
     ): File {
         val file = tempFile()
         DataOutputStream(FileOutputStream(file)).use { out ->
             writeHeader(out, 4)
             writeType(out, 0)
             if (base != null) writeBase(out, base)
-            if (legacy) writeV4Snapshot(out, LEGACY_SHARED, keyCount, cycle, groupedX)
-            if (portrait) writeV4Snapshot(out, PORTRAIT_OVERRIDE, keyCount, cycle, groupedX)
-            if (landscape) writeV4Snapshot(out, LANDSCAPE_OVERRIDE, keyCount, cycle, groupedX)
+            if (legacy) writeV4Snapshot(out, LEGACY_SHARED, keyCount, cycle, groupedX, groupedRadius)
+            if (portrait) writeV4Snapshot(out, PORTRAIT_OVERRIDE, keyCount, cycle, groupedX, groupedRadius)
+            if (landscape) writeV4Snapshot(out, LANDSCAPE_OVERRIDE, keyCount, cycle, groupedX, groupedRadius)
             writeEnd(out)
         }
         return file
@@ -257,6 +264,7 @@ class KeyboardLayoutValidatorTest {
         keyCount: Int,
         cycle: Boolean,
         groupedX: Float,
+        groupedRadius: Float,
     ) {
         out.writeInt(block)
         out.writeInt(V4_SNAPSHOT_LENGTH)
@@ -284,10 +292,10 @@ class KeyboardLayoutValidatorTest {
         out.writeBoolean(false)
         out.writeFloat(groupedX)
         out.writeFloat(0.75f)
-        out.writeFloat(0.16f)
+        out.writeFloat(groupedRadius)
         out.writeFloat(0.25f)
         out.writeFloat(0.75f)
-        out.writeFloat(0.16f)
+        out.writeFloat(groupedRadius)
     }
 
     private fun tempFile(): File =
