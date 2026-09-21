@@ -54,6 +54,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 	private static final String KEY_SAVE = "KEY_MAP_SAVE";
 	private final SparseIntArray defaultKeyMap = KeyMapper.getDefaultKeyMap();
 	private SparseIntArray androidToMIDP;
+	private SparseIntArray persistedEffectiveMap;
 	private ProfileModel params;
 	private File configDir;
 	private boolean namedProfile;
@@ -90,12 +91,18 @@ public class KeyMapperActivity extends AppCompatActivity {
 						: ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
 				legacyThemeLinked);
 
+		SparseIntArray loadedEffective =
+				KeyMapperMappingRules.resolve(defaultKeyMap, params.keyMappings);
+		// Back is a host-reserved runtime control. Treat this editor normalization as the persisted
+		// effective baseline so opening and closing an older profile is not a user-owned mutation.
+		loadedEffective.put(KeyEvent.KEYCODE_BACK, KeyMapper.KEY_OPTIONS_MENU);
+		persistedEffectiveMap = loadedEffective.clone();
 		if (savedInstanceState == null) {
-			androidToMIDP = KeyMapperMappingRules.resolve(defaultKeyMap, params.keyMappings);
+			androidToMIDP = loadedEffective;
 		} else {
 			String save = savedInstanceState.getString(KEY_SAVE);
 			if (save == null || save.isEmpty()) {
-				androidToMIDP = KeyMapperMappingRules.resolve(defaultKeyMap, params.keyMappings);
+				androidToMIDP = loadedEffective;
 			} else {
 				androidToMIDP = new GsonBuilder()
 						.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
@@ -103,8 +110,6 @@ public class KeyMapperActivity extends AppCompatActivity {
 						.fromJson(save, SparseIntArray.class);
 			}
 		}
-		// Back is a host-reserved runtime control. Normalize older profile overrides in the
-		// editor too, so the visible/effective map agrees with runtime dispatch.
 		androidToMIDP.put(KeyEvent.KEYCODE_BACK, KeyMapper.KEY_OPTIONS_MENU);
 		composeController = new KeyMapperComposeController(composeView, new KeyMapperActions() {
 			@Override
@@ -159,9 +164,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 
 	@Override
 	protected void onSaveInstanceState(@NonNull Bundle outState) {
-		SparseIntArray currentOverrides = KeyMapperMappingRules.diff(defaultKeyMap, androidToMIDP);
-		SparseIntArray persistedOverrides = currentOverrides.size() == 0 ? null : currentOverrides;
-		if (!KeyMapperMappingRules.equalMaps(params.keyMappings, persistedOverrides)) {
+		if (!KeyMapperMappingRules.equalMaps(persistedEffectiveMap, androidToMIDP)) {
 			String currMap = new GsonBuilder()
 					.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
 					.create()
@@ -193,13 +196,13 @@ public class KeyMapperActivity extends AppCompatActivity {
 
 
 	private boolean save() {
+		if (KeyMapperMappingRules.equalMaps(persistedEffectiveMap, androidToMIDP)) {
+			return true;
+		}
 		SparseIntArray newMap = KeyMapperMappingRules.diff(defaultKeyMap, androidToMIDP);
 		SparseIntArray oldMap = params.keyMappings;
 		if (newMap.size() == 0) {
 			newMap = null;
-		}
-		if (KeyMapperMappingRules.equalMaps(oldMap, newMap)) {
-			return true;
 		}
 
 		PresetLocalOverride.Guard ownership = null;
@@ -213,6 +216,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 
 		params.keyMappings = newMap;
 		if (ProfilesManager.saveConfig(params)) {
+			persistedEffectiveMap = androidToMIDP.clone();
 			return true;
 		}
 		params.keyMappings = oldMap;
