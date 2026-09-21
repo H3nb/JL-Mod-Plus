@@ -67,6 +67,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private static final String ARROW_UP_RIGHT = "↗";
 	private static final String ARROW_DOWN_LEFT = "↙";
 	private static final String ARROW_DOWN_RIGHT = "↘";
+	private static final String KEYPAD_LEGEND_REFERENCE = "WXYZ";
 
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
 	private static final int LAYOUT_VERSION = 4;
@@ -1438,6 +1439,114 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 	}
 
+	static String legendForKeyCode(int keyCode) {
+		return switch (keyCode) {
+			case Canvas.KEY_NUM1 -> ".?!";
+			case Canvas.KEY_NUM2 -> "ABC";
+			case Canvas.KEY_NUM3 -> "DEF";
+			case Canvas.KEY_NUM4 -> "GHI";
+			case Canvas.KEY_NUM5 -> "JKL";
+			case Canvas.KEY_NUM6 -> "MNO";
+			case Canvas.KEY_NUM7 -> "PQRS";
+			case Canvas.KEY_NUM8 -> "TUV";
+			case Canvas.KEY_NUM9 -> "WXYZ";
+			case Canvas.KEY_NUM0 -> "+";
+			case Canvas.KEY_STAR -> "SYM";
+			case Canvas.KEY_POUND -> "Aa";
+			default -> null;
+		};
+	}
+
+	boolean hasVisibleNumericKeypadContext() {
+		int visibleDigits = 0;
+		for (int i = KEY_NUM1; i <= KEY_NUM9; i++) {
+			if (keypad[i].visible) visibleDigits++;
+		}
+		return KeypadLegendLayout.hasNumericContext(visibleDigits);
+	}
+
+	private static void drawKeyString(
+			CanvasWrapper g,
+			String text,
+			float x,
+			float y,
+			float scale) {
+		if (scale == 1.0f) {
+			g.drawString(text, x, y);
+		} else {
+			g.drawString(text, x, y, scale);
+		}
+	}
+
+	private void paintKeyLabel(
+			CanvasWrapper g,
+			VirtualKey key,
+			RectF bounds,
+			boolean keypadLegendContext) {
+		float primaryWidth = g.measureStringWidth(key.label, 1.0f);
+		float primaryHeight = g.getTextHeight(1.0f);
+		String legend = keypadLegendContext ? legendForKeyCode(key.keyCode) : null;
+		if (legend == null) {
+			float primaryScale = KeypadLegendLayout.fitPrimaryScale(
+					bounds.width(), bounds.height(), primaryWidth, primaryHeight);
+			drawKeyString(g, key.label, bounds.centerX(), bounds.centerY(), primaryScale);
+			return;
+		}
+
+		float secondaryWidth = g.measureStringWidth(legend, 1.0f);
+		float limitingSecondaryWidth = Math.max(
+				secondaryWidth, g.measureStringWidth(KEYPAD_LEGEND_REFERENCE, 1.0f));
+		KeypadLegendLayout.Plan plan = KeypadLegendLayout.resolve(
+				bounds.width(),
+				bounds.height(),
+				primaryWidth,
+				primaryHeight,
+				secondaryWidth,
+				primaryHeight,
+				limitingSecondaryWidth);
+
+		if (plan.mode() == KeypadLegendLayout.Mode.PRIMARY_ONLY) {
+			drawKeyString(g, key.label, bounds.centerX(), bounds.centerY(), plan.primaryScale());
+			return;
+		}
+
+		float scaledPrimaryWidth = primaryWidth * plan.primaryScale();
+		float scaledPrimaryHeight = primaryHeight * plan.primaryScale();
+		float scaledSecondaryWidth = secondaryWidth * plan.secondaryScale();
+		float scaledSecondaryHeight = primaryHeight * plan.secondaryScale();
+
+		if (plan.mode() == KeypadLegendLayout.Mode.HORIZONTAL) {
+			float totalWidth = scaledPrimaryWidth + plan.gap() + scaledSecondaryWidth;
+			float left = bounds.centerX() - totalWidth / 2.0f;
+			drawKeyString(
+					g,
+					key.label,
+					left + scaledPrimaryWidth / 2.0f,
+					bounds.centerY(),
+					plan.primaryScale());
+			g.drawString(
+					legend,
+					left + scaledPrimaryWidth + plan.gap() + scaledSecondaryWidth / 2.0f,
+					bounds.centerY(),
+					plan.secondaryScale());
+			return;
+		}
+
+		float totalHeight = scaledPrimaryHeight + plan.gap() + scaledSecondaryHeight;
+		float top = bounds.centerY() - totalHeight / 2.0f;
+		drawKeyString(
+				g,
+				key.label,
+				bounds.centerX(),
+				top + scaledPrimaryHeight / 2.0f,
+				plan.primaryScale());
+		g.drawString(
+				legend,
+				bounds.centerX(),
+				top + scaledPrimaryHeight + plan.gap() + scaledSecondaryHeight / 2.0f,
+				plan.secondaryScale());
+	}
+
 	public String[] getKeyNames() {
 		String[] names = new String[KEYBOARD_SIZE];
 		for (int i = 0; i < KEYBOARD_SIZE; i++) {
@@ -1800,9 +1909,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	@Override
 	public void paint(CanvasWrapper g) {
 		if (visible && (layoutEditMode != LAYOUT_EOF || settings.vkAlpha > 0)) {
+			boolean keypadLegendContext = hasVisibleNumericKeypadContext();
 			for (VirtualKey key : keypad) {
 				if (key.visible) {
-					key.paint(g);
+					key.paint(g, keypadLegendContext);
 				}
 			}
 		}
@@ -1842,7 +1952,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					Math.max(6, (int) (cellWidth * 0.08f)));
 			g.drawRoundRect(rect, Math.max(6, (int) (cellWidth * 0.08f)),
 					Math.max(6, (int) (cellWidth * 0.08f)));
-			g.drawString(keypad[CONTROLLER_KEYPAD_ORDER[i]].label, rect.centerX(), rect.centerY());
+			paintKeyLabel(g, keypad[CONTROLLER_KEYPAD_ORDER[i]], rect, true);
 		}
 	}
 
@@ -2239,7 +2349,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			return visible && rect.contains(x, y);
 		}
 
-		void paint(CanvasWrapper g) {
+		void paint(CanvasWrapper g, boolean keypadLegendContext) {
 			int bgColor;
 			int fgColor;
 			if (selected) {
@@ -2268,7 +2378,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					g.drawArc(rect, 0, 360);
 				}
 			}
-			g.drawString(label, rect.centerX(), rect.centerY());
+			paintKeyLabel(g, this, rect, keypadLegendContext);
 		}
 
 		@NonNull
