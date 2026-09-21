@@ -51,7 +51,7 @@ public class VirtualKeyboardLegendRenderingTest {
 
 		ProfileModel settings = new ProfileModel();
 		settings.dir = profileDir;
-		settings.vkType = 3;
+		settings.vkType = 1; // Phone: normal numeric keys are wide enough to show legends.
 		settings.vkFeedback = false;
 		settings.vkAlpha = 255;
 
@@ -89,8 +89,14 @@ public class VirtualKeyboardLegendRenderingTest {
 	@Test
 	public void actualBoundsSelectHorizontalStackedAndPrimaryOnly() throws Exception {
 		RectF two = mutableRect(keyByLabel("2"));
+		RecordingCanvasWrapper metrics = graphics();
+		float textHeight = metrics.getTextHeight(1.0f);
+		float primaryWidth = metrics.measureStringWidth("2", 1.0f);
+		float longestLegendWidth = metrics.measureStringWidth("WXYZ", 1.0f);
 
-		two.set(100f, 100f, 220f, 150f);
+		float wideWidth = Math.max(longestLegendWidth * 1.8f, textHeight * 3.0f);
+		float wideHeight = textHeight * 1.8f;
+		two.set(100f, 100f, 100f + wideWidth, 100f + wideHeight);
 		RecordingCanvasWrapper wide = graphics();
 		keyboard.paint(wide);
 		TextDraw widePrimary = wide.find("2");
@@ -99,8 +105,15 @@ public class VirtualKeyboardLegendRenderingTest {
 		assertNotNull(wideLegend);
 		assertEquals(widePrimary.y, wideLegend.y, EPS);
 		assertTrue(widePrimary.scale <= 1.0f);
+		float primaryDrawWidth = wide.measureStringWidth("2", widePrimary.scale);
+		float legendDrawWidth = wide.measureStringWidth("ABC", wideLegend.scale);
+		float compositionLeft = widePrimary.x - primaryDrawWidth / 2.0f;
+		float compositionRight = wideLegend.x + legendDrawWidth / 2.0f;
+		assertEquals(two.centerX(), (compositionLeft + compositionRight) / 2.0f, EPS);
 
-		two.set(100f, 100f, 132f, 190f);
+		float stackedWidth = longestLegendWidth * 0.75f;
+		float stackedHeight = textHeight * 3.0f;
+		two.set(100f, 100f, 100f + stackedWidth, 100f + stackedHeight);
 		RecordingCanvasWrapper stacked = graphics();
 		keyboard.paint(stacked);
 		TextDraw stackedPrimary = stacked.find("2");
@@ -109,7 +122,9 @@ public class VirtualKeyboardLegendRenderingTest {
 		assertNotNull(stackedLegend);
 		assertTrue(Math.abs(stackedPrimary.y - stackedLegend.y) > 1.0f);
 
-		two.set(100f, 100f, 118f, 120f);
+		float tinyWidth = Math.max(primaryWidth * 1.2f, longestLegendWidth * 0.35f);
+		float tinyHeight = textHeight * 0.60f;
+		two.set(100f, 100f, 100f + tinyWidth, 100f + tinyHeight);
 		RecordingCanvasWrapper tiny = graphics();
 		keyboard.paint(tiny);
 		TextDraw tinyPrimary = tiny.find("2");
