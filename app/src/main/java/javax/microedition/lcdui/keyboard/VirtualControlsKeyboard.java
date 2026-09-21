@@ -38,6 +38,7 @@ import io.github.h3nb.jlmodplus.input.VirtualAnalogStick;
 import io.github.h3nb.jlmodplus.input.VirtualAnalogStickMode;
 import io.github.h3nb.jlmodplus.input.VirtualAnalogStickSettings;
 import io.github.h3nb.jlmodplus.input.VirtualAnalogVisualState;
+import io.github.h3nb.jlmodplus.input.VirtualControlGeometryResolver;
 import io.github.h3nb.jlmodplus.input.VirtualDpadController;
 import io.github.h3nb.jlmodplus.input.VirtualDpadDirection;
 import io.github.h3nb.jlmodplus.input.VirtualDpadGeometry;
@@ -65,12 +66,13 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private static final float DEFAULT_ANALOG_RADIUS = 0.16f;
 	private static final float CONTROL_HIT_SCALE = 1.20f;
 	private static final float EDIT_SECOND_FINGER_HIT_SCALE = 1.60f;
-	private static final float MIN_RADIUS_FRACTION = 0.07f;
-	private static final float MAX_RADIUS_FRACTION = 0.34f;
+	public static final float MIN_RADIUS_FRACTION = 0.07f;
+	public static final float MAX_RADIUS_FRACTION = 0.34f;
 	private static final int GRID_DIVISIONS = 24;
 	private static final int FEEDBACK_DURATION_MS = 50;
 
 	private enum EditControl { NONE, DPAD, ANALOG }
+	private enum ActiveCustomSource { NONE, OVERRIDE, BASE, LEGACY_SHARED }
 
 	private final ProfileModel settings;
 	private final VirtualDpadController dpadController = new VirtualDpadController();
@@ -87,6 +89,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private boolean applyingStandardTemplate;
 	private boolean standardTemplateReflowPosted;
 	private boolean standardTemplateEdited;
+	private VirtualLayoutOrientation activeLayoutOrientation;
+	private ActiveCustomSource activeCustomSource = ActiveCustomSource.NONE;
+	private boolean activeOrientationDirty;
+	private boolean runtimeCustomSavePending;
+	private VirtualKeyboardLayoutState runtimeCustomBaselineState;
 
 	private int dpadPointer = -1;
 	private PointerSourceToken dpadToken;
@@ -130,6 +137,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public VirtualControlsKeyboard(ProfileModel settings) {
 		super(settings);
 		this.settings = settings;
+		boolean legacyDpadEnabled = settings.virtualDpadEnabled;
+		boolean legacyAnalogEnabled = settings.virtualAnalogEnabled;
 		int layout = getLayout();
 		if (isStandardTemplate(layout)) {
 			settings.virtualDpadEnabled = layout == TYPE_DPAD_STANDARD;
@@ -142,6 +151,39 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		}
 		sanitizeStoredGeometry();
 		rebuildAnalogStick();
+
+		// A v1-v3 file may keep its Custom KEYS/SCALES dormant while a built-in TYPE is active.
+		// VirtualKeyboard stages that legacy payload before this constructor runs; enrich it with
+		// grouped-control values that historically lived only in ProfileModel before any active
+		// built-in normalization can erase those working flags.
+		VirtualKeyboardLayoutState legacyDormantState = getStoredCustomLayoutState();
+		if (getLoadedLayoutVersion() > 0 && getLoadedLayoutVersion() < 4 &&
+				legacyDormantState != null &&
+				legacyDormantState.baseVariant() == VirtualKeyboardLayoutState.BASE_UNKNOWN &&
+				legacyDormantState.legacySharedFallback() != null &&
+				!legacyDormantState.legacySharedFallback().hasGroupedControls) {
+			VirtualKeyboardLayoutSnapshot enriched =
+					legacyDormantState.legacySharedFallback().withGroupedControls(
+							legacyDpadEnabled,
+							legacyAnalogEnabled,
+							settings.virtualDpadCenterX,
+							settings.virtualDpadCenterY,
+							settings.virtualDpadRadius,
+							settings.virtualAnalogCenterX,
+							settings.virtualAnalogCenterY,
+							settings.virtualAnalogRadius,
+							false,
+							true).asCustomOverride();
+			setStoredCustomLayoutState(VirtualKeyboardLayoutState.migrated(enriched));
+		}
+
+		// v1-v3 Custom artifacts had one shared semantic layout. Promote that state in memory only;
+		// the file is rewritten as v4 only after an explicit Save.
+		if (layout == TYPE_CUSTOM && getLoadedLayoutVersion() > 0 &&
+				getLoadedLayoutVersion() < 4 && getStoredCustomLayoutState() == null) {
+			setStoredCustomLayoutState(
+					VirtualKeyboardLayoutState.migrated(captureCurrentCustomSnapshot()));
+		}
 	}
 
 
@@ -187,46 +229,159 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public void setKeysVisibility(boolean[] states) {
 		if (states == null) return;
 		int legacyCount = super.getKeyNames().length;
-		if (states.length < legacyCount) {
-			// The superclass requires the complete legacy array. Reject malformed callers without
-			// partially changing visibility or risking ArrayIndexOutOfBoundsException.
-			return;
+		if (states.length < legacyCount) return;
+
+		boolean[] before = getKeysVisibility();
+		boolean standardBase = isStandardTemplate(getLayout());
+		VirtualKeyboardLayoutState customState = getStoredCustomLayoutState();
+		if (!standardBase && getLayout() == TYPE_CUSTOM && customState != null &&
+				customState.hasKnownBase() && activeCustomSource == ActiveCustomSource.BASE) {
+			standardBase = isStandardTemplate(customState.baseVariant());
 		}
 
-		boolean standardTemplate = isStandardTemplate(getLayout());
-		if (standardTemplate) standardTemplateEdited = true;
 		boolean[] legacyStates = Arrays.copyOf(states, legacyCount);
-		if (standardTemplate) forceLegacyDirectionsHidden(legacyStates);
+		if (standardBase) forceLegacyDirectionsHidden(legacyStates);
 		super.setKeysVisibility(legacyStates);
 
-		if (states.length < legacyCount + GROUPED_CONTROL_COUNT) return;
-		boolean nextDpadEnabled = !states[legacyCount];
-		boolean nextAnalogEnabled = !states[legacyCount + 1];
-		boolean groupedChanged = nextDpadEnabled != settings.virtualDpadEnabled ||
-				nextAnalogEnabled != settings.virtualAnalogEnabled;
-		if (!groupedChanged) return;
-
-		if (!nextDpadEnabled) endDpad();
-		if (!nextAnalogEnabled) endAnalog();
-		settings.virtualDpadEnabled = nextDpadEnabled;
-		settings.virtualAnalogEnabled = nextAnalogEnabled;
-		invalidateOverlay();
+		if (states.length >= legacyCount + GROUPED_CONTROL_COUNT) {
+			boolean nextDpadEnabled = !states[legacyCount];
+			boolean nextAnalogEnabled = !states[legacyCount + 1];
+			if (!nextDpadEnabled) endDpad();
+			if (!nextAnalogEnabled) endAnalog();
+			settings.virtualDpadEnabled = nextDpadEnabled;
+			settings.virtualAnalogEnabled = nextAnalogEnabled;
+		}
+		if (!Arrays.equals(before, getKeysVisibility())) {
+			markActiveOrientationEdited();
+			invalidateOverlay();
+		}
 	}
 
 	@Override
-	public void onLayoutChanged(int variant) {
-		super.onLayoutChanged(variant);
-		if (!applyingStandardTemplate) ProfilesManager.saveConfig(settings);
+	public boolean onLayoutChanged(int variant) {
+		if (variant != TYPE_CUSTOM) {
+			abandonPendingRuntimeCustomization();
+		}
+		if (variant == TYPE_CUSTOM) {
+			if (getStoredCustomLayoutState() == null) {
+				int current = getLayout();
+				if (VirtualKeyboardLayoutState.isSupportedBaseVariant(current)) {
+					setStoredCustomLayoutState(VirtualKeyboardLayoutState.forBase(current));
+					activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+							screenBounds, activeLayoutOrientation);
+					activeOrientationDirty = true;
+					activeCustomSource = ActiveCustomSource.OVERRIDE;
+				} else {
+					setStoredCustomLayoutState(
+							VirtualKeyboardLayoutState.migrated(captureCurrentCustomSnapshot()));
+				}
+			}
+			if (activeOrientationDirty && !stashActiveCustomDraft()) {
+				return false;
+			}
+			setLayoutVariantInMemory(TYPE_CUSTOM);
+		} else {
+			activeCustomSource = ActiveCustomSource.NONE;
+			activeOrientationDirty = false;
+		}
+		if (!super.onLayoutChanged(variant)) return false;
+		if (variant == TYPE_CUSTOM) {
+			commitPendingRuntimeCustomization();
+		}
+		if (!applyingStandardTemplate) {
+			// The v4 layout artifact is authoritative for Custom geometry. ProfileModel keeps
+			// compatibility working values only, so its best-effort save must not turn an already
+			// committed layout write into a false "Save failed" result.
+			ProfilesManager.saveConfig(settings);
+		}
+		return true;
 	}
 
 	@Override
 	public void setLayout(int variant) {
+		abandonPendingRuntimeCustomization();
+		if (variant != TYPE_CUSTOM) {
+			activeCustomSource = ActiveCustomSource.NONE;
+			activeOrientationDirty = false;
+		}
 		applyControlsLayout(variant, true);
 	}
 
 	@Override
 	public void setLayoutForEditing(int variant) {
+		if (variant == TYPE_CUSTOM) {
+			if (getLayout() == TYPE_CUSTOM && getStoredCustomLayoutState() != null) {
+				// Re-selecting the already-active Custom entry must not reload the last disk state and
+				// silently discard unsaved orientation drafts.
+				return;
+			}
+			applyControlsLayout(variant, false);
+			return;
+		}
+		if (!VirtualKeyboardLayoutState.isSupportedBaseVariant(variant)) return;
+		if (getLayout() != TYPE_CUSTOM && getStoredCustomLayoutState() == null &&
+				getLayout() == variant) {
+			applyControlsLayout(variant, false);
+			return;
+		}
+
+		cancel();
+		setStoredCustomLayoutState(VirtualKeyboardLayoutState.forBase(variant));
+		activeOrientationDirty = false;
+		activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+				screenBounds, activeLayoutOrientation);
+
+		// Reuse the established built-in generator for explicit template preview. After it has
+		// produced current-orientation geometry, restore the semantic outer type to Custom.
 		applyControlsLayout(variant, false);
+		setLayoutVariantInMemory(TYPE_CUSTOM);
+		activeCustomSource = ActiveCustomSource.BASE;
+		standardTemplateEdited = false;
+		invalidateOverlay();
+		notifyLayoutEditStateChanged();
+	}
+
+	private void markActiveOrientationEdited() {
+		beginPendingRuntimeCustomizationIfNeeded();
+		activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+				screenBounds, activeLayoutOrientation);
+		VirtualKeyboardLayoutState state = getStoredCustomLayoutState();
+		if (getLayout() != TYPE_CUSTOM) {
+			int base = getLayout();
+			if (VirtualKeyboardLayoutState.isSupportedBaseVariant(base)) {
+				state = VirtualKeyboardLayoutState.forBase(base);
+			} else {
+				state = VirtualKeyboardLayoutState.migrated(captureCurrentCustomSnapshot());
+			}
+			setStoredCustomLayoutState(state);
+			setLayoutVariantInMemory(TYPE_CUSTOM);
+		} else if (state == null) {
+			state = VirtualKeyboardLayoutState.migrated(captureCurrentCustomSnapshot());
+			setStoredCustomLayoutState(state);
+		}
+		activeOrientationDirty = true;
+		activeCustomSource = ActiveCustomSource.OVERRIDE;
+		standardTemplateEdited = false;
+		notifyLayoutEditStateChanged();
+	}
+
+	private void beginPendingRuntimeCustomizationIfNeeded() {
+		if (getLayoutEditMode() != LAYOUT_EOF || runtimeCustomSavePending) return;
+		runtimeCustomBaselineState = getStoredCustomLayoutState();
+		runtimeCustomSavePending = true;
+	}
+
+	private void commitPendingRuntimeCustomization() {
+		if (!runtimeCustomSavePending) return;
+		runtimeCustomSavePending = false;
+		runtimeCustomBaselineState = null;
+	}
+
+	private void abandonPendingRuntimeCustomization() {
+		if (!runtimeCustomSavePending) return;
+		setStoredCustomLayoutState(runtimeCustomBaselineState);
+		runtimeCustomSavePending = false;
+		runtimeCustomBaselineState = null;
 	}
 
 	private void applyControlsLayout(int variant, boolean persist) {
@@ -234,12 +389,30 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			standardTemplateEdited = false;
 			endDpad();
 			endAnalog();
+			if (variant == TYPE_CUSTOM) {
+				activeCustomSource = ActiveCustomSource.NONE;
+				activeOrientationDirty = false;
+			}
 			if (variant != TYPE_CUSTOM) {
 				settings.virtualDpadEnabled = false;
 				settings.virtualAnalogEnabled = false;
 			}
 			if (persist) super.setLayout(variant);
 			else super.setLayoutForEditing(variant);
+			if (variant == TYPE_CUSTOM && getLayout() == TYPE_CUSTOM) {
+				activeOrientationDirty = false;
+				activeCustomSource = ActiveCustomSource.NONE;
+				if (getLoadedLayoutVersion() > 0 && getLoadedLayoutVersion() < 4 &&
+						getStoredCustomLayoutState() == null) {
+					setStoredCustomLayoutState(
+							VirtualKeyboardLayoutState.migrated(captureCurrentCustomSnapshot()));
+				}
+				if (screenBounds != null && getStoredCustomLayoutState() != null) {
+					activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+							screenBounds, activeLayoutOrientation);
+					applyCustomOrientationState(activeLayoutOrientation);
+				}
+			}
 			invalidateOverlay();
 			notifyLayoutEditStateChanged();
 			return;
@@ -277,8 +450,9 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			settings.virtualAnalogRadius = movementRadius;
 			rebuildAnalogStick();
 			if (persist) {
-				ProfilesManager.saveConfig(settings);
-				super.onLayoutChanged(variant);
+				if (super.onLayoutChanged(variant)) {
+					ProfilesManager.saveConfig(settings);
+				}
 			} else {
 				setLayoutVariantInMemory(variant);
 			}
@@ -329,7 +503,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	 * corners, movement in the lower-left, and F, *, and 0 in the lower-right.
 	 */
 	private void arrangeStandardLegacyButtons(StandardVirtualControlsLayout layout) {
-		if (screenBounds == null || overlayView == null || layout == null) return;
+		if (screenBounds == null || layout == null) return;
 
 		float baseKeySize = Math.max(1.0f, getCurrentKeySize());
 		setKeyGroupScaleByLabel(
@@ -368,29 +542,92 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				standardTemplateEdited);
 	}
 
+	private VirtualKeyboardLayoutSnapshot captureCurrentCustomSnapshot() {
+		return super.captureLayoutSnapshot().withGroupedControls(
+				settings.virtualDpadEnabled,
+				settings.virtualAnalogEnabled,
+				settings.virtualDpadCenterX,
+				settings.virtualDpadCenterY,
+				settings.virtualDpadRadius,
+				settings.virtualAnalogCenterX,
+				settings.virtualAnalogCenterY,
+				settings.virtualAnalogRadius,
+				false,
+				true).asCustomOverride();
+	}
+
+	@Override
+	public VirtualKeyboardLayoutEditState captureLayoutEditState() {
+		VirtualKeyboardLayoutState state = getStoredCustomLayoutState();
+		if (getLayout() != TYPE_CUSTOM || state == null) {
+			return super.captureLayoutEditState();
+		}
+		if (activeOrientationDirty && activeLayoutOrientation != null) {
+			state = state.withOverride(
+					activeLayoutOrientation, captureCurrentCustomSnapshot());
+		}
+		return VirtualKeyboardLayoutEditState.custom(state);
+	}
+
+	@Override
+	public void restoreLayoutEditState(VirtualKeyboardLayoutEditState state) {
+		if (state == null) return;
+		cancel();
+		if (!state.isCustom()) {
+			activeCustomSource = ActiveCustomSource.NONE;
+			activeOrientationDirty = false;
+			super.restoreLayoutEditState(state);
+			return;
+		}
+
+		setStoredCustomLayoutState(state.customLayout());
+		activeOrientationDirty = false;
+		setLayoutVariantInMemory(TYPE_CUSTOM);
+		activeLayoutOrientation = VirtualLayoutOrientation.resolve(
+				screenBounds, activeLayoutOrientation);
+		if (screenBounds != null) {
+			applyCustomOrientationState(activeLayoutOrientation);
+		} else {
+			activeCustomSource = ActiveCustomSource.NONE;
+		}
+		invalidateOverlay();
+		notifyLayoutEditStateChanged();
+	}
+
 	@Override
 	public void restoreLayoutSnapshot(VirtualKeyboardLayoutSnapshot snapshot) {
 		if (snapshot == null) return;
+		if (snapshot.layoutVariant != TYPE_CUSTOM) {
+			activeCustomSource = ActiveCustomSource.NONE;
+			activeOrientationDirty = false;
+		}
 		if (snapshot.isUneditedStandardTemplate()) {
 			applyControlsLayout(snapshot.layoutVariant, false);
 			return;
 		}
 		standardTemplateEdited = snapshot.standardTemplateEdited;
-		if (snapshot.hasGroupedControls) {
-			settings.virtualDpadEnabled = snapshot.dpadEnabled;
-			settings.virtualAnalogEnabled = snapshot.analogEnabled;
-			settings.virtualDpadCenterX = snapshot.dpadCenterX;
-			settings.virtualDpadCenterY = snapshot.dpadCenterY;
-			settings.virtualDpadRadius = snapshot.dpadRadius;
-			settings.virtualAnalogCenterX = snapshot.analogCenterX;
-			settings.virtualAnalogCenterY = snapshot.analogCenterY;
-			settings.virtualAnalogRadius = snapshot.analogRadius;
-		}
+		applyGroupedSnapshot(snapshot);
 		super.restoreLayoutSnapshot(snapshot);
 		sanitizeStoredGeometry();
 		rebuildAnalogStick();
 		invalidateOverlay();
 		notifyLayoutEditStateChanged();
+	}
+
+	private void applyGroupedSnapshot(VirtualKeyboardLayoutSnapshot snapshot) {
+		if (!snapshot.hasGroupedControls) {
+			settings.virtualDpadEnabled = false;
+			settings.virtualAnalogEnabled = false;
+			return;
+		}
+		settings.virtualDpadEnabled = snapshot.dpadEnabled;
+		settings.virtualAnalogEnabled = snapshot.analogEnabled;
+		settings.virtualDpadCenterX = snapshot.dpadCenterX;
+		settings.virtualDpadCenterY = snapshot.dpadCenterY;
+		settings.virtualDpadRadius = snapshot.dpadRadius;
+		settings.virtualAnalogCenterX = snapshot.analogCenterX;
+		settings.virtualAnalogCenterY = snapshot.analogCenterY;
+		settings.virtualAnalogRadius = snapshot.analogRadius;
 	}
 
 	@Override
@@ -434,9 +671,28 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	@Override
+	public boolean isPhone() {
+		if (super.isPhone()) return true;
+		VirtualKeyboardLayoutState state = getStoredCustomLayoutState();
+		return getLayout() == TYPE_CUSTOM && state != null && state.hasKnownBase() &&
+				(state.baseVariant() == 1 || state.baseVariant() == 2);
+	}
+
+	@Override
 	public void resize(RectF screen, float left, float top, float right, float bottom) {
-		endDpad();
-		endAnalog();
+		VirtualLayoutOrientation nextOrientation =
+				VirtualLayoutOrientation.resolve(screen, activeLayoutOrientation);
+		boolean orientationChanged = activeLayoutOrientation != null &&
+				nextOrientation != activeLayoutOrientation;
+		if (orientationChanged) {
+			// A new control surface must never inherit ownership or edit gesture state from the old one.
+			cancel();
+			stashActiveCustomDraft();
+		} else {
+			endDpad();
+			endAnalog();
+		}
+
 		boolean screenChanged = rectChanged(
 				screenBounds, screen.left, screen.top, screen.right, screen.bottom);
 		boolean guestChanged = rectChanged(guestBounds, left, top, right, bottom);
@@ -450,8 +706,128 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		viewport = new GuestViewport(
 				Math.max(1, Math.round(screen.width())),
 				Math.max(1, Math.round(screen.height())));
+		activeLayoutOrientation = nextOrientation;
+
+		VirtualKeyboardLayoutState customState = getStoredCustomLayoutState();
+		if (getLayout() == TYPE_CUSTOM && customState != null) {
+			if (orientationChanged || activeCustomSource == ActiveCustomSource.NONE) {
+				applyCustomOrientationState(nextOrientation);
+			} else if (activeCustomSource == ActiveCustomSource.BASE &&
+					customState.hasKnownBase() &&
+					isStandardTemplate(customState.baseVariant()) &&
+					(screenChanged || guestChanged)) {
+				// Missing Standard override remains derived and therefore follows current guest bounds.
+				applyCustomBaseVariant(customState.baseVariant());
+			} else {
+				rebuildAnalogStick();
+			}
+			invalidateOverlay();
+			return;
+		}
+
 		rebuildAnalogStick();
 		if (reflowStandardTemplate) scheduleStandardTemplateReflow(layout);
+	}
+
+	private boolean stashActiveCustomDraft() {
+		if (!activeOrientationDirty || activeLayoutOrientation == null) return true;
+		VirtualKeyboardLayoutState state = getStoredCustomLayoutState();
+		if (state == null) return false;
+		boolean persistable = prepareCustomLayoutForSave();
+		if (!persistable) {
+			// Keep the visible draft in its orientation slot so rotation cannot lose user work.
+			// The invalid snapshot remains invalid and the v4 writer will reject Save.
+			android.util.Log.w(
+					VirtualControlsKeyboard.class.getSimpleName(),
+					"Orientation draft could not satisfy Custom persistence invariant");
+		}
+		setStoredCustomLayoutState(state.withOverride(
+				activeLayoutOrientation, captureCurrentCustomSnapshot()));
+		activeOrientationDirty = false;
+		activeCustomSource = ActiveCustomSource.OVERRIDE;
+		return persistable;
+	}
+
+	private void applyCustomOrientationState(VirtualLayoutOrientation orientation) {
+		VirtualKeyboardLayoutState state = getStoredCustomLayoutState();
+		if (state == null || orientation == null) {
+			activeCustomSource = ActiveCustomSource.NONE;
+			return;
+		}
+
+		VirtualKeyboardLayoutSnapshot override = state.overrideFor(orientation);
+		if (override != null) {
+			applyCustomSnapshot(override);
+			activeCustomSource = ActiveCustomSource.OVERRIDE;
+			return;
+		}
+		if (state.hasKnownBase()) {
+			applyCustomBaseVariant(state.baseVariant());
+			activeCustomSource = ActiveCustomSource.BASE;
+			return;
+		}
+		VirtualKeyboardLayoutSnapshot legacy = state.legacySharedFallback();
+		if (legacy != null) {
+			applyCustomSnapshot(legacy);
+			activeCustomSource = ActiveCustomSource.LEGACY_SHARED;
+			return;
+		}
+		activeCustomSource = ActiveCustomSource.NONE;
+	}
+
+	private void applyCustomSnapshot(VirtualKeyboardLayoutSnapshot snapshot) {
+		if (!applyLayoutSnapshotInMemory(snapshot)) return;
+		applyGroupedSnapshot(snapshot);
+		standardTemplateEdited = false;
+		setLayoutVariantInMemory(TYPE_CUSTOM);
+		sanitizeStoredGeometry();
+		rebuildAnalogStick();
+	}
+
+	private void applyCustomBaseVariant(int variant) {
+		applyingStandardTemplate = true;
+		try {
+			if (!isStandardTemplate(variant)) {
+				applyBuiltInLayoutInMemory(variant);
+				settings.virtualDpadEnabled = false;
+				settings.virtualAnalogEnabled = false;
+				standardTemplateEdited = false;
+				setLayoutVariantInMemory(TYPE_CUSTOM);
+				rebuildAnalogStick();
+				return;
+			}
+
+			applyBuiltInLayoutInMemory(LEGACY_TEMPLATE_NUMBERS_ARROWS);
+			applyStandardLegacyVisibility();
+			StandardVirtualControlsLayout layout = standardTemplateLayout();
+			arrangeStandardLegacyButtons(layout);
+
+			float width = Math.max(1.0f, screenBounds == null ? 1.0f : screenBounds.width());
+			float height = Math.max(1.0f, screenBounds == null ? 1.0f : screenBounds.height());
+			float originLeft = screenBounds == null ? 0.0f : screenBounds.left;
+			float originTop = screenBounds == null ? 0.0f : screenBounds.top;
+			float movementCenterX = (layout.movementCenterX - originLeft) / width;
+			float movementCenterY = (layout.movementCenterY - originTop) / height;
+			float shortest = Math.max(1.0f, Math.min(width, height));
+			float movementRadius = clamp(
+					layout.movementRadius / shortest,
+					MIN_RADIUS_FRACTION,
+					MAX_RADIUS_FRACTION);
+
+			settings.virtualDpadEnabled = variant == TYPE_DPAD_STANDARD;
+			settings.virtualAnalogEnabled = variant == TYPE_ANALOG_STANDARD;
+			settings.virtualDpadCenterX = clamp(movementCenterX, 0.0f, 1.0f);
+			settings.virtualDpadCenterY = clamp(movementCenterY, 0.0f, 1.0f);
+			settings.virtualDpadRadius = movementRadius;
+			settings.virtualAnalogCenterX = clamp(movementCenterX, 0.0f, 1.0f);
+			settings.virtualAnalogCenterY = clamp(movementCenterY, 0.0f, 1.0f);
+			settings.virtualAnalogRadius = movementRadius;
+			standardTemplateEdited = false;
+			setLayoutVariantInMemory(TYPE_CUSTOM);
+			rebuildAnalogStick();
+		} finally {
+			applyingStandardTemplate = false;
+		}
 	}
 
 	private static boolean rectChanged(RectF rect, float left, float top, float right, float bottom) {
@@ -470,7 +846,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			if (!applyingStandardTemplate && !standardTemplateEdited && getLayout() == variant &&
 					isStandardTemplate(variant)) {
 				if (getLayoutEditMode() == LAYOUT_EOF) setLayout(variant);
-				else setLayoutForEditing(variant);
+				else applyControlsLayout(variant, false);
 			}
 		});
 	}
@@ -526,8 +902,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	@Override
 	public boolean pointerDragged(int pointer, float x, float y) {
 		if (editControl != EditControl.NONE) {
-			standardTemplateEdited |= isStandardTemplate(getLayout());
 			if (pointer == editPointer) {
+				markActiveOrientationEdited();
 				editPointerX = x;
 				editPointerY = y;
 				if (editPinchPointer >= 0) updateGroupedPinch();
@@ -536,6 +912,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				return true;
 			}
 			if (pointer == editPinchPointer) {
+				markActiveOrientationEdited();
 				editPinchX = x;
 				editPinchY = y;
 				updateGroupedPinch();
@@ -544,8 +921,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			}
 		}
 		if (legacyEditPointer >= 0) {
-			standardTemplateEdited |= isStandardTemplate(getLayout());
 			if (pointer == legacyEditPointer) {
+				markActiveOrientationEdited();
 				legacyEditX = x;
 				legacyEditY = y;
 				if (legacyPinchPointer >= 0) {
@@ -555,6 +932,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				return super.pointerDragged(pointer, x, y);
 			}
 			if (pointer == legacyPinchPointer) {
+				markActiveOrientationEdited();
 				legacyPinchX = x;
 				legacyPinchY = y;
 				updateLegacyPinch();
@@ -629,6 +1007,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	@Override
 	public void cancel() {
+		boolean restorePublicEditMode = getLayoutEditMode() == LAYOUT_SCALES;
 		editPointer = -1;
 		editPinchPointer = -1;
 		editControl = EditControl.NONE;
@@ -636,6 +1015,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		endDpad();
 		endAnalog();
 		super.cancel();
+		if (restorePublicEditMode) {
+			// LAYOUT_SCALES is only an internal bridge used during a legacy two-finger pinch.
+			// A lifecycle cancellation (including rotation) must not expose it to the new surface.
+			super.setLayoutEditMode(LAYOUT_KEYS);
+		}
 		notifyLayoutEditStateChanged();
 	}
 
@@ -819,6 +1203,17 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float radius = pinchStartRadius * distance / Math.max(1.0f, pinchStartDistance);
 		float shortest = Math.max(1.0f, Math.min(screenBounds.width(), screenBounds.height()));
 		setControlRadius(editControl, radius / shortest);
+
+		// Pinch is an explicit edit. If the larger radius makes the preferred center impossible,
+		// commit the viewport-safe center together with the new radius rather than persisting a
+		// center/radius pair that can never be rendered fully on-screen.
+		VirtualDpadGeometry resolved = resolvedControlGeometry(editControl);
+		setControlCenter(
+				editControl,
+				(resolved.getCenterX() - screenBounds.left) /
+						Math.max(1.0f, screenBounds.width()),
+				(resolved.getCenterY() - screenBounds.top) /
+						Math.max(1.0f, screenBounds.height()));
 		notifyLayoutEditStateChanged();
 	}
 
@@ -1226,19 +1621,34 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	private VirtualDpadGeometry dpadGeometry() {
-		float shortest = Math.max(1.0f, Math.min(screenBounds.width(), screenBounds.height()));
-		return new VirtualDpadGeometry(
-				screenBounds.left + settings.virtualDpadCenterX * screenBounds.width(),
-				screenBounds.top + settings.virtualDpadCenterY * screenBounds.height(),
-				settings.virtualDpadRadius * shortest);
+		return resolveGroupedGeometry(
+				settings.virtualDpadCenterX,
+				settings.virtualDpadCenterY,
+				settings.virtualDpadRadius);
 	}
 
 	private VirtualDpadGeometry analogGeometry() {
-		float shortest = Math.max(1.0f, Math.min(screenBounds.width(), screenBounds.height()));
+		return resolveGroupedGeometry(
+				settings.virtualAnalogCenterX,
+				settings.virtualAnalogCenterY,
+				settings.virtualAnalogRadius);
+	}
+
+	private VirtualDpadGeometry resolvedControlGeometry(EditControl control) {
+		return control == EditControl.DPAD ? dpadGeometry() : analogGeometry();
+	}
+
+	private VirtualDpadGeometry resolveGroupedGeometry(float centerX, float centerY, float radius) {
+		VirtualDpadGeometry local = VirtualControlGeometryResolver.resolve(
+				Math.max(1.0f, screenBounds.width()),
+				Math.max(1.0f, screenBounds.height()),
+				centerX,
+				centerY,
+				radius);
 		return new VirtualDpadGeometry(
-				screenBounds.left + settings.virtualAnalogCenterX * screenBounds.width(),
-				screenBounds.top + settings.virtualAnalogCenterY * screenBounds.height(),
-				settings.virtualAnalogRadius * shortest);
+				screenBounds.left + local.getCenterX(),
+				screenBounds.top + local.getCenterY(),
+				local.getRadius());
 	}
 
 	private boolean insideAnalog(float x, float y, float scale) {

@@ -6,24 +6,29 @@ package javax.microedition.shell;
 
 import java.util.Objects;
 
-import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutSnapshot;
+import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutEditState;
 
 /**
  * One in-memory virtual-controls edit transaction. It deliberately owns only transaction state;
  * rendering, persistence, and layout restoration remain with the existing runtime/keyboard owners.
  */
 final class VirtualKeyboardEditTransaction {
+	@FunctionalInterface
+	interface SaveAction {
+		boolean persist();
+	}
+
 	enum FinishRequest { CLEAN, CONFIRM }
 
-	private final VirtualKeyboardLayoutSnapshot baseline;
+	private final VirtualKeyboardLayoutEditState baseline;
 	private boolean active = true;
 	private boolean finishPending;
 
-	VirtualKeyboardEditTransaction(VirtualKeyboardLayoutSnapshot baseline) {
+	VirtualKeyboardEditTransaction(VirtualKeyboardLayoutEditState baseline) {
 		this.baseline = Objects.requireNonNull(baseline);
 	}
 
-	FinishRequest requestFinish(VirtualKeyboardLayoutSnapshot current) {
+	FinishRequest requestFinish(VirtualKeyboardLayoutEditState current) {
 		if (!active) throw new IllegalStateException("Layout edit transaction is already closed");
 		if (baseline.equals(Objects.requireNonNull(current))) {
 			active = false;
@@ -39,13 +44,19 @@ final class VirtualKeyboardEditTransaction {
 		finishPending = false;
 	}
 
-	void save() {
-		if (!active) return;
+	boolean commitSave(SaveAction persist) {
+		if (!active) return false;
+		Objects.requireNonNull(persist);
+		if (!persist.persist()) {
+			finishPending = false;
+			return false;
+		}
 		active = false;
 		finishPending = false;
+		return true;
 	}
 
-	VirtualKeyboardLayoutSnapshot discard() {
+	VirtualKeyboardLayoutEditState discard() {
 		if (!active) throw new IllegalStateException("Layout edit transaction is already closed");
 		active = false;
 		finishPending = false;
@@ -60,7 +71,7 @@ final class VirtualKeyboardEditTransaction {
 		return finishPending;
 	}
 
-	VirtualKeyboardLayoutSnapshot baseline() {
+	VirtualKeyboardLayoutEditState baseline() {
 		return baseline;
 	}
 }

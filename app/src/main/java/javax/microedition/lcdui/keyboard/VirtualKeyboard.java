@@ -69,13 +69,22 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private static final String ARROW_DOWN_RIGHT = "↘";
 
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
-	private static final int LAYOUT_VERSION = 3;
+	private static final int LAYOUT_VERSION = 4;
+	private static final String LAYOUT_TEMP_SUFFIX = ".new";
+	private static final String LAYOUT_BACKUP_SUFFIX = ".bak";
+	private static final int MAX_LAYOUT_BLOCKS = 1024;
+	private static final int KEY_RECORD_SIZE_V1 = 20;
+	private static final int KEY_RECORD_SIZE_V2 = 21;
 	public static final int LAYOUT_EOF = -1;
 	public static final int LAYOUT_KEYS = 0;
 	public static final int LAYOUT_SCALES = 1;
 	@SuppressWarnings("unused")
 	public static final int LAYOUT_COLORS = 2;
 	public static final int LAYOUT_TYPE = 3;
+	public static final int LAYOUT_BASE_VARIANT = 4;
+	public static final int LAYOUT_LEGACY_SHARED = 5;
+	public static final int LAYOUT_PORTRAIT_OVERRIDE = 6;
+	public static final int LAYOUT_LANDSCAPE_OVERRIDE = 7;
 
 	private static final int SHAPE_OVAL = 0;
 	private static final int SHAPE_RECT = 1;
@@ -205,6 +214,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			Math.min(ContextHolder.getDisplayWidth(), ContextHolder.getDisplayHeight()) / 6.0f;
 	private float snapRadius;
 	private int layoutVariant;
+	private int loadedLayoutVersion = -1;
+	private boolean legacyCustomPayloadSeen;
+	private VirtualKeyboardLayoutState storedCustomLayoutState;
 	private boolean controllerKeypadVisible;
 	private int controllerKeypadSelection;
 	private VirtualKey controllerKeypadPressed;
@@ -214,6 +226,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	public VirtualKeyboard(ProfileModel settings) {
 		this.settings = settings;
 		this.saveFile = new File(settings.dir + Config.MIDLET_KEY_LAYOUT_FILE);
+		recoverLayoutFile();
 
 		for (int i = KEY_NUM1; i < 9; i++) {
 			keypad[i] = new VirtualKey(Canvas.KEY_NUM1 + i, Integer.toString(1 + i));
@@ -253,15 +266,29 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				layoutVariant = TYPE_NUM_ARR;
 			}
 		}
+		if (loadedLayoutVersion > 0 && loadedLayoutVersion < 4 &&
+				layoutVariant != TYPE_CUSTOM && legacyCustomPayloadSeen) {
+			int activeVariant = layoutVariant;
+			resetLayout(TYPE_CUSTOM);
+			try {
+				readLayout();
+				storedCustomLayoutState = VirtualKeyboardLayoutState.migrated(
+						captureBaseLayoutSnapshot().asCustomOverride());
+			} catch (IOException e) {
+				Log.w(TAG, "Could not stage dormant legacy Custom layout", e);
+				storedCustomLayoutState = null;
+			}
+			layoutVariant = activeVariant;
+		}
 		resetLayout(layoutVariant);
 		if (layoutVariant == TYPE_CUSTOM) {
 			try {
 				readLayout();
 			} catch (IOException e) {
-				e.printStackTrace();
+				Log.w(TAG, "Could not load Custom virtual keyboard layout; using safe in-memory fallback", e);
+				storedCustomLayoutState = null;
 				resetLayout(TYPE_NUM_ARR);
 				layoutVariant = TYPE_NUM_ARR;
-				saveLayout();
 			}
 		}
 		HandlerThread thread = new HandlerThread("MidletVirtualKeyboard");
@@ -269,8 +296,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		handler = new Handler(thread.getLooper());
 	}
 
-	public void onLayoutChanged(int variant) {
-		if (variant == TYPE_CUSTOM && isPhone()) {
+	public boolean onLayoutChanged(int variant) {
+		if (variant == TYPE_CUSTOM && storedCustomLayoutState == null && isPhone() && screen != null) {
 			float min = screen.width();
 			float max = screen.height();
 			if (min > max) {
@@ -287,10 +314,11 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			}
 		}
 		layoutVariant = variant;
-		saveLayout();
+		boolean saved = saveLayout();
 		if (target != null && target.isShown()) {
 			target.updateSize();
 		}
+		return saved;
 	}
 
 	private void resetLayout(int variant) {
@@ -532,7 +560,34 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		return bounds;
 	}
 
+	public VirtualKeyboardLayoutEditState captureLayoutEditState() {
+		return VirtualKeyboardLayoutEditState.single(
+				captureLayoutSnapshot(), storedCustomLayoutState);
+	}
+
+	public void restoreLayoutEditState(VirtualKeyboardLayoutEditState state) {
+		if (state == null || state.isCustom()) return;
+		storedCustomLayoutState = state.dormantCustomLayout();
+		restoreLayoutSnapshot(state.singleLayout());
+	}
+
+	protected final VirtualKeyboardLayoutState getStoredCustomLayoutState() {
+		return storedCustomLayoutState;
+	}
+
+	protected final void setStoredCustomLayoutState(VirtualKeyboardLayoutState state) {
+		storedCustomLayoutState = state;
+	}
+
+	protected final int getLoadedLayoutVersion() {
+		return loadedLayoutVersion;
+	}
+
 	public VirtualKeyboardLayoutSnapshot captureLayoutSnapshot() {
+		return captureBaseLayoutSnapshot();
+	}
+
+	private VirtualKeyboardLayoutSnapshot captureBaseLayoutSnapshot() {
 		boolean[] visible = new boolean[keypad.length];
 		int[] snapOrigins = new int[keypad.length];
 		int[] snapModes = new int[keypad.length];
@@ -557,7 +612,16 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	public void restoreLayoutSnapshot(VirtualKeyboardLayoutSnapshot snapshot) {
-		if (snapshot == null || !snapshot.matchesLegacyShape(keypad.length, keyScales.length)) return;
+		if (!applyLayoutSnapshotInMemory(snapshot)) return;
+		if (overlayView != null) overlayView.postInvalidate();
+		if (target != null && target.isShown()) target.updateSize();
+		notifyLayoutEditStateChanged();
+	}
+
+	protected final boolean applyLayoutSnapshotInMemory(VirtualKeyboardLayoutSnapshot snapshot) {
+		if (snapshot == null || !snapshot.matchesLegacyShape(keypad.length, keyScales.length)) {
+			return false;
+		}
 		layoutVariant = snapshot.layoutVariant;
 		for (int i = 0; i < keypad.length; i++) {
 			VirtualKey key = keypad[i];
@@ -568,13 +632,21 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			key.snapValid = false;
 		}
 		System.arraycopy(snapshot.keyScales, 0, keyScales, 0, keyScales.length);
-		for (int group = 0; group < keyScaleGroups.length; group++) {
-			resizeKeyGroup(group);
-		}
+		for (int group = 0; group < keyScaleGroups.length; group++) resizeKeyGroup(group);
+		if (screen != null) snapKeys();
+		return true;
+	}
+
+	/**
+	 * Applies an existing built-in legacy template to the current viewport without persistence,
+	 * target resize, or editor transaction side effects.
+	 */
+	protected final void applyBuiltInLayoutInMemory(int variant) {
+		resetLayout(variant);
+		layoutVariant = variant;
+		for (int group = 0; group < keyScaleGroups.length; group++) resizeKeyGroup(group);
 		if (screen != null) snapKeys();
 		if (overlayView != null) overlayView.postInvalidate();
-		if (target != null && target.isShown()) target.updateSize();
-		notifyLayoutEditStateChanged();
 	}
 
 	public float getPhoneKeyboardHeight(float w, float h) {
@@ -619,85 +691,291 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		notifyLayoutEditStateChanged();
 	}
 
-	private void saveLayout() {
-		try (RandomAccessFile raf = new RandomAccessFile(saveFile, "rw")) {
-			int variant = layoutVariant;
-			if (variant != TYPE_CUSTOM && raf.length() > 16) {
-				try {
-					if (raf.readInt() != LAYOUT_SIGNATURE) {
-						throw new IOException("file signature not found");
-					}
-					int version = raf.readInt();
-					if (version < 1 || version > LAYOUT_VERSION) {
-						throw new IOException("incompatible file version");
-					}
-					loop:while (true) {
-						int block = raf.readInt();
-						int length = raf.readInt();
-						switch (block) {
-							case LAYOUT_EOF:
-								raf.seek(raf.getFilePointer() - 8);
-								raf.writeInt(LAYOUT_TYPE);
-								raf.writeInt(1);
-								raf.write(variant);
-								raf.writeInt(LAYOUT_EOF);
-								raf.writeInt(0);
-								return;
-							case LAYOUT_TYPE:
-								raf.write(variant);
-								return;
-							case LAYOUT_KEYS:
-								if (version >= 2) {
-									int count = raf.readInt();
-									length = count * 21;
-								}
-							default:
-								if (raf.skipBytes(length) != length) {
-									break loop;
-								}
-								break;
-						}
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+	private boolean saveLayout() {
+		int variant = layoutVariant;
+		VirtualKeyboardLayoutState state = storedCustomLayoutState;
+		if (variant == TYPE_CUSTOM && state == null) {
+			if (!prepareCustomLayoutForSave()) {
+				Log.w(TAG, "Refusing to persist Custom layout with unreconstructible key geometry");
+				return false;
 			}
-			raf.seek(0);
-			raf.writeInt(LAYOUT_SIGNATURE);
-			raf.writeInt(LAYOUT_VERSION);
-			raf.writeInt(LAYOUT_TYPE);
-			raf.writeInt(1);
-			raf.write(variant);
-			if (variant != TYPE_CUSTOM) {
-				raf.writeInt(LAYOUT_EOF);
-				raf.writeInt(0);
-				raf.setLength(raf.getFilePointer());
-				return;
-			}
-			raf.writeInt(LAYOUT_KEYS);
-			raf.writeInt(keypad.length * 21 + 4);
-			raf.writeInt(keypad.length);
-			for (VirtualKey key : keypad) {
-				raf.writeInt(key.hashCode());
-				raf.writeBoolean(key.visible);
-				raf.writeInt(key.snapOrigin);
-				raf.writeInt(key.snapMode);
-				PointF snapOffset = key.snapOffset;
-				raf.writeFloat(snapOffset.x);
-				raf.writeFloat(snapOffset.y);
-			}
-			raf.writeInt(LAYOUT_SCALES);
-			raf.writeInt(keyScales.length * 4 + 4);
-			raf.writeInt(keyScales.length);
-			for (float keyScale : keyScales) {
-				raf.writeFloat(keyScale);
-			}
-			raf.writeInt(LAYOUT_EOF);
-			raf.writeInt(0);
-			raf.setLength(raf.getFilePointer());
-		} catch (IOException e) {
-			e.printStackTrace();
+			state = VirtualKeyboardLayoutState.migrated(captureLayoutSnapshot());
+			storedCustomLayoutState = state;
 		}
+		if (state != null && !isValidV4CustomState(state)) {
+			Log.w(TAG, "Refusing to persist invalid orientation-aware Custom layout state");
+			return false;
+		}
+		return writeLayoutAtomically(variant, state);
+	}
+
+	private boolean writeLayoutAtomically(
+			int variant, VirtualKeyboardLayoutState customState) {
+		File parent = saveFile.getParentFile();
+		File temporary = layoutSibling(LAYOUT_TEMP_SUFFIX);
+		File backup = layoutSibling(LAYOUT_BACKUP_SUFFIX);
+		boolean backupStaged = false;
+		try {
+			if (parent != null && !parent.isDirectory() &&
+					!parent.mkdirs() && !parent.isDirectory()) {
+				throw new IOException("unable to create virtual keyboard layout directory");
+			}
+			if (temporary.exists() && !temporary.delete()) {
+				throw new IOException("unable to remove stale virtual keyboard layout write");
+			}
+			if (backup.exists() && !backup.delete()) {
+				throw new IOException("unable to remove stale virtual keyboard layout backup");
+			}
+
+			try (RandomAccessFile raf = new RandomAccessFile(temporary, "rw")) {
+				raf.setLength(0);
+				writeLayoutContents(raf, variant, customState);
+				raf.getFD().sync();
+			}
+
+			if (saveFile.exists()) {
+				if (!saveFile.renameTo(backup)) {
+					throw new IOException("unable to stage existing virtual keyboard layout");
+				}
+				backupStaged = true;
+			}
+			if (!temporary.renameTo(saveFile)) {
+				if (backupStaged && !backup.renameTo(saveFile)) {
+					Log.e(TAG, "Unable to restore previous virtual keyboard layout");
+				}
+				throw new IOException("unable to publish virtual keyboard layout");
+			}
+			if (backup.exists() && !backup.delete()) {
+				Log.w(TAG, "Unable to remove virtual keyboard layout backup " + backup);
+			}
+			loadedLayoutVersion = LAYOUT_VERSION;
+			return true;
+		} catch (IOException | RuntimeException e) {
+			if (temporary.exists() && !temporary.delete()) {
+				Log.w(TAG, "Unable to remove failed virtual keyboard layout write " + temporary);
+			}
+			if (backupStaged && !saveFile.exists() && backup.exists() &&
+					!backup.renameTo(saveFile)) {
+				Log.e(TAG, "Unable to restore previous virtual keyboard layout", e);
+			}
+			Log.e(TAG, "Failed to save virtual keyboard layout", e);
+			return false;
+		}
+	}
+
+	private void writeLayoutContents(
+			RandomAccessFile raf,
+			int variant,
+			VirtualKeyboardLayoutState customState) throws IOException {
+		raf.writeInt(LAYOUT_SIGNATURE);
+		raf.writeInt(LAYOUT_VERSION);
+		raf.writeInt(LAYOUT_TYPE);
+		raf.writeInt(1);
+		raf.write(variant);
+		if (customState != null) {
+			if (customState.hasKnownBase()) {
+				raf.writeInt(LAYOUT_BASE_VARIANT);
+				raf.writeInt(1);
+				raf.write(customState.baseVariant());
+			}
+			writeV4SnapshotBlock(
+					raf, LAYOUT_LEGACY_SHARED, customState.legacySharedFallback());
+			writeV4SnapshotBlock(
+					raf, LAYOUT_PORTRAIT_OVERRIDE, customState.portraitOverride());
+			writeV4SnapshotBlock(
+					raf, LAYOUT_LANDSCAPE_OVERRIDE, customState.landscapeOverride());
+		}
+		raf.writeInt(LAYOUT_EOF);
+		raf.writeInt(0);
+	}
+
+	private File layoutSibling(String suffix) {
+		return new File(saveFile.getPath() + suffix);
+	}
+
+	private void recoverLayoutFile() {
+		File temporary = layoutSibling(LAYOUT_TEMP_SUFFIX);
+		File backup = layoutSibling(LAYOUT_BACKUP_SUFFIX);
+		if (backup.exists()) {
+			if (saveFile.exists()) {
+				if (!backup.delete()) {
+					Log.w(TAG, "Unable to remove stale virtual keyboard layout backup " + backup);
+				}
+			} else if (!backup.renameTo(saveFile)) {
+				Log.w(TAG, "Unable to restore virtual keyboard layout backup " + backup);
+			}
+		}
+		if (temporary.exists() && !temporary.delete()) {
+			Log.w(TAG, "Unable to remove stale virtual keyboard layout write " + temporary);
+		}
+	}
+
+	private void writeV4SnapshotBlock(
+			RandomAccessFile raf, int block, VirtualKeyboardLayoutSnapshot snapshot) throws IOException {
+		if (snapshot == null) return;
+		if (!isValidSnapshotForV4(snapshot)) {
+			throw new IOException("invalid v4 virtual keyboard snapshot");
+		}
+		int payloadLength =
+				4 + keypad.length * KEY_RECORD_SIZE_V2 +
+				4 + keyScales.length * 4 +
+				2 + 6 * 4;
+		raf.writeInt(block);
+		raf.writeInt(payloadLength);
+		raf.writeInt(keypad.length);
+		for (int i = 0; i < keypad.length; i++) {
+			raf.writeInt(keypad[i].hashCode());
+			raf.writeBoolean(snapshot.visible[i]);
+			raf.writeInt(snapshot.snapOrigins[i]);
+			raf.writeInt(snapshot.snapModes[i]);
+			raf.writeFloat(snapshot.snapOffsetX[i]);
+			raf.writeFloat(snapshot.snapOffsetY[i]);
+		}
+		raf.writeInt(keyScales.length);
+		for (float scale : snapshot.keyScales) raf.writeFloat(scale);
+
+		boolean hasGrouped = snapshot.hasGroupedControls;
+		raf.writeBoolean(hasGrouped && snapshot.dpadEnabled);
+		raf.writeBoolean(hasGrouped && snapshot.analogEnabled);
+		if (hasGrouped) {
+			raf.writeFloat(snapshot.dpadCenterX);
+			raf.writeFloat(snapshot.dpadCenterY);
+			raf.writeFloat(snapshot.dpadRadius);
+			raf.writeFloat(snapshot.analogCenterX);
+			raf.writeFloat(snapshot.analogCenterY);
+			raf.writeFloat(snapshot.analogRadius);
+		} else {
+			// Base VirtualKeyboard has no grouped controls. Keep the v4 payload structurally complete
+			// without creating another persistence shape.
+			raf.writeFloat(0.5f);
+			raf.writeFloat(0.5f);
+			raf.writeFloat(0.16f);
+			raf.writeFloat(0.5f);
+			raf.writeFloat(0.5f);
+			raf.writeFloat(0.16f);
+		}
+	}
+
+	private boolean isValidV4CustomState(VirtualKeyboardLayoutState state) {
+		if (state == null) return false;
+		if (state.hasKnownBase() &&
+				!VirtualKeyboardLayoutState.isSupportedBaseVariant(state.baseVariant())) {
+			return false;
+		}
+		if (state.hasKnownBase() && state.legacySharedFallback() != null) {
+			return false;
+		}
+		if (!isValidSnapshotForV4(state.legacySharedFallback()) ||
+				!isValidSnapshotForV4(state.portraitOverride()) ||
+				!isValidSnapshotForV4(state.landscapeOverride())) {
+			return false;
+		}
+		return state.hasRenderableSourceFor(VirtualLayoutOrientation.PORTRAIT) &&
+				state.hasRenderableSourceFor(VirtualLayoutOrientation.LANDSCAPE);
+	}
+
+	private boolean isValidSnapshotForV4(VirtualKeyboardLayoutSnapshot snapshot) {
+		if (snapshot == null) return true;
+		if (!snapshot.matchesLegacyShape(keypad.length, keyScales.length) ||
+				!isValidSnapTopology(
+						snapshot.snapOrigins, snapshot.snapModes,
+						snapshot.snapOffsetX, snapshot.snapOffsetY)) {
+			return false;
+		}
+		for (float scale : snapshot.keyScales) {
+			if (!Float.isFinite(scale) || scale <= 0.0f) return false;
+		}
+		if (!snapshot.hasGroupedControls) return true;
+		return isValidGroupedGeometry(
+				snapshot.dpadCenterX, snapshot.dpadCenterY, snapshot.dpadRadius) &&
+				isValidGroupedGeometry(
+						snapshot.analogCenterX, snapshot.analogCenterY, snapshot.analogRadius);
+	}
+
+	private static boolean isValidGroupedGeometry(float x, float y, float radius) {
+		return Float.isFinite(x) && Float.isFinite(y) && Float.isFinite(radius) &&
+				x >= 0.0f && x <= 1.0f && y >= 0.0f && y <= 1.0f &&
+				radius >= VirtualControlsKeyboard.MIN_RADIUS_FRACTION &&
+				radius <= VirtualControlsKeyboard.MAX_RADIUS_FRACTION;
+	}
+
+	protected final boolean prepareCustomLayoutForSave() {
+		boolean materialized = false;
+		for (VirtualKey key : keypad) {
+			if (key.snapMode == RectSnap.NO_SNAP) {
+				if (!materializeKeyPositionAgainstScreen(key)) return false;
+				materialized = true;
+			}
+		}
+		if (!hasValidSnapTopology(keypad)) return false;
+		if (materialized && isUsableScreen(screen)) snapKeys();
+		return true;
+	}
+
+	private boolean materializeKeyPositionAgainstScreen(VirtualKey key) {
+		if (key == null || !isUsableScreen(screen) || !isFiniteRect(key.rect)) return false;
+		key.snapOrigin = SCREEN;
+		key.snapMode = RectSnap.getSnap(key.rect, screen, key.snapOffset);
+		key.snapValid = false;
+		return isPersistableSnapMode(key.snapMode) &&
+				Float.isFinite(key.snapOffset.x) && Float.isFinite(key.snapOffset.y);
+	}
+
+	private static boolean isUsableScreen(RectF value) {
+		return value != null && Float.isFinite(value.left) && Float.isFinite(value.top) &&
+				Float.isFinite(value.right) && Float.isFinite(value.bottom) &&
+				value.width() > 0.0f && value.height() > 0.0f;
+	}
+
+	private static boolean isFiniteRect(RectF value) {
+		return value != null && Float.isFinite(value.left) && Float.isFinite(value.top) &&
+				Float.isFinite(value.right) && Float.isFinite(value.bottom) &&
+				value.width() > 0.0f && value.height() > 0.0f;
+	}
+
+	private static boolean isPersistableSnapMode(int mode) {
+		if (mode == RectSnap.NO_SNAP || (mode & ~RectSnap.FINE_MASK) != 0) return false;
+		int horizontal = mode & RectSnap.HORIZONTAL_MASK;
+		int vertical = mode & RectSnap.VERTICAL_MASK;
+		return Integer.bitCount(horizontal) == 1 && Integer.bitCount(vertical) == 1;
+	}
+
+	private boolean hasValidSnapTopology(VirtualKey[] keys) {
+		int[] origins = new int[keys.length];
+		int[] modes = new int[keys.length];
+		float[] offsetsX = new float[keys.length];
+		float[] offsetsY = new float[keys.length];
+		for (int i = 0; i < keys.length; i++) {
+			origins[i] = keys[i].snapOrigin;
+			modes[i] = keys[i].snapMode;
+			offsetsX[i] = keys[i].snapOffset.x;
+			offsetsY[i] = keys[i].snapOffset.y;
+		}
+		return isValidSnapTopology(origins, modes, offsetsX, offsetsY);
+	}
+
+	private static boolean isValidSnapTopology(
+			int[] origins, int[] modes, float[] offsetsX, float[] offsetsY) {
+		int size = origins.length;
+		for (int i = 0; i < size; i++) {
+			if (!isPersistableSnapMode(modes[i]) ||
+					!Float.isFinite(offsetsX[i]) || !Float.isFinite(offsetsY[i])) {
+				return false;
+			}
+			int origin = origins[i];
+			if (origin != SCREEN && (origin < 0 || origin >= size || origin == i)) return false;
+		}
+
+		for (int i = 0; i < size; i++) {
+			boolean[] visited = new boolean[size];
+			int current = i;
+			while (current != SCREEN) {
+				if (current < 0 || current >= size || visited[current]) return false;
+				visited[current] = true;
+				current = origins[current];
+			}
+		}
+		return true;
 	}
 
 	private int readLayoutType() {
@@ -706,47 +984,64 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				throw new IOException("file signature not found");
 			}
 			int version = dis.readInt();
+			loadedLayoutVersion = version;
+			legacyCustomPayloadSeen = false;
 			if (version < 1 || version > LAYOUT_VERSION) {
 				throw new IOException("incompatible file version");
 			}
-			int custom = 0;
-			while (true) {
+			if (version == 4) {
+				return readV4Layout(dis);
+			}
+
+			int legacyCustomBlocks = 0;
+			int explicitType = -1;
+			boolean typeSeen = false;
+			for (int blockIndex = 0; blockIndex < MAX_LAYOUT_BLOCKS; blockIndex++) {
 				int block = dis.readInt();
 				int length = dis.readInt();
+				if (length < 0) return -1;
 				switch (block) {
 					case LAYOUT_EOF -> {
-						return custom == 3 ? 0 : -1;
+						if (length != 0) return -1;
+						legacyCustomPayloadSeen = legacyCustomBlocks == 3;
+						if (explicitType >= TYPE_CUSTOM) return explicitType;
+						return legacyCustomPayloadSeen ? TYPE_CUSTOM : -1;
 					}
 					case LAYOUT_TYPE -> {
-						return dis.read();
+						if (typeSeen || length < 1) return -1;
+						int variant = dis.readUnsignedByte();
+						if (variant < TYPE_CUSTOM ||
+								variant > VirtualControlsKeyboard.TYPE_ANALOG_STANDARD) {
+							return -1;
+						}
+						skipFully(dis, length - 1);
+						typeSeen = true;
+						explicitType = variant;
 					}
 					case LAYOUT_KEYS -> {
 						if (version >= 2) {
+							if (length < 4) return -1;
 							int count = dis.readInt();
-							length = count * 21;
+							long expected = 4L + (long) count * KEY_RECORD_SIZE_V2;
+							if (count < 0 || count > KEYBOARD_SIZE || expected != length) return -1;
+							skipFully(dis, length - 4);
+						} else {
+							skipFully(dis, length);
 						}
-						if (dis.skipBytes(length) != length) {
-							return -1;
-						}
-						custom |= 1;
+						legacyCustomBlocks |= 1;
 					}
 					case LAYOUT_SCALES -> {
-						if (dis.skipBytes(length) != length) {
-							return -1;
-						}
-						custom |= 2;
+						skipFully(dis, length);
+						legacyCustomBlocks |= 2;
 					}
-					default -> {
-						if (dis.skipBytes(length) != length) {
-							return -1;
-						}
-					}
+					default -> skipFully(dis, length);
 				}
 			}
+			return -1;
 		} catch (FileNotFoundException e) {
 			Log.w(TAG, "readLayoutType() threw an FileNotFoundException: " + e.getMessage());
 		} catch (IOException e) {
-			e.printStackTrace();
+			Log.w(TAG, "Could not read virtual keyboard layout type", e);
 		}
 		return -1;
 	}
@@ -757,59 +1052,389 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				throw new IOException("file signature not found");
 			}
 			int version = dis.readInt();
+			loadedLayoutVersion = version;
 			if (version < 1 || version > LAYOUT_VERSION) {
 				throw new IOException("incompatible file version");
 			}
-			while (true) {
+			if (version == 4) {
+				readV4Layout(dis);
+				return;
+			}
+
+			boolean[] stagedVisible = new boolean[keypad.length];
+			int[] stagedOrigins = new int[keypad.length];
+			int[] stagedModes = new int[keypad.length];
+			float[] stagedOffsetX = new float[keypad.length];
+			float[] stagedOffsetY = new float[keypad.length];
+			for (int i = 0; i < keypad.length; i++) {
+				VirtualKey key = keypad[i];
+				stagedVisible[i] = key.visible;
+				stagedOrigins[i] = key.snapOrigin;
+				stagedModes[i] = key.snapMode;
+				stagedOffsetX[i] = key.snapOffset.x;
+				stagedOffsetY[i] = key.snapOffset.y;
+			}
+			float[] stagedScales = keyScales.clone();
+
+			for (int blockIndex = 0; blockIndex < MAX_LAYOUT_BLOCKS; blockIndex++) {
 				int block = dis.readInt();
 				int length = dis.readInt();
-				int count;
+				if (length < 0) throw new IOException("negative layout block length");
 				switch (block) {
 					case LAYOUT_EOF -> {
+						if (length != 0) throw new IOException("invalid layout end block");
+						if (!isValidSnapTopology(
+								stagedOrigins, stagedModes, stagedOffsetX, stagedOffsetY)) {
+							throw new IOException("invalid key snap topology");
+						}
+						applyStagedLayout(
+								stagedVisible, stagedOrigins, stagedModes,
+								stagedOffsetX, stagedOffsetY, stagedScales);
 						return;
 					}
-					case LAYOUT_KEYS -> {
-						count = dis.readInt();
-						for (int i = 0; i < count; i++) {
-							int hash = dis.readInt();
-							boolean found = false;
-							for (VirtualKey key : keypad) {
-								if (key.hashCode() == hash) {
-									if (version >= 2) {
-										key.visible = dis.readBoolean();
-									}
-									key.snapOrigin = dis.readInt();
-									key.snapMode = dis.readInt();
-									key.snapOffset.x = dis.readFloat();
-									key.snapOffset.y = dis.readFloat();
-									found = true;
-									break;
-								}
-							}
-							if (!found) {
-								dis.skipBytes(version >= 2 ? 17 : 16);
-							}
-						}
+					case LAYOUT_TYPE -> {
+						if (length < 1) throw new IOException("empty layout type block");
+						dis.readUnsignedByte();
+						skipFully(dis, length - 1);
 					}
-					case LAYOUT_SCALES -> {
-						count = dis.readInt();
-						if (version >= 3) {
-							for (int i = 0; i < count; i++) {
-								keyScales[i] = dis.readFloat();
-							}
-						} else if (count * 2 <= keyScales.length) {
-							for (int i = 0, len = count * 2; i < len; ) {
-								float v = dis.readFloat();
-								keyScales[i++] = v;
-								keyScales[i++] = v;
-							}
-						} else {
-							dis.skipBytes(count * 4);
-						}
-					}
-					default -> dis.skipBytes(length);
+					case LAYOUT_KEYS -> readKeyBlock(
+							dis, version, length,
+							stagedVisible, stagedOrigins, stagedModes,
+							stagedOffsetX, stagedOffsetY);
+					case LAYOUT_SCALES -> readScaleBlock(dis, version, length, stagedScales);
+					default -> skipFully(dis, length);
 				}
 			}
+			throw new IOException("layout contains too many blocks");
+		}
+	}
+
+	private int readV4Layout(DataInputStream dis) throws IOException {
+		boolean typeSeen = false;
+		boolean baseSeen = false;
+		boolean legacySeen = false;
+		boolean portraitSeen = false;
+		boolean landscapeSeen = false;
+		int activeType = -1;
+		int baseVariant = VirtualKeyboardLayoutState.BASE_UNKNOWN;
+		VirtualKeyboardLayoutSnapshot legacyFallback = null;
+		VirtualKeyboardLayoutSnapshot portraitOverride = null;
+		VirtualKeyboardLayoutSnapshot landscapeOverride = null;
+
+		for (int blockIndex = 0; blockIndex < MAX_LAYOUT_BLOCKS; blockIndex++) {
+			int block = dis.readInt();
+			int length = dis.readInt();
+			if (length < 0) throw new IOException("negative layout block length");
+			switch (block) {
+				case LAYOUT_EOF -> {
+					if (length != 0) throw new IOException("invalid layout end block");
+					if (!typeSeen) throw new IOException("layout type is missing");
+					boolean hasCustomState =
+							baseSeen || legacySeen || portraitSeen || landscapeSeen;
+					VirtualKeyboardLayoutState state = null;
+					if (hasCustomState) {
+						state = new VirtualKeyboardLayoutState(
+								baseVariant, legacyFallback, portraitOverride, landscapeOverride);
+						if (!isValidV4CustomState(state)) {
+							throw new IOException("invalid orientation-aware Custom layout state");
+						}
+					}
+					if (activeType == TYPE_CUSTOM && state == null) {
+						throw new IOException("Custom layout has no stored Custom state");
+					}
+					storedCustomLayoutState = state;
+					return activeType;
+				}
+				case LAYOUT_TYPE -> {
+					if (typeSeen || length != 1) throw new IOException("invalid duplicate layout type");
+					activeType = dis.readUnsignedByte();
+					if (activeType < TYPE_CUSTOM ||
+							activeType > VirtualControlsKeyboard.TYPE_ANALOG_STANDARD) {
+						throw new IOException("invalid layout type");
+					}
+					typeSeen = true;
+				}
+				case LAYOUT_BASE_VARIANT -> {
+					if (baseSeen || length != 1) throw new IOException("invalid base-variant block");
+					baseVariant = dis.readUnsignedByte();
+					if (!VirtualKeyboardLayoutState.isSupportedBaseVariant(baseVariant)) {
+						throw new IOException("invalid Custom base variant");
+					}
+					baseSeen = true;
+				}
+				case LAYOUT_LEGACY_SHARED -> {
+					if (legacySeen) throw new IOException("duplicate legacy fallback block");
+					legacyFallback = readV4SnapshotBlock(dis, length);
+					legacySeen = true;
+				}
+				case LAYOUT_PORTRAIT_OVERRIDE -> {
+					if (portraitSeen) throw new IOException("duplicate portrait override block");
+					portraitOverride = readV4SnapshotBlock(dis, length);
+					portraitSeen = true;
+				}
+				case LAYOUT_LANDSCAPE_OVERRIDE -> {
+					if (landscapeSeen) throw new IOException("duplicate landscape override block");
+					landscapeOverride = readV4SnapshotBlock(dis, length);
+					landscapeSeen = true;
+				}
+				case LAYOUT_KEYS, LAYOUT_SCALES ->
+						throw new IOException("legacy layout blocks are invalid in v4");
+				default -> skipFully(dis, length);
+			}
+		}
+		throw new IOException("layout contains too many blocks");
+	}
+
+	private VirtualKeyboardLayoutSnapshot readV4SnapshotBlock(
+			DataInputStream dis, int length) throws IOException {
+		int expectedLength =
+				4 + keypad.length * KEY_RECORD_SIZE_V2 +
+				4 + keyScales.length * 4 +
+				2 + 6 * 4;
+		if (length != expectedLength) throw new IOException("invalid v4 snapshot payload length");
+
+		int keyCount = dis.readInt();
+		if (keyCount != keypad.length) throw new IOException("invalid v4 key count");
+		boolean[] visible = new boolean[keypad.length];
+		int[] origins = new int[keypad.length];
+		int[] modes = new int[keypad.length];
+		float[] offsetX = new float[keypad.length];
+		float[] offsetY = new float[keypad.length];
+		boolean[] seenKeys = new boolean[keypad.length];
+
+		for (int i = 0; i < keyCount; i++) {
+			int hash = dis.readInt();
+			boolean keyVisible = dis.readBoolean();
+			int origin = dis.readInt();
+			int mode = dis.readInt();
+			float x = dis.readFloat();
+			float y = dis.readFloat();
+			int keyIndex = findKeyIndexByHash(hash);
+			if (keyIndex < 0 || seenKeys[keyIndex]) {
+				throw new IOException("invalid or duplicate v4 key identity");
+			}
+			if (origin != SCREEN && (origin < 0 || origin >= keypad.length) ||
+					!isPersistableSnapMode(mode) ||
+					!Float.isFinite(x) || !Float.isFinite(y)) {
+				throw new IOException("invalid v4 key snap state");
+			}
+			seenKeys[keyIndex] = true;
+			visible[keyIndex] = keyVisible;
+			origins[keyIndex] = origin;
+			modes[keyIndex] = mode;
+			offsetX[keyIndex] = x;
+			offsetY[keyIndex] = y;
+		}
+		for (boolean seen : seenKeys) {
+			if (!seen) throw new IOException("v4 snapshot is missing a key");
+		}
+		if (!isValidSnapTopology(origins, modes, offsetX, offsetY)) {
+			throw new IOException("invalid v4 key snap topology");
+		}
+
+		int scaleCount = dis.readInt();
+		if (scaleCount != keyScales.length) throw new IOException("invalid v4 scale count");
+		float[] scales = new float[keyScales.length];
+		for (int i = 0; i < scaleCount; i++) {
+			float scale = dis.readFloat();
+			if (!Float.isFinite(scale) || scale <= 0.0f) {
+				throw new IOException("invalid v4 key scale");
+			}
+			scales[i] = scale;
+		}
+
+		int dpadEnabled = dis.readUnsignedByte();
+		int analogEnabled = dis.readUnsignedByte();
+		if (dpadEnabled > 1 || analogEnabled > 1) {
+			throw new IOException("invalid v4 grouped-control flags");
+		}
+		float dpadCenterX = dis.readFloat();
+		float dpadCenterY = dis.readFloat();
+		float dpadRadius = dis.readFloat();
+		float analogCenterX = dis.readFloat();
+		float analogCenterY = dis.readFloat();
+		float analogRadius = dis.readFloat();
+		if (!isValidGroupedGeometry(dpadCenterX, dpadCenterY, dpadRadius) ||
+				!isValidGroupedGeometry(analogCenterX, analogCenterY, analogRadius)) {
+			throw new IOException("invalid v4 grouped-control geometry");
+		}
+
+		return VirtualKeyboardLayoutSnapshot.legacy(
+				TYPE_CUSTOM,
+				visible,
+				origins,
+				modes,
+				offsetX,
+				offsetY,
+				scales).withGroupedControls(
+				dpadEnabled != 0,
+				analogEnabled != 0,
+				dpadCenterX,
+				dpadCenterY,
+				dpadRadius,
+				analogCenterX,
+				analogCenterY,
+				analogRadius,
+				false,
+				true);
+	}
+
+	private void readKeyBlock(
+			DataInputStream dis,
+			int version,
+			int length,
+			boolean[] visible,
+			int[] origins,
+			int[] modes,
+			float[] offsetX,
+			float[] offsetY) throws IOException {
+		int itemSize = version >= 2 ? KEY_RECORD_SIZE_V2 : KEY_RECORD_SIZE_V1;
+		int count = readCount(dis, length, itemSize);
+		if (count < 0 || count > KEYBOARD_SIZE) {
+			throw new IOException("invalid layout key count");
+		}
+		for (int i = 0; i < count; i++) {
+			int hash = dis.readInt();
+			boolean keyVisible = version >= 2 ? dis.readBoolean() : false;
+			int origin = dis.readInt();
+			int mode = dis.readInt();
+			float x = dis.readFloat();
+			float y = dis.readFloat();
+
+			if (!Float.isFinite(x) || !Float.isFinite(y)) {
+				throw new IOException("non-finite key snap offset");
+			}
+			if (origin != SCREEN && (origin < 0 || origin >= KEYBOARD_SIZE)) {
+				throw new IOException("invalid key snap origin");
+			}
+			if (mode != RectSnap.NO_SNAP && !isPersistableSnapMode(mode)) {
+				throw new IOException("invalid key snap state");
+			}
+
+			int keyIndex = findKeyIndexByHash(hash);
+			if (keyIndex < 0) continue;
+			if (version >= 2) visible[keyIndex] = keyVisible;
+
+			// Older broken Standard-derived Custom files may contain SCREEN + NO_SNAP. The raw
+			// RectF was never persisted, so the exact lost position is unrecoverable. Keep the safe
+			// resetLayout(TYPE_CUSTOM) fallback topology instead of replacing it with NO_SNAP.
+			if (mode == RectSnap.NO_SNAP) continue;
+			if (origin == keyIndex) throw new IOException("self-referencing key snap state");
+
+			origins[keyIndex] = origin;
+			modes[keyIndex] = mode;
+			offsetX[keyIndex] = x;
+			offsetY[keyIndex] = y;
+		}
+	}
+
+	private void readScaleBlock(
+			DataInputStream dis, int version, int length, float[] scales) throws IOException {
+		int count = readCount(dis, length, 4);
+		int maxScales = version >= 3 ? scales.length : scales.length / 2;
+		if (count < 0 || count > maxScales) {
+			throw new IOException("invalid layout scale count");
+		}
+		if (version >= 3) {
+			for (int i = 0; i < count; i++) {
+				float value = dis.readFloat();
+				if (!Float.isFinite(value) || value <= 0.0f) {
+					throw new IOException("invalid key scale");
+				}
+				scales[i] = value;
+			}
+		} else {
+			for (int i = 0; i < count; i++) {
+				float value = dis.readFloat();
+				if (!Float.isFinite(value) || value <= 0.0f) {
+					throw new IOException("invalid legacy key scale");
+				}
+				scales[i * 2] = value;
+				scales[i * 2 + 1] = value;
+			}
+		}
+	}
+
+	public static int persistedKeyIndexForHash(int hash) {
+		for (int i = 0; i < KEYBOARD_SIZE; i++) {
+			if (persistedKeyHashForIndex(i) == hash) return i;
+		}
+		return -1;
+	}
+
+	public static int persistedKeyHashForIndex(int index) {
+		return switch (index) {
+			case KEY_NUM1, KEY_NUM2, KEY_NUM3, KEY_NUM4, KEY_NUM5,
+					KEY_NUM6, KEY_NUM7, KEY_NUM8, KEY_NUM9 ->
+					singleKeyHash(Canvas.KEY_NUM1 + index);
+			case KEY_NUM0 -> singleKeyHash(Canvas.KEY_NUM0);
+			case KEY_STAR -> singleKeyHash(Canvas.KEY_STAR);
+			case KEY_POUND -> singleKeyHash(Canvas.KEY_POUND);
+			case KEY_SOFT_LEFT -> singleKeyHash(Canvas.KEY_SOFT_LEFT);
+			case KEY_SOFT_RIGHT -> singleKeyHash(Canvas.KEY_SOFT_RIGHT);
+			case KEY_D -> singleKeyHash(Canvas.KEY_SEND);
+			case KEY_C -> singleKeyHash(Canvas.KEY_END);
+			case KEY_UP_LEFT -> dualKeyHash(Canvas.KEY_UP, Canvas.KEY_LEFT);
+			case KEY_UP -> singleKeyHash(Canvas.KEY_UP);
+			case KEY_UP_RIGHT -> dualKeyHash(Canvas.KEY_UP, Canvas.KEY_RIGHT);
+			case KEY_LEFT -> singleKeyHash(Canvas.KEY_LEFT);
+			case KEY_RIGHT -> singleKeyHash(Canvas.KEY_RIGHT);
+			case KEY_DOWN_LEFT -> dualKeyHash(Canvas.KEY_DOWN, Canvas.KEY_LEFT);
+			case KEY_DOWN -> singleKeyHash(Canvas.KEY_DOWN);
+			case KEY_DOWN_RIGHT -> dualKeyHash(Canvas.KEY_DOWN, Canvas.KEY_RIGHT);
+			case KEY_FIRE -> singleKeyHash(Canvas.KEY_FIRE);
+			case KEY_A -> singleKeyHash(SE_KEY_SPECIAL_GAMING_A);
+			case KEY_B -> singleKeyHash(SE_KEY_SPECIAL_GAMING_B);
+			case KEY_MENU -> singleKeyHash(KeyMapper.KEY_OPTIONS_MENU);
+			default -> Integer.MIN_VALUE;
+		};
+	}
+
+	private static int singleKeyHash(int keyCode) {
+		return 31 * (31 + keyCode);
+	}
+
+	private static int dualKeyHash(int keyCode, int secondKeyCode) {
+		return 31 * (31 + keyCode) + secondKeyCode;
+	}
+
+	private int findKeyIndexByHash(int hash) {
+		return persistedKeyIndexForHash(hash);
+	}
+
+	private void applyStagedLayout(
+			boolean[] visible,
+			int[] origins,
+			int[] modes,
+			float[] offsetX,
+			float[] offsetY,
+			float[] scales) {
+		for (int i = 0; i < keypad.length; i++) {
+			VirtualKey key = keypad[i];
+			key.visible = visible[i];
+			key.snapOrigin = origins[i];
+			key.snapMode = modes[i];
+			key.snapOffset.set(offsetX[i], offsetY[i]);
+			key.snapValid = false;
+		}
+		System.arraycopy(scales, 0, keyScales, 0, keyScales.length);
+	}
+
+	private static int readCount(DataInputStream dis, int length, int itemSize) throws IOException {
+		if (length < 4) return -1;
+		int count = dis.readInt();
+		if (count < 0) return -1;
+		long expected = 4L + (long) count * itemSize;
+		return expected == length ? count : -1;
+	}
+
+	private static void skipFully(DataInputStream dis, int bytes) throws IOException {
+		if (bytes < 0) throw new IOException("negative layout payload");
+		int remaining = bytes;
+		while (remaining > 0) {
+			int skipped = dis.skipBytes(remaining);
+			if (skipped <= 0) throw new IOException("truncated layout payload");
+			remaining -= skipped;
 		}
 	}
 
@@ -992,6 +1617,12 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		if (vKey.snapOrigin == SCREEN) {
 			RectSnap.snap(vKey.rect, screen, vKey.snapMode, vKey.snapOffset);
 		} else {
+			if (vKey.snapOrigin < 0 || vKey.snapOrigin >= keypad.length ||
+					vKey.snapOrigin == key) {
+				Log.w(TAG, "Ignoring invalid snap origin " + vKey.snapOrigin + " for key " + key);
+				vKey.snapValid = true;
+				return;
+			}
 			if (!keypad[vKey.snapOrigin].snapValid) {
 				snapKey(vKey.snapOrigin, level + 1);
 			}
@@ -1092,21 +1723,24 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	/** Places a built-in-template key by center without routing through the interactive editor. */
 	protected final boolean setKeyCenterByLabel(String label, float centerX, float centerY) {
-		if (label == null) return false;
+		if (label == null || !isUsableScreen(screen) ||
+				!Float.isFinite(centerX) || !Float.isFinite(centerY)) {
+			return false;
+		}
 		for (VirtualKey key : keypad) {
 			if (!label.equals(key.label)) continue;
 			float width = key.rect.width();
 			float height = key.rect.height();
+			if (!Float.isFinite(width) || !Float.isFinite(height) ||
+					width <= 0.0f || height <= 0.0f) {
+				return false;
+			}
 			key.rect.set(
 					centerX - width * 0.5f,
 					centerY - height * 0.5f,
 					centerX + width * 0.5f,
 					centerY + height * 0.5f);
-			key.snapOrigin = SCREEN;
-			key.snapMode = RectSnap.NO_SNAP;
-			key.snapOffset.set(0.0f, 0.0f);
-			key.snapValid = true;
-			return true;
+			return materializeKeyPositionAgainstScreen(key);
 		}
 		return false;
 	}
