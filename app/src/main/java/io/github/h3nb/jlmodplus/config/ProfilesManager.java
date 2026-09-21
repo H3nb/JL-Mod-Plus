@@ -127,8 +127,6 @@ public class ProfilesManager {
 		try {
 			recoverInterruptedPresetSave(profileDir);
 		} catch (IOException | RuntimeException recoveryFailure) {
-			Log.w(TAG, "Unable to recover preset source before inspection: " + profile.getName(),
-					recoveryFailure);
 			Capability unavailable = new Capability(
 					CapabilityStatus.UNAVAILABLE, "preset source recovery failed");
 			return new ProfileInfo(profile, null, unavailable, unavailable);
@@ -183,8 +181,6 @@ public class ProfilesManager {
 			try {
 				recoverInterruptedPresetSave(dir);
 			} catch (IOException | RuntimeException recoveryFailure) {
-				Log.w(TAG, "Unable to recover preset source during enumeration: " + dir.getName(),
-						recoveryFailure);
 				if (isInvisibleInterruptedNewProfile(dir)) {
 					continue;
 				}
