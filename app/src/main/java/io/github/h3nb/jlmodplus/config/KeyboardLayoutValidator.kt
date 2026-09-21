@@ -253,7 +253,8 @@ internal object KeyboardLayoutValidator {
             val radius = input.readFloat()
             if (!x.isFinite() || !y.isFinite() || !radius.isFinite() ||
                 x !in 0.0f..1.0f || y !in 0.0f..1.0f ||
-                radius <= 0.0f || radius > 0.5f) {
+                radius < VirtualControlsKeyboard.MIN_RADIUS_FRACTION ||
+                radius > VirtualControlsKeyboard.MAX_RADIUS_FRACTION) {
                 return "layout grouped geometry is invalid"
             }
         }
