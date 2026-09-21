@@ -588,9 +588,9 @@ public class VirtualControlsKeyboardResizeTest {
                         }
                         raf.skipBytes(16);
                     }
-                    return;
+                    break;
                 }
-                if (block == VirtualKeyboard.LAYOUT_EOF) return;
+                if (block == VirtualKeyboard.LAYOUT_EOF) break;
                 raf.skipBytes(length);
             }
         }
