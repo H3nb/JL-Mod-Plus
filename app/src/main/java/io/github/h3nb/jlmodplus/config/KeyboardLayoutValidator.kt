@@ -140,14 +140,15 @@ internal object KeyboardLayoutValidator {
                 EOF -> {
                     if (length != 0) return "layout end block is invalid"
                     val layoutType = type ?: return "layout type is missing"
-                    if (layoutType != TYPE_CUSTOM) {
-                        return if (baseVariant != null || legacyShared ||
-                            portraitOverride || landscapeOverride) {
-                            "non-Custom v4 layout contains Custom state"
-                        } else null
-                    }
                     if (baseVariant != null && legacyShared) {
                         return "Custom v4 mixes base and legacy fallback"
+                    }
+                    val hasCustomState =
+                        baseVariant != null || legacyShared || portraitOverride || landscapeOverride
+                    if (!hasCustomState) {
+                        return if (layoutType == TYPE_CUSTOM) {
+                            "Custom v4 has no stored Custom state"
+                        } else null
                     }
                     val portraitRenderable =
                         portraitOverride || baseVariant != null || legacyShared
