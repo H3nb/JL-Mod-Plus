@@ -58,11 +58,40 @@ public class VirtualKeyboardEditTransactionTest {
 		VirtualKeyboardEditTransaction transaction = new VirtualKeyboardEditTransaction(baseline);
 		transaction.requestFinish(edit(snapshot(8.0f)));
 
-		transaction.save();
+		assertTrue(transaction.commitSave(() -> true));
 
 		assertFalse(transaction.isActive());
 		assertFalse(transaction.isFinishPending());
 		assertSame(baseline, transaction.baseline());
+	}
+
+	@Test
+	public void failedPersistenceKeepsDirtyTransactionActiveForRetry() {
+		VirtualKeyboardLayoutEditState baseline = edit(snapshot(3.0f));
+		VirtualKeyboardLayoutEditState draft = edit(snapshot(8.0f));
+		VirtualKeyboardEditTransaction transaction = new VirtualKeyboardEditTransaction(baseline);
+		transaction.requestFinish(draft);
+
+		assertFalse(transaction.commitSave(() -> false));
+
+		assertTrue(transaction.isActive());
+		assertFalse(transaction.isFinishPending());
+		assertSame(baseline, transaction.baseline());
+		assertTrue(transaction.commitSave(() -> true));
+		assertFalse(transaction.isActive());
+	}
+
+	@Test
+	public void dormantCustomStateParticipatesInSingleLayoutTransactionEquality() {
+		VirtualKeyboardLayoutState dormant = customState(
+				snapshot(3.0f), snapshot(8.0f)).customLayout();
+		VirtualKeyboardLayoutEditState baseline =
+				VirtualKeyboardLayoutEditState.single(snapshot(3.0f), dormant);
+		VirtualKeyboardEditTransaction transaction = new VirtualKeyboardEditTransaction(baseline);
+
+		assertEquals(
+				VirtualKeyboardEditTransaction.FinishRequest.CONFIRM,
+				transaction.requestFinish(VirtualKeyboardLayoutEditState.single(snapshot(3.0f))));
 	}
 
 	@Test
