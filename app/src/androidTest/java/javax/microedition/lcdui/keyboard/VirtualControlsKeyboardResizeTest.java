@@ -457,6 +457,22 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
+    public void passiveStandardReflowDoesNotCreateCustomDraftOrDirtyTransactionState() {
+        keyboard.resize(new RectF(0f, 0f, 945f, 2048f), 18f, 0f, 812f, 1118f);
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        VirtualKeyboardLayoutEditState baseline = keyboard.captureLayoutEditState();
+
+        keyboard.resize(
+                new RectF(0f, 0f, 1536f, 709f),
+                503f, 0f, 1034f, 709f);
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+        assertEquals(VirtualControlsKeyboard.TYPE_DPAD_STANDARD, keyboard.getLayout());
+        assertEquals(baseline, keyboard.captureLayoutEditState());
+    }
+
+    @Test
     public void portraitAndLandscapeDpadOverridesAreIndependentAndDriftFree() throws Exception {
         RectF portrait = new RectF(0f, 0f, 600f, 1200f);
         RectF landscape = new RectF(0f, 0f, 1200f, 600f);
