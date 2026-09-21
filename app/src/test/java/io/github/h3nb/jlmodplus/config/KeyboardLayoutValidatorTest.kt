@@ -38,6 +38,9 @@ class KeyboardLayoutValidatorTest {
 
         assertNull(KeyboardLayoutValidator.validate(layoutFile(version = 2, type = 0, scales = 6)))
         assertNotNull(KeyboardLayoutValidator.validate(layoutFile(version = 2, type = 0, scales = 7)))
+
+        assertNull(KeyboardLayoutValidator.validate(layoutFile(version = 1, type = 0, scales = 6)))
+        assertNotNull(KeyboardLayoutValidator.validate(layoutFile(version = 1, type = 0, scales = 7)))
     }
 
     @Test
