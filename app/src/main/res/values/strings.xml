@@ -94,6 +94,7 @@
     <string name="layout_edit_continue">Continue Editing</string>
     <string name="layout_edit_finished">Virtual controls editing finished</string>
     <string name="virtual_controls_save_failed">Virtual controls could not be saved. Try again.</string>
+    <string name="virtual_controls_screen_params_save_failed">Virtual controls were saved, but screen parameters could not be saved.</string>
     <string name="layout_edit_mode">Virtual controls edit mode: drag to move, pinch to resize</string>
     <string name="layout_scale_mode">Virtual controls edit mode: drag to move, pinch to resize</string>
     <string name="layout_switch">Switch Control Layout</string>

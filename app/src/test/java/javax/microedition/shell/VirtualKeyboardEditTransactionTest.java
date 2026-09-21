@@ -11,6 +11,10 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import javax.microedition.lcdui.keyboard.VirtualControlsKeyboard;
 import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutEditState;
 import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutSnapshot;
@@ -79,6 +83,67 @@ public class VirtualKeyboardEditTransactionTest {
 		assertSame(baseline, transaction.baseline());
 		assertTrue(transaction.commitSave(() -> true));
 		assertFalse(transaction.isActive());
+	}
+
+	@Test
+	public void layoutFailureKeepsTransactionActive() {
+		VirtualKeyboardEditTransaction transaction =
+				new VirtualKeyboardEditTransaction(edit(snapshot(3.0f)));
+		transaction.requestFinish(edit(snapshot(8.0f)));
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutFailed();
+
+		assertFalse(transaction.commitSave(result::isLayoutCommitted));
+
+		assertTrue(transaction.isActive());
+		assertFalse(result.isLayoutCommitted());
+	}
+
+	@Test
+	public void layoutAndScreenSuccessCloseTransaction() {
+		VirtualKeyboardEditTransaction transaction =
+				new VirtualKeyboardEditTransaction(edit(snapshot(3.0f)));
+		transaction.requestFinish(edit(snapshot(8.0f)));
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(false);
+
+		assertTrue(transaction.commitSave(result::isLayoutCommitted));
+
+		assertFalse(transaction.isActive());
+		assertFalse(result.isScreenParamsFailed());
+	}
+
+	@Test
+	public void screenParamFailureAfterLayoutCommitStillClosesTransactionAndKeepsLayout()
+			throws Exception {
+		VirtualKeyboardEditTransaction transaction =
+				new VirtualKeyboardEditTransaction(edit(snapshot(3.0f)));
+		transaction.requestFinish(edit(snapshot(8.0f)));
+		Path persistedLayout = Files.createTempFile("jlmod-layout-save", ".bin");
+		Files.write(persistedLayout, "edited-layout".getBytes(StandardCharsets.UTF_8));
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(true);
+
+		assertTrue(transaction.commitSave(result::isLayoutCommitted));
+
+		assertFalse(transaction.isActive());
+		assertTrue(result.isScreenParamsFailed());
+		assertEquals(
+				"edited-layout",
+				new String(Files.readAllBytes(persistedLayout), StandardCharsets.UTF_8));
+		try {
+			transaction.discard();
+			throw new AssertionError("Committed layout transaction must not remain discardable");
+		} catch (IllegalStateException expected) {
+			// Expected: the primary layout commit closed the transaction.
+		} finally {
+			Files.deleteIfExists(persistedLayout);
+		}
+	}
+
+	@Test
+	public void nonEditorOutcomeKeepsPrimarySuccessDistinctFromSecondaryFailure() {
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(true);
+
+		assertTrue(result.isLayoutCommitted());
+		assertTrue(result.isScreenParamsFailed());
 	}
 
 	@Test

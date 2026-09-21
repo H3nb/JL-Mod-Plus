@@ -46,6 +46,28 @@ public class PresetLocalOverrideTest {
 	}
 
 	@Test
+	public void committedLayoutStaysCustomWhenSecondaryConfigWriteFails() throws Exception {
+		File configDir = tempDir("layout-primary-committed");
+		FakePreferences preferences = linked(configDir, "K800i");
+
+		PresetLocalOverride.Guard guard =
+				PresetLocalOverride.detachBeforeWrite(preferences, configDir);
+		assertTrue(guard.canWrite());
+		Files.write(new File(configDir, "VirtualKeyboardLayout").toPath(),
+				"edited-layout".getBytes(StandardCharsets.UTF_8));
+		boolean secondaryConfigSaved = false;
+
+		assertFalse(secondaryConfigSaved);
+		assertFalse(isLinked(preferences, configDir));
+		assertEquals("K800i", origin(preferences, configDir));
+		assertEquals(
+				"edited-layout",
+				new String(
+						Files.readAllBytes(new File(configDir, "VirtualKeyboardLayout").toPath()),
+						StandardCharsets.UTF_8));
+	}
+
+	@Test
 	public void failedWriteCanRestorePreviousLink() throws Exception {
 		File configDir = tempDir("restore-link");
 		FakePreferences preferences = linked(configDir, "K800i");

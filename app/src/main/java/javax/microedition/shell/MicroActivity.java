@@ -465,8 +465,11 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onSaveVirtualKeyboard(boolean saveScreenParams) {
-						if (!applyVirtualKeyboardSave(saveScreenParams)) {
+						VirtualKeyboardSaveResult result = applyVirtualKeyboardSave(saveScreenParams);
+						if (!result.isLayoutCommitted()) {
 							toast(R.string.virtual_controls_save_failed);
+						} else if (result.isScreenParamsFailed()) {
+							toast(R.string.virtual_controls_screen_params_save_failed);
 						}
 					}
 
@@ -1201,7 +1204,11 @@ public class MicroActivity extends AppCompatActivity {
 		VirtualKeyboard vk = ContextHolder.getVk();
 		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
 		if (vk == null || transaction == null || !transaction.isActive()) return;
-		if (!transaction.commitSave(() -> applyVirtualKeyboardSave(saveScreenParams))) {
+		VirtualKeyboardSaveResult[] saveResult = new VirtualKeyboardSaveResult[1];
+		if (!transaction.commitSave(() -> {
+			saveResult[0] = applyVirtualKeyboardSave(saveScreenParams);
+			return saveResult[0].isLayoutCommitted();
+		})) {
 			toast(R.string.virtual_controls_save_failed);
 			updateRuntimeMenuState(current);
 			scheduleVirtualKeyboardEditorChromeUpdate();
@@ -1209,7 +1216,11 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
 		clearVirtualKeyboardEditTransaction();
-		toast(R.string.layout_edit_finished);
+		if (saveResult[0].isScreenParamsFailed()) {
+			toast(R.string.virtual_controls_screen_params_save_failed);
+		} else {
+			toast(R.string.layout_edit_finished);
+		}
 		updateRuntimeMenuState(current);
 	}
 
@@ -1422,23 +1433,26 @@ public class MicroActivity extends AppCompatActivity {
 		}
 	}
 
-	private boolean applyVirtualKeyboardSave(boolean saveScreenParams) {
+	private VirtualKeyboardSaveResult applyVirtualKeyboardSave(boolean saveScreenParams) {
 		VirtualKeyboard vk = ContextHolder.getVk();
 		File configDir = activeMidletConfigDir();
 		if (vk == null || configDir == null) {
-			return false;
+			return VirtualKeyboardSaveResult.layoutFailed();
 		}
 		PresetLocalOverride.Guard ownership =
 				PresetLocalOverride.detachBeforeWrite(this, configDir);
 		if (!ownership.canWrite()) {
-			return false;
+			return VirtualKeyboardSaveResult.layoutFailed();
 		}
 		if (!vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM)) {
 			ownership.restoreIfUnchanged();
-			return false;
+			return VirtualKeyboardSaveResult.layoutFailed();
 		}
-		// The layout is now durably divergent. A later config-save failure must remain CUSTOM.
-		return !saveScreenParams || !vk.isPhone() || vk.saveScreenParams();
+		// The primary artifact is committed at this point. Secondary config persistence cannot
+		// make the layout transaction discardable again and must never restore preset linkage.
+		boolean screenParamsFailed =
+				saveScreenParams && vk.isPhone() && !vk.saveScreenParams();
+		return VirtualKeyboardSaveResult.layoutCommitted(screenParamsFailed);
 	}
 
 	private void applyLayoutSelection(int index) {
