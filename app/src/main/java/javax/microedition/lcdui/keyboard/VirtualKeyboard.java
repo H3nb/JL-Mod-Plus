@@ -588,7 +588,16 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	}
 
 	public void restoreLayoutSnapshot(VirtualKeyboardLayoutSnapshot snapshot) {
-		if (snapshot == null || !snapshot.matchesLegacyShape(keypad.length, keyScales.length)) return;
+		if (!applyLayoutSnapshotInMemory(snapshot)) return;
+		if (overlayView != null) overlayView.postInvalidate();
+		if (target != null && target.isShown()) target.updateSize();
+		notifyLayoutEditStateChanged();
+	}
+
+	protected final boolean applyLayoutSnapshotInMemory(VirtualKeyboardLayoutSnapshot snapshot) {
+		if (snapshot == null || !snapshot.matchesLegacyShape(keypad.length, keyScales.length)) {
+			return false;
+		}
 		layoutVariant = snapshot.layoutVariant;
 		for (int i = 0; i < keypad.length; i++) {
 			VirtualKey key = keypad[i];
@@ -599,13 +608,21 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			key.snapValid = false;
 		}
 		System.arraycopy(snapshot.keyScales, 0, keyScales, 0, keyScales.length);
-		for (int group = 0; group < keyScaleGroups.length; group++) {
-			resizeKeyGroup(group);
-		}
+		for (int group = 0; group < keyScaleGroups.length; group++) resizeKeyGroup(group);
+		if (screen != null) snapKeys();
+		return true;
+	}
+
+	/**
+	 * Applies an existing built-in legacy template to the current viewport without persistence,
+	 * target resize, or editor transaction side effects.
+	 */
+	protected final void applyBuiltInLayoutInMemory(int variant) {
+		resetLayout(variant);
+		layoutVariant = variant;
+		for (int group = 0; group < keyScaleGroups.length; group++) resizeKeyGroup(group);
 		if (screen != null) snapKeys();
 		if (overlayView != null) overlayView.postInvalidate();
-		if (target != null && target.isShown()) target.updateSize();
-		notifyLayoutEditStateChanged();
 	}
 
 	public float getPhoneKeyboardHeight(float w, float h) {
