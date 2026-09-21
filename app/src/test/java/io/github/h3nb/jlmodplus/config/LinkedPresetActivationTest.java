@@ -1,0 +1,474 @@
+/*
+ * Modified for JL-Mod Plus.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ */
+package io.github.h3nb.jlmodplus.config;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import android.content.SharedPreferences;
+
+import com.google.gson.Gson;
+
+import org.junit.Test;
+
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
+
+public class LinkedPresetActivationTest {
+	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
+	private static final int LAYOUT_TYPE = 3;
+	private static final int LAYOUT_EOF = -1;
+
+	@Test
+	public void completeConfigAndLayoutBecomesLinked() throws Exception {
+		File source = tempDir("combined-source");
+		File target = tempDir("combined-target");
+		writeConfig(source, 360, 1);
+		writeLayout(source, 3);
+		writeConfig(target, 176, 1);
+		writeLayout(target, 1);
+		FakePreferences preferences = new FakePreferences();
+
+		assertEquals(
+				LinkedPresetActivation.Result.LINKED,
+				LinkedPresetActivation.activate(preferences, target, source, "K800i"));
+
+		assertEquals(360, readConfig(target).screenWidth);
+		assertArrayEquals(readLayout(source), readLayout(target));
+		assertLinked(preferences, target, "K800i");
+	}
+
+	@Test
+	public void validConfigOnlyBecomesLinkedAndRemovesStaleLayoutFamily() throws Exception {
+		File source = tempDir("config-only-source");
+		File target = tempDir("config-only-target");
+		writeConfig(source, 360, 1);
+		writeConfig(target, 176, 1);
+		writeLayout(target, 2);
+		Files.write(new File(target, "VirtualKeyboardLayout.new").toPath(), new byte[] {1});
+		Files.write(new File(target, "VirtualKeyboardLayout.bak").toPath(), new byte[] {2});
+		FakePreferences preferences = new FakePreferences();
+
+		assertEquals(
+				LinkedPresetActivation.Result.LINKED,
+				LinkedPresetActivation.activate(preferences, target, source, "K800i"));
+
+		assertEquals(360, readConfig(target).screenWidth);
+		assertFalse(layoutFile(target).exists());
+		assertFalse(new File(target, "VirtualKeyboardLayout.new").exists());
+		assertFalse(new File(target, "VirtualKeyboardLayout.bak").exists());
+		assertLinked(preferences, target, "K800i");
+	}
+
+	@Test
+	public void customWithoutLayoutFailsSafelyAndDoesNotLink() throws Exception {
+		File source = tempDir("custom-missing-layout-source");
+		File target = tempDir("custom-missing-layout-target");
+		writeConfig(source, 360, VirtualKeyboard.TYPE_CUSTOM);
+		writeConfig(target, 176, 1);
+		byte[] previous = Files.readAllBytes(configFile(target).toPath());
+		FakePreferences preferences = new FakePreferences();
+
+		assertEquals(
+				LinkedPresetActivation.Result.FAILED_SAFE,
+				LinkedPresetActivation.activate(preferences, target, source, "K800i"));
+
+		assertArrayEquals(previous, Files.readAllBytes(configFile(target).toPath()));
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+	}
+
+	@Test
+	public void corruptLayoutFailsSafelyAndDoesNotLink() throws Exception {
+		File source = tempDir("corrupt-layout-source");
+		File target = tempDir("corrupt-layout-target");
+		writeConfig(source, 360, 1);
+		Files.write(layoutFile(source).toPath(), "corrupt".getBytes(StandardCharsets.UTF_8));
+		writeConfig(target, 176, 1);
+		byte[] previous = Files.readAllBytes(configFile(target).toPath());
+		FakePreferences preferences = new FakePreferences();
+
+		assertEquals(
+				LinkedPresetActivation.Result.FAILED_SAFE,
+				LinkedPresetActivation.activate(preferences, target, source, "K800i"));
+
+		assertArrayEquals(previous, Files.readAllBytes(configFile(target).toPath()));
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+	}
+
+	@Test
+	public void switchingLinkedK800iToN95PublishesN95ThenLinksN95() throws Exception {
+		File source = tempDir("n95-source");
+		File target = tempDir("switch-target");
+		writeConfig(source, 480, 1);
+		writeLayout(source, 3);
+		writeConfig(target, 240, 1);
+		writeLayout(target, 1);
+		FakePreferences preferences = linked(target, "K800i");
+
+		assertEquals(
+				LinkedPresetActivation.Result.LINKED,
+				LinkedPresetActivation.activate(preferences, target, source, "N95"));
+
+		assertEquals(480, readConfig(target).screenWidth);
+		assertArrayEquals(readLayout(source), readLayout(target));
+		assertLinked(preferences, target, "N95");
+	}
+
+	@Test
+	public void clearMetadataFailureBlocksSyncAndLeavesFilesystemUntouched() throws Exception {
+		File source = tempDir("clear-fail-source");
+		File target = tempDir("clear-fail-target");
+		writeConfig(source, 480, 1);
+		writeConfig(target, 240, 1);
+		byte[] previous = Files.readAllBytes(configFile(target).toPath());
+		FakePreferences preferences = linked(target, "K800i");
+		preferences.failCommit(2);
+
+		assertEquals(
+				LinkedPresetActivation.Result.FAILED_SAFE,
+				LinkedPresetActivation.activate(preferences, target, source, "N95"));
+
+		assertArrayEquals(previous, Files.readAllBytes(configFile(target).toPath()));
+		assertLinked(preferences, target, "K800i");
+	}
+
+	@Test
+	public void syncFailureRecoversOldSnapshotAndRestoresPreviousAssociation() throws Exception {
+		File source = tempDir("sync-fail-source");
+		File target = tempDir("sync-fail-target");
+		writeConfig(source, 480, VirtualKeyboard.TYPE_CUSTOM);
+		writeConfig(target, 240, 1);
+		writeLayout(target, 2);
+		byte[] previousConfig = Files.readAllBytes(configFile(target).toPath());
+		byte[] previousLayout = readLayout(target);
+		FakePreferences preferences = linked(target, "K800i");
+
+		assertEquals(
+				LinkedPresetActivation.Result.FAILED_SAFE,
+				LinkedPresetActivation.activate(preferences, target, source, "N95"));
+
+		assertArrayEquals(previousConfig, Files.readAllBytes(configFile(target).toPath()));
+		assertArrayEquals(previousLayout, readLayout(target));
+		assertLinked(preferences, target, "K800i");
+	}
+
+	@Test
+	public void failedRecoveryReturnsUnsafeWithoutRestoringPreviousLink() throws Exception {
+		File source = tempDir("unsafe-source");
+		File target = tempDir("unsafe-target");
+		writeConfig(source, 480, 1);
+		writeConfig(target, 240, 1);
+		File rollback = new File(target, ".preset-sync.rollback");
+		assertTrue(rollback.mkdir());
+		assertTrue(new File(rollback, "config.json.present").createNewFile());
+		assertTrue(new File(rollback, ".ready").createNewFile());
+		FakePreferences preferences = linked(target, "K800i");
+
+		assertEquals(
+				LinkedPresetActivation.Result.FAILED_UNSAFE,
+				LinkedPresetActivation.activate(preferences, target, source, "N95"));
+
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+	}
+
+	@Test
+	public void linkFailureKeepsNewSnapshotAsCustomAndNeverRestoresOldLink() throws Exception {
+		File source = tempDir("link-fail-source");
+		File target = tempDir("link-fail-target");
+		writeConfig(source, 480, 1);
+		writeConfig(target, 240, 1);
+		FakePreferences preferences = linked(target, "K800i");
+		preferences.failCommit(3); // fixture #1, clear #2, linkTo(N95) #3.
+
+		assertEquals(
+				LinkedPresetActivation.Result.APPLIED_CUSTOM,
+				LinkedPresetActivation.activate(preferences, target, source, "N95"));
+
+		assertEquals(480, readConfig(target).screenWidth);
+		PresetLinkage linkage = new PresetLinkage(preferences, target);
+		assertFalse(linkage.isLinked());
+		assertEquals("N95", linkage.getOrigin());
+	}
+
+	@Test
+	public void newMidletValidCompleteDefaultCanActivateLinked() throws Exception {
+		File source = tempDir("default-source");
+		File target = tempDir("new-midlet");
+		writeConfig(source, 360, 1);
+		FakePreferences preferences = new FakePreferences();
+
+		assertEquals(
+				LinkedPresetActivation.Result.LINKED,
+				LinkedPresetActivation.activate(preferences, target, source, "Default"));
+
+		assertEquals(360, readConfig(target).screenWidth);
+		assertLinked(preferences, target, "Default");
+	}
+
+	@Test
+	public void invalidCustomDefaultFallsBackSafelyWithoutLiveLink() throws Exception {
+		File source = tempDir("invalid-default-source");
+		File target = tempDir("invalid-default-target");
+		writeConfig(source, 360, VirtualKeyboard.TYPE_CUSTOM);
+		FakePreferences preferences = new FakePreferences();
+
+		assertEquals(
+				LinkedPresetActivation.Result.FAILED_SAFE,
+				LinkedPresetActivation.activate(preferences, target, source, "Default"));
+
+		assertFalse(configFile(target).exists());
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+		assertNull(new PresetLinkage(preferences, target).getOrigin());
+	}
+
+	@Test
+	public void completeSnapshotWithoutMarkerRemainsCustomOnNextPreload() throws Exception {
+		File profilesRoot = tempDir("profiles-root");
+		File source = new File(profilesRoot, "K800i");
+		File target = tempDir("materialized-custom");
+		assertTrue(source.mkdir());
+		writeConfig(source, 360, 1);
+		ProfilesManager.syncSnapshot(source, target);
+		FakePreferences preferences = new FakePreferences();
+
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profilesRoot));
+
+		PresetLinkage linkage = new PresetLinkage(preferences, target);
+		assertFalse(linkage.isLinked());
+		assertNull(linkage.getOrigin());
+		assertEquals(360, readConfig(target).screenWidth);
+		assertTrue(ConfigActivity.hasExistingSetupAfterRecovery(target, null, false));
+	}
+
+	private static File tempDir(String suffix) throws Exception {
+		File dir = Files.createTempDirectory("jlmod-activation-" + suffix).toFile();
+		dir.deleteOnExit();
+		return dir;
+	}
+
+	private static void writeConfig(File dir, int screenWidth, int vkType) throws Exception {
+		if (!dir.isDirectory()) assertTrue(dir.mkdirs());
+		ProfileModel model = new ProfileModel();
+		model.version = ProfileModel.VERSION;
+		model.screenWidth = screenWidth;
+		model.vkType = vkType;
+		model.systemProperties = "";
+		Files.write(configFile(dir).toPath(),
+				new Gson().toJson(model).getBytes(StandardCharsets.UTF_8));
+	}
+
+	private static ProfileModel readConfig(File dir) throws Exception {
+		return new Gson().fromJson(
+				new String(Files.readAllBytes(configFile(dir).toPath()), StandardCharsets.UTF_8),
+				ProfileModel.class);
+	}
+
+	private static void writeLayout(File dir, int type) throws Exception {
+		if (!dir.isDirectory()) assertTrue(dir.mkdirs());
+		try (DataOutputStream out = new DataOutputStream(new FileOutputStream(layoutFile(dir)))) {
+			out.writeInt(LAYOUT_SIGNATURE);
+			out.writeInt(1);
+			out.writeInt(LAYOUT_TYPE);
+			out.writeInt(1);
+			out.writeByte(type);
+			out.writeInt(LAYOUT_EOF);
+			out.writeInt(0);
+		}
+	}
+
+	private static byte[] readLayout(File dir) throws Exception {
+		return Files.readAllBytes(layoutFile(dir).toPath());
+	}
+
+	private static File configFile(File dir) {
+		return new File(dir, Config.MIDLET_CONFIG_FILE);
+	}
+
+	private static File layoutFile(File dir) {
+		return new File(dir, Config.MIDLET_KEY_LAYOUT_FILE);
+	}
+
+	private static FakePreferences linked(File target, String origin) {
+		FakePreferences preferences = new FakePreferences();
+		assertTrue(preferences.edit()
+				.putString(PresetLinkage.originPreferenceKey(target), origin)
+				.putBoolean(PresetLinkage.linkedPreferenceKey(target), true)
+				.commit());
+		return preferences;
+	}
+
+	private static void assertLinked(FakePreferences preferences, File target, String origin) {
+		PresetLinkage linkage = new PresetLinkage(preferences, target);
+		assertTrue(linkage.isLinked());
+		assertEquals(origin, linkage.getOrigin());
+	}
+
+	private static final class FakePreferences implements SharedPreferences {
+		private final Map<String, Object> values = new HashMap<>();
+		private final Set<Integer> failedCommits = new HashSet<>();
+		private int commitCount;
+
+		void failCommit(int number) {
+			failedCommits.add(number);
+		}
+
+		@Override
+		public Map<String, ?> getAll() {
+			return Collections.unmodifiableMap(new HashMap<>(values));
+		}
+
+		@Override
+		public String getString(String key, String defValue) {
+			Object value = values.get(key);
+			return value instanceof String ? (String) value : defValue;
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public Set<String> getStringSet(String key, Set<String> defValues) {
+			Object value = values.get(key);
+			return value instanceof Set ? new HashSet<>((Set<String>) value) : defValues;
+		}
+
+		@Override
+		public int getInt(String key, int defValue) {
+			Object value = values.get(key);
+			return value instanceof Integer ? (Integer) value : defValue;
+		}
+
+		@Override
+		public long getLong(String key, long defValue) {
+			Object value = values.get(key);
+			return value instanceof Long ? (Long) value : defValue;
+		}
+
+		@Override
+		public float getFloat(String key, float defValue) {
+			Object value = values.get(key);
+			return value instanceof Float ? (Float) value : defValue;
+		}
+
+		@Override
+		public boolean getBoolean(String key, boolean defValue) {
+			Object value = values.get(key);
+			return value instanceof Boolean ? (Boolean) value : defValue;
+		}
+
+		@Override
+		public boolean contains(String key) {
+			return values.containsKey(key);
+		}
+
+		@Override
+		public Editor edit() {
+			return new FakeEditor();
+		}
+
+		@Override
+		public void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+		}
+
+		@Override
+		public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+		}
+
+		private final class FakeEditor implements Editor {
+			private final Map<String, Object> updates = new HashMap<>();
+			private final Set<String> removals = new HashSet<>();
+			private boolean clear;
+
+			@Override
+			public Editor putString(String key, String value) {
+				updates.put(key, value);
+				removals.remove(key);
+				return this;
+			}
+
+			@Override
+			public Editor putStringSet(String key, Set<String> value) {
+				updates.put(key, value == null ? null : new HashSet<>(value));
+				removals.remove(key);
+				return this;
+			}
+
+			@Override
+			public Editor putInt(String key, int value) {
+				updates.put(key, value);
+				removals.remove(key);
+				return this;
+			}
+
+			@Override
+			public Editor putLong(String key, long value) {
+				updates.put(key, value);
+				removals.remove(key);
+				return this;
+			}
+
+			@Override
+			public Editor putFloat(String key, float value) {
+				updates.put(key, value);
+				removals.remove(key);
+				return this;
+			}
+
+			@Override
+			public Editor putBoolean(String key, boolean value) {
+				updates.put(key, value);
+				removals.remove(key);
+				return this;
+			}
+
+			@Override
+			public Editor remove(String key) {
+				removals.add(key);
+				updates.remove(key);
+				return this;
+			}
+
+			@Override
+			public Editor clear() {
+				clear = true;
+				return this;
+			}
+
+			@Override
+			public boolean commit() {
+				applyChanges();
+				commitCount++;
+				return !failedCommits.contains(commitCount);
+			}
+
+			@Override
+			public void apply() {
+				applyChanges();
+			}
+
+			private void applyChanges() {
+				if (clear) values.clear();
+				for (String key : removals) values.remove(key);
+				for (Map.Entry<String, Object> entry : updates.entrySet()) {
+					if (entry.getValue() == null) values.remove(entry.getKey());
+					else values.put(entry.getKey(), entry.getValue());
+				}
+			}
+		}
+	}
+}
