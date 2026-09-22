@@ -152,6 +152,21 @@ public class VirtualKeyboardEditTransactionTest {
 				result.getPresetUpdateOutcome());
 	}
 
+
+	@Test
+	public void oneShotTemplateFailureRestoresBaselineAndSecondAttemptCanRetry() {
+		VirtualKeyboardLayoutEditState baseline = edit(snapshot(3.0f));
+		VirtualKeyboardEditTransaction first = new VirtualKeyboardEditTransaction(baseline);
+
+		assertFalse(first.commitSave(() -> false));
+		assertSame(baseline, first.discard());
+
+		VirtualKeyboardEditTransaction retry = new VirtualKeyboardEditTransaction(baseline);
+		assertTrue(retry.commitSave(() -> true));
+		assertFalse(retry.isActive());
+	}
+
+
 	@Test
 	public void dormantCustomStateParticipatesInSingleLayoutTransactionEquality() {
 		VirtualKeyboardLayoutState dormant = customState(

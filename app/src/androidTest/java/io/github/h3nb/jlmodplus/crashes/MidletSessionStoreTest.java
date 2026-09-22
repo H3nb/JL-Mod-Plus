@@ -33,25 +33,47 @@ public class MidletSessionStoreTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         try {
             MidletSessionStore.clear(context);
-            MidletSessionStore.markPending(context, "/data/jlmod/converted/demo", "Demo MIDlet");
+            MidletSessionStore.markPending(
+                    context, "/data/jlmod/converted/demo", "Demo MIDlet", 73L);
 
             MidletSessionStore.State pending = MidletSessionStore.read(context);
             assertNotNull(pending);
             assertEquals("/data/jlmod/converted/demo", pending.getAppPath());
             assertEquals("Demo MIDlet", pending.getAppName());
             assertNull(pending.getMainClass());
+            assertEquals(73L, pending.getAppId());
 
             MidletSessionStore.markStarted(
                     context,
                     pending.getAppPath(),
                     pending.getAppName(),
-                    "com.example.DemoMidlet");
+                    "com.example.DemoMidlet",
+                    pending.getAppId());
             MidletSessionStore.State started = MidletSessionStore.read(context);
             assertNotNull(started);
             assertEquals("com.example.DemoMidlet", started.getMainClass());
+            assertEquals(73L, started.getAppId());
         } finally {
             MidletSessionStore.clear(context);
         }
         assertNull(MidletSessionStore.read(context));
     }
+
+    @Test
+    public void legacyMarkerWithoutAppIdRemainsExplicitlyUnknown() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        try {
+            MidletSessionStore.clear(context);
+            MidletSessionStore.markPending(
+                    context, "/data/jlmod/converted/legacy", "Legacy MIDlet");
+
+            MidletSessionStore.State state = MidletSessionStore.read(context);
+
+            assertNotNull(state);
+            assertEquals(0L, state.getAppId());
+        } finally {
+            MidletSessionStore.clear(context);
+        }
+    }
+
 }
