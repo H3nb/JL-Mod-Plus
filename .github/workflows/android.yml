@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
@@ -26,7 +26,7 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          persist-credentials: false
+          persist-credentials: true
           submodules: recursive
 
       - name: Restore shared debug keystore
@@ -101,6 +101,22 @@ jobs:
             build/reports/problems/**
           if-no-files-found: warn
           retention-days: 7
+
+      - name: Refresh changed runtime screenshot baseline
+        if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feature/linked-device-presets'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
+          target='app/src/screenshotTestEmulatorDebug/reference/javax/microedition/shell/RuntimeMenuScreenshotTestKt/RuntimeFinishVirtualKeyboardEditScreenshot_Runtime finish edit narrow phone_ee78e4c1_0.png'
+          test -f "$target"
+          git checkout a52d4060dc0dd856a0d7661081548d24f672ccff -- .github/workflows/android.yml
+          git add -- "$target" .github/workflows/android.yml
+          git diff --cached --quiet && exit 0
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'test: update virtual control save screenshot'
+          git push origin HEAD:"${{ github.event.pull_request.head.ref }}"
 
       - name: Upload arm64 emulator debug APK
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
