@@ -1793,6 +1793,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 							}
 						}
 					}
+				}
 			}
 
 			if (!sourceReady) {
