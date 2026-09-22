@@ -526,6 +526,32 @@ public class ProfilesManager {
 		}
 	}
 
+	/**
+	 * Main-process runtime preparation for the keyboard artifact family.
+	 *
+	 * <p>This is deliberately separate from parsing. Runtime readers in {@code :midlet} consume only
+	 * the already-prepared committed file and never recover {@code .new/.bak} themselves.</p>
+	 */
+	static void prepareRuntimeLayout(@NonNull File targetDir) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			prepareLocalPublicationTarget(targetDir, true);
+		}
+	}
+
+	/**
+	 * Publishes one already-encoded runtime layout through the same recoverable local transaction
+	 * used by preset application. No independent VirtualKeyboard publication protocol is involved.
+	 */
+	static void publishRuntimeLayout(@NonNull File targetDir, @NonNull byte[] layoutPayload)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			prepareLocalPublicationTarget(targetDir, true);
+			publishLocalSnapshotArtifacts(
+					targetDir, targetDir, null,
+					false, true, true, false, null, layoutPayload);
+		}
+	}
+
 	private static void publishLocalSnapshotArtifacts(
 			@NonNull File sourceDir,
 			@NonNull File targetDir,
@@ -535,6 +561,21 @@ public class ProfilesManager {
 			boolean sourceHasLayout,
 			boolean verifyCompleteSource,
 			@Nullable LocalPublicationHook hook) throws IOException {
+		publishLocalSnapshotArtifacts(
+				sourceDir, targetDir, sourceConfig, config, keyboard, sourceHasLayout,
+				verifyCompleteSource, hook, null);
+	}
+
+	private static void publishLocalSnapshotArtifacts(
+			@NonNull File sourceDir,
+			@NonNull File targetDir,
+			@Nullable ProfileModel sourceConfig,
+			boolean config,
+			boolean keyboard,
+			boolean sourceHasLayout,
+			boolean verifyCompleteSource,
+			@Nullable LocalPublicationHook hook,
+			@Nullable byte[] layoutPayload) throws IOException {
 		File staging = new File(targetDir, PRESET_SYNC_STAGING_DIR);
 		File rollback = new File(targetDir, PRESET_SYNC_ROLLBACK_DIR);
 		File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
@@ -576,11 +617,18 @@ public class ProfilesManager {
 				}
 			}
 			if (keyboard && sourceHasLayout) {
-				File sourceLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
-				if (!sourceLayout.isFile()) {
-					throw new IOException("Profile keyboard layout changed while applying");
+				if (layoutPayload != null) {
+					try (FileOutputStream output = new FileOutputStream(stagedLayout)) {
+						output.write(layoutPayload);
+						output.getFD().sync();
+					}
+				} else {
+					File sourceLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+					if (!sourceLayout.isFile()) {
+						throw new IOException("Profile keyboard layout changed while applying");
+					}
+					FileUtils.copyFileUsingChannel(sourceLayout, stagedLayout);
 				}
-				FileUtils.copyFileUsingChannel(sourceLayout, stagedLayout);
 				String layoutError = KeyboardLayoutValidator.validate(stagedLayout);
 				if (layoutError != null) {
 					throw new IOException(

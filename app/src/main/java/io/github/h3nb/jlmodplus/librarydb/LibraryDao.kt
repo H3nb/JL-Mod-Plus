@@ -114,6 +114,13 @@ abstract class LibraryDao {
     @Query("SELECT * FROM apps WHERE storage_key = :storageKey LIMIT 1")
     abstract suspend fun getAppByStorageKey(storageKey: String): LibraryAppEntity?
 
+    /**
+     * Provider-side identity lookup. Runtime authority calls execute on a Binder/provider worker
+     * thread, so this avoids coupling the synchronous IPC boundary to coroutine Activity state.
+     */
+    @Query("SELECT * FROM apps WHERE storage_key = :storageKey LIMIT 1")
+    abstract fun getAppByStorageKeyNow(storageKey: String): LibraryAppEntity?
+
     @Query("SELECT * FROM collections WHERE id = :id LIMIT 1")
     abstract suspend fun getCollection(id: Long): LibraryCollectionEntity?
 
