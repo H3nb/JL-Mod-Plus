@@ -21,6 +21,8 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -246,6 +248,53 @@ public class ProfilesManagerPresetSaveRecoveryTest {
 	}
 
 	@Test
+	public void armedSourceRecoveryRestoresAllOwnedArtifactsBeforeDisarm() throws Exception {
+		File target = tempDir("ready-all-source-artifacts");
+		writeConfig(target, 176);
+		byte[] oldConfig = readConfigBytes(target);
+		byte[] oldLegacy = "<old-legacy/>".getBytes(StandardCharsets.UTF_8);
+		Files.write(new File(target, "config.xml").toPath(), oldLegacy);
+		writeLayout(target, 1);
+		byte[] oldLayout = readLayout(target);
+		createRollback(target, oldConfig, oldLegacy, oldLayout, true, false);
+
+		writeConfig(target, 999);
+		Files.write(new File(target, "config.xml").toPath(),
+				"<new-legacy/>".getBytes(StandardCharsets.UTF_8));
+		writeLayout(target, 6);
+
+		ProfilesManager.recoverInterruptedPresetSave(target);
+
+		assertArrayEquals(oldConfig, readConfigBytes(target));
+		assertArrayEquals(oldLegacy, Files.readAllBytes(new File(target, "config.xml").toPath()));
+		assertArrayEquals(oldLayout, readLayout(target));
+		assertFalse(saveRollback(target).exists());
+	}
+
+	@Test
+	public void synchronousPresetSaveRollbackUsesAuthoritativeRecoveryRule() throws Exception {
+		File target = tempDir("synchronous-source-rollback");
+		writeConfig(target, 176);
+		writeLayout(target, 1);
+		byte[] oldConfig = readConfigBytes(target);
+		byte[] oldLayout = readLayout(target);
+
+		Object transaction = beginPresetSaveReflectively(target);
+		File rollback = saveRollback(target);
+		assertTrue(new File(rollback, ProfilesManager.PRESET_SAVE_READY_MARKER).isFile());
+
+		writeConfig(target, 999);
+		writeLayout(target, 6);
+		IOException publicationFailure = new IOException("injected publication failure");
+		invokePresetSaveRollback(transaction, publicationFailure);
+
+		assertArrayEquals(oldConfig, readConfigBytes(target));
+		assertArrayEquals(oldLayout, readLayout(target));
+		assertFalse(saveRollback(target).exists());
+		assertEquals(0, publicationFailure.getSuppressed().length);
+	}
+
+	@Test
 	public void recoveryFailureLeavesEvidenceAndInspectionFailsClosed() throws Exception {
 		File target = tempDir("recovery-failure");
 		writeConfig(target, 999);
@@ -412,6 +461,36 @@ public class ProfilesManagerPresetSaveRecoveryTest {
 		assertEquals("K800i", new PresetLinkage(preferences, target).getOrigin());
 		assertTrue(new PresetLinkage(preferences, target).isLinked());
 		assertTrue(saveRollback(source).isDirectory());
+	}
+
+	private static Object beginPresetSaveReflectively(File target) throws Exception {
+		Method method = ProfilesManager.class.getDeclaredMethod(
+				"beginPresetSave", File.class, boolean.class);
+		method.setAccessible(true);
+		try {
+			return method.invoke(null, target, false);
+		} catch (InvocationTargetException failure) {
+			throw rethrowReflectionCause(failure);
+		}
+	}
+
+	private static void invokePresetSaveRollback(Object transaction, Throwable failure)
+			throws Exception {
+		Method method = transaction.getClass().getDeclaredMethod("rollback", Throwable.class);
+		method.setAccessible(true);
+		try {
+			method.invoke(transaction, failure);
+		} catch (InvocationTargetException invocationFailure) {
+			throw rethrowReflectionCause(invocationFailure);
+		}
+	}
+
+	private static Exception rethrowReflectionCause(InvocationTargetException failure)
+			throws Exception {
+		Throwable cause = failure.getCause();
+		if (cause instanceof Exception) return (Exception) cause;
+		if (cause instanceof Error) throw (Error) cause;
+		return failure;
 	}
 
 	private static void createRollback(
