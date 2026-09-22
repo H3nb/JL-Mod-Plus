@@ -138,7 +138,13 @@
     <string name="preset_keyboard_part">Tata Letak Kontrol Virtual</string>
     <string name="preset_name">Nama</string>
     <string name="preset_include_keyboard_layout">Sertakan Tata Letak Kontrol Virtual</string>
-    <string name="preset_save_help">Dapat digunakan kembali dengan MIDlet lain. Perubahan pada MIDlet ini tidak akan mengubah prasetel secara otomatis.</string>
+    <string name="preset_save_help">Menyimpan konfigurasi MIDlet saat ini beserta tata letak kontrol virtual saat tersedia. MIDlet ini akan mengikuti prasetel baru setelah disimpan.</string>
+    <string name="preset_following">Mengikuti %1$s</string>
+    <string name="preset_update">Perbarui %1$s</string>
+    <string name="preset_update_title">Perbarui %1$s?</string>
+    <string name="preset_update_summary">Ganti prasetel ini dengan pengaturan MIDlet dan tata letak kontrol virtual saat ini. MIDlet lain yang mengikuti %1$s akan menerima pembaruan saat berikutnya dibuka atau dijalankan.</string>
+    <string name="preset_update_confirm">Perbarui</string>
+    <string name="preset_saved_unlinked_warning">Prasetel tersimpan, tetapi MIDlet ini tidak dapat ditautkan ke prasetel tersebut.</string>
     <string name="preset_discard_changes_title">Buang Perubahan?</string>
     <string name="preset_discard_changes_summary">Draf prasetel ini belum disimpan.</string>
     <string name="preset_continue_editing">Lanjut Mengedit</string>

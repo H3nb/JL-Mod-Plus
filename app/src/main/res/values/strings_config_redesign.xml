@@ -132,7 +132,13 @@
     <string name="preset_keyboard_part">Virtual Controls Layout</string>
     <string name="preset_name">Name</string>
     <string name="preset_include_keyboard_layout">Include Virtual Controls Layout</string>
-    <string name="preset_save_help">Can be reused with other MIDlets. Changes to this MIDlet won’t automatically change the preset.</string>
+    <string name="preset_save_help">Saves the current MIDlet configuration and its current virtual-controls layout when present. This MIDlet will follow the new preset after saving.</string>
+    <string name="preset_following">Following %1$s</string>
+    <string name="preset_update">Update %1$s</string>
+    <string name="preset_update_title">Update %1$s?</string>
+    <string name="preset_update_summary">Replace this preset with the current MIDlet settings and virtual-controls layout. Other MIDlets following %1$s will receive the update when they next open or run.</string>
+    <string name="preset_update_confirm">Update</string>
+    <string name="preset_saved_unlinked_warning">Preset saved, but this MIDlet could not be linked to it.</string>
     <string name="preset_discard_changes_title">Discard Changes?</string>
     <string name="preset_discard_changes_summary">This preset draft has not been saved.</string>
     <string name="preset_continue_editing">Continue Editing</string>

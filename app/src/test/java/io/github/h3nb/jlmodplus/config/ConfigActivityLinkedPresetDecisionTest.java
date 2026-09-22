@@ -163,6 +163,81 @@ public class ConfigActivityLinkedPresetDecisionTest {
 				false, "K800i", false, null));
 	}
 
+	@Test
+	public void linkedWithoutDraftChangeDoesNotOfferUpdate() {
+		ProfileModel persisted = model(240);
+		ConfigFormState draft = ConfigFormState.fromProfile(persisted, persisted.systemProperties);
+		ConfigUiState.ProfileStatus status = ConfigUiState.ProfileStatus.active("K800i", null);
+
+		boolean divergent = ConfigActivity.hasEffectiveDraftDivergence(
+				persisted, draft, ProfileConfigMatcher.copyConfig(persisted));
+
+		assertFalse(divergent);
+		assertNull(ConfigActivity.resolveUpdatePresetName(false, status, true, divergent));
+	}
+
+	@Test
+	public void linkedEffectiveDraftChangeOffersUpdate() {
+		ProfileModel persisted = model(240);
+		ConfigFormState draft = ConfigFormState.fromProfile(persisted, persisted.systemProperties)
+				.toBuilder().screenWidth("360").build();
+		ConfigUiState.ProfileStatus status = ConfigUiState.ProfileStatus.active("K800i", null);
+
+		boolean divergent = ConfigActivity.hasEffectiveDraftDivergence(
+				persisted, draft, ProfileConfigMatcher.copyConfig(persisted));
+
+		assertTrue(divergent);
+		assertEquals("K800i",
+				ConfigActivity.resolveUpdatePresetName(false, status, true, divergent));
+	}
+
+	@Test
+	public void linkedDraftChangedThenRestoredHidesUpdateAgain() {
+		ProfileModel persisted = model(240);
+		ConfigFormState changed = ConfigFormState.fromProfile(persisted, persisted.systemProperties)
+				.toBuilder().screenWidth("360").build();
+		ConfigFormState restored = changed.toBuilder().screenWidth("240").build();
+		ConfigUiState.ProfileStatus status = ConfigUiState.ProfileStatus.active("K800i", null);
+
+		boolean divergent = ConfigActivity.hasEffectiveDraftDivergence(
+				persisted, restored, ProfileConfigMatcher.copyConfig(persisted));
+
+		assertFalse(divergent);
+		assertNull(ConfigActivity.resolveUpdatePresetName(false, status, true, divergent));
+	}
+
+	@Test
+	public void customBasedOnExistingSourceOffersUpdateWithoutDraftDivergence() {
+		ConfigUiState.ProfileStatus status = ConfigUiState.ProfileStatus.modified("K800i", null);
+
+		assertEquals("K800i",
+				ConfigActivity.resolveUpdatePresetName(false, status, true, false));
+	}
+
+	@Test
+	public void customWithoutSourceDoesNotOfferUpdate() {
+		ConfigUiState.ProfileStatus status = ConfigUiState.ProfileStatus.custom(null);
+
+		assertNull(ConfigActivity.resolveUpdatePresetName(false, status, false, true));
+	}
+
+	@Test
+	public void missingNamedSourceSuppressesUpdateForActiveOrModifiedState() {
+		assertNull(ConfigActivity.resolveUpdatePresetName(
+				false, ConfigUiState.ProfileStatus.active("K800i", null), false, true));
+		assertNull(ConfigActivity.resolveUpdatePresetName(
+				false, ConfigUiState.ProfileStatus.modified("K800i", null), false, false));
+	}
+
+	private static ProfileModel model(int width) {
+		ProfileModel model = new ProfileModel();
+		model.version = ProfileModel.VERSION;
+		model.screenWidth = width;
+		model.screenHeight = 320;
+		model.systemProperties = "";
+		return model;
+	}
+
 	private static ProfilesManager.ProfileInfo info(
 			ProfilesManager.CapabilityStatus settings,
 			ProfilesManager.CapabilityStatus keyboard) {

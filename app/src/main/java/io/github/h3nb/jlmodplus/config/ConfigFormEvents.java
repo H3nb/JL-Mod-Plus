@@ -60,8 +60,13 @@ public interface ConfigFormEvents {
 		return true;
 	}
 
-	/** Saves application settings and optionally the separate virtual keyboard layout artifact. */
-	default boolean onSaveTemplate(@NonNull String name, boolean includeKeyboard) {
+	/** Saves the current complete MIDlet snapshot as a new linked whole-device preset. */
+	default boolean onSaveTemplate(@NonNull String name) {
+		return true;
+	}
+
+	/** Replaces one existing named preset with the current complete MIDlet snapshot. */
+	default boolean onUpdatePreset(@NonNull String name) {
 		return true;
 	}
 

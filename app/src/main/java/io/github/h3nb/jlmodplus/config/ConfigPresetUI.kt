@@ -76,6 +76,7 @@ internal fun PresetSummary(
     onSavePreset: () -> Unit,
     events: ConfigFormEvents,
 ) {
+    var updateConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
     ConfigSection(
         title = stringResource(R.string.presets),
         highlighted = true,
@@ -114,8 +115,22 @@ internal fun PresetSummary(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            PresetActionButtons(onUsePreset = onUsePreset, onSavePreset = onSavePreset)
+            PresetActionButtons(
+                onUsePreset = onUsePreset,
+                onSavePreset = onSavePreset,
+                updatePresetName = state.updatePresetName,
+                onUpdatePreset = { updateConfirmation = it },
+            )
         }
+    }
+    updateConfirmation?.let { name ->
+        UpdatePresetDialog(
+            name = name,
+            onDismissRequest = { updateConfirmation = null },
+            onConfirm = {
+                if (events.onUpdatePreset(name)) updateConfirmation = null
+            },
+        )
     }
 }
 
@@ -123,18 +138,33 @@ internal fun PresetSummary(
 private fun PresetActionButtons(
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
+    updatePresetName: String?,
+    onUpdatePreset: (String) -> Unit,
 ) {
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val compactActions = maxWidth < 440.dp
-        if (compactActions) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PresetPrimaryButton(onUsePreset, Modifier.fillMaxWidth())
-                PresetSecondaryButton(onSavePreset, Modifier.fillMaxWidth())
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val compactActions = maxWidth < 440.dp
+            if (compactActions) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PresetPrimaryButton(onUsePreset, Modifier.fillMaxWidth())
+                    PresetSecondaryButton(onSavePreset, Modifier.fillMaxWidth())
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    PresetPrimaryButton(onUsePreset, Modifier.weight(1f))
+                    PresetSecondaryButton(onSavePreset, Modifier.weight(1f))
+                }
             }
-        } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                PresetPrimaryButton(onUsePreset, Modifier.weight(1f))
-                PresetSecondaryButton(onSavePreset, Modifier.weight(1f))
+        }
+        updatePresetName?.let { name ->
+            OutlinedButton(
+                onClick = { onUpdatePreset(name) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .testTag("preset_update_action"),
+            ) {
+                PresetActionLabel(R.string.preset_update, name)
             }
         }
     }
@@ -165,9 +195,9 @@ private fun PresetSecondaryButton(onClick: () -> Unit, modifier: Modifier) {
 }
 
 @Composable
-private fun PresetActionLabel(label: Int) {
+private fun PresetActionLabel(label: Int, vararg formatArgs: Any) {
     Text(
-        text = stringResource(label),
+        text = stringResource(label, *formatArgs),
         style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.SemiBold,
         maxLines = 2,
@@ -208,10 +238,9 @@ internal fun PresetDialogs(
         SavePresetDialog(
             existingNames = state.profileNames,
             templates = state.profileTemplates,
-            hasKeyboardLayout = state.hasKeyboardLayout,
             onDismissRequest = onSaveDismiss,
-            onConfirm = { name, includeKeyboard ->
-                if (events.onSaveTemplate(name, includeKeyboard)) onSaveDismiss()
+            onConfirm = { name ->
+                if (events.onSaveTemplate(name)) onSaveDismiss()
             },
         )
     }
@@ -229,12 +258,13 @@ private fun setupSummary(form: ConfigFormState): String {
 }
 
 @Composable
-private fun provenanceSummary(status: ConfigUiState.ProfileStatus): String? =
-    if (status.modified && status.sourceProfile != null) {
+private fun provenanceSummary(status: ConfigUiState.ProfileStatus): String? = when {
+    status.modified && status.sourceProfile != null ->
         stringResource(R.string.preset_based_on_modified, status.sourceProfile)
-    } else {
-        null
-    }
+    status.activeProfile != null ->
+        stringResource(R.string.preset_following, status.activeProfile)
+    else -> null
+}
 
 @Composable
 private fun presetStatusTitle(status: ConfigUiState.ProfileStatus): String = when {
@@ -524,12 +554,10 @@ private fun PresetPickerRow(
 private fun SavePresetDialog(
     existingNames: List<String>,
     templates: List<ConfigUiState.ProfileTemplate>,
-    hasKeyboardLayout: Boolean,
     onDismissRequest: () -> Unit,
-    onConfirm: (String, Boolean) -> Unit,
+    onConfirm: (String) -> Unit,
 ) {
     var value by rememberSaveable { mutableStateOf("") }
-    var includeKeyboard by rememberSaveable(hasKeyboardLayout) { mutableStateOf(hasKeyboardLayout) }
     val trimmed = value.trim()
     val duplicate = existingNames.any { it.equals(trimmed, ignoreCase = true) } ||
         templates.any { it.name.equals(trimmed, ignoreCase = true) }
@@ -558,14 +586,6 @@ private fun SavePresetDialog(
                         }
                     } else null,
                 )
-                if (hasKeyboardLayout) {
-                    ApplyPartRow(
-                        label = stringResource(R.string.preset_include_keyboard_layout),
-                        checked = includeKeyboard,
-                        onCheckedChange = { includeKeyboard = it },
-                        testTag = "preset_include_keyboard_layout",
-                    )
-                }
                 Text(
                     text = stringResource(R.string.preset_save_help),
                     style = MaterialTheme.typography.bodySmall,
@@ -579,8 +599,27 @@ private fun SavePresetDialog(
         confirmButton = {
             TextButton(
                 enabled = valid,
-                onClick = { onConfirm(trimmed, includeKeyboard) },
+                onClick = { onConfirm(trimmed) },
             ) { Text(stringResource(R.string.save)) }
+        },
+    )
+}
+
+@Composable
+private fun UpdatePresetDialog(
+    name: String,
+    onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text(stringResource(R.string.preset_update_title, name)) },
+        text = { Text(stringResource(R.string.preset_update_summary, name)) },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.preset_update_confirm)) }
         },
     )
 }

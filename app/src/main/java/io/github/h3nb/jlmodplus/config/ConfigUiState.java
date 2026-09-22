@@ -61,6 +61,9 @@ public final class ConfigUiState {
 	public final List<String> profileNames;
 	/** True when at least one connected input device exposes a controller source. */
 	public final boolean controllerAvailable;
+	/** Existing named source eligible for explicit whole-device Update, or null when unavailable. */
+	@Nullable
+	public final String updatePresetName;
 
 	public ConfigUiState(
 			@NonNull ConfigFormState form,
@@ -186,6 +189,27 @@ public final class ConfigUiState {
 			@NonNull List<String> profileNames,
 			@NonNull List<ProfileTemplate> keyboardLayouts,
 			boolean controllerAvailable) {
+		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
+				profileStatus, profileTemplates, timingControlsEnabled, hasKeyboardLayout,
+				profileNames, keyboardLayouts, controllerAvailable, null);
+	}
+
+	public ConfigUiState(
+			@NonNull ConfigFormState form,
+			@NonNull List<Size> screenPresets,
+			@NonNull List<FontPreset> fontPresets,
+			@NonNull List<String> skins,
+			@NonNull List<String> soundBanks,
+			@NonNull List<ShaderInfo> shaders,
+			@NonNull List<Size> removableScreenPresets,
+			@NonNull ProfileStatus profileStatus,
+			@NonNull List<ProfileTemplate> profileTemplates,
+			boolean timingControlsEnabled,
+			boolean hasKeyboardLayout,
+			@NonNull List<String> profileNames,
+			@NonNull List<ProfileTemplate> keyboardLayouts,
+			boolean controllerAvailable,
+			@Nullable String updatePresetName) {
 		this.form = form;
 		this.screenPresets = immutableCopy(screenPresets);
 		this.removableScreenPresets = immutableCopy(removableScreenPresets);
@@ -200,6 +224,7 @@ public final class ConfigUiState {
 		this.hasKeyboardLayout = hasKeyboardLayout;
 		this.profileNames = immutableCopy(profileNames);
 		this.controllerAvailable = controllerAvailable;
+		this.updatePresetName = updatePresetName;
 	}
 
 	private static <T> List<T> immutableCopy(List<T> values) {

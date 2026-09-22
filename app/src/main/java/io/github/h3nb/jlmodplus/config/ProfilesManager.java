@@ -165,14 +165,36 @@ public class ProfilesManager {
 	/** Returns true when a directory or a saved layout already occupies this collection name. */
 	static boolean profileNameExists(@Nullable String rawName) {
 		if (!Profile.isValidName(rawName)) return false;
-		String name = rawName.trim();
-		for (Profile profile : getProfiles()) {
-			if (profile.getName().equalsIgnoreCase(name)) return true;
+		synchronized (PRESET_SOURCE_LOCK) {
+		try {
+			return profileNameExistsLocked(new File(Config.getProfilesDir()), rawName.trim());
+		} catch (IOException | RuntimeException recoveryFailure) {
+			// A name with unsafe recovery evidence is occupied until that evidence can be resolved.
+			return true;
 		}
-		File root = new File(Config.getProfilesDir());
-		return new File(root, name).exists()
-				|| new File(root, name + Config.MIDLET_CONFIG_FILE).exists()
-				|| new File(root, name + Config.MIDLET_KEY_LAYOUT_FILE).exists();
+		}
+	}
+
+	private static boolean profileNameExistsLocked(@NonNull File root, @NonNull String name)
+			throws IOException {
+		File[] entries = root.listFiles();
+		if (entries == null) return false;
+		String flatConfig = name + Config.MIDLET_CONFIG_FILE;
+		String flatLayout = name + Config.MIDLET_KEY_LAYOUT_FILE;
+		for (File entry : entries) {
+			String entryName = entry.getName();
+			if (entry.isDirectory() && entryName.equalsIgnoreCase(name)) {
+				recoverInterruptedPresetSave(entry);
+				if (entry.exists()) return true;
+				continue;
+			}
+			if (entryName.equalsIgnoreCase(name)
+					|| entryName.equalsIgnoreCase(flatConfig)
+					|| entryName.equalsIgnoreCase(flatLayout)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@NonNull
@@ -758,6 +780,94 @@ public class ProfilesManager {
 		}
 		if (!file.delete() && file.exists()) {
 			Log.w(TAG, "Unable to remove temporary profile operation file " + file);
+		}
+	}
+
+	/**
+	 * Creates a new whole-device preset from the active MIDlet's complete materialized snapshot.
+	 * Name occupancy is decided under the same source monitor as publication.
+	 */
+	static void saveNewCompleteSnapshot(
+			@NonNull File profilesRoot, @NonNull String rawName, @NonNull File sourceDir)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+		String name = rawName.trim();
+		if (!Profile.isValidName(name)) {
+			throw new IOException("Invalid preset name");
+		}
+		if (profileNameExistsLocked(profilesRoot, name)) {
+			throw new IOException("Preset name already exists");
+		}
+		File targetDir = new File(profilesRoot, name);
+		CompleteSnapshot snapshot = prepareCompleteLocalSnapshot(sourceDir);
+		publishCompleteSnapshotLocked(targetDir, sourceDir, snapshot, true);
+		}
+	}
+
+	/** Replaces one existing whole-device preset without recreating a missing stale name. */
+	static void updateCompleteSnapshot(
+			@NonNull File targetDir, @NonNull File sourceDir) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+		recoverInterruptedPresetSave(targetDir);
+		if (!targetDir.isDirectory()) {
+			throw new IOException("Preset source no longer exists");
+		}
+		CompleteSnapshot snapshot = prepareCompleteLocalSnapshot(sourceDir);
+		publishCompleteSnapshotLocked(targetDir, sourceDir, snapshot, false);
+		}
+	}
+
+	@NonNull
+	private static CompleteSnapshot prepareCompleteLocalSnapshot(@NonNull File sourceDir)
+			throws IOException {
+		// The active MIDlet can itself contain interrupted exact-sync/layout atomic state.
+		recoverInterruptedSnapshotSync(sourceDir);
+		File sourceLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		normalizeVirtualKeyboardLayout(sourceLayout);
+		CompleteSnapshot snapshot = inspectCompleteSnapshot(sourceDir);
+		if (!new File(sourceDir, Config.MIDLET_CONFIG_FILE).isFile()) {
+			throw new IOException("Current application configuration is not materialized");
+		}
+		return snapshot;
+	}
+
+	private static void publishCompleteSnapshotLocked(
+			@NonNull File targetDir,
+			@NonNull File sourceDir,
+			@NonNull CompleteSnapshot snapshot,
+			boolean createNew) throws IOException {
+		if (createNew) {
+			if (targetDir.exists()) throw new IOException("Preset name already exists");
+		} else if (!targetDir.isDirectory()) {
+			throw new IOException("Preset source no longer exists");
+		}
+		PresetSaveTransaction transaction = beginPresetSave(targetDir, createNew);
+		File targetConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
+		File legacyConfig = new File(targetDir, "config.xml");
+		File targetLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		try {
+			FileUtils.copyFileUsingChannel(
+					new File(sourceDir, Config.MIDLET_CONFIG_FILE), targetConfig);
+			if (legacyConfig.exists() && !legacyConfig.delete()) {
+				throw new IOException("Unable to remove stale legacy profile configuration");
+			}
+			if (snapshot.hasKeyboardLayout) {
+				FileUtils.copyFileUsingChannel(
+						new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE), targetLayout);
+			} else if (targetLayout.exists() && !targetLayout.delete()) {
+				throw new IOException("Unable to remove stale key layout");
+			}
+
+			// Validate what was actually published before disarming Task 3B recovery.
+			CompleteSnapshot published = inspectCompleteSnapshot(targetDir);
+			if (published.hasKeyboardLayout != snapshot.hasKeyboardLayout) {
+				throw new IOException("Preset snapshot changed while saving");
+			}
+			transaction.commit();
+		} catch (IOException | RuntimeException failure) {
+			transaction.rollback(failure);
+			if (failure instanceof IOException) throw (IOException) failure;
+			throw failure;
 		}
 	}
 

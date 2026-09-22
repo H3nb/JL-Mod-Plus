@@ -244,8 +244,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		@Override
-		public boolean onSaveTemplate(@NonNull String name, boolean includeKeyboard) {
-			return saveTemplate(name, includeKeyboard);
+		public boolean onSaveTemplate(@NonNull String name) {
+			return saveTemplate(name);
+		}
+
+		@Override
+		public boolean onUpdatePreset(@NonNull String name) {
+			return updatePreset(name);
 		}
 
 		@Override
@@ -1472,8 +1477,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			ProfileModel candidate = currentForm == null
 					? ProfileConfigMatcher.copyConfig(params)
 					: ProfileConfigMatcher.effectiveConfig(params, currentForm);
-			boolean divergent = persistedBaseline == null
-					|| !ProfileConfigMatcher.sameConfig(candidate, persistedBaseline);
+			boolean divergent = hasEffectiveDraftDivergence(params, currentForm, persistedBaseline);
 			PresetLocalOverride.Guard ownership = null;
 			if (divergent) {
 				ownership = PresetLocalOverride.detachBeforeWrite(this, configDir);
@@ -1758,33 +1762,65 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	private boolean saveTemplate(@NonNull String rawName, boolean includeKeyboard) {
+	private boolean saveTemplate(@NonNull String rawName) {
 		String name = rawName.trim();
 		if (!Profile.isValidName(name)) {
 			ThemedToast.show(this, R.string.preset_invalid_name, Toast.LENGTH_SHORT);
 			return false;
 		}
+		if (operationRunning) return false;
+		// Keep the cheap UI-time duplicate feedback, but publication rechecks under PRESET_SOURCE_LOCK.
 		if (ProfilesManager.profileNameExists(name)) {
 			ThemedToast.show(this, R.string.profile_name_exists, Toast.LENGTH_SHORT);
 			return false;
 		}
-		Profile profile = new Profile(name);
+		operationRunning = true;
 		try {
 			if (!saveParams()) {
-				throw new IOException("Unable to save current application configuration");
+				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+				return false;
 			}
-			ProfilesManager.saveSnapshot(profile, configDir.getPath(), includeKeyboard);
-			if (!setProfileOrigin(name)) {
-				Log.e(TAG, "Preset saved, but provenance metadata could not be updated: " + name);
+			PresetSourceSave.Result result = PresetSourceSave.saveAsNew(
+					hostPreferences, configDir, new File(Config.getProfilesDir()), name);
+			return finishPresetSourceSave(name, result);
+		} finally {
+			operationRunning = false;
+		}
+	}
+
+	private boolean updatePreset(@NonNull String name) {
+		if (operationRunning || isProfile) return false;
+		operationRunning = true;
+		try {
+			// Persist the current draft first. A successful local edit is never rolled back because
+			// a later named-source update fails.
+			if (!saveParams()) {
+				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+				return false;
 			}
-			refreshProfileMatchCache();
-			if (composeController != null) composeController.update(createUiState());
-			return true;
-		} catch (IOException | RuntimeException e) {
-			Log.e(TAG, "saveTemplate: " + name, e);
+			PresetSourceSave.Result result = PresetSourceSave.updateExisting(
+					hostPreferences, configDir, new File(Config.getProfilesDir()), name);
+			return finishPresetSourceSave(name, result);
+		} finally {
+			operationRunning = false;
+		}
+	}
+
+	private boolean finishPresetSourceSave(
+			@NonNull String name, @NonNull PresetSourceSave.Result result) {
+		refreshProfileOriginFromMetadata();
+		builtInThemeLinked = readBuiltInThemeLinked();
+		refreshProfileMatchCache();
+		if (composeController != null) composeController.update(createUiState());
+		if (result == PresetSourceSave.Result.FAILED) {
+			Log.e(TAG, "Whole-device preset save failed: " + name);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			return false;
 		}
+		if (result == PresetSourceSave.Result.SAVED_UNLINKED) {
+			ThemedToast.show(this, R.string.preset_saved_unlinked_warning, Toast.LENGTH_LONG);
+		}
+		return true;
 	}
 
 	private String builtInThemeKey() {
@@ -2069,6 +2105,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		} else if (profileStatus == null) {
 			profileStatus = ConfigUiState.ProfileStatus.custom(defaultProfile);
 		}
+		boolean draftDiverged = !isProfile
+				&& hasEffectiveDraftDivergence(params, state, persistedBaseline);
+		String updatePresetName = resolveUpdatePresetName(
+				isProfile, profileStatus, originExists, draftDiverged);
 		ArrayList<ConfigUiState.ProfileTemplate> templates = new ArrayList<>();
 		ArrayList<ConfigUiState.ProfileTemplate> keyboardLayouts = new ArrayList<>();
 		for (ProfilesManager.ProfileInfo info : inspectedProfiles) {
@@ -2099,7 +2139,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
 				KeyboardLayoutValidator.validate(keylayoutFile) == null,
-				profileNames, keyboardLayouts, hasControllerDevice());
+				profileNames, keyboardLayouts, hasControllerDevice(), updatePresetName);
 	}
 
 	private boolean hasCompatibleTimingTransform() {
@@ -2151,6 +2191,29 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				|| ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir)
 				|| origin != null
 				|| builtInThemeLinked;
+	}
+
+	static boolean hasEffectiveDraftDivergence(
+			@Nullable ProfileModel current,
+			@Nullable ConfigFormState draft,
+			@Nullable ProfileModel persisted) {
+		if (current == null) return false;
+		ProfileModel effective = draft == null
+				? ProfileConfigMatcher.copyConfig(current)
+				: ProfileConfigMatcher.effectiveConfig(current, draft);
+		return persisted == null || !ProfileConfigMatcher.sameConfig(effective, persisted);
+	}
+
+	@Nullable
+	static String resolveUpdatePresetName(
+			boolean profileEditor,
+			@NonNull ConfigUiState.ProfileStatus status,
+			boolean sourceExists,
+			boolean draftDiverged) {
+		if (profileEditor || !sourceExists || status.sourceProfile == null) return null;
+		if (status.modified) return status.sourceProfile;
+		if (status.activeProfile != null && draftDiverged) return status.activeProfile;
+		return null;
 	}
 
 	@Nullable
