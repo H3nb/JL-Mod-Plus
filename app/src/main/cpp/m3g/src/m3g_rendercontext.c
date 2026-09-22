@@ -162,6 +162,7 @@ struct M3GRenderContextImpl
 
 	M3Gfloat depthNear;
 	M3Gfloat depthFar;
+    M3Gbool depthBufferInitialized;
     
     /*! \internal \brief Clipping rectangle parameters */
     struct { M3Gint x0, y0, x1, y1; } clip;
@@ -222,6 +223,7 @@ static void m3gResetRectangles(RenderContext *ctx);
 static void m3gSetGLDefaults(void);
 static void m3gUpdateScissor(RenderContext *ctx);
 static void m3gValidateBuffers(RenderContext *ctx);
+static void m3gInitializeDepthBuffer(RenderContext *ctx);
 static M3Gbool m3gValidTargetFormat(M3GPixelFormat format);
 
 #include "m3g_rendercontext.inl"
@@ -514,6 +516,7 @@ static M3Gbool m3gBindRenderTarget(RenderContext *ctx,
     ctx->display.height = height;
     ctx->target.format = format;
     ctx->target.handle = handle;
+    ctx->depthBufferInitialized = M3G_FALSE;
     m3gResetRectangles(ctx);
     m3gUpdateScissor(ctx);
     m3gValidateBuffers(ctx);
@@ -629,6 +632,32 @@ static void m3gMakeCurrent(RenderContext *ctx)
 
 /*!
  * \internal
+ * \brief Initializes unspecified depth contents before the first draw
+ *
+ * JSR-184 does not define depth-buffer contents immediately after a
+ * target is bound. Reused EGL surfaces can therefore expose stale depth
+ * from an earlier binding. Initialize it once, before the first draw, so
+ * immediate-mode rendering does not inherit unrelated depth state.
+ */
+static void m3gInitializeDepthBuffer(RenderContext *ctx)
+{
+    if (ctx->depthBufferInitialized ||
+        (ctx->bufferBits & M3G_DEPTH_BUFFER_BIT) == 0) {
+        return;
+    }
+
+    glDisable(GL_SCISSOR_TEST);
+    glDepthMask(GL_TRUE);
+    glClearDepthx(1 << 16);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_SCISSOR_TEST);
+
+    ctx->depthBufferInitialized = M3G_TRUE;
+    M3G_ASSERT_GL;
+}
+
+/*!
+ * \internal
  * \brief Returns the HW acceleration status of the current context
  */
 static M3Gbool m3gIsAccelerated(const RenderContext *ctx)
@@ -686,6 +715,7 @@ static void m3gInitRender(M3GRenderContext context, M3Genum renderMode)
     
     m3gIncrementRenderTimeStamp(ctx);
     m3gMakeCurrent(ctx);
+    m3gInitializeDepthBuffer(ctx);
     m3gCollectGLObjects(M3G_INTERFACE(ctx));
     
     /* If buffered rendering, blit the image to the back buffer at
@@ -980,6 +1010,9 @@ static void m3gClearInternal(RenderContext *ctx, Background *bg)
     
     if (bg != NULL) {
         m3gApplyBackground(ctx, bg);
+        if (bg->depthClearEnable) {
+            ctx->depthBufferInitialized = M3G_TRUE;
+        }
         if (ctx->target.buffered && bg->colorClearEnable) {
             ctx->backBuffer.contentsValid = M3G_TRUE;
         }
@@ -988,6 +1021,7 @@ static void m3gClearInternal(RenderContext *ctx, Background *bg)
         glClearColorx(0, 0, 0, 0);
         glClearDepthx(1 << 16);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        ctx->depthBufferInitialized = M3G_TRUE;
         if (ctx->target.buffered) {
             ctx->backBuffer.contentsValid = M3G_TRUE;
         }

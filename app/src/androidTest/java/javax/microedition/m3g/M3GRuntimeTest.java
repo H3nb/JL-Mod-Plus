@@ -213,6 +213,49 @@ public class M3GRuntimeTest {
 	}
 
 	@Test
+	public void immediateRenderDoesNotReuseDepthFromPreviousBinding() {
+		Camera camera = new Camera();
+		camera.setPerspective(60.0f, 1.0f, 1.0f, 20.0f);
+		TriangleFixture nearTriangle = createTriangleFixture((short) -2);
+		TriangleFixture farTriangle = createTriangleFixture((short) -4);
+		Background background = createBackground(BACKGROUND_ARGB);
+		Image image = Image.createImage(SIZE, SIZE);
+
+		runtimeStep("depth init: seed near depth");
+		g3d.bindTarget(image.getGraphics(), true, Graphics3D.TRUE_COLOR);
+		try {
+			g3d.setCamera(camera, null);
+			g3d.clear(background);
+			g3d.render(nearTriangle.vertices, nearTriangle.indices,
+					nearTriangle.appearance, null);
+		} finally {
+			g3d.releaseTarget();
+		}
+		assertNotEquals(BACKGROUND_ARGB & RGB_MASK,
+				readPixel(image, SIZE / 2, SIZE / 2) & RGB_MASK);
+
+		Graphics reset = image.getGraphics();
+		reset.setColor(BACKGROUND_ARGB & RGB_MASK);
+		reset.fillRect(0, 0, SIZE, SIZE);
+
+		// Deliberately rebind and render without Graphics3D.clear().
+		// A reused EGL pbuffer must not leak the previous binding's
+		// near-depth values into this new target binding.
+		runtimeStep("depth init: rebind without explicit clear");
+		g3d.bindTarget(image.getGraphics(), true, Graphics3D.TRUE_COLOR);
+		try {
+			g3d.setCamera(camera, null);
+			g3d.render(farTriangle.vertices, farTriangle.indices,
+					farTriangle.appearance, null);
+		} finally {
+			g3d.releaseTarget();
+		}
+
+		assertNotEquals(BACKGROUND_ARGB & RGB_MASK,
+				readPixel(image, SIZE / 2, SIZE / 2) & RGB_MASK);
+	}
+
+	@Test
 	public void image2DTargetClearRoundTripsThroughBackgroundRendering() {
 		Image2D target = new Image2D(Image2D.RGB, SIZE, SIZE);
 		Background clearBackground = createBackground(BACKGROUND_ARGB);
@@ -417,10 +460,14 @@ public class M3GRuntimeTest {
 	}
 
 	private static TriangleFixture createTriangleFixture() {
+		return createTriangleFixture((short) -4);
+	}
+
+	private static TriangleFixture createTriangleFixture(short depth) {
 		VertexBuffer vertices = createVertexBuffer(new short[]{
-				-2, -2, -4,
-				 2, -2, -4,
-				 0,  2, -4
+				-2, -2, depth,
+				 2, -2, depth,
+				 0,  2, depth
 		});
 		TriangleStripArray indices = new TriangleStripArray(0, new int[]{3});
 		Appearance appearance = new Appearance();
