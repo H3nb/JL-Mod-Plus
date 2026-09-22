@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -333,6 +334,34 @@ public class PresetIdentitySerializationTest {
 	}
 
 	@Test
+	public void renameWaitsThenRejectsCaseInsensitiveSaveAsRace() throws Exception {
+		File root = tempDir("rename-case-race-root");
+		File oldSource = preset(root, "K800i", 176, 1);
+		File local = tempDir("rename-case-race-local");
+		writeConfig(local, 640, 1);
+		FakePreferences preferences = new FakePreferences();
+		AtomicReference<PresetLifecycle.Result> renameResult = new AtomicReference<>();
+		AtomicReference<Throwable> renameFailure = new AtomicReference<>();
+
+		Thread rename;
+		synchronized (ProfilesManager.presetSourceLock()) {
+			rename = thread("rename-case-race", renameFailure,
+					() -> renameResult.set(PresetLifecycle.rename(
+							preferences, root, "K800i", "Sony K800i")));
+			rename.start();
+			awaitBlocked(rename);
+
+			ProfilesManager.saveNewCompleteSnapshot(root, "sony k800i", local);
+		}
+		join(rename, renameFailure);
+
+		assertEquals(PresetLifecycle.Result.FAILED, renameResult.get());
+		assertTrue(oldSource.isDirectory());
+		assertEquals(640, readConfig(new File(root, "sony k800i")).screenWidth);
+		assertFalse(new File(root, "Sony K800i").exists());
+	}
+
+	@Test
 	public void renameRejectsCaseInsensitiveCollisionInsideIdentityLock() throws Exception {
 		File root = tempDir("rename-case-root");
 		File oldSource = preset(root, "K800i", 176, 1);
@@ -478,6 +507,26 @@ public class PresetIdentitySerializationTest {
 
 		assertTrue(result.get());
 		assertNull(preferences.getString(PREF_DEFAULT_PROFILE, null));
+	}
+
+	@Test
+	public void editorDraftModeClassifiesAfterInterruptedNewProfileRecovery() throws Exception {
+		File root = tempDir("editor-recovery-mode-root");
+		File source = new File(root, "N95");
+		assertTrue(source.mkdir());
+		File rollback = new File(source, ProfilesManager.PRESET_SAVE_ROLLBACK_DIR);
+		assertTrue(rollback.mkdir());
+		assertTrue(new File(
+				rollback, ProfilesManager.PRESET_SAVE_NEW_PROFILE_MARKER).createNewFile());
+		assertTrue(new File(
+				rollback, ProfilesManager.PRESET_SAVE_READY_MARKER).createNewFile());
+		File draft = tempDir("editor-recovery-mode-draft");
+
+		assertEquals(ProfilesManager.ProfileEditMode.CREATE_NEW,
+				ProfilesManager.preparePresetEditDraft(source, draft));
+
+		assertFalse(source.exists());
+		assertFalse(configFile(draft).exists());
 	}
 
 	@Test
@@ -741,7 +790,7 @@ public class PresetIdentitySerializationTest {
 	}
 
 	private static final class FakePreferences implements SharedPreferences {
-		private final Map<String, Object> values = new HashMap<>();
+		private final Map<String, Object> values = new ConcurrentHashMap<>();
 		private int commitCount;
 		private int blockedCommitNumber = -1;
 		private CountDownLatch commitEntered;
