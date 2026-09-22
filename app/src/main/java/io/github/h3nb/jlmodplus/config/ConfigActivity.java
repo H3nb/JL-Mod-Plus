@@ -1714,20 +1714,92 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private boolean applyTemplate(@NonNull String name,
 			@NonNull ConfigFormEvents.PresetApplyScope scope) {
 		if (operationRunning) return false;
-		Profile profile = ProfilesManager.findProfile(name);
-		ProfilesManager.ProfileInfo inspected = profile == null
-				? null : ProfilesManager.inspectProfile(profile);
-		if (profile == null || inspected == null) {
-			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-			return false;
-		}
 
-		boolean completeCandidate = !isProfile && isCompletePresetCandidate(inspected, scope);
-		if (completeCandidate) {
+		if (isProfile) {
+			Profile profile = ProfilesManager.findProfile(name);
+			ProfilesManager.ProfileInfo inspected = profile == null
+					? null : ProfilesManager.inspectProfile(profile);
+			boolean applySettings = scope != ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT;
+			boolean applyKeyboard = scope != ConfigFormEvents.PresetApplyScope.SETTINGS;
+			if (inspected == null
+					|| (applySettings && !inspected.settings.isReady())
+					|| (applyKeyboard && !inspected.keyboardLayout.isReady())) {
+				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+				return false;
+			}
+
 			operationRunning = true;
 			try {
-				LinkedPresetActivation.Result activation = LinkedPresetActivation.activate(
-						hostPreferences, configDir, profile.getDir(), profile.getName());
+				ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
+				boolean sourceHasKeyboardArtifact =
+						inspected.keyboardLayout.status != ProfilesManager.CapabilityStatus.ABSENT;
+				boolean appliesCompleteSource =
+						scope == ConfigFormEvents.PresetApplyScope.SETTINGS_AND_KEYBOARD
+								|| (scope == ConfigFormEvents.PresetApplyScope.SETTINGS
+								&& !sourceHasKeyboardArtifact);
+				if (!setProfileOrigin(appliesCompleteSource ? profile.getName() : null)) {
+					Log.e(TAG, "Unable to update preset editor provenance");
+				}
+				setBuiltInThemeLinked(false);
+				loadParams(true);
+				return true;
+			} catch (IOException | RuntimeException failure) {
+				Log.e(TAG, "applyTemplate: " + name, failure);
+				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+				return false;
+			} finally {
+				operationRunning = false;
+			}
+		}
+
+		operationRunning = true;
+		try {
+			LinkedPresetActivation.Result activation = null;
+			boolean partialApplied = false;
+			boolean sourceReady = false;
+			synchronized (ProfilesManager.presetSourceLock()) {
+				Profile currentProfile = ProfilesManager.findProfile(name);
+				ProfilesManager.ProfileInfo currentInfo = currentProfile == null
+						? null : ProfilesManager.inspectProfile(currentProfile);
+				if (currentInfo != null) {
+					if (isCompletePresetCandidate(currentInfo, scope)) {
+						sourceReady = true;
+						activation = LinkedPresetActivation.activate(
+								hostPreferences,
+								configDir,
+								currentProfile.getDir(),
+								currentProfile.getName());
+					} else {
+						boolean applySettings =
+								scope != ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT;
+						boolean applyKeyboard =
+								scope != ConfigFormEvents.PresetApplyScope.SETTINGS;
+						sourceReady = (!applySettings || currentInfo.settings.isReady())
+								&& (!applyKeyboard || currentInfo.keyboardLayout.isReady());
+						if (sourceReady) {
+							PresetSourceReplacement.Guard ownership =
+									PresetSourceReplacement.begin(hostPreferences, configDir);
+							if (ownership.canWrite()) {
+								profileOrigin = null;
+								builtInThemeLinked = false;
+								ProfilesManager.load(
+										currentProfile,
+										configDir.getPath(),
+										applySettings,
+										applyKeyboard);
+								partialApplied = true;
+							} else {
+								sourceReady = false;
+							}
+						}
+					}
+			}
+
+			if (!sourceReady) {
+				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+				return false;
+			}
+			if (activation != null) {
 				refreshProfileOriginFromMetadata();
 				builtInThemeLinked = readBuiltInThemeLinked();
 				switch (activation) {
@@ -1749,56 +1821,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 								Toast.LENGTH_SHORT);
 						return false;
 				}
-			} finally {
-				operationRunning = false;
 			}
-		}
-
-		boolean applySettings = scope != ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT;
-		boolean applyKeyboard = scope != ConfigFormEvents.PresetApplyScope.SETTINGS;
-		if ((applySettings && !inspected.settings.isReady())
-				|| (applyKeyboard && !inspected.keyboardLayout.isReady())) {
-			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			if (partialApplied) {
+				loadParams(true);
+				return true;
+			}
 			return false;
-		}
-
-		operationRunning = true;
-		PresetSourceReplacement.Guard ownership = null;
-		try {
-			if (!isProfile) {
-				synchronized (ProfilesManager.presetSourceLock()) {
-					ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
-					if (ownership.canWrite()) {
-						profileOrigin = null;
-						builtInThemeLinked = false;
-						ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
-					}
-				}
-				if (ownership == null || !ownership.canWrite()) {
-					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-					return false;
-				}
-			} else {
-				ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
-			}
-			if (isProfile) {
-				boolean sourceHasKeyboardArtifact =
-						inspected.keyboardLayout.status != ProfilesManager.CapabilityStatus.ABSENT;
-				boolean appliesCompleteSource =
-						scope == ConfigFormEvents.PresetApplyScope.SETTINGS_AND_KEYBOARD
-								|| (scope == ConfigFormEvents.PresetApplyScope.SETTINGS
-								&& !sourceHasKeyboardArtifact);
-				if (!setProfileOrigin(appliesCompleteSource ? profile.getName() : null)) {
-					Log.e(TAG, "Unable to update preset editor provenance");
-				}
-			}
-			if (isProfile) setBuiltInThemeLinked(false);
-			loadParams(true);
-			return true;
-		} catch (IOException | RuntimeException e1) {
-			// ProfilesManager.load() does not expose whether publication began before failure.
-			// Keeping the already-cleared association CUSTOM is safer than restoring a stale link.
-			Log.e(TAG, "applyTemplate: " + name, e1);
+		} catch (IOException | RuntimeException failure) {
+			// Once a partial replacement may have published, CUSTOM is the conservative state.
+			Log.e(TAG, "applyTemplate: " + name, failure);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			return false;
 		} finally {
@@ -1963,44 +1994,64 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	/** Applies only a saved keyboard artifact and leaves the current application-settings draft intact. */
 	boolean applyKeyboardLayout(@NonNull String name) {
 		if (operationRunning) return false;
-		Profile profile = ProfilesManager.findProfile(name);
-		ProfilesManager.ProfileInfo inspected = profile == null ? null
-				: ProfilesManager.inspectProfile(profile);
-		if (inspected == null || !inspected.keyboardLayout.isReady()) {
-			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-			return false;
+
+		if (isProfile) {
+			Profile profile = ProfilesManager.findProfile(name);
+			ProfilesManager.ProfileInfo inspected = profile == null
+					? null : ProfilesManager.inspectProfile(profile);
+			if (inspected == null || !inspected.keyboardLayout.isReady()) {
+				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+				return false;
+			}
+			operationRunning = true;
+			try {
+				ProfilesManager.load(profile, configDir.getPath(), false, true);
+				if (!setProfileOrigin(null)) {
+					Log.e(TAG, "Unable to clear preset editor provenance");
+				}
+				setBuiltInThemeLinked(false);
+				loadKeyLayout();
+				refreshProfileMatchCache();
+				if (composeController != null) composeController.update(createUiState());
+				return true;
+			} catch (IOException | RuntimeException failure) {
+				Log.e(TAG, "applyKeyboardLayout: " + name, failure);
+				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+				return false;
+			} finally {
+				operationRunning = false;
+			}
 		}
+
 		operationRunning = true;
-		PresetSourceReplacement.Guard ownership = null;
 		try {
-			if (!isProfile) {
-				synchronized (ProfilesManager.presetSourceLock()) {
-					ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
+			boolean applied = false;
+			synchronized (ProfilesManager.presetSourceLock()) {
+				Profile currentProfile = ProfilesManager.findProfile(name);
+				ProfilesManager.ProfileInfo currentInfo = currentProfile == null
+						? null : ProfilesManager.inspectProfile(currentProfile);
+				if (currentInfo != null && currentInfo.keyboardLayout.isReady()) {
+					PresetSourceReplacement.Guard ownership =
+							PresetSourceReplacement.begin(hostPreferences, configDir);
 					if (ownership.canWrite()) {
 						profileOrigin = null;
 						builtInThemeLinked = false;
-						ProfilesManager.load(profile, configDir.getPath(), false, true);
+						ProfilesManager.load(currentProfile, configDir.getPath(), false, true);
+						applied = true;
 					}
 				}
-				if (ownership == null || !ownership.canWrite()) {
-					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-					return false;
-				}
-			} else {
-				ProfilesManager.load(profile, configDir.getPath(), false, true);
 			}
-			if (isProfile && !setProfileOrigin(null)) {
-				Log.e(TAG, "Unable to clear preset editor provenance");
+			if (!applied) {
+				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+				return false;
 			}
-			if (isProfile) setBuiltInThemeLinked(false);
 			loadKeyLayout();
 			refreshProfileMatchCache();
 			if (composeController != null) composeController.update(createUiState());
 			return true;
-		} catch (IOException | RuntimeException e1) {
-			// The partial preset transaction cannot prove to this caller that no publication began.
-			// Remain CUSTOM on failure rather than risk reviving stale ownership.
-			Log.e(TAG, "applyKeyboardLayout: " + name, e1);
+		} catch (IOException | RuntimeException failure) {
+			// The partial preset transaction cannot prove that no publication began. Remain CUSTOM.
+			Log.e(TAG, "applyKeyboardLayout: " + name, failure);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			if (composeController != null) composeController.update(createUiState());
 			return false;
