@@ -1489,19 +1489,24 @@ public class MicroActivity extends AppCompatActivity {
 			applyVirtualKeyboardOrientationPolicy(vk);
 			return;
 		}
-		VirtualKeyboardLayoutEditState previous = vk.captureLayoutEditState();
+		VirtualKeyboardEditTransaction selection =
+				new VirtualKeyboardEditTransaction(vk.captureLayoutEditState());
 		if (!vk.setLayout(index)) {
-			vk.restoreLayoutEditState(previous);
+			vk.restoreLayoutEditState(selection.discard());
 			toast(R.string.virtual_controls_save_failed);
 			applyVirtualKeyboardOrientationPolicy(vk);
 			return;
 		}
-		VirtualKeyboardSaveResult result = saveCurrentVirtualKeyboard(vk, updateTarget);
-		if (!result.isLayoutCommitted()) {
-			vk.restoreLayoutEditState(previous);
+		VirtualKeyboardSaveResult[] result = new VirtualKeyboardSaveResult[1];
+		if (!selection.commitSave(() -> {
+			result[0] = saveCurrentVirtualKeyboard(vk, updateTarget);
+			return result[0].isLayoutCommitted();
+		})) {
+			// One-shot template selection uses the same baseline/rollback rule as the editor.
+			vk.restoreLayoutEditState(selection.discard());
 			toast(R.string.virtual_controls_save_failed);
 		} else {
-			showVirtualKeyboardSaveWarnings(result, updateTarget);
+			showVirtualKeyboardSaveWarnings(result[0], updateTarget);
 		}
 		applyVirtualKeyboardOrientationPolicy(vk);
 	}

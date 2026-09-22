@@ -5,7 +5,6 @@ package io.github.h3nb.jlmodplus.config;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.Uri;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,6 +12,7 @@ import androidx.preference.PreferenceManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 import io.github.h3nb.jlmodplus.installer.InstallerExecutionCoordinator;
 
@@ -40,14 +40,20 @@ final class PresetAuthority {
 		static InstalledPath parse(@NonNull String rawPath) throws IOException {
 			String value = rawPath.trim();
 			if (value.isEmpty()) return null;
-			Uri uri = Uri.parse(value);
 			final File requested;
-			if (uri.getScheme() == null) {
-				requested = new File(value);
-			} else if ("file".equals(uri.getScheme()) && uri.getPath() != null) {
-				requested = new File(uri.getPath());
+			if (value.regionMatches(true, 0, "file:", 0, 5)) {
+				try {
+					URI uri = URI.create(value);
+					if (!"file".equalsIgnoreCase(uri.getScheme())) return null;
+					requested = new File(uri);
+				} catch (IllegalArgumentException invalidUri) {
+					return null;
+				}
 			} else {
-				return null;
+				// Runtime authority accepts filesystem identity only. Other URI schemes must never
+				// become arbitrary relative paths under the provider process.
+				if (value.contains("://")) return null;
+				requested = new File(value);
 			}
 			File appDir = requested.getCanonicalFile();
 			File converted = appDir.getParentFile();
