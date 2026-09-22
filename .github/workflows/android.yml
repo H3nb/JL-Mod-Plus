@@ -110,6 +110,7 @@ jobs:
           ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
           target='app/src/screenshotTestEmulatorDebug/reference/javax/microedition/shell/RuntimeMenuScreenshotTestKt/RuntimeFinishVirtualKeyboardEditScreenshot_Runtime finish edit narrow phone_ee78e4c1_0.png'
           test -f "$target"
+          git fetch --no-tags --depth=1 origin a52d4060dc0dd856a0d7661081548d24f672ccff
           git checkout a52d4060dc0dd856a0d7661081548d24f672ccff -- .github/workflows/android.yml
           git add -- "$target" .github/workflows/android.yml
           git diff --cached --quiet && exit 0
