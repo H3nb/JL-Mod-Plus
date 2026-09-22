@@ -11,10 +11,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import javax.microedition.lcdui.keyboard.VirtualControlsKeyboard;
 import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutEditState;
 import javax.microedition.lcdui.keyboard.VirtualKeyboardLayoutSnapshot;
@@ -99,51 +95,25 @@ public class VirtualKeyboardEditTransactionTest {
 	}
 
 	@Test
-	public void layoutAndScreenSuccessCloseTransaction() {
+	public void layoutSuccessClosesTransaction() {
 		VirtualKeyboardEditTransaction transaction =
 				new VirtualKeyboardEditTransaction(edit(snapshot(3.0f)));
 		transaction.requestFinish(edit(snapshot(8.0f)));
-		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(false);
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted();
 
 		assertTrue(transaction.commitSave(result::isLayoutCommitted));
 
 		assertFalse(transaction.isActive());
-		assertFalse(result.isScreenParamsFailed());
-	}
-
-	@Test
-	public void screenParamFailureAfterLayoutCommitStillClosesTransactionAndKeepsLayout()
-			throws Exception {
-		VirtualKeyboardEditTransaction transaction =
-				new VirtualKeyboardEditTransaction(edit(snapshot(3.0f)));
-		transaction.requestFinish(edit(snapshot(8.0f)));
-		Path persistedLayout = Files.createTempFile("jlmod-layout-save", ".bin");
-		Files.write(persistedLayout, "edited-layout".getBytes(StandardCharsets.UTF_8));
-		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(true);
-
-		assertTrue(transaction.commitSave(result::isLayoutCommitted));
-
-		assertFalse(transaction.isActive());
-		assertTrue(result.isScreenParamsFailed());
 		assertEquals(
-				"edited-layout",
-				new String(Files.readAllBytes(persistedLayout), StandardCharsets.UTF_8));
-		try {
-			transaction.discard();
-			throw new AssertionError("Committed layout transaction must not remain discardable");
-		} catch (IllegalStateException expected) {
-			// Expected: the primary layout commit closed the transaction.
-		} finally {
-			Files.deleteIfExists(persistedLayout);
-		}
+				VirtualKeyboardSaveResult.PresetUpdateOutcome.NONE,
+				result.getPresetUpdateOutcome());
 	}
 
 	@Test
-	public void nonEditorOutcomeKeepsPrimarySuccessDistinctFromSecondaryFailure() {
-		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(true);
+	public void nonEditorLayoutCommitHasNoSecondaryOutcomeByDefault() {
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted();
 
 		assertTrue(result.isLayoutCommitted());
-		assertTrue(result.isScreenParamsFailed());
 		assertEquals(
 				VirtualKeyboardSaveResult.PresetUpdateOutcome.NONE,
 				result.getPresetUpdateOutcome());
@@ -155,7 +125,7 @@ public class VirtualKeyboardEditTransactionTest {
 				new VirtualKeyboardEditTransaction(edit(snapshot(3.0f)));
 		transaction.requestFinish(edit(snapshot(8.0f)));
 		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(
-				false, VirtualKeyboardSaveResult.PresetUpdateOutcome.FAILED);
+				VirtualKeyboardSaveResult.PresetUpdateOutcome.FAILED);
 
 		assertTrue(transaction.commitSave(result::isLayoutCommitted));
 
@@ -174,10 +144,9 @@ public class VirtualKeyboardEditTransactionTest {
 	@Test
 	public void savedUnlinkedOutcomeRemainsPrimaryLocalSuccess() {
 		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(
-				false, VirtualKeyboardSaveResult.PresetUpdateOutcome.SAVED_UNLINKED);
+				VirtualKeyboardSaveResult.PresetUpdateOutcome.SAVED_UNLINKED);
 
 		assertTrue(result.isLayoutCommitted());
-		assertFalse(result.isScreenParamsFailed());
 		assertEquals(
 				VirtualKeyboardSaveResult.PresetUpdateOutcome.SAVED_UNLINKED,
 				result.getPresetUpdateOutcome());

@@ -473,8 +473,6 @@ class RuntimeMenuComposeTest {
                 JLModPlusTheme {
                     RuntimeHostDialogs(
                         state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
-                            phone = false,
-                            keepScreenPreferred = false,
                             updateTarget = "Very Long K800i Preset Name That Wraps",
                         ),
                         actions = RecordingRuntimeHostDialogActions(events),
@@ -497,8 +495,6 @@ class RuntimeMenuComposeTest {
             JLModPlusTheme {
                 RuntimeHostDialogs(
                     state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
-                        phone = false,
-                        keepScreenPreferred = false,
                         updateTarget = "K800i",
                     ),
                     actions = RecordingRuntimeHostDialogActions(events),
@@ -519,7 +515,7 @@ class RuntimeMenuComposeTest {
         ).assertIsDisplayed()
         composeRule.onNodeWithText("Save").performClick()
 
-        assertEquals(listOf("dismiss", "edit-save:false:K800i"), events)
+        assertEquals(listOf("dismiss", "edit-save:K800i"), events)
     }
 
     @Test
@@ -534,8 +530,6 @@ class RuntimeMenuComposeTest {
                 ) {
                     RuntimeHostDialogs(
                         state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
-                            phone = false,
-                            keepScreenPreferred = false,
                         ),
                         actions = RecordingRuntimeHostDialogActions(events),
                         onDismiss = { events += "dismiss" },
@@ -553,25 +547,22 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun finishVirtualKeyboardEditDialog_preservesSaveScreenParamsOption() {
+    fun finishVirtualKeyboardEditDialog_hasNoScreenParameterOption() {
         val events = mutableListOf<String>()
         composeRule.setContent {
             JLModPlusTheme {
                 RuntimeHostDialogs(
-                    state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
-                        phone = true,
-                        keepScreenPreferred = false,
-                    ),
+                    state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(),
                     actions = RecordingRuntimeHostDialogActions(events),
                     onDismiss = { events += "dismiss" },
                 )
             }
         }
 
-        composeRule.onNodeWithText("Save Screen Parameters").performClick()
+        composeRule.onAllNodesWithText("Save Screen Parameters").assertCountEquals(0)
         composeRule.onNodeWithText("Save").performClick()
 
-        assertEquals(listOf("dismiss", "edit-save:true"), events)
+        assertEquals(listOf("dismiss", "edit-save"), events)
     }
 
     @Test
@@ -581,8 +572,6 @@ class RuntimeMenuComposeTest {
             JLModPlusTheme {
                 RuntimeHostDialogs(
                     state = RuntimeHostDialogState.SaveVirtualKeyboard(
-                        phone = false,
-                        keepScreenPreferred = false,
                     ),
                     actions = RecordingRuntimeHostDialogActions(events),
                     onDismiss = { events += "dismiss" },
@@ -604,8 +593,6 @@ class RuntimeMenuComposeTest {
             JLModPlusTheme {
                 RuntimeHostDialogs(
                     state = RuntimeHostDialogState.SaveVirtualKeyboard(
-                        phone = false,
-                        keepScreenPreferred = false,
                         updateTarget = "K800i",
                     ),
                     actions = RecordingRuntimeHostDialogActions(events),
@@ -632,8 +619,6 @@ class RuntimeMenuComposeTest {
             JLModPlusTheme {
                 RuntimeHostDialogs(
                     state = RuntimeHostDialogState.SaveVirtualKeyboard(
-                        phone = false,
-                        keepScreenPreferred = false,
                         updateTarget = "K800i",
                     ),
                     actions = RecordingRuntimeHostDialogActions(events),
@@ -1006,13 +991,12 @@ private class RecordingRuntimeHostDialogActions(
         events += "hide"
     }
 
-    override fun onSaveVirtualKeyboard(saveScreenParams: Boolean, updateTarget: String?) {
+    override fun onSaveVirtualKeyboard(updateTarget: String?) {
         events += updateTarget?.let { "save:$it" } ?: "save"
     }
 
-    override fun onVirtualKeyboardEditSaved(saveScreenParams: Boolean, updateTarget: String?) {
-        events += updateTarget?.let { "edit-save:$saveScreenParams:$it" }
-            ?: "edit-save:$saveScreenParams"
+    override fun onVirtualKeyboardEditSaved(updateTarget: String?) {
+        events += updateTarget?.let { "edit-save:$it" } ?: "edit-save"
     }
 
     override fun onVirtualKeyboardEditDiscarded() {

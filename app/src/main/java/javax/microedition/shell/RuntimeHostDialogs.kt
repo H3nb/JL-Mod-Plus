@@ -70,8 +70,8 @@ interface RuntimeHostDialogActions {
     fun onErrorAcknowledged()
     fun onExitConfirmed(openSettings: Boolean)
     fun onHideButtonsConfirmed(states: BooleanArray)
-    fun onSaveVirtualKeyboard(saveScreenParams: Boolean, updateTarget: String?)
-    fun onVirtualKeyboardEditSaved(saveScreenParams: Boolean, updateTarget: String?) = Unit
+    fun onSaveVirtualKeyboard(updateTarget: String?)
+    fun onVirtualKeyboardEditSaved(updateTarget: String?) = Unit
     fun onVirtualKeyboardEditDiscarded() = Unit
     fun onVirtualKeyboardEditContinued() = Unit
     fun onLayoutSelected(index: Int, updateTarget: String?)
@@ -84,13 +84,9 @@ internal sealed interface RuntimeHostDialogState {
     data object ExitConfirmation : RuntimeHostDialogState
     data class HideButtons(val names: List<String>, val checked: BooleanArray) : RuntimeHostDialogState
     data class SaveVirtualKeyboard(
-        val phone: Boolean,
-        val keepScreenPreferred: Boolean,
         val updateTarget: String? = null,
     ) : RuntimeHostDialogState
     data class FinishVirtualKeyboardEdit(
-        val phone: Boolean,
-        val keepScreenPreferred: Boolean,
         val updateTarget: String? = null,
     ) : RuntimeHostDialogState
     data class LayoutSelection(
@@ -468,7 +464,6 @@ private fun FinishVirtualKeyboardEditDialog(
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
-    var saveScreenParams by remember(state) { mutableStateOf(state.keepScreenPreferred) }
     var updatePreset by remember(state) { mutableStateOf(false) }
     val layout = runtimeDialogLayout()
     val maxContentHeight = runtimeDialogListHeight()
@@ -505,22 +500,6 @@ private fun FinishVirtualKeyboardEditDialog(
                         updatePreset = updatePreset,
                         onUpdatePresetChanged = { updatePreset = it },
                     )
-                    if (state.phone) {
-                        ListItem(
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            headlineContent = {
-                                Text(stringResource(R.string.opt_save_screen_params))
-                            },
-                            leadingContent = {
-                                Checkbox(checked = saveScreenParams, onCheckedChange = null)
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .toggleable(value = saveScreenParams, role = Role.Checkbox) {
-                                    saveScreenParams = !saveScreenParams
-                                },
-                        )
-                    }
                 }
                 ScrollableContentHint(
                     visible = canScrollForward,
@@ -546,7 +525,6 @@ private fun FinishVirtualKeyboardEditDialog(
                 Button(onClick = {
                     onDismiss()
                     actions.onVirtualKeyboardEditSaved(
-                        saveScreenParams,
                         state.updateTarget.takeIf { updatePreset },
                     )
                 }) {
@@ -563,7 +541,6 @@ private fun SaveVirtualKeyboardDialog(
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
-    var saveScreenParams by remember(state) { mutableStateOf(state.keepScreenPreferred) }
     var updatePreset by remember(state) { mutableStateOf(false) }
     val layout = runtimeDialogLayout()
     val maxContentHeight = runtimeDialogListHeight()
@@ -596,22 +573,6 @@ private fun SaveVirtualKeyboardDialog(
                         updatePreset = updatePreset,
                         onUpdatePresetChanged = { updatePreset = it },
                     )
-                    if (state.phone) {
-                        ListItem(
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            headlineContent = {
-                                Text(stringResource(R.string.opt_save_screen_params))
-                            },
-                            leadingContent = {
-                                Checkbox(checked = saveScreenParams, onCheckedChange = null)
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .toggleable(value = saveScreenParams, role = Role.Checkbox) {
-                                    saveScreenParams = !saveScreenParams
-                            },
-                        )
-                    }
                 }
                 ScrollableContentHint(
                     visible = canScrollForward,
@@ -623,7 +584,6 @@ private fun SaveVirtualKeyboardDialog(
             TextButton(onClick = {
                 onDismiss()
                 actions.onSaveVirtualKeyboard(
-                    saveScreenParams,
                     state.updateTarget.takeIf { updatePreset },
                 )
             }) {

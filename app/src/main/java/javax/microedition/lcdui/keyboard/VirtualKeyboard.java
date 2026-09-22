@@ -48,7 +48,6 @@ import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
-import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 
@@ -2312,13 +2311,6 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			case KEY_DOWN_LEFT  -> 1 << 23; // 23 Lower Left
 			default             -> 0      ;
 		};
-	}
-
-	public boolean saveScreenParams() {
-		float scale = virtualScreen.width() / screen.width();
-		settings.screenScaleRatio = Math.round(scale * 100);
-		settings.screenGravity = 1;
-		return ProfilesManager.saveConfig(settings);
 	}
 
 	private class VirtualKey {

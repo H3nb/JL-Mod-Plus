@@ -62,7 +62,6 @@
     <string name="more">المزيد</string>
     <string name="no_data_for_display">لا يوجد بيانات</string>
     <string name="not_saved_exists">موجود بالفعل</string>
-    <string name="opt_save_screen_params">حفظ ابعاد الشاشة</string>
     <string name="parallel_screen_redrawing">إعادة رسم الشاشة بشكل موازي</string>
     <string name="permission_request_failed">هذا التطبيق يتطلب إذونات الكتابة و التخزين</string>
     <string name="pref_app_sort_date">التاريخ</string>

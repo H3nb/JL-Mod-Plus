@@ -62,7 +62,6 @@
     <string name="more">Більше</string>
     <string name="no_data_for_display">Немає даних</string>
     <string name="not_saved_exists">Вже існує</string>
-    <string name="opt_save_screen_params">зберегти параметри екрана</string>
     <string name="parallel_screen_redrawing">Паралельне перемальовування екрану</string>
     <string name="permission_request_failed">Данний додаток вимагає дозволу записування данних</string>
     <string name="pref_app_sort_date">Дата</string>

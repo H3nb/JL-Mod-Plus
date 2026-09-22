@@ -58,7 +58,6 @@
     <string name="more">Mehr</string>
     <string name="no_data_for_display">Keine Daten</string>
     <string name="not_saved_exists">Bereits vorhanden</string>
-    <string name="opt_save_screen_params">Bildschirmparameter speichern</string>
     <string name="parallel_screen_redrawing">Parallele Bildschirmwiederholung</string>
     <string name="permission_request_failed">Diese App benötigt Schreibrechte</string>
     <string name="pref_app_sort_date">Datum</string>

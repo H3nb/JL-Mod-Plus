@@ -94,7 +94,6 @@
     <string name="layout_edit_continue">Continue Editing</string>
     <string name="layout_edit_finished">Virtual controls editing finished</string>
     <string name="virtual_controls_save_failed">Virtual controls could not be saved. Try again.</string>
-    <string name="virtual_controls_screen_params_save_failed">Virtual controls were saved, but screen parameters could not be saved.</string>
     <string name="runtime_preset_save_destination">Save to</string>
     <string name="runtime_preset_apply_destination">Apply to</string>
     <string name="runtime_preset_this_midlet_only">This MIDlet only</string>
@@ -170,7 +169,6 @@
     <string name="msg_unsupported_soundbank">Unsupported soundbank; using the default bank!</string>
     <string name="no_data_for_display">No data</string>
     <string name="not_saved_exists">Already exists</string>
-    <string name="opt_save_screen_params">Save Screen Parameters</string>
     <string name="parallel_screen_redrawing">Parallel Screen Redraw</string>
     <string name="permission_request_failed">This app requires storage write permission</string>
     <string name="pref_app_sort_date">Date</string>

@@ -62,7 +62,6 @@
     <string name="more">Daha Fazla</string>
     <string name="no_data_for_display">Veri yok</string>
     <string name="not_saved_exists">Zaten mevcut</string>
-    <string name="opt_save_screen_params">ekran parametrelerini kaydet</string>
     <string name="parallel_screen_redrawing">Paralel ekran yeniden çizme</string>
     <string name="permission_request_failed">Bu uygulama için depolama izni gerekiyor</string>
     <string name="pref_app_sort_date">Tarihe göre</string>

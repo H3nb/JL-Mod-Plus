@@ -48,7 +48,7 @@ private object NoOpRuntimeHostDialogActions : RuntimeHostDialogActions {
     override fun onErrorAcknowledged() = Unit
     override fun onExitConfirmed(openSettings: Boolean) = Unit
     override fun onHideButtonsConfirmed(states: BooleanArray) = Unit
-    override fun onSaveVirtualKeyboard(saveScreenParams: Boolean, updateTarget: String?) = Unit
+    override fun onSaveVirtualKeyboard(updateTarget: String?) = Unit
     override fun onLayoutSelected(index: Int, updateTarget: String?) = Unit
 }
 
@@ -196,8 +196,6 @@ fun RuntimeFinishVirtualKeyboardEditScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         RuntimeHostDialogs(
             state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
-                phone = true,
-                keepScreenPreferred = true,
                 updateTarget = "SE K800i 240×320 — Long Preset Name",
             ),
             actions = NoOpRuntimeHostDialogActions,

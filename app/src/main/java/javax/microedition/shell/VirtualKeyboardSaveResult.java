@@ -4,12 +4,7 @@
  */
 package javax.microedition.shell;
 
-/**
- * Result of one host-owned virtual-keyboard save attempt.
- *
- * <p>The layout is the primary artifact. Optional screen parameters are secondary and cannot
- * turn an already-published layout back into an uncommitted edit transaction.</p>
- */
+/** Result of one host-owned virtual-keyboard save attempt. */
 final class VirtualKeyboardSaveResult {
 	enum PresetUpdateOutcome {
 		NONE,
@@ -19,18 +14,13 @@ final class VirtualKeyboardSaveResult {
 	}
 
 	private static final VirtualKeyboardSaveResult LAYOUT_FAILED =
-			new VirtualKeyboardSaveResult(false, false, PresetUpdateOutcome.NONE);
+			new VirtualKeyboardSaveResult(false, PresetUpdateOutcome.NONE);
 
 	private final boolean layoutCommitted;
-	private final boolean screenParamsFailed;
 	private final PresetUpdateOutcome presetUpdateOutcome;
 
-	private VirtualKeyboardSaveResult(
-			boolean layoutCommitted,
-			boolean screenParamsFailed,
-			PresetUpdateOutcome presetUpdateOutcome) {
+	private VirtualKeyboardSaveResult(boolean layoutCommitted, PresetUpdateOutcome presetUpdateOutcome) {
 		this.layoutCommitted = layoutCommitted;
-		this.screenParamsFailed = screenParamsFailed;
 		this.presetUpdateOutcome = presetUpdateOutcome;
 	}
 
@@ -38,21 +28,16 @@ final class VirtualKeyboardSaveResult {
 		return LAYOUT_FAILED;
 	}
 
-	static VirtualKeyboardSaveResult layoutCommitted(boolean screenParamsFailed) {
-		return layoutCommitted(screenParamsFailed, PresetUpdateOutcome.NONE);
+	static VirtualKeyboardSaveResult layoutCommitted() {
+		return layoutCommitted(PresetUpdateOutcome.NONE);
 	}
 
-	static VirtualKeyboardSaveResult layoutCommitted(
-			boolean screenParamsFailed, PresetUpdateOutcome presetUpdateOutcome) {
-		return new VirtualKeyboardSaveResult(true, screenParamsFailed, presetUpdateOutcome);
+	static VirtualKeyboardSaveResult layoutCommitted(PresetUpdateOutcome presetUpdateOutcome) {
+		return new VirtualKeyboardSaveResult(true, presetUpdateOutcome);
 	}
 
 	boolean isLayoutCommitted() {
 		return layoutCommitted;
-	}
-
-	boolean isScreenParamsFailed() {
-		return screenParamsFailed;
 	}
 
 	PresetUpdateOutcome getPresetUpdateOutcome() {

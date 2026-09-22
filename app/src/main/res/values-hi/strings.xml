@@ -62,7 +62,6 @@
     <string name="more">अधिक</string>
     <string name="no_data_for_display">कोई डेटा नहीं</string>
     <string name="not_saved_exists">पहले से ही मौजूद है</string>
-    <string name="opt_save_screen_params">स्क्रीन पैराम सहेजें</string>
     <string name="parallel_screen_redrawing">समानांतर स्क्रीन रिडरिंग</string>
     <string name="permission_request_failed">इस ऐप को रखने लिखने की अनुमति चाहिए</string>
     <string name="pref_app_sort_date">दिनांक</string>
