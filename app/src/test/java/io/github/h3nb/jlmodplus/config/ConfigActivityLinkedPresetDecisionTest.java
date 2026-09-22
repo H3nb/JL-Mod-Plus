@@ -87,6 +87,28 @@ public class ConfigActivityLinkedPresetDecisionTest {
 	}
 
 	@Test
+	public void existingSetupKeepsChangedGlobalDefaultProspectiveOnly() throws Exception {
+		File target = tempDir("prospective-default");
+		Files.write(new File(target, Config.MIDLET_CONFIG_FILE).toPath(),
+				"existing-config".getBytes(StandardCharsets.UTF_8));
+
+		boolean existing = ConfigActivity.hasExistingSetupAfterRecovery(target, null, false);
+
+		assertTrue(existing);
+		assertFalse(ConfigActivity.shouldInitializeNewApp(true, false, existing));
+	}
+
+	@Test
+	public void freshEmptyIdentityCanInitializeCurrentGlobalDefault() throws Exception {
+		File target = tempDir("fresh-default");
+
+		boolean existing = ConfigActivity.hasExistingSetupAfterRecovery(target, null, false);
+
+		assertFalse(existing);
+		assertTrue(ConfigActivity.shouldInitializeNewApp(true, false, existing));
+	}
+
+	@Test
 	public void abandonedNewSidecarAloneDoesNotMakeMidletExisting() throws Exception {
 		File target = tempDir("new-sidecar");
 		Files.write(new File(target, Config.MIDLET_KEY_LAYOUT_FILE + ".new").toPath(), new byte[] {1});

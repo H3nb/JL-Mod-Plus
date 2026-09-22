@@ -54,6 +54,48 @@ public class AppInstallerStorageKeyTest {
 	}
 
 	@Test
+	public void orphanConfigReservesStorageKey() throws Exception {
+		File root = temporaryFolder.newFolder("orphan-config-root");
+		File converted = new File(root, "converted");
+		File configs = new File(root, "configs");
+		assertTrue(converted.mkdir());
+		assertTrue(configs.mkdir());
+		assertTrue(new File(configs, "Game").mkdir());
+
+		File selected = AppInstaller.chooseTargetDirectory(
+				converted, "Game", Collections.emptySet());
+
+		assertEquals("Game_1", selected.getName());
+	}
+
+	@Test
+	public void orphanSaveDataReservesStorageKey() throws Exception {
+		File root = temporaryFolder.newFolder("orphan-data-root");
+		File converted = new File(root, "converted");
+		File data = new File(root, "data");
+		assertTrue(converted.mkdir());
+		assertTrue(data.mkdir());
+		assertTrue(new File(data, "Game").mkdir());
+
+		File selected = AppInstaller.chooseTargetDirectory(
+				converted, "Game", Collections.emptySet());
+
+		assertEquals("Game_1", selected.getName());
+	}
+
+	@Test
+	public void noSideStateKeepsNormalUnsuffixedCandidate() throws Exception {
+		File root = temporaryFolder.newFolder("fresh-root");
+		File converted = new File(root, "converted");
+		assertTrue(converted.mkdir());
+
+		File selected = AppInstaller.chooseTargetDirectory(
+				converted, "Game", Collections.emptySet());
+
+		assertEquals("Game", selected.getName());
+	}
+
+	@Test
 	public void normalAvailableNameIsPreserved() throws Exception {
 		File converted = temporaryFolder.newFolder("converted-normal");
 

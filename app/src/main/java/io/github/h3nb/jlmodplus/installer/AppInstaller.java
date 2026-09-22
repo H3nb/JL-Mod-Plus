@@ -21,6 +21,8 @@ package io.github.h3nb.jlmodplus.installer;
 import android.net.Uri;
 import android.util.Log;
 
+import androidx.preference.PreferenceManager;
+
 import com.android.dx.command.dexer.Main;
 
 import net.lingala.zip4j.io.inputstream.ZipInputStream;
@@ -43,6 +45,7 @@ import java.util.jar.JarFile;
 
 import io.reactivex.SingleEmitter;
 import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationLease;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
@@ -498,7 +501,22 @@ public class AppInstaller {
                     expectedGeneration,
                     expectedWorkdir)) {
                 WorkDirLayout.requireConverted(expectedWorkdir);
-                if (currentApp != null) {
+                if (currentApp == null) {
+                    File freshConfigDir = new File(new File(expectedWorkdir, "configs"), appDirName);
+                    File freshDataDir = new File(new File(expectedWorkdir, "data"), appDirName);
+                    if (targetDir.exists() || freshConfigDir.exists() || freshDataDir.exists()) {
+                        throw new InstallerFailure(
+                                "Fresh MIDlet identity became occupied before publish: " + appDirName);
+                    }
+                    if (!ProfilesManager.clearMidletOwnershipMetadata(
+                            PreferenceManager.getDefaultSharedPreferences(
+                                    libraryViewModel.getApplication()),
+                            freshConfigDir)) {
+                        throw new InstallerFailure(
+                                "Unable to clear stale preset ownership for fresh MIDlet identity: "
+                                        + appDirName);
+                    }
+                } else {
                     LibraryIconOverride.applyPersistedOverride(expectedWorkdir, appDirName, tmpDir);
                 }
                 if (targetDir.exists()) {
@@ -712,20 +730,32 @@ public class AppInstaller {
         return chooseTargetDirectory(appsDir, name, Collections.emptySet());
     }
 
-    /** Pure path selection boundary: neither recovery names nor indexed identities may be reused. */
+    /**
+     * Pure path selection boundary: converted, indexed, config, and save-data identities all
+     * reserve a storage key. Orphan side state is preserved and forces the normal numeric suffix.
+     */
     static File chooseTargetDirectory(File appsDir, String name, Set<String> indexedStorageKeys) {
         String safeName = name == null ? "" : name.trim();
         if (safeName.isEmpty() || ".".equals(safeName) || "..".equals(safeName)) {
             safeName = "MIDlet";
         }
+        File root = appsDir.getParentFile();
+        File configsDir = root == null ? null : new File(root, "configs");
+        File dataDir = root == null ? null : new File(root, "data");
         File dir = new File(appsDir, safeName);
         for (int i = 1;
                 LibraryInstallRecovery.isReservedStorageKey(dir.getName()) ||
-                        dir.exists() || indexedStorageKeys.contains(dir.getName());
+                        dir.exists() || indexedStorageKeys.contains(dir.getName()) ||
+                        sideIdentityExists(configsDir, dir.getName()) ||
+                        sideIdentityExists(dataDir, dir.getName());
                 i++) {
             dir = new File(appsDir, safeName + "_" + i);
         }
         return dir;
+    }
+
+    private static boolean sideIdentityExists(File parent, String storageKey) {
+        return parent != null && new File(parent, storageKey).exists();
     }
 
     private void downloadJar() throws IOException {

@@ -17,6 +17,7 @@
 
 package io.github.h3nb.jlmodplus.config;
 
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -62,6 +63,23 @@ public class ProfilesManager {
 	@NonNull
 	static Object presetSourceLock() {
 		return PRESET_SOURCE_LOCK;
+	}
+
+	/**
+	 * Durably clears all per-MIDlet preset ownership for one configuration identity.
+	 *
+	 * <p>This is shared by fresh-install publication and explicit uninstall cleanup so callers
+	 * never duplicate ownership preference keys outside the preset layer.</p>
+	 */
+	public static boolean clearMidletOwnershipMetadata(
+			@NonNull SharedPreferences preferences, @NonNull File configDir) {
+		synchronized (PRESET_SOURCE_LOCK) {
+			return preferences.edit()
+					.remove(PresetLinkage.originPreferenceKey(configDir))
+					.remove(PresetLinkage.linkedPreferenceKey(configDir))
+					.remove(ProfileModel.builtInThemePreferenceKey(configDir))
+					.commit();
+		}
 	}
 
 	/** Identifies whether legacy linkage metadata is meaningful for a config load. */

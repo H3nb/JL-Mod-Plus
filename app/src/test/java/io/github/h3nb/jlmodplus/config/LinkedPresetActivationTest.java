@@ -221,6 +221,35 @@ public class LinkedPresetActivationTest {
 	}
 
 	@Test
+	public void freshIdentityCleanupClearsNamedAndBuiltInOwnershipInOneCommit() throws Exception {
+		File target = tempDir("fresh-ownership-cleanup");
+		FakePreferences preferences = linked(target, "OldPreset");
+		assertTrue(preferences.edit()
+				.putBoolean(ProfileModel.builtInThemePreferenceKey(target), true)
+				.commit());
+		int before = preferences.commitCount();
+
+		assertTrue(ProfilesManager.clearMidletOwnershipMetadata(preferences, target));
+
+		assertEquals(before + 1, preferences.commitCount());
+		assertNull(new PresetLinkage(preferences, target).getOrigin());
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+		assertFalse(isBuiltInOwned(preferences, target));
+	}
+
+	@Test
+	public void freshIdentityCleanupFailureIsSynchronousAndResultBearing() throws Exception {
+		File target = tempDir("fresh-ownership-cleanup-failure");
+		FakePreferences preferences = linked(target, "OldPreset");
+		int failingCommit = preferences.commitCount() + 1;
+		preferences.failCommit(failingCommit);
+
+		assertFalse(ProfilesManager.clearMidletOwnershipMetadata(preferences, target));
+
+		assertEquals(failingCommit, preferences.commitCount());
+	}
+
+	@Test
 	public void invalidCustomDefaultFallsBackSafelyWithoutLiveLink() throws Exception {
 		File source = tempDir("invalid-default-source");
 		File target = tempDir("invalid-default-target");

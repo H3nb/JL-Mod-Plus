@@ -852,7 +852,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                             storageKey = app.storageKey,
                             title = app.title,
                             status = LibraryBulkItemStatus.Succeeded,
-                            detail = if (deleted.leftoverConfig || deleted.leftoverSaveData)
+                            detail = if (deleted.leftoverConfig || deleted.leftoverSaveData || deleted.leftoverOwnership)
                                 getApplication<Application>().getString(io.github.h3nb.jlmodplus.R.string.installer_removed_leftovers) else null,
                         )
                     } catch (cancelled: CancellationException) {
