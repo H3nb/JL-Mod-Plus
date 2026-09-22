@@ -157,7 +157,6 @@
     <string name="preset_manager_keyboard_section">Tata Letak Kontrol Virtual Tersimpan</string>
     <string name="preset_manager_empty_summary">Belum ada prasetel atau tata letak kontrol virtual tersimpan. Simpan dari pengaturan MIDlet.</string>
     <string name="preset_default_policy_summary">MIDlet baru menggunakan %1$s.</string>
-    <string name="preset_legacy_keyboard_default_summary">Pengaturan bawaan MIDlet ditambah tata letak kontrol tersimpan “%1$s”.</string>
     <string name="preset_keyboard_layout_unavailable">Tata letak kontrol virtual tidak tersedia</string>
     <string name="set_as_default_new_applications">Bawaan untuk MIDlet Baru</string>
     <string name="edit_preset">Edit Prasetel</string>

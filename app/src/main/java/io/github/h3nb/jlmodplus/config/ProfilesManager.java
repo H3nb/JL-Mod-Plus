@@ -127,13 +127,16 @@ public class ProfilesManager {
 		@Nullable final ProfileModel config;
 		@NonNull final Capability settings;
 		@NonNull final Capability keyboardLayout;
+		final boolean completeSnapshotReady;
 
 		ProfileInfo(@NonNull Profile profile, @Nullable ProfileModel config,
-				@NonNull Capability settings, @NonNull Capability keyboardLayout) {
+				@NonNull Capability settings, @NonNull Capability keyboardLayout,
+				boolean completeSnapshotReady) {
 			this.profile = profile;
 			this.config = config;
 			this.settings = settings;
 			this.keyboardLayout = keyboardLayout;
+			this.completeSnapshotReady = completeSnapshotReady;
 		}
 	}
 
@@ -163,7 +166,7 @@ public class ProfilesManager {
 		} catch (IOException | RuntimeException recoveryFailure) {
 			Capability unavailable = new Capability(
 					CapabilityStatus.UNAVAILABLE, "preset source recovery failed");
-			return new ProfileInfo(profile, null, unavailable, unavailable);
+			return new ProfileInfo(profile, null, unavailable, unavailable, false);
 		}
 
 		File configFile = new File(profileDir, Config.MIDLET_CONFIG_FILE);
@@ -184,7 +187,14 @@ public class ProfilesManager {
 				? new Capability(CapabilityStatus.ABSENT, null)
 				: new Capability(layoutReason == null ? CapabilityStatus.READY : CapabilityStatus.UNAVAILABLE,
 						layoutReason);
-		return new ProfileInfo(profile, config, settings, layout);
+		boolean completeSnapshotReady;
+		try {
+			inspectCompleteSnapshot(profileDir);
+			completeSnapshotReady = true;
+		} catch (IOException | RuntimeException unavailable) {
+			completeSnapshotReady = false;
+		}
+		return new ProfileInfo(profile, config, settings, layout, completeSnapshotReady);
 		}
 	}
 
@@ -355,6 +365,25 @@ public class ProfilesManager {
 			publishLocalSnapshotArtifacts(
 					sourceDir, targetDir, snapshot.config,
 					true, true, snapshot.hasKeyboardLayout, true, null);
+		}
+	}
+
+	/**
+	 * Returns whether the source can be used for an exact whole-device activation.
+	 *
+	 * <p>This deliberately delegates to the same inspection used immediately before exact
+	 * publication. Partial settings and keyboard-only presets remain valid collection entries, but
+	 * are not complete default candidates.</p>
+	 */
+	static boolean isCompleteSnapshotReady(@NonNull File sourceDir) {
+		synchronized (PRESET_SOURCE_LOCK) {
+			try {
+				recoverInterruptedPresetSave(sourceDir);
+				inspectCompleteSnapshot(sourceDir);
+				return true;
+			} catch (IOException | RuntimeException unavailable) {
+				return false;
+			}
 		}
 	}
 

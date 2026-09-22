@@ -111,6 +111,40 @@ class ProfilesComposeTest {
     }
 
     @Test
+    fun incompleteEditablePresetIsExcludedFromDefaultChoices() {
+        val actions = RecordingProfilesActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ProfilesScreen(
+                    state = ProfilesUiState(
+                        profiles = listOf(
+                            ProfileUiItem(
+                                "",
+                                isDefault = true,
+                                canEdit = false,
+                                canSetDefault = true,
+                                isBuiltIn = true,
+                            ),
+                            ProfileUiItem(
+                                "Custom without layout",
+                                isDefault = false,
+                                canEdit = true,
+                                canSetDefault = false,
+                            ),
+                        ),
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Change").performClick()
+        composeRule.onNode(
+            hasText("Custom without layout") and hasAnyAncestor(isDialog()),
+        ).assertDoesNotExist()
+    }
+
+    @Test
     fun unavailableItemsAreNotPresentedAsSavedLayouts() {
         val actions = RecordingProfilesActions()
         composeRule.setContent {

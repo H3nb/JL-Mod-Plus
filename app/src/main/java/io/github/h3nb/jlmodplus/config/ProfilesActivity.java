@@ -170,11 +170,10 @@ public class ProfilesActivity extends AppCompatActivity {
 			@NonNull File profilesRoot,
 			@NonNull String name) {
 		synchronized (ProfilesManager.presetSourceLock()) {
+			if (!Profile.isValidName(name)) return false;
 			File sourceDir = new File(profilesRoot, name);
 			if (!sourceDir.isDirectory()) return false;
-			ProfilesManager.ProfileInfo info =
-					ProfilesManager.inspectProfile(new Profile(name), sourceDir);
-			if (!info.settings.isReady()) return false;
+			if (!ProfilesManager.isCompleteSnapshotReady(sourceDir)) return false;
 			return preferences.edit().putString(PREF_DEFAULT_PROFILE, name).commit();
 		}
 	}
@@ -195,21 +194,15 @@ public class ProfilesActivity extends AppCompatActivity {
 			Collections.sort(profiles);
 			ArrayList<ProfilesManager.ProfileInfo> inspected = ProfilesManager.inspectProfiles(profiles);
 			boolean hasValidDefault = false;
-			String legacyKeyboardDefaultName = null;
 			for (ProfilesManager.ProfileInfo info : inspected) {
-				if (info.settings.isReady() && defaultName != null
+				if (info.completeSnapshotReady && defaultName != null
 						&& defaultName.equals(info.profile.getName())) {
 					hasValidDefault = true;
-				} else if (legacyKeyboardDefaultName == null
-						&& info.settings.status == ProfilesManager.CapabilityStatus.ABSENT
-						&& info.keyboardLayout.isReady()
-						&& defaultName != null && defaultName.equals(info.profile.getName())) {
-					legacyKeyboardDefaultName = info.profile.getName();
 				}
 			}
 			ArrayList<ProfileUiItem> items = new ArrayList<>(inspected.size() + 1);
 			items.add(new ProfileUiItem(
-					"", !hasValidDefault, false, true, false, false, 0, 0, 0, false, false));
+					"", !hasValidDefault, false, true, true, false, false, 0, 0, 0, false, false));
 			for (ProfilesManager.ProfileInfo info : inspected) {
 				boolean valid = info.settings.isReady();
 				boolean keyboardOnly = info.settings.status == ProfilesManager.CapabilityStatus.ABSENT
@@ -217,8 +210,9 @@ public class ProfilesActivity extends AppCompatActivity {
 				boolean unavailable = !valid && !keyboardOnly;
 				items.add(new ProfileUiItem(
 						info.profile.getName(),
-						valid && info.profile.getName().equals(defaultName),
+						info.completeSnapshotReady && info.profile.getName().equals(defaultName),
 						valid,
+						info.completeSnapshotReady,
 						false,
 						keyboardOnly,
 						info.keyboardLayout.isReady(),
@@ -228,12 +222,11 @@ public class ProfilesActivity extends AppCompatActivity {
 						unavailable,
 						info.keyboardLayout.status == ProfilesManager.CapabilityStatus.UNAVAILABLE));
 			}
-			final String resolvedLegacyKeyboardDefaultName = legacyKeyboardDefaultName;
 			runOnUiThread(() -> {
 				if (generation != refreshGeneration || isFinishing() || isDestroyed()) return;
 				profilesByName.clear();
 				for (Profile profile : profiles) profilesByName.put(profile.getName(), profile);
-				composeController.updateProfileItems(items, resolvedLegacyKeyboardDefaultName);
+				composeController.updateProfileItems(items);
 			});
 		});
 	}

@@ -123,13 +123,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	@Nullable private InstalledAppWriteGuard installedWriteGuard;
 	private Display display;
 	private File configDir;
-	private String defProfile;
 	private ArrayList<ShaderInfo> shaders;
 	private String workDir;
 	private boolean needShow;
-	/** Captured once after pre-load recovery so interrupted publication cannot misclassify a new app. */
-	private boolean setupArtifactExistedBeforeInitialization;
-	private boolean initializationDecisionMade;
 	private boolean operationRunning;
 	/** Target and isolated staging directory used while editing a reusable preset. */
 	@Nullable private Profile profileEditTarget;
@@ -419,8 +415,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		profileOrigin = presetLinkage == null ? null : presetLinkage.getOrigin();
 		builtInDefaultParams = newBuiltInProfile();
 
-		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
-				.getString(PREF_DEFAULT_PROFILE, null);
 		if (!loadConfig()) {
 			needShow = false;
 			finish();
@@ -1160,26 +1154,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			}
 			refreshProfileOriginFromMetadata();
 		}
-		boolean decidingInitializationNow = !initializationDecisionMade;
-		if (decidingInitializationNow) {
-			if (!isProfile) {
-				setupArtifactExistedBeforeInitialization = hasExistingSetupAfterRecovery(
-						configDir, profileOrigin, readBuiltInThemeLinked());
-			}
-			initializationDecisionMade = true;
-		}
-		boolean mayInitializeNewApp = shouldInitializeNewApp(
-				decidingInitializationNow, isProfile, setupArtifactExistedBeforeInitialization);
-
-		String configuredDefault = hostPreferences.getString(PREF_DEFAULT_PROFILE, null);
-		Profile configuredProfile = isProfile ? null : ProfilesManager.findProfile(configuredDefault);
-		ProfilesManager.ProfileInfo configuredInfo = configuredProfile == null
-				? null : ProfilesManager.inspectProfile(configuredProfile);
-		Profile validDefault = configuredInfo != null && configuredInfo.settings.isReady()
-				? configuredProfile : null;
-		defProfile = validDefault == null ? null : validDefault.getName();
-		cachedDefaultProfileName = defProfile;
-
 		params = ProfilesManager.loadConfig(
 				configDir,
 				true,
@@ -1190,77 +1164,26 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			persistedBaseline = ProfileConfigMatcher.copyConfig(params);
 		}
 
-		boolean loadedDefaultProfile = false;
-		boolean loadedLegacyDefaultLayout = false;
-		if (params == null && mayInitializeNewApp && !isProfile) {
-			synchronized (ProfilesManager.presetSourceLock()) {
-				String currentDefaultName = hostPreferences.getString(PREF_DEFAULT_PROFILE, null);
-				Profile currentDefault = ProfilesManager.findProfile(currentDefaultName);
-				ProfilesManager.ProfileInfo currentDefaultInfo = currentDefault == null
-						? null : ProfilesManager.inspectProfile(currentDefault);
-				Profile currentDefaultWithSettings =
-						hasApplicationSettingsArtifact(currentDefaultInfo) ? currentDefault : null;
-				Profile currentValidDefault =
-						currentDefaultInfo != null && currentDefaultInfo.settings.isReady()
-								? currentDefault : null;
-				Profile currentKeyboardOnlyDefault =
-						isLegacyKeyboardOnlyDefault(currentDefaultInfo) ? currentDefault : null;
-				defProfile = currentValidDefault == null ? null : currentValidDefault.getName();
-				cachedDefaultProfileName = defProfile;
-
-				if (currentDefaultWithSettings != null) {
-					LinkedPresetActivation.Result activation = LinkedPresetActivation.activate(
-							hostPreferences,
-							configDir,
-							currentDefaultWithSettings.getDir(),
-							currentDefaultWithSettings.getName());
-					refreshProfileOriginFromMetadata();
-					builtInThemeLinked = readBuiltInThemeLinked();
-					if (activation == LinkedPresetActivation.Result.FAILED_UNSAFE) {
-						Log.e(TAG, "Default preset activation left an unsafe local snapshot");
-						return false;
-					}
-					if (activation == LinkedPresetActivation.Result.LINKED
-							|| activation == LinkedPresetActivation.Result.APPLIED_CUSTOM) {
-						builtInThemeLinked = false;
-						params = ProfilesManager.loadConfig(
-								configDir,
-								true,
-								ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
-								false);
-						loadedDefaultProfile = params != null;
-						if (params != null) {
-							persistedBaseline = ProfileConfigMatcher.copyConfig(params);
-						}
-					} else {
-						Log.e(TAG, "Default preset activation failed safely: "
-								+ currentDefaultWithSettings.getName());
-					}
-				} else if (currentKeyboardOnlyDefault != null) {
-					params = newBuiltInProfile();
-					if (ProfilesManager.saveConfig(params)) {
-						persistedBaseline = ProfileConfigMatcher.copyConfig(params);
-						try {
-							ProfilesManager.load(
-									currentKeyboardOnlyDefault, configDir.getPath(), false, true);
-							loadedLegacyDefaultLayout = true;
-						} catch (IOException | RuntimeException e) {
-							Log.e(TAG, "loadConfig: legacy default keyboard layout", e);
-						}
-					}
-					if (loadedLegacyDefaultLayout && !setProfileOrigin(null)) {
-						Log.e(TAG, "Unable to clear preset provenance for legacy keyboard-only default");
-					}
-				}
-			}
-		}
-
 		if (params == null) {
-			if (!isProfile) persistedBaseline = null;
-			params = newBuiltInProfile();
-			setBuiltInThemeLinked(!isProfile && !loadedDefaultProfile
-					&& !setupArtifactExistedBeforeInitialization && profileOrigin == null);
-			return true;
+			if (isProfile) {
+				params = newBuiltInProfile();
+				builtInThemeLinked = false;
+				return true;
+			}
+			if (!FreshInstalledMidletInitializer.publishBuiltIn(
+					hostPreferences, configDir, isDarkTheme())) {
+				Log.e(TAG, "Unable to materialize Built-in recovery for installed MIDlet");
+				return false;
+			}
+			refreshProfileOriginFromMetadata();
+			builtInThemeLinked = true;
+			params = ProfilesManager.loadConfig(
+					configDir,
+					true,
+					ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
+					true);
+			if (params == null) return false;
+			persistedBaseline = ProfileConfigMatcher.copyConfig(params);
 		}
 		if (isProfile) {
 			builtInThemeLinked = false;
@@ -1268,12 +1191,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		boolean linked = readBuiltInThemeLinked();
-		if (profileOrigin != null || loadedDefaultProfile) {
+		if (profileOrigin != null) {
 			linked = false;
-		}
-		if (loadedLegacyDefaultLayout) {
-			setBuiltInThemeLinked(true);
-			return true;
 		}
 		setBuiltInThemeLinked(linked);
 		if (builtInThemeLinked) {
@@ -2278,7 +2197,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			String defaultName = null;
 			if (configuredDefault != null) {
 				for (ProfilesManager.ProfileInfo info : inspected) {
-					if (configuredDefault.equals(info.profile.getName()) && info.settings.isReady()) {
+					if (configuredDefault.equals(info.profile.getName())
+							&& info.completeSnapshotReady) {
 						defaultName = configuredDefault;
 						break;
 					}
@@ -2362,24 +2282,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	static boolean shouldInitializeNewApp(
-			boolean decidingInitializationNow,
-			boolean isProfile,
-			boolean existingSetup) {
-		return decidingInitializationNow && !isProfile && !existingSetup;
-	}
-
-	static boolean hasApplicationSettingsArtifact(@Nullable ProfilesManager.ProfileInfo inspected) {
-		return inspected != null
-				&& inspected.settings.status != ProfilesManager.CapabilityStatus.ABSENT;
-	}
-
-	static boolean isLegacyKeyboardOnlyDefault(@Nullable ProfilesManager.ProfileInfo inspected) {
-		return inspected != null
-				&& inspected.settings.status == ProfilesManager.CapabilityStatus.ABSENT
-				&& inspected.keyboardLayout.isReady();
-	}
-
 	static boolean isCompletePresetCandidate(
 			@NonNull ProfilesManager.ProfileInfo inspected,
 			@NonNull ConfigFormEvents.PresetApplyScope scope) {
@@ -2388,16 +2290,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return ownsKeyboardArtifact
 				? scope == ConfigFormEvents.PresetApplyScope.SETTINGS_AND_KEYBOARD
 				: scope == ConfigFormEvents.PresetApplyScope.SETTINGS;
-	}
-
-	static boolean hasExistingSetupAfterRecovery(
-			@NonNull File configDir,
-			@Nullable String origin,
-			boolean builtInThemeLinked) {
-		return hasConfigArtifact(configDir)
-				|| ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir)
-				|| origin != null
-				|| builtInThemeLinked;
 	}
 
 	static boolean hasEffectiveDraftDivergence(
@@ -2447,11 +2339,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			@NonNull SharedPreferences preferences,
 			@NonNull File configDir) {
 		return new PresetLinkage(preferences, configDir).getOrigin();
-	}
-
-	private static boolean hasConfigArtifact(@NonNull File dir) {
-		return new File(dir, Config.MIDLET_CONFIG_FILE).exists()
-				|| new File(dir, "config.xml").exists();
 	}
 
 	private String normalizedSystemProperties() {

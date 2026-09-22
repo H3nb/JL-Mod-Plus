@@ -18,6 +18,7 @@
 
 package io.github.h3nb.jlmodplus.installer;
 
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
 
@@ -45,7 +46,8 @@ import java.util.jar.JarFile;
 
 import io.reactivex.SingleEmitter;
 import io.github.h3nb.jlmodplus.config.Config;
-import io.github.h3nb.jlmodplus.config.ProfilesManager;
+import io.github.h3nb.jlmodplus.config.FreshInstalledMidletInitializer;
+import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationLease;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
@@ -494,6 +496,9 @@ public class AppInstaller {
             }
 
             File replacementBackup = null;
+            File freshConfigDir = null;
+            SharedPreferences freshPreferences = null;
+            boolean freshDefaultInitialized = false;
             // The generation lease stays short. The process-wide execution permit already serializes
             // the physical converter/staging lifetime; the lease additionally excludes generation-bound
             // Library filesystem mutations while the final target directory is published.
@@ -502,20 +507,26 @@ public class AppInstaller {
                     expectedWorkdir)) {
                 WorkDirLayout.requireConverted(expectedWorkdir);
                 if (currentApp == null) {
-                    File freshConfigDir = new File(new File(expectedWorkdir, "configs"), appDirName);
+                    freshConfigDir = new File(new File(expectedWorkdir, "configs"), appDirName);
                     File freshDataDir = new File(new File(expectedWorkdir, "data"), appDirName);
                     if (targetDir.exists() || freshConfigDir.exists() || freshDataDir.exists()) {
                         throw new InstallerFailure(
                                 "Fresh MIDlet identity became occupied before publish: " + appDirName);
                     }
-                    if (!ProfilesManager.clearMidletOwnershipMetadata(
-                            PreferenceManager.getDefaultSharedPreferences(
-                                    libraryViewModel.getApplication()),
-                            freshConfigDir)) {
+                    freshPreferences = PreferenceManager.getDefaultSharedPreferences(
+                            libraryViewModel.getApplication());
+                    FreshInstalledMidletInitializer.Result initialization =
+                            FreshInstalledMidletInitializer.initialize(
+                                    freshPreferences,
+                                    new File(expectedWorkdir, "templates"),
+                                    freshConfigDir,
+                                    ProfileModel.isDarkTheme(libraryViewModel.getApplication()));
+                    if (!initialization.isSuccess()) {
                         throw new InstallerFailure(
-                                "Unable to clear stale preset ownership for fresh MIDlet identity: "
+                                "Unable to initialize preset ownership for fresh MIDlet identity: "
                                         + appDirName);
                     }
+                    freshDefaultInitialized = true;
                 } else {
                     LibraryIconOverride.applyPersistedOverride(expectedWorkdir, appDirName, tmpDir);
                 }
@@ -526,6 +537,12 @@ public class AppInstaller {
                             targetDir);
                 }
                 if (!tmpDir.renameTo(targetDir)) {
+                    if (freshDefaultInitialized
+                            && !FreshInstalledMidletInitializer.discardFreshInitialization(
+                                    freshPreferences, freshConfigDir)) {
+                        Log.e(TAG, "Converted publish failed and fresh config cleanup also failed: "
+                                + appDirName);
+                    }
                     if (replacementBackup != null &&
                             !LibraryInstallRecovery.restoreBackup(targetDir, replacementBackup)) {
                         Log.e(TAG,

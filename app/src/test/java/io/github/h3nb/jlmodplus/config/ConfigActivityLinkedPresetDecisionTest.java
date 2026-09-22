@@ -11,10 +11,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-
 public class ConfigActivityLinkedPresetDecisionTest {
 	@Test
 	public void combinedPresetIsCompleteOnlyForSettingsAndKeyboard() {
@@ -57,108 +53,13 @@ public class ConfigActivityLinkedPresetDecisionTest {
 	}
 
 	@Test
-	public void keyboardOnlyPresetRemainsLegacyPartialDefault() {
+	public void keyboardOnlyPresetRemainsPartialOnly() {
 		ProfilesManager.ProfileInfo keyboardOnly = info(
 				ProfilesManager.CapabilityStatus.ABSENT,
 				ProfilesManager.CapabilityStatus.READY);
 
-		assertFalse(ConfigActivity.hasApplicationSettingsArtifact(keyboardOnly));
-		assertTrue(ConfigActivity.isLegacyKeyboardOnlyDefault(keyboardOnly));
 		assertFalse(ConfigActivity.isCompletePresetCandidate(
 				keyboardOnly, ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT));
-	}
-
-	@Test
-	public void unavailableSettingsArtifactStillRoutesThroughExactDefaultActivation() {
-		ProfilesManager.ProfileInfo malformedSettings = info(
-				ProfilesManager.CapabilityStatus.UNAVAILABLE,
-				ProfilesManager.CapabilityStatus.ABSENT);
-
-		assertTrue(ConfigActivity.hasApplicationSettingsArtifact(malformedSettings));
-		assertFalse(ConfigActivity.isLegacyKeyboardOnlyDefault(malformedSettings));
-	}
-
-	@Test
-	public void defaultInitializationDecisionIsOneShotPerActivityLoadSequence() {
-		assertTrue(ConfigActivity.shouldInitializeNewApp(true, false, false));
-		assertFalse(ConfigActivity.shouldInitializeNewApp(false, false, false));
-		assertFalse(ConfigActivity.shouldInitializeNewApp(true, false, true));
-		assertFalse(ConfigActivity.shouldInitializeNewApp(true, true, false));
-	}
-
-	@Test
-	public void existingSetupKeepsChangedGlobalDefaultProspectiveOnly() throws Exception {
-		File target = tempDir("prospective-default");
-		Files.write(new File(target, Config.MIDLET_CONFIG_FILE).toPath(),
-				"existing-config".getBytes(StandardCharsets.UTF_8));
-
-		boolean existing = ConfigActivity.hasExistingSetupAfterRecovery(target, null, false);
-
-		assertTrue(existing);
-		assertFalse(ConfigActivity.shouldInitializeNewApp(true, false, existing));
-	}
-
-	@Test
-	public void freshEmptyIdentityCanInitializeCurrentGlobalDefault() throws Exception {
-		File target = tempDir("fresh-default");
-
-		boolean existing = ConfigActivity.hasExistingSetupAfterRecovery(target, null, false);
-
-		assertFalse(existing);
-		assertTrue(ConfigActivity.shouldInitializeNewApp(true, false, existing));
-	}
-
-	@Test
-	public void existingOwnershipCannotBeReinitializedFromChangedGlobalDefault() throws Exception {
-		File target = tempDir("existing-ownership-default");
-
-		assertFalse(ConfigActivity.shouldInitializeNewApp(
-				true,
-				false,
-				ConfigActivity.hasExistingSetupAfterRecovery(target, "K800i", false)));
-		assertFalse(ConfigActivity.shouldInitializeNewApp(
-				true,
-				false,
-				ConfigActivity.hasExistingSetupAfterRecovery(target, null, true)));
-	}
-
-	@Test
-	public void abandonedNewSidecarAloneDoesNotMakeMidletExisting() throws Exception {
-		File target = tempDir("new-sidecar");
-		Files.write(new File(target, Config.MIDLET_KEY_LAYOUT_FILE + ".new").toPath(), new byte[] {1});
-
-		assertFalse(ConfigActivity.hasExistingSetupAfterRecovery(target, null, false));
-	}
-
-	@Test
-	public void recoverableLayoutBackupCountsAsExistingSetup() throws Exception {
-		File target = tempDir("layout-backup");
-		Files.write(new File(target, Config.MIDLET_KEY_LAYOUT_FILE + ".bak").toPath(), new byte[] {1});
-
-		assertTrue(ConfigActivity.hasExistingSetupAfterRecovery(target, null, false));
-	}
-
-	@Test
-	public void provenanceAndBuiltInOwnershipEachCountAsExistingSetup() throws Exception {
-		File target = tempDir("ownership-evidence");
-
-		assertTrue(ConfigActivity.hasExistingSetupAfterRecovery(target, "K800i", false));
-		assertTrue(ConfigActivity.hasExistingSetupAfterRecovery(target, null, true));
-	}
-
-	@Test
-	public void interruptedDefaultPublicationRecoveredToEmptyIsStillNew() throws Exception {
-		File target = tempDir("interrupted-empty");
-		Files.write(new File(target, Config.MIDLET_CONFIG_FILE).toPath(),
-				"partially-published".getBytes(StandardCharsets.UTF_8));
-		File rollback = new File(target, ".preset-sync.rollback");
-		assertTrue(rollback.mkdir());
-		assertTrue(new File(rollback, ".ready").createNewFile());
-
-		ProfilesManager.recoverInterruptedSnapshotSync(target);
-
-		assertFalse(new File(target, Config.MIDLET_CONFIG_FILE).exists());
-		assertFalse(ConfigActivity.hasExistingSetupAfterRecovery(target, null, false));
 	}
 
 	@Test
@@ -281,12 +182,7 @@ public class ConfigActivityLinkedPresetDecisionTest {
 				new Profile("fixture"),
 				config,
 				new ProfilesManager.Capability(settings, null),
-				new ProfilesManager.Capability(keyboard, null));
-	}
-
-	private static File tempDir(String suffix) throws Exception {
-		File dir = Files.createTempDirectory("jlmod-config-decision-" + suffix).toFile();
-		dir.deleteOnExit();
-		return dir;
+				new ProfilesManager.Capability(keyboard, null),
+				false);
 	}
 }

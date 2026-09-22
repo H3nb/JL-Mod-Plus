@@ -240,6 +240,10 @@ public class ProfileModel {
 	}
 
 	public ProfileModel(File dir) {
+		this(dir, ContextHolder.getAssetAsString("defaults/system.props"));
+	}
+
+	ProfileModel(File dir, String defaultSystemProperties) {
 		this.dir = dir;
 		isNew = true;
 		version = VERSION;
@@ -272,7 +276,7 @@ public class ProfileModel {
 		vkBgColorSelected = 0x000080;
 		vkFgColorSelected = 0xFFFFFF;
 		vkOutlineColor = 0xFFFFFF;
-		systemProperties = ContextHolder.getAssetAsString("defaults/system.props");
+		systemProperties = defaultSystemProperties;
 	}
 
 	/** Applies the theme-owned colors used by the app-provided profile template. */
@@ -312,7 +316,13 @@ public class ProfileModel {
 	 * named profiles continue to load their own explicit colors.
 	 */
 	public static ProfileModel createBuiltIn(File dir, boolean darkTheme) {
-		ProfileModel profile = new ProfileModel(dir);
+		return createBuiltIn(
+				dir, darkTheme, ContextHolder.getAssetAsString("defaults/system.props"));
+	}
+
+	static ProfileModel createBuiltIn(
+			File dir, boolean darkTheme, String defaultSystemProperties) {
+		ProfileModel profile = new ProfileModel(dir, defaultSystemProperties);
 		profile.screenBackgroundMode = BackgroundMode.THEME;
 		// Keep a deterministic dormant custom value so switching back to Custom is reversible.
 		profile.screenBackgroundColor = AppBackgroundColors.rgb(darkTheme);

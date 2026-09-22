@@ -72,6 +72,7 @@ data class ProfileUiItem(
     val name: String,
     val isDefault: Boolean,
     val canEdit: Boolean,
+    val canSetDefault: Boolean = canEdit,
     val isBuiltIn: Boolean = false,
     val isKeyboardOnly: Boolean = false,
     val hasKeyboardLayout: Boolean = false,
@@ -82,10 +83,7 @@ data class ProfileUiItem(
     val isKeyboardLayoutUnavailable: Boolean = false,
 )
 
-data class ProfilesUiState(
-    val profiles: List<ProfileUiItem> = emptyList(),
-    val legacyKeyboardDefaultName: String? = null,
-)
+data class ProfilesUiState(val profiles: List<ProfileUiItem> = emptyList())
 
 interface ProfilesActions {
     fun onBack()
@@ -115,8 +113,8 @@ class ProfilesComposeController(
         }
     }
 
-    fun updateProfileItems(items: List<ProfileUiItem>, legacyKeyboardDefaultName: String? = null) {
-        state = ProfilesUiState(profiles = items, legacyKeyboardDefaultName = legacyKeyboardDefaultName)
+    fun updateProfileItems(items: List<ProfileUiItem>) {
+        state = ProfilesUiState(profiles = items)
     }
 }
 
@@ -188,7 +186,6 @@ fun ProfilesScreen(
                 item(key = "default-policy") {
                     DefaultPolicyRow(
                         activeDefault = activeDefault,
-                        legacyKeyboardDefaultName = state.legacyKeyboardDefaultName,
                         onClick = { defaultDialogVisible = true },
                     )
                 }
@@ -227,7 +224,6 @@ fun ProfilesScreen(
     selectedProfile?.let { profile ->
         ProfileActionsDialog(
             profile = profile,
-            legacyKeyboardDefaultName = state.legacyKeyboardDefaultName,
             onDismiss = { selectedProfile = null },
             onEdit = { actions.onEdit(profile.name) },
             onRename = { nameDialog = ProfileNameDialog.Rename(profile) },
@@ -322,20 +318,14 @@ private fun ProfileSectionHeader(title: String) {
 @Composable
 private fun DefaultPolicyRow(
     activeDefault: ProfileUiItem?,
-    legacyKeyboardDefaultName: String?,
     onClick: () -> Unit,
 ) {
     val displayName = when {
-        legacyKeyboardDefaultName != null -> stringResource(R.string.profile_builtin_settings)
         activeDefault?.isBuiltIn == true -> stringResource(R.string.profile_builtin_settings)
         activeDefault != null -> activeDefault.name
         else -> stringResource(R.string.profile_builtin_settings)
     }
-    val summary = if (legacyKeyboardDefaultName != null) {
-        stringResource(R.string.preset_legacy_keyboard_default_summary, legacyKeyboardDefaultName)
-    } else {
-        stringResource(R.string.preset_default_policy_summary, displayName)
-    }
+    val summary = stringResource(R.string.preset_default_policy_summary, displayName)
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -469,7 +459,6 @@ private fun ProfileRow(
 @Composable
 internal fun ProfileActionsDialog(
     profile: ProfileUiItem,
-    legacyKeyboardDefaultName: String? = null,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onRename: () -> Unit,
@@ -502,14 +491,7 @@ internal fun ProfileActionsDialog(
                 ) {
                     if (profile.isBuiltIn) {
                         Text(
-                            if (legacyKeyboardDefaultName != null) {
-                                stringResource(
-                                    R.string.preset_legacy_keyboard_default_summary,
-                                    legacyKeyboardDefaultName,
-                                )
-                            } else {
-                                stringResource(R.string.profile_builtin_settings_summary)
-                            },
+                            stringResource(R.string.profile_builtin_settings_summary),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 8.dp),
                         )
@@ -542,7 +524,7 @@ private fun DefaultPresetDialog(
     onApply: (ProfileUiItem) -> Unit,
 ) {
     val choices = profiles.filter {
-        it.isBuiltIn || (!it.isKeyboardOnly && !it.isUnavailable && it.canEdit)
+        it.isBuiltIn || it.canSetDefault
     }
     val active = profiles.firstOrNull { it.isDefault } ?: profiles.firstOrNull { it.isBuiltIn }
     var selectedId by rememberSaveable(active?.let(::profileSelectionId)) {

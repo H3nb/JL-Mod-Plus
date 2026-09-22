@@ -525,7 +525,7 @@ public class InstallerDialog extends DialogFragment {
 		}
 		cleanupBundleImport();
 		acknowledgeExternalRequest();
-		Config.startApp(requireContext(), title, path);
+		Config.startApp(requireContext(), title, path, installer.getInstalledId());
 		dismiss();
 	}
 

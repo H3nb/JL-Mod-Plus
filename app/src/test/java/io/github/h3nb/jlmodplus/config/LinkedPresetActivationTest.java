@@ -35,6 +35,167 @@ public class LinkedPresetActivationTest {
 	private static final int LAYOUT_EOF = -1;
 
 	@Test
+	public void completeDefaultEligibilityMatchesExactSnapshotRules() throws Exception {
+		File root = tempDir("complete-default-eligibility");
+		File configOnly = new File(root, "Config only");
+		writeConfig(configOnly, 240, 1);
+		File configAndLayout = new File(root, "Config and layout");
+		writeConfig(configAndLayout, 320, 1);
+		writeLayout(configAndLayout, 2);
+		File customAndLayout = new File(root, "Custom and layout");
+		writeConfig(customAndLayout, 360, VirtualKeyboard.TYPE_CUSTOM);
+		writeLayout(customAndLayout, 3);
+		File customWithoutLayout = new File(root, "Custom without layout");
+		writeConfig(customWithoutLayout, 400, VirtualKeyboard.TYPE_CUSTOM);
+		File corruptLayout = new File(root, "Corrupt layout");
+		writeConfig(corruptLayout, 480, 1);
+		Files.write(layoutFile(corruptLayout).toPath(), new byte[] {1, 2, 3});
+		File missingConfig = new File(root, "Missing config");
+		assertTrue(missingConfig.mkdir());
+		File unreadableConfig = new File(root, "Unreadable config");
+		assertTrue(unreadableConfig.mkdir());
+		Files.write(configFile(unreadableConfig).toPath(), "{".getBytes(StandardCharsets.UTF_8));
+		File keyboardOnly = new File(root, "Keyboard only");
+		writeLayout(keyboardOnly, 1);
+
+		assertTrue(ProfilesManager.isCompleteSnapshotReady(configOnly));
+		assertTrue(ProfilesManager.isCompleteSnapshotReady(configAndLayout));
+		assertTrue(ProfilesManager.isCompleteSnapshotReady(customAndLayout));
+		assertFalse(ProfilesManager.isCompleteSnapshotReady(customWithoutLayout));
+		assertFalse(ProfilesManager.isCompleteSnapshotReady(corruptLayout));
+		assertFalse(ProfilesManager.isCompleteSnapshotReady(missingConfig));
+		assertFalse(ProfilesManager.isCompleteSnapshotReady(unreadableConfig));
+		assertFalse(ProfilesManager.isCompleteSnapshotReady(keyboardOnly));
+	}
+
+	@Test
+	public void setNamedDefaultUsesCompleteSnapshotAuthority() throws Exception {
+		File root = tempDir("set-complete-default");
+		File ready = new File(root, "Ready");
+		writeConfig(ready, 240, 1);
+		File incomplete = new File(root, "Incomplete");
+		writeConfig(incomplete, 360, VirtualKeyboard.TYPE_CUSTOM);
+		FakePreferences preferences = new FakePreferences();
+
+		assertFalse(ProfilesActivity.setNamedDefault(preferences, root, "Incomplete"));
+		assertNull(preferences.getString(
+				io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE, null));
+		assertTrue(ProfilesActivity.setNamedDefault(preferences, root, "Ready"));
+		assertEquals("Ready", preferences.getString(
+				io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE, null));
+	}
+
+	@Test
+	public void freshBuiltInDefaultIsMaterializedWithExplicitOwnership() throws Exception {
+		File root = tempDir("fresh-builtin-root");
+		File target = new File(tempDir("fresh-builtin-target"), "Game");
+		FakePreferences preferences = new FakePreferences();
+
+		assertEquals(FreshInstalledMidletInitializer.Result.BUILT_IN,
+				FreshInstalledMidletInitializer.initialize(preferences, root, target, false, ""));
+
+		assertTrue(configFile(target).isFile());
+		assertFalse(layoutFile(target).exists());
+		assertTrue(isBuiltInOwned(preferences, target));
+		assertNull(new PresetLinkage(preferences, target).getOrigin());
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+	}
+
+	@Test
+	public void freshNamedDefaultsPublishExactCompleteSnapshots() throws Exception {
+		File root = tempDir("fresh-named-root");
+		File configOnly = new File(root, "K800i");
+		writeConfig(configOnly, 360, 1);
+		File custom = new File(root, "N95");
+		writeConfig(custom, 480, VirtualKeyboard.TYPE_CUSTOM);
+		writeLayout(custom, 3);
+		FakePreferences preferences = new FakePreferences();
+		assertTrue(preferences.edit().putString(
+				io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE, "K800i").commit());
+		File first = new File(tempDir("fresh-config-only"), "GameA");
+
+		assertEquals(FreshInstalledMidletInitializer.Result.LINKED,
+				FreshInstalledMidletInitializer.initialize(preferences, root, first, false, ""));
+		assertEquals(360, readConfig(first).screenWidth);
+		assertFalse(layoutFile(first).exists());
+		assertLinked(preferences, first, "K800i");
+
+		assertTrue(preferences.edit().putString(
+				io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE, "N95").commit());
+		File second = new File(tempDir("fresh-custom-layout"), "GameB");
+		assertEquals(FreshInstalledMidletInitializer.Result.LINKED,
+				FreshInstalledMidletInitializer.initialize(preferences, root, second, true, ""));
+		assertEquals(480, readConfig(second).screenWidth);
+		assertArrayEquals(readLayout(custom), readLayout(second));
+		assertLinked(preferences, second, "N95");
+		assertLinked(preferences, first, "K800i");
+		assertEquals(360, readConfig(first).screenWidth);
+
+		assertTrue(preferences.edit().remove(
+				io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE).commit());
+		File third = new File(tempDir("fresh-builtin-after-named"), "GameC");
+		assertEquals(FreshInstalledMidletInitializer.Result.BUILT_IN,
+				FreshInstalledMidletInitializer.initialize(preferences, root, third, true, ""));
+		assertTrue(isBuiltInOwned(preferences, third));
+		assertLinked(preferences, first, "K800i");
+		assertLinked(preferences, second, "N95");
+	}
+
+	@Test
+	public void unusableNamedDefaultFallsBackToBuiltInWithoutNamedOwnership() throws Exception {
+		File root = tempDir("fresh-invalid-root");
+		File invalid = new File(root, "Broken");
+		writeConfig(invalid, 360, VirtualKeyboard.TYPE_CUSTOM);
+		FakePreferences preferences = new FakePreferences();
+		assertTrue(preferences.edit().putString(
+				io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE, "Broken").commit());
+		File target = new File(tempDir("fresh-invalid-target"), "Game");
+
+		assertEquals(FreshInstalledMidletInitializer.Result.BUILT_IN,
+				FreshInstalledMidletInitializer.initialize(preferences, root, target, true, ""));
+
+		assertTrue(configFile(target).isFile());
+		assertTrue(isBuiltInOwned(preferences, target));
+		assertNull(new PresetLinkage(preferences, target).getOrigin());
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+	}
+
+	@Test
+	public void freshInitializerNeverRetargetsOrDeletesOccupiedConfig() throws Exception {
+		File root = tempDir("occupied-root");
+		File target = tempDir("occupied-target");
+		writeConfig(target, 777, 1);
+		byte[] existing = Files.readAllBytes(configFile(target).toPath());
+		FakePreferences preferences = new FakePreferences();
+
+		assertEquals(FreshInstalledMidletInitializer.Result.FAILED,
+				FreshInstalledMidletInitializer.initialize(preferences, root, target, false, ""));
+
+		assertArrayEquals(existing, Files.readAllBytes(configFile(target).toPath()));
+		assertTrue(target.isDirectory());
+	}
+
+	@Test
+	public void failedNamedLinkKeepsPublishedFreshSnapshotCustom() throws Exception {
+		File root = tempDir("fresh-link-fail-root");
+		File source = new File(root, "K800i");
+		writeConfig(source, 360, 1);
+		File target = new File(tempDir("fresh-link-fail-target"), "Game");
+		FakePreferences preferences = new FakePreferences();
+		assertTrue(preferences.edit().putString(
+				io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE, "K800i").commit());
+		preferences.failCommit(3); // default #1, ownership clear #2, link publication #3.
+
+		assertEquals(FreshInstalledMidletInitializer.Result.CUSTOM,
+				FreshInstalledMidletInitializer.initialize(preferences, root, target, false, ""));
+
+		assertEquals(360, readConfig(target).screenWidth);
+		assertEquals("K800i", new PresetLinkage(preferences, target).getOrigin());
+		assertFalse(new PresetLinkage(preferences, target).isLinked());
+		assertFalse(isBuiltInOwned(preferences, target));
+	}
+
+	@Test
 	public void completeConfigAndLayoutBecomesLinked() throws Exception {
 		File source = tempDir("combined-source");
 		File target = tempDir("combined-target");
@@ -281,7 +442,7 @@ public class LinkedPresetActivationTest {
 		assertFalse(linkage.isLinked());
 		assertNull(linkage.getOrigin());
 		assertEquals(360, readConfig(target).screenWidth);
-		assertTrue(ConfigActivity.hasExistingSetupAfterRecovery(target, null, false));
+		assertTrue(configFile(target).isFile());
 	}
 
 
@@ -326,7 +487,7 @@ public class LinkedPresetActivationTest {
 		assertFalse(isBuiltInOwned(preferences, target));
 		assertNull(new PresetLinkage(preferences, target).getOrigin());
 		assertFalse(new PresetLinkage(preferences, target).isLinked());
-		assertTrue(ConfigActivity.hasExistingSetupAfterRecovery(target, null, false));
+		assertTrue(configFile(target).isFile());
 	}
 
 	@Test

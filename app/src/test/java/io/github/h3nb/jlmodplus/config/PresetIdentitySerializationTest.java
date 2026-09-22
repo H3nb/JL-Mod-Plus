@@ -379,16 +379,17 @@ public class PresetIdentitySerializationTest {
 			throws Exception {
 		File root = tempDir("default-rename-root");
 		preset(root, "K800i", 480, 1);
-		File target = tempDir("default-rename-target");
+		File target = new File(tempDir("default-rename-target"), "Game");
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedString(PREF_DEFAULT_PROFILE, "K800i");
 		preferences.blockCommit(2); // activation clear #1, final link #2.
-		AtomicReference<LinkedPresetActivation.Result> initResult = new AtomicReference<>();
+		AtomicReference<FreshInstalledMidletInitializer.Result> initResult = new AtomicReference<>();
 		AtomicReference<Throwable> initFailure = new AtomicReference<>();
 		AtomicReference<Throwable> renameFailure = new AtomicReference<>();
 
 		Thread initializer = thread("fresh-default-init", initFailure,
-				() -> initResult.set(initializeCurrentDefault(preferences, target, root)));
+				() -> initResult.set(FreshInstalledMidletInitializer.initialize(
+						preferences, root, target, false, "")));
 		initializer.start();
 		preferences.awaitBlockedCommit();
 
@@ -401,7 +402,7 @@ public class PresetIdentitySerializationTest {
 		join(initializer, initFailure);
 		join(rename, renameFailure);
 
-		assertEquals(LinkedPresetActivation.Result.LINKED, initResult.get());
+		assertEquals(FreshInstalledMidletInitializer.Result.LINKED, initResult.get());
 		assertEquals("Sony K800i", preferences.getString(PREF_DEFAULT_PROFILE, null));
 		assertLinked(preferences, target, "Sony K800i");
 	}
@@ -410,16 +411,17 @@ public class PresetIdentitySerializationTest {
 	public void freshDefaultInitializationSeesDeleteThatWinsIdentityLock() throws Exception {
 		File root = tempDir("default-delete-root");
 		preset(root, "K800i", 480, 1);
-		File target = tempDir("default-delete-target");
+		File target = new File(tempDir("default-delete-target"), "Game");
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedString(PREF_DEFAULT_PROFILE, "K800i");
-		AtomicReference<LinkedPresetActivation.Result> initResult = new AtomicReference<>();
+		AtomicReference<FreshInstalledMidletInitializer.Result> initResult = new AtomicReference<>();
 		AtomicReference<Throwable> initFailure = new AtomicReference<>();
 
 		Thread initializer;
 		synchronized (ProfilesManager.presetSourceLock()) {
 			initializer = thread("fresh-default-after-delete", initFailure,
-					() -> initResult.set(initializeCurrentDefault(preferences, target, root)));
+					() -> initResult.set(FreshInstalledMidletInitializer.initialize(
+							preferences, root, target, false, "")));
 			initializer.start();
 			awaitBlocked(initializer);
 			assertEquals(PresetLifecycle.Result.SUCCESS,
@@ -427,10 +429,12 @@ public class PresetIdentitySerializationTest {
 		}
 		join(initializer, initFailure);
 
-		assertNull(initResult.get());
+		assertEquals(FreshInstalledMidletInitializer.Result.BUILT_IN, initResult.get());
 		assertNull(preferences.getString(PREF_DEFAULT_PROFILE, null));
 		assertNull(new PresetLinkage(preferences, target).getOrigin());
-		assertFalse(configFile(target).exists());
+		assertTrue(configFile(target).isFile());
+		assertTrue(preferences.getBoolean(
+				ProfileModel.builtInThemePreferenceKey(target), false));
 	}
 
 	@Test
@@ -679,20 +683,6 @@ public class PresetIdentitySerializationTest {
 
 		assertNull(new PresetLinkage(preferences, target).getOrigin());
 		assertFalse(new PresetLinkage(preferences, target).isLinked());
-	}
-
-	private static LinkedPresetActivation.Result initializeCurrentDefault(
-			FakePreferences preferences, File target, File root) {
-		synchronized (ProfilesManager.presetSourceLock()) {
-			String name = preferences.getString(PREF_DEFAULT_PROFILE, null);
-			if (name == null) return null;
-			File source = new File(root, name);
-			if (!source.isDirectory()) return null;
-			ProfilesManager.ProfileInfo info =
-					ProfilesManager.inspectProfile(new Profile(name), source);
-			if (!ConfigActivity.hasApplicationSettingsArtifact(info)) return null;
-			return LinkedPresetActivation.activate(preferences, target, source, name);
-		}
 	}
 
 	private static File preset(File root, String name, int width, int vkType) throws Exception {
