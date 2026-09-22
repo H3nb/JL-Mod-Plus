@@ -1176,8 +1176,28 @@ public class ProfilesManager {
 	@Nullable
 	public static ProfileModel loadConfig(File dir, boolean persistMigrations,
 			@NonNull BackgroundMigrationContext context, boolean legacyThemeLinked) {
+		return loadConfigInternal(dir, persistMigrations, context, legacyThemeLinked, true);
+	}
+
+	/**
+	 * Parses an authority-prepared MIDlet config without filesystem recovery or migration writes.
+	 */
+	@Nullable
+	public static ProfileModel loadPreparedMidletConfig(
+			@NonNull File dir, boolean legacyThemeLinked) {
+		return loadConfigInternal(
+				dir, false, BackgroundMigrationContext.MIDLET_CONFIG, legacyThemeLinked, false);
+	}
+
+	@Nullable
+	private static ProfileModel loadConfigInternal(
+			@NonNull File dir,
+			boolean persistMigrations,
+			@NonNull BackgroundMigrationContext context,
+			boolean legacyThemeLinked,
+			boolean recoverAtomic) {
 		File file = new File(dir, Config.MIDLET_CONFIG_FILE);
-		recoverAtomicConfig(file);
+		if (recoverAtomic) recoverAtomicConfig(file);
 		ProfileModel params = null;
 		File oldFile = new File(dir, "config.xml");
 		boolean loadedLegacyFile = false;

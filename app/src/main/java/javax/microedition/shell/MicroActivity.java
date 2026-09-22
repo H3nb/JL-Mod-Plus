@@ -84,8 +84,6 @@ import io.reactivex.disposables.Disposable;
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
-import io.github.h3nb.jlmodplus.config.PresetLocalOverride;
-import io.github.h3nb.jlmodplus.config.PresetRuntimeUpdate;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.input.ControllerHostSink;
@@ -122,6 +120,8 @@ public class MicroActivity extends AppCompatActivity {
 	private boolean menuKeyLongPressHandled;
 	private int imeToggleRequest;
 	private String appPath;
+	private long expectedAppId;
+	private PresetAuthorityClient presetAuthorityClient;
 	private RuntimeHostView binding;
 	private RuntimeMenuComposeController runtimeMenuController;
 	private ControllerInputRouter controllerInputRouter;
@@ -210,12 +210,23 @@ public class MicroActivity extends AppCompatActivity {
 			}
 		}
 		updateRecentTaskDescription();
-		MidletSessionStore.markPending(getApplicationContext(), appPath, appName);
-		microLoader = new MicroLoader(appPath);
+		expectedAppId = intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L);
+		presetAuthorityClient = new PresetAuthorityClient(this);
+		PresetAuthorityClient.PrepareResult prepared =
+				presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
+		if (!prepared.isSuccess()) {
+			MidletSessionStore.clear(getApplicationContext());
+			MidletKeepAliveService.stop(this);
+			if (!prepared.isStale()) Config.openSettings(this, appName, appPath);
+			finish();
+			return;
+		}
+		expectedAppId = prepared.appId();
+		MidletSessionStore.markPending(getApplicationContext(), appPath, appName, expectedAppId);
+		microLoader = new MicroLoader(appPath, expectedAppId, prepared.builtInThemeLinked());
 		if (!microLoader.init()) {
 			MidletSessionStore.clear(getApplicationContext());
 			MidletKeepAliveService.stop(this);
-			Config.openSettings(this, appName, appPath);
 			finish();
 			return;
 		}
@@ -1442,18 +1453,25 @@ public class MicroActivity extends AppCompatActivity {
 
 	private VirtualKeyboardSaveResult applyVirtualKeyboardSave(@Nullable String updateTarget) {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		File configDir = activeMidletConfigDir();
-		if (vk == null || configDir == null) {
+		if (vk == null || presetAuthorityClient == null || expectedAppId <= 0L
+				|| !vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM)) {
 			return VirtualKeyboardSaveResult.layoutFailed();
 		}
-		if (!PresetLocalOverride.runDetachedWrite(
-				this, configDir, () -> vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM))) {
+		return saveCurrentVirtualKeyboard(vk, updateTarget);
+	}
+
+	private VirtualKeyboardSaveResult saveCurrentVirtualKeyboard(
+			@NonNull VirtualKeyboard vk, @Nullable String updateTarget) {
+		final byte[] payload;
+		try {
+			payload = vk.encodeCurrentLayoutForPersistence();
+		} catch (IOException | RuntimeException encodingFailure) {
 			return VirtualKeyboardSaveResult.layoutFailed();
 		}
-		// The local layout is authoritative once committed. Optional whole-preset Update remains
-		// a secondary destination and cannot make the local edit transaction discardable again.
-		return VirtualKeyboardSaveResult.layoutCommitted(
-				updateWholePresetAfterLocalSave(configDir, updateTarget));
+		VirtualKeyboardSaveResult result = presetAuthorityClient.saveVirtualKeyboardLayout(
+				appPath, expectedAppId, payload, updateTarget);
+		if (result.isLayoutCommitted()) vk.onLayoutPersistenceCommitted();
+		return result;
 	}
 
 	private void applyLayoutSelection(int index, @Nullable String updateTarget) {
@@ -1471,15 +1489,18 @@ public class MicroActivity extends AppCompatActivity {
 			applyVirtualKeyboardOrientationPolicy(vk);
 			return;
 		}
-		File configDir = activeMidletConfigDir();
-		if (configDir == null) {
+		VirtualKeyboardLayoutEditState previous = vk.captureLayoutEditState();
+		if (!vk.setLayout(index)) {
+			vk.restoreLayoutEditState(previous);
+			toast(R.string.virtual_controls_save_failed);
+			applyVirtualKeyboardOrientationPolicy(vk);
 			return;
 		}
-		if (!PresetLocalOverride.runDetachedWrite(this, configDir, () -> vk.setLayout(index))) {
+		VirtualKeyboardSaveResult result = saveCurrentVirtualKeyboard(vk, updateTarget);
+		if (!result.isLayoutCommitted()) {
+			vk.restoreLayoutEditState(previous);
 			toast(R.string.virtual_controls_save_failed);
 		} else {
-			VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(
-					updateWholePresetAfterLocalSave(configDir, updateTarget));
 			showVirtualKeyboardSaveWarnings(result, updateTarget);
 		}
 		applyVirtualKeyboardOrientationPolicy(vk);
@@ -1487,22 +1508,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Nullable
 	private String resolveRuntimePresetUpdateTarget() {
-		File configDir = activeMidletConfigDir();
-		return configDir == null ? null : PresetRuntimeUpdate.resolveUpdateTarget(this, configDir);
-	}
-
-	private VirtualKeyboardSaveResult.PresetUpdateOutcome updateWholePresetAfterLocalSave(
-			@NonNull File configDir, @Nullable String updateTarget) {
-		if (updateTarget == null) {
-			return VirtualKeyboardSaveResult.PresetUpdateOutcome.NONE;
-		}
-		// Runtime writes always publish the local layout/config first. The optional Update action is
-		// whole-device replacement, not a keyboard-component write, and delegates to Task 3C.
-		return switch (PresetRuntimeUpdate.updateExisting(this, configDir, updateTarget)) {
-			case LINKED -> VirtualKeyboardSaveResult.PresetUpdateOutcome.LINKED;
-			case SAVED_UNLINKED -> VirtualKeyboardSaveResult.PresetUpdateOutcome.SAVED_UNLINKED;
-			case FAILED -> VirtualKeyboardSaveResult.PresetUpdateOutcome.FAILED;
-		};
+		return presetAuthorityClient == null || expectedAppId <= 0L
+				? null
+				: presetAuthorityClient.resolveUpdateTarget(appPath, expectedAppId);
 	}
 
 	private boolean showVirtualKeyboardSaveWarnings(
@@ -1526,10 +1534,6 @@ public class MicroActivity extends AppCompatActivity {
 		return false;
 	}
 
-	@Nullable
-	private File activeMidletConfigDir() {
-		return microLoader == null || microLoader.params == null ? null : microLoader.params.dir;
-	}
 
 	@Override
 	public boolean onContextItemSelected(@NonNull MenuItem item) {

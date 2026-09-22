@@ -64,6 +64,9 @@ public final class LauncherActivity extends Activity {
             if (state.getMainClass() != null) {
                 intent.putExtra(Constants.KEY_MIDLET_CLASS, state.getMainClass());
             }
+            if (state.getAppId() > 0L) {
+                intent.putExtra(Constants.KEY_LIBRARY_APP_ID, state.getAppId());
+            }
             startActivity(intent);
         } else {
             if (state != null) {

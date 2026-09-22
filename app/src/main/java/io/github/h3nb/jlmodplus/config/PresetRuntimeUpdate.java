@@ -4,12 +4,10 @@
  */
 package io.github.h3nb.jlmodplus.config;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.preference.PreferenceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,35 +25,6 @@ public final class PresetRuntimeUpdate {
 	}
 
 	private PresetRuntimeUpdate() {
-	}
-
-	@Nullable
-	public static String resolveUpdateTarget(
-			@NonNull Context context, @NonNull File currentConfigDir) {
-		File profilesRoot = profilesRoot();
-		if (profilesRoot == null) {
-			return null;
-		}
-		return resolveUpdateTarget(
-				PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext()),
-				currentConfigDir,
-				profilesRoot);
-	}
-
-	@NonNull
-	public static Result updateExisting(
-			@NonNull Context context,
-			@NonNull File currentConfigDir,
-			@NonNull String name) {
-		File profilesRoot = profilesRoot();
-		if (profilesRoot == null) {
-			return Result.FAILED;
-		}
-		return updateExisting(
-				PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext()),
-				currentConfigDir,
-				profilesRoot,
-				name);
 	}
 
 	@Nullable
@@ -108,9 +77,4 @@ public final class PresetRuntimeUpdate {
 		}
 	}
 
-	@Nullable
-	private static File profilesRoot() {
-		String path = Config.getProfilesDir();
-		return path == null || path.isEmpty() ? null : new File(path);
-	}
 }

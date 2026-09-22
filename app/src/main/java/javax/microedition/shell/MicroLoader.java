@@ -23,7 +23,6 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
 import android.graphics.Bitmap;
-import android.content.SharedPreferences;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.util.Log;
@@ -31,7 +30,6 @@ import android.util.SparseIntArray;
 import android.view.KeyEvent;
 
 import androidx.core.content.ContextCompat;
-import androidx.preference.PreferenceManager;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -70,7 +68,6 @@ import kotlin.io.ConstantsKt;
 import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.config.Config;
-import io.github.h3nb.jlmodplus.config.MidletConfigLoadBoundary;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.config.ShaderInfo;
@@ -99,6 +96,8 @@ public class MicroLoader {
 	private final File appDir;
 	private final String workDir;
 	private final String appDirName;
+	private final long expectedAppId;
+	private final boolean builtInThemeLinked;
 	private String midletName;
 	private String midletVendor;
 	private String midletVersion;
@@ -111,8 +110,10 @@ public class MicroLoader {
 	/** Set only after the MIDlet thread has successfully received the timing session. */
 	private boolean timingSessionTransferred;
 
-	MicroLoader(String appPath) {
+	MicroLoader(String appPath, long expectedAppId, boolean builtInThemeLinked) {
 		this.appDir = new File(appPath);
+		this.expectedAppId = expectedAppId;
+		this.builtInThemeLinked = builtInThemeLinked;
 		File converted = appDir.getParentFile();
 		if (converted == null)
 			throw new NullPointerException("Can't access to parent of " + appPath);
@@ -122,19 +123,7 @@ public class MicroLoader {
 
 	public boolean init() {
 		File config = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDirName);
-		SharedPreferences preferences =
-				PreferenceManager.getDefaultSharedPreferences(ContextHolder.getAppContext());
-		if (!MidletConfigLoadBoundary.prepare(preferences, config)) {
-			Log.e(TAG, "Refusing to load an unsafe MIDlet configuration snapshot");
-			return false;
-		}
-		boolean legacyThemeLinked = preferences
-				.getBoolean(ProfileModel.builtInThemePreferenceKey(config), false);
-		this.params = ProfilesManager.loadConfig(
-				config,
-				true,
-				ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
-				legacyThemeLinked);
+		this.params = ProfilesManager.loadPreparedMidletConfig(config, builtInThemeLinked);
 		if (params == null) {
 			return false;
 		}
@@ -144,7 +133,7 @@ public class MicroLoader {
 			Log.e(TAG, "A MIDlet timing session is already active");
 			return false;
 		}
-		applyLinkedBuiltInTheme(config);
+		applyLinkedBuiltInTheme();
 		Display.initDisplay();
 		Graphics3D.initGraphics3D();
 		File cacheDir = ContextHolder.getCacheDir();
@@ -253,10 +242,8 @@ public class MicroLoader {
 	}
 
 	/** Applies only the theme-owned colors for a linked built-in profile at runtime. */
-	private void applyLinkedBuiltInTheme(File configDir) {
-		boolean linked = PreferenceManager.getDefaultSharedPreferences(ContextHolder.getAppContext())
-				.getBoolean(ProfileModel.builtInThemePreferenceKey(configDir), false);
-		if (!linked || params.screenBackgroundMode != io.github.h3nb.jlmodplus.config.BackgroundMode.THEME) {
+	private void applyLinkedBuiltInTheme() {
+		if (!builtInThemeLinked || params.screenBackgroundMode != io.github.h3nb.jlmodplus.config.BackgroundMode.THEME) {
 			return;
 		}
 		ProfileModel.applyBuiltInTheme(
@@ -426,7 +413,7 @@ public class MicroLoader {
 		try {
 			// Apply configuration to the launching MIDlet
 			if (params.showKeyboard) {
-				ContextHolder.setVk(new VirtualControlsKeyboard(params));
+				ContextHolder.setVk(new VirtualControlsKeyboard(params, false));
 			} else {
 				ContextHolder.setVk(null);
 			}
@@ -520,7 +507,8 @@ public class MicroLoader {
 		}
 		startTimingSession();
 		try {
-			MidletSessionStore.markStarted(ContextHolder.getAppContext(), appDir.getPath(), appName, clazz);
+			MidletSessionStore.markStarted(
+					ContextHolder.getAppContext(), appDir.getPath(), appName, clazz, expectedAppId);
 			MidletSessionJournal journal = MidletSessionJournal.create(
 					ContextHolder.getAppContext(),
 					midletName,

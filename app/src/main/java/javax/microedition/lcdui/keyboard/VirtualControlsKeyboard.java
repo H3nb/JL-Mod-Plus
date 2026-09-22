@@ -27,7 +27,6 @@ import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
-import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.input.GuestViewport;
 import io.github.h3nb.jlmodplus.input.PointerSourceKind;
 import io.github.h3nb.jlmodplus.input.PointerSourceToken;
@@ -135,7 +134,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private float legacyPinchStartSpanY;
 
 	public VirtualControlsKeyboard(ProfileModel settings) {
-		super(settings);
+		this(settings, true);
+	}
+
+	public VirtualControlsKeyboard(ProfileModel settings, boolean recoverPersistentLayout) {
+		super(settings, recoverPersistentLayout);
 		this.settings = settings;
 		boolean legacyDpadEnabled = settings.virtualDpadEnabled;
 		boolean legacyAnalogEnabled = settings.virtualAnalogEnabled;
@@ -284,17 +287,13 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			activeCustomSource = ActiveCustomSource.NONE;
 			activeOrientationDirty = false;
 		}
-		if (!super.onLayoutChanged(variant)) return false;
-		if (variant == TYPE_CUSTOM) {
-			commitPendingRuntimeCustomization();
-		}
-		if (!applyingStandardTemplate) {
-			// The v4 layout artifact is authoritative for Custom geometry. ProfileModel keeps
-			// compatibility working values only, so its best-effort save must not turn an already
-			// committed layout write into a false "Save failed" result.
-			ProfilesManager.saveConfig(settings);
-		}
-		return true;
+		return super.onLayoutChanged(variant);
+	}
+
+	@Override
+	public void onLayoutPersistenceCommitted() {
+		super.onLayoutPersistenceCommitted();
+		commitPendingRuntimeCustomization();
 	}
 
 	@Override
@@ -453,9 +452,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			rebuildAnalogStick();
 			if (persist) {
 				persisted = super.onLayoutChanged(variant);
-				if (persisted) {
-					ProfilesManager.saveConfig(settings);
-				}
 			} else {
 				setLayoutVariantInMemory(variant);
 			}
