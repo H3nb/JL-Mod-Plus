@@ -133,7 +133,7 @@ final class PresetAuthority {
 		Context app = context.getApplicationContext();
 		return new PresetAuthority(
 				PreferenceManager.getDefaultSharedPreferences(app),
-				new InstalledIdentityResolver(app));
+				new InstalledIdentityResolver());
 	}
 
 	@NonNull

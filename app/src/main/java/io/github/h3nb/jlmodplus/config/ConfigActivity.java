@@ -22,6 +22,8 @@ package io.github.h3nb.jlmodplus.config;
 
 import static io.github.h3nb.jlmodplus.util.Constants.ACTION_EDIT;
 import static io.github.h3nb.jlmodplus.util.Constants.ACTION_EDIT_PROFILE;
+import static io.github.h3nb.jlmodplus.util.Constants.KEY_INSTALLED_APP_PATH;
+import static io.github.h3nb.jlmodplus.util.Constants.KEY_LIBRARY_APP_ID;
 import static io.github.h3nb.jlmodplus.util.Constants.KEY_MIDLET_NAME;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_THEME;
@@ -103,6 +105,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private static final String STATE_PROFILE_DRAFT_PATH = "profile_edit_draft_path";
 	private static final String STATE_PROFILE_DRAFT_DIRTY = "profile_edit_draft_dirty";
 	private static final String STATE_PROFILE_EDIT_MODE = "profile_edit_mode";
+	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
 
 	private final ArrayList<Size> screenPresets = new ArrayList<>();
 	private final ArrayList<Size> removableScreenPresets = new ArrayList<>();
@@ -116,6 +119,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	@Nullable private ProfileModel persistedBaseline;
 	private boolean isProfile;
 	private File appDir;
+	private long expectedAppId;
+	@Nullable private InstalledAppWriteGuard installedWriteGuard;
 	private Display display;
 	private File configDir;
 	private String defProfile;
@@ -316,7 +321,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		String action = intent.getAction();
 		isProfile = ACTION_EDIT_PROFILE.equals(action);
 		needShow = isProfile || ACTION_EDIT.equals(action);
-		String path = intent.getDataString();
+		Uri intentData = intent.getData();
+		String path = intentData != null && "file".equals(intentData.getScheme())
+				? intentData.getPath() : intent.getDataString();
 		if (path == null) {
 			needShow = false;
 			finish();
@@ -386,10 +393,26 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				return;
 			}
 			dataDir = new File(workDir + Config.MIDLET_DATA_DIR + appDir.getName());
-			dataDir.mkdirs();
 			configDir = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDir.getName());
 		}
-		configDir.mkdirs();
+		if (isProfile) {
+			configDir.mkdirs();
+		} else {
+			installedWriteGuard = InstalledAppWriteGuard.create(this);
+			expectedAppId = savedInstanceState == null
+					? intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L)
+					: savedInstanceState.getLong(
+							STATE_EXPECTED_APP_ID, intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L));
+			if (expectedAppId <= 0L) {
+				expectedAppId = installedWriteGuard.resolveCurrentAppId(appDir.getPath());
+			}
+			if (expectedAppId <= 0L) {
+				ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+				finish();
+				return;
+			}
+			intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
+		}
 		hostPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		hostPreferences.registerOnSharedPreferenceChangeListener(hostThemeListener);
 		presetLinkage = isProfile ? null : new PresetLinkage(hostPreferences, configDir);
@@ -442,7 +465,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					@Override
 					public void onClearData() {
 						if (dataDir != null) {
-							FileUtils.clearDirectory(dataDir);
+							boolean cleared = isProfile || runInstalledWrite(() -> {
+								FileUtils.clearDirectory(dataDir);
+								return true;
+							});
+							if (!cleared) {
+								ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
+							}
 						}
 					}
 
@@ -484,23 +513,26 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 						if (isProfile) {
 							removed = ProfilesManager.removeLocalKeyboardLayout(configDir);
 						} else {
-							synchronized (ProfilesManager.presetSourceLock()) {
-								boolean effectiveLayoutExists =
-										ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir);
-								PresetLocalOverride.Guard ownership = null;
-								if (effectiveLayoutExists) {
-									ownership = PresetLocalOverride.detachBeforeWrite(
-											ConfigActivity.this, configDir);
-									if (!ownership.canWrite()) {
-										removed = false;
+							removed = runInstalledWrite(() -> {
+								synchronized (ProfilesManager.presetSourceLock()) {
+									boolean effectiveLayoutExists =
+											ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir);
+									PresetLocalOverride.Guard ownership = null;
+									if (effectiveLayoutExists) {
+										ownership = PresetLocalOverride.detachBeforeWrite(
+												ConfigActivity.this, configDir);
+										if (!ownership.canWrite()) {
+											return false;
+										}
+										boolean published =
+												ProfilesManager.removeLocalKeyboardLayout(configDir);
+										if (!published) restorePresetAssociation(ownership);
+										return published;
 									} else {
-										removed = ProfilesManager.removeLocalKeyboardLayout(configDir);
-										if (!removed) restorePresetAssociation(ownership);
+										return true;
 									}
-								} else {
-									removed = true;
 								}
-							}
+							});
 						}
 						if (!removed) {
 							ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
@@ -1061,6 +1093,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	@Override
 	protected void onSaveInstanceState(@NonNull Bundle outState) {
+		if (!isProfile && expectedAppId > 0L) {
+			outState.putLong(STATE_EXPECTED_APP_ID, expectedAppId);
+		}
 		if (isProfile && profileEditDraftDir != null) {
 			outState.putString(STATE_PROFILE_DRAFT_PATH, profileEditDraftDir.getAbsolutePath());
 			outState.putBoolean(STATE_PROFILE_DRAFT_DIRTY, profileDraftDirty);
@@ -1108,6 +1143,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	boolean loadConfig() {
+		return isProfile
+				? loadConfigWithInstalledIdentity()
+				: runInstalledWrite(this::loadConfigWithInstalledIdentity);
+	}
+
+	private boolean loadConfigWithInstalledIdentity() {
+		if (!isProfile) {
+			if (dataDir != null && !dataDir.isDirectory() && !dataDir.mkdirs()) return false;
+			if (!configDir.isDirectory() && !configDir.mkdirs()) return false;
+		}
 		if (!isProfile) {
 			if (!MidletConfigLoadBoundary.prepare(hostPreferences, configDir)) {
 				Log.e(TAG, "Refusing to load MIDlet config after preset snapshot recovery failure");
@@ -1473,7 +1518,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	public void loadParams(boolean reloadFromFile) {
-		if (reloadFromFile && !loadConfig()) {
+		loadParams(reloadFromFile, false);
+	}
+
+	private void loadParams(boolean reloadFromFile, boolean identityHeld) {
+		if (reloadFromFile && !(identityHeld
+				? loadConfigWithInstalledIdentity()
+				: loadConfig())) {
 			Log.e(TAG, "Keeping current in-memory params because persisted snapshot is unsafe");
 			return;
 		}
@@ -1484,7 +1535,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	private boolean saveParams() {
+	boolean saveParams() {
+		return isProfile
+				? saveParamsWithInstalledIdentity()
+				: runInstalledWrite(this::saveParamsWithInstalledIdentity);
+	}
+
+	private boolean saveParamsWithInstalledIdentity() {
 		try {
 			if (isProfile) {
 				if (currentForm != null) currentForm.applyTo(params);
@@ -1526,6 +1583,19 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			Log.e(TAG, "saveParams", t);
 			return false;
 		}
+	}
+
+	private boolean runInstalledWrite(@NonNull BooleanOperation operation) {
+		InstalledAppWriteGuard guard = installedWriteGuard;
+		if (isProfile) return operation.run();
+		if (guard == null || appDir == null || expectedAppId <= 0L) return false;
+		InstalledAppWriteGuard.Result result = guard.run(
+				appDir.getPath(), expectedAppId, operation::run);
+		if (result == InstalledAppWriteGuard.Result.STALE) {
+			ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+			finish();
+		}
+		return result == InstalledAppWriteGuard.Result.SUCCESS;
 	}
 
 	@Nullable
@@ -1596,18 +1666,26 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void startMIDlet() {
 		if (needShow && configDir != null) {
-			saveParams();
+			if (!saveParams()) {
+				ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+				return;
+			}
 		}
 		boolean reconversionShown = Config.startApp(
 				this,
 				getIntent().getStringExtra(KEY_MIDLET_NAME),
-				getIntent().getData());
+				getIntent().getData(),
+				expectedAppId);
 		if (!reconversionShown) finish();
 	}
 
 	private void openKeyMappings() {
 		Intent i = new Intent(getIntent().getAction(), Uri.parse(configDir.getPath()),
 				this, KeyMapperActivity.class);
+		if (!isProfile) {
+			i.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
+			i.putExtra(KEY_INSTALLED_APP_PATH, appDir.getPath());
+		}
 		startActivity(i);
 	}
 
@@ -1656,6 +1734,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private boolean replaceActiveConfigWithBuiltIn() {
+		return runInstalledWrite(this::replaceActiveConfigWithBuiltInUnderIdentity);
+	}
+
+	private boolean replaceActiveConfigWithBuiltInUnderIdentity() {
 		ProfileModel previousParams = params == null ? null : ProfileConfigMatcher.copyConfig(params);
 		ConfigFormState previousForm = currentForm;
 		synchronized (ProfilesManager.presetSourceLock()) {
@@ -1668,7 +1750,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			builtInThemeLinked = false;
 			params = newBuiltInProfile();
 			currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
-			if (!saveParams()) {
+			if (!saveParamsWithInstalledIdentity()) {
 				if (previousParams != null) params = previousParams;
 				currentForm = previousForm;
 				restoreSourceOwnership(ownership);
@@ -1754,6 +1836,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 		operationRunning = true;
 		try {
+			return runInstalledWrite(() -> applyTemplateWithInstalledIdentity(name, scope));
+		} finally {
+			operationRunning = false;
+		}
+	}
+
+	private boolean applyTemplateWithInstalledIdentity(@NonNull String name,
+			@NonNull ConfigFormEvents.PresetApplyScope scope) {
+		try {
 			LinkedPresetActivation.Result activation = null;
 			boolean partialApplied = false;
 			boolean sourceReady = false;
@@ -1765,9 +1856,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					if (isCompletePresetCandidate(currentInfo, scope)) {
 						sourceReady = true;
 						activation = LinkedPresetActivation.activate(
-								hostPreferences,
-								configDir,
-								currentProfile.getDir(),
+								hostPreferences, configDir, currentProfile.getDir(),
 								currentProfile.getName());
 					} else {
 						boolean applySettings =
@@ -1782,11 +1871,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 							if (ownership.canWrite()) {
 								profileOrigin = null;
 								builtInThemeLinked = false;
-								ProfilesManager.load(
-										currentProfile,
-										configDir.getPath(),
-										applySettings,
-										applyKeyboard);
+								ProfilesManager.load(currentProfile, configDir.getPath(),
+										applySettings, applyKeyboard);
 								partialApplied = true;
 							} else {
 								sourceReady = false;
@@ -1795,7 +1881,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					}
 				}
 			}
-
 			if (!sourceReady) {
 				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 				return false;
@@ -1808,7 +1893,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					case APPLIED_CUSTOM:
 						builtInThemeLinked = false;
 						loadKeyLayout();
-						loadParams(true);
+						loadParams(true, true);
 						return true;
 					case FAILED_SAFE:
 						if (composeController != null) composeController.update(createUiState());
@@ -1824,7 +1909,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				}
 			}
 			if (partialApplied) {
-				loadParams(true);
+				loadParams(true, true);
 				return true;
 			}
 			return false;
@@ -1833,8 +1918,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			Log.e(TAG, "applyTemplate: " + name, failure);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			return false;
-		} finally {
-			operationRunning = false;
 		}
 	}
 
@@ -1852,13 +1935,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		operationRunning = true;
 		try {
-			if (!saveParams()) {
-				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-				return false;
-			}
-			PresetSourceSave.Result result = PresetSourceSave.saveAsNew(
-					hostPreferences, configDir, new File(Config.getProfilesDir()), name);
-			return finishPresetSourceSave(name, result);
+			return isProfile
+					? saveTemplateWithInstalledIdentity(name)
+					: runInstalledWrite(() -> saveTemplateWithInstalledIdentity(name));
 		} finally {
 			operationRunning = false;
 		}
@@ -1868,18 +1947,32 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (operationRunning || isProfile) return false;
 		operationRunning = true;
 		try {
-			// Persist the current draft first. A successful local edit is never rolled back because
-			// a later named-source update fails.
-			if (!saveParams()) {
-				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-				return false;
-			}
-			PresetSourceSave.Result result = PresetSourceSave.updateExisting(
-					hostPreferences, configDir, new File(Config.getProfilesDir()), name);
-			return finishPresetSourceSave(name, result);
+			return runInstalledWrite(() -> updatePresetWithInstalledIdentity(name));
 		} finally {
 			operationRunning = false;
 		}
+	}
+
+	private boolean saveTemplateWithInstalledIdentity(@NonNull String name) {
+		if (!saveParamsWithInstalledIdentity()) {
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			return false;
+		}
+		PresetSourceSave.Result result = PresetSourceSave.saveAsNew(
+				hostPreferences, configDir, new File(Config.getProfilesDir()), name);
+		return finishPresetSourceSave(name, result);
+	}
+
+	private boolean updatePresetWithInstalledIdentity(@NonNull String name) {
+		// Persist the current draft first. A successful local edit is never rolled back because
+		// a later named-source update fails.
+		if (!saveParamsWithInstalledIdentity()) {
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			return false;
+		}
+		PresetSourceSave.Result result = PresetSourceSave.updateExisting(
+				hostPreferences, configDir, new File(Config.getProfilesDir()), name);
+		return finishPresetSourceSave(name, result);
 	}
 
 	private boolean finishPresetSourceSave(
@@ -2026,6 +2119,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 		operationRunning = true;
 		try {
+			return runInstalledWrite(() -> applyKeyboardLayoutWithInstalledIdentity(name));
+		} finally {
+			operationRunning = false;
+		}
+	}
+
+	private boolean applyKeyboardLayoutWithInstalledIdentity(@NonNull String name) {
+		try {
 			boolean applied = false;
 			synchronized (ProfilesManager.presetSourceLock()) {
 				Profile currentProfile = ProfilesManager.findProfile(name);
@@ -2056,8 +2157,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			if (composeController != null) composeController.update(createUiState());
 			return false;
-		} finally {
-			operationRunning = false;
 		}
 	}
 
@@ -2073,6 +2172,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			ThemedToast.show(this, R.string.preset_invalid_name, Toast.LENGTH_SHORT);
 			return false;
 		}
+		return isProfile
+				? saveKeyboardLayoutWithInstalledIdentity(name)
+				: runInstalledWrite(() -> saveKeyboardLayoutWithInstalledIdentity(name));
+	}
+
+	private boolean saveKeyboardLayoutWithInstalledIdentity(@NonNull String name) {
 		try {
 			ProfilesManager.saveLayoutSnapshot(new Profile(name), configDir.getPath());
 			refreshProfileMatchCache();

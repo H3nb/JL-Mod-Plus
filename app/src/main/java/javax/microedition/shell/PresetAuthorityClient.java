@@ -75,8 +75,15 @@ final class PresetAuthorityClient {
 			extras.putString(PresetAuthorityContract.KEY_UPDATE_TARGET, requestedPresetName);
 		}
 		Bundle result = call(PresetAuthorityContract.METHOD_SAVE_VIRTUAL_KEYBOARD_LAYOUT, extras);
-		if (result == null || result.getInt(PresetAuthorityContract.KEY_RESULT,
-				PresetAuthorityContract.RESULT_FAILED) != PresetAuthorityContract.RESULT_OK) {
+		if (result == null) {
+			return VirtualKeyboardSaveResult.layoutFailed();
+		}
+		int resultCode = result.getInt(
+				PresetAuthorityContract.KEY_RESULT, PresetAuthorityContract.RESULT_FAILED);
+		if (resultCode == PresetAuthorityContract.RESULT_STALE) {
+			return VirtualKeyboardSaveResult.layoutStale();
+		}
+		if (resultCode != PresetAuthorityContract.RESULT_OK) {
 			return VirtualKeyboardSaveResult.layoutFailed();
 		}
 		return VirtualKeyboardSaveResult.layoutCommitted(switch (result.getInt(

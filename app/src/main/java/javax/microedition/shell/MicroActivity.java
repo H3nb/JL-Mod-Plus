@@ -104,8 +104,7 @@ public class MicroActivity extends AppCompatActivity {
 	private static final int MIN_RUNTIME_TOOLBAR_TOUCH_TARGET_DP = 48;
 	private static final int MAX_IME_REQUEST_ATTEMPTS = 30;
 	private static final long IME_REQUEST_RETRY_DELAY_MILLIS = 100L;
-	private static final String PREF_HIDE_LAYOUT_EDIT_GUIDE =
-			"pref_runtime_hide_layout_edit_guide";
+	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
 
 	private Displayable current;
 	private boolean runtimeToolbarEnabled;
@@ -136,6 +135,7 @@ public class MicroActivity extends AppCompatActivity {
 	private int virtualDisplayPaddingBottom;
 	private View overlayAnchor;
 	private SharedPreferences defaultPreferences;
+	private SharedPreferences runtimePreferences;
 	private VirtualKeyboardEditTransaction virtualKeyboardEditTransaction;
 	private EditorDonePlacement.Box layoutEditDonePlacement;
 	private EditorDonePlacement.Box layoutEditDoneEditorBounds;
@@ -177,6 +177,7 @@ public class MicroActivity extends AppCompatActivity {
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		defaultPreferences = sp;
+		runtimePreferences = RuntimeUiPreferences.get(this);
 		sp.registerOnSharedPreferenceChangeListener(canvasThemeListener);
 		runtimeToolbarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
@@ -210,18 +211,22 @@ public class MicroActivity extends AppCompatActivity {
 			}
 		}
 		updateRecentTaskDescription();
-		expectedAppId = intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L);
+		expectedAppId = savedInstanceState == null
+				? intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L)
+				: savedInstanceState.getLong(
+						STATE_EXPECTED_APP_ID, intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L));
 		presetAuthorityClient = new PresetAuthorityClient(this);
 		PresetAuthorityClient.PrepareResult prepared =
 				presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
 		if (!prepared.isSuccess()) {
 			MidletSessionStore.clear(getApplicationContext());
 			MidletKeepAliveService.stop(this);
-			if (!prepared.isStale()) Config.openSettings(this, appName, appPath);
+			if (!prepared.isStale()) Config.openSettings(this, appName, appPath, expectedAppId);
 			finish();
 			return;
 		}
 		expectedAppId = prepared.appId();
+		intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
 		MidletSessionStore.markPending(getApplicationContext(), appPath, appName, expectedAppId);
 		microLoader = new MicroLoader(appPath, expectedAppId, prepared.builtInThemeLinked());
 		if (!microLoader.init()) {
@@ -409,8 +414,8 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onEditVirtualKeyboardLayout() {
-						if (defaultPreferences != null &&
-								defaultPreferences.getBoolean(PREF_HIDE_LAYOUT_EDIT_GUIDE, false)) {
+						if (runtimePreferences != null && runtimePreferences.getBoolean(
+								RuntimeUiPreferences.HIDE_LAYOUT_EDIT_GUIDE, false)) {
 							startVirtualKeyboardLayoutEdit();
 						} else if (runtimeMenuController != null) {
 							runtimeMenuController.showLayoutEditGuide();
@@ -464,7 +469,7 @@ public class MicroActivity extends AppCompatActivity {
 					public void onExitConfirmed(boolean openSettings) {
 						hideSoftInput();
 						if (openSettings) {
-							Config.openSettings(MicroActivity.this, appName, appPath);
+							Config.openSettings(MicroActivity.this, appName, appPath, expectedAppId);
 						}
 						MidletThread.destroyApp();
 					}
@@ -507,9 +512,9 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onLayoutEditGuideConfirmed(boolean dontShowAgain) {
-						if (dontShowAgain && defaultPreferences != null) {
-							defaultPreferences.edit()
-									.putBoolean(PREF_HIDE_LAYOUT_EDIT_GUIDE, true)
+						if (dontShowAgain && runtimePreferences != null) {
+							runtimePreferences.edit()
+									.putBoolean(RuntimeUiPreferences.HIDE_LAYOUT_EDIT_GUIDE, true)
 									.apply();
 						}
 						startVirtualKeyboardLayoutEdit();
@@ -519,6 +524,12 @@ public class MicroActivity extends AppCompatActivity {
 				this::beginControllerHostTargetChange);
 		setRuntimeToolbarHeight(getRuntimeToolbarHeight(getRuntimeChrome(current)));
 		updateRuntimeMenuState(current);
+	}
+
+	@Override
+	protected void onSaveInstanceState(@NonNull Bundle outState) {
+		if (expectedAppId > 0L) outState.putLong(STATE_EXPECTED_APP_ID, expectedAppId);
+		super.onSaveInstanceState(outState);
 	}
 
 	private void updateRuntimeMenuState(@Nullable Displayable displayable) {
@@ -641,6 +652,7 @@ public class MicroActivity extends AppCompatActivity {
 			defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
 			defaultPreferences = null;
 		}
+		runtimePreferences = null;
 		if (memoryEditorController != null) {
 			memoryEditorController.destroy();
 			memoryEditorController = null;

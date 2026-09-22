@@ -456,7 +456,7 @@ public class AppsListFragment extends Fragment {
             public void onOpenApp(int appId) {
                 LibraryAppRow app = findRow(appId);
                 if (app != null && activeWorkdir != null) {
-                    Config.startApp(requireContext(), app.getTitle(), appPath(app));
+                    Config.startApp(requireContext(), app.getTitle(), appPath(app), app.getId());
                 }
             }
 
@@ -481,7 +481,7 @@ public class AppsListFragment extends Fragment {
             public void onOpenAppSettings(int appId) {
                 LibraryAppRow app = findRow(appId);
                 if (app != null && activeWorkdir != null) {
-                    Config.openSettings(requireActivity(), app.getTitle(), appPath(app));
+                    Config.openSettings(requireActivity(), app.getTitle(), appPath(app), app.getId());
                 }
             }
 
