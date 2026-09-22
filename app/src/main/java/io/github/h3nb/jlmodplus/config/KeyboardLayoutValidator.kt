@@ -5,6 +5,7 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.annotation.Nullable
+import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -44,20 +45,36 @@ internal object KeyboardLayoutValidator {
         if (file == null || !file.isFile || file.length() <= 0L) {
             return "layout file is missing or empty"
         }
-        try {
-            DataInputStream(FileInputStream(file)).use { input ->
-                if (input.readInt() != SIGNATURE) return "layout signature is invalid"
-                val version = input.readInt()
-                if (version < 1 || version > CURRENT_VERSION) {
-                    return "layout version is unsupported"
-                }
-                return if (version == 4) validateV4(input) else validateLegacy(input, version)
-            }
+        return try {
+            DataInputStream(FileInputStream(file)).use(::validateInput)
         } catch (_: IOException) {
-            return "layout cannot be read"
+            "layout cannot be read"
         } catch (_: RuntimeException) {
-            return "layout cannot be read"
+            "layout cannot be read"
         }
+    }
+
+    /** Applies the exact same format validation before an IPC payload can affect ownership. */
+    @JvmStatic
+    @Nullable
+    fun validateBytes(@Nullable bytes: ByteArray?): String? {
+        if (bytes == null || bytes.isEmpty()) return "layout payload is missing or empty"
+        return try {
+            DataInputStream(ByteArrayInputStream(bytes)).use(::validateInput)
+        } catch (_: IOException) {
+            "layout cannot be read"
+        } catch (_: RuntimeException) {
+            "layout cannot be read"
+        }
+    }
+
+    private fun validateInput(input: DataInputStream): String? {
+        if (input.readInt() != SIGNATURE) return "layout signature is invalid"
+        val version = input.readInt()
+        if (version < 1 || version > CURRENT_VERSION) {
+            return "layout version is unsupported"
+        }
+        return if (version == 4) validateV4(input) else validateLegacy(input, version)
     }
 
     private fun validateLegacy(input: DataInputStream, version: Int): String? {

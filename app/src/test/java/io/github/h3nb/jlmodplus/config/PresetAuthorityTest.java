@@ -170,8 +170,8 @@ public class PresetAuthorityTest {
                         fixture.appPath, 52L, validLayout(3), null);
 
         assertEquals(PresetAuthorityContract.RESULT_OK, result.code);
-        assertFalse(fixture.preferences.getBoolean(
-                PresetLinkage.linkedPreferenceKey(fixture.configDir), true));
+        assertFalse(fixture.preferences.contains(
+                PresetLinkage.linkedPreferenceKey(fixture.configDir)));
         assertEquals("K800i", fixture.preferences.getString(
                 PresetLinkage.originPreferenceKey(fixture.configDir), null));
     }
@@ -250,14 +250,49 @@ public class PresetAuthorityTest {
     }
 
     @Test
-    public void oversizedRuntimeLayoutIsRejectedBeforeOwnershipMutation() throws Exception {
+    public void malformedRuntimeLayoutIsRejectedBeforeOwnershipMutation() throws Exception {
         Fixture fixture = fixture(56L);
+        byte[] oldLayout = validLayout(3);
+        write(fixture.layoutFile(), oldLayout);
+        assertTrue(new PresetLinkage(fixture.preferences, fixture.configDir).linkTo("K800i"));
+
+        PresetAuthority.SaveResult result =
+                fixture.authority.saveVirtualKeyboardLayout(
+                        fixture.appPath, 56L, new byte[]{1, 2, 3}, null);
+
+        assertEquals(PresetAuthorityContract.RESULT_INVALID, result.code);
+        assertArrayEquals(oldLayout, Files.readAllBytes(fixture.layoutFile().toPath()));
+        assertTrue(new PresetLinkage(fixture.preferences, fixture.configDir).isLinked());
+    }
+
+    @Test
+    public void unrecoverableLocalTransactionDoesNotRelinkAfterPublicationFailure()
+            throws Exception {
+        Fixture fixture = fixture(57L);
+        assertTrue(new PresetLinkage(fixture.preferences, fixture.configDir).linkTo("K800i"));
+        File invalidRollback = new File(fixture.configDir, ".preset-sync.rollback");
+        write(invalidRollback, new byte[]{9});
+
+        PresetAuthority.SaveResult result =
+                fixture.authority.saveVirtualKeyboardLayout(
+                        fixture.appPath, 57L, validLayout(4), null);
+
+        assertEquals(PresetAuthorityContract.RESULT_FAILED, result.code);
+        PresetLinkage linkage = new PresetLinkage(fixture.preferences, fixture.configDir);
+        assertFalse(linkage.isLinked());
+        assertEquals("K800i", linkage.getOrigin());
+        assertTrue(invalidRollback.isFile());
+    }
+
+    @Test
+    public void oversizedRuntimeLayoutIsRejectedBeforeOwnershipMutation() throws Exception {
+        Fixture fixture = fixture(58L);
         assertTrue(new PresetLinkage(fixture.preferences, fixture.configDir).linkTo("K800i"));
         byte[] oversized = new byte[PresetAuthorityContract.MAX_LAYOUT_PAYLOAD_BYTES + 1];
 
         PresetAuthority.SaveResult result =
                 fixture.authority.saveVirtualKeyboardLayout(
-                        fixture.appPath, 56L, oversized, null);
+                        fixture.appPath, 58L, oversized, null);
 
         assertEquals(PresetAuthorityContract.RESULT_INVALID, result.code);
         assertTrue(new PresetLinkage(fixture.preferences, fixture.configDir).isLinked());

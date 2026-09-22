@@ -198,6 +198,11 @@ final class PresetAuthority {
 			if (identity != PresetAuthorityContract.RESULT_OK) {
 				return new SaveResult(identity, PresetAuthorityContract.UPDATE_NONE);
 			}
+			if (KeyboardLayoutValidator.validateBytes(layoutPayload) != null) {
+				return new SaveResult(
+						PresetAuthorityContract.RESULT_INVALID,
+						PresetAuthorityContract.UPDATE_NONE);
+			}
 			synchronized (ProfilesManager.presetSourceLock()) {
 				PresetLocalOverride.Guard ownership =
 						PresetLocalOverride.detachBeforeWrite(preferences, app.configDir());
@@ -207,8 +212,19 @@ final class PresetAuthority {
 				try {
 					ProfilesManager.publishRuntimeLayout(app.configDir(), layoutPayload);
 				} catch (IOException | RuntimeException publicationFailure) {
-					ownership.restoreIfUnchanged();
-					return new SaveResult(PresetAuthorityContract.RESULT_FAILED, PresetAuthorityContract.UPDATE_NONE);
+					boolean localStateRecovered = false;
+					try {
+						ProfilesManager.recoverInterruptedSnapshotSync(app.configDir());
+						localStateRecovered = true;
+					} catch (IOException | RuntimeException recoveryFailure) {
+						publicationFailure.addSuppressed(recoveryFailure);
+					}
+					if (localStateRecovered) {
+						ownership.restoreIfUnchanged();
+					}
+					return new SaveResult(
+							PresetAuthorityContract.RESULT_FAILED,
+							PresetAuthorityContract.UPDATE_NONE);
 				}
 
 				int update = PresetAuthorityContract.UPDATE_NONE;
