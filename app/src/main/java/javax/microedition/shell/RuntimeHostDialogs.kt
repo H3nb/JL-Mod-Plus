@@ -19,10 +19,13 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -43,7 +46,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -404,37 +406,61 @@ private fun PresetDestinationOptions(
 ) {
     if (updateTarget == null) return
 
-    Text(stringResource(titleRes))
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = { Text(stringResource(R.string.runtime_preset_this_midlet_only)) },
-        leadingContent = { RadioButton(selected = !updatePreset, onClick = null) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .selectable(
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(stringResource(titleRes))
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
+        ) {
+            PresetDestinationRow(
+                label = stringResource(R.string.runtime_preset_this_midlet_only),
                 selected = !updatePreset,
-                role = Role.RadioButton,
                 onClick = { onUpdatePresetChanged(false) },
-            ),
-    )
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = {
-            Text(stringResource(R.string.runtime_preset_update_destination, updateTarget))
-        },
-        leadingContent = { RadioButton(selected = updatePreset, onClick = null) },
+            )
+            PresetDestinationRow(
+                label = stringResource(R.string.runtime_preset_update_destination, updateTarget),
+                selected = updatePreset,
+                onClick = { onUpdatePresetChanged(true) },
+            )
+        }
+        Text(
+            text = if (updatePreset) {
+                stringResource(R.string.runtime_preset_update_explanation, updateTarget)
+            } else {
+                stringResource(R.string.runtime_preset_local_explanation)
+            },
+            modifier = Modifier.padding(horizontal = 4.dp, top = 4.dp),
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+}
+
+@Composable
+private fun PresetDestinationRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .selectable(
-                selected = updatePreset,
+                selected = selected,
                 role = Role.RadioButton,
-                onClick = { onUpdatePresetChanged(true) },
-            ),
-    )
-    Text(
-        text = stringResource(R.string.runtime_preset_update_explanation),
-        style = MaterialTheme.typography.bodySmall,
-    )
+                onClick = onClick,
+            )
+            .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Text(
+            text = label,
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 8.dp),
+        )
+    }
 }
 
 @Composable
@@ -504,12 +530,10 @@ private fun FinishVirtualKeyboardEditDialog(
             }
         },
         confirmButton = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 TextButton(onClick = {
                     onDismiss()
@@ -665,78 +689,108 @@ private fun LayoutSelectionDialog(
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
-    var selected by remember(state) { mutableIntStateOf(state.selected) }
+    var pendingLayout by remember(state) { mutableStateOf<Int?>(null) }
     var updatePreset by remember(state) { mutableStateOf(false) }
     val layout = runtimeDialogLayout()
-    val listState = rememberLazyListState()
-    val maxListHeight = runtimeDialogListHeight()
-    val canScrollForward = rememberLazyListCanScrollForward(listState)
-    AlertDialog(
-        textScrollable = false,
-        modifier = layout.modifier,
-        properties = layout.properties,
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.layout_switch)) },
-        text = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = maxListHeight),
-            ) {
-                LazyColumn(
+    val pendingIndex = pendingLayout
+
+    if (pendingIndex == null) {
+        val listState = rememberLazyListState()
+        val maxListHeight = runtimeDialogListHeight()
+        val canScrollForward = rememberLazyListCanScrollForward(listState)
+        AlertDialog(
+            textScrollable = false,
+            modifier = layout.modifier,
+            properties = layout.properties,
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.layout_switch)) },
+            text = {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(max = maxListHeight),
-                    state = listState,
                 ) {
-                    itemsIndexed(state.entries) { index, entry ->
-                        ListItem(
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            headlineContent = { Text(entry) },
-                            leadingContent = {
-                                RadioButton(
-                                    selected = selected == index,
-                                    onClick = null,
-                                )
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .selectable(
-                                    selected = selected == index,
-                                    role = Role.RadioButton,
-                                    onClick = { selected = index },
-                                ),
-                        )
-                    }
-                    if (state.updateTarget != null) {
-                        item {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                PresetDestinationOptions(
-                                    titleRes = R.string.runtime_preset_apply_destination,
-                                    updateTarget = state.updateTarget,
-                                    updatePreset = updatePreset,
-                                    onUpdatePresetChanged = { updatePreset = it },
-                                )
-                            }
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = maxListHeight),
+                        state = listState,
+                    ) {
+                        itemsIndexed(state.entries) { index, entry ->
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                headlineContent = { Text(entry) },
+                                leadingContent = {
+                                    RadioButton(
+                                        selected = state.selected == index,
+                                        onClick = null,
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .selectable(
+                                        selected = state.selected == index,
+                                        role = Role.RadioButton,
+                                        onClick = {
+                                            if (index == state.selected) {
+                                                onDismiss()
+                                            } else {
+                                                updatePreset = false
+                                                pendingLayout = index
+                                            }
+                                        },
+                                    ),
+                            )
                         }
                     }
+                    ScrollableContentHint(
+                        visible = canScrollForward,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
                 }
-                ScrollableContentHint(
-                    visible = canScrollForward,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter),
+            },
+            confirmButton = null,
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+        return
+    }
+
+    val layoutName = state.entries.getOrNull(pendingIndex) ?: return
+    AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
+        onDismissRequest = onDismiss,
+        title = {
+            Text(stringResource(R.string.runtime_layout_apply_title, layoutName))
+        },
+        text = {
+            if (state.updateTarget != null) {
+                PresetDestinationOptions(
+                    titleRes = R.string.runtime_preset_apply_destination,
+                    updateTarget = state.updateTarget,
+                    updatePreset = updatePreset,
+                    onUpdatePresetChanged = { updatePreset = it },
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.runtime_preset_local_explanation),
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = {
+            Button(onClick = {
                 onDismiss()
                 actions.onLayoutSelected(
-                    selected,
+                    pendingIndex,
                     state.updateTarget.takeIf { updatePreset },
                 )
             }) {
-                Text(stringResource(android.R.string.ok))
+                Text(stringResource(R.string.runtime_apply))
             }
         },
         dismissButton = {

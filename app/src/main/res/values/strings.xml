@@ -95,11 +95,11 @@
     <string name="layout_edit_finished">Virtual controls editing finished</string>
     <string name="virtual_controls_save_failed">Virtual controls could not be saved. Try again.</string>
     <string name="virtual_controls_screen_params_save_failed">Virtual controls were saved, but screen parameters could not be saved.</string>
-    <string name="runtime_preset_save_destination">Save changes to</string>
+    <string name="runtime_preset_save_destination">Save to</string>
     <string name="runtime_preset_apply_destination">Apply to</string>
     <string name="runtime_preset_this_midlet_only">This MIDlet only</string>
     <string name="runtime_preset_update_destination">Update %1$s</string>
-    <string name="runtime_preset_update_explanation">Updating this preset replaces it with this MIDlet\'s current settings and virtual-controls layout. Other MIDlets following it receive the change the next time they open or run.</string>
+    <string name="runtime_preset_local_explanation">Only this MIDlet will change.</string>\n    <string name="runtime_preset_update_explanation">Replaces %1$s with this MIDlet\'s current settings and controls.\nOther followers update when next opened.</string>\n    <string name="runtime_layout_apply_title">Apply %1$s?</string>\n    <string name="runtime_apply">Apply</string>
     <string name="runtime_preset_update_failed">Saved for this MIDlet, but %1$s could not be updated.</string>
     <string name="runtime_preset_update_unlinked">%1$s was updated, but this MIDlet could not be linked to it.</string>
     <string name="layout_edit_mode">Virtual controls edit mode: drag to move, pinch to resize</string>

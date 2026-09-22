@@ -169,8 +169,36 @@ fun RuntimeLayoutSelectionScreenshot() {
     JLModPlusTheme(darkTheme = true) {
         RuntimeHostDialogs(
             state = RuntimeHostDialogState.LayoutSelection(
-                entries = listOf("Default", "Phone", "Tablet", "Custom"),
+                entries = listOf(
+                    "Custom",
+                    "Phone (Numeric)",
+                    "Phone (Arrows)",
+                    "Standard Analog",
+                ),
                 selected = 0,
+                updateTarget = "SE K800i 240×320",
+            ),
+            actions = NoOpRuntimeHostDialogActions,
+            onDismiss = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Runtime finish edit narrow phone",
+    widthDp = 320,
+    heightDp = 640,
+    showBackground = true,
+)
+@Composable
+fun RuntimeFinishVirtualKeyboardEditScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        RuntimeHostDialogs(
+            state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
+                phone = true,
+                keepScreenPreferred = true,
+                updateTarget = "SE K800i 240×320 — Long Preset Name",
             ),
             actions = NoOpRuntimeHostDialogActions,
             onDismiss = {},
