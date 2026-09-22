@@ -1452,13 +1452,8 @@ public class MicroActivity extends AppCompatActivity {
 		if (vk == null || configDir == null) {
 			return VirtualKeyboardSaveResult.layoutFailed();
 		}
-		PresetLocalOverride.Guard ownership =
-				PresetLocalOverride.detachBeforeWrite(this, configDir);
-		if (!ownership.canWrite()) {
-			return VirtualKeyboardSaveResult.layoutFailed();
-		}
-		if (!vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM)) {
-			ownership.restoreIfUnchanged();
+		if (!PresetLocalOverride.runDetachedWrite(
+				this, configDir, () -> vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM))) {
 			return VirtualKeyboardSaveResult.layoutFailed();
 		}
 		// The primary artifact is committed at this point. Secondary config persistence cannot
@@ -1488,13 +1483,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (configDir == null) {
 			return;
 		}
-		PresetLocalOverride.Guard ownership =
-				PresetLocalOverride.detachBeforeWrite(this, configDir);
-		if (!ownership.canWrite()) {
-			return;
-		}
-		if (!vk.setLayout(index)) {
-			ownership.restoreIfUnchanged();
+		if (!PresetLocalOverride.runDetachedWrite(this, configDir, () -> vk.setLayout(index))) {
 			toast(R.string.virtual_controls_save_failed);
 		} else {
 			VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(

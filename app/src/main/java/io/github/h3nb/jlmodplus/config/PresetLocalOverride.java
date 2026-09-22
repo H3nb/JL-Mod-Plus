@@ -38,6 +38,42 @@ public final class PresetLocalOverride {
 				configDir);
 	}
 
+	@FunctionalInterface
+	public interface WriteOperation {
+		boolean run();
+	}
+
+	/**
+	 * Serializes one ordinary active-MIDlet mutation against named-preset lifecycle changes.
+	 *
+	 * <p>The named link is detached before the primary write and restored only when that primary
+	 * publication reports failure. Optional secondary work belongs outside this operation.</p>
+	 */
+	public static boolean runDetachedWrite(
+			@NonNull Context context,
+			@NonNull File configDir,
+			@NonNull WriteOperation writeOperation) {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
+				context.getApplicationContext());
+		synchronized (ProfilesManager.presetSourceLock()) {
+			Guard ownership = detachBeforeWrite(preferences, configDir);
+			if (!ownership.canWrite()) {
+				return false;
+			}
+			final boolean written;
+			try {
+				written = writeOperation.run();
+			} catch (RuntimeException | Error failure) {
+				ownership.restoreIfUnchanged();
+				throw failure;
+			}
+			if (!written) {
+				ownership.restoreIfUnchanged();
+			}
+			return written;
+		}
+	}
+
 	@NonNull
 	static Guard detachBeforeWrite(@NonNull SharedPreferences preferences,
 			@NonNull File configDir) {

@@ -205,22 +205,16 @@ public class KeyMapperActivity extends AppCompatActivity {
 			newMap = null;
 		}
 
-		PresetLocalOverride.Guard ownership = null;
-		if (!namedProfile) {
-			ownership = PresetLocalOverride.detachBeforeWrite(this, configDir);
-			if (!ownership.canWrite()) {
-				ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
-				return false;
-			}
-		}
-
 		params.keyMappings = newMap;
-		if (ProfilesManager.saveConfig(params)) {
+		boolean saved = namedProfile
+				? ProfilesManager.saveConfig(params)
+				: PresetLocalOverride.runDetachedWrite(
+						this, configDir, () -> ProfilesManager.saveConfig(params));
+		if (saved) {
 			persistedEffectiveMap = androidToMIDP.clone();
 			return true;
 		}
 		params.keyMappings = oldMap;
-		if (ownership != null) ownership.restoreIfUnchanged();
 		ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
 		return false;
 	}

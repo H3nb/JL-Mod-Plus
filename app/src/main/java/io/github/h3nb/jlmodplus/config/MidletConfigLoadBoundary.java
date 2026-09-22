@@ -43,6 +43,7 @@ public final class MidletConfigLoadBoundary {
 			return false;
 		}
 
+		synchronized (ProfilesManager.presetSourceLock()) {
 		PresetLinkage linkage = new PresetLinkage(preferences, configDir);
 		if (!linkage.isLinked()) {
 			return true;
@@ -70,6 +71,7 @@ public final class MidletConfigLoadBoundary {
 					"Unable to refresh linked preset; using last-known-good local snapshot: " + origin,
 					syncFailure);
 			return true;
+		}
 		}
 	}
 

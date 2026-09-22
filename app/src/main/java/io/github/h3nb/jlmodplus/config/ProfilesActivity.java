@@ -110,17 +110,23 @@ public class ProfilesActivity extends AppCompatActivity {
 
 			@Override
 			public void onSetBuiltInDefault() {
-				preferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
-				refreshProfiles();
+				boolean committed;
+				synchronized (ProfilesManager.presetSourceLock()) {
+					committed = preferences.edit().remove(PREF_DEFAULT_PROFILE).commit();
+				}
+				if (committed) refreshProfiles();
 			}
 
 			@Override
 			public void onSetDefault(@NonNull String name) {
-				Profile profile = profilesByName.get(name);
-				if (profile != null && ProfilesManager.inspectProfile(profile).settings.isReady()) {
-					preferences.edit().putString(PREF_DEFAULT_PROFILE, name).apply();
-					refreshProfiles();
+				boolean committed = false;
+				synchronized (ProfilesManager.presetSourceLock()) {
+					Profile profile = ProfilesManager.findProfile(name);
+					if (profile != null && ProfilesManager.inspectProfile(profile).settings.isReady()) {
+						committed = preferences.edit().putString(PREF_DEFAULT_PROFILE, name).commit();
+					}
 				}
+				if (committed) refreshProfiles();
 			}
 
 			@Override

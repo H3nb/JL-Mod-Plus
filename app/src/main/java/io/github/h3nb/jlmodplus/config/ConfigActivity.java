@@ -102,6 +102,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 	private static final String STATE_PROFILE_DRAFT_PATH = "profile_edit_draft_path";
 	private static final String STATE_PROFILE_DRAFT_DIRTY = "profile_edit_draft_dirty";
+	private static final String STATE_PROFILE_EDIT_MODE = "profile_edit_mode";
 
 	private final ArrayList<Size> screenPresets = new ArrayList<>();
 	private final ArrayList<Size> removableScreenPresets = new ArrayList<>();
@@ -128,6 +129,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	/** Target and isolated staging directory used while editing a reusable preset. */
 	@Nullable private Profile profileEditTarget;
 	@Nullable private File profileEditDraftDir;
+	@Nullable private ProfilesManager.ProfileEditMode profileEditMode;
 	private boolean profileDraftDirty;
 	private boolean profileEditorResumeObserved;
 	private ConfigFormState currentForm;
@@ -324,11 +326,18 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			profileEditTarget = new Profile(path);
 			String savedDraftPath = savedInstanceState == null
 					? null : savedInstanceState.getString(STATE_PROFILE_DRAFT_PATH);
+			String savedEditMode = savedInstanceState == null
+					? null : savedInstanceState.getString(STATE_PROFILE_EDIT_MODE);
 			try {
-				if (savedDraftPath != null) {
+				if (savedDraftPath != null && savedEditMode != null) {
 					File savedDraft = new File(savedDraftPath);
-					profileEditDraftDir = savedDraft.isDirectory()
-							? savedDraft : createProfileEditDraft(profileEditTarget);
+					ProfilesManager.ProfileEditMode restoredMode = parseProfileEditMode(savedEditMode);
+					if (savedDraft.isDirectory() && restoredMode != null) {
+						profileEditDraftDir = savedDraft;
+						profileEditMode = restoredMode;
+					} else {
+						profileEditDraftDir = createProfileEditDraft(profileEditTarget);
+					}
 				} else {
 					profileEditDraftDir = createProfileEditDraft(profileEditTarget);
 				}
@@ -441,43 +450,24 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				public void onResetSettings() {
 					if (operationRunning) return;
 					operationRunning = true;
-					PresetSourceReplacement.Guard ownership = null;
-					ProfileModel previousParams = params == null
-							? null : ProfileConfigMatcher.copyConfig(params);
-					ConfigFormState previousForm = currentForm;
-					boolean previousBuiltInThemeLinked = builtInThemeLinked;
 					try {
 						if (isProfile) {
 							profileDraftDirty = true;
-						} else {
-							ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
-							if (!ownership.canWrite()) {
-								ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
-								return;
-							}
-							profileOrigin = null;
-							builtInThemeLinked = false;
+							params = newBuiltInProfile();
+							loadParams(false);
+							builtInThemeLinked = true;
+							return;
 						}
-						params = newBuiltInProfile();
-						loadParams(false);
-						if (!isProfile && !saveParams()) {
-							if (previousParams != null) params = previousParams;
-							currentForm = previousForm;
-							restoreSourceOwnership(ownership);
+						if (!replaceActiveConfigWithBuiltIn()) {
 							if (composeController != null) {
 								composeController.update(createUiState());
 							}
 							ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
 							return;
 						}
-						if (isProfile) {
-							builtInThemeLinked = true;
-						} else if (ownership == null || !ownership.publishBuiltInOwnership()) {
-							builtInThemeLinked = false;
-							ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
-							return;
-						} else {
-							builtInThemeLinked = true;
+						refreshProfileMatchCache();
+						if (composeController != null) {
+							composeController.update(createUiState());
 						}
 					} finally {
 						operationRunning = false;
@@ -490,19 +480,29 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					operationRunning = true;
 					try {
 						if (isProfile) profileDraftDirty = true;
-						boolean effectiveLayoutExists =
-								ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir);
-						PresetLocalOverride.Guard ownership = null;
-						if (!isProfile && effectiveLayoutExists) {
-							ownership = PresetLocalOverride.detachBeforeWrite(
-									ConfigActivity.this, configDir);
-							if (!ownership.canWrite()) {
-								ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
-								return;
+						boolean removed;
+						if (isProfile) {
+							removed = ProfilesManager.removeLocalKeyboardLayout(configDir);
+						} else {
+							synchronized (ProfilesManager.presetSourceLock()) {
+								boolean effectiveLayoutExists =
+										ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir);
+								PresetLocalOverride.Guard ownership = null;
+								if (effectiveLayoutExists) {
+									ownership = PresetLocalOverride.detachBeforeWrite(
+											ConfigActivity.this, configDir);
+									if (!ownership.canWrite()) {
+										removed = false;
+									} else {
+										removed = ProfilesManager.removeLocalKeyboardLayout(configDir);
+										if (!removed) restorePresetAssociation(ownership);
+									}
+								} else {
+									removed = true;
+								}
 							}
 						}
-						if (!ProfilesManager.removeLocalKeyboardLayout(configDir)) {
-							if (ownership != null) restorePresetAssociation(ownership);
+						if (!removed) {
 							ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
 							return;
 						}
@@ -1064,6 +1064,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (isProfile && profileEditDraftDir != null) {
 			outState.putString(STATE_PROFILE_DRAFT_PATH, profileEditDraftDir.getAbsolutePath());
 			outState.putBoolean(STATE_PROFILE_DRAFT_DIRTY, profileDraftDirty);
+			if (profileEditMode != null) {
+				outState.putString(STATE_PROFILE_EDIT_MODE, profileEditMode.name());
+			}
 		}
 		super.onSaveInstanceState(outState);
 	}
@@ -1148,48 +1151,66 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 		boolean loadedDefaultProfile = false;
 		boolean loadedLegacyDefaultLayout = false;
-		if (params == null && mayInitializeNewApp && defaultWithSettings != null) {
-			LinkedPresetActivation.Result activation = LinkedPresetActivation.activate(
-					hostPreferences,
-					configDir,
-					defaultWithSettings.getDir(),
-					defaultWithSettings.getName());
-			refreshProfileOriginFromMetadata();
-			builtInThemeLinked = readBuiltInThemeLinked();
-			if (activation == LinkedPresetActivation.Result.FAILED_UNSAFE) {
-				Log.e(TAG, "Default preset activation left an unsafe local snapshot");
-				return false;
-			}
-			if (activation == LinkedPresetActivation.Result.LINKED
-					|| activation == LinkedPresetActivation.Result.APPLIED_CUSTOM) {
-				builtInThemeLinked = false;
-				params = ProfilesManager.loadConfig(
-						configDir,
-						true,
-						ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
-						false);
-				loadedDefaultProfile = params != null;
-				if (params != null) {
-					persistedBaseline = ProfileConfigMatcher.copyConfig(params);
+		if (params == null && mayInitializeNewApp && !isProfile) {
+			synchronized (ProfilesManager.presetSourceLock()) {
+				String currentDefaultName = hostPreferences.getString(PREF_DEFAULT_PROFILE, null);
+				Profile currentDefault = ProfilesManager.findProfile(currentDefaultName);
+				ProfilesManager.ProfileInfo currentDefaultInfo = currentDefault == null
+						? null : ProfilesManager.inspectProfile(currentDefault);
+				Profile currentDefaultWithSettings =
+						hasApplicationSettingsArtifact(currentDefaultInfo) ? currentDefault : null;
+				Profile currentValidDefault =
+						currentDefaultInfo != null && currentDefaultInfo.settings.isReady()
+								? currentDefault : null;
+				Profile currentKeyboardOnlyDefault =
+						isLegacyKeyboardOnlyDefault(currentDefaultInfo) ? currentDefault : null;
+				defProfile = currentValidDefault == null ? null : currentValidDefault.getName();
+				cachedDefaultProfileName = defProfile;
+
+				if (currentDefaultWithSettings != null) {
+					LinkedPresetActivation.Result activation = LinkedPresetActivation.activate(
+							hostPreferences,
+							configDir,
+							currentDefaultWithSettings.getDir(),
+							currentDefaultWithSettings.getName());
+					refreshProfileOriginFromMetadata();
+					builtInThemeLinked = readBuiltInThemeLinked();
+					if (activation == LinkedPresetActivation.Result.FAILED_UNSAFE) {
+						Log.e(TAG, "Default preset activation left an unsafe local snapshot");
+						return false;
+					}
+					if (activation == LinkedPresetActivation.Result.LINKED
+							|| activation == LinkedPresetActivation.Result.APPLIED_CUSTOM) {
+						builtInThemeLinked = false;
+						params = ProfilesManager.loadConfig(
+								configDir,
+								true,
+								ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
+								false);
+						loadedDefaultProfile = params != null;
+						if (params != null) {
+							persistedBaseline = ProfileConfigMatcher.copyConfig(params);
+						}
+					} else {
+						Log.e(TAG, "Default preset activation failed safely: "
+								+ currentDefaultWithSettings.getName());
+					}
+				} else if (currentKeyboardOnlyDefault != null) {
+					params = newBuiltInProfile();
+					if (ProfilesManager.saveConfig(params)) {
+						persistedBaseline = ProfileConfigMatcher.copyConfig(params);
+						try {
+							ProfilesManager.load(
+									currentKeyboardOnlyDefault, configDir.getPath(), false, true);
+							loadedLegacyDefaultLayout = true;
+						} catch (IOException | RuntimeException e) {
+							Log.e(TAG, "loadConfig: legacy default keyboard layout", e);
+						}
+					}
+					if (loadedLegacyDefaultLayout && !setProfileOrigin(null)) {
+						Log.e(TAG, "Unable to clear preset provenance for legacy keyboard-only default");
+					}
 				}
-			} else {
-				Log.e(TAG, "Default preset activation failed safely: " + defaultWithSettings.getName());
-			}
-		} else if (params == null && mayInitializeNewApp && keyboardOnlyDefault != null) {
-			// Preserve the legacy default keyboard-only preference for new applications while keeping
-			// the built-in application settings as the explicit configuration source.
-			params = newBuiltInProfile();
-			if (ProfilesManager.saveConfig(params)) {
-				persistedBaseline = ProfileConfigMatcher.copyConfig(params);
-				try {
-					ProfilesManager.load(keyboardOnlyDefault, configDir.getPath(), false, true);
-					loadedLegacyDefaultLayout = true;
-				} catch (IOException | RuntimeException e) {
-					Log.e(TAG, "loadConfig: legacy default keyboard layout", e);
-				}
-			}
-			if (loadedLegacyDefaultLayout && !setProfileOrigin(null)) {
-				Log.e(TAG, "Unable to clear preset provenance for legacy keyboard-only default");
 			}
 		}
 
@@ -1474,38 +1495,50 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				return ProfilesManager.saveConfig(params);
 			}
 
-			ProfileModel candidate = currentForm == null
-					? ProfileConfigMatcher.copyConfig(params)
-					: ProfileConfigMatcher.effectiveConfig(params, currentForm);
-			boolean divergent = hasEffectiveDraftDivergence(params, currentForm, persistedBaseline);
-			PresetLocalOverride.Guard ownership = null;
-			if (divergent) {
-				ownership = PresetLocalOverride.detachBeforeWrite(this, configDir);
-				if (!ownership.canWrite()) {
-					Log.e(TAG, "Unable to durably detach linked preset before config save");
-					return false;
+			synchronized (ProfilesManager.presetSourceLock()) {
+				ProfileModel candidate = currentForm == null
+						? ProfileConfigMatcher.copyConfig(params)
+						: ProfileConfigMatcher.effectiveConfig(params, currentForm);
+				boolean divergent = hasEffectiveDraftDivergence(params, currentForm, persistedBaseline);
+				PresetLocalOverride.Guard ownership = null;
+				if (divergent) {
+					ownership = PresetLocalOverride.detachBeforeWrite(this, configDir);
+					if (!ownership.canWrite()) {
+						Log.e(TAG, "Unable to durably detach linked preset before config save");
+						return false;
+					}
 				}
-			}
 
-			boolean builtInDetachRequired = shouldDetachBuiltInThemeLink(
-					builtInThemeLinked, false, params, currentForm, builtInDefaultParams);
-			boolean saved = persistConfigAfterBuiltInOwnershipBarrier(
-					builtInDetachRequired,
-					this::reconcileBuiltInThemeLink,
-					() -> {
-						params = candidate;
-						return ProfilesManager.saveConfig(params);
-					},
-					() -> setBuiltInThemeLinked(true));
-			if (saved) {
-				persistedBaseline = ProfileConfigMatcher.copyConfig(params);
-				return true;
+				boolean builtInDetachRequired = shouldDetachBuiltInThemeLink(
+						builtInThemeLinked, false, params, currentForm, builtInDefaultParams);
+				boolean saved = persistConfigAfterBuiltInOwnershipBarrier(
+						builtInDetachRequired,
+						this::reconcileBuiltInThemeLink,
+						() -> {
+							params = candidate;
+							return ProfilesManager.saveConfig(params);
+						},
+						() -> setBuiltInThemeLinked(true));
+				if (saved) {
+					persistedBaseline = ProfileConfigMatcher.copyConfig(params);
+					return true;
+				}
+				if (ownership != null) ownership.restoreIfUnchanged();
+				return false;
 			}
-			if (ownership != null) ownership.restoreIfUnchanged();
-			return false;
 		} catch (Throwable t) {
 			Log.e(TAG, "saveParams", t);
 			return false;
+		}
+	}
+
+	@Nullable
+	static ProfilesManager.ProfileEditMode parseProfileEditMode(@Nullable String value) {
+		if (value == null) return null;
+		try {
+			return ProfilesManager.ProfileEditMode.valueOf(value);
+		} catch (IllegalArgumentException ignored) {
+			return null;
 		}
 	}
 
@@ -1522,7 +1555,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			throw new IOException("Unable to create preset editor draft");
 		}
 		try {
-			ProfilesManager.copyPresetSourceForEdit(profile, draft);
+			profileEditMode = ProfilesManager.preparePresetEditDraft(profile, draft);
 			return draft;
 		} catch (IOException | RuntimeException failure) {
 			FileUtils.clearDirectory(draft);
@@ -1542,7 +1575,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		operationRunning = true;
 		try {
 			if (!saveParams()) throw new IOException("Unable to save preset editor draft");
-			ProfilesManager.saveEditedSnapshot(profileEditTarget, profileEditDraftDir.getPath());
+			if (profileEditMode == null) throw new IOException("Missing preset editor session mode");
+			ProfilesManager.saveEditedSnapshot(
+					profileEditTarget, profileEditDraftDir.getPath(), profileEditMode);
 			profileDraftDirty = false;
 			setResult(RESULT_OK, new Intent().setData(getIntent().getData()));
 			finish();
@@ -1587,43 +1622,18 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			return false;
 		}
 		operationRunning = true;
-		PresetSourceReplacement.Guard ownership = null;
-		ProfileModel previousParams = params == null ? null : ProfileConfigMatcher.copyConfig(params);
-		ConfigFormState previousForm = currentForm;
-		boolean previousBuiltInThemeLinked = builtInThemeLinked;
-		boolean localDiverged = false;
 		try {
-			if (!isProfile) {
-				ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
-				if (!ownership.canWrite()) {
-					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-					return false;
-				}
-				profileOrigin = null;
-				builtInThemeLinked = false;
-			}
-			params = newBuiltInProfile();
-			currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
-			if (!saveParams()) {
-				if (previousParams != null) params = previousParams;
-				currentForm = previousForm;
-				if (isProfile) builtInThemeLinked = previousBuiltInThemeLinked;
-				else restoreSourceOwnership(ownership);
-				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-				return false;
-			}
-			localDiverged = true;
 			if (isProfile) {
+				params = newBuiltInProfile();
+				currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
 				builtInThemeLinked = true;
-			} else if (ownership == null || !ownership.publishBuiltInOwnership()) {
-				builtInThemeLinked = false;
+				profileDraftDirty = true;
+				if (!setProfileOrigin(null)) {
+					Log.e(TAG, "Unable to clear preset editor provenance");
+				}
+			} else if (!replaceActiveConfigWithBuiltIn()) {
 				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 				return false;
-			} else {
-				builtInThemeLinked = true;
-			}
-			if (isProfile && !setProfileOrigin(null)) {
-				Log.e(TAG, "Unable to clear preset editor provenance");
 			}
 			refreshProfileMatchCache();
 			if (composeController != null) {
@@ -1631,17 +1641,39 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			}
 			return true;
 		} catch (RuntimeException e) {
-			if (!localDiverged) {
-				if (previousParams != null) params = previousParams;
-				currentForm = previousForm;
-				if (isProfile) builtInThemeLinked = previousBuiltInThemeLinked;
-				else restoreSourceOwnership(ownership);
-			}
 			Log.e(TAG, "applyBuiltInTemplate", e);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			return false;
 		} finally {
 			operationRunning = false;
+		}
+	}
+
+	private boolean replaceActiveConfigWithBuiltIn() {
+		ProfileModel previousParams = params == null ? null : ProfileConfigMatcher.copyConfig(params);
+		ConfigFormState previousForm = currentForm;
+		synchronized (ProfilesManager.presetSourceLock()) {
+			PresetSourceReplacement.Guard ownership =
+					PresetSourceReplacement.begin(hostPreferences, configDir);
+			if (!ownership.canWrite()) {
+				return false;
+			}
+			profileOrigin = null;
+			builtInThemeLinked = false;
+			params = newBuiltInProfile();
+			currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+			if (!saveParams()) {
+				if (previousParams != null) params = previousParams;
+				currentForm = previousForm;
+				restoreSourceOwnership(ownership);
+				return false;
+			}
+			if (!ownership.publishBuiltInOwnership()) {
+				builtInThemeLinked = false;
+				return false;
+			}
+			builtInThemeLinked = true;
+			return true;
 		}
 	}
 
@@ -1728,15 +1760,19 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		PresetSourceReplacement.Guard ownership = null;
 		try {
 			if (!isProfile) {
-				ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
-				if (!ownership.canWrite()) {
-					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-					return false;
+				synchronized (ProfilesManager.presetSourceLock()) {
+					ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
+					if (!ownership.canWrite()) {
+						ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+						return false;
+					}
+					profileOrigin = null;
+					builtInThemeLinked = false;
+					ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
 				}
-				profileOrigin = null;
-				builtInThemeLinked = false;
+			} else {
+				ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
 			}
-			ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
 			if (isProfile) {
 				boolean sourceHasKeyboardArtifact =
 						inspected.keyboardLayout.status != ProfilesManager.CapabilityStatus.ABSENT;
@@ -1930,15 +1966,19 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		PresetSourceReplacement.Guard ownership = null;
 		try {
 			if (!isProfile) {
-				ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
-				if (!ownership.canWrite()) {
-					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-					return false;
+				synchronized (ProfilesManager.presetSourceLock()) {
+					ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
+					if (!ownership.canWrite()) {
+						ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+						return false;
+					}
+					profileOrigin = null;
+					builtInThemeLinked = false;
+					ProfilesManager.load(profile, configDir.getPath(), false, true);
 				}
-				profileOrigin = null;
-				builtInThemeLinked = false;
+			} else {
+				ProfilesManager.load(profile, configDir.getPath(), false, true);
 			}
-			ProfilesManager.load(profile, configDir.getPath(), false, true);
 			if (isProfile && !setProfileOrigin(null)) {
 				Log.e(TAG, "Unable to clear preset editor provenance");
 			}

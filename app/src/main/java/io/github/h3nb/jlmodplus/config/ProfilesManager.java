@@ -70,6 +70,11 @@ public class ProfilesManager {
 		MIDLET_CONFIG
 	}
 
+	enum ProfileEditMode {
+		CREATE_NEW,
+		EDIT_EXISTING
+	}
+
 	static ArrayList<Profile> getProfiles() {
 		File root = new File(Config.getProfilesDir());
 		return getList(root);
@@ -175,7 +180,7 @@ public class ProfilesManager {
 		}
 	}
 
-	private static boolean profileNameExistsLocked(@NonNull File root, @NonNull String name)
+	static boolean profileNameExistsLocked(@NonNull File root, @NonNull String name)
 			throws IOException {
 		File[] entries = root.listFiles();
 		if (entries == null) return false;
@@ -261,6 +266,21 @@ public class ProfilesManager {
 				new File(draftDir, "config.xml"));
 		copyPresetArtifactIfFile(new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE),
 				new File(draftDir, Config.MIDLET_KEY_LAYOUT_FILE));
+		}
+	}
+
+	static ProfileEditMode preparePresetEditDraft(
+			@NonNull Profile profile, @NonNull File draftDir) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			File sourceDir = profile.getDir();
+			if (sourceDir.exists() && !sourceDir.isDirectory()) {
+				throw new IOException("Preset path is not a directory");
+			}
+			if (!sourceDir.isDirectory()) {
+				return ProfileEditMode.CREATE_NEW;
+			}
+			copyPresetSourceForEdit(sourceDir, draftDir);
+			return ProfileEditMode.EDIT_EXISTING;
 		}
 	}
 
@@ -932,14 +952,40 @@ public class ProfilesManager {
 	 * not understand.
 	 */
 	static void saveEditedSnapshot(Profile profile, String fromPath) throws IOException {
-		saveEditedSnapshot(profile.getDir(), new File(fromPath));
+		saveEditedSnapshot(profile.getDir(), new File(fromPath), null);
+	}
+
+	static void saveEditedSnapshot(
+			@NonNull Profile profile,
+			@NonNull String fromPath,
+			@NonNull ProfileEditMode expectedMode) throws IOException {
+		saveEditedSnapshot(profile.getDir(), new File(fromPath), expectedMode);
 	}
 
 	/** File-level entry point kept package-private for deterministic preset-save recovery tests. */
 	static void saveEditedSnapshot(@NonNull File profileDir, @NonNull File sourceDir)
 			throws IOException {
+		saveEditedSnapshot(profileDir, sourceDir, null);
+	}
+
+	static void saveEditedSnapshot(
+			@NonNull File profileDir,
+			@NonNull File sourceDir,
+			@Nullable ProfileEditMode expectedMode) throws IOException {
 		synchronized (PRESET_SOURCE_LOCK) {
-		recoverInterruptedPresetSave(profileDir);
+		if (expectedMode == ProfileEditMode.EDIT_EXISTING) {
+			recoverInterruptedPresetSave(profileDir);
+			if (!profileDir.isDirectory()) {
+				throw new IOException("Preset source no longer exists");
+			}
+		} else if (expectedMode == ProfileEditMode.CREATE_NEW) {
+			File root = profileDir.getParentFile();
+			if (root == null || profileNameExistsLocked(root, profileDir.getName())) {
+				throw new IOException("Preset name already exists");
+			}
+		} else {
+			recoverInterruptedPresetSave(profileDir);
+		}
 
 		File srcConfig = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
 		if (!isValidConfigFile(srcConfig)) {

@@ -36,6 +36,7 @@ final class LinkedPresetActivation {
 			@NonNull File targetConfigDir,
 			@NonNull File sourcePresetDir,
 			@NonNull String sourcePresetName) {
+		synchronized (ProfilesManager.presetSourceLock()) {
 		PresetSourceReplacement.Guard previous =
 				PresetSourceReplacement.begin(preferences, targetConfigDir);
 		if (!previous.canWrite()) {
@@ -69,5 +70,6 @@ final class LinkedPresetActivation {
 			linkage.detach();
 		}
 		return Result.APPLIED_CUSTOM;
+		}
 	}
 }

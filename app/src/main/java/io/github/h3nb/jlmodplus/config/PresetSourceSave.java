@@ -53,6 +53,9 @@ final class PresetSourceSave {
 			@NonNull File profilesRoot,
 			@NonNull String name) {
 		synchronized (ProfilesManager.presetSourceLock()) {
+			if (!name.equals(new PresetLinkage(preferences, currentConfigDir).getOrigin())) {
+				return Result.FAILED;
+			}
 			try {
 				ProfilesManager.updateCompleteSnapshot(new File(profilesRoot, name), currentConfigDir);
 			} catch (IOException | RuntimeException sourceFailure) {
