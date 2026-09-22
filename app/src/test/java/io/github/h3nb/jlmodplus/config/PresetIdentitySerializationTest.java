@@ -1,6 +1,4 @@
 /*
- * Modified for JL-Mod Plus.
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 package io.github.h3nb.jlmodplus.config;
