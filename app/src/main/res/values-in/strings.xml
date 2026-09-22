@@ -59,7 +59,10 @@
     <string name="runtime_preset_apply_destination">Terapkan ke</string>
     <string name="runtime_preset_this_midlet_only">MIDlet ini saja</string>
     <string name="runtime_preset_update_destination">Perbarui %1$s</string>
-    <string name="runtime_preset_local_explanation">Hanya MIDlet ini yang berubah.</string>\n    <string name="runtime_preset_update_explanation">Mengganti %1$s dengan pengaturan dan kontrol MIDlet ini.\nPengikut lain diperbarui saat dibuka lagi.</string>\n    <string name="runtime_layout_apply_title">Terapkan %1$s?</string>\n    <string name="runtime_apply">Terapkan</string>
+    <string name="runtime_preset_local_explanation">Hanya MIDlet ini yang berubah.</string>
+    <string name="runtime_preset_update_explanation">Mengganti %1$s dengan pengaturan dan kontrol MIDlet ini.\nPengikut lain diperbarui saat dibuka lagi.</string>
+    <string name="runtime_layout_apply_title">Terapkan %1$s?</string>
+    <string name="runtime_apply">Terapkan</string>
     <string name="runtime_preset_update_failed">Tersimpan untuk MIDlet ini, tetapi %1$s tidak dapat diperbarui.</string>
     <string name="runtime_preset_update_unlinked">%1$s telah diperbarui, tetapi MIDlet ini tidak dapat ditautkan ke prasetel itu.</string>
     <string name="layout_edit_mode">Mode edit kontrol virtual: geser untuk memindahkan, cubit untuk mengubah ukuran</string>
