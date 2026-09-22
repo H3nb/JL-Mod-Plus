@@ -271,8 +271,12 @@ public class ProfilesManager {
 
 	static ProfileEditMode preparePresetEditDraft(
 			@NonNull Profile profile, @NonNull File draftDir) throws IOException {
+		return preparePresetEditDraft(profile.getDir(), draftDir);
+	}
+
+	static ProfileEditMode preparePresetEditDraft(
+			@NonNull File sourceDir, @NonNull File draftDir) throws IOException {
 		synchronized (PRESET_SOURCE_LOCK) {
-			File sourceDir = profile.getDir();
 			if (sourceDir.exists() && !sourceDir.isDirectory()) {
 				throw new IOException("Preset path is not a directory");
 			}

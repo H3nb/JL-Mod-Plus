@@ -93,8 +93,13 @@ final class PresetLifecycle {
 		} catch (IOException | RuntimeException recoveryFailure) {
 			return Result.FAILED;
 		}
-		if (!oldSource.isDirectory()
-				|| ProfilesManager.profileNameExistsLocked(profilesRoot, newName)) {
+		final boolean newNameOccupied;
+		try {
+			newNameOccupied = ProfilesManager.profileNameExistsLocked(profilesRoot, newName);
+		} catch (IOException | RuntimeException occupancyFailure) {
+			return Result.FAILED;
+		}
+		if (!oldSource.isDirectory() || newNameOccupied) {
 			return Result.FAILED;
 		}
 		if (staging.exists() && !deleteRecursively(staging)) {

@@ -53,8 +53,16 @@ public final class PresetLocalOverride {
 			@NonNull Context context,
 			@NonNull File configDir,
 			@NonNull WriteOperation writeOperation) {
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
-				context.getApplicationContext());
+		return runDetachedWrite(
+				PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext()),
+				configDir,
+				writeOperation);
+	}
+
+	static boolean runDetachedWrite(
+			@NonNull SharedPreferences preferences,
+			@NonNull File configDir,
+			@NonNull WriteOperation writeOperation) {
 		synchronized (ProfilesManager.presetSourceLock()) {
 			Guard ownership = detachBeforeWrite(preferences, configDir);
 			if (!ownership.canWrite()) {

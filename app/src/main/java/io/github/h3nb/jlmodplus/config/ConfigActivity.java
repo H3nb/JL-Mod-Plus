@@ -1130,11 +1130,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		Profile configuredProfile = isProfile ? null : ProfilesManager.findProfile(configuredDefault);
 		ProfilesManager.ProfileInfo configuredInfo = configuredProfile == null
 				? null : ProfilesManager.inspectProfile(configuredProfile);
-		Profile defaultWithSettings = hasApplicationSettingsArtifact(configuredInfo)
-				? configuredProfile : null;
 		Profile validDefault = configuredInfo != null && configuredInfo.settings.isReady()
-				? configuredProfile : null;
-		Profile keyboardOnlyDefault = isLegacyKeyboardOnlyDefault(configuredInfo)
 				? configuredProfile : null;
 		defProfile = validDefault == null ? null : validDefault.getName();
 		cachedDefaultProfileName = defProfile;
@@ -1624,10 +1620,20 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		operationRunning = true;
 		try {
 			if (isProfile) {
+				ProfileModel previousParams = params == null
+						? null : ProfileConfigMatcher.copyConfig(params);
+				ConfigFormState previousForm = currentForm;
+				boolean previousBuiltInThemeLinked = builtInThemeLinked;
 				params = newBuiltInProfile();
 				currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+				if (!saveParams()) {
+					if (previousParams != null) params = previousParams;
+					currentForm = previousForm;
+					builtInThemeLinked = previousBuiltInThemeLinked;
+					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+					return false;
+				}
 				builtInThemeLinked = true;
-				profileDraftDirty = true;
 				if (!setProfileOrigin(null)) {
 					Log.e(TAG, "Unable to clear preset editor provenance");
 				}
@@ -1762,13 +1768,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			if (!isProfile) {
 				synchronized (ProfilesManager.presetSourceLock()) {
 					ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
-					if (!ownership.canWrite()) {
-						ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-						return false;
+					if (ownership.canWrite()) {
+						profileOrigin = null;
+						builtInThemeLinked = false;
+						ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
 					}
-					profileOrigin = null;
-					builtInThemeLinked = false;
-					ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
+				}
+				if (ownership == null || !ownership.canWrite()) {
+					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+					return false;
 				}
 			} else {
 				ProfilesManager.load(profile, configDir.getPath(), applySettings, applyKeyboard);
@@ -1968,13 +1976,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			if (!isProfile) {
 				synchronized (ProfilesManager.presetSourceLock()) {
 					ownership = PresetSourceReplacement.begin(hostPreferences, configDir);
-					if (!ownership.canWrite()) {
-						ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-						return false;
+					if (ownership.canWrite()) {
+						profileOrigin = null;
+						builtInThemeLinked = false;
+						ProfilesManager.load(profile, configDir.getPath(), false, true);
 					}
-					profileOrigin = null;
-					builtInThemeLinked = false;
-					ProfilesManager.load(profile, configDir.getPath(), false, true);
+				}
+				if (ownership == null || !ownership.canWrite()) {
+					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+					return false;
 				}
 			} else {
 				ProfilesManager.load(profile, configDir.getPath(), false, true);

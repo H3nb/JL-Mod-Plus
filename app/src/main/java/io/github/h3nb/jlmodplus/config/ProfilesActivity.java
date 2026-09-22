@@ -110,23 +110,14 @@ public class ProfilesActivity extends AppCompatActivity {
 
 			@Override
 			public void onSetBuiltInDefault() {
-				boolean committed;
-				synchronized (ProfilesManager.presetSourceLock()) {
-					committed = preferences.edit().remove(PREF_DEFAULT_PROFILE).commit();
-				}
-				if (committed) refreshProfiles();
+				if (setBuiltInDefault(preferences)) refreshProfiles();
 			}
 
 			@Override
 			public void onSetDefault(@NonNull String name) {
-				boolean committed = false;
-				synchronized (ProfilesManager.presetSourceLock()) {
-					Profile profile = ProfilesManager.findProfile(name);
-					if (profile != null && ProfilesManager.inspectProfile(profile).settings.isReady()) {
-						committed = preferences.edit().putString(PREF_DEFAULT_PROFILE, name).commit();
-					}
+				if (setNamedDefault(preferences, new File(Config.getProfilesDir()), name)) {
+					refreshProfiles();
 				}
-				if (committed) refreshProfiles();
 			}
 
 			@Override
@@ -166,6 +157,26 @@ public class ProfilesActivity extends AppCompatActivity {
 				});
 			}
 		};
+	}
+
+	static boolean setBuiltInDefault(@NonNull SharedPreferences preferences) {
+		synchronized (ProfilesManager.presetSourceLock()) {
+			return preferences.edit().remove(PREF_DEFAULT_PROFILE).commit();
+		}
+	}
+
+	static boolean setNamedDefault(
+			@NonNull SharedPreferences preferences,
+			@NonNull File profilesRoot,
+			@NonNull String name) {
+		synchronized (ProfilesManager.presetSourceLock()) {
+			File sourceDir = new File(profilesRoot, name);
+			if (!sourceDir.isDirectory()) return false;
+			ProfilesManager.ProfileInfo info =
+					ProfilesManager.inspectProfile(new Profile(name), sourceDir);
+			if (!info.settings.isReady()) return false;
+			return preferences.edit().putString(PREF_DEFAULT_PROFILE, name).commit();
+		}
 	}
 
 	private void finishLifecycleOperation(@NonNull PresetLifecycle.Result result) {
