@@ -17,6 +17,7 @@ import android.os.RemoteException;
 import androidx.annotation.Nullable;
 
 import io.github.h3nb.jlmodplus.config.PresetAuthorityContract;
+import io.github.h3nb.jlmodplus.EmulatorApplication;
 
 /**
  * Debug-only cross-process probe. It does not implement preset behavior; it only invokes the same
@@ -26,12 +27,16 @@ public final class PresetAuthorityProbeService extends Service {
     public static final int MSG_PREPARE = 1;
     public static final int MSG_RESOLVE = 2;
     public static final int MSG_SAVE = 3;
+    public static final int MSG_WRITE_RUNTIME_PREFERENCE = 4;
 
     public static final String KEY_PHASE = "phase";
     public static final int PHASE_ENTERED = 1;
     public static final int PHASE_RESULT = 2;
     public static final String KEY_REMOTE_PID = "remotePid";
     public static final String KEY_LAYOUT_COMMITTED = "layoutCommitted";
+    public static final String KEY_PROCESS_NAME = "processName";
+    public static final String KEY_PROCESS_IS_MAIN = "processIsMain";
+    public static final String KEY_RUNTIME_PREFERENCE_VALUE = "runtimePreferenceValue";
 
     private final Messenger messenger =
             new Messenger(new Handler(Looper.getMainLooper(), this::handleMessage));
@@ -48,8 +53,26 @@ public final class PresetAuthorityProbeService extends Service {
 
         send(reply, message.what, phase(PHASE_ENTERED));
         Bundle request = message.getData();
-        PresetAuthorityClient client = new PresetAuthorityClient(this);
         Bundle result = phase(PHASE_RESULT);
+
+        if (message.what == MSG_WRITE_RUNTIME_PREFERENCE) {
+            boolean committed = RuntimeUiPreferences.get(this).edit()
+                    .putBoolean(RuntimeUiPreferences.HIDE_LAYOUT_EDIT_GUIDE, true)
+                    .commit();
+            result.putInt(
+                    PresetAuthorityContract.KEY_RESULT,
+                    committed
+                            ? PresetAuthorityContract.RESULT_OK
+                            : PresetAuthorityContract.RESULT_FAILED);
+            result.putBoolean(
+                    KEY_RUNTIME_PREFERENCE_VALUE,
+                    RuntimeUiPreferences.get(this).getBoolean(
+                            RuntimeUiPreferences.HIDE_LAYOUT_EDIT_GUIDE, false));
+            send(reply, message.what, result);
+            return true;
+        }
+
+        PresetAuthorityClient client = new PresetAuthorityClient(this);
 
         String appPath = request.getString(PresetAuthorityContract.KEY_APP_PATH);
         long expectedAppId =
@@ -114,7 +137,9 @@ public final class PresetAuthorityProbeService extends Service {
                         PresetAuthorityContract.KEY_RESULT,
                         saved.isLayoutCommitted()
                                 ? PresetAuthorityContract.RESULT_OK
-                                : PresetAuthorityContract.RESULT_FAILED);
+                                : saved.isStale()
+                                        ? PresetAuthorityContract.RESULT_STALE
+                                        : PresetAuthorityContract.RESULT_FAILED);
             }
             default -> result.putInt(
                     PresetAuthorityContract.KEY_RESULT,
@@ -124,10 +149,13 @@ public final class PresetAuthorityProbeService extends Service {
         return true;
     }
 
-    private static Bundle phase(int phase) {
+    private Bundle phase(int phase) {
         Bundle bundle = new Bundle();
         bundle.putInt(KEY_PHASE, phase);
         bundle.putInt(KEY_REMOTE_PID, Process.myPid());
+        String processName = EmulatorApplication.getProcessName();
+        bundle.putString(KEY_PROCESS_NAME, processName);
+        bundle.putBoolean(KEY_PROCESS_IS_MAIN, getPackageName().equals(processName));
         return bundle;
     }
 

@@ -95,6 +95,14 @@ public class VirtualKeyboardEditTransactionTest {
 	}
 
 	@Test
+	public void staleLayoutResultRemainsDistinctFromOrdinaryFailure() {
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutStale();
+
+		assertFalse(result.isLayoutCommitted());
+		assertTrue(result.isStale());
+	}
+
+	@Test
 	public void layoutSuccessClosesTransaction() {
 		VirtualKeyboardEditTransaction transaction =
 				new VirtualKeyboardEditTransaction(edit(snapshot(3.0f)));

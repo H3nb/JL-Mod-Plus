@@ -1,41 +1,30 @@
 /*
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
-
-package io.github.h3nb.jlmodplus.config
+package io.github.h3nb.jlmodplus.settings
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.ui.platform.ComposeView
+import android.view.KeyEvent
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.github.h3nb.jlmodplus.config.ProfileModel
+import io.github.h3nb.jlmodplus.config.ProfilesManager
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppEntity
 import io.github.h3nb.jlmodplus.librarydb.LibraryDatabase
+import io.github.h3nb.jlmodplus.util.Constants
+import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import io.github.h3nb.jlmodplus.R
-import io.github.h3nb.jlmodplus.util.Constants
-import java.io.File
 
 @RunWith(AndroidJUnit4::class)
-class ConfigActivityComposeSmokeTest {
+class KeyMapperInstalledIdentityTest {
     private var fixtureRoot: File? = null
 
     @After
@@ -44,51 +33,25 @@ class ConfigActivityComposeSmokeTest {
     }
 
     @Test
-    fun configActivityHostsComposeRootForRealProfileFixture() {
+    fun staleMapperCannotPublishIntoReplacementIdentity() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val root = File(context.filesDir, "config-compose-fixture")
-        fixtureRoot = root
-        val appDir = File(File(root, "converted"), "fixture")
-        assertTrue(appDir.mkdirs() || appDir.isDirectory)
-        val appId = installIdentity(context, root, "fixture")
-        val intent = Intent(
-            Constants.ACTION_EDIT,
-            Uri.parse(appDir.absolutePath),
-            context,
-            ConfigActivity::class.java,
-        )
-            .putExtra(Constants.KEY_MIDLET_NAME, "Config Compose Fixture")
-            .putExtra(Constants.KEY_LIBRARY_APP_ID, appId)
-
-        ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
-            scenario.onActivity { activity ->
-                val composeView = activity.findViewById<ComposeView>(R.id.config_compose_root)
-                assertNotNull("ConfigActivity must host the Compose form", composeView)
-                assertNotNull("ConfigActivity must retain a native window", activity.window)
-            }
-        }
-    }
-
-    @Test
-    fun staleConfigActivityCannotSaveIntoReplacementIdentity() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val root = File(context.filesDir, "config-stale-identity-fixture")
+        val root = File(context.filesDir, "key-mapper-stale-identity-fixture")
         fixtureRoot = root
         val appDir = File(File(root, "converted"), "fixture")
         val configDir = File(File(root, "configs"), "fixture")
         assertTrue(appDir.mkdirs() || appDir.isDirectory)
         writeConfig(configDir, 176)
-        val originalId = installIdentity(context, root, "fixture")
+        val originalId = insertIdentity(context, root, "Original")
         val intent = Intent(
             Constants.ACTION_EDIT,
-            Uri.parse(appDir.absolutePath),
+            Uri.parse(configDir.absolutePath),
             context,
-            ConfigActivity::class.java,
+            KeyMapperActivity::class.java,
         )
-            .putExtra(Constants.KEY_MIDLET_NAME, "Original")
+            .putExtra(Constants.KEY_INSTALLED_APP_PATH, appDir.absolutePath)
             .putExtra(Constants.KEY_LIBRARY_APP_ID, originalId)
 
-        ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
+        ActivityScenario.launch<KeyMapperActivity>(intent).use { scenario ->
             scenario.recreate()
             val database = LibraryDatabase.open(context, root)
             val replacementId = try {
@@ -110,29 +73,29 @@ class ConfigActivityComposeSmokeTest {
             writeConfig(configDir, 640)
 
             scenario.onActivity { activity ->
-                assertFalse(activity.saveParams())
+                activity.androidToMIDP.put(KeyEvent.KEYCODE_F1, 424242)
+                assertFalse(activity.save())
                 assertTrue(activity.isFinishing)
             }
 
-            assertEquals(
-                640,
-                ProfilesManager.loadPreparedMidletConfig(configDir, false)!!.screenWidth,
-            )
+            val replacement = ProfilesManager.loadPreparedMidletConfig(configDir, false)!!
+            assertEquals(640, replacement.screenWidth)
+            assertFalse(replacement.keyMappings?.indexOfKey(KeyEvent.KEYCODE_F1)?.let { it >= 0 } ?: false)
         }
     }
 
-    private fun installIdentity(
+    private fun insertIdentity(
         context: android.content.Context,
         root: File,
-        storageKey: String,
+        title: String,
     ): Long {
         val database = LibraryDatabase.open(context, root)
         return try {
             runBlocking {
                 database.libraryDao().insertApp(
                     LibraryAppEntity(
-                        storageKey = storageKey,
-                        sourceTitle = "Fixture",
+                        storageKey = "fixture",
+                        sourceTitle = title,
                         sourceVendor = "JL-Mod Plus",
                         sourceVersion = "1.0",
                     ),

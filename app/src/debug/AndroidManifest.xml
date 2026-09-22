@@ -19,6 +19,9 @@
             android:name="javax.microedition.shell.PresetAuthorityProbeService"
             android:exported="false"
             android:process=":midlet" />
+        <service
+            android:name="io.github.h3nb.jlmodplus.config.PresetAuthorityMainProbeService"
+            android:exported="false" />
     </application>
 
 </manifest>
