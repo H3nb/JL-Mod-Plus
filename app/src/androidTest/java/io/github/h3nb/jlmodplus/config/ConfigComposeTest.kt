@@ -364,7 +364,7 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun saveAsPresetExposesExplicitKeyboardLayoutChoice() {
+    fun saveAsPresetCapturesWholeDeviceWithoutComponentChoice() {
         val base = sampleState()
         val state = ConfigUiState(
             base.form,
@@ -383,12 +383,107 @@ class ConfigComposeTest {
         composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
 
         composeRule.onNodeWithText("Save As Preset").performClick()
-        composeRule.onNodeWithText("Include virtual keyboard layout").assertExists()
+        composeRule.onNodeWithTag("preset_include_keyboard_layout").assertDoesNotExist()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("Comfortable")
         composeRule.onNodeWithText("Save").performClick()
 
         assertEquals("Comfortable", events.savedTemplate)
-        assertTrue(events.savedTemplateIncludesKeyboard)
+    }
+
+    @Test
+    fun saveAsPresetStillRejectsInvalidAndDuplicateNames() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            base.profileStatus,
+            emptyList(),
+            true,
+            false,
+            listOf("K800i"),
+        )
+        composeRule.setContent { JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) } }
+
+        composeRule.onNodeWithText("Save As Preset").performClick()
+        val nameField = composeRule.onNode(hasSetTextAction())
+        val saveButton = composeRule.onNode(
+            hasText("Save") and hasClickAction() and hasAnyAncestor(isDialog()),
+        )
+
+        nameField.performTextReplacement("bad/name")
+        saveButton.assertIsNotEnabled()
+
+        nameField.performTextReplacement("k800i")
+        saveButton.assertIsNotEnabled()
+
+        nameField.performTextReplacement("N95")
+        saveButton.assertIsEnabled()
+    }
+
+    @Test
+    fun linkedPresetShowsFollowingStatusWithoutUpdateWhenClean() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            ConfigUiState.ProfileStatus.active("K800i", null),
+            emptyList(),
+            true,
+            false,
+            listOf("K800i"),
+            emptyList(),
+            false,
+            null,
+        )
+        composeRule.setContent { JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) } }
+
+        composeRule.onNodeWithText("Following K800i").assertExists()
+        composeRule.onNodeWithTag("preset_update_action").assertDoesNotExist()
+    }
+
+    @Test
+    fun updatePresetActionRequiresConfirmation() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            ConfigUiState.ProfileStatus.active("K800i", null),
+            emptyList(),
+            true,
+            false,
+            listOf("K800i"),
+            emptyList(),
+            false,
+            "K800i",
+        )
+        val events = RecordingConfigEvents()
+        composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
+
+        composeRule.onNodeWithText("Following K800i").assertExists()
+        composeRule.onNodeWithTag("preset_update_action").assertExists().performClick()
+        composeRule.onNodeWithText("Update K800i?").assertExists()
+        assertEquals(null, events.updatedTemplate)
+
+        composeRule.onNode(
+            hasText("Update") and hasClickAction() and hasAnyAncestor(isDialog()),
+        ).performClick()
+
+        assertEquals("K800i", events.updatedTemplate)
     }
 
     @Test
@@ -706,7 +801,7 @@ class ConfigComposeTest {
         var applyTemplateCalls = 0
         var appliedTemplate: String? = null
         var savedTemplate: String? = null
-        var savedTemplateIncludesKeyboard = false
+        var updatedTemplate: String? = null
 
         override fun onApplyBuiltInTemplate(scope: ConfigFormEvents.PresetApplyScope): Boolean {
             applyBuiltInCalls++
@@ -722,9 +817,13 @@ class ConfigComposeTest {
             return true
         }
 
-        override fun onSaveTemplate(name: String, includeKeyboard: Boolean): Boolean {
+        override fun onSaveTemplate(name: String): Boolean {
             savedTemplate = name
-            savedTemplateIncludesKeyboard = includeKeyboard
+            return true
+        }
+
+        override fun onUpdatePreset(name: String): Boolean {
+            updatedTemplate = name
             return true
         }
 
