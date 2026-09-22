@@ -63,7 +63,6 @@ import androidx.preference.PreferenceManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -86,6 +85,7 @@ import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.PresetLocalOverride;
+import io.github.h3nb.jlmodplus.config.PresetRuntimeUpdate;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.input.ControllerHostSink;
@@ -464,18 +464,21 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
-					public void onSaveVirtualKeyboard(boolean saveScreenParams) {
-						VirtualKeyboardSaveResult result = applyVirtualKeyboardSave(saveScreenParams);
+					public void onSaveVirtualKeyboard(
+							boolean saveScreenParams, @Nullable String updateTarget) {
+						VirtualKeyboardSaveResult result =
+								applyVirtualKeyboardSave(saveScreenParams, updateTarget);
 						if (!result.isLayoutCommitted()) {
 							toast(R.string.virtual_controls_save_failed);
-						} else if (result.isScreenParamsFailed()) {
-							toast(R.string.virtual_controls_screen_params_save_failed);
+						} else {
+							showVirtualKeyboardSaveWarnings(result, updateTarget);
 						}
 					}
 
 					@Override
-					public void onVirtualKeyboardEditSaved(boolean saveScreenParams) {
-						saveVirtualKeyboardEdit(saveScreenParams);
+					public void onVirtualKeyboardEditSaved(
+							boolean saveScreenParams, @Nullable String updateTarget) {
+						saveVirtualKeyboardEdit(saveScreenParams, updateTarget);
 					}
 
 					@Override
@@ -489,8 +492,8 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
-					public void onLayoutSelected(int index) {
-						applyLayoutSelection(index);
+					public void onLayoutSelected(int index, @Nullable String updateTarget) {
+						applyLayoutSelection(index, updateTarget);
 					}
 
 					@Override
@@ -1190,7 +1193,8 @@ public class MicroActivity extends AppCompatActivity {
 			return;
 		}
 		hideVirtualKeyboardEditorDone();
-		runtimeMenuController.showFinishVirtualKeyboardEdit(vk.isPhone(), false);
+		runtimeMenuController.showFinishVirtualKeyboardEdit(
+				vk.isPhone(), false, resolveRuntimePresetUpdateTarget());
 	}
 
 	private void finishCleanVirtualKeyboardEdit(VirtualKeyboard vk) {
@@ -1200,13 +1204,14 @@ public class MicroActivity extends AppCompatActivity {
 		updateRuntimeMenuState(current);
 	}
 
-	private void saveVirtualKeyboardEdit(boolean saveScreenParams) {
+	private void saveVirtualKeyboardEdit(
+			boolean saveScreenParams, @Nullable String updateTarget) {
 		VirtualKeyboard vk = ContextHolder.getVk();
 		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
 		if (vk == null || transaction == null || !transaction.isActive()) return;
 		VirtualKeyboardSaveResult[] saveResult = new VirtualKeyboardSaveResult[1];
 		if (!transaction.commitSave(() -> {
-			saveResult[0] = applyVirtualKeyboardSave(saveScreenParams);
+			saveResult[0] = applyVirtualKeyboardSave(saveScreenParams, updateTarget);
 			return saveResult[0].isLayoutCommitted();
 		})) {
 			toast(R.string.virtual_controls_save_failed);
@@ -1216,9 +1221,7 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
 		clearVirtualKeyboardEditTransaction();
-		if (saveResult[0].isScreenParamsFailed()) {
-			toast(R.string.virtual_controls_screen_params_save_failed);
-		} else {
+		if (!showVirtualKeyboardSaveWarnings(saveResult[0], updateTarget)) {
 			toast(R.string.layout_edit_finished);
 		}
 		updateRuntimeMenuState(current);
@@ -1403,7 +1406,8 @@ public class MicroActivity extends AppCompatActivity {
 	private void showSaveVkAlert(boolean keepScreenPreferred) {
 		final VirtualKeyboard vk = ContextHolder.getVk();
 		if (vk != null && runtimeMenuController != null) {
-			runtimeMenuController.showSaveVirtualKeyboard(vk.isPhone(), keepScreenPreferred);
+			runtimeMenuController.showSaveVirtualKeyboard(
+					vk.isPhone(), keepScreenPreferred, resolveRuntimePresetUpdateTarget());
 		}
 	}
 
@@ -1412,8 +1416,16 @@ public class MicroActivity extends AppCompatActivity {
 		if (vk == null || runtimeMenuController == null) {
 			return;
 		}
+		// Resolve on every open so a runtime Activity never caches a renamed/deleted source.
+		String updateTarget = resolveRuntimePresetUpdateTarget();
+		if (isVirtualKeyboardLayoutEditing()) {
+			// Layout templates are in-memory editor changes while an edit transaction is active.
+			updateTarget = null;
+		}
 		runtimeMenuController.showLayoutSelection(
-				getResources().getStringArray(R.array.PREF_VK_TYPE_ENTRIES), vk.getLayout());
+				getResources().getStringArray(R.array.PREF_VK_TYPE_ENTRIES),
+				vk.getLayout(),
+				updateTarget);
 	}
 
 	private void applyHiddenButtons(boolean[] changed) {
@@ -1422,7 +1434,7 @@ public class MicroActivity extends AppCompatActivity {
 			return;
 		}
 		boolean[] states = vk.getKeysVisibility();
-		if (changed.length != states.length || Arrays.equals(states, changed)) {
+		if (!RuntimeVirtualKeyboardPersistence.hiddenButtonsChanged(states, changed)) {
 			return;
 		}
 		vk.setKeysVisibility(changed.clone());
@@ -1433,7 +1445,8 @@ public class MicroActivity extends AppCompatActivity {
 		}
 	}
 
-	private VirtualKeyboardSaveResult applyVirtualKeyboardSave(boolean saveScreenParams) {
+	private VirtualKeyboardSaveResult applyVirtualKeyboardSave(
+			boolean saveScreenParams, @Nullable String updateTarget) {
 		VirtualKeyboard vk = ContextHolder.getVk();
 		File configDir = activeMidletConfigDir();
 		if (vk == null || configDir == null) {
@@ -1452,10 +1465,11 @@ public class MicroActivity extends AppCompatActivity {
 		// make the layout transaction discardable again and must never restore preset linkage.
 		boolean screenParamsFailed =
 				saveScreenParams && vk.isPhone() && !vk.saveScreenParams();
-		return VirtualKeyboardSaveResult.layoutCommitted(screenParamsFailed);
+		return VirtualKeyboardSaveResult.layoutCommitted(
+				screenParamsFailed, updateWholePresetAfterLocalSave(configDir, updateTarget));
 	}
 
-	private void applyLayoutSelection(int index) {
+	private void applyLayoutSelection(int index, @Nullable String updateTarget) {
 		VirtualKeyboard vk = ContextHolder.getVk();
 		if (vk == null || index < 0 || index >= getResources()
 				.getStringArray(R.array.PREF_VK_TYPE_ENTRIES).length) {
@@ -1466,7 +1480,7 @@ public class MicroActivity extends AppCompatActivity {
 			applyVirtualKeyboardOrientationPolicy(vk);
 			return;
 		}
-		if (vk.getLayout() == index) {
+		if (!RuntimeVirtualKeyboardPersistence.layoutSelectionChanged(vk.getLayout(), index)) {
 			applyVirtualKeyboardOrientationPolicy(vk);
 			return;
 		}
@@ -1482,8 +1496,56 @@ public class MicroActivity extends AppCompatActivity {
 		if (!vk.setLayout(index)) {
 			ownership.restoreIfUnchanged();
 			toast(R.string.virtual_controls_save_failed);
+		} else {
+			VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(
+					false, updateWholePresetAfterLocalSave(configDir, updateTarget));
+			showVirtualKeyboardSaveWarnings(result, updateTarget);
 		}
 		applyVirtualKeyboardOrientationPolicy(vk);
+	}
+
+	@Nullable
+	private String resolveRuntimePresetUpdateTarget() {
+		File configDir = activeMidletConfigDir();
+		return configDir == null ? null : PresetRuntimeUpdate.resolveUpdateTarget(this, configDir);
+	}
+
+	private VirtualKeyboardSaveResult.PresetUpdateOutcome updateWholePresetAfterLocalSave(
+			@NonNull File configDir, @Nullable String updateTarget) {
+		if (updateTarget == null) {
+			return VirtualKeyboardSaveResult.PresetUpdateOutcome.NONE;
+		}
+		// Runtime writes always publish the local layout/config first. The optional Update action is
+		// whole-device replacement, not a keyboard-component write, and delegates to Task 3C.
+		return switch (PresetRuntimeUpdate.updateExisting(this, configDir, updateTarget)) {
+			case LINKED -> VirtualKeyboardSaveResult.PresetUpdateOutcome.LINKED;
+			case SAVED_UNLINKED -> VirtualKeyboardSaveResult.PresetUpdateOutcome.SAVED_UNLINKED;
+			case FAILED -> VirtualKeyboardSaveResult.PresetUpdateOutcome.FAILED;
+		};
+	}
+
+	private boolean showVirtualKeyboardSaveWarnings(
+			@NonNull VirtualKeyboardSaveResult result, @Nullable String updateTarget) {
+		String warning = null;
+		if (result.isScreenParamsFailed()) {
+			warning = getString(R.string.virtual_controls_screen_params_save_failed);
+		}
+		if (updateTarget != null) {
+			String presetWarning = switch (result.getPresetUpdateOutcome()) {
+				case FAILED -> getString(R.string.runtime_preset_update_failed, updateTarget);
+				case SAVED_UNLINKED ->
+						getString(R.string.runtime_preset_update_unlinked, updateTarget);
+				default -> null;
+			};
+			if (presetWarning != null) {
+				warning = warning == null ? presetWarning : warning + "\n" + presetWarning;
+			}
+		}
+		if (warning != null) {
+			toast(warning);
+			return true;
+		}
+		return false;
 	}
 
 	@Nullable

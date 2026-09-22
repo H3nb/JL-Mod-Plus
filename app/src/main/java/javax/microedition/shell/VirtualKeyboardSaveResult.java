@@ -11,15 +11,27 @@ package javax.microedition.shell;
  * turn an already-published layout back into an uncommitted edit transaction.</p>
  */
 final class VirtualKeyboardSaveResult {
+	enum PresetUpdateOutcome {
+		NONE,
+		LINKED,
+		SAVED_UNLINKED,
+		FAILED
+	}
+
 	private static final VirtualKeyboardSaveResult LAYOUT_FAILED =
-			new VirtualKeyboardSaveResult(false, false);
+			new VirtualKeyboardSaveResult(false, false, PresetUpdateOutcome.NONE);
 
 	private final boolean layoutCommitted;
 	private final boolean screenParamsFailed;
+	private final PresetUpdateOutcome presetUpdateOutcome;
 
-	private VirtualKeyboardSaveResult(boolean layoutCommitted, boolean screenParamsFailed) {
+	private VirtualKeyboardSaveResult(
+			boolean layoutCommitted,
+			boolean screenParamsFailed,
+			PresetUpdateOutcome presetUpdateOutcome) {
 		this.layoutCommitted = layoutCommitted;
 		this.screenParamsFailed = screenParamsFailed;
+		this.presetUpdateOutcome = presetUpdateOutcome;
 	}
 
 	static VirtualKeyboardSaveResult layoutFailed() {
@@ -27,7 +39,12 @@ final class VirtualKeyboardSaveResult {
 	}
 
 	static VirtualKeyboardSaveResult layoutCommitted(boolean screenParamsFailed) {
-		return new VirtualKeyboardSaveResult(true, screenParamsFailed);
+		return layoutCommitted(screenParamsFailed, PresetUpdateOutcome.NONE);
+	}
+
+	static VirtualKeyboardSaveResult layoutCommitted(
+			boolean screenParamsFailed, PresetUpdateOutcome presetUpdateOutcome) {
+		return new VirtualKeyboardSaveResult(true, screenParamsFailed, presetUpdateOutcome);
 	}
 
 	boolean isLayoutCommitted() {
@@ -36,5 +53,9 @@ final class VirtualKeyboardSaveResult {
 
 	boolean isScreenParamsFailed() {
 		return screenParamsFailed;
+	}
+
+	PresetUpdateOutcome getPresetUpdateOutcome() {
+		return presetUpdateOutcome;
 	}
 }

@@ -472,6 +472,7 @@ class RuntimeMenuComposeTest {
                     state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
                         phone = false,
                         keepScreenPreferred = false,
+                        updateTarget = "K800i",
                     ),
                     actions = RecordingRuntimeHostDialogActions(events),
                     onDismiss = { events += "dismiss" },
@@ -480,6 +481,8 @@ class RuntimeMenuComposeTest {
         }
 
         composeRule.onNodeWithText("Save changes to virtual controls?").assertIsDisplayed()
+        composeRule.onNodeWithText("This MIDlet only").assertIsDisplayed()
+        composeRule.onNodeWithText("Update K800i").assertIsDisplayed()
         composeRule.onNodeWithText("Discard").assertIsDisplayed()
         composeRule.onNodeWithText("Continue Editing").assertIsDisplayed()
         composeRule.onNodeWithText("Save").assertIsDisplayed()
@@ -538,6 +541,100 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("Save").performClick()
 
         assertEquals(listOf("dismiss", "edit-save:true"), events)
+    }
+
+
+    @Test
+    fun saveVirtualKeyboardDialog_withoutTargetKeepsExistingSurface() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.SaveVirtualKeyboard(
+                        phone = false,
+                        keepScreenPreferred = false,
+                    ),
+                    actions = RecordingRuntimeHostDialogActions(events),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithText("This MIDlet only").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Update K800i").assertCountEquals(0)
+        composeRule.onNodeWithText("Yes").performClick()
+        assertEquals(listOf("dismiss", "save"), events)
+    }
+
+    @Test
+    fun saveVirtualKeyboardDialog_targetDefaultsToThisMidletOnly() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.SaveVirtualKeyboard(
+                        phone = false,
+                        keepScreenPreferred = false,
+                        updateTarget = "K800i",
+                    ),
+                    actions = RecordingRuntimeHostDialogActions(events),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("This MIDlet only").assertIsDisplayed()
+        composeRule.onNodeWithText("Update K800i").assertIsDisplayed()
+        composeRule.onNodeWithText("Yes").performClick()
+
+        assertEquals(listOf("dismiss", "save"), events)
+    }
+
+    @Test
+    fun saveVirtualKeyboardDialog_updateSelectionPassesTarget() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.SaveVirtualKeyboard(
+                        phone = false,
+                        keepScreenPreferred = false,
+                        updateTarget = "K800i",
+                    ),
+                    actions = RecordingRuntimeHostDialogActions(events),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Update K800i").performClick()
+        composeRule.onNodeWithText("Yes").performClick()
+
+        assertEquals(listOf("dismiss", "save:K800i"), events)
+    }
+
+    @Test
+    fun runtimeLayoutDialog_targetOffersDestinationAndPassesTarget() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.LayoutSelection(
+                        entries = listOf("Phone", "Tablet"),
+                        selected = 0,
+                        updateTarget = "K800i",
+                    ),
+                    actions = RecordingRuntimeHostDialogActions(events),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Tablet").performClick()
+        composeRule.onNodeWithText("Update K800i").performScrollTo().performClick()
+        composeRule.onNodeWithText("OK").performClick()
+
+        assertEquals(listOf("dismiss", "layout:1:K800i"), events)
     }
 
     @Test
@@ -657,12 +754,13 @@ private class RecordingRuntimeHostDialogActions(
         events += "hide"
     }
 
-    override fun onSaveVirtualKeyboard(saveScreenParams: Boolean) {
-        events += "save"
+    override fun onSaveVirtualKeyboard(saveScreenParams: Boolean, updateTarget: String?) {
+        events += updateTarget?.let { "save:$it" } ?: "save"
     }
 
-    override fun onVirtualKeyboardEditSaved(saveScreenParams: Boolean) {
-        events += "edit-save:$saveScreenParams"
+    override fun onVirtualKeyboardEditSaved(saveScreenParams: Boolean, updateTarget: String?) {
+        events += updateTarget?.let { "edit-save:$saveScreenParams:$it" }
+            ?: "edit-save:$saveScreenParams"
     }
 
     override fun onVirtualKeyboardEditDiscarded() {
@@ -673,8 +771,8 @@ private class RecordingRuntimeHostDialogActions(
         events += "edit-continue"
     }
 
-    override fun onLayoutSelected(index: Int) {
-        events += "layout:$index"
+    override fun onLayoutSelected(index: Int, updateTarget: String?) {
+        events += updateTarget?.let { "layout:$index:$it" } ?: "layout:$index"
     }
 
     override fun onLayoutEditGuideConfirmed(dontShowAgain: Boolean) {

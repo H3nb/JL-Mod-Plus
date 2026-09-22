@@ -286,6 +286,355 @@ public class PresetSourceSaveTest {
 		assertLinked(preferences, current, "K800i");
 	}
 
+
+	@Test
+	public void runtimeLinkedOriginResolvesExistingTarget() throws Exception {
+		File root = tempDir("runtime-linked-target-root");
+		preset(root, "K800i", 176, 1, 1);
+		File current = tempDir("runtime-linked-target-current");
+		writeConfig(current, 176, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", true);
+
+		assertEquals("K800i",
+				PresetRuntimeUpdate.resolveUpdateTarget(preferences, current, root));
+	}
+
+	@Test
+	public void runtimeCustomProvenanceAlsoResolvesExistingTarget() throws Exception {
+		File root = tempDir("runtime-custom-target-root");
+		preset(root, "K800i", 176, 1, 1);
+		File current = tempDir("runtime-custom-target-current");
+		writeConfig(current, 176, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", false);
+
+		assertEquals("K800i",
+				PresetRuntimeUpdate.resolveUpdateTarget(preferences, current, root));
+	}
+
+	@Test
+	public void runtimeTargetRequiresOriginAndExistingSource() throws Exception {
+		File root = tempDir("runtime-missing-target-root");
+		File current = tempDir("runtime-missing-target-current");
+		writeConfig(current, 176, 1);
+		FakePreferences preferences = new FakePreferences();
+
+		assertNull(PresetRuntimeUpdate.resolveUpdateTarget(preferences, current, root));
+
+		preferences.seedOrigin(current, "K800i", false);
+		assertNull(PresetRuntimeUpdate.resolveUpdateTarget(preferences, current, root));
+	}
+
+	@Test
+	public void runtimeTargetSuppressesUnsafeRecovery() throws Exception {
+		File root = tempDir("runtime-unsafe-target-root");
+		File source = preset(root, "K800i", 176, 1, 1);
+		createBrokenReadyRollback(source, "config.json");
+		File current = tempDir("runtime-unsafe-target-current");
+		writeConfig(current, 176, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", true);
+
+		assertNull(PresetRuntimeUpdate.resolveUpdateTarget(preferences, current, root));
+		assertTrue(new File(source, ProfilesManager.PRESET_SAVE_ROLLBACK_DIR).isDirectory());
+	}
+
+	@Test
+	public void runtimeTargetAllowsMalformedButRecoverableSourceForExplicitRepair() throws Exception {
+		File root = tempDir("runtime-malformed-target-root");
+		File source = new File(root, "K800i");
+		assertTrue(source.mkdir());
+		Files.write(configFile(source).toPath(), "{malformed".getBytes(StandardCharsets.UTF_8));
+		File current = tempDir("runtime-malformed-target-current");
+		writeConfig(current, 176, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", false);
+
+		assertEquals("K800i",
+				PresetRuntimeUpdate.resolveUpdateTarget(preferences, current, root));
+	}
+
+	@Test
+	public void runtimeLocalOnlyLayoutCommitDetachesButPreservesOriginAndSource() throws Exception {
+		File root = tempDir("runtime-local-only-root");
+		File source = preset(root, "K800i", 176, 1, 1);
+		byte[] sourceConfig = readConfigBytes(source);
+		byte[] sourceLayout = readLayout(source);
+		File current = tempDir("runtime-local-only-current");
+		writeConfig(current, 176, 1);
+		writeLayout(current, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", true);
+
+		PresetLocalOverride.Guard ownership =
+				PresetLocalOverride.detachBeforeWrite(preferences, current);
+		assertTrue(ownership.canWrite());
+		writeLayout(current, 5);
+
+		PresetLinkage linkage = new PresetLinkage(preferences, current);
+		assertEquals("K800i", linkage.getOrigin());
+		assertFalse(linkage.isLinked());
+		assertArrayEquals(sourceConfig, readConfigBytes(source));
+		assertArrayEquals(sourceLayout, readLayout(source));
+	}
+
+	@Test
+	public void runtimeLocalLayoutFailureRestoresOldOwnershipAndDoesNotTouchSource()
+			throws Exception {
+		File root = tempDir("runtime-layout-fail-root");
+		File source = preset(root, "K800i", 176, 1, 1);
+		byte[] sourceConfig = readConfigBytes(source);
+		byte[] sourceLayout = readLayout(source);
+		File current = tempDir("runtime-layout-fail-current");
+		writeConfig(current, 176, 1);
+		writeLayout(current, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", true);
+
+		PresetLocalOverride.Guard ownership =
+				PresetLocalOverride.detachBeforeWrite(preferences, current);
+		assertTrue(ownership.canWrite());
+		assertTrue(ownership.restoreIfUnchanged());
+
+		assertLinked(preferences, current, "K800i");
+		assertArrayEquals(sourceConfig, readConfigBytes(source));
+		assertArrayEquals(sourceLayout, readLayout(source));
+	}
+
+	@Test
+	public void runtimeUpdateRunsAfterLocalCommitAndReplacesWholePreset() throws Exception {
+		File root = tempDir("runtime-update-root");
+		File source = preset(root, "K800i", 176, 1, 1);
+		File current = tempDir("runtime-update-current");
+		writeConfig(current, 176, 1);
+		writeLayout(current, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", true);
+
+		PresetLocalOverride.Guard ownership =
+				PresetLocalOverride.detachBeforeWrite(preferences, current);
+		assertTrue(ownership.canWrite());
+		writeConfig(current, 640, 1);
+		writeLayout(current, 5);
+
+		assertEquals(PresetRuntimeUpdate.Result.LINKED,
+				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
+		assertEquals(640, readConfig(source).screenWidth);
+		assertArrayEquals(readLayout(current), readLayout(source));
+		assertLinked(preferences, current, "K800i");
+	}
+
+	@Test
+	public void runtimeUpdateIncludesCommittedScreenParams() throws Exception {
+		File root = tempDir("runtime-screen-success-root");
+		File source = preset(root, "K800i", 176, 1, 1);
+		File current = tempDir("runtime-screen-success-current");
+		writeConfig(current, 240, 1);
+		writeLayout(current, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", true);
+
+		PresetLocalOverride.Guard ownership =
+				PresetLocalOverride.detachBeforeWrite(preferences, current);
+		assertTrue(ownership.canWrite());
+		writeLayout(current, 4);
+		writeConfig(current, 800, 1);
+
+		assertEquals(PresetRuntimeUpdate.Result.LINKED,
+				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
+		assertEquals(800, readConfig(source).screenWidth);
+		assertArrayEquals(readLayout(current), readLayout(source));
+	}
+
+	@Test
+	public void runtimeScreenParamsFailureStillUpdatesFromActualPersistedConfig() throws Exception {
+		File root = tempDir("runtime-screen-fail-root");
+		File source = preset(root, "K800i", 176, 1, 1);
+		File current = tempDir("runtime-screen-fail-current");
+		writeConfig(current, 240, 1);
+		writeLayout(current, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", true);
+
+		PresetLocalOverride.Guard ownership =
+				PresetLocalOverride.detachBeforeWrite(preferences, current);
+		assertTrue(ownership.canWrite());
+		// Layout committed, while the failed screen-parameter write leaves config.json unchanged.
+		writeLayout(current, 6);
+
+		assertEquals(PresetRuntimeUpdate.Result.LINKED,
+				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
+		assertEquals(240, readConfig(source).screenWidth);
+		assertArrayEquals(readLayout(current), readLayout(source));
+	}
+
+	@Test
+	public void runtimeSourceUpdateFailureKeepsCommittedLocalLayoutCustom() throws Exception {
+		File root = tempDir("runtime-source-fail-root");
+		File source = preset(root, "K800i", 176, 1, 1);
+		File current = tempDir("runtime-source-fail-current");
+		writeConfig(current, 240, 1);
+		writeLayout(current, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", true);
+		assertEquals("K800i",
+				PresetRuntimeUpdate.resolveUpdateTarget(preferences, current, root));
+
+		createBrokenReadyRollback(source, "config.json");
+		PresetLocalOverride.Guard ownership =
+				PresetLocalOverride.detachBeforeWrite(preferences, current);
+		assertTrue(ownership.canWrite());
+		writeLayout(current, 7);
+		byte[] committedLocalLayout = readLayout(current);
+
+		assertEquals(PresetRuntimeUpdate.Result.FAILED,
+				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
+		assertArrayEquals(committedLocalLayout, readLayout(current));
+		assertEquals(176, readConfig(source).screenWidth);
+		PresetLinkage linkage = new PresetLinkage(preferences, current);
+		assertEquals("K800i", linkage.getOrigin());
+		assertFalse(linkage.isLinked());
+	}
+
+	@Test
+	public void runtimeSavedUnlinkedKeepsCommittedSourceAndNoFalseLink() throws Exception {
+		File root = tempDir("runtime-unlinked-root");
+		File source = preset(root, "K800i", 176, 1, 1);
+		File current = tempDir("runtime-unlinked-current");
+		writeConfig(current, 240, 1);
+		writeLayout(current, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", true);
+
+		PresetLocalOverride.Guard ownership =
+				PresetLocalOverride.detachBeforeWrite(preferences, current);
+		assertTrue(ownership.canWrite()); // commit #1
+		writeConfig(current, 640, 1);
+		writeLayout(current, 5);
+		preferences.failCommit(3); // source replacement clear #2; linkTo #3 fails.
+
+		assertEquals(PresetRuntimeUpdate.Result.SAVED_UNLINKED,
+				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
+		assertEquals(640, readConfig(source).screenWidth);
+		assertArrayEquals(readLayout(current), readLayout(source));
+		PresetLinkage linkage = new PresetLinkage(preferences, current);
+		assertEquals("K800i", linkage.getOrigin());
+		assertFalse(linkage.isLinked());
+	}
+
+	@Test
+	public void runtimeStaleRenamedTargetIsRejectedEvenWhenOldDirectoryRemains()
+			throws Exception {
+		File root = tempDir("runtime-stale-rename-root");
+		File oldSource = preset(root, "K800i", 176, 1, 1);
+		File current = tempDir("runtime-stale-rename-current");
+		writeConfig(current, 176, 1);
+		writeLayout(current, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", true);
+		String shownTarget = PresetRuntimeUpdate.resolveUpdateTarget(preferences, current, root);
+		assertEquals("K800i", shownTarget);
+
+		assertEquals(PresetLifecycle.Result.CLEANUP_FAILED,
+				PresetLifecycle.rename(preferences, root, "K800i", "Sony K800i",
+						new PresetLifecycle.FileActions() {
+							@Override
+							public boolean publish(File staging, File published) {
+								return staging.renameTo(published);
+							}
+
+							@Override
+							public boolean deleteSource(File source) {
+								return false;
+							}
+						}));
+		assertTrue(oldSource.isDirectory());
+		assertTrue(new File(root, "Sony K800i").isDirectory());
+
+		PresetLocalOverride.Guard ownership =
+				PresetLocalOverride.detachBeforeWrite(preferences, current);
+		assertTrue(ownership.canWrite());
+		writeConfig(current, 640, 1);
+		writeLayout(current, 5);
+
+		assertEquals(PresetRuntimeUpdate.Result.FAILED,
+				PresetRuntimeUpdate.updateExisting(preferences, current, root, shownTarget));
+		assertEquals(176, readConfig(oldSource).screenWidth);
+		assertEquals(176, readConfig(new File(root, "Sony K800i")).screenWidth);
+		PresetLinkage linkage = new PresetLinkage(preferences, current);
+		assertEquals("Sony K800i", linkage.getOrigin());
+		assertFalse(linkage.isLinked());
+	}
+
+	@Test
+	public void runtimeStaleDeletedTargetDoesNotRecreateSource() throws Exception {
+		File root = tempDir("runtime-stale-delete-root");
+		preset(root, "K800i", 176, 1, 1);
+		File current = tempDir("runtime-stale-delete-current");
+		writeConfig(current, 176, 1);
+		writeLayout(current, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", true);
+		String shownTarget = PresetRuntimeUpdate.resolveUpdateTarget(preferences, current, root);
+		assertEquals("K800i", shownTarget);
+
+		assertEquals(PresetLifecycle.Result.SUCCESS,
+				PresetLifecycle.delete(preferences, root, "K800i"));
+		PresetLocalOverride.Guard ownership =
+				PresetLocalOverride.detachBeforeWrite(preferences, current);
+		assertTrue(ownership.canWrite());
+		writeLayout(current, 5);
+
+		assertEquals(PresetRuntimeUpdate.Result.FAILED,
+				PresetRuntimeUpdate.updateExisting(preferences, current, root, shownTarget));
+		assertFalse(new File(root, "K800i").exists());
+		assertNull(new PresetLinkage(preferences, current).getOrigin());
+	}
+
+	@Test
+	public void runtimeUpdateLeavesOtherFollowersMetadataUnchanged() throws Exception {
+		File root = tempDir("runtime-follower-metadata-root");
+		File source = preset(root, "K800i", 176, 1, 1);
+		File current = tempDir("runtime-follower-current");
+		File follower = tempDir("runtime-other-follower");
+		writeConfig(current, 640, 1);
+		writeLayout(current, 5);
+		writeConfig(follower, 176, 1);
+		writeLayout(follower, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", false);
+		preferences.seedOrigin(follower, "K800i", true);
+
+		assertEquals(PresetRuntimeUpdate.Result.LINKED,
+				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
+		assertEquals(640, readConfig(source).screenWidth);
+		assertLinked(preferences, follower, "K800i");
+	}
+
+	@Test
+	public void runtimeUpdatedSourceReachesFollowerAtNextPreload() throws Exception {
+		File root = tempDir("runtime-follower-preload-root");
+		File source = preset(root, "K800i", 176, 1, 1);
+		File current = tempDir("runtime-preload-current");
+		File follower = tempDir("runtime-preload-follower");
+		writeConfig(current, 640, 1);
+		writeLayout(current, 5);
+		writeConfig(follower, 176, 1);
+		writeLayout(follower, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.seedOrigin(current, "K800i", false);
+		preferences.seedOrigin(follower, "K800i", true);
+
+		assertEquals(PresetRuntimeUpdate.Result.LINKED,
+				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, follower, root));
+
+		assertEquals(640, readConfig(follower).screenWidth);
+		assertArrayEquals(readLayout(source), readLayout(follower));
+		assertLinked(preferences, follower, "K800i");
+	}
+
 	private static File preset(File root, String name, int width, int vkType, Integer layout)
 			throws Exception {
 		File source = new File(root, name);
@@ -303,6 +652,14 @@ public class PresetSourceSaveTest {
 		assertTrue(new File(rollback, "config.json.present").createNewFile());
 		Files.write(new File(rollback, "VirtualKeyboardLayout").toPath(), layout);
 		assertTrue(new File(rollback, "VirtualKeyboardLayout.present").createNewFile());
+		assertTrue(new File(rollback, ProfilesManager.PRESET_SAVE_READY_MARKER).createNewFile());
+	}
+
+	private static void createBrokenReadyRollback(File source, String missingBackupName)
+			throws Exception {
+		File rollback = new File(source, ProfilesManager.PRESET_SAVE_ROLLBACK_DIR);
+		assertTrue(rollback.mkdir());
+		assertTrue(new File(rollback, missingBackupName + ".present").createNewFile());
 		assertTrue(new File(rollback, ProfilesManager.PRESET_SAVE_READY_MARKER).createNewFile());
 	}
 

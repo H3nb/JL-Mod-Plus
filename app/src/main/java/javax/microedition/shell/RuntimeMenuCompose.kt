@@ -397,24 +397,45 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         }
     }
 
-    fun showSaveVirtualKeyboard(phone: Boolean, keepScreenPreferred: Boolean) {
+    fun showSaveVirtualKeyboard(
+        phone: Boolean,
+        keepScreenPreferred: Boolean,
+        updateTarget: String? = null,
+    ) {
         changeControllerSurface {
-            hostDialogState = RuntimeHostDialogState.SaveVirtualKeyboard(phone, keepScreenPreferred)
-        }
-    }
-
-    fun showFinishVirtualKeyboardEdit(phone: Boolean, keepScreenPreferred: Boolean) {
-        changeControllerSurface {
-            hostDialogState = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
+            hostDialogState = RuntimeHostDialogState.SaveVirtualKeyboard(
                 phone,
                 keepScreenPreferred,
+                updateTarget,
             )
         }
     }
 
-    fun showLayoutSelection(entries: Array<String>, selected: Int) {
+    fun showFinishVirtualKeyboardEdit(
+        phone: Boolean,
+        keepScreenPreferred: Boolean,
+        updateTarget: String? = null,
+    ) {
         changeControllerSurface {
-            hostDialogState = RuntimeHostDialogState.LayoutSelection(entries.toList(), selected)
+            hostDialogState = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
+                phone,
+                keepScreenPreferred,
+                updateTarget,
+            )
+        }
+    }
+
+    fun showLayoutSelection(
+        entries: Array<String>,
+        selected: Int,
+        updateTarget: String? = null,
+    ) {
+        changeControllerSurface {
+            hostDialogState = RuntimeHostDialogState.LayoutSelection(
+                entries.toList(),
+                selected,
+                updateTarget,
+            )
         }
     }
 
