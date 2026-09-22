@@ -48,8 +48,8 @@ private object NoOpRuntimeHostDialogActions : RuntimeHostDialogActions {
     override fun onErrorAcknowledged() = Unit
     override fun onExitConfirmed(openSettings: Boolean) = Unit
     override fun onHideButtonsConfirmed(states: BooleanArray) = Unit
-    override fun onSaveVirtualKeyboard(saveScreenParams: Boolean) = Unit
-    override fun onLayoutSelected(index: Int) = Unit
+    override fun onSaveVirtualKeyboard(saveScreenParams: Boolean, updateTarget: String?) = Unit
+    override fun onLayoutSelected(index: Int, updateTarget: String?) = Unit
 }
 
 private val CanvasMenuState = RuntimeMenuUiState(
