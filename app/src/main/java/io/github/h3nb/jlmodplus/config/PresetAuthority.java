@@ -5,6 +5,7 @@ package io.github.h3nb.jlmodplus.config;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
