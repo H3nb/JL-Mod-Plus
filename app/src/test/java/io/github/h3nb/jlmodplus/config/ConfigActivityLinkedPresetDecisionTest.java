@@ -109,6 +109,20 @@ public class ConfigActivityLinkedPresetDecisionTest {
 	}
 
 	@Test
+	public void existingOwnershipCannotBeReinitializedFromChangedGlobalDefault() throws Exception {
+		File target = tempDir("existing-ownership-default");
+
+		assertFalse(ConfigActivity.shouldInitializeNewApp(
+				true,
+				false,
+				ConfigActivity.hasExistingSetupAfterRecovery(target, "K800i", false)));
+		assertFalse(ConfigActivity.shouldInitializeNewApp(
+				true,
+				false,
+				ConfigActivity.hasExistingSetupAfterRecovery(target, null, true)));
+	}
+
+	@Test
 	public void abandonedNewSidecarAloneDoesNotMakeMidletExisting() throws Exception {
 		File target = tempDir("new-sidecar");
 		Files.write(new File(target, Config.MIDLET_KEY_LAYOUT_FILE + ".new").toPath(), new byte[] {1});
