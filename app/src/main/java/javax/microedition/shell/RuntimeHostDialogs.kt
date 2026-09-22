@@ -428,7 +428,7 @@ private fun PresetDestinationOptions(
             } else {
                 stringResource(R.string.runtime_preset_local_explanation)
             },
-            modifier = Modifier.padding(horizontal = 4.dp, top = 4.dp),
+            modifier = Modifier.padding(start = 4.dp, top = 4.dp, end = 4.dp),
             style = MaterialTheme.typography.bodySmall,
         )
     }
