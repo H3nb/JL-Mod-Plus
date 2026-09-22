@@ -107,6 +107,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git fetch --no-tags --depth=1 origin feature/linked-device-presets
+          git checkout -B feature/linked-device-presets FETCH_HEAD
           ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
           target='app/src/screenshotTestEmulatorDebug/reference/javax/microedition/shell/RuntimeMenuScreenshotTestKt/RuntimeFinishVirtualKeyboardEditScreenshot_Runtime finish edit narrow phone_ee78e4c1_0.png'
           test -f "$target"
