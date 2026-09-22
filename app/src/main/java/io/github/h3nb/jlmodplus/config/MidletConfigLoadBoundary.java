@@ -34,6 +34,7 @@ public final class MidletConfigLoadBoundary {
 
 	static boolean prepare(@NonNull SharedPreferences preferences,
 			@NonNull File configDir, @NonNull File profilesRoot) {
+		synchronized (ProfilesManager.presetSourceLock()) {
 		try {
 			ProfilesManager.recoverInterruptedSnapshotSync(configDir);
 		} catch (IOException | RuntimeException recoveryFailure) {
@@ -41,7 +42,6 @@ public final class MidletConfigLoadBoundary {
 			return false;
 		}
 
-		synchronized (ProfilesManager.presetSourceLock()) {
 		PresetLinkage linkage = new PresetLinkage(preferences, configDir);
 		if (!linkage.isLinked()) {
 			return true;

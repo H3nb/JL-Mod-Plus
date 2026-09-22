@@ -204,6 +204,48 @@ public class ProfilesManagerPresetSaveRecoveryTest {
 	}
 
 	@Test
+	public void disarmedPartiallyCleanedSourceRollbackNeverChangesDestination() throws Exception {
+		File target = tempDir("source-disarmed-partial");
+		writeConfig(target, 640);
+		writeLayout(target, 5);
+		byte[] currentConfig = readConfigBytes(target);
+		byte[] currentLayout = readLayout(target);
+		File rollback = saveRollback(target);
+		assertTrue(rollback.mkdir());
+		// No .ready: destination is authoritative even if stale cleanup evidence is incomplete.
+		assertTrue(new File(rollback, "config.json.present").createNewFile());
+
+		ProfilesManager.recoverInterruptedPresetSave(target);
+
+		assertArrayEquals(currentConfig, readConfigBytes(target));
+		assertArrayEquals(currentLayout, readLayout(target));
+		assertFalse(rollback.exists());
+	}
+
+	@Test
+	public void armedSourceRecoveryIsIdempotentAfterDisarm() throws Exception {
+		File target = tempDir("source-armed-idempotent");
+		writeConfig(target, 176);
+		writeLayout(target, 1);
+		byte[] oldConfig = readConfigBytes(target);
+		byte[] oldLayout = readLayout(target);
+		createRollback(target, oldConfig, null, oldLayout, true, false);
+		writeConfig(target, 999);
+		writeLayout(target, 6);
+
+		ProfilesManager.recoverInterruptedPresetSave(target);
+		byte[] restoredConfig = readConfigBytes(target);
+		byte[] restoredLayout = readLayout(target);
+		ProfilesManager.recoverInterruptedPresetSave(target);
+
+		assertArrayEquals(oldConfig, restoredConfig);
+		assertArrayEquals(oldLayout, restoredLayout);
+		assertArrayEquals(restoredConfig, readConfigBytes(target));
+		assertArrayEquals(restoredLayout, readLayout(target));
+		assertFalse(saveRollback(target).exists());
+	}
+
+	@Test
 	public void recoveryFailureLeavesEvidenceAndInspectionFailsClosed() throws Exception {
 		File target = tempDir("recovery-failure");
 		writeConfig(target, 999);

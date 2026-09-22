@@ -347,7 +347,6 @@ public class ProfilesManager {
 			throw new IOException("Unable to clear stale preset sync state");
 		}
 
-		boolean rollbackSucceeded = true;
 		File ready = new File(rollback, PRESET_SYNC_READY_MARKER);
 		try {
 			if (!staging.mkdirs() || !rollback.mkdirs()) {
@@ -410,18 +409,11 @@ public class ProfilesManager {
 			}
 			deleteRecursively(rollback);
 		} catch (IOException | RuntimeException failure) {
-			if (ready.isFile()) {
-				rollbackSucceeded &= tryRestore(failure, dstConfig, rollback, "config.json");
-				rollbackSucceeded &= tryRestore(failure, dstKeyLayout, rollback,
-						"VirtualKeyboardLayout");
-				try {
-					removeVirtualKeyboardLayoutSidecars(dstKeyLayout);
-				} catch (IOException cleanupFailure) {
-					failure.addSuppressed(cleanupFailure);
-					rollbackSucceeded = false;
-				}
+			try {
+				recoverInterruptedSnapshotSync(targetDir);
+			} catch (IOException | RuntimeException recoveryFailure) {
+				failure.addSuppressed(recoveryFailure);
 			}
-			if (rollbackSucceeded) deleteRecursively(rollback);
 			if (failure instanceof IOException) throw (IOException) failure;
 			throw failure;
 		} finally {
@@ -475,25 +467,36 @@ public class ProfilesManager {
 	}
 
 	static void recoverInterruptedSnapshotSync(@NonNull File targetDir) throws IOException {
-		File rollback = new File(targetDir, PRESET_SYNC_ROLLBACK_DIR);
-		File staging = new File(targetDir, PRESET_SYNC_STAGING_DIR);
-		if (rollback.exists()) {
-			File ready = new File(rollback, PRESET_SYNC_READY_MARKER);
-			if (ready.isFile()) {
-				File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
-				File dstKeyLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
-				restoreExisting(dstConfig, rollback, "config.json");
-				restoreExisting(dstKeyLayout, rollback, "VirtualKeyboardLayout");
-				removeVirtualKeyboardLayoutSidecars(dstKeyLayout);
-			}
-			deleteRecursively(rollback);
+		synchronized (PRESET_SOURCE_LOCK) {
+			File rollback = new File(targetDir, PRESET_SYNC_ROLLBACK_DIR);
+			File staging = new File(targetDir, PRESET_SYNC_STAGING_DIR);
 			if (rollback.exists()) {
-				throw new IOException("Unable to clear interrupted preset sync rollback state");
+				if (!rollback.isDirectory()) {
+					throw new IOException("Preset sync rollback state is not a directory");
+				}
+				File ready = new File(rollback, PRESET_SYNC_READY_MARKER);
+				if (ready.exists() && !ready.isFile()) {
+					throw new IOException("Preset sync ready marker is invalid");
+				}
+				if (ready.isFile()) {
+					File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
+					File dstKeyLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
+					restoreExisting(dstConfig, rollback, "config.json");
+					restoreExisting(dstKeyLayout, rollback, "VirtualKeyboardLayout");
+					removeVirtualKeyboardLayoutSidecars(dstKeyLayout);
+					if (!ready.delete()) {
+						throw new IOException("Unable to disarm interrupted preset sync");
+					}
+				}
+				deleteRecursively(rollback);
+				if (rollback.exists()) {
+					throw new IOException("Unable to clear interrupted preset sync rollback state");
+				}
 			}
-		}
-		deleteRecursively(staging);
-		if (staging.exists()) {
-			throw new IOException("Unable to clear interrupted preset sync staging state");
+			deleteRecursively(staging);
+			if (staging.exists()) {
+				throw new IOException("Unable to clear interrupted preset sync staging state");
+			}
 		}
 	}
 
@@ -690,6 +693,9 @@ public class ProfilesManager {
 					rollback, "config.xml");
 			restoreExisting(new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE),
 					rollback, "VirtualKeyboardLayout");
+			if (!ready.delete()) {
+				throw new IOException("Unable to disarm interrupted preset save");
+			}
 		}
 
 		boolean removeTransactionCreatedProfile =

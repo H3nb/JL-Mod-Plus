@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MidletConfigLoadBoundaryTest {
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
@@ -210,6 +212,52 @@ public class MidletConfigLoadBoundaryTest {
 		assertFalse(preferences.getBoolean(PresetLinkage.linkedPreferenceKey(target), false));
 	}
 
+	@Test
+	public void prepareBlocksBehindLiveLocalPublication() throws Exception {
+		File profiles = tempDir("profiles-live-local");
+		File target = tempDir("target-live-local");
+		File previous = tempDir("target-live-local-previous");
+		writeConfig(previous, 176, 1);
+		writeLayout(previous, 2);
+		byte[] oldConfig = Files.readAllBytes(configFile(previous).toPath());
+		byte[] oldLayout = readLayout(previous);
+		writeConfig(target, 999, 1);
+		writeLayout(target, 5);
+		createInterruptedSyncRollback(target, oldConfig, oldLayout, true);
+		byte[] publishedConfig = Files.readAllBytes(configFile(target).toPath());
+		byte[] publishedLayout = readLayout(target);
+		AtomicReference<Boolean> result = new AtomicReference<>();
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+
+		Thread reader;
+		synchronized (ProfilesManager.presetSourceLock()) {
+			reader = new Thread(() -> {
+				try {
+					result.set(MidletConfigLoadBoundary.prepare(
+							new FakePreferences(), target, profiles));
+				} catch (Throwable throwable) {
+					failure.set(throwable);
+				}
+			}, "midlet-load-boundary-local-publication");
+			reader.start();
+			awaitBlocked(reader);
+
+			assertArrayEquals(publishedConfig, Files.readAllBytes(configFile(target).toPath()));
+			assertArrayEquals(publishedLayout, readLayout(target));
+			assertTrue(new File(syncRollbackDir(target), SYNC_READY_MARKER).isFile());
+			assertTrue(new File(syncRollbackDir(target), "config.json").isFile());
+			assertTrue(new File(syncRollbackDir(target), "VirtualKeyboardLayout").isFile());
+		}
+
+		reader.join(TimeUnit.SECONDS.toMillis(5));
+		assertFalse("prepare thread did not finish", reader.isAlive());
+		if (failure.get() != null) throw new AssertionError(failure.get());
+		assertTrue(result.get());
+		assertArrayEquals(oldConfig, Files.readAllBytes(configFile(target).toPath()));
+		assertArrayEquals(oldLayout, readLayout(target));
+		assertFalse(syncRollbackDir(target).exists());
+	}
+
 	private static FakePreferences linkedPreferences(File target, String origin) {
 		FakePreferences preferences = new FakePreferences();
 		preferences.edit()
@@ -276,6 +324,16 @@ public class MidletConfigLoadBoundaryTest {
 		if (ready) {
 			assertTrue(new File(rollback, SYNC_READY_MARKER).createNewFile());
 		}
+	}
+
+	private static void awaitBlocked(Thread thread) {
+		long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+		while (thread.getState() != Thread.State.BLOCKED && System.nanoTime() < deadline) {
+			if (!thread.isAlive()) break;
+			Thread.yield();
+		}
+		assertEquals("Expected prepare to block on preset source monitor",
+				Thread.State.BLOCKED, thread.getState());
 	}
 
 	private static File configFile(File dir) {

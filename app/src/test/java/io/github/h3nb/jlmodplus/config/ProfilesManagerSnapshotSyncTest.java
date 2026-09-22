@@ -259,6 +259,67 @@ public class ProfilesManagerSnapshotSyncTest {
 		assertArrayEquals(previousLayout, readLayout(target));
 	}
 
+	@Test
+	public void armedRecoveryDisarmsBeforeCleanupAndIsIdempotent() throws Exception {
+		File target = tempDir("direct-armed-idempotent");
+		File previous = tempDir("direct-armed-previous");
+		writeConfig(target, 999, 1);
+		writeLayout(target, 5);
+		writeConfig(previous, 176, 1);
+		writeLayout(previous, 2);
+		byte[] oldConfig = Files.readAllBytes(configFile(previous).toPath());
+		byte[] oldLayout = readLayout(previous);
+		createInterruptedSyncRollback(target, oldConfig, oldLayout, true);
+
+		ProfilesManager.recoverInterruptedSnapshotSync(target);
+
+		assertArrayEquals(oldConfig, Files.readAllBytes(configFile(target).toPath()));
+		assertArrayEquals(oldLayout, readLayout(target));
+		assertFalse(syncRollbackDir(target).exists());
+
+		byte[] restoredConfig = Files.readAllBytes(configFile(target).toPath());
+		byte[] restoredLayout = readLayout(target);
+		ProfilesManager.recoverInterruptedSnapshotSync(target);
+		assertArrayEquals(restoredConfig, Files.readAllBytes(configFile(target).toPath()));
+		assertArrayEquals(restoredLayout, readLayout(target));
+	}
+
+	@Test
+	public void disarmedPartiallyCleanedRollbackNeverChangesDestination() throws Exception {
+		File target = tempDir("direct-disarmed-partial");
+		writeConfig(target, 360, 1);
+		writeLayout(target, 4);
+		byte[] currentConfig = Files.readAllBytes(configFile(target).toPath());
+		byte[] currentLayout = readLayout(target);
+		File rollback = syncRollbackDir(target);
+		assertTrue(rollback.mkdir());
+		// Simulate cleanup after disarm having already removed some backup bytes.
+		assertTrue(new File(rollback, "config.json.present").createNewFile());
+
+		ProfilesManager.recoverInterruptedSnapshotSync(target);
+
+		assertArrayEquals(currentConfig, Files.readAllBytes(configFile(target).toPath()));
+		assertArrayEquals(currentLayout, readLayout(target));
+		assertFalse(rollback.exists());
+	}
+
+	@Test
+	public void armedConfigOnlyOldSnapshotRecoversWithoutLayout() throws Exception {
+		File target = tempDir("direct-config-only-old");
+		File previous = tempDir("direct-config-only-previous");
+		writeConfig(previous, 176, 1);
+		byte[] oldConfig = Files.readAllBytes(configFile(previous).toPath());
+		createInterruptedSyncRollback(target, oldConfig, null, true);
+		writeConfig(target, 999, 1);
+		writeLayout(target, 5);
+
+		ProfilesManager.recoverInterruptedSnapshotSync(target);
+
+		assertArrayEquals(oldConfig, Files.readAllBytes(configFile(target).toPath()));
+		assertFalse(layoutFile(target).exists());
+		assertFalse(syncRollbackDir(target).exists());
+	}
+
 	private static void expectSyncFailure(File source, File target) throws Exception {
 		try {
 			ProfilesManager.syncSnapshot(source, target);
