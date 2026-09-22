@@ -562,7 +562,7 @@ class RuntimeMenuComposeTest {
 
         composeRule.onAllNodesWithText("This MIDlet only").assertCountEquals(0)
         composeRule.onAllNodesWithText("Update K800i").assertCountEquals(0)
-        composeRule.onNodeWithText("Yes").performClick()
+        composeRule.onNodeWithText("OK").performClick()
         assertEquals(listOf("dismiss", "save"), events)
     }
 
@@ -585,7 +585,7 @@ class RuntimeMenuComposeTest {
 
         composeRule.onNodeWithText("This MIDlet only").assertIsDisplayed()
         composeRule.onNodeWithText("Update K800i").assertIsDisplayed()
-        composeRule.onNodeWithText("Yes").performClick()
+        composeRule.onNodeWithText("OK").performClick()
 
         assertEquals(listOf("dismiss", "save"), events)
     }
@@ -608,7 +608,7 @@ class RuntimeMenuComposeTest {
         }
 
         composeRule.onNodeWithText("Update K800i").performClick()
-        composeRule.onNodeWithText("Yes").performClick()
+        composeRule.onNodeWithText("OK").performClick()
 
         assertEquals(listOf("dismiss", "save:K800i"), events)
     }
