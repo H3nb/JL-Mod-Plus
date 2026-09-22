@@ -50,7 +50,7 @@ class ProfilesComposeTest {
         setProfilesContent(actions)
 
         composeRule.onNodeWithText("Change").performClick()
-        composeRule.onNodeWithText("Playable").performClick()
+        composeRule.onNode(hasText("Playable") and hasAnyAncestor(isDialog())).performClick()
         composeRule.onNodeWithText("Apply").performClick()
         assertEquals("Playable", actions.defaulted)
 
@@ -58,14 +58,14 @@ class ProfilesComposeTest {
         assertEquals("Playable", actions.edited)
         composeRule.onNodeWithText("Edit Preset").assertDoesNotExist()
 
-        composeRule.onNodeWithText("Manage Presets").assertExists()
-        composeRule.onNodeWithText("Manage Presets").performClick()
+        composeRule.onNodeWithContentDescription("More Actions for Playable").assertExists()
+        composeRule.onNodeWithContentDescription("More Actions for Playable").performClick()
         composeRule.onNodeWithText("Rename").performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput(" 2")
         composeRule.onNodeWithText("OK").performClick()
         assertEquals("Playable" to "Playable 2", actions.renamed)
 
-        composeRule.onNodeWithText("Empty").performClick()
+        composeRule.onNodeWithContentDescription("More Actions for Empty").performClick()
         composeRule.onNodeWithText("Delete").performClick()
         composeRule.onNodeWithText("OK").performClick()
         assertEquals("Empty", actions.deleted)
@@ -80,7 +80,7 @@ class ProfilesComposeTest {
         composeRule.onNodeWithText("Apply").performClick()
         assertEquals(1, actions.builtInDefaultCalls)
 
-        composeRule.onNodeWithText("JL-Mod Defaults").performClick()
+        composeRule.onNode(hasText("Built-in MIDlet settings")).performClick()
         composeRule.onNodeWithText("Rename").assertDoesNotExist()
         composeRule.onNodeWithText("Delete").assertDoesNotExist()
     }
