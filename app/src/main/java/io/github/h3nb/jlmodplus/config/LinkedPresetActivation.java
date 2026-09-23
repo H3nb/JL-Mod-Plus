@@ -60,7 +60,7 @@ final class LinkedPresetActivation {
 		}
 
 		// The new snapshot is already authoritative on disk. The old association must never return.
-		// clearBeforeReplacement() was durable before publication, so a failed link commit leaves
+		// Source ownership was durably cleared before publication, so a failed link commit leaves
 		// CUSTOM as the last known durable ownership state. setOrigin() also removes any process-
 		// visible linked marker that a failed SharedPreferences commit may have exposed in memory.
 		linkage.setOrigin(sourcePresetName);

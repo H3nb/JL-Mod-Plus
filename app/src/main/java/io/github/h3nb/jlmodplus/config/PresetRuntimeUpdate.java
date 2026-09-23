@@ -17,12 +17,7 @@ import java.io.IOException;
  *
  * <p>Runtime code never reads linkage preference keys or writes a preset source directly.</p>
  */
-public final class PresetRuntimeUpdate {
-	public enum Result {
-		LINKED,
-		SAVED_UNLINKED,
-		FAILED
-	}
+final class PresetRuntimeUpdate {
 
 	private PresetRuntimeUpdate() {
 	}
@@ -52,28 +47,23 @@ public final class PresetRuntimeUpdate {
 	}
 
 	@NonNull
-	static Result updateExisting(
+	static PresetSourceSave.Result updateExisting(
 			@NonNull SharedPreferences preferences,
 			@NonNull File currentConfigDir,
 			@NonNull File profilesRoot,
 			@NonNull String name) {
 		synchronized (ProfilesManager.presetSourceLock()) {
 			if (!Profile.isValidName(name)) {
-				return Result.FAILED;
+				return PresetSourceSave.Result.FAILED;
 			}
 			// The dialog target is only a hint. Re-read provenance under the source lock so a
 			// rename/delete that happened while the dialog was open cannot relink a stale name.
 			String currentOrigin = new PresetLinkage(preferences, currentConfigDir).getOrigin();
 			if (!name.equals(currentOrigin)) {
-				return Result.FAILED;
+				return PresetSourceSave.Result.FAILED;
 			}
-			// Task 3C remains the single authoritative whole-device source replacement path.
-			return switch (PresetSourceSave.updateExisting(
-					preferences, currentConfigDir, profilesRoot, name)) {
-				case LINKED -> Result.LINKED;
-				case SAVED_UNLINKED -> Result.SAVED_UNLINKED;
-				case FAILED -> Result.FAILED;
-			};
+			return PresetSourceSave.updateExisting(
+					preferences, currentConfigDir, profilesRoot, name);
 		}
 	}
 

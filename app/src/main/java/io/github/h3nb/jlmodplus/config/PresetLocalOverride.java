@@ -29,13 +29,6 @@ public final class PresetLocalOverride {
 				configDir);
 	}
 
-	@NonNull
-	public static Guard clearBeforeReplacement(@NonNull Context context, @NonNull File configDir) {
-		return clearBeforeReplacement(
-				PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext()),
-				configDir);
-	}
-
 	@FunctionalInterface
 	public interface WriteOperation {
 		boolean run();
@@ -83,28 +76,18 @@ public final class PresetLocalOverride {
 	@NonNull
 	static Guard detachBeforeWrite(@NonNull SharedPreferences preferences,
 			@NonNull File configDir) {
-		return begin(new PresetLinkage(preferences, configDir), false);
+		return begin(new PresetLinkage(preferences, configDir));
 	}
 
 	@NonNull
-	static Guard clearBeforeReplacement(@NonNull SharedPreferences preferences,
-			@NonNull File configDir) {
-		return begin(new PresetLinkage(preferences, configDir), true);
-	}
-
-	@NonNull
-	private static Guard begin(@NonNull PresetLinkage linkage, boolean clearAssociation) {
+	private static Guard begin(@NonNull PresetLinkage linkage) {
 		String previousOrigin = linkage.getOrigin();
 		boolean previousLinked = linkage.isLinked();
-		boolean transitionNeeded = clearAssociation
-				? previousOrigin != null || previousLinked
-				: previousLinked;
-		if (!transitionNeeded) {
+		if (!previousLinked) {
 			return new Guard(linkage, previousOrigin, previousLinked, false, true);
 		}
 
-		boolean changed = clearAssociation ? linkage.clear() : linkage.detach();
-		if (!changed) {
+		if (!linkage.detach()) {
 			// No filesystem write may follow. Best-effort restore also repairs SharedPreferences'
 			// in-memory view when commit() changed memory but failed to reach durable storage.
 			restoreAssociation(linkage, previousOrigin, previousLinked);

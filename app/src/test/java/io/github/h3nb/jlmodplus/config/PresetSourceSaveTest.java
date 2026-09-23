@@ -436,7 +436,7 @@ public class PresetSourceSaveTest {
 		writeConfig(current, 640, 1);
 		writeLayout(current, 5);
 
-		assertEquals(PresetRuntimeUpdate.Result.LINKED,
+		assertEquals(PresetSourceSave.Result.LINKED,
 				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
 		assertEquals(640, readConfig(source).screenWidth);
 		assertArrayEquals(readLayout(current), readLayout(source));
@@ -459,7 +459,7 @@ public class PresetSourceSaveTest {
 		writeLayout(current, 4);
 		writeConfig(current, 800, 1);
 
-		assertEquals(PresetRuntimeUpdate.Result.LINKED,
+		assertEquals(PresetSourceSave.Result.LINKED,
 				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
 		assertEquals(800, readConfig(source).screenWidth);
 		assertArrayEquals(readLayout(current), readLayout(source));
@@ -481,7 +481,7 @@ public class PresetSourceSaveTest {
 		// Layout committed, while the failed screen-parameter write leaves config.json unchanged.
 		writeLayout(current, 6);
 
-		assertEquals(PresetRuntimeUpdate.Result.LINKED,
+		assertEquals(PresetSourceSave.Result.LINKED,
 				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
 		assertEquals(240, readConfig(source).screenWidth);
 		assertArrayEquals(readLayout(current), readLayout(source));
@@ -506,7 +506,7 @@ public class PresetSourceSaveTest {
 		writeLayout(current, 7);
 		byte[] committedLocalLayout = readLayout(current);
 
-		assertEquals(PresetRuntimeUpdate.Result.FAILED,
+		assertEquals(PresetSourceSave.Result.FAILED,
 				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
 		assertArrayEquals(committedLocalLayout, readLayout(current));
 		assertEquals(176, readConfig(source).screenWidth);
@@ -532,7 +532,7 @@ public class PresetSourceSaveTest {
 		writeLayout(current, 5);
 		preferences.failCommit(3); // source replacement clear #2; linkTo #3 fails.
 
-		assertEquals(PresetRuntimeUpdate.Result.SAVED_UNLINKED,
+		assertEquals(PresetSourceSave.Result.SAVED_UNLINKED,
 				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
 		assertEquals(640, readConfig(source).screenWidth);
 		assertArrayEquals(readLayout(current), readLayout(source));
@@ -576,7 +576,7 @@ public class PresetSourceSaveTest {
 		writeConfig(current, 640, 1);
 		writeLayout(current, 5);
 
-		assertEquals(PresetRuntimeUpdate.Result.FAILED,
+		assertEquals(PresetSourceSave.Result.FAILED,
 				PresetRuntimeUpdate.updateExisting(preferences, current, root, shownTarget));
 		assertEquals(176, readConfig(oldSource).screenWidth);
 		assertEquals(176, readConfig(new File(root, "Sony K800i")).screenWidth);
@@ -604,7 +604,7 @@ public class PresetSourceSaveTest {
 		assertTrue(ownership.canWrite());
 		writeLayout(current, 5);
 
-		assertEquals(PresetRuntimeUpdate.Result.FAILED,
+		assertEquals(PresetSourceSave.Result.FAILED,
 				PresetRuntimeUpdate.updateExisting(preferences, current, root, shownTarget));
 		assertFalse(new File(root, "K800i").exists());
 		assertNull(new PresetLinkage(preferences, current).getOrigin());
@@ -624,7 +624,7 @@ public class PresetSourceSaveTest {
 		preferences.seedOrigin(current, "K800i", false);
 		preferences.seedOrigin(follower, "K800i", true);
 
-		assertEquals(PresetRuntimeUpdate.Result.LINKED,
+		assertEquals(PresetSourceSave.Result.LINKED,
 				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
 		assertEquals(640, readConfig(source).screenWidth);
 		assertLinked(preferences, follower, "K800i");
@@ -644,7 +644,7 @@ public class PresetSourceSaveTest {
 		preferences.seedOrigin(current, "K800i", false);
 		preferences.seedOrigin(follower, "K800i", true);
 
-		assertEquals(PresetRuntimeUpdate.Result.LINKED,
+		assertEquals(PresetSourceSave.Result.LINKED,
 				PresetRuntimeUpdate.updateExisting(preferences, current, root, "K800i"));
 		assertTrue(MidletConfigLoadBoundary.prepare(preferences, follower, root));
 

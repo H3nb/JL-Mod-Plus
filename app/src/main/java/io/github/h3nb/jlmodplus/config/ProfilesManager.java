@@ -100,11 +100,6 @@ public class ProfilesManager {
 		EDIT_EXISTING
 	}
 
-	static ArrayList<Profile> getProfiles() {
-		File root = new File(Config.getProfilesDir());
-		return getList(root);
-	}
-
 	/** A disk-only inspection result prepared before Compose state is updated. */
 	enum CapabilityStatus {
 		ABSENT,
@@ -146,16 +141,6 @@ public class ProfilesManager {
 
 	/** Performs profile parsing and artifact checks in the caller's worker thread. */
 	@NonNull
-	static ArrayList<ProfileInfo> inspectProfiles(@Nullable List<Profile> profiles) {
-		ArrayList<ProfileInfo> result = new ArrayList<>();
-		if (profiles == null) return result;
-		for (Profile profile : profiles) {
-			result.add(inspectProfile(profile));
-		}
-		return result;
-	}
-
-	@NonNull
 	static ArrayList<ProfileInfo> inspectProfiles(@NonNull File profilesRoot,
 			@Nullable List<Profile> profiles) {
 		ArrayList<ProfileInfo> result = new ArrayList<>();
@@ -164,12 +149,6 @@ public class ProfilesManager {
 			result.add(inspectProfile(profile, new File(profilesRoot, profile.getName())));
 		}
 		return result;
-	}
-
-	/** Computes both independent capabilities once so picker and operation code share the same view. */
-	@NonNull
-	static ProfileInfo inspectProfile(@NonNull Profile profile) {
-		return inspectProfile(profile, profile.getDir());
 	}
 
 	/** File-level entry point kept package-private for deterministic source-recovery tests. */
@@ -274,10 +253,6 @@ public class ProfilesManager {
 	}
 
 	/** Returns true when a directory or a saved layout already occupies this collection name. */
-	static boolean profileNameExists(@Nullable String rawName) {
-		return profileNameExists(new File(Config.getProfilesDir()), rawName);
-	}
-
 	static boolean profileNameExists(@NonNull File profilesRoot, @Nullable String rawName) {
 		if (!Profile.isValidName(rawName)) return false;
 		synchronized (PRESET_SOURCE_LOCK) {
@@ -358,11 +333,6 @@ public class ProfilesManager {
 		}
 	}
 
-	static void load(Profile from, String toPath, boolean config, boolean keyboard)
-			throws IOException {
-		load(from.getDir(), new File(toPath), config, keyboard, null);
-	}
-
 	@FunctionalInterface
 	interface LocalPublicationHook {
 		void afterPublished(@NonNull String artifact) throws IOException;
@@ -397,11 +367,6 @@ public class ProfilesManager {
 	/**
 	 * Creates a byte-preserving editor working copy from one coherent committed preset source.
 	 */
-	static void copyPresetSourceForEdit(@NonNull Profile profile, @NonNull File draftDir)
-			throws IOException {
-		copyPresetSourceForEdit(profile.getDir(), draftDir);
-	}
-
 	/** File-level entry point kept package-private for deterministic source-concurrency tests. */
 	static void copyPresetSourceForEdit(@NonNull File sourceDir, @NonNull File draftDir)
 			throws IOException {
@@ -443,10 +408,6 @@ public class ProfilesManager {
 	 * <p>Whole publication owns both config.json and the complete VirtualKeyboardLayout atomic
 	 * family. Source layout absence is therefore authoritative.</p>
 	 */
-	static void syncSnapshot(@NonNull Profile from, @NonNull String toPath) throws IOException {
-		syncSnapshot(from.getDir(), new File(toPath));
-	}
-
 	/** File-level entry point kept package-private so crash-recovery state can be covered by JVM tests. */
 	static void syncSnapshot(@NonNull File sourceDir, @NonNull File targetDir) throws IOException {
 		synchronized (PRESET_SOURCE_LOCK) {
@@ -1083,7 +1044,7 @@ public class ProfilesManager {
 				throw new IOException("Unable to remove stale key layout");
 			}
 
-			// Validate what was actually published before disarming Task 3B recovery.
+			// Validate what was actually published before disarming source-save recovery.
 			CompleteSnapshot published = inspectCompleteSnapshot(targetDir);
 			if (published.hasKeyboardLayout != snapshot.hasKeyboardLayout) {
 				throw new IOException("Preset snapshot changed while saving");
@@ -1094,14 +1055,6 @@ public class ProfilesManager {
 			if (failure instanceof IOException) throw (IOException) failure;
 			throw failure;
 		}
-	}
-
-	/**
-	 * Saves a reusable application preset. Application settings are always copied; the separate
-	 * keyboard layout is copied only when explicitly requested, and stale destination layouts are removed.
-	 */
-	static void saveSnapshot(Profile profile, String fromPath, boolean includeKeyboard) throws IOException {
-		saveSnapshot(profile.getDir(), new File(fromPath), includeKeyboard);
 	}
 
 	/** File-level entry point kept package-private for deterministic preset-save recovery tests. */
@@ -1271,16 +1224,6 @@ public class ProfilesManager {
 			throw failure;
 		}
 		}
-	}
-
-	/** Resolves a saved collection entry without requiring it to contain application settings. */
-	@Nullable
-	static Profile findProfile(@Nullable String name) {
-		if (name == null) return null;
-		for (Profile profile : getProfiles()) {
-			if (name.equals(profile.getName())) return profile;
-		}
-		return null;
 	}
 
 	@Nullable

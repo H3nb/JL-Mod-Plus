@@ -110,20 +110,6 @@ public class PresetLocalOverrideTest {
 	}
 
 	@Test
-	public void failedDurableClearBlocksSourceReplacement() throws Exception {
-		File configDir = tempDir("clear-fails");
-		FakePreferences preferences = linked(configDir, "K800i");
-		preferences.failCommit(2); // #1 fixture, #2 clear.
-
-		PresetLocalOverride.Guard guard =
-				PresetLocalOverride.clearBeforeReplacement(preferences, configDir);
-
-		assertFalse(guard.canWrite());
-		assertTrue(isLinked(preferences, configDir));
-		assertEquals("K800i", origin(preferences, configDir));
-	}
-
-	@Test
 	public void automaticMigrationDoesNotDetachLinkedOwnership() throws Exception {
 		File configDir = tempDir("migration");
 		ProfileModel legacy = new ProfileModel();
@@ -159,24 +145,6 @@ public class PresetLocalOverrideTest {
 
 		assertTrue(isLinked(preferences, activeDir));
 		assertEquals("K800i", origin(preferences, activeDir));
-	}
-
-	@Test
-	public void clearReplacementRemovesAssociationBeforeWriteAndCanRestoreOnSafeFailure()
-			throws Exception {
-		File configDir = tempDir("clear-replacement");
-		FakePreferences preferences = linked(configDir, "K800i");
-
-		PresetLocalOverride.Guard guard =
-				PresetLocalOverride.clearBeforeReplacement(preferences, configDir);
-
-		assertTrue(guard.canWrite());
-		assertFalse(isLinked(preferences, configDir));
-		assertEquals(null, origin(preferences, configDir));
-
-		assertTrue(guard.restoreIfUnchanged());
-		assertTrue(isLinked(preferences, configDir));
-		assertEquals("K800i", origin(preferences, configDir));
 	}
 
 	@Test
