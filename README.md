@@ -13,6 +13,5 @@ Licensed under the Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTIC
 
 - [Build and validation](docs/development.md)
 - [UI ownership](docs/ui-ownership-map.md) and [UI copy style](docs/ui-copy-style.md)
-- [Library schema evolution](docs/library-schema-evolution.md)
 - [Runtime UI and compatibility boundaries](docs/runtime-ui.md)
 - [Third-party provenance and notices](THIRD_PARTY_NOTICES.md)
