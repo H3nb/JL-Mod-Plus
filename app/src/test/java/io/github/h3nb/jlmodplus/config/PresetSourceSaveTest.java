@@ -526,7 +526,7 @@ public class PresetSourceSaveTest {
 			throws Exception {
 		File root = tempDir("runtime-stale-rename-root");
 		File oldSource = preset(root, "K800i", 176, 1, 1);
-		File current = tempDir("runtime-stale-rename-current");
+		File current = new File(root.getParentFile(), "configs/runtime-stale-rename-current");
 		writeConfig(current, 176, 1);
 		writeLayout(current, 1);
 		FakePreferences preferences = new FakePreferences();
@@ -569,7 +569,7 @@ public class PresetSourceSaveTest {
 	public void runtimeStaleDeletedTargetDoesNotRecreateSource() throws Exception {
 		File root = tempDir("runtime-stale-delete-root");
 		preset(root, "K800i", 176, 1, 1);
-		File current = tempDir("runtime-stale-delete-current");
+		File current = new File(root.getParentFile(), "configs/runtime-stale-delete-current");
 		writeConfig(current, 176, 1);
 		writeLayout(current, 1);
 		FakePreferences preferences = new FakePreferences();

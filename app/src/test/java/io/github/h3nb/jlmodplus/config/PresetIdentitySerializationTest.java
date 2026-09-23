@@ -39,7 +39,7 @@ public class PresetIdentitySerializationTest {
 	public void linkedActivationVsRenameCannotPublishStaleOldName() throws Exception {
 		File root = tempDir("activation-rename-root");
 		File source = preset(root, "K800i", 360, 1);
-		File target = tempDir("activation-rename-target");
+		File target = configDir(root, "activation-rename-target");
 		writeConfig(target, 176, 1);
 		FakePreferences preferences = new FakePreferences();
 		preferences.blockCommit(2); // clear barrier #1, final link #2.
@@ -75,7 +75,7 @@ public class PresetIdentitySerializationTest {
 		File root = tempDir("activation-fail-rename-root");
 		preset(root, "K800i", 176, 1);
 		File broken = preset(root, "Broken", 360, VirtualKeyboard.TYPE_CUSTOM);
-		File target = tempDir("activation-fail-rename-target");
+		File target = configDir(root, "activation-fail-rename-target");
 		writeConfig(target, 240, 1);
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedOrigin(target, "K800i", true);
@@ -111,7 +111,7 @@ public class PresetIdentitySerializationTest {
 		File root = tempDir("activation-fail-delete-root");
 		preset(root, "K800i", 176, 1);
 		File broken = preset(root, "Broken", 360, VirtualKeyboard.TYPE_CUSTOM);
-		File target = tempDir("activation-fail-delete-target");
+		File target = configDir(root, "activation-fail-delete-target");
 		writeConfig(target, 240, 1);
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedOrigin(target, "K800i", true);
@@ -143,7 +143,7 @@ public class PresetIdentitySerializationTest {
 	public void followerBoundaryReadsRenamedOriginAfterWinningLifecycle() throws Exception {
 		File root = tempDir("follower-rename-root");
 		preset(root, "K800i", 480, 1);
-		File target = tempDir("follower-rename-target");
+		File target = configDir(root, "follower-rename-target");
 		writeConfig(target, 176, 1);
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedOrigin(target, "K800i", true);
@@ -172,7 +172,7 @@ public class PresetIdentitySerializationTest {
 		File root = tempDir("follower-reuse-root");
 		preset(root, "K800i", 176, 1);
 		preset(root, "Sony K800i", 640, 1);
-		File target = tempDir("follower-reuse-target");
+		File target = configDir(root, "follower-reuse-target");
 		writeConfig(target, 111, 1);
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedOrigin(target, "Sony K800i", true);
@@ -207,7 +207,7 @@ public class PresetIdentitySerializationTest {
 	public void sourceReplacementSafeRestoreCompletesBeforeRename() throws Exception {
 		File root = tempDir("source-replace-rename-root");
 		preset(root, "K800i", 176, 1);
-		File target = tempDir("source-replace-rename-target");
+		File target = configDir(root, "source-replace-rename-target");
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedOrigin(target, "K800i", true);
 		CountDownLatch cleared = new CountDownLatch(1);
@@ -244,7 +244,7 @@ public class PresetIdentitySerializationTest {
 	public void sourceReplacementSafeRestoreCompletesBeforeDelete() throws Exception {
 		File root = tempDir("source-replace-delete-root");
 		preset(root, "K800i", 176, 1);
-		File target = tempDir("source-replace-delete-target");
+		File target = configDir(root, "source-replace-delete-target");
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedOrigin(target, "K800i", true);
 		CountDownLatch cleared = new CountDownLatch(1);
@@ -283,7 +283,7 @@ public class PresetIdentitySerializationTest {
 		File root = tempDir("stale-update-rename-root");
 		File oldSource = preset(root, "K800i", 176, 1);
 		preset(root, "Sony K800i", 360, 1);
-		File current = tempDir("stale-update-rename-current");
+		File current = configDir(root, "stale-update-rename-current");
 		writeConfig(current, 640, 1);
 		byte[] oldBytes = Files.readAllBytes(configFile(oldSource).toPath());
 		FakePreferences preferences = new FakePreferences();
@@ -301,7 +301,7 @@ public class PresetIdentitySerializationTest {
 		File root = tempDir("stale-update-reuse-root");
 		File reused = preset(root, "K800i", 999, 1);
 		preset(root, "Sony K800i", 360, 1);
-		File current = tempDir("stale-update-reuse-current");
+		File current = configDir(root, "stale-update-reuse-current");
 		writeConfig(current, 640, 1);
 		byte[] reusedBytes = Files.readAllBytes(configFile(reused).toPath());
 		FakePreferences preferences = new FakePreferences();
@@ -319,7 +319,7 @@ public class PresetIdentitySerializationTest {
 	public void provenanceOnlyExplicitUpdateStillPromotesToLinked() throws Exception {
 		File root = tempDir("provenance-update-root");
 		File source = preset(root, "K800i", 176, 1);
-		File current = tempDir("provenance-update-current");
+		File current = configDir(root, "provenance-update-current");
 		writeConfig(current, 640, 1);
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedOrigin(current, "K800i", false);
@@ -379,7 +379,7 @@ public class PresetIdentitySerializationTest {
 			throws Exception {
 		File root = tempDir("default-rename-root");
 		preset(root, "K800i", 480, 1);
-		File target = new File(tempDir("default-rename-target"), "Game");
+		File target = new File(configsRoot(root), "Game");
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedString(PREF_DEFAULT_PROFILE, "K800i");
 		preferences.blockCommit(2); // activation clear #1, final link #2.
@@ -411,7 +411,7 @@ public class PresetIdentitySerializationTest {
 	public void freshDefaultInitializationSeesDeleteThatWinsIdentityLock() throws Exception {
 		File root = tempDir("default-delete-root");
 		preset(root, "K800i", 480, 1);
-		File target = new File(tempDir("default-delete-target"), "Game");
+		File target = new File(configsRoot(root), "Game");
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedString(PREF_DEFAULT_PROFILE, "K800i");
 		AtomicReference<FreshInstalledMidletInitializer.Result> initResult = new AtomicReference<>();
@@ -536,14 +536,14 @@ public class PresetIdentitySerializationTest {
 		File root = tempDir("editor-edit-rename-root");
 		File source = preset(root, "K800i", 176, 1);
 		File draft = tempDir("editor-edit-rename-draft");
-		assertEquals(ProfilesManager.ProfileEditMode.EDIT_EXISTING,
-				ProfilesManager.preparePresetEditDraft(source, draft));
+		ProfilesManager.PresetEditSession session =
+				ProfilesManager.beginPresetEditSession(source, draft);
+		assertEquals(ProfilesManager.ProfileEditMode.EDIT_EXISTING, session.mode);
 		writeConfig(draft, 640, 1);
 
 		assertEquals(PresetLifecycle.Result.SUCCESS,
 				PresetLifecycle.rename(new FakePreferences(), root, "K800i", "Sony K800i"));
-		expectIOException(() -> ProfilesManager.saveEditedSnapshot(
-				source, draft, ProfilesManager.ProfileEditMode.EDIT_EXISTING));
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(session, draft));
 
 		assertFalse(source.exists());
 		assertEquals(176, readConfig(new File(root, "Sony K800i")).screenWidth);
@@ -554,16 +554,197 @@ public class PresetIdentitySerializationTest {
 		File root = tempDir("editor-edit-delete-root");
 		File source = preset(root, "K800i", 176, 1);
 		File draft = tempDir("editor-edit-delete-draft");
-		assertEquals(ProfilesManager.ProfileEditMode.EDIT_EXISTING,
-				ProfilesManager.preparePresetEditDraft(source, draft));
+		ProfilesManager.PresetEditSession session =
+				ProfilesManager.beginPresetEditSession(source, draft);
+		assertEquals(ProfilesManager.ProfileEditMode.EDIT_EXISTING, session.mode);
 		writeConfig(draft, 640, 1);
 
 		assertEquals(PresetLifecycle.Result.SUCCESS,
 				PresetLifecycle.delete(new FakePreferences(), root, "K800i"));
-		expectIOException(() -> ProfilesManager.saveEditedSnapshot(
-				source, draft, ProfilesManager.ProfileEditMode.EDIT_EXISTING));
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(session, draft));
 
 		assertFalse(source.exists());
+	}
+
+	@Test
+	public void editorExistingSaveUsesOpenedTargetWhenAnotherWorkdirHasSameName() throws Exception {
+		File rootA = tempDir("editor-save-a");
+		File rootB = tempDir("editor-save-b");
+		File sourceA = preset(rootA, "K800i", 176, 1);
+		File sourceB = preset(rootB, "K800i", 240, 1);
+		File draft = tempDir("editor-save-draft");
+		ProfilesManager.PresetEditSession session =
+				ProfilesManager.beginPresetEditSession(sourceA, draft);
+		writeConfig(draft, 640, 1);
+		byte[] bytesB = Files.readAllBytes(configFile(sourceB).toPath());
+
+		ProfilesManager.saveEditedSnapshot(session, draft);
+
+		assertEquals(640, readConfig(sourceA).screenWidth);
+		assertArrayEquals(bytesB, Files.readAllBytes(configFile(sourceB).toPath()));
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(session, draft));
+	}
+
+	@Test
+	public void editorRenameThenSameNameRecreationRejectsOldSession() throws Exception {
+		File root = tempDir("editor-recreated-name");
+		File source = preset(root, "K800i", 176, 1);
+		File draft = tempDir("editor-recreated-draft");
+		ProfilesManager.PresetEditSession session =
+				ProfilesManager.beginPresetEditSession(source, draft);
+		writeConfig(draft, 640, 1);
+		assertEquals(PresetLifecycle.Result.SUCCESS,
+				PresetLifecycle.rename(new FakePreferences(), root, "K800i", "Sony"));
+		preset(root, "K800i", 240, 1);
+		byte[] replacement = Files.readAllBytes(configFile(source).toPath());
+
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(session, draft));
+
+		assertArrayEquals(replacement, Files.readAllBytes(configFile(source).toPath()));
+	}
+
+	@Test
+	public void editorDeleteThenSameNameRecreationRejectsOldSession() throws Exception {
+		File root = tempDir("editor-deleted-name");
+		File source = preset(root, "K800i", 176, 1);
+		File draft = tempDir("editor-deleted-draft");
+		ProfilesManager.PresetEditSession session =
+				ProfilesManager.beginPresetEditSession(source, draft);
+		writeConfig(draft, 640, 1);
+		assertEquals(PresetLifecycle.Result.SUCCESS,
+				PresetLifecycle.delete(new FakePreferences(), root, "K800i"));
+		preset(root, "K800i", 240, 1);
+		byte[] replacement = Files.readAllBytes(configFile(source).toPath());
+
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(session, draft));
+
+		assertArrayEquals(replacement, Files.readAllBytes(configFile(source).toPath()));
+	}
+
+	@Test
+	public void editorSessionSurvivesFailedRenameBeforeCommit() throws Exception {
+		File root = tempDir("editor-rename-failed");
+		File source = preset(root, "K800i", 176, 1);
+		File draft = tempDir("editor-rename-failed-draft");
+		ProfilesManager.PresetEditSession session =
+				ProfilesManager.beginPresetEditSession(source, draft);
+		writeConfig(draft, 640, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.failNextCommit();
+
+		assertEquals(PresetLifecycle.Result.FAILED,
+				PresetLifecycle.rename(preferences, root, "K800i", "Sony"));
+		ProfilesManager.saveEditedSnapshot(session, draft);
+		assertEquals(640, readConfig(source).screenWidth);
+	}
+
+	@Test
+	public void editorSessionInvalidAfterRenameCleanupFailure() throws Exception {
+		File root = tempDir("editor-rename-cleanup");
+		File source = preset(root, "K800i", 176, 1);
+		File draft = tempDir("editor-rename-cleanup-draft");
+		ProfilesManager.PresetEditSession session =
+				ProfilesManager.beginPresetEditSession(source, draft);
+		writeConfig(draft, 640, 1);
+		assertEquals(PresetLifecycle.Result.CLEANUP_FAILED,
+				PresetLifecycle.rename(new FakePreferences(), root, "K800i", "Sony",
+						failedCleanup()));
+
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(session, draft));
+		assertEquals(176, readConfig(source).screenWidth);
+	}
+
+	@Test
+	public void editorSessionSurvivesFailedDeleteCommit() throws Exception {
+		File root = tempDir("editor-delete-failed");
+		File source = preset(root, "K800i", 176, 1);
+		File draft = tempDir("editor-delete-failed-draft");
+		ProfilesManager.PresetEditSession session =
+				ProfilesManager.beginPresetEditSession(source, draft);
+		writeConfig(draft, 640, 1);
+		FakePreferences preferences = new FakePreferences();
+		preferences.failNextCommit();
+
+		assertEquals(PresetLifecycle.Result.FAILED,
+				PresetLifecycle.delete(preferences, root, "K800i"));
+		ProfilesManager.saveEditedSnapshot(session, draft);
+		assertEquals(640, readConfig(source).screenWidth);
+	}
+
+	@Test
+	public void editorSessionInvalidAfterDeleteCleanupFailure() throws Exception {
+		File root = tempDir("editor-delete-cleanup");
+		File source = preset(root, "K800i", 176, 1);
+		File draft = tempDir("editor-delete-cleanup-draft");
+		ProfilesManager.PresetEditSession session =
+				ProfilesManager.beginPresetEditSession(source, draft);
+		writeConfig(draft, 640, 1);
+		assertEquals(PresetLifecycle.Result.CLEANUP_FAILED,
+				PresetLifecycle.delete(new FakePreferences(), root, "K800i",
+						failedCleanup()));
+
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(session, draft));
+		assertEquals(176, readConfig(source).screenWidth);
+	}
+
+	@Test
+	public void editorSessionsAreScopedByExactRootAndAllOldEditorsInvalidate() throws Exception {
+		File rootA = tempDir("editor-scope-a");
+		File rootB = tempDir("editor-scope-b");
+		File sourceA = preset(rootA, "K800i", 176, 1);
+		File sourceB = preset(rootB, "K800i", 240, 1);
+		File draftA = tempDir("editor-scope-a-draft");
+		File draftB1 = tempDir("editor-scope-b1-draft");
+		File draftB2 = tempDir("editor-scope-b2-draft");
+		ProfilesManager.PresetEditSession sessionA =
+				ProfilesManager.beginPresetEditSession(sourceA, draftA);
+		ProfilesManager.PresetEditSession sessionB1 =
+				ProfilesManager.beginPresetEditSession(sourceB, draftB1);
+		ProfilesManager.PresetEditSession sessionB2 =
+				ProfilesManager.beginPresetEditSession(sourceB, draftB2);
+		writeConfig(draftA, 640, 1);
+		assertEquals(PresetLifecycle.Result.SUCCESS,
+				PresetLifecycle.rename(new FakePreferences(), rootB, "K800i", "Sony"));
+
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(sessionB1, draftB1));
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(sessionB2, draftB2));
+		ProfilesManager.saveEditedSnapshot(sessionA, draftA);
+		assertEquals(640, readConfig(sourceA).screenWidth);
+	}
+
+	@Test
+	public void restoredSameProcessSessionWorksButMissingRegistryFailsClosed() throws Exception {
+		File root = tempDir("editor-restored");
+		File source = preset(root, "K800i", 176, 1);
+		File draft = tempDir("editor-restored-draft");
+		ProfilesManager.PresetEditSession opened =
+				ProfilesManager.beginPresetEditSession(source, draft);
+		ProfilesManager.PresetEditSession restored = new ProfilesManager.PresetEditSession(
+					opened.mode, opened.target, opened.token);
+		writeConfig(draft, 640, 1);
+		ProfilesManager.saveEditedSnapshot(restored, draft);
+		assertEquals(640, readConfig(source).screenWidth);
+
+		File secondDraft = tempDir("editor-restored-second-draft");
+		ProfilesManager.PresetEditSession second =
+				ProfilesManager.beginPresetEditSession(source, secondDraft);
+		ProfilesManager.releasePresetEditSession(second); // Empty registry after process death.
+		ProfilesManager.PresetEditSession dead = new ProfilesManager.PresetEditSession(
+					second.mode, second.target, second.token);
+		writeConfig(secondDraft, 800, 1);
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(dead, secondDraft));
+		assertEquals(640, readConfig(source).screenWidth);
+	}
+
+	private static PresetLifecycle.FileActions failedCleanup() {
+		return new PresetLifecycle.FileActions() {
+			@Override public boolean publish(File staging, File published) {
+				return staging.renameTo(published);
+			}
+			@Override public boolean deleteSource(File source) {
+				return false;
+			}
+		};
 	}
 
 	@Test
@@ -571,15 +752,15 @@ public class PresetIdentitySerializationTest {
 		File root = tempDir("editor-create-race-root");
 		File target = new File(root, "N95");
 		File draft = tempDir("editor-create-race-draft");
-		assertEquals(ProfilesManager.ProfileEditMode.CREATE_NEW,
-				ProfilesManager.preparePresetEditDraft(target, draft));
+		ProfilesManager.PresetEditSession session =
+				ProfilesManager.beginPresetEditSession(target, draft);
+		assertEquals(ProfilesManager.ProfileEditMode.CREATE_NEW, session.mode);
 		writeConfig(draft, 640, 1);
 		assertTrue(target.mkdir());
 		writeConfig(target, 176, 1);
 		byte[] existing = Files.readAllBytes(configFile(target).toPath());
 
-		expectIOException(() -> ProfilesManager.saveEditedSnapshot(
-				target, draft, ProfilesManager.ProfileEditMode.CREATE_NEW));
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(session, draft));
 
 		assertArrayEquals(existing, Files.readAllBytes(configFile(target).toPath()));
 	}
@@ -589,14 +770,14 @@ public class PresetIdentitySerializationTest {
 		File root = tempDir("editor-create-case-root");
 		File target = new File(root, "N95");
 		File draft = tempDir("editor-create-case-draft");
-		assertEquals(ProfilesManager.ProfileEditMode.CREATE_NEW,
-				ProfilesManager.preparePresetEditDraft(target, draft));
+		ProfilesManager.PresetEditSession session =
+				ProfilesManager.beginPresetEditSession(target, draft);
+		assertEquals(ProfilesManager.ProfileEditMode.CREATE_NEW, session.mode);
 		writeConfig(draft, 640, 1);
 		File occupied = preset(root, "n95", 176, 1);
 		byte[] existing = Files.readAllBytes(configFile(occupied).toPath());
 
-		expectIOException(() -> ProfilesManager.saveEditedSnapshot(
-				target, draft, ProfilesManager.ProfileEditMode.CREATE_NEW));
+		expectIOException(() -> ProfilesManager.saveEditedSnapshot(session, draft));
 
 		assertArrayEquals(existing, Files.readAllBytes(configFile(occupied).toPath()));
 		assertFalse(target.exists());
@@ -617,7 +798,7 @@ public class PresetIdentitySerializationTest {
 	private static void assertDetachedFailureThenRename(String suffix) throws Exception {
 		File root = tempDir(suffix + "-root");
 		preset(root, "K800i", 176, 1);
-		File target = tempDir(suffix + "-target");
+		File target = configDir(root, suffix + "-target");
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedOrigin(target, "K800i", true);
 		CountDownLatch writeEntered = new CountDownLatch(1);
@@ -652,7 +833,7 @@ public class PresetIdentitySerializationTest {
 	private static void assertDetachedFailureThenDelete(String suffix) throws Exception {
 		File root = tempDir(suffix + "-root");
 		preset(root, "K800i", 176, 1);
-		File target = tempDir(suffix + "-target");
+		File target = configDir(root, suffix + "-target");
 		FakePreferences preferences = new FakePreferences();
 		preferences.seedOrigin(target, "K800i", true);
 		CountDownLatch writeEntered = new CountDownLatch(1);
@@ -715,8 +896,21 @@ public class PresetIdentitySerializationTest {
 	}
 
 	private static File tempDir(String suffix) throws Exception {
-		File dir = Files.createTempDirectory("jlmod-preset-identity-" + suffix).toFile();
-		dir.deleteOnExit();
+		File workdir = Files.createTempDirectory("jlmod-preset-identity-" + suffix).toFile();
+		File root = new File(workdir, "templates");
+		assertTrue(root.mkdir());
+		return root;
+	}
+
+	private static File configsRoot(File root) {
+		File configs = new File(root.getParentFile(), "configs");
+		assertTrue(configs.isDirectory() || configs.mkdir());
+		return configs;
+	}
+
+	private static File configDir(File root, String name) {
+		File dir = new File(configsRoot(root), name);
+		assertTrue(dir.mkdir());
 		return dir;
 	}
 
@@ -783,6 +977,11 @@ public class PresetIdentitySerializationTest {
 		private int blockedCommitNumber = -1;
 		private CountDownLatch commitEntered;
 		private CountDownLatch commitRelease;
+		private int failedCommitNumber = -1;
+
+		void failNextCommit() {
+			failedCommitNumber = commitCount + 1;
+		}
 
 		void seedOrigin(File dir, String origin, boolean linked) {
 			values.put(PresetLinkage.originPreferenceKey(dir), origin);
@@ -937,7 +1136,7 @@ public class PresetIdentitySerializationTest {
 					if (commitEntered != null) commitEntered.countDown();
 					await(commitRelease);
 				}
-				return true;
+				return commitCount != failedCommitNumber;
 			}
 
 			@Override

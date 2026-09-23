@@ -27,12 +27,105 @@ import java.util.Set;
 
 public class PresetLifecycleTest {
 	@Test
+	public void renameOnlyRewritesOriginsInManagedWorkdir() throws Exception {
+		File rootA = tempDir("scope-rename-a");
+		File rootB = tempDir("scope-rename-b");
+		source(rootA, "K800i");
+		source(rootB, "K800i");
+		File customA = configDir(rootA, "custom-a");
+		File linkedA = configDir(rootA, "linked-a");
+		File customB = configDir(rootB, "custom-b");
+		File linkedB = configDir(rootB, "linked-b");
+		FakePreferences preferences = origin(preferences(), customA, "K800i", false);
+		origin(preferences, linkedA, "K800i", true);
+		origin(preferences, customB, "K800i", false);
+		origin(preferences, linkedB, "K800i", true);
+		String malformed = PresetLinkage.originPreferencePrefix() + "relative/config";
+		assertTrue(preferences.edit().putString(malformed, "K800i").commit());
+
+		assertEquals(PresetLifecycle.Result.SUCCESS,
+				PresetLifecycle.rename(preferences, rootB, "K800i", "Sony"));
+
+		assertEquals("K800i", new PresetLinkage(preferences, customA).getOrigin());
+		assertEquals("K800i", new PresetLinkage(preferences, linkedA).getOrigin());
+		assertTrue(new PresetLinkage(preferences, linkedA).isLinked());
+		assertEquals("Sony", new PresetLinkage(preferences, customB).getOrigin());
+		assertFalse(new PresetLinkage(preferences, customB).isLinked());
+		assertEquals("Sony", new PresetLinkage(preferences, linkedB).getOrigin());
+		assertTrue(new PresetLinkage(preferences, linkedB).isLinked());
+		assertEquals("K800i", preferences.getString(malformed, null));
+	}
+
+	@Test
+	public void similarlyPrefixedWorkdirsDoNotShareOrigins() throws Exception {
+		File parent = Files.createTempDirectory("jlmod-preset-prefix").toFile();
+		File root = new File(parent, "work/templates");
+		File foreignRoot = new File(parent, "work2/templates");
+		assertTrue(root.mkdirs());
+		assertTrue(foreignRoot.mkdirs());
+		source(root, "K800i");
+		File foreignGame = configDir(foreignRoot, "game");
+		FakePreferences preferences = origin(preferences(), foreignGame, "K800i", true);
+
+		assertEquals(PresetLifecycle.Result.SUCCESS,
+				PresetLifecycle.rename(preferences, root, "K800i", "Sony"));
+
+		assertEquals("K800i", new PresetLinkage(preferences, foreignGame).getOrigin());
+		assertTrue(new PresetLinkage(preferences, foreignGame).isLinked());
+	}
+
+	@Test
+	public void deleteOnlyClearsOriginsInManagedWorkdir() throws Exception {
+		File rootA = tempDir("scope-delete-a");
+		File rootB = tempDir("scope-delete-b");
+		source(rootA, "K800i");
+		source(rootB, "K800i");
+		File customA = configDir(rootA, "custom-a");
+		File linkedA = configDir(rootA, "linked-a");
+		File customB = configDir(rootB, "custom-b");
+		File linkedB = configDir(rootB, "linked-b");
+		FakePreferences preferences = origin(preferences(), customA, "K800i", false);
+		origin(preferences, linkedA, "K800i", true);
+		origin(preferences, customB, "K800i", false);
+		origin(preferences, linkedB, "K800i", true);
+
+		assertEquals(PresetLifecycle.Result.SUCCESS,
+				PresetLifecycle.delete(preferences, rootB, "K800i"));
+
+		assertEquals("K800i", new PresetLinkage(preferences, customA).getOrigin());
+		assertEquals("K800i", new PresetLinkage(preferences, linkedA).getOrigin());
+		assertTrue(new PresetLinkage(preferences, linkedA).isLinked());
+		assertNull(new PresetLinkage(preferences, customB).getOrigin());
+		assertNull(new PresetLinkage(preferences, linkedB).getOrigin());
+		assertFalse(new PresetLinkage(preferences, linkedB).isLinked());
+	}
+
+	@Test
+	public void failedMetadataCommitRestoresOnlyManagedWorkdirReferences() throws Exception {
+		File rootA = tempDir("scope-failure-a");
+		File rootB = tempDir("scope-failure-b");
+		source(rootB, "K800i");
+		File followerA = configDir(rootA, "game-a");
+		File followerB = configDir(rootB, "game-b");
+		FakePreferences preferences = origin(preferences(), followerA, "K800i", true);
+		origin(preferences, followerB, "K800i", true);
+		preferences.failNextCommit();
+
+		assertEquals(PresetLifecycle.Result.FAILED,
+				PresetLifecycle.delete(preferences, rootB, "K800i"));
+
+		assertEquals("K800i", new PresetLinkage(preferences, followerA).getOrigin());
+		assertTrue(new PresetLinkage(preferences, followerA).isLinked());
+		assertEquals("K800i", new PresetLinkage(preferences, followerB).getOrigin());
+		assertTrue(new PresetLinkage(preferences, followerB).isLinked());
+	}
+	@Test
 	public void renameCompletePresetPreservesBytesAndUpdatesOrigin() throws Exception {
 		File root = tempDir("rename-complete");
 		File oldSource = source(root, "K800i");
 		write(oldSource, "config.json", "config-bytes");
 		write(oldSource, "VirtualKeyboardLayout", "layout-bytes");
-		File midlet = tempDir("rename-complete-midlet");
+		File midlet = configDir(root, "rename-complete-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", false);
 
 		assertEquals(PresetLifecycle.Result.SUCCESS,
@@ -50,7 +143,7 @@ public class PresetLifecycleTest {
 		File root = tempDir("rename-linked");
 		File oldSource = source(root, "K800i");
 		write(oldSource, "config.json", "x");
-		File midlet = tempDir("rename-linked-midlet");
+		File midlet = configDir(root, "rename-linked-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", true);
 
 		assertEquals(PresetLifecycle.Result.SUCCESS,
@@ -66,7 +159,7 @@ public class PresetLifecycleTest {
 		File root = tempDir("rename-custom");
 		File oldSource = source(root, "K800i");
 		write(oldSource, "config.json", "x");
-		File midlet = tempDir("rename-custom-midlet");
+		File midlet = configDir(root, "rename-custom-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", false);
 
 		assertEquals(PresetLifecycle.Result.SUCCESS,
@@ -96,8 +189,8 @@ public class PresetLifecycleTest {
 		File root = tempDir("rename-one-commit");
 		File oldSource = source(root, "K800i");
 		write(oldSource, "config.json", "x");
-		File first = tempDir("rename-one-first");
-		File second = tempDir("rename-one-second");
+		File first = configDir(root, "rename-one-first");
+		File second = configDir(root, "rename-one-second");
 		FakePreferences preferences = preferences();
 		assertTrue(preferences.edit()
 				.putString(PREF_DEFAULT_PROFILE, "K800i")
@@ -123,7 +216,7 @@ public class PresetLifecycleTest {
 		File root = tempDir("rename-publish-fail");
 		File oldSource = source(root, "K800i");
 		write(oldSource, "config.json", "x");
-		File midlet = tempDir("rename-publish-fail-midlet");
+		File midlet = configDir(root, "rename-publish-fail-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", true);
 
 		PresetLifecycle.Result result = PresetLifecycle.rename(
@@ -151,7 +244,7 @@ public class PresetLifecycleTest {
 		File root = tempDir("rename-ref-fail");
 		File oldSource = source(root, "K800i");
 		write(oldSource, "config.json", "same");
-		File midlet = tempDir("rename-ref-fail-midlet");
+		File midlet = configDir(root, "rename-ref-fail-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", true);
 		preferences.failNextCommit();
 
@@ -169,7 +262,7 @@ public class PresetLifecycleTest {
 		File root = tempDir("rename-restore-fail");
 		File oldSource = source(root, "K800i");
 		write(oldSource, "config.json", "same");
-		File midlet = tempDir("rename-restore-fail-midlet");
+		File midlet = configDir(root, "rename-restore-fail-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", true);
 		preferences.failNextCommits(2);
 
@@ -185,7 +278,7 @@ public class PresetLifecycleTest {
 		File root = tempDir("rename-crash-before-ref");
 		File oldSource = source(root, "K800i");
 		write(oldSource, "config.json", "same");
-		File midlet = tempDir("rename-crash-before-ref-midlet");
+		File midlet = configDir(root, "rename-crash-before-ref-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", true);
 		boolean[] observedSafeCrashState = {false};
 		preferences.beforeNextCommit(() -> {
@@ -206,7 +299,7 @@ public class PresetLifecycleTest {
 		File root = tempDir("rename-crash-after-ref");
 		File oldSource = source(root, "K800i");
 		write(oldSource, "config.json", "same");
-		File midlet = tempDir("rename-crash-after-ref-midlet");
+		File midlet = configDir(root, "rename-crash-after-ref-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", true);
 
 		PresetLifecycle.Result result = PresetLifecycle.rename(
@@ -265,7 +358,7 @@ public class PresetLifecycleTest {
 		File root = tempDir("delete-linked");
 		File source = source(root, "K800i");
 		write(source, "config.json", "source");
-		File midlet = tempDir("delete-linked-midlet");
+		File midlet = configDir(root, "delete-linked-midlet");
 		write(midlet, "config.json", "local-snapshot");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", true);
 
@@ -282,7 +375,7 @@ public class PresetLifecycleTest {
 	public void deleteProvenanceOnlyPresetClearsOrigin() throws Exception {
 		File root = tempDir("delete-custom");
 		source(root, "K800i");
-		File midlet = tempDir("delete-custom-midlet");
+		File midlet = configDir(root, "delete-custom-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", false);
 
 		assertEquals(PresetLifecycle.Result.SUCCESS,
@@ -309,8 +402,8 @@ public class PresetLifecycleTest {
 	public void deleteOnlyClearsExactMatchingOrigins() throws Exception {
 		File root = tempDir("delete-exact");
 		source(root, "K800i");
-		File matching = tempDir("delete-exact-match");
-		File other = tempDir("delete-exact-other");
+		File matching = configDir(root, "delete-exact-match");
+		File other = configDir(root, "delete-exact-other");
 		FakePreferences preferences = origin(preferences(), matching, "K800i", true);
 		origin(preferences, other, "Sony K800i", true);
 
@@ -326,7 +419,7 @@ public class PresetLifecycleTest {
 	public void deleteMetadataCommitFailureDoesNotDeleteSource() throws Exception {
 		File root = tempDir("delete-metadata-fail");
 		File source = source(root, "K800i");
-		File midlet = tempDir("delete-metadata-fail-midlet");
+		File midlet = configDir(root, "delete-metadata-fail-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", true);
 		preferences.failNextCommit();
 
@@ -342,7 +435,7 @@ public class PresetLifecycleTest {
 	public void deleteFilesystemFailureDoesNotRestoreReferences() throws Exception {
 		File root = tempDir("delete-filesystem-fail");
 		File source = source(root, "K800i");
-		File midlet = tempDir("delete-filesystem-fail-midlet");
+		File midlet = configDir(root, "delete-filesystem-fail-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", true);
 		assertTrue(preferences.edit().putString(PREF_DEFAULT_PROFILE, "K800i").commit());
 
@@ -387,7 +480,7 @@ public class PresetLifecycleTest {
 		File root = tempDir("refresh-rename");
 		File source = source(root, "K800i");
 		write(source, "config.json", "x");
-		File midlet = tempDir("refresh-rename-midlet");
+		File midlet = configDir(root, "refresh-rename-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", true);
 
 		assertEquals(PresetLifecycle.Result.SUCCESS,
@@ -400,7 +493,7 @@ public class PresetLifecycleTest {
 	public void refreshedActiveMetadataAfterDeleteResolvesNullOrigin() throws Exception {
 		File root = tempDir("refresh-delete");
 		source(root, "K800i");
-		File midlet = tempDir("refresh-delete-midlet");
+		File midlet = configDir(root, "refresh-delete-midlet");
 		FakePreferences preferences = origin(preferences(), midlet, "K800i", true);
 
 		assertEquals(PresetLifecycle.Result.SUCCESS,
@@ -423,8 +516,17 @@ public class PresetLifecycleTest {
 	}
 
 	private static File tempDir(String suffix) throws Exception {
-		File dir = Files.createTempDirectory("jlmod-preset-lifecycle-" + suffix).toFile();
-		dir.deleteOnExit();
+		File workdir = Files.createTempDirectory("jlmod-preset-lifecycle-" + suffix).toFile();
+		File root = new File(workdir, "templates");
+		assertTrue(root.mkdir());
+		return root;
+	}
+
+	private static File configDir(File root, String name) {
+		File configs = new File(root.getParentFile(), "configs");
+		assertTrue(configs.isDirectory() || configs.mkdir());
+		File dir = new File(configs, name);
+		assertTrue(dir.mkdir());
 		return dir;
 	}
 

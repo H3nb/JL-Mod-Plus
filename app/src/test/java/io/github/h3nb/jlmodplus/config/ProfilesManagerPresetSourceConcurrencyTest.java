@@ -236,7 +236,7 @@ public class ProfilesManagerPresetSourceConcurrencyTest {
 		File update = tempDir("rename-update");
 		writeConfig(update, 480);
 		writeLayout(update, 5);
-		File midlet = tempDir("rename-midlet");
+		File midlet = new File(root.getParentFile(), "configs/rename-midlet");
 		FakePreferences preferences = linkedPreferences(midlet, "K800i");
 		CountDownLatch writerCommitted = new CountDownLatch(1);
 		CountDownLatch releaseWriter = new CountDownLatch(1);
@@ -286,7 +286,7 @@ public class ProfilesManagerPresetSourceConcurrencyTest {
 		File update = tempDir("delete-update");
 		writeConfig(update, 480);
 		writeLayout(update, 5);
-		File midlet = tempDir("delete-midlet");
+		File midlet = new File(root.getParentFile(), "configs/delete-midlet");
 		FakePreferences preferences = linkedPreferences(midlet, "K800i");
 		CountDownLatch writerCommitted = new CountDownLatch(1);
 		CountDownLatch releaseWriter = new CountDownLatch(1);

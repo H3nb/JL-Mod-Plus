@@ -407,7 +407,7 @@ public class ProfilesManagerPresetSaveRecoveryTest {
 		byte[] oldConfig = readConfigBytes(oldSource);
 		createRollback(oldSource, oldConfig, null, null, true, false);
 		writeConfig(oldSource, 999);
-		File midlet = tempDir("rename-recovers-midlet");
+		File midlet = new File(root.getParentFile(), "configs/rename-recovers-midlet");
 		FakePreferences preferences = linkedPreferences(midlet, "K800i");
 
 		assertEquals(PresetLifecycle.Result.SUCCESS,
@@ -427,7 +427,7 @@ public class ProfilesManagerPresetSaveRecoveryTest {
 		assertTrue(oldSource.mkdir());
 		writeConfig(oldSource, 999);
 		createBrokenReadyRollback(oldSource, "config.json");
-		File midlet = tempDir("rename-recovery-fail-midlet");
+		File midlet = new File(root.getParentFile(), "configs/rename-recovery-fail-midlet");
 		FakePreferences preferences = linkedPreferences(midlet, "K800i");
 
 		assertEquals(PresetLifecycle.Result.FAILED,
