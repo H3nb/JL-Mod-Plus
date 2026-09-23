@@ -7,6 +7,7 @@ import android.app.ActivityManager
 import android.app.Application
 import android.content.Intent
 import android.net.Uri
+import android.os.Environment
 import android.os.Process
 import android.util.Base64
 import androidx.lifecycle.ViewModelProvider
@@ -44,6 +45,89 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class RuntimeStorageLeaseInstrumentedTest {
+    @Test fun privateFileConnectionUsesTheLaunchedWorkdirWhileAnotherWorkdirIsActive() = runBlocking {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val app = instrumentation.targetContext.applicationContext as Application
+        val preferences = PreferenceManager.getDefaultSharedPreferences(app)
+        val oldWorkdir = preferences.getString(Constants.PREF_EMULATOR_DIR, null)
+        val external = requireNotNull(app.getExternalFilesDir(null))
+        val rootA = File(external, "fileconn-root-a")
+        val rootB = File(external, "fileconn-root-b")
+        rootA.deleteRecursively()
+        rootB.deleteRecursively()
+        val installed = File(rootA, "converted/Bounce")
+        val config = File(rootA, "configs/Bounce")
+        val privateA = File(rootA, "data/Bounce/private")
+        val privateB = File(rootB, "data/Bounce/private")
+        val report = File(rootA, "fileconn-report.txt")
+        try {
+            assertTrue(installed.mkdirs())
+            assertTrue(config.mkdirs())
+            assertTrue(privateA.mkdirs())
+            assertTrue(privateB.mkdirs())
+            File(app.applicationInfo.sourceDir).copyTo(File(installed, "converted.zip"))
+            assertTrue(ProfilesManager.saveConfig(ProfileModel(config)))
+            File(installed, "converted.dex.conf").writeText(
+                "Manifest-Version: 1.0\nMIDlet-Name: Bounce\n" +
+                    "MIDlet-Vendor: Tests\nMIDlet-Version: 1.0\n" +
+                    "MIDlet-1: Bounce,,${LifecycleMidlet.CLASS_NAME}\n" +
+                    "${LifecycleMidlet.MODE_PROPERTY}: ${LifecycleMidlet.MODE_FILE_CONNECTION}\n" +
+                    "${LifecycleMidlet.MARKER_PROPERTY}: ${report.absolutePath}\n",
+            )
+            val database = LibraryDatabase.open(app, rootA)
+            val appId = try {
+                database.libraryDao().setLibraryState(
+                    LibraryStateEntity(bootstrapState = LibraryBootstrapState.READY),
+                )
+                database.libraryDao().insertApp(
+                    LibraryAppEntity(
+                        storageKey = "Bounce",
+                        sourceTitle = "Bounce",
+                        sourceVendor = "Tests",
+                        sourceVersion = "1.0",
+                    ),
+                )
+            } finally {
+                database.close()
+            }
+            instrumentation.runOnMainSync {
+                assertTrue(preferences.edit()
+                    .putString(Constants.PREF_EMULATOR_DIR, rootA.absolutePath).commit())
+                assertTrue(preferences.edit()
+                    .putString(Constants.PREF_EMULATOR_DIR, rootB.absolutePath).commit())
+            }
+            app.startActivity(Intent(Intent.ACTION_DEFAULT, Uri.parse(installed.absolutePath),
+                app, MicroActivity::class.java)
+                .putExtra(Constants.KEY_MIDLET_NAME, "Bounce")
+                .putExtra(Constants.KEY_LIBRARY_APP_ID, appId)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+            awaitFile(report)
+
+            val dataPath = File(rootA, "data/Bounce").absolutePath
+            val expectedUri = "file:///c:" +
+                dataPath.removePrefix(Environment.getExternalStorageDirectory().path)
+            assertEquals("$expectedUri/private\n$expectedUri/cache", report.readText())
+            assertEquals(37, File(privateA, "identity.bin").readBytes().single().toInt())
+            assertFalse(File(privateB, "identity.bin").exists())
+            assertTrue(RuntimeStorageLease.isActive(app.filesDir, installed))
+            val runtimePid = midletPid(app)
+            assertTrue(runtimePid > 0)
+            assertNotEquals(Process.myPid(), runtimePid)
+        } finally {
+            val pid = midletPid(app)
+            if (pid > 0) Process.killProcess(pid)
+            MidletSessionStore.clear(app)
+            instrumentation.runOnMainSync {
+                val edit = preferences.edit()
+                if (oldWorkdir == null) edit.remove(Constants.PREF_EMULATOR_DIR)
+                else edit.putString(Constants.PREF_EMULATOR_DIR, oldWorkdir)
+                edit.commit()
+            }
+            rootA.deleteRecursively()
+            rootB.deleteRecursively()
+        }
+    }
+
     @Test fun deletedLiveRuntimeCannotShareFreshInstallStorage() = runBlocking {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val app = instrumentation.targetContext.applicationContext as Application

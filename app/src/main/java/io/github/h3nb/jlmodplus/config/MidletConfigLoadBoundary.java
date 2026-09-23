@@ -32,7 +32,7 @@ public final class MidletConfigLoadBoundary {
 		return prepare(preferences, configDir, new File(Config.getProfilesDir()));
 	}
 
-	static boolean prepare(@NonNull SharedPreferences preferences,
+	public static boolean prepare(@NonNull SharedPreferences preferences,
 			@NonNull File configDir, @NonNull File profilesRoot) {
 		synchronized (ProfilesManager.presetSourceLock()) {
 		try {

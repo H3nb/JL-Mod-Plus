@@ -52,6 +52,26 @@ public class PresetSourceSaveTest {
 	}
 
 	@Test
+	public void saveAsAndUpdateStayInsidePassedWorkdirCollection() throws Exception {
+		File rootA = tempDir("bound-source-a");
+		File rootB = tempDir("bound-source-b");
+		File foreign = preset(rootB, "K800i", 640, 1, null);
+		File current = tempDir("bound-source-current");
+		writeConfig(current, 360, 1);
+		FakePreferences preferences = new FakePreferences();
+
+		assertEquals(PresetSourceSave.Result.LINKED,
+				PresetSourceSave.saveAsNew(preferences, current, rootA, "K800i"));
+		assertEquals(360, readConfig(new File(rootA, "K800i")).screenWidth);
+		assertEquals(640, readConfig(foreign).screenWidth);
+		writeConfig(current, 480, 1);
+		assertEquals(PresetSourceSave.Result.LINKED,
+				PresetSourceSave.updateExisting(preferences, current, rootA, "K800i"));
+		assertEquals(480, readConfig(new File(rootA, "K800i")).screenWidth);
+		assertEquals(640, readConfig(foreign).screenWidth);
+	}
+
+	@Test
 	public void saveAsConfigOnlyCreatesNoLayoutAndLinksCurrentMidlet() throws Exception {
 		File root = tempDir("save-config-root");
 		File current = tempDir("save-config-current");

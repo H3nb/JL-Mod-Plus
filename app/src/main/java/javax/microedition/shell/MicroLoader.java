@@ -405,15 +405,21 @@ public class MicroLoader {
 		final String country = defaultLocale.getCountry();
 		System.setProperty("microedition.locale", defaultLocale.getLanguage()
 				+ (country.length() == 2 ? "-" + country : ""));
-		// FIXME: 21.10.2020 Config.getDataDir() may be in different storage
 		final String primaryStoragePath = Environment.getExternalStorageDirectory().getPath();
-		String dataUri = "file:///c:" + Config.getDataDir().substring(primaryStoragePath.length()) + appDirName;
+		String dataUri = fileConnectionDataUri(workDir, appDirName, primaryStoragePath);
 		String musicUri = "file:///c:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
 				.getPath().substring(primaryStoragePath.length());
 		System.setProperty("fileconn.dir.cache", dataUri + "/cache");
 		System.setProperty("fileconn.dir.private", dataUri + "/private");
 		System.setProperty("fileconn.dir.music", musicUri);
 		System.setProperty("user.home", primaryStoragePath);
+	}
+
+	static String fileConnectionDataUri(
+			String launchedWorkDir, String storageKey, String primaryStoragePath) {
+		File dataDir = new File(launchedWorkDir + Config.MIDLET_DATA_DIR + storageKey);
+		return "file:///c:" + dataDir.getPath().substring(primaryStoragePath.length())
+				.replace(File.separatorChar, '/');
 	}
 
 	public int getOrientation() {

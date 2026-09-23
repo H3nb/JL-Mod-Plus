@@ -17,7 +17,11 @@ package jlmod.runtimefixture;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
+import javax.microedition.io.Connector;
+import javax.microedition.io.file.FileConnection;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.util.ContextHolder;
@@ -34,6 +38,7 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String MODE_CRASH_DESTROY = "crash-destroy";
 	public static final String MODE_CLEAN = "clean";
 	public static final String MODE_STORAGE_LEASE = "storage-lease";
+	public static final String MODE_FILE_CONNECTION = "file-connection-root";
 	public static final String STORAGE_TRIGGER_PROPERTY = "JLMod-Storage-Trigger";
 	public static final String STORAGE_WRITTEN_PROPERTY = "JLMod-Storage-Written";
 	private volatile boolean destroyed;
@@ -99,6 +104,27 @@ public final class LifecycleMidlet extends MIDlet {
 			}, "StorageLeaseFixtureWriter").start();
 			return;
 		}
+		if (MODE_FILE_CONNECTION.equals(mode)) {
+			String privateUri = System.getProperty("fileconn.dir.private");
+			String cacheUri = System.getProperty("fileconn.dir.cache");
+			FileConnection connection = null;
+			try {
+				connection = (FileConnection) Connector.open(
+						privateUri + "/identity.bin", Connector.READ_WRITE);
+				if (!connection.exists()) connection.create();
+				try (OutputStream output = connection.openOutputStream()) {
+					output.write(37);
+				}
+				writeReport(getAppProperty(MARKER_PROPERTY), privateUri + "\n" + cacheUri);
+			} catch (IOException failure) {
+				throw new IllegalStateException("Unable to write FileConnection private data", failure);
+			} finally {
+				if (connection != null) {
+					try { connection.close(); } catch (IOException ignored) {}
+				}
+			}
+			return;
+		}
 		throw new IllegalStateException("Unknown lifecycle runtime fixture mode: " + mode);
 	}
 
@@ -131,6 +157,13 @@ public final class LifecycleMidlet extends MIDlet {
 			output.flush();
 		} catch (IOException e) {
 			throw new IllegalStateException("Unable to write lifecycle fixture marker", e);
+		}
+	}
+
+	private static void writeReport(String path, String value) throws IOException {
+		if (path == null || path.isEmpty()) throw new IOException("Missing report path");
+		try (FileOutputStream output = new FileOutputStream(path)) {
+			output.write(value.getBytes(StandardCharsets.UTF_8));
 		}
 	}
 }

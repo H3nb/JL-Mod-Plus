@@ -155,6 +155,17 @@ public class ProfilesManager {
 		return result;
 	}
 
+	@NonNull
+	static ArrayList<ProfileInfo> inspectProfiles(@NonNull File profilesRoot,
+			@Nullable List<Profile> profiles) {
+		ArrayList<ProfileInfo> result = new ArrayList<>();
+		if (profiles == null) return result;
+		for (Profile profile : profiles) {
+			result.add(inspectProfile(profile, new File(profilesRoot, profile.getName())));
+		}
+		return result;
+	}
+
 	/** Computes both independent capabilities once so picker and operation code share the same view. */
 	@NonNull
 	static ProfileInfo inspectProfile(@NonNull Profile profile) {
@@ -264,10 +275,14 @@ public class ProfilesManager {
 
 	/** Returns true when a directory or a saved layout already occupies this collection name. */
 	static boolean profileNameExists(@Nullable String rawName) {
+		return profileNameExists(new File(Config.getProfilesDir()), rawName);
+	}
+
+	static boolean profileNameExists(@NonNull File profilesRoot, @Nullable String rawName) {
 		if (!Profile.isValidName(rawName)) return false;
 		synchronized (PRESET_SOURCE_LOCK) {
 		try {
-			return profileNameExistsLocked(new File(Config.getProfilesDir()), rawName.trim());
+			return profileNameExistsLocked(profilesRoot, rawName.trim());
 		} catch (IOException | RuntimeException recoveryFailure) {
 			// A name with unsafe recovery evidence is occupied until that evidence can be resolved.
 			return true;
@@ -277,24 +292,42 @@ public class ProfilesManager {
 
 	static boolean profileNameExistsLocked(@NonNull File root, @NonNull String name)
 			throws IOException {
+		return resolveProfileEntryLocked(root, name) != null;
+	}
+
+	@Nullable
+	static File findProfileDirectory(@NonNull File root, @Nullable String name)
+			throws IOException {
+		if (name == null) return null;
+		synchronized (PRESET_SOURCE_LOCK) {
+			File entry = resolveProfileEntryLocked(root, name);
+			return entry != null && entry.isDirectory() ? entry : null;
+		}
+	}
+
+	/** One source-locked name resolver for occupancy and exact filesystem spelling. */
+	@Nullable
+	private static File resolveProfileEntryLocked(@NonNull File root, @NonNull String name)
+			throws IOException {
 		File[] entries = root.listFiles();
-		if (entries == null) return false;
+		if (entries == null) return null;
 		String flatConfig = name + Config.MIDLET_CONFIG_FILE;
 		String flatLayout = name + Config.MIDLET_KEY_LAYOUT_FILE;
+		File match = null;
 		for (File entry : entries) {
 			String entryName = entry.getName();
 			if (entry.isDirectory() && entryName.equalsIgnoreCase(name)) {
 				recoverInterruptedPresetSave(entry);
-				if (entry.exists()) return true;
-				continue;
+				if (!entry.exists()) continue;
 			}
 			if (entryName.equalsIgnoreCase(name)
 					|| entryName.equalsIgnoreCase(flatConfig)
 					|| entryName.equalsIgnoreCase(flatLayout)) {
-				return true;
+				if (match != null) throw new IOException("Ambiguous preset name: " + name);
+				match = entry;
 			}
 		}
-		return false;
+		return match;
 	}
 
 	@NonNull
@@ -1182,9 +1215,25 @@ public class ProfilesManager {
 		}
 	}
 
-	/** Saves only the separate layout artifact, converting an explicitly overwritten entry to layout-only. */
-	static void saveLayoutSnapshot(Profile profile, String fromPath) throws IOException {
-		saveLayoutSnapshot(profile.getDir(), new File(fromPath));
+	/** Resolves create versus confirmed overwrite at the publication boundary. */
+	static void saveLayoutSnapshot(@NonNull File profilesRoot, @NonNull String rawName,
+			@NonNull File sourceDir, boolean overwrite) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			String name = rawName.trim();
+			if (!Profile.isValidName(name)) throw new IOException("Invalid preset name");
+			File existing = resolveProfileEntryLocked(profilesRoot, name);
+			File target;
+			if (overwrite) {
+				if (existing == null || !existing.isDirectory()) {
+					throw new IOException("Preset to overwrite no longer exists");
+				}
+				target = existing;
+			} else {
+				if (existing != null) throw new IOException("Preset name already exists");
+				target = new File(profilesRoot, name);
+			}
+			saveLayoutSnapshot(target, sourceDir);
+		}
 	}
 
 	/** File-level entry point kept package-private for deterministic preset-save recovery tests. */

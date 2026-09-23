@@ -33,9 +33,10 @@ class LoadProfileAlert : DialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val allProfiles = ProfilesManager.getProfiles()
+        val root = (requireActivity() as ConfigActivity).profilesRoot
+        val allProfiles = ProfilesManager.getList(root)
         allProfiles.sort()
-        profiles = ProfilesManager.inspectProfiles(allProfiles)
+        profiles = ProfilesManager.inspectProfiles(root, allProfiles)
             .filter { it.keyboardLayout.isReady() }
             .map { it.profile }
     }

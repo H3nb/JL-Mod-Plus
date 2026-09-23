@@ -75,7 +75,7 @@ object ConfigDialogComposeBridge {
 
     interface SaveProfileCallbacks {
         fun onDismiss()
-        fun onConfirm(name: String)
+        fun onConfirm(name: String, overwrite: Boolean)
     }
 
     interface ShaderCallbacks {
@@ -304,7 +304,7 @@ private fun SaveProfileContent(
                     if (duplicate) {
                         overwriteVisible = true
                     } else {
-                        callbacks.onConfirm(trimmed)
+                        callbacks.onConfirm(trimmed, false)
                     }
                 },
             ) {
@@ -325,7 +325,7 @@ private fun SaveProfileContent(
             confirmButton = {
                 TextButton(onClick = {
                     overwriteVisible = false
-                    callbacks.onConfirm(trimmed)
+                    callbacks.onConfirm(trimmed, true)
                 }) {
                     Text(stringResource(R.string.save))
                 }

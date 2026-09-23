@@ -121,6 +121,28 @@ public class MidletConfigLoadBoundaryTest {
 	}
 
 	@Test
+	public void explicitProfilesRootKeepsSameNamedForeignSourceOutOfFollower() throws Exception {
+		File workdirA = tempDir("bound-workdir-a");
+		File workdirB = tempDir("active-workdir-b");
+		File profilesA = new File(workdirA, "templates");
+		File sourceA = new File(profilesA, "K800i");
+		File sourceB = new File(workdirB, "templates/K800i");
+		File target = new File(workdirA, "configs/Bounce");
+		assertTrue(sourceA.mkdirs());
+		assertTrue(sourceB.mkdirs());
+		assertTrue(target.mkdirs());
+		writeConfig(sourceA, 360, 1);
+		writeConfig(sourceB, 640, 1);
+		writeConfig(target, 176, 1);
+		FakePreferences preferences = linkedPreferences(target, "K800i");
+
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profilesA));
+
+		assertEquals(360, readConfig(target).screenWidth);
+		assertEquals(640, readConfig(sourceB).screenWidth);
+	}
+
+	@Test
 	public void linkedMissingSourceKeepsLastKnownGoodAndLinkage() throws Exception {
 		File profiles = tempDir("profiles-missing");
 		File target = tempDir("target-missing");

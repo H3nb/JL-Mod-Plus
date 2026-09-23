@@ -33,7 +33,8 @@ import io.github.h3nb.jlmodplus.ui.ThemedToast
 /** Compose presentation for saving a virtual keyboard layout with overwrite confirmation. */
 class SaveProfileAlert : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val existingProfileNames = ProfilesManager.getProfiles()
+        val activity = requireActivity() as ConfigActivity
+        val existingProfileNames = ProfilesManager.getList(activity.profilesRoot)
             .mapTo(mutableSetOf()) { it.name }
         val composeView = ComposeView(requireContext())
         ConfigDialogComposeBridge.setSaveProfileContent(
@@ -44,9 +45,9 @@ class SaveProfileAlert : DialogFragment() {
                     dismiss()
                 }
 
-                override fun onConfirm(name: String) {
+                override fun onConfirm(name: String, overwrite: Boolean) {
                     val activity = context as? ConfigActivity ?: return
-                    if (activity.saveKeyboardLayout(name)) {
+                    if (activity.saveKeyboardLayout(name, overwrite)) {
                         ThemedToast.show(activity, getString(R.string.saved, name), Toast.LENGTH_SHORT)
                         dismiss()
                     }

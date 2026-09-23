@@ -61,6 +61,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 	private SparseIntArray persistedEffectiveMap;
 	private ProfileModel params;
 	private File configDir;
+	private File profilesRoot;
 	private boolean namedProfile;
 	private String installedAppPath;
 	private long expectedAppId;
@@ -87,6 +88,15 @@ public class KeyMapperActivity extends AppCompatActivity {
 				.getDefaultSharedPreferences(getApplicationContext());
 		if (!namedProfile) {
 			installedAppPath = intent.getStringExtra(KEY_INSTALLED_APP_PATH);
+			File convertedDir = installedAppPath == null
+					? null : new File(installedAppPath).getParentFile();
+			File workDir = convertedDir == null ? null : convertedDir.getParentFile();
+			if (workDir == null) {
+				ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+				finish();
+				return;
+			}
+			profilesRoot = new File(workDir, "templates");
 			expectedAppId = savedInstanceState == null
 					? intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L)
 					: savedInstanceState.getLong(
@@ -238,7 +248,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 	private boolean initializeConfig(@NonNull SharedPreferences preferences) {
 		if (namedProfile) return loadConfig(preferences);
 		InstalledAppWriteGuard.Result result = runInstalledWrite(() ->
-				MidletConfigLoadBoundary.prepare(preferences, configDir)
+				MidletConfigLoadBoundary.prepare(preferences, configDir, profilesRoot)
 						&& loadConfig(preferences));
 		return result == InstalledAppWriteGuard.Result.SUCCESS;
 	}

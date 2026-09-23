@@ -16,6 +16,7 @@ import android.content.SharedPreferences;
 import com.google.gson.Gson;
 
 import org.junit.Test;
+import org.junit.Assume;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -396,6 +397,125 @@ public class ProfilesManagerPresetSaveRecoveryTest {
 		assertFalse(configFile(target).exists());
 		assertFalse(new File(target, "config.xml").exists());
 		assertFalse(saveRollback(target).exists());
+	}
+
+	@Test
+	public void layoutOverwriteUsesExistingFilesystemSpelling() throws Exception {
+		File root = tempDir("layout-case-overwrite");
+		File existing = new File(root, "K800i");
+		File source = tempDir("layout-case-source");
+		writeLayout(existing, 1);
+		writeLayout(source, 2);
+
+		ProfilesManager.saveLayoutSnapshot(root, "k800i", source, true);
+
+		assertArrayEquals(readLayout(source), readLayout(existing));
+		assertEquals(1, ProfilesManager.getList(root).size());
+		assertEquals("K800i", ProfilesManager.getList(root).get(0).getName());
+	}
+
+	@Test
+	public void layoutCreateRejectsNameClaimedAfterDialogDecision() throws Exception {
+		File root = tempDir("layout-create-race");
+		File existing = new File(root, "K800i");
+		File source = tempDir("layout-create-race-source");
+		writeLayout(existing, 1);
+		byte[] original = readLayout(existing);
+		writeLayout(source, 2);
+
+		expectIOException(() -> ProfilesManager.saveLayoutSnapshot(root, "k800i", source, false));
+
+		assertArrayEquals(original, readLayout(existing));
+		assertEquals(1, ProfilesManager.getList(root).size());
+	}
+
+	@Test
+	public void layoutOverwriteRejectsDisappearedEntry() throws Exception {
+		File root = tempDir("layout-overwrite-gone");
+		File source = tempDir("layout-overwrite-gone-source");
+		writeLayout(source, 2);
+
+		expectIOException(() -> ProfilesManager.saveLayoutSnapshot(root, "k800i", source, true));
+
+		assertFalse(new File(root, "k800i").exists());
+	}
+
+	@Test
+	public void layoutOverwriteRejectsAmbiguousLegacyEntries() throws Exception {
+		File root = tempDir("layout-ambiguous");
+		File first = new File(root, "K800i");
+		File second = new File(root, "k800i");
+		File source = tempDir("layout-ambiguous-source");
+		writeLayout(first, 1);
+		Assume.assumeTrue("Host filesystem cannot hold case-distinct directories",
+				second.mkdir());
+		writeLayout(second, 2);
+		writeLayout(source, 3);
+		byte[] firstBefore = readLayout(first);
+		byte[] secondBefore = readLayout(second);
+
+		expectIOException(() -> ProfilesManager.saveLayoutSnapshot(root, "K800i", source, true));
+
+		assertArrayEquals(firstBefore, readLayout(first));
+		assertArrayEquals(secondBefore, readLayout(second));
+	}
+
+	@Test
+	public void layoutCreateNewAndExactOverwriteStillWork() throws Exception {
+		File root = tempDir("layout-create-exact");
+		File target = new File(root, "K800i");
+		File source = tempDir("layout-create-exact-source");
+		writeLayout(source, 1);
+
+		ProfilesManager.saveLayoutSnapshot(root, "K800i", source, false);
+		assertArrayEquals(readLayout(source), readLayout(target));
+		writeLayout(source, 2);
+		ProfilesManager.saveLayoutSnapshot(root, "K800i", source, true);
+		assertArrayEquals(readLayout(source), readLayout(target));
+		assertEquals(1, ProfilesManager.getList(root).size());
+	}
+
+	@Test
+	public void explicitRootListsInspectsAndAppliesOnlyItsOwnPreset() throws Exception {
+		File rootA = tempDir("bound-list-a");
+		File rootB = tempDir("bound-list-b");
+		File sourceA = new File(rootA, "K800i");
+		File sourceB = new File(rootB, "K800i");
+		File current = tempDir("bound-list-current");
+		writeConfig(sourceA, 360);
+		writeLayout(sourceA, 1);
+		writeConfig(sourceB, 640);
+		writeLayout(sourceB, 2);
+		writeConfig(current, 176);
+		writeLayout(current, 3);
+
+		ArrayList<Profile> listed = ProfilesManager.getList(rootA);
+		assertEquals(1, listed.size());
+		assertEquals(360, ProfilesManager.inspectProfiles(rootA, listed).get(0).config.screenWidth);
+		File selected = ProfilesManager.findProfileDirectory(rootA, "K800i");
+		assertEquals(sourceA, selected);
+		ProfilesManager.load(selected, current, true, false, null);
+		assertEquals(360, readConfig(current).screenWidth);
+		assertEquals(640, readConfig(sourceB).screenWidth);
+		ProfilesManager.load(selected, current, false, true, null);
+		assertArrayEquals(readLayout(sourceA), readLayout(current));
+		assertFalse(java.util.Arrays.equals(readLayout(sourceB), readLayout(current)));
+	}
+
+	@Test
+	public void layoutSaveUsesCapturedRootRatherThanSameNamedForeignRoot() throws Exception {
+		File rootA = tempDir("bound-layout-a");
+		File rootB = tempDir("bound-layout-b");
+		File sourceB = new File(rootB, "K800i");
+		File current = tempDir("bound-layout-current");
+		writeLayout(sourceB, 1);
+		byte[] foreignBefore = readLayout(sourceB);
+		writeLayout(current, 2);
+
+		ProfilesManager.saveLayoutSnapshot(rootA, "K800i", current, false);
+
+		assertArrayEquals(readLayout(current), readLayout(new File(rootA, "K800i")));
+		assertArrayEquals(foreignBefore, readLayout(sourceB));
 	}
 
 	@Test
