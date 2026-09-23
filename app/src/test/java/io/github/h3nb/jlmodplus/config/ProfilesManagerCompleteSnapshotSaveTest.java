@@ -139,7 +139,7 @@ public class ProfilesManagerCompleteSnapshotSaveTest {
 		}
 
 		assertEquals(176, readConfig(target).screenWidth);
-		assertFalse(new File(root, "k800I").exists());
+		assertEquals(1, root.list().length);
 	}
 
 	@Test

@@ -356,7 +356,7 @@ public class PresetIdentitySerializationTest {
 		assertEquals(PresetLifecycle.Result.FAILED, renameResult.get());
 		assertTrue(oldSource.isDirectory());
 		assertEquals(640, readConfig(new File(root, "sony k800i")).screenWidth);
-		assertFalse(new File(root, "Sony K800i").exists());
+		assertEquals(2, root.list().length);
 	}
 
 	@Test
@@ -371,7 +371,7 @@ public class PresetIdentitySerializationTest {
 
 		assertTrue(oldSource.isDirectory());
 		assertArrayEquals(occupiedBytes, Files.readAllBytes(configFile(occupied).toPath()));
-		assertFalse(new File(root, "Sony K800i").exists());
+		assertEquals(2, root.list().length);
 	}
 
 	@Test
@@ -780,7 +780,7 @@ public class PresetIdentitySerializationTest {
 		expectIOException(() -> ProfilesManager.saveEditedSnapshot(session, draft));
 
 		assertArrayEquals(existing, Files.readAllBytes(configFile(occupied).toPath()));
-		assertFalse(target.exists());
+		assertEquals(1, root.list().length);
 	}
 
 	@Test

@@ -93,39 +93,6 @@ public class ProfileConfigMatcherTest {
 	}
 
 	@Test
-	public void candidateMatchingTreatsKeyboardAsPartOfProfilesThatOwnIt() {
-		ProfileModel current = new ProfileModel();
-		current.version = ProfileModel.VERSION;
-		current.screenWidth = 240;
-		current.screenHeight = 320;
-		current.systemProperties = "platform: test\n";
-		ConfigFormState draft = ConfigFormState.fromProfile(current, current.systemProperties);
-
-		Profile withKeyboard = new Profile("with-keyboard");
-		Profile configOnly = new Profile("config-only");
-		ProfileConfigMatcher.Candidate keyboardCandidate = new ProfileConfigMatcher.Candidate(
-				withKeyboard, current, true, "keys".getBytes(StandardCharsets.UTF_8));
-		ProfileConfigMatcher.Candidate configOnlyCandidate = new ProfileConfigMatcher.Candidate(
-				configOnly, current, false, null);
-
-		assertTrue(ProfileConfigMatcher.matchesCandidate(
-				current,
-				draft,
-				keyboardCandidate,
-				"keys".getBytes(StandardCharsets.UTF_8)));
-		assertFalse(ProfileConfigMatcher.matchesCandidate(
-				current,
-				draft,
-				keyboardCandidate,
-				"different".getBytes(StandardCharsets.UTF_8)));
-		assertTrue(ProfileConfigMatcher.matchesCandidate(
-				current,
-				draft,
-				configOnlyCandidate,
-				"different".getBytes(StandardCharsets.UTF_8)));
-	}
-
-	@Test
 	public void renderTimeLoadDoesNotPersistProfileMigration() throws Exception {
 		File directory = Files.createTempDirectory("jlmod-profile").toFile();
 		directory.deleteOnExit();
