@@ -34,7 +34,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.util.ContextHolder;
@@ -60,6 +63,7 @@ public class ProfilesManager {
 	static final String PRESET_SAVE_READY_MARKER = ".ready";
 	static final String PRESET_SAVE_NEW_PROFILE_MARKER = ".new-profile";
 	private static final Object PRESET_SOURCE_LOCK = new Object();
+	private static final Map<String, File> presetEditSessions = new HashMap<>();
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 	/** Shared process-local monitor for all named-preset source reads, writes, and lifecycle changes. */
@@ -198,6 +202,66 @@ public class ProfilesManager {
 		}
 	}
 
+	static final class PresetEditSession {
+		@NonNull final ProfileEditMode mode;
+		@NonNull final File target;
+		@Nullable final String token;
+
+		PresetEditSession(@NonNull ProfileEditMode mode, @NonNull File target,
+				@Nullable String token) {
+			this.mode = mode;
+			this.target = target.getAbsoluteFile();
+			this.token = token;
+		}
+	}
+
+	@NonNull
+	static PresetEditSession beginPresetEditSession(@NonNull File target, @NonNull File draft)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			File exactTarget = target.getAbsoluteFile();
+			ProfileEditMode mode = preparePresetEditDraft(exactTarget, draft);
+			String token = null;
+			if (mode == ProfileEditMode.EDIT_EXISTING) {
+				token = UUID.randomUUID().toString();
+				presetEditSessions.put(token, exactTarget);
+			}
+			return new PresetEditSession(mode, exactTarget, token);
+		}
+	}
+
+	static void releasePresetEditSession(@Nullable PresetEditSession session) {
+		if (session == null || session.token == null) return;
+		synchronized (PRESET_SOURCE_LOCK) {
+			if (session.target.equals(presetEditSessions.get(session.token))) {
+				presetEditSessions.remove(session.token);
+			}
+		}
+	}
+
+	static void invalidatePresetEditSessions(@NonNull File target) {
+		synchronized (PRESET_SOURCE_LOCK) {
+			File exactTarget = target.getAbsoluteFile();
+			Iterator<File> sessions = presetEditSessions.values().iterator();
+			while (sessions.hasNext()) {
+				if (exactTarget.equals(sessions.next())) sessions.remove();
+			}
+		}
+	}
+
+	static void saveEditedSnapshot(@NonNull PresetEditSession session, @NonNull File draft)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			if (session.mode == ProfileEditMode.EDIT_EXISTING
+					&& (session.token == null
+					|| !session.target.equals(presetEditSessions.get(session.token)))) {
+				throw new IOException("Preset editor session is no longer active");
+			}
+			saveEditedSnapshot(session.target, draft, session.mode);
+			releasePresetEditSession(session);
+		}
+	}
+
 	/** Returns true when a directory or a saved layout already occupies this collection name. */
 	static boolean profileNameExists(@Nullable String rawName) {
 		if (!Profile.isValidName(rawName)) return false;
@@ -319,11 +383,7 @@ public class ProfilesManager {
 		}
 	}
 
-	static ProfileEditMode preparePresetEditDraft(
-			@NonNull Profile profile, @NonNull File draftDir) throws IOException {
-		return preparePresetEditDraft(profile.getDir(), draftDir);
-	}
-
+	/** File-level preparation kept for source-recovery tests; editor callers issue a session. */
 	static ProfileEditMode preparePresetEditDraft(
 			@NonNull File sourceDir, @NonNull File draftDir) throws IOException {
 		synchronized (PRESET_SOURCE_LOCK) {
@@ -1063,24 +1123,13 @@ public class ProfilesManager {
 	 * the real profile so editing settings cannot accidentally destroy an artifact the editor could
 	 * not understand.
 	 */
-	static void saveEditedSnapshot(Profile profile, String fromPath) throws IOException {
-		saveEditedSnapshot(profile.getDir(), new File(fromPath), null);
-	}
-
-	static void saveEditedSnapshot(
-			@NonNull Profile profile,
-			@NonNull String fromPath,
-			@NonNull ProfileEditMode expectedMode) throws IOException {
-		saveEditedSnapshot(profile.getDir(), new File(fromPath), expectedMode);
-	}
-
-	/** File-level entry point kept package-private for deterministic preset-save recovery tests. */
+	/** File-level entry point kept package-private for deterministic transaction tests. */
 	static void saveEditedSnapshot(@NonNull File profileDir, @NonNull File sourceDir)
 			throws IOException {
 		saveEditedSnapshot(profileDir, sourceDir, null);
 	}
 
-	static void saveEditedSnapshot(
+	private static void saveEditedSnapshot(
 			@NonNull File profileDir,
 			@NonNull File sourceDir,
 			@Nullable ProfileEditMode expectedMode) throws IOException {

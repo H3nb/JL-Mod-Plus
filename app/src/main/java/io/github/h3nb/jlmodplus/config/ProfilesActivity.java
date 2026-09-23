@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.ComposeView;
 import androidx.preference.PreferenceManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,8 +51,10 @@ import io.github.h3nb.jlmodplus.ui.ThemedToast;
 import io.github.h3nb.jlmodplus.R;
 
 public class ProfilesActivity extends AppCompatActivity {
+	private static final String STATE_PROFILES_ROOT = "profiles_root";
 	private final Map<String, Profile> profilesByName = new HashMap<>();
 	private SharedPreferences preferences;
+	private File profilesRoot;
 	private ProfilesComposeController composeController;
 	private final ExecutorService profileExecutor = Executors.newSingleThreadExecutor();
 	private int refreshGeneration;
@@ -86,6 +89,9 @@ public class ProfilesActivity extends AppCompatActivity {
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		String savedRoot = savedInstanceState == null
+				? null : savedInstanceState.getString(STATE_PROFILES_ROOT);
+		profilesRoot = new File(savedRoot == null ? Config.getProfilesDir() : savedRoot).getAbsoluteFile();
 		composeController = new ProfilesComposeController(composeView, createActions());
 		refreshProfiles();
 	}
@@ -105,7 +111,7 @@ public class ProfilesActivity extends AppCompatActivity {
 
 			@Override
 			public void onCreate(@NonNull String name) {
-				editProfileLauncher.launch(name);
+				editProfileLauncher.launch(new File(profilesRoot, name).getAbsolutePath());
 			}
 
 			@Override
@@ -115,7 +121,7 @@ public class ProfilesActivity extends AppCompatActivity {
 
 			@Override
 			public void onSetDefault(@NonNull String name) {
-				if (setNamedDefault(preferences, new File(Config.getProfilesDir()), name)) {
+				if (setNamedDefault(preferences, profilesRoot, name)) {
 					refreshProfiles();
 				}
 			}
@@ -123,8 +129,9 @@ public class ProfilesActivity extends AppCompatActivity {
 			@Override
 			public void onEdit(@NonNull String name) {
 				Profile profile = profilesByName.get(name);
-				if (profile != null && ProfilesManager.inspectProfile(profile).settings.isReady()) {
-					editProfileLauncher.launch(name);
+				if (profile != null && ProfilesManager.inspectProfile(
+						profile, new File(profilesRoot, name)).settings.isReady()) {
+					editProfileLauncher.launch(new File(profilesRoot, name).getAbsolutePath());
 				}
 			}
 
@@ -132,13 +139,13 @@ public class ProfilesActivity extends AppCompatActivity {
 			public void onRename(@NonNull String oldName, @NonNull String newName) {
 				String normalizedName = newName.trim();
 				if (profilesByName.get(oldName) == null || !Profile.isValidName(normalizedName)
-						|| ProfilesManager.profileNameExists(normalizedName)) {
+						|| profileNameExists(profilesRoot, normalizedName)) {
 					return;
 				}
 				profileExecutor.execute(() -> {
 					PresetLifecycle.Result result = PresetLifecycle.rename(
 							preferences,
-							new File(Config.getProfilesDir()),
+							profilesRoot,
 							oldName,
 							normalizedName);
 					runOnUiThread(() -> finishLifecycleOperation(result));
@@ -151,7 +158,7 @@ public class ProfilesActivity extends AppCompatActivity {
 				profileExecutor.execute(() -> {
 					PresetLifecycle.Result result = PresetLifecycle.delete(
 							preferences,
-							new File(Config.getProfilesDir()),
+							profilesRoot,
 							name);
 					runOnUiThread(() -> finishLifecycleOperation(result));
 				});
@@ -162,6 +169,22 @@ public class ProfilesActivity extends AppCompatActivity {
 	static boolean setBuiltInDefault(@NonNull SharedPreferences preferences) {
 		synchronized (ProfilesManager.presetSourceLock()) {
 			return preferences.edit().remove(PREF_DEFAULT_PROFILE).commit();
+		}
+	}
+
+	@Override
+	protected void onSaveInstanceState(@NonNull Bundle outState) {
+		outState.putString(STATE_PROFILES_ROOT, profilesRoot.getAbsolutePath());
+		super.onSaveInstanceState(outState);
+	}
+
+	private static boolean profileNameExists(@NonNull File root, @NonNull String name) {
+		synchronized (ProfilesManager.presetSourceLock()) {
+			try {
+				return ProfilesManager.profileNameExistsLocked(root, name);
+			} catch (IOException | RuntimeException unavailable) {
+				return true;
+			}
 		}
 	}
 
@@ -190,9 +213,13 @@ public class ProfilesActivity extends AppCompatActivity {
 		final int generation = ++refreshGeneration;
 		final String defaultName = preferences.getString(PREF_DEFAULT_PROFILE, null);
 		profileExecutor.execute(() -> {
-			ArrayList<Profile> profiles = ProfilesManager.getProfiles();
+			ArrayList<Profile> profiles = ProfilesManager.getList(profilesRoot);
 			Collections.sort(profiles);
-			ArrayList<ProfilesManager.ProfileInfo> inspected = ProfilesManager.inspectProfiles(profiles);
+			ArrayList<ProfilesManager.ProfileInfo> inspected = new ArrayList<>(profiles.size());
+			for (Profile profile : profiles) {
+				inspected.add(ProfilesManager.inspectProfile(
+						profile, new File(profilesRoot, profile.getName())));
+			}
 			boolean hasValidDefault = false;
 			for (ProfilesManager.ProfileInfo info : inspected) {
 				if (info.completeSnapshotReady && defaultName != null

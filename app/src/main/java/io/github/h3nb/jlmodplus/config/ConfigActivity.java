@@ -105,6 +105,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private static final String STATE_PROFILE_DRAFT_PATH = "profile_edit_draft_path";
 	private static final String STATE_PROFILE_DRAFT_DIRTY = "profile_edit_draft_dirty";
 	private static final String STATE_PROFILE_EDIT_MODE = "profile_edit_mode";
+	private static final String STATE_PROFILE_EDIT_TOKEN = "profile_edit_token";
 	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
 
 	private final ArrayList<Size> screenPresets = new ArrayList<>();
@@ -127,10 +128,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private String workDir;
 	private boolean needShow;
 	private boolean operationRunning;
-	/** Target and isolated staging directory used while editing a reusable preset. */
-	@Nullable private Profile profileEditTarget;
+	/** Isolated staging directory and process-local authority for a reusable preset edit. */
 	@Nullable private File profileEditDraftDir;
-	@Nullable private ProfilesManager.ProfileEditMode profileEditMode;
+	@Nullable private ProfilesManager.PresetEditSession profileEditSession;
 	private boolean profileDraftDirty;
 	private boolean profileEditorResumeObserved;
 	private ConfigFormState currentForm;
@@ -326,25 +326,35 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			return;
 		}
 		if (isProfile) {
-			profileEditTarget = new Profile(path);
+			File profileEditTarget = new File(path).getAbsoluteFile();
 			String savedDraftPath = savedInstanceState == null
 					? null : savedInstanceState.getString(STATE_PROFILE_DRAFT_PATH);
 			String savedEditMode = savedInstanceState == null
 					? null : savedInstanceState.getString(STATE_PROFILE_EDIT_MODE);
+			String savedToken = savedInstanceState == null
+					? null : savedInstanceState.getString(STATE_PROFILE_EDIT_TOKEN);
 			try {
-				if (savedDraftPath != null && savedEditMode != null) {
+				if (savedInstanceState != null) {
+					if (savedDraftPath == null) {
+						throw new IOException("Missing saved preset editor draft");
+					}
 					File savedDraft = new File(savedDraftPath);
 					ProfilesManager.ProfileEditMode restoredMode = parseProfileEditMode(savedEditMode);
-					if (savedDraft.isDirectory() && restoredMode != null) {
-						profileEditDraftDir = savedDraft;
-						profileEditMode = restoredMode;
-					} else {
-						profileEditDraftDir = createProfileEditDraft(profileEditTarget);
+					if (!savedDraft.isDirectory() || restoredMode == null) {
+						throw new IOException("Preset editor draft cannot be restored");
 					}
+					profileEditDraftDir = savedDraft;
+					profileEditSession = new ProfilesManager.PresetEditSession(
+							restoredMode, profileEditTarget, savedToken);
 				} else {
 					profileEditDraftDir = createProfileEditDraft(profileEditTarget);
 				}
-			} catch (IOException e) {
+			} catch (IOException | RuntimeException e) {
+				if (savedToken != null) {
+					ProfilesManager.releasePresetEditSession(new ProfilesManager.PresetEditSession(
+							ProfilesManager.ProfileEditMode.EDIT_EXISTING,
+							profileEditTarget, savedToken));
+				}
 				Log.e(TAG, "createProfileEditDraft", e);
 				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 				finish();
@@ -353,8 +363,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			configDir = profileEditDraftDir;
 			profileDraftDirty = savedInstanceState != null
 					&& savedInstanceState.getBoolean(STATE_PROFILE_DRAFT_DIRTY, false);
-			workDir = Config.getEmulatorDir();
-			setTitle(getString(R.string.preset_edit_title, path));
+			File root = profileEditTarget.getParentFile();
+			File openedWorkdir = root == null ? null : root.getParentFile();
+			workDir = openedWorkdir == null ? Config.getEmulatorDir() : openedWorkdir.getPath();
+			setTitle(getString(R.string.preset_edit_title, profileEditTarget.getName()));
 		} else {
 			setTitle(intent.getStringExtra(KEY_MIDLET_NAME));
 			appDir = new File(path);
@@ -1093,8 +1105,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (isProfile && profileEditDraftDir != null) {
 			outState.putString(STATE_PROFILE_DRAFT_PATH, profileEditDraftDir.getAbsolutePath());
 			outState.putBoolean(STATE_PROFILE_DRAFT_DIRTY, profileDraftDirty);
-			if (profileEditMode != null) {
-				outState.putString(STATE_PROFILE_EDIT_MODE, profileEditMode.name());
+			if (profileEditSession != null) {
+				outState.putString(STATE_PROFILE_EDIT_MODE, profileEditSession.mode.name());
+				outState.putString(STATE_PROFILE_EDIT_TOKEN, profileEditSession.token);
 			}
 		}
 		super.onSaveInstanceState(outState);
@@ -1350,8 +1363,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		getWindow().getDecorView().removeCallbacks(gamepadCalibrationTicker);
 		profileMetadataExecutor.shutdownNow();
-		if (isProfile && profileEditDraftDir != null && !isChangingConfigurations()) {
-			FileUtils.deleteDirectory(profileEditDraftDir);
+		if (isProfile && !isChangingConfigurations()) {
+			ProfilesManager.releasePresetEditSession(profileEditSession);
+			if (profileEditDraftDir != null) FileUtils.deleteDirectory(profileEditDraftDir);
 			profileEditDraftDir = null;
 		}
 		if (hostPreferences != null) {
@@ -1527,7 +1541,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	private File createProfileEditDraft(@NonNull Profile profile) throws IOException {
+	private File createProfileEditDraft(@NonNull File target) throws IOException {
 		File cache = getCacheDir();
 		if (!cache.isDirectory() && !cache.mkdirs()) {
 			throw new IOException("Unable to create preset editor cache");
@@ -1540,7 +1554,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			throw new IOException("Unable to create preset editor draft");
 		}
 		try {
-			profileEditMode = ProfilesManager.preparePresetEditDraft(profile, draft);
+			profileEditSession = ProfilesManager.beginPresetEditSession(target, draft);
 			return draft;
 		} catch (IOException | RuntimeException failure) {
 			FileUtils.clearDirectory(draft);
@@ -1554,15 +1568,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private void saveProfileDraft() {
-		if (!isProfile || operationRunning || profileEditTarget == null || profileEditDraftDir == null) {
+		if (!isProfile || operationRunning || profileEditSession == null
+				|| profileEditDraftDir == null) {
 			return;
 		}
 		operationRunning = true;
 		try {
 			if (!saveParams()) throw new IOException("Unable to save preset editor draft");
-			if (profileEditMode == null) throw new IOException("Missing preset editor session mode");
-			ProfilesManager.saveEditedSnapshot(
-					profileEditTarget, profileEditDraftDir.getPath(), profileEditMode);
+			ProfilesManager.saveEditedSnapshot(profileEditSession, profileEditDraftDir);
 			profileDraftDirty = false;
 			setResult(RESULT_OK, new Intent().setData(getIntent().getData()));
 			finish();

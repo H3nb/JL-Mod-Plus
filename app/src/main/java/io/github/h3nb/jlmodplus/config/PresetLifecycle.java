@@ -12,7 +12,6 @@ import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Preserves name-based preset references while one saved preset is renamed or deleted.
+ * Preserves workdir-scoped preset references while one saved preset is renamed or deleted.
  *
  * <p>Rename publishes a byte-preserving copy before one durable reference rewrite. Delete clears
  * every matching reference before touching the source. MIDlet-local snapshots are never scanned
@@ -123,18 +122,19 @@ final class PresetLifecycle {
 
 		ReferenceSnapshot references;
 		try {
-			references = captureReferences(preferences, oldName);
+			references = captureReferences(preferences, profilesRoot, oldName);
 			if (!rewriteForRename(preferences, references, newName)) {
 				if (restoreReferences(preferences, references, false)) {
 					deleteRecursively(newSource);
 				}
 				return Result.FAILED;
 			}
-		} catch (RuntimeException metadataFailure) {
+		} catch (IOException | RuntimeException metadataFailure) {
 			// NEW and OLD are both complete here. Keeping both is the conservative crash-safe state
 			// when metadata durability cannot be established.
 			return Result.FAILED;
 		}
+		ProfilesManager.invalidatePresetEditSessions(oldSource);
 
 		try {
 			return fileActions.deleteSource(oldSource)
@@ -165,14 +165,15 @@ final class PresetLifecycle {
 
 		ReferenceSnapshot references;
 		try {
-			references = captureReferences(preferences, name);
+			references = captureReferences(preferences, profilesRoot, name);
 			if (!clearForDelete(preferences, references)) {
 				restoreReferences(preferences, references, true);
 				return Result.FAILED;
 			}
-		} catch (RuntimeException metadataFailure) {
+		} catch (IOException | RuntimeException metadataFailure) {
 			return Result.FAILED;
 		}
+		ProfilesManager.invalidatePresetEditSessions(source);
 
 		if (!source.exists()) return Result.SUCCESS;
 		try {
@@ -188,14 +189,26 @@ final class PresetLifecycle {
 	@NonNull
 	private static ReferenceSnapshot captureReferences(
 			@NonNull SharedPreferences preferences,
-			@NonNull String name) {
+			@NonNull File profilesRoot,
+			@NonNull String name) throws IOException {
 		Map<String, ?> all = preferences.getAll();
 		boolean defaultMatches = name.equals(all.get(PREF_DEFAULT_PROFILE));
 		String originPrefix = PresetLinkage.originPreferencePrefix();
+		File workdir = profilesRoot.getCanonicalFile().getParentFile();
+		if (workdir == null) throw new IOException("Preset root has no workdir");
+		File configRoot = new File(workdir, "configs").getCanonicalFile();
 		List<OriginReference> origins = new ArrayList<>();
 		for (Map.Entry<String, ?> entry : all.entrySet()) {
 			String key = entry.getKey();
 			if (!key.startsWith(originPrefix) || !name.equals(entry.getValue())) {
+				continue;
+			}
+			String path = key.substring(originPrefix.length());
+			File configDir = new File(path);
+			if (!configDir.isAbsolute() || configDir.getName().isEmpty()) continue;
+			try {
+				if (!configRoot.equals(configDir.getCanonicalFile().getParentFile())) continue;
+			} catch (IOException | RuntimeException malformedKey) {
 				continue;
 			}
 			String linkedKey = PresetLinkage.linkedPreferenceKeyForOriginKey(key);
