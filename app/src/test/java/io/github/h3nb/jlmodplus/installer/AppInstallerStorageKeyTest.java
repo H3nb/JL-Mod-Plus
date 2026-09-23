@@ -9,10 +9,14 @@ package io.github.h3nb.jlmodplus.installer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Collections;
+
+import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -93,6 +97,58 @@ public class AppInstallerStorageKeyTest {
 				converted, "Game", Collections.emptySet());
 
 		assertEquals("Game", selected.getName());
+	}
+
+	@Test
+	public void liveRuntimeReservesFreshNameAndNormalSuffixSelectionContinues() throws Exception {
+		File filesDir = temporaryFolder.newFolder("lease-files");
+		File root = temporaryFolder.newFolder("lease-work");
+		File converted = new File(root, "converted");
+		assertTrue(converted.mkdir());
+		File configs = new File(root, "configs");
+		assertTrue(configs.mkdir());
+		assertTrue(new File(configs, "Bounce_1").mkdir());
+		File oldPath = new File(converted, "Bounce");
+		try (RuntimeStorageLease ignored = RuntimeStorageLease.acquire(filesDir, oldPath)) {
+			assertEquals("Bounce_2", AppInstaller.chooseTargetDirectory(
+					converted, "Bounce", Collections.emptySet(), filesDir).getName());
+			File oldData = new File(root, "data/Bounce/save.rms");
+			assertTrue(oldData.getParentFile().mkdirs());
+			write(oldData, new byte[]{1, 2, 3});
+			assertFalse(new File(root, "data/Bounce_2/save.rms").exists());
+		}
+		assertEquals("Bounce_2", AppInstaller.chooseTargetDirectory(
+				converted, "Bounce", Collections.emptySet(), filesDir).getName());
+	}
+
+	@Test
+	public void liveLeaseIsScopedToWorkdirAndReleaseAllowsCleanReuse() throws Exception {
+		File filesDir = temporaryFolder.newFolder("lease-files-2");
+		File rootA = temporaryFolder.newFolder("lease-a");
+		File rootB = temporaryFolder.newFolder("lease-b");
+		File convertedA = new File(rootA, "converted");
+		File convertedB = new File(rootB, "converted");
+		assertTrue(convertedA.mkdir());
+		assertTrue(convertedB.mkdir());
+		try (RuntimeStorageLease ignored = RuntimeStorageLease.acquire(
+				filesDir, new File(convertedA, "Bounce"))) {
+			assertEquals("Bounce_1", AppInstaller.chooseTargetDirectory(
+					convertedA, "Bounce", Collections.emptySet(), filesDir).getName());
+			assertEquals("Bounce", AppInstaller.chooseTargetDirectory(
+					convertedB, "Bounce", Collections.emptySet(), filesDir).getName());
+		}
+		assertEquals("Bounce", AppInstaller.chooseTargetDirectory(
+				convertedA, "Bounce", Collections.emptySet(), filesDir).getName());
+	}
+
+	@Test
+	public void unknownLeaseStateNeverAllocatesCandidate() throws Exception {
+		File root = temporaryFolder.newFolder("lease-unavailable");
+		File converted = new File(root, "converted");
+		assertTrue(converted.mkdir());
+		File unusableFilesDir = temporaryFolder.newFile("not-a-directory");
+		assertThrows(IOException.class, () -> AppInstaller.chooseTargetDirectory(
+				converted, "Bounce", Collections.emptySet(), unusableFilesDir));
 	}
 
 	@Test

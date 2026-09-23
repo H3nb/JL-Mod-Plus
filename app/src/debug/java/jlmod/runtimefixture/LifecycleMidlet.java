@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
+import javax.microedition.util.ContextHolder;
 
 /** Debug-only MIDlet used by hosted runtime validation. */
 public final class LifecycleMidlet extends MIDlet {
@@ -32,6 +33,10 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String MODE_CRASH_PAUSE = "crash-pause";
 	public static final String MODE_CRASH_DESTROY = "crash-destroy";
 	public static final String MODE_CLEAN = "clean";
+	public static final String MODE_STORAGE_LEASE = "storage-lease";
+	public static final String STORAGE_TRIGGER_PROPERTY = "JLMod-Storage-Trigger";
+	public static final String STORAGE_WRITTEN_PROPERTY = "JLMod-Storage-Written";
+	private volatile boolean destroyed;
 	public static final String INIT_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture init failure";
 	public static final String START_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture start failure";
 	public static final String WORKER_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture worker failure";
@@ -68,6 +73,32 @@ public final class LifecycleMidlet extends MIDlet {
 			notifyDestroyed();
 			return;
 		}
+		if (MODE_STORAGE_LEASE.equals(mode)) {
+			writeMarker(getAppProperty(MARKER_PROPERTY));
+			String triggerPath = getAppProperty(STORAGE_TRIGGER_PROPERTY);
+			String writtenPath = getAppProperty(STORAGE_WRITTEN_PROPERTY);
+			new Thread(() -> {
+				while (!destroyed) {
+					if (triggerPath != null && new File(triggerPath).exists()) {
+						try (FileOutputStream output = ContextHolder.openFileOutput("old-save.rms")) {
+							output.write(17);
+							output.flush();
+							writeMarker(writtenPath);
+						} catch (IOException failure) {
+							throw new IllegalStateException("Unable to write old private data", failure);
+						}
+						return;
+					}
+					try {
+						Thread.sleep(50L);
+					} catch (InterruptedException interrupted) {
+						Thread.currentThread().interrupt();
+						return;
+					}
+				}
+			}, "StorageLeaseFixtureWriter").start();
+			return;
+		}
 		throw new IllegalStateException("Unknown lifecycle runtime fixture mode: " + mode);
 	}
 
@@ -80,6 +111,7 @@ public final class LifecycleMidlet extends MIDlet {
 
 	@Override
 	public void destroyApp(boolean unconditional) throws MIDletStateChangeException {
+		destroyed = true;
 		if (MODE_CRASH_DESTROY.equals(getAppProperty(MODE_PROPERTY))) {
 			throw new IllegalStateException(DESTROY_FAILURE_MARKER);
 		}
