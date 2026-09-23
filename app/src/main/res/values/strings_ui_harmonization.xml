@@ -21,6 +21,9 @@
     <string name="pref_accent_orange">Orange</string>
     <string name="pref_accent_pink">Pink</string>
     <string name="runtime_invalid_intent">Invalid launch request: the MIDlet path is missing.</string>
+    <string name="runtime_storage_in_use">MIDlet storage is already in use.</string>
+    <string name="runtime_installation_changed">The MIDlet installation changed before launch.</string>
+    <string name="runtime_storage_unavailable">Unable to reserve MIDlet storage.</string>
     <string name="runtime_no_midlets">No MIDlets were found in this application.</string>
     <string name="midlet_running_notification_title">MIDlet Running</string>
     <string name="midlet_running_notification_text">%1$s is running in the background.</string>

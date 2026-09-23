@@ -67,6 +67,7 @@ import io.reactivex.schedulers.Schedulers;
 import kotlin.io.ConstantsKt;
 import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.BuildConfig;
+import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
@@ -75,6 +76,7 @@ import io.github.h3nb.jlmodplus.crashes.CrashReporter;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionJournal;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.memory.MemoryRuntimeSession;
+import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 import io.github.h3nb.jlmodplus.util.AppUtils;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
@@ -104,6 +106,7 @@ public class MicroLoader {
 	private String jarSize;
 	private String jarSha256;
 	private TimingSession timingSession;
+	private RuntimeStorageLease storageLease;
 	private AutoSpeedController autoSpeedController;
 	private long memoryRuntimeToken;
 	private boolean timingTransformCompatible;
@@ -186,6 +189,18 @@ public class MicroLoader {
 		MemoryRuntimeSession.close(token);
 	}
 
+	private void closeStorageLease() {
+		RuntimeStorageLease lease = storageLease;
+		storageLease = null;
+		if (lease != null) {
+			try {
+				lease.close();
+			} catch (IOException error) {
+				Log.w(TAG, "Unable to release runtime storage lease", error);
+			}
+		}
+	}
+
 	/**
 	 * Releases a session created for a launch that never reached a MidletThread. This is called
 	 * from Activity teardown; once the thread has started, its lifecycle/failure paths own cleanup.
@@ -193,6 +208,7 @@ public class MicroLoader {
 	void closeTimingSessionIfNotTransferred() {
 		if (!timingSessionTransferred) {
 			closeTimingSession();
+			closeStorageLease();
 		}
 	}
 
@@ -505,8 +521,26 @@ public class MicroLoader {
 		if (timingSessionTransferred) {
 			return;
 		}
-		startTimingSession();
 		try {
+			// This lock lives with the actual MIDlet session, not its Activity. A second authority
+			// check closes the prepare/delete/install race before any MIDlet code can write data.
+			storageLease = RuntimeStorageLease.acquire(
+					ContextHolder.getAppContext().getFilesDir(), appDir);
+			if (storageLease == null) {
+				ContextHolder.getActivity().showErrorDialog(
+						ContextHolder.getActivity().getString(R.string.runtime_storage_in_use));
+				return;
+			}
+			PresetAuthorityClient.PrepareResult current = new PresetAuthorityClient(
+					ContextHolder.getAppContext()).prepareRuntime(appDir.getPath(), expectedAppId);
+			if (!current.isSuccess() || current.appId() != expectedAppId) {
+				closeTimingSession();
+				closeStorageLease();
+				ContextHolder.getActivity().showErrorDialog(
+						ContextHolder.getActivity().getString(R.string.runtime_installation_changed));
+				return;
+			}
+			startTimingSession();
 			MidletSessionStore.markStarted(
 					ContextHolder.getAppContext(), appDir.getPath(), appName, clazz, expectedAppId);
 			MidletSessionJournal journal = MidletSessionJournal.create(
@@ -523,16 +557,23 @@ public class MicroLoader {
 			CrashReporter.setMidletMainClass(clazz);
 			MidletThread midletThread = new MidletThread(this, clazz, journal);
 			midletThread.start();
-			// The thread now owns lifecycle cleanup. Set this after start() so a failed thread start
-			// still rolls back the session in the catch block below.
+			// The thread now owns lifecycle cleanup. Keep its storage lease until :midlet exits:
+			// guest worker threads may still write between terminal callbacks and process death.
+			// Set this after start() so a failed thread start still rolls back the launch.
 			timingSessionTransferred = true;
 			if (!BuildConfig.FULL_EMULATOR) {
 				return;
 			}
 			AppUtils.pushToRecentShortcuts(ContextHolder.getActivity(), appDir.getPath(), appName);
+		} catch (IOException failure) {
+			closeTimingSession();
+			closeStorageLease();
+			ContextHolder.getActivity().showErrorDialog(
+					ContextHolder.getActivity().getString(R.string.runtime_storage_unavailable));
 		} catch (RuntimeException | Error failure) {
 			if (!timingSessionTransferred) {
 				closeTimingSession();
+				closeStorageLease();
 			}
 			throw failure;
 		}

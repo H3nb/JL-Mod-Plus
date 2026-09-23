@@ -21,6 +21,9 @@
     <string name="pref_accent_orange">Oranye</string>
     <string name="pref_accent_pink">Merah Muda</string>
     <string name="runtime_invalid_intent">Permintaan peluncuran tidak valid: jalur MIDlet tidak tersedia.</string>
+    <string name="runtime_storage_in_use">Penyimpanan MIDlet sedang digunakan.</string>
+    <string name="runtime_installation_changed">Instalasi MIDlet berubah sebelum dijalankan.</string>
+    <string name="runtime_storage_unavailable">Tidak dapat mencadangkan penyimpanan MIDlet.</string>
     <string name="runtime_no_midlets">Tidak ada MIDlet yang ditemukan dalam aplikasi ini.</string>
     <string name="midlet_running_notification_title">MIDlet Berjalan</string>
     <string name="midlet_running_notification_text">%1$s sedang berjalan di latar belakang.</string>

@@ -56,6 +56,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryIconRevision;
 import io.github.h3nb.jlmodplus.librarydb.LibraryInstallRecovery;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.librarydb.WorkDirLayout;
+import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 import io.github.h3nb.jlmodplus.util.ConverterException;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
@@ -507,6 +508,11 @@ public class AppInstaller {
                     expectedWorkdir)) {
                 WorkDirLayout.requireConverted(expectedWorkdir);
                 if (currentApp == null) {
+                    // Conversion may outlive a runtime launch. Select again at the authoritative
+                    // publish boundary so a newly held lease gets the normal numeric suffix.
+                    generatePathName(
+                            newDesc.getName().replaceAll(FileUtils.ILLEGAL_FILENAME_CHARS, "").trim(),
+                            libraryViewModel.storageKeys(expectedGeneration, expectedWorkdir));
                     freshConfigDir = new File(new File(expectedWorkdir, "configs"), appDirName);
                     File freshDataDir = new File(new File(expectedWorkdir, "data"), appDirName);
                     if (targetDir.exists() || freshConfigDir.exists() || freshDataDir.exists()) {
@@ -736,22 +742,29 @@ public class AppInstaller {
         }
     }
 
-    private void generatePathName(String name, Set<String> indexedStorageKeys) {
-        File dir = chooseTargetDirectory(appsDir(), name, indexedStorageKeys);
+    private void generatePathName(String name, Set<String> indexedStorageKeys) throws IOException {
+        File dir = chooseTargetDirectory(appsDir(), name, indexedStorageKeys,
+                libraryViewModel.getApplication().getFilesDir());
         appDirName = dir.getName();
         targetDir = dir;
     }
 
     /** Compatibility helper retained for focused path-selection unit tests. */
-    static File chooseTargetDirectory(File appsDir, String name) {
+    static File chooseTargetDirectory(File appsDir, String name) throws IOException {
         return chooseTargetDirectory(appsDir, name, Collections.emptySet());
     }
 
     /**
-     * Pure path selection boundary: converted, indexed, config, and save-data identities all
+     * Path selection boundary: converted, indexed, config, save-data, and live runtime identities
      * reserve a storage key. Orphan side state is preserved and forces the normal numeric suffix.
      */
-    static File chooseTargetDirectory(File appsDir, String name, Set<String> indexedStorageKeys) {
+    static File chooseTargetDirectory(File appsDir, String name, Set<String> indexedStorageKeys)
+            throws IOException {
+        return chooseTargetDirectory(appsDir, name, indexedStorageKeys, null);
+    }
+
+    static File chooseTargetDirectory(File appsDir, String name, Set<String> indexedStorageKeys,
+            File filesDir) throws IOException {
         String safeName = name == null ? "" : name.trim();
         if (safeName.isEmpty() || ".".equals(safeName) || "..".equals(safeName)) {
             safeName = "MIDlet";
@@ -764,7 +777,8 @@ public class AppInstaller {
                 LibraryInstallRecovery.isReservedStorageKey(dir.getName()) ||
                         dir.exists() || indexedStorageKeys.contains(dir.getName()) ||
                         sideIdentityExists(configsDir, dir.getName()) ||
-                        sideIdentityExists(dataDir, dir.getName());
+                        sideIdentityExists(dataDir, dir.getName()) ||
+                        filesDir != null && RuntimeStorageLease.isActive(filesDir, dir);
                 i++) {
             dir = new File(appsDir, safeName + "_" + i);
         }
