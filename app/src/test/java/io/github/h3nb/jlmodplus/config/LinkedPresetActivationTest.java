@@ -94,6 +94,7 @@ public class LinkedPresetActivationTest {
 		assertEquals(FreshInstalledMidletInitializer.Result.BUILT_IN,
 				FreshInstalledMidletInitializer.initialize(preferences, root, target, false, ""));
 
+		assertTrue(FreshInstalledMidletInitializer.needsReview(target));
 		assertTrue(configFile(target).isFile());
 		assertFalse(layoutFile(target).exists());
 		assertTrue(isBuiltInOwned(preferences, target));
@@ -116,6 +117,7 @@ public class LinkedPresetActivationTest {
 
 		assertEquals(FreshInstalledMidletInitializer.Result.LINKED,
 				FreshInstalledMidletInitializer.initialize(preferences, root, first, false, ""));
+		assertTrue(FreshInstalledMidletInitializer.needsReview(first));
 		assertEquals(360, readConfig(first).screenWidth);
 		assertFalse(layoutFile(first).exists());
 		assertLinked(preferences, first, "K800i");
@@ -125,6 +127,7 @@ public class LinkedPresetActivationTest {
 		File second = new File(tempDir("fresh-custom-layout"), "GameB");
 		assertEquals(FreshInstalledMidletInitializer.Result.LINKED,
 				FreshInstalledMidletInitializer.initialize(preferences, root, second, true, ""));
+		assertTrue(FreshInstalledMidletInitializer.needsReview(second));
 		assertEquals(480, readConfig(second).screenWidth);
 		assertArrayEquals(readLayout(custom), readLayout(second));
 		assertLinked(preferences, second, "N95");
@@ -136,6 +139,7 @@ public class LinkedPresetActivationTest {
 		File third = new File(tempDir("fresh-builtin-after-named"), "GameC");
 		assertEquals(FreshInstalledMidletInitializer.Result.BUILT_IN,
 				FreshInstalledMidletInitializer.initialize(preferences, root, third, true, ""));
+		assertTrue(FreshInstalledMidletInitializer.needsReview(third));
 		assertTrue(isBuiltInOwned(preferences, third));
 		assertLinked(preferences, first, "K800i");
 		assertLinked(preferences, second, "N95");
@@ -188,11 +192,29 @@ public class LinkedPresetActivationTest {
 
 		assertEquals(FreshInstalledMidletInitializer.Result.CUSTOM,
 				FreshInstalledMidletInitializer.initialize(preferences, root, target, false, ""));
+		assertTrue(FreshInstalledMidletInitializer.needsReview(target));
 
 		assertEquals(360, readConfig(target).screenWidth);
 		assertEquals("K800i", new PresetLinkage(preferences, target).getOrigin());
 		assertFalse(new PresetLinkage(preferences, target).isLinked());
 		assertFalse(isBuiltInOwned(preferences, target));
+	}
+
+	@Test
+	public void freshReviewPersistsUntilPlayAndDoesNotRebindAnExistingConfig() throws Exception {
+		File root = tempDir("fresh-review-root");
+		File target = new File(tempDir("fresh-review-target"), "Game");
+		FakePreferences preferences = new FakePreferences();
+		assertEquals(FreshInstalledMidletInitializer.Result.BUILT_IN,
+				FreshInstalledMidletInitializer.initialize(preferences, root, target, false, ""));
+		assertTrue(FreshInstalledMidletInitializer.needsReview(target));
+		assertEquals(FreshInstalledMidletInitializer.Result.FAILED,
+				FreshInstalledMidletInitializer.initialize(preferences, root, target, false, ""));
+		assertTrue(FreshInstalledMidletInitializer.needsReview(target));
+		assertTrue(FreshInstalledMidletInitializer.markReviewed(target));
+		assertFalse(FreshInstalledMidletInitializer.needsReview(target));
+		assertTrue(FreshInstalledMidletInitializer.markReviewed(target));
+		assertTrue(configFile(target).isFile());
 	}
 
 	@Test

@@ -115,7 +115,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private final ArrayList<String> skinOptions = new ArrayList<>();
 	private final ArrayList<String> soundBankOptions = new ArrayList<>();
 
-	private File keylayoutFile;
 	private File dataDir;
 	private ProfileModel params;
 	@Nullable private ProfileModel persistedBaseline;
@@ -261,21 +260,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		@Override
 		public boolean onUpdatePreset(@NonNull String name) {
 			return updatePreset(name);
-		}
-
-		@Override
-		public void onSaveKeyboardLayout() {
-			showSaveKeyboardLayout();
-		}
-
-		@Override
-		public boolean onSaveKeyboardLayout(@NonNull String name) {
-			return saveKeyboardLayout(name);
-		}
-
-		@Override
-		public void onChooseKeyboardLayout() {
-			showKeyboardLayoutPicker();
 		}
 
 		@Override
@@ -429,6 +413,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				return;
 			}
 			intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
+			if (Config.requiresSettings(configDir)) needShow = true;
 		}
 		hostPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		hostPreferences.registerOnSharedPreferenceChangeListener(hostThemeListener);
@@ -445,7 +430,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			startMIDlet();
 			return;
 		}
-		loadKeyLayout();
 		refreshProfileMatchCache();
 		EdgeToEdgeCompat.enableForComposeSurface(this);
 		ComposeView composeView = new ComposeView(this);
@@ -553,7 +537,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 							ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
 							return;
 						}
-						loadKeyLayout();
 						refreshProfileMatchCache();
 						if (composeController != null) {
 							composeController.update(createUiState());
@@ -1331,11 +1314,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				text + key + " " + charset + "\n").build());
 	}
 
-	private void loadKeyLayout() {
-		File file = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
-		keylayoutFile = file;
-	}
-
 	@Override
 	public void onPause() {
 		cancelGamepadCalibration();
@@ -1607,7 +1585,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void startMIDlet() {
 		if (needShow && configDir != null) {
-			if (!saveParams()) {
+			boolean saved = isProfile
+					? saveParams()
+					: runInstalledWrite(() -> saveParamsWithInstalledIdentity()
+							&& FreshInstalledMidletInitializer.markReviewed(configDir));
+			if (!saved) {
 				ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
 				return;
 			}
@@ -1848,7 +1830,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					case LINKED:
 					case APPLIED_CUSTOM:
 						builtInThemeLinked = false;
-						loadKeyLayout();
 						loadParams(true, true);
 						return true;
 					case FAILED_SAFE:
@@ -2035,124 +2016,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	private void showKeyboardLayoutPicker() {
-		if (keylayoutFile == null) return;
-		LoadProfileAlert.newInstance()
-				.show(getSupportFragmentManager(), "load_keyboard_layout");
-	}
-
-	/** Applies only a saved keyboard artifact and leaves the current application-settings draft intact. */
-	boolean applyKeyboardLayout(@NonNull String name) {
-		if (operationRunning) return false;
-
-		if (isProfile) {
-			operationRunning = true;
-			try {
-				File sourceDir = ProfilesManager.findProfileDirectory(profilesRoot, name);
-				Profile profile = sourceDir == null ? null : new Profile(sourceDir.getName());
-				ProfilesManager.ProfileInfo inspected = profile == null
-						? null : ProfilesManager.inspectProfile(profile, sourceDir);
-				if (inspected == null || !inspected.keyboardLayout.isReady()) {
-					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-					return false;
-				}
-				ProfilesManager.load(sourceDir, configDir, false, true, null);
-				if (!setProfileOrigin(null)) {
-					Log.e(TAG, "Unable to clear preset editor provenance");
-				}
-				setBuiltInThemeLinked(false);
-				loadKeyLayout();
-				refreshProfileMatchCache();
-				if (composeController != null) composeController.update(createUiState());
-				return true;
-			} catch (IOException | RuntimeException failure) {
-				Log.e(TAG, "applyKeyboardLayout: " + name, failure);
-				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-				return false;
-			} finally {
-				operationRunning = false;
-			}
-		}
-
-		operationRunning = true;
-		try {
-			return runInstalledWrite(() -> applyKeyboardLayoutWithInstalledIdentity(name));
-		} finally {
-			operationRunning = false;
-		}
-	}
-
-	private boolean applyKeyboardLayoutWithInstalledIdentity(@NonNull String name) {
-		try {
-			boolean applied = false;
-			synchronized (ProfilesManager.presetSourceLock()) {
-				File sourceDir = ProfilesManager.findProfileDirectory(profilesRoot, name);
-				Profile currentProfile = sourceDir == null ? null : new Profile(sourceDir.getName());
-				ProfilesManager.ProfileInfo currentInfo = currentProfile == null
-						? null : ProfilesManager.inspectProfile(currentProfile, sourceDir);
-				if (currentInfo != null && currentInfo.keyboardLayout.isReady()) {
-					PresetSourceReplacement.Guard ownership =
-							PresetSourceReplacement.begin(hostPreferences, configDir);
-					if (ownership.canWrite()) {
-						profileOrigin = null;
-						builtInThemeLinked = false;
-						ProfilesManager.load(sourceDir, configDir, false, true, null);
-						applied = true;
-					}
-				}
-			}
-			if (!applied) {
-				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-				return false;
-			}
-			loadKeyLayout();
-			refreshProfileMatchCache();
-			if (composeController != null) composeController.update(createUiState());
-			return true;
-		} catch (IOException | RuntimeException failure) {
-			// The partial preset transaction cannot prove that no publication began. Remain CUSTOM.
-			Log.e(TAG, "applyKeyboardLayout: " + name, failure);
-			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-			if (composeController != null) composeController.update(createUiState());
-			return false;
-		}
-	}
-
-	private void showSaveKeyboardLayout() {
-		if (keylayoutFile == null) return;
-		SaveProfileAlert.newInstance()
-				.show(getSupportFragmentManager(), "save_keyboard_layout");
-	}
-
-	boolean saveKeyboardLayout(@NonNull String rawName) {
-		return saveKeyboardLayout(rawName, false);
-	}
-
-	boolean saveKeyboardLayout(@NonNull String rawName, boolean overwrite) {
-		String name = rawName.trim();
-		if (!Profile.isValidName(name)) {
-			ThemedToast.show(this, R.string.preset_invalid_name, Toast.LENGTH_SHORT);
-			return false;
-		}
-		return isProfile
-				? saveKeyboardLayoutWithInstalledIdentity(name, overwrite)
-				: runInstalledWrite(() -> saveKeyboardLayoutWithInstalledIdentity(name, overwrite));
-	}
-
-	private boolean saveKeyboardLayoutWithInstalledIdentity(
-			@NonNull String name, boolean overwrite) {
-		try {
-			ProfilesManager.saveLayoutSnapshot(profilesRoot, name, configDir, overwrite);
-			refreshProfileMatchCache();
-			if (composeController != null) composeController.update(createUiState());
-			return true;
-		} catch (IOException | RuntimeException e) {
-			Log.e(TAG, "saveKeyboardLayout: " + name, e);
-			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-			return false;
-		}
-	}
-
 	private void showColorPicker(ColorField field) {
 		if (composeController != null && currentForm != null
 				&& (field != ColorField.SCREEN_BACKGROUND
@@ -2285,19 +2148,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		String updatePresetName = resolveUpdatePresetName(
 				isProfile, profileStatus, originExists, draftDiverged);
 		ArrayList<ConfigUiState.ProfileTemplate> templates = new ArrayList<>();
-		ArrayList<ConfigUiState.ProfileTemplate> keyboardLayouts = new ArrayList<>();
-		for (ProfilesManager.ProfileInfo info : inspectedProfiles) {
-			if (info.keyboardLayout.isReady()) {
-				String name = info.profile.getName();
-				keyboardLayouts.add(new ConfigUiState.ProfileTemplate(
-						name,
-						name.equals(defaultProfile),
-						true,
-						info.config == null ? 0 : info.config.screenWidth,
-						info.config == null ? 0 : info.config.screenHeight,
-						info.config == null ? 0 : info.config.orientation));
-			}
-		}
 		for (ProfilesManager.ProfileInfo info : inspectedProfiles) {
 			if (!info.settings.isReady() || info.config == null) continue;
 			String name = info.profile.getName();
@@ -2313,8 +2163,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
 				profileStatus, templates, isProfile || hasCompatibleTimingTransform(),
-				KeyboardLayoutValidator.validate(keylayoutFile) == null,
-				profileNames, keyboardLayouts, hasControllerDevice(), updatePresetName);
+				profileNames, hasControllerDevice(), updatePresetName);
 	}
 
 	private boolean hasCompatibleTimingTransform() {

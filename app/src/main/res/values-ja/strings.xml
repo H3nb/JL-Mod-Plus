@@ -9,7 +9,6 @@
     <string name="action_settings">設定</string>
     <string name="add_profile_description">新しいプロファイルを作成</string>
     <string name="alert_map_menu">メニューキー (M) が未割当です！\nエミュレータオプションにアクセスできなくなる可能性があります。</string>
-    <string name="alert_rewrite_profile">\"%1$s\" というプロファイル名は既に存在します。\n上書きしますか？</string>
     <string name="CANCEL_CMD">キャンセル</string>
     <string name="choose">選択</string>
     <string name="CLEAR_DATA_CMD">データをクリア</string>

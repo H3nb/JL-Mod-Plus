@@ -560,7 +560,6 @@ private fun ConfigDestinationContent(
                 onFormChanged,
                 events,
                 onRequestAction,
-                showLayoutActions = !isProfile,
             )
             ConfigDestination.System -> {
                 EmulationSection(form, onFormChanged)
@@ -1378,7 +1377,6 @@ private fun InputSection(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     onRequestAction: (ConfigAction) -> Unit,
-    showLayoutActions: Boolean,
 ) {
     ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
         val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
@@ -1389,20 +1387,6 @@ private fun InputSection(
             options = layoutOptions,
             onSelected = { index -> onFormChanged(form.toBuilder().keyCodesLayout(index).build()) },
         )
-        if (showLayoutActions && state.keyboardLayouts.isNotEmpty()) {
-            ConfigActionPreference(
-                title = stringResource(R.string.choose_saved_keyboard_layout),
-                description = stringResource(R.string.choose_saved_keyboard_layout_summary),
-                onClick = events::onChooseKeyboardLayout,
-            )
-        }
-        if (showLayoutActions && state.hasKeyboardLayout) {
-            ConfigActionPreference(
-                title = stringResource(R.string.save_keyboard_layout),
-                description = stringResource(R.string.save_keyboard_layout_summary),
-                onClick = events::onSaveKeyboardLayout,
-            )
-        }
         ConfigActionPreference(
             title = stringResource(R.string.pref_map_keys),
             description = stringResource(R.string.config_help_key_mapping),

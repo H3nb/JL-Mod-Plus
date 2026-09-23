@@ -105,10 +105,9 @@ class ConfigComposeTest {
             base.profileStatus,
             base.profileTemplates,
             base.timingControlsEnabled,
-            base.hasKeyboardLayout,
             base.profileNames,
-            base.keyboardLayouts,
             false,
+			null,
         )
         composeRule.setContent {
             JLModPlusTheme {
@@ -128,6 +127,20 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("4-Way").assertExists()
         composeRule.onNodeWithText("8-Way").assertExists()
         composeRule.onNodeWithText("Numeric").assertExists()
+    }
+
+    @Test
+    fun inputSectionHasNoSeparateSavedLayoutActions() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Controls)
+            }
+        }
+
+        composeRule.onNodeWithText("Choose Saved Virtual Controls Layout").assertDoesNotExist()
+        composeRule.onNodeWithText("Save Virtual Controls Layout").assertDoesNotExist()
+        composeRule.onNodeWithText("Key Mappings").assertExists()
     }
 
     @Test
@@ -377,7 +390,6 @@ class ConfigComposeTest {
             base.profileStatus,
             emptyList(),
             true,
-            true,
         )
         val events = RecordingConfigEvents()
         composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
@@ -404,8 +416,9 @@ class ConfigComposeTest {
             base.profileStatus,
             emptyList(),
             true,
-            false,
             listOf("K800i"),
+            true,
+            null,
         )
         composeRule.setContent { JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) } }
 
@@ -439,9 +452,7 @@ class ConfigComposeTest {
             ConfigUiState.ProfileStatus.active("K800i", null),
             emptyList(),
             true,
-            false,
             listOf("K800i"),
-            emptyList(),
             false,
             null,
         )
@@ -465,9 +476,7 @@ class ConfigComposeTest {
             ConfigUiState.ProfileStatus.active("K800i", null),
             emptyList(),
             true,
-            false,
             listOf("K800i"),
-            emptyList(),
             false,
             "K800i",
         )

@@ -70,19 +70,6 @@ public interface ConfigFormEvents {
 		return true;
 	}
 
-	/** Opens the naming dialog for a layout-only saved entry. */
-	default void onSaveKeyboardLayout() {
-	}
-
-	/** Saves only the current virtual keyboard layout as a reusable layout entry. */
-	default boolean onSaveKeyboardLayout(@NonNull String name) {
-		return true;
-	}
-
-	/** Opens the saved keyboard-layout picker without replacing the current application settings draft. */
-	default void onChooseKeyboardLayout() {
-	}
-
 	/** Starts the host-owned controller calibration flow. */
 	default void onGamepadCalibration() {
 	}

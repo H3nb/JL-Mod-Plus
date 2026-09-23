@@ -12,7 +12,6 @@
     <string name="add_profile_description">Criar novo perfil</string>
     <string name="alert_map_menu">Tecla de menu (M) não está atribuída!\nIsto pode impossibilitar o acesso às opções do emulador</string>
     <string name="alert_msg_workdir_not_exists">Diretório de trabalho não existe no caminho:\n\'%1$s\'.\nVocê quer criá-lo ou escolher outro?</string>
-    <string name="alert_rewrite_profile">Um perfil chamado \"%1$s\" já existe.\nVocê deseja substituí-lo?</string>
     <string name="CANCEL_CMD">Cancelar</string>
     <string name="change">Alterar</string>
     <string name="choose">Escolher</string>

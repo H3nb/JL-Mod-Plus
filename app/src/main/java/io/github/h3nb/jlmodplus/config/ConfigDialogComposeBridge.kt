@@ -14,7 +14,6 @@
 
 package io.github.h3nb.jlmodplus.config
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,14 +31,8 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,7 +40,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,56 +49,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
-import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
-import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
 
 /** Java-facing callbacks keep persistence, toasts, and activity-result ownership in the host. */
 object ConfigDialogComposeBridge {
-    interface LoadProfileCallbacks {
-        fun onDismiss()
-        fun onConfirm(name: String)
-    }
-
-    interface SaveProfileCallbacks {
-        fun onDismiss()
-        fun onConfirm(name: String, overwrite: Boolean)
-    }
-
     interface ShaderCallbacks {
         fun onDismiss()
         fun onConfirm(values: FloatArray)
-    }
-
-    @JvmStatic
-    fun setLoadProfileContent(
-        view: ComposeView,
-        profiles: List<Profile>,
-        callbacks: LoadProfileCallbacks,
-    ) {
-        view.setContent {
-            JLModPlusTheme {
-                LoadProfileContent(profiles, callbacks)
-            }
-        }
-    }
-
-    @JvmStatic
-    fun setSaveProfileContent(
-        view: ComposeView,
-        existingProfileNames: Set<String>,
-        callbacks: SaveProfileCallbacks,
-    ) {
-        view.setContent {
-            JLModPlusTheme {
-                SaveProfileContent(existingProfileNames, callbacks)
-            }
-        }
     }
 
     @JvmStatic
@@ -177,160 +131,6 @@ private fun DialogSurface(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun LoadProfileContent(
-    profiles: List<Profile>,
-    callbacks: ConfigDialogComposeBridge.LoadProfileCallbacks,
-) {
-    DialogSurface(onDismissRequest = callbacks::onDismiss) {
-        Text(
-            stringResource(R.string.choose_saved_keyboard_layout),
-            style = MaterialTheme.typography.titleLarge,
-        )
-        Text(
-            stringResource(R.string.choose_saved_keyboard_layout_summary),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        if (profiles.isEmpty()) {
-            Text(
-                text = stringResource(R.string.no_data_for_display),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 20.dp),
-            )
-        } else {
-            val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-            val canScrollForward = rememberLazyListCanScrollForward(listState)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f, fill = false),
-            ) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    itemsIndexed(profiles) { _, profile ->
-                        ListItem(
-                            colors = ListItemDefaults.colors(
-                                containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                            ),
-                            headlineContent = { Text(profile.name) },
-                            supportingContent = {
-                                Text(stringResource(R.string.saved_keyboard_layout_summary))
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { callbacks.onConfirm(profile.name) },
-                        )
-                    }
-                }
-                ScrollableContentHint(
-                    visible = canScrollForward,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
-            }
-        }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            TextButton(onClick = callbacks::onDismiss) {
-                Text(stringResource(android.R.string.cancel))
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun SaveProfileContent(
-    existingProfileNames: Set<String>,
-    callbacks: ConfigDialogComposeBridge.SaveProfileCallbacks,
-) {
-    var name by rememberSaveable { mutableStateOf("") }
-    var touched by rememberSaveable { mutableStateOf(false) }
-    var overwriteVisible by rememberSaveable { mutableStateOf(false) }
-    val trimmed = name.trim()
-    val valid = trimmed.isNotEmpty() && Profile.isValidName(trimmed)
-    val duplicate = existingProfileNames.any { it.equals(trimmed, ignoreCase = true) }
-
-    DialogSurface(onDismissRequest = callbacks::onDismiss) {
-        Text(
-            stringResource(R.string.save_keyboard_layout),
-            style = MaterialTheme.typography.titleLarge,
-        )
-        val scrollState = rememberScrollState()
-        val canScrollForward = rememberScrollCanScrollForward(scrollState)
-        Box(Modifier.fillMaxWidth().weight(1f, fill = false)) {
-            Column(
-                modifier = Modifier.fillMaxWidth().verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    stringResource(R.string.save_keyboard_layout_summary),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = {
-                        touched = true
-                        name = it
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.profile_name_label)) },
-                    singleLine = true,
-                    isError = touched && !valid,
-                    supportingText = if (touched && !valid) {
-                        { Text(stringResource(R.string.preset_invalid_name)) }
-                    } else {
-                        null
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                )
-            }
-            ScrollableContentHint(canScrollForward, Modifier.align(Alignment.BottomCenter))
-        }
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = callbacks::onDismiss) {
-                Text(stringResource(android.R.string.cancel))
-            }
-            TextButton(
-                enabled = valid,
-                onClick = {
-                    if (duplicate) {
-                        overwriteVisible = true
-                    } else {
-                        callbacks.onConfirm(trimmed, false)
-                    }
-                },
-            ) {
-                Text(stringResource(R.string.save))
-            }
-        }
-    }
-
-    if (overwriteVisible) {
-        AlertDialog(
-            onDismissRequest = { overwriteVisible = false },
-            text = { Text(stringResource(R.string.alert_rewrite_profile, trimmed)) },
-            dismissButton = {
-                TextButton(onClick = { overwriteVisible = false }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    overwriteVisible = false
-                    callbacks.onConfirm(trimmed, true)
-                }) {
-                    Text(stringResource(R.string.save))
-                }
-            },
-        )
     }
 }
 

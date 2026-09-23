@@ -65,6 +65,48 @@ class ConfigActivityComposeSmokeTest {
     }
 
     @Test
+    fun freshlyInitializedAppRoutesThroughConfigUntilPlay() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        val root = File(context.filesDir, "first-open-config-fixture-${System.nanoTime()}")
+        fixtureRoot = root
+        val appDir = File(root, "converted/Bounce")
+        val configDir = File(root, "configs/Bounce")
+        assertTrue(appDir.mkdirs() || appDir.isDirectory)
+        val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+        assertTrue(FreshInstalledMidletInitializer.initialize(
+            preferences, File(root, "templates"), configDir, false).isSuccess)
+        assertTrue(FreshInstalledMidletInitializer.needsReview(configDir))
+        val appId = installIdentity(context, root, "Bounce")
+        val intent = Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.absolutePath),
+            context, ConfigActivity::class.java)
+            .putExtra(Constants.KEY_MIDLET_NAME, "Bounce")
+            .putExtra(Constants.KEY_LIBRARY_APP_ID, appId)
+
+        ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                assertNotNull(activity.findViewById<ComposeView>(R.id.config_compose_root))
+            }
+            val monitor = instrumentation.addMonitor(ConfigActivity::class.java.name, null, true)
+            try {
+                scenario.onActivity { activity ->
+                    Config.startApp(activity, "Bounce", appDir.absolutePath, appId)
+                }
+                assertTrue(instrumentation.checkMonitorHit(monitor, 1))
+            } finally {
+                instrumentation.removeMonitor(monitor)
+            }
+            assertTrue(FreshInstalledMidletInitializer.needsReview(configDir))
+            scenario.onActivity { activity ->
+                ConfigActivity::class.java.getDeclaredMethod("startMIDlet").apply {
+                    isAccessible = true
+                }.invoke(activity)
+            }
+        }
+        assertFalse(FreshInstalledMidletInitializer.needsReview(configDir))
+    }
+
+    @Test
     fun keyMapperInitializationUsesInstalledAppWorkdirWhenAnotherIsActive() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val preferences = PreferenceManager.getDefaultSharedPreferences(context)

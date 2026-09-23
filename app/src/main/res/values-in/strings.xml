@@ -17,7 +17,6 @@
     <string name="message_reset_layout">Atur ulang letak tombol ke bawaan?</string>
     <string name="alert_map_menu">Tombol menu (M) belum ditetapkan!\nIni membuat opsi emulator tidak bisa diakses.</string>
     <string name="alert_msg_workdir_not_exists">Direktori kerja tidak ditemukan di:\n\'%1$s\'.\nApakah Anda ingin membuatnya atau memilih direktori lain?</string>
-    <string name="alert_rewrite_profile">Profil bernama \"%1$s\" sudah ada.\n\nTimpa profil ini?</string>
     <string name="CANCEL_CMD">Batal</string>
     <string name="change">Ubah</string>
     <string name="choose">Pilih</string>

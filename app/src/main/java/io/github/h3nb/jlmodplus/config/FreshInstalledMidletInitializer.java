@@ -11,11 +11,13 @@ import android.content.SharedPreferences;
 import androidx.annotation.NonNull;
 
 import java.io.File;
+import java.io.IOException;
 
 import javax.microedition.util.ContextHolder;
 
 /** Binds the current complete default to one proven-fresh installed storage identity. */
 public final class FreshInstalledMidletInitializer {
+	private static final String PENDING_REVIEW_FILE = ".config-review-pending";
 	public enum Result {
 		LINKED,
 		CUSTOM,
@@ -65,10 +67,10 @@ public final class FreshInstalledMidletInitializer {
 						LinkedPresetActivation.Result activation = LinkedPresetActivation.activate(
 								preferences, configDir, sourceDir, defaultName);
 						if (activation == LinkedPresetActivation.Result.LINKED) {
-							return Result.LINKED;
+							return requireReviewMarker(preferences, configDir, Result.LINKED);
 						}
 						if (activation == LinkedPresetActivation.Result.APPLIED_CUSTOM) {
-							return Result.CUSTOM;
+							return requireReviewMarker(preferences, configDir, Result.CUSTOM);
 						}
 						if (activation == LinkedPresetActivation.Result.FAILED_UNSAFE) {
 							discardFreshInitialization(preferences, configDir);
@@ -79,7 +81,7 @@ public final class FreshInstalledMidletInitializer {
 
 				if (publishBuiltInLocked(preferences, configDir, darkTheme,
 						defaultSystemProperties)) {
-					return Result.BUILT_IN;
+					return requireReviewMarker(preferences, configDir, Result.BUILT_IN);
 				}
 				discardFreshInitialization(preferences, configDir);
 				return Result.FAILED;
@@ -88,6 +90,45 @@ public final class FreshInstalledMidletInitializer {
 				return Result.FAILED;
 			}
 		}
+	}
+
+	/** The marker belongs to the fresh config directory, so reinstall preserves its review state. */
+	public static boolean needsReview(@NonNull File configDir) {
+		return new File(configDir, PENDING_REVIEW_FILE).exists();
+	}
+
+	/** Called only after Play has saved the installed MIDlet configuration. */
+	static boolean markReviewed(@NonNull File configDir) {
+		File marker = new File(configDir, PENDING_REVIEW_FILE);
+		return !marker.exists() || marker.delete();
+	}
+
+	/** A bundle restore must preserve the installed identity's review state. */
+	public static void preserveReviewState(
+			@NonNull File currentConfigDir, @NonNull File stagedConfigDir) throws IOException {
+		File marker = new File(stagedConfigDir, PENDING_REVIEW_FILE);
+		if (!needsReview(currentConfigDir)) {
+			if (marker.exists() && !marker.delete()) {
+				throw new IOException("Unable to clear imported config review marker");
+			}
+			return;
+		}
+		if (marker.exists()) {
+			if (!marker.isFile()) throw new IOException("Invalid staged config review marker");
+		} else if (!marker.createNewFile()) {
+			throw new IOException("Unable to preserve pending config review");
+		}
+	}
+
+	private static Result requireReviewMarker(
+			@NonNull SharedPreferences preferences, @NonNull File configDir, Result result) {
+		try {
+			if (new File(configDir, PENDING_REVIEW_FILE).createNewFile()) return result;
+		} catch (java.io.IOException ignored) {
+			// A fresh install must not become launchable without its first-open decision.
+		}
+		discardFreshInitialization(preferences, configDir);
+		return Result.FAILED;
 	}
 
 	/** Publishes safe Built-in recovery without consulting today's named default. */

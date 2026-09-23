@@ -136,7 +136,7 @@ public class Config {
 					.append(MIDLET_CONFIG_FILE)
 					.toString();
 			File configFile = new File(configPath);
-			if (!configFile.exists()) {
+			if (requiresSettings(configFile.getParentFile())) {
 				openSettings(context, name, path, expectedAppId);
 				return false;
 			}
@@ -160,6 +160,11 @@ public class Config {
 		if (expectedAppId > 0L) intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
 		context.startActivity(intent);
 		return false;
+	}
+
+	static boolean requiresSettings(File configDir) {
+		return !new File(configDir, MIDLET_CONFIG_FILE.substring(1)).exists()
+				|| FreshInstalledMidletInitializer.needsReview(configDir);
 	}
 
 	public static boolean startApp(Context context, String name, Uri appUri) {

@@ -9,7 +9,6 @@
     <string name="action_reinstall">Neuinstallieren</string>
     <string name="action_settings">Einstellungen</string>
     <string name="add_profile_description">Neues Profil anlegen</string>
-    <string name="alert_rewrite_profile">Ein Profil mit dem Namen: \"%1$s\" existiert bereits.\nMöchtest du es überschreiben?</string>
     <string name="CANCEL_CMD">Abbrechen</string>
     <string name="change">Ändern</string>
     <string name="choose">Auswählen</string>

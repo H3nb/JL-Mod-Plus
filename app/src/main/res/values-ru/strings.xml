@@ -13,7 +13,6 @@
     <string name="add_resolution_preset">Добавить в предустановки</string>
     <string name="alert_map_menu">Кнопка меню (M) не назначена!\nЭто может сделать невозможным доступ к опциям эмулятора</string>
     <string name="alert_msg_workdir_not_exists">Рабочая папка эмулятора будет создана по пути:\n%1$s\nВы хотите создать её или выбрать другую?</string>
-    <string name="alert_rewrite_profile">Профиль \"%1$s\" уже есть.\nХотите его перезаписать?</string>
     <string name="CANCEL_CMD">Отмена</string>
     <string name="change">Изменить</string>
     <string name="choose">Выбрать</string>

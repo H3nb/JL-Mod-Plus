@@ -12,7 +12,6 @@
     <string name="add_profile_description">Створити новий профіль</string>
     <string name="alert_map_menu">Клавіша меню (M) не призначена!\nЦе може унеможливити доступ до параметрів емулятора</string>
     <string name="alert_msg_workdir_not_exists">Робочий каталог не існує за шляхом:\n\'%1$s\'.\nВи хочете створити його чи вибрати інший?</string>
-    <string name="alert_rewrite_profile">Профіль під назвою \"%1$s\" уже існує.\nВи хочете перезаписати його?</string>
     <string name="CANCEL_CMD">Скасувати</string>
     <string name="change">Змінити</string>
     <string name="choose">Вибрати</string>

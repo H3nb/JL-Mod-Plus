@@ -1168,64 +1168,6 @@ public class ProfilesManager {
 		}
 	}
 
-	/** Resolves create versus confirmed overwrite at the publication boundary. */
-	static void saveLayoutSnapshot(@NonNull File profilesRoot, @NonNull String rawName,
-			@NonNull File sourceDir, boolean overwrite) throws IOException {
-		synchronized (PRESET_SOURCE_LOCK) {
-			String name = rawName.trim();
-			if (!Profile.isValidName(name)) throw new IOException("Invalid preset name");
-			File existing = resolveProfileEntryLocked(profilesRoot, name);
-			File target;
-			if (overwrite) {
-				if (existing == null || !existing.isDirectory()) {
-					throw new IOException("Preset to overwrite no longer exists");
-				}
-				target = existing;
-			} else {
-				if (existing != null) throw new IOException("Preset name already exists");
-				target = new File(profilesRoot, name);
-			}
-			saveLayoutSnapshot(target, sourceDir);
-		}
-	}
-
-	/** File-level entry point kept package-private for deterministic preset-save recovery tests. */
-	static void saveLayoutSnapshot(@NonNull File profileDir, @NonNull File sourceDir)
-			throws IOException {
-		synchronized (PRESET_SOURCE_LOCK) {
-		recoverInterruptedPresetSave(profileDir);
-
-		File source = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
-		if (KeyboardLayoutValidator.validate(source) != null) {
-			throw new IOException("Current keyboard layout is not loadable");
-		}
-
-		boolean transactionCreatedProfile = !profileDir.exists();
-		if (profileDir.exists() && !profileDir.isDirectory()) {
-			throw new IOException("Preset path is not a directory");
-		}
-		PresetSaveTransaction transaction =
-				beginPresetSave(profileDir, transactionCreatedProfile);
-		File config = new File(profileDir, Config.MIDLET_CONFIG_FILE);
-		File legacyConfig = new File(profileDir, "config.xml");
-		File keyLayout = new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE);
-		try {
-			FileUtils.copyFileUsingChannel(source, keyLayout);
-			if (config.exists() && !config.delete()) {
-				throw new IOException("Unable to remove stale profile configuration");
-			}
-			if (legacyConfig.exists() && !legacyConfig.delete()) {
-				throw new IOException("Unable to remove stale legacy profile configuration");
-			}
-			transaction.commit();
-		} catch (IOException | RuntimeException failure) {
-			transaction.rollback(failure);
-			if (failure instanceof IOException) throw (IOException) failure;
-			throw failure;
-		}
-		}
-	}
-
 	@Nullable
 	public static ProfileModel loadConfig(File dir) {
 		return loadConfig(dir, true, BackgroundMigrationContext.MIDLET_CONFIG, false);

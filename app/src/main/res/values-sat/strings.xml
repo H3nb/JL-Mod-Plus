@@ -12,7 +12,6 @@
     <string name="add_profile_description">ᱱᱟᱶᱟ ᱢᱚᱦᱲᱟ ᱛᱮᱭᱟᱨ ᱢᱮ</string>
     <string name="alert_map_menu">ᱢᱮᱱᱩ ᱪᱟᱹᱵᱤ (M) ᱫᱚ ᱵᱟᱝ ᱪᱤᱱᱦᱟᱹᱯ ᱠᱟᱱᱟ !\n ᱱᱚᱶᱟ ᱮᱢᱩᱞᱮᱴᱚᱨ ᱠᱚᱣᱟᱜ ᱵᱟᱪᱷᱟᱣ ᱟᱫᱮᱨ ᱵᱟᱝ ᱮᱢᱟᱭ</string>
     <string name="alert_msg_workdir_not_exists">ᱡᱟᱭᱜᱟ ᱨᱮ ᱠᱟᱹᱢᱤ ᱰᱟᱭᱨᱮᱠᱴᱚᱨᱭ ᱵᱟᱹᱱᱩᱜᱼᱟ : \n%1$s ᱾ \nᱟᱢ ᱮᱪᱫ ᱛᱮᱭᱟᱨ ᱥᱮᱱᱟᱢ ᱠᱟᱱᱟ ᱥᱮ ᱟᱨᱵᱟᱝᱠᱷᱟᱱ ᱮᱴᱟᱜ ᱵᱟᱪᱷᱟᱣᱟᱢ ᱥᱮ ?</string>
-    <string name="alert_rewrite_profile">%1$s ᱧᱩᱛᱩᱢ ᱛᱮ ᱢᱟᱲᱟᱝ ᱠᱷᱚᱱ ᱢᱤᱫ ᱢᱚᱲᱟ ᱢᱮᱱᱟᱜᱼᱟ ᱾\n ᱟᱢ ᱪᱮᱫ ᱚᱱᱟ ᱪᱮᱛᱟᱱ ᱨᱮ ᱫᱚᱦᱚ ᱥᱟᱱᱟᱢ ᱠᱟᱱᱟ ᱥᱮ?</string>
     <string name="CANCEL_CMD">ᱵᱟᱹᱰᱨᱟᱹ</string>
     <string name="change">ᱵᱚᱫᱚᱞ</string>
     <string name="choose">ᱵᱟᱪᱷᱟᱣ</string>

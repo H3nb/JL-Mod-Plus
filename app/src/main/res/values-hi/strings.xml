@@ -12,7 +12,6 @@
     <string name="add_profile_description">नई प्रोफ़ाइल बनाएँ</string>
     <string name="alert_map_menu">मेनू कुंजी (M) असाइन नहीं की गई है!\nइससे एमुलेटर विकल्पों तक पहुंचना असंभव हो सकता है</string>
     <string name="alert_msg_workdir_not_exists">पथ पर कार्यशील निर्देशिका मौजूद नहीं है:\n\'%1$s\' । \nक्या आप इसे बनाना चाहते हैं या कोई अन्य चुनना चाहते हैं?</string>
-    <string name="alert_rewrite_profile">\"%1$s\" नाम की एक प्रोफ़ाइल पहले से मौजूद है।\nक्या आप इसे अधिलेखित करना चाहते हैं?</string>
     <string name="CANCEL_CMD">रद्द करें</string>
     <string name="change">बदलें</string>
     <string name="choose">चुनें</string>

@@ -12,7 +12,6 @@
     <string name="add_profile_description">إنشاء ملف شخصي جديد</string>
     <string name="alert_map_menu">لم يتم تعيين مفتاح القائمة (M)!\nقد يجعل هذا من المستحيل الوصول إلى خيارات المحاكي</string>
     <string name="alert_msg_workdir_not_exists">دليل العمل غير موجود في المسار:\n\'%1$s\'.\nهل تريد إنشاؤه أو اختيار دليل آخر؟</string>
-    <string name="alert_rewrite_profile">ملف تعريف اسمه \"%1$s\" موجود بالفعل.\nهل تريد الكتابة فوقه؟</string>
     <string name="CANCEL_CMD">الغاء</string>
     <string name="change">تغيير</string>
     <string name="choose">اختيار</string>

@@ -22,6 +22,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import io.github.h3nb.jlmodplus.util.Constants
 import io.github.h3nb.jlmodplus.jar.Descriptor
 import io.github.h3nb.jlmodplus.config.Config
+import io.github.h3nb.jlmodplus.config.FreshInstalledMidletInitializer
 import io.github.h3nb.jlmodplus.config.ProfileModel
 import io.github.h3nb.jlmodplus.config.ProfilesManager
 
@@ -75,6 +76,7 @@ class InstallerFilesystemTest {
             val installedConfigDir = File(installedWorkdir, "configs/${installed.name}")
             val installedConfig = File(installedConfigDir, Config.MIDLET_CONFIG_FILE)
             val freshBuiltInBytes = installedConfig.readBytes()
+            assertTrue(FreshInstalledMidletInitializer.needsReview(installedConfigDir))
             val builtInKey = ProfileModel.builtInThemePreferenceKey(installedConfigDir)
             assertTrue("Missing $builtInKey in ${preferences.all}",
                 preferences.getBoolean(builtInKey, false))
@@ -88,6 +90,7 @@ class InstallerFilesystemTest {
             assertEquals(AppInstaller.STATUS_EQUAL, Single.create<Int>(reinstall::loadInfo).blockingGet())
             assertEquals(AppInstaller.STATUS_SUCCESS, Single.create<Int>(reinstall::install).blockingGet())
             assertEquals(id, reinstall.installedId)
+            assertTrue(FreshInstalledMidletInitializer.needsReview(installedConfigDir))
             assertArrayEquals(originalJad, File(installed, AppReconverter.RETAINED_JAD).readBytes())
             assertArrayEquals(freshBuiltInBytes, installedConfig.readBytes())
             assertTrue(preferences.getBoolean(
