@@ -13,13 +13,13 @@ import org.junit.Test;
 
 public class ConfigActivityLinkedPresetDecisionTest {
 	@Test
-	public void combinedPresetIsCompleteOnlyForSettingsAndKeyboard() {
+	public void combinedPresetIsCompleteOnlyForWholeProfile() {
 		ProfilesManager.ProfileInfo combined = info(
 				ProfilesManager.CapabilityStatus.READY,
 				ProfilesManager.CapabilityStatus.READY);
 
 		assertTrue(ConfigActivity.isCompletePresetCandidate(
-				combined, ConfigFormEvents.PresetApplyScope.SETTINGS_AND_KEYBOARD));
+				combined, ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE));
 		assertFalse(ConfigActivity.isCompletePresetCandidate(
 				combined, ConfigFormEvents.PresetApplyScope.SETTINGS));
 		assertFalse(ConfigActivity.isCompletePresetCandidate(
@@ -27,27 +27,27 @@ public class ConfigActivityLinkedPresetDecisionTest {
 	}
 
 	@Test
-	public void configOnlyPresetIsCompleteOnlyForSettings() {
+	public void configOnlyPresetIsCompleteOnlyForWholeProfile() {
 		ProfilesManager.ProfileInfo configOnly = info(
 				ProfilesManager.CapabilityStatus.READY,
 				ProfilesManager.CapabilityStatus.ABSENT);
 
 		assertTrue(ConfigActivity.isCompletePresetCandidate(
-				configOnly, ConfigFormEvents.PresetApplyScope.SETTINGS));
+				configOnly, ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE));
 		assertFalse(ConfigActivity.isCompletePresetCandidate(
-				configOnly, ConfigFormEvents.PresetApplyScope.SETTINGS_AND_KEYBOARD));
+				configOnly, ConfigFormEvents.PresetApplyScope.SETTINGS));
 		assertFalse(ConfigActivity.isCompletePresetCandidate(
 				configOnly, ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT));
 	}
 
 	@Test
-	public void unavailableKeyboardArtifactStillMakesCombinedRequestTheCompleteCandidate() {
+	public void unavailableKeyboardArtifactCannotBeAppliedAsWholeProfile() {
 		ProfilesManager.ProfileInfo corruptCombined = info(
 				ProfilesManager.CapabilityStatus.READY,
 				ProfilesManager.CapabilityStatus.UNAVAILABLE);
 
-		assertTrue(ConfigActivity.isCompletePresetCandidate(
-				corruptCombined, ConfigFormEvents.PresetApplyScope.SETTINGS_AND_KEYBOARD));
+		assertFalse(ConfigActivity.isCompletePresetCandidate(
+				corruptCombined, ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE));
 		assertFalse(ConfigActivity.isCompletePresetCandidate(
 				corruptCombined, ConfigFormEvents.PresetApplyScope.SETTINGS));
 	}
@@ -183,6 +183,7 @@ public class ConfigActivityLinkedPresetDecisionTest {
 				config,
 				new ProfilesManager.Capability(settings, null),
 				new ProfilesManager.Capability(keyboard, null),
-				false);
+				settings == ProfilesManager.CapabilityStatus.READY
+						&& keyboard != ProfilesManager.CapabilityStatus.UNAVAILABLE);
 	}
 }

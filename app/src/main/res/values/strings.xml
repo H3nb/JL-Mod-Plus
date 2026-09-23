@@ -98,7 +98,7 @@
     <string name="runtime_preset_this_midlet_only">This MIDlet Only</string>
     <string name="runtime_preset_update_destination">Update %1$s</string>
     <string name="runtime_preset_local_explanation">Only this MIDlet’s virtual controls will change.</string>
-    <string name="runtime_preset_update_explanation">Replace %1$s with this MIDlet’s current settings and virtual controls layout.\nOther MIDlets using this preset will get the changes when they next start.</string>
+    <string name="runtime_preset_update_explanation">Replace %1$s with this MIDlet’s current settings and virtual controls layout.\nOther MIDlets using this profile will get the changes when they next start.</string>
     <string name="runtime_layout_apply_title">Apply %1$s?</string>
     <string name="runtime_apply">Apply</string>
     <string name="runtime_preset_update_failed">Saved for this MIDlet, but %1$s could not be updated.</string>
@@ -482,7 +482,7 @@
     <string name="pref_wakelock_title">Keep Screen On</string>
     <string name="fps_overlay_label">FPS</string>
     <string name="PREF_WIDTH">Width</string>
-    <string name="profiles">Presets</string>
+    <string name="profiles">Profiles</string>
     <string name="reinstall">App already installed.\n\nDo you want to reinstall it?\nAll data will be saved.</string>
     <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s\nAll data will be saved.</string>
     <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nThe older version may not work correctly with the recorded data.</string>

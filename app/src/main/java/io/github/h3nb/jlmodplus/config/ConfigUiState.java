@@ -168,6 +168,8 @@ public final class ConfigUiState {
 		@NonNull public final String name;
 		public final boolean isDefault;
 		public final boolean hasKeyboardLayout;
+		public final boolean hasSettings;
+		public final boolean completeSnapshotReady;
 		/** True when settings are readable but the separate layout artifact is not. */
 		public final boolean keyboardLayoutUnavailable;
 		public final int screenWidth;
@@ -185,9 +187,18 @@ public final class ConfigUiState {
 
 		public ProfileTemplate(@NonNull String name, boolean isDefault, boolean hasKeyboardLayout,
 				boolean keyboardLayoutUnavailable, int screenWidth, int screenHeight, int orientation) {
+			this(name, isDefault, hasKeyboardLayout, keyboardLayoutUnavailable,
+				true, !keyboardLayoutUnavailable, screenWidth, screenHeight, orientation);
+		}
+
+		public ProfileTemplate(@NonNull String name, boolean isDefault, boolean hasKeyboardLayout,
+				boolean keyboardLayoutUnavailable, boolean hasSettings,
+				boolean completeSnapshotReady, int screenWidth, int screenHeight, int orientation) {
 			this.name = name;
 			this.isDefault = isDefault;
 			this.hasKeyboardLayout = hasKeyboardLayout;
+			this.hasSettings = hasSettings;
+			this.completeSnapshotReady = completeSnapshotReady;
 			this.keyboardLayoutUnavailable = keyboardLayoutUnavailable;
 			this.screenWidth = screenWidth;
 			this.screenHeight = screenHeight;

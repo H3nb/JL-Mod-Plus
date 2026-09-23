@@ -1735,28 +1735,25 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (operationRunning) return false;
 
 		if (isProfile) {
-			boolean applySettings = scope != ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT;
-			boolean applyKeyboard = scope != ConfigFormEvents.PresetApplyScope.SETTINGS;
 			operationRunning = true;
 			try {
 				File sourceDir = ProfilesManager.findProfileDirectory(profilesRoot, name);
 				Profile profile = sourceDir == null ? null : new Profile(sourceDir.getName());
 				ProfilesManager.ProfileInfo inspected = profile == null
 						? null : ProfilesManager.inspectProfile(profile, sourceDir);
+				boolean whole = scope == ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE;
+				boolean applySettings = scope == ConfigFormEvents.PresetApplyScope.SETTINGS;
+				boolean applyKeyboard = scope == ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT;
 				if (inspected == null
+						|| (whole && !inspected.completeSnapshotReady)
 						|| (applySettings && !inspected.settings.isReady())
 						|| (applyKeyboard && !inspected.keyboardLayout.isReady())) {
 					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 					return false;
 				}
-				ProfilesManager.load(sourceDir, configDir, applySettings, applyKeyboard, null);
-				boolean sourceHasKeyboardArtifact =
-						inspected.keyboardLayout.status != ProfilesManager.CapabilityStatus.ABSENT;
-				boolean appliesCompleteSource =
-						scope == ConfigFormEvents.PresetApplyScope.SETTINGS_AND_KEYBOARD
-								|| (scope == ConfigFormEvents.PresetApplyScope.SETTINGS
-								&& !sourceHasKeyboardArtifact);
-				if (!setProfileOrigin(appliesCompleteSource ? profile.getName() : null)) {
+				if (whole) ProfilesManager.syncSnapshot(sourceDir, configDir);
+				else ProfilesManager.load(sourceDir, configDir, applySettings, applyKeyboard, null);
+				if (!setProfileOrigin(whole ? profile.getName() : null)) {
 					Log.e(TAG, "Unable to update preset editor provenance");
 				}
 				setBuiltInThemeLinked(false);
@@ -1796,11 +1793,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 						activation = LinkedPresetActivation.activate(
 								hostPreferences, configDir, sourceDir,
 								currentProfile.getName());
+					} else if (scope == ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE) {
+						sourceReady = false;
 					} else {
 						boolean applySettings =
-								scope != ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT;
+								scope == ConfigFormEvents.PresetApplyScope.SETTINGS;
 						boolean applyKeyboard =
-								scope != ConfigFormEvents.PresetApplyScope.SETTINGS;
+								scope == ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT;
 						sourceReady = (!applySettings || currentInfo.settings.isReady())
 								&& (!applyKeyboard || currentInfo.keyboardLayout.isReady());
 						if (sourceReady) {
@@ -2149,16 +2148,19 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				isProfile, profileStatus, originExists, draftDiverged);
 		ArrayList<ConfigUiState.ProfileTemplate> templates = new ArrayList<>();
 		for (ProfilesManager.ProfileInfo info : inspectedProfiles) {
-			if (!info.settings.isReady() || info.config == null) continue;
+			boolean hasSettings = info.settings.isReady() && info.config != null;
+			if (!hasSettings && !info.keyboardLayout.isReady()) continue;
 			String name = info.profile.getName();
 			templates.add(new ConfigUiState.ProfileTemplate(
-				name,
-				name.equals(defaultProfile),
-				info.keyboardLayout.isReady(),
-				info.keyboardLayout.status == ProfilesManager.CapabilityStatus.UNAVAILABLE,
-				info.config.screenWidth,
-				info.config.screenHeight,
-				info.config.orientation));
+					name,
+					name.equals(defaultProfile),
+					info.keyboardLayout.isReady(),
+					info.keyboardLayout.status == ProfilesManager.CapabilityStatus.UNAVAILABLE,
+					hasSettings,
+					info.completeSnapshotReady,
+					hasSettings ? info.config.screenWidth : 0,
+					hasSettings ? info.config.screenHeight : 0,
+					hasSettings ? info.config.orientation : 0));
 		}
 		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
@@ -2182,11 +2184,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	static boolean isCompletePresetCandidate(
 			@NonNull ProfilesManager.ProfileInfo inspected,
 			@NonNull ConfigFormEvents.PresetApplyScope scope) {
-		boolean ownsKeyboardArtifact =
-				inspected.keyboardLayout.status != ProfilesManager.CapabilityStatus.ABSENT;
-		return ownsKeyboardArtifact
-				? scope == ConfigFormEvents.PresetApplyScope.SETTINGS_AND_KEYBOARD
-				: scope == ConfigFormEvents.PresetApplyScope.SETTINGS;
+		return scope == ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE
+				&& inspected.completeSnapshotReady;
 	}
 
 	static boolean hasEffectiveDraftDivergence(

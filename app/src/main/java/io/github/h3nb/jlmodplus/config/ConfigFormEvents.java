@@ -97,7 +97,7 @@ public interface ConfigFormEvents {
 	enum PresetApplyScope {
 		SETTINGS,
 		KEYBOARD_LAYOUT,
-		SETTINGS_AND_KEYBOARD
+		WHOLE_PROFILE
 	}
 
 	enum ColorField {

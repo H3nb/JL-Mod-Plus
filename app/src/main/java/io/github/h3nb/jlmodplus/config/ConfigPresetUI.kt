@@ -26,11 +26,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -46,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -66,7 +62,9 @@ private fun savedPresetKey(name: String): String = "saved:$name"
 private data class PresetChoice(
     val name: String,
     val isBuiltIn: Boolean,
+    val hasSettings: Boolean,
     val hasKeyboardLayout: Boolean,
+    val completeSnapshotReady: Boolean,
 )
 
 @Composable
@@ -79,39 +77,32 @@ internal fun PresetSummary(
     var updateConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
     ConfigSection(
         title = stringResource(R.string.presets),
-        highlighted = true,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = stringResource(R.string.preset_current_configuration),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
             Text(
                 text = presetStatusTitle(state.profileStatus),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             provenanceSummary(state.profileStatus)?.let { provenance -> Text(
                 text = provenance,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.74f),
-                maxLines = 1,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             ) }
             Text(
                 text = setupSummary(state.form),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -262,7 +253,7 @@ private fun provenanceSummary(status: ConfigUiState.ProfileStatus): String? = wh
     status.modified && status.sourceProfile != null ->
         stringResource(R.string.preset_based_on_modified, status.sourceProfile)
     status.activeProfile != null ->
-        stringResource(R.string.preset_following, status.activeProfile)
+        stringResource(R.string.profile_follows_updates)
     else -> null
 }
 
@@ -282,33 +273,36 @@ private fun PresetPickerDialog(
     onApply: (PresetChoice, ConfigFormEvents.PresetApplyScope) -> Boolean,
 ) {
     var selectedKey by rememberSaveable { mutableStateOf<String?>(null) }
-    var choosePartsVisible by rememberSaveable { mutableStateOf(false) }
     var applyErrorVisible by rememberSaveable { mutableStateOf(false) }
-    var scopeKey by rememberSaveable(selectedKey) {
-        mutableStateOf(ConfigFormEvents.PresetApplyScope.SETTINGS_AND_KEYBOARD.name)
-    }
     val maxHeight = adaptiveDialogLayout().maxHeight
     val selectedChoice = when {
         selectedKey == BUILT_IN_PRESET_KEY -> PresetChoice(
             name = "",
             isBuiltIn = true,
+            hasSettings = true,
             hasKeyboardLayout = false,
+            completeSnapshotReady = false,
         )
         selectedKey != null -> templates.firstOrNull { savedPresetKey(it.name) == selectedKey }?.let { template ->
             PresetChoice(
                 name = template.name,
                 isBuiltIn = false,
+                hasSettings = template.hasSettings,
                 hasKeyboardLayout = template.hasKeyboardLayout,
+                completeSnapshotReady = template.completeSnapshotReady,
             )
         }
         else -> null
     }
-    val selectedScope = if (selectedChoice?.hasKeyboardLayout == true) {
-        runCatching { ConfigFormEvents.PresetApplyScope.valueOf(scopeKey) }
-            .getOrDefault(ConfigFormEvents.PresetApplyScope.SETTINGS_AND_KEYBOARD)
-    } else {
-        ConfigFormEvents.PresetApplyScope.SETTINGS
+    val availableScopes = buildList {
+        if (selectedChoice?.completeSnapshotReady == true) {
+            add(ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE)
+        }
+        if (selectedChoice?.hasSettings == true) add(ConfigFormEvents.PresetApplyScope.SETTINGS)
+        if (selectedChoice?.hasKeyboardLayout == true) add(ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT)
     }
+    var scopeKey by rememberSaveable(selectedKey) { mutableStateOf(availableScopes.firstOrNull()?.name) }
+    val selectedScope = availableScopes.firstOrNull { it.name == scopeKey }
     AlertDialog(
         maxWidth = PresetPickerMaximumWidth,
         textScrollable = false,
@@ -326,7 +320,6 @@ private fun PresetPickerDialog(
                         name = stringResource(R.string.preset_builtin),
                         summary = stringResource(R.string.preset_builtin_summary),
                         selected = selectedKey == BUILT_IN_PRESET_KEY,
-                        onChooseParts = null,
                         onClick = {
                             selectedKey = BUILT_IN_PRESET_KEY
                             applyErrorVisible = false
@@ -338,34 +331,38 @@ private fun PresetPickerDialog(
                         name = template.name,
                         summary = presetDescription(template),
                         selected = selectedKey == savedPresetKey(template.name),
-                        onChooseParts = if (template.hasKeyboardLayout) {
-                            {
-                                selectedKey = savedPresetKey(template.name)
-                                applyErrorVisible = false
-                                choosePartsVisible = true
-                            }
-                        } else {
-                            null
-                        },
                         onClick = {
                             selectedKey = savedPresetKey(template.name)
                             applyErrorVisible = false
                         },
                     )
                 }
-                selectedChoice?.takeIf { applyErrorVisible }?.let {
-                    item(key = "selected-actions") {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            HorizontalDivider(modifier = Modifier.padding(top = 4.dp))
-                            if (applyErrorVisible) {
-                                Text(
-                                    text = stringResource(R.string.preset_apply_failed_summary),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.padding(top = 4.dp),
-                                )
-                            }
-                        }
+                if (selectedChoice != null) {
+                    item(key = "apply-scope-title") {
+                        Text(
+                            text = stringResource(R.string.preset_choose_parts),
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                    }
+                    items(availableScopes, key = { "scope:${it.name}" }) { scope ->
+                        PresetScopeRow(
+                            scope = scope,
+                            selected = selectedScope == scope,
+                            isBuiltIn = selectedChoice.isBuiltIn,
+                            hasLayout = selectedChoice.hasKeyboardLayout,
+                            onClick = {
+                                scopeKey = scope.name
+                                applyErrorVisible = false
+                            },
+                        )
+                    }
+                    if (applyErrorVisible) item(key = "apply-error") {
+                        Text(
+                            text = stringResource(R.string.preset_apply_failed_summary),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
                     }
                 }
             }
@@ -375,111 +372,63 @@ private fun PresetPickerDialog(
                 TextButton(onClick = onManage) { Text(stringResource(R.string.preset_manage)) }
                 TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) }
                 TextButton(
-                    enabled = selectedChoice != null,
+                    enabled = selectedChoice != null && selectedScope != null,
                     onClick = {
                         selectedChoice?.let { choice ->
-                            applyErrorVisible = !onApply(choice, selectedScope)
+                            selectedScope?.let { scope -> applyErrorVisible = !onApply(choice, scope) }
                         }
                     },
                 ) { Text(stringResource(R.string.preset_apply)) }
             }
         },
     )
-    if (choosePartsVisible && selectedChoice?.hasKeyboardLayout == true) {
-        PresetPartsDialog(
-            initialScope = selectedScope,
-            onDismissRequest = { choosePartsVisible = false },
-            onConfirm = { scope ->
-                scopeKey = scope.name
-                choosePartsVisible = false
-            },
+}
+
+@Composable
+private fun PresetScopeRow(
+    scope: ConfigFormEvents.PresetApplyScope,
+    selected: Boolean,
+    isBuiltIn: Boolean,
+    hasLayout: Boolean,
+    onClick: () -> Unit,
+) {
+    val label = when (scope) {
+        ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE -> stringResource(R.string.profile_apply_whole)
+        ConfigFormEvents.PresetApplyScope.SETTINGS -> stringResource(R.string.profile_apply_settings_only)
+        ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT -> stringResource(R.string.profile_apply_layout_only)
+    }
+    val description = when (scope) {
+        ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE -> stringResource(
+            if (hasLayout) R.string.profile_apply_whole_follows
+            else R.string.profile_apply_whole_without_layout,
         )
+        ConfigFormEvents.PresetApplyScope.SETTINGS -> stringResource(
+            if (isBuiltIn) R.string.profile_apply_builtin_settings
+            else R.string.profile_apply_settings_keeps_layout,
+        )
+        ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT -> stringResource(R.string.profile_apply_layout_keeps_settings)
     }
-}
-
-@Composable
-private fun PresetPartsDialog(
-    initialScope: ConfigFormEvents.PresetApplyScope,
-    onDismissRequest: () -> Unit,
-    onConfirm: (ConfigFormEvents.PresetApplyScope) -> Unit,
-) {
-    var settings by rememberSaveable(initialScope) {
-        mutableStateOf(initialScope != ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT)
-    }
-    var keyboard by rememberSaveable(initialScope) {
-        mutableStateOf(initialScope != ConfigFormEvents.PresetApplyScope.SETTINGS)
-    }
-    val scope = when {
-        settings && keyboard -> ConfigFormEvents.PresetApplyScope.SETTINGS_AND_KEYBOARD
-        settings -> ConfigFormEvents.PresetApplyScope.SETTINGS
-        keyboard -> ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT
-        else -> null
-    }
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
-        title = { Text(stringResource(R.string.preset_choose_parts)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    stringResource(R.string.preset_choose_parts_summary),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                ApplyPartRow(
-                    label = stringResource(R.string.preset_settings_part),
-                    checked = settings,
-                    onCheckedChange = { settings = it },
-                    testTag = "preset_apply_settings_part",
-                )
-                ApplyPartRow(
-                    label = stringResource(R.string.preset_keyboard_part),
-                    checked = keyboard,
-                    onCheckedChange = { keyboard = it },
-                    testTag = "preset_apply_keyboard_part",
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) }
-        },
-        confirmButton = {
-            TextButton(
-                modifier = Modifier.testTag("preset_parts_apply"),
-                enabled = scope != null,
-                onClick = { scope?.let(onConfirm) },
-            ) {
-                Text(stringResource(R.string.preset_apply))
-            }
-        },
-    )
-}
-
-@Composable
-private fun ApplyPartRow(
-    label: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    testTag: String,
-) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag(testTag)
-            .toggleable(
-                value = checked,
-                role = Role.Checkbox,
-                onValueChange = onCheckedChange,
-            )
+            .testTag("profile_scope_${scope.name.lowercase()}")
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .heightIn(min = 48.dp)
-            .padding(vertical = 4.dp),
+            .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Checkbox(checked = checked, onCheckedChange = null)
-        Text(label, modifier = Modifier.padding(start = 8.dp))
+        RadioButton(selected = selected, onClick = null)
+        Column(modifier = Modifier.padding(start = 8.dp)) {
+            Text(label, style = MaterialTheme.typography.bodyMedium)
+            Text(description, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
 @Composable
 private fun presetDescription(template: ConfigUiState.ProfileTemplate): String {
+    if (!template.hasSettings) return stringResource(R.string.saved_keyboard_layout_summary)
     val orientations = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
     val orientation = orientations.getOrNull(template.orientation)
     val configuration = buildString {
@@ -503,7 +452,6 @@ private fun PresetPickerRow(
     name: String,
     summary: String,
     selected: Boolean,
-    onChooseParts: (() -> Unit)?,
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -536,15 +484,6 @@ private fun PresetPickerRow(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-            }
-            onChooseParts?.let { chooseParts ->
-                androidx.compose.material3.IconButton(onClick = chooseParts) {
-                    androidx.compose.material3.Icon(
-                        painter = painterResource(R.drawable.ic_tune),
-                        contentDescription = stringResource(R.string.preset_choose_parts),
-                        tint = if (selected) colors.onSecondaryContainer else colors.primary,
-                    )
-                }
             }
         }
     }
