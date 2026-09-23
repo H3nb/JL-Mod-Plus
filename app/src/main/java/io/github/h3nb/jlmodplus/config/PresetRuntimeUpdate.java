@@ -13,7 +13,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Narrow runtime bridge for explicit whole-device preset updates.
+ * Narrow runtime bridge for layout-only updates to an explicitly named preset.
  *
  * <p>Runtime code never reads linkage preference keys or writes a preset source directly.</p>
  */
@@ -51,7 +51,8 @@ final class PresetRuntimeUpdate {
 			@NonNull SharedPreferences preferences,
 			@NonNull File currentConfigDir,
 			@NonNull File profilesRoot,
-			@NonNull String name) {
+			@NonNull String name,
+			boolean wasLinked) {
 		synchronized (ProfilesManager.presetSourceLock()) {
 			if (!Profile.isValidName(name)) {
 				return PresetSourceSave.Result.FAILED;
@@ -62,8 +63,8 @@ final class PresetRuntimeUpdate {
 			if (!name.equals(currentOrigin)) {
 				return PresetSourceSave.Result.FAILED;
 			}
-			return PresetSourceSave.updateExisting(
-					preferences, currentConfigDir, profilesRoot, name);
+			return PresetSourceSave.updateLayoutOnly(
+					preferences, currentConfigDir, profilesRoot, name, wasLinked);
 		}
 	}
 

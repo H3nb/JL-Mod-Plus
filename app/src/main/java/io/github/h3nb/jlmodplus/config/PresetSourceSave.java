@@ -12,7 +12,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Coordinates one whole-device preset source save with the current MIDlet ownership transition.
+ * Coordinates preset source publication with the current MIDlet ownership transition.
  *
  * <p>Source publication commits first. The current local snapshot is never rolled back by this
  * coordinator, and other followers remain lazy.</p>
@@ -58,6 +58,32 @@ final class PresetSourceSave {
 				ProfilesManager.updateCompleteSnapshot(new File(profilesRoot, name), currentConfigDir);
 			} catch (IOException | RuntimeException sourceFailure) {
 				return Result.FAILED;
+			}
+			return relinkCommittedSource(preferences, currentConfigDir, name);
+		}
+	}
+
+	@NonNull
+	static Result updateLayoutOnly(
+			@NonNull SharedPreferences preferences,
+			@NonNull File currentConfigDir,
+			@NonNull File profilesRoot,
+			@NonNull String name,
+			boolean wasLinked) {
+		synchronized (ProfilesManager.presetSourceLock()) {
+			if (!name.equals(new PresetLinkage(preferences, currentConfigDir).getOrigin())) {
+				return Result.FAILED;
+			}
+			File sourceDir = new File(profilesRoot, name);
+			try {
+				ProfilesManager.updateLayoutOnly(sourceDir, currentConfigDir);
+			} catch (IOException | RuntimeException sourceFailure) {
+				return Result.FAILED;
+			}
+			// A layout edit must not turn CUSTOM provenance into a live whole-profile link:
+			// that would replace the MIDlet's unrelated settings at the next load.
+			if (!wasLinked || !ProfilesManager.isCompleteSnapshotReady(sourceDir)) {
+				return Result.SAVED_UNLINKED;
 			}
 			return relinkCommittedSource(preferences, currentConfigDir, name);
 		}

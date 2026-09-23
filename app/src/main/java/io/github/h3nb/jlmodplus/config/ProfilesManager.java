@@ -1003,6 +1003,36 @@ public class ProfilesManager {
 		}
 	}
 
+	/** Publishes a runtime layout into an existing preset without changing its configuration. */
+	static void updateLayoutOnly(@NonNull File targetDir, @NonNull File sourceDir)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			recoverInterruptedPresetSave(targetDir);
+			if (!targetDir.isDirectory()) {
+				throw new IOException("Preset source no longer exists");
+			}
+			File sourceLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+			String layoutError = KeyboardLayoutValidator.validate(sourceLayout);
+			if (layoutError != null) {
+				throw new IOException("Current keyboard layout is not loadable: " + layoutError);
+			}
+			PresetSaveTransaction transaction = beginPresetSave(targetDir, false);
+			try {
+				File targetLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
+				FileUtils.copyFileUsingChannel(sourceLayout, targetLayout);
+				layoutError = KeyboardLayoutValidator.validate(targetLayout);
+				if (layoutError != null) {
+					throw new IOException("Published keyboard layout is not loadable: " + layoutError);
+				}
+				transaction.commit();
+			} catch (IOException | RuntimeException failure) {
+				transaction.rollback(failure);
+				if (failure instanceof IOException) throw (IOException) failure;
+				throw failure;
+			}
+		}
+	}
+
 	@NonNull
 	private static CompleteSnapshot prepareCompleteLocalSnapshot(@NonNull File sourceDir)
 			throws IOException {

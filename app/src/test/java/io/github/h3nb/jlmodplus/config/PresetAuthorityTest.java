@@ -177,9 +177,11 @@ public class PresetAuthorityTest {
     }
 
     @Test
-    public void runtimeUpdatePublishesLocalThenWholePresetThenRelinks() throws Exception {
+    public void runtimeUpdatePublishesOnlyLayoutThenRelinksExistingFollower() throws Exception {
         Fixture fixture = fixture(53L);
         File source = fixture.preset("K800i", 176);
+        byte[] sourceConfig = Files.readAllBytes(
+                new File(source, Config.MIDLET_CONFIG_FILE).toPath());
         byte[] sourceLayout = validLayout(3);
         write(new File(source, Config.MIDLET_KEY_LAYOUT_FILE), sourceLayout);
         writeConfig(fixture.configDir, 640);
@@ -195,8 +197,41 @@ public class PresetAuthorityTest {
         assertArrayEquals(runtimeLayout, Files.readAllBytes(fixture.layoutFile().toPath()));
         assertArrayEquals(runtimeLayout, Files.readAllBytes(
                 new File(source, Config.MIDLET_KEY_LAYOUT_FILE).toPath()));
-        assertEquals(640, readConfig(source).screenWidth);
+        assertArrayEquals(sourceConfig, Files.readAllBytes(
+                new File(source, Config.MIDLET_CONFIG_FILE).toPath()));
+        assertEquals(640, readConfig(fixture.configDir).screenWidth);
         assertTrue(new PresetLinkage(fixture.preferences, fixture.configDir).isLinked());
+    }
+
+    @Test
+    public void customProvenanceLayoutUpdateDoesNotLinkOrReplaceLocalSettingsOnNextLoad()
+            throws Exception {
+        Fixture fixture = fixture(59L);
+        File source = fixture.preset("K800i", 176);
+        assertTrue(new PresetLinkage(fixture.preferences, fixture.configDir)
+                .setOrigin("K800i"));
+        byte[] sourceConfig = Files.readAllBytes(
+                new File(source, Config.MIDLET_CONFIG_FILE).toPath());
+        byte[] localConfig = Files.readAllBytes(
+                new File(fixture.configDir, Config.MIDLET_CONFIG_FILE).toPath());
+        byte[] layout = validLayout(5);
+
+        PresetAuthority.SaveResult result = fixture.authority.saveVirtualKeyboardLayout(
+                fixture.appPath, 59L, layout, "K800i");
+
+        assertEquals(PresetAuthorityContract.RESULT_OK, result.code);
+        assertEquals(PresetAuthorityContract.UPDATE_SAVED_UNLINKED, result.updateOutcome);
+        assertArrayEquals(sourceConfig, Files.readAllBytes(
+                new File(source, Config.MIDLET_CONFIG_FILE).toPath()));
+        assertArrayEquals(localConfig, Files.readAllBytes(
+                new File(fixture.configDir, Config.MIDLET_CONFIG_FILE).toPath()));
+        assertArrayEquals(layout, Files.readAllBytes(
+                new File(source, Config.MIDLET_KEY_LAYOUT_FILE).toPath()));
+        assertFalse(new PresetLinkage(fixture.preferences, fixture.configDir).isLinked());
+        assertTrue(MidletConfigLoadBoundary.prepare(
+                fixture.preferences, fixture.configDir, fixture.profilesRoot));
+        assertArrayEquals(localConfig, Files.readAllBytes(
+                new File(fixture.configDir, Config.MIDLET_CONFIG_FILE).toPath()));
     }
 
     @Test

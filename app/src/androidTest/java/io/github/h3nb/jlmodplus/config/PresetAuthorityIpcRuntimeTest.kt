@@ -142,8 +142,9 @@ class PresetAuthorityIpcRuntimeTest {
     }
 
     @Test
-    fun runtimeUpdatePublishesWholePresetAndRelinksCurrentApp() {
+    fun runtimeUpdatePublishesOnlyLayoutAndRelinksCurrentApp() {
         val source = preset("K800i", 176, validLayout(3))
+        val sourceConfig = File(source, Config.MIDLET_CONFIG_FILE).readBytes()
         linkInMain("K800i")
         val runtimeId = handshake()
         writeConfig(configDir, 640)
@@ -166,8 +167,45 @@ class PresetAuthorityIpcRuntimeTest {
             result.getInt(PresetAuthorityContract.KEY_UPDATE_OUTCOME),
         )
         assertArrayEquals(payload, layoutFile(source).readBytes())
-        assertEquals(640, ProfilesManager.loadPreparedMidletConfig(source, false)!!.screenWidth)
+        assertArrayEquals(sourceConfig, File(source, Config.MIDLET_CONFIG_FILE).readBytes())
+        assertEquals(640, ProfilesManager.loadPreparedMidletConfig(configDir, false)!!.screenWidth)
         assertTrue(readMainOwnership().getBoolean(PresetAuthorityMainProbeService.KEY_LINKED))
+    }
+
+    @Test
+    fun runtimeLayoutUpdateKeepsCustomMidletSettingsAcrossNextLoad() {
+        val source = preset("K800i", 176, validLayout(3))
+        val sourceConfig = File(source, Config.MIDLET_CONFIG_FILE).readBytes()
+        linkInMain("K800i")
+        val runtimeId = handshake()
+        val localOnly = probe().request(
+            PresetAuthorityProbeService.MSG_SAVE,
+            request(runtimeId).apply {
+                putByteArray(PresetAuthorityContract.KEY_LAYOUT_PAYLOAD, validLayout(4))
+            },
+        )
+        assertTrue(localOnly.getBoolean(PresetAuthorityProbeService.KEY_LAYOUT_COMMITTED))
+        writeConfig(configDir, 640)
+        val localConfig = File(configDir, Config.MIDLET_CONFIG_FILE).readBytes()
+        val updatedLayout = validLayout(5)
+
+        val update = probe().request(
+            PresetAuthorityProbeService.MSG_SAVE,
+            request(runtimeId).apply {
+                putByteArray(PresetAuthorityContract.KEY_LAYOUT_PAYLOAD, updatedLayout)
+                putString(PresetAuthorityContract.KEY_UPDATE_TARGET, "K800i")
+            },
+        )
+
+        assertEquals(PresetAuthorityContract.RESULT_OK,
+            update.getInt(PresetAuthorityContract.KEY_RESULT))
+        assertEquals(PresetAuthorityContract.UPDATE_SAVED_UNLINKED,
+            update.getInt(PresetAuthorityContract.KEY_UPDATE_OUTCOME))
+        assertArrayEquals(sourceConfig, File(source, Config.MIDLET_CONFIG_FILE).readBytes())
+        assertArrayEquals(updatedLayout, layoutFile(source).readBytes())
+        assertFalse(readMainOwnership().getBoolean(PresetAuthorityMainProbeService.KEY_LINKED))
+        assertMainSuccess(PresetAuthorityMainProbeService.MSG_PREPARE_MAIN_LOAD)
+        assertArrayEquals(localConfig, File(configDir, Config.MIDLET_CONFIG_FILE).readBytes())
     }
 
     @Test

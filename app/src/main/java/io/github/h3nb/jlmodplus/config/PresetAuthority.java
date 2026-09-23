@@ -230,7 +230,8 @@ final class PresetAuthority {
 				int update = PresetAuthorityContract.UPDATE_NONE;
 				if (requestedPresetName != null) {
 					update = switch (PresetRuntimeUpdate.updateExisting(
-							preferences, app.configDir(), app.profilesRoot(), requestedPresetName)) {
+							preferences, app.configDir(), app.profilesRoot(), requestedPresetName,
+							ownership.wasLinked())) {
 						case LINKED -> PresetAuthorityContract.UPDATE_LINKED;
 						case SAVED_UNLINKED -> PresetAuthorityContract.UPDATE_SAVED_UNLINKED;
 						case FAILED -> PresetAuthorityContract.UPDATE_FAILED;

@@ -59,7 +59,7 @@
     <string name="runtime_preset_this_midlet_only">MIDlet Ini Saja</string>
     <string name="runtime_preset_update_destination">Perbarui %1$s</string>
     <string name="runtime_preset_local_explanation">Hanya kontrol virtual MIDlet ini yang berubah.</string>
-    <string name="runtime_preset_update_explanation">Ganti %1$s dengan pengaturan MIDlet ini dan tata letak kontrol virtualnya.\nPerubahan ini akan berlaku untuk MIDlet lain yang menggunakan profil ini saat dijalankan lagi.</string>
+    <string name="runtime_preset_update_explanation">Perbarui tata letak kontrol virtual di %1$s.\nMIDlet lain yang terhubung ke profil ini akan menerima tata letak baru saat dijalankan lagi.</string>
     <string name="runtime_layout_apply_title">Terapkan %1$s?</string>
     <string name="runtime_apply">Terapkan</string>
     <string name="runtime_preset_update_failed">Tersimpan untuk MIDlet ini, tetapi %1$s tidak dapat diperbarui.</string>
