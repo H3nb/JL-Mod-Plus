@@ -139,7 +139,7 @@
     <string name="preset_update_summary">Ganti %1$s dengan pengaturan MIDlet ini dan tata letak kontrol virtualnya jika tersedia. Perubahan ini akan berlaku untuk MIDlet lain yang menggunakan profil ini saat dijalankan lagi.</string>
     <string name="preset_update_confirm">Perbarui</string>
     <string name="preset_saved_unlinked_warning">Profil tersimpan, tetapi MIDlet ini tidak akan menerima pembaruan berikutnya dari profil tersebut.</string>
-    <string name="profile_default_fallback_notice">Profil bawaan “%1$s” tidak dapat digunakan karena tidak tersedia, tidak lengkap, atau rusak. Bawaan JL-Mod sekarang menjadi bawaan untuk MIDlet baru.</string>
+    <string name="profile_default_fallback_notice">Profil bawaan “%1$s” tidak dapat digunakan. Profil mungkin tidak tersedia, tidak lengkap, atau rusak. Bawaan JL-Mod sekarang menjadi bawaan untuk MIDlet baru.</string>
     <string name="preset_discard_changes_title">Buang Perubahan?</string>
     <string name="preset_discard_changes_summary">Draf profil ini belum disimpan.</string>
     <string name="preset_continue_editing">Lanjut Mengedit</string>

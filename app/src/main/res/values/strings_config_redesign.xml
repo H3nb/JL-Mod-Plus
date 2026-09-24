@@ -133,7 +133,7 @@
     <string name="preset_update_summary">Replace %1$s with this MIDlet’s current settings and, if available, its virtual controls layout. Other MIDlets using this profile will get the changes when they next start.</string>
     <string name="preset_update_confirm">Update</string>
     <string name="preset_saved_unlinked_warning">Profile saved, but this MIDlet won’t receive future updates from it.</string>
-    <string name="profile_default_fallback_notice">Default profile “%1$s” could not be used because it is missing, incomplete, or unreadable. JL-Mod Defaults is now the default for new MIDlets.</string>
+    <string name="profile_default_fallback_notice">Default profile “%1$s” could not be used. It may be missing, incomplete, or unreadable. JL-Mod Defaults is now the default for new MIDlets.</string>
     <string name="preset_discard_changes_title">Discard Changes?</string>
     <string name="preset_discard_changes_summary">This profile draft has not been saved.</string>
     <string name="preset_continue_editing">Continue Editing</string>
