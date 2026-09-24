@@ -585,12 +585,18 @@ public class InstallerDialog extends DialogFragment {
 					case CONVERTING -> R.string.installer_failed_conversion;
 					case READING -> R.string.installer_error_message;
 				};
+		String userMessage = getString(message);
+		String fallbackName = installer == null ? null : installer.getDefaultProfileFallbackName();
+		if (fallbackName != null) {
+			userMessage += "\n\n"
+					+ getString(R.string.profile_default_fallback_notice, fallbackName);
+		}
 		cleanupInstallerResources();
 		primaryAction = published ? () -> {
 			libraryViewModel.retry();
 			closeInstaller();
 		} : this::retryRequest;
-		composeController.showError(getString(R.string.error), getString(message), getString(R.string.close),
+		composeController.showError(getString(R.string.error), userMessage, getString(R.string.close),
 				getString(published ? R.string.installer_refresh_library : R.string.library_retry),
 				"Build: " + io.github.h3nb.jlmodplus.BuildConfig.VERSION_NAME + "\nStage: " +
 						(installer == null ? "bundle" : installer.getStage()) + "\n" + InstallerFailure.details(e));
