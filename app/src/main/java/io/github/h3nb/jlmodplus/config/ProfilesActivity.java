@@ -235,11 +235,15 @@ public class ProfilesActivity extends AppCompatActivity {
 				String currentDefault = preferences.getString(PREF_DEFAULT_PROFILE, null);
 				boolean sameDefault = defaultName == null
 						? currentDefault == null : defaultName.equals(currentDefault);
-				defaultStateChanged = !sameDefault;
+				boolean currentDefaultReady = defaultName == null
+						|| ProfilesManager.isCompleteSnapshotReady(
+								new File(profilesRoot, defaultName));
+				boolean inspectedDefaultReady = defaultName == null || hasValidDefault;
+				defaultStateChanged = !sameDefault || currentDefaultReady != inspectedDefaultReady;
 				if (defaultStateChanged) {
 					defaultFallbackApplied = false;
 					defaultFallbackFailed = false;
-				} else if (defaultName != null && !hasValidDefault) {
+				} else if (defaultName != null && !currentDefaultReady) {
 					defaultFallbackApplied = setBuiltInDefault(preferences);
 					defaultFallbackFailed = !defaultFallbackApplied;
 				} else {
