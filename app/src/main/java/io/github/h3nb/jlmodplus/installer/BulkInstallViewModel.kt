@@ -584,14 +584,23 @@ class BulkInstallViewModel : ViewModel() {
                 item.preflightStatus == BulkInstallStatus.Update -> BulkInstallResultKind.Updated
                 else -> BulkInstallResultKind.Reinstalled
             }
-            val fallbackDetail = activeInstaller.getDefaultProfileFallbackName()?.let { name ->
-                library.getApplication<android.app.Application>()
-                    .getString(R.string.profile_default_fallback_notice, name)
-            }
-            return BulkInstallResult(item.id, item.name, kind, fallbackDetail)
+            return BulkInstallResult(
+                item.id,
+                item.name,
+                kind,
+                defaultProfileFallbackNotice(activeInstaller, library),
+            )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (error: Throwable) {
-            if (isFatalEnvironmentError(error)) throw FatalBatchException(error)
-            throw error
+            val fallbackNotice = defaultProfileFallbackNotice(installer, library)
+            val reportedError = if (fallbackNotice == null) {
+                error
+            } else {
+                RuntimeException(fallbackNotice + "\n" + boundedMessage(error), error)
+            }
+            if (isFatalEnvironmentError(error)) throw FatalBatchException(reportedError)
+            throw reportedError
         } finally {
             if (installer == null) {
                 scratch.clear()
@@ -665,6 +674,14 @@ class BulkInstallViewModel : ViewModel() {
         AppInstaller.STATUS_UNMATCHED -> BulkInstallStatus.JadJarMismatch
         AppInstaller.STATUS_AMBIGUOUS -> BulkInstallStatus.AmbiguousInstalledMatch
         else -> BulkInstallStatus.SourceError
+    }
+
+    private fun defaultProfileFallbackNotice(
+        installer: AppInstaller?,
+        library: LibraryViewModel,
+    ): String? = installer?.getDefaultProfileFallbackName()?.let { name ->
+        library.getApplication<android.app.Application>()
+            .getString(R.string.profile_default_fallback_notice, name)
     }
 
     private fun isFatalEnvironmentError(error: Throwable): Boolean {
