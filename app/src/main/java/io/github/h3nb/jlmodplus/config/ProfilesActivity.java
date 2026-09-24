@@ -236,7 +236,8 @@ public class ProfilesActivity extends AppCompatActivity {
 				boolean sameDefault = defaultName == null
 						? currentDefault == null : defaultName.equals(currentDefault);
 				boolean currentDefaultReady = defaultName == null
-						|| ProfilesManager.isCompleteSnapshotReady(
+						|| Profile.isValidName(defaultName)
+						&& ProfilesManager.isCompleteSnapshotReady(
 								new File(profilesRoot, defaultName));
 				boolean inspectedDefaultReady = defaultName == null || hasValidDefault;
 				defaultStateChanged = !sameDefault || currentDefaultReady != inspectedDefaultReady;
