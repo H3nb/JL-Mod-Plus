@@ -573,9 +573,14 @@ class BulkInstallViewModel : ViewModel() {
                 restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) {
-                return BulkInstallResult(item.id, item.name, BulkInstallResultKind.PartiallyInstalled,
-                    boundedMessage(error), activeInstaller.installedId,
-                    File(activeInstaller.installedPath).name)
+                return BulkInstallResult(
+                    item.id,
+                    item.name,
+                    BulkInstallResultKind.PartiallyInstalled,
+                    withDefaultProfileFallbackNotice(boundedMessage(error), activeInstaller, library),
+                    activeInstaller.installedId,
+                    File(activeInstaller.installedPath).name,
+                )
             }
             val kind = when {
                 item.action == BulkInstallAction.InstallSeparateCopy -> BulkInstallResultKind.Installed
@@ -593,12 +598,9 @@ class BulkInstallViewModel : ViewModel() {
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Throwable) {
-            val fallbackNotice = defaultProfileFallbackNotice(installer, library)
-            val reportedError = if (fallbackNotice == null) {
-                error
-            } else {
-                RuntimeException(fallbackNotice + "\n" + boundedMessage(error), error)
-            }
+            val reportedError = defaultProfileFallbackNotice(installer, library)?.let {
+                RuntimeException(it + "\n" + boundedMessage(error), error)
+            } ?: error
             if (isFatalEnvironmentError(error)) throw FatalBatchException(reportedError)
             throw reportedError
         } finally {
@@ -683,6 +685,12 @@ class BulkInstallViewModel : ViewModel() {
         library.getApplication<android.app.Application>()
             .getString(R.string.profile_default_fallback_notice, name)
     }
+
+    private fun withDefaultProfileFallbackNotice(
+        detail: String,
+        installer: AppInstaller?,
+        library: LibraryViewModel,
+    ): String = defaultProfileFallbackNotice(installer, library)?.let { "$it\n$detail" } ?: detail
 
     private fun isFatalEnvironmentError(error: Throwable): Boolean {
         var cursor: Throwable? = error

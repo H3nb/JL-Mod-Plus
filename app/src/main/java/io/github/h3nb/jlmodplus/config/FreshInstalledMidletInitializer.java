@@ -9,6 +9,7 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE;
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +31,31 @@ public final class FreshInstalledMidletInitializer {
 		}
 	}
 
+	/** Initialization result plus the named default replaced by Built-in, when fallback occurred. */
+	public static final class Initialization {
+		@NonNull private final Result result;
+		@Nullable private final String fallbackProfileName;
+
+		private Initialization(@NonNull Result result, @Nullable String fallbackProfileName) {
+			this.result = result;
+			this.fallbackProfileName = fallbackProfileName;
+		}
+
+		public boolean isSuccess() {
+			return result.isSuccess();
+		}
+
+		@NonNull
+		public Result result() {
+			return result;
+		}
+
+		@Nullable
+		public String fallbackProfileName() {
+			return fallbackProfileName;
+		}
+	}
+
 	private FreshInstalledMidletInitializer() {
 	}
 
@@ -47,6 +73,25 @@ public final class FreshInstalledMidletInitializer {
 			boolean darkTheme) {
 		return initialize(preferences, profilesRoot, configDir, darkTheme,
 				ContextHolder.getAssetAsString("defaults/system.props"));
+	}
+
+	/**
+	 * Initializes a fresh MIDlet and captures any named default replaced by Built-in atomically
+	 * with respect to preset/default mutations.
+	 */
+	@NonNull
+	public static Initialization initializeDetailed(
+			@NonNull SharedPreferences preferences,
+			@NonNull File profilesRoot,
+			@NonNull File configDir,
+			boolean darkTheme) {
+		synchronized (ProfilesManager.presetSourceLock()) {
+			String requestedDefault = preferences.getString(PREF_DEFAULT_PROFILE, null);
+			Result result = initialize(preferences, profilesRoot, configDir, darkTheme);
+			return new Initialization(
+					result,
+					result == Result.BUILT_IN_FALLBACK ? requestedDefault : null);
+		}
 	}
 
 	@NonNull

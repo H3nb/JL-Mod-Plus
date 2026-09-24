@@ -477,7 +477,10 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private String successMessage(int messageRes) {
-		String message = getString(messageRes);
+		return withDefaultProfileFallbackNotice(getString(messageRes));
+	}
+
+	private String withDefaultProfileFallbackNotice(String message) {
 		String fallbackName = installer == null ? null : installer.getDefaultProfileFallbackName();
 		if (fallbackName == null) return message;
 		return message + "\n\n"
@@ -490,7 +493,8 @@ public class InstallerDialog extends DialogFragment {
 		primaryAction = this::restoreBundleToInstalled;
 		composeController.showConfirmation(
 				currentTitle,
-				getString(R.string.library_import_restore_failed),
+				withDefaultProfileFallbackNotice(
+						getString(R.string.library_import_restore_failed)),
 				getString(R.string.library_retry),
 				getString(R.string.close),
 				null,
@@ -585,12 +589,7 @@ public class InstallerDialog extends DialogFragment {
 					case CONVERTING -> R.string.installer_failed_conversion;
 					case READING -> R.string.installer_error_message;
 				};
-		String userMessage = getString(message);
-		String fallbackName = installer == null ? null : installer.getDefaultProfileFallbackName();
-		if (fallbackName != null) {
-			userMessage += "\n\n"
-					+ getString(R.string.profile_default_fallback_notice, fallbackName);
-		}
+		String userMessage = withDefaultProfileFallbackNotice(getString(message));
 		cleanupInstallerResources();
 		primaryAction = published ? () -> {
 			libraryViewModel.retry();

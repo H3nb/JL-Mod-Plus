@@ -57,7 +57,6 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryInstallRecovery;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.librarydb.WorkDirLayout;
 import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
-import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.ConverterException;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
@@ -524,10 +523,8 @@ public class AppInstaller {
                     }
                     freshPreferences = PreferenceManager.getDefaultSharedPreferences(
                             libraryViewModel.getApplication());
-                    String requestedDefaultProfile =
-                            freshPreferences.getString(Constants.PREF_DEFAULT_PROFILE, null);
-                    FreshInstalledMidletInitializer.Result initialization =
-                            FreshInstalledMidletInitializer.initialize(
+                    FreshInstalledMidletInitializer.Initialization initialization =
+                            FreshInstalledMidletInitializer.initializeDetailed(
                                     freshPreferences,
                                     new File(expectedWorkdir, "templates"),
                                     freshConfigDir,
@@ -537,9 +534,7 @@ public class AppInstaller {
                                 "Unable to initialize preset ownership for fresh MIDlet identity: "
                                         + appDirName);
                     }
-                    if (initialization == FreshInstalledMidletInitializer.Result.BUILT_IN_FALLBACK) {
-                        defaultProfileFallbackName = requestedDefaultProfile;
-                    }
+                    defaultProfileFallbackName = initialization.fallbackProfileName();
                     freshDefaultInitialized = true;
                 } else {
                     LibraryIconOverride.applyPersistedOverride(expectedWorkdir, appDirName, tmpDir);
