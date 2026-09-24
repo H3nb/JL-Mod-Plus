@@ -236,9 +236,9 @@ public class ProfilesActivity extends AppCompatActivity {
 				boolean sameDefault = defaultName == null
 						? currentDefault == null : defaultName.equals(currentDefault);
 				boolean currentDefaultReady = defaultName == null
-						|| Profile.isValidName(defaultName)
+						|| (Profile.isValidName(defaultName)
 						&& ProfilesManager.isCompleteSnapshotReady(
-								new File(profilesRoot, defaultName));
+								new File(profilesRoot, defaultName)));
 				boolean inspectedDefaultReady = defaultName == null || hasValidDefault;
 				defaultStateChanged = !sameDefault || currentDefaultReady != inspectedDefaultReady;
 				if (defaultStateChanged) {
@@ -294,16 +294,17 @@ public class ProfilesActivity extends AppCompatActivity {
 						info.keyboardLayout.status == ProfilesManager.CapabilityStatus.UNAVAILABLE));
 			}
 			runOnUiThread(() -> {
-				if (generation != refreshGeneration || isFinishing() || isDestroyed()) return;
-				profilesByName.clear();
-				for (Profile profile : profiles) profilesByName.put(profile.getName(), profile);
-				composeController.updateProfileItems(items);
+				if (isFinishing() || isDestroyed()) return;
 				if (defaultFallbackApplied) {
 					ThemedToast.show(
 							this,
 							getString(R.string.profile_default_fallback_notice, defaultName),
 							Toast.LENGTH_LONG);
 				}
+				if (generation != refreshGeneration) return;
+				profilesByName.clear();
+				for (Profile profile : profiles) profilesByName.put(profile.getName(), profile);
+				composeController.updateProfileItems(items);
 			});
 		});
 	}
