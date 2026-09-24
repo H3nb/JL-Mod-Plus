@@ -22,6 +22,7 @@ public final class FreshInstalledMidletInitializer {
 		LINKED,
 		CUSTOM,
 		BUILT_IN,
+		BUILT_IN_FALLBACK,
 		FAILED;
 
 		public boolean isSuccess() {
@@ -60,6 +61,7 @@ public final class FreshInstalledMidletInitializer {
 			try {
 
 				String defaultName = preferences.getString(PREF_DEFAULT_PROFILE, null);
+				boolean namedDefaultRequested = defaultName != null;
 				if (Profile.isValidName(defaultName)) {
 					File sourceDir = new File(profilesRoot, defaultName);
 					if (sourceDir.isDirectory()
@@ -81,7 +83,20 @@ public final class FreshInstalledMidletInitializer {
 
 				if (publishBuiltInLocked(preferences, configDir, darkTheme,
 						defaultSystemProperties)) {
-					return requireReviewMarker(preferences, configDir, Result.BUILT_IN);
+					Result result = requireReviewMarker(
+							preferences, configDir,
+							namedDefaultRequested ? Result.BUILT_IN_FALLBACK : Result.BUILT_IN);
+					if (result == Result.FAILED) {
+						return Result.FAILED;
+					}
+					if (namedDefaultRequested
+							&& !preferences.edit().remove(PREF_DEFAULT_PROFILE).commit()) {
+						// Do not claim Built-in as the durable default while the invalid named
+						// policy is still persisted. The fresh local snapshot can be discarded.
+						discardFreshInitialization(preferences, configDir);
+						return Result.FAILED;
+					}
+					return result;
 				}
 				discardFreshInitialization(preferences, configDir);
 				return Result.FAILED;

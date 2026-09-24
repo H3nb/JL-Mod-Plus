@@ -54,7 +54,7 @@ class InstallerFilesystemTest {
             instrumentation.runOnMainSync {
                 preferences.edit()
                     .putString(Constants.PREF_EMULATOR_DIR, workdir.path)
-                    .remove(Constants.PREF_DEFAULT_PROFILE)
+                    .putString(Constants.PREF_DEFAULT_PROFILE, "Unavailable")
                     .commit()
                 library = ViewModelProvider(store, ViewModelProvider.AndroidViewModelFactory(app))[LibraryViewModel::class.java]
                 library.setEmulatorDirectory(workdir.path)
@@ -70,6 +70,8 @@ class InstallerFilesystemTest {
             jad.writeText("changed after review")
             jar.writeText("changed after review")
             assertEquals(AppInstaller.STATUS_SUCCESS, Single.create<Int>(installer::install).blockingGet())
+            assertEquals("Unavailable", installer.defaultProfileFallbackName)
+            assertFalse(preferences.contains(Constants.PREF_DEFAULT_PROFILE))
             val id = installer.installedId
             val installed = File(installer.installedPath)
             val installedWorkdir = requireNotNull(requireNotNull(installed.parentFile).parentFile)

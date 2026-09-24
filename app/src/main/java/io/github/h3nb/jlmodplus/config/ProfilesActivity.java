@@ -227,9 +227,48 @@ public class ProfilesActivity extends AppCompatActivity {
 					hasValidDefault = true;
 				}
 			}
+
+			final boolean defaultStateChanged;
+			final boolean defaultFallbackApplied;
+			final boolean defaultFallbackFailed;
+			synchronized (ProfilesManager.presetSourceLock()) {
+				String currentDefault = preferences.getString(PREF_DEFAULT_PROFILE, null);
+				boolean sameDefault = defaultName == null
+						? currentDefault == null : defaultName.equals(currentDefault);
+				defaultStateChanged = !sameDefault;
+				if (defaultStateChanged) {
+					defaultFallbackApplied = false;
+					defaultFallbackFailed = false;
+				} else if (defaultName != null && !hasValidDefault) {
+					defaultFallbackApplied = setBuiltInDefault(preferences);
+					defaultFallbackFailed = !defaultFallbackApplied;
+				} else {
+					defaultFallbackApplied = false;
+					defaultFallbackFailed = false;
+				}
+			}
+			if (defaultStateChanged) {
+				runOnUiThread(() -> {
+					if (generation == refreshGeneration && !isFinishing() && !isDestroyed()) {
+						refreshProfiles();
+					}
+				});
+				return;
+			}
+			if (defaultFallbackFailed) {
+				runOnUiThread(() -> {
+					if (generation == refreshGeneration && !isFinishing() && !isDestroyed()) {
+						ThemedToast.show(
+								this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+					}
+				});
+				return;
+			}
+
+			boolean builtInDefault = defaultName == null || defaultFallbackApplied;
 			ArrayList<ProfileUiItem> items = new ArrayList<>(inspected.size() + 1);
 			items.add(new ProfileUiItem(
-					"", !hasValidDefault, false, true, true, false, false, 0, 0, 0, false, false));
+					"", builtInDefault, false, true, true, false, false, 0, 0, 0, false, false));
 			for (ProfilesManager.ProfileInfo info : inspected) {
 				boolean valid = info.settings.isReady();
 				boolean keyboardOnly = info.settings.status == ProfilesManager.CapabilityStatus.ABSENT
@@ -237,7 +276,7 @@ public class ProfilesActivity extends AppCompatActivity {
 				boolean unavailable = !valid && !keyboardOnly;
 				items.add(new ProfileUiItem(
 						info.profile.getName(),
-						info.completeSnapshotReady && info.profile.getName().equals(defaultName),
+						hasValidDefault && info.profile.getName().equals(defaultName),
 						valid,
 						info.completeSnapshotReady,
 						false,
@@ -254,6 +293,12 @@ public class ProfilesActivity extends AppCompatActivity {
 				profilesByName.clear();
 				for (Profile profile : profiles) profilesByName.put(profile.getName(), profile);
 				composeController.updateProfileItems(items);
+				if (defaultFallbackApplied) {
+					ThemedToast.show(
+							this,
+							getString(R.string.profile_default_fallback_notice, defaultName),
+							Toast.LENGTH_LONG);
+				}
 			});
 		});
 	}

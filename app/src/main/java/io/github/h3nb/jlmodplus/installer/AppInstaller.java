@@ -1,7 +1,7 @@
 /*
  * Copyright 2020-2026 Yury Kharchenko
  *
- * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryInstallRecovery;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.librarydb.WorkDirLayout;
 import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
+import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.ConverterException;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
@@ -104,6 +105,7 @@ public class AppInstaller {
     private long installedId = NO_ID;
     private String installedTitle;
     private String installedPath;
+    private String defaultProfileFallbackName;
     private int loadedStatus = NO_STATUS;
     private String matchedIdentity = "";
     private String loadedIdentity = "";
@@ -394,6 +396,7 @@ public class AppInstaller {
     /** Finalize converted files first, then publish a generation-bound Room3 mutation asynchronously. */
     void install(SingleEmitter<Integer> emitter) throws ConverterException, IOException {
         checkCancelled();
+        defaultProfileFallbackName = null;
         // Source preparation owns only request scratch and must not block other filesystem operations.
         if (srcJar == null) {
             srcJar = scratch.file("download.jar");
@@ -521,6 +524,8 @@ public class AppInstaller {
                     }
                     freshPreferences = PreferenceManager.getDefaultSharedPreferences(
                             libraryViewModel.getApplication());
+                    String requestedDefaultProfile =
+                            freshPreferences.getString(Constants.PREF_DEFAULT_PROFILE, null);
                     FreshInstalledMidletInitializer.Result initialization =
                             FreshInstalledMidletInitializer.initialize(
                                     freshPreferences,
@@ -531,6 +536,9 @@ public class AppInstaller {
                         throw new InstallerFailure(
                                 "Unable to initialize preset ownership for fresh MIDlet identity: "
                                         + appDirName);
+                    }
+                    if (initialization == FreshInstalledMidletInitializer.Result.BUILT_IN_FALLBACK) {
+                        defaultProfileFallbackName = requestedDefaultProfile;
                     }
                     freshDefaultInitialized = true;
                 } else {
@@ -826,6 +834,10 @@ public class AppInstaller {
 
     long getInstalledId() {
         return installedId != NO_ID ? installedId : currentApp == null ? NO_ID : currentApp.getId();
+    }
+
+    String getDefaultProfileFallbackName() {
+        return defaultProfileFallbackName;
     }
 
     private File appsDir() {

@@ -1,7 +1,6 @@
 /*
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
- * Modifications for JL-Mod Plus.
  * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

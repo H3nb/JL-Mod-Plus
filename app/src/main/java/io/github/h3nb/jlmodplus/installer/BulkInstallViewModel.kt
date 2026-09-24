@@ -584,7 +584,11 @@ class BulkInstallViewModel : ViewModel() {
                 item.preflightStatus == BulkInstallStatus.Update -> BulkInstallResultKind.Updated
                 else -> BulkInstallResultKind.Reinstalled
             }
-            return BulkInstallResult(item.id, item.name, kind)
+            val fallbackDetail = activeInstaller.getDefaultProfileFallbackName()?.let { name ->
+                library.getApplication<android.app.Application>()
+                    .getString(R.string.profile_default_fallback_notice, name)
+            }
+            return BulkInstallResult(item.id, item.name, kind, fallbackDetail)
         } catch (error: Throwable) {
             if (isFatalEnvironmentError(error)) throw FatalBatchException(error)
             throw error

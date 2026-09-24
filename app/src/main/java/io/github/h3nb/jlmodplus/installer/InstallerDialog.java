@@ -1,7 +1,7 @@
 /*
  * Copyright 2020-2026 Yury Kharchenko
  *
- * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -343,7 +343,7 @@ public class InstallerDialog extends DialogFragment {
 			acknowledgeExternalRequest();
 			composeController.showSuccess(
 					currentTitle,
-					getString(R.string.install_done),
+					successMessage(R.string.install_done),
 					getString(R.string.START_CMD),
 					getString(R.string.close),
 					installer.getIconPath());
@@ -469,11 +469,19 @@ public class InstallerDialog extends DialogFragment {
 			acknowledgeExternalRequest();
 			composeController.showSuccess(
 					currentTitle,
-					getString(R.string.library_import_done),
+					successMessage(R.string.library_import_done),
 					getString(R.string.START_CMD),
 					getString(R.string.close),
 					installer.getIconPath());
 		});
+	}
+
+	private String successMessage(int messageRes) {
+		String message = getString(messageRes);
+		String fallbackName = installer == null ? null : installer.getDefaultProfileFallbackName();
+		if (fallbackName == null) return message;
+		return message + "\n\n"
+				+ getString(R.string.profile_default_fallback_notice, fallbackName);
 	}
 
 	private void onBundleRestoreError(Throwable error) {
