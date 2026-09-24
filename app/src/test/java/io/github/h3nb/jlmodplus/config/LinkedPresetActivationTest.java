@@ -155,9 +155,11 @@ public class LinkedPresetActivationTest {
 				io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE, "Broken").commit());
 		File target = new File(tempDir("fresh-invalid-target"), "Game");
 
-		assertEquals(FreshInstalledMidletInitializer.Result.BUILT_IN,
+		assertEquals(FreshInstalledMidletInitializer.Result.BUILT_IN_FALLBACK,
 				FreshInstalledMidletInitializer.initialize(preferences, root, target, true, ""));
 
+		assertNull(preferences.getString(
+				io.github.h3nb.jlmodplus.util.Constants.PREF_DEFAULT_PROFILE, null));
 		assertTrue(configFile(target).isFile());
 		assertTrue(isBuiltInOwned(preferences, target));
 		assertNull(new PresetLinkage(preferences, target).getOrigin());
