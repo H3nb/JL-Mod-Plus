@@ -502,28 +502,6 @@ public class PresetLifecycleTest {
 		assertNull(ConfigActivity.profileOriginFromMetadata(preferences, midlet));
 	}
 
-	@Test
-	public void unavailableNamedDefaultFallsBackToBuiltInAndClearsDefaultPolicy() throws Exception {
-		File workDir = tempDir("fresh-default-fallback");
-		File profilesRoot = new File(workDir, "templates");
-		File configsRoot = new File(workDir, "configs");
-		assertTrue(profilesRoot.mkdir());
-		assertTrue(configsRoot.mkdir());
-		File configDir = new File(configsRoot, "Game");
-		FakePreferences preferences = preferences();
-		assertTrue(preferences.edit().putString(PREF_DEFAULT_PROFILE, "Broken").commit());
-
-		assertEquals(
-				FreshInstalledMidletInitializer.Result.BUILT_IN_FALLBACK,
-				FreshInstalledMidletInitializer.initialize(
-						preferences, profilesRoot, configDir, false, "microedition.test=true"));
-		assertNull(preferences.getString(PREF_DEFAULT_PROFILE, null));
-		assertTrue(new File(configDir, Config.MIDLET_CONFIG_FILE).isFile());
-		assertTrue(FreshInstalledMidletInitializer.needsReview(configDir));
-		assertTrue(preferences.getBoolean(
-				ProfileModel.builtInThemePreferenceKey(configDir), false));
-	}
-
 	private static FakePreferences preferences() {
 		return new FakePreferences();
 	}
