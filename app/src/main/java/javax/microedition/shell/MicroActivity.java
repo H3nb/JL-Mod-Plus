@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.microedition.lcdui.Canvas;
+import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Form;
 import javax.microedition.lcdui.Screen;
@@ -216,27 +217,37 @@ public class MicroActivity extends AppCompatActivity {
 				: savedInstanceState.getLong(
 						STATE_EXPECTED_APP_ID, intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L));
 		presetAuthorityClient = new PresetAuthorityClient(this);
-		PresetAuthorityClient.PrepareResult prepared =
-				presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
-		if (!prepared.isSuccess()) {
-			MidletSessionStore.clear(getApplicationContext());
-			MidletKeepAliveService.stop(this);
-			if (!prepared.isStale()) Config.openSettings(this, appName, appPath, expectedAppId);
-			finish();
-			return;
+		String requestedMainClass = intent.getStringExtra(KEY_MIDLET_CLASS);
+		microLoader = MidletThread.findLiveRuntime(appPath, expectedAppId, requestedMainClass);
+		boolean reattachingRuntime = microLoader != null;
+		if (reattachingRuntime) {
+			expectedAppId = microLoader.getExpectedAppId();
+			if (expectedAppId > 0L) {
+				intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
+			}
+		} else {
+			PresetAuthorityClient.PrepareResult prepared =
+					presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
+			if (!prepared.isSuccess()) {
+				MidletSessionStore.clear(getApplicationContext());
+				MidletKeepAliveService.stop(this);
+				if (!prepared.isStale()) Config.openSettings(this, appName, appPath, expectedAppId);
+				finish();
+				return;
+			}
+			expectedAppId = prepared.appId();
+			intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
+			MidletSessionStore.markPending(getApplicationContext(), appPath, appName, expectedAppId);
+			microLoader = new MicroLoader(appPath, expectedAppId, prepared.builtInThemeLinked());
+			if (!microLoader.init()) {
+				MidletSessionStore.clear(getApplicationContext());
+				MidletKeepAliveService.stop(this);
+				finish();
+				return;
+			}
+			MidletKeepAliveService.start(this);
+			microLoader.applyConfiguration();
 		}
-		expectedAppId = prepared.appId();
-		intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
-		MidletSessionStore.markPending(getApplicationContext(), appPath, appName, expectedAppId);
-		microLoader = new MicroLoader(appPath, expectedAppId, prepared.builtInThemeLinked());
-		if (!microLoader.init()) {
-			MidletSessionStore.clear(getApplicationContext());
-			MidletKeepAliveService.stop(this);
-			finish();
-			return;
-		}
-		MidletKeepAliveService.start(this);
-		microLoader.applyConfiguration();
 		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
 			@Override
 			public Canvas currentCanvas() {
@@ -332,7 +343,14 @@ public class MicroActivity extends AppCompatActivity {
 				}
 			}
 		});
-		loadMIDlet();
+		if (reattachingRuntime) {
+			Display display = Display.getDisplay(null);
+			if (display != null) {
+				display.attachHost(this);
+			}
+		} else {
+			loadMIDlet();
+		}
 	}
 
 	private void initializeRuntimeMenu() {
@@ -611,6 +629,18 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	@Override
+	protected void onStart() {
+		super.onStart();
+		MidletThread.hostVisible(this);
+	}
+
+	@Override
+	protected void onStop() {
+		MidletThread.hostHidden(this);
+		super.onStop();
+	}
+
+	@Override
 	protected void onResume() {
 		super.onResume();
 		refreshCanvasBackground();
@@ -641,6 +671,15 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
+		if (ContextHolder.getActivity() == this) {
+			MidletThread.hostDetached(this);
+			Display display = Display.getDisplay(null);
+			if (display != null) {
+				display.detachHost();
+			}
+			current = null;
+			ContextHolder.clearCurrentActivity(this);
+		}
 		if (binding != null) binding.getRoot().removeCallbacks(virtualKeyboardEditorChromeUpdate);
 		VirtualKeyboard vk = ContextHolder.getVk();
 		if (vk != null) vk.setLayoutEditObserver(null);

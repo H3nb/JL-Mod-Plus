@@ -124,6 +124,22 @@ public class MicroLoader {
 		appDirName = appDir.getName();
 	}
 
+	boolean matchesRuntime(String appPath, long appId) {
+		if (appPath == null || (appId > 0L && expectedAppId > 0L && appId != expectedAppId)) {
+			return false;
+		}
+		File candidate = new File(appPath);
+		try {
+			return appDir.getCanonicalFile().equals(candidate.getCanonicalFile());
+		} catch (IOException ignored) {
+			return appDir.getAbsoluteFile().equals(candidate.getAbsoluteFile());
+		}
+	}
+
+	long getExpectedAppId() {
+		return expectedAppId;
+	}
+
 	public boolean init() {
 		File config = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDirName);
 		this.params = ProfilesManager.loadPreparedMidletConfig(config, builtInThemeLinked);

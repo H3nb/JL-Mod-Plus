@@ -83,6 +83,36 @@ public class Display {
 		instance = null;
 	}
 
+	public void attachHost(MicroActivity activity) {
+		Displayable target;
+		long requestGeneration;
+		synchronized (stateLock) {
+			target = current;
+			requestGeneration = currentRequestGeneration.incrementAndGet();
+		}
+		if (target instanceof Alert alert) {
+			alert.detachHost();
+			final long generation = requestGeneration;
+			ViewHandler.postEvent(() -> showAlert(alert, generation));
+		} else if (target != null) {
+			target.clearDisplayableView();
+			activity.setCurrent(target);
+		}
+	}
+
+	public void detachHost() {
+		Displayable target;
+		synchronized (stateLock) {
+			target = current;
+			currentRequestGeneration.incrementAndGet();
+		}
+		if (target instanceof Alert alert) {
+			alert.detachHost();
+		} else if (target != null) {
+			target.clearDisplayableView();
+		}
+	}
+
 	public static void postEvent(Event event) {
 		queue.postEvent(event);
 	}
@@ -132,12 +162,16 @@ public class Display {
 		} else if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
 		}
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity == null) {
+			return;
+		}
 		if (alert != null) {
 			Alert requestedAlert = alert;
 			final long generation = requestGeneration;
 			ViewHandler.postEvent(() -> showAlert(requestedAlert, generation));
 		} else {
-			ContextHolder.getActivity().setCurrent(displayable);
+			activity.setCurrent(displayable);
 		}
 	}
 
@@ -171,7 +205,9 @@ public class Display {
 		} else if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
 		}
-		ViewHandler.postEvent(() -> showAlert(alert, requestGeneration));
+		if (ContextHolder.getActivity() != null) {
+			ViewHandler.postEvent(() -> showAlert(alert, requestGeneration));
+		}
 	}
 
 	private void showAlert(Alert expectedAlert, long requestGeneration) {

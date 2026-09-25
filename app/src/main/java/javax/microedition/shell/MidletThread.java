@@ -32,9 +32,7 @@ import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.util.ContextHolder;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleEventObserver;
-import androidx.lifecycle.LifecycleOwner;
+import androidx.annotation.Nullable;
 
 import io.github.h3nb.jlmodplus.crashes.MidletSessionJournal;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
@@ -63,7 +61,6 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private final AtomicBoolean fatalFailureClaimed = new AtomicBoolean();
 	private final Object terminationLock = new Object();
 	private final UncaughtExceptionHandler sessionUncaughtHandler = this::handleUncaughtSessionFailure;
-	private final LifecycleEventObserver activityLifecycleObserver = this::onActivityStateChanged;
 
 	private MIDlet midlet;
 	private volatile Handler handler;
@@ -97,6 +94,40 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 
 	public static void resumeRequest() {
 		signalGuest(RESUME_REQUEST);
+	}
+
+	@Nullable
+	static MicroLoader findLiveRuntime(String appPath, long appId, @Nullable String requestedMainClass) {
+		MidletThread current = instance;
+		if (current == null || !current.lifecycle.isConstructed() || current.lifecycle.isDestroyed()
+				|| !current.microLoader.matchesRuntime(appPath, appId)) {
+			return null;
+		}
+		if (requestedMainClass != null && !requestedMainClass.isEmpty()
+				&& !requestedMainClass.equals(current.mainClass)) {
+			return null;
+		}
+		return current.microLoader;
+	}
+
+	static void hostVisible(MicroActivity activity) {
+		MidletThread current = instance;
+		if (current != null && ContextHolder.getActivity() == activity) {
+			current.send(HOST_VISIBLE);
+		}
+	}
+
+	static void hostHidden(MicroActivity activity) {
+		MidletThread current = instance;
+		if (current != null && ContextHolder.getActivity() == activity) {
+			current.send(HOST_HIDDEN);
+		}
+	}
+
+	static void hostDetached(MicroActivity activity) {
+		// Detachment is presentation ownership, not MIDP destruction. Ensure the current host can no
+		// longer count as visible; duplicate HOST_HIDDEN signals are harmless.
+		hostHidden(activity);
 	}
 
 	private static void signalGuest(int what) {
@@ -172,10 +203,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		upstreamUncaughtHandler = Thread.getDefaultUncaughtExceptionHandler();
 		Thread.setDefaultUncaughtExceptionHandler(sessionUncaughtHandler);
 		handler = new Handler(getLooper(), this);
-		MicroActivity activity = ContextHolder.getActivity();
-		if (activity != null) {
-			activity.getLifecycle().addObserver(activityLifecycleObserver);
-		}
+		send(INIT);
 	}
 
 	private void send(int what) {
@@ -567,21 +595,6 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			journal.complete(outcome);
 		} catch (RuntimeException | OutOfMemoryError ignored) {
 			// Process termination must remain reliable even when diagnostics cannot allocate/write.
-		}
-	}
-
-	private void onActivityStateChanged(LifecycleOwner lifecycleOwner, Lifecycle.Event event) {
-		switch (event) {
-			case ON_CREATE -> send(INIT);
-			case ON_START -> send(HOST_VISIBLE);
-			case ON_STOP -> send(HOST_HIDDEN);
-			case ON_DESTROY -> {
-				if (fatalFailureClaimed.get()) {
-					break;
-				}
-				requestIntentionalTermination(MidletSessionJournal.Outcome.LIFECYCLE_STOP);
-				send(DESTROY);
-			}
 		}
 	}
 

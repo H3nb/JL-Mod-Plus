@@ -17,8 +17,8 @@ final class MidletLifecycleState {
 		DESTROYED
 	}
 
-	private State state = State.PAUSED;
-	private boolean constructed;
+	private volatile State state = State.PAUSED;
+	private volatile boolean constructed;
 	private boolean hostVisible;
 	private boolean activationRequested = true;
 	private boolean startSucceeded;

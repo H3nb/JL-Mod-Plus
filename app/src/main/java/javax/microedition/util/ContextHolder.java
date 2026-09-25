@@ -91,6 +91,13 @@ public class ContextHolder {
 		currentActivity = new WeakReference<>(activity);
 	}
 
+	public static void clearCurrentActivity(MicroActivity activity) {
+		WeakReference<MicroActivity> reference = currentActivity;
+		if (reference != null && reference.get() == activity) {
+			currentActivity = null;
+		}
+	}
+
 	public static void addActivityResultListener(ActivityResultListener listener) {
 		if (!resultListeners.contains(listener)) {
 			resultListeners.add(listener);
@@ -195,7 +202,8 @@ public class ContextHolder {
 	}
 
 	public static MicroActivity getActivity() {
-		return currentActivity.get();
+		WeakReference<MicroActivity> reference = currentActivity;
+		return reference == null ? null : reference.get();
 	}
 
 	public static boolean vibrate(int duration) {
