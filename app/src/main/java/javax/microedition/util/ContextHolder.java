@@ -87,11 +87,11 @@ public class ContextHolder {
 		return getDisplay().getHeight();
 	}
 
-	public static void setCurrentActivity(MicroActivity activity) {
+	public static synchronized void setCurrentActivity(MicroActivity activity) {
 		currentActivity = new WeakReference<>(activity);
 	}
 
-	public static void clearCurrentActivity(MicroActivity activity) {
+	public static synchronized void clearCurrentActivity(MicroActivity activity) {
 		WeakReference<MicroActivity> reference = currentActivity;
 		if (reference != null && reference.get() == activity) {
 			currentActivity = null;
