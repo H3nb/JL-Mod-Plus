@@ -154,7 +154,6 @@ public class MicroActivity extends AppCompatActivity {
 		lockNightMode();
 		super.onCreate(savedInstanceState);
 		EdgeToEdgeCompat.enableIfSupported(this);
-		ContextHolder.setCurrentActivity(this);
 		binding = new RuntimeHostView(this);
 		setContentView(binding.getRoot());
 		binding.layoutEditDone.setOnClickListener(ignored -> requestFinishVirtualKeyboardEdit());
@@ -219,6 +218,13 @@ public class MicroActivity extends AppCompatActivity {
 		String requestedMainClass = intent.getStringExtra(KEY_MIDLET_CLASS);
 		microLoader = MidletThread.findLiveRuntime(appPath, expectedAppId, requestedMainClass);
 		boolean reattachingRuntime = microLoader != null;
+		if (!reattachingRuntime && MidletThread.hasLiveRuntime()) {
+			// This isolated process already owns a different live Java heap. A second Activity must
+			// not steal its host globals or construct another MIDlet in the same process.
+			finish();
+			return;
+		}
+		ContextHolder.setCurrentActivity(this);
 		if (reattachingRuntime) {
 			expectedAppId = microLoader.getExpectedAppId();
 			if (expectedAppId > 0L) {
@@ -468,14 +474,16 @@ public class MicroActivity extends AppCompatActivity {
 					@Override
 					public void onMidletCancelled() {
 						pendingMidletClasses = null;
-						if (!MidletThread.destroyApp(true)) {
+						if (ContextHolder.getActivity() != MicroActivity.this
+								|| !MidletThread.destroyApp(true)) {
 							finishUnstartedRuntime(true);
 						}
 					}
 
 					@Override
 					public void onErrorAcknowledged() {
-						if (!MidletThread.destroyApp(true)) {
+						if (ContextHolder.getActivity() != MicroActivity.this
+								|| !MidletThread.destroyApp(true)) {
 							finishUnstartedRuntime(true);
 						}
 					}
@@ -486,7 +494,8 @@ public class MicroActivity extends AppCompatActivity {
 						if (openSettings) {
 							Config.openSettings(MicroActivity.this, appName, appPath, expectedAppId);
 						}
-						if (!MidletThread.destroyApp(!openSettings)) {
+						if (ContextHolder.getActivity() != MicroActivity.this
+								|| !MidletThread.destroyApp(!openSettings)) {
 							finishUnstartedRuntime(!openSettings);
 						}
 					}
@@ -682,7 +691,8 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
-		if (ContextHolder.getActivity() == this) {
+		boolean currentHost = ContextHolder.getActivity() == this;
+		if (currentHost) {
 			MidletThread.hostDetached(this);
 			Display display = Display.getDisplay(null);
 			if (display != null) {
@@ -693,7 +703,7 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		if (binding != null) binding.getRoot().removeCallbacks(virtualKeyboardEditorChromeUpdate);
 		VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk != null) vk.setLayoutEditObserver(null);
+		if (currentHost && vk != null) vk.setLayoutEditObserver(null);
 		if (controllerInputRouter != null) {
 			controllerInputRouter.close();
 			controllerInputRouter = null;

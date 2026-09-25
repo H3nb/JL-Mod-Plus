@@ -97,6 +97,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		signalGuest(RESUME_REQUEST);
 	}
 
+	static boolean hasLiveRuntime() {
+		MidletThread current = instance;
+		return current != null && !current.lifecycle.isDestroyed();
+	}
+
 	@Nullable
 	static MicroLoader findLiveRuntime(String appPath, long appId, @Nullable String requestedMainClass) {
 		MidletThread current = instance;
