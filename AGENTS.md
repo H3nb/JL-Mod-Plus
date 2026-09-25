@@ -45,4 +45,3 @@ Establish the root cause and simplest correct model before changing code. Do not
 | Preset/config ownership, installed identity, cross-process preset access, or runtime storage identity | [Preset, configuration, and installed-identity contracts](docs/preset-config-contract.md) |
 | Library Room schema or Library-owned data changes | [Library data and schema contracts](docs/library-data-contract.md) |
 | Third-party provenance or notices | [Third-party notices](THIRD_PARTY_NOTICES.md) and [NOTICE](NOTICE) |
-| Android task-specific skill | [Skill routing](docs/agent-workflow.md#repository-skills) |

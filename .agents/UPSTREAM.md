@@ -32,7 +32,7 @@ When a selected skill references a missing `references/...` or `scripts/...` fil
 
 ## Project interpretation for coding agents
 
-Apply [AGENTS.md](../AGENTS.md) before generic upstream workflow defaults. When using a vendored skill, read only that skill's interpretation below in addition to its own `SKILL.md`.
+These sections record JL-Mod Plus interpretations of the corresponding vendored skills. [AGENTS.md](../AGENTS.md) and [Agent development workflow](../docs/agent-workflow.md#repository-skills) define precedence and routing.
 
 ### migrate-xml-views-to-jetpack-compose
 

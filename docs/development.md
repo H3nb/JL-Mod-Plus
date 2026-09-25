@@ -1,6 +1,6 @@
 # Build and validation
 
-Use the Gradle wrapper from the repository root. The source of truth is
+Use the Gradle wrapper from the repository root. For current build, toolchain, dependency, and CI configuration, inspect
 [app/build.gradle.kts](../app/build.gradle.kts),
 [build.gradle.kts](../build.gradle.kts),
 [the version catalog](../gradle/libs.versions.toml), and
