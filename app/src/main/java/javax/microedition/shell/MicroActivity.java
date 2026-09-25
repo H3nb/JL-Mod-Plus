@@ -87,12 +87,10 @@ import io.github.h3nb.jlmodplus.MainActivity;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
-import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.input.ControllerHostSink;
 import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
-import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.util.LogUtils;
 import io.github.h3nb.jlmodplus.ui.TransientNoticeComposeController;
@@ -230,23 +228,17 @@ public class MicroActivity extends AppCompatActivity {
 			PresetAuthorityClient.PrepareResult prepared =
 					presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
 			if (!prepared.isSuccess()) {
-				MidletSessionStore.clear(getApplicationContext());
-				MidletKeepAliveService.stop(this);
 				if (!prepared.isStale()) Config.openSettings(this, appName, appPath, expectedAppId);
 				finish();
 				return;
 			}
 			expectedAppId = prepared.appId();
 			intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
-			MidletSessionStore.markPending(getApplicationContext(), appPath, appName, expectedAppId);
 			microLoader = new MicroLoader(appPath, expectedAppId, prepared.builtInThemeLinked());
 			if (!microLoader.init()) {
-				MidletSessionStore.clear(getApplicationContext());
-				MidletKeepAliveService.stop(this);
 				finish();
 				return;
 			}
-			MidletKeepAliveService.start(this);
 			microLoader.applyConfiguration();
 		}
 		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
@@ -713,13 +705,11 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void finishUnstartedRuntime(boolean returnToLibrary) {
 		try {
-			MidletSessionStore.clear(getApplicationContext());
-			MidletKeepAliveService.stop(this);
 			if (microLoader != null) {
 				microLoader.closeTimingSessionIfNotTransferred();
 			}
 		} catch (Throwable ignored) {
-			// Host cleanup must still finish even if diagnostics/session cleanup cannot complete.
+			// Host cleanup must still finish even if launch-local resources cannot be released.
 		}
 		finishRuntime(returnToLibrary, null);
 	}

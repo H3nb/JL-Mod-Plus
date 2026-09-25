@@ -9,14 +9,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 
 package io.github.h3nb.jlmodplus.crashes;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import android.content.Context;
 
@@ -29,51 +29,70 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class MidletSessionStoreTest {
     @Test
-    public void markerSurvivesPendingAndSelectedClassUpdates() {
+    public void startedRuntimePersistsOnlyRoutingIdentityAndGeneration() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         try {
             MidletSessionStore.clear(context);
-            MidletSessionStore.markPending(
-                    context, "/data/jlmod/converted/demo", "Demo MIDlet", 73L);
-
-            MidletSessionStore.State pending = MidletSessionStore.read(context);
-            assertNotNull(pending);
-            assertEquals("/data/jlmod/converted/demo", pending.getAppPath());
-            assertEquals("Demo MIDlet", pending.getAppName());
-            assertNull(pending.getMainClass());
-            assertEquals(73L, pending.getAppId());
-
             MidletSessionStore.markStarted(
                     context,
-                    pending.getAppPath(),
-                    pending.getAppName(),
+                    "/data/jlmod/converted/demo",
+                    "Demo MIDlet",
                     "com.example.DemoMidlet",
-                    pending.getAppId());
-            MidletSessionStore.State started = MidletSessionStore.read(context);
-            assertNotNull(started);
-            assertEquals("com.example.DemoMidlet", started.getMainClass());
-            assertEquals(73L, started.getAppId());
-        } finally {
-            MidletSessionStore.clear(context);
-        }
-        assertNull(MidletSessionStore.read(context));
-    }
-
-    @Test
-    public void legacyMarkerWithoutAppIdRemainsExplicitlyUnknown() {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        try {
-            MidletSessionStore.clear(context);
-            MidletSessionStore.markPending(
-                    context, "/data/jlmod/converted/legacy", "Legacy MIDlet");
+                    73L,
+                    "runtime-generation-a");
 
             MidletSessionStore.State state = MidletSessionStore.read(context);
 
             assertNotNull(state);
-            assertEquals(0L, state.getAppId());
+            assertEquals("runtime-generation-a", state.getGeneration());
+            assertEquals("/data/jlmod/converted/demo", state.getAppPath());
+            assertEquals("Demo MIDlet", state.getAppName());
+            assertEquals("com.example.DemoMidlet", state.getMainClass());
+            assertEquals(73L, state.getAppId());
         } finally {
             MidletSessionStore.clear(context);
         }
     }
 
+    @Test
+    public void olderRuntimeCannotClearNewerGeneration() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        try {
+            MidletSessionStore.clear(context);
+            MidletSessionStore.markStarted(
+                    context, "/data/jlmod/converted/old", "Old", "example.Old", 1L, "old-generation");
+            MidletSessionStore.markStarted(
+                    context, "/data/jlmod/converted/new", "New", "example.New", 2L, "new-generation");
+
+            MidletSessionStore.clear(context, "old-generation");
+
+            MidletSessionStore.State state = MidletSessionStore.read(context);
+            assertNotNull(state);
+            assertEquals("new-generation", state.getGeneration());
+            assertEquals("/data/jlmod/converted/new", state.getAppPath());
+
+            MidletSessionStore.clear(context, "new-generation");
+            assertNull(MidletSessionStore.read(context));
+        } finally {
+            MidletSessionStore.clear(context);
+        }
+    }
+
+    @Test
+    public void generationlessCompatibilityRecordIsExplicitlyNonRoutable() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        try {
+            MidletSessionStore.clear(context);
+            MidletSessionStore.markStarted(
+                    context, "/data/jlmod/converted/legacy", "Legacy", "example.Legacy", 9L);
+
+            MidletSessionStore.State state = MidletSessionStore.read(context);
+
+            assertNotNull(state);
+            assertNull(state.getGeneration());
+            assertEquals(9L, state.getAppId());
+        } finally {
+            MidletSessionStore.clear(context);
+        }
+    }
 }

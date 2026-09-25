@@ -100,7 +100,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	@Nullable
 	static MicroLoader findLiveRuntime(String appPath, long appId, @Nullable String requestedMainClass) {
 		MidletThread current = instance;
-		if (current == null || !current.lifecycle.isConstructed() || current.lifecycle.isDestroyed()
+		if (current == null || current.lifecycle.isDestroyed()
 				|| !current.microLoader.matchesRuntime(appPath, appId)) {
 			return null;
 		}
@@ -622,7 +622,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		microLoader.closeTimingSession();
 		try {
 			android.content.Context context = ContextHolder.getAppContext();
-			MidletSessionStore.clear(context);
+			MidletSessionStore.clear(context, journal.getSessionId());
 			MidletKeepAliveService.stop(context);
 		} catch (Throwable ignored) {
 			// Runtime cleanup must never replace the original lifecycle/crash outcome.
