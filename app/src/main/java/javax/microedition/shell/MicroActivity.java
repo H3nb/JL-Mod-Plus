@@ -919,15 +919,17 @@ public class MicroActivity extends AppCompatActivity {
 			runtimeMenuController.showMidletDialog(names.clone());
 		} else {
 			pendingMidletClasses = null;
-			MidletThread.notifyDestroyed();
+			if (!MidletThread.destroyApp(true)) {
+				finishUnstartedRuntime(true);
+			}
 		}
 	}
 
 	void showErrorDialog(String message) {
 		if (runtimeMenuController != null) {
 			runtimeMenuController.showErrorDialog(message);
-		} else {
-			MidletThread.notifyDestroyed();
+		} else if (!MidletThread.destroyApp(true)) {
+			finishUnstartedRuntime(true);
 		}
 	}
 
