@@ -150,10 +150,12 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		if (current == null) {
 			return false;
 		}
-		// Keep the user intent in memory until destroyApp(true) has actually been attempted. A
-		// start/pause failure that wins first must remain the primary diagnostic outcome.
-		current.requestIntentionalTermination(
-				MidletSessionJournal.Outcome.USER_STOP, returnToLibrary);
+		// The host has requested destruction, but USER_STOP does not own the terminal outcome until
+		// MidletMain commits the DESTROY callback. A synchronous guest notifyDestroyed() can still
+		// linearize first. Destination policy is orthogonal: Settings handoff must remain sticky.
+		if (!returnToLibrary) {
+			current.suppressLibraryReturn();
+		}
 
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
@@ -346,6 +348,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			}
 			return;
 		}
+		requestIntentionalTermination(MidletSessionJournal.Outcome.USER_STOP, true);
 		transitionJournal(MidletSessionJournal.Stage.STOPPING);
 		invokeUnconditionalDestroy("normal MIDlet destruction", true);
 		lifecycle.completeDestroy();
@@ -495,6 +498,15 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 	}
 
+	private void suppressLibraryReturn() {
+		synchronized (terminationLock) {
+			if (!terminalFinalized) {
+				// An explicit handoff such as Settings must never be replaced by the library.
+				returnToLibraryOnTermination = false;
+			}
+		}
+	}
+
 	private void requestIntentionalTermination(
 			MidletSessionJournal.Outcome outcome, boolean returnToLibrary) {
 		synchronized (terminationLock) {
@@ -503,9 +515,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			}
 			if (requestedTerminationOutcome == null) {
 				requestedTerminationOutcome = outcome;
-				returnToLibraryOnTermination = returnToLibrary;
-			} else if (!returnToLibrary) {
-				// An explicit handoff such as Settings must never be replaced by the library.
+			}
+			if (!returnToLibrary) {
+				// Destination policy is monotonic and independent of which terminal outcome wins.
 				returnToLibraryOnTermination = false;
 			}
 		}
