@@ -361,8 +361,8 @@ public class CrashRuntimeIsolationTest {
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
 				context, MicroActivity.class)
 				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
-				// MicroActivity is singleTask in the host manifest. Clear the old fixture task so
-				// each lifecycle mode is delivered through a fresh onCreate/onNew process boundary.
+				// Clear the previous fixture task so each lifecycle mode is delivered through a
+				// fresh MicroActivity/process boundary rather than reusing test presentation state.
 				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		context.startActivity(intent);
 	}
