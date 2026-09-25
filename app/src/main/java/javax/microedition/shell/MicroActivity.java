@@ -547,7 +547,8 @@ public class MicroActivity extends AppCompatActivity {
 					}
 				}, this::dispatchControllerKeyEventFromDialog,
 				this::dispatchControllerGenericMotionEventFromDialog,
-				this::beginControllerHostTargetChange);
+				this::beginControllerHostTargetChange,
+				this::setRuntimeSystemScreenObscured);
 		setRuntimeToolbarHeight(getRuntimeToolbarHeight(getRuntimeChrome(current)));
 		updateRuntimeMenuState(current);
 	}
@@ -556,6 +557,16 @@ public class MicroActivity extends AppCompatActivity {
 	protected void onSaveInstanceState(@NonNull Bundle outState) {
 		if (expectedAppId > 0L) outState.putLong(STATE_EXPECTED_APP_ID, expectedAppId);
 		super.onSaveInstanceState(outState);
+	}
+
+	private void setRuntimeSystemScreenObscured(boolean obscured) {
+		if (ContextHolder.getActivity() != this) {
+			return;
+		}
+		Display display = Display.getDisplay(null);
+		if (display != null) {
+			display.setSystemScreenObscured(obscured);
+		}
 	}
 
 	private void updateRuntimeMenuState(@Nullable Displayable displayable) {

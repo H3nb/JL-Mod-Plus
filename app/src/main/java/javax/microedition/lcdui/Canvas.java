@@ -170,6 +170,7 @@ public abstract class Canvas extends Displayable {
 	private final Object visibilityLock = new Object();
 	private boolean currentDisplayable;
 	private boolean hostVisible;
+	private boolean systemScreenObscured;
 	private boolean surfaceUsable;
 	private volatile boolean visible;
 	private boolean sizeChangedCalled;
@@ -610,23 +611,26 @@ public abstract class Canvas extends Displayable {
 		hideNotify();
 	}
 
-	static boolean isPresentationVisible(
-			boolean currentDisplayable, boolean hostVisible, boolean surfaceUsable) {
-		return currentDisplayable && hostVisible && surfaceUsable;
+	static boolean isPresentationVisible(boolean currentDisplayable, boolean hostVisible,
+			boolean surfaceUsable, boolean systemScreenObscured) {
+		return currentDisplayable && hostVisible && surfaceUsable && !systemScreenObscured;
 	}
 
 	/**
 	 * Reconciles guest visibility from Display ownership and Android host visibility. Surface
 	 * usability is owned by the View callback below; only an effective edge emits a MIDP callback.
 	 */
-	void updatePresentationState(boolean currentDisplayable, boolean hostVisible) {
+	void updatePresentationState(
+			boolean currentDisplayable, boolean hostVisible, boolean systemScreenObscured) {
 		boolean nextVisible;
 		boolean changed;
 		synchronized (visibilityLock) {
 			this.currentDisplayable = currentDisplayable;
 			this.hostVisible = hostVisible;
+			this.systemScreenObscured = systemScreenObscured;
 			nextVisible = isPresentationVisible(
-					this.currentDisplayable, this.hostVisible, surfaceUsable);
+					this.currentDisplayable, this.hostVisible, surfaceUsable,
+					this.systemScreenObscured);
 			changed = visible != nextVisible;
 			if (changed) {
 				visible = nextVisible;
@@ -642,7 +646,8 @@ public abstract class Canvas extends Displayable {
 		boolean changed;
 		synchronized (visibilityLock) {
 			surfaceUsable = usable;
-			nextVisible = isPresentationVisible(currentDisplayable, hostVisible, surfaceUsable);
+			nextVisible = isPresentationVisible(
+					currentDisplayable, hostVisible, surfaceUsable, systemScreenObscured);
 			changed = visible != nextVisible;
 			if (changed) {
 				visible = nextVisible;
@@ -1320,7 +1325,11 @@ public abstract class Canvas extends Displayable {
 		synchronized (visibilityLock) {
 			currentHostVisible = hostVisible;
 		}
-		updatePresentationState(false, currentHostVisible);
+		boolean currentSystemScreenObscured;
+		synchronized (visibilityLock) {
+			currentSystemScreenObscured = systemScreenObscured;
+		}
+		updatePresentationState(false, currentHostVisible, currentSystemScreenObscured);
 	}
 
 	/**

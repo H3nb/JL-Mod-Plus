@@ -19,6 +19,7 @@
 package javax.microedition.midlet;
 
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
@@ -101,8 +102,13 @@ public abstract class MIDlet {
 			} else {
 				intent.setData(Uri.parse(url));
 			}
-			ContextHolder.getActivity().startActivity(intent);
-		} catch (ActivityNotFoundException | IOException e) {
+			Context launchContext = ContextHolder.getActivity();
+			if (launchContext == null) {
+				launchContext = ContextHolder.getAppContext();
+				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			}
+			launchContext.startActivity(intent);
+		} catch (ActivityNotFoundException | SecurityException | IOException e) {
 			throw new ConnectionNotFoundException();
 		}
 

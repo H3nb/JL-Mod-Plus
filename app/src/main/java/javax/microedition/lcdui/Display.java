@@ -68,6 +68,7 @@ public class Display {
 	/** Serializes current-screen and host-presentation facts. */
 	private final Object stateLock = new Object();
 	private boolean hostVisible;
+	private boolean systemScreenObscured;
 
 	public static Display getDisplay(MIDlet midlet) {
 		if (instance == null && midlet != null) {
@@ -94,6 +95,7 @@ public class Display {
 		long requestGeneration;
 		synchronized (stateLock) {
 			hostVisible = false;
+			systemScreenObscured = false;
 			target = current;
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 		}
@@ -104,7 +106,7 @@ public class Display {
 		} else if (target != null) {
 			target.clearDisplayableView();
 			if (target instanceof Canvas canvas) {
-				canvas.updatePresentationState(true, false);
+				canvas.updatePresentationState(true, false, false);
 			}
 			activity.setCurrent(target);
 		}
@@ -114,6 +116,7 @@ public class Display {
 		Displayable target;
 		synchronized (stateLock) {
 			hostVisible = false;
+			systemScreenObscured = false;
 			target = current;
 			currentRequestGeneration.incrementAndGet();
 		}
@@ -121,7 +124,7 @@ public class Display {
 			alert.detachHost();
 		} else if (target != null) {
 			if (target instanceof Canvas canvas) {
-				canvas.updatePresentationState(true, false);
+				canvas.updatePresentationState(true, false, false);
 			}
 			target.clearDisplayableView();
 		}
@@ -130,17 +133,38 @@ public class Display {
 	/** Updates host foreground access without changing the guest's current Displayable. */
 	public void setHostVisible(boolean visible) {
 		Canvas canvas = null;
+		boolean obscured;
 		synchronized (stateLock) {
 			if (hostVisible == visible) {
 				return;
 			}
 			hostVisible = visible;
+			obscured = systemScreenObscured;
 			if (current instanceof Canvas currentCanvas) {
 				canvas = currentCanvas;
 			}
 		}
 		if (canvas != null) {
-			canvas.updatePresentationState(true, visible);
+			canvas.updatePresentationState(true, visible, obscured);
+		}
+	}
+
+	/** Host-owned menus/dialogs can obscure LCDUI without changing the current Displayable. */
+	public void setSystemScreenObscured(boolean obscured) {
+		Canvas canvas = null;
+		boolean visible;
+		synchronized (stateLock) {
+			if (systemScreenObscured == obscured) {
+				return;
+			}
+			systemScreenObscured = obscured;
+			visible = hostVisible;
+			if (current instanceof Canvas currentCanvas) {
+				canvas = currentCanvas;
+			}
+		}
+		if (canvas != null) {
+			canvas.updatePresentationState(true, visible, obscured);
 		}
 	}
 
@@ -164,6 +188,7 @@ public class Display {
 		}
 		Displayable previous;
 		boolean currentHostVisible;
+		boolean currentSystemScreenObscured;
 		long requestGeneration = 0L;
 		Alert alert = null;
 		synchronized (stateLock) {
@@ -184,6 +209,7 @@ public class Display {
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			this.current = displayable;
 			currentHostVisible = hostVisible;
+			currentSystemScreenObscured = systemScreenObscured;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 			if (displayable instanceof Alert nextAlert) {
 				alert = nextAlert;
@@ -191,12 +217,14 @@ public class Display {
 			}
 		}
 		if (previous instanceof Canvas canvas) {
-			canvas.updatePresentationState(false, currentHostVisible);
+			canvas.updatePresentationState(
+					false, currentHostVisible, currentSystemScreenObscured);
 		} else if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
 		}
 		if (displayable instanceof Canvas canvas) {
-			canvas.updatePresentationState(true, currentHostVisible);
+			canvas.updatePresentationState(
+					true, currentHostVisible, currentSystemScreenObscured);
 		}
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity == null) {
@@ -219,6 +247,7 @@ public class Display {
 		}
 		Displayable previous;
 		boolean currentHostVisible;
+		boolean currentSystemScreenObscured;
 		long requestGeneration;
 		synchronized (stateLock) {
 			if (current instanceof Alert && current != alert) {
@@ -236,10 +265,12 @@ public class Display {
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			current = alert;
 			currentHostVisible = hostVisible;
+			currentSystemScreenObscured = systemScreenObscured;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 		}
 		if (previous instanceof Canvas canvas) {
-			canvas.updatePresentationState(false, currentHostVisible);
+			canvas.updatePresentationState(
+					false, currentHostVisible, currentSystemScreenObscured);
 		} else if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
 		}

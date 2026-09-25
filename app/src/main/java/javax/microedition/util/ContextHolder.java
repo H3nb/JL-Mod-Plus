@@ -55,7 +55,7 @@ import io.github.h3nb.jlmodplus.config.Config;
 public class ContextHolder {
 	private static Display display;
 	private static VirtualKeyboard vk;
-	private static WeakReference<MicroActivity> currentActivity;
+	private static volatile WeakReference<MicroActivity> currentActivity;
 	private static Vibrator vibrator;
 	private static final ArrayList<ActivityResultListener> resultListeners = new ArrayList<>();
 	private static boolean vibrationEnabled;
@@ -149,7 +149,7 @@ public class ContextHolder {
 	}
 
 	public static boolean requestPermission(String permission) {
-		MicroActivity context = currentActivity.get();
+		MicroActivity context = getActivity();
 		if (context == null) {
 			return false;
 		}
@@ -162,7 +162,7 @@ public class ContextHolder {
 	}
 
 	public static boolean requestPermissions(String[] permissions) {
-		MicroActivity context = currentActivity.get();
+		MicroActivity context = getActivity();
 		if (context == null) {
 			return false;
 		}

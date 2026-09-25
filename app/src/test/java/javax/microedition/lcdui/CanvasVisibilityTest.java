@@ -11,13 +11,10 @@ import org.junit.Test;
 public class CanvasVisibilityTest {
 	@Test
 	public void canvasIsGuestVisibleOnlyWhenAllPresentationConditionsHold() {
-		assertFalse(Canvas.isPresentationVisible(false, false, false));
-		assertFalse(Canvas.isPresentationVisible(true, false, false));
-		assertFalse(Canvas.isPresentationVisible(false, true, false));
-		assertFalse(Canvas.isPresentationVisible(false, false, true));
-		assertFalse(Canvas.isPresentationVisible(true, true, false));
-		assertFalse(Canvas.isPresentationVisible(true, false, true));
-		assertFalse(Canvas.isPresentationVisible(false, true, true));
-		assertTrue(Canvas.isPresentationVisible(true, true, true));
+		assertFalse(Canvas.isPresentationVisible(false, false, false, false));
+		assertFalse(Canvas.isPresentationVisible(true, false, true, false));
+		assertFalse(Canvas.isPresentationVisible(true, true, false, false));
+		assertFalse(Canvas.isPresentationVisible(true, true, true, true));
+		assertTrue(Canvas.isPresentationVisible(true, true, true, false));
 	}
 }
