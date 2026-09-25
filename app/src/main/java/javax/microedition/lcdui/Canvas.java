@@ -951,7 +951,12 @@ public abstract class Canvas extends Displayable {
 
 	@Override
 	public void clearDisplayableView() {
-		updateSurfaceUsable(false);
+		ViewCallbacks callbacks = viewCallbacks;
+		if (callbacks != null) {
+			callbacks.detachFromCanvas();
+		} else {
+			updateSurfaceUsable(false);
+		}
 		super.clearDisplayableView();
 		layout = null;
 		innerView = null;
@@ -1632,14 +1637,63 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private class ViewCallbacks implements View.OnTouchListener, SurfaceHolder.Callback, View.OnKeyListener {
-		private final View mView;
+		private final SurfaceView mView;
 		private final Set<Integer> overlayPointers = new HashSet<>();
 		private final Set<Integer> controllerPointers = new HashSet<>();
+		private boolean surfaceAttached;
 		OverlayView overlayView;
 
-		public ViewCallbacks(View view) {
+		public ViewCallbacks(SurfaceView view) {
 			mView = view;
 			overlayView = ContextHolder.getActivity().findViewById(R.id.overlay);
+		}
+
+		private boolean isCurrentView() {
+			return viewCallbacks == this;
+		}
+
+		private void detachFromCanvas() {
+			mView.getHolder().removeCallback(this);
+			mView.setOnTouchListener(null);
+			mView.setOnKeyListener(null);
+			cancelPointerOwnership();
+			if (surfaceAttached) {
+				releaseSurface();
+			} else {
+				updateSurfaceUsable(false);
+			}
+		}
+
+		private void releaseSurface() {
+			updateSurfaceUsable(false);
+			if (autoSpeedController != null) {
+				autoSpeedController.setFrameSourceActive(false);
+				autoSpeedController = null;
+			}
+			presentationMailbox.close();
+			if (renderer != null) {
+				renderer.stop();
+			}
+			synchronized (surfaceLock) {
+				surface = null;
+			}
+			if (fpsCounter != null) {
+				fpsCounter.stop();
+				overlayView.removeLayer(fpsCounter);
+				fpsCounter = null;
+			}
+			frameMetrics = null;
+			publishedFrameSequence = 0L;
+			overlayView.removeLayer(softBar);
+			overlayView.removeLayer(controllerJoystickOverlay);
+			controllerOverlayView = null;
+			softBar.closeMenu();
+			overlayView.setVisibility(false);
+			if (overlay != null) {
+				overlay.setTarget(null);
+				overlay = null;
+			}
+			surfaceAttached = false;
 		}
 
 		private void cancelPointerOwnership() {
@@ -1651,6 +1705,9 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public boolean onKey(View v, int keyCode, KeyEvent event) {
+			if (!isCurrentView() || !visible) {
+				return false;
+			}
 			switch (event.getAction()) {
 				case KeyEvent.ACTION_DOWN -> {
 					return onKeyDown(keyCode, event);
@@ -1679,6 +1736,9 @@ public abstract class Canvas extends Displayable {
 		}
 
 		public boolean onKeyDown(int keyCode, KeyEvent event) {
+			if (!isCurrentView() || !visible) {
+				return false;
+			}
 			int androidKeyCode = keyCode;
 			keyCode = KeyMapper.convertAndroidKeyCode(keyCode, event);
 			if (keyCode == 0) {
@@ -1703,6 +1763,9 @@ public abstract class Canvas extends Displayable {
 		}
 
 		public boolean onKeyUp(int keyCode, KeyEvent event) {
+			if (!isCurrentView() || !visible) {
+				return false;
+			}
 			int androidKeyCode = keyCode;
 			int midpKeyCode = KeyMapper.convertAndroidKeyCode(keyCode, event);
 			if (midpKeyCode == 0) {
@@ -1718,6 +1781,9 @@ public abstract class Canvas extends Displayable {
 		@Override
 		@SuppressLint("ClickableViewAccessibility")
 		public boolean onTouch(View v, MotionEvent event) {
+			if (!isCurrentView() || !visible) {
+				return false;
+			}
 			switch (event.getActionMasked()) {
 				case MotionEvent.ACTION_DOWN:
 					if (overlay != null) {
@@ -1835,6 +1901,9 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int newWidth, int newHeight) {
+			if (!isCurrentView()) {
+				return;
+			}
 			if (displayWidth > displayHeight) {
 				if (newWidth < newHeight) {
 					softBar.closeMenu();
@@ -1856,6 +1925,10 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder holder) {
+			if (!isCurrentView() || surfaceAttached) {
+				return;
+			}
+			surfaceAttached = true;
 			presentationMailbox.begin();
 			if (renderer != null) {
 				renderer.start();
@@ -1886,34 +1959,10 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-			updateSurfaceUsable(false);
-			if (autoSpeedController != null) {
-				autoSpeedController.setFrameSourceActive(false);
-				autoSpeedController = null;
+			if (!isCurrentView() || !surfaceAttached) {
+				return;
 			}
-			presentationMailbox.close();
-			if (renderer != null) {
-				renderer.stop();
-			}
-			synchronized (surfaceLock) {
-				surface = null;
-			}
-			if (fpsCounter != null) {
-				fpsCounter.stop();
-				overlayView.removeLayer(fpsCounter);
-				fpsCounter = null;
-			}
-			frameMetrics = null;
-			publishedFrameSequence = 0L;
-			overlayView.removeLayer(softBar);
-			overlayView.removeLayer(controllerJoystickOverlay);
-		controllerOverlayView = null;
-			softBar.closeMenu();
-			overlayView.setVisibility(false);
-			if (overlay != null) {
-				overlay.setTarget(null);
-				overlay = null;
-			}
+			releaseSurface();
 		}
 
 	}
