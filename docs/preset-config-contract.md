@@ -1,13 +1,13 @@
 # Preset, configuration, and installed-identity contracts
 
-This document records durable correctness boundaries for preset/configuration work. Class names and internal decomposition may change; preserve these invariants rather than the current implementation shape.
+This document records durable semantic correctness boundaries for preset/configuration work. Current classes, process placement, IPC, locking, and transaction mechanisms are implementation details unless explicitly identified as part of a compatibility contract.
 
 ## Authority and identity
 
-- The default/main process is the persistent authority for preset ownership and linked-preset metadata. The isolated `:midlet` process consumes prepared state and uses the narrow preset-authority IPC boundary for runtime preset/config persistence that requires main-process authority.
+- Persistent preset ownership and linkage must have one authoritative serialization domain across processes. A runtime process must not independently race or invent persistent ownership state. The current implementation places this authority in the default/main process and exposes a narrow preset-authority IPC boundary to the isolated `:midlet` process.
 - Library `appId` is the durable identity of an installed MIDlet. `storageKey` identifies its filesystem location and is not a substitute for installed identity.
-- Installed-app writes capture the expected positive `appId` and reject stale delete/reinstall reuse before publishing config, layout, ownership, or named-source changes. Workdir/root identity is part of the operation and must not silently retarget while an editor or runtime is open.
-- Named-preset source editing is distinct from installed-app editing. A stale editor must not become valid merely because the same name or filesystem path is later reused.
+- Installed-app writes must be fenced by the installed identity that opened or launched the operation and reject stale delete/reinstall reuse before publishing config, layout, or ownership changes. Workdir/root identity must not silently retarget while an editor or runtime is open.
+- Named-preset source identity is distinct from installed-app identity. A stale source editor must not become valid merely because the same name or filesystem path is later reused.
 
 ## Preset ownership
 
@@ -18,15 +18,15 @@ This document records durable correctness boundaries for preset/configuration wo
 
 ## Persistence and recovery
 
-- Preset source and installed snapshot publication must not expose a partially written state as committed. Recover interrupted transactions before reading, replacing, renaming, or synchronizing the affected source or local snapshot.
-- Publish durable content before ownership metadata that depends on it. When recovery or identity cannot be proven safe, prefer the existing conservative CUSTOM/fail-closed outcome over inventing ownership.
-- Serialize source mutations through the existing preset-source transaction boundary. Installed-app mutations must also respect installer/identity coordination before publishing filesystem or ownership changes.
+- Preset source and installed-snapshot publication must not expose a partially written state as committed. Recover interrupted publication before consuming, replacing, renaming, deleting, or synchronizing the affected snapshot.
+- Publish durable content before ownership metadata that depends on it. When recovery or identity cannot be proven safe, prefer the conservative CUSTOM/fail-closed outcome over inventing ownership.
+- Competing source mutations and recovery must be serialized so readers, rename/delete operations, and followers cannot observe a mismatched or partially committed snapshot. The current implementation provides this through the preset-source transaction/locking boundary and installer identity coordination; equivalent mechanisms may replace it if the invariant remains intact.
 - Preserve the distinction between primary committed content and optional secondary state: failure of an optional follow-up must not masquerade as failure of content that was already durably committed.
 
 ## Runtime storage
 
-- A live MIDlet runtime owns an OS-backed storage lease for its launched workdir/storage identity. A leftover lock file without an active OS lock is not a live lease.
-- A deleted/replaced installed identity must not let an old runtime gain authority over the replacement. Fresh allocation must avoid filesystem identities that are still reserved by active runtime state or surviving side data.
-- Runtime private/cache paths are derived from the launched workdir and storage identity so runtime writes stay inside the same namespace whose lifetime is protected by the lease.
+- A live runtime must hold an exclusive lifetime reservation for its installed storage identity that is meaningful across process concurrency and distinguishes an active owner from stale filesystem residue. The current implementation uses an OS-backed file lock.
+- A deleted or replaced installed identity must not let an old runtime gain authority over its replacement. Fresh allocation must avoid filesystem identities still reserved by active runtime state or surviving side data.
+- Runtime private/cache paths must remain scoped to the launched workdir/storage identity whose lifetime is reserved.
 
-When changing these areas, inspect the current authority, linkage, installer-identity, source-transaction, and runtime-lease tests for executable details. Update this contract only when the intended invariant changes, not for transient task sequencing or PR status.
+When changing these areas, use current source and focused tests to determine implementation details. Change this contract only when intended behavior changes; do not promote transient PR sequencing or current class structure into a permanent requirement.

@@ -66,8 +66,7 @@ non-Canvas Displayables.
   insets; it never sends text into a MIDP `TextField` or changes Canvas key
   dispatch.
 - Host-only recovery, exit/settings, MIDlet selection, and virtual-keyboard
-  dialogs are Compose Material 3 surfaces. The Java side still owns loader,
-  orientation, persistence, cleanup, and `MidletThread` callbacks.
+  dialogs are Compose Material 3 surfaces. The current Java host owns loader, orientation, persistence, cleanup, and `MidletThread` callbacks. Preserve those semantics if ownership is refactored.
 
 ## Validation gates
 

@@ -16,7 +16,7 @@ This document describes UI ownership in JL-Mod Plus. The protected compatibility
 | Runtime host toolbar, options menu, and host dialogs | `RuntimeMenuCompose.kt`, `RuntimeHostDialogs.kt`, hosted by `MicroActivity` | Compose-owned Material 3 presentation inside the View runtime shell | Toolbar overflow, Android Back, and legacy menu-key paths share one modal popup. Popup Back only dismisses it; explicit host Exit, a MIDlet Exit command, and system task removal remain the separate termination paths. Midlet selection, recovery, exit/settings, virtual-keyboard layout, and hide/save dialogs use stable callbacks; no MIDP `Command` or input dispatch moves into Compose. |
 | Main host container | Programmatic `FrameLayout` + `FragmentContainerView` in `MainActivity` | Transitional programmatic host | The container is still the Fragment host for the library state machine and exported import/install intents; it has no XML visual tree. |
 | File picker browsing, search, sort, directory creation, and selection | `FilteredFilePickerActivity.kt`, `FilePickerController.kt`, `FilePickerCompose.kt`, `FilePickerModel.kt` | Compose-owned presentation; transitional Activity/result host | The implementation is app-owned and clean-room. It preserves raw-path `file://` results, JAR/JAD/KJX filtering, storage permissions, start paths, directory mode, cancellation, and work-directory/import callers without a picker dependency. |
-| MIDlet shell and rendering | `MicroActivity`, `RuntimeHostView`, `OverlayView`, `CanvasView`/`GlesView`, native C/C++ renderer | Permanent programmatic View boundary with Compose-owned host chrome | The former XML hierarchy is reproduced directly to preserve Surface/overlay geometry. Java ME rendering, lifecycle, orientation, IME, and runtime input remain compatibility-sensitive. |
+| MIDlet shell and rendering | `MicroActivity`, `RuntimeHostView`, `OverlayView`, `CanvasView`/`GlesView`, native C/C++ renderer | Protected programmatic View/runtime boundary with Compose-owned host chrome | The former XML hierarchy is reproduced directly to preserve Surface/overlay geometry. Java ME rendering, lifecycle, orientation, IME, and runtime input remain compatibility-sensitive. |
 | Runtime FPS-limit dialog | `RuntimeMenuCompose.kt`, callback to `Canvas.setLimitFps()` | Compose-owned Material 3 presentation | Digits-only input, unlimited value `0`, and reset value `-1` remain unchanged. This dialog was not the MIDP TextBox/TextField editor. |
 | Java ME Screen soft keys | `ScreenSoftBarCompose.kt` and `ScreenSoftBarPresentation.kt`, hosted by `ScreenSoftBar` | Compose-owned Material 3 presentation over a protected LCDUI event boundary | `ScreenSoftBarPolicy` owns placement, including single-command cases; `Display.postEvent(CommandActionEvent)` owns dispatch. See [runtime UI](runtime-ui.md). Canvas layer soft keys remain native and close/rebuild stale popups on command updates. |
 | Guest/configuration compatibility dialogs | `LoadProfileAlert`, `SaveProfileAlert`, `ShaderTuneAlert`, `Alert`, and platform `AlertDialog` calls | Mixed: Compose body with intentional DialogFragment/platform shells | Profile persistence, validation, shader, and guest-runtime callbacks remain host-owned. The migrated profile/shader bodies no longer inflate XML or use legacy `EditText`/`SeekBar` views. |
@@ -54,15 +54,15 @@ resource lookup. Native-looking resources may still serve Java ME controls.
 
 | Dependency family | Current consumers | Decision |
 | --- | --- | --- |
-| `androidx.activity` | Activity Result APIs and back-press dispatch in host, picker, settings, key mapper, and guest shell | Retain |
-| `androidx.appcompat` | Host Activities/themes, locale service, and the Java ME `Alert` platform-dialog boundary | Retain |
-| `androidx.fragment` | Library Fragment, installer and compatibility `DialogFragment`s | Retain |
-| `androidx.preference` | SharedPreferences access and locale/profile/config persistence | Retain |
-| `androidx.lifecycle` | LibraryViewModel/StateFlow and host, installer, and guest lifecycle observers | Retain |
-| `androidx.room3` | Library database/entity/DAO/repository | Retain |
-| Compose Material 3/runtime/foundation/UI | All migrated app-owned surfaces and screenshot tests | Retain |
+| `androidx.activity` | Activity Result APIs and back-press dispatch in host, picker, settings, key mapper, and guest shell | Required by current consumers |
+| `androidx.appcompat` | Host Activities/themes, locale service, and the Java ME `Alert` platform-dialog boundary | Required by current consumers |
+| `androidx.fragment` | Library Fragment, installer and compatibility `DialogFragment`s | Required by current consumers |
+| `androidx.preference` | SharedPreferences access and locale/profile/config persistence | Required by current consumers |
+| `androidx.lifecycle` | LibraryViewModel/StateFlow and host, installer, and guest lifecycle observers | Required by current consumers |
+| `androidx.room3` | Library database/entity/DAO/repository | Required by current consumers |
+| Compose Material 3/runtime/foundation/UI | All migrated app-owned surfaces and screenshot tests | Required by current consumers |
 
-The app-owned file picker uses its controller and Compose list. Check `app/build.gradle.kts` and `gradle/libs.versions.toml` for current dependency declarations. `Retain` means the dependency is currently required by active consumers; it does not forbid a future scoped refactor that removes those consumers while preserving the protected contracts above.
+The app-owned file picker uses its controller and Compose list. Check `app/build.gradle.kts` and `gradle/libs.versions.toml` for current dependency declarations. The table describes current consumers, not permanent dependency choices; a scoped refactor may remove a dependency after its consumers are removed while preserving the protected contracts above.
 
 ## Validation and manual gates
 

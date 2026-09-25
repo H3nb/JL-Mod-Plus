@@ -1,6 +1,6 @@
 # Agent development workflow
 
-Read the sections relevant to the task. [AGENTS.md](../AGENTS.md) states the project-wide priorities; current source, configuration, tests, and verified specifications remain the authority for implementation details.
+Read only the sections relevant to the task. [AGENTS.md](../AGENTS.md) defines the project-wide authority hierarchy and priorities; this file supplies task-specific workflow guidance.
 
 ## Task continuity and delegation
 
@@ -9,7 +9,7 @@ Read the sections relevant to the task. [AGENTS.md](../AGENTS.md) states the pro
 
 ## Repository skills
 
-The repository contains task-specific guidance under `.agents/skills/`. When a task matches a skill, read that skill's `SKILL.md` before planning or editing and follow the parts that are relevant to the current task.
+The repository contains task-specific guidance under `.agents/skills/`. When a task matches a vendored skill, read its `SKILL.md` and the matching project-interpretation section in [.agents/UPSTREAM.md](../.agents/UPSTREAM.md) before planning or editing; do not load unrelated skill interpretations.
 
 - User instructions take precedence over skill guidance. Apply [AGENTS.md](../AGENTS.md) and verified current project behavior when interpreting a matching skill; do not let unclear or conflicting skill steps silently redirect the task.
 - Use only skills that match the current task. A skill prerequisite is a planning constraint, not permission to widen the PR or perform unrelated migrations.

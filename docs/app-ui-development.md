@@ -1,6 +1,6 @@
 # App-owned UI development
 
-Use this guidance for app-owned UI, adaptation, and navigation work. Check [UI ownership](ui-ownership-map.md), [UI copy style](ui-copy-style.md), and [runtime UI boundaries](runtime-ui.md) for the affected surface.
+Use this guidance for app-owned UI architecture, adaptation, and navigation work. Load the additional UI ownership, copy/presentation, or runtime documents routed by [AGENTS.md](../AGENTS.md) only when the affected surface crosses those concerns.
 
 ## App-owned UI, adaptation, and navigation
 
@@ -16,5 +16,5 @@ Use this guidance for app-owned UI, adaptation, and navigation work. Check [UI o
 - Keep `DropdownMenu` for short anchored choices. Use a custom constrained dialog or a full-screen destination for long forms; do not change presentation type merely because orientation changes. Modal scrims must cover the owning surface, hide underlying semantics, preserve Back/outside-dismiss policy, and remain usable with the IME and 200% text.
 - Keep touch targets at least 48dp where practical, expose labels/state/actions to accessibility services, and avoid duplicate focus targets by putting selection/toggle semantics on the containing row while making its indicator inert.
 - Keep UI work economical on low-end devices: move I/O and expensive transforms off the main thread, use lazy containers and stable keys for long data sets, remember derived work with complete keys, and avoid per-frame persistence, duplicate state, or decorative effects that trigger broad recomposition.
-- Add focused regression coverage when behavior or a relevant invariant changes. Use screenshots for materially different size or theme layouts and interaction tests for affected Back/restore, modal overflow, dismissal, action reachability, and accessibility semantics. Inspect rendered output before accepting new screenshot references; avoid tests that only mirror a reversible, low-impact implementation detail.
+- Apply [Testing strategy](development.md#testing-strategy) when UI behavior changes. Use screenshots only for materially different presentation states and interaction tests only for affected UI failure modes such as Back/restore, modal overflow, dismissal, action reachability, or accessibility semantics. Inspect rendered output before accepting new screenshot references.
 - For internal app icons, prefer official Material Symbols when suitable; use a repository-provided helper when available before creating a custom icon.

@@ -30,34 +30,54 @@ When a selected skill references a missing `references/...` or `scripts/...` fil
 4. Do not invent missing references, scripts, commands, or generated results.
 5. If the resource is also missing or inconsistent at the pinned upstream revision, report that fact and use the documented project fallback below.
 
-### Known upstream caveat: R8 analyzer scripts
-
-At the pinned revision, `r8-analyzer/SKILL.md` refers to `.agents/skills/r8-analyzer/scripts/convert_pb_to_json.py` and `scripts/analyze.py`, but the `performance/r8-analyzer` source tree does not contain those scripts.
-
-For JL-Mod Plus, the missing scripts are a failed prerequisite, not an instruction to recreate them. If those exact scripts are still absent from the verified upstream revision in use:
-
-- do not fabricate or approximate the scripts;
-- do not claim that the scripted Path A analysis was completed;
-- use the skill's non-scripted heuristic analysis path instead, based on the available Gradle/R8 configuration and vendored references;
-- if a future verified upstream revision supplies the scripts, review that revision first and vendor or retrieve the exact upstream files before using the scripted path.
-
 ## Project interpretation for coding agents
 
-Apply [AGENTS.md](../AGENTS.md) before generic upstream workflow defaults. These local interpretations do not change the pinned upstream files:
+Apply [AGENTS.md](../AGENTS.md) before generic upstream workflow defaults. When using a vendored skill, read only that skill's interpretation below in addition to its own `SKILL.md`.
 
-- XML-to-Compose Step 3 requests plan approval. An explicit request to migrate a bounded UI already authorizes the local implementation; present the approach and continue within that scope. Choose an unspecified candidate from current evidence when the choice is routine. For Step 4, use available repository screenshots or emulator captures before requesting an upload. Report unavailable visual evidence.
-- XML-to-Compose baseline guidance says to fix pre-existing build failures before migration. Diagnose whether a failure affects the requested change; repair it only when necessary and within scope, otherwise record the limitation and use the relevant validation that remains available.
-- AGP 9's Android Studio Upgrade Assistant prerequisite does not override the project's CLI-first workflow. An AGP migration request authorizes the scoped version and compatibility changes; inspect current Gradle, AGP, JDK, and Kotlin constraints, then perform and validate the migration without pausing for Android Studio.
-- Adaptive Step 3.3 requests user verification of screenshots. Inspect the rendered output yourself and provide reviewable artifacts; ask for a product decision when visual intent remains ambiguous. Do not accept references without inspection.
-- JL-Mod Plus intentionally mixes app-owned Compose surfaces with protected View/Java ME/runtime boundaries. The adaptive skill's whole-app Compose and Navigation 3 prerequisites do not authorize migration of unrelated or compatibility-sensitive boundaries. Apply adaptive guidance only to the app-owned surface in scope.
-- Adaptive instructions to add Navigation 3 scenes or experimental Grid apply only when those choices solve the requested layout problem within the current stack. Prefer a stable, simpler layout when it meets the requirement; ask about an experimental API only if its use is necessary and materially changes the product or compatibility decision.
-- Edge-to-edge workflow steps that scan or migrate every Activity apply only to an app-wide edge-to-edge task. For a scoped UI fix, inspect and change only the affected host and the boundaries needed for correctness.
-- Navigation 3's migration guide assumes a specific Navigation 2 architecture and requests confirmation when its assumptions or recipes differ. Inspect the actual app structure and supported contracts, choose a suitable incremental or atomic approach within the user's request, and ask only when an unresolved product or compatibility choice materially changes the result.
-- Android Profiler's intent and workflow-selection prompts should be read alongside the user's actual request and current evidence. Infer routine targets, locate existing traces before requesting uploads, and execute authorized composite work without renewed confirmation; ask only when ambiguity materially changes the recording, target, or result.
-- Testing setup is for creating or materially changing testing infrastructure, not for ordinary regression tests that already fit the current stack. Its broad framework/DI installation sequence is not a default migration plan; add infrastructure only when the requested testing capability genuinely requires it.
-- CameraX blueprint examples describe possible decomposition, not mandatory ViewModel/controller/layering. Fit camera work to the existing architecture and add layers only when they establish a needed boundary.
-- R8 analyzer's report-only/no-code constraint applies to analysis-only requests. If the user explicitly asks to analyze and implement R8 fixes, use the analyzer guidance for diagnosis and then make the authorized scoped changes under AGENTS.md.
-- Compose, target-SDK, and Navigation 3 prerequisites remain scope constraints. A missing prerequisite does not authorize an unrelated migration. The R8 script fallback above remains applicable.
+### migrate-xml-views-to-jetpack-compose
+
+- Step 3 requests plan approval. An explicit request to migrate a bounded UI already authorizes the local implementation; present the approach and continue within that scope. Choose an unspecified candidate from current evidence when the choice is routine.
+- For Step 4, use available repository screenshots or emulator captures before requesting an upload. Report unavailable visual evidence.
+- Baseline guidance says to fix pre-existing build failures before migration. Diagnose whether a failure affects the requested change; repair it only when necessary and within scope, otherwise record the limitation and use the relevant validation that remains available.
+
+### agp-9-upgrade
+
+- The Android Studio Upgrade Assistant prerequisite does not override the project's CLI-first workflow. An AGP migration request authorizes the scoped version and compatibility changes; inspect current Gradle, AGP, JDK, and Kotlin constraints, then perform and validate the migration without pausing for Android Studio.
+
+### adaptive
+
+- Step 3.3 requests user verification of screenshots. Inspect rendered output yourself and provide reviewable artifacts; ask for a product decision only when visual intent remains materially ambiguous.
+- JL-Mod Plus intentionally mixes app-owned Compose surfaces with protected View/Java ME/runtime boundaries. The skill's whole-app Compose and Navigation 3 prerequisites do not authorize migration of unrelated or compatibility-sensitive boundaries. Apply adaptive guidance only to the app-owned surface in scope.
+- Instructions to add Navigation 3 scenes or experimental Grid apply only when those choices solve the requested layout problem within the current stack. Prefer a stable, simpler layout when it meets the requirement; ask about an experimental API only if its use is necessary and materially changes the product or compatibility decision.
+
+### edge-to-edge
+
+- Workflow steps that scan or migrate every Activity apply only to an app-wide edge-to-edge task. For a scoped UI fix, inspect and change only the affected host and the boundaries needed for correctness.
+
+### navigation-3
+
+- The migration guide assumes a specific Navigation 2 architecture and requests confirmation when its assumptions or recipes differ. Inspect the actual app structure and supported contracts, choose a suitable incremental or atomic approach within the user's request, and ask only when an unresolved product or compatibility choice materially changes the result.
+
+### android-profiler
+
+- Intent and workflow-selection prompts should be read alongside the user's actual request and current evidence. Infer routine targets, locate existing traces before requesting uploads, and execute authorized composite work without renewed confirmation; ask only when ambiguity materially changes the recording, target, or result.
+
+### testing-setup
+
+- This skill is for creating or materially changing testing infrastructure, not for ordinary regression tests that already fit the current stack. Its broad framework/DI installation sequence is not a default migration plan; add infrastructure only when the requested testing capability genuinely requires it. Follow [Testing strategy](../docs/development.md#testing-strategy).
+
+### camerax
+
+- Blueprint examples describe possible decomposition, not mandatory ViewModel/controller/layering. Fit camera work to the existing architecture and add layers only when they establish a needed boundary.
+
+### r8-analyzer
+
+- The report-only/no-code constraint applies to analysis-only requests. If the user explicitly asks to analyze and implement R8 fixes, use the analyzer guidance for diagnosis and then make the authorized scoped changes under [AGENTS.md](../AGENTS.md).
+- At the pinned revision, the referenced conversion/analysis scripts are absent. Do not fabricate them or claim scripted analysis completed; use the non-scripted heuristic path. If a future verified upstream revision supplies the scripts, review and vendor the exact upstream files before using that path.
+
+### Shared prerequisite rule
+
+- A missing Compose, target-SDK, Navigation 3, tool, or framework prerequisite is a scope constraint, not authorization for an unrelated migration. Follow the project's current stack and the user's requested scope.
 
 ## Updating these skills
 

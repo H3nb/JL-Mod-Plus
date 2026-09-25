@@ -18,7 +18,7 @@ Compatibility details retained during the move:
 - The old absolute component names for `LauncherActivity`, `MainActivity`, `config.ConfigActivity`, and `settings.SettingsActivity` are explicit-only activity aliases targeting the new classes. Only the legacy launcher alias owns the `MAIN`/`LAUNCHER` filter.
 - Diagnostic stack parsing accepts both the canonical and legacy host prefixes. Existing reports and diagnostic fixtures are not rewritten.
 - The protocol extras `ru.playsoftware.j2meloader.memory.extra.RUNTIME_TOKEN`, `ru.playsoftware.j2meloader.crashes.REPORT_ID`, and the debug runtime-probe extra remain literal compatibility keys.
-- The historical Room schema directory is preserved alongside byte-identical copies under the canonical qualified class name. Database filename, schema version, migrations, and identity hash are unchanged.
+- The historical Room schema directory was preserved alongside byte-identical copies under the canonical qualified class name. At the namespace-migration checkpoint, the database filename, schema version, migrations, and identity hash were unchanged; later schema evolution follows the current Library data contract.
 - GLES, Micro3D, EAS, and TSF JNI entry points use the canonical host names while their Java ME contracts and native library names remain unchanged.
 
 Inherited Apache-2.0 source keeps its original copyright and attribution. Files modified by this migration use the neutral notice `Modified for JL-Mod Plus.` where an appropriate modification notice was not already present. The root `LICENSE` is unchanged.
