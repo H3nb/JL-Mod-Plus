@@ -30,9 +30,8 @@ public final class CrashRuntimeLifecycleControlActivity extends Activity {
 		if (COMMAND_DESTROY.equals(command)) {
 			MidletThread.destroyApp();
 		} else if (COMMAND_PAUSE.equals(command)) {
-			// Use the exact dispatcher that MicroActivity's ON_STOP observer uses. Instrumentation can
-			// launch this control activity in a separate task, so relying on Android task ordering alone
-			// would not reliably exercise MIDlet.pauseApp().
+			// Exercise the runtime owner's pause dispatcher directly. Instrumentation can launch this
+			// control activity in a separate task, so Android task ordering is not a reliable trigger.
 			MidletThread.requestPause();
 		}
 		finish();

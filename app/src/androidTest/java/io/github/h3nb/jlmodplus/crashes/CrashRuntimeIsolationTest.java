@@ -146,14 +146,19 @@ public class CrashRuntimeIsolationTest {
 					LifecycleMidlet.PAUSE_FAILURE_MARKER,
 					CrashRuntimeLifecycleControlActivity.COMMAND_PAUSE,
 					mainPid, mainProcessName, midletProcessName);
-			assertLifecycleFailureCase(context, appDir, marker,
-					LifecycleMidlet.MODE_CRASH_DESTROY,
-					MidletSessionJournal.FailureBoundary.LIFECYCLE_DESTROY,
-					LifecycleMidlet.DESTROY_FAILURE_MARKER,
-					CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY,
-					mainPid, mainProcessName, midletProcessName);
 
 			Set<String> afterCrashIds = recordIds(LocalDiagnosticRepository.load(context));
+			clearMarker(marker);
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_CRASH_DESTROY, marker);
+			launchLifecycleMidlet(context, appDir);
+			awaitMarker(marker);
+			launchLifecycleControl(context, CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY);
+			assertRemoteProcessStops(context, midletProcessName);
+			assertEquals(mainPid, Process.myPid());
+			assertEquals(mainPid, processPid(context, mainProcessName));
+			assertNoNewLifecycleFailure(context, afterCrashIds);
+
+			Set<String> afterThrowingDestroyIds = recordIds(LocalDiagnosticRepository.load(context));
 			clearMarker(marker);
 			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_CLEAN, marker);
 			launchLifecycleMidlet(context, appDir);
@@ -161,7 +166,7 @@ public class CrashRuntimeIsolationTest {
 			assertRemoteProcessStops(context, midletProcessName);
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
-			assertNoNewLifecycleFailure(context, afterCrashIds);
+			assertNoNewLifecycleFailure(context, afterThrowingDestroyIds);
 		} finally {
 			killRemoteProcessBestEffort(context, midletProcessName);
 			cleanupLifecycleDiagnostics(context, baselineIds);

@@ -83,6 +83,7 @@ import javax.microedition.util.ContextHolder;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
 import io.github.h3nb.jlmodplus.BuildConfig;
+import io.github.h3nb.jlmodplus.MainActivity;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
@@ -475,12 +476,16 @@ public class MicroActivity extends AppCompatActivity {
 					@Override
 					public void onMidletCancelled() {
 						pendingMidletClasses = null;
-						MidletThread.notifyDestroyed();
+						if (!MidletThread.destroyApp(true)) {
+							finishUnstartedRuntime(true);
+						}
 					}
 
 					@Override
 					public void onErrorAcknowledged() {
-						MidletThread.notifyDestroyed();
+						if (!MidletThread.destroyApp(true)) {
+							finishUnstartedRuntime(true);
+						}
 					}
 
 					@Override
@@ -489,7 +494,9 @@ public class MicroActivity extends AppCompatActivity {
 						if (openSettings) {
 							Config.openSettings(MicroActivity.this, appName, appPath, expectedAppId);
 						}
-						MidletThread.destroyApp();
+						if (!MidletThread.destroyApp(!openSettings)) {
+							finishUnstartedRuntime(!openSettings);
+						}
 					}
 
 					@Override
@@ -702,6 +709,47 @@ public class MicroActivity extends AppCompatActivity {
 			microLoader.closeTimingSessionIfNotTransferred();
 		}
 		super.onDestroy();
+	}
+
+	private void finishUnstartedRuntime(boolean returnToLibrary) {
+		try {
+			MidletSessionStore.clear(getApplicationContext());
+			MidletKeepAliveService.stop(this);
+			if (microLoader != null) {
+				microLoader.closeTimingSessionIfNotTransferred();
+			}
+		} catch (Throwable ignored) {
+			// Host cleanup must still finish even if diagnostics/session cleanup cannot complete.
+		}
+		finishRuntime(returnToLibrary, null);
+	}
+
+	void finishRuntime(boolean returnToLibrary, @Nullable Runnable processCleanup) {
+		runOnUiThread(() -> {
+			boolean currentHost = ContextHolder.getActivity() == this;
+			boolean wasVisible = currentHost && isVisible() && !isDestroyed();
+			if (currentHost) {
+				if (controllerInputRouter != null) {
+					controllerInputRouter.clear();
+				}
+				Display display = Display.getDisplay(null);
+				if (display != null) {
+					display.detachHost();
+				}
+				current = null;
+				ContextHolder.clearCurrentActivity(this);
+			}
+			if (wasVisible && returnToLibrary) {
+				startActivity(new Intent(this, MainActivity.class)
+						.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
+			}
+			if (!isFinishing()) {
+				finish();
+			}
+			if (processCleanup != null) {
+				processCleanup.run();
+			}
+		});
 	}
 
 	private void refreshCanvasBackground() {
