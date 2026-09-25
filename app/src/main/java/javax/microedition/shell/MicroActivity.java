@@ -630,12 +630,24 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	protected void onStart() {
 		super.onStart();
-		MidletThread.hostVisible(this);
+		if (ContextHolder.getActivity() == this) {
+			Display display = Display.getDisplay(null);
+			if (display != null) {
+				display.setHostVisible(true);
+			}
+			MidletThread.hostVisible(this);
+		}
 	}
 
 	@Override
 	protected void onStop() {
-		MidletThread.hostHidden(this);
+		if (ContextHolder.getActivity() == this) {
+			Display display = Display.getDisplay(null);
+			if (display != null) {
+				display.setHostVisible(false);
+			}
+			MidletThread.hostHidden(this);
+		}
 		super.onStop();
 	}
 

@@ -58,7 +58,6 @@ public class Display {
 	private static Display instance;
 	static EventQueue queue = new EventQueue();
 
-
 	static {
 		queue.startProcessing();
 	}
@@ -66,8 +65,9 @@ public class Display {
 	private volatile Displayable current;
 	/** Invalidates queued show requests when the displayable changes, including reusing an Alert. */
 	private final AtomicLong currentRequestGeneration = new AtomicLong();
-	/** Serializes display state transitions with Alert preparation/showing. */
+	/** Serializes current-screen and host-presentation facts. */
 	private final Object stateLock = new Object();
+	private boolean hostVisible;
 
 	public static Display getDisplay(MIDlet midlet) {
 		if (instance == null && midlet != null) {
@@ -77,16 +77,23 @@ public class Display {
 	}
 
 	private Display() {
+		MicroActivity activity = ContextHolder.getActivity();
+		hostVisible = activity != null && activity.isVisible();
 	}
 
 	public static void initDisplay() {
 		instance = null;
 	}
 
+	/**
+	 * Attaches the persisted guest Display state to a replacement Android host. The new Activity is
+	 * still in onCreate, so presentation remains hidden until its onStart edge arrives.
+	 */
 	public void attachHost(MicroActivity activity) {
 		Displayable target;
 		long requestGeneration;
 		synchronized (stateLock) {
+			hostVisible = false;
 			target = current;
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 		}
@@ -96,6 +103,9 @@ public class Display {
 			ViewHandler.postEvent(() -> showAlert(alert, generation));
 		} else if (target != null) {
 			target.clearDisplayableView();
+			if (target instanceof Canvas canvas) {
+				canvas.updatePresentationState(true, false);
+			}
 			activity.setCurrent(target);
 		}
 	}
@@ -103,13 +113,34 @@ public class Display {
 	public void detachHost() {
 		Displayable target;
 		synchronized (stateLock) {
+			hostVisible = false;
 			target = current;
 			currentRequestGeneration.incrementAndGet();
 		}
 		if (target instanceof Alert alert) {
 			alert.detachHost();
 		} else if (target != null) {
+			if (target instanceof Canvas canvas) {
+				canvas.updatePresentationState(true, false);
+			}
 			target.clearDisplayableView();
+		}
+	}
+
+	/** Updates host foreground access without changing the guest's current Displayable. */
+	public void setHostVisible(boolean visible) {
+		Canvas canvas = null;
+		synchronized (stateLock) {
+			if (hostVisible == visible) {
+				return;
+			}
+			hostVisible = visible;
+			if (current instanceof Canvas currentCanvas) {
+				canvas = currentCanvas;
+			}
+		}
+		if (canvas != null) {
+			canvas.updatePresentationState(true, visible);
 		}
 	}
 
@@ -132,9 +163,10 @@ public class Display {
 			return;
 		}
 		Displayable previous;
+		boolean currentHostVisible;
 		long requestGeneration = 0L;
 		Alert alert = null;
-			synchronized (stateLock) {
+		synchronized (stateLock) {
 			previous = this.current;
 			if (previous instanceof Alert && displayable instanceof Alert) {
 				throw new IllegalArgumentException();
@@ -151,6 +183,7 @@ public class Display {
 			}
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			this.current = displayable;
+			currentHostVisible = hostVisible;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 			if (displayable instanceof Alert nextAlert) {
 				alert = nextAlert;
@@ -158,9 +191,12 @@ public class Display {
 			}
 		}
 		if (previous instanceof Canvas canvas) {
-			canvas.setInvisible();
+			canvas.updatePresentationState(false, currentHostVisible);
 		} else if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
+		}
+		if (displayable instanceof Canvas canvas) {
+			canvas.updatePresentationState(true, currentHostVisible);
 		}
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity == null) {
@@ -182,6 +218,7 @@ public class Display {
 			throw new IllegalArgumentException();
 		}
 		Displayable previous;
+		boolean currentHostVisible;
 		long requestGeneration;
 		synchronized (stateLock) {
 			if (current instanceof Alert && current != alert) {
@@ -198,10 +235,11 @@ public class Display {
 			alert.setNextDisplayable(displayable);
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			current = alert;
+			currentHostVisible = hostVisible;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 		}
 		if (previous instanceof Canvas canvas) {
-			canvas.setInvisible();
+			canvas.updatePresentationState(false, currentHostVisible);
 		} else if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
 		}
