@@ -41,9 +41,7 @@ consistent across the library, profiles, and installer surfaces.
 - Resource keys such as `START_CMD` and `CANCEL_CMD` are legacy identifiers and do not define rendered capitalization.
 - Write full messages as normal sentences: capitalize the first word, use ordinary punctuation, and start a new sentence after a newline with a capital letter.
 - Preserve proper nouns, product names, and technical abbreviations: `JL-Mod Plus`, `J2ME`, `MIDlet`, `JAR`, `JAD`, `KJX`, `GitHub`, `Android`, `Material 3`, and `H3NB`.
-- Apply the same role-based rule to translated app-owned labels, retaining
-  correct spelling, diacritics, acronyms, and technical notation. Descriptions
-  remain sentence case even when they are placed beside a title-cased option.
+- Preserve the same semantic role across locales, but follow the natural capitalization rules of each target language rather than mechanically applying English title casing. Retain correct spelling, diacritics, acronyms, and technical notation.
 - Store the intended capitalization in resources; do not title-case arbitrary
   content at runtime. Game names, user-created profile/collection names, source
   metadata, and identifiers retain their supplied form.

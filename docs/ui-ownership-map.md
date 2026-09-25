@@ -1,8 +1,6 @@
 # UI ownership and protected boundaries
 
-This document describes UI ownership in JL-Mod Plus. It is a
-repository contract for UI work: a component is not a migration target
-just because it still uses a `View`.
+This document describes UI ownership in JL-Mod Plus. The protected compatibility boundaries below are normative: a component is not a migration target merely because it still uses a `View`. Class ownership, transitional hosts, and dependency usage describe the current implementation and must be revalidated against current source; they are not permanent architectural constraints.
 
 ## Ownership map
 
@@ -64,9 +62,7 @@ resource lookup. Native-looking resources may still serve Java ME controls.
 | `androidx.room3` | Library database/entity/DAO/repository | Retain |
 | Compose Material 3/runtime/foundation/UI | All migrated app-owned surfaces and screenshot tests | Retain |
 
-The app-owned file picker uses its controller and Compose list. Check
-`app/build.gradle.kts` and `gradle/libs.versions.toml` for current dependency
-declarations; this table explains ownership rather than pinning versions.
+The app-owned file picker uses its controller and Compose list. Check `app/build.gradle.kts` and `gradle/libs.versions.toml` for current dependency declarations. `Retain` means the dependency is currently required by active consumers; it does not forbid a future scoped refactor that removes those consumers while preserving the protected contracts above.
 
 ## Validation and manual gates
 
@@ -75,10 +71,7 @@ edge-to-edge roots. File-picker tests additionally cover filtering, search,
 sorting (including modified time), directory navigation, and result state. The
 CI debug job compiles/assembles the host and Android-test artifacts and runs
 lint/unit tests; it does not execute connected instrumentation tests. See
-[Build and validation](development.md). A connected emulator or device is still
-required for the final smoke pass over exported JAR/JAD/KJX intents, raw-path/
-file-picker results, permission recovery, install/overwrite/cancel/error
-cleanup, guest launch, hardware key/touch dispatch, rotation, and IME behavior.
+[Build and validation](development.md). When a change affects these platform or runtime behaviors, use a connected emulator or device for the relevant smoke cases across exported JAR/JAD/KJX intents, raw-path/file-picker results, permission recovery, install/overwrite/cancel/error cleanup, guest launch, hardware key/touch dispatch, rotation, and IME behavior. Reserve the full matrix for broad boundary changes or release validation.
 
 Navigation 3 is deliberately limited to the Collections overview-to-members flow,
 where distinct destinations and an adaptive Material 3 list-detail scene provide a
