@@ -2,7 +2,7 @@
  * Copyright 2018-2021 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
  *
- * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import android.util.SparseIntArray;
 import android.view.KeyEvent;
 
 import androidx.core.content.ContextCompat;
-import androidx.preference.PreferenceManager;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -68,6 +67,7 @@ import io.reactivex.schedulers.Schedulers;
 import kotlin.io.ConstantsKt;
 import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.BuildConfig;
+import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
@@ -76,6 +76,7 @@ import io.github.h3nb.jlmodplus.crashes.CrashReporter;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionJournal;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.memory.MemoryRuntimeSession;
+import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 import io.github.h3nb.jlmodplus.util.AppUtils;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
@@ -97,20 +98,25 @@ public class MicroLoader {
 	private final File appDir;
 	private final String workDir;
 	private final String appDirName;
+	private final long expectedAppId;
+	private final boolean builtInThemeLinked;
 	private String midletName;
 	private String midletVendor;
 	private String midletVersion;
 	private String jarSize;
 	private String jarSha256;
 	private TimingSession timingSession;
+	private RuntimeStorageLease storageLease;
 	private AutoSpeedController autoSpeedController;
 	private long memoryRuntimeToken;
 	private boolean timingTransformCompatible;
 	/** Set only after the MIDlet thread has successfully received the timing session. */
 	private boolean timingSessionTransferred;
 
-	MicroLoader(String appPath) {
+	MicroLoader(String appPath, long expectedAppId, boolean builtInThemeLinked) {
 		this.appDir = new File(appPath);
+		this.expectedAppId = expectedAppId;
+		this.builtInThemeLinked = builtInThemeLinked;
 		File converted = appDir.getParentFile();
 		if (converted == null)
 			throw new NullPointerException("Can't access to parent of " + appPath);
@@ -120,14 +126,7 @@ public class MicroLoader {
 
 	public boolean init() {
 		File config = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDirName);
-		boolean legacyThemeLinked = PreferenceManager.getDefaultSharedPreferences(
-				ContextHolder.getAppContext())
-				.getBoolean(ProfileModel.builtInThemePreferenceKey(config), false);
-		this.params = ProfilesManager.loadConfig(
-				config,
-				true,
-				ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
-				legacyThemeLinked);
+		this.params = ProfilesManager.loadPreparedMidletConfig(config, builtInThemeLinked);
 		if (params == null) {
 			return false;
 		}
@@ -137,7 +136,7 @@ public class MicroLoader {
 			Log.e(TAG, "A MIDlet timing session is already active");
 			return false;
 		}
-		applyLinkedBuiltInTheme(config);
+		applyLinkedBuiltInTheme();
 		Display.initDisplay();
 		Graphics3D.initGraphics3D();
 		File cacheDir = ContextHolder.getCacheDir();
@@ -190,6 +189,18 @@ public class MicroLoader {
 		MemoryRuntimeSession.close(token);
 	}
 
+	private void closeStorageLease() {
+		RuntimeStorageLease lease = storageLease;
+		storageLease = null;
+		if (lease != null) {
+			try {
+				lease.close();
+			} catch (IOException error) {
+				Log.w(TAG, "Unable to release runtime storage lease", error);
+			}
+		}
+	}
+
 	/**
 	 * Releases a session created for a launch that never reached a MidletThread. This is called
 	 * from Activity teardown; once the thread has started, its lifecycle/failure paths own cleanup.
@@ -197,6 +208,7 @@ public class MicroLoader {
 	void closeTimingSessionIfNotTransferred() {
 		if (!timingSessionTransferred) {
 			closeTimingSession();
+			closeStorageLease();
 		}
 	}
 
@@ -246,10 +258,8 @@ public class MicroLoader {
 	}
 
 	/** Applies only the theme-owned colors for a linked built-in profile at runtime. */
-	private void applyLinkedBuiltInTheme(File configDir) {
-		boolean linked = PreferenceManager.getDefaultSharedPreferences(ContextHolder.getAppContext())
-				.getBoolean(ProfileModel.builtInThemePreferenceKey(configDir), false);
-		if (!linked || params.screenBackgroundMode != io.github.h3nb.jlmodplus.config.BackgroundMode.THEME) {
+	private void applyLinkedBuiltInTheme() {
+		if (!builtInThemeLinked || params.screenBackgroundMode != io.github.h3nb.jlmodplus.config.BackgroundMode.THEME) {
 			return;
 		}
 		ProfileModel.applyBuiltInTheme(
@@ -395,15 +405,21 @@ public class MicroLoader {
 		final String country = defaultLocale.getCountry();
 		System.setProperty("microedition.locale", defaultLocale.getLanguage()
 				+ (country.length() == 2 ? "-" + country : ""));
-		// FIXME: 21.10.2020 Config.getDataDir() may be in different storage
 		final String primaryStoragePath = Environment.getExternalStorageDirectory().getPath();
-		String dataUri = "file:///c:" + Config.getDataDir().substring(primaryStoragePath.length()) + appDirName;
+		String dataUri = fileConnectionDataUri(workDir, appDirName, primaryStoragePath);
 		String musicUri = "file:///c:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
 				.getPath().substring(primaryStoragePath.length());
 		System.setProperty("fileconn.dir.cache", dataUri + "/cache");
 		System.setProperty("fileconn.dir.private", dataUri + "/private");
 		System.setProperty("fileconn.dir.music", musicUri);
 		System.setProperty("user.home", primaryStoragePath);
+	}
+
+	static String fileConnectionDataUri(
+			String launchedWorkDir, String storageKey, String primaryStoragePath) {
+		File dataDir = new File(launchedWorkDir + Config.MIDLET_DATA_DIR + storageKey);
+		return "file:///c:" + dataDir.getPath().substring(primaryStoragePath.length())
+				.replace(File.separatorChar, '/');
 	}
 
 	public int getOrientation() {
@@ -419,7 +435,7 @@ public class MicroLoader {
 		try {
 			// Apply configuration to the launching MIDlet
 			if (params.showKeyboard) {
-				ContextHolder.setVk(new VirtualControlsKeyboard(params));
+				ContextHolder.setVk(new VirtualControlsKeyboard(params, false));
 			} else {
 				ContextHolder.setVk(null);
 			}
@@ -511,9 +527,28 @@ public class MicroLoader {
 		if (timingSessionTransferred) {
 			return;
 		}
-		startTimingSession();
 		try {
-			MidletSessionStore.markStarted(ContextHolder.getAppContext(), appDir.getPath(), appName, clazz);
+			// This lock lives with the actual MIDlet session, not its Activity. A second authority
+			// check closes the prepare/delete/install race before any MIDlet code can write data.
+			storageLease = RuntimeStorageLease.acquire(
+					ContextHolder.getAppContext().getFilesDir(), appDir);
+			if (storageLease == null) {
+				ContextHolder.getActivity().showErrorDialog(
+						ContextHolder.getActivity().getString(R.string.runtime_storage_in_use));
+				return;
+			}
+			PresetAuthorityClient.PrepareResult current = new PresetAuthorityClient(
+					ContextHolder.getAppContext()).prepareRuntime(appDir.getPath(), expectedAppId);
+			if (!current.isSuccess() || current.appId() != expectedAppId) {
+				closeTimingSession();
+				closeStorageLease();
+				ContextHolder.getActivity().showErrorDialog(
+						ContextHolder.getActivity().getString(R.string.runtime_installation_changed));
+				return;
+			}
+			startTimingSession();
+			MidletSessionStore.markStarted(
+					ContextHolder.getAppContext(), appDir.getPath(), appName, clazz, expectedAppId);
 			MidletSessionJournal journal = MidletSessionJournal.create(
 					ContextHolder.getAppContext(),
 					midletName,
@@ -528,16 +563,23 @@ public class MicroLoader {
 			CrashReporter.setMidletMainClass(clazz);
 			MidletThread midletThread = new MidletThread(this, clazz, journal);
 			midletThread.start();
-			// The thread now owns lifecycle cleanup. Set this after start() so a failed thread start
-			// still rolls back the session in the catch block below.
+			// The thread now owns lifecycle cleanup. Keep its storage lease until :midlet exits:
+			// guest worker threads may still write between terminal callbacks and process death.
+			// Set this after start() so a failed thread start still rolls back the launch.
 			timingSessionTransferred = true;
 			if (!BuildConfig.FULL_EMULATOR) {
 				return;
 			}
 			AppUtils.pushToRecentShortcuts(ContextHolder.getActivity(), appDir.getPath(), appName);
+		} catch (IOException failure) {
+			closeTimingSession();
+			closeStorageLease();
+			ContextHolder.getActivity().showErrorDialog(
+					ContextHolder.getActivity().getString(R.string.runtime_storage_unavailable));
 		} catch (RuntimeException | Error failure) {
 			if (!timingSessionTransferred) {
 				closeTimingSession();
+				closeStorageLease();
 			}
 			throw failure;
 		}

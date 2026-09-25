@@ -19,8 +19,11 @@
 package io.github.h3nb.jlmodplus.settings;
 
 import static io.github.h3nb.jlmodplus.util.Constants.ACTION_EDIT_PROFILE;
+import static io.github.h3nb.jlmodplus.util.Constants.KEY_INSTALLED_APP_PATH;
+import static io.github.h3nb.jlmodplus.util.Constants.KEY_LIBRARY_APP_ID;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.SparseIntArray;
 import android.view.KeyEvent;
@@ -41,6 +44,9 @@ import java.io.File;
 import javax.microedition.lcdui.keyboard.KeyMapper;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.config.MidletConfigLoadBoundary;
+import io.github.h3nb.jlmodplus.config.InstalledAppWriteGuard;
+import io.github.h3nb.jlmodplus.config.PresetLocalOverride;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -49,9 +55,17 @@ import io.github.h3nb.jlmodplus.ui.ThemedToast;
 
 public class KeyMapperActivity extends AppCompatActivity {
 	private static final String KEY_SAVE = "KEY_MAP_SAVE";
+	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
 	private final SparseIntArray defaultKeyMap = KeyMapper.getDefaultKeyMap();
-	private SparseIntArray androidToMIDP;
+	SparseIntArray androidToMIDP;
+	private SparseIntArray persistedEffectiveMap;
 	private ProfileModel params;
+	private File configDir;
+	private File profilesRoot;
+	private boolean namedProfile;
+	private String installedAppPath;
+	private long expectedAppId;
+	private InstalledAppWriteGuard installedWriteGuard;
 	private int canvasKey;
 	private KeyMapperComposeController composeController;
 
@@ -68,22 +82,45 @@ public class KeyMapperActivity extends AppCompatActivity {
 		}
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
-		boolean namedProfile = ACTION_EDIT_PROFILE.equals(intent.getAction());
-		boolean legacyThemeLinked = !namedProfile && PreferenceManager
-				.getDefaultSharedPreferences(getApplicationContext())
-				.getBoolean(ProfileModel.builtInThemePreferenceKey(new File(path)), false);
-		params = ProfilesManager.loadConfig(new File(path), true,
-				namedProfile
-						? ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE
-						: ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
-				legacyThemeLinked);
+		namedProfile = ACTION_EDIT_PROFILE.equals(intent.getAction());
+		configDir = new File(path);
+		SharedPreferences preferences = PreferenceManager
+				.getDefaultSharedPreferences(getApplicationContext());
+		if (!namedProfile) {
+			installedAppPath = intent.getStringExtra(KEY_INSTALLED_APP_PATH);
+			File convertedDir = installedAppPath == null
+					? null : new File(installedAppPath).getParentFile();
+			File workDir = convertedDir == null ? null : convertedDir.getParentFile();
+			if (workDir == null) {
+				ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+				finish();
+				return;
+			}
+			profilesRoot = new File(workDir, "templates");
+			expectedAppId = savedInstanceState == null
+					? intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L)
+					: savedInstanceState.getLong(
+							STATE_EXPECTED_APP_ID, intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L));
+			installedWriteGuard = InstalledAppWriteGuard.create(this);
+		}
+		if (!initializeConfig(preferences)) {
+			ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+			finish();
+			return;
+		}
 
+		SparseIntArray loadedEffective =
+				KeyMapperMappingRules.resolve(defaultKeyMap, params.keyMappings);
+		// Back is a host-reserved runtime control. Treat this editor normalization as the persisted
+		// effective baseline so opening and closing an older profile is not a user-owned mutation.
+		loadedEffective.put(KeyEvent.KEYCODE_BACK, KeyMapper.KEY_OPTIONS_MENU);
+		persistedEffectiveMap = loadedEffective.clone();
 		if (savedInstanceState == null) {
-			androidToMIDP = KeyMapperMappingRules.resolve(defaultKeyMap, params.keyMappings);
+			androidToMIDP = loadedEffective;
 		} else {
 			String save = savedInstanceState.getString(KEY_SAVE);
 			if (save == null || save.isEmpty()) {
-				androidToMIDP = KeyMapperMappingRules.resolve(defaultKeyMap, params.keyMappings);
+				androidToMIDP = loadedEffective;
 			} else {
 				androidToMIDP = new GsonBuilder()
 						.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
@@ -91,8 +128,6 @@ public class KeyMapperActivity extends AppCompatActivity {
 						.fromJson(save, SparseIntArray.class);
 			}
 		}
-		// Back is a host-reserved runtime control. Normalize older profile overrides in the
-		// editor too, so the visible/effective map agrees with runtime dispatch.
 		androidToMIDP.put(KeyEvent.KEYCODE_BACK, KeyMapper.KEY_OPTIONS_MENU);
 		composeController = new KeyMapperComposeController(composeView, new KeyMapperActions() {
 			@Override
@@ -125,8 +160,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 			@Override
 			public void onSaveAndExit() {
 				composeController.hideMenuKeyWarning();
-				save();
-				finish();
+				if (save()) finish();
 			}
 
 			@Override
@@ -141,17 +175,17 @@ public class KeyMapperActivity extends AppCompatActivity {
 					composeController.showMenuKeyWarning();
 					return;
 				}
-				save();
-				finish();
+				if (save()) finish();
 			}
 		});
 	}
 
 	@Override
 	protected void onSaveInstanceState(@NonNull Bundle outState) {
-		SparseIntArray currentOverrides = KeyMapperMappingRules.diff(defaultKeyMap, androidToMIDP);
-		SparseIntArray persistedOverrides = currentOverrides.size() == 0 ? null : currentOverrides;
-		if (!KeyMapperMappingRules.equalMaps(params.keyMappings, persistedOverrides)) {
+		if (!namedProfile && expectedAppId > 0L) {
+			outState.putLong(STATE_EXPECTED_APP_ID, expectedAppId);
+		}
+		if (!KeyMapperMappingRules.equalMaps(persistedEffectiveMap, androidToMIDP)) {
 			String currMap = new GsonBuilder()
 					.registerTypeAdapter(SparseIntArray.class, new SparseIntArrayAdapter())
 					.create()
@@ -182,16 +216,63 @@ public class KeyMapperActivity extends AppCompatActivity {
 	}
 
 
-	private void save() {
+	boolean save() {
+		if (KeyMapperMappingRules.equalMaps(persistedEffectiveMap, androidToMIDP)) {
+			return true;
+		}
 		SparseIntArray newMap = KeyMapperMappingRules.diff(defaultKeyMap, androidToMIDP);
 		SparseIntArray oldMap = params.keyMappings;
 		if (newMap.size() == 0) {
 			newMap = null;
 		}
-		if (!KeyMapperMappingRules.equalMaps(oldMap, newMap)) {
-			params.keyMappings = newMap;
-			ProfilesManager.saveConfig(params);
+
+		params.keyMappings = newMap;
+		boolean saved;
+		if (namedProfile) {
+			saved = ProfilesManager.saveConfig(params);
+		} else {
+			InstalledAppWriteGuard.Result result = runInstalledWrite(() ->
+					PresetLocalOverride.runDetachedWrite(
+							this, configDir, () -> ProfilesManager.saveConfig(params)));
+			saved = result == InstalledAppWriteGuard.Result.SUCCESS;
 		}
+		if (saved) {
+			persistedEffectiveMap = androidToMIDP.clone();
+			return true;
+		}
+		params.keyMappings = oldMap;
+		ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+		return false;
+	}
+
+	private boolean initializeConfig(@NonNull SharedPreferences preferences) {
+		if (namedProfile) return loadConfig(preferences);
+		InstalledAppWriteGuard.Result result = runInstalledWrite(() ->
+				MidletConfigLoadBoundary.prepare(preferences, configDir, profilesRoot)
+						&& loadConfig(preferences));
+		return result == InstalledAppWriteGuard.Result.SUCCESS;
+	}
+
+	private boolean loadConfig(@NonNull SharedPreferences preferences) {
+		boolean legacyThemeLinked = !namedProfile && preferences
+				.getBoolean(ProfileModel.builtInThemePreferenceKey(configDir), false);
+		params = ProfilesManager.loadConfig(configDir, true,
+				namedProfile
+						? ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE
+						: ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
+				legacyThemeLinked);
+		return params != null;
+	}
+
+	private InstalledAppWriteGuard.Result runInstalledWrite(
+			@NonNull InstalledAppWriteGuard.WriteOperation operation) {
+		if (installedWriteGuard == null || installedAppPath == null || expectedAppId <= 0L) {
+			return InstalledAppWriteGuard.Result.STALE;
+		}
+		InstalledAppWriteGuard.Result result = installedWriteGuard.run(
+				installedAppPath, expectedAppId, operation);
+		if (result == InstalledAppWriteGuard.Result.STALE) finish();
+		return result;
 	}
 
 	@Override

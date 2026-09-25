@@ -1,4 +1,4 @@
-# UI copy, typography, and interaction style
+# UI copy and presentation style
 
 JL-Mod Plus uses a hierarchy-aware capitalization policy. One casing rule is
 not applied to every piece of UI copy.
@@ -41,9 +41,7 @@ consistent across the library, profiles, and installer surfaces.
 - Resource keys such as `START_CMD` and `CANCEL_CMD` are legacy identifiers and do not define rendered capitalization.
 - Write full messages as normal sentences: capitalize the first word, use ordinary punctuation, and start a new sentence after a newline with a capital letter.
 - Preserve proper nouns, product names, and technical abbreviations: `JL-Mod Plus`, `J2ME`, `MIDlet`, `JAR`, `JAD`, `KJX`, `GitHub`, `Android`, `Material 3`, and `H3NB`.
-- Apply the same role-based rule to translated app-owned labels, retaining
-  correct spelling, diacritics, acronyms, and technical notation. Descriptions
-  remain sentence case even when they are placed beside a title-cased option.
+- Preserve the same semantic role across locales, but follow the natural capitalization rules of each target language rather than mechanically applying English title casing. Retain correct spelling, diacritics, acronyms, and technical notation.
 - Store the intended capitalization in resources; do not title-case arbitrary
   content at runtime. Game names, user-created profile/collection names, source
   metadata, and identifiers retain their supplied form.
@@ -146,38 +144,12 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
   from an operation whose files were saved but whose remaining step needs retry.
   Keep technical diagnostics behind an explicit copy/details action.
 
-## Interaction, accessibility, and performance
+## Presentation review
 
-- Preserve Back, outside-dismiss, confirmation, and navigation semantics when
-  refactoring presentation. Explain an unavailable action or an operation waiting
-  to stop; prevent duplicate submissions while it is running.
-- Keep touch targets at least 48 dp where practical. Use one semantic target for
-  a selectable row, with its indicator inert. Label icons and expose selection,
-  busy/error state, and meaningful actions to accessibility services.
-- Support 200% text, long/localized labels, keyboard focus, and the IME. Scroll
-  focused fields into view and keep the confirm/cancel path usable.
-- Keep file, database, network, parsing, and expensive image work off the UI
-  thread. Use lazy lists with stable keys for potentially long collections;
-  ordinary columns are sufficient for a few fixed fields or actions.
-- Keep one owner for each interaction state. Remember expensive derived values
-  with complete keys; avoid recomputing them or persisting settings on every
-  frame. Reuse existing components and dependencies instead of introducing a
-  framework for a small presentation change.
-- Prefer direct feedback and inexpensive transitions. Decorative animation,
-  layered effects, and artificial delays must not slow interaction or obscure
-  progress, especially on low-end devices.
+For interaction architecture, accessibility behavior, performance, and general UI testing policy, follow [App-owned UI development](app-ui-development.md) and [Testing strategy](development.md#testing-strategy). This document adds only copy and presentation-specific checks.
 
-## Visual and interaction review
-
-Check compact, medium, and expanded widths; short and tall windows; portrait and
-landscape; light/dark themes; a non-default accent; and normal/200% text. Include
-system bars and IME behavior where relevant. Review the actual rendered output
-and verify overflow, the last action, dismissal, and accessibility semantics.
-
-Compare reference, actual, and diff images before approving screenshot updates.
-A green screenshot test does not by itself prove that spacing or interaction is
-good. Do not accept a baseline only to silence CI, and do not relax comparisons
-to hide a functional or layout regression.
+- When copy, typography, theme, or popup presentation changes materially, inspect the rendered contexts that can expose the change, such as a narrow width, long localization, large text, or light/dark theme. Choose cases from the actual risk rather than running a universal visual matrix.
+- When a screenshot baseline changes, compare the reference, actual, and diff before accepting it. A green screenshot test does not by itself establish that spacing, wrapping, hierarchy, or readability is correct.
 
 ## Review checklist
 
@@ -194,9 +166,3 @@ For example, the installer title is `MIDlet Installer`; its actions are
 `Install`, `Start`, and `Cancel`. A multi-word action is `Install Again`, not
 `Install again`. Neither `install` nor `INSTALL` is the default form for that
 action label. The status beneath a progress indicator remains `Installing application…`.
-
-## References
-
-- [Android Developers: Buttons](https://developer.android.com/design/ui/tv/guides/components/buttons) recommends sentence case for button label text.
-- [Android Developers: Writing principles](https://developer.android.com/design/ui/cars/guides/foundations/writing-guidelines) allows sentence case or title case for buttons when the choice is consistent.
-- [Material Design: Writing](https://m1.material.io/style/writing.html) documents sentence-style capitalization for titles, headings, labels, and menu items.

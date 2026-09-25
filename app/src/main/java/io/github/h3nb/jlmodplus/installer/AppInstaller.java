@@ -1,7 +1,7 @@
 /*
  * Copyright 2020-2026 Yury Kharchenko
  *
- * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,11 @@
 
 package io.github.h3nb.jlmodplus.installer;
 
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
+
+import androidx.preference.PreferenceManager;
 
 import com.android.dx.command.dexer.Main;
 
@@ -43,6 +46,8 @@ import java.util.jar.JarFile;
 
 import io.reactivex.SingleEmitter;
 import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.config.FreshInstalledMidletInitializer;
+import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationLease;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
@@ -51,6 +56,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryIconRevision;
 import io.github.h3nb.jlmodplus.librarydb.LibraryInstallRecovery;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.librarydb.WorkDirLayout;
+import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 import io.github.h3nb.jlmodplus.util.ConverterException;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
@@ -98,6 +104,7 @@ public class AppInstaller {
     private long installedId = NO_ID;
     private String installedTitle;
     private String installedPath;
+    private String defaultProfileFallbackName;
     private int loadedStatus = NO_STATUS;
     private String matchedIdentity = "";
     private String loadedIdentity = "";
@@ -388,6 +395,7 @@ public class AppInstaller {
     /** Finalize converted files first, then publish a generation-bound Room3 mutation asynchronously. */
     void install(SingleEmitter<Integer> emitter) throws ConverterException, IOException {
         checkCancelled();
+        defaultProfileFallbackName = null;
         // Source preparation owns only request scratch and must not block other filesystem operations.
         if (srcJar == null) {
             srcJar = scratch.file("download.jar");
@@ -491,6 +499,9 @@ public class AppInstaller {
             }
 
             File replacementBackup = null;
+            File freshConfigDir = null;
+            SharedPreferences freshPreferences = null;
+            boolean freshDefaultInitialized = false;
             // The generation lease stays short. The process-wide execution permit already serializes
             // the physical converter/staging lifetime; the lease additionally excludes generation-bound
             // Library filesystem mutations while the final target directory is published.
@@ -498,7 +509,34 @@ public class AppInstaller {
                     expectedGeneration,
                     expectedWorkdir)) {
                 WorkDirLayout.requireConverted(expectedWorkdir);
-                if (currentApp != null) {
+                if (currentApp == null) {
+                    // Conversion may outlive a runtime launch. Select again at the authoritative
+                    // publish boundary so a newly held lease gets the normal numeric suffix.
+                    generatePathName(
+                            newDesc.getName().replaceAll(FileUtils.ILLEGAL_FILENAME_CHARS, "").trim(),
+                            libraryViewModel.storageKeys(expectedGeneration, expectedWorkdir));
+                    freshConfigDir = new File(new File(expectedWorkdir, "configs"), appDirName);
+                    File freshDataDir = new File(new File(expectedWorkdir, "data"), appDirName);
+                    if (targetDir.exists() || freshConfigDir.exists() || freshDataDir.exists()) {
+                        throw new InstallerFailure(
+                                "Fresh MIDlet identity became occupied before publish: " + appDirName);
+                    }
+                    freshPreferences = PreferenceManager.getDefaultSharedPreferences(
+                            libraryViewModel.getApplication());
+                    FreshInstalledMidletInitializer.Initialization initialization =
+                            FreshInstalledMidletInitializer.initializeDetailed(
+                                    freshPreferences,
+                                    new File(expectedWorkdir, "templates"),
+                                    freshConfigDir,
+                                    ProfileModel.isDarkTheme(libraryViewModel.getApplication()));
+                    if (!initialization.isSuccess()) {
+                        throw new InstallerFailure(
+                                "Unable to initialize preset ownership for fresh MIDlet identity: "
+                                        + appDirName);
+                    }
+                    defaultProfileFallbackName = initialization.fallbackProfileName();
+                    freshDefaultInitialized = true;
+                } else {
                     LibraryIconOverride.applyPersistedOverride(expectedWorkdir, appDirName, tmpDir);
                 }
                 if (targetDir.exists()) {
@@ -508,6 +546,12 @@ public class AppInstaller {
                             targetDir);
                 }
                 if (!tmpDir.renameTo(targetDir)) {
+                    if (freshDefaultInitialized
+                            && !FreshInstalledMidletInitializer.discardFreshInitialization(
+                                    freshPreferences, freshConfigDir)) {
+                        Log.e(TAG, "Converted publish failed and fresh config cleanup also failed: "
+                                + appDirName);
+                    }
                     if (replacementBackup != null &&
                             !LibraryInstallRecovery.restoreBackup(targetDir, replacementBackup)) {
                         Log.e(TAG,
@@ -701,31 +745,51 @@ public class AppInstaller {
         }
     }
 
-    private void generatePathName(String name, Set<String> indexedStorageKeys) {
-        File dir = chooseTargetDirectory(appsDir(), name, indexedStorageKeys);
+    private void generatePathName(String name, Set<String> indexedStorageKeys) throws IOException {
+        File dir = chooseTargetDirectory(appsDir(), name, indexedStorageKeys,
+                libraryViewModel.getApplication().getFilesDir());
         appDirName = dir.getName();
         targetDir = dir;
     }
 
     /** Compatibility helper retained for focused path-selection unit tests. */
-    static File chooseTargetDirectory(File appsDir, String name) {
+    static File chooseTargetDirectory(File appsDir, String name) throws IOException {
         return chooseTargetDirectory(appsDir, name, Collections.emptySet());
     }
 
-    /** Pure path selection boundary: neither recovery names nor indexed identities may be reused. */
-    static File chooseTargetDirectory(File appsDir, String name, Set<String> indexedStorageKeys) {
+    /**
+     * Path selection boundary: converted, indexed, config, save-data, and live runtime identities
+     * reserve a storage key. Orphan side state is preserved and forces the normal numeric suffix.
+     */
+    static File chooseTargetDirectory(File appsDir, String name, Set<String> indexedStorageKeys)
+            throws IOException {
+        return chooseTargetDirectory(appsDir, name, indexedStorageKeys, null);
+    }
+
+    static File chooseTargetDirectory(File appsDir, String name, Set<String> indexedStorageKeys,
+            File filesDir) throws IOException {
         String safeName = name == null ? "" : name.trim();
         if (safeName.isEmpty() || ".".equals(safeName) || "..".equals(safeName)) {
             safeName = "MIDlet";
         }
+        File root = appsDir.getParentFile();
+        File configsDir = root == null ? null : new File(root, "configs");
+        File dataDir = root == null ? null : new File(root, "data");
         File dir = new File(appsDir, safeName);
         for (int i = 1;
                 LibraryInstallRecovery.isReservedStorageKey(dir.getName()) ||
-                        dir.exists() || indexedStorageKeys.contains(dir.getName());
+                        dir.exists() || indexedStorageKeys.contains(dir.getName()) ||
+                        sideIdentityExists(configsDir, dir.getName()) ||
+                        sideIdentityExists(dataDir, dir.getName()) ||
+                        filesDir != null && RuntimeStorageLease.isActive(filesDir, dir);
                 i++) {
             dir = new File(appsDir, safeName + "_" + i);
         }
         return dir;
+    }
+
+    private static boolean sideIdentityExists(File parent, String storageKey) {
+        return parent != null && new File(parent, storageKey).exists();
     }
 
     private void downloadJar() throws IOException {
@@ -765,6 +829,10 @@ public class AppInstaller {
 
     long getInstalledId() {
         return installedId != NO_ID ? installedId : currentApp == null ? NO_ID : currentApp.getId();
+    }
+
+    String getDefaultProfileFallbackName() {
+        return defaultProfileFallbackName;
     }
 
     private File appsDir() {

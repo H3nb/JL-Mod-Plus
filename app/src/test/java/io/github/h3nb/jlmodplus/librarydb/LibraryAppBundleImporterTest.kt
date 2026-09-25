@@ -14,6 +14,7 @@ import java.util.Properties
 import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import io.github.h3nb.jlmodplus.config.FreshInstalledMidletInitializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -245,6 +246,7 @@ class LibraryAppBundleImporterTest {
         File(converted, "res.jar").writeBytes(byteArrayOf(7))
         File(converted, "converted.dex.conf").writeText(descriptor)
         File(config, "old.cfg").writeText("old config")
+        assertTrue(File(config, ".config-review-pending").createNewFile())
         File(data, "keep.sav").writeText("existing save")
 
         val staging = temporaryFolder.newFolder("restore-staging")
@@ -261,6 +263,7 @@ class LibraryAppBundleImporterTest {
 
         assertFalse(File(config, "old.cfg").exists())
         assertEquals("new config", File(config, "new.cfg").readText())
+        assertTrue(FreshInstalledMidletInitializer.needsReview(config))
         assertEquals(descriptor, File(converted, "converted.dex.conf").readText())
         assertEquals("existing save", File(data, "keep.sav").readText())
         assertTrue(File(converted, "res.jar").isFile)
@@ -279,6 +282,28 @@ class LibraryAppBundleImporterTest {
                 "app/res.jar" to byteArrayOf(1),
             ),
         )
+    }
+
+    @Test fun bundleReviewMarkerDoesNotReopenConfirmedInstalledIdentity() {
+        val descriptor = "MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n"
+        val workdir = temporaryFolder.newFolder("confirmed-review-workdir")
+        val converted = File(File(workdir, "converted"), "game").apply { mkdirs() }
+        File(converted, "res.jar").writeBytes(byteArrayOf(7))
+        File(converted, "converted.dex.conf").writeText(descriptor)
+        val config = File(File(workdir, "configs"), "game").apply { mkdirs() }
+        val prepared = LibraryAppBundleImporter.extractToStaging(
+            bundle(
+                "app/res.jar" to byteArrayOf(1),
+                "app/converted.dex.conf" to descriptor.toByteArray(),
+                "config/config.json" to byteArrayOf(2),
+                "config/.config-review-pending" to byteArrayOf(),
+            ),
+            temporaryFolder.newFolder("confirmed-review-staging"),
+        )
+
+        LibraryAppBundleImporter.restore(prepared, workdir, "game")
+
+        assertFalse(FreshInstalledMidletInitializer.needsReview(config))
     }
 
     @Test fun midPublishFailureRollsEveryNamespaceBack() {

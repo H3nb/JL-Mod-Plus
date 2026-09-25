@@ -21,6 +21,10 @@ import org.junit.runner.RunWith
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import io.github.h3nb.jlmodplus.util.Constants
 import io.github.h3nb.jlmodplus.jar.Descriptor
+import io.github.h3nb.jlmodplus.config.Config
+import io.github.h3nb.jlmodplus.config.FreshInstalledMidletInitializer
+import io.github.h3nb.jlmodplus.config.ProfileModel
+import io.github.h3nb.jlmodplus.config.ProfilesManager
 
 @RunWith(AndroidJUnit4::class)
 class InstallerFilesystemTest {
@@ -29,6 +33,8 @@ class InstallerFilesystemTest {
         val app = instrumentation.targetContext.applicationContext as Application
         val preferences = PreferenceManager.getDefaultSharedPreferences(app)
         val oldWorkdir = preferences.getString(Constants.PREF_EMULATOR_DIR, null)
+        val hadDefault = preferences.contains(Constants.PREF_DEFAULT_PROFILE)
+        val oldDefault = preferences.getString(Constants.PREF_DEFAULT_PROFILE, null)
         val root = File(app.cacheDir, "installer-test-${System.nanoTime()}").apply { mkdirs() }
         val workdir = File(root, "work").apply { mkdir() }
         val jar = File(root, "Fixture.jar")
@@ -46,7 +52,10 @@ class InstallerFilesystemTest {
         lateinit var library: LibraryViewModel
         try {
             instrumentation.runOnMainSync {
-                preferences.edit().putString(Constants.PREF_EMULATOR_DIR, workdir.path).commit()
+                preferences.edit()
+                    .putString(Constants.PREF_EMULATOR_DIR, workdir.path)
+                    .putString(Constants.PREF_DEFAULT_PROFILE, "Unavailable")
+                    .commit()
                 library = ViewModelProvider(store, ViewModelProvider.AndroidViewModelFactory(app))[LibraryViewModel::class.java]
                 library.setEmulatorDirectory(workdir.path)
             }
@@ -61,17 +70,33 @@ class InstallerFilesystemTest {
             jad.writeText("changed after review")
             jar.writeText("changed after review")
             assertEquals(AppInstaller.STATUS_SUCCESS, Single.create<Int>(installer::install).blockingGet())
+            assertEquals("Unavailable", installer.defaultProfileFallbackName)
+            assertFalse(preferences.contains(Constants.PREF_DEFAULT_PROFILE))
             val id = installer.installedId
             val installed = File(installer.installedPath)
+            val installedWorkdir = requireNotNull(requireNotNull(installed.parentFile).parentFile)
+            val installedConfigDir = File(installedWorkdir, "configs/${installed.name}")
+            val installedConfig = File(installedConfigDir, Config.MIDLET_CONFIG_FILE)
+            val freshBuiltInBytes = installedConfig.readBytes()
+            assertTrue(FreshInstalledMidletInitializer.needsReview(installedConfigDir))
+            val builtInKey = ProfileModel.builtInThemePreferenceKey(installedConfigDir)
+            assertTrue("Missing $builtInKey in ${preferences.all}",
+                preferences.getBoolean(builtInKey, false))
             assertArrayEquals(originalJad, File(installed, AppReconverter.RETAINED_JAD).readBytes())
             val save = File(workdir, "data/${installed.name}/save").apply { parentFile!!.mkdirs(); writeText("save") }
             val config = File(workdir, "configs/${installed.name}/custom").apply { parentFile!!.mkdirs(); writeText("config") }
+
+            preferences.edit().putString(Constants.PREF_DEFAULT_PROFILE, "Unavailable").commit()
 
             val reinstall = AppInstaller(id, generation.generation, workdir, installed.name, library)
             assertEquals(AppInstaller.STATUS_EQUAL, Single.create<Int>(reinstall::loadInfo).blockingGet())
             assertEquals(AppInstaller.STATUS_SUCCESS, Single.create<Int>(reinstall::install).blockingGet())
             assertEquals(id, reinstall.installedId)
+            assertTrue(FreshInstalledMidletInitializer.needsReview(installedConfigDir))
             assertArrayEquals(originalJad, File(installed, AppReconverter.RETAINED_JAD).readBytes())
+            assertArrayEquals(freshBuiltInBytes, installedConfig.readBytes())
+            assertTrue(preferences.getBoolean(
+                ProfileModel.builtInThemePreferenceKey(installedConfigDir), false))
 
             assertTrue(File(installed, "converted.dex.conf").delete())
             AppReconverter.reconvert(installed)
@@ -91,6 +116,14 @@ class InstallerFilesystemTest {
                 zip.closeEntry()
             }
             val update = AppInstaller(updateJar, Uri.fromFile(updateJar), library)
+            val customProfile = requireNotNull(ProfilesManager.loadConfig(installedConfigDir)).apply {
+                screenWidth = 777
+            }
+            assertTrue(ProfilesManager.saveConfig(customProfile))
+            assertTrue(preferences.edit()
+                .remove(ProfileModel.builtInThemePreferenceKey(installedConfigDir))
+                .commit())
+            val customBytes = installedConfig.readBytes()
             assertEquals(AppInstaller.STATUS_NEWER, Single.create<Int>(update::loadInfo).blockingGet())
             assertEquals(AppInstaller.STATUS_SUCCESS, Single.create<Int>(update::install).blockingGet())
             assertEquals(id, update.installedId)
@@ -98,10 +131,32 @@ class InstallerFilesystemTest {
             assertNull(Descriptor(File(installed, "converted.dex.conf"), false).attrs["Vendor-Option"])
             assertEquals("save", save.readText())
             assertEquals("config", config.readText())
+            assertArrayEquals(customBytes, installedConfig.readBytes())
+            assertFalse(preferences.getBoolean(
+                ProfileModel.builtInThemePreferenceKey(installedConfigDir), false))
+
+            val originKey = "config_profile_origin:${installedConfigDir.absolutePath}"
+            val linkedKey = "config_profile_linked:${installedConfigDir.absolutePath}"
+            assertTrue(preferences.edit()
+                .putString(originKey, "K800i")
+                .putBoolean(linkedKey, true)
+                .commit())
+            val linkedBytes = installedConfig.readBytes()
+            val linkedReinstall = AppInstaller(id, generation.generation, workdir, installed.name, library)
+            assertEquals(AppInstaller.STATUS_EQUAL,
+                Single.create<Int>(linkedReinstall::loadInfo).blockingGet())
+            assertEquals(AppInstaller.STATUS_SUCCESS,
+                Single.create<Int>(linkedReinstall::install).blockingGet())
+            assertArrayEquals(linkedBytes, installedConfig.readBytes())
+            assertEquals("K800i", preferences.getString(originKey, null))
+            assertTrue(preferences.getBoolean(linkedKey, false))
         } finally {
             instrumentation.runOnMainSync {
                 store.clear()
-                preferences.edit().putString(Constants.PREF_EMULATOR_DIR, oldWorkdir).commit()
+                val editor = preferences.edit().putString(Constants.PREF_EMULATOR_DIR, oldWorkdir)
+                if (hadDefault) editor.putString(Constants.PREF_DEFAULT_PROFILE, oldDefault)
+                else editor.remove(Constants.PREF_DEFAULT_PROFILE)
+                editor.commit()
             }
             root.deleteRecursively()
         }

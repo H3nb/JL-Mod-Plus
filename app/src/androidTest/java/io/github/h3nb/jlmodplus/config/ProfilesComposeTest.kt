@@ -41,7 +41,7 @@ class ProfilesComposeTest {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
         composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
-        composeRule.onNodeWithContentDescription("Create New Preset").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Create New Profile").assertDoesNotExist()
     }
 
     @Test
@@ -50,22 +50,22 @@ class ProfilesComposeTest {
         setProfilesContent(actions)
 
         composeRule.onNodeWithText("Change").performClick()
-        composeRule.onNodeWithText("Playable").performClick()
+        composeRule.onNode(hasText("Playable") and hasAnyAncestor(isDialog())).performClick()
         composeRule.onNodeWithText("Apply").performClick()
         assertEquals("Playable", actions.defaulted)
 
         composeRule.onNodeWithText("Playable").performClick()
         assertEquals("Playable", actions.edited)
-        composeRule.onNodeWithText("Edit Preset").assertDoesNotExist()
+        composeRule.onNodeWithText("Edit Profile").assertDoesNotExist()
 
-        composeRule.onNodeWithText("Manage Presets").assertExists()
-        composeRule.onNodeWithText("Manage Presets").performClick()
+        composeRule.onNodeWithContentDescription("More Actions For Playable").assertExists()
+        composeRule.onNodeWithContentDescription("More Actions For Playable").performClick()
         composeRule.onNodeWithText("Rename").performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput(" 2")
         composeRule.onNodeWithText("OK").performClick()
         assertEquals("Playable" to "Playable 2", actions.renamed)
 
-        composeRule.onNodeWithText("Empty").performClick()
+        composeRule.onNodeWithContentDescription("More Actions For Empty").performClick()
         composeRule.onNodeWithText("Delete").performClick()
         composeRule.onNodeWithText("OK").performClick()
         assertEquals("Empty", actions.deleted)
@@ -76,13 +76,13 @@ class ProfilesComposeTest {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
 
+        composeRule.onNodeWithText("Built-in").assertDoesNotExist()
+        composeRule.onNodeWithText("Built-in MIDlet settings.").assertDoesNotExist()
         composeRule.onNodeWithText("Change").performClick()
+        composeRule.onNode(hasText("JL-Mod Defaults") and hasAnyAncestor(isDialog())).assertExists()
         composeRule.onNodeWithText("Apply").performClick()
         assertEquals(1, actions.builtInDefaultCalls)
-
-        composeRule.onNodeWithText("JL-Mod Defaults").performClick()
-        composeRule.onNodeWithText("Rename").assertDoesNotExist()
-        composeRule.onNodeWithText("Delete").assertDoesNotExist()
+        composeRule.onNodeWithText("Built-in MIDlet settings").assertDoesNotExist()
     }
 
     @Test
@@ -103,11 +103,45 @@ class ProfilesComposeTest {
 
         composeRule.onNodeWithText("Legacy layout").performClick()
         composeRule.onNode(
-            hasText("Default for New Applications") and hasAnyAncestor(isDialog()),
+            hasText("Default For New MIDlets") and hasAnyAncestor(isDialog()),
         ).assertDoesNotExist()
-        composeRule.onNodeWithText("Edit Preset").assertDoesNotExist()
+        composeRule.onNodeWithText("Edit Profile").assertDoesNotExist()
         composeRule.onNodeWithText("Rename").assertExists()
         composeRule.onNodeWithText("Delete").assertExists()
+    }
+
+    @Test
+    fun incompleteEditablePresetIsExcludedFromDefaultChoices() {
+        val actions = RecordingProfilesActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ProfilesScreen(
+                    state = ProfilesUiState(
+                        profiles = listOf(
+                            ProfileUiItem(
+                                "",
+                                isDefault = true,
+                                canEdit = false,
+                                canSetDefault = true,
+                                isBuiltIn = true,
+                            ),
+                            ProfileUiItem(
+                                "Custom without layout",
+                                isDefault = false,
+                                canEdit = true,
+                                canSetDefault = false,
+                            ),
+                        ),
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Change").performClick()
+        composeRule.onNode(
+            hasText("Custom without layout") and hasAnyAncestor(isDialog()),
+        ).assertDoesNotExist()
     }
 
     @Test
@@ -127,13 +161,13 @@ class ProfilesComposeTest {
         }
 
         composeRule.onNodeWithText("Unavailable").assertExists()
-        composeRule.onNodeWithText("Saved Keyboard Layouts").assertDoesNotExist()
+        composeRule.onNodeWithText("Saved Virtual Controls Layouts").assertDoesNotExist()
         composeRule.onNodeWithText("Broken").performClick()
-        composeRule.onNodeWithText("This entry could not be loaded. Rename or delete it.").assertExists()
+        composeRule.onNodeWithText("This profile could not be loaded. Rename or delete it.").assertExists()
         composeRule.onNode(
-            hasText("Default for New Applications") and hasAnyAncestor(isDialog()),
+            hasText("Default For New MIDlets") and hasAnyAncestor(isDialog()),
         ).assertDoesNotExist()
-        composeRule.onNodeWithText("Edit Preset").assertDoesNotExist()
+        composeRule.onNodeWithText("Edit Profile").assertDoesNotExist()
     }
 
     private fun setProfilesContent(actions: RecordingProfilesActions) {

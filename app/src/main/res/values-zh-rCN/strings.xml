@@ -12,7 +12,6 @@
     <string name="add_profile_description">创建新配置文件</string>
     <string name="alert_map_menu">菜单键 (M) 未分配！\n这可能造成无法打开模拟器的选项菜单</string>
     <string name="alert_msg_workdir_not_exists">工作目录不存在于路径：\n\'%1$s 中。\n你想要创建它还是选择另一个？</string>
-    <string name="alert_rewrite_profile">名为“%1$s”的配置文件已存在。\n你想覆盖它吗？</string>
     <string name="CANCEL_CMD">取消</string>
     <string name="change">更改</string>
     <string name="choose">选择</string>
@@ -62,7 +61,6 @@
     <string name="more">更多</string>
     <string name="no_data_for_display">无数据</string>
     <string name="not_saved_exists">已存在</string>
-    <string name="opt_save_screen_params">保存屏幕参数</string>
     <string name="parallel_screen_redrawing">同步画面绘制</string>
     <string name="permission_request_failed">本应用需要获取存储读写权限</string>
     <string name="pref_app_sort_date">日期</string>

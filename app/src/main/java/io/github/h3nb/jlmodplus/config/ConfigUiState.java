@@ -49,18 +49,16 @@ public final class ConfigUiState {
 	public final ProfileStatus profileStatus;
 	@NonNull
 	public final List<ProfileTemplate> profileTemplates;
-	/** Saved layout projection of the same profile collection; combined entries are not duplicated on disk. */
-	@NonNull
-	public final List<ProfileTemplate> keyboardLayouts;
 	/** True when the current MIDlet artifact can execute the timing bridge. */
 	public final boolean timingControlsEnabled;
-	/** True when the current application owns a separate virtual keyboard layout artifact. */
-	public final boolean hasKeyboardLayout;
 	/** Names already occupied by profiles, including layout-only and unavailable entries. */
 	@NonNull
 	public final List<String> profileNames;
 	/** True when at least one connected input device exposes a controller source. */
 	public final boolean controllerAvailable;
+	/** Existing named source eligible for explicit whole-device Update, or null when unavailable. */
+	@Nullable
+	public final String updatePresetName;
 
 	public ConfigUiState(
 			@NonNull ConfigFormState form,
@@ -113,8 +111,8 @@ public final class ConfigUiState {
 			@NonNull List<ProfileTemplate> profileTemplates,
 			boolean timingControlsEnabled) {
 		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
-				profileStatus, profileTemplates, timingControlsEnabled, false,
-				Collections.emptyList(), Collections.emptyList());
+				profileStatus, profileTemplates, timingControlsEnabled,
+				Collections.emptyList(), true, null);
 	}
 
 	public ConfigUiState(
@@ -128,64 +126,9 @@ public final class ConfigUiState {
 			@NonNull ProfileStatus profileStatus,
 			@NonNull List<ProfileTemplate> profileTemplates,
 			boolean timingControlsEnabled,
-			boolean hasKeyboardLayout) {
-		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
-				profileStatus, profileTemplates, timingControlsEnabled, hasKeyboardLayout,
-				Collections.emptyList(), Collections.emptyList());
-	}
-
-	public ConfigUiState(
-			@NonNull ConfigFormState form,
-			@NonNull List<Size> screenPresets,
-			@NonNull List<FontPreset> fontPresets,
-			@NonNull List<String> skins,
-			@NonNull List<String> soundBanks,
-			@NonNull List<ShaderInfo> shaders,
-			@NonNull List<Size> removableScreenPresets,
-			@NonNull ProfileStatus profileStatus,
-			@NonNull List<ProfileTemplate> profileTemplates,
-			boolean timingControlsEnabled,
-			boolean hasKeyboardLayout,
-			@NonNull List<String> profileNames) {
-		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
-				profileStatus, profileTemplates, timingControlsEnabled, hasKeyboardLayout,
-				profileNames, Collections.emptyList());
-	}
-
-	public ConfigUiState(
-			@NonNull ConfigFormState form,
-			@NonNull List<Size> screenPresets,
-			@NonNull List<FontPreset> fontPresets,
-			@NonNull List<String> skins,
-			@NonNull List<String> soundBanks,
-			@NonNull List<ShaderInfo> shaders,
-			@NonNull List<Size> removableScreenPresets,
-			@NonNull ProfileStatus profileStatus,
-			@NonNull List<ProfileTemplate> profileTemplates,
-			boolean timingControlsEnabled,
-			boolean hasKeyboardLayout,
 			@NonNull List<String> profileNames,
-			@NonNull List<ProfileTemplate> keyboardLayouts) {
-		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
-				profileStatus, profileTemplates, timingControlsEnabled, hasKeyboardLayout,
-				profileNames, keyboardLayouts, true);
-	}
-
-	public ConfigUiState(
-			@NonNull ConfigFormState form,
-			@NonNull List<Size> screenPresets,
-			@NonNull List<FontPreset> fontPresets,
-			@NonNull List<String> skins,
-			@NonNull List<String> soundBanks,
-			@NonNull List<ShaderInfo> shaders,
-			@NonNull List<Size> removableScreenPresets,
-			@NonNull ProfileStatus profileStatus,
-			@NonNull List<ProfileTemplate> profileTemplates,
-			boolean timingControlsEnabled,
-			boolean hasKeyboardLayout,
-			@NonNull List<String> profileNames,
-			@NonNull List<ProfileTemplate> keyboardLayouts,
-			boolean controllerAvailable) {
+			boolean controllerAvailable,
+			@Nullable String updatePresetName) {
 		this.form = form;
 		this.screenPresets = immutableCopy(screenPresets);
 		this.removableScreenPresets = immutableCopy(removableScreenPresets);
@@ -195,11 +138,10 @@ public final class ConfigUiState {
 		this.shaders = immutableCopy(shaders);
 		this.profileStatus = profileStatus;
 		this.profileTemplates = immutableCopy(profileTemplates);
-		this.keyboardLayouts = immutableCopy(keyboardLayouts);
 		this.timingControlsEnabled = timingControlsEnabled;
-		this.hasKeyboardLayout = hasKeyboardLayout;
 		this.profileNames = immutableCopy(profileNames);
 		this.controllerAvailable = controllerAvailable;
+		this.updatePresetName = updatePresetName;
 	}
 
 	private static <T> List<T> immutableCopy(List<T> values) {
@@ -226,6 +168,8 @@ public final class ConfigUiState {
 		@NonNull public final String name;
 		public final boolean isDefault;
 		public final boolean hasKeyboardLayout;
+		public final boolean hasSettings;
+		public final boolean completeSnapshotReady;
 		/** True when settings are readable but the separate layout artifact is not. */
 		public final boolean keyboardLayoutUnavailable;
 		public final int screenWidth;
@@ -243,9 +187,18 @@ public final class ConfigUiState {
 
 		public ProfileTemplate(@NonNull String name, boolean isDefault, boolean hasKeyboardLayout,
 				boolean keyboardLayoutUnavailable, int screenWidth, int screenHeight, int orientation) {
+			this(name, isDefault, hasKeyboardLayout, keyboardLayoutUnavailable,
+				true, !keyboardLayoutUnavailable, screenWidth, screenHeight, orientation);
+		}
+
+		public ProfileTemplate(@NonNull String name, boolean isDefault, boolean hasKeyboardLayout,
+				boolean keyboardLayoutUnavailable, boolean hasSettings,
+				boolean completeSnapshotReady, int screenWidth, int screenHeight, int orientation) {
 			this.name = name;
 			this.isDefault = isDefault;
 			this.hasKeyboardLayout = hasKeyboardLayout;
+			this.hasSettings = hasSettings;
+			this.completeSnapshotReady = completeSnapshotReady;
 			this.keyboardLayoutUnavailable = keyboardLayoutUnavailable;
 			this.screenWidth = screenWidth;
 			this.screenHeight = screenHeight;

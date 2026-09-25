@@ -1,7 +1,6 @@
 /*
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
- * Modifications for JL-Mod Plus.
  * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,13 +51,15 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 		instance = this;
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-		if (!sp.contains(Constants.PREF_TOOLBAR)) {
-			boolean enable = !ViewConfiguration.get(this).hasPermanentMenuKey();
-			sp.edit().putBoolean(Constants.PREF_TOOLBAR, enable).apply();
-		}
-		if (sp.getBoolean(Constants.PREF_STATUSBAR, false)
-				&& sp.getBoolean(Constants.PREF_USE_DISPLAY_CUTOUT, true)) {
-			sp.edit().putBoolean(Constants.PREF_USE_DISPLAY_CUTOUT, false).apply();
+		if (isMainProcessName(getPackageName(), getProcessName())) {
+			if (!sp.contains(Constants.PREF_TOOLBAR)) {
+				boolean enable = !ViewConfiguration.get(this).hasPermanentMenuKey();
+				sp.edit().putBoolean(Constants.PREF_TOOLBAR, enable).apply();
+			}
+			if (sp.getBoolean(Constants.PREF_STATUSBAR, false)
+					&& sp.getBoolean(Constants.PREF_USE_DISPLAY_CUTOUT, true)) {
+				sp.edit().putBoolean(Constants.PREF_USE_DISPLAY_CUTOUT, false).apply();
+			}
 		}
 		ContextHolder.setVibration(sp.getBoolean(Constants.PREF_VIBRATION, true));
 		sp.registerOnSharedPreferenceChangeListener(this);
@@ -91,6 +92,10 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 			rawName = rawName.substring(0, terminator);
 		}
 		return rawName.trim();
+	}
+
+	static boolean isMainProcessName(String packageName, String processName) {
+		return packageName != null && packageName.equals(processName);
 	}
 
 	void setNightMode(String theme) {

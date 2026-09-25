@@ -20,6 +20,7 @@ package io.github.h3nb.jlmodplus.config;
 
 import static io.github.h3nb.jlmodplus.util.Constants.ACTION_EDIT;
 import static io.github.h3nb.jlmodplus.util.Constants.KEY_MIDLET_NAME;
+import static io.github.h3nb.jlmodplus.util.Constants.KEY_LIBRARY_APP_ID;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR;
 
 import android.content.Context;
@@ -112,12 +113,21 @@ public class Config {
 	}
 
 	public static void openSettings(Context context, String name, String path) {
+		openSettings(context, name, path, 0L);
+	}
+
+	public static void openSettings(Context context, String name, String path, long expectedAppId) {
 		Intent intent = new Intent(ACTION_EDIT, Uri.parse(path), context, ConfigActivity.class);
 		intent.putExtra(KEY_MIDLET_NAME, name);
+		if (expectedAppId > 0L) intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
 		context.startActivity(intent);
 	}
 
 	public static boolean startApp(Context context, String name, String path) {
+		return startApp(context, name, path, 0L);
+	}
+
+	public static boolean startApp(Context context, String name, String path, long expectedAppId) {
 		int end = path.lastIndexOf(File.separatorChar);
 		int start = path.lastIndexOf(File.separatorChar, end - 1);
 		if (start > 0) {
@@ -126,8 +136,8 @@ public class Config {
 					.append(MIDLET_CONFIG_FILE)
 					.toString();
 			File configFile = new File(configPath);
-			if (!configFile.exists()) {
-				openSettings(context, name, path);
+			if (requiresSettings(configFile.getParentFile())) {
+				openSettings(context, name, path, expectedAppId);
 				return false;
 			}
 		}
@@ -147,11 +157,21 @@ public class Config {
 
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(path), context, MicroActivity.class);
 		intent.putExtra(KEY_MIDLET_NAME, name);
+		if (expectedAppId > 0L) intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
 		context.startActivity(intent);
 		return false;
 	}
 
+	static boolean requiresSettings(File configDir) {
+		return !new File(configDir, MIDLET_CONFIG_FILE.substring(1)).exists()
+				|| FreshInstalledMidletInitializer.needsReview(configDir);
+	}
+
 	public static boolean startApp(Context context, String name, Uri appUri) {
+		return startApp(context, name, appUri, 0L);
+	}
+
+	public static boolean startApp(Context context, String name, Uri appUri, long expectedAppId) {
 		if (appUri == null) {
 			// A malformed shortcut/configuration intent must not open a configuration screen for the
 			// process working directory. The caller can surface its own navigation error or simply
@@ -163,7 +183,7 @@ public class Config {
 				: "file".equals(appUri.getScheme()) && appUri.getPath() != null
 						? appUri.getPath()
 						: appUri.toString();
-		return startApp(context, name, path);
+		return startApp(context, name, path, expectedAppId);
 	}
 
 	private static File localAppDirectory(String path) {

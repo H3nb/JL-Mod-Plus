@@ -45,6 +45,7 @@ public final class MidletSessionStore {
     private static final String KEY_APP_PATH = "appPath";
     private static final String KEY_APP_NAME = "appName";
     private static final String KEY_MAIN_CLASS = "mainClass";
+    private static final String KEY_APP_ID = "appId";
     private static final String VERSION = "1";
 
     private MidletSessionStore() {
@@ -52,13 +53,25 @@ public final class MidletSessionStore {
 
     /** Records a launch before the MIDlet class is selected (including multi-MIDlet jars). */
     public static void markPending(@Nullable Context context, String appPath, String appName) {
-        write(context, appPath, appName, null);
+        markPending(context, appPath, appName, 0L);
+    }
+
+    /** Records a launch together with its validated durable Library identity. */
+    public static void markPending(@Nullable Context context, String appPath, String appName,
+            long appId) {
+        write(context, appPath, appName, null, appId);
     }
 
     /** Records the concrete MIDlet class once the runtime has selected it. */
     public static void markStarted(@Nullable Context context, String appPath, String appName,
             String mainClass) {
-        write(context, appPath, appName, mainClass);
+        markStarted(context, appPath, appName, mainClass, 0L);
+    }
+
+    /** Records the selected class while preserving the validated installed identity. */
+    public static void markStarted(@Nullable Context context, String appPath, String appName,
+            String mainClass, long appId) {
+        write(context, appPath, appName, mainClass, appId);
     }
 
     @Nullable
@@ -84,10 +97,12 @@ public final class MidletSessionStore {
             if (appPath == null) {
                 return null;
             }
+            long appId = parsePositiveLong(properties.getProperty(KEY_APP_ID));
             return new State(
                     appPath,
                     nonBlank(properties.getProperty(KEY_APP_NAME)),
-                    nonBlank(properties.getProperty(KEY_MAIN_CLASS)));
+                    nonBlank(properties.getProperty(KEY_MAIN_CLASS)),
+                    appId);
         }
     }
 
@@ -105,7 +120,7 @@ public final class MidletSessionStore {
     }
 
     private static void write(@Nullable Context context, String appPath, String appName,
-            String mainClass) {
+            String mainClass, long appId) {
         if (context == null || nonBlank(appPath) == null) {
             return;
         }
@@ -122,6 +137,7 @@ public final class MidletSessionStore {
                 if (nonBlank(mainClass) != null) {
                     properties.setProperty(KEY_MAIN_CLASS, mainClass);
                 }
+                if (appId > 0L) properties.setProperty(KEY_APP_ID, Long.toString(appId));
                 output = atomic.startWrite();
                 properties.store(output, "JL-Mod Plus active MIDlet");
                 output.flush();
@@ -154,15 +170,27 @@ public final class MidletSessionStore {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
+    private static long parsePositiveLong(String value) {
+        if (value == null) return 0L;
+        try {
+            long parsed = Long.parseLong(value);
+            return parsed > 0L ? parsed : 0L;
+        } catch (NumberFormatException ignored) {
+            return 0L;
+        }
+    }
+
     public static final class State {
         private final String appPath;
         private final String appName;
         private final String mainClass;
+        private final long appId;
 
-        private State(String appPath, String appName, String mainClass) {
+        private State(String appPath, String appName, String mainClass, long appId) {
             this.appPath = appPath;
             this.appName = appName;
             this.mainClass = mainClass;
+            this.appId = appId;
         }
 
         public String getAppPath() {
@@ -177,6 +205,11 @@ public final class MidletSessionStore {
         @Nullable
         public String getMainClass() {
             return mainClass;
+        }
+
+        /** Zero denotes a legacy session marker that predates the identity handshake. */
+        public long getAppId() {
+            return appId;
         }
     }
 }

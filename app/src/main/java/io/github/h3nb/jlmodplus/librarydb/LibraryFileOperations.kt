@@ -8,10 +8,12 @@ package io.github.h3nb.jlmodplus.librarydb
 
 import android.content.Context
 import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.preference.PreferenceManager
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import io.github.h3nb.jlmodplus.config.ProfilesManager
 import io.github.h3nb.jlmodplus.util.FileUtils
 
 
@@ -21,6 +23,7 @@ object LibraryFileOperations {
         val appPath: String,
         val leftoverConfig: Boolean,
         val leftoverSaveData: Boolean,
+        val leftoverOwnership: Boolean,
     )
 
     internal fun deleteInstalledApp(
@@ -44,10 +47,14 @@ object LibraryFileOperations {
         // a later startup could restore an app the user intentionally removed.
         LibraryInstallRecovery.discardBackupForDelete(emulatorDir, storageKey)
 
-        // Once converted/<key> is gone, installed-app existence is gone. Config/save cleanup
-        // remains best-effort so a leftover side directory cannot make the catalog falsely
-        // claim the app is still installed; a later user/manual cleanup can remove those
-        // remnants safely.
+        // Once converted/<key> is gone, installed-app existence is gone. Ownership/config/save
+        // cleanup remains best-effort so a secondary failure cannot make the catalog falsely
+        // claim the app is still installed. Fresh-install publication independently clears stale
+        // ownership before any future reuse of this identity.
+        val ownershipCleared = ProfilesManager.clearMidletOwnershipMetadata(
+            PreferenceManager.getDefaultSharedPreferences(context),
+            configDir,
+        )
         FileUtils.deleteDirectory(configDir)
         FileUtils.deleteDirectory(dataDir)
         ShortcutManagerCompat.removeDynamicShortcuts(context, listOf(appPath))
@@ -56,6 +63,7 @@ object LibraryFileOperations {
             appPath = appPath,
             leftoverConfig = configDir.exists(),
             leftoverSaveData = dataDir.exists(),
+            leftoverOwnership = !ownershipCleared,
         )
     }
 

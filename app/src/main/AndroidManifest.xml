@@ -290,6 +290,11 @@
             android:process=":midlet" />
 
         <provider
+            android:name=".config.PresetAuthorityProvider"
+            android:authorities="${applicationId}.preset-authority"
+            android:exported="false" />
+
+        <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.diagnostic-files"
             android:exported="false"

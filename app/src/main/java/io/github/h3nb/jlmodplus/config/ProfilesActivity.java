@@ -37,6 +37,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.preference.PreferenceManager;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,8 +51,10 @@ import io.github.h3nb.jlmodplus.ui.ThemedToast;
 import io.github.h3nb.jlmodplus.R;
 
 public class ProfilesActivity extends AppCompatActivity {
+	private static final String STATE_PROFILES_ROOT = "profiles_root";
 	private final Map<String, Profile> profilesByName = new HashMap<>();
 	private SharedPreferences preferences;
+	private File profilesRoot;
 	private ProfilesComposeController composeController;
 	private final ExecutorService profileExecutor = Executors.newSingleThreadExecutor();
 	private int refreshGeneration;
@@ -85,6 +89,9 @@ public class ProfilesActivity extends AppCompatActivity {
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		String savedRoot = savedInstanceState == null
+				? null : savedInstanceState.getString(STATE_PROFILES_ROOT);
+		profilesRoot = new File(savedRoot == null ? Config.getProfilesDir() : savedRoot).getAbsoluteFile();
 		composeController = new ProfilesComposeController(composeView, createActions());
 		refreshProfiles();
 	}
@@ -104,20 +111,17 @@ public class ProfilesActivity extends AppCompatActivity {
 
 			@Override
 			public void onCreate(@NonNull String name) {
-				editProfileLauncher.launch(name);
+				editProfileLauncher.launch(new File(profilesRoot, name).getAbsolutePath());
 			}
 
 			@Override
 			public void onSetBuiltInDefault() {
-				preferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
-				refreshProfiles();
+				if (setBuiltInDefault(preferences)) refreshProfiles();
 			}
 
 			@Override
 			public void onSetDefault(@NonNull String name) {
-				Profile profile = profilesByName.get(name);
-				if (profile != null && ProfilesManager.inspectProfile(profile).settings.isReady()) {
-					preferences.edit().putString(PREF_DEFAULT_PROFILE, name).apply();
+				if (setNamedDefault(preferences, profilesRoot, name)) {
 					refreshProfiles();
 				}
 			}
@@ -125,70 +129,151 @@ public class ProfilesActivity extends AppCompatActivity {
 			@Override
 			public void onEdit(@NonNull String name) {
 				Profile profile = profilesByName.get(name);
-				if (profile != null && ProfilesManager.inspectProfile(profile).settings.isReady()) {
-					editProfileLauncher.launch(name);
+				if (profile != null && ProfilesManager.inspectProfile(
+						profile, new File(profilesRoot, name)).settings.isReady()) {
+					editProfileLauncher.launch(new File(profilesRoot, name).getAbsolutePath());
 				}
 			}
 
 			@Override
 			public void onRename(@NonNull String oldName, @NonNull String newName) {
-				Profile profile = profilesByName.get(oldName);
-				if (profile == null || !Profile.isValidName(newName)
-						|| ProfilesManager.profileNameExists(newName)) {
+				String normalizedName = newName.trim();
+				if (profilesByName.get(oldName) == null || !Profile.isValidName(normalizedName)
+						|| profileNameExists(profilesRoot, normalizedName)) {
 					return;
 				}
-				if (!profile.renameTo(newName)) {
-					ThemedToast.show(ProfilesActivity.this,
-							R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-					return;
-				}
-				if (oldName.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
-					preferences.edit().putString(PREF_DEFAULT_PROFILE, newName).apply();
-				}
-				refreshProfiles();
+				profileExecutor.execute(() -> {
+					PresetLifecycle.Result result = PresetLifecycle.rename(
+							preferences,
+							profilesRoot,
+							oldName,
+							normalizedName);
+					runOnUiThread(() -> finishLifecycleOperation(result));
+				});
 			}
 
 			@Override
 			public void onDelete(@NonNull String name) {
-				Profile profile = profilesByName.get(name);
-				if (profile != null) {
-					if (!profile.delete()) {
-						ThemedToast.show(ProfilesActivity.this,
-								R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-						return;
-					}
-					if (name.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
-						preferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
-					}
-					refreshProfiles();
-				}
+				if (profilesByName.get(name) == null) return;
+				profileExecutor.execute(() -> {
+					PresetLifecycle.Result result = PresetLifecycle.delete(
+							preferences,
+							profilesRoot,
+							name);
+					runOnUiThread(() -> finishLifecycleOperation(result));
+				});
 			}
 		};
+	}
+
+	static boolean setBuiltInDefault(@NonNull SharedPreferences preferences) {
+		synchronized (ProfilesManager.presetSourceLock()) {
+			return preferences.edit().remove(PREF_DEFAULT_PROFILE).commit();
+		}
+	}
+
+	@Override
+	protected void onSaveInstanceState(@NonNull Bundle outState) {
+		outState.putString(STATE_PROFILES_ROOT, profilesRoot.getAbsolutePath());
+		super.onSaveInstanceState(outState);
+	}
+
+	private static boolean profileNameExists(@NonNull File root, @NonNull String name) {
+		synchronized (ProfilesManager.presetSourceLock()) {
+			try {
+				return ProfilesManager.profileNameExistsLocked(root, name);
+			} catch (IOException | RuntimeException unavailable) {
+				return true;
+			}
+		}
+	}
+
+	static boolean setNamedDefault(
+			@NonNull SharedPreferences preferences,
+			@NonNull File profilesRoot,
+			@NonNull String name) {
+		synchronized (ProfilesManager.presetSourceLock()) {
+			if (!Profile.isValidName(name)) return false;
+			File sourceDir = new File(profilesRoot, name);
+			if (!sourceDir.isDirectory()) return false;
+			if (!ProfilesManager.isCompleteSnapshotReady(sourceDir)) return false;
+			return preferences.edit().putString(PREF_DEFAULT_PROFILE, name).commit();
+		}
+	}
+
+	private void finishLifecycleOperation(@NonNull PresetLifecycle.Result result) {
+		if (isFinishing() || isDestroyed()) return;
+		if (result != PresetLifecycle.Result.SUCCESS) {
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+		}
+		refreshProfiles();
 	}
 
 	private void refreshProfiles() {
 		final int generation = ++refreshGeneration;
 		final String defaultName = preferences.getString(PREF_DEFAULT_PROFILE, null);
 		profileExecutor.execute(() -> {
-			ArrayList<Profile> profiles = ProfilesManager.getProfiles();
+			ArrayList<Profile> profiles = ProfilesManager.getList(profilesRoot);
 			Collections.sort(profiles);
-			ArrayList<ProfilesManager.ProfileInfo> inspected = ProfilesManager.inspectProfiles(profiles);
+			ArrayList<ProfilesManager.ProfileInfo> inspected = new ArrayList<>(profiles.size());
+			for (Profile profile : profiles) {
+				inspected.add(ProfilesManager.inspectProfile(
+						profile, new File(profilesRoot, profile.getName())));
+			}
 			boolean hasValidDefault = false;
-			String legacyKeyboardDefaultName = null;
 			for (ProfilesManager.ProfileInfo info : inspected) {
-				if (info.settings.isReady() && defaultName != null
+				if (info.completeSnapshotReady && defaultName != null
 						&& defaultName.equals(info.profile.getName())) {
 					hasValidDefault = true;
-				} else if (legacyKeyboardDefaultName == null
-						&& info.settings.status == ProfilesManager.CapabilityStatus.ABSENT
-						&& info.keyboardLayout.isReady()
-						&& defaultName != null && defaultName.equals(info.profile.getName())) {
-					legacyKeyboardDefaultName = info.profile.getName();
 				}
 			}
+
+			final boolean defaultStateChanged;
+			final boolean defaultFallbackApplied;
+			final boolean defaultFallbackFailed;
+			synchronized (ProfilesManager.presetSourceLock()) {
+				String currentDefault = preferences.getString(PREF_DEFAULT_PROFILE, null);
+				boolean sameDefault = defaultName == null
+						? currentDefault == null : defaultName.equals(currentDefault);
+				boolean currentDefaultReady = defaultName == null
+						|| (Profile.isValidName(defaultName)
+						&& ProfilesManager.isCompleteSnapshotReady(
+								new File(profilesRoot, defaultName)));
+				boolean inspectedDefaultReady = defaultName == null || hasValidDefault;
+				defaultStateChanged = !sameDefault || currentDefaultReady != inspectedDefaultReady;
+				if (defaultStateChanged) {
+					defaultFallbackApplied = false;
+					defaultFallbackFailed = false;
+				} else if (defaultName != null && !currentDefaultReady) {
+					defaultFallbackApplied = setBuiltInDefault(preferences);
+					defaultFallbackFailed = !defaultFallbackApplied;
+				} else {
+					defaultFallbackApplied = false;
+					defaultFallbackFailed = false;
+				}
+			}
+			if (defaultStateChanged) {
+				runOnUiThread(() -> {
+					if (generation == refreshGeneration && !isFinishing() && !isDestroyed()) {
+						refreshProfiles();
+					}
+				});
+				return;
+			}
+			if (defaultFallbackFailed) {
+				runOnUiThread(() -> {
+					if (generation == refreshGeneration && !isFinishing() && !isDestroyed()) {
+						ThemedToast.show(
+								this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+					}
+				});
+				return;
+			}
+
+			boolean builtInDefault = defaultName == null || defaultFallbackApplied;
 			ArrayList<ProfileUiItem> items = new ArrayList<>(inspected.size() + 1);
 			items.add(new ProfileUiItem(
-					"", !hasValidDefault, false, true, false, false, 0, 0, 0, false, false));
+					"", builtInDefault, false, true, true, false, false, 0, 0, 0, false, false));
 			for (ProfilesManager.ProfileInfo info : inspected) {
 				boolean valid = info.settings.isReady();
 				boolean keyboardOnly = info.settings.status == ProfilesManager.CapabilityStatus.ABSENT
@@ -196,8 +281,9 @@ public class ProfilesActivity extends AppCompatActivity {
 				boolean unavailable = !valid && !keyboardOnly;
 				items.add(new ProfileUiItem(
 						info.profile.getName(),
-						valid && info.profile.getName().equals(defaultName),
+						hasValidDefault && info.profile.getName().equals(defaultName),
 						valid,
+						info.completeSnapshotReady,
 						false,
 						keyboardOnly,
 						info.keyboardLayout.isReady(),
@@ -207,12 +293,18 @@ public class ProfilesActivity extends AppCompatActivity {
 						unavailable,
 						info.keyboardLayout.status == ProfilesManager.CapabilityStatus.UNAVAILABLE));
 			}
-			final String resolvedLegacyKeyboardDefaultName = legacyKeyboardDefaultName;
 			runOnUiThread(() -> {
-				if (generation != refreshGeneration || isFinishing() || isDestroyed()) return;
+				if (isFinishing() || isDestroyed()) return;
+				if (defaultFallbackApplied) {
+					ThemedToast.show(
+							this,
+							getString(R.string.profile_default_fallback_notice, defaultName),
+							Toast.LENGTH_LONG);
+				}
+				if (generation != refreshGeneration) return;
 				profilesByName.clear();
 				for (Profile profile : profiles) profilesByName.put(profile.getName(), profile);
-				composeController.updateProfileItems(items, resolvedLegacyKeyboardDefaultName);
+				composeController.updateProfileItems(items);
 			});
 		});
 	}

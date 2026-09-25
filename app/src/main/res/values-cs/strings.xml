@@ -12,7 +12,6 @@
     <string name="add_profile_description">Vytvořit nový profil</string>
     <string name="alert_map_menu">Klávesa Menu (M) není přiřazena!\nTo může znemožnit přístup k možnostem emulátoru</string>
     <string name="alert_msg_workdir_not_exists">Pracovní adresář neexistuje na cestě:\n\'%1$s\'\nChcete jej vytvořit nebo vybrat jiný?</string>
-    <string name="alert_rewrite_profile">Profil s názvem \"%1$s\" již existuje.\nChcete jej přepsat?</string>
     <string name="CANCEL_CMD">Zrušit</string>
     <string name="change">Změnit</string>
     <string name="choose">Vybrat</string>
@@ -62,7 +61,6 @@
     <string name="more">Více</string>
     <string name="no_data_for_display">Žádná data</string>
     <string name="not_saved_exists">Již existuje</string>
-    <string name="opt_save_screen_params">uložit parametry obrazovky</string>
     <string name="parallel_screen_redrawing">Paralelní překreslování obrazovky</string>
     <string name="permission_request_failed">Tato aplikace vyžaduje oprávnění k zápisu do úložiště</string>
     <string name="pref_app_sort_date">Datum</string>

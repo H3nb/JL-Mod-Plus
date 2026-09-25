@@ -66,19 +66,14 @@ non-Canvas Displayables.
   insets; it never sends text into a MIDP `TextField` or changes Canvas key
   dispatch.
 - Host-only recovery, exit/settings, MIDlet selection, and virtual-keyboard
-  dialogs are Compose Material 3 surfaces. The Java side still owns loader,
-  orientation, persistence, cleanup, and `MidletThread` callbacks.
+  dialogs are Compose Material 3 surfaces. The current Java host owns loader, orientation, persistence, cleanup, and `MidletThread` callbacks. Preserve those semantics if ownership is refactored.
 
 ## Validation gates
 
 - Use the relevant commands in [Build and validation](development.md).
-- Keep Compose UI tests for Canvas versus non-Canvas action visibility,
-  virtual-keyboard submenu state, and dismiss-before-callback ordering.
-- Keep screenshot baselines for phone toolbar/overflow and dark landscape
-  fullscreen menu.
-- On a device or emulator, smoke-test Canvas/GL rendering size, Back and menu
-  keys, rotation lock/unlock, IME, screenshot, FPS, virtual-keyboard editing,
-  a non-Canvas Form, and transitions between them.
+- Keep focused automated coverage for the runtime contracts actually affected by the change, such as Canvas versus non-Canvas action visibility, virtual-keyboard state, command dispatch, or dismiss-before-callback ordering.
+- Keep screenshot baselines for materially distinct runtime presentation states when visual behavior changes.
+- Select device/emulator smoke cases from Canvas/GL rendering size, Back and menu keys, rotation, IME, screenshot, FPS, virtual-keyboard editing, non-Canvas screens, and transitions according to the boundary changed. Run the full matrix for broad runtime-boundary changes or release validation, not for every local edit.
 
 ## Screen soft-key boundary
 

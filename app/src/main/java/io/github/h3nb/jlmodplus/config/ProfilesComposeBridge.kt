@@ -72,6 +72,7 @@ data class ProfileUiItem(
     val name: String,
     val isDefault: Boolean,
     val canEdit: Boolean,
+    val canSetDefault: Boolean = canEdit,
     val isBuiltIn: Boolean = false,
     val isKeyboardOnly: Boolean = false,
     val hasKeyboardLayout: Boolean = false,
@@ -82,10 +83,7 @@ data class ProfileUiItem(
     val isKeyboardLayoutUnavailable: Boolean = false,
 )
 
-data class ProfilesUiState(
-    val profiles: List<ProfileUiItem> = emptyList(),
-    val legacyKeyboardDefaultName: String? = null,
-)
+data class ProfilesUiState(val profiles: List<ProfileUiItem> = emptyList())
 
 interface ProfilesActions {
     fun onBack()
@@ -115,8 +113,8 @@ class ProfilesComposeController(
         }
     }
 
-    fun updateProfileItems(items: List<ProfileUiItem>, legacyKeyboardDefaultName: String? = null) {
-        state = ProfilesUiState(profiles = items, legacyKeyboardDefaultName = legacyKeyboardDefaultName)
+    fun updateProfileItems(items: List<ProfileUiItem>) {
+        state = ProfilesUiState(profiles = items)
     }
 }
 
@@ -131,6 +129,11 @@ fun ProfilesScreen(
     var nameDialog by remember { mutableStateOf<ProfileNameDialog?>(null) }
     var deleteTarget by remember { mutableStateOf<ProfileUiItem?>(null) }
     var defaultDialogVisible by remember { mutableStateOf(false) }
+    val builtIn = state.profiles.firstOrNull { it.isBuiltIn }
+    val activeDefault = state.profiles.firstOrNull { it.isDefault && !it.isBuiltIn } ?: builtIn
+    val profiles = state.profiles.filter { !it.isBuiltIn && !it.isKeyboardOnly && !it.isUnavailable }
+    val savedLayouts = state.profiles.filter { !it.isBuiltIn && it.isKeyboardOnly }
+    val unavailable = state.profiles.filter { !it.isBuiltIn && it.isUnavailable }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -153,72 +156,45 @@ fun ProfilesScreen(
             )
         },
     ) { padding ->
-        if (state.profiles.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-            ) {
-                EmptyProfilesCard(
-                    onCreate = { nameDialog = ProfileNameDialog.Create },
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(16.dp),
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                top = padding.calculateTopPadding() + 16.dp,
+                end = 16.dp,
+                bottom = padding.calculateBottomPadding() + 16.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item { ProfileSectionHeader(stringResource(R.string.preset_manager_default_section)) }
+            item(key = "default-policy") {
+                DefaultPolicyRow(activeDefault = activeDefault, onClick = { defaultDialogVisible = true })
+            }
+            if (profiles.isEmpty() && savedLayouts.isEmpty() && unavailable.isEmpty()) {
+                item(key = "empty-profiles") {
+                    EmptyProfilesCard(onCreate = { nameDialog = ProfileNameDialog.Create })
+                }
+            }
+            if (profiles.isNotEmpty()) {
+                item { ProfileSectionHeader(stringResource(R.string.preset_manager_presets_section)) }
+            }
+            items(profiles, key = { it.name }) { profile ->
+                ProfileRow(
+                    profile = profile,
+                    onClick = { actions.onEdit(profile.name) },
+                    onManage = { selectedProfile = profile },
                 )
             }
-        } else {
-            val builtIn = state.profiles.firstOrNull { it.isBuiltIn }
-            val activeDefault = state.profiles.firstOrNull { it.isDefault && !it.isBuiltIn } ?: builtIn
-            val presets = state.profiles.filter {
-                !it.isBuiltIn && !it.isKeyboardOnly && !it.isUnavailable
+            if (savedLayouts.isNotEmpty()) {
+                item { ProfileSectionHeader(stringResource(R.string.preset_manager_keyboard_section)) }
+                items(savedLayouts, key = { "keyboard:" + it.name }) { profile ->
+                    ProfileRow(profile = profile, onClick = { selectedProfile = profile })
+                }
             }
-            val savedLayouts = state.profiles.filter { !it.isBuiltIn && it.isKeyboardOnly }
-            val unavailable = state.profiles.filter { it.isUnavailable }
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    top = padding.calculateTopPadding() + 16.dp,
-                    end = 16.dp,
-                    bottom = padding.calculateBottomPadding() + 16.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                item { ProfileSectionHeader(stringResource(R.string.preset_manager_default_section)) }
-                item(key = "default-policy") {
-                    DefaultPolicyRow(
-                        activeDefault = activeDefault,
-                        legacyKeyboardDefaultName = state.legacyKeyboardDefaultName,
-                        onClick = { defaultDialogVisible = true },
-                    )
-                }
-                builtIn?.let { profile ->
-                    item(key = "builtin") {
-                        ProfileSectionHeader(stringResource(R.string.preset_manager_builtin_section))
-                        ProfileRow(profile = profile, onClick = { selectedProfile = profile })
-                    }
-                }
-                if (presets.isNotEmpty()) {
-                    item { ProfileSectionHeader(stringResource(R.string.preset_manager_presets_section)) }
-                }
-                items(presets, key = { it.name }) { profile ->
-                    ProfileRow(
-                        profile = profile,
-                        onClick = { actions.onEdit(profile.name) },
-                        onManage = { selectedProfile = profile },
-                    )
-                }
-                if (savedLayouts.isNotEmpty()) {
-                    item { ProfileSectionHeader(stringResource(R.string.preset_manager_keyboard_section)) }
-                    items(savedLayouts, key = { "keyboard:" + it.name }) { profile ->
-                        ProfileRow(profile = profile, onClick = { selectedProfile = profile })
-                    }
-                }
-                if (unavailable.isNotEmpty()) {
-                    item { ProfileSectionHeader(stringResource(R.string.preset_unavailable_section)) }
-                    items(unavailable, key = { "unavailable:" + it.name }) { profile ->
-                        ProfileRow(profile = profile, onClick = { selectedProfile = profile })
-                    }
+            if (unavailable.isNotEmpty()) {
+                item { ProfileSectionHeader(stringResource(R.string.preset_unavailable_section)) }
+                items(unavailable, key = { "unavailable:" + it.name }) { profile ->
+                    ProfileRow(profile = profile, onClick = { selectedProfile = profile })
                 }
             }
         }
@@ -227,7 +203,6 @@ fun ProfilesScreen(
     selectedProfile?.let { profile ->
         ProfileActionsDialog(
             profile = profile,
-            legacyKeyboardDefaultName = state.legacyKeyboardDefaultName,
             onDismiss = { selectedProfile = null },
             onEdit = { actions.onEdit(profile.name) },
             onRename = { nameDialog = ProfileNameDialog.Rename(profile) },
@@ -280,9 +255,9 @@ fun ProfilesScreen(
 }
 
 @Composable
-private fun EmptyProfilesCard(onCreate: () -> Unit, modifier: Modifier = Modifier) {
+private fun EmptyProfilesCard(onCreate: () -> Unit) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
@@ -322,25 +297,19 @@ private fun ProfileSectionHeader(title: String) {
 @Composable
 private fun DefaultPolicyRow(
     activeDefault: ProfileUiItem?,
-    legacyKeyboardDefaultName: String?,
     onClick: () -> Unit,
 ) {
     val displayName = when {
-        legacyKeyboardDefaultName != null -> stringResource(R.string.profile_builtin_settings)
         activeDefault?.isBuiltIn == true -> stringResource(R.string.profile_builtin_settings)
         activeDefault != null -> activeDefault.name
         else -> stringResource(R.string.profile_builtin_settings)
     }
-    val summary = if (legacyKeyboardDefaultName != null) {
-        stringResource(R.string.preset_legacy_keyboard_default_summary, legacyKeyboardDefaultName)
-    } else {
-        stringResource(R.string.preset_default_policy_summary, displayName)
-    }
+    val summary = stringResource(R.string.preset_default_policy_summary)
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
-            .heightIn(min = 96.dp),
+            .heightIn(min = 80.dp),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -349,11 +318,6 @@ private fun DefaultPolicyRow(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(
-                stringResource(R.string.set_as_default_new_applications),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
             Text(
                 displayName,
                 style = MaterialTheme.typography.titleMedium,
@@ -385,11 +349,7 @@ private fun ProfileRow(
     onClick: () -> Unit,
     onManage: (() -> Unit)? = null,
 ) {
-    val displayName = if (profile.isBuiltIn) {
-        stringResource(R.string.profile_builtin_settings)
-    } else {
-        profile.name
-    }
+    val displayName = profile.name
     val colors = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier
@@ -415,7 +375,7 @@ private fun ProfileRow(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    if (profile.isDefault && !profile.isBuiltIn) {
+                    if (profile.isDefault) {
                         Surface(
                             shape = MaterialTheme.shapes.small,
                             color = colors.secondary,
@@ -432,7 +392,6 @@ private fun ProfileRow(
                 }
                 val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
                 val summary = when {
-                    profile.isBuiltIn -> stringResource(R.string.profile_builtin_settings_summary)
                     profile.isKeyboardOnly -> stringResource(R.string.saved_keyboard_layout_summary)
                     profile.isUnavailable -> stringResource(R.string.preset_unavailable_summary)
                     profile.screenWidth > 0 && profile.screenHeight > 0 -> buildString {
@@ -469,24 +428,18 @@ private fun ProfileRow(
 @Composable
 internal fun ProfileActionsDialog(
     profile: ProfileUiItem,
-    legacyKeyboardDefaultName: String? = null,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val displayName = if (profile.isBuiltIn) {
-        stringResource(R.string.profile_builtin_settings)
-    } else {
-        profile.name
-    }
     val maxActionHeight = adaptiveDialogLayout().maxHeight
     val scrollState = rememberScrollState()
     val canScrollForward = rememberScrollCanScrollForward(scrollState)
     AlertDialog(
         textScrollable = false,
         onDismissRequest = onDismiss,
-        title = { Text(displayName, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        title = { Text(profile.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         text = {
             Box(
                 modifier = Modifier
@@ -500,27 +453,11 @@ internal fun ProfileActionsDialog(
                         .verticalScroll(scrollState),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    if (profile.isBuiltIn) {
-                        Text(
-                            if (legacyKeyboardDefaultName != null) {
-                                stringResource(
-                                    R.string.preset_legacy_keyboard_default_summary,
-                                    legacyKeyboardDefaultName,
-                                )
-                            } else {
-                                stringResource(R.string.profile_builtin_settings_summary)
-                            },
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 8.dp),
-                        )
-                    }
-                    if (!profile.isBuiltIn && !profile.isKeyboardOnly && !profile.isUnavailable && profile.canEdit) {
+                    if (!profile.isKeyboardOnly && !profile.isUnavailable && profile.canEdit) {
                         ProfileDialogAction(R.string.edit_preset, onDismiss, onEdit)
                     }
-                    if (!profile.isBuiltIn) {
-                        ProfileDialogAction(R.string.action_context_rename, onDismiss, onRename)
-                        ProfileDialogAction(R.string.action_context_delete, onDismiss, onDelete)
-                    }
+                    ProfileDialogAction(R.string.action_context_rename, onDismiss, onRename)
+                    ProfileDialogAction(R.string.action_context_delete, onDismiss, onDelete)
                 }
                 ScrollableContentHint(
                     visible = canScrollForward,
@@ -542,7 +479,7 @@ private fun DefaultPresetDialog(
     onApply: (ProfileUiItem) -> Unit,
 ) {
     val choices = profiles.filter {
-        it.isBuiltIn || (!it.isKeyboardOnly && !it.isUnavailable && it.canEdit)
+        it.isBuiltIn || it.canSetDefault
     }
     val active = profiles.firstOrNull { it.isDefault } ?: profiles.firstOrNull { it.isBuiltIn }
     var selectedId by rememberSaveable(active?.let(::profileSelectionId)) {

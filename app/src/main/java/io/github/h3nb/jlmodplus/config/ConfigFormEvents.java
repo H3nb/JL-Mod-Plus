@@ -60,22 +60,14 @@ public interface ConfigFormEvents {
 		return true;
 	}
 
-	/** Saves application settings and optionally the separate virtual keyboard layout artifact. */
-	default boolean onSaveTemplate(@NonNull String name, boolean includeKeyboard) {
+	/** Saves the current complete MIDlet snapshot as a new linked whole-device preset. */
+	default boolean onSaveTemplate(@NonNull String name) {
 		return true;
 	}
 
-	/** Opens the naming dialog for a layout-only saved entry. */
-	default void onSaveKeyboardLayout() {
-	}
-
-	/** Saves only the current virtual keyboard layout as a reusable layout entry. */
-	default boolean onSaveKeyboardLayout(@NonNull String name) {
+	/** Replaces one existing named preset with the current complete MIDlet snapshot. */
+	default boolean onUpdatePreset(@NonNull String name) {
 		return true;
-	}
-
-	/** Opens the saved keyboard-layout picker without replacing the current application settings draft. */
-	default void onChooseKeyboardLayout() {
 	}
 
 	/** Starts the host-owned controller calibration flow. */
@@ -105,7 +97,7 @@ public interface ConfigFormEvents {
 	enum PresetApplyScope {
 		SETTINGS,
 		KEYBOARD_LAYOUT,
-		SETTINGS_AND_KEYBOARD
+		WHOLE_PROFILE
 	}
 
 	enum ColorField {

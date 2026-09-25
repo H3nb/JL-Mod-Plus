@@ -242,6 +242,14 @@ class KeyboardLayoutValidatorTest {
     }
 
     @Test
+    fun encodedBytesUseTheSameValidationRulesAsFiles() {
+        val valid = v4File(type = 3).readBytes()
+        assertNull(KeyboardLayoutValidator.validateBytes(valid))
+        assertNotNull(KeyboardLayoutValidator.validateBytes(byteArrayOf(1, 2, 3)))
+        assertNotNull(KeyboardLayoutValidator.validateBytes(ByteArray(0)))
+    }
+
+    @Test
     fun futureLayoutVersionRemainsUnsupported() {
         assertNotNull(KeyboardLayoutValidator.validate(layoutFile(version = 5, type = 0)))
     }

@@ -12,7 +12,6 @@
     <string name="add_profile_description">إنشاء ملف شخصي جديد</string>
     <string name="alert_map_menu">لم يتم تعيين مفتاح القائمة (M)!\nقد يجعل هذا من المستحيل الوصول إلى خيارات المحاكي</string>
     <string name="alert_msg_workdir_not_exists">دليل العمل غير موجود في المسار:\n\'%1$s\'.\nهل تريد إنشاؤه أو اختيار دليل آخر؟</string>
-    <string name="alert_rewrite_profile">ملف تعريف اسمه \"%1$s\" موجود بالفعل.\nهل تريد الكتابة فوقه؟</string>
     <string name="CANCEL_CMD">الغاء</string>
     <string name="change">تغيير</string>
     <string name="choose">اختيار</string>
@@ -62,7 +61,6 @@
     <string name="more">المزيد</string>
     <string name="no_data_for_display">لا يوجد بيانات</string>
     <string name="not_saved_exists">موجود بالفعل</string>
-    <string name="opt_save_screen_params">حفظ ابعاد الشاشة</string>
     <string name="parallel_screen_redrawing">إعادة رسم الشاشة بشكل موازي</string>
     <string name="permission_request_failed">هذا التطبيق يتطلب إذونات الكتابة و التخزين</string>
     <string name="pref_app_sort_date">التاريخ</string>

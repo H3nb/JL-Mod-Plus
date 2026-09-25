@@ -10,7 +10,6 @@
     <string name="add_profile_description">ନୂତନ ପ୍ରୋଫାଇଲ୍ ସୃଷ୍ଟି କରନ୍ତୁ</string>
     <string name="alert_map_menu">ମେନ୍ୟୁ କୀ (M) ନ୍ୟସ୍ତ ହୋଇନାହିଁ!\nଏହା ଦ୍ୱାରା ଅନୁକରଣକାରୀ ବିକଳ୍ପଗୁଡିକ ଆକସେସ୍ କରିବା ଅସମ୍ଭବ ହୋଇପାରେ</string>
     <string name="alert_msg_workdir_not_exists">ୱାର୍କିଂ ଡିରେକ୍ଟୋରୀ ପଥରେ ବିଦ୍ୟମାନ ନାହିଁ:\n\'%1$s\'।\n ଆପଣ ଏହାକୁ ସୃଷ୍ଟି କରିବାକୁ କିମ୍ବା ଅନ୍ୟଟି ବାଛିବାକୁ ଚାହୁଁଛନ୍ତି କି?</string>
-    <string name="alert_rewrite_profile">\"%1$s\" ନାମକ ଏକ ପ୍ରୋଫାଇଲ୍ ପୂର୍ବରୁ ବିଦ୍ୟମାନ ଅଛି।\nଆପଣ ଏହାକୁ ଅତ୍ୟଧିକ ଲେଖିବାକୁ ଚାହାଁନ୍ତି କି?</string>
     <string name="change">ପରିବର୍ତ୍ତନ କରନ୍ତୁ</string>
     <string name="choose">ବାଛନ୍ତୁ</string>
     <string name="close">ବନ୍ଦ କରନ୍ତୁ</string>

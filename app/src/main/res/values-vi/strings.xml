@@ -57,7 +57,6 @@
     <string name="more">Thêm</string>
     <string name="no_data_for_display">Không có dữ liệu</string>
     <string name="not_saved_exists">Đã tồn tại</string>
-    <string name="opt_save_screen_params">lưu thông số màn hình</string>
     <string name="parallel_screen_redrawing">Kéo ngược màn hình song song</string>
     <string name="permission_request_failed">Ứng dụng này yêu cầu quyền ghi vào bộ nhớ</string>
     <string name="pref_app_sort_date">Ngày tháng</string>

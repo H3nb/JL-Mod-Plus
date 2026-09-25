@@ -573,9 +573,14 @@ class BulkInstallViewModel : ViewModel() {
                 restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) {
-                return BulkInstallResult(item.id, item.name, BulkInstallResultKind.PartiallyInstalled,
-                    boundedMessage(error), activeInstaller.installedId,
-                    File(activeInstaller.installedPath).name)
+                return BulkInstallResult(
+                    item.id,
+                    item.name,
+                    BulkInstallResultKind.PartiallyInstalled,
+                    withDefaultProfileFallbackNotice(boundedMessage(error), activeInstaller, library),
+                    activeInstaller.installedId,
+                    File(activeInstaller.installedPath).name,
+                )
             }
             val kind = when {
                 item.action == BulkInstallAction.InstallSeparateCopy -> BulkInstallResultKind.Installed
@@ -584,10 +589,20 @@ class BulkInstallViewModel : ViewModel() {
                 item.preflightStatus == BulkInstallStatus.Update -> BulkInstallResultKind.Updated
                 else -> BulkInstallResultKind.Reinstalled
             }
-            return BulkInstallResult(item.id, item.name, kind)
+            return BulkInstallResult(
+                item.id,
+                item.name,
+                kind,
+                defaultProfileFallbackNotice(activeInstaller, library),
+            )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (error: Throwable) {
-            if (isFatalEnvironmentError(error)) throw FatalBatchException(error)
-            throw error
+            val reportedError = defaultProfileFallbackNotice(installer, library)?.let {
+                RuntimeException(it + "\n" + boundedMessage(error), error)
+            } ?: error
+            if (isFatalEnvironmentError(error)) throw FatalBatchException(reportedError)
+            throw reportedError
         } finally {
             if (installer == null) {
                 scratch.clear()
@@ -662,6 +677,20 @@ class BulkInstallViewModel : ViewModel() {
         AppInstaller.STATUS_AMBIGUOUS -> BulkInstallStatus.AmbiguousInstalledMatch
         else -> BulkInstallStatus.SourceError
     }
+
+    private fun defaultProfileFallbackNotice(
+        installer: AppInstaller?,
+        library: LibraryViewModel,
+    ): String? = installer?.getDefaultProfileFallbackName()?.let { name ->
+        library.getApplication<android.app.Application>()
+            .getString(R.string.profile_default_fallback_notice, name)
+    }
+
+    private fun withDefaultProfileFallbackNotice(
+        detail: String,
+        installer: AppInstaller?,
+        library: LibraryViewModel,
+    ): String = defaultProfileFallbackNotice(installer, library)?.let { "$it\n$detail" } ?: detail
 
     private fun isFatalEnvironmentError(error: Throwable): Boolean {
         var cursor: Throwable? = error

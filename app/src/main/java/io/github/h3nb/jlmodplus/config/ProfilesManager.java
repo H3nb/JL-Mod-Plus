@@ -17,6 +17,7 @@
 
 package io.github.h3nb.jlmodplus.config;
 
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -33,8 +34,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.util.ContextHolder;
 
 import androidx.annotation.NonNull;
@@ -48,7 +53,41 @@ public class ProfilesManager {
 	private static final String TAG = ProfilesManager.class.getName();
 	private static final String ATOMIC_NEW_SUFFIX = ".new";
 	private static final String ATOMIC_BACKUP_SUFFIX = ".bak";
+	private static final String PRESET_SYNC_STAGING_DIR = ".preset-sync.tmp";
+	private static final String PRESET_SYNC_ROLLBACK_DIR = ".preset-sync.rollback";
+	private static final String PRESET_SYNC_READY_MARKER = ".ready";
+	private static final String PRESET_SYNC_OWNED_SUFFIX = ".owned";
+	private static final String LOCAL_CONFIG_ARTIFACT = "config.json";
+	private static final String LOCAL_LAYOUT_ARTIFACT = "VirtualKeyboardLayout";
+	static final String PRESET_SAVE_ROLLBACK_DIR = ".preset-save.rollback";
+	static final String PRESET_SAVE_READY_MARKER = ".ready";
+	static final String PRESET_SAVE_NEW_PROFILE_MARKER = ".new-profile";
+	private static final Object PRESET_SOURCE_LOCK = new Object();
+	private static final Map<String, File> presetEditSessions = new HashMap<>();
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+	/** Shared process-local monitor for all named-preset source reads, writes, and lifecycle changes. */
+	@NonNull
+	static Object presetSourceLock() {
+		return PRESET_SOURCE_LOCK;
+	}
+
+	/**
+	 * Durably clears all per-MIDlet preset ownership for one configuration identity.
+	 *
+	 * <p>This is shared by fresh-install publication and explicit uninstall cleanup so callers
+	 * never duplicate ownership preference keys outside the preset layer.</p>
+	 */
+	public static boolean clearMidletOwnershipMetadata(
+			@NonNull SharedPreferences preferences, @NonNull File configDir) {
+		synchronized (PRESET_SOURCE_LOCK) {
+			return preferences.edit()
+					.remove(PresetLinkage.originPreferenceKey(configDir))
+					.remove(PresetLinkage.linkedPreferenceKey(configDir))
+					.remove(ProfileModel.builtInThemePreferenceKey(configDir))
+					.commit();
+		}
+	}
 
 	/** Identifies whether legacy linkage metadata is meaningful for a config load. */
 	public enum BackgroundMigrationContext {
@@ -56,9 +95,9 @@ public class ProfilesManager {
 		MIDLET_CONFIG
 	}
 
-	static ArrayList<Profile> getProfiles() {
-		File root = new File(Config.getProfilesDir());
-		return getList(root);
+	enum ProfileEditMode {
+		CREATE_NEW,
+		EDIT_EXISTING
 	}
 
 	/** A disk-only inspection result prepared before Compose state is updated. */
@@ -87,63 +126,188 @@ public class ProfilesManager {
 		@Nullable final ProfileModel config;
 		@NonNull final Capability settings;
 		@NonNull final Capability keyboardLayout;
+		final boolean completeSnapshotReady;
 
 		ProfileInfo(@NonNull Profile profile, @Nullable ProfileModel config,
-				@NonNull Capability settings, @NonNull Capability keyboardLayout) {
+				@NonNull Capability settings, @NonNull Capability keyboardLayout,
+				boolean completeSnapshotReady) {
 			this.profile = profile;
 			this.config = config;
 			this.settings = settings;
 			this.keyboardLayout = keyboardLayout;
+			this.completeSnapshotReady = completeSnapshotReady;
 		}
 	}
 
 	/** Performs profile parsing and artifact checks in the caller's worker thread. */
 	@NonNull
-	static ArrayList<ProfileInfo> inspectProfiles(@Nullable List<Profile> profiles) {
+	static ArrayList<ProfileInfo> inspectProfiles(@NonNull File profilesRoot,
+			@Nullable List<Profile> profiles) {
 		ArrayList<ProfileInfo> result = new ArrayList<>();
 		if (profiles == null) return result;
 		for (Profile profile : profiles) {
-			result.add(inspectProfile(profile));
+			result.add(inspectProfile(profile, new File(profilesRoot, profile.getName())));
 		}
 		return result;
 	}
 
-	/** Computes both independent capabilities once so picker and operation code share the same view. */
+	/** File-level entry point kept package-private for deterministic source-recovery tests. */
 	@NonNull
-	static ProfileInfo inspectProfile(@NonNull Profile profile) {
-		boolean hasConfigArtifact = profile.hasConfig() || profile.hasOldConfig();
+	static ProfileInfo inspectProfile(@NonNull Profile profile, @NonNull File profileDir) {
+		synchronized (PRESET_SOURCE_LOCK) {
+		try {
+			recoverInterruptedPresetSave(profileDir);
+		} catch (IOException | RuntimeException recoveryFailure) {
+			Capability unavailable = new Capability(
+					CapabilityStatus.UNAVAILABLE, "preset source recovery failed");
+			return new ProfileInfo(profile, null, unavailable, unavailable, false);
+		}
+
+		File configFile = new File(profileDir, Config.MIDLET_CONFIG_FILE);
+		File legacyConfig = new File(profileDir, "config.xml");
+		boolean hasConfigArtifact = configFile.exists() || legacyConfig.exists();
 		ProfileModel config = hasConfigArtifact
-				? loadConfig(profile.getDir(), false, BackgroundMigrationContext.NAMED_PROFILE, false)
+				? loadConfig(profileDir, false, BackgroundMigrationContext.NAMED_PROFILE, false)
 				: null;
 		Capability settings = hasConfigArtifact
 				? new Capability(config == null ? CapabilityStatus.UNAVAILABLE : CapabilityStatus.READY,
 						config == null ? "configuration cannot be parsed" : null)
 				: new Capability(CapabilityStatus.ABSENT, null);
-		boolean hasLayoutArtifact = profile.hasKeyLayout();
+		File keyLayout = new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		boolean hasLayoutArtifact = keyLayout.exists();
 		String layoutReason = hasLayoutArtifact
-				? KeyboardLayoutValidator.validate(profile.getKeyLayout()) : null;
+				? KeyboardLayoutValidator.validate(keyLayout) : null;
 		Capability layout = !hasLayoutArtifact
 				? new Capability(CapabilityStatus.ABSENT, null)
 				: new Capability(layoutReason == null ? CapabilityStatus.READY : CapabilityStatus.UNAVAILABLE,
 						layoutReason);
-		return new ProfileInfo(profile, config, settings, layout);
+		boolean completeSnapshotReady;
+		try {
+			inspectCompleteSnapshot(profileDir);
+			completeSnapshotReady = true;
+		} catch (IOException | RuntimeException unavailable) {
+			completeSnapshotReady = false;
+		}
+		return new ProfileInfo(profile, config, settings, layout, completeSnapshotReady);
+		}
 	}
 
-	/** Returns true when a directory or a saved layout already occupies this collection name. */
-	static boolean profileNameExists(@Nullable String rawName) {
-		if (!Profile.isValidName(rawName)) return false;
-		String name = rawName.trim();
-		for (Profile profile : getProfiles()) {
-			if (profile.getName().equalsIgnoreCase(name)) return true;
+	static final class PresetEditSession {
+		@NonNull final ProfileEditMode mode;
+		@NonNull final File target;
+		@Nullable final String token;
+
+		PresetEditSession(@NonNull ProfileEditMode mode, @NonNull File target,
+				@Nullable String token) {
+			this.mode = mode;
+			this.target = target.getAbsoluteFile();
+			this.token = token;
 		}
-		File root = new File(Config.getProfilesDir());
-		return new File(root, name).exists()
-				|| new File(root, name + Config.MIDLET_CONFIG_FILE).exists()
-				|| new File(root, name + Config.MIDLET_KEY_LAYOUT_FILE).exists();
 	}
 
 	@NonNull
-	private static ArrayList<Profile> getList(File root) {
+	static PresetEditSession beginPresetEditSession(@NonNull File target, @NonNull File draft)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			File exactTarget = target.getAbsoluteFile();
+			ProfileEditMode mode = preparePresetEditDraft(exactTarget, draft);
+			String token = null;
+			if (mode == ProfileEditMode.EDIT_EXISTING) {
+				token = UUID.randomUUID().toString();
+				presetEditSessions.put(token, exactTarget);
+			}
+			return new PresetEditSession(mode, exactTarget, token);
+		}
+	}
+
+	static void releasePresetEditSession(@Nullable PresetEditSession session) {
+		if (session == null || session.token == null) return;
+		synchronized (PRESET_SOURCE_LOCK) {
+			if (session.target.equals(presetEditSessions.get(session.token))) {
+				presetEditSessions.remove(session.token);
+			}
+		}
+	}
+
+	static void invalidatePresetEditSessions(@NonNull File target) {
+		synchronized (PRESET_SOURCE_LOCK) {
+			File exactTarget = target.getAbsoluteFile();
+			Iterator<File> sessions = presetEditSessions.values().iterator();
+			while (sessions.hasNext()) {
+				if (exactTarget.equals(sessions.next())) sessions.remove();
+			}
+		}
+	}
+
+	static void saveEditedSnapshot(@NonNull PresetEditSession session, @NonNull File draft)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			if (session.mode == ProfileEditMode.EDIT_EXISTING
+					&& (session.token == null
+					|| !session.target.equals(presetEditSessions.get(session.token)))) {
+				throw new IOException("Preset editor session is no longer active");
+			}
+			saveEditedSnapshot(session.target, draft, session.mode);
+			releasePresetEditSession(session);
+		}
+	}
+
+	/** Returns true when a directory or a saved layout already occupies this collection name. */
+	static boolean profileNameExists(@NonNull File profilesRoot, @Nullable String rawName) {
+		if (!Profile.isValidName(rawName)) return false;
+		synchronized (PRESET_SOURCE_LOCK) {
+		try {
+			return profileNameExistsLocked(profilesRoot, rawName.trim());
+		} catch (IOException | RuntimeException recoveryFailure) {
+			// A name with unsafe recovery evidence is occupied until that evidence can be resolved.
+			return true;
+		}
+		}
+	}
+
+	static boolean profileNameExistsLocked(@NonNull File root, @NonNull String name)
+			throws IOException {
+		return resolveProfileEntryLocked(root, name) != null;
+	}
+
+	@Nullable
+	static File findProfileDirectory(@NonNull File root, @Nullable String name)
+			throws IOException {
+		if (name == null) return null;
+		synchronized (PRESET_SOURCE_LOCK) {
+			File entry = resolveProfileEntryLocked(root, name);
+			return entry != null && entry.isDirectory() ? entry : null;
+		}
+	}
+
+	/** One source-locked name resolver for occupancy and exact filesystem spelling. */
+	@Nullable
+	private static File resolveProfileEntryLocked(@NonNull File root, @NonNull String name)
+			throws IOException {
+		File[] entries = root.listFiles();
+		if (entries == null) return null;
+		String flatConfig = name + Config.MIDLET_CONFIG_FILE;
+		String flatLayout = name + Config.MIDLET_KEY_LAYOUT_FILE;
+		File match = null;
+		for (File entry : entries) {
+			String entryName = entry.getName();
+			if (entry.isDirectory() && entryName.equalsIgnoreCase(name)) {
+				recoverInterruptedPresetSave(entry);
+				if (!entry.exists()) continue;
+			}
+			if (entryName.equalsIgnoreCase(name)
+					|| entryName.equalsIgnoreCase(flatConfig)
+					|| entryName.equalsIgnoreCase(flatLayout)) {
+				if (match != null) throw new IOException("Ambiguous preset name: " + name);
+				match = entry;
+			}
+		}
+		return match;
+	}
+
+	@NonNull
+	static ArrayList<Profile> getList(File root) {
+		synchronized (PRESET_SOURCE_LOCK) {
 		File[] dirs = root.listFiles();
 		if (dirs == null) {
 			return new ArrayList<>();
@@ -151,99 +315,468 @@ public class ProfilesManager {
 		int size = dirs.length;
 		ArrayList<Profile> result = new ArrayList<>(size);
 		for (File dir : dirs) {
+			if (!dir.isDirectory() || PresetLifecycle.isInternalRenameStagingName(dir.getName())) {
+				continue;
+			}
+			try {
+				recoverInterruptedPresetSave(dir);
+			} catch (IOException | RuntimeException recoveryFailure) {
+				if (isInvisibleInterruptedNewProfile(dir)) {
+					continue;
+				}
+			}
 			if (dir.isDirectory()) {
 				result.add(new Profile(dir.getName()));
 			}
 		}
 		return result;
+		}
 	}
 
-	static void load(Profile from, String toPath, boolean config, boolean keyboard)
-			throws IOException {
-		if (!config && !keyboard) {
-			return;
+	@FunctionalInterface
+	interface LocalPublicationHook {
+		void afterPublished(@NonNull String artifact) throws IOException;
+	}
+
+	/**
+	 * File-level entry point used by deterministic publication tests.
+	 *
+	 * <p>The optional hook observes a real post-publication boundary and is never used by
+	 * production callers.</p>
+	 */
+	static void load(@NonNull File sourceDir, @NonNull File targetDir,
+			boolean config, boolean keyboard, @Nullable LocalPublicationHook hook) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			if (!config && !keyboard) {
+				return;
+			}
+			prepareLocalPublicationTarget(targetDir, keyboard);
+			ProfileInfo inspected = inspectProfile(new Profile(sourceDir.getName()), sourceDir);
+			if (config && !inspected.settings.isReady()) {
+				throw new IOException("Profile configuration is not loadable");
+			}
+			if (keyboard && !inspected.keyboardLayout.isReady()) {
+				throw new IOException("Profile keyboard layout is not loadable");
+			}
+			publishLocalSnapshotArtifacts(
+					sourceDir, targetDir, inspected.config,
+					config, keyboard, keyboard, false, hook);
 		}
-		File targetDir = new File(toPath);
+	}
+
+	/**
+	 * Creates a byte-preserving editor working copy from one coherent committed preset source.
+	 */
+	/** File-level entry point kept package-private for deterministic source-concurrency tests. */
+	static void copyPresetSourceForEdit(@NonNull File sourceDir, @NonNull File draftDir)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+		recoverInterruptedPresetSave(sourceDir);
+		copyPresetArtifactIfFile(new File(sourceDir, Config.MIDLET_CONFIG_FILE),
+				new File(draftDir, Config.MIDLET_CONFIG_FILE));
+		copyPresetArtifactIfFile(new File(sourceDir, "config.xml"),
+				new File(draftDir, "config.xml"));
+		copyPresetArtifactIfFile(new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE),
+				new File(draftDir, Config.MIDLET_KEY_LAYOUT_FILE));
+		}
+	}
+
+	/** File-level preparation kept for source-recovery tests; editor callers issue a session. */
+	static ProfileEditMode preparePresetEditDraft(
+			@NonNull File sourceDir, @NonNull File draftDir) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			recoverInterruptedPresetSave(sourceDir);
+			if (sourceDir.exists() && !sourceDir.isDirectory()) {
+				throw new IOException("Preset path is not a directory");
+			}
+			if (!sourceDir.isDirectory()) {
+				return ProfileEditMode.CREATE_NEW;
+			}
+			copyPresetSourceForEdit(sourceDir, draftDir);
+			return ProfileEditMode.EDIT_EXISTING;
+		}
+	}
+
+	private static void copyPresetArtifactIfFile(@NonNull File source, @NonNull File destination)
+			throws IOException {
+		if (source.isFile()) FileUtils.copyFileUsingChannel(source, destination);
+	}
+
+	/**
+	 * Mirrors one complete named preset into a MIDlet-local materialized snapshot.
+	 *
+	 * <p>Whole publication owns both config.json and the complete VirtualKeyboardLayout atomic
+	 * family. Source layout absence is therefore authoritative.</p>
+	 */
+	/** File-level entry point kept package-private so crash-recovery state can be covered by JVM tests. */
+	static void syncSnapshot(@NonNull File sourceDir, @NonNull File targetDir) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			// Recover local publication before source inspection so an unavailable source can never
+			// hide an already recoverable last-known-good MIDlet snapshot.
+			prepareLocalPublicationTarget(targetDir, true);
+			recoverInterruptedPresetSave(sourceDir);
+			CompleteSnapshot snapshot = inspectCompleteSnapshot(sourceDir);
+			publishLocalSnapshotArtifacts(
+					sourceDir, targetDir, snapshot.config,
+					true, true, snapshot.hasKeyboardLayout, true, null);
+		}
+	}
+
+	/**
+	 * Returns whether the source can be used for an exact whole-device activation.
+	 *
+	 * <p>This deliberately delegates to the same inspection used immediately before exact
+	 * publication. Partial settings and keyboard-only presets remain valid collection entries, but
+	 * are not complete default candidates.</p>
+	 */
+	static boolean isCompleteSnapshotReady(@NonNull File sourceDir) {
+		synchronized (PRESET_SOURCE_LOCK) {
+			try {
+				recoverInterruptedPresetSave(sourceDir);
+				inspectCompleteSnapshot(sourceDir);
+				return true;
+			} catch (IOException | RuntimeException unavailable) {
+				return false;
+			}
+		}
+	}
+
+	private static final class CompleteSnapshot {
+		@NonNull final ProfileModel config;
+		final boolean hasKeyboardLayout;
+
+		CompleteSnapshot(@NonNull ProfileModel config, boolean hasKeyboardLayout) {
+			this.config = config;
+			this.hasKeyboardLayout = hasKeyboardLayout;
+		}
+	}
+
+	@NonNull
+	private static CompleteSnapshot inspectCompleteSnapshot(@NonNull File sourceDir)
+			throws IOException {
+		File sourceConfig = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
+		File legacyConfig = new File(sourceDir, "config.xml");
+		// A preset save can be interrupted between the same atomic config renames used elsewhere.
+		// Recover that last-known-good file before deciding whether the source snapshot is readable.
+		recoverAtomicConfig(sourceConfig);
+		if (sourceConfig.exists() && !isValidConfigFile(sourceConfig)) {
+			throw new IOException("Profile configuration is not loadable");
+		}
+		if (!sourceConfig.exists() && !legacyConfig.isFile()) {
+			throw new IOException("Profile configuration is missing");
+		}
+		ProfileModel config = loadConfig(
+				sourceDir, false, BackgroundMigrationContext.NAMED_PROFILE, false);
+		if (config == null) {
+			throw new IOException("Profile configuration is not loadable");
+		}
+
+		File sourceLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		boolean hasKeyboardLayout = sourceLayout.exists();
+		if (hasKeyboardLayout) {
+			String layoutError = KeyboardLayoutValidator.validate(sourceLayout);
+			if (layoutError != null) {
+				throw new IOException("Profile keyboard layout is not loadable: " + layoutError);
+			}
+		}
+		if (config.vkType == VirtualKeyboard.TYPE_CUSTOM && !hasKeyboardLayout) {
+			throw new IOException("Custom profile requires a keyboard layout");
+		}
+		return new CompleteSnapshot(config, hasKeyboardLayout);
+	}
+
+	static void recoverInterruptedSnapshotSync(@NonNull File targetDir) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			File rollback = new File(targetDir, PRESET_SYNC_ROLLBACK_DIR);
+			File staging = new File(targetDir, PRESET_SYNC_STAGING_DIR);
+			if (rollback.exists()) {
+				if (!rollback.isDirectory()) {
+					throw new IOException("Preset sync rollback state is not a directory");
+				}
+				File ready = new File(rollback, PRESET_SYNC_READY_MARKER);
+				if (ready.exists() && !ready.isFile()) {
+					throw new IOException("Preset sync ready marker is invalid");
+				}
+				if (ready.isFile()) {
+					File configOwned = new File(
+							rollback, LOCAL_CONFIG_ARTIFACT + PRESET_SYNC_OWNED_SUFFIX);
+					File layoutOwned = new File(
+							rollback, LOCAL_LAYOUT_ARTIFACT + PRESET_SYNC_OWNED_SUFFIX);
+					validateOwnedMarker(configOwned);
+					validateOwnedMarker(layoutOwned);
+					boolean explicitOwnership = configOwned.exists() || layoutOwned.exists();
+					boolean ownsConfig = !explicitOwnership || configOwned.isFile();
+					boolean ownsLayout = !explicitOwnership || layoutOwned.isFile();
+
+					if (ownsConfig) {
+						restoreExisting(
+								new File(targetDir, Config.MIDLET_CONFIG_FILE),
+								rollback, LOCAL_CONFIG_ARTIFACT);
+					}
+					if (ownsLayout) {
+						File dstLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
+						restoreExisting(dstLayout, rollback, LOCAL_LAYOUT_ARTIFACT);
+						removeVirtualKeyboardLayoutSidecars(dstLayout);
+					}
+					if (!ready.delete()) {
+						throw new IOException("Unable to disarm interrupted preset sync");
+					}
+				}
+				// Without .ready, destination state is authoritative. Only stale evidence is cleaned.
+				deleteRecursively(rollback);
+				if (rollback.exists()) {
+					throw new IOException("Unable to clear interrupted preset sync rollback state");
+				}
+			}
+			deleteRecursively(staging);
+			if (staging.exists()) {
+				throw new IOException("Unable to clear interrupted preset sync staging state");
+			}
+		}
+	}
+
+	private static void validateOwnedMarker(@NonNull File marker) throws IOException {
+		if (marker.exists() && !marker.isFile()) {
+			throw new IOException("Preset sync ownership marker is invalid: " + marker.getName());
+		}
+	}
+
+	static boolean hasRecoverableLocalKeyboardLayout(@NonNull File configDir) {
+		File layout = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		return layout.exists() || atomicSibling(layout, ATOMIC_BACKUP_SUFFIX).exists();
+	}
+
+	/**
+	 * Removes one active MIDlet's persisted keyboard-layout family for an explicit local reset.
+	 *
+	 * <p>Sidecars are removed before the main layout so a sidecar-cleanup failure cannot delete the
+	 * currently effective main layout.</p>
+	 */
+	static boolean removeLocalKeyboardLayout(@NonNull File configDir) {
+		File layout = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		File temporary = atomicSibling(layout, ATOMIC_NEW_SUFFIX);
+		File backup = atomicSibling(layout, ATOMIC_BACKUP_SUFFIX);
+		if (temporary.exists() && !temporary.delete()) {
+			return false;
+		}
+		if (backup.exists() && !backup.delete()) {
+			return false;
+		}
+		return !layout.exists() || layout.delete();
+	}
+
+	/**
+	 * Applies the same effective recovery order as VirtualKeyboard.recoverLayoutFile(), but fails
+	 * closed so exact sync never captures an ambiguous layout family as its rollback baseline.
+	 */
+	private static void normalizeVirtualKeyboardLayout(@NonNull File layout) throws IOException {
+		File temporary = atomicSibling(layout, ATOMIC_NEW_SUFFIX);
+		File backup = atomicSibling(layout, ATOMIC_BACKUP_SUFFIX);
+		if (backup.exists()) {
+			if (layout.exists()) {
+				if (!backup.delete()) {
+					throw new IOException("Unable to remove stale virtual keyboard layout backup");
+				}
+			} else if (!backup.renameTo(layout)) {
+				throw new IOException("Unable to restore virtual keyboard layout backup");
+			}
+		}
+		if (temporary.exists() && !temporary.delete()) {
+			throw new IOException("Unable to remove stale virtual keyboard layout write");
+		}
+	}
+
+	private static void removeVirtualKeyboardLayoutSidecars(@NonNull File layout) throws IOException {
+		File temporary = atomicSibling(layout, ATOMIC_NEW_SUFFIX);
+		File backup = atomicSibling(layout, ATOMIC_BACKUP_SUFFIX);
+		if (temporary.exists() && !temporary.delete()) {
+			throw new IOException("Unable to remove virtual keyboard layout write sidecar");
+		}
+		if (backup.exists() && !backup.delete()) {
+			throw new IOException("Unable to remove virtual keyboard layout backup sidecar");
+		}
+	}
+
+	private static void prepareLocalPublicationTarget(
+			@NonNull File targetDir, boolean ownsLayout) throws IOException {
 		if (!targetDir.isDirectory() && !targetDir.mkdirs()) {
 			throw new IOException("Unable to create configuration directory");
 		}
-		ProfileInfo inspected = inspectProfile(from);
-		if (config && !inspected.settings.isReady()) {
-			throw new IOException("Profile configuration is not loadable");
+		recoverInterruptedSnapshotSync(targetDir);
+		if (ownsLayout) {
+			normalizeVirtualKeyboardLayout(
+					new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE));
 		}
-		if (keyboard && !inspected.keyboardLayout.isReady()) {
-			throw new IOException("Profile keyboard layout is not loadable");
+	}
+
+	/**
+	 * Main-process runtime preparation for the keyboard artifact family.
+	 *
+	 * <p>This is deliberately separate from parsing. Runtime readers in {@code :midlet} consume only
+	 * the already-prepared committed file and never recover {@code .new/.bak} themselves.</p>
+	 */
+	static void prepareRuntimeLayout(@NonNull File targetDir) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			prepareLocalPublicationTarget(targetDir, true);
 		}
-		File staging = new File(targetDir, ".preset-apply.tmp");
-		File rollback = new File(targetDir, ".preset-apply.rollback");
+	}
+
+	/**
+	 * Publishes one already-encoded runtime layout through the same recoverable local transaction
+	 * used by preset application. No independent VirtualKeyboard publication protocol is involved.
+	 */
+	static void publishRuntimeLayout(@NonNull File targetDir, @NonNull byte[] layoutPayload)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			prepareLocalPublicationTarget(targetDir, true);
+			publishLocalSnapshotArtifacts(
+					targetDir, targetDir, null,
+					false, true, true, false, null, layoutPayload);
+		}
+	}
+
+	private static void publishLocalSnapshotArtifacts(
+			@NonNull File sourceDir,
+			@NonNull File targetDir,
+			@Nullable ProfileModel sourceConfig,
+			boolean config,
+			boolean keyboard,
+			boolean sourceHasLayout,
+			boolean verifyCompleteSource,
+			@Nullable LocalPublicationHook hook) throws IOException {
+		publishLocalSnapshotArtifacts(
+				sourceDir, targetDir, sourceConfig, config, keyboard, sourceHasLayout,
+				verifyCompleteSource, hook, null);
+	}
+
+	private static void publishLocalSnapshotArtifacts(
+			@NonNull File sourceDir,
+			@NonNull File targetDir,
+			@Nullable ProfileModel sourceConfig,
+			boolean config,
+			boolean keyboard,
+			boolean sourceHasLayout,
+			boolean verifyCompleteSource,
+			@Nullable LocalPublicationHook hook,
+			@Nullable byte[] layoutPayload) throws IOException {
+		File staging = new File(targetDir, PRESET_SYNC_STAGING_DIR);
+		File rollback = new File(targetDir, PRESET_SYNC_ROLLBACK_DIR);
+		File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
+		File dstKeyLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		deleteRecursively(staging);
 		deleteRecursively(rollback);
-		boolean configCommitStarted = false;
-		boolean keyboardCommitStarted = false;
-		boolean rollbackSucceeded = true;
+		if (staging.exists() || rollback.exists()) {
+			throw new IOException("Unable to clear stale local preset publication state");
+		}
+
+		File ready = new File(rollback, PRESET_SYNC_READY_MARKER);
 		try {
 			if (!staging.mkdirs() || !rollback.mkdirs()) {
-				throw new IOException("Unable to create preset staging directory");
+				throw new IOException("Unable to create local preset publication state");
 			}
+
 			File stagedConfig = new File(staging, Config.MIDLET_CONFIG_FILE);
 			File stagedLayout = new File(staging, Config.MIDLET_KEY_LAYOUT_FILE);
 			if (config) {
-				File source = from.getConfig();
+				File source = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
 				if (source.isFile()) {
 					FileUtils.copyFileUsingChannel(source, stagedConfig);
 				} else {
-					ProfileModel params = inspected.config;
-					if (params == null) {
+					if (sourceConfig == null) {
 						throw new IOException("Profile configuration is not loadable");
 					}
-					File originalDir = params.dir;
+					File originalDir = sourceConfig.dir;
 					try {
-						params.dir = staging;
-						if (!saveConfig(params)) {
+						sourceConfig.dir = staging;
+						if (!saveConfig(sourceConfig)) {
 							throw new IOException("Unable to materialize profile configuration");
 						}
 					} finally {
-						params.dir = originalDir;
+						sourceConfig.dir = originalDir;
 					}
 				}
 				if (!isValidConfigFile(stagedConfig)) {
 					throw new IOException("Profile configuration changed while applying");
 				}
 			}
-			if (keyboard) {
-				FileUtils.copyFileUsingChannel(from.getKeyLayout(), stagedLayout);
+			if (keyboard && sourceHasLayout) {
+				if (layoutPayload != null) {
+					try (FileOutputStream output = new FileOutputStream(stagedLayout)) {
+						output.write(layoutPayload);
+						output.getFD().sync();
+					}
+				} else {
+					File sourceLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+					if (!sourceLayout.isFile()) {
+						throw new IOException("Profile keyboard layout changed while applying");
+					}
+					FileUtils.copyFileUsingChannel(sourceLayout, stagedLayout);
+				}
 				String layoutError = KeyboardLayoutValidator.validate(stagedLayout);
 				if (layoutError != null) {
-					throw new IOException("Profile keyboard layout changed while applying: " + layoutError);
+					throw new IOException(
+							"Profile keyboard layout changed while applying: " + layoutError);
 				}
 			}
-			File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
-			File dstKeyLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
+			if (keyboard && !sourceHasLayout && !verifyCompleteSource) {
+				throw new IOException("Partial keyboard apply requires a usable source layout");
+			}
+
+			if (verifyCompleteSource) {
+				CompleteSnapshot current = inspectCompleteSnapshot(sourceDir);
+				if (current.hasKeyboardLayout != sourceHasLayout) {
+					throw new IOException("Profile keyboard layout changed while applying");
+				}
+			}
+
 			if (config) {
-				backupExisting(dstConfig, rollback, "config.json");
-				configCommitStarted = true;
-				FileUtils.copyFileUsingChannel(stagedConfig, dstConfig);
+				markLocalArtifactOwned(rollback, LOCAL_CONFIG_ARTIFACT);
+				backupExisting(dstConfig, rollback, LOCAL_CONFIG_ARTIFACT);
 			}
 			if (keyboard) {
-				backupExisting(dstKeyLayout, rollback, "VirtualKeyboardLayout");
-				keyboardCommitStarted = true;
-				FileUtils.copyFileUsingChannel(stagedLayout, dstKeyLayout);
+				markLocalArtifactOwned(rollback, LOCAL_LAYOUT_ARTIFACT);
+				backupExisting(dstKeyLayout, rollback, LOCAL_LAYOUT_ARTIFACT);
 			}
+			if (!ready.createNewFile()) {
+				throw new IOException("Unable to arm local preset publication");
+			}
+
+			if (config) {
+				FileUtils.copyFileUsingChannel(stagedConfig, dstConfig);
+				if (hook != null) hook.afterPublished(LOCAL_CONFIG_ARTIFACT);
+			}
+			if (keyboard) {
+				if (sourceHasLayout) {
+					FileUtils.copyFileUsingChannel(stagedLayout, dstKeyLayout);
+				} else if (dstKeyLayout.exists() && !dstKeyLayout.delete()) {
+					throw new IOException("Unable to remove stale key layout");
+				}
+				removeVirtualKeyboardLayoutSidecars(dstKeyLayout);
+				if (hook != null) hook.afterPublished(LOCAL_LAYOUT_ARTIFACT);
+			}
+
+			// .ready removal is the commit point. Once absent, recovery must never change destination.
+			if (!ready.delete()) {
+				throw new IOException("Unable to commit local preset publication");
+			}
+			deleteRecursively(rollback);
 		} catch (IOException | RuntimeException failure) {
-			File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
-			File dstKeyLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
-			if (configCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, dstConfig, rollback, "config.json");
-			}
-			if (keyboardCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, dstKeyLayout, rollback,
-						"VirtualKeyboardLayout");
+			try {
+				recoverInterruptedSnapshotSync(targetDir);
+			} catch (IOException | RuntimeException recoveryFailure) {
+				failure.addSuppressed(recoveryFailure);
 			}
 			if (failure instanceof IOException) throw (IOException) failure;
 			throw failure;
 		} finally {
 			deleteRecursively(staging);
-			if (rollbackSucceeded) deleteRecursively(rollback);
+		}
+	}
+
+	private static void markLocalArtifactOwned(@NonNull File rollback, @NonNull String name)
+			throws IOException {
+		if (!new File(rollback, name + PRESET_SYNC_OWNED_SUFFIX).createNewFile()) {
+			throw new IOException("Unable to record local preset artifact ownership: " + name);
 		}
 	}
 
@@ -271,20 +804,146 @@ public class ProfilesManager {
 		}
 	}
 
-	private static boolean tryRestore(Throwable failure, File destination, File rollback, String name) {
-		try {
-			restoreExisting(destination, rollback, name);
-			return true;
-		} catch (IOException rollbackFailure) {
-			failure.addSuppressed(rollbackFailure);
-			return false;
+
+	static void recoverInterruptedPresetSave(@NonNull File profileDir) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+		File rollback = new File(profileDir, PRESET_SAVE_ROLLBACK_DIR);
+		if (!rollback.exists()) return;
+		if (!rollback.isDirectory()) {
+			throw new IOException("Preset save rollback state is not a directory");
+		}
+
+		File ready = new File(rollback, PRESET_SAVE_READY_MARKER);
+		File newProfile = new File(rollback, PRESET_SAVE_NEW_PROFILE_MARKER);
+		if (ready.exists() && !ready.isFile()) {
+			throw new IOException("Preset save ready marker is invalid");
+		}
+		if (newProfile.exists() && !newProfile.isFile()) {
+			throw new IOException("Preset save new-profile marker is invalid");
+		}
+		boolean transactionCreatedProfile = newProfile.isFile();
+
+		if (ready.isFile()) {
+			restoreExisting(new File(profileDir, Config.MIDLET_CONFIG_FILE),
+					rollback, "config.json");
+			restoreExisting(new File(profileDir, "config.xml"),
+					rollback, "config.xml");
+			restoreExisting(new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE),
+					rollback, "VirtualKeyboardLayout");
+			if (!ready.delete()) {
+				throw new IOException("Unable to disarm interrupted preset save");
+			}
+		}
+
+		boolean removeTransactionCreatedProfile =
+				transactionCreatedProfile && containsOnlyTransactionState(profileDir, rollback);
+		deleteRecursively(rollback);
+		if (rollback.exists()) {
+			throw new IOException("Unable to clear interrupted preset save rollback state");
+		}
+
+		if (removeTransactionCreatedProfile && profileDir.isDirectory() && !profileDir.delete()) {
+			// Preserve retry evidence when the final empty-directory cleanup itself fails.
+			File retryRollback = new File(profileDir, PRESET_SAVE_ROLLBACK_DIR);
+			if (retryRollback.mkdir()) {
+				try {
+					new File(retryRollback, PRESET_SAVE_NEW_PROFILE_MARKER).createNewFile();
+				} catch (IOException ignored) {
+					// Best effort only; the original cleanup failure remains authoritative.
+				}
+			}
+			throw new IOException("Unable to remove interrupted new preset directory");
+		}
 		}
 	}
 
-	private static void prepareRollbackDirectory(File rollback) throws IOException {
-		deleteRecursively(rollback);
-		if (rollback.exists() || !rollback.mkdirs()) {
-			throw new IOException("Unable to create profile rollback directory");
+	private static boolean containsOnlyTransactionState(
+			@NonNull File profileDir, @NonNull File rollback) {
+		File[] entries = profileDir.listFiles();
+		if (entries == null) return false;
+		for (File entry : entries) {
+			if (!entry.equals(rollback)) return false;
+		}
+		return true;
+	}
+
+	private static boolean isInvisibleInterruptedNewProfile(@NonNull File profileDir) {
+		File rollback = new File(profileDir, PRESET_SAVE_ROLLBACK_DIR);
+		if (!new File(rollback, PRESET_SAVE_NEW_PROFILE_MARKER).isFile()) return false;
+		if (new File(rollback, PRESET_SAVE_READY_MARKER).isFile()) return true;
+		return containsOnlyTransactionState(profileDir, rollback);
+	}
+
+	private static PresetSaveTransaction beginPresetSave(
+			@NonNull File profileDir, boolean transactionCreatedProfile) throws IOException {
+		if (!profileDir.isDirectory() && !profileDir.mkdirs()) {
+			throw new IOException("Unable to create preset directory");
+		}
+		File rollback = new File(profileDir, PRESET_SAVE_ROLLBACK_DIR);
+		if (rollback.exists() || !rollback.mkdir()) {
+			if (transactionCreatedProfile) {
+				File[] entries = profileDir.listFiles();
+				if (entries != null && entries.length == 0) {
+					// Best effort: no preset artifact has been published yet.
+					profileDir.delete();
+				}
+			}
+			throw new IOException("Unable to create preset save rollback directory");
+		}
+		try {
+			if (transactionCreatedProfile
+					&& !new File(rollback, PRESET_SAVE_NEW_PROFILE_MARKER).createNewFile()) {
+				throw new IOException("Unable to mark new preset transaction");
+			}
+			backupExisting(new File(profileDir, Config.MIDLET_CONFIG_FILE),
+					rollback, "config.json");
+			backupExisting(new File(profileDir, "config.xml"),
+					rollback, "config.xml");
+			backupExisting(new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE),
+					rollback, "VirtualKeyboardLayout");
+			File ready = new File(rollback, PRESET_SAVE_READY_MARKER);
+			if (!ready.createNewFile()) {
+				throw new IOException("Unable to mark preset save ready for publication");
+			}
+			return new PresetSaveTransaction(profileDir, rollback, ready);
+		} catch (IOException | RuntimeException failure) {
+			try {
+				recoverInterruptedPresetSave(profileDir);
+			} catch (IOException | RuntimeException recoveryFailure) {
+				failure.addSuppressed(recoveryFailure);
+			}
+			if (failure instanceof IOException) throw (IOException) failure;
+			throw failure;
+		}
+	}
+
+	private static final class PresetSaveTransaction {
+		@NonNull final File profileDir;
+		@NonNull final File rollback;
+		@NonNull final File ready;
+
+		PresetSaveTransaction(
+				@NonNull File profileDir, @NonNull File rollback, @NonNull File ready) {
+			this.profileDir = profileDir;
+			this.rollback = rollback;
+			this.ready = ready;
+		}
+
+		void commit() throws IOException {
+			// Marker removal is the commit point. Cleanup after this point is best effort:
+			// a stale rollback without .ready is discarded by the next recovery boundary.
+			if (!ready.delete()) {
+				throw new IOException("Unable to commit preset source publication");
+			}
+			deleteRecursively(rollback);
+		}
+
+		void rollback(@NonNull Throwable failure) {
+			try {
+				recoverInterruptedPresetSave(profileDir);
+			} catch (IOException | RuntimeException recoveryFailure) {
+				failure.addSuppressed(recoveryFailure);
+			}
 		}
 	}
 
@@ -311,68 +970,167 @@ public class ProfilesManager {
 	}
 
 	/**
-	 * Saves a reusable application preset. Application settings are always copied; the separate
-	 * keyboard layout is copied only when explicitly requested, and stale destination layouts are removed.
+	 * Creates a new whole-device preset from the active MIDlet's complete materialized snapshot.
+	 * Name occupancy is decided under the same source monitor as publication.
 	 */
-	static void saveSnapshot(Profile profile, String fromPath, boolean includeKeyboard) throws IOException {
-		File srcConfig = new File(fromPath, Config.MIDLET_CONFIG_FILE);
+	static void saveNewCompleteSnapshot(
+			@NonNull File profilesRoot, @NonNull String rawName, @NonNull File sourceDir)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+		String name = rawName.trim();
+		if (!Profile.isValidName(name)) {
+			throw new IOException("Invalid preset name");
+		}
+		if (profileNameExistsLocked(profilesRoot, name)) {
+			throw new IOException("Preset name already exists");
+		}
+		File targetDir = new File(profilesRoot, name);
+		CompleteSnapshot snapshot = prepareCompleteLocalSnapshot(sourceDir);
+		publishCompleteSnapshotLocked(targetDir, sourceDir, snapshot, true);
+		}
+	}
+
+	/** Replaces one existing whole-device preset without recreating a missing stale name. */
+	static void updateCompleteSnapshot(
+			@NonNull File targetDir, @NonNull File sourceDir) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+		recoverInterruptedPresetSave(targetDir);
+		if (!targetDir.isDirectory()) {
+			throw new IOException("Preset source no longer exists");
+		}
+		CompleteSnapshot snapshot = prepareCompleteLocalSnapshot(sourceDir);
+		publishCompleteSnapshotLocked(targetDir, sourceDir, snapshot, false);
+		}
+	}
+
+	/** Publishes a runtime layout into an existing preset without changing its configuration. */
+	static void updateLayoutOnly(@NonNull File targetDir, @NonNull File sourceDir)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+			recoverInterruptedPresetSave(targetDir);
+			if (!targetDir.isDirectory()) {
+				throw new IOException("Preset source no longer exists");
+			}
+			File sourceLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+			String layoutError = KeyboardLayoutValidator.validate(sourceLayout);
+			if (layoutError != null) {
+				throw new IOException("Current keyboard layout is not loadable: " + layoutError);
+			}
+			PresetSaveTransaction transaction = beginPresetSave(targetDir, false);
+			try {
+				File targetLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
+				FileUtils.copyFileUsingChannel(sourceLayout, targetLayout);
+				layoutError = KeyboardLayoutValidator.validate(targetLayout);
+				if (layoutError != null) {
+					throw new IOException("Published keyboard layout is not loadable: " + layoutError);
+				}
+				transaction.commit();
+			} catch (IOException | RuntimeException failure) {
+				transaction.rollback(failure);
+				if (failure instanceof IOException) throw (IOException) failure;
+				throw failure;
+			}
+		}
+	}
+
+	@NonNull
+	private static CompleteSnapshot prepareCompleteLocalSnapshot(@NonNull File sourceDir)
+			throws IOException {
+		// The active MIDlet can itself contain interrupted exact-sync/layout atomic state.
+		recoverInterruptedSnapshotSync(sourceDir);
+		File sourceLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		normalizeVirtualKeyboardLayout(sourceLayout);
+		CompleteSnapshot snapshot = inspectCompleteSnapshot(sourceDir);
+		if (!new File(sourceDir, Config.MIDLET_CONFIG_FILE).isFile()) {
+			throw new IOException("Current application configuration is not materialized");
+		}
+		return snapshot;
+	}
+
+	private static void publishCompleteSnapshotLocked(
+			@NonNull File targetDir,
+			@NonNull File sourceDir,
+			@NonNull CompleteSnapshot snapshot,
+			boolean createNew) throws IOException {
+		if (createNew) {
+			if (targetDir.exists()) throw new IOException("Preset name already exists");
+		} else if (!targetDir.isDirectory()) {
+			throw new IOException("Preset source no longer exists");
+		}
+		PresetSaveTransaction transaction = beginPresetSave(targetDir, createNew);
+		File targetConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
+		File legacyConfig = new File(targetDir, "config.xml");
+		File targetLayout = new File(targetDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		try {
+			FileUtils.copyFileUsingChannel(
+					new File(sourceDir, Config.MIDLET_CONFIG_FILE), targetConfig);
+			if (legacyConfig.exists() && !legacyConfig.delete()) {
+				throw new IOException("Unable to remove stale legacy profile configuration");
+			}
+			if (snapshot.hasKeyboardLayout) {
+				FileUtils.copyFileUsingChannel(
+						new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE), targetLayout);
+			} else if (targetLayout.exists() && !targetLayout.delete()) {
+				throw new IOException("Unable to remove stale key layout");
+			}
+
+			// Validate what was actually published before disarming source-save recovery.
+			CompleteSnapshot published = inspectCompleteSnapshot(targetDir);
+			if (published.hasKeyboardLayout != snapshot.hasKeyboardLayout) {
+				throw new IOException("Preset snapshot changed while saving");
+			}
+			transaction.commit();
+		} catch (IOException | RuntimeException failure) {
+			transaction.rollback(failure);
+			if (failure instanceof IOException) throw (IOException) failure;
+			throw failure;
+		}
+	}
+
+	/** File-level entry point kept package-private for deterministic preset-save recovery tests. */
+	static void saveSnapshot(
+			@NonNull File profileDir, @NonNull File sourceDir, boolean includeKeyboard)
+			throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+		recoverInterruptedPresetSave(profileDir);
+
+		File srcConfig = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
 		if (!isValidConfigFile(srcConfig)) {
 			throw new IOException("Current application configuration is not loadable");
 		}
-		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
+		File srcKeyLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		if (includeKeyboard) {
 			String layoutError = KeyboardLayoutValidator.validate(srcKeyLayout);
 			if (layoutError != null) {
 				throw new IOException("Current keyboard layout is not loadable: " + layoutError);
 			}
 		}
-		boolean profileExisted = profile.getDir().exists();
-		profile.create();
-		File legacyConfig = new File(profile.getDir(), "config.xml");
-		File dstKeyLayout = profile.getKeyLayout();
-		File rollback = new File(profile.getDir(), ".preset-save.rollback");
-		boolean configCommitStarted = false;
-		boolean legacyCommitStarted = false;
-		boolean keyboardCommitStarted = false;
-		boolean rollbackSucceeded = true;
+
+		boolean transactionCreatedProfile = !profileDir.exists();
+		if (profileDir.exists() && !profileDir.isDirectory()) {
+			throw new IOException("Preset path is not a directory");
+		}
+		PresetSaveTransaction transaction =
+				beginPresetSave(profileDir, transactionCreatedProfile);
+		File config = new File(profileDir, Config.MIDLET_CONFIG_FILE);
+		File legacyConfig = new File(profileDir, "config.xml");
+		File keyLayout = new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		try {
-			prepareRollbackDirectory(rollback);
-			backupExisting(profile.getConfig(), rollback, "config.json");
-			backupExisting(legacyConfig, rollback, "config.xml");
-			backupExisting(dstKeyLayout, rollback, "VirtualKeyboardLayout");
-			configCommitStarted = true;
-			FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
-			if (legacyConfig.exists()) {
-				legacyCommitStarted = true;
-				if (!legacyConfig.delete()) {
-					throw new IOException("Unable to remove stale legacy profile configuration");
-				}
+			FileUtils.copyFileUsingChannel(srcConfig, config);
+			if (legacyConfig.exists() && !legacyConfig.delete()) {
+				throw new IOException("Unable to remove stale legacy profile configuration");
 			}
 			if (includeKeyboard) {
-				keyboardCommitStarted = true;
-				FileUtils.copyFileUsingChannel(srcKeyLayout, dstKeyLayout);
-			} else if (dstKeyLayout.exists()) {
-				keyboardCommitStarted = true;
-				if (!dstKeyLayout.delete()) {
-					throw new IOException("Unable to remove stale key layout");
-				}
+				FileUtils.copyFileUsingChannel(srcKeyLayout, keyLayout);
+			} else if (keyLayout.exists() && !keyLayout.delete()) {
+				throw new IOException("Unable to remove stale key layout");
 			}
+			transaction.commit();
 		} catch (IOException | RuntimeException failure) {
-			if (configCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, profile.getConfig(), rollback, "config.json");
-			}
-			if (legacyCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, legacyConfig, rollback, "config.xml");
-			}
-			if (keyboardCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, dstKeyLayout, rollback,
-						"VirtualKeyboardLayout");
-			}
-			if (rollbackSucceeded && !profileExisted) deleteRecursively(profile.getDir());
+			transaction.rollback(failure);
 			if (failure instanceof IOException) throw (IOException) failure;
 			throw failure;
-		} finally {
-			if (rollbackSucceeded) deleteRecursively(rollback);
+		}
 		}
 	}
 
@@ -381,124 +1139,63 @@ public class ProfilesManager {
 	 * the real profile so editing settings cannot accidentally destroy an artifact the editor could
 	 * not understand.
 	 */
-	static void saveEditedSnapshot(Profile profile, String fromPath) throws IOException {
-		File srcConfig = new File(fromPath, Config.MIDLET_CONFIG_FILE);
+	/** File-level entry point kept package-private for deterministic transaction tests. */
+	static void saveEditedSnapshot(@NonNull File profileDir, @NonNull File sourceDir)
+			throws IOException {
+		saveEditedSnapshot(profileDir, sourceDir, null);
+	}
+
+	private static void saveEditedSnapshot(
+			@NonNull File profileDir,
+			@NonNull File sourceDir,
+			@Nullable ProfileEditMode expectedMode) throws IOException {
+		synchronized (PRESET_SOURCE_LOCK) {
+		if (expectedMode == ProfileEditMode.EDIT_EXISTING) {
+			recoverInterruptedPresetSave(profileDir);
+			if (!profileDir.isDirectory()) {
+				throw new IOException("Preset source no longer exists");
+			}
+		} else if (expectedMode == ProfileEditMode.CREATE_NEW) {
+			File root = profileDir.getParentFile();
+			if (root == null || profileNameExistsLocked(root, profileDir.getName())) {
+				throw new IOException("Preset name already exists");
+			}
+		} else {
+			recoverInterruptedPresetSave(profileDir);
+		}
+
+		File srcConfig = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
 		if (!isValidConfigFile(srcConfig)) {
 			throw new IOException("Preset draft configuration is not loadable");
 		}
-		boolean profileExisted = profile.getDir().exists();
-		profile.create();
-		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
-		File config = profile.getConfig();
-		File legacyConfig = new File(profile.getDir(), "config.xml");
-		File keyLayout = profile.getKeyLayout();
-		File rollback = new File(profile.getDir(), ".preset-save.rollback");
-		boolean configCommitStarted = false;
-		boolean legacyCommitStarted = false;
-		boolean keyboardCommitStarted = false;
-		boolean rollbackSucceeded = true;
+		File srcKeyLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+
+		boolean transactionCreatedProfile = !profileDir.exists();
+		if (profileDir.exists() && !profileDir.isDirectory()) {
+			throw new IOException("Preset path is not a directory");
+		}
+		PresetSaveTransaction transaction =
+				beginPresetSave(profileDir, transactionCreatedProfile);
+		File config = new File(profileDir, Config.MIDLET_CONFIG_FILE);
+		File legacyConfig = new File(profileDir, "config.xml");
+		File keyLayout = new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		try {
-			prepareRollbackDirectory(rollback);
-			backupExisting(config, rollback, "config.json");
-			backupExisting(legacyConfig, rollback, "config.xml");
-			backupExisting(keyLayout, rollback, "VirtualKeyboardLayout");
-			configCommitStarted = true;
 			FileUtils.copyFileUsingChannel(srcConfig, config);
-			if (legacyConfig.exists()) {
-				legacyCommitStarted = true;
-				if (!legacyConfig.delete()) {
-					throw new IOException("Unable to remove stale legacy profile configuration");
-				}
+			if (legacyConfig.exists() && !legacyConfig.delete()) {
+				throw new IOException("Unable to remove stale legacy profile configuration");
 			}
 			if (KeyboardLayoutValidator.validate(srcKeyLayout) == null) {
-				keyboardCommitStarted = true;
 				FileUtils.copyFileUsingChannel(srcKeyLayout, keyLayout);
-			} else if (!srcKeyLayout.exists() && keyLayout.exists()) {
-				keyboardCommitStarted = true;
-				if (!keyLayout.delete()) {
-					throw new IOException("Unable to remove deleted profile keyboard layout");
-				}
+			} else if (!srcKeyLayout.exists() && keyLayout.exists() && !keyLayout.delete()) {
+				throw new IOException("Unable to remove deleted profile keyboard layout");
 			}
+			transaction.commit();
 		} catch (IOException | RuntimeException failure) {
-			if (configCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, config, rollback, "config.json");
-			}
-			if (legacyCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, legacyConfig, rollback, "config.xml");
-			}
-			if (keyboardCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, keyLayout, rollback,
-						"VirtualKeyboardLayout");
-			}
-			if (rollbackSucceeded && !profileExisted) deleteRecursively(profile.getDir());
+			transaction.rollback(failure);
 			if (failure instanceof IOException) throw (IOException) failure;
 			throw failure;
-		} finally {
-			if (rollbackSucceeded) deleteRecursively(rollback);
 		}
-	}
-
-	/** Saves only the separate layout artifact, converting an explicitly overwritten entry to layout-only. */
-	static void saveLayoutSnapshot(Profile profile, String fromPath) throws IOException {
-		File source = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
-		if (KeyboardLayoutValidator.validate(source) != null) {
-			throw new IOException("Current keyboard layout is not loadable");
 		}
-		boolean profileExisted = profile.getDir().exists();
-		profile.create();
-		File config = profile.getConfig();
-		File oldConfig = new File(profile.getDir(), "config.xml");
-		File rollback = new File(profile.getDir(), ".preset-save.rollback");
-		boolean configCommitStarted = false;
-		boolean legacyCommitStarted = false;
-		boolean keyboardCommitStarted = false;
-		boolean rollbackSucceeded = true;
-		try {
-			prepareRollbackDirectory(rollback);
-			backupExisting(config, rollback, "config.json");
-			backupExisting(oldConfig, rollback, "config.xml");
-			backupExisting(profile.getKeyLayout(), rollback, "VirtualKeyboardLayout");
-			keyboardCommitStarted = true;
-			FileUtils.copyFileUsingChannel(source, profile.getKeyLayout());
-			if (config.exists()) {
-				configCommitStarted = true;
-				if (!config.delete()) {
-					throw new IOException("Unable to remove stale profile configuration");
-				}
-			}
-			if (oldConfig.exists()) {
-				legacyCommitStarted = true;
-				if (!oldConfig.delete()) {
-					throw new IOException("Unable to remove stale legacy profile configuration");
-				}
-			}
-		} catch (IOException | RuntimeException failure) {
-			if (configCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, config, rollback, "config.json");
-			}
-			if (legacyCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, oldConfig, rollback, "config.xml");
-			}
-			if (keyboardCommitStarted) {
-				rollbackSucceeded &= tryRestore(failure, profile.getKeyLayout(), rollback,
-						"VirtualKeyboardLayout");
-			}
-			if (rollbackSucceeded && !profileExisted) deleteRecursively(profile.getDir());
-			if (failure instanceof IOException) throw (IOException) failure;
-			throw failure;
-		} finally {
-			if (rollbackSucceeded) deleteRecursively(rollback);
-		}
-	}
-
-	/** Resolves a saved collection entry without requiring it to contain application settings. */
-	@Nullable
-	static Profile findProfile(@Nullable String name) {
-		if (name == null) return null;
-		for (Profile profile : getProfiles()) {
-			if (name.equals(profile.getName())) return profile;
-		}
-		return null;
 	}
 
 	@Nullable
@@ -521,8 +1218,28 @@ public class ProfilesManager {
 	@Nullable
 	public static ProfileModel loadConfig(File dir, boolean persistMigrations,
 			@NonNull BackgroundMigrationContext context, boolean legacyThemeLinked) {
+		return loadConfigInternal(dir, persistMigrations, context, legacyThemeLinked, true);
+	}
+
+	/**
+	 * Parses an authority-prepared MIDlet config without filesystem recovery or migration writes.
+	 */
+	@Nullable
+	public static ProfileModel loadPreparedMidletConfig(
+			@NonNull File dir, boolean legacyThemeLinked) {
+		return loadConfigInternal(
+				dir, false, BackgroundMigrationContext.MIDLET_CONFIG, legacyThemeLinked, false);
+	}
+
+	@Nullable
+	private static ProfileModel loadConfigInternal(
+			@NonNull File dir,
+			boolean persistMigrations,
+			@NonNull BackgroundMigrationContext context,
+			boolean legacyThemeLinked,
+			boolean recoverAtomic) {
 		File file = new File(dir, Config.MIDLET_CONFIG_FILE);
-		recoverAtomicConfig(file);
+		if (recoverAtomic) recoverAtomicConfig(file);
 		ProfileModel params = null;
 		File oldFile = new File(dir, "config.xml");
 		boolean loadedLegacyFile = false;

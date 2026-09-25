@@ -15,6 +15,8 @@
 package io.github.h3nb.jlmodplus;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -24,5 +26,16 @@ public class EmulatorApplicationTest {
 		assertEquals("io.github.h3nb.jlmodplus.debug:midlet",
 				EmulatorApplication.normalizeProcessName(
 						"io.github.h3nb.jlmodplus.debug:midlet\0extra"));
+	}
+
+	@Test
+	public void onlyExactPackageProcessOwnsDefaultPreferenceInitialization() {
+		String packageName = "io.github.h3nb.jlmodplus.debug";
+
+		assertTrue(EmulatorApplication.isMainProcessName(packageName, packageName));
+		assertFalse(EmulatorApplication.isMainProcessName(
+				packageName, packageName + ":midlet"));
+		assertFalse(EmulatorApplication.isMainProcessName(
+				packageName, packageName + ":memory_engine"));
 	}
 }

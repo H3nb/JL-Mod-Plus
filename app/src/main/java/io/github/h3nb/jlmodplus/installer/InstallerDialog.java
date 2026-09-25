@@ -1,7 +1,7 @@
 /*
  * Copyright 2020-2026 Yury Kharchenko
  *
- * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -343,7 +343,7 @@ public class InstallerDialog extends DialogFragment {
 			acknowledgeExternalRequest();
 			composeController.showSuccess(
 					currentTitle,
-					getString(R.string.install_done),
+					successMessage(R.string.install_done),
 					getString(R.string.START_CMD),
 					getString(R.string.close),
 					installer.getIconPath());
@@ -469,11 +469,22 @@ public class InstallerDialog extends DialogFragment {
 			acknowledgeExternalRequest();
 			composeController.showSuccess(
 					currentTitle,
-					getString(R.string.library_import_done),
+					successMessage(R.string.library_import_done),
 					getString(R.string.START_CMD),
 					getString(R.string.close),
 					installer.getIconPath());
 		});
+	}
+
+	private String successMessage(int messageRes) {
+		return withDefaultProfileFallbackNotice(getString(messageRes));
+	}
+
+	private String withDefaultProfileFallbackNotice(String message) {
+		String fallbackName = installer == null ? null : installer.getDefaultProfileFallbackName();
+		if (fallbackName == null) return message;
+		return message + "\n\n"
+				+ getString(R.string.profile_default_fallback_notice, fallbackName);
 	}
 
 	private void onBundleRestoreError(Throwable error) {
@@ -482,7 +493,8 @@ public class InstallerDialog extends DialogFragment {
 		primaryAction = this::restoreBundleToInstalled;
 		composeController.showConfirmation(
 				currentTitle,
-				getString(R.string.library_import_restore_failed),
+				withDefaultProfileFallbackNotice(
+						getString(R.string.library_import_restore_failed)),
 				getString(R.string.library_retry),
 				getString(R.string.close),
 				null,
@@ -525,7 +537,7 @@ public class InstallerDialog extends DialogFragment {
 		}
 		cleanupBundleImport();
 		acknowledgeExternalRequest();
-		Config.startApp(requireContext(), title, path);
+		Config.startApp(requireContext(), title, path, installer.getInstalledId());
 		dismiss();
 	}
 
@@ -577,12 +589,13 @@ public class InstallerDialog extends DialogFragment {
 					case CONVERTING -> R.string.installer_failed_conversion;
 					case READING -> R.string.installer_error_message;
 				};
+		String userMessage = withDefaultProfileFallbackNotice(getString(message));
 		cleanupInstallerResources();
 		primaryAction = published ? () -> {
 			libraryViewModel.retry();
 			closeInstaller();
 		} : this::retryRequest;
-		composeController.showError(getString(R.string.error), getString(message), getString(R.string.close),
+		composeController.showError(getString(R.string.error), userMessage, getString(R.string.close),
 				getString(published ? R.string.installer_refresh_library : R.string.library_retry),
 				"Build: " + io.github.h3nb.jlmodplus.BuildConfig.VERSION_NAME + "\nStage: " +
 						(installer == null ? "bundle" : installer.getStage()) + "\n" + InstallerFailure.details(e));

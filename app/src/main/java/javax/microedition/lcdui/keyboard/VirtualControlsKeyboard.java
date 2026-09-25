@@ -27,7 +27,6 @@ import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
-import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.input.GuestViewport;
 import io.github.h3nb.jlmodplus.input.PointerSourceKind;
 import io.github.h3nb.jlmodplus.input.PointerSourceToken;
@@ -135,7 +134,11 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private float legacyPinchStartSpanY;
 
 	public VirtualControlsKeyboard(ProfileModel settings) {
-		super(settings);
+		this(settings, true);
+	}
+
+	public VirtualControlsKeyboard(ProfileModel settings, boolean recoverPersistentLayout) {
+		super(settings, recoverPersistentLayout);
 		this.settings = settings;
 		boolean legacyDpadEnabled = settings.virtualDpadEnabled;
 		boolean legacyAnalogEnabled = settings.virtualAnalogEnabled;
@@ -284,27 +287,23 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			activeCustomSource = ActiveCustomSource.NONE;
 			activeOrientationDirty = false;
 		}
-		if (!super.onLayoutChanged(variant)) return false;
-		if (variant == TYPE_CUSTOM) {
-			commitPendingRuntimeCustomization();
-		}
-		if (!applyingStandardTemplate) {
-			// The v4 layout artifact is authoritative for Custom geometry. ProfileModel keeps
-			// compatibility working values only, so its best-effort save must not turn an already
-			// committed layout write into a false "Save failed" result.
-			ProfilesManager.saveConfig(settings);
-		}
-		return true;
+		return super.onLayoutChanged(variant);
 	}
 
 	@Override
-	public void setLayout(int variant) {
+	public void onLayoutPersistenceCommitted() {
+		super.onLayoutPersistenceCommitted();
+		commitPendingRuntimeCustomization();
+	}
+
+	@Override
+	public boolean setLayout(int variant) {
 		abandonPendingRuntimeCustomization();
 		if (variant != TYPE_CUSTOM) {
 			activeCustomSource = ActiveCustomSource.NONE;
 			activeOrientationDirty = false;
 		}
-		applyControlsLayout(variant, true);
+		return applyControlsLayout(variant, true);
 	}
 
 	@Override
@@ -384,7 +383,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		runtimeCustomBaselineState = null;
 	}
 
-	private void applyControlsLayout(int variant, boolean persist) {
+	private boolean applyControlsLayout(int variant, boolean persist) {
 		if (!isStandardTemplate(variant)) {
 			standardTemplateEdited = false;
 			endDpad();
@@ -397,7 +396,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				settings.virtualDpadEnabled = false;
 				settings.virtualAnalogEnabled = false;
 			}
-			if (persist) super.setLayout(variant);
+			boolean persisted = true;
+			if (persist) persisted = super.setLayout(variant);
 			else super.setLayoutForEditing(variant);
 			if (variant == TYPE_CUSTOM && getLayout() == TYPE_CUSTOM) {
 				activeOrientationDirty = false;
@@ -415,9 +415,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			}
 			invalidateOverlay();
 			notifyLayoutEditStateChanged();
-			return;
+			return persisted;
 		}
 
+		boolean persisted = true;
 		applyingStandardTemplate = true;
 		standardTemplateEdited = false;
 		try {
@@ -450,9 +451,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			settings.virtualAnalogRadius = movementRadius;
 			rebuildAnalogStick();
 			if (persist) {
-				if (super.onLayoutChanged(variant)) {
-					ProfilesManager.saveConfig(settings);
-				}
+				persisted = super.onLayoutChanged(variant);
 			} else {
 				setLayoutVariantInMemory(variant);
 			}
@@ -461,6 +460,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		} finally {
 			applyingStandardTemplate = false;
 		}
+		return persisted;
 	}
 
 	private static boolean isStandardTemplate(int variant) {
@@ -845,8 +845,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			standardTemplateReflowPosted = false;
 			if (!applyingStandardTemplate && !standardTemplateEdited && getLayout() == variant &&
 					isStandardTemplate(variant)) {
-				if (getLayoutEditMode() == LAYOUT_EOF) setLayout(variant);
-				else applyControlsLayout(variant, false);
+				// Viewport-driven reflow is automatic normalization, not a user-owned layout edit.
+				applyControlsLayout(variant, false);
 			}
 		});
 	}

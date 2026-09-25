@@ -48,8 +48,8 @@ private object NoOpRuntimeHostDialogActions : RuntimeHostDialogActions {
     override fun onErrorAcknowledged() = Unit
     override fun onExitConfirmed(openSettings: Boolean) = Unit
     override fun onHideButtonsConfirmed(states: BooleanArray) = Unit
-    override fun onSaveVirtualKeyboard(saveScreenParams: Boolean) = Unit
-    override fun onLayoutSelected(index: Int) = Unit
+    override fun onSaveVirtualKeyboard(updateTarget: String?) = Unit
+    override fun onLayoutSelected(index: Int, updateTarget: String?) = Unit
 }
 
 private val CanvasMenuState = RuntimeMenuUiState(
@@ -169,8 +169,34 @@ fun RuntimeLayoutSelectionScreenshot() {
     JLModPlusTheme(darkTheme = true) {
         RuntimeHostDialogs(
             state = RuntimeHostDialogState.LayoutSelection(
-                entries = listOf("Default", "Phone", "Tablet", "Custom"),
+                entries = listOf(
+                    "Custom",
+                    "Phone (Numeric)",
+                    "Phone (Arrows)",
+                    "Standard Analog",
+                ),
                 selected = 0,
+                updateTarget = "SE K800i 240×320",
+            ),
+            actions = NoOpRuntimeHostDialogActions,
+            onDismiss = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Runtime finish edit narrow phone",
+    widthDp = 320,
+    heightDp = 640,
+    showBackground = true,
+)
+@Composable
+fun RuntimeFinishVirtualKeyboardEditScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        RuntimeHostDialogs(
+            state = RuntimeHostDialogState.FinishVirtualKeyboardEdit(
+                updateTarget = "SE K800i 240×320 — Long Preset Name",
             ),
             actions = NoOpRuntimeHostDialogActions,
             onDismiss = {},

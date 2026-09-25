@@ -106,6 +106,20 @@ public class KeyMapperMappingRulesTest {
 	}
 
 	@Test
+	public void hostReservedBackNormalizationCanRemainAnEditorNoOp() {
+		SparseIntArray defaults = KeyMapper.getDefaultKeyMap();
+		SparseIntArray persistedOverrides = new SparseIntArray();
+		persistedOverrides.put(KeyEvent.KEYCODE_BACK, Canvas.KEY_FIRE);
+		SparseIntArray loadedEffective =
+				KeyMapperMappingRules.resolve(defaults, persistedOverrides);
+		loadedEffective.put(KeyEvent.KEYCODE_BACK, KeyMapper.KEY_OPTIONS_MENU);
+		SparseIntArray persistedEffectiveBaseline = loadedEffective.clone();
+
+		assertTrue(KeyMapperMappingRules.equalMaps(
+				persistedEffectiveBaseline, loadedEffective));
+	}
+
+	@Test
 	public void runtimeMenuTargetRecognizesMultiplePhysicalSources() {
 		ProfileModel profile = new ProfileModel();
 		profile.keyMappings = new SparseIntArray();

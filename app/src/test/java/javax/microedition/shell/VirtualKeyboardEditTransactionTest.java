@@ -82,6 +82,100 @@ public class VirtualKeyboardEditTransactionTest {
 	}
 
 	@Test
+	public void layoutFailureKeepsTransactionActive() {
+		VirtualKeyboardEditTransaction transaction =
+				new VirtualKeyboardEditTransaction(edit(snapshot(3.0f)));
+		transaction.requestFinish(edit(snapshot(8.0f)));
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutFailed();
+
+		assertFalse(transaction.commitSave(result::isLayoutCommitted));
+
+		assertTrue(transaction.isActive());
+		assertFalse(result.isLayoutCommitted());
+	}
+
+	@Test
+	public void staleLayoutResultRemainsDistinctFromOrdinaryFailure() {
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutStale();
+
+		assertFalse(result.isLayoutCommitted());
+		assertTrue(result.isStale());
+	}
+
+	@Test
+	public void layoutSuccessClosesTransaction() {
+		VirtualKeyboardEditTransaction transaction =
+				new VirtualKeyboardEditTransaction(edit(snapshot(3.0f)));
+		transaction.requestFinish(edit(snapshot(8.0f)));
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted();
+
+		assertTrue(transaction.commitSave(result::isLayoutCommitted));
+
+		assertFalse(transaction.isActive());
+		assertEquals(
+				VirtualKeyboardSaveResult.PresetUpdateOutcome.NONE,
+				result.getPresetUpdateOutcome());
+	}
+
+	@Test
+	public void nonEditorLayoutCommitHasNoSecondaryOutcomeByDefault() {
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted();
+
+		assertTrue(result.isLayoutCommitted());
+		assertEquals(
+				VirtualKeyboardSaveResult.PresetUpdateOutcome.NONE,
+				result.getPresetUpdateOutcome());
+	}
+
+	@Test
+	public void presetUpdateFailureAfterLocalCommitStillClosesEditorTransaction() {
+		VirtualKeyboardEditTransaction transaction =
+				new VirtualKeyboardEditTransaction(edit(snapshot(3.0f)));
+		transaction.requestFinish(edit(snapshot(8.0f)));
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(
+				VirtualKeyboardSaveResult.PresetUpdateOutcome.FAILED);
+
+		assertTrue(transaction.commitSave(result::isLayoutCommitted));
+
+		assertFalse(transaction.isActive());
+		assertEquals(
+				VirtualKeyboardSaveResult.PresetUpdateOutcome.FAILED,
+				result.getPresetUpdateOutcome());
+		try {
+			transaction.discard();
+			throw new AssertionError("Committed local layout must close the editor transaction");
+		} catch (IllegalStateException expected) {
+			// The optional preset failure cannot make the committed local layout discardable again.
+		}
+	}
+
+	@Test
+	public void savedUnlinkedOutcomeRemainsPrimaryLocalSuccess() {
+		VirtualKeyboardSaveResult result = VirtualKeyboardSaveResult.layoutCommitted(
+				VirtualKeyboardSaveResult.PresetUpdateOutcome.SAVED_UNLINKED);
+
+		assertTrue(result.isLayoutCommitted());
+		assertEquals(
+				VirtualKeyboardSaveResult.PresetUpdateOutcome.SAVED_UNLINKED,
+				result.getPresetUpdateOutcome());
+	}
+
+
+	@Test
+	public void oneShotTemplateFailureRestoresBaselineAndSecondAttemptCanRetry() {
+		VirtualKeyboardLayoutEditState baseline = edit(snapshot(3.0f));
+		VirtualKeyboardEditTransaction first = new VirtualKeyboardEditTransaction(baseline);
+
+		assertFalse(first.commitSave(() -> false));
+		assertSame(baseline, first.discard());
+
+		VirtualKeyboardEditTransaction retry = new VirtualKeyboardEditTransaction(baseline);
+		assertTrue(retry.commitSave(() -> true));
+		assertFalse(retry.isActive());
+	}
+
+
+	@Test
 	public void dormantCustomStateParticipatesInSingleLayoutTransactionEquality() {
 		VirtualKeyboardLayoutState dormant = customState(
 				snapshot(3.0f), snapshot(8.0f)).customLayout();

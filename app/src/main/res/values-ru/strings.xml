@@ -13,7 +13,6 @@
     <string name="add_resolution_preset">Добавить в предустановки</string>
     <string name="alert_map_menu">Кнопка меню (M) не назначена!\nЭто может сделать невозможным доступ к опциям эмулятора</string>
     <string name="alert_msg_workdir_not_exists">Рабочая папка эмулятора будет создана по пути:\n%1$s\nВы хотите создать её или выбрать другую?</string>
-    <string name="alert_rewrite_profile">Профиль \"%1$s\" уже есть.\nХотите его перезаписать?</string>
     <string name="CANCEL_CMD">Отмена</string>
     <string name="change">Изменить</string>
     <string name="choose">Выбрать</string>
@@ -68,7 +67,6 @@
     <string name="msg_unsupported_soundbank">Неподдержываемый soundbank, перехожу на стандартный</string>
     <string name="no_data_for_display">Нет данных</string>
     <string name="not_saved_exists">Уже существует</string>
-    <string name="opt_save_screen_params">сохранить параметры экрана</string>
     <string name="parallel_screen_redrawing">Параллельное обновление экрана</string>
     <string name="permission_request_failed">Для работы приложения требуется разрешение на запись файлов</string>
     <string name="pref_app_sort_date">Дата</string>

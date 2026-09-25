@@ -85,7 +85,9 @@ class Profile(name: String) : Comparable<Profile> {
         fun isValidName(@Nullable rawName: String?): Boolean {
             if (rawName == null) return false
             val value = rawName.trim()
-            if (value.isEmpty() || value == "." || value == "..") return false
+            if (value.isEmpty() || value == "." || value == ".."
+                || PresetLifecycle.isInternalRenameStagingName(value)
+            ) return false
             for (character in value) {
                 if (character == '/' || character == '\\' || character == ':' || character == '*'
                     || character == '?' || character == '"' || character == '<' || character == '>'

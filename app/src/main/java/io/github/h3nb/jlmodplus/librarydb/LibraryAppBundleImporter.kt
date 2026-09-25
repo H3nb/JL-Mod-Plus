@@ -20,6 +20,7 @@ import java.util.Properties
 import java.util.UUID
 import java.util.zip.ZipInputStream
 import io.github.h3nb.jlmodplus.jar.Descriptor
+import io.github.h3nb.jlmodplus.config.FreshInstalledMidletInitializer
 
 /** Validates an exported JL-Mod Plus bundle and restores only authoritative app-owned state. */
 object LibraryAppBundleImporter {
@@ -651,6 +652,12 @@ object LibraryAppBundleImporter {
         writeTransaction(transaction)
         try {
             replacements.forEach(::stageReplacement)
+            if (prepared.configDir != null) {
+                val configReplacement = replacements.first()
+                FreshInstalledMidletInitializer.preserveReviewState(
+                    configReplacement.target, configReplacement.staged,
+                )
+            }
             publishReplacements(replacements, afterPublished)
             val iconRevision = if (prepared.configDir != null) {
                 LibraryIconOverride.reapplyPersistedOverride(root, storageKey)

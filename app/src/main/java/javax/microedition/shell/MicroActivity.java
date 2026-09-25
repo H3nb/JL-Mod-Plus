@@ -2,7 +2,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2021 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
- * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,6 @@ import androidx.preference.PreferenceManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -105,8 +104,7 @@ public class MicroActivity extends AppCompatActivity {
 	private static final int MIN_RUNTIME_TOOLBAR_TOUCH_TARGET_DP = 48;
 	private static final int MAX_IME_REQUEST_ATTEMPTS = 30;
 	private static final long IME_REQUEST_RETRY_DELAY_MILLIS = 100L;
-	private static final String PREF_HIDE_LAYOUT_EDIT_GUIDE =
-			"pref_runtime_hide_layout_edit_guide";
+	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
 
 	private Displayable current;
 	private boolean runtimeToolbarEnabled;
@@ -121,6 +119,8 @@ public class MicroActivity extends AppCompatActivity {
 	private boolean menuKeyLongPressHandled;
 	private int imeToggleRequest;
 	private String appPath;
+	private long expectedAppId;
+	private PresetAuthorityClient presetAuthorityClient;
 	private RuntimeHostView binding;
 	private RuntimeMenuComposeController runtimeMenuController;
 	private ControllerInputRouter controllerInputRouter;
@@ -135,6 +135,7 @@ public class MicroActivity extends AppCompatActivity {
 	private int virtualDisplayPaddingBottom;
 	private View overlayAnchor;
 	private SharedPreferences defaultPreferences;
+	private SharedPreferences runtimePreferences;
 	private VirtualKeyboardEditTransaction virtualKeyboardEditTransaction;
 	private EditorDonePlacement.Box layoutEditDonePlacement;
 	private EditorDonePlacement.Box layoutEditDoneEditorBounds;
@@ -176,6 +177,7 @@ public class MicroActivity extends AppCompatActivity {
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		defaultPreferences = sp;
+		runtimePreferences = RuntimeUiPreferences.get(this);
 		sp.registerOnSharedPreferenceChangeListener(canvasThemeListener);
 		runtimeToolbarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
@@ -209,12 +211,27 @@ public class MicroActivity extends AppCompatActivity {
 			}
 		}
 		updateRecentTaskDescription();
-		MidletSessionStore.markPending(getApplicationContext(), appPath, appName);
-		microLoader = new MicroLoader(appPath);
+		expectedAppId = savedInstanceState == null
+				? intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L)
+				: savedInstanceState.getLong(
+						STATE_EXPECTED_APP_ID, intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L));
+		presetAuthorityClient = new PresetAuthorityClient(this);
+		PresetAuthorityClient.PrepareResult prepared =
+				presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
+		if (!prepared.isSuccess()) {
+			MidletSessionStore.clear(getApplicationContext());
+			MidletKeepAliveService.stop(this);
+			if (!prepared.isStale()) Config.openSettings(this, appName, appPath, expectedAppId);
+			finish();
+			return;
+		}
+		expectedAppId = prepared.appId();
+		intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
+		MidletSessionStore.markPending(getApplicationContext(), appPath, appName, expectedAppId);
+		microLoader = new MicroLoader(appPath, expectedAppId, prepared.builtInThemeLinked());
 		if (!microLoader.init()) {
 			MidletSessionStore.clear(getApplicationContext());
 			MidletKeepAliveService.stop(this);
-			Config.openSettings(this, appName, appPath);
 			finish();
 			return;
 		}
@@ -397,8 +414,8 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onEditVirtualKeyboardLayout() {
-						if (defaultPreferences != null &&
-								defaultPreferences.getBoolean(PREF_HIDE_LAYOUT_EDIT_GUIDE, false)) {
+						if (runtimePreferences != null && runtimePreferences.getBoolean(
+								RuntimeUiPreferences.HIDE_LAYOUT_EDIT_GUIDE, false)) {
 							startVirtualKeyboardLayoutEdit();
 						} else if (runtimeMenuController != null) {
 							runtimeMenuController.showLayoutEditGuide();
@@ -452,7 +469,7 @@ public class MicroActivity extends AppCompatActivity {
 					public void onExitConfirmed(boolean openSettings) {
 						hideSoftInput();
 						if (openSettings) {
-							Config.openSettings(MicroActivity.this, appName, appPath);
+							Config.openSettings(MicroActivity.this, appName, appPath, expectedAppId);
 						}
 						MidletThread.destroyApp();
 					}
@@ -463,15 +480,19 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
-					public void onSaveVirtualKeyboard(boolean saveScreenParams) {
-						if (!applyVirtualKeyboardSave(saveScreenParams)) {
+					public void onSaveVirtualKeyboard(@Nullable String updateTarget) {
+						VirtualKeyboardSaveResult result =
+								applyVirtualKeyboardSave(updateTarget);
+						if (!result.isLayoutCommitted()) {
 							toast(R.string.virtual_controls_save_failed);
+						} else {
+							showVirtualKeyboardSaveWarnings(result, updateTarget);
 						}
 					}
 
 					@Override
-					public void onVirtualKeyboardEditSaved(boolean saveScreenParams) {
-						saveVirtualKeyboardEdit(saveScreenParams);
+					public void onVirtualKeyboardEditSaved(@Nullable String updateTarget) {
+						saveVirtualKeyboardEdit(updateTarget);
 					}
 
 					@Override
@@ -485,15 +506,15 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
-					public void onLayoutSelected(int index) {
-						applyLayoutSelection(index);
+					public void onLayoutSelected(int index, @Nullable String updateTarget) {
+						applyLayoutSelection(index, updateTarget);
 					}
 
 					@Override
 					public void onLayoutEditGuideConfirmed(boolean dontShowAgain) {
-						if (dontShowAgain && defaultPreferences != null) {
-							defaultPreferences.edit()
-									.putBoolean(PREF_HIDE_LAYOUT_EDIT_GUIDE, true)
+						if (dontShowAgain && runtimePreferences != null) {
+							runtimePreferences.edit()
+									.putBoolean(RuntimeUiPreferences.HIDE_LAYOUT_EDIT_GUIDE, true)
 									.apply();
 						}
 						startVirtualKeyboardLayoutEdit();
@@ -503,6 +524,12 @@ public class MicroActivity extends AppCompatActivity {
 				this::beginControllerHostTargetChange);
 		setRuntimeToolbarHeight(getRuntimeToolbarHeight(getRuntimeChrome(current)));
 		updateRuntimeMenuState(current);
+	}
+
+	@Override
+	protected void onSaveInstanceState(@NonNull Bundle outState) {
+		if (expectedAppId > 0L) outState.putLong(STATE_EXPECTED_APP_ID, expectedAppId);
+		super.onSaveInstanceState(outState);
 	}
 
 	private void updateRuntimeMenuState(@Nullable Displayable displayable) {
@@ -625,6 +652,7 @@ public class MicroActivity extends AppCompatActivity {
 			defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
 			defaultPreferences = null;
 		}
+		runtimePreferences = null;
 		if (memoryEditorController != null) {
 			memoryEditorController.destroy();
 			memoryEditorController = null;
@@ -1186,7 +1214,8 @@ public class MicroActivity extends AppCompatActivity {
 			return;
 		}
 		hideVirtualKeyboardEditorDone();
-		runtimeMenuController.showFinishVirtualKeyboardEdit(vk.isPhone(), false);
+		runtimeMenuController.showFinishVirtualKeyboardEdit(
+				resolveRuntimePresetUpdateTarget());
 	}
 
 	private void finishCleanVirtualKeyboardEdit(VirtualKeyboard vk) {
@@ -1196,11 +1225,15 @@ public class MicroActivity extends AppCompatActivity {
 		updateRuntimeMenuState(current);
 	}
 
-	private void saveVirtualKeyboardEdit(boolean saveScreenParams) {
+	private void saveVirtualKeyboardEdit(@Nullable String updateTarget) {
 		VirtualKeyboard vk = ContextHolder.getVk();
 		VirtualKeyboardEditTransaction transaction = virtualKeyboardEditTransaction;
 		if (vk == null || transaction == null || !transaction.isActive()) return;
-		if (!transaction.commitSave(() -> applyVirtualKeyboardSave(saveScreenParams))) {
+		VirtualKeyboardSaveResult[] saveResult = new VirtualKeyboardSaveResult[1];
+		if (!transaction.commitSave(() -> {
+			saveResult[0] = applyVirtualKeyboardSave(updateTarget);
+			return saveResult[0].isLayoutCommitted();
+		})) {
 			toast(R.string.virtual_controls_save_failed);
 			updateRuntimeMenuState(current);
 			scheduleVirtualKeyboardEditorChromeUpdate();
@@ -1208,7 +1241,9 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
 		clearVirtualKeyboardEditTransaction();
-		toast(R.string.layout_edit_finished);
+		if (!showVirtualKeyboardSaveWarnings(saveResult[0], updateTarget)) {
+			toast(R.string.layout_edit_finished);
+		}
 		updateRuntimeMenuState(current);
 	}
 
@@ -1388,10 +1423,9 @@ public class MicroActivity extends AppCompatActivity {
 		runtimeMenuController.showHideButtons(vk.getKeyNames(), states);
 	}
 
-	private void showSaveVkAlert(boolean keepScreenPreferred) {
-		final VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk != null && runtimeMenuController != null) {
-			runtimeMenuController.showSaveVirtualKeyboard(vk.isPhone(), keepScreenPreferred);
+	private void showSaveVkAlert() {
+		if (ContextHolder.getVk() != null && runtimeMenuController != null) {
+			runtimeMenuController.showSaveVirtualKeyboard(resolveRuntimePresetUpdateTarget());
 		}
 	}
 
@@ -1400,8 +1434,16 @@ public class MicroActivity extends AppCompatActivity {
 		if (vk == null || runtimeMenuController == null) {
 			return;
 		}
+		// Resolve on every open so a runtime Activity never caches a renamed/deleted source.
+		String updateTarget = resolveRuntimePresetUpdateTarget();
+		if (isVirtualKeyboardLayoutEditing()) {
+			// Layout templates are in-memory editor changes while an edit transaction is active.
+			updateTarget = null;
+		}
 		runtimeMenuController.showLayoutSelection(
-				getResources().getStringArray(R.array.PREF_VK_TYPE_ENTRIES), vk.getLayout());
+				getResources().getStringArray(R.array.PREF_VK_TYPE_ENTRIES),
+				vk.getLayout(),
+				updateTarget);
 	}
 
 	private void applyHiddenButtons(boolean[] changed) {
@@ -1410,38 +1452,105 @@ public class MicroActivity extends AppCompatActivity {
 			return;
 		}
 		boolean[] states = vk.getKeysVisibility();
-		if (changed.length != states.length || Arrays.equals(states, changed)) {
+		if (!RuntimeVirtualKeyboardPersistence.hiddenButtonsChanged(states, changed)) {
 			return;
 		}
 		vk.setKeysVisibility(changed.clone());
 		if (isVirtualKeyboardLayoutEditing()) {
 			scheduleVirtualKeyboardEditorChromeUpdate();
 		} else {
-			showSaveVkAlert(true);
+			showSaveVkAlert();
 		}
 	}
 
-	private boolean applyVirtualKeyboardSave(boolean saveScreenParams) {
+	private VirtualKeyboardSaveResult applyVirtualKeyboardSave(@Nullable String updateTarget) {
 		VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk == null || !vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM)) {
-			return false;
+		if (vk == null || presetAuthorityClient == null || expectedAppId <= 0L
+				|| !vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM)) {
+			return VirtualKeyboardSaveResult.layoutFailed();
 		}
-		if (saveScreenParams && vk.isPhone()) {
-			vk.saveScreenParams();
-		}
-		return true;
+		return saveCurrentVirtualKeyboard(vk, updateTarget);
 	}
 
-	private void applyLayoutSelection(int index) {
+	private VirtualKeyboardSaveResult saveCurrentVirtualKeyboard(
+			@NonNull VirtualKeyboard vk, @Nullable String updateTarget) {
+		final byte[] payload;
+		try {
+			payload = vk.encodeCurrentLayoutForPersistence();
+		} catch (IOException | RuntimeException encodingFailure) {
+			return VirtualKeyboardSaveResult.layoutFailed();
+		}
+		VirtualKeyboardSaveResult result = presetAuthorityClient.saveVirtualKeyboardLayout(
+				appPath, expectedAppId, payload, updateTarget);
+		if (result.isLayoutCommitted()) vk.onLayoutPersistenceCommitted();
+		return result;
+	}
+
+	private void applyLayoutSelection(int index, @Nullable String updateTarget) {
 		VirtualKeyboard vk = ContextHolder.getVk();
 		if (vk == null || index < 0 || index >= getResources()
 				.getStringArray(R.array.PREF_VK_TYPE_ENTRIES).length) {
 			return;
 		}
-		if (isVirtualKeyboardLayoutEditing()) vk.setLayoutForEditing(index);
-		else vk.setLayout(index);
+		if (isVirtualKeyboardLayoutEditing()) {
+			vk.setLayoutForEditing(index);
+			applyVirtualKeyboardOrientationPolicy(vk);
+			return;
+		}
+		if (!RuntimeVirtualKeyboardPersistence.layoutSelectionChanged(vk.getLayout(), index)) {
+			applyVirtualKeyboardOrientationPolicy(vk);
+			return;
+		}
+		VirtualKeyboardEditTransaction selection =
+				new VirtualKeyboardEditTransaction(vk.captureLayoutEditState());
+		if (!vk.setLayout(index)) {
+			vk.restoreLayoutEditState(selection.discard());
+			toast(R.string.virtual_controls_save_failed);
+			applyVirtualKeyboardOrientationPolicy(vk);
+			return;
+		}
+		VirtualKeyboardSaveResult[] result = new VirtualKeyboardSaveResult[1];
+		if (!selection.commitSave(() -> {
+			result[0] = saveCurrentVirtualKeyboard(vk, updateTarget);
+			return result[0].isLayoutCommitted();
+		})) {
+			// One-shot template selection uses the same baseline/rollback rule as the editor.
+			vk.restoreLayoutEditState(selection.discard());
+			toast(R.string.virtual_controls_save_failed);
+		} else {
+			showVirtualKeyboardSaveWarnings(result[0], updateTarget);
+		}
 		applyVirtualKeyboardOrientationPolicy(vk);
 	}
+
+	@Nullable
+	private String resolveRuntimePresetUpdateTarget() {
+		return presetAuthorityClient == null || expectedAppId <= 0L
+				? null
+				: presetAuthorityClient.resolveUpdateTarget(appPath, expectedAppId);
+	}
+
+	private boolean showVirtualKeyboardSaveWarnings(
+			@NonNull VirtualKeyboardSaveResult result, @Nullable String updateTarget) {
+		String warning = null;
+		if (updateTarget != null) {
+			String presetWarning = switch (result.getPresetUpdateOutcome()) {
+				case FAILED -> getString(R.string.runtime_preset_update_failed, updateTarget);
+				case SAVED_UNLINKED ->
+						getString(R.string.runtime_preset_update_unlinked, updateTarget);
+				default -> null;
+			};
+			if (presetWarning != null) {
+				warning = warning == null ? presetWarning : warning + "\n" + presetWarning;
+			}
+		}
+		if (warning != null) {
+			toast(warning);
+			return true;
+		}
+		return false;
+	}
+
 
 	@Override
 	public boolean onContextItemSelected(@NonNull MenuItem item) {

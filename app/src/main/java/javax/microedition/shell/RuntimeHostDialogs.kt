@@ -19,10 +19,12 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -43,7 +45,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -69,11 +70,11 @@ interface RuntimeHostDialogActions {
     fun onErrorAcknowledged()
     fun onExitConfirmed(openSettings: Boolean)
     fun onHideButtonsConfirmed(states: BooleanArray)
-    fun onSaveVirtualKeyboard(saveScreenParams: Boolean)
-    fun onVirtualKeyboardEditSaved(saveScreenParams: Boolean) = Unit
+    fun onSaveVirtualKeyboard(updateTarget: String?)
+    fun onVirtualKeyboardEditSaved(updateTarget: String?) = Unit
     fun onVirtualKeyboardEditDiscarded() = Unit
     fun onVirtualKeyboardEditContinued() = Unit
-    fun onLayoutSelected(index: Int)
+    fun onLayoutSelected(index: Int, updateTarget: String?)
     fun onLayoutEditGuideConfirmed(dontShowAgain: Boolean) = Unit
 }
 
@@ -83,14 +84,16 @@ internal sealed interface RuntimeHostDialogState {
     data object ExitConfirmation : RuntimeHostDialogState
     data class HideButtons(val names: List<String>, val checked: BooleanArray) : RuntimeHostDialogState
     data class SaveVirtualKeyboard(
-        val phone: Boolean,
-        val keepScreenPreferred: Boolean,
+        val updateTarget: String? = null,
     ) : RuntimeHostDialogState
     data class FinishVirtualKeyboardEdit(
-        val phone: Boolean,
-        val keepScreenPreferred: Boolean,
+        val updateTarget: String? = null,
     ) : RuntimeHostDialogState
-    data class LayoutSelection(val entries: List<String>, val selected: Int) : RuntimeHostDialogState
+    data class LayoutSelection(
+        val entries: List<String>,
+        val selected: Int,
+        val updateTarget: String? = null,
+    ) : RuntimeHostDialogState
     data object LayoutEditGuide : RuntimeHostDialogState
 }
 
@@ -390,12 +393,78 @@ private fun HideButtonsDialog(
 }
 
 @Composable
+private fun PresetDestinationOptions(
+    titleRes: Int,
+    updateTarget: String?,
+    updatePreset: Boolean,
+    onUpdatePresetChanged: (Boolean) -> Unit,
+) {
+    if (updateTarget == null) return
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(stringResource(titleRes))
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
+        ) {
+            PresetDestinationRow(
+                label = stringResource(R.string.runtime_preset_this_midlet_only),
+                selected = !updatePreset,
+                onClick = { onUpdatePresetChanged(false) },
+            )
+            PresetDestinationRow(
+                label = stringResource(R.string.runtime_preset_update_destination, updateTarget),
+                selected = updatePreset,
+                onClick = { onUpdatePresetChanged(true) },
+            )
+        }
+        Text(
+            text = if (updatePreset) {
+                stringResource(R.string.runtime_preset_update_explanation, updateTarget)
+            } else {
+                stringResource(R.string.runtime_preset_local_explanation)
+            },
+            modifier = Modifier.padding(start = 4.dp, top = 4.dp, end = 4.dp),
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+}
+
+@Composable
+private fun PresetDestinationRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .selectable(
+                selected = selected,
+                role = Role.RadioButton,
+                onClick = onClick,
+            )
+            .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Text(
+            text = label,
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 8.dp),
+        )
+    }
+}
+
+@Composable
 private fun FinishVirtualKeyboardEditDialog(
     state: RuntimeHostDialogState.FinishVirtualKeyboardEdit,
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
-    var saveScreenParams by remember(state) { mutableStateOf(state.keepScreenPreferred) }
+    var updatePreset by remember(state) { mutableStateOf(false) }
     val layout = runtimeDialogLayout()
     val maxContentHeight = runtimeDialogListHeight()
 
@@ -425,22 +494,12 @@ private fun FinishVirtualKeyboardEditDialog(
                         .verticalScroll(scrollState),
                 ) {
                     Text(stringResource(R.string.layout_edit_save_changes))
-                    if (state.phone) {
-                        ListItem(
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            headlineContent = {
-                                Text(stringResource(R.string.opt_save_screen_params))
-                            },
-                            leadingContent = {
-                                Checkbox(checked = saveScreenParams, onCheckedChange = null)
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .toggleable(value = saveScreenParams, role = Role.Checkbox) {
-                                    saveScreenParams = !saveScreenParams
-                                },
-                        )
-                    }
+                    PresetDestinationOptions(
+                        titleRes = R.string.runtime_preset_save_destination,
+                        updateTarget = state.updateTarget,
+                        updatePreset = updatePreset,
+                        onUpdatePresetChanged = { updatePreset = it },
+                    )
                 }
                 ScrollableContentHint(
                     visible = canScrollForward,
@@ -449,12 +508,10 @@ private fun FinishVirtualKeyboardEditDialog(
             }
         },
         confirmButton = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 TextButton(onClick = {
                     onDismiss()
@@ -467,7 +524,9 @@ private fun FinishVirtualKeyboardEditDialog(
                 }
                 Button(onClick = {
                     onDismiss()
-                    actions.onVirtualKeyboardEditSaved(saveScreenParams)
+                    actions.onVirtualKeyboardEditSaved(
+                        state.updateTarget.takeIf { updatePreset },
+                    )
                 }) {
                     Text(stringResource(R.string.save))
                 }
@@ -482,7 +541,7 @@ private fun SaveVirtualKeyboardDialog(
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
-    var saveScreenParams by remember(state) { mutableStateOf(state.keepScreenPreferred) }
+    var updatePreset by remember(state) { mutableStateOf(false) }
     val layout = runtimeDialogLayout()
     val maxContentHeight = runtimeDialogListHeight()
     AlertDialog(
@@ -508,22 +567,12 @@ private fun SaveVirtualKeyboardDialog(
                         .verticalScroll(scrollState),
                 ) {
                     Text(stringResource(R.string.pref_vk_save_alert))
-                    if (state.phone) {
-                        ListItem(
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            headlineContent = {
-                                Text(stringResource(R.string.opt_save_screen_params))
-                            },
-                            leadingContent = {
-                                Checkbox(checked = saveScreenParams, onCheckedChange = null)
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .toggleable(value = saveScreenParams, role = Role.Checkbox) {
-                                    saveScreenParams = !saveScreenParams
-                            },
-                        )
-                    }
+                    PresetDestinationOptions(
+                        titleRes = R.string.runtime_preset_save_destination,
+                        updateTarget = state.updateTarget,
+                        updatePreset = updatePreset,
+                        onUpdatePresetChanged = { updatePreset = it },
+                    )
                 }
                 ScrollableContentHint(
                     visible = canScrollForward,
@@ -534,7 +583,9 @@ private fun SaveVirtualKeyboardDialog(
         confirmButton = {
             TextButton(onClick = {
                 onDismiss()
-                actions.onSaveVirtualKeyboard(saveScreenParams)
+                actions.onSaveVirtualKeyboard(
+                    state.updateTarget.takeIf { updatePreset },
+                )
             }) {
                 Text(stringResource(android.R.string.yes))
             }
@@ -597,59 +648,108 @@ private fun LayoutSelectionDialog(
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
-    var selected by remember(state) { mutableIntStateOf(state.selected) }
+    var pendingLayout by remember(state) { mutableStateOf<Int?>(null) }
+    var updatePreset by remember(state) { mutableStateOf(false) }
     val layout = runtimeDialogLayout()
-    val listState = rememberLazyListState()
-    val maxListHeight = runtimeDialogListHeight()
-    val canScrollForward = rememberLazyListCanScrollForward(listState)
-    AlertDialog(
-        textScrollable = false,
-        modifier = layout.modifier,
-        properties = layout.properties,
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.layout_switch)) },
-        text = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = maxListHeight),
-            ) {
-                LazyColumn(
+    val pendingIndex = pendingLayout
+
+    if (pendingIndex == null) {
+        val listState = rememberLazyListState()
+        val maxListHeight = runtimeDialogListHeight()
+        val canScrollForward = rememberLazyListCanScrollForward(listState)
+        AlertDialog(
+            textScrollable = false,
+            modifier = layout.modifier,
+            properties = layout.properties,
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.layout_switch)) },
+            text = {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(max = maxListHeight),
-                    state = listState,
                 ) {
-                    itemsIndexed(state.entries) { index, entry ->
-                        ListItem(
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            headlineContent = { Text(entry) },
-                            leadingContent = {
-                                RadioButton(
-                                    selected = selected == index,
-                                    onClick = null,
-                                )
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .selectable(
-                                    selected = selected == index,
-                                    role = Role.RadioButton,
-                                    onClick = { selected = index },
-                                ),
-                        )
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = maxListHeight),
+                        state = listState,
+                    ) {
+                        itemsIndexed(state.entries) { index, entry ->
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                headlineContent = { Text(entry) },
+                                leadingContent = {
+                                    RadioButton(
+                                        selected = state.selected == index,
+                                        onClick = null,
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .selectable(
+                                        selected = state.selected == index,
+                                        role = Role.RadioButton,
+                                        onClick = {
+                                            if (index == state.selected) {
+                                                onDismiss()
+                                            } else {
+                                                updatePreset = false
+                                                pendingLayout = index
+                                            }
+                                        },
+                                    ),
+                            )
+                        }
                     }
+                    ScrollableContentHint(
+                        visible = canScrollForward,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
                 }
-                ScrollableContentHint(
-                    visible = canScrollForward,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter),
+            },
+            confirmButton = null,
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+        return
+    }
+
+    val layoutName = state.entries.getOrNull(pendingIndex) ?: return
+    AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
+        onDismissRequest = onDismiss,
+        title = {
+            Text(stringResource(R.string.runtime_layout_apply_title, layoutName))
+        },
+        text = {
+            if (state.updateTarget != null) {
+                PresetDestinationOptions(
+                    titleRes = R.string.runtime_preset_apply_destination,
+                    updateTarget = state.updateTarget,
+                    updatePreset = updatePreset,
+                    onUpdatePresetChanged = { updatePreset = it },
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.runtime_preset_local_explanation),
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onDismiss(); actions.onLayoutSelected(selected) }) {
-                Text(stringResource(android.R.string.ok))
+            Button(onClick = {
+                onDismiss()
+                actions.onLayoutSelected(
+                    pendingIndex,
+                    state.updateTarget.takeIf { updatePreset },
+                )
+            }) {
+                Text(stringResource(R.string.runtime_apply))
             }
         },
         dismissButton = {
