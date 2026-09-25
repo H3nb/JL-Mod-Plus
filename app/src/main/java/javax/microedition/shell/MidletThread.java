@@ -381,6 +381,22 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		return true;
 	}
 
+	private void terminateIntentional(MidletSessionJournal.Outcome fallbackOutcome) {
+		boolean returnToLibrary;
+		synchronized (terminationLock) {
+			returnToLibrary = returnToLibraryOnTermination;
+		}
+		if (!finalizeIntentionalTermination(fallbackOutcome)) {
+			return;
+		}
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity == null) {
+			Process.killProcess(Process.myPid());
+			return;
+		}
+		activity.finishRuntime(returnToLibrary, () -> Process.killProcess(Process.myPid()));
+	}
+
 	private void claimLifecycleFailure(MidletSessionJournal.FailureBoundary boundary) {
 		if (!beginFatalFailure(Thread.currentThread(), boundary)) {
 			return;
