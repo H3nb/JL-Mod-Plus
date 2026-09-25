@@ -583,10 +583,12 @@ public abstract class Canvas extends Displayable {
 	 * Removes a controller pointer arbiter only if that exact host still owns the Canvas.
 	 * A stale Activity/router teardown must not clear the consumer installed by its replacement.
 	 */
-	public void clearControllerPointerConsumer(ControllerPointerConsumer consumer) {
-		if (controllerPointerConsumer == consumer) {
-			controllerPointerConsumer = null;
+	public boolean clearControllerPointerConsumer(ControllerPointerConsumer consumer) {
+		if (controllerPointerConsumer != consumer) {
+			return false;
 		}
+		controllerPointerConsumer = null;
+		return true;
 	}
 
 	/** Draws the explicitly configured touch-joystick affordance in guest-relative coordinates. */
