@@ -196,6 +196,21 @@ public class MidletLifecycleStateTest {
 	}
 
 	@Test
+	public void replacementForegroundSignalDoesNotRestartLiveOrSelfPausedRuntime() {
+		MidletLifecycleState active = activeState();
+		assertFalse(active.setAmsForeground(true));
+		assertEquals(MidletLifecycleState.State.ACTIVE, active.state());
+		assertEquals(MidletLifecycleState.StartAction.NONE, active.tryBeginStart(false));
+
+		MidletLifecycleState selfPaused = activeState();
+		selfPaused.notifyPaused();
+		assertTrue(selfPaused.isResumeRequired());
+		assertFalse(selfPaused.setAmsForeground(true));
+		assertEquals(MidletLifecycleState.StartAction.NONE, selfPaused.tryBeginStart(false));
+		assertEquals(MidletLifecycleState.State.PAUSED, selfPaused.state());
+	}
+
+	@Test
 	public void notifyPausedBeforeFirstStartHasNoEffect() {
 		MidletLifecycleState state = new MidletLifecycleState();
 		state.onConstructed();

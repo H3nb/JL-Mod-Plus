@@ -44,8 +44,8 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			Log.e(TAG, "Error in thread: \"" + t + "\" after MIDlet termination", e);
 
 	private static final int INIT = 0;
-	private static final int HOST_VISIBLE = 1;
-	private static final int HOST_HIDDEN = 2;
+	private static final int AMS_FOREGROUND = 1;
+	private static final int AMS_BACKGROUND = 2;
 	private static final int PAUSE = 3;
 	private static final int DESTROY = 4;
 	private static final int GUEST_PAUSED = 5;
@@ -120,23 +120,18 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		return current.microLoader;
 	}
 
-	static void hostVisible(MicroActivity activity) {
+	static void amsForeground(MicroActivity activity) {
 		MidletThread current = instance;
 		if (current != null && ContextHolder.getActivity() == activity) {
-			current.send(HOST_VISIBLE);
+			current.send(AMS_FOREGROUND);
 		}
 	}
 
-	static void hostHidden(MicroActivity activity) {
+	static void amsBackground(MicroActivity activity) {
 		MidletThread current = instance;
 		if (current != null && ContextHolder.getActivity() == activity) {
-			current.send(HOST_HIDDEN);
+			current.send(AMS_BACKGROUND);
 		}
-	}
-
-	static void hostDetached(MicroActivity activity) {
-		// Detachment is presentation ownership, not MIDP destruction. Whether it is also an AMS
-		// foreground transition is decided by the Activity boundary, not here.
 	}
 
 	static void requestPause() {
@@ -226,11 +221,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private void handleSignal(int what) {
 		switch (what) {
 			case INIT -> initializeMidlet();
-			case HOST_VISIBLE -> {
+			case AMS_FOREGROUND -> {
 				lifecycle.setAmsForeground(true);
 				activateIfNeeded();
 			}
-			case HOST_HIDDEN -> {
+			case AMS_BACKGROUND -> {
 				lifecycle.setAmsForeground(false);
 				pauseIfNeeded();
 			}

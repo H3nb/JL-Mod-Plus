@@ -640,22 +640,28 @@ public class MicroActivity extends AppCompatActivity {
 	protected void onStart() {
 		super.onStart();
 		if (ContextHolder.getActivity() == this) {
+			// AMS foreground and LCDUI presentation are separate facts. Reasserting foreground on a
+			// replacement Activity is harmless when the live MIDlet never left ACTIVE.
+			MidletThread.amsForeground(this);
 			Display display = Display.getDisplay(null);
 			if (display != null) {
 				display.setHostVisible(true);
 			}
-			MidletThread.hostVisible(this);
 		}
 	}
 
 	@Override
 	protected void onStop() {
 		if (ContextHolder.getActivity() == this) {
+			// The old presentation really does disappear during configuration recreation, so Canvas
+			// visibility still falls even though the MIDlet remains logically foreground.
 			Display display = Display.getDisplay(null);
 			if (display != null) {
 				display.setHostVisible(false);
 			}
-			MidletThread.hostHidden(this);
+			if (!isChangingConfigurations()) {
+				MidletThread.amsBackground(this);
+			}
 		}
 		super.onStop();
 	}
@@ -693,7 +699,6 @@ public class MicroActivity extends AppCompatActivity {
 	protected void onDestroy() {
 		boolean currentHost = ContextHolder.getActivity() == this;
 		if (currentHost) {
-			MidletThread.hostDetached(this);
 			Display display = Display.getDisplay(null);
 			if (display != null) {
 				display.detachHost();
