@@ -82,7 +82,6 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		this.microLoader = microLoader;
 		this.mainClass = mainClass;
 		this.journal = journal;
-		instance = this;
 	}
 
 	public static void notifyDestroyed() {
@@ -222,6 +221,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		upstreamUncaughtHandler = Thread.getDefaultUncaughtExceptionHandler();
 		Thread.setDefaultUncaughtExceptionHandler(sessionUncaughtHandler);
 		handler = new Handler(getLooper(), this);
+		instance = this;
 		send(INIT);
 	}
 

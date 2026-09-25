@@ -795,7 +795,7 @@ class ControllerInputRouter(
         // arrives, so cancel while the old target is still known.
         pointerCanvas?.let(PointerEvent::cancel)
         resetPointerState()
-        pointerCanvas?.setControllerPointerConsumer(null)
+        pointerCanvas?.clearControllerPointerConsumer(this)
         pointerCanvas = null
         pointerViewport = null
     }
