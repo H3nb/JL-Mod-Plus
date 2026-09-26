@@ -34,6 +34,8 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String CLASS_NAME = "jlmod.runtimefixture.LifecycleMidlet";
 	public static final String MODE_PROPERTY = "JLMod-Runtime-Mode";
 	public static final String MARKER_PROPERTY = "JLMod-Runtime-Marker";
+	public static final String UNEXPECTED_FOREGROUND_PROPERTY =
+			"JLMod-Runtime-Unexpected-Foreground";
 	public static final String MODE_CRASH_INIT = "crash-init";
 	public static final String MODE_CRASH_START = "crash-start";
 	public static final String MODE_CRASH_WORKER = "crash-worker";
@@ -51,6 +53,7 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String STORAGE_WRITTEN_PROPERTY = "JLMod-Storage-Written";
 	private volatile boolean destroyed;
 	private boolean backgroundRequested;
+	private boolean foregroundAllowedAfterResume;
 	private Canvas retainedCanvas;
 	public static final String INIT_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture init failure";
 	public static final String START_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture start failure";
@@ -103,11 +106,19 @@ public final class LifecycleMidlet extends MIDlet {
 				if (display.getCurrent() != retainedCanvas) {
 					throw new IllegalStateException("Background request lost current Displayable");
 				}
+				foregroundAllowedAfterResume = true;
 				return;
 			}
 			retainedCanvas = new Canvas() {
 				@Override
 				protected void paint(Graphics graphics) {
+				}
+
+				@Override
+				protected void showNotify() {
+					if (backgroundRequested && !foregroundAllowedAfterResume) {
+						writeMarker(getAppProperty(UNEXPECTED_FOREGROUND_PROPERTY));
+					}
 				}
 			};
 			display.setCurrent(retainedCanvas);
