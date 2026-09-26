@@ -29,6 +29,7 @@ import javax.microedition.lcdui.event.RunnableEvent;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.shell.MemoryDiscoveryBridge;
 import javax.microedition.shell.MicroActivity;
+import javax.microedition.shell.MidletThread;
 import javax.microedition.util.ContextHolder;
 import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
 
@@ -251,12 +252,8 @@ public class Display {
 
 	public void setCurrent(Displayable displayable) {
 		if (displayable == null) {
-			// MIDP defines null as a background hint; it must not clear the guest current
-			// Displayable or close a visible Alert.
-			MicroActivity activity = ContextHolder.getActivity();
-			if (activity != null) {
-				activity.requestBackground();
-			}
+			// MIDP defines null as an AMS background request; guest current state is retained.
+			MidletThread.requestBackground();
 			return;
 		}
 		Displayable previous;
@@ -269,13 +266,8 @@ public class Display {
 				throw new IllegalArgumentException();
 			}
 			if (displayable == previous) {
-				// MIDP defines this call as a foreground request even when the same Displayable is
-				// already current. Keep the guest state untouched and ask the Android host to bring
-				// its task forward on a best-effort basis.
-				MicroActivity activity = ContextHolder.getActivity();
-				if (activity != null) {
-					activity.requestForeground();
-				}
+				// MIDP treats this as a foreground request. JL-Mod deliberately leaves that request
+				// to AMS policy; guest code must never foreground the Android task directly.
 				return;
 			}
 			requestGeneration = currentRequestGeneration.incrementAndGet();
