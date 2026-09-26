@@ -510,6 +510,7 @@ public final class LocalDiagnosticRepository {
 				failure,
 				null,
 				null,
+				null,
 				relevantFrame,
 				raw.midletVersion,
 				raw.mainClass,
@@ -518,7 +519,9 @@ public final class LocalDiagnosticRepository {
 				environmentLabel(-1, joinDevice(raw.brand, raw.phoneModel), raw.androidVersion),
 				raw.processRole,
 				breadcrumbs(raw.appContext),
-				processExitEvidence(exit));
+				processExitEvidence(exit),
+				null,
+				raw.sessionId);
 	}
 
 	private static IncidentSummary incidentForProcessExit(ProcessExitStore.Snapshot exit,
@@ -538,6 +541,8 @@ public final class LocalDiagnosticRepository {
 				subject,
 				null,
 				null,
+				snapshot == null || snapshot.failureBoundary == null
+						? null : snapshot.failureBoundary.name(),
 				snapshot == null || snapshot.stage == null ? null : snapshot.stage.name(),
 				null,
 				snapshot == null ? null : snapshot.midletVersion,
@@ -547,7 +552,9 @@ public final class LocalDiagnosticRepository {
 				environmentLabel(exit.stateSdk, joinDevice(exit.deviceBrand, exit.deviceModel), null),
 				processLabel(exit),
 				breadcrumbs(exit.appContext),
-				processExitEvidence(exit));
+				processExitEvidence(exit),
+				null,
+				exit.sessionId);
 	}
 
 	private static IncidentSummary incidentForMidlet(MidletSessionJournal.Snapshot snapshot,
@@ -572,6 +579,7 @@ public final class LocalDiagnosticRepository {
 				snapshot.midletName,
 				failure,
 				IncidentSummary.lifecycleOperation(snapshot.failureBoundary),
+				snapshot.failureBoundary == null ? null : snapshot.failureBoundary.name(),
 				snapshot.stage == null ? null : snapshot.stage.name(),
 				relevantFrame,
 				snapshot.midletVersion,
@@ -581,7 +589,9 @@ public final class LocalDiagnosticRepository {
 				environment,
 				processRole,
 				breadcrumbs(appContext),
-				processExitEvidence(exit));
+				processExitEvidence(exit),
+				snapshot.eventId,
+				snapshot.sessionId);
 	}
 
 	private static IncidentSummary.ProcessExitEvidence processExitEvidence(
