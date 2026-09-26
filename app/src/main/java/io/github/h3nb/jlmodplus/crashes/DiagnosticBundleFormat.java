@@ -71,6 +71,7 @@ final class DiagnosticBundleFormat {
 		field(json, "failureType", safe(sanitizer, incident.rootFailure == null ? null : incident.rootFailure.type), true, true);
 		field(json, "failureMessage", safe(sanitizer, incident.rootFailure == null ? null : incident.rootFailure.message), true, true);
 		field(json, "operation", safe(sanitizer, incident.operation), true, true);
+		field(json, "boundary", safe(sanitizer, incident.boundary), true, true);
 		field(json, "lifecycleStage", safe(sanitizer, incident.lifecycleStage), true, true);
 		field(json, "topRelevantFrame", safe(sanitizer, incident.topRelevantFrame), true, true);
 		field(json, "midletVersion", safe(sanitizer, incident.midletVersion), true, true);
@@ -79,6 +80,8 @@ final class DiagnosticBundleFormat {
 		field(json, "build", safe(sanitizer, incident.build), true, true);
 		field(json, "environment", safe(sanitizer, incident.environment), true, true);
 		field(json, "process", safe(sanitizer, incident.process), true, true);
+		field(json, "eventId", safe(sanitizer, incident.eventId), true, true);
+		field(json, "sessionId", safe(sanitizer, incident.sessionId), true, true);
 		field(json, "fingerprint", incident.fingerprint, true, hasExit || hasNative);
 		if (hasExit) {
 			IncidentSummary.ProcessExitEvidence exit = incident.associatedProcessExit;
