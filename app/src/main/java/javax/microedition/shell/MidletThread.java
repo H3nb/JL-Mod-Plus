@@ -108,6 +108,32 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		return current != null && !current.lifecycle.isDestroyed();
 	}
 
+	/** Handles MIDP Display.setCurrent(null) as an emulator/AMS background request. */
+	public static void requestBackground() {
+		MidletThread current = instance;
+		if (current == null || current.lifecycle.isDestroyed()) {
+			return;
+		}
+		current.setRuntimeSelected(false);
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null) {
+			activity.leaveRuntimeHost(true, null);
+		}
+	}
+
+	/** Marks an explicitly selected live runtime as the emulator foreground destination. */
+	static void selectRuntimeForForeground() {
+		MidletThread current = instance;
+		if (current != null && !current.lifecycle.isDestroyed()) {
+			current.setRuntimeSelected(true);
+		}
+	}
+
+	private void setRuntimeSelected(boolean selected) {
+		MidletSessionStore.setRuntimeSelected(
+				ContextHolder.getAppContext(), journal.getSessionId(), selected);
+	}
+
 	@Nullable
 	static MicroLoader findLiveRuntime(String appPath, long appId, @Nullable String requestedMainClass) {
 		MidletThread current = instance;
@@ -427,7 +453,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			Process.killProcess(Process.myPid());
 			return;
 		}
-		activity.finishRuntime(returnToLibrary, () -> Process.killProcess(Process.myPid()));
+		activity.leaveRuntimeHost(returnToLibrary, () -> Process.killProcess(Process.myPid()));
 	}
 
 	private void claimLifecycleFailure(MidletSessionJournal.FailureBoundary boundary) {
