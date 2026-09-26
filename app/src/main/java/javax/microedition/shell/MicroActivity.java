@@ -708,7 +708,7 @@ public class MicroActivity extends AppCompatActivity {
 	private static float maximumValidRate(float maximum, float[] rates) {
 		if (rates == null) return maximum;
 		for (float rate : rates) {
-			if (Float.isFinite(rate) && rate > maximum) maximum = rate;
+			if (!Float.isNaN(rate) && !Float.isInfinite(rate) && rate > maximum) maximum = rate;
 		}
 		return maximum;
 	}
