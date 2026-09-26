@@ -29,9 +29,9 @@
     </plurals>
     <string name="crash_reports_batch_share_disclosure">Laporan diagnostik yang dipilih mungkin berisi informasi perangkat, metadata MIDlet, pengenal korelasi crash, stack trace Java, atau detail proses Android yang berhenti. Raw trace yang disimpan juga akan dilampirkan. Tinjau laporan sebelum membagikannya.</string>
     <string name="crash_report_bundle_preparing">Menyiapkan bundle diagnostik…</string>
-    <string name="crash_report_bundle_ready_title">Bundle Diagnostik Siap</string>
+    <string name="crash_report_bundle_ready_title">Bundle diagnostik siap</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nDisimpan di Downloads → JL-Mod Plus Diagnostics.\n\nGitHub akan meminta Anda mengunggah file ini sebelum mengirim laporan. Bundle diagnostik akan dipublikasikan bersama issue Anda.</string>
-    <string name="locate_bundle">Temukan Bundle</string>
+    <string name="locate_bundle">Temukan bundle</string>
     <string name="open_github">Buka GitHub</string>
     <string name="crash_report_bundle_failed">Tidak dapat menyiapkan bundle diagnostik</string>
     <string name="crash_report_locate_failed">Tidak ada pemilih file sistem yang tersedia untuk menemukan bundle diagnostik</string>
