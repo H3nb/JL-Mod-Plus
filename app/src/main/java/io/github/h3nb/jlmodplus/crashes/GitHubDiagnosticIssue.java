@@ -248,7 +248,12 @@ final class GitHubDiagnosticIssue {
 
 	private static String processExitTitle(IncidentSummary.ProcessExitEvidence exit) {
 		if (exit == null) return "process exit";
-		String mechanism = value(exit.statusLabel, exit.reasonLabel);
+		boolean signalStatusIsMoreSpecific =
+				exit.reason == ProcessExitStore.REASON_SIGNALED
+				|| exit.reason == ProcessExitStore.REASON_CRASH_NATIVE;
+		String mechanism = signalStatusIsMoreSpecific
+				? value(exit.statusLabel, exit.reasonLabel)
+				: value(exit.reasonLabel, exit.statusLabel);
 		if (mechanism == null) mechanism = "process exit";
 		if (exit.importance != null) mechanism += " while " + exit.importance;
 		return mechanism;
