@@ -590,7 +590,7 @@ public final class LocalDiagnosticRepository {
 				processRole,
 				breadcrumbs(appContext),
 				processExitEvidence(exit),
-				snapshot.eventId,
+				snapshot.failureEventId,
 				snapshot.sessionId);
 	}
 
