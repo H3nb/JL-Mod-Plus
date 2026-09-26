@@ -21,46 +21,73 @@ import org.junit.Test;
 
 public class DiagnosticExportSanitizerTest {
 	@Test
-	public void redactsKnownAppAndEmulatorPaths() {
+	public void redactsKnownRootsButPreservesUsefulSuffixes() {
 		String input = "jar=/storage/emulated/0/JL-Mod Plus/converted/game/res.jar "
-				+ "db=/data/user/0/ru.playsoftware.j2meloader/files/report.json";
+				+ "db=/data/user/0/io.github.h3nb.jlmodplus/files/report.json";
 
 		String sanitized = DiagnosticExportSanitizer.sanitize(
 				input,
 				"/storage/emulated/0/JL-Mod Plus",
-				"/data/user/0/ru.playsoftware.j2meloader");
+				"/data/user/0/io.github.h3nb.jlmodplus");
 
-		assertTrue(sanitized.contains("<emulator-dir>"));
-		assertTrue(sanitized.contains("<app-data>"));
+		assertTrue(sanitized.contains("<emulator-dir>/converted/game/res.jar"));
+		assertTrue(sanitized.contains("<app-data>/files/report.json"));
 		assertFalse(sanitized.contains("/storage/emulated/0/JL-Mod Plus"));
-		assertFalse(sanitized.contains("/data/user/0/ru.playsoftware.j2meloader"));
+		assertFalse(sanitized.contains("/data/user/0/io.github.h3nb.jlmodplus"));
 	}
 
 	@Test
-	public void redactsUrisAndRemainingAbsolutePaths() {
-		String input = "GET https://example.com/private?q=token "
-				+ "content://com.example.provider/private/42 "
-				+ "ftp://example.com/private.bin "
-				+ "jar:file:/storage/emulated/0/a.jar!/secret.txt "
-				+ "native=/vendor/lib64/libx.so windows=C:\\Users\\User\\secret.txt";
+	public void preservesAndroidTechnicalModulePaths() {
+		String input = "/system/lib64/liba.so /apex/com.android.runtime/lib64/libb.so "
+				+ "/vendor/lib64/libc.so /product/lib64/libd.so";
 
 		String sanitized = DiagnosticExportSanitizer.sanitize(input, null, null);
 
-		assertFalse(sanitized.contains("example.com"));
+		assertTrue(sanitized.contains("/system/lib64/liba.so"));
+		assertTrue(sanitized.contains("/apex/com.android.runtime/lib64/libb.so"));
+		assertTrue(sanitized.contains("/vendor/lib64/libc.so"));
+		assertTrue(sanitized.contains("/product/lib64/libd.so"));
+	}
+
+	@Test
+	public void stripsUriSecretsWithoutDestroyingUsefulHttpContext() {
+		String input = "GET https://user:secret@example.com/api/crash?id=42&token=abc#fragment "
+				+ "content://com.example.provider/private/42";
+
+		String sanitized = DiagnosticExportSanitizer.sanitize(input, null, null);
+
+		assertTrue(sanitized.contains("https://example.com/api/crash"));
+		assertFalse(sanitized.contains("user:secret"));
+		assertFalse(sanitized.contains("token=abc"));
+		assertFalse(sanitized.contains("#fragment"));
 		assertFalse(sanitized.contains("com.example.provider"));
-		assertFalse(sanitized.contains("/storage/emulated/0/a.jar"));
-		assertFalse(sanitized.contains("/vendor/lib64/libx.so"));
-		assertFalse(sanitized.contains("C:\\Users\\User"));
 		assertTrue(sanitized.contains("<uri>"));
-		assertTrue(sanitized.contains("<path>"));
 	}
 
 	@Test
-	public void leavesJavaStackFramesReadable() {
-		String input = "at javax.microedition.shell.MidletThread.handleMessage(MidletThread.java:123)";
+	public void redactsUnownedUserStoragePaths() {
+		String input = "save=/storage/emulated/0/Personal/MyGame/save.dat "
+				+ "linux=/home/hendra/private.txt windows=C:\\Users\\User\\secret.txt";
 
 		String sanitized = DiagnosticExportSanitizer.sanitize(input, null, null);
 
+		assertFalse(sanitized.contains("Personal/MyGame"));
+		assertFalse(sanitized.contains("/home/hendra"));
+		assertFalse(sanitized.contains("C:\\Users\\User"));
+		assertTrue(sanitized.contains("<user-path>"));
+	}
+
+	@Test
+	public void keepsDiagnosticMetadataAndJavaFramesReadable() {
+		String input = "Build: abc123 · emulatorDebug\n"
+				+ "MIDlet: Example\nProcess: midlet\nFingerprint: deadbeef\n"
+				+ "at javax.microedition.shell.MidletThread.handleMessage(MidletThread.java:123)";
+
+		String sanitized = DiagnosticExportSanitizer.sanitize(input, null, null);
+
+		assertTrue(sanitized.contains("abc123"));
+		assertTrue(sanitized.contains("Example"));
+		assertTrue(sanitized.contains("deadbeef"));
 		assertTrue(sanitized.contains("MidletThread.handleMessage"));
 		assertTrue(sanitized.contains("MidletThread.java:123"));
 	}
