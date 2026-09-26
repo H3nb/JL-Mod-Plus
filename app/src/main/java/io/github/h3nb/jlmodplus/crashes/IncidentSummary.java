@@ -159,7 +159,7 @@ final class IncidentSummary {
 		int deepestCauseLine = -1;
 		for (int i = 0; i < lines.length; i++) {
 			String line = lines[i].trim();
-			if (line.isEmpty() || line.startsWith("eventId=")) continue;
+			if (line.isEmpty() || line.startsWith("eventId=") || "jlamf".equals(line)) continue;
 			if (line.startsWith("Caused by:")) {
 				String cause = clean(line.substring("Caused by:".length()));
 				if (cause != null) {
