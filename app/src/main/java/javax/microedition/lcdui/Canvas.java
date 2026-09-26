@@ -1117,7 +1117,7 @@ public abstract class Canvas extends Displayable {
 			return maximum;
 		}
 		for (float rate : rates) {
-			if (Float.isFinite(rate) && rate > maximum) {
+			if (!Float.isNaN(rate) && !Float.isInfinite(rate) && rate > maximum) {
 				maximum = rate;
 			}
 		}
