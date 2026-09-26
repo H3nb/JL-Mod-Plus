@@ -182,6 +182,7 @@ public abstract class Canvas extends Displayable {
 	private final PresentationMailbox presentationMailbox = new PresentationMailbox();
 	private int onX, onY, onWidth, onHeight;
 	private final FramePacer framePacer = new FramePacer(GuestTimingBridge.activeSession());
+	private volatile int displayMaximumFps;
 	private final Object ambientLock = new Object();
 	private final AmbientColorSampler ambientSampler = new AmbientColorSampler();
 	private AmbientColorField ambientField;
@@ -1092,7 +1093,51 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void limitFps() {
-		framePacer.pace(fpsLimit, !EventQueue.isInCallback());
+		framePacer.pace(resolveFrameRateLimit(fpsLimit, displayMaximumFps),
+				!EventQueue.isInCallback());
+	}
+
+	static int resolveFrameRateLimit(int configuredFps, int displayMaximumFps) {
+		return configuredFps == 0 ? displayMaximumFps : configuredFps;
+	}
+
+	static int resolveMaximumDisplayFps(float[] supportedRenderRates, float[] supportedModeRates,
+			int fallbackFps) {
+		float maximum = highestValidRate(supportedRenderRates);
+		maximum = Math.max(maximum, highestValidRate(supportedModeRates));
+		if (maximum > 0.0f) {
+			return Math.max(1, Math.round(maximum));
+		}
+		return fallbackFps > 0 ? fallbackFps : 1;
+	}
+
+	private static float highestValidRate(float[] rates) {
+		float maximum = 0.0f;
+		if (rates == null) {
+			return maximum;
+		}
+		for (float rate : rates) {
+			if (Float.isFinite(rate) && rate > maximum) {
+				maximum = rate;
+			}
+		}
+		return maximum;
+	}
+
+	private void refreshDisplayMaximumFps(@NonNull SurfaceView view) {
+		android.view.Display display = view.getDisplay();
+		if (display == null) {
+			displayMaximumFps = displayMaximumFps > 0 ? displayMaximumFps : 1;
+			return;
+		}
+
+		android.view.Display.Mode[] modes = display.getSupportedModes();
+		float[] modeRates = new float[modes == null ? 0 : modes.length];
+		for (int i = 0; i < modeRates.length; i++) {
+			modeRates[i] = modes[i] == null ? Float.NaN : modes[i].getRefreshRate();
+		}
+		displayMaximumFps = resolveMaximumDisplayFps(
+				display.getSupportedRefreshRates(), modeRates, displayMaximumFps);
 	}
 
 	private void publishFrameLocked() {
@@ -1946,6 +1991,7 @@ public abstract class Canvas extends Displayable {
 			if (!isCurrentView() || surfaceAttached) {
 				return;
 			}
+			refreshDisplayMaximumFps(mView);
 			surfaceAttached = true;
 			presentationMailbox.begin();
 			if (renderer != null) {

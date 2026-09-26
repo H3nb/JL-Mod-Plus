@@ -455,6 +455,7 @@
     <string name="START_CMD">Mulai</string>
     <string name="SWAP_SIZES">Tukar Ukuran</string>
     <string name="take_screenshot">Buat Tangkapan Layar</string>
+    <string name="fps_limit_maximum">Maksimum</string>
     <string name="unlimited">Tanpa batas</string>
     <string name="version">Versi: </string>
     <string name="warn_install_from_net">Berkas akan diunduh dari internet</string>
