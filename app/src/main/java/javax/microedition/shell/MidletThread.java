@@ -122,10 +122,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		if (current == null || current.lifecycle.isDestroyed()) {
 			return;
 		}
+		boolean returnToLibrary = current.isLibraryReturnAllowedInternal();
 		current.setRuntimeSelected(false);
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
-			activity.leaveRuntimeHost(true, null);
+			activity.leaveRuntimeHost(returnToLibrary, null);
 		}
 	}
 
@@ -141,6 +142,18 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		runtimeSelected = selected;
 		MidletSessionStore.setRuntimeSelected(
 				ContextHolder.getAppContext(), journal.getSessionId(), selected);
+	}
+
+	/** Returns whether the current runtime policy still permits a Library host destination. */
+	static boolean isLibraryReturnAllowed() {
+		MidletThread current = instance;
+		return current == null || current.isLibraryReturnAllowedInternal();
+	}
+
+	private boolean isLibraryReturnAllowedInternal() {
+		synchronized (terminationLock) {
+			return returnToLibraryOnTermination;
+		}
 	}
 
 	@Nullable
