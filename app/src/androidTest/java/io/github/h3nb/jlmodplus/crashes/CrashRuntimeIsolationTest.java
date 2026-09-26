@@ -353,18 +353,20 @@ public class CrashRuntimeIsolationTest {
 			assertTrue(preferences.edit()
 					.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
 			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_END_KEY_BACKGROUND, markerFile);
-			launchLifecycleMidlet(context, appDir);
+			// Put the explicit destination underneath the runtime. The debug control Activity then
+			// executes destroyApp(false) while MicroActivity is still STARTED, matching the window
+			// where the runtime-menu Settings launch has been requested but onStop has not completed.
+			launchConfigActivity(context, appDir, 0L);
+			awaitActivityOnTop(context, ConfigActivity.class);
+			launchLifecycleMidletOverExistingTask(context, appDir);
 			awaitMarker(markerFile);
+			awaitActivityOnTop(context, MicroActivity.class);
 
 			MidletSessionStore.State running = MidletSessionStore.read(context);
 			assertNotNull(running);
 			String generation = running.getGeneration();
 			assertNotNull(generation);
 			assertTrue(running.isRuntimeSelected());
-
-			launchConfigActivity(context, appDir, running.getAppId());
-			awaitActivityOnTop(context, ConfigActivity.class);
-			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
 			clearMarker(markerFile);
 
 			launchLifecycleControl(
@@ -614,6 +616,14 @@ public class CrashRuntimeIsolationTest {
 				// Clear the previous fixture task so each lifecycle mode is delivered through a
 				// fresh MicroActivity/process boundary rather than reusing test presentation state.
 				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+		context.startActivity(intent);
+	}
+
+	private static void launchLifecycleMidletOverExistingTask(Context context, File appDir) {
+		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
+				context, MicroActivity.class)
+				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		context.startActivity(intent);
 	}
 
