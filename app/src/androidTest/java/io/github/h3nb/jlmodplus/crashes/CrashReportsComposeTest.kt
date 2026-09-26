@@ -155,6 +155,28 @@ class CrashReportsComposeTest {
     }
 
     @Test
+    fun bundleReadyDialogInvokesLocateAndOpenActions() {
+        val actions = RecordingDetailActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                CrashReportDetailsScreen(
+                    state = CrashReportDetailState(
+                        displayText = "diagnostic details",
+                        readyBundle = DiagnosticBundleReadyState("20260926-134500-012-deadbeef.zip"),
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Diagnostic bundle ready").assertIsDisplayed()
+        composeRule.onNodeWithText("Locate bundle").performClick()
+        assertEquals(1, actions.locateCount)
+        composeRule.onNodeWithText("Open GitHub").performClick()
+        assertEquals(1, actions.openGitHubCount)
+    }
+
+    @Test
     fun detailActionsInvokeCopyShareGitHubAndDeleteCallbacks() {
         val actions = RecordingDetailActions()
         composeRule.setContent {
@@ -210,6 +232,8 @@ class CrashReportsComposeTest {
         var copyCount = 0
         var shareCount = 0
         var githubCount = 0
+        var locateCount = 0
+        var openGitHubCount = 0
         var deleteCount = 0
 
         override fun onBack() = Unit
@@ -228,9 +252,13 @@ class CrashReportsComposeTest {
 
         override fun onDismissBundleReady() = Unit
 
-        override fun onLocateBundle() = Unit
+        override fun onLocateBundle() {
+            locateCount++
+        }
 
-        override fun onOpenGitHub() = Unit
+        override fun onOpenGitHub() {
+            openGitHubCount++
+        }
 
         override fun onDelete() {
             deleteCount++
