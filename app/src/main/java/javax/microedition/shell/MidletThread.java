@@ -20,6 +20,7 @@ package javax.microedition.shell;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.os.Looper;
 import android.os.Process;
 import android.util.Log;
 
@@ -448,12 +449,15 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		if (!finalizeIntentionalTermination(fallbackOutcome)) {
 			return;
 		}
+		Runnable processCleanup = () -> Process.killProcess(Process.myPid());
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity == null) {
-			Process.killProcess(Process.myPid());
+			// A live MIDlet may already have yielded its Activity to Library. With no host left to
+			// tear down, keep process lifetime outside the guest callback by returning to main Looper.
+			new Handler(Looper.getMainLooper()).post(processCleanup);
 			return;
 		}
-		activity.leaveRuntimeHost(returnToLibrary, () -> Process.killProcess(Process.myPid()));
+		activity.leaveRuntimeHost(returnToLibrary, processCleanup);
 	}
 
 	private void claimLifecycleFailure(MidletSessionJournal.FailureBoundary boundary) {
