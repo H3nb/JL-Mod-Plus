@@ -17,6 +17,9 @@ package io.github.h3nb.jlmodplus.crashes;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -47,6 +50,43 @@ final class DiagnosticBundleFormat {
 		writeOptional(zip, TOMBSTONE_ENTRY, tombstoneSummary);
 		zip.finish();
 		zip.flush();
+	}
+
+	static String contentFingerprint(String reportMarkdown, String incidentJson,
+			String anrTrace, String tombstoneSummary) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			updateDigest(digest, REPORT_ENTRY, reportMarkdown);
+			updateDigest(digest, INCIDENT_ENTRY, incidentJson);
+			updateDigest(digest, ANR_ENTRY, anrTrace);
+			updateDigest(digest, TOMBSTONE_ENTRY, tombstoneSummary);
+			byte[] hash = digest.digest();
+			StringBuilder result = new StringBuilder(hash.length * 2);
+			for (byte value : hash) {
+				result.append(String.format(Locale.US, "%02x", value & 0xff));
+			}
+			return result.toString();
+		} catch (NoSuchAlgorithmException impossible) {
+			throw new AssertionError("SHA-256 unavailable", impossible);
+		}
+	}
+
+	private static void updateDigest(MessageDigest digest, String name, String text) {
+		byte[] nameBytes = name.getBytes(StandardCharsets.UTF_8);
+		digest.update((byte) (nameBytes.length >>> 8));
+		digest.update((byte) nameBytes.length);
+		digest.update(nameBytes);
+		if (text == null) {
+			digest.update((byte) 0);
+			return;
+		}
+		digest.update((byte) 1);
+		byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+		digest.update((byte) (bytes.length >>> 24));
+		digest.update((byte) (bytes.length >>> 16));
+		digest.update((byte) (bytes.length >>> 8));
+		digest.update((byte) bytes.length);
+		digest.update(bytes);
 	}
 
 	static String incidentJson(IncidentSummary incident) {
