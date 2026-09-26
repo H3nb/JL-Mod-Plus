@@ -25,7 +25,6 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -36,6 +35,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * Owns the one public derived bundle associated with a diagnostic record.
@@ -74,7 +75,10 @@ final class DiagnosticBundleStore {
 		}
 
 		if (existing != null) {
-			deleteOwned(context, existing, fileName);
+			boolean removed = deleteOwned(context, existing);
+			if (!removed && exists(context, existing)) {
+				throw new IOException("Unable to replace tracked diagnostic bundle");
+			}
 			clear(preferences, key);
 		}
 
@@ -83,7 +87,7 @@ final class DiagnosticBundleStore {
 				incident, nativeSummary, fileName, javaStack);
 		report = DiagnosticExportSanitizer.sanitize(context, report);
 		String incidentJson = DiagnosticExportSanitizer.sanitize(
-				context, DiagnosticBundleFormat.incidentJson(incident));
+				context, DiagnosticBundleFormat.incidentJson(incident, nativeSummary));
 
 		String anrTrace = null;
 		ProcessExitStore.Snapshot exit = record.getProcessExitSnapshot();
@@ -98,12 +102,16 @@ final class DiagnosticBundleStore {
 		Uri uri = writePublicBundle(context, fileName, report, incidentJson, anrTrace, tombstone);
 		Metadata complete = new Metadata(
 				uri.toString(), fileName, DiagnosticBundleFormat.FORMAT_VERSION, incident.fingerprint);
-		preferences.edit()
+		boolean stored = preferences.edit()
 				.putString(key + KEY_URI, complete.uri)
 				.putString(key + KEY_FILE, complete.fileName)
 				.putInt(key + KEY_FORMAT, complete.formatVersion)
 				.putString(key + KEY_FINGERPRINT, complete.fingerprint)
-				.apply();
+				.commit();
+		if (!stored) {
+			deleteOwned(context, complete);
+			throw new IOException("Unable to persist diagnostic bundle ownership");
+		}
 		return prepared(incident, nativeSummary, uri, fileName);
 	}
 
@@ -118,9 +126,7 @@ final class DiagnosticBundleStore {
 		Metadata metadata = read(preferences, key);
 		if (metadata == null) return true;
 
-		String expected = record.getIncidentSummary() == null
-				? metadata.fileName : record.getIncidentSummary().bundleFileName();
-		boolean deleted = deleteOwned(context, metadata, expected);
+		boolean deleted = deleteOwned(context, metadata);
 		if (deleted || !exists(context, metadata)) {
 			clear(preferences, key);
 			return true;
@@ -175,6 +181,11 @@ final class DiagnosticBundleStore {
 			if (resolver.update(uri, publish, null, null) != 1) {
 				throw new IOException("Unable to publish diagnostic bundle");
 			}
+			Metadata candidate = new Metadata(
+					uri.toString(), fileName, DiagnosticBundleFormat.FORMAT_VERSION, "");
+			if (!exists(context, candidate)) {
+				throw new IOException("Diagnostic bundle was published with an unexpected identity");
+			}
 			published = true;
 			return uri;
 		} finally {
@@ -227,10 +238,17 @@ final class DiagnosticBundleStore {
 	private static boolean isReusable(Context context, Metadata metadata) {
 		if (!exists(context, metadata)) return false;
 		try (InputStream raw = open(context, metadata);
-				BufferedInputStream input = raw == null ? null : new BufferedInputStream(raw)) {
-			if (input == null) return false;
-			return input.read() == 'P' && input.read() == 'K'
-					&& input.read() == 3 && input.read() == 4;
+				ZipInputStream zip = raw == null ? null : new ZipInputStream(raw, StandardCharsets.UTF_8)) {
+			if (zip == null) return false;
+			boolean report = false;
+			boolean incident = false;
+			ZipEntry entry;
+			while ((entry = zip.getNextEntry()) != null) {
+				if (DiagnosticBundleFormat.REPORT_ENTRY.equals(entry.getName())) report = true;
+				if (DiagnosticBundleFormat.INCIDENT_ENTRY.equals(entry.getName())) incident = true;
+				if (report && incident) return true;
+			}
+			return false;
 		} catch (IOException | RuntimeException e) {
 			return false;
 		}
@@ -265,9 +283,8 @@ final class DiagnosticBundleStore {
 		return context.getContentResolver().openInputStream(uri);
 	}
 
-	private static boolean deleteOwned(Context context, Metadata metadata, String expectedFileName) {
-		if (metadata == null || expectedFileName == null
-				|| !expectedFileName.equals(metadata.fileName)) return false;
+	private static boolean deleteOwned(Context context, Metadata metadata) {
+		if (metadata == null || metadata.fileName == null) return false;
 		Uri uri = Uri.parse(metadata.uri);
 		try {
 			if ("file".equals(uri.getScheme())) {
