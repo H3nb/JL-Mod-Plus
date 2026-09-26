@@ -116,9 +116,11 @@ public final class LifecycleMidlet extends MIDlet {
 
 				@Override
 				protected void showNotify() {
-					if (backgroundRequested && !foregroundAllowedAfterResume) {
-						writeMarker(getAppProperty(UNEXPECTED_FOREGROUND_PROPERTY));
+					if (!backgroundRequested) {
+						return;
 					}
+					writeMarker(getAppProperty(foregroundAllowedAfterResume
+							? MARKER_PROPERTY : UNEXPECTED_FOREGROUND_PROPERTY));
 				}
 			};
 			display.setCurrent(retainedCanvas);
