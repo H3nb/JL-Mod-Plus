@@ -95,7 +95,7 @@ public class DiagnosticBundleFormatTest {
 				null,
 				value -> DiagnosticExportSanitizer.sanitize(value, null, null));
 
-		assertTrue(json.contains("\\\"failureMessage\\\": \\"failed at <uri>\\\""));
+		assertTrue(json.contains("\"failureMessage\": \"failed at <uri>\""));
 		assertFalse(json.contains("private.provider"));
 		assertTrue(json.trim().endsWith("}"));
 	}
