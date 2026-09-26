@@ -310,6 +310,7 @@ public class CrashRuntimeIsolationTest {
 			MidletSessionStore.State afterHistoryRestore = MidletSessionStore.read(context);
 			assertNotNull(afterHistoryRestore);
 			assertEquals(generation, afterHistoryRestore.getGeneration());
+			assertEquals(backgrounded.getAppId(), afterHistoryRestore.getAppId());
 			assertFalse(afterHistoryRestore.isRuntimeSelected());
 			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
 
