@@ -4,6 +4,7 @@
 package javax.microedition.lcdui;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
@@ -17,6 +18,18 @@ import javax.microedition.midlet.MIDletStateChangeException;
 import org.junit.Test;
 
 public class DisplaySeriallyTest {
+	@Test
+	public void setCurrentNullKeepsGuestCurrentDisplayable() {
+		Display.initDisplay();
+		Display display = Display.getDisplay(new TestMidlet());
+		Displayable canvasA = new Displayable() {};
+
+		display.setCurrent(canvasA);
+		display.setCurrent(null);
+
+		assertSame(canvasA, display.getCurrent());
+	}
+
 	@Test
 	public void callSeriallyIsSerializedWhileHostBarrierContinuesOutsideCallback() throws Exception {
 		Display.initDisplay();
