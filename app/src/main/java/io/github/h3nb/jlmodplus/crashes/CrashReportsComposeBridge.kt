@@ -387,38 +387,6 @@ fun CrashReportsScreen(
     }
 
 
-    state.readyBundle?.let { ready ->
-        AlertDialog(
-            onDismissRequest = actions::onDismissBundleReady,
-            title = {
-                Text(stringResource(R.string.crash_report_bundle_ready_title))
-            },
-            text = {
-                Text(
-                    stringResource(
-                        R.string.crash_report_bundle_ready_message,
-                        ready.fileName,
-                    ),
-                )
-            },
-            dismissButton = {
-                androidx.compose.foundation.layout.Row {
-                    TextButton(onClick = actions::onDismissBundleReady) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                    TextButton(onClick = actions::onLocateBundle) {
-                        Text(stringResource(R.string.locate_bundle))
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = actions::onOpenGitHub) {
-                    Text(stringResource(R.string.open_github))
-                }
-            },
-        )
-    }
-
     confirmation?.let { pendingConfirmation ->
         CrashReportConfirmationDialog(
             confirmation = pendingConfirmation,
@@ -514,6 +482,38 @@ fun CrashReportDetailsScreen(
                 }
             }
         }
+    }
+
+    state.readyBundle?.let { ready ->
+        AlertDialog(
+            onDismissRequest = actions::onDismissBundleReady,
+            title = {
+                Text(stringResource(R.string.crash_report_bundle_ready_title))
+            },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.crash_report_bundle_ready_message,
+                        ready.fileName,
+                    ),
+                )
+            },
+            dismissButton = {
+                androidx.compose.foundation.layout.Row {
+                    TextButton(onClick = actions::onDismissBundleReady) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                    TextButton(onClick = actions::onLocateBundle) {
+                        Text(stringResource(R.string.locate_bundle))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = actions::onOpenGitHub) {
+                    Text(stringResource(R.string.open_github))
+                }
+            },
+        )
     }
 
     confirmation?.let { pendingConfirmation ->
