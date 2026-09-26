@@ -17,11 +17,15 @@ package javax.microedition.shell;
 import android.app.Activity;
 import android.os.Bundle;
 
+import javax.microedition.lcdui.event.EventQueue;
+
 /** Debug-only lifecycle trigger used by hosted MIDlet containment tests. */
 public final class CrashRuntimeLifecycleControlActivity extends Activity {
 	public static final String EXTRA_COMMAND = "command";
 	public static final String COMMAND_PAUSE = "pause";
 	public static final String COMMAND_DESTROY = "destroy";
+	public static final String COMMAND_DESTROY_NO_LIBRARY_IMMEDIATE =
+			"destroy-no-library-immediate";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +33,15 @@ public final class CrashRuntimeLifecycleControlActivity extends Activity {
 		String command = getIntent().getStringExtra(EXTRA_COMMAND);
 		if (COMMAND_DESTROY.equals(command)) {
 			MidletThread.destroyApp();
+		} else if (COMMAND_DESTROY_NO_LIBRARY_IMMEDIATE.equals(command)) {
+			// Deterministically let the injected KEY_END callback finish before DESTROY is posted.
+			// This is debug-only test control; production EventQueue scheduling remains unchanged.
+			EventQueue.setImmediate(true);
+			try {
+				MidletThread.destroyApp(false);
+			} finally {
+				EventQueue.setImmediate(false);
+			}
 		} else if (COMMAND_PAUSE.equals(command)) {
 			// Exercise the runtime owner's pause dispatcher directly. Instrumentation can launch this
 			// control activity in a separate task, so Android task ordering is not a reliable trigger.
