@@ -215,21 +215,20 @@ final class DiagnosticBundleStore {
 			throw new IOException("Unable to create diagnostic bundle directory");
 		}
 		File destination = new File(directory, fileName);
-		File partial = new File(directory, fileName + ".part");
-		if (partial.exists() && !partial.delete()) {
-			throw new IOException("Unable to replace stale diagnostic bundle scratch file");
+		if (destination.exists()) {
+			// Without ownership metadata an existing public file is not ours to replace.
+			throw new IOException("Diagnostic bundle filename is already in use");
 		}
+		File partial = File.createTempFile(".jlp-diagnostic-", ".part", directory);
 		boolean complete = false;
 		try {
 			try (FileOutputStream output = new FileOutputStream(partial, false)) {
 				DiagnosticBundleFormat.write(output, report, incidentJson, anrTrace, tombstone);
 				output.getFD().sync();
 			}
-			if (destination.exists() && !destination.delete()) {
-				throw new IOException("Unable to replace diagnostic bundle");
-			}
-			if (!partial.renameTo(destination)) {
-				throw new IOException("Unable to publish diagnostic bundle");
+			// Re-check immediately before publication. Never deliberately replace an untracked file.
+			if (destination.exists() || !partial.renameTo(destination)) {
+				throw new IOException("Unable to publish diagnostic bundle safely");
 			}
 			complete = true;
 			return Uri.fromFile(destination);
