@@ -31,10 +31,10 @@ public class EventQueueBarrierTest {
 				await(releaseHide);
 				order.add("hide.end");
 			}));
-			queue.postEvent(RunnableEvent.getInstance(() -> {
+			queue.postBarrier(() -> {
 				order.add("background");
 				backgroundPosted.countDown();
-			}));
+			});
 
 			assertTrue(hideEntered.await(1, TimeUnit.SECONDS));
 			assertEquals(1L, backgroundPosted.getCount());
@@ -56,11 +56,11 @@ public class EventQueueBarrierTest {
 		queue.startProcessing();
 		try {
 			queue.postEvent(RunnableEvent.getInstance(() -> order.add("hide")));
-			queue.postEvent(RunnableEvent.getInstance(() -> order.add("background")));
-			queue.postEvent(RunnableEvent.getInstance(() -> {
+			queue.postBarrier(() -> order.add("background"));
+			queue.postBarrier(() -> {
 				order.add("foreground");
 				complete.countDown();
-			}));
+			});
 
 			assertTrue(complete.await(1, TimeUnit.SECONDS));
 			assertEquals(Arrays.asList("hide", "background", "foreground"), order);

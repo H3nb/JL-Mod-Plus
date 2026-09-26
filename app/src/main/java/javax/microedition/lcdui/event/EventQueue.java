@@ -43,6 +43,45 @@ public class EventQueue implements Runnable {
 	private boolean continuerun;
 
 	/**
+	 * Queue barrier whose continuation runs after the EventQueue callback lock has been released.
+	 * The continuation must only signal another owner; guest callback work stays serialized above.
+	 */
+	private static final class BarrierEvent extends Event {
+		private Runnable continuation;
+
+		BarrierEvent(Runnable continuation) {
+			this.continuation = continuation;
+		}
+
+		Runnable continuation() {
+			return continuation;
+		}
+
+		@Override
+		public void process() {
+			// Ordering marker only.
+		}
+
+		@Override
+		public void recycle() {
+			continuation = null;
+		}
+
+		@Override
+		public void enterQueue() {
+		}
+
+		@Override
+		public void leaveQueue() {
+		}
+
+		@Override
+		public boolean placeableAfter(Event event) {
+			return true;
+		}
+	}
+
+	/**
 	 * Enable immediate processing mode.
 	 * <p>
 	 * In this mode event are processed as soon as they arrive,
@@ -99,6 +138,7 @@ public class EventQueue implements Runnable {
 				ContextHolder.getActivity().toast(R.string.msg_immediate_mode_disabled);
 			} else {
 				event.enterQueue();
+				Runnable continuation = continuationAfterCallback(event);
 				synchronized (callbackLock) {
 					try {
 						loopCounter.set(loop + 1);
@@ -108,6 +148,9 @@ public class EventQueue implements Runnable {
 						leaveCallback();
 						loopCounter.set(loop);
 					}
+				}
+				if (continuation != null) {
+					continuation.run();
 				}
 				return;      // and nothing to do here
 			}
@@ -152,6 +195,21 @@ public class EventQueue implements Runnable {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Runs {@code continuation} after every event already ahead of this barrier has completed, and
+	 * after the callback serialization lock for the barrier itself has been released.
+	 */
+	public void postBarrier(Runnable continuation) {
+		if (continuation == null) {
+			throw new NullPointerException("continuation");
+		}
+		postEvent(new BarrierEvent(continuation));
+	}
+
+	private static Runnable continuationAfterCallback(Event event) {
+		return event instanceof BarrierEvent barrier ? barrier.continuation() : null;
 	}
 
 	/**
@@ -217,6 +275,7 @@ public class EventQueue implements Runnable {
 				}
 
 				if (event != null) {
+					Runnable continuation = continuationAfterCallback(event);
 					synchronized (callbackLock) {
 						enterCallback();
 						try {
@@ -224,6 +283,9 @@ public class EventQueue implements Runnable {
 						} finally {
 							leaveCallback();
 						}
+					}
+					if (continuation != null) {
+						continuation.run();
 					}
 				} else {
 					synchronized (waiter) {

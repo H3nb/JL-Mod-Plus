@@ -198,7 +198,7 @@ public class Display {
 	 * The runnable itself must only signal another owner; it must not execute guest lifecycle code.
 	 */
 	public static void postAfterPendingCallbacks(Runnable runnable) {
-		postEvent(RunnableEvent.getInstance(runnable));
+		queue.postBarrier(runnable);
 	}
 
 	static EventQueue getEventQueue() {

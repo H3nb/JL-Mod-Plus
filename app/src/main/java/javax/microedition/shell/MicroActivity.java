@@ -692,7 +692,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (display != null) {
 			display.setHostVisible(true);
 		}
-		Display.postAfterPendingCallbacks(() -> MidletThread.amsForeground(this));
+		Display.postAfterPendingCallbacks(MidletThread::amsForeground);
 	}
 
 	/**
@@ -708,7 +708,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (display != null) {
 			display.setHostVisible(false);
 		}
-		Display.postAfterPendingCallbacks(() -> MidletThread.amsBackground(this));
+		Display.postAfterPendingCallbacks(MidletThread::amsBackground);
 	}
 
 	@Override

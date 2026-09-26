@@ -121,16 +121,16 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		return current.microLoader;
 	}
 
-	static void amsForeground(MicroActivity activity) {
+	static void amsForeground() {
 		MidletThread current = instance;
-		if (current != null && ContextHolder.getActivity() == activity) {
+		if (current != null) {
 			current.send(AMS_FOREGROUND);
 		}
 	}
 
-	static void amsBackground(MicroActivity activity) {
+	static void amsBackground() {
 		MidletThread current = instance;
-		if (current != null && ContextHolder.getActivity() == activity) {
+		if (current != null) {
 			current.send(AMS_BACKGROUND);
 		}
 	}
