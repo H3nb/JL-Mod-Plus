@@ -33,7 +33,9 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
@@ -781,10 +783,11 @@ public class MicroActivity extends AppCompatActivity {
 			}
 			super.onDestroy();
 		} finally {
-			// Normal terminal cleanup is intentionally last: Android has now torn down this outgoing
-			// Activity instead of racing its Window transition with an immediate process kill.
+			// Do not kill the isolated process from inside Activity.onDestroy(). Posting to the same
+			// main Looper guarantees this callback returns to Android before residual process cleanup
+			// runs, without a delay or any cross-thread wait.
 			if (processCleanup != null) {
-				processCleanup.run();
+				new Handler(Looper.getMainLooper()).post(processCleanup);
 			}
 		}
 	}
