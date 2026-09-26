@@ -76,6 +76,7 @@ import io.github.h3nb.jlmodplus.crashes.CrashReporter;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionJournal;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.memory.MemoryRuntimeSession;
+import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 import io.github.h3nb.jlmodplus.util.AppUtils;
 import io.github.h3nb.jlmodplus.util.FileUtils;
@@ -122,6 +123,22 @@ public class MicroLoader {
 			throw new NullPointerException("Can't access to parent of " + appPath);
 		workDir = converted.getParent();
 		appDirName = appDir.getName();
+	}
+
+	boolean matchesRuntime(String appPath, long appId) {
+		if (appPath == null || (appId > 0L && expectedAppId > 0L && appId != expectedAppId)) {
+			return false;
+		}
+		File candidate = new File(appPath);
+		try {
+			return appDir.getCanonicalFile().equals(candidate.getCanonicalFile());
+		} catch (IOException ignored) {
+			return appDir.getAbsoluteFile().equals(candidate.getAbsoluteFile());
+		}
+	}
+
+	long getExpectedAppId() {
+		return expectedAppId;
 	}
 
 	public boolean init() {
@@ -547,8 +564,6 @@ public class MicroLoader {
 				return;
 			}
 			startTimingSession();
-			MidletSessionStore.markStarted(
-					ContextHolder.getAppContext(), appDir.getPath(), appName, clazz, expectedAppId);
 			MidletSessionJournal journal = MidletSessionJournal.create(
 					ContextHolder.getAppContext(),
 					midletName,
@@ -560,13 +575,23 @@ public class MicroLoader {
 					workDir,
 					appDirName
 			);
+			String runtimeGeneration = journal.getSessionId();
+			MidletSessionStore.markStarted(
+					ContextHolder.getAppContext(), appDir.getPath(), appName, clazz,
+					expectedAppId, runtimeGeneration);
 			CrashReporter.setMidletMainClass(clazz);
 			MidletThread midletThread = new MidletThread(this, clazz, journal);
-			midletThread.start();
+			try {
+				midletThread.start();
+			} catch (RuntimeException | Error failure) {
+				MidletSessionStore.clear(ContextHolder.getAppContext(), runtimeGeneration);
+				throw failure;
+			}
 			// The thread now owns lifecycle cleanup. Keep its storage lease until :midlet exits:
 			// guest worker threads may still write between terminal callbacks and process death.
 			// Set this after start() so a failed thread start still rolls back the launch.
 			timingSessionTransferred = true;
+			MidletKeepAliveService.start(ContextHolder.getAppContext());
 			if (!BuildConfig.FULL_EMULATOR) {
 				return;
 			}

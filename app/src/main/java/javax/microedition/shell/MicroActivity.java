@@ -33,7 +33,9 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
@@ -67,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.microedition.lcdui.Canvas;
+import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Form;
 import javax.microedition.lcdui.Screen;
@@ -82,15 +85,14 @@ import javax.microedition.util.ContextHolder;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
 import io.github.h3nb.jlmodplus.BuildConfig;
+import io.github.h3nb.jlmodplus.MainActivity;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
-import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.input.ControllerHostSink;
 import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
-import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.util.LogUtils;
 import io.github.h3nb.jlmodplus.ui.TransientNoticeComposeController;
@@ -106,7 +108,14 @@ public class MicroActivity extends AppCompatActivity {
 	private static final long IME_REQUEST_RETRY_DELAY_MILLIS = 100L;
 	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
 
-	private Displayable current;
+	private final Object displayRequestLock = new Object();
+	private volatile Displayable current;
+	/** UI-thread owner of the Displayable actually mounted in displayableContainer. */
+	private Displayable presentedDisplayable;
+	private long displayRequestGeneration;
+	/** Process cleanup owned by this exact terminal Activity instance; UI-thread only. */
+	@Nullable
+	private Runnable pendingTerminalProcessCleanup;
 	private boolean runtimeToolbarEnabled;
 	private boolean statusBarEnabled;
 	private boolean displayCutoutEnabled;
@@ -128,6 +137,8 @@ public class MicroActivity extends AppCompatActivity {
 	private MemoryEditorBubbleController memoryEditorController;
 	private TransientNoticeComposeController runtimeNoticeController;
 	private WindowInsetsCompat lastWindowInsets;
+	/** True from an explicit external Android launch until this host resumes again. */
+	private volatile boolean externalAndroidHandoff;
 	private boolean skinLayerAvailable;
 	private int virtualDisplayPaddingLeft;
 	private int virtualDisplayPaddingTop;
@@ -154,7 +165,6 @@ public class MicroActivity extends AppCompatActivity {
 		lockNightMode();
 		super.onCreate(savedInstanceState);
 		EdgeToEdgeCompat.enableIfSupported(this);
-		ContextHolder.setCurrentActivity(this);
 		binding = new RuntimeHostView(this);
 		setContentView(binding.getRoot());
 		binding.layoutEditDone.setOnClickListener(ignored -> requestFinishVirtualKeyboardEdit());
@@ -216,27 +226,56 @@ public class MicroActivity extends AppCompatActivity {
 				: savedInstanceState.getLong(
 						STATE_EXPECTED_APP_ID, intent.getLongExtra(KEY_LIBRARY_APP_ID, 0L));
 		presetAuthorityClient = new PresetAuthorityClient(this);
-		PresetAuthorityClient.PrepareResult prepared =
-				presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
-		if (!prepared.isSuccess()) {
-			MidletSessionStore.clear(getApplicationContext());
-			MidletKeepAliveService.stop(this);
-			if (!prepared.isStale()) Config.openSettings(this, appName, appPath, expectedAppId);
+		String requestedMainClass = intent.getStringExtra(KEY_MIDLET_CLASS);
+		microLoader = MidletThread.findLiveRuntime(appPath, expectedAppId, requestedMainClass);
+		boolean reattachingRuntime = microLoader != null;
+		if (!reattachingRuntime && MidletThread.hasLiveRuntime()) {
+			// This isolated process already owns a different live Java heap. A second Activity must
+			// not steal its host globals or construct another MIDlet in the same process.
 			finish();
 			return;
 		}
-		expectedAppId = prepared.appId();
-		intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
-		MidletSessionStore.markPending(getApplicationContext(), appPath, appName, expectedAppId);
-		microLoader = new MicroLoader(appPath, expectedAppId, prepared.builtInThemeLinked());
-		if (!microLoader.init()) {
-			MidletSessionStore.clear(getApplicationContext());
-			MidletKeepAliveService.stop(this);
-			finish();
-			return;
+		if (reattachingRuntime) {
+			expectedAppId = microLoader.getExpectedAppId();
+			if (expectedAppId > 0L) {
+				intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
+			}
+			boolean explicitRuntimeSelection = savedInstanceState == null
+					&& (intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0;
+			if (explicitRuntimeSelection) {
+				MidletThread.selectRuntimeForForeground();
+			}
+			if (!MidletThread.isRuntimeSelected()) {
+				// Do not attach guest presentation during recreation/history. Navigation waits for
+				// onStart(), so merely rebuilding a background task cannot foreground JL-Mod.
+				return;
+			}
 		}
-		MidletKeepAliveService.start(this);
-		microLoader.applyConfiguration();
+		MicroActivity previousHost = ContextHolder.getActivity();
+		if (reattachingRuntime && previousHost != null && previousHost != this) {
+			// Release the View actually mounted by the old host before publishing this replacement.
+			// This also covers an MIDP Alert overlay, where Display.current is the Alert while the
+			// underlying Canvas/Screen View is still mounted in the old Activity.
+			previousHost.releaseMountedPresentationForReplacement();
+		}
+		ContextHolder.setCurrentActivity(this);
+		if (!reattachingRuntime) {
+			PresetAuthorityClient.PrepareResult prepared =
+					presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
+			if (!prepared.isSuccess()) {
+				if (!prepared.isStale()) Config.openSettings(this, appName, appPath, expectedAppId);
+				finish();
+				return;
+			}
+			expectedAppId = prepared.appId();
+			intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
+			microLoader = new MicroLoader(appPath, expectedAppId, prepared.builtInThemeLinked());
+			if (!microLoader.init()) {
+				finish();
+				return;
+			}
+			microLoader.applyConfiguration();
+		}
 		controllerInputRouter = new ControllerInputRouter(this, new ControllerHostSink() {
 			@Override
 			public Canvas currentCanvas() {
@@ -332,7 +371,14 @@ public class MicroActivity extends AppCompatActivity {
 				}
 			}
 		});
-		loadMIDlet();
+		if (reattachingRuntime) {
+			Display display = Display.getDisplay(null);
+			if (display != null) {
+				display.attachHost(this);
+			}
+		} else {
+			loadMIDlet();
+		}
 	}
 
 	private void initializeRuntimeMenu() {
@@ -457,12 +503,18 @@ public class MicroActivity extends AppCompatActivity {
 					@Override
 					public void onMidletCancelled() {
 						pendingMidletClasses = null;
-						MidletThread.notifyDestroyed();
+						if (ContextHolder.getActivity() != MicroActivity.this
+								|| !MidletThread.destroyApp(true)) {
+							finishUnstartedRuntime(true);
+						}
 					}
 
 					@Override
 					public void onErrorAcknowledged() {
-						MidletThread.notifyDestroyed();
+						if (ContextHolder.getActivity() != MicroActivity.this
+								|| !MidletThread.destroyApp(true)) {
+							finishUnstartedRuntime(true);
+						}
 					}
 
 					@Override
@@ -471,7 +523,10 @@ public class MicroActivity extends AppCompatActivity {
 						if (openSettings) {
 							Config.openSettings(MicroActivity.this, appName, appPath, expectedAppId);
 						}
-						MidletThread.destroyApp();
+						if (ContextHolder.getActivity() != MicroActivity.this
+								|| !MidletThread.destroyApp(!openSettings)) {
+							finishUnstartedRuntime(!openSettings);
+						}
 					}
 
 					@Override
@@ -611,8 +666,74 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	@Override
+	protected void onStart() {
+		super.onStart();
+		if (MidletThread.hasLiveRuntime() && !MidletThread.isRuntimeSelected()) {
+			// Android is now actually presenting this stale/restored host. Reconcile the emulator
+			// destination without ever attaching or activating the deselected MIDlet.
+			if (MidletThread.isLibraryReturnAllowed()) {
+				startActivity(new Intent(this, MainActivity.class));
+			}
+			finish();
+			return;
+		}
+		externalAndroidHandoff = false;
+		beginAmsForegroundTransition();
+	}
+
+	@Override
+	protected void onStop() {
+		if (ContextHolder.getActivity() == this) {
+			if (isChangingConfigurations()) {
+				// Physical presentation disappears, but the MIDlet remains logically foreground.
+				Display display = Display.getDisplay(null);
+				if (display != null) {
+					display.setHostVisible(false);
+				}
+			} else {
+				beginAmsBackgroundTransition();
+			}
+		}
+		super.onStop();
+	}
+
+	/**
+	 * Android visibility is only the host fact. AMS activation is queued behind earlier LCDUI
+	 * callbacks; MidletMain grants display foreground only after startApp() succeeds.
+	 */
+	void beginAmsForegroundTransition() {
+		if (ContextHolder.getActivity() != this) {
+			return;
+		}
+		long foregroundGeneration = Display.requestForeground();
+		Display display = Display.getDisplay(null);
+		if (display != null) {
+			display.setHostVisible(true);
+		}
+		Display.postAfterPendingCallbacks(
+				() -> MidletThread.amsForeground(foregroundGeneration));
+	}
+
+	/**
+	 * Revoke display ownership first so HIDE_NOTIFY enters MIDletEventQueue before the barrier that
+	 * signals AMS background. Nothing waits across threads: the barrier merely posts to MidletMain.
+	 */
+	void beginAmsBackgroundTransition() {
+		if (ContextHolder.getActivity() != this) {
+			return;
+		}
+		Display.revokeForeground();
+		Display display = Display.getDisplay(null);
+		if (display != null) {
+			display.setHostVisible(false);
+		}
+		Display.postAfterPendingCallbacks(MidletThread::amsBackground);
+	}
+
+	@Override
 	protected void onResume() {
 		super.onResume();
+		externalAndroidHandoff = false;
 		refreshCanvasBackground();
 		if (memoryEditorController != null) {
 			memoryEditorController.onHostResumed();
@@ -641,28 +762,117 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
-		if (binding != null) binding.getRoot().removeCallbacks(virtualKeyboardEditorChromeUpdate);
-		VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk != null) vk.setLayoutEditObserver(null);
-		if (controllerInputRouter != null) {
-			controllerInputRouter.close();
-			controllerInputRouter = null;
+		Runnable processCleanup = pendingTerminalProcessCleanup;
+		pendingTerminalProcessCleanup = null;
+		try {
+			boolean currentHost = ContextHolder.getActivity() == this;
+			if (currentHost) {
+				Display display = Display.getDisplay(null);
+				if (display != null) {
+					display.detachHost();
+				}
+				clearMountedDisplayable();
+				current = null;
+				ContextHolder.clearCurrentActivity(this);
+			}
+			if (binding != null) binding.getRoot().removeCallbacks(virtualKeyboardEditorChromeUpdate);
+			VirtualKeyboard vk = ContextHolder.getVk();
+			if (currentHost && vk != null) vk.setLayoutEditObserver(null);
+			if (controllerInputRouter != null) {
+				controllerInputRouter.close();
+				controllerInputRouter = null;
+			}
+			if (defaultPreferences != null) {
+				defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
+				defaultPreferences = null;
+			}
+			runtimePreferences = null;
+			if (memoryEditorController != null) {
+				memoryEditorController.destroy();
+				memoryEditorController = null;
+			}
+			// A MIDlet chooser, malformed archive, or Activity teardown can happen before a
+			// MidletThread is started. In that window MicroLoader still owns any launch session.
+			if (microLoader != null) {
+				microLoader.closeTimingSessionIfNotTransferred();
+			}
+			super.onDestroy();
+		} finally {
+			// Do not kill the isolated process from inside Activity.onDestroy(). Posting to the same
+			// main Looper guarantees this callback returns to Android before residual process cleanup
+			// runs, without a delay or any cross-thread wait.
+			if (processCleanup != null) {
+				new Handler(Looper.getMainLooper()).post(processCleanup);
+			}
 		}
-		if (defaultPreferences != null) {
-			defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
-			defaultPreferences = null;
+	}
+
+	private void finishUnstartedRuntime(boolean returnToLibrary) {
+		try {
+			if (microLoader != null) {
+				microLoader.closeTimingSessionIfNotTransferred();
+			}
+		} catch (Throwable ignored) {
+			// Host cleanup must still finish even if launch-local resources cannot be released.
 		}
-		runtimePreferences = null;
-		if (memoryEditorController != null) {
-			memoryEditorController.destroy();
-			memoryEditorController = null;
+		leaveRuntimeHost(returnToLibrary, null);
+	}
+
+	/**
+	 * Leaves the current runtime host without defining MIDlet lifetime. A null cleanup keeps the
+	 * live runtime resident; terminal callers attach process cleanup to the same idempotent departure.
+	 */
+	void leaveRuntimeHost(boolean returnToLibrary, @Nullable Runnable processCleanup) {
+		runOnUiThread(() -> {
+			MicroActivity currentHost = ContextHolder.getActivity();
+			if (currentHost != null && currentHost != this) {
+				// Configuration/host replacement may win between runtime policy and this UI runnable.
+				// Transfer both navigation and any terminal cleanup to the attached host instance.
+				currentHost.leaveRuntimeHost(returnToLibrary, processCleanup);
+				return;
+			}
+			if (processCleanup != null && pendingTerminalProcessCleanup == null) {
+				pendingTerminalProcessCleanup = processCleanup;
+			}
+			if (isDestroyed()) {
+				runPendingTerminalProcessCleanup();
+				return;
+			}
+
+			boolean departureStarted = isFinishing();
+			boolean wasVisible = currentHost == this && isVisible();
+			if (!departureStarted && wasVisible && returnToLibrary && !externalAndroidHandoff) {
+				// MainActivity is singleTask. Start it once for one runtime-host departure, but never
+				// replace an explicit browser/other-app destination that Android is still presenting.
+				startActivity(new Intent(this, MainActivity.class));
+			}
+			if (!departureStarted) {
+				finish();
+			}
+		});
+	}
+
+	private void runPendingTerminalProcessCleanup() {
+		Runnable processCleanup = pendingTerminalProcessCleanup;
+		pendingTerminalProcessCleanup = null;
+		if (processCleanup != null) {
+			processCleanup.run();
 		}
-		// A MIDlet chooser, malformed archive, or Activity teardown can happen before a
-		// MidletThread is started. In that window MicroLoader still owns any launch session.
-		if (microLoader != null) {
-			microLoader.closeTimingSessionIfNotTransferred();
+	}
+
+	private void clearMountedDisplayable() {
+		Displayable mounted = presentedDisplayable;
+		if (mounted != null) {
+			mounted.clearDisplayableView();
 		}
-		super.onDestroy();
+		presentedDisplayable = null;
+	}
+
+	private void releaseMountedPresentationForReplacement() {
+		clearMountedDisplayable();
+		if (binding != null) {
+			binding.displayableContainer.removeAllViews();
+		}
 	}
 
 	private void refreshCanvasBackground() {
@@ -820,15 +1030,17 @@ public class MicroActivity extends AppCompatActivity {
 			runtimeMenuController.showMidletDialog(names.clone());
 		} else {
 			pendingMidletClasses = null;
-			MidletThread.notifyDestroyed();
+			if (!MidletThread.destroyApp(true)) {
+				finishUnstartedRuntime(true);
+			}
 		}
 	}
 
 	void showErrorDialog(String message) {
 		if (runtimeMenuController != null) {
 			runtimeMenuController.showErrorDialog(message);
-		} else {
-			MidletThread.notifyDestroyed();
+		} else if (!MidletThread.destroyApp(true)) {
+			finishUnstartedRuntime(true);
 		}
 	}
 
@@ -968,36 +1180,34 @@ public class MicroActivity extends AppCompatActivity {
 		return null;
 	}
 
-	public void setCurrent(Displayable displayable) {
-		ViewHandler.postEvent(new SetCurrentEvent(current, displayable));
-		current = displayable;
-	}
-
-	/** Implements MIDP's setCurrent(null) background request without changing guest current state. */
-	public void requestBackground() {
-		runOnUiThread(() -> {
-			if (!isFinishing() && !isDestroyed()) {
-				moveTaskToBack(true);
-			}
-		});
-	}
-
-	/** Implements MIDP's foreground request without changing the guest Displayable. */
-	public void requestForeground() {
-		runOnUiThread(() -> {
-			if (isFinishing() || isDestroyed()) {
+	public void setCurrent(Displayable displayable, long requestGeneration) {
+		synchronized (displayRequestLock) {
+			if (ContextHolder.getActivity() != this
+					|| requestGeneration <= displayRequestGeneration) {
 				return;
 			}
-			try {
-				ActivityManager activityManager =
-						(ActivityManager) getSystemService(ACTIVITY_SERVICE);
-				if (activityManager != null) {
-					activityManager.moveTaskToFront(getTaskId(), ActivityManager.MOVE_TASK_WITH_HOME);
-				}
-			} catch (SecurityException ignored) {
-				// Foregrounding is a host convenience; Android may reject it for background starts.
-			}
-		});
+			current = displayable;
+			displayRequestGeneration = requestGeneration;
+			// Post while holding the request lock so accepted generations enter the UI queue in order.
+			ViewHandler.postEvent(new SetCurrentEvent(displayable, requestGeneration));
+		}
+	}
+
+	private boolean ownsDisplayRequest(long requestGeneration) {
+		synchronized (displayRequestLock) {
+			return ContextHolder.getActivity() == this
+					&& displayRequestGeneration == requestGeneration;
+		}
+	}
+
+	/** Marks an explicit browser/other-app destination so runtime departure cannot steal foreground. */
+	public void beginExternalAndroidHandoff() {
+		externalAndroidHandoff = true;
+	}
+
+	/** Rolls back the handoff marker when Android rejects the external launch. */
+	public void cancelExternalAndroidHandoff() {
+		externalAndroidHandoff = false;
 	}
 
 	public Displayable getCurrent() {
@@ -1629,33 +1839,41 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private class SetCurrentEvent extends SimpleEvent {
-		private final Displayable current;
 		private final Displayable next;
+		private final long requestGeneration;
 
-		private SetCurrentEvent(Displayable current, Displayable next) {
-			this.current = current;
+		private SetCurrentEvent(Displayable next, long requestGeneration) {
 			this.next = next;
+			this.requestGeneration = requestGeneration;
 		}
 
 		@Override
 		public void process() {
+			if (!ownsDisplayRequest(requestGeneration)) {
+				return;
+			}
 			closeOptionsMenu();
 			if (controllerInputRouter != null) {
 				controllerInputRouter.onTargetChanged();
 			}
-			if (current != null) {
-				current.clearDisplayableView();
+			Displayable previous = presentedDisplayable;
+			boolean replaceMountedView = previous != next;
+			if (replaceMountedView) {
+				if (previous != null) {
+					previous.clearDisplayableView();
+				}
+				binding.displayableContainer.removeAllViews();
 			}
-			binding.displayableContainer.removeAllViews();
 			GuestWindowPolicy.Chrome chrome = getRuntimeChrome(next);
 			applySystemUi(chrome, next);
 			configureDisplayCutoutWindow(chrome.cutoutAllowed);
 			setRuntimeToolbarHeight(getRuntimeToolbarHeight(chrome));
 			updateRuntimeMenuState(next);
 			applyGuestInsets(next);
-			if (next != null) {
+			if (replaceMountedView && next != null) {
 				binding.displayableContainer.addView(next.getDisplayableView());
 			}
+			presentedDisplayable = next;
 			refreshCanvasBackground();
 			binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
 		}

@@ -138,7 +138,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private var controllerFocusVisible by mutableStateOf(false)
     private var dialogHostCommandHandler: ControllerHostCommandHandler? = null
     private fun changeControllerSurface(change: () -> Unit) {
-        // Release the outgoing host domain before mutating state; this can be re-entrant from DOWN.
+        // Release the outgoing host input domain before mutating state; this can be re-entrant from DOWN.
         onControllerTargetChanging.run()
         dialogHostCommandHandler = null
         change()

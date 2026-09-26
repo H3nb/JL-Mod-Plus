@@ -22,6 +22,9 @@ import java.nio.charset.StandardCharsets;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.file.FileConnection;
+import javax.microedition.lcdui.Canvas;
+import javax.microedition.lcdui.Display;
+import javax.microedition.lcdui.Graphics;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.util.ContextHolder;
@@ -31,17 +34,27 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String CLASS_NAME = "jlmod.runtimefixture.LifecycleMidlet";
 	public static final String MODE_PROPERTY = "JLMod-Runtime-Mode";
 	public static final String MARKER_PROPERTY = "JLMod-Runtime-Marker";
+	public static final String UNEXPECTED_FOREGROUND_PROPERTY =
+			"JLMod-Runtime-Unexpected-Foreground";
 	public static final String MODE_CRASH_INIT = "crash-init";
 	public static final String MODE_CRASH_START = "crash-start";
 	public static final String MODE_CRASH_WORKER = "crash-worker";
 	public static final String MODE_CRASH_PAUSE = "crash-pause";
 	public static final String MODE_CRASH_DESTROY = "crash-destroy";
 	public static final String MODE_CLEAN = "clean";
+	public static final String MODE_WORKER_DESTROY = "worker-destroy";
+	public static final String MODE_HOLD = "hold";
+	public static final String MODE_BACKGROUND = "background";
+	public static final String MODE_END_KEY_BACKGROUND = "end-key-background";
+	public static final String MODE_CSI_STYLE_EXIT = "csi-style-exit";
 	public static final String MODE_STORAGE_LEASE = "storage-lease";
 	public static final String MODE_FILE_CONNECTION = "file-connection-root";
 	public static final String STORAGE_TRIGGER_PROPERTY = "JLMod-Storage-Trigger";
 	public static final String STORAGE_WRITTEN_PROPERTY = "JLMod-Storage-Written";
 	private volatile boolean destroyed;
+	private boolean backgroundRequested;
+	private boolean foregroundAllowedAfterResume;
+	private Canvas retainedCanvas;
 	public static final String INIT_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture init failure";
 	public static final String START_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture start failure";
 	public static final String WORKER_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture worker failure";
@@ -75,6 +88,79 @@ public final class LifecycleMidlet extends MIDlet {
 		}
 		if (MODE_CLEAN.equals(mode)) {
 			writeMarker(getAppProperty(MARKER_PROPERTY));
+			notifyDestroyed();
+			return;
+		}
+		if (MODE_WORKER_DESTROY.equals(mode)) {
+			writeMarker(getAppProperty(MARKER_PROPERTY));
+			new Thread(this::notifyDestroyed, "LifecycleFixtureDestroyWorker").start();
+			return;
+		}
+		if (MODE_HOLD.equals(mode)) {
+			writeMarker(getAppProperty(MARKER_PROPERTY));
+			return;
+		}
+		if (MODE_BACKGROUND.equals(mode)) {
+			Display display = Display.getDisplay(this);
+			if (backgroundRequested) {
+				if (display.getCurrent() != retainedCanvas) {
+					throw new IllegalStateException("Background request lost current Displayable");
+				}
+				foregroundAllowedAfterResume = true;
+				return;
+			}
+			retainedCanvas = new Canvas() {
+				@Override
+				protected void paint(Graphics graphics) {
+				}
+
+				@Override
+				protected void showNotify() {
+					if (!backgroundRequested) {
+						return;
+					}
+					writeMarker(getAppProperty(foregroundAllowedAfterResume
+							? MARKER_PROPERTY : UNEXPECTED_FOREGROUND_PROPERTY));
+				}
+			};
+			display.setCurrent(retainedCanvas);
+			writeMarker(getAppProperty(MARKER_PROPERTY));
+			backgroundRequested = true;
+			display.setCurrent(null);
+			return;
+		}
+		if (MODE_END_KEY_BACKGROUND.equals(mode)) {
+			Display display = Display.getDisplay(this);
+			display.setCurrent(new Canvas() {
+				@Override
+				protected void paint(Graphics graphics) {
+				}
+
+				@Override
+				protected void keyPressed(int keyCode) {
+					if (keyCode == KEY_END) {
+						writeMarker(getAppProperty(MARKER_PROPERTY));
+						Display.getDisplay(LifecycleMidlet.this).setCurrent(null);
+					}
+				}
+			});
+			writeMarker(getAppProperty(MARKER_PROPERTY));
+			return;
+		}
+		if (MODE_CSI_STYLE_EXIT.equals(mode)) {
+			Display display = Display.getDisplay(this);
+			display.setCurrent(new Canvas() {
+				@Override
+				protected void paint(Graphics graphics) {
+				}
+			});
+			writeMarker(getAppProperty(MARKER_PROPERTY));
+			try {
+				destroyApp(true);
+			} catch (MIDletStateChangeException impossible) {
+				throw new IllegalStateException(impossible);
+			}
+			display.setCurrent(null);
 			notifyDestroyed();
 			return;
 		}
@@ -130,15 +216,23 @@ public final class LifecycleMidlet extends MIDlet {
 
 	@Override
 	public void pauseApp() {
-		if (MODE_CRASH_PAUSE.equals(getAppProperty(MODE_PROPERTY))) {
+		String mode = getAppProperty(MODE_PROPERTY);
+		if (MODE_CRASH_PAUSE.equals(mode)) {
 			throw new IllegalStateException(PAUSE_FAILURE_MARKER);
+		}
+		if (MODE_BACKGROUND.equals(mode)) {
+			writeMarker(getAppProperty(MARKER_PROPERTY));
 		}
 	}
 
 	@Override
 	public void destroyApp(boolean unconditional) throws MIDletStateChangeException {
+		String mode = getAppProperty(MODE_PROPERTY);
+		if (MODE_CSI_STYLE_EXIT.equals(mode) && destroyed) {
+			throw new IllegalStateException("CSI-style fixture destroyed twice");
+		}
 		destroyed = true;
-		if (MODE_CRASH_DESTROY.equals(getAppProperty(MODE_PROPERTY))) {
+		if (MODE_CRASH_DESTROY.equals(mode)) {
 			throw new IllegalStateException(DESTROY_FAILURE_MARKER);
 		}
 	}

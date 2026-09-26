@@ -18,6 +18,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -29,6 +30,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.SystemClock;
 
@@ -51,11 +53,15 @@ import java.util.Set;
 
 import javax.microedition.shell.CrashRuntimeLifecycleControlActivity;
 import javax.microedition.shell.MicroActivity;
+import javax.microedition.util.ContextHolder;
 
 import com.nokia.mid.ui.NotificationActivity;
 
 import jlmod.runtimefixture.LifecycleMidlet;
 import io.github.h3nb.jlmodplus.EmulatorApplication;
+import io.github.h3nb.jlmodplus.LauncherActivity;
+import io.github.h3nb.jlmodplus.MainActivity;
+import io.github.h3nb.jlmodplus.config.ConfigActivity;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.util.Constants;
@@ -104,6 +110,15 @@ public class CrashRuntimeIsolationTest {
 		}
 	}
 
+
+	@Test
+	public void detachedMidletHostPermissionBridgeIsNullSafe() {
+		// MicroActivity lives in :midlet, so this main-process test has no attached runtime host.
+		assertNull(ContextHolder.getActivity());
+		assertFalse(ContextHolder.requestPermission("android.permission.CAMERA"));
+		assertFalse(ContextHolder.requestPermissions(new String[]{"android.permission.CAMERA"}));
+	}
+
 	@Test
 	public void realMidletFailureMatrixIsContainedAndNextSessionLaunchesCleanly() throws Exception {
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -146,14 +161,19 @@ public class CrashRuntimeIsolationTest {
 					LifecycleMidlet.PAUSE_FAILURE_MARKER,
 					CrashRuntimeLifecycleControlActivity.COMMAND_PAUSE,
 					mainPid, mainProcessName, midletProcessName);
-			assertLifecycleFailureCase(context, appDir, marker,
-					LifecycleMidlet.MODE_CRASH_DESTROY,
-					MidletSessionJournal.FailureBoundary.LIFECYCLE_DESTROY,
-					LifecycleMidlet.DESTROY_FAILURE_MARKER,
-					CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY,
-					mainPid, mainProcessName, midletProcessName);
 
 			Set<String> afterCrashIds = recordIds(LocalDiagnosticRepository.load(context));
+			clearMarker(marker);
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_CRASH_DESTROY, marker);
+			launchLifecycleMidlet(context, appDir);
+			awaitMarker(marker);
+			launchLifecycleControl(context, CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY);
+			assertRemoteProcessStops(context, midletProcessName);
+			assertEquals(mainPid, Process.myPid());
+			assertEquals(mainPid, processPid(context, mainProcessName));
+			assertNoNewLifecycleFailure(context, afterCrashIds);
+
+			Set<String> afterThrowingDestroyIds = recordIds(LocalDiagnosticRepository.load(context));
 			clearMarker(marker);
 			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_CLEAN, marker);
 			launchLifecycleMidlet(context, appDir);
@@ -161,11 +181,256 @@ public class CrashRuntimeIsolationTest {
 			assertRemoteProcessStops(context, midletProcessName);
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
-			assertNoNewLifecycleFailure(context, afterCrashIds);
+			assertNoNewLifecycleFailure(context, afterThrowingDestroyIds);
+			// launchLifecycleMidlet() clears the fixture task first, so this exercises visible
+			// self-exit when no pre-existing library Activity is available underneath.
+			awaitActivityOnTop(context, MainActivity.class);
+
+			Set<String> afterMainThreadSelfExitIds = recordIds(LocalDiagnosticRepository.load(context));
+			clearMarker(marker);
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_WORKER_DESTROY, marker);
+			launchLifecycleMidlet(context, appDir);
+			awaitMarker(marker);
+			assertRemoteProcessStops(context, midletProcessName);
+			assertEquals(mainPid, Process.myPid());
+			assertEquals(mainPid, processPid(context, mainProcessName));
+			assertNoNewLifecycleFailure(context, afterMainThreadSelfExitIds);
 		} finally {
 			killRemoteProcessBestEffort(context, midletProcessName);
 			cleanupLifecycleDiagnostics(context, baselineIds);
 			restoreEmulatorDirectoryBestEffort(preferences, hadPreviousEmulatorDir, previousEmulatorDir);
+			deleteRecursivelyBestEffort(root);
+		}
+	}
+
+	@Test
+	public void androidHomeKeepsLiveRuntimeSelectedForLauncherReturn() throws Exception {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		String midletProcessName = context.getPackageName() + ":midlet";
+		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean hadPreviousEmulatorDir = preferences.contains(Constants.PREF_EMULATOR_DIR);
+		String previousEmulatorDir = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
+		File appDir = new File(new File(root, "converted"), "fixture");
+		File markerFile = new File(root, "lifecycle.marker");
+
+		try {
+			deleteRecursively(root);
+			prepareLifecycleFixture(context, root, appDir);
+			assertTrue(preferences.edit()
+					.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_HOLD, markerFile);
+			launchLifecycleMidlet(context, appDir);
+			awaitMarker(markerFile);
+
+			MidletSessionStore.State running = MidletSessionStore.read(context);
+			assertNotNull(running);
+			assertTrue(running.isRuntimeSelected());
+			String generation = running.getGeneration();
+			assertNotNull(generation);
+			int runtimePid = processPid(context, midletProcessName);
+			assertNotEquals(0, runtimePid);
+
+			sendAndroidTaskHome();
+			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
+
+			MidletSessionStore.State backgroundedByAndroid = MidletSessionStore.read(context);
+			assertNotNull(backgroundedByAndroid);
+			assertEquals(generation, backgroundedByAndroid.getGeneration());
+			assertTrue(backgroundedByAndroid.isRuntimeSelected());
+			assertEquals(runtimePid, processPid(context, midletProcessName));
+
+			launchLauncher(context);
+			awaitActivityOnTop(context, MicroActivity.class);
+			awaitJournalStage(context, generation, MidletSessionJournal.Stage.RUNNING);
+			assertEquals(runtimePid, processPid(context, midletProcessName));
+			assertNoNewLifecycleFailure(context, baselineIds);
+
+			launchLifecycleControl(context, CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY);
+			assertRemoteProcessStops(context, midletProcessName);
+			awaitActivityOnTop(context, MainActivity.class);
+		} finally {
+			killRemoteProcessBestEffort(context, midletProcessName);
+			MidletSessionStore.clear(context);
+			cleanupLifecycleDiagnostics(context, baselineIds);
+			restoreEmulatorDirectoryBestEffort(
+					preferences, hadPreviousEmulatorDir, previousEmulatorDir);
+			deleteRecursivelyBestEffort(root);
+		}
+	}
+
+	@Test
+	public void liveMidletCanYieldLibraryAndReattachSameRuntime() throws Exception {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		String midletProcessName = context.getPackageName() + ":midlet";
+		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean hadPreviousEmulatorDir = preferences.contains(Constants.PREF_EMULATOR_DIR);
+		String previousEmulatorDir = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
+		File appDir = new File(new File(root, "converted"), "fixture");
+		File markerFile = new File(root, "lifecycle.marker");
+		File unexpectedForegroundMarker = new File(root, "unexpected-foreground.marker");
+
+		try {
+			deleteRecursively(root);
+			prepareLifecycleFixture(context, root, appDir);
+			assertTrue(preferences.edit()
+					.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_BACKGROUND, markerFile);
+			launchLifecycleMidlet(context, appDir);
+
+			awaitMarker(markerFile);
+			awaitActivityOnTop(context, MainActivity.class);
+			int runtimePid = processPid(context, midletProcessName);
+			assertNotEquals(0, runtimePid);
+			MidletSessionStore.State backgrounded = MidletSessionStore.read(context);
+			assertNotNull(backgrounded);
+			assertFalse(backgrounded.isRuntimeSelected());
+			String generation = backgrounded.getGeneration();
+			assertNotNull(generation);
+			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
+			assertFalse("Startup background request was followed by stale showNotify()",
+					unexpectedForegroundMarker.exists());
+
+			// A live lease is not enough to route the launcher back into the MIDlet after the guest
+			// deliberately yielded emulator foreground to Library.
+			launchLauncher(context);
+			awaitActivityOnTop(context, MainActivity.class);
+			assertEquals(runtimePid, processPid(context, midletProcessName));
+			MidletSessionStore.State afterLauncher = MidletSessionStore.read(context);
+			assertNotNull(afterLauncher);
+			assertEquals(generation, afterLauncher.getGeneration());
+			assertFalse(afterLauncher.isRuntimeSelected());
+
+			// Simulate Android restoring the old runtime task from history, not an explicit Library
+			// selection. The stale host must reconcile back to Library without activating the MIDlet.
+			sendAndroidTaskHome();
+			launchLifecycleMidletFromHistory(context, appDir);
+			awaitActivityOnTop(context, MainActivity.class);
+			assertEquals(runtimePid, processPid(context, midletProcessName));
+			MidletSessionStore.State afterHistoryRestore = MidletSessionStore.read(context);
+			assertNotNull(afterHistoryRestore);
+			assertEquals(generation, afterHistoryRestore.getGeneration());
+			assertEquals(backgrounded.getAppId(), afterHistoryRestore.getAppId());
+			assertFalse(afterHistoryRestore.isRuntimeSelected());
+			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
+			assertFalse("History restore produced stale showNotify()",
+					unexpectedForegroundMarker.exists());
+
+			clearMarker(markerFile);
+			launchLifecycleMidletWithoutClearingTask(context, appDir);
+			awaitActivityOnTop(context, MicroActivity.class);
+			awaitRuntimeSelection(context, generation, true);
+			awaitJournalStage(context, generation, MidletSessionJournal.Stage.RUNNING);
+			awaitMarker(markerFile);
+			assertFalse("Explicit re-selection reused a stale foreground generation",
+					unexpectedForegroundMarker.exists());
+			assertEquals(runtimePid, processPid(context, midletProcessName));
+			assertNoNewLifecycleFailure(context, baselineIds);
+
+			launchLifecycleControl(context, CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY);
+			assertRemoteProcessStops(context, midletProcessName);
+			awaitActivityOnTop(context, MainActivity.class);
+			assertNull(MidletSessionStore.read(context));
+		} finally {
+			killRemoteProcessBestEffort(context, midletProcessName);
+			MidletSessionStore.clear(context);
+			cleanupLifecycleDiagnostics(context, baselineIds);
+			restoreEmulatorDirectoryBestEffort(
+					preferences, hadPreviousEmulatorDir, previousEmulatorDir);
+			deleteRecursivelyBestEffort(root);
+		}
+	}
+
+	@Test
+	public void explicitDestinationSurvivesKeyEndBackgroundDuringDestroy() throws Exception {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		String midletProcessName = context.getPackageName() + ":midlet";
+		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean hadPreviousEmulatorDir = preferences.contains(Constants.PREF_EMULATOR_DIR);
+		String previousEmulatorDir = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
+		File appDir = new File(new File(root, "converted"), "fixture");
+		File markerFile = new File(root, "lifecycle.marker");
+
+		try {
+			deleteRecursively(root);
+			prepareLifecycleFixture(context, root, appDir);
+			assertTrue(preferences.edit()
+					.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_END_KEY_BACKGROUND, markerFile);
+			// Put the explicit destination underneath the runtime. The debug control Activity then
+			// executes destroyApp(false) while MicroActivity is still STARTED, matching the window
+			// where the runtime-menu Settings launch has been requested but onStop has not completed.
+			launchConfigActivity(context, appDir, 0L);
+			awaitActivityOnTop(context, ConfigActivity.class);
+			launchLifecycleMidletWithoutClearingTask(context, appDir);
+			awaitMarker(markerFile);
+			awaitActivityOnTop(context, MicroActivity.class);
+
+			MidletSessionStore.State running = MidletSessionStore.read(context);
+			assertNotNull(running);
+			assertNotNull(running.getGeneration());
+			assertTrue(running.isRuntimeSelected());
+			clearMarker(markerFile);
+
+			launchLifecycleControl(
+					context, CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY_NO_LIBRARY_IMMEDIATE);
+
+			// The marker is rewritten only by the injected KEY_END callback before it requests
+			// Display.setCurrent(null). The sticky non-Library destination must still win.
+			awaitMarker(markerFile);
+			assertRemoteProcessStops(context, midletProcessName);
+			awaitActivityOnTop(context, ConfigActivity.class);
+			assertNull(MidletSessionStore.read(context));
+			assertNoNewLifecycleFailure(context, baselineIds);
+		} finally {
+			killRemoteProcessBestEffort(context, midletProcessName);
+			MidletSessionStore.clear(context);
+			cleanupLifecycleDiagnostics(context, baselineIds);
+			restoreEmulatorDirectoryBestEffort(
+					preferences, hadPreviousEmulatorDir, previousEmulatorDir);
+			context.startActivity(new Intent(context, MainActivity.class)
+					.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP));
+			deleteRecursivelyBestEffort(root);
+		}
+	}
+
+	@Test
+	public void csiStyleBackgroundThenDestroyReturnsToLibraryOnceAndTerminatesCleanly()
+			throws Exception {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		String midletProcessName = context.getPackageName() + ":midlet";
+		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean hadPreviousEmulatorDir = preferences.contains(Constants.PREF_EMULATOR_DIR);
+		String previousEmulatorDir = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
+		File appDir = new File(new File(root, "converted"), "fixture");
+		File markerFile = new File(root, "lifecycle.marker");
+
+		try {
+			deleteRecursively(root);
+			prepareLifecycleFixture(context, root, appDir);
+			assertTrue(preferences.edit()
+					.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_CSI_STYLE_EXIT, markerFile);
+			launchLifecycleMidlet(context, appDir);
+
+			awaitMarker(markerFile);
+			assertRemoteProcessStops(context, midletProcessName);
+			awaitActivityOnTop(context, MainActivity.class);
+			assertNull(MidletSessionStore.read(context));
+			assertNoNewLifecycleFailure(context, baselineIds);
+		} finally {
+			killRemoteProcessBestEffort(context, midletProcessName);
+			MidletSessionStore.clear(context);
+			cleanupLifecycleDiagnostics(context, baselineIds);
+			restoreEmulatorDirectoryBestEffort(
+					preferences, hadPreviousEmulatorDir, previousEmulatorDir);
 			deleteRecursivelyBestEffort(root);
 		}
 	}
@@ -356,10 +621,98 @@ public class CrashRuntimeIsolationTest {
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
 				context, MicroActivity.class)
 				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
-				// MicroActivity is singleTask in the host manifest. Clear the old fixture task so
-				// each lifecycle mode is delivered through a fresh onCreate/onNew process boundary.
+				// Clear the previous fixture task so each lifecycle mode is delivered through a
+				// fresh MicroActivity/process boundary rather than reusing test presentation state.
 				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		context.startActivity(intent);
+	}
+
+	private static void sendAndroidTaskHome() throws IOException {
+		ParcelFileDescriptor result = InstrumentationRegistry.getInstrumentation()
+				.getUiAutomation()
+				.executeShellCommand(
+						"am start -W -a android.intent.action.MAIN -c android.intent.category.HOME");
+		try (ParcelFileDescriptor.AutoCloseInputStream input =
+					new ParcelFileDescriptor.AutoCloseInputStream(result)) {
+			byte[] buffer = new byte[1024];
+			while (input.read(buffer) != -1) {
+				// Drain the synchronous am -W result before observing lifecycle state.
+			}
+		}
+	}
+
+	private static void awaitJournalStage(
+			Context context, String sessionId, MidletSessionJournal.Stage expectedStage) {
+		long deadline = SystemClock.uptimeMillis() + PROCESS_TIMEOUT_MILLIS;
+		do {
+			for (File journalFile : MidletSessionJournal.journalFiles(context)) {
+				try (FileInputStream input = new FileInputStream(journalFile)) {
+					MidletSessionJournal.Snapshot snapshot = MidletSessionJournal.read(input);
+					if (sessionId.equals(snapshot.sessionId) && snapshot.stage == expectedStage) {
+						return;
+					}
+				} catch (IOException ignored) {
+					// The isolated process may be atomically replacing this journal; retry.
+				}
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Session " + sessionId + " did not reach journal stage " + expectedStage.name());
+	}
+
+	private static void launchLauncher(Context context) {
+		context.startActivity(new Intent(context, LauncherActivity.class)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+	}
+
+	private static void launchConfigActivity(Context context, File appDir, long appId) {
+		Intent intent = new Intent(Constants.ACTION_EDIT, Uri.parse(appDir.getAbsolutePath()),
+				context, ConfigActivity.class)
+				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		if (appId > 0L) {
+			intent.putExtra(Constants.KEY_LIBRARY_APP_ID, appId);
+		}
+		context.startActivity(intent);
+	}
+
+	private static void launchLifecycleMidletWithoutClearingTask(
+			Context context, File appDir) {
+		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
+				context, MicroActivity.class)
+				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		context.startActivity(intent);
+	}
+
+	private static void launchLifecycleMidletFromHistory(Context context, File appDir) {
+		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
+				context, MicroActivity.class)
+				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
+		context.startActivity(intent);
+	}
+
+	private static void launchLifecycleMidletForReselection(Context context, File appDir) {
+		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
+				context, MicroActivity.class)
+				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		context.startActivity(intent);
+	}
+
+	private static void awaitRuntimeSelection(
+			Context context, String generation, boolean expectedSelected) {
+		long deadline = SystemClock.uptimeMillis() + PROCESS_TIMEOUT_MILLIS;
+		do {
+			MidletSessionStore.State state = MidletSessionStore.read(context);
+			if (state != null && generation.equals(state.getGeneration())
+					&& state.isRuntimeSelected() == expectedSelected) {
+				return;
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Runtime foreground selection did not become " + expectedSelected);
 	}
 
 	private static void launchLifecycleControl(Context context, String command) {
@@ -389,13 +742,17 @@ public class CrashRuntimeIsolationTest {
 
 	private static void writeLifecycleManifest(File appDir, String mode, File marker) throws IOException {
 		File manifest = new File(appDir, "converted.dex.conf");
+		File unexpectedForegroundMarker =
+				new File(marker.getParentFile(), "unexpected-foreground.marker");
 		String text = "Manifest-Version: 1.0\n"
 				+ "MIDlet-Name: " + LIFECYCLE_MIDLET_NAME + "\n"
 				+ "MIDlet-Vendor: " + LIFECYCLE_MIDLET_VENDOR + "\n"
 				+ "MIDlet-Version: " + LIFECYCLE_MIDLET_VERSION + "\n"
 				+ "MIDlet-1: " + LIFECYCLE_MIDLET_NAME + ",," + LifecycleMidlet.CLASS_NAME + "\n"
 				+ LifecycleMidlet.MODE_PROPERTY + ": " + mode + "\n"
-				+ LifecycleMidlet.MARKER_PROPERTY + ": " + marker.getAbsolutePath() + "\n";
+				+ LifecycleMidlet.MARKER_PROPERTY + ": " + marker.getAbsolutePath() + "\n"
+				+ LifecycleMidlet.UNEXPECTED_FOREGROUND_PROPERTY + ": "
+				+ unexpectedForegroundMarker.getAbsolutePath() + "\n";
 		try (OutputStreamWriter writer = new OutputStreamWriter(
 				new FileOutputStream(manifest), StandardCharsets.UTF_8)) {
 			writer.write(text);
@@ -417,6 +774,23 @@ public class CrashRuntimeIsolationTest {
 			SystemClock.sleep(100L);
 		} while (SystemClock.uptimeMillis() < deadline);
 		fail("MIDlet lifecycle fixture never reached its ready marker");
+	}
+
+	private static void awaitActivityOnTop(Context context, Class<?> activityClass) {
+		ActivityManager activityManager =
+				(ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+		ComponentName expected = new ComponentName(context, activityClass);
+		long deadline = SystemClock.uptimeMillis() + PROCESS_TIMEOUT_MILLIS;
+		do {
+			for (ActivityManager.AppTask task : activityManager.getAppTasks()) {
+				ActivityManager.RecentTaskInfo info = task.getTaskInfo();
+				if (expected.equals(info.topActivity)) {
+					return;
+				}
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Expected Activity never became task top: " + expected.flattenToShortString());
 	}
 
 	private static void assertNoNewLifecycleFailure(Context context, Set<String> existingIds) {

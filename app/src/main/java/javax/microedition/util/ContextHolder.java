@@ -55,7 +55,7 @@ import io.github.h3nb.jlmodplus.config.Config;
 public class ContextHolder {
 	private static Display display;
 	private static VirtualKeyboard vk;
-	private static WeakReference<MicroActivity> currentActivity;
+	private static volatile WeakReference<MicroActivity> currentActivity;
 	private static Vibrator vibrator;
 	private static final ArrayList<ActivityResultListener> resultListeners = new ArrayList<>();
 	private static boolean vibrationEnabled;
@@ -87,8 +87,15 @@ public class ContextHolder {
 		return getDisplay().getHeight();
 	}
 
-	public static void setCurrentActivity(MicroActivity activity) {
+	public static synchronized void setCurrentActivity(MicroActivity activity) {
 		currentActivity = new WeakReference<>(activity);
+	}
+
+	public static synchronized void clearCurrentActivity(MicroActivity activity) {
+		WeakReference<MicroActivity> reference = currentActivity;
+		if (reference != null && reference.get() == activity) {
+			currentActivity = null;
+		}
 	}
 
 	public static void addActivityResultListener(ActivityResultListener listener) {
@@ -142,7 +149,7 @@ public class ContextHolder {
 	}
 
 	public static boolean requestPermission(String permission) {
-		MicroActivity context = currentActivity.get();
+		MicroActivity context = getActivity();
 		if (context == null) {
 			return false;
 		}
@@ -155,7 +162,7 @@ public class ContextHolder {
 	}
 
 	public static boolean requestPermissions(String[] permissions) {
-		MicroActivity context = currentActivity.get();
+		MicroActivity context = getActivity();
 		if (context == null) {
 			return false;
 		}
@@ -195,7 +202,8 @@ public class ContextHolder {
 	}
 
 	public static MicroActivity getActivity() {
-		return currentActivity.get();
+		WeakReference<MicroActivity> reference = currentActivity;
+		return reference == null ? null : reference.get();
 	}
 
 	public static boolean vibrate(int duration) {

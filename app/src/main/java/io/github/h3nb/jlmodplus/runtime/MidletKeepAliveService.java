@@ -42,8 +42,8 @@ import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 /**
  * Keeps an active full-emulator MIDlet in the foreground process priority while it is backgrounded.
  * The notification is intentional: Android requires a user-visible foreground service for a
- * long-running task, and a durable session marker still provides recovery if the OS terminates the
- * isolated process despite the service.
+ * long-running task. The service does not own MIDP lifecycle state; its routing record is useful
+ * only while the runtime storage lease proves that the same isolated-process heap is still live.
  */
 public final class MidletKeepAliveService extends Service {
     private static final String TAG = "MidletKeepAlive";
@@ -63,7 +63,7 @@ public final class MidletKeepAliveService extends Service {
             }
         } catch (RuntimeException e) {
             // A denied notification permission or device policy must not prevent the MIDlet from
-            // launching. The session marker still enables recovery from a later launcher tap.
+            // launching. Process survival is best effort; a later launcher tap verifies the lease.
             Log.w(TAG, "Unable to start MIDlet keep-alive service", e);
         }
     }
@@ -88,7 +88,7 @@ public final class MidletKeepAliveService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         MidletSessionStore.State state = MidletSessionStore.read(getApplicationContext());
-        if (state == null) {
+        if (state == null || state.getGeneration() == null) {
             stopSelfResult(startId);
             return START_NOT_STICKY;
         }

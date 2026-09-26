@@ -742,6 +742,23 @@ public class Alert extends Screen {
 		return image == null ? null : Image.createImage(image).getBitmap();
 	}
 
+	void detachHost() {
+		cancelTimeout();
+		AlertDialog currentDialog = dialog;
+		Gauge oldDialogIndicator = dialogIndicator;
+		if (oldDialogIndicator != null) {
+			oldDialogIndicator.clearItemContentView();
+		}
+		dialogIndicator = null;
+		dialog = null;
+		dialogCommandState = null;
+		contentModal = false;
+		commandListDialog = false;
+		if (currentDialog != null) {
+			currentDialog.dismiss();
+		}
+	}
+
 	void close() {
 		cancelTimeout();
 		this.nextDisplayable = null;

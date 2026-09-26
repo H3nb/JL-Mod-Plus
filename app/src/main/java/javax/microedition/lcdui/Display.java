@@ -29,6 +29,7 @@ import javax.microedition.lcdui.event.RunnableEvent;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.shell.MemoryDiscoveryBridge;
 import javax.microedition.shell.MicroActivity;
+import javax.microedition.shell.MidletThread;
 import javax.microedition.util.ContextHolder;
 import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
 
@@ -56,8 +57,11 @@ public class Display {
 			};
 
 	private static Display instance;
+	/** MIDP foreground-display request/grant for the one runtime in this isolated process. */
+	private static long runtimeForegroundGeneration;
+	private static boolean runtimeForegroundRequested;
+	private static boolean runtimeForegroundGranted;
 	static EventQueue queue = new EventQueue();
-
 
 	static {
 		queue.startProcessing();
@@ -66,25 +70,165 @@ public class Display {
 	private volatile Displayable current;
 	/** Invalidates queued show requests when the displayable changes, including reusing an Alert. */
 	private final AtomicLong currentRequestGeneration = new AtomicLong();
-	/** Serializes display state transitions with Alert preparation/showing. */
+	/** Serializes current-screen and host-presentation facts. */
 	private final Object stateLock = new Object();
+	private boolean hostVisible;
+	private boolean displayForeground;
 
-	public static Display getDisplay(MIDlet midlet) {
+	/**
+	 * Applies the Display-owned presentation facts while their transaction lock is still held.
+	 * This prevents a guest-thread setCurrent() snapshot from arriving after a newer host/UI edge.
+	 */
+	private void reconcileCanvasLocked(Displayable displayable, boolean isCurrent) {
+		if (displayable instanceof Canvas canvas) {
+			canvas.updatePresentationState(isCurrent, hostVisible, displayForeground);
+		}
+	}
+
+	public static synchronized Display getDisplay(MIDlet midlet) {
 		if (instance == null && midlet != null) {
-			instance = new Display();
+			instance = new Display(runtimeForegroundGranted);
 		}
 		return instance;
 	}
 
-	private Display() {
+	private Display(boolean foregroundGranted) {
+		displayForeground = foregroundGranted;
+		MicroActivity activity = ContextHolder.getActivity();
+		hostVisible = activity != null && activity.isVisible();
 	}
 
-	public static void initDisplay() {
+	public static synchronized void initDisplay() {
 		instance = null;
+		runtimeForegroundGeneration = 0L;
+		runtimeForegroundRequested = false;
+		runtimeForegroundGranted = false;
+	}
+
+	/**
+	 * Begins a new Android/MIDP foreground request. The returned generation must be carried through
+	 * the serialized AMS callback so a slow earlier startApp() cannot grant a newer host edge.
+	 */
+	public static synchronized long requestForeground() {
+		runtimeForegroundRequested = true;
+		return ++runtimeForegroundGeneration;
+	}
+
+	/**
+	 * Revokes display ownership synchronously at the Android visibility edge and invalidates every
+	 * older foreground grant attempt.
+	 */
+	public static void revokeForeground() {
+		Display current;
+		synchronized (Display.class) {
+			runtimeForegroundRequested = false;
+			runtimeForegroundGranted = false;
+			runtimeForegroundGeneration++;
+			current = instance;
+		}
+		if (current != null) {
+			current.updateForegroundGranted(false);
+		}
+	}
+
+	/**
+	 * Grants display ownership only if the activation still belongs to the latest foreground edge.
+	 * This is the stale-completion fence for rapid Home/return while startApp() is still executing.
+	 */
+	public static synchronized long currentForegroundRequestGeneration() {
+		return runtimeForegroundRequested ? runtimeForegroundGeneration : 0L;
+	}
+
+	public static synchronized boolean isForegroundRequestCurrent(long generation) {
+		return generation != 0L
+				&& runtimeForegroundRequested
+				&& generation == runtimeForegroundGeneration;
+	}
+
+	public static boolean grantForeground(long generation) {
+		Display current;
+		synchronized (Display.class) {
+			if (!runtimeForegroundRequested || generation != runtimeForegroundGeneration) {
+				return false;
+			}
+			runtimeForegroundGranted = true;
+			current = instance;
+		}
+		if (current != null) {
+			current.updateForegroundGranted(true);
+		}
+		return true;
+	}
+
+	private void updateForegroundGranted(boolean granted) {
+		synchronized (stateLock) {
+			if (displayForeground == granted) {
+				return;
+			}
+			displayForeground = granted;
+			reconcileCanvasLocked(current, true);
+		}
+	}
+
+	/**
+	 * Attaches the persisted guest Display state to a replacement Android host. The new Activity is
+	 * still in onCreate, so presentation remains hidden until its onStart edge arrives.
+	 */
+	public void attachHost(MicroActivity activity) {
+		Displayable target;
+		long requestGeneration;
+		synchronized (stateLock) {
+			hostVisible = false;
+			target = current;
+			requestGeneration = currentRequestGeneration.incrementAndGet();
+			reconcileCanvasLocked(target, true);
+		}
+		if (target instanceof Alert alert) {
+			alert.detachHost();
+			final long generation = requestGeneration;
+			ViewHandler.postEvent(() -> showAlert(alert, generation));
+		} else if (target != null) {
+			target.clearDisplayableView();
+			activity.setCurrent(target, requestGeneration);
+		}
+	}
+
+	public void detachHost() {
+		Displayable target;
+		synchronized (stateLock) {
+			hostVisible = false;
+			target = current;
+			currentRequestGeneration.incrementAndGet();
+			reconcileCanvasLocked(target, true);
+		}
+		if (target instanceof Alert alert) {
+			alert.detachHost();
+		} else if (target != null) {
+			target.clearDisplayableView();
+		}
+	}
+
+	/** Updates host foreground access without changing the guest's current Displayable. */
+	public void setHostVisible(boolean visible) {
+		synchronized (stateLock) {
+			if (hostVisible == visible) {
+				return;
+			}
+			hostVisible = visible;
+			reconcileCanvasLocked(current, true);
+		}
 	}
 
 	public static void postEvent(Event event) {
 		queue.postEvent(event);
+	}
+
+	/**
+	 * Posts a non-blocking serialization barrier behind all LCDUI callbacks already queued.
+	 * The runnable itself must only signal another owner; it must not execute guest lifecycle code.
+	 */
+	public static void postAfterPendingCallbacks(Runnable runnable) {
+		queue.postBarrier(runnable);
 	}
 
 	static EventQueue getEventQueue() {
@@ -93,30 +237,22 @@ public class Display {
 
 	public void setCurrent(Displayable displayable) {
 		if (displayable == null) {
-			// MIDP defines null as a background hint; it must not clear the guest current
-			// Displayable or close a visible Alert.
-			MicroActivity activity = ContextHolder.getActivity();
-			if (activity != null) {
-				activity.requestBackground();
-			}
+			// MIDP defines null as an AMS background request; guest current state is retained.
+			MidletThread.requestBackground();
 			return;
 		}
 		Displayable previous;
 		long requestGeneration = 0L;
 		Alert alert = null;
-			synchronized (stateLock) {
+		boolean showCanvasAfterClosingAlert;
+		synchronized (stateLock) {
 			previous = this.current;
 			if (previous instanceof Alert && displayable instanceof Alert) {
 				throw new IllegalArgumentException();
 			}
 			if (displayable == previous) {
-				// MIDP defines this call as a foreground request even when the same Displayable is
-				// already current. Keep the guest state untouched and ask the Android host to bring
-				// its task forward on a best-effort basis.
-				MicroActivity activity = ContextHolder.getActivity();
-				if (activity != null) {
-					activity.requestForeground();
-				}
+				// MIDP treats this as a foreground request. JL-Mod deliberately leaves that request
+				// to AMS policy; guest code must never foreground the Android task directly.
 				return;
 			}
 			requestGeneration = currentRequestGeneration.incrementAndGet();
@@ -126,18 +262,34 @@ public class Display {
 				alert = nextAlert;
 				alert.setNextDisplayable(previous);
 			}
+			showCanvasAfterClosingAlert =
+					previous instanceof Alert && displayable instanceof Canvas;
+			reconcileCanvasLocked(previous, false);
+			if (!showCanvasAfterClosingAlert) {
+				reconcileCanvasLocked(displayable, true);
+			}
 		}
-		if (previous instanceof Canvas canvas) {
-			canvas.setInvisible();
-		} else if (previous instanceof Alert previousAlert) {
+		if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
+		}
+		if (showCanvasAfterClosingAlert) {
+			synchronized (stateLock) {
+				if (current == displayable
+						&& currentRequestGeneration.get() == requestGeneration) {
+					reconcileCanvasLocked(displayable, true);
+				}
+			}
+		}
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity == null) {
+			return;
 		}
 		if (alert != null) {
 			Alert requestedAlert = alert;
 			final long generation = requestGeneration;
 			ViewHandler.postEvent(() -> showAlert(requestedAlert, generation));
 		} else {
-			ContextHolder.getActivity().setCurrent(displayable);
+			activity.setCurrent(displayable, requestGeneration);
 		}
 	}
 
@@ -165,13 +317,14 @@ public class Display {
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			current = alert;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
+			reconcileCanvasLocked(previous, false);
 		}
-		if (previous instanceof Canvas canvas) {
-			canvas.setInvisible();
-		} else if (previous instanceof Alert previousAlert) {
+		if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
 		}
-		ViewHandler.postEvent(() -> showAlert(alert, requestGeneration));
+		if (ContextHolder.getActivity() != null) {
+			ViewHandler.postEvent(() -> showAlert(alert, requestGeneration));
+		}
 	}
 
 	private void showAlert(Alert expectedAlert, long requestGeneration) {
@@ -210,16 +363,17 @@ public class Display {
 	 */
 	void restoreAfterAlert(Alert expectedAlert) {
 		MicroActivity activity;
+		long requestGeneration;
 		synchronized (stateLock) {
 			if (current != expectedAlert) {
 				return;
 			}
-			currentRequestGeneration.incrementAndGet();
+			requestGeneration = currentRequestGeneration.incrementAndGet();
 			current = null;
 			activity = ContextHolder.getActivity();
 		}
 		if (activity != null) {
-			activity.setCurrent(null);
+			activity.setCurrent(null, requestGeneration);
 		}
 	}
 

@@ -790,14 +790,30 @@ class ControllerInputRouter(
     }
 
     private fun detachPointerConsumer() {
-        // A target boundary must close ordinary physical MIDP pointers as well as the virtual
-        // lease. The Canvas callback may already be detached by the time a later MotionEvent
-        // arrives, so cancel while the old target is still known.
-        pointerCanvas?.let(PointerEvent::cancel)
-        resetPointerState()
-        pointerCanvas?.setControllerPointerConsumer(null)
+        val canvas = pointerCanvas
+        val stillOwnsCanvas = canvas?.clearControllerPointerConsumer(this) == true
+        if (stillOwnsCanvas) {
+            // Only the router which still owns the Canvas may emit guest pointer cleanup.
+            PointerEvent.cancel(canvas)
+            resetPointerState()
+        } else {
+            // A replacement host may already own the same Canvas. Drop only this stale router's
+            // local bookkeeping; emitting releases/cancel here could corrupt the new host's input.
+            discardPointerState()
+        }
         pointerCanvas = null
         pointerViewport = null
+    }
+
+    private fun discardPointerState() {
+        pointerClickBindings.clear()
+        cursorController.reset()
+        joystickController.reset()
+        activeCursorClickToken = null
+        pointerClickOwners.clear()
+        pointerPhysicalTokens.clear()
+        pointerJoystickToken = null
+        pointerLease.reset(releaseVirtual = false)
     }
 
     override fun onPhysicalPointerPressed(pointerId: Int, x: Int, y: Int): Boolean {
