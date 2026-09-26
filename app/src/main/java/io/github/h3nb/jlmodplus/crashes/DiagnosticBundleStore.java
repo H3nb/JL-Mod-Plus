@@ -176,10 +176,6 @@ final class DiagnosticBundleStore {
 			Metadata metadata = new Metadata(
 					uri.toString(), fileName, DiagnosticBundleFormat.FORMAT_VERSION,
 					contentFingerprint);
-			if (!exists(context, metadata)) {
-				deleteMediaStoreUri(resolver, uri);
-				throw new IOException("Diagnostic bundle was created with an unexpected identity");
-			}
 			if (!claim(preferences, key, metadata)) {
 				deleteMediaStoreUri(resolver, uri);
 				throw new IOException("Unable to persist diagnostic bundle ownership");
@@ -187,6 +183,9 @@ final class DiagnosticBundleStore {
 
 			boolean complete = false;
 			try {
+				if (!exists(context, metadata)) {
+					throw new IOException("Diagnostic bundle was created with an unexpected identity");
+				}
 				try (OutputStream output = resolver.openOutputStream(uri, "w")) {
 					if (output == null) throw new IOException("Unable to open diagnostic bundle");
 					DiagnosticBundleFormat.write(output, report, incidentJson, anrTrace, tombstone);
