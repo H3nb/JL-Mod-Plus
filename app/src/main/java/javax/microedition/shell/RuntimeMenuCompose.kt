@@ -116,10 +116,6 @@ interface RuntimeMenuActions {
     fun onHideVirtualKeyboardButtons()
 }
 
-fun interface RuntimeMenuVisibilityListener {
-    fun onVisibilityChanged(visible: Boolean)
-}
-
 /**
  * Interop owner for the app-owned runtime chrome. Rendering, input dispatch, and MIDP
  * Displayable transitions deliberately remain in [MicroActivity].
@@ -131,7 +127,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private val dialogKeyDispatcher: (KeyEvent) -> Boolean = { false },
     private val dialogMotionDispatcher: (MotionEvent) -> Boolean = { false },
     private val onControllerTargetChanging: Runnable = Runnable {},
-    private val visibilityListener: RuntimeMenuVisibilityListener = RuntimeMenuVisibilityListener {},
 ) {
     private var state by mutableStateOf(RuntimeMenuUiState())
     private var menuVisible by mutableStateOf(false)
@@ -143,13 +138,10 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private var controllerFocusVisible by mutableStateOf(false)
     private var dialogHostCommandHandler: ControllerHostCommandHandler? = null
     private fun changeControllerSurface(change: () -> Unit) {
-        // Release the outgoing host domain before mutating state; this can be re-entrant from DOWN.
-        val wasVisible = isMenuVisible()
+        // Release the outgoing host input domain before mutating state; this can be re-entrant from DOWN.
         onControllerTargetChanging.run()
         dialogHostCommandHandler = null
         change()
-        val visible = isMenuVisible()
-        if (visible != wasVisible) visibilityListener.onVisibilityChanged(visible)
     }
 
     private val menuActions = object : RuntimeMenuActions by actions {
