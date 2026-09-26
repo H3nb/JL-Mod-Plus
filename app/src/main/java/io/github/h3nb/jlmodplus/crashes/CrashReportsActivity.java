@@ -203,19 +203,31 @@ public class CrashReportsActivity extends AppCompatActivity {
 
 	private void deleteSelected(List<String> reportIds) {
 		List<LocalDiagnosticRepository.Record> records = selectedRecords(reportIds);
-		if (records.isEmpty()) {
-			return;
-		}
-		boolean allDeleted = true;
-		for (LocalDiagnosticRepository.Record record : records) {
-			if (!LocalDiagnosticRepository.delete(this, record)) {
-				allDeleted = false;
+		if (records.isEmpty()) return;
+		Context appContext = getApplicationContext();
+		new Thread(() -> {
+			boolean allSourcesDeleted = true;
+			boolean allBundlesDeleted = true;
+			for (LocalDiagnosticRepository.Record selected : records) {
+				LocalDiagnosticRepository.DeleteResult result =
+						LocalDiagnosticRepository.deleteWithArtifacts(appContext, selected);
+				allSourcesDeleted &= result.sourceDeleted;
+				allBundlesDeleted &= result.bundleDeleted;
 			}
-		}
-		updateStoredRecords();
-		if (!allDeleted) {
-			ThemedToast.show(this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG);
-		}
+			boolean finalAllSourcesDeleted = allSourcesDeleted;
+			boolean finalAllBundlesDeleted = allBundlesDeleted;
+			runOnUiThread(() -> {
+				if (isFinishing() || isDestroyed()) return;
+				updateStoredRecords();
+				if (!finalAllSourcesDeleted) {
+					ThemedToast.show(
+							this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG);
+				} else if (!finalAllBundlesDeleted) {
+					ThemedToast.show(
+							this, R.string.crash_report_bundle_cleanup_failed, Toast.LENGTH_LONG);
+				}
+			});
+		}, "JLP-delete-diagnostics").start();
 	}
 
 	@Override
