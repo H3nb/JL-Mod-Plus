@@ -111,6 +111,9 @@ public class MicroActivity extends AppCompatActivity {
 	/** UI-thread owner of the Displayable actually mounted in displayableContainer. */
 	private Displayable presentedDisplayable;
 	private long displayRequestGeneration;
+	/** Process cleanup owned by this exact terminal Activity instance; UI-thread only. */
+	@Nullable
+	private Runnable pendingTerminalProcessCleanup;
 	private boolean runtimeToolbarEnabled;
 	private boolean statusBarEnabled;
 	private boolean displayCutoutEnabled;
@@ -742,38 +745,48 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
-		boolean currentHost = ContextHolder.getActivity() == this;
-		if (currentHost) {
-			Display display = Display.getDisplay(null);
-			if (display != null) {
-				display.detachHost();
+		Runnable processCleanup = pendingTerminalProcessCleanup;
+		pendingTerminalProcessCleanup = null;
+		try {
+			boolean currentHost = ContextHolder.getActivity() == this;
+			if (currentHost) {
+				Display display = Display.getDisplay(null);
+				if (display != null) {
+					display.detachHost();
+				}
+				clearMountedDisplayable();
+				current = null;
+				ContextHolder.clearCurrentActivity(this);
 			}
-			clearMountedDisplayable();
-			current = null;
-			ContextHolder.clearCurrentActivity(this);
+			if (binding != null) binding.getRoot().removeCallbacks(virtualKeyboardEditorChromeUpdate);
+			VirtualKeyboard vk = ContextHolder.getVk();
+			if (currentHost && vk != null) vk.setLayoutEditObserver(null);
+			if (controllerInputRouter != null) {
+				controllerInputRouter.close();
+				controllerInputRouter = null;
+			}
+			if (defaultPreferences != null) {
+				defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
+				defaultPreferences = null;
+			}
+			runtimePreferences = null;
+			if (memoryEditorController != null) {
+				memoryEditorController.destroy();
+				memoryEditorController = null;
+			}
+			// A MIDlet chooser, malformed archive, or Activity teardown can happen before a
+			// MidletThread is started. In that window MicroLoader still owns any launch session.
+			if (microLoader != null) {
+				microLoader.closeTimingSessionIfNotTransferred();
+			}
+			super.onDestroy();
+		} finally {
+			// Normal terminal cleanup is intentionally last: Android has now torn down this outgoing
+			// Activity instead of racing its Window transition with an immediate process kill.
+			if (processCleanup != null) {
+				processCleanup.run();
+			}
 		}
-		if (binding != null) binding.getRoot().removeCallbacks(virtualKeyboardEditorChromeUpdate);
-		VirtualKeyboard vk = ContextHolder.getVk();
-		if (currentHost && vk != null) vk.setLayoutEditObserver(null);
-		if (controllerInputRouter != null) {
-			controllerInputRouter.close();
-			controllerInputRouter = null;
-		}
-		if (defaultPreferences != null) {
-			defaultPreferences.unregisterOnSharedPreferenceChangeListener(canvasThemeListener);
-			defaultPreferences = null;
-		}
-		runtimePreferences = null;
-		if (memoryEditorController != null) {
-			memoryEditorController.destroy();
-			memoryEditorController = null;
-		}
-		// A MIDlet chooser, malformed archive, or Activity teardown can happen before a
-		// MidletThread is started. In that window MicroLoader still owns any launch session.
-		if (microLoader != null) {
-			microLoader.closeTimingSessionIfNotTransferred();
-		}
-		super.onDestroy();
 	}
 
 	private void finishUnstartedRuntime(boolean returnToLibrary) {
@@ -789,31 +802,39 @@ public class MicroActivity extends AppCompatActivity {
 
 	void finishRuntime(boolean returnToLibrary, @Nullable Runnable processCleanup) {
 		runOnUiThread(() -> {
-			boolean currentHost = ContextHolder.getActivity() == this;
-			boolean wasVisible = currentHost && isVisible() && !isDestroyed();
-			if (currentHost) {
-				if (controllerInputRouter != null) {
-					controllerInputRouter.clear();
-				}
-				Display display = Display.getDisplay(null);
-				if (display != null) {
-					display.detachHost();
-				}
-				clearMountedDisplayable();
-				current = null;
-				ContextHolder.clearCurrentActivity(this);
+			MicroActivity currentHost = ContextHolder.getActivity();
+			if (currentHost != null && currentHost != this) {
+				// Configuration/host replacement may win between terminal finalization and this UI
+				// runnable. Transfer navigation ownership to the currently attached host instance.
+				currentHost.finishRuntime(returnToLibrary, processCleanup);
+				return;
 			}
+			if (processCleanup != null && pendingTerminalProcessCleanup == null) {
+				pendingTerminalProcessCleanup = processCleanup;
+			}
+			if (isDestroyed()) {
+				runPendingTerminalProcessCleanup();
+				return;
+			}
+
+			boolean wasVisible = currentHost == this && isVisible();
 			if (wasVisible && returnToLibrary) {
-				startActivity(new Intent(this, MainActivity.class)
-						.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
+				// MainActivity is singleTask. A plain intent either exposes its existing task/instance
+				// or creates it when absent; REORDER_TO_FRONT is redundant and can distort handoff.
+				startActivity(new Intent(this, MainActivity.class));
 			}
 			if (!isFinishing()) {
 				finish();
 			}
-			if (processCleanup != null) {
-				processCleanup.run();
-			}
 		});
+	}
+
+	private void runPendingTerminalProcessCleanup() {
+		Runnable processCleanup = pendingTerminalProcessCleanup;
+		pendingTerminalProcessCleanup = null;
+		if (processCleanup != null) {
+			processCleanup.run();
+		}
 	}
 
 	private void clearMountedDisplayable() {

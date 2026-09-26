@@ -58,6 +58,7 @@ import com.nokia.mid.ui.NotificationActivity;
 
 import jlmod.runtimefixture.LifecycleMidlet;
 import io.github.h3nb.jlmodplus.EmulatorApplication;
+import io.github.h3nb.jlmodplus.MainActivity;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.util.Constants;
@@ -178,6 +179,9 @@ public class CrashRuntimeIsolationTest {
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
 			assertNoNewLifecycleFailure(context, afterThrowingDestroyIds);
+			// launchLifecycleMidlet() clears the fixture task first, so this exercises visible
+			// self-exit when no pre-existing library Activity is available underneath.
+			awaitActivityOnTop(context, MainActivity.class);
 
 			Set<String> afterMainThreadSelfExitIds = recordIds(LocalDiagnosticRepository.load(context));
 			clearMarker(marker);
@@ -443,6 +447,23 @@ public class CrashRuntimeIsolationTest {
 			SystemClock.sleep(100L);
 		} while (SystemClock.uptimeMillis() < deadline);
 		fail("MIDlet lifecycle fixture never reached its ready marker");
+	}
+
+	private static void awaitActivityOnTop(Context context, Class<?> activityClass) {
+		ActivityManager activityManager =
+				(ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+		ComponentName expected = new ComponentName(context, activityClass);
+		long deadline = SystemClock.uptimeMillis() + PROCESS_TIMEOUT_MILLIS;
+		do {
+			for (ActivityManager.AppTask task : activityManager.getAppTasks()) {
+				ActivityManager.RecentTaskInfo info = task.getTaskInfo();
+				if (expected.equals(info.topActivity)) {
+					return;
+				}
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Expected Activity never became task top: " + expected.flattenToShortString());
 	}
 
 	private static void assertNoNewLifecycleFailure(Context context, Set<String> existingIds) {
