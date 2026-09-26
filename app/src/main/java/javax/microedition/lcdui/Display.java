@@ -418,7 +418,7 @@ public class Display {
 	}
 
 	public void callSerially(Runnable r) {
-		postAfterPendingCallbacks(r);
+		postEvent(RunnableEvent.getInstance(r));
 	}
 
 	public boolean flashBacklight(int duration) {
