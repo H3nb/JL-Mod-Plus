@@ -98,9 +98,9 @@ final class GitHubDiagnosticIssue {
 			}
 		}
 		if (javaStackTrace != null && !javaStackTrace.trim().isEmpty()) {
-			text.append("\n## Java Stack Trace\n\n\`\`\`text\n")
+			text.append("\n## Java Stack Trace\n\n```text\n")
 					.append(javaStackTrace.trim())
-					.append("\n\`\`\`\n");
+					.append("\n```\n");
 		}
 		return text.toString().trim() + "\n";
 	}
