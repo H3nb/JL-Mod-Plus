@@ -242,7 +242,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 				.setType("application/zip");
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
 				&& preparedBundle.uri != null
-				&& "content".equals(preparedBundle.uri.getScheme())) {
+				&& DocumentsContract.isDocumentUri(this, preparedBundle.uri)) {
 			locate.putExtra(DocumentsContract.EXTRA_INITIAL_URI, preparedBundle.uri);
 		}
 		try {
