@@ -30,6 +30,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.SystemClock;
 
@@ -197,6 +198,63 @@ public class CrashRuntimeIsolationTest {
 			killRemoteProcessBestEffort(context, midletProcessName);
 			cleanupLifecycleDiagnostics(context, baselineIds);
 			restoreEmulatorDirectoryBestEffort(preferences, hadPreviousEmulatorDir, previousEmulatorDir);
+			deleteRecursivelyBestEffort(root);
+		}
+	}
+
+	@Test
+	public void androidHomeKeepsLiveRuntimeSelectedForLauncherReturn() throws Exception {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		String midletProcessName = context.getPackageName() + ":midlet";
+		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean hadPreviousEmulatorDir = preferences.contains(Constants.PREF_EMULATOR_DIR);
+		String previousEmulatorDir = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
+		File appDir = new File(new File(root, "converted"), "fixture");
+		File markerFile = new File(root, "lifecycle.marker");
+
+		try {
+			deleteRecursively(root);
+			prepareLifecycleFixture(context, root, appDir);
+			assertTrue(preferences.edit()
+					.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_HOLD, markerFile);
+			launchLifecycleMidlet(context, appDir);
+			awaitMarker(markerFile);
+
+			MidletSessionStore.State running = MidletSessionStore.read(context);
+			assertNotNull(running);
+			assertTrue(running.isRuntimeSelected());
+			String generation = running.getGeneration();
+			assertNotNull(generation);
+			int runtimePid = processPid(context, midletProcessName);
+			assertNotEquals(0, runtimePid);
+
+			sendAndroidTaskHome();
+			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
+
+			MidletSessionStore.State backgroundedByAndroid = MidletSessionStore.read(context);
+			assertNotNull(backgroundedByAndroid);
+			assertEquals(generation, backgroundedByAndroid.getGeneration());
+			assertTrue(backgroundedByAndroid.isRuntimeSelected());
+			assertEquals(runtimePid, processPid(context, midletProcessName));
+
+			launchLauncher(context);
+			awaitActivityOnTop(context, MicroActivity.class);
+			awaitJournalStage(context, generation, MidletSessionJournal.Stage.RUNNING);
+			assertEquals(runtimePid, processPid(context, midletProcessName));
+			assertNoNewLifecycleFailure(context, baselineIds);
+
+			launchLifecycleControl(context, CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY);
+			assertRemoteProcessStops(context, midletProcessName);
+			awaitActivityOnTop(context, MainActivity.class);
+		} finally {
+			killRemoteProcessBestEffort(context, midletProcessName);
+			MidletSessionStore.clear(context);
+			cleanupLifecycleDiagnostics(context, baselineIds);
+			restoreEmulatorDirectoryBestEffort(
+					preferences, hadPreviousEmulatorDir, previousEmulatorDir);
 			deleteRecursivelyBestEffort(root);
 		}
 	}
@@ -487,6 +545,39 @@ public class CrashRuntimeIsolationTest {
 				// fresh MicroActivity/process boundary rather than reusing test presentation state.
 				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		context.startActivity(intent);
+	}
+
+	private static void sendAndroidTaskHome() throws IOException {
+		ParcelFileDescriptor result = InstrumentationRegistry.getInstrumentation()
+				.getUiAutomation()
+				.executeShellCommand(
+						"am start -W -a android.intent.action.MAIN -c android.intent.category.HOME");
+		try (ParcelFileDescriptor.AutoCloseInputStream input =
+					new ParcelFileDescriptor.AutoCloseInputStream(result)) {
+			byte[] buffer = new byte[1024];
+			while (input.read(buffer) != -1) {
+				// Drain the synchronous am -W result before observing lifecycle state.
+			}
+		}
+	}
+
+	private static void awaitJournalStage(
+			Context context, String sessionId, MidletSessionJournal.Stage expectedStage) {
+		long deadline = SystemClock.uptimeMillis() + PROCESS_TIMEOUT_MILLIS;
+		do {
+			for (File journalFile : MidletSessionJournal.journalFiles(context)) {
+				try (FileInputStream input = new FileInputStream(journalFile)) {
+					MidletSessionJournal.Snapshot snapshot = MidletSessionJournal.read(input);
+					if (sessionId.equals(snapshot.sessionId) && snapshot.stage == expectedStage) {
+						return;
+					}
+				} catch (IOException ignored) {
+					// The isolated process may be atomically replacing this journal; retry.
+				}
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Session " + sessionId + " did not reach journal stage " + expectedStage.name());
 	}
 
 	private static void launchLauncher(Context context) {
