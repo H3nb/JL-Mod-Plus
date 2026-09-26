@@ -29,6 +29,12 @@ final class DiagnosticBundleFormat {
 	static final String TOMBSTONE_ENTRY = "evidence/tombstone-summary.txt";
 	static final int MAX_TEXT_ENTRY_BYTES = 256 * 1024;
 
+	interface ValueSanitizer {
+		String sanitize(String value);
+	}
+
+	private static final ValueSanitizer IDENTITY = value -> value;
+
 	private DiagnosticBundleFormat() {}
 
 	static void write(OutputStream destination, String reportMarkdown, String incidentJson,
@@ -44,10 +50,16 @@ final class DiagnosticBundleFormat {
 	}
 
 	static String incidentJson(IncidentSummary incident) {
-		return incidentJson(incident, null);
+		return incidentJson(incident, null, IDENTITY);
 	}
 
 	static String incidentJson(IncidentSummary incident, NativeTombstoneSummary.Summary nativeSummary) {
+		return incidentJson(incident, nativeSummary, IDENTITY);
+	}
+
+	static String incidentJson(IncidentSummary incident,
+			NativeTombstoneSummary.Summary nativeSummary, ValueSanitizer sanitizer) {
+		if (sanitizer == null) sanitizer = IDENTITY;
 		boolean hasExit = incident.associatedProcessExit != null;
 		boolean hasNative = nativeSummary != null;
 		StringBuilder json = new StringBuilder(1024);
@@ -55,45 +67,49 @@ final class DiagnosticBundleFormat {
 		field(json, "formatVersion", Integer.toString(FORMAT_VERSION), false, true);
 		field(json, "category", incident.category.name(), true, true);
 		field(json, "timestampMillis", Long.toString(incident.incidentTimestampMillis), false, true);
-		field(json, "subject", incident.subject, true, true);
-		field(json, "failureType", incident.rootFailure == null ? null : incident.rootFailure.type, true, true);
-		field(json, "failureMessage", incident.rootFailure == null ? null : incident.rootFailure.message, true, true);
-		field(json, "operation", incident.operation, true, true);
-		field(json, "lifecycleStage", incident.lifecycleStage, true, true);
-		field(json, "topRelevantFrame", incident.topRelevantFrame, true, true);
-		field(json, "midletVersion", incident.midletVersion, true, true);
-		field(json, "entrypoint", incident.entrypoint, true, true);
-		field(json, "jarFingerprint", incident.jarFingerprint, true, true);
-		field(json, "build", incident.build, true, true);
-		field(json, "environment", incident.environment, true, true);
-		field(json, "process", incident.process, true, true);
+		field(json, "subject", safe(sanitizer, incident.subject), true, true);
+		field(json, "failureType", safe(sanitizer, incident.rootFailure == null ? null : incident.rootFailure.type), true, true);
+		field(json, "failureMessage", safe(sanitizer, incident.rootFailure == null ? null : incident.rootFailure.message), true, true);
+		field(json, "operation", safe(sanitizer, incident.operation), true, true);
+		field(json, "lifecycleStage", safe(sanitizer, incident.lifecycleStage), true, true);
+		field(json, "topRelevantFrame", safe(sanitizer, incident.topRelevantFrame), true, true);
+		field(json, "midletVersion", safe(sanitizer, incident.midletVersion), true, true);
+		field(json, "entrypoint", safe(sanitizer, incident.entrypoint), true, true);
+		field(json, "jarFingerprint", safe(sanitizer, incident.jarFingerprint), true, true);
+		field(json, "build", safe(sanitizer, incident.build), true, true);
+		field(json, "environment", safe(sanitizer, incident.environment), true, true);
+		field(json, "process", safe(sanitizer, incident.process), true, true);
 		field(json, "fingerprint", incident.fingerprint, true, hasExit || hasNative);
 		if (hasExit) {
 			IncidentSummary.ProcessExitEvidence exit = incident.associatedProcessExit;
 			json.append("  \"associatedProcessExit\": {\n");
 			field(json, "reason", Integer.toString(exit.reason), false, true, 4);
 			field(json, "status", Integer.toString(exit.status), false, true, 4);
-			field(json, "reasonLabel", exit.reasonLabel, true, true, 4);
-			field(json, "statusLabel", exit.statusLabel, true, true, 4);
-			field(json, "importance", exit.importance, true, true, 4);
-			field(json, "cause", exit.cause, true, true, 4);
-			field(json, "processName", exit.processName, true, true, 4);
-			field(json, "processRole", exit.processRole, true, false, 4);
+			field(json, "reasonLabel", safe(sanitizer, exit.reasonLabel), true, true, 4);
+			field(json, "statusLabel", safe(sanitizer, exit.statusLabel), true, true, 4);
+			field(json, "importance", safe(sanitizer, exit.importance), true, true, 4);
+			field(json, "cause", safe(sanitizer, exit.cause), true, true, 4);
+			field(json, "processName", safe(sanitizer, exit.processName), true, true, 4);
+			field(json, "processRole", safe(sanitizer, exit.processRole), true, false, 4);
 			json.append("  }").append(hasNative ? ',' : ' ').append('\n');
 		}
 		if (hasNative) {
 			json.append("  \"nativeCrash\": {\n");
 			field(json, "signalNumber", number(nativeSummary.signalNumber), false, true, 4);
-			field(json, "signalName", nativeSummary.signalName, true, true, 4);
+			field(json, "signalName", safe(sanitizer, nativeSummary.signalName), true, true, 4);
 			field(json, "signalCode", number(nativeSummary.signalCode), false, true, 4);
-			field(json, "signalCodeName", nativeSummary.signalCodeName, true, true, 4);
-			field(json, "cause", nativeSummary.cause, true, true, 4);
-			field(json, "crashingThread", nativeSummary.threadName, true, true, 4);
-			field(json, "topProjectFrame", topProjectFrame(nativeSummary), true, false, 4);
+			field(json, "signalCodeName", safe(sanitizer, nativeSummary.signalCodeName), true, true, 4);
+			field(json, "cause", safe(sanitizer, nativeSummary.cause), true, true, 4);
+			field(json, "crashingThread", safe(sanitizer, nativeSummary.threadName), true, true, 4);
+			field(json, "topProjectFrame", safe(sanitizer, topProjectFrame(nativeSummary)), true, false, 4);
 			json.append("  }\n");
 		}
 		json.append("}\n");
 		return json.toString();
+	}
+
+	private static String safe(ValueSanitizer sanitizer, String value) {
+		return value == null ? null : sanitizer.sanitize(value);
 	}
 
 	private static String number(int value) {
