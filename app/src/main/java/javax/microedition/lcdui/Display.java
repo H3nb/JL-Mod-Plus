@@ -74,7 +74,6 @@ public class Display {
 	private final Object stateLock = new Object();
 	private boolean hostVisible;
 	private boolean displayForeground;
-	private boolean systemScreenObscured;
 
 	/**
 	 * Applies the Display-owned presentation facts while their transaction lock is still held.
@@ -82,8 +81,7 @@ public class Display {
 	 */
 	private void reconcileCanvasLocked(Displayable displayable, boolean isCurrent) {
 		if (displayable instanceof Canvas canvas) {
-			canvas.updatePresentationState(
-					isCurrent, hostVisible, displayForeground, systemScreenObscured);
+			canvas.updatePresentationState(isCurrent, hostVisible, displayForeground);
 		}
 	}
 
@@ -181,7 +179,6 @@ public class Display {
 		long requestGeneration;
 		synchronized (stateLock) {
 			hostVisible = false;
-			systemScreenObscured = false;
 			target = current;
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			reconcileCanvasLocked(target, true);
@@ -200,7 +197,6 @@ public class Display {
 		Displayable target;
 		synchronized (stateLock) {
 			hostVisible = false;
-			systemScreenObscured = false;
 			target = current;
 			currentRequestGeneration.incrementAndGet();
 			reconcileCanvasLocked(target, true);
@@ -219,17 +215,6 @@ public class Display {
 				return;
 			}
 			hostVisible = visible;
-			reconcileCanvasLocked(current, true);
-		}
-	}
-
-	/** Host-owned menus/dialogs can obscure LCDUI without changing the current Displayable. */
-	public void setSystemScreenObscured(boolean obscured) {
-		synchronized (stateLock) {
-			if (systemScreenObscured == obscured) {
-				return;
-			}
-			systemScreenObscured = obscured;
 			reconcileCanvasLocked(current, true);
 		}
 	}
