@@ -288,6 +288,7 @@ public class CrashRuntimeIsolationTest {
 			assertFalse(backgrounded.isRuntimeSelected());
 			String generation = backgrounded.getGeneration();
 			assertNotNull(generation);
+			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
 
 			// A live lease is not enough to route the launcher back into the MIDlet after the guest
 			// deliberately yielded emulator foreground to Library.
