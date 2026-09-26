@@ -155,46 +155,50 @@ final class DiagnosticBundleStore {
 	private static Uri writePublicBundle(Context context, String fileName, String report,
 			String incidentJson, String anrTrace, String tombstone) throws IOException {
 		return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-				? writeMediaStore(context, fileName, report, incidentJson, anrTrace, tombstone)
+				? Api29Impl.write(context, fileName, report, incidentJson, anrTrace, tombstone)
 				: writeLegacy(fileName, report, incidentJson, anrTrace, tombstone);
 	}
 
-	private static Uri writeMediaStore(Context context, String fileName, String report,
-			String incidentJson, String anrTrace, String tombstone) throws IOException {
-		ContentResolver resolver = context.getContentResolver();
-		ContentValues values = new ContentValues();
-		values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-		values.put(MediaStore.MediaColumns.MIME_TYPE, MIME_ZIP);
-		values.put(MediaStore.MediaColumns.RELATIVE_PATH,
-				Environment.DIRECTORY_DOWNLOADS + "/" + PUBLIC_DIRECTORY);
-		values.put(MediaStore.MediaColumns.IS_PENDING, 1);
-		Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-		if (uri == null) throw new IOException("Unable to create diagnostic bundle");
-		boolean published = false;
-		try {
-			try (OutputStream output = resolver.openOutputStream(uri, "w")) {
-				if (output == null) throw new IOException("Unable to open diagnostic bundle");
-				DiagnosticBundleFormat.write(output, report, incidentJson, anrTrace, tombstone);
-			}
-			ContentValues publish = new ContentValues();
-			publish.put(MediaStore.MediaColumns.IS_PENDING, 0);
-			if (resolver.update(uri, publish, null, null) != 1) {
-				throw new IOException("Unable to publish diagnostic bundle");
-			}
-			Metadata candidate = new Metadata(
-					uri.toString(), fileName, DiagnosticBundleFormat.FORMAT_VERSION, "");
-			if (!exists(context, candidate)) {
-				throw new IOException("Diagnostic bundle was published with an unexpected identity");
-			}
-			published = true;
-			return uri;
-		} finally {
-			if (!published) {
-				try {
-					resolver.delete(uri, null, null);
-				} catch (RuntimeException ignored) {}
+	@androidx.annotation.RequiresApi(Build.VERSION_CODES.Q)
+	private static final class Api29Impl {
+		static Uri write(Context context, String fileName, String report,
+				String incidentJson, String anrTrace, String tombstone) throws IOException {
+			ContentResolver resolver = context.getContentResolver();
+			ContentValues values = new ContentValues();
+			values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+			values.put(MediaStore.MediaColumns.MIME_TYPE, MIME_ZIP);
+			values.put(MediaStore.MediaColumns.RELATIVE_PATH,
+					Environment.DIRECTORY_DOWNLOADS + "/" + PUBLIC_DIRECTORY);
+			values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+			Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+			if (uri == null) throw new IOException("Unable to create diagnostic bundle");
+			boolean published = false;
+			try {
+				try (OutputStream output = resolver.openOutputStream(uri, "w")) {
+					if (output == null) throw new IOException("Unable to open diagnostic bundle");
+					DiagnosticBundleFormat.write(output, report, incidentJson, anrTrace, tombstone);
+				}
+				ContentValues publish = new ContentValues();
+				publish.put(MediaStore.MediaColumns.IS_PENDING, 0);
+				if (resolver.update(uri, publish, null, null) != 1) {
+					throw new IOException("Unable to publish diagnostic bundle");
+				}
+				Metadata candidate = new Metadata(
+						uri.toString(), fileName, DiagnosticBundleFormat.FORMAT_VERSION, "");
+				if (!exists(context, candidate)) {
+					throw new IOException("Diagnostic bundle was published with an unexpected identity");
+				}
+				published = true;
+				return uri;
+			} finally {
+				if (!published) {
+					try {
+						resolver.delete(uri, null, null);
+					} catch (RuntimeException ignored) {}
+				}
 			}
 		}
+	
 	}
 
 	@SuppressWarnings("deprecation")
