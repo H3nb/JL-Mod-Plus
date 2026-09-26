@@ -217,6 +217,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 			}
 			if (deletingRecord) {
 				if (result != null) DiagnosticBundleStore.deleteTracked(appContext, target);
+				preparingBundle = false;
 				return;
 			}
 			DiagnosticBundleStore.PreparedBundle finalResult = result;
@@ -240,7 +241,8 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 				.addCategory(Intent.CATEGORY_OPENABLE)
 				.setType("application/zip");
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-				&& ContentResolverScheme.isContent(preparedBundle.uri)) {
+				&& preparedBundle.uri != null
+				&& "content".equals(preparedBundle.uri.getScheme())) {
 			locate.putExtra(DocumentsContract.EXTRA_INITIAL_URI, preparedBundle.uri);
 		}
 		try {
@@ -302,11 +304,4 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		}, "JLP-delete-diagnostic").start();
 	}
 
-	private static final class ContentResolverScheme {
-		private ContentResolverScheme() {}
-
-		static boolean isContent(Uri uri) {
-			return uri != null && "content".equals(uri.getScheme());
-		}
-	}
 }
