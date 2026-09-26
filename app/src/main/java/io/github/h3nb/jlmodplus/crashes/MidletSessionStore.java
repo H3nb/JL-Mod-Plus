@@ -33,10 +33,10 @@ import java.util.Properties;
 /**
  * Small cross-process routing record for the one MIDlet runtime owned by the isolated process.
  *
- * <p>The record is not lifecycle state and cannot prove that a Java heap still exists. Launcher
- * routing combines its opaque generation with the installed runtime's OS file lease. A process
- * death leaves the record behind, but the released lease makes that generation stale rather than
- * turning a later cold launch into a fake resume.</p>
+ * <p>The record is not lifecycle state and cannot prove that a Java heap still exists. Its opaque
+ * generation fences cross-process routing updates, while {@code runtimeSelected} records whether
+ * that live runtime is the emulator foreground destination. The installed runtime's OS file lease
+ * remains the independent liveness proof.</p>
  */
 public final class MidletSessionStore {
     private static final Object LOCK = new Object();
