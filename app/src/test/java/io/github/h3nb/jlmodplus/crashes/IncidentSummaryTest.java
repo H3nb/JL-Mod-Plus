@@ -80,6 +80,27 @@ public class IncidentSummaryTest {
 	}
 
 	@Test
+	public void laterAssociatedExitDoesNotChangeJavaIncidentIdentity() {
+		IncidentSummary withoutExit = minimalWithExit(null);
+		IncidentSummary.ProcessExitEvidence exit = new IncidentSummary.ProcessExitEvidence(
+				ProcessExitStore.REASON_SIGNALED,
+				9,
+				"Signal termination",
+				"SIGKILL (9)",
+				"cached",
+				"unknown",
+				"io.github.h3nb.jlmodplus:midlet",
+				"midlet",
+				null,
+				36,
+				"Device");
+		IncidentSummary withExit = minimalWithExit(exit);
+
+		assertEquals(withoutExit.fingerprint, withExit.fingerprint);
+		assertEquals(withoutExit.bundleFileName(), withExit.bundleFileName());
+	}
+
+	@Test
 	public void equivalentEvidenceHasStableFingerprintAndFilename() {
 		IncidentSummary first = minimal(0L, "java.lang.IllegalStateException: boom");
 		IncidentSummary second = minimal(0L, "java.lang.IllegalStateException: different message");
@@ -88,6 +109,28 @@ public class IncidentSummaryTest {
 		assertEquals(first.bundleFileName(), second.bundleFileName());
 		assertTrue(first.bundleFileName().startsWith("19700101-000000-000-"));
 		assertTrue(first.bundleFileName().endsWith(".zip"));
+	}
+
+	private static IncidentSummary minimalWithExit(
+			IncidentSummary.ProcessExitEvidence exit) {
+		IncidentSummary.JavaFailure failure = IncidentSummary.analyzeJavaFailure(
+				"java.lang.IllegalStateException: boom\\n\\tat example.Game.run(Game.java:42)");
+		return new IncidentSummary(
+				IncidentSummary.Category.MIDLET_CRASH,
+				1234L,
+				"Game",
+				failure,
+				null,
+				null,
+				failure.frame,
+				"1.0",
+				"example.Game",
+				"abc123",
+				"deadbeef · emulatorDebug",
+				"Android 16 · Device",
+				"midlet",
+				Collections.emptyList(),
+				exit);
 	}
 
 	private static IncidentSummary minimal(long timestamp, String failureLine) {
