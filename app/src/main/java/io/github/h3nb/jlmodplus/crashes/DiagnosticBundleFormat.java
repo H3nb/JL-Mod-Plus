@@ -34,7 +34,7 @@ final class DiagnosticBundleFormat {
 	static void write(OutputStream destination, String reportMarkdown, String incidentJson,
 			String anrTrace, String tombstoneSummary) throws IOException {
 		if (destination == null) throw new IOException("Missing bundle destination");
-		ZipOutputStream zip = new ZipOutputStream(destination, StandardCharsets.UTF_8);
+		ZipOutputStream zip = new ZipOutputStream(destination);
 		writeRequired(zip, REPORT_ENTRY, reportMarkdown);
 		writeRequired(zip, INCIDENT_ENTRY, incidentJson);
 		writeOptional(zip, ANR_ENTRY, anrTrace);
@@ -140,7 +140,8 @@ final class DiagnosticBundleFormat {
 
 	private static void field(StringBuilder json, String name, String value, boolean quote,
 			boolean comma, int indent) {
-		json.append(" ".repeat(indent)).append('"').append(escape(name)).append("\": ");
+		for (int i = 0; i < indent; i++) json.append(' ');
+		json.append('"').append(escape(name)).append("\": ");
 		if (value == null) {
 			json.append("null");
 		} else if (quote) {
