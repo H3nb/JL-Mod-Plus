@@ -595,7 +595,7 @@ public final class LocalDiagnosticRepository {
 				exit.reason,
 				exit.status,
 				ProcessExitStore.reasonLabel(exit.reason),
-				ProcessExitStore.statusLabel(exit),
+				canonicalProcessStatus(exit),
 				ProcessExitStore.importanceLabel(exit.importance),
 				cause,
 				exit.processName,
@@ -603,6 +603,16 @@ public final class LocalDiagnosticRepository {
 				exit.description,
 				exit.stateSdk,
 				joinDevice(exit.deviceBrand, exit.deviceModel));
+	}
+
+	private static String canonicalProcessStatus(ProcessExitStore.Snapshot exit) {
+		String status = ProcessExitStore.statusLabel(exit);
+		if (status == null) return null;
+		if (exit.reason == ProcessExitStore.REASON_SIGNALED && exit.status == OsConstants.SIGKILL) {
+			int qualifier = status.indexOf(';');
+			if (qualifier >= 0) return status.substring(0, qualifier).trim();
+		}
+		return status;
 	}
 
 	private static List<IncidentSummary.Breadcrumb> breadcrumbs(CrashContextStore.Snapshot context) {
