@@ -227,6 +227,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	@Override
 	public boolean handleMessage(@NonNull Message msg) {
 		if (msg.what == AMS_FOREGROUND && msg.obj instanceof Long generation) {
+			if (!Display.isForegroundRequestCurrent(generation)) {
+				return true;
+			}
 			displayForegroundGeneration = generation;
 		}
 		handleSignal(msg.what);

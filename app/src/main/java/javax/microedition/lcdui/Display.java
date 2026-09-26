@@ -136,6 +136,10 @@ public class Display {
 	 * Grants display ownership only if the activation still belongs to the latest foreground edge.
 	 * This is the stale-completion fence for rapid Home/return while startApp() is still executing.
 	 */
+	public static synchronized boolean isForegroundRequestCurrent(long generation) {
+		return runtimeForegroundRequested && generation == runtimeForegroundGeneration;
+	}
+
 	public static boolean grantForeground(long generation) {
 		Display current;
 		synchronized (Display.class) {

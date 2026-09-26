@@ -16,7 +16,9 @@ public class CanvasVisibilityTest {
 		Display.revokeForeground();
 		long returnedForeground = Display.requestForeground();
 
+		assertFalse(Display.isForegroundRequestCurrent(firstForeground));
 		assertFalse(Display.grantForeground(firstForeground));
+		assertTrue(Display.isForegroundRequestCurrent(returnedForeground));
 		assertTrue(Display.grantForeground(returnedForeground));
 	}
 
