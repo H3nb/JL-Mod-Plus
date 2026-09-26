@@ -15,8 +15,10 @@
 package io.github.h3nb.jlmodplus.crashes;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 
@@ -49,6 +51,7 @@ public class MidletSessionStoreTest {
             assertEquals("Demo MIDlet", state.getAppName());
             assertEquals("com.example.DemoMidlet", state.getMainClass());
             assertEquals(73L, state.getAppId());
+            assertTrue(state.isRuntimeSelected());
         } finally {
             MidletSessionStore.clear(context);
         }
@@ -73,6 +76,28 @@ public class MidletSessionStoreTest {
 
             MidletSessionStore.clear(context, "new-generation");
             assertNull(MidletSessionStore.read(context));
+        } finally {
+            MidletSessionStore.clear(context);
+        }
+    }
+
+    @Test
+    public void foregroundSelectionIsGenerationFenced() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        try {
+            MidletSessionStore.clear(context);
+            MidletSessionStore.markStarted(
+                    context, "/data/jlmod/converted/demo", "Demo", "example.Demo", 3L,
+                    "current-generation");
+
+            MidletSessionStore.setRuntimeSelected(context, "stale-generation", false);
+            assertTrue(MidletSessionStore.read(context).isRuntimeSelected());
+
+            MidletSessionStore.setRuntimeSelected(context, "current-generation", false);
+            assertFalse(MidletSessionStore.read(context).isRuntimeSelected());
+
+            MidletSessionStore.setRuntimeSelected(context, "current-generation", true);
+            assertTrue(MidletSessionStore.read(context).isRuntimeSelected());
         } finally {
             MidletSessionStore.clear(context);
         }
