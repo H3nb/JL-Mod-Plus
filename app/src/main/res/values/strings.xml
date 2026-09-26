@@ -504,6 +504,7 @@
     <string name="START_CMD">Start</string>
     <string name="SWAP_SIZES">Swap Sizes</string>
     <string name="take_screenshot">Take Screenshot</string>
+    <string name="maximum">Maximum</string>
     <string name="unlimited">Unlimited</string>
     <string name="version">Version: </string>
     <string name="virtual_key_0" translatable="false">0</string>

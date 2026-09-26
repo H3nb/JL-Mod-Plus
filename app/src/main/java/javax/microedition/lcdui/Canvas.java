@@ -148,6 +148,7 @@ public abstract class Canvas extends Displayable {
 	private static ProfileModel settings;
 	private static boolean parallelRedraw;
 	private static int fpsLimit;
+	private static volatile int hostDisplayMaximumFps;
 	private static boolean screenshotRawMode;
 	private static boolean timingOverlayEnabled;
 
@@ -239,6 +240,14 @@ public abstract class Canvas extends Displayable {
 
 	public static void setLimitFps(int fpsLimit) {
 		Canvas.fpsLimit = fpsLimit == -1 ? settings.fpsLimit : fpsLimit;
+	}
+
+	public static void setHostDisplayMaximumFps(int fps) {
+		if (fps > 0) hostDisplayMaximumFps = fps;
+	}
+
+	static int resolveFrameRateLimit(int configuredFps, int displayMaximumFps) {
+		return configuredFps == 0 ? displayMaximumFps : configuredFps;
 	}
 
 	public static void setScreenshotRawMode(boolean enable) {
@@ -1092,7 +1101,8 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void limitFps() {
-		framePacer.pace(fpsLimit, !EventQueue.isInCallback());
+		int compatibilityFps = resolveFrameRateLimit(fpsLimit, hostDisplayMaximumFps);
+		framePacer.pace(compatibilityFps, !EventQueue.isInCallback());
 	}
 
 	private void publishFrameLocked() {

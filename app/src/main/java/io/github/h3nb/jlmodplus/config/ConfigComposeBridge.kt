@@ -921,7 +921,7 @@ private fun ScreenSection(
             title = stringResource(R.string.PREF_LIMIT_FPS),
             description = stringResource(R.string.config_help_fps_limit),
             value = form.fpsLimit,
-            fallbackLabel = stringResource(R.string.unlimited),
+            fallbackLabel = stringResource(R.string.maximum),
             keyboardType = KeyboardType.Number,
             onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
         )

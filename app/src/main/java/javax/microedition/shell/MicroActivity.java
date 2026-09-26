@@ -108,6 +108,9 @@ public class MicroActivity extends AppCompatActivity {
 	private static final long IME_REQUEST_RETRY_DELAY_MILLIS = 100L;
 	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
 
+	private int hostDisplayId = -1;
+	private int hostDisplayMaximumFps;
+
 	private final Object displayRequestLock = new Object();
 	private volatile Displayable current;
 	/** UI-thread owner of the Displayable actually mounted in displayableContainer. */
@@ -656,6 +659,49 @@ public class MicroActivity extends AppCompatActivity {
 		binding.toolbar.setLayoutParams(layoutParams);
 	}
 
+	/** Resolves the stable capability of the Display that actually hosts the runtime View. */
+	private void refreshHostDisplayMaximumFps() {
+		if (binding == null) return;
+		android.view.Display display = binding.getRoot().getDisplay();
+		if (display == null || !display.isValid()) return;
+
+		int displayId = display.getDisplayId();
+		if (displayId == hostDisplayId && hostDisplayMaximumFps > 0) return;
+
+		int maximumFps = resolveMaximumDisplayFps(display);
+		if (maximumFps <= 0) return;
+
+		hostDisplayId = displayId;
+		hostDisplayMaximumFps = maximumFps;
+		Canvas.setHostDisplayMaximumFps(maximumFps);
+	}
+
+	private static int resolveMaximumDisplayFps(android.view.Display display) {
+		android.view.Display.Mode[] modes = display.getSupportedModes();
+		float[] modeRefreshRates = new float[modes == null ? 0 : modes.length];
+		for (int i = 0; i < modeRefreshRates.length; i++) {
+			modeRefreshRates[i] = modes[i].getRefreshRate();
+		}
+		// Android 16 reports supported render rates directly; older releases may expose
+		// additional capabilities through supported display modes.
+		return maximumSupportedFrameRate(display.getSupportedRefreshRates(), modeRefreshRates);
+	}
+
+	static int maximumSupportedFrameRate(float[] supportedRefreshRates,
+			float[] supportedModeRefreshRates) {
+		float maximum = maximumValidRate(0f, supportedRefreshRates);
+		maximum = maximumValidRate(maximum, supportedModeRefreshRates);
+		return maximum > 0f ? Math.max(1, Math.round(maximum)) : 0;
+	}
+
+	private static float maximumValidRate(float maximum, float[] rates) {
+		if (rates == null) return maximum;
+		for (float rate : rates) {
+			if (Float.isFinite(rate) && rate > maximum) maximum = rate;
+		}
+		return maximum;
+	}
+
 	public void lockNightMode() {
 		int current = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
 		if (current == Configuration.UI_MODE_NIGHT_YES) {
@@ -677,6 +723,7 @@ public class MicroActivity extends AppCompatActivity {
 			finish();
 			return;
 		}
+		refreshHostDisplayMaximumFps();
 		externalAndroidHandoff = false;
 		beginAmsForegroundTransition();
 	}
@@ -755,6 +802,7 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
+		refreshHostDisplayMaximumFps();
 		refreshCanvasBackground();
 		if (binding != null) binding.getRoot().post(this::updateOverlayLocation);
 		scheduleVirtualKeyboardEditorChromeUpdate();
@@ -1871,6 +1919,7 @@ public class MicroActivity extends AppCompatActivity {
 			updateRuntimeMenuState(next);
 			applyGuestInsets(next);
 			if (replaceMountedView && next != null) {
+				refreshHostDisplayMaximumFps();
 				binding.displayableContainer.addView(next.getDisplayableView());
 			}
 			presentedDisplayable = next;
