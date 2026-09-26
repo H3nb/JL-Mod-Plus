@@ -109,7 +109,6 @@ public class MicroActivity extends AppCompatActivity {
 	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
 
 	private int hostDisplayId = -1;
-	private int hostDisplayMaximumFps;
 
 	private final Object displayRequestLock = new Object();
 	private volatile Displayable current;
@@ -677,13 +676,12 @@ public class MicroActivity extends AppCompatActivity {
 		if (display == null || !display.isValid()) return;
 
 		int displayId = display.getDisplayId();
-		if (displayId == hostDisplayId && hostDisplayMaximumFps > 0) return;
+		if (displayId == hostDisplayId) return;
 
 		int maximumFps = resolveMaximumDisplayFps(display);
 		if (maximumFps <= 0) return;
 
 		hostDisplayId = displayId;
-		hostDisplayMaximumFps = maximumFps;
 		Canvas.setHostDisplayMaximumFps(maximumFps);
 	}
 
@@ -734,7 +732,6 @@ public class MicroActivity extends AppCompatActivity {
 			finish();
 			return;
 		}
-		refreshHostDisplayMaximumFps();
 		externalAndroidHandoff = false;
 		beginAmsForegroundTransition();
 	}
@@ -1930,7 +1927,6 @@ public class MicroActivity extends AppCompatActivity {
 			updateRuntimeMenuState(next);
 			applyGuestInsets(next);
 			if (replaceMountedView && next != null) {
-				refreshHostDisplayMaximumFps();
 				binding.displayableContainer.addView(next.getDisplayableView());
 			}
 			presentedDisplayable = next;
