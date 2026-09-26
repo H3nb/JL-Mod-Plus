@@ -25,6 +25,8 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 
+import androidx.annotation.RequiresApi;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -46,46 +48,32 @@ import java.util.zip.ZipInputStream;
  */
 final class DiagnosticBundleStore {
 	static final String PUBLIC_DIRECTORY = "JL-Mod Plus Diagnostics";
-	static final String DISPLAY_LOCATION = "Downloads → " + PUBLIC_DIRECTORY;
 
 	private static final String PREFS = "diagnostic_bundle_ownership";
 	private static final String KEY_URI = ".uri";
 	private static final String KEY_FILE = ".file";
 	private static final String KEY_FORMAT = ".format";
-	private static final String KEY_FINGERPRINT = ".fingerprint";
+	private static final String KEY_CONTENT = ".content";
 	private static final String MIME_ZIP = "application/zip";
 
 	private DiagnosticBundleStore() {}
 
-	static PreparedBundle ensure(Context context, LocalDiagnosticRepository.Record record)
-			throws IOException {
+	static synchronized PreparedBundle ensure(
+			Context context, LocalDiagnosticRepository.Record record) throws IOException {
 		if (context == null || record == null || record.getIncidentSummary() == null) {
 			throw new IOException("Missing diagnostic incident");
 		}
+
 		IncidentSummary incident = record.getIncidentSummary();
 		String fileName = incident.bundleFileName();
 		String key = key(record.getId());
 		SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-		Metadata existing = read(preferences, key);
 		NativeTombstoneSummary.Summary nativeSummary = nativeSummary(context, record);
 
-		if (existing != null && metadataMatches(existing, fileName, incident.fingerprint)
-				&& isReusable(context, existing)) {
-			return prepared(context, incident, nativeSummary, Uri.parse(existing.uri), fileName);
-		}
-
-		if (existing != null) {
-			boolean removed = deleteOwned(context, existing);
-			if (!removed && exists(context, existing)) {
-				throw new IOException("Unable to replace tracked diagnostic bundle");
-			}
-			clear(preferences, key);
-		}
-
 		String javaStack = DiagnosticExportSanitizer.sanitize(context, record.getStackTrace());
-		String report = GitHubDiagnosticIssue.reportMarkdown(
-				incident, nativeSummary, fileName, javaStack);
-		report = DiagnosticExportSanitizer.sanitize(context, report);
+		String report = DiagnosticExportSanitizer.sanitize(
+				context, GitHubDiagnosticIssue.reportMarkdown(
+						incident, nativeSummary, fileName, javaStack));
 		String incidentJson = DiagnosticBundleFormat.incidentJson(
 				incident,
 				nativeSummary,
@@ -100,28 +88,42 @@ final class DiagnosticBundleStore {
 		String tombstone = nativeSummary == null ? null
 				: DiagnosticExportSanitizer.sanitize(
 						context, NativeTombstoneSummary.format(nativeSummary));
+		String contentFingerprint = DiagnosticBundleFormat.contentFingerprint(
+				report, incidentJson, anrTrace, tombstone);
 
-		Uri uri = writePublicBundle(context, fileName, report, incidentJson, anrTrace, tombstone);
-		Metadata complete = new Metadata(
-				uri.toString(), fileName, DiagnosticBundleFormat.FORMAT_VERSION, incident.fingerprint);
-		boolean stored = preferences.edit()
-				.putString(key + KEY_URI, complete.uri)
-				.putString(key + KEY_FILE, complete.fileName)
-				.putInt(key + KEY_FORMAT, complete.formatVersion)
-				.putString(key + KEY_FINGERPRINT, complete.fingerprint)
-				.commit();
-		if (!stored) {
-			deleteOwned(context, complete);
-			throw new IOException("Unable to persist diagnostic bundle ownership");
+		Metadata existing = read(preferences, key);
+		if (existing != null
+				&& metadataMatches(existing, fileName, contentFingerprint)
+				&& isReusable(context, existing)) {
+			return prepared(context, incident, nativeSummary, Uri.parse(existing.uri), fileName);
 		}
-		return prepared(context, incident, nativeSummary, uri, fileName);
+
+		if (existing != null) {
+			boolean removed = deleteOwned(context, existing);
+			if (!removed && ownedArtifactExists(context, existing)) {
+				throw new IOException("Unable to replace tracked diagnostic bundle");
+			}
+			if (!clear(preferences, key)) {
+				throw new IOException("Unable to clear diagnostic bundle ownership");
+			}
+		}
+
+		Metadata complete = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+				? Api29Impl.write(
+						context, preferences, key, fileName, contentFingerprint,
+						report, incidentJson, anrTrace, tombstone)
+				: writeLegacy(
+						preferences, key, fileName, contentFingerprint,
+						report, incidentJson, anrTrace, tombstone);
+		return prepared(context, incident, nativeSummary, Uri.parse(complete.uri), fileName);
 	}
 
 	/**
 	 * Deletes only the exact artifact tracked for this record. Failure never implies the source
 	 * diagnostic must be retained.
 	 */
-	static boolean deleteTracked(Context context, LocalDiagnosticRepository.Record record) {
+	static synchronized boolean deleteTracked(
+			Context context, LocalDiagnosticRepository.Record record) {
 		if (context == null || record == null) return true;
 		String key = key(record.getId());
 		SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -129,9 +131,8 @@ final class DiagnosticBundleStore {
 		if (metadata == null) return true;
 
 		boolean deleted = deleteOwned(context, metadata);
-		if (deleted || !exists(context, metadata)) {
-			clear(preferences, key);
-			return true;
+		if (deleted || !ownedArtifactExists(context, metadata)) {
+			return clear(preferences, key);
 		}
 		return false;
 	}
@@ -157,17 +158,11 @@ final class DiagnosticBundleStore {
 		return attachment == null ? null : NativeTombstoneSummary.read(context, attachment.uri);
 	}
 
-	private static Uri writePublicBundle(Context context, String fileName, String report,
-			String incidentJson, String anrTrace, String tombstone) throws IOException {
-		return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-				? Api29Impl.write(context, fileName, report, incidentJson, anrTrace, tombstone)
-				: writeLegacy(fileName, report, incidentJson, anrTrace, tombstone);
-	}
-
-	@androidx.annotation.RequiresApi(Build.VERSION_CODES.Q)
+	@RequiresApi(Build.VERSION_CODES.Q)
 	private static final class Api29Impl {
-		static Uri write(Context context, String fileName, String report,
-				String incidentJson, String anrTrace, String tombstone) throws IOException {
+		static Metadata write(Context context, SharedPreferences preferences, String key,
+				String fileName, String contentFingerprint, String report, String incidentJson,
+				String anrTrace, String tombstone) throws IOException {
 			ContentResolver resolver = context.getContentResolver();
 			ContentValues values = new ContentValues();
 			values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
@@ -177,7 +172,20 @@ final class DiagnosticBundleStore {
 			values.put(MediaStore.MediaColumns.IS_PENDING, 1);
 			Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
 			if (uri == null) throw new IOException("Unable to create diagnostic bundle");
-			boolean published = false;
+
+			Metadata metadata = new Metadata(
+					uri.toString(), fileName, DiagnosticBundleFormat.FORMAT_VERSION,
+					contentFingerprint);
+			if (!exists(context, metadata)) {
+				deleteMediaStoreUri(resolver, uri);
+				throw new IOException("Diagnostic bundle was created with an unexpected identity");
+			}
+			if (!claim(preferences, key, metadata)) {
+				deleteMediaStoreUri(resolver, uri);
+				throw new IOException("Unable to persist diagnostic bundle ownership");
+			}
+
+			boolean complete = false;
 			try {
 				try (OutputStream output = resolver.openOutputStream(uri, "w")) {
 					if (output == null) throw new IOException("Unable to open diagnostic bundle");
@@ -188,59 +196,90 @@ final class DiagnosticBundleStore {
 				if (resolver.update(uri, publish, null, null) != 1) {
 					throw new IOException("Unable to publish diagnostic bundle");
 				}
-				Metadata candidate = new Metadata(
-						uri.toString(), fileName, DiagnosticBundleFormat.FORMAT_VERSION, "");
-				if (!exists(context, candidate)) {
-					throw new IOException("Diagnostic bundle was published with an unexpected identity");
+				if (!isReusable(context, metadata)) {
+					throw new IOException("Published diagnostic bundle is not readable");
 				}
-				published = true;
-				return uri;
+				complete = true;
+				return metadata;
 			} finally {
-				if (!published) {
-					try {
-						resolver.delete(uri, null, null);
-					} catch (RuntimeException ignored) {}
-				}
+				if (!complete) cleanupFailedWrite(context, preferences, key, metadata);
 			}
 		}
-	
+
+		private static void deleteMediaStoreUri(ContentResolver resolver, Uri uri) {
+			try {
+				resolver.delete(uri, null, null);
+			} catch (RuntimeException ignored) {}
+		}
 	}
 
 	@SuppressWarnings("deprecation")
-	private static Uri writeLegacy(String fileName, String report, String incidentJson,
+	private static Metadata writeLegacy(SharedPreferences preferences, String key,
+			String fileName, String contentFingerprint, String report, String incidentJson,
 			String anrTrace, String tombstone) throws IOException {
 		File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
 		File directory = new File(downloads, PUBLIC_DIRECTORY);
 		if (!directory.isDirectory() && !directory.mkdirs()) {
 			throw new IOException("Unable to create diagnostic bundle directory");
 		}
+
 		File destination = new File(directory, fileName);
-		if (destination.exists()) {
-			// Without ownership metadata an existing public file is not ours to replace.
+		File partial = new File(directory, "." + fileName + ".part");
+		if (destination.exists() || partial.exists()) {
+			// Without ownership metadata neither public file is ours to replace.
 			throw new IOException("Diagnostic bundle filename is already in use");
 		}
-		File partial = File.createTempFile(".jlp-diagnostic-", ".part", directory);
+
+		Metadata metadata = new Metadata(
+				Uri.fromFile(destination).toString(), fileName,
+				DiagnosticBundleFormat.FORMAT_VERSION, contentFingerprint);
+		if (!claim(preferences, key, metadata)) {
+			throw new IOException("Unable to persist diagnostic bundle ownership");
+		}
+
 		boolean complete = false;
 		try {
 			try (FileOutputStream output = new FileOutputStream(partial, false)) {
 				DiagnosticBundleFormat.write(output, report, incidentJson, anrTrace, tombstone);
 				output.getFD().sync();
 			}
-			// Re-check immediately before publication. Never deliberately replace an untracked file.
+			// Never deliberately replace an untracked public file.
 			if (destination.exists() || !partial.renameTo(destination)) {
 				throw new IOException("Unable to publish diagnostic bundle safely");
 			}
+			if (!isReusable(null, metadata)) {
+				throw new IOException("Published diagnostic bundle is not readable");
+			}
 			complete = true;
-			return Uri.fromFile(destination);
+			return metadata;
 		} finally {
-			if (!complete && partial.exists()) partial.delete();
+			if (!complete) cleanupFailedWrite(null, preferences, key, metadata);
 		}
 	}
 
-	private static boolean metadataMatches(Metadata metadata, String fileName, String fingerprint) {
+	private static void cleanupFailedWrite(Context context, SharedPreferences preferences,
+			String key, Metadata metadata) {
+		if (deleteOwned(context, metadata) || !ownedArtifactExists(context, metadata)) {
+			clear(preferences, key);
+		}
+		// If cleanup fails, retain ownership metadata so retry/delete can clean the exact artifact.
+	}
+
+	private static boolean claim(
+			SharedPreferences preferences, String key, Metadata metadata) {
+		return preferences.edit()
+				.putString(key + KEY_URI, metadata.uri)
+				.putString(key + KEY_FILE, metadata.fileName)
+				.putInt(key + KEY_FORMAT, metadata.formatVersion)
+				.putString(key + KEY_CONTENT, metadata.contentFingerprint)
+				.commit();
+	}
+
+	private static boolean metadataMatches(
+			Metadata metadata, String fileName, String contentFingerprint) {
 		return metadata.formatVersion == DiagnosticBundleFormat.FORMAT_VERSION
 				&& fileName.equals(metadata.fileName)
-				&& fingerprint.equals(metadata.fingerprint);
+				&& contentFingerprint.equals(metadata.contentFingerprint);
 	}
 
 	private static boolean isReusable(Context context, Metadata metadata) {
@@ -269,7 +308,8 @@ final class DiagnosticBundleStore {
 			File file = safeLegacyFile(uri, metadata.fileName);
 			return file != null && file.isFile();
 		}
-		if (!ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())
+		if (context == null
+				|| !ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())
 				|| !"media".equals(uri.getAuthority())) {
 			return false;
 		}
@@ -288,19 +328,37 @@ final class DiagnosticBundleStore {
 			File file = safeLegacyFile(uri, metadata.fileName);
 			return file == null ? null : new FileInputStream(file);
 		}
-		return context.getContentResolver().openInputStream(uri);
+		return context == null ? null : context.getContentResolver().openInputStream(uri);
+	}
+
+	private static boolean ownedArtifactExists(Context context, Metadata metadata) {
+		if (metadata == null || metadata.uri == null) return false;
+		Uri uri = Uri.parse(metadata.uri);
+		if ("file".equals(uri.getScheme())) {
+			File file = safeLegacyFile(uri, metadata.fileName);
+			File partial = safeLegacyPartial(uri, metadata.fileName);
+			return file != null && file.exists() || partial != null && partial.exists();
+		}
+		return exists(context, metadata);
 	}
 
 	private static boolean deleteOwned(Context context, Metadata metadata) {
-		if (metadata == null || metadata.fileName == null) return false;
+		if (metadata == null || metadata.fileName == null || metadata.uri == null) return false;
 		Uri uri = Uri.parse(metadata.uri);
 		try {
 			if ("file".equals(uri.getScheme())) {
 				File file = safeLegacyFile(uri, metadata.fileName);
-				return file == null || !file.exists() || (file.isFile() && file.delete());
+				File partial = safeLegacyPartial(uri, metadata.fileName);
+				if (file == null || partial == null) return false;
+				boolean fileDeleted = !file.exists() || file.isFile() && file.delete();
+				boolean partialDeleted = !partial.exists() || partial.isFile() && partial.delete();
+				return fileDeleted && partialDeleted;
 			}
-			if (!ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())
-					|| !"media".equals(uri.getAuthority())) return false;
+			if (context == null
+					|| !ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())
+					|| !"media".equals(uri.getAuthority())) {
+				return false;
+			}
 			if (!exists(context, metadata)) return true;
 			return context.getContentResolver().delete(uri, null, null) == 1;
 		} catch (RuntimeException e) {
@@ -324,22 +382,28 @@ final class DiagnosticBundleStore {
 		}
 	}
 
+	private static File safeLegacyPartial(Uri uri, String expectedFileName) {
+		File file = safeLegacyFile(uri, expectedFileName);
+		if (file == null || file.getParentFile() == null) return null;
+		return new File(file.getParentFile(), "." + expectedFileName + ".part");
+	}
+
 	private static Metadata read(SharedPreferences preferences, String key) {
 		String uri = preferences.getString(key + KEY_URI, null);
 		String file = preferences.getString(key + KEY_FILE, null);
-		String fingerprint = preferences.getString(key + KEY_FINGERPRINT, null);
-		if (uri == null || file == null || fingerprint == null) return null;
+		String contentFingerprint = preferences.getString(key + KEY_CONTENT, null);
+		if (uri == null || file == null || contentFingerprint == null) return null;
 		return new Metadata(
-				uri, file, preferences.getInt(key + KEY_FORMAT, -1), fingerprint);
+				uri, file, preferences.getInt(key + KEY_FORMAT, -1), contentFingerprint);
 	}
 
-	private static void clear(SharedPreferences preferences, String key) {
-		preferences.edit()
+	private static boolean clear(SharedPreferences preferences, String key) {
+		return preferences.edit()
 				.remove(key + KEY_URI)
 				.remove(key + KEY_FILE)
 				.remove(key + KEY_FORMAT)
-				.remove(key + KEY_FINGERPRINT)
-				.apply();
+				.remove(key + KEY_CONTENT)
+				.commit();
 	}
 
 	private static String key(String recordId) {
@@ -375,13 +439,13 @@ final class DiagnosticBundleStore {
 		final String uri;
 		final String fileName;
 		final int formatVersion;
-		final String fingerprint;
+		final String contentFingerprint;
 
-		Metadata(String uri, String fileName, int formatVersion, String fingerprint) {
+		Metadata(String uri, String fileName, int formatVersion, String contentFingerprint) {
 			this.uri = uri;
 			this.fileName = fileName;
 			this.formatVersion = formatVersion;
-			this.fingerprint = fingerprint;
+			this.contentFingerprint = contentFingerprint;
 		}
 	}
 }
