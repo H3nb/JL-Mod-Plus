@@ -207,6 +207,13 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		handler = new Handler(getLooper(), this);
 		instance = this;
 		send(INIT);
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null && activity.isVisible()) {
+			long foregroundGeneration = Display.currentForegroundRequestGeneration();
+			if (foregroundGeneration != 0L) {
+				send(AMS_FOREGROUND, foregroundGeneration);
+			}
+		}
 	}
 
 	private void send(int what) {

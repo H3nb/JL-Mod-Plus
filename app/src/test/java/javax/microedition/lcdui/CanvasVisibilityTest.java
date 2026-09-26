@@ -3,6 +3,7 @@
  */
 package javax.microedition.lcdui;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -13,7 +14,9 @@ public class CanvasVisibilityTest {
 	public void staleForegroundCompletionCannotGrantNewerHostEdge() {
 		Display.initDisplay();
 		long firstForeground = Display.requestForeground();
+		assertEquals(firstForeground, Display.currentForegroundRequestGeneration());
 		Display.revokeForeground();
+		assertEquals(0L, Display.currentForegroundRequestGeneration());
 		long returnedForeground = Display.requestForeground();
 
 		assertFalse(Display.isForegroundRequestCurrent(firstForeground));
