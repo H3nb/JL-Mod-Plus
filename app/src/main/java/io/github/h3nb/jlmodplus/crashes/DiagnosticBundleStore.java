@@ -238,7 +238,7 @@ final class DiagnosticBundleStore {
 	private static boolean isReusable(Context context, Metadata metadata) {
 		if (!exists(context, metadata)) return false;
 		try (InputStream raw = open(context, metadata);
-				ZipInputStream zip = raw == null ? null : new ZipInputStream(raw, StandardCharsets.UTF_8)) {
+				ZipInputStream zip = raw == null ? null : new ZipInputStream(raw)) {
 			if (zip == null) return false;
 			boolean report = false;
 			boolean incident = false;
