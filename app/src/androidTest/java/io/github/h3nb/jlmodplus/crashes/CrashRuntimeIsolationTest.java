@@ -214,6 +214,7 @@ public class CrashRuntimeIsolationTest {
 		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
 		File appDir = new File(new File(root, "converted"), "fixture");
 		File markerFile = new File(root, "lifecycle.marker");
+		File unexpectedForegroundMarker = new File(root, "unexpected-foreground.marker");
 
 		try {
 			deleteRecursively(root);
@@ -290,6 +291,8 @@ public class CrashRuntimeIsolationTest {
 			String generation = backgrounded.getGeneration();
 			assertNotNull(generation);
 			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
+			assertFalse("Startup background request was followed by stale showNotify()",
+					unexpectedForegroundMarker.exists());
 
 			// A live lease is not enough to route the launcher back into the MIDlet after the guest
 			// deliberately yielded emulator foreground to Library.
@@ -313,11 +316,17 @@ public class CrashRuntimeIsolationTest {
 			assertEquals(backgrounded.getAppId(), afterHistoryRestore.getAppId());
 			assertFalse(afterHistoryRestore.isRuntimeSelected());
 			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
+			assertFalse("History restore produced stale showNotify()",
+					unexpectedForegroundMarker.exists());
 
+			clearMarker(markerFile);
 			launchLifecycleMidletWithoutClearingTask(context, appDir);
 			awaitActivityOnTop(context, MicroActivity.class);
 			awaitRuntimeSelection(context, generation, true);
 			awaitJournalStage(context, generation, MidletSessionJournal.Stage.RUNNING);
+			awaitMarker(markerFile);
+			assertFalse("Explicit re-selection reused a stale foreground generation",
+					unexpectedForegroundMarker.exists());
 			assertEquals(runtimePid, processPid(context, midletProcessName));
 			assertNoNewLifecycleFailure(context, baselineIds);
 
@@ -733,13 +742,17 @@ public class CrashRuntimeIsolationTest {
 
 	private static void writeLifecycleManifest(File appDir, String mode, File marker) throws IOException {
 		File manifest = new File(appDir, "converted.dex.conf");
+		File unexpectedForegroundMarker =
+				new File(marker.getParentFile(), "unexpected-foreground.marker");
 		String text = "Manifest-Version: 1.0\n"
 				+ "MIDlet-Name: " + LIFECYCLE_MIDLET_NAME + "\n"
 				+ "MIDlet-Vendor: " + LIFECYCLE_MIDLET_VENDOR + "\n"
 				+ "MIDlet-Version: " + LIFECYCLE_MIDLET_VERSION + "\n"
 				+ "MIDlet-1: " + LIFECYCLE_MIDLET_NAME + ",," + LifecycleMidlet.CLASS_NAME + "\n"
 				+ LifecycleMidlet.MODE_PROPERTY + ": " + mode + "\n"
-				+ LifecycleMidlet.MARKER_PROPERTY + ": " + marker.getAbsolutePath() + "\n";
+				+ LifecycleMidlet.MARKER_PROPERTY + ": " + marker.getAbsolutePath() + "\n"
+				+ LifecycleMidlet.UNEXPECTED_FOREGROUND_PROPERTY + ": "
+				+ unexpectedForegroundMarker.getAbsolutePath() + "\n";
 		try (OutputStreamWriter writer = new OutputStreamWriter(
 				new FileOutputStream(manifest), StandardCharsets.UTF_8)) {
 			writer.write(text);
