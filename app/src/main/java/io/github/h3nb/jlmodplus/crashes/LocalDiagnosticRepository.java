@@ -174,14 +174,21 @@ public final class LocalDiagnosticRepository {
 	}
 
 	/**
-	 * Deletes exactly the selected logical record. The durable suppression marker is created only
-	 * immediately before process-exit evidence is removed, so an earlier dependent-file failure does
-	 * not hide evidence that the failed delete left behind.
+	 * Deletes exactly the selected logical record, then best-effort removes its tracked derived
+	 * bundle. A bundle cleanup failure never prevents deletion of the diagnostic source.
 	 */
 	public static boolean delete(Context context, Record record) {
-		if (record == null) {
-			return false;
-		}
+		return deleteWithArtifacts(context, record).sourceDeleted;
+	}
+
+	static DeleteResult deleteWithArtifacts(Context context, Record record) {
+		if (!deleteSource(context, record)) return new DeleteResult(false, true);
+		boolean bundleDeleted = DiagnosticBundleStore.deleteTracked(context, record);
+		return new DeleteResult(true, bundleDeleted);
+	}
+
+	private static boolean deleteSource(Context context, Record record) {
+		if (record == null) return false;
 		for (File rawFile : record.rawFiles) {
 			if (rawFile.isFile() && !rawFile.delete()) {
 				Log.w(TAG, "Unable to delete raw crash report: " + rawFile.getName());
@@ -206,6 +213,16 @@ public final class LocalDiagnosticRepository {
 			}
 		}
 		return true;
+	}
+
+	static final class DeleteResult {
+		final boolean sourceDeleted;
+		final boolean bundleDeleted;
+
+		DeleteResult(boolean sourceDeleted, boolean bundleDeleted) {
+			this.sourceDeleted = sourceDeleted;
+			this.bundleDeleted = bundleDeleted;
+		}
 	}
 
 	static boolean isExactEventMatch(String journalSessionId, String eventId, String rawSessionId,
