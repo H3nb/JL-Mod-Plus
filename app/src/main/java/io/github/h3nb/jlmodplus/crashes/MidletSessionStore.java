@@ -49,8 +49,10 @@ public final class MidletSessionStore {
     private static final String KEY_APP_NAME = "appName";
     private static final String KEY_MAIN_CLASS = "mainClass";
     private static final String KEY_APP_ID = "appId";
+    private static final String KEY_RUNTIME_SELECTED = "runtimeSelected";
     private static final String LEGACY_VERSION = "1";
-    private static final String VERSION = "2";
+    private static final String ROUTING_VERSION = "2";
+    private static final String VERSION = "3";
 
     private MidletSessionStore() {
     }
@@ -69,7 +71,7 @@ public final class MidletSessionStore {
      */
     public static void markPending(@Nullable Context context, String appPath, String appName,
             long appId) {
-        write(context, null, appPath, appName, null, appId);
+        write(context, null, appPath, appName, null, appId, false);
     }
 
     /** Legacy compatibility overload; records written through it are not considered live routes. */
@@ -81,7 +83,7 @@ public final class MidletSessionStore {
     /** Legacy compatibility overload; records written through it are not considered live routes. */
     public static void markStarted(@Nullable Context context, String appPath, String appName,
             String mainClass, long appId) {
-        write(context, null, appPath, appName, mainClass, appId);
+        write(context, null, appPath, appName, mainClass, appId, false);
     }
 
     /** Records the immutable identity needed to route back to an already-live runtime. */
@@ -90,7 +92,33 @@ public final class MidletSessionStore {
         if (nonBlank(generation) == null) {
             return;
         }
-        write(context, generation, appPath, appName, mainClass, appId);
+        write(context, generation, appPath, appName, mainClass, appId, true);
+    }
+
+    /**
+     * Updates only the emulator foreground selection for the matching live runtime generation.
+     * A stale Activity/runtime can never overwrite a newer runtime record.
+     */
+    public static void setRuntimeSelected(@Nullable Context context, @Nullable String generation,
+            boolean runtimeSelected) {
+        String expectedGeneration = nonBlank(generation);
+        if (context == null || expectedGeneration == null) {
+            return;
+        }
+        synchronized (LOCK) {
+            try (FileChannel channel = openStoreLock(context);
+                    FileLock ignored = channel.lock()) {
+                State current = readUnlocked(context);
+                if (current == null || !expectedGeneration.equals(current.getGeneration())) {
+                    return;
+                }
+                writeUnlocked(context, current.getGeneration(), current.getAppPath(),
+                        current.getAppName(), current.getMainClass(), current.getAppId(),
+                        runtimeSelected);
+            } catch (IOException | RuntimeException ignored) {
+                // Routing metadata is best effort; it must not break guest lifecycle execution.
+            }
+        }
     }
 
     @Nullable
@@ -153,43 +181,51 @@ public final class MidletSessionStore {
     }
 
     private static void write(@Nullable Context context, @Nullable String generation,
-            String appPath, String appName, String mainClass, long appId) {
+            String appPath, String appName, String mainClass, long appId, boolean runtimeSelected) {
         if (context == null || nonBlank(appPath) == null) {
             return;
         }
         synchronized (LOCK) {
             try (FileChannel channel = openStoreLock(context);
                     FileLock ignored = channel.lock()) {
-                AtomicFile atomic = new AtomicFile(stateFile(context));
-                FileOutputStream output = null;
-                try {
-                    Properties properties = new Properties();
-                    properties.setProperty(KEY_VERSION, VERSION);
-                    if (nonBlank(generation) != null) {
-                        properties.setProperty(KEY_GENERATION, generation);
-                    }
-                    properties.setProperty(KEY_APP_PATH, appPath);
-                    if (nonBlank(appName) != null) {
-                        properties.setProperty(KEY_APP_NAME, appName);
-                    }
-                    if (nonBlank(mainClass) != null) {
-                        properties.setProperty(KEY_MAIN_CLASS, mainClass);
-                    }
-                    if (appId > 0L) {
-                        properties.setProperty(KEY_APP_ID, Long.toString(appId));
-                    }
-                    output = atomic.startWrite();
-                    properties.store(output, "JL-Mod Plus active MIDlet");
-                    output.flush();
-                    atomic.finishWrite(output);
-                    output = null;
-                } catch (IOException | RuntimeException ignoredWrite) {
-                    if (output != null) {
-                        atomic.failWrite(output);
-                    }
-                }
+                writeUnlocked(context, generation, appPath, appName, mainClass, appId,
+                        runtimeSelected);
             } catch (IOException | RuntimeException ignored) {
                 // Routing metadata is fail-open; the runtime can continue without launcher routing.
+            }
+        }
+    }
+
+    private static void writeUnlocked(Context context, @Nullable String generation,
+            String appPath, @Nullable String appName, @Nullable String mainClass, long appId,
+            boolean runtimeSelected) {
+        AtomicFile atomic = new AtomicFile(stateFile(context));
+        FileOutputStream output = null;
+        try {
+            Properties properties = new Properties();
+            properties.setProperty(KEY_VERSION, VERSION);
+            if (nonBlank(generation) != null) {
+                properties.setProperty(KEY_GENERATION, generation);
+            }
+            properties.setProperty(KEY_APP_PATH, appPath);
+            if (nonBlank(appName) != null) {
+                properties.setProperty(KEY_APP_NAME, appName);
+            }
+            if (nonBlank(mainClass) != null) {
+                properties.setProperty(KEY_MAIN_CLASS, mainClass);
+            }
+            if (appId > 0L) {
+                properties.setProperty(KEY_APP_ID, Long.toString(appId));
+            }
+            properties.setProperty(KEY_RUNTIME_SELECTED, Boolean.toString(runtimeSelected));
+            output = atomic.startWrite();
+            properties.store(output, "JL-Mod Plus active MIDlet");
+            output.flush();
+            atomic.finishWrite(output);
+            output = null;
+        } catch (IOException | RuntimeException ignoredWrite) {
+            if (output != null) {
+                atomic.failWrite(output);
             }
         }
     }
@@ -207,19 +243,25 @@ public final class MidletSessionStore {
             return null;
         }
         String version = properties.getProperty(KEY_VERSION);
-        if (!VERSION.equals(version) && !LEGACY_VERSION.equals(version)) {
+        if (!VERSION.equals(version) && !ROUTING_VERSION.equals(version)
+                && !LEGACY_VERSION.equals(version)) {
             return null;
         }
         String appPath = nonBlank(properties.getProperty(KEY_APP_PATH));
         if (appPath == null) {
             return null;
         }
+        boolean runtimeSelected = VERSION.equals(version)
+                ? Boolean.parseBoolean(properties.getProperty(KEY_RUNTIME_SELECTED, "true"))
+                : ROUTING_VERSION.equals(version);
         return new State(
-                VERSION.equals(version) ? nonBlank(properties.getProperty(KEY_GENERATION)) : null,
+                LEGACY_VERSION.equals(version)
+                        ? null : nonBlank(properties.getProperty(KEY_GENERATION)),
                 appPath,
                 nonBlank(properties.getProperty(KEY_APP_NAME)),
                 nonBlank(properties.getProperty(KEY_MAIN_CLASS)),
-                parsePositiveLong(properties.getProperty(KEY_APP_ID)));
+                parsePositiveLong(properties.getProperty(KEY_APP_ID)),
+                runtimeSelected);
     }
 
     private static FileChannel openStoreLock(Context context) throws IOException {
@@ -265,14 +307,16 @@ public final class MidletSessionStore {
         private final String appName;
         private final String mainClass;
         private final long appId;
+        private final boolean runtimeSelected;
 
         private State(@Nullable String generation, String appPath, String appName,
-                String mainClass, long appId) {
+                String mainClass, long appId, boolean runtimeSelected) {
             this.generation = generation;
             this.appPath = appPath;
             this.appName = appName;
             this.mainClass = mainClass;
             this.appId = appId;
+            this.runtimeSelected = runtimeSelected;
         }
 
         /** Null denotes a legacy/non-routable record rather than a live runtime generation. */
@@ -298,6 +342,11 @@ public final class MidletSessionStore {
         /** Zero denotes a record that predates or lacks the durable Library identity handshake. */
         public long getAppId() {
             return appId;
+        }
+
+        /** Whether this live runtime is the emulator foreground destination selected by the AMS. */
+        public boolean isRuntimeSelected() {
+            return runtimeSelected;
         }
     }
 }
