@@ -137,6 +137,8 @@ public class MicroActivity extends AppCompatActivity {
 	private MemoryEditorBubbleController memoryEditorController;
 	private TransientNoticeComposeController runtimeNoticeController;
 	private WindowInsetsCompat lastWindowInsets;
+	/** True from an explicit external Android launch until this host resumes again. */
+	private volatile boolean externalAndroidHandoff;
 	private boolean skinLayerAvailable;
 	private int virtualDisplayPaddingLeft;
 	private int virtualDisplayPaddingTop;
@@ -724,6 +726,7 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		externalAndroidHandoff = false;
 		refreshCanvasBackground();
 		if (memoryEditorController != null) {
 			memoryEditorController.onHostResumed();
@@ -831,8 +834,9 @@ public class MicroActivity extends AppCompatActivity {
 
 			boolean departureStarted = isFinishing();
 			boolean wasVisible = currentHost == this && isVisible();
-			if (!departureStarted && wasVisible && returnToLibrary) {
-				// MainActivity is singleTask. Start it once for one runtime-host departure.
+			if (!departureStarted && wasVisible && returnToLibrary && !externalAndroidHandoff) {
+				// MainActivity is singleTask. Start it once for one runtime-host departure, but never
+				// replace an explicit browser/other-app destination that Android is still presenting.
 				startActivity(new Intent(this, MainActivity.class));
 			}
 			if (!departureStarted) {
@@ -1187,6 +1191,16 @@ public class MicroActivity extends AppCompatActivity {
 			return ContextHolder.getActivity() == this
 					&& displayRequestGeneration == requestGeneration;
 		}
+	}
+
+	/** Marks an explicit browser/other-app destination so runtime departure cannot steal foreground. */
+	public void beginExternalAndroidHandoff() {
+		externalAndroidHandoff = true;
+	}
+
+	/** Rolls back the handoff marker when Android rejects the external launch. */
+	public void cancelExternalAndroidHandoff() {
+		externalAndroidHandoff = false;
 	}
 
 	public Displayable getCurrent() {
