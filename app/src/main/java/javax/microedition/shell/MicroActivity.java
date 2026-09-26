@@ -714,10 +714,12 @@ public class MicroActivity extends AppCompatActivity {
 	protected void onDestroy() {
 		boolean currentHost = ContextHolder.getActivity() == this;
 		if (currentHost) {
+			Displayable logicalCurrent = current;
 			Display display = Display.getDisplay(null);
 			if (display != null) {
 				display.detachHost();
 			}
+			clearStaleMountedDisplayable(logicalCurrent);
 			current = null;
 			ContextHolder.clearCurrentActivity(this);
 		}
@@ -764,10 +766,12 @@ public class MicroActivity extends AppCompatActivity {
 				if (controllerInputRouter != null) {
 					controllerInputRouter.clear();
 				}
+				Displayable logicalCurrent = current;
 				Display display = Display.getDisplay(null);
 				if (display != null) {
 					display.detachHost();
 				}
+				clearStaleMountedDisplayable(logicalCurrent);
 				current = null;
 				ContextHolder.clearCurrentActivity(this);
 			}
@@ -782,6 +786,14 @@ public class MicroActivity extends AppCompatActivity {
 				processCleanup.run();
 			}
 		});
+	}
+
+	private void clearStaleMountedDisplayable(@Nullable Displayable logicalCurrent) {
+		Displayable mounted = presentedDisplayable;
+		if (mounted != null && mounted != logicalCurrent) {
+			mounted.clearDisplayableView();
+		}
+		presentedDisplayable = null;
 	}
 
 	private void refreshCanvasBackground() {
@@ -1783,17 +1795,20 @@ public class MicroActivity extends AppCompatActivity {
 				controllerInputRouter.onTargetChanged();
 			}
 			Displayable previous = presentedDisplayable;
-			if (previous != null && previous != next) {
-				previous.clearDisplayableView();
+			boolean replaceMountedView = previous != next;
+			if (replaceMountedView) {
+				if (previous != null) {
+					previous.clearDisplayableView();
+				}
+				binding.displayableContainer.removeAllViews();
 			}
-			binding.displayableContainer.removeAllViews();
 			GuestWindowPolicy.Chrome chrome = getRuntimeChrome(next);
 			applySystemUi(chrome, next);
 			configureDisplayCutoutWindow(chrome.cutoutAllowed);
 			setRuntimeToolbarHeight(getRuntimeToolbarHeight(chrome));
 			updateRuntimeMenuState(next);
 			applyGuestInsets(next);
-			if (next != null) {
+			if (replaceMountedView && next != null) {
 				binding.displayableContainer.addView(next.getDisplayableView());
 			}
 			presentedDisplayable = next;
