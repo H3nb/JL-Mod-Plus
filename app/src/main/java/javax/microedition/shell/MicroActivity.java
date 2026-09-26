@@ -235,6 +235,23 @@ public class MicroActivity extends AppCompatActivity {
 			finish();
 			return;
 		}
+		if (reattachingRuntime) {
+			expectedAppId = microLoader.getExpectedAppId();
+			if (expectedAppId > 0L) {
+				intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
+			}
+			boolean explicitRuntimeSelection = savedInstanceState == null
+					&& (intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0;
+			if (explicitRuntimeSelection) {
+				MidletThread.selectRuntimeForForeground();
+			}
+			if (!MidletThread.isRuntimeSelected()) {
+				// Android recreation/history is not authority to undo an AMS Library selection.
+				startActivity(new Intent(this, MainActivity.class));
+				finish();
+				return;
+			}
+		}
 		MicroActivity previousHost = ContextHolder.getActivity();
 		if (reattachingRuntime && previousHost != null && previousHost != this) {
 			// Release the View actually mounted by the old host before publishing this replacement.
@@ -243,18 +260,7 @@ public class MicroActivity extends AppCompatActivity {
 			previousHost.releaseMountedPresentationForReplacement();
 		}
 		ContextHolder.setCurrentActivity(this);
-		if (reattachingRuntime) {
-			expectedAppId = microLoader.getExpectedAppId();
-			if (expectedAppId > 0L) {
-				intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
-			}
-			// Only an explicit Activity launch selects the runtime again. Configuration recreation
-			// inherits the existing emulator destination; otherwise it could overwrite a concurrent
-			// MIDlet background request from the outgoing host.
-			if (savedInstanceState == null) {
-				MidletThread.selectRuntimeForForeground();
-			}
-		} else {
+		if (!reattachingRuntime) {
 			PresetAuthorityClient.PrepareResult prepared =
 					presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
 			if (!prepared.isSuccess()) {
@@ -674,6 +680,12 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	protected void onStart() {
 		super.onStart();
+		if (MidletThread.hasLiveRuntime() && !MidletThread.isRuntimeSelected()) {
+			// Selection may change after onCreate() during a replacement race. Do not let the
+			// Android visibility edge resurrect a runtime that has already yielded to Library.
+			leaveRuntimeHost(true, null);
+			return;
+		}
 		externalAndroidHandoff = false;
 		beginAmsForegroundTransition();
 	}
