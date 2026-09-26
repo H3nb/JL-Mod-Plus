@@ -54,6 +54,7 @@ final class GitHubDiagnosticIssue {
 				incident.subject);
 		appendBullet(text, "MIDlet version", incident.midletVersion);
 		appendBullet(text, "Entrypoint", incident.entrypoint);
+		appendBullet(text, "Failure boundary", incident.boundary);
 		appendBullet(text, "Failure operation", incident.operation);
 		appendBullet(text, "Lifecycle stage", incident.lifecycleStage);
 		appendBullet(text, "Relevant frame", incident.topRelevantFrame);
@@ -83,6 +84,11 @@ final class GitHubDiagnosticIssue {
 		StringBuilder text = new StringBuilder();
 		text.append("# JL-Mod Plus Diagnostic Report\n\n");
 		text.append(compactSummary(incident, nativeSummary, bundleFileName)).append("\n");
+		if (incident.eventId != null || incident.sessionId != null) {
+			text.append("\n## Correlation\n");
+			appendBullet(text, "Event ID", incident.eventId);
+			appendBullet(text, "Session ID", incident.sessionId);
+		}
 		if (incident.associatedProcessExit != null
 				&& (incident.category == IncidentSummary.Category.PROCESS_EXIT
 				|| incident.category == IncidentSummary.Category.NATIVE_CRASH
@@ -312,7 +318,8 @@ final class GitHubDiagnosticIssue {
 	private static String defaultSubject(IncidentSummary.Category category) {
 		return switch (category) {
 			case JL_MOD_PLUS -> "JL-Mod Plus";
-			default -> "MIDlet process";
+			case MIDLET_LIFECYCLE, MIDLET_CRASH -> "MIDlet";
+			case NATIVE_CRASH, ANR, PROCESS_EXIT -> "process";
 		};
 	}
 
