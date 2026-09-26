@@ -316,6 +316,7 @@ public class CrashRuntimeIsolationTest {
 			launchLifecycleMidletForReselection(context, appDir);
 			awaitActivityOnTop(context, MicroActivity.class);
 			awaitRuntimeSelection(context, generation, true);
+			awaitJournalStage(context, generation, MidletSessionJournal.Stage.RUNNING);
 			assertEquals(runtimePid, processPid(context, midletProcessName));
 			assertNoNewLifecycleFailure(context, baselineIds);
 
