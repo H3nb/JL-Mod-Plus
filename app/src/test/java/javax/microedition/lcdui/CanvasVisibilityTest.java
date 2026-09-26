@@ -31,6 +31,7 @@ public class CanvasVisibilityTest {
 		assertFalse(Canvas.isPresentationVisible(true, false, true, true));
 		assertFalse(Canvas.isPresentationVisible(true, true, false, true));
 		assertFalse(Canvas.isPresentationVisible(true, true, true, false));
+		// Host-owned runtime menu/tooling is intentionally not a MIDP presentation fact.
 		assertTrue(Canvas.isPresentationVisible(true, true, true, true));
 	}
 }
