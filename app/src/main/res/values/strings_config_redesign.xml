@@ -58,7 +58,7 @@
     <string name="config_help_parallel_redraw">Redraws the screen in parallel when supported. This may improve performance on some configurations.</string>
     <string name="config_help_force_fullscreen">Lets the MIDlet use the full available screen.</string>
     <string name="config_help_show_fps">Shows the MIDlet’s frame rate and rendering diagnostics.</string>
-    <string name="config_help_fps_limit">Caps the frame rate. Leave empty for no limit.</string>
+    <string name="config_help_fps_limit">Caps the frame rate.</string>
     <string name="PREF_EMULATION_SPEED">Emulation Speed</string>
     <string name="PREF_TIMING_MODE">Clock Mode</string>
     <string name="config_timing_mode_full_guest">Emulated Clock</string>

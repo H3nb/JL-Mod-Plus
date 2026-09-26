@@ -242,6 +242,18 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun displayFpsZeroUsesMaximumLabel() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(), initialDestination = ConfigDestination.Display)
+            }
+        }
+
+        composeRule.onNodeWithText("Frame Rate Limit").performScrollTo()
+        composeRule.onNodeWithText("Maximum").assertIsDisplayed()
+    }
+
+    @Test
     fun displaySettingsDoNotExposeRuntimeEmulationSpeed() {
         composeRule.setContent {
             JLModPlusTheme {

@@ -64,7 +64,7 @@
     <string name="config_help_parallel_redraw">Menggambar ulang layar secara paralel jika didukung. Dapat meningkatkan kinerja pada konfigurasi tertentu.</string>
     <string name="config_help_force_fullscreen">Memungkinkan MIDlet menggunakan seluruh layar yang tersedia.</string>
     <string name="config_help_show_fps">Menampilkan FPS serta informasi rendering, frame yang terlewat, dan kecepatan runtime.</string>
-    <string name="config_help_fps_limit">Membatasi FPS. Kosongkan untuk tanpa batas.</string>
+    <string name="config_help_fps_limit">Membatasi FPS.</string>
     <string name="PREF_EMULATION_SPEED">Kecepatan Emulasi</string>
     <string name="PREF_TIMING_MODE">Mode Waktu</string>
     <string name="config_timing_mode_full_guest">Waktu Emulasi</string>
