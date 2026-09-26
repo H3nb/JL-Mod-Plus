@@ -41,6 +41,7 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String MODE_CRASH_DESTROY = "crash-destroy";
 	public static final String MODE_CLEAN = "clean";
 	public static final String MODE_WORKER_DESTROY = "worker-destroy";
+	public static final String MODE_HOLD = "hold";
 	public static final String MODE_BACKGROUND = "background";
 	public static final String MODE_CSI_STYLE_EXIT = "csi-style-exit";
 	public static final String MODE_STORAGE_LEASE = "storage-lease";
@@ -89,6 +90,10 @@ public final class LifecycleMidlet extends MIDlet {
 		if (MODE_WORKER_DESTROY.equals(mode)) {
 			writeMarker(getAppProperty(MARKER_PROPERTY));
 			new Thread(this::notifyDestroyed, "LifecycleFixtureDestroyWorker").start();
+			return;
+		}
+		if (MODE_HOLD.equals(mode)) {
+			writeMarker(getAppProperty(MARKER_PROPERTY));
 			return;
 		}
 		if (MODE_BACKGROUND.equals(mode)) {
