@@ -189,8 +189,12 @@ public final class LifecycleMidlet extends MIDlet {
 
 	@Override
 	public void destroyApp(boolean unconditional) throws MIDletStateChangeException {
+		String mode = getAppProperty(MODE_PROPERTY);
+		if (MODE_CSI_STYLE_EXIT.equals(mode) && destroyed) {
+			throw new IllegalStateException("CSI-style fixture destroyed twice");
+		}
 		destroyed = true;
-		if (MODE_CRASH_DESTROY.equals(getAppProperty(MODE_PROPERTY))) {
+		if (MODE_CRASH_DESTROY.equals(mode)) {
 			throw new IllegalStateException(DESTROY_FAILURE_MARKER);
 		}
 	}
