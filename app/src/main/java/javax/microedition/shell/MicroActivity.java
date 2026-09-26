@@ -674,6 +674,7 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	protected void onStart() {
 		super.onStart();
+		externalAndroidHandoff = false;
 		beginAmsForegroundTransition();
 	}
 
