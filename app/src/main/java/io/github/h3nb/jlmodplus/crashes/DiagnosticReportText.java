@@ -21,24 +21,11 @@ import java.util.List;
 /** Formats local diagnostics consistently for detail, clipboard, and explicit sharing surfaces. */
 final class DiagnosticReportText {
 	private static final String BATCH_SEPARATOR = "\n\n====================\n\n";
-	private static final String ANR_TRACE_MARKER = "\nANR trace:\n";
-	private static final String JAVA_STACK_MARKER = "\nStack trace:\n";
-	private static final String GITHUB_TRACE_NOTICE =
-			"\nANR trace: retained locally; use Share Report in JL-Mod Plus to attach retained trace evidence explicitly.";
 
 	private DiagnosticReportText() {}
 
 	static String build(LocalDiagnosticRepository.Record record) {
 		return build(record, record.getDetailText());
-	}
-
-	/** GitHub drafts never inline retained raw Android trace evidence. */
-	static String buildForGitHub(LocalDiagnosticRepository.Record record) {
-		String detailText = record.getDetailText();
-		if (record.hasProcessExit()) {
-			detailText = removeRawSystemTrace(detailText, record.getStackTrace());
-		}
-		return build(record, detailText);
 	}
 
 	static String withNativeSummary(String reportText, String nativeSummary) {
@@ -55,26 +42,6 @@ final class DiagnosticReportText {
 			}
 		}
 		return reportText + block;
-	}
-
-	static String removeRawSystemTrace(String detailText, String javaStackTrace) {
-		if (detailText == null || detailText.isEmpty()) {
-			return detailText;
-		}
-		int traceStart = detailText.indexOf(ANR_TRACE_MARKER);
-		if (traceStart < 0) {
-			return detailText;
-		}
-
-		String retainedSuffix = "";
-		if (javaStackTrace != null && !javaStackTrace.trim().isEmpty()) {
-			String stackSection = JAVA_STACK_MARKER + javaStackTrace.trim();
-			int stackStart = detailText.lastIndexOf(stackSection);
-			if (stackStart > traceStart) {
-				retainedSuffix = detailText.substring(stackStart);
-			}
-		}
-		return detailText.substring(0, traceStart) + GITHUB_TRACE_NOTICE + retainedSuffix;
 	}
 
 	private static String build(LocalDiagnosticRepository.Record record, String detailText) {
@@ -95,9 +62,7 @@ final class DiagnosticReportText {
 	static String buildBatch(List<LocalDiagnosticRepository.Record> records) {
 		StringBuilder text = new StringBuilder();
 		for (LocalDiagnosticRepository.Record record : records) {
-			if (text.length() > 0) {
-				text.append(BATCH_SEPARATOR);
-			}
+			if (text.length() > 0) text.append(BATCH_SEPARATOR);
 			text.append(build(record));
 		}
 		return text.toString();

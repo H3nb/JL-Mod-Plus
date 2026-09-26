@@ -81,6 +81,9 @@ interface CrashReportDetailsActions {
     fun onCopy()
     fun onShare()
     fun onReportGitHub()
+    fun onDismissBundleReady()
+    fun onLocateBundle()
+    fun onOpenGitHub()
     fun onDelete()
 }
 
@@ -90,9 +93,33 @@ data class CrashReportListItem(
     val subtitle: String,
 )
 
+data class DiagnosticBundleReadyState(
+    val fileName: String,
+)
+
 data class CrashReportDetailState(
     val displayText: String,
+    val readyBundle: DiagnosticBundleReadyState? = null,
 )
+
+class CrashReportDetailsController internal constructor(
+    displayText: String,
+) {
+    var state by mutableStateOf(CrashReportDetailState(displayText))
+        private set
+
+    fun updateDisplay(displayText: String) {
+        state = state.copy(displayText = displayText)
+    }
+
+    fun showBundleReady(fileName: String) {
+        state = state.copy(readyBundle = DiagnosticBundleReadyState(fileName))
+    }
+
+    fun dismissBundleReady() {
+        state = state.copy(readyBundle = null)
+    }
+}
 
 data class CrashReportsListState(
     val loading: Boolean,
@@ -359,6 +386,7 @@ fun CrashReportsScreen(
         }
     }
 
+
     confirmation?.let { pendingConfirmation ->
         CrashReportConfirmationDialog(
             confirmation = pendingConfirmation,
@@ -454,6 +482,38 @@ fun CrashReportDetailsScreen(
                 }
             }
         }
+    }
+
+    state.readyBundle?.let { ready ->
+        AlertDialog(
+            onDismissRequest = actions::onDismissBundleReady,
+            title = {
+                Text(stringResource(R.string.crash_report_bundle_ready_title))
+            },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.crash_report_bundle_ready_message,
+                        ready.fileName,
+                    ),
+                )
+            },
+            dismissButton = {
+                androidx.compose.foundation.layout.Row {
+                    TextButton(onClick = actions::onDismissBundleReady) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                    TextButton(onClick = actions::onLocateBundle) {
+                        Text(stringResource(R.string.locate_bundle))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = actions::onOpenGitHub) {
+                    Text(stringResource(R.string.open_github))
+                }
+            },
+        )
     }
 
     confirmation?.let { pendingConfirmation ->
@@ -607,15 +667,17 @@ object CrashReportsComposeBridge {
         view: ComposeView,
         displayText: String,
         actions: CrashReportDetailsActions,
-    ) {
+    ): CrashReportDetailsController {
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+        val controller = CrashReportDetailsController(displayText)
         view.setContent {
             JLModPlusTheme {
                 CrashReportDetailsScreen(
-                    state = CrashReportDetailState(displayText),
+                    state = controller.state,
                     actions = actions,
                 )
             }
         }
+        return controller
     }
 }

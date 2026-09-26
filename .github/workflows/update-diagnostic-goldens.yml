@@ -1,0 +1,67 @@
+name: Temporary diagnostic golden updater
+
+on:
+  push:
+    branches:
+      - feature/diagnostic-reporting-redesign
+    paths:
+      - '.github/workflows/update-diagnostic-goldens.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out feature branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: feature/diagnostic-reporting-redesign
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+
+      - name: Set up Android SDK and platform 37
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        with:
+          packages: 'platform-tools platforms;android-37.0'
+
+      - name: Update diagnostic screenshot references
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
+
+          delete_ref='app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/crashes/CrashReportsScreenshotTestKt/CrashReportDeleteConfirmationScreenshot_Delete confirmation_4ce54f38_0.png'
+          bundle_ref='app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/crashes/CrashReportsScreenshotTestKt/CrashReportBundleReadyScreenshot_Bundle ready_1f4cec22_0.png'
+
+          test -f "$delete_ref"
+          test -f "$bundle_ref"
+
+          unexpected="$(git status --porcelain -- app/src/screenshotTestEmulatorDebug/reference             | grep -vF "$delete_ref"             | grep -vF "$bundle_ref" || true)"
+          if [[ -n "$unexpected" ]]; then
+            echo "Unexpected screenshot reference changes:" >&2
+            printf '%s\n' "$unexpected" >&2
+            exit 1
+          fi
+
+          git add -- "$delete_ref" "$bundle_ref"
+          if git diff --cached --quiet; then
+            echo 'Expected diagnostic screenshot references did not change.' >&2
+            exit 1
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Update diagnostic reporting screenshot references [skip ci]'
+          git push origin HEAD:feature/diagnostic-reporting-redesign

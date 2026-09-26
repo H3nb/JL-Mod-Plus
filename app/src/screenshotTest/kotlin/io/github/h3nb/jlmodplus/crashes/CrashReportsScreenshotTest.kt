@@ -101,6 +101,23 @@ fun CrashReportDetailsDarkScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Bundle ready", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun CrashReportBundleReadyScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        CrashReportDetailsScreen(
+            state = CrashReportDetailState(
+                displayText = PreviewReportText,
+                readyBundle = DiagnosticBundleReadyState(
+                    "20260926-134500-012-deadbeef.zip",
+                ),
+            ),
+            actions = NoOpDetailActions,
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Share confirmation", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun CrashReportShareConfirmationScreenshot() {
@@ -155,6 +172,12 @@ private object NoOpDetailActions : CrashReportDetailsActions {
     override fun onShare() = Unit
 
     override fun onReportGitHub() = Unit
+
+    override fun onDismissBundleReady() = Unit
+
+    override fun onLocateBundle() = Unit
+
+    override fun onOpenGitHub() = Unit
 
     override fun onDelete() = Unit
 }
