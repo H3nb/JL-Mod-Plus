@@ -214,7 +214,6 @@ public class CrashRuntimeIsolationTest {
 		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
 		File appDir = new File(new File(root, "converted"), "fixture");
 		File markerFile = new File(root, "lifecycle.marker");
-		File unexpectedForegroundMarker = new File(root, "unexpected-foreground.marker");
 
 		try {
 			deleteRecursively(root);
@@ -272,6 +271,7 @@ public class CrashRuntimeIsolationTest {
 		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
 		File appDir = new File(new File(root, "converted"), "fixture");
 		File markerFile = new File(root, "lifecycle.marker");
+		File unexpectedForegroundMarker = new File(root, "unexpected-foreground.marker");
 
 		try {
 			deleteRecursively(root);
