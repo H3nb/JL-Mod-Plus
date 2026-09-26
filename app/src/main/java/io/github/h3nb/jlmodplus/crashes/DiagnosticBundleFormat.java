@@ -34,17 +34,23 @@ final class DiagnosticBundleFormat {
 	static void write(OutputStream destination, String reportMarkdown, String incidentJson,
 			String anrTrace, String tombstoneSummary) throws IOException {
 		if (destination == null) throw new IOException("Missing bundle destination");
-		try (ZipOutputStream zip = new ZipOutputStream(destination, StandardCharsets.UTF_8)) {
-			writeRequired(zip, REPORT_ENTRY, reportMarkdown);
-			writeRequired(zip, INCIDENT_ENTRY, incidentJson);
-			writeOptional(zip, ANR_ENTRY, anrTrace);
-			writeOptional(zip, TOMBSTONE_ENTRY, tombstoneSummary);
-			zip.finish();
-		}
+		ZipOutputStream zip = new ZipOutputStream(destination, StandardCharsets.UTF_8);
+		writeRequired(zip, REPORT_ENTRY, reportMarkdown);
+		writeRequired(zip, INCIDENT_ENTRY, incidentJson);
+		writeOptional(zip, ANR_ENTRY, anrTrace);
+		writeOptional(zip, TOMBSTONE_ENTRY, tombstoneSummary);
+		zip.finish();
+		zip.flush();
 	}
 
 	static String incidentJson(IncidentSummary incident) {
-		StringBuilder json = new StringBuilder(768);
+		return incidentJson(incident, null);
+	}
+
+	static String incidentJson(IncidentSummary incident, NativeTombstoneSummary.Summary nativeSummary) {
+		boolean hasExit = incident.associatedProcessExit != null;
+		boolean hasNative = nativeSummary != null;
+		StringBuilder json = new StringBuilder(1024);
 		json.append("{\n");
 		field(json, "formatVersion", Integer.toString(FORMAT_VERSION), false, true);
 		field(json, "category", incident.category.name(), true, true);
@@ -61,8 +67,8 @@ final class DiagnosticBundleFormat {
 		field(json, "build", incident.build, true, true);
 		field(json, "environment", incident.environment, true, true);
 		field(json, "process", incident.process, true, true);
-		field(json, "fingerprint", incident.fingerprint, true, incident.associatedProcessExit != null);
-		if (incident.associatedProcessExit != null) {
+		field(json, "fingerprint", incident.fingerprint, true, hasExit || hasNative);
+		if (hasExit) {
 			IncidentSummary.ProcessExitEvidence exit = incident.associatedProcessExit;
 			json.append("  \"associatedProcessExit\": {\n");
 			field(json, "reason", Integer.toString(exit.reason), false, true, 4);
@@ -73,10 +79,37 @@ final class DiagnosticBundleFormat {
 			field(json, "cause", exit.cause, true, true, 4);
 			field(json, "processName", exit.processName, true, true, 4);
 			field(json, "processRole", exit.processRole, true, false, 4);
+			json.append("  }").append(hasNative ? ',' : ' ').append('\n');
+		}
+		if (hasNative) {
+			json.append("  \"nativeCrash\": {\n");
+			field(json, "signalNumber", number(nativeSummary.signalNumber), false, true, 4);
+			field(json, "signalName", nativeSummary.signalName, true, true, 4);
+			field(json, "signalCode", number(nativeSummary.signalCode), false, true, 4);
+			field(json, "signalCodeName", nativeSummary.signalCodeName, true, true, 4);
+			field(json, "cause", nativeSummary.cause, true, true, 4);
+			field(json, "crashingThread", nativeSummary.threadName, true, true, 4);
+			field(json, "topProjectFrame", topProjectFrame(nativeSummary), true, false, 4);
 			json.append("  }\n");
 		}
 		json.append("}\n");
 		return json.toString();
+	}
+
+	private static String number(int value) {
+		return value == Integer.MIN_VALUE ? null : Integer.toString(value);
+	}
+
+	private static String topProjectFrame(NativeTombstoneSummary.Summary summary) {
+		for (NativeTombstoneSummary.Frame frame : summary.frames) {
+			String function = frame.functionName;
+			if (function != null && (function.startsWith("io.github.h3nb.jlmodplus.")
+					|| function.startsWith("ru.playsoftware.j2meloader.")
+					|| function.startsWith("javax.microedition."))) {
+				return function;
+			}
+		}
+		return null;
 	}
 
 	private static void writeRequired(ZipOutputStream zip, String name, String text) throws IOException {
