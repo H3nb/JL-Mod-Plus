@@ -66,10 +66,23 @@ public final class LauncherActivity extends Activity {
                 staleRecord = true;
             } else {
                 try {
+                    String probedGeneration = state.getGeneration();
                     boolean runtimeLive = RuntimeStorageLease.isActive(
                             getApplicationContext().getFilesDir(), installedDir);
                     staleRecord = !runtimeLive;
-                    routeToRuntime = runtimeLive && state.isRuntimeSelected();
+                    if (runtimeLive) {
+                        // The lease proves only that some runtime owns this installation. Re-read
+                        // the generation/selection after that probe so a replacement runtime cannot
+                        // inherit an older launcher's foreground decision.
+                        MidletSessionStore.State latest =
+                                MidletSessionStore.read(getApplicationContext());
+                        if (latest != null
+                                && probedGeneration.equals(latest.getGeneration())
+                                && latest.isRuntimeSelected()) {
+                            state = latest;
+                            routeToRuntime = true;
+                        }
+                    }
                 } catch (IOException probeFailure) {
                     // Unknown liveness is not evidence of death. Open the library without deleting
                     // the generation so a later launcher attempt can retry the OS-lock probe.
