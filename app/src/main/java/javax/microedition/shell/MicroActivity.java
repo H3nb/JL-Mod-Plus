@@ -248,9 +248,12 @@ public class MicroActivity extends AppCompatActivity {
 			if (expectedAppId > 0L) {
 				intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
 			}
-			// This Activity exists because the runtime was explicitly selected again (or an already
-			// selected host is being recreated). Liveness remains independently owned by the lease.
-			MidletThread.selectRuntimeForForeground();
+			// Only an explicit Activity launch selects the runtime again. Configuration recreation
+			// inherits the existing emulator destination; otherwise it could overwrite a concurrent
+			// MIDlet background request from the outgoing host.
+			if (savedInstanceState == null) {
+				MidletThread.selectRuntimeForForeground();
+			}
 		} else {
 			PresetAuthorityClient.PrepareResult prepared =
 					presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
