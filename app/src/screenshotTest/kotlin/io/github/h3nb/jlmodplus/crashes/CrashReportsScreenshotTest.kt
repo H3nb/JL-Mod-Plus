@@ -156,5 +156,11 @@ private object NoOpDetailActions : CrashReportDetailsActions {
 
     override fun onReportGitHub() = Unit
 
+    override fun onDismissBundleReady() = Unit
+
+    override fun onLocateBundle() = Unit
+
+    override fun onOpenGitHub() = Unit
+
     override fun onDelete() = Unit
 }
