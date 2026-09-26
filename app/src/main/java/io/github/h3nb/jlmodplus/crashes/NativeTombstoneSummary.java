@@ -41,6 +41,10 @@ final class NativeTombstoneSummary {
 	private NativeTombstoneSummary() {}
 
 	static String summarize(Context context, Uri traceUri) {
+		return format(read(context, traceUri));
+	}
+
+	static Summary read(Context context, Uri traceUri) {
 		if (context == null || traceUri == null) {
 			return null;
 		}
@@ -50,10 +54,7 @@ final class NativeTombstoneSummary {
 			}
 			byte[] data = new byte[MAX_INPUT_BYTES + 1];
 			int size = readBounded(input, data);
-			if (size < 0) {
-				return null;
-			}
-			return format(parse(data, size));
+			return size < 0 ? null : parse(data, size);
 		} catch (IOException | RuntimeException ignored) {
 			return null;
 		}
@@ -410,7 +411,7 @@ final class NativeTombstoneSummary {
 	private static String frameFileLabel(String fileName) {
 		if (fileName == null || fileName.isEmpty() || fileName.charAt(0) == '[') return null;
 		if (fileName.startsWith("/system/") || fileName.startsWith("/apex/")
-				|| fileName.startsWith("/vendor/")) return fileName;
+				|| fileName.startsWith("/vendor/") || fileName.startsWith("/product/")) return fileName;
 		int slash = fileName.lastIndexOf('/');
 		return slash >= 0 && slash + 1 < fileName.length() ? fileName.substring(slash + 1) : fileName;
 	}
