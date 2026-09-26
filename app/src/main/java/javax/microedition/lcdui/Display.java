@@ -179,6 +179,7 @@ public class Display {
 		Displayable previous;
 		long requestGeneration = 0L;
 		Alert alert = null;
+		boolean showCanvasAfterClosingAlert;
 		synchronized (stateLock) {
 			previous = this.current;
 			if (previous instanceof Alert && displayable instanceof Alert) {
@@ -201,11 +202,23 @@ public class Display {
 				alert = nextAlert;
 				alert.setNextDisplayable(previous);
 			}
+			showCanvasAfterClosingAlert =
+					previous instanceof Alert && displayable instanceof Canvas;
 			reconcileCanvasLocked(previous, false);
-			reconcileCanvasLocked(displayable, true);
+			if (!showCanvasAfterClosingAlert) {
+				reconcileCanvasLocked(displayable, true);
+			}
 		}
 		if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
+		}
+		if (showCanvasAfterClosingAlert) {
+			synchronized (stateLock) {
+				if (current == displayable
+						&& currentRequestGeneration.get() == requestGeneration) {
+					reconcileCanvasLocked(displayable, true);
+				}
+			}
 		}
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity == null) {
