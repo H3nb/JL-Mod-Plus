@@ -37,6 +37,7 @@ public class CanvasVisibilityTest {
 
 	@Test
 	public void zeroFpsUsesDisplayMaximumWithoutClampingExplicitOrInternalValues() {
+		assertEquals(1, Canvas.resolveFrameRateLimit(0, 0));
 		assertEquals(120, Canvas.resolveFrameRateLimit(0, 120));
 		assertEquals(240, Canvas.resolveFrameRateLimit(240, 120));
 		assertEquals(-1, Canvas.resolveFrameRateLimit(-1, 120));
