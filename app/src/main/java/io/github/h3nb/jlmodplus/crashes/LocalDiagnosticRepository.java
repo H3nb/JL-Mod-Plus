@@ -497,10 +497,12 @@ public final class LocalDiagnosticRepository {
 
 	private static IncidentSummary incidentForRaw(RawJavaReport raw, ProcessExitStore.Snapshot exit) {
 		IncidentSummary.JavaFailure failure = IncidentSummary.analyzeJavaFailure(raw.stackTrace);
-		String relevantFrame = failure != null && failure.frame != null
-				? failure.frame : topAppFrame(raw.stackTrace);
 		IncidentSummary.Category category = raw.midletName != null
 				? IncidentSummary.Category.MIDLET_CRASH : IncidentSummary.Category.JL_MOD_PLUS;
+		String projectFrame = topAppFrame(raw.stackTrace);
+		String relevantFrame = category == IncidentSummary.Category.JL_MOD_PLUS
+				? (projectFrame != null ? projectFrame : failure == null ? null : failure.frame)
+				: (failure != null && failure.frame != null ? failure.frame : projectFrame);
 		return new IncidentSummary(
 				category,
 				raw.timestampMillis,
