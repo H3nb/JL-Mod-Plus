@@ -243,7 +243,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	public static void setHostDisplayMaximumFps(int fps) {
-		if (fps > 0) hostDisplayMaximumFps = fps;
+		hostDisplayMaximumFps = Math.max(0, fps);
 	}
 
 	static int resolveFrameRateLimit(int configuredFps, int displayMaximumFps) {

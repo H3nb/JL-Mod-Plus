@@ -679,7 +679,12 @@ public class MicroActivity extends AppCompatActivity {
 		if (displayId == hostDisplayId) return;
 
 		int maximumFps = resolveMaximumDisplayFps(display);
-		if (maximumFps <= 0) return;
+		if (maximumFps <= 0) {
+			// Never carry a capability from a different display into this host. Leave the
+			// display ID uncached so a later attachment/configuration edge can retry.
+			Canvas.setHostDisplayMaximumFps(0);
+			return;
+		}
 
 		hostDisplayId = displayId;
 		Canvas.setHostDisplayMaximumFps(maximumFps);
