@@ -35,9 +35,9 @@ import io.github.h3nb.jlmodplus.util.Constants;
 /**
  * Launcher-only dispatcher.
  *
- * <p>A routing record identifies a candidate live runtime; the installed app's OS file lease is
- * the liveness proof. A released lease means the old Java heap is gone, so launcher returns to the
- * library instead of silently cold-relaunching the previous MIDlet.</p>
+ * <p>A routing record identifies a candidate runtime and the emulator foreground selection. The
+ * installed app's OS file lease remains the independent liveness proof. A live runtime may therefore
+ * coexist with Library foreground after the MIDlet intentionally yields its Display.</p>
  */
 public final class LauncherActivity extends Activity {
     private static final String TAG = "LauncherActivity";
@@ -66,9 +66,10 @@ public final class LauncherActivity extends Activity {
                 staleRecord = true;
             } else {
                 try {
-                    routeToRuntime = RuntimeStorageLease.isActive(
+                    boolean runtimeLive = RuntimeStorageLease.isActive(
                             getApplicationContext().getFilesDir(), installedDir);
-                    staleRecord = !routeToRuntime;
+                    staleRecord = !runtimeLive;
+                    routeToRuntime = runtimeLive && state.isRuntimeSelected();
                 } catch (IOException probeFailure) {
                     // Unknown liveness is not evidence of death. Open the library without deleting
                     // the generation so a later launcher attempt can retry the OS-lock probe.
