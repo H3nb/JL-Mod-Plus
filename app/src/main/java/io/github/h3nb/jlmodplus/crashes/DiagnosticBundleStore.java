@@ -71,7 +71,7 @@ final class DiagnosticBundleStore {
 
 		if (existing != null && metadataMatches(existing, fileName, incident.fingerprint)
 				&& isReusable(context, existing)) {
-			return prepared(incident, nativeSummary, Uri.parse(existing.uri), fileName);
+			return prepared(context, incident, nativeSummary, Uri.parse(existing.uri), fileName);
 		}
 
 		if (existing != null) {
@@ -86,8 +86,10 @@ final class DiagnosticBundleStore {
 		String report = GitHubDiagnosticIssue.reportMarkdown(
 				incident, nativeSummary, fileName, javaStack);
 		report = DiagnosticExportSanitizer.sanitize(context, report);
-		String incidentJson = DiagnosticExportSanitizer.sanitize(
-				context, DiagnosticBundleFormat.incidentJson(incident, nativeSummary));
+		String incidentJson = DiagnosticBundleFormat.incidentJson(
+				incident,
+				nativeSummary,
+				value -> DiagnosticExportSanitizer.sanitize(context, value));
 
 		String anrTrace = null;
 		ProcessExitStore.Snapshot exit = record.getProcessExitSnapshot();
@@ -112,7 +114,7 @@ final class DiagnosticBundleStore {
 			deleteOwned(context, complete);
 			throw new IOException("Unable to persist diagnostic bundle ownership");
 		}
-		return prepared(incident, nativeSummary, uri, fileName);
+		return prepared(context, incident, nativeSummary, uri, fileName);
 	}
 
 	/**
@@ -134,13 +136,16 @@ final class DiagnosticBundleStore {
 		return false;
 	}
 
-	private static PreparedBundle prepared(IncidentSummary incident,
+	private static PreparedBundle prepared(Context context, IncidentSummary incident,
 			NativeTombstoneSummary.Summary nativeSummary, Uri uri, String fileName) {
 		return new PreparedBundle(
 				uri,
 				fileName,
-				GitHubDiagnosticIssue.title(incident, nativeSummary),
-				GitHubDiagnosticIssue.compactSummary(incident, nativeSummary, fileName));
+				DiagnosticExportSanitizer.sanitize(
+						context, GitHubDiagnosticIssue.title(incident, nativeSummary)),
+				DiagnosticExportSanitizer.sanitize(
+						context, GitHubDiagnosticIssue.compactSummary(
+								incident, nativeSummary, fileName)));
 	}
 
 	private static NativeTombstoneSummary.Summary nativeSummary(
