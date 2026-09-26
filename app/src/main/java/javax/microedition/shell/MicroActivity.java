@@ -108,6 +108,8 @@ public class MicroActivity extends AppCompatActivity {
 
 	private final Object displayRequestLock = new Object();
 	private volatile Displayable current;
+	/** UI-thread owner of the Displayable actually mounted in displayableContainer. */
+	private Displayable presentedDisplayable;
 	private long displayRequestGeneration;
 	private boolean runtimeToolbarEnabled;
 	private boolean statusBarEnabled;
@@ -1093,11 +1095,10 @@ public class MicroActivity extends AppCompatActivity {
 					|| requestGeneration <= displayRequestGeneration) {
 				return;
 			}
-			Displayable previous = current;
 			current = displayable;
 			displayRequestGeneration = requestGeneration;
 			// Post while holding the request lock so accepted generations enter the UI queue in order.
-			ViewHandler.postEvent(new SetCurrentEvent(previous, displayable, requestGeneration));
+			ViewHandler.postEvent(new SetCurrentEvent(displayable, requestGeneration));
 		}
 	}
 
@@ -1764,13 +1765,10 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private class SetCurrentEvent extends SimpleEvent {
-		private final Displayable current;
 		private final Displayable next;
 		private final long requestGeneration;
 
-		private SetCurrentEvent(
-				Displayable current, Displayable next, long requestGeneration) {
-			this.current = current;
+		private SetCurrentEvent(Displayable next, long requestGeneration) {
 			this.next = next;
 			this.requestGeneration = requestGeneration;
 		}
@@ -1784,8 +1782,9 @@ public class MicroActivity extends AppCompatActivity {
 			if (controllerInputRouter != null) {
 				controllerInputRouter.onTargetChanged();
 			}
-			if (current != null) {
-				current.clearDisplayableView();
+			Displayable previous = presentedDisplayable;
+			if (previous != null && previous != next) {
+				previous.clearDisplayableView();
 			}
 			binding.displayableContainer.removeAllViews();
 			GuestWindowPolicy.Chrome chrome = getRuntimeChrome(next);
@@ -1797,6 +1796,7 @@ public class MicroActivity extends AppCompatActivity {
 			if (next != null) {
 				binding.displayableContainer.addView(next.getDisplayableView());
 			}
+			presentedDisplayable = next;
 			refreshCanvasBackground();
 			binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
 		}
