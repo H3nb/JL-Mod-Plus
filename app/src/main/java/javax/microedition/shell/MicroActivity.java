@@ -246,12 +246,8 @@ public class MicroActivity extends AppCompatActivity {
 				MidletThread.selectRuntimeForForeground();
 			}
 			if (!MidletThread.isRuntimeSelected()) {
-				// Android recreation/history is not authority to undo the current AMS destination.
-				// A sticky Settings/external handoff is stronger than the normal Library fallback.
-				if (MidletThread.isLibraryReturnAllowed()) {
-					startActivity(new Intent(this, MainActivity.class));
-				}
-				finish();
+				// Do not attach guest presentation during recreation/history. Navigation waits for
+				// onStart(), so merely rebuilding a background task cannot foreground JL-Mod.
 				return;
 			}
 		}
@@ -684,9 +680,12 @@ public class MicroActivity extends AppCompatActivity {
 	protected void onStart() {
 		super.onStart();
 		if (MidletThread.hasLiveRuntime() && !MidletThread.isRuntimeSelected()) {
-			// Selection may change after onCreate() during a replacement race. Do not let the
-			// Android visibility edge resurrect a runtime or override a sticky host destination.
-			leaveRuntimeHost(MidletThread.isLibraryReturnAllowed(), null);
+			// Android is now actually presenting this stale/restored host. Reconcile the emulator
+			// destination without ever attaching or activating the deselected MIDlet.
+			if (MidletThread.isLibraryReturnAllowed()) {
+				startActivity(new Intent(this, MainActivity.class));
+			}
+			finish();
 			return;
 		}
 		externalAndroidHandoff = false;
