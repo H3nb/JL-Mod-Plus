@@ -48,7 +48,10 @@ final class GitHubDiagnosticIssue {
 		text.append(description(incident, nativeSummary)).append("\n\n");
 
 		appendBullet(text, "Primary failure", primaryFailure(incident, nativeSummary));
-		appendBullet(text, "MIDlet", incident.subject);
+		appendBullet(
+				text,
+				isMidletSubject(incident) ? "MIDlet" : "Subject",
+				incident.subject);
 		appendBullet(text, "MIDlet version", incident.midletVersion);
 		appendBullet(text, "Entrypoint", incident.entrypoint);
 		appendBullet(text, "Failure operation", incident.operation);
@@ -112,8 +115,10 @@ final class GitHubDiagnosticIssue {
 				if (incident.rootFailure != null) {
 					String frame = callSite(incident.rootFailure.frame);
 					if (frame != null) {
+						String context = "destroyApp()".equals(incident.operation)
+								? " during teardown" : " during MIDlet lifecycle handling";
 						return "The MIDlet threw " + javaFailureLabel(incident.rootFailure)
-								+ " while " + frame + " was being called during teardown.";
+								+ " while " + frame + " was being called" + context + ".";
 					}
 					if (incident.operation != null) {
 						return "The MIDlet threw " + javaFailureLabel(incident.rootFailure)
