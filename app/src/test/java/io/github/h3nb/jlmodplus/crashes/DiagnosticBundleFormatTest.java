@@ -68,6 +68,22 @@ public class DiagnosticBundleFormatTest {
 	}
 
 	@Test
+	public void contentFingerprintTracksEvidenceWithoutChangingLogicalFilename() {
+		String first = DiagnosticBundleFormat.contentFingerprint(
+				"# report\n", "{\"formatVersion\":1}\n", null, null);
+		String same = DiagnosticBundleFormat.contentFingerprint(
+				"# report\n", "{\"formatVersion\":1}\n", null, null);
+		String withExitEvidence = DiagnosticBundleFormat.contentFingerprint(
+				"# report\nassociated exit\n", "{\"formatVersion\":1}\n", null, null);
+		String withAnr = DiagnosticBundleFormat.contentFingerprint(
+				"# report\n", "{\"formatVersion\":1}\n", "ANR trace", null);
+
+		assertEquals(first, same);
+		assertFalse(first.equals(withExitEvidence));
+		assertFalse(first.equals(withAnr));
+	}
+
+	@Test
 	public void sanitizesValuesBeforeJsonEscaping() {
 		IncidentSummary.JavaFailure failure = new IncidentSummary.JavaFailure(
 				"java.lang.IllegalStateException",
