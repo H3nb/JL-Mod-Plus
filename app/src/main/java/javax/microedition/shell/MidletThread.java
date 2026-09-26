@@ -123,6 +123,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			return;
 		}
 		boolean returnToLibrary = current.isLibraryReturnAllowedInternal();
+		// Linearize loss of LCDUI foreground before returning to guest code. This invalidates
+		// every older activation generation, including one currently executing startApp().
+		Display.revokeForeground();
 		current.setRuntimeSelected(false);
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
@@ -339,8 +342,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	private void activateAndReconcileDisplay() {
+		if (!runtimeSelected) {
+			return;
+		}
 		activateIfNeeded();
-		if (lifecycle.isDestroyed() || !lifecycle.isAmsForeground()) {
+		if (!runtimeSelected || lifecycle.isDestroyed() || !lifecycle.isAmsForeground()) {
 			return;
 		}
 		MidletLifecycleState.State state = lifecycle.state();
