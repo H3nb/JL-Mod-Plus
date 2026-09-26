@@ -16,20 +16,36 @@ package io.github.h3nb.jlmodplus.crashes;
 
 import android.content.Context;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.github.h3nb.jlmodplus.config.Config;
 
-/** Second privacy pass applied only to text copied/shared outside the app. */
+/** Explicit privacy contract applied only to diagnostics exported outside the app. */
 final class DiagnosticExportSanitizer {
-	private static final Pattern URI = Pattern.compile(
-			"(?i)\\b(?:https?|file|content|ftp|ftps|sftp|jar|mailto|tel|geo|market|intent):(?:/{1,3})?\\S+");
+	private static final Pattern HTTP_URI = Pattern.compile("(?i)\\bhttps?://[^\\s]+");
+	private static final Pattern PRIVATE_URI = Pattern.compile(
+			"(?i)\\b(?:file|content|ftp|ftps|sftp|jar|mailto|tel|geo|market|intent):(?:/{1,3})?\\S+");
 	private static final Pattern WINDOWS_PATH = Pattern.compile("(?i)\\b[A-Z]:\\\\\\S+");
-	private static final Pattern UNIX_PATH = Pattern.compile("(?<![A-Za-z0-9:/])/(?:[^\\s]+)");
+	private static final Pattern PRIVATE_UNIX_PATH = Pattern.compile(
+			"(?<![A-Za-z0-9:/])(?:"
+					+ "/storage/emulated/[0-9]+/[^\\s]+"
+					+ "|/storage/self/primary/[^\\s]+"
+					+ "|/sdcard/[^\\s]+"
+					+ "|/mnt/sdcard/[^\\s]+"
+					+ "|/mnt/media_rw/[^\\s]+"
+					+ "|/data/user/[0-9]+/[^\\s]+"
+					+ "|/data/data/[^\\s]+"
+					+ "|/home/[^\\s]+"
+					+ "|/Users/[^\\s]+"
+					+ ")");
 
 	private DiagnosticExportSanitizer() {}
 
 	static String sanitize(Context context, String text) {
+		if (context == null) return sanitize(text, null, null);
 		String appDataDir = context.getApplicationInfo().dataDir;
 		String emulatorDir;
 		try {
@@ -41,25 +57,76 @@ final class DiagnosticExportSanitizer {
 	}
 
 	static String sanitize(String text, String emulatorDir, String appDataDir) {
-		if (text == null || text.isEmpty()) {
-			return text;
-		}
-		String sanitized = URI.matcher(text).replaceAll("<uri>");
-		sanitized = replacePath(sanitized, emulatorDir, "<emulator-dir>");
+		if (text == null || text.isEmpty()) return text;
+
+		String sanitized = replacePath(text, emulatorDir, "<emulator-dir>");
 		sanitized = replacePath(sanitized, appDataDir, "<app-data>");
-		sanitized = WINDOWS_PATH.matcher(sanitized).replaceAll("<path>");
-		sanitized = UNIX_PATH.matcher(sanitized).replaceAll("<path>");
+		sanitized = sanitizeHttpUris(sanitized);
+		sanitized = PRIVATE_URI.matcher(sanitized).replaceAll("<uri>");
+		sanitized = WINDOWS_PATH.matcher(sanitized).replaceAll("<user-path>");
+		sanitized = PRIVATE_UNIX_PATH.matcher(sanitized).replaceAll("<user-path>");
 		return sanitized;
 	}
 
-	private static String replacePath(String text, String path, String replacement) {
-		if (path == null) {
-			return text;
+	private static String sanitizeHttpUris(String text) {
+		Matcher matcher = HTTP_URI.matcher(text);
+		StringBuffer output = new StringBuffer(text.length());
+		while (matcher.find()) {
+			String token = matcher.group();
+			String trailing = "";
+			while (!token.isEmpty()) {
+				char last = token.charAt(token.length() - 1);
+				if (last != '.' && last != ',' && last != ';' && last != ')'
+						&& last != ']' && last != '}') break;
+				trailing = last + trailing;
+				token = token.substring(0, token.length() - 1);
+			}
+			matcher.appendReplacement(output,
+					Matcher.quoteReplacement(sanitizeHttpUri(token) + trailing));
 		}
+		matcher.appendTail(output);
+		return output.toString();
+	}
+
+	private static String sanitizeHttpUri(String value) {
+		try {
+			URI uri = new URI(value);
+			if (uri.getHost() == null) return "<uri>";
+			return new URI(
+					uri.getScheme().toLowerCase(java.util.Locale.ROOT),
+					null,
+					uri.getHost(),
+					uri.getPort(),
+					uri.getRawPath(),
+					null,
+					null).toASCIIString();
+		} catch (URISyntaxException | IllegalArgumentException e) {
+			int sensitive = firstPositive(value.indexOf('?'), value.indexOf('#'));
+			String withoutSecrets = sensitive < 0 ? value : value.substring(0, sensitive);
+			int credentials = withoutSecrets.indexOf('@');
+			int scheme = withoutSecrets.indexOf("://");
+			if (credentials > scheme + 3) {
+				withoutSecrets = withoutSecrets.substring(0, scheme + 3)
+						+ withoutSecrets.substring(credentials + 1);
+			}
+			return withoutSecrets;
+		}
+	}
+
+	private static int firstPositive(int first, int second) {
+		if (first < 0) return second;
+		if (second < 0) return first;
+		return Math.min(first, second);
+	}
+
+	private static String replacePath(String text, String path, String replacement) {
+		if (path == null) return text;
 		String normalized = path.trim();
-		while (normalized.length() > 1 && (normalized.endsWith("/") || normalized.endsWith("\\"))) {
+		while (normalized.length() > 1
+				&& (normalized.endsWith("/") || normalized.endsWith("\\"))) {
 			normalized = normalized.substring(0, normalized.length() - 1);
 		}
-		return normalized.isEmpty() ? text : text.replace(normalized, replacement);
+		if (normalized.isEmpty()) return text;
+		return text.replace(normalized, replacement);
 	}
 }
