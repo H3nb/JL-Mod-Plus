@@ -70,6 +70,16 @@ public class Display {
 	private boolean hostVisible;
 	private boolean systemScreenObscured;
 
+	/**
+	 * Applies the Display-owned presentation facts while their transaction lock is still held.
+	 * This prevents a guest-thread setCurrent() snapshot from arriving after a newer host/UI edge.
+	 */
+	private void reconcileCanvasLocked(Displayable displayable, boolean isCurrent) {
+		if (displayable instanceof Canvas canvas) {
+			canvas.updatePresentationState(isCurrent, hostVisible, systemScreenObscured);
+		}
+	}
+
 	public static Display getDisplay(MIDlet midlet) {
 		if (instance == null && midlet != null) {
 			instance = new Display();
@@ -98,6 +108,7 @@ public class Display {
 			systemScreenObscured = false;
 			target = current;
 			requestGeneration = currentRequestGeneration.incrementAndGet();
+			reconcileCanvasLocked(target, true);
 		}
 		if (target instanceof Alert alert) {
 			alert.detachHost();
@@ -105,10 +116,7 @@ public class Display {
 			ViewHandler.postEvent(() -> showAlert(alert, generation));
 		} else if (target != null) {
 			target.clearDisplayableView();
-			if (target instanceof Canvas canvas) {
-				canvas.updatePresentationState(true, false, false);
-			}
-			activity.setCurrent(target);
+			activity.setCurrent(target, requestGeneration);
 		}
 	}
 
@@ -119,52 +127,34 @@ public class Display {
 			systemScreenObscured = false;
 			target = current;
 			currentRequestGeneration.incrementAndGet();
+			reconcileCanvasLocked(target, true);
 		}
 		if (target instanceof Alert alert) {
 			alert.detachHost();
 		} else if (target != null) {
-			if (target instanceof Canvas canvas) {
-				canvas.updatePresentationState(true, false, false);
-			}
 			target.clearDisplayableView();
 		}
 	}
 
 	/** Updates host foreground access without changing the guest's current Displayable. */
 	public void setHostVisible(boolean visible) {
-		Canvas canvas = null;
-		boolean obscured;
 		synchronized (stateLock) {
 			if (hostVisible == visible) {
 				return;
 			}
 			hostVisible = visible;
-			obscured = systemScreenObscured;
-			if (current instanceof Canvas currentCanvas) {
-				canvas = currentCanvas;
-			}
-		}
-		if (canvas != null) {
-			canvas.updatePresentationState(true, visible, obscured);
+			reconcileCanvasLocked(current, true);
 		}
 	}
 
 	/** Host-owned menus/dialogs can obscure LCDUI without changing the current Displayable. */
 	public void setSystemScreenObscured(boolean obscured) {
-		Canvas canvas = null;
-		boolean visible;
 		synchronized (stateLock) {
 			if (systemScreenObscured == obscured) {
 				return;
 			}
 			systemScreenObscured = obscured;
-			visible = hostVisible;
-			if (current instanceof Canvas currentCanvas) {
-				canvas = currentCanvas;
-			}
-		}
-		if (canvas != null) {
-			canvas.updatePresentationState(true, visible, obscured);
+			reconcileCanvasLocked(current, true);
 		}
 	}
 
@@ -187,8 +177,6 @@ public class Display {
 			return;
 		}
 		Displayable previous;
-		boolean currentHostVisible;
-		boolean currentSystemScreenObscured;
 		long requestGeneration = 0L;
 		Alert alert = null;
 		synchronized (stateLock) {
@@ -208,23 +196,16 @@ public class Display {
 			}
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			this.current = displayable;
-			currentHostVisible = hostVisible;
-			currentSystemScreenObscured = systemScreenObscured;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
 			if (displayable instanceof Alert nextAlert) {
 				alert = nextAlert;
 				alert.setNextDisplayable(previous);
 			}
+			reconcileCanvasLocked(previous, false);
+			reconcileCanvasLocked(displayable, true);
 		}
-		if (previous instanceof Canvas canvas) {
-			canvas.updatePresentationState(
-					false, currentHostVisible, currentSystemScreenObscured);
-		} else if (previous instanceof Alert previousAlert) {
+		if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
-		}
-		if (displayable instanceof Canvas canvas) {
-			canvas.updatePresentationState(
-					true, currentHostVisible, currentSystemScreenObscured);
 		}
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity == null) {
@@ -235,7 +216,7 @@ public class Display {
 			final long generation = requestGeneration;
 			ViewHandler.postEvent(() -> showAlert(requestedAlert, generation));
 		} else {
-			activity.setCurrent(displayable);
+			activity.setCurrent(displayable, requestGeneration);
 		}
 	}
 
@@ -246,8 +227,6 @@ public class Display {
 			throw new IllegalArgumentException();
 		}
 		Displayable previous;
-		boolean currentHostVisible;
-		boolean currentSystemScreenObscured;
 		long requestGeneration;
 		synchronized (stateLock) {
 			if (current instanceof Alert && current != alert) {
@@ -264,14 +243,10 @@ public class Display {
 			alert.setNextDisplayable(displayable);
 			requestGeneration = currentRequestGeneration.incrementAndGet();
 			current = alert;
-			currentHostVisible = hostVisible;
-			currentSystemScreenObscured = systemScreenObscured;
 			MemoryDiscoveryBridge.setCurrentDisplayable(displayable);
+			reconcileCanvasLocked(previous, false);
 		}
-		if (previous instanceof Canvas canvas) {
-			canvas.updatePresentationState(
-					false, currentHostVisible, currentSystemScreenObscured);
-		} else if (previous instanceof Alert previousAlert) {
+		if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
 		}
 		if (ContextHolder.getActivity() != null) {
@@ -315,16 +290,17 @@ public class Display {
 	 */
 	void restoreAfterAlert(Alert expectedAlert) {
 		MicroActivity activity;
+		long requestGeneration;
 		synchronized (stateLock) {
 			if (current != expectedAlert) {
 				return;
 			}
-			currentRequestGeneration.incrementAndGet();
+			requestGeneration = currentRequestGeneration.incrementAndGet();
 			current = null;
 			activity = ContextHolder.getActivity();
 		}
 		if (activity != null) {
-			activity.setCurrent(null);
+			activity.setCurrent(null, requestGeneration);
 		}
 	}
 

@@ -106,7 +106,9 @@ public class MicroActivity extends AppCompatActivity {
 	private static final long IME_REQUEST_RETRY_DELAY_MILLIS = 100L;
 	private static final String STATE_EXPECTED_APP_ID = "expected_library_app_id";
 
-	private Displayable current;
+	private final Object displayRequestLock = new Object();
+	private volatile Displayable current;
+	private long displayRequestGeneration;
 	private boolean runtimeToolbarEnabled;
 	private boolean statusBarEnabled;
 	private boolean displayCutoutEnabled;
@@ -1085,9 +1087,25 @@ public class MicroActivity extends AppCompatActivity {
 		return null;
 	}
 
-	public void setCurrent(Displayable displayable) {
-		ViewHandler.postEvent(new SetCurrentEvent(current, displayable));
-		current = displayable;
+	public void setCurrent(Displayable displayable, long requestGeneration) {
+		synchronized (displayRequestLock) {
+			if (ContextHolder.getActivity() != this
+					|| requestGeneration <= displayRequestGeneration) {
+				return;
+			}
+			Displayable previous = current;
+			current = displayable;
+			displayRequestGeneration = requestGeneration;
+			// Post while holding the request lock so accepted generations enter the UI queue in order.
+			ViewHandler.postEvent(new SetCurrentEvent(previous, displayable, requestGeneration));
+		}
+	}
+
+	private boolean ownsDisplayRequest(long requestGeneration) {
+		synchronized (displayRequestLock) {
+			return ContextHolder.getActivity() == this
+					&& displayRequestGeneration == requestGeneration;
+		}
 	}
 
 	/** Implements MIDP's setCurrent(null) background request without changing guest current state. */
@@ -1748,14 +1766,20 @@ public class MicroActivity extends AppCompatActivity {
 	private class SetCurrentEvent extends SimpleEvent {
 		private final Displayable current;
 		private final Displayable next;
+		private final long requestGeneration;
 
-		private SetCurrentEvent(Displayable current, Displayable next) {
+		private SetCurrentEvent(
+				Displayable current, Displayable next, long requestGeneration) {
 			this.current = current;
 			this.next = next;
+			this.requestGeneration = requestGeneration;
 		}
 
 		@Override
 		public void process() {
+			if (!ownsDisplayRequest(requestGeneration)) {
+				return;
+			}
 			closeOptionsMenu();
 			if (controllerInputRouter != null) {
 				controllerInputRouter.onTargetChanged();
