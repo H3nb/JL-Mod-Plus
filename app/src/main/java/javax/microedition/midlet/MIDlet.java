@@ -102,12 +102,23 @@ public abstract class MIDlet {
 			} else {
 				intent.setData(Uri.parse(url));
 			}
-			Context launchContext = ContextHolder.getActivity();
+			MicroActivity activity = ContextHolder.getActivity();
+			Context launchContext = activity;
 			if (launchContext == null) {
 				launchContext = ContextHolder.getAppContext();
 				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			}
-			launchContext.startActivity(intent);
+			if (activity != null) {
+				activity.beginExternalAndroidHandoff();
+			}
+			try {
+				launchContext.startActivity(intent);
+			} catch (ActivityNotFoundException | SecurityException launchFailure) {
+				if (activity != null) {
+					activity.cancelExternalAndroidHandoff();
+				}
+				throw launchFailure;
+			}
 		} catch (ActivityNotFoundException | SecurityException | IOException e) {
 			throw new ConnectionNotFoundException();
 		}
