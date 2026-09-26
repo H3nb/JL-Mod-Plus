@@ -33,9 +33,9 @@
     </plurals>
     <string name="crash_reports_batch_share_disclosure">The selected diagnostic reports may contain device information, MIDlet metadata, crash-correlation identifiers, Java stack traces, or Android process-exit details. Retained raw traces will also be attached. Review the reports before sharing them.</string>
     <string name="crash_report_bundle_preparing">Preparing diagnostic bundle…</string>
-    <string name="crash_report_bundle_ready_title">Diagnostic Bundle Ready</string>
+    <string name="crash_report_bundle_ready_title">Diagnostic bundle ready</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nGitHub will ask you to upload this file before submitting the report. The diagnostic bundle will be public with your issue.</string>
-    <string name="locate_bundle">Locate Bundle</string>
+    <string name="locate_bundle">Locate bundle</string>
     <string name="open_github">Open GitHub</string>
     <string name="crash_report_bundle_failed">Could not prepare the diagnostic bundle</string>
     <string name="crash_report_locate_failed">No system file picker is available to locate the diagnostic bundle</string>
