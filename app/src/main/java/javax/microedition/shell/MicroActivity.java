@@ -169,6 +169,17 @@ public class MicroActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		EdgeToEdgeCompat.enableIfSupported(this);
 		binding = new RuntimeHostView(this);
+		binding.getRoot().addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+			@Override
+			public void onViewAttachedToWindow(View view) {
+				refreshHostDisplayMaximumFps();
+			}
+
+			@Override
+			public void onViewDetachedFromWindow(View view) {
+				// Keep the last resolved capability until another attached display replaces it.
+			}
+		});
 		setContentView(binding.getRoot());
 		binding.layoutEditDone.setOnClickListener(ignored -> requestFinishVirtualKeyboardEdit());
 		runtimeNoticeController = new TransientNoticeComposeController(binding.notices);

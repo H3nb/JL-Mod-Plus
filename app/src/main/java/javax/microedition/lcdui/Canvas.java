@@ -247,7 +247,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	static int resolveFrameRateLimit(int configuredFps, int displayMaximumFps) {
-		return configuredFps == 0 ? displayMaximumFps : configuredFps;
+		return configuredFps == 0 ? Math.max(1, displayMaximumFps) : configuredFps;
 	}
 
 	public static void setScreenshotRawMode(boolean enable) {
