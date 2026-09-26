@@ -226,6 +226,12 @@ class CrashReportsComposeTest {
             githubCount++
         }
 
+        override fun onDismissBundleReady() = Unit
+
+        override fun onLocateBundle() = Unit
+
+        override fun onOpenGitHub() = Unit
+
         override fun onDelete() {
             deleteCount++
         }
