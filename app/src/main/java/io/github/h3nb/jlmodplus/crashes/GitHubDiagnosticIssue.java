@@ -299,7 +299,14 @@ final class GitHubDiagnosticIssue {
 	}
 
 	private static boolean isMidletSubject(IncidentSummary incident) {
-		return incident.subject != null && !"JL-Mod Plus".equals(incident.subject);
+		if (incident.category == IncidentSummary.Category.MIDLET_LIFECYCLE
+				|| incident.category == IncidentSummary.Category.MIDLET_CRASH
+				|| incident.entrypoint != null) {
+			return true;
+		}
+		return incident.process != null && (incident.process.equals("midlet")
+				|| incident.process.startsWith("midlet · ")
+				|| incident.process.contains(":midlet"));
 	}
 
 	private static String defaultSubject(IncidentSummary.Category category) {
