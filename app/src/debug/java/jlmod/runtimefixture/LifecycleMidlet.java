@@ -43,6 +43,7 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String MODE_WORKER_DESTROY = "worker-destroy";
 	public static final String MODE_HOLD = "hold";
 	public static final String MODE_BACKGROUND = "background";
+	public static final String MODE_END_KEY_BACKGROUND = "end-key-background";
 	public static final String MODE_CSI_STYLE_EXIT = "csi-style-exit";
 	public static final String MODE_STORAGE_LEASE = "storage-lease";
 	public static final String MODE_FILE_CONNECTION = "file-connection-root";
@@ -113,6 +114,24 @@ public final class LifecycleMidlet extends MIDlet {
 			writeMarker(getAppProperty(MARKER_PROPERTY));
 			backgroundRequested = true;
 			display.setCurrent(null);
+			return;
+		}
+		if (MODE_END_KEY_BACKGROUND.equals(mode)) {
+			Display display = Display.getDisplay(this);
+			display.setCurrent(new Canvas() {
+				@Override
+				protected void paint(Graphics graphics) {
+				}
+
+				@Override
+				protected void keyPressed(int keyCode) {
+					if (keyCode == KEY_END) {
+						writeMarker(getAppProperty(MARKER_PROPERTY));
+						Display.getDisplay(LifecycleMidlet.this).setCurrent(null);
+					}
+				}
+			});
+			writeMarker(getAppProperty(MARKER_PROPERTY));
 			return;
 		}
 		if (MODE_CSI_STYLE_EXIT.equals(mode)) {
