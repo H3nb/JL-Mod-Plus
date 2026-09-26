@@ -300,6 +300,18 @@ public class CrashRuntimeIsolationTest {
 			assertEquals(generation, afterLauncher.getGeneration());
 			assertFalse(afterLauncher.isRuntimeSelected());
 
+			// Simulate Android restoring the old runtime task from history, not an explicit Library
+			// selection. The stale host must reconcile back to Library without activating the MIDlet.
+			sendAndroidTaskHome();
+			launchLifecycleMidletFromHistory(context, appDir);
+			awaitActivityOnTop(context, MainActivity.class);
+			assertEquals(runtimePid, processPid(context, midletProcessName));
+			MidletSessionStore.State afterHistoryRestore = MidletSessionStore.read(context);
+			assertNotNull(afterHistoryRestore);
+			assertEquals(generation, afterHistoryRestore.getGeneration());
+			assertFalse(afterHistoryRestore.isRuntimeSelected());
+			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
+
 			launchLifecycleMidletForReselection(context, appDir);
 			awaitActivityOnTop(context, MicroActivity.class);
 			awaitRuntimeSelection(context, generation, true);
@@ -584,6 +596,14 @@ public class CrashRuntimeIsolationTest {
 	private static void launchLauncher(Context context) {
 		context.startActivity(new Intent(context, LauncherActivity.class)
 				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+	}
+
+	private static void launchLifecycleMidletFromHistory(Context context, File appDir) {
+		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
+				context, MicroActivity.class)
+				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
+		context.startActivity(intent);
 	}
 
 	private static void launchLifecycleMidletForReselection(Context context, File appDir) {
