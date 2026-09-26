@@ -364,8 +364,7 @@ public class CrashRuntimeIsolationTest {
 
 			MidletSessionStore.State running = MidletSessionStore.read(context);
 			assertNotNull(running);
-			String generation = running.getGeneration();
-			assertNotNull(generation);
+			assertNotNull(running.getGeneration());
 			assertTrue(running.isRuntimeSelected());
 			clearMarker(markerFile);
 
