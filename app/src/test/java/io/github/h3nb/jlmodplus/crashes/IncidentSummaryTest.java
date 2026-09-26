@@ -80,6 +80,17 @@ public class IncidentSummaryTest {
 	}
 
 	@Test
+	public void internalCorrelationWrapperIsNotReportedAsRootFailure() {
+		IncidentSummary.JavaFailure failure = IncidentSummary.analyzeJavaFailure(
+				"eventId=e1; boundary=UNCAUGHT_THREAD\njlamf\n"
+						+ "java.lang.IllegalStateException: useful\n"
+						+ "\tat example.Game.run(Game.java:42)");
+
+		assertEquals("java.lang.IllegalStateException", failure.type);
+		assertEquals("useful", failure.message);
+	}
+
+	@Test
 	public void laterAssociatedExitDoesNotChangeJavaIncidentIdentity() {
 		IncidentSummary withoutExit = minimalWithExit(null);
 		IncidentSummary.ProcessExitEvidence exit = new IncidentSummary.ProcessExitEvidence(
@@ -114,7 +125,7 @@ public class IncidentSummaryTest {
 	private static IncidentSummary minimalWithExit(
 			IncidentSummary.ProcessExitEvidence exit) {
 		IncidentSummary.JavaFailure failure = IncidentSummary.analyzeJavaFailure(
-				"java.lang.IllegalStateException: boom\\n\\tat example.Game.run(Game.java:42)");
+				"java.lang.IllegalStateException: boom\n\tat example.Game.run(Game.java:42)");
 		return new IncidentSummary(
 				IncidentSummary.Category.MIDLET_CRASH,
 				1234L,
