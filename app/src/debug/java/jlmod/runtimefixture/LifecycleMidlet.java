@@ -37,6 +37,7 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String MODE_CRASH_PAUSE = "crash-pause";
 	public static final String MODE_CRASH_DESTROY = "crash-destroy";
 	public static final String MODE_CLEAN = "clean";
+	public static final String MODE_WORKER_DESTROY = "worker-destroy";
 	public static final String MODE_STORAGE_LEASE = "storage-lease";
 	public static final String MODE_FILE_CONNECTION = "file-connection-root";
 	public static final String STORAGE_TRIGGER_PROPERTY = "JLMod-Storage-Trigger";
@@ -76,6 +77,11 @@ public final class LifecycleMidlet extends MIDlet {
 		if (MODE_CLEAN.equals(mode)) {
 			writeMarker(getAppProperty(MARKER_PROPERTY));
 			notifyDestroyed();
+			return;
+		}
+		if (MODE_WORKER_DESTROY.equals(mode)) {
+			writeMarker(getAppProperty(MARKER_PROPERTY));
+			new Thread(this::notifyDestroyed, "LifecycleFixtureDestroyWorker").start();
 			return;
 		}
 		if (MODE_STORAGE_LEASE.equals(mode)) {

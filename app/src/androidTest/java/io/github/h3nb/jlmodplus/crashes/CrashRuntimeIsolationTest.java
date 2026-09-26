@@ -18,6 +18,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -51,6 +52,7 @@ import java.util.Set;
 
 import javax.microedition.shell.CrashRuntimeLifecycleControlActivity;
 import javax.microedition.shell.MicroActivity;
+import javax.microedition.util.ContextHolder;
 
 import com.nokia.mid.ui.NotificationActivity;
 
@@ -102,6 +104,15 @@ public class CrashRuntimeIsolationTest {
 		} finally {
 			cleanupProbeDiagnostics(context, baselineIds);
 		}
+	}
+
+
+	@Test
+	public void detachedMidletHostPermissionBridgeIsNullSafe() {
+		// MicroActivity lives in :midlet, so this main-process test has no attached runtime host.
+		assertNull(ContextHolder.getActivity());
+		assertFalse(ContextHolder.requestPermission("android.permission.CAMERA"));
+		assertFalse(ContextHolder.requestPermissions(new String[]{"android.permission.CAMERA"}));
 	}
 
 	@Test
@@ -167,6 +178,16 @@ public class CrashRuntimeIsolationTest {
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
 			assertNoNewLifecycleFailure(context, afterThrowingDestroyIds);
+
+			Set<String> afterMainThreadSelfExitIds = recordIds(LocalDiagnosticRepository.load(context));
+			clearMarker(marker);
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_WORKER_DESTROY, marker);
+			launchLifecycleMidlet(context, appDir);
+			awaitMarker(marker);
+			assertRemoteProcessStops(context, midletProcessName);
+			assertEquals(mainPid, Process.myPid());
+			assertEquals(mainPid, processPid(context, mainProcessName));
+			assertNoNewLifecycleFailure(context, afterMainThreadSelfExitIds);
 		} finally {
 			killRemoteProcessBestEffort(context, midletProcessName);
 			cleanupLifecycleDiagnostics(context, baselineIds);
