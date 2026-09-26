@@ -44,6 +44,12 @@ evidence, rather than by embedding a client-side decryption secret.
 ## Ownership
 
 JL-Mod Plus tracks the exact URI and identity of the bundle it generated for a diagnostic record.
-Retry reuses the valid tracked bundle; a missing, obsolete, or invalid bundle is regenerated with
-the same logical filename. Deleting the diagnostic attempts to remove only that tracked artifact.
-Files already uploaded, copied, or shared elsewhere are outside JL-Mod Plus ownership.
+The logical filename comes from the stable incident identity, while an internal content fingerprint
+tracks the evidence represented by that ZIP. Retry reuses the tracked bundle only when both still
+match; newer correlated evidence regenerates the ZIP with the same logical filename.
+
+Ownership is persisted before the bundle is written or published. Interrupted legacy writes can
+therefore clean their deterministic partial file on retry, and failed cleanup keeps the ownership
+mapping instead of guessing by filename. Deleting the diagnostic attempts to remove only that
+tracked artifact. Files already uploaded, copied, or shared elsewhere are outside JL-Mod Plus
+ownership.
