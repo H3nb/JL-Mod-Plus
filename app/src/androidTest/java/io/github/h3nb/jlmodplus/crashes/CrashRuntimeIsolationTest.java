@@ -58,6 +58,7 @@ import com.nokia.mid.ui.NotificationActivity;
 
 import jlmod.runtimefixture.LifecycleMidlet;
 import io.github.h3nb.jlmodplus.EmulatorApplication;
+import io.github.h3nb.jlmodplus.LauncherActivity;
 import io.github.h3nb.jlmodplus.MainActivity;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
@@ -229,6 +230,16 @@ public class CrashRuntimeIsolationTest {
 			assertFalse(backgrounded.isRuntimeSelected());
 			String generation = backgrounded.getGeneration();
 			assertNotNull(generation);
+
+			// A live lease is not enough to route the launcher back into the MIDlet after the guest
+			// deliberately yielded emulator foreground to Library.
+			launchLauncher(context);
+			awaitActivityOnTop(context, MainActivity.class);
+			assertEquals(runtimePid, processPid(context, midletProcessName));
+			MidletSessionStore.State afterLauncher = MidletSessionStore.read(context);
+			assertNotNull(afterLauncher);
+			assertEquals(generation, afterLauncher.getGeneration());
+			assertFalse(afterLauncher.isRuntimeSelected());
 
 			launchLifecycleMidletForReselection(context, appDir);
 			awaitActivityOnTop(context, MicroActivity.class);
@@ -476,6 +487,11 @@ public class CrashRuntimeIsolationTest {
 				// fresh MicroActivity/process boundary rather than reusing test presentation state.
 				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		context.startActivity(intent);
+	}
+
+	private static void launchLauncher(Context context) {
+		context.startActivity(new Intent(context, LauncherActivity.class)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
 	}
 
 	private static void launchLifecycleMidletForReselection(Context context, File appDir) {
