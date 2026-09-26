@@ -72,6 +72,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private volatile MidletSessionJournal.FailureBoundary primaryFailureBoundary;
 	private MidletSessionJournal.Outcome requestedTerminationOutcome;
 	private long displayForegroundGeneration;
+	private volatile boolean runtimeSelected = true;
 	private boolean returnToLibraryOnTermination = true;
 	private boolean terminalFinalized;
 
@@ -109,6 +110,12 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		return current != null && !current.lifecycle.isDestroyed();
 	}
 
+	/** Returns the in-process AMS foreground selection for the current live runtime. */
+	static boolean isRuntimeSelected() {
+		MidletThread current = instance;
+		return current != null && !current.lifecycle.isDestroyed() && current.runtimeSelected;
+	}
+
 	/** Handles MIDP Display.setCurrent(null) as an emulator/AMS background request. */
 	public static void requestBackground() {
 		MidletThread current = instance;
@@ -131,6 +138,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	private void setRuntimeSelected(boolean selected) {
+		runtimeSelected = selected;
 		MidletSessionStore.setRuntimeSelected(
 				ContextHolder.getAppContext(), journal.getSessionId(), selected);
 	}
