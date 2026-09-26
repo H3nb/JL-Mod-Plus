@@ -35,14 +35,22 @@
     <string name="crash_report_github_issue_title">Diagnostic Report: %1$s</string>
     <string name="crash_report_github_intro">Before submitting, describe what you were doing when the problem occurred. Review the prefilled diagnostic text and remove anything you do not want to publish.\n\n---\n\nDiagnostic report (sanitized by JL-Mod Plus):</string>
     <string name="crash_report_github_truncated">\n\n[Diagnostic prefill shortened for the GitHub issue form. Use Share Report in JL-Mod Plus if additional evidence is needed.]</string>
+    <string name="crash_report_bundle_preparing">Preparing diagnostic bundle…</string>
+    <string name="crash_report_bundle_ready_title">Diagnostic Bundle Ready</string>
+    <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nGitHub will ask you to upload this file before submitting the report. The diagnostic bundle will be public with your issue.</string>
+    <string name="locate_bundle">Locate Bundle</string>
+    <string name="open_github">Open GitHub</string>
+    <string name="crash_report_bundle_failed">Could not prepare the diagnostic bundle</string>
+    <string name="crash_report_locate_failed">No system file picker is available to locate the diagnostic bundle</string>
+    <string name="crash_report_bundle_cleanup_failed">The diagnostic report was deleted, but JL-Mod Plus could not remove its generated bundle</string>
     <string name="crash_report_github_unavailable">No app is available to open the GitHub issue form</string>
     <string name="crash_report_delete_title">Delete Crash Report?</string>
-    <string name="crash_report_delete_message">This permanently removes the selected local diagnostic record from JL-Mod Plus.</string>
+    <string name="crash_report_delete_message">This permanently removes the diagnostic report and any bundle generated for it from this device. Files already uploaded or shared elsewhere are not affected.</string>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Delete %1$d Crash Report?</item>
         <item quantity="other">Delete %1$d Crash Reports?</item>
     </plurals>
-    <string name="crash_reports_batch_delete_message">This permanently removes the selected local diagnostic records from JL-Mod Plus.</string>
+    <string name="crash_reports_batch_delete_message">This permanently removes the selected diagnostic reports and any bundles generated for them from this device. Files already uploaded or shared elsewhere are not affected.</string>
     <string name="crash_report_delete_failed">Could not delete the complete report</string>
     <string name="crash_report_unavailable">This report is no longer available</string>
     <string name="process_exit_recovery_title">Unexpected Process Exit Detected</string>
