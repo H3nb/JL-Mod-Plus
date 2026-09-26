@@ -110,6 +110,7 @@ public final class LifecycleMidlet extends MIDlet {
 				}
 			};
 			display.setCurrent(retainedCanvas);
+			writeMarker(getAppProperty(MARKER_PROPERTY));
 			backgroundRequested = true;
 			display.setCurrent(null);
 			return;
