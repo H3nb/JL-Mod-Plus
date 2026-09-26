@@ -97,7 +97,7 @@ final class DiagnosticExportSanitizer {
 					null,
 					uri.getHost(),
 					uri.getPort(),
-					uri.getRawPath(),
+					uri.getPath(),
 					null,
 					null).toASCIIString();
 		} catch (URISyntaxException | IllegalArgumentException e) {
