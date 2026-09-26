@@ -61,6 +61,7 @@ import jlmod.runtimefixture.LifecycleMidlet;
 import io.github.h3nb.jlmodplus.EmulatorApplication;
 import io.github.h3nb.jlmodplus.LauncherActivity;
 import io.github.h3nb.jlmodplus.MainActivity;
+import io.github.h3nb.jlmodplus.config.ConfigActivity;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
 import io.github.h3nb.jlmodplus.util.Constants;
@@ -333,6 +334,60 @@ public class CrashRuntimeIsolationTest {
 	}
 
 	@Test
+	public void explicitDestinationSurvivesKeyEndBackgroundDuringDestroy() throws Exception {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		String midletProcessName = context.getPackageName() + ":midlet";
+		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean hadPreviousEmulatorDir = preferences.contains(Constants.PREF_EMULATOR_DIR);
+		String previousEmulatorDir = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
+		File appDir = new File(new File(root, "converted"), "fixture");
+		File markerFile = new File(root, "lifecycle.marker");
+
+		try {
+			deleteRecursively(root);
+			prepareLifecycleFixture(context, root, appDir);
+			assertTrue(preferences.edit()
+					.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_END_KEY_BACKGROUND, markerFile);
+			launchLifecycleMidlet(context, appDir);
+			awaitMarker(markerFile);
+
+			MidletSessionStore.State running = MidletSessionStore.read(context);
+			assertNotNull(running);
+			String generation = running.getGeneration();
+			assertNotNull(generation);
+			assertTrue(running.isRuntimeSelected());
+
+			launchConfigActivity(context, appDir, running.getAppId());
+			awaitActivityOnTop(context, ConfigActivity.class);
+			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
+			clearMarker(markerFile);
+
+			launchLifecycleControl(
+					context, CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY_NO_LIBRARY_IMMEDIATE);
+
+			// The marker is rewritten only by the injected KEY_END callback before it requests
+			// Display.setCurrent(null). The sticky non-Library destination must still win.
+			awaitMarker(markerFile);
+			assertRemoteProcessStops(context, midletProcessName);
+			awaitActivityOnTop(context, ConfigActivity.class);
+			assertNull(MidletSessionStore.read(context));
+			assertNoNewLifecycleFailure(context, baselineIds);
+		} finally {
+			killRemoteProcessBestEffort(context, midletProcessName);
+			MidletSessionStore.clear(context);
+			cleanupLifecycleDiagnostics(context, baselineIds);
+			restoreEmulatorDirectoryBestEffort(
+					preferences, hadPreviousEmulatorDir, previousEmulatorDir);
+			context.startActivity(new Intent(context, MainActivity.class)
+					.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP));
+			deleteRecursivelyBestEffort(root);
+		}
+	}
+
+	@Test
 	public void csiStyleBackgroundThenDestroyReturnsToLibraryOnceAndTerminatesCleanly()
 			throws Exception {
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -596,6 +651,17 @@ public class CrashRuntimeIsolationTest {
 	private static void launchLauncher(Context context) {
 		context.startActivity(new Intent(context, LauncherActivity.class)
 				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+	}
+
+	private static void launchConfigActivity(Context context, File appDir, long appId) {
+		Intent intent = new Intent(Constants.ACTION_EDIT, Uri.parse(appDir.getAbsolutePath()),
+				context, ConfigActivity.class)
+				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		if (appId > 0L) {
+			intent.putExtra(Constants.KEY_LIBRARY_APP_ID, appId);
+		}
+		context.startActivity(intent);
 	}
 
 	private static void launchLifecycleMidletFromHistory(Context context, File appDir) {
