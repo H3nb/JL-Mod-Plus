@@ -31,7 +31,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class MidletSessionStoreTest {
     @Test
-    public void startedRuntimePersistsOnlyRoutingIdentityAndGeneration() {
+    public void startedRuntimePersistsRoutingIdentityGenerationAndSelection() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         try {
             MidletSessionStore.clear(context);
@@ -116,6 +116,7 @@ public class MidletSessionStoreTest {
             assertNotNull(state);
             assertNull(state.getGeneration());
             assertEquals(9L, state.getAppId());
+            assertFalse(state.isRuntimeSelected());
         } finally {
             MidletSessionStore.clear(context);
         }
