@@ -721,12 +721,11 @@ public class MicroActivity extends AppCompatActivity {
 	protected void onDestroy() {
 		boolean currentHost = ContextHolder.getActivity() == this;
 		if (currentHost) {
-			Displayable logicalCurrent = current;
 			Display display = Display.getDisplay(null);
 			if (display != null) {
 				display.detachHost();
 			}
-			clearStaleMountedDisplayable(logicalCurrent);
+			clearMountedDisplayable();
 			current = null;
 			ContextHolder.clearCurrentActivity(this);
 		}
@@ -773,12 +772,11 @@ public class MicroActivity extends AppCompatActivity {
 				if (controllerInputRouter != null) {
 					controllerInputRouter.clear();
 				}
-				Displayable logicalCurrent = current;
 				Display display = Display.getDisplay(null);
 				if (display != null) {
 					display.detachHost();
 				}
-				clearStaleMountedDisplayable(logicalCurrent);
+				clearMountedDisplayable();
 				current = null;
 				ContextHolder.clearCurrentActivity(this);
 			}
@@ -795,20 +793,16 @@ public class MicroActivity extends AppCompatActivity {
 		});
 	}
 
-	private void clearStaleMountedDisplayable(@Nullable Displayable logicalCurrent) {
+	private void clearMountedDisplayable() {
 		Displayable mounted = presentedDisplayable;
-		if (mounted != null && mounted != logicalCurrent) {
+		if (mounted != null) {
 			mounted.clearDisplayableView();
 		}
 		presentedDisplayable = null;
 	}
 
 	private void releaseMountedPresentationForReplacement() {
-		Displayable mounted = presentedDisplayable;
-		if (mounted != null) {
-			mounted.clearDisplayableView();
-		}
-		presentedDisplayable = null;
+		clearMountedDisplayable();
 		if (binding != null) {
 			binding.displayableContainer.removeAllViews();
 		}
