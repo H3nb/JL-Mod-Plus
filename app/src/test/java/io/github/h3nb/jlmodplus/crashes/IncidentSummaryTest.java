@@ -112,6 +112,42 @@ public class IncidentSummaryTest {
 	}
 
 	@Test
+	public void processExitTitlePrefersReasonUnlessSignalStatusIsMoreSpecific() {
+		IncidentSummary.ProcessExitEvidence exit = new IncidentSummary.ProcessExitEvidence(
+				ProcessExitStore.REASON_LOW_MEMORY,
+				0,
+				"Low-memory kill",
+				"0",
+				"cached",
+				"low-memory kill",
+				"io.github.h3nb.jlmodplus:midlet",
+				"midlet",
+				null,
+				36,
+				"Device");
+		IncidentSummary incident = new IncidentSummary(
+				IncidentSummary.Category.PROCESS_EXIT,
+				1234L,
+				"Game",
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				"midlet",
+				Collections.emptyList(),
+				exit);
+
+		String title = GitHubDiagnosticIssue.title(incident, null);
+		assertTrue(title.contains("Low-memory kill"));
+		assertFalse(title.contains(" — 0 while"));
+	}
+
+	@Test
 	public void equivalentEvidenceHasStableFingerprintAndFilename() {
 		IncidentSummary first = minimal(0L, "java.lang.IllegalStateException: boom");
 		IncidentSummary second = minimal(0L, "java.lang.IllegalStateException: different message");
