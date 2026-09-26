@@ -68,7 +68,7 @@ public class DiagnosticBundleFormatTest {
 	}
 
 	@Test
-	public void contentFingerprintTracksEvidenceWithoutChangingLogicalFilename() {
+	public void contentFingerprintChangesWhenExportedEvidenceChanges() {
 		String first = DiagnosticBundleFormat.contentFingerprint(
 				"# report\n", "{\"formatVersion\":1}\n", null, null);
 		String same = DiagnosticBundleFormat.contentFingerprint(
