@@ -228,6 +228,13 @@ public class MicroActivity extends AppCompatActivity {
 			finish();
 			return;
 		}
+		MicroActivity previousHost = ContextHolder.getActivity();
+		if (reattachingRuntime && previousHost != null && previousHost != this) {
+			// Release the View actually mounted by the old host before publishing this replacement.
+			// This also covers an MIDP Alert overlay, where Display.current is the Alert while the
+			// underlying Canvas/Screen View is still mounted in the old Activity.
+			previousHost.releaseMountedPresentationForReplacement();
+		}
 		ContextHolder.setCurrentActivity(this);
 		if (reattachingRuntime) {
 			expectedAppId = microLoader.getExpectedAppId();
@@ -794,6 +801,17 @@ public class MicroActivity extends AppCompatActivity {
 			mounted.clearDisplayableView();
 		}
 		presentedDisplayable = null;
+	}
+
+	private void releaseMountedPresentationForReplacement() {
+		Displayable mounted = presentedDisplayable;
+		if (mounted != null) {
+			mounted.clearDisplayableView();
+		}
+		presentedDisplayable = null;
+		if (binding != null) {
+			binding.displayableContainer.removeAllViews();
+		}
 	}
 
 	private void refreshCanvasBackground() {
