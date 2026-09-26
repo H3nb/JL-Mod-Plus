@@ -68,6 +68,39 @@ public class DiagnosticBundleFormatTest {
 	}
 
 	@Test
+	public void sanitizesValuesBeforeJsonEscaping() {
+		IncidentSummary.JavaFailure failure = new IncidentSummary.JavaFailure(
+				"java.lang.IllegalStateException",
+				"failed at content://private.provider/item/42",
+				"example.Game.run(Game.java:42)");
+		IncidentSummary incident = new IncidentSummary(
+				IncidentSummary.Category.MIDLET_CRASH,
+				1234L,
+				"Example",
+				failure,
+				null,
+				null,
+				failure.frame,
+				null,
+				null,
+				null,
+				null,
+				null,
+				"midlet",
+				Collections.emptyList(),
+				null);
+
+		String json = DiagnosticBundleFormat.incidentJson(
+				incident,
+				null,
+				value -> DiagnosticExportSanitizer.sanitize(value, null, null));
+
+		assertTrue(json.contains("\\\"failureMessage\\\": \\"failed at <uri>\\\""));
+		assertFalse(json.contains("private.provider"));
+		assertTrue(json.trim().endsWith("}"));
+	}
+
+	@Test
 	public void optionalTombstoneSummaryUsesSeparateTextEntry() throws Exception {
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 		DiagnosticBundleFormat.write(
