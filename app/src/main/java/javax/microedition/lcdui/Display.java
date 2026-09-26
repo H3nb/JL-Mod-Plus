@@ -56,6 +56,8 @@ public class Display {
 			};
 
 	private static Display instance;
+	/** MIDP foreground-display grant for the one runtime in this isolated process. */
+	private static boolean runtimeForegroundGranted;
 	static EventQueue queue = new EventQueue();
 
 	static {
@@ -68,6 +70,7 @@ public class Display {
 	/** Serializes current-screen and host-presentation facts. */
 	private final Object stateLock = new Object();
 	private boolean hostVisible;
+	private boolean displayForeground;
 	private boolean systemScreenObscured;
 
 	/**
@@ -76,24 +79,52 @@ public class Display {
 	 */
 	private void reconcileCanvasLocked(Displayable displayable, boolean isCurrent) {
 		if (displayable instanceof Canvas canvas) {
-			canvas.updatePresentationState(isCurrent, hostVisible, systemScreenObscured);
+			canvas.updatePresentationState(
+					isCurrent, hostVisible, displayForeground, systemScreenObscured);
 		}
 	}
 
-	public static Display getDisplay(MIDlet midlet) {
+	public static synchronized Display getDisplay(MIDlet midlet) {
 		if (instance == null && midlet != null) {
-			instance = new Display();
+			instance = new Display(runtimeForegroundGranted);
 		}
 		return instance;
 	}
 
-	private Display() {
+	private Display(boolean foregroundGranted) {
+		displayForeground = foregroundGranted;
 		MicroActivity activity = ContextHolder.getActivity();
 		hostVisible = activity != null && activity.isVisible();
 	}
 
-	public static void initDisplay() {
+	public static synchronized void initDisplay() {
 		instance = null;
+		runtimeForegroundGranted = false;
+	}
+
+	/**
+	 * Grants or revokes MIDP foreground display ownership independently from Android host
+	 * visibility. The static fact also covers MIDlets which create their Display after startApp().
+	 */
+	public static void setForegroundGranted(boolean granted) {
+		Display current;
+		synchronized (Display.class) {
+			runtimeForegroundGranted = granted;
+			current = instance;
+		}
+		if (current != null) {
+			current.updateForegroundGranted(granted);
+		}
+	}
+
+	private void updateForegroundGranted(boolean granted) {
+		synchronized (stateLock) {
+			if (displayForeground == granted) {
+				return;
+			}
+			displayForeground = granted;
+			reconcileCanvasLocked(current, true);
+		}
 	}
 
 	/**
@@ -160,6 +191,14 @@ public class Display {
 
 	public static void postEvent(Event event) {
 		queue.postEvent(event);
+	}
+
+	/**
+	 * Posts a non-blocking serialization barrier behind all LCDUI callbacks already queued.
+	 * The runnable itself must only signal another owner; it must not execute guest lifecycle code.
+	 */
+	public static void postAfterPendingCallbacks(Runnable runnable) {
+		postEvent(RunnableEvent.getInstance(runnable));
 	}
 
 	static EventQueue getEventQueue() {
@@ -335,7 +374,7 @@ public class Display {
 	}
 
 	public void callSerially(Runnable r) {
-		postEvent(RunnableEvent.getInstance(r));
+		postAfterPendingCallbacks(r);
 	}
 
 	public boolean flashBacklight(int duration) {

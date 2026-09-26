@@ -26,6 +26,7 @@ import android.util.Log;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.lcdui.Canvas;
+import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
@@ -225,7 +226,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			case INIT -> initializeMidlet();
 			case AMS_FOREGROUND -> {
 				lifecycle.setAmsForeground(true);
-				activateIfNeeded();
+				activateAndReconcileDisplay();
 			}
 			case AMS_BACKGROUND -> {
 				lifecycle.setAmsForeground(false);
@@ -239,7 +240,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				}
 			}
 			case GUEST_DESTROYED -> finishSelfDestructionIfNeeded();
-			case RESUME_REQUEST -> activateIfNeeded();
+			case RESUME_REQUEST -> activateAndReconcileDisplay();
 		}
 	}
 
@@ -264,7 +265,19 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		if (finishSelfDestructionIfNeeded()) {
 			return;
 		}
+		activateAndReconcileDisplay();
+	}
+
+	private void activateAndReconcileDisplay() {
 		activateIfNeeded();
+		if (lifecycle.isDestroyed() || !lifecycle.isAmsForeground()) {
+			return;
+		}
+		MidletLifecycleState.State state = lifecycle.state();
+		if (state == MidletLifecycleState.State.ACTIVE
+				|| (state == MidletLifecycleState.State.PAUSED && lifecycle.isResumeRequired())) {
+			Display.setForegroundGranted(true);
+		}
 	}
 
 	private void activateIfNeeded() {

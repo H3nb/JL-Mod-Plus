@@ -661,31 +661,54 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	protected void onStart() {
 		super.onStart();
-		if (ContextHolder.getActivity() == this) {
-			// AMS foreground and LCDUI presentation are separate facts. Reasserting foreground on a
-			// replacement Activity is harmless when the live MIDlet never left ACTIVE.
-			MidletThread.amsForeground(this);
-			Display display = Display.getDisplay(null);
-			if (display != null) {
-				display.setHostVisible(true);
-			}
-		}
+		beginAmsForegroundTransition();
 	}
 
 	@Override
 	protected void onStop() {
 		if (ContextHolder.getActivity() == this) {
-			// The old presentation really does disappear during configuration recreation, so Canvas
-			// visibility still falls even though the MIDlet remains logically foreground.
-			Display display = Display.getDisplay(null);
-			if (display != null) {
-				display.setHostVisible(false);
-			}
-			if (!isChangingConfigurations()) {
-				MidletThread.amsBackground(this);
+			if (isChangingConfigurations()) {
+				// Physical presentation disappears, but the MIDlet remains logically foreground.
+				Display display = Display.getDisplay(null);
+				if (display != null) {
+					display.setHostVisible(false);
+				}
+			} else {
+				beginAmsBackgroundTransition();
 			}
 		}
 		super.onStop();
+	}
+
+	/**
+	 * Android visibility is only the host fact. AMS activation is queued behind earlier LCDUI
+	 * callbacks; MidletMain grants display foreground only after startApp() succeeds.
+	 */
+	void beginAmsForegroundTransition() {
+		if (ContextHolder.getActivity() != this) {
+			return;
+		}
+		Display display = Display.getDisplay(null);
+		if (display != null) {
+			display.setHostVisible(true);
+		}
+		Display.postAfterPendingCallbacks(() -> MidletThread.amsForeground(this));
+	}
+
+	/**
+	 * Revoke display ownership first so HIDE_NOTIFY enters MIDletEventQueue before the barrier that
+	 * signals AMS background. Nothing waits across threads: the barrier merely posts to MidletMain.
+	 */
+	void beginAmsBackgroundTransition() {
+		if (ContextHolder.getActivity() != this) {
+			return;
+		}
+		Display.setForegroundGranted(false);
+		Display display = Display.getDisplay(null);
+		if (display != null) {
+			display.setHostVisible(false);
+		}
+		Display.postAfterPendingCallbacks(() -> MidletThread.amsBackground(this));
 	}
 
 	@Override
