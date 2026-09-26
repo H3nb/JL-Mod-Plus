@@ -314,7 +314,7 @@ public class CrashRuntimeIsolationTest {
 			assertFalse(afterHistoryRestore.isRuntimeSelected());
 			awaitJournalStage(context, generation, MidletSessionJournal.Stage.PAUSED);
 
-			launchLifecycleMidletForReselection(context, appDir);
+			launchLifecycleMidletWithoutClearingTask(context, appDir);
 			awaitActivityOnTop(context, MicroActivity.class);
 			awaitRuntimeSelection(context, generation, true);
 			awaitJournalStage(context, generation, MidletSessionJournal.Stage.RUNNING);
@@ -358,7 +358,7 @@ public class CrashRuntimeIsolationTest {
 			// where the runtime-menu Settings launch has been requested but onStop has not completed.
 			launchConfigActivity(context, appDir, 0L);
 			awaitActivityOnTop(context, ConfigActivity.class);
-			launchLifecycleMidletOverExistingTask(context, appDir);
+			launchLifecycleMidletWithoutClearingTask(context, appDir);
 			awaitMarker(markerFile);
 			awaitActivityOnTop(context, MicroActivity.class);
 
@@ -618,14 +618,6 @@ public class CrashRuntimeIsolationTest {
 		context.startActivity(intent);
 	}
 
-	private static void launchLifecycleMidletOverExistingTask(Context context, File appDir) {
-		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
-				context, MicroActivity.class)
-				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
-				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		context.startActivity(intent);
-	}
-
 	private static void sendAndroidTaskHome() throws IOException {
 		ParcelFileDescriptor result = InstrumentationRegistry.getInstrumentation()
 				.getUiAutomation()
@@ -672,6 +664,15 @@ public class CrashRuntimeIsolationTest {
 		if (appId > 0L) {
 			intent.putExtra(Constants.KEY_LIBRARY_APP_ID, appId);
 		}
+		context.startActivity(intent);
+	}
+
+	private static void launchLifecycleMidletWithoutClearingTask(
+			Context context, File appDir) {
+		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
+				context, MicroActivity.class)
+				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		context.startActivity(intent);
 	}
 
