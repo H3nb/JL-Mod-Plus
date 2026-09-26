@@ -246,6 +246,9 @@ public class MicroActivity extends AppCompatActivity {
 			if (expectedAppId > 0L) {
 				intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
 			}
+			// This Activity exists because the runtime was explicitly selected again (or an already
+			// selected host is being recreated). Liveness remains independently owned by the lease.
+			MidletThread.selectRuntimeForForeground();
 		} else {
 			PresetAuthorityClient.PrepareResult prepared =
 					presetAuthorityClient.prepareRuntime(appPath, expectedAppId);
@@ -802,16 +805,20 @@ public class MicroActivity extends AppCompatActivity {
 		} catch (Throwable ignored) {
 			// Host cleanup must still finish even if launch-local resources cannot be released.
 		}
-		finishRuntime(returnToLibrary, null);
+		leaveRuntimeHost(returnToLibrary, null);
 	}
 
-	void finishRuntime(boolean returnToLibrary, @Nullable Runnable processCleanup) {
+	/**
+	 * Leaves the current runtime host without defining MIDlet lifetime. A null cleanup keeps the
+	 * live runtime resident; terminal callers attach process cleanup to the same idempotent departure.
+	 */
+	void leaveRuntimeHost(boolean returnToLibrary, @Nullable Runnable processCleanup) {
 		runOnUiThread(() -> {
 			MicroActivity currentHost = ContextHolder.getActivity();
 			if (currentHost != null && currentHost != this) {
-				// Configuration/host replacement may win between terminal finalization and this UI
-				// runnable. Transfer navigation ownership to the currently attached host instance.
-				currentHost.finishRuntime(returnToLibrary, processCleanup);
+				// Configuration/host replacement may win between runtime policy and this UI runnable.
+				// Transfer both navigation and any terminal cleanup to the attached host instance.
+				currentHost.leaveRuntimeHost(returnToLibrary, processCleanup);
 				return;
 			}
 			if (processCleanup != null && pendingTerminalProcessCleanup == null) {
@@ -822,13 +829,13 @@ public class MicroActivity extends AppCompatActivity {
 				return;
 			}
 
+			boolean departureStarted = isFinishing();
 			boolean wasVisible = currentHost == this && isVisible();
-			if (wasVisible && returnToLibrary) {
-				// MainActivity is singleTask. A plain intent either exposes its existing task/instance
-				// or creates it when absent; REORDER_TO_FRONT is redundant and can distort handoff.
+			if (!departureStarted && wasVisible && returnToLibrary) {
+				// MainActivity is singleTask. Start it once for one runtime-host departure.
 				startActivity(new Intent(this, MainActivity.class));
 			}
-			if (!isFinishing()) {
+			if (!departureStarted) {
 				finish();
 			}
 		});
@@ -1180,33 +1187,6 @@ public class MicroActivity extends AppCompatActivity {
 			return ContextHolder.getActivity() == this
 					&& displayRequestGeneration == requestGeneration;
 		}
-	}
-
-	/** Implements MIDP's setCurrent(null) background request without changing guest current state. */
-	public void requestBackground() {
-		runOnUiThread(() -> {
-			if (!isFinishing() && !isDestroyed()) {
-				moveTaskToBack(true);
-			}
-		});
-	}
-
-	/** Implements MIDP's foreground request without changing the guest Displayable. */
-	public void requestForeground() {
-		runOnUiThread(() -> {
-			if (isFinishing() || isDestroyed()) {
-				return;
-			}
-			try {
-				ActivityManager activityManager =
-						(ActivityManager) getSystemService(ACTIVITY_SERVICE);
-				if (activityManager != null) {
-					activityManager.moveTaskToFront(getTaskId(), ActivityManager.MOVE_TASK_WITH_HOME);
-				}
-			} catch (SecurityException ignored) {
-				// Foregrounding is a host convenience; Android may reject it for background starts.
-			}
-		});
 	}
 
 	public Displayable getCurrent() {
