@@ -56,7 +56,9 @@ public class Display {
 			};
 
 	private static Display instance;
-	/** MIDP foreground-display grant for the one runtime in this isolated process. */
+	/** MIDP foreground-display request/grant for the one runtime in this isolated process. */
+	private static long runtimeForegroundGeneration;
+	private static boolean runtimeForegroundRequested;
 	private static boolean runtimeForegroundGranted;
 	static EventQueue queue = new EventQueue();
 
@@ -99,22 +101,54 @@ public class Display {
 
 	public static synchronized void initDisplay() {
 		instance = null;
+		runtimeForegroundGeneration = 0L;
+		runtimeForegroundRequested = false;
 		runtimeForegroundGranted = false;
 	}
 
 	/**
-	 * Grants or revokes MIDP foreground display ownership independently from Android host
-	 * visibility. The static fact also covers MIDlets which create their Display after startApp().
+	 * Begins a new Android/MIDP foreground request. The returned generation must be carried through
+	 * the serialized AMS callback so a slow earlier startApp() cannot grant a newer host edge.
 	 */
-	public static void setForegroundGranted(boolean granted) {
+	public static synchronized long requestForeground() {
+		runtimeForegroundRequested = true;
+		return ++runtimeForegroundGeneration;
+	}
+
+	/**
+	 * Revokes display ownership synchronously at the Android visibility edge and invalidates every
+	 * older foreground grant attempt.
+	 */
+	public static void revokeForeground() {
 		Display current;
 		synchronized (Display.class) {
-			runtimeForegroundGranted = granted;
+			runtimeForegroundRequested = false;
+			runtimeForegroundGranted = false;
+			runtimeForegroundGeneration++;
 			current = instance;
 		}
 		if (current != null) {
-			current.updateForegroundGranted(granted);
+			current.updateForegroundGranted(false);
 		}
+	}
+
+	/**
+	 * Grants display ownership only if the activation still belongs to the latest foreground edge.
+	 * This is the stale-completion fence for rapid Home/return while startApp() is still executing.
+	 */
+	public static boolean grantForeground(long generation) {
+		Display current;
+		synchronized (Display.class) {
+			if (!runtimeForegroundRequested || generation != runtimeForegroundGeneration) {
+				return false;
+			}
+			runtimeForegroundGranted = true;
+			current = instance;
+		}
+		if (current != null) {
+			current.updateForegroundGranted(true);
+		}
+		return true;
 	}
 
 	private void updateForegroundGranted(boolean granted) {

@@ -693,11 +693,13 @@ public class MicroActivity extends AppCompatActivity {
 		if (ContextHolder.getActivity() != this) {
 			return;
 		}
+		long foregroundGeneration = Display.requestForeground();
 		Display display = Display.getDisplay(null);
 		if (display != null) {
 			display.setHostVisible(true);
 		}
-		Display.postAfterPendingCallbacks(MidletThread::amsForeground);
+		Display.postAfterPendingCallbacks(
+				() -> MidletThread.amsForeground(foregroundGeneration));
 	}
 
 	/**
@@ -708,7 +710,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (ContextHolder.getActivity() != this) {
 			return;
 		}
-		Display.setForegroundGranted(false);
+		Display.revokeForeground();
 		Display display = Display.getDisplay(null);
 		if (display != null) {
 			display.setHostVisible(false);

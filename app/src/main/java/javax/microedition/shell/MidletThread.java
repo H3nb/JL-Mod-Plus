@@ -70,6 +70,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private volatile String primaryFailureEventId;
 	private volatile MidletSessionJournal.FailureBoundary primaryFailureBoundary;
 	private MidletSessionJournal.Outcome requestedTerminationOutcome;
+	private long displayForegroundGeneration;
 	private boolean returnToLibraryOnTermination = true;
 	private boolean terminalFinalized;
 
@@ -121,10 +122,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		return current.microLoader;
 	}
 
-	static void amsForeground() {
+	static void amsForeground(long foregroundGeneration) {
 		MidletThread current = instance;
 		if (current != null) {
-			current.send(AMS_FOREGROUND);
+			current.send(AMS_FOREGROUND, foregroundGeneration);
 		}
 	}
 
@@ -215,8 +216,19 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 	}
 
+	private void send(int what, long value) {
+		Handler currentHandler = handler;
+		if (currentHandler != null) {
+			Message message = currentHandler.obtainMessage(what, Long.valueOf(value));
+			message.sendToTarget();
+		}
+	}
+
 	@Override
 	public boolean handleMessage(@NonNull Message msg) {
+		if (msg.what == AMS_FOREGROUND && msg.obj instanceof Long generation) {
+			displayForegroundGeneration = generation;
+		}
 		handleSignal(msg.what);
 		return true;
 	}
@@ -276,7 +288,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		MidletLifecycleState.State state = lifecycle.state();
 		if (state == MidletLifecycleState.State.ACTIVE
 				|| (state == MidletLifecycleState.State.PAUSED && lifecycle.isResumeRequired())) {
-			Display.setForegroundGranted(true);
+			Display.grantForeground(displayForegroundGeneration);
 		}
 	}
 

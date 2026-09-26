@@ -10,6 +10,17 @@ import org.junit.Test;
 
 public class CanvasVisibilityTest {
 	@Test
+	public void staleForegroundCompletionCannotGrantNewerHostEdge() {
+		Display.initDisplay();
+		long firstForeground = Display.requestForeground();
+		Display.revokeForeground();
+		long returnedForeground = Display.requestForeground();
+
+		assertFalse(Display.grantForeground(firstForeground));
+		assertTrue(Display.grantForeground(returnedForeground));
+	}
+
+	@Test
 	public void canvasIsGuestVisibleOnlyWhenAllPresentationConditionsHold() {
 		assertFalse(Canvas.isPresentationVisible(false, true, true, true, false));
 		assertFalse(Canvas.isPresentationVisible(true, false, true, true, false));
