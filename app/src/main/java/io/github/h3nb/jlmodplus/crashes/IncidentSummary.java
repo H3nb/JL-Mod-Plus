@@ -108,6 +108,7 @@ final class IncidentSummary {
 	final String subject;
 	final JavaFailure rootFailure;
 	final String operation;
+	final String boundary;
 	final String lifecycleStage;
 	final String topRelevantFrame;
 	final String midletVersion;
@@ -116,6 +117,8 @@ final class IncidentSummary {
 	final String build;
 	final String environment;
 	final String process;
+	final String eventId;
+	final String sessionId;
 	final List<Breadcrumb> breadcrumbs;
 	final ProcessExitEvidence associatedProcessExit;
 	final String fingerprint;
@@ -125,11 +128,23 @@ final class IncidentSummary {
 			String topRelevantFrame, String midletVersion, String entrypoint,
 			String jarFingerprint, String build, String environment, String process,
 			List<Breadcrumb> breadcrumbs, ProcessExitEvidence associatedProcessExit) {
+		this(category, incidentTimestampMillis, subject, rootFailure, operation, null,
+				lifecycleStage, topRelevantFrame, midletVersion, entrypoint, jarFingerprint,
+				build, environment, process, breadcrumbs, associatedProcessExit, null, null);
+	}
+
+	IncidentSummary(Category category, long incidentTimestampMillis, String subject,
+			JavaFailure rootFailure, String operation, String boundary, String lifecycleStage,
+			String topRelevantFrame, String midletVersion, String entrypoint,
+			String jarFingerprint, String build, String environment, String process,
+			List<Breadcrumb> breadcrumbs, ProcessExitEvidence associatedProcessExit,
+			String eventId, String sessionId) {
 		this.category = category == null ? Category.JL_MOD_PLUS : category;
 		this.incidentTimestampMillis = Math.max(0L, incidentTimestampMillis);
 		this.subject = clean(subject);
 		this.rootFailure = rootFailure;
 		this.operation = clean(operation);
+		this.boundary = clean(boundary);
 		this.lifecycleStage = clean(lifecycleStage);
 		this.topRelevantFrame = clean(topRelevantFrame);
 		this.midletVersion = clean(midletVersion);
@@ -138,6 +153,8 @@ final class IncidentSummary {
 		this.build = clean(build);
 		this.environment = clean(environment);
 		this.process = clean(process);
+		this.eventId = clean(eventId);
+		this.sessionId = clean(sessionId);
 		this.breadcrumbs = breadcrumbs == null
 				? Collections.emptyList()
 				: Collections.unmodifiableList(new ArrayList<>(breadcrumbs));
@@ -217,6 +234,7 @@ final class IncidentSummary {
 		appendCanonical(canonical, incident.subject);
 		appendCanonical(canonical, incident.rootFailure == null ? null : incident.rootFailure.type);
 		appendCanonical(canonical, incident.operation);
+		appendCanonical(canonical, incident.boundary);
 		appendCanonical(canonical, normalizeFrame(incident.topRelevantFrame));
 		appendCanonical(canonical, incident.entrypoint);
 		appendCanonical(canonical, incident.jarFingerprint);
