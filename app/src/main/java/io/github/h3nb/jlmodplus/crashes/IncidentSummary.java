@@ -220,7 +220,10 @@ final class IncidentSummary {
 		appendCanonical(canonical, normalizeFrame(incident.topRelevantFrame));
 		appendCanonical(canonical, incident.entrypoint);
 		appendCanonical(canonical, incident.jarFingerprint);
-		if (incident.associatedProcessExit != null) {
+		if (incident.associatedProcessExit != null
+				&& (incident.category == Category.NATIVE_CRASH
+				|| incident.category == Category.ANR
+				|| incident.category == Category.PROCESS_EXIT)) {
 			appendCanonical(canonical, Integer.toString(incident.associatedProcessExit.reason));
 			appendCanonical(canonical, Integer.toString(incident.associatedProcessExit.status));
 		}
