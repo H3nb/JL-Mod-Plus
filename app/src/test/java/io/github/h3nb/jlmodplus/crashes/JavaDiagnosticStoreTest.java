@@ -259,6 +259,25 @@ public class JavaDiagnosticStoreTest {
 	}
 
 	@Test
+	public void interruptedAtomicReplacementRestoresCommittedBackup() throws Exception {
+		File file = new File(temporary.getRoot(), "interrupted.java.properties");
+		JavaDiagnosticStore.Snapshot committed =
+				minimalSnapshot(file).withLegacyRecordId("acra:committed");
+		JavaDiagnosticStore.write(file, committed);
+
+		File backup = new File(file.getPath() + ".bak");
+		copyFile(file, backup);
+		try (FileOutputStream output = new FileOutputStream(file, false)) {
+			output.write("incomplete".getBytes(StandardCharsets.UTF_8));
+		}
+
+		JavaDiagnosticStore.Snapshot restored = JavaDiagnosticStore.read(file);
+
+		assertEquals("acra:committed", restored.legacyRecordId);
+		assertFalse(backup.exists());
+	}
+
+	@Test
 	public void failedLegacyMigrationLeavesSourceIntact() throws Exception {
 		File source = temporary.newFile("legacy-failed.stacktrace");
 		File parentFile = temporary.newFile("not-a-directory");
@@ -270,6 +289,17 @@ public class JavaDiagnosticStoreTest {
 			fail("Expected migration write to fail");
 		} catch (Exception expected) {
 			assertTrue(source.isFile());
+		}
+	}
+
+	private static void copyFile(File source, File destination) throws Exception {
+		try (java.io.FileInputStream input = new java.io.FileInputStream(source);
+				FileOutputStream output = new FileOutputStream(destination, false)) {
+			byte[] buffer = new byte[1024];
+			int count;
+			while ((count = input.read(buffer)) != -1) {
+				output.write(buffer, 0, count);
+			}
 		}
 	}
 

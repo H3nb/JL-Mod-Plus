@@ -900,17 +900,31 @@ final class JavaDiagnosticStore {
 		File backup = new File(destination.getPath() + BACKUP_SUFFIX);
 		File pending = new File(destination.getPath() + NEW_SUFFIX);
 		if (backup.isFile()) {
-			if (destination.isFile()) {
-				// A published base plus backup means replacement reached its commit point and only
-				// backup cleanup was interrupted. Keep the published base.
-				deleteIfExists(backup);
-			} else if (!backup.renameTo(destination)) {
+			// Android AtomicFile historically writes through the base after moving the previous
+			// committed value to .bak. Therefore any surviving backup outranks the base.
+			if (destination.exists() && !deleteIfExists(destination)) {
+				throw new IOException("Unable to discard incomplete Java diagnostic");
+			}
+			if (!backup.renameTo(destination)) {
 				throw new IOException("Unable to restore Java diagnostic backup");
 			}
 		}
-		// A .new file is never authoritative until it has been renamed to the base path.
-		deleteIfExists(pending);
+		// A .new file is never authoritative until the replacement is fully committed.
+		if (pending.exists() && !deleteIfExists(pending)) {
+			throw new IOException("Unable to discard incomplete Java diagnostic write");
+		}
 		return new FileInputStream(destination);
+	}
+
+	private static void recoverAtomic(File destination) throws IOException {
+		if (!destination.exists()
+				&& !new File(destination.getPath() + BACKUP_SUFFIX).exists()) {
+			deleteIfExists(new File(destination.getPath() + NEW_SUFFIX));
+			return;
+		}
+		try (FileInputStream ignored = openAtomicRead(destination)) {
+			// Recovery only; caller will reopen the file when it needs content.
+		}
 	}
 
 	private static void writeAtomic(File destination, Properties p) throws IOException {
@@ -920,21 +934,7 @@ final class JavaDiagnosticStore {
 		}
 		File backup = new File(destination.getPath() + BACKUP_SUFFIX);
 		File pending = new File(destination.getPath() + NEW_SUFFIX);
-		try (FileInputStream ignored = destination.exists() || backup.exists()
-				? openAtomicRead(destination) : null) {
-			// openAtomicRead performs recovery/cleanup only; no bytes are consumed here.
-		}
-		if (pending.exists() && !deleteIfExists(pending)) {
-			throw new IOException("Unable to clear stale Java diagnostic write");
-		}
-		if (destination.isFile()) {
-			if (backup.exists() && !deleteIfExists(backup)) {
-				throw new IOException("Unable to clear stale Java diagnostic backup");
-			}
-			if (!destination.renameTo(backup)) {
-				throw new IOException("Unable to stage Java diagnostic backup");
-			}
-		}
+		recoverAtomic(destination);
 
 		boolean published = false;
 		try {
@@ -943,17 +943,21 @@ final class JavaDiagnosticStore {
 				output.flush();
 				output.getFD().sync();
 			}
+			if (destination.isFile() && !destination.renameTo(backup)) {
+				throw new IOException("Unable to stage Java diagnostic backup");
+			}
 			if (!pending.renameTo(destination)) {
 				throw new IOException("Unable to publish Java diagnostic");
 			}
+			if (backup.exists() && !deleteIfExists(backup)) {
+				throw new IOException("Unable to commit Java diagnostic replacement");
+			}
 			published = true;
-			// The base file is now authoritative. A stale backup is harmless and will also be
-			// cleaned by the next read, so deletion failure must not roll back a committed record.
-			deleteIfExists(backup);
 		} finally {
 			if (!published) {
 				deleteIfExists(pending);
-				if (!destination.exists() && backup.isFile()) {
+				if (backup.isFile()) {
+					deleteIfExists(destination);
 					backup.renameTo(destination);
 				}
 			}
