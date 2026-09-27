@@ -32,7 +32,7 @@ ordering, or replace `Displayable` views.
 | Lock Screen Rotation | Every Displayable | Existing lock/unlock orientation calculation |
 | Keyboard (IME) | Canvas when Android IME exists | Existing toggle semantics, posted after popup dismissal, using the Canvas/GLSurfaceView window token and its explicit `InputConnection` contract |
 | Take Screenshot | Canvas | `takeScreenshot()` and existing asynchronous result handling |
-| Limit FPS | Canvas | Compose Material 3 digits-only dialog and existing `Canvas.setLimitFps()` values (`0` unlimited, `-1` reset) |
+| Limit FPS | Canvas | Compose Material 3 digits-only dialog and existing `Canvas.setLimitFps()` values (`0` display maximum, `-1` reset) |
 | Virtual Keyboard options | Canvas when a virtual keyboard exists | Existing layout edit/resize/finish/switch/hide methods |
 
 The finish-layout item is visible only while the virtual keyboard is in an
