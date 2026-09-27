@@ -297,7 +297,7 @@ public final class CrashReporter {
 	public static Throwable wrapSessionFailure(String eventId,
 			MidletSessionJournal.FailureBoundary boundary, Throwable propagated,
 			Throwable primaryFailure) {
-		if (propagated == null || eventId == null || boundary == null) return propagated;
+		if (propagated == null || boundary == null) return propagated;
 		return new SessionFailureException(eventId, boundary, propagated,
 				primaryFailure == null ? propagated : primaryFailure);
 	}
@@ -439,8 +439,9 @@ public final class CrashReporter {
 
 		SessionFailureException(String eventId, MidletSessionJournal.FailureBoundary boundary,
 				Throwable cause, Throwable primaryFailure) {
-			super("JL-Mod Plus session failure; eventId=" + eventId + "; boundary=" + boundary.name(),
-					cause);
+			super("JL-Mod Plus session failure; "
+					+ (eventId == null ? "" : "eventId=" + eventId + "; ")
+					+ "boundary=" + boundary.name(), cause);
 			this.primaryFailure = primaryFailure;
 		}
 	}

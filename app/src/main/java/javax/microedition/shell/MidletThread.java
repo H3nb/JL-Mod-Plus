@@ -535,13 +535,13 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		Throwable reportError = error;
 		String eventId = primaryFailureEventId;
 		MidletSessionJournal.FailureBoundary boundary = primaryFailureBoundary;
-		if (eventId != null && boundary != null) {
+		if (boundary != null) {
 			try {
 				reportError = CrashReporter.wrapSessionFailure(
 						eventId, boundary, error,
 						primaryFailureThrowable == null ? error : primaryFailureThrowable);
 			} catch (OutOfMemoryError ignored) {
-				// Preserve the original Throwable; sessionId still correlates it to the durable journal.
+				// Preserve the original Throwable; sessionId still provides correlation when available.
 			}
 		}
 

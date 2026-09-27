@@ -84,6 +84,26 @@ public class JavaDiagnosticStoreTest {
 	}
 
 	@Test
+	public void missingEventIdDoesNotLoseKnownLifecyclePrimaryThrowable() {
+		NoClassDefFoundError primary = new NoClassDefFoundError("missing");
+		RuntimeException lifecycle = new RuntimeException("Failed startApp", primary);
+		Throwable reported = CrashReporter.wrapSessionFailure(
+				null,
+				MidletSessionJournal.FailureBoundary.LIFECYCLE_START,
+				lifecycle,
+				primary);
+
+		JavaDiagnosticStore.ThrowableCapture captured =
+				JavaDiagnosticStore.captureThrowableChain(
+						reported, CrashReporter.primaryFailure(reported));
+
+		assertTrue(reported != lifecycle);
+		assertEquals(2, captured.primaryIndex);
+		assertEquals(NoClassDefFoundError.class.getName(),
+				captured.throwables.get(captured.primaryIndex).className);
+	}
+
+	@Test
 	public void structuredEvidenceRoundTripKeepsReleaseSdkAndPrimaryIndex() throws Exception {
 		JavaDiagnosticStore.ThrowableData primary = new JavaDiagnosticStore.ThrowableData(
 				NoClassDefFoundError.class.getName(),
