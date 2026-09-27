@@ -102,6 +102,7 @@ final class JavaDiagnosticStore {
 	private static final String KEY_THROWABLE_COUNT = "throwableCount";
 	private static final String KEY_LEGACY_EVENT_ID = "legacyEventId";
 	private static final String KEY_LEGACY_BOUNDARY = "legacyBoundary";
+	private static final String KEY_LEGACY_RECORD_ID = "legacyRecordId";
 	private static final String KEY_CONTEXT_RUN_ID = "context.runId";
 	private static final String KEY_CONTEXT_PROCESS_ROLE = "context.processRole";
 	private static final String KEY_CONTEXT_BUILD_COMMIT = "context.buildCommit";
@@ -279,8 +280,16 @@ final class JavaDiagnosticStore {
 					if (!commitMigration(source, destination, legacy)) {
 						Log.w(TAG, "Unable to remove migrated fatal-v1 report: " + source.getName());
 					}
-				} else if (!source.delete()) {
-					Log.w(TAG, "Unable to remove redundant fatal-v1 report: " + source.getName());
+				} else {
+					// The old repository intentionally kept the fatal fallback as the logical
+					// standalone record when the same crash also existed in ACRA. Preserve that
+					// exact identity so any already-exported bundle remains owned after migration.
+					write(equivalent.file,
+							equivalent.withLegacyRecordId(legacy.legacyRecordId));
+					read(equivalent.file);
+					if (!source.delete()) {
+						Log.w(TAG, "Unable to remove redundant fatal-v1 report: " + source.getName());
+					}
 				}
 			} catch (IOException | RuntimeException error) {
 				Log.w(TAG, "Keeping fatal-v1 report after failed migration: " + source.getName());
@@ -338,6 +347,8 @@ final class JavaDiagnosticStore {
 		String boundary = legacyBoundary(stack);
 		int primaryIndex = legacyPrimaryIndex(chain, boundary);
 		String runId = customString(custom, "jlmod.run.id");
+		String reportKey = jsonString(data, "REPORT_ID");
+		if (reportKey == null) reportKey = source.getName();
 		CrashContextStore.Snapshot appContext = resolveLegacyContext(
 				context,
 				runId,
@@ -376,6 +387,7 @@ final class JavaDiagnosticStore {
 				primaryIndex,
 				legacyEventId(stack),
 				bound(boundary, 64),
+				"acra:" + reportKey,
 				appContext);
 	}
 
@@ -432,6 +444,7 @@ final class JavaDiagnosticStore {
 				legacyPrimaryIndex(chain, boundary),
 				legacyEventId(stack),
 				bound(boundary, 64),
+				"acra:" + source.getName(),
 				appContext);
 	}
 
@@ -692,6 +705,7 @@ final class JavaDiagnosticStore {
 		p.setProperty(KEY_THROWABLE_COUNT, Integer.toString(snapshot.throwables.size()));
 		put(p, KEY_LEGACY_EVENT_ID, snapshot.legacyEventId);
 		put(p, KEY_LEGACY_BOUNDARY, snapshot.legacyBoundary);
+		put(p, KEY_LEGACY_RECORD_ID, snapshot.legacyRecordId);
 		for (int i = 0; i < snapshot.throwables.size(); i++) {
 			ThrowableData item = snapshot.throwables.get(i);
 			String prefix = "throwable." + i + ".";
@@ -774,6 +788,7 @@ final class JavaDiagnosticStore {
 				parseInt(p.getProperty(KEY_PRIMARY_INDEX), chain.isEmpty() ? -1 : 0),
 				value(p, KEY_LEGACY_EVENT_ID),
 				value(p, KEY_LEGACY_BOUNDARY),
+				value(p, KEY_LEGACY_RECORD_ID),
 				readContext(p));
 	}
 
@@ -1115,6 +1130,7 @@ final class JavaDiagnosticStore {
 		final int primaryThrowableIndex;
 		final String legacyEventId;
 		final String legacyBoundary;
+		final String legacyRecordId;
 		final CrashContextStore.Snapshot appContext;
 
 		Snapshot(File file, Kind kind, long timestampMillis, String processName, String processRole,
@@ -1124,6 +1140,21 @@ final class JavaDiagnosticStore {
 				String primaryAbi, String contextNote, String stackTrace,
 				List<ThrowableData> throwables, int primaryThrowableIndex,
 				String legacyEventId, String legacyBoundary, CrashContextStore.Snapshot appContext) {
+			this(file, kind, timestampMillis, processName, processRole, pid, threadName, threadId,
+					threadPriority, sessionId, midletName, midletVersion, midletMainClass, jarSha256,
+					appVersion, androidRelease, androidSdk, brand, model, primaryAbi, contextNote,
+					stackTrace, throwables, primaryThrowableIndex, legacyEventId, legacyBoundary,
+					null, appContext);
+		}
+
+		Snapshot(File file, Kind kind, long timestampMillis, String processName, String processRole,
+				int pid, String threadName, long threadId, int threadPriority, String sessionId,
+				String midletName, String midletVersion, String midletMainClass, String jarSha256,
+				String appVersion, String androidRelease, int androidSdk, String brand, String model,
+				String primaryAbi, String contextNote, String stackTrace,
+				List<ThrowableData> throwables, int primaryThrowableIndex,
+				String legacyEventId, String legacyBoundary, String legacyRecordId,
+				CrashContextStore.Snapshot appContext) {
 			this.file = file;
 			this.kind = kind;
 			this.timestampMillis = timestampMillis;
@@ -1151,6 +1182,7 @@ final class JavaDiagnosticStore {
 					&& primaryThrowableIndex < this.throwables.size() ? primaryThrowableIndex : -1;
 			this.legacyEventId = bound(legacyEventId, 96);
 			this.legacyBoundary = bound(legacyBoundary, 64);
+			this.legacyRecordId = bound(legacyRecordId, 1024);
 			this.appContext = appContext;
 		}
 
@@ -1161,7 +1193,17 @@ final class JavaDiagnosticStore {
 					midletName, midletVersion, midletMainClass, jarSha256,
 					appVersion, androidRelease, androidSdk, brand, model, primaryAbi,
 					contextNote, stackTrace, throwables, primaryThrowableIndex,
-					legacyEventId, legacyBoundary, appContext);
+					legacyEventId, legacyBoundary, legacyRecordId, appContext);
+		}
+
+		Snapshot withLegacyRecordId(String value) {
+			return new Snapshot(
+					file, kind, timestampMillis, processName, processRole, pid,
+					threadName, threadId, threadPriority, sessionId,
+					midletName, midletVersion, midletMainClass, jarSha256,
+					appVersion, androidRelease, androidSdk, brand, model, primaryAbi,
+					contextNote, stackTrace, throwables, primaryThrowableIndex,
+					legacyEventId, legacyBoundary, value, appContext);
 		}
 
 		ThrowableData primaryThrowable() {

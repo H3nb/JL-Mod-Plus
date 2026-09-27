@@ -46,6 +46,16 @@ public class LocalDiagnosticRepositoryTest {
 	}
 
 	@Test
+	public void migratedStandaloneJavaKeepsLegacyLogicalRecordId() {
+		JavaDiagnosticStore.Snapshot migrated = javaEvidence(
+				JavaDiagnosticStore.Kind.LEGACY_ACRA, null, null)
+				.withLegacyRecordId("acra:old-report-id");
+
+		assertTrue("acra:old-report-id".equals(
+				LocalDiagnosticRepository.javaRecordId(migrated)));
+	}
+
+	@Test
 	public void mismatchedNewSessionNeverCorrelatesByFatalKindAlone() {
 		assertFalse(LocalDiagnosticRepository.shouldAttachToSession(
 				session(SESSION, EVENT),

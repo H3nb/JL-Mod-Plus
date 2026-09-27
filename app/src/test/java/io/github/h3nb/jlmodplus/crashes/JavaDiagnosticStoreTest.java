@@ -212,6 +212,18 @@ public class JavaDiagnosticStoreTest {
 	}
 
 	@Test
+	public void legacyLogicalRecordIdentitySurvivesStoreRoundTrip() throws Exception {
+		File file = new File(temporary.getRoot(), "identity.java.properties");
+		JavaDiagnosticStore.Snapshot snapshot =
+				minimalSnapshot(file).withLegacyRecordId("acra:legacy-report.stacktrace");
+
+		JavaDiagnosticStore.write(file, snapshot);
+		JavaDiagnosticStore.Snapshot restored = JavaDiagnosticStore.read(file);
+
+		assertEquals("acra:legacy-report.stacktrace", restored.legacyRecordId);
+	}
+
+	@Test
 	public void failedLegacyMigrationLeavesSourceIntact() throws Exception {
 		File source = temporary.newFile("legacy-failed.stacktrace");
 		File parentFile = temporary.newFile("not-a-directory");

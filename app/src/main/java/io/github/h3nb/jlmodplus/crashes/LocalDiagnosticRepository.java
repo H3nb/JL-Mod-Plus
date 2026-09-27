@@ -252,7 +252,7 @@ public final class LocalDiagnosticRepository {
 				ProcessExitStore.Snapshot exit) {
 			IncidentSummary incident = IncidentInterpreter.interpret(null, java, exit);
 			return new Record(
-					"java:" + java.file.getName(),
+					javaRecordId(java),
 					Kind.JAVA_REPORT,
 					incident.incidentTimestampMillis,
 					java.legacyEventId,
@@ -364,6 +364,11 @@ public final class LocalDiagnosticRepository {
 					primary,
 					processExit);
 		}
+	}
+
+	static String javaRecordId(JavaDiagnosticStore.Snapshot java) {
+		if (java == null) return null;
+		return java.legacyRecordId != null ? java.legacyRecordId : "java:" + java.file.getName();
 	}
 
 	private static JavaDiagnosticStore.Snapshot selectPrimaryJava(
