@@ -218,9 +218,6 @@ final class JavaDiagnosticStore {
 			File base = canonicalRecordFile(file);
 			if (base != null && !containsPath(bases, base)) bases.add(base);
 		}
-		Collections.sort(
-				bases,
-				(left, right) -> Long.compare(right.lastModified(), left.lastModified()));
 		ArrayList<Snapshot> result = new ArrayList<>(bases.size());
 		for (File file : bases) {
 			try {
@@ -229,6 +226,12 @@ final class JavaDiagnosticStore {
 				Log.w(TAG, "Ignoring unreadable Java diagnostic: " + file.getName(), error);
 			}
 		}
+		Collections.sort(result, (left, right) -> {
+			if (left.timestampMillis == right.timestampMillis) {
+				return left.file.getName().compareTo(right.file.getName());
+			}
+			return left.timestampMillis < right.timestampMillis ? 1 : -1;
+		});
 		return result;
 	}
 
