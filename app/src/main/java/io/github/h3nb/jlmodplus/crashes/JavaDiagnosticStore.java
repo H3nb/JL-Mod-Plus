@@ -255,13 +255,8 @@ final class JavaDiagnosticStore {
 		for (File source : files) {
 			File destination = migratedFile(context, "acra", source);
 			try {
-				if (!atomicExists(destination)) {
-					Snapshot legacy = readLegacyAcra(context, source);
-					write(destination, legacy.withFile(destination));
-				} else {
-					read(destination);
-				}
-				if (!source.delete()) {
+				Snapshot legacy = readLegacyAcra(context, source);
+				if (!commitMigration(source, destination, legacy)) {
 					Log.w(TAG, "Unable to remove migrated legacy ACRA report: " + source.getName());
 				}
 			} catch (IOException | RuntimeException error) {
@@ -281,14 +276,11 @@ final class JavaDiagnosticStore {
 				Snapshot legacy = readLegacyFatalV1(context, source);
 				Snapshot equivalent = findRicherEquivalent(loadStored(context), legacy);
 				if (equivalent == null) {
-					if (!atomicExists(destination)) {
-						write(destination, legacy.withFile(destination));
-					} else {
-						read(destination);
+					if (!commitMigration(source, destination, legacy)) {
+						Log.w(TAG, "Unable to remove migrated fatal-v1 report: " + source.getName());
 					}
-				}
-				if (!source.delete()) {
-					Log.w(TAG, "Unable to remove migrated fatal-v1 report: " + source.getName());
+				} else if (!source.delete()) {
+					Log.w(TAG, "Unable to remove redundant fatal-v1 report: " + source.getName());
 				}
 			} catch (IOException | RuntimeException error) {
 				Log.w(TAG, "Keeping fatal-v1 report after failed migration: " + source.getName());
@@ -305,6 +297,16 @@ final class JavaDiagnosticStore {
 				Log.w(TAG, "Unable to remove migrated duplicate fatal-v1 evidence");
 			}
 		}
+	}
+
+	static boolean commitMigration(File source, File destination, Snapshot snapshot)
+			throws IOException {
+		if (!atomicExists(destination)) {
+			write(destination, snapshot.withFile(destination));
+		} else {
+			read(destination);
+		}
+		return !source.exists() || source.delete();
 	}
 
 	static Snapshot findRicherEquivalent(List<Snapshot> existing, Snapshot candidate) {
@@ -594,7 +596,7 @@ final class JavaDiagnosticStore {
 				nativeMethod);
 	}
 
-	private static ThrowableCapture captureThrowableChain(Throwable reported, Throwable primary) {
+	static ThrowableCapture captureThrowableChain(Throwable reported, Throwable primary) {
 		ArrayList<ThrowableData> chain = new ArrayList<>();
 		IdentityHashMap<Throwable, Boolean> seen = new IdentityHashMap<>();
 		Throwable current = reported;
@@ -1176,7 +1178,7 @@ final class JavaDiagnosticStore {
 		}
 	}
 
-	private static final class ThrowableCapture {
+	static final class ThrowableCapture {
 		final List<ThrowableData> throwables;
 		final int primaryIndex;
 		final String stackTrace;

@@ -17,6 +17,11 @@ final class DiagnosticReportText {
 	static String build(LocalDiagnosticRepository.Record record) {
 		if (record == null || record.getIncidentSummary() == null) return "";
 		IncidentSummary incident = record.getIncidentSummary();
+		return build(incident, record.getStackTrace());
+	}
+
+	static String build(IncidentSummary incident, String stack) {
+		if (incident == null) return "";
 		StringBuilder text = new StringBuilder("JL-Mod Plus Diagnostic Report\n\n");
 		text.append("Summary\n")
 				.append(GitHubDiagnosticIssue.description(incident, null)).append("\n");
@@ -83,7 +88,6 @@ final class DiagnosticReportText {
 			for (String limitation : incident.limitations) text.append("- ").append(limitation).append('\n');
 		}
 
-		String stack = record.getStackTrace();
 		if (stack != null && !stack.trim().isEmpty()) {
 			text.append("\nTechnical Evidence\nJava stack trace:\n")
 					.append(stack.trim()).append('\n');
