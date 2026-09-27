@@ -4,12 +4,6 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package io.github.h3nb.jlmodplus.crashes;
@@ -28,7 +22,7 @@ import java.util.zip.ZipOutputStream;
 
 /** Versioned, transparent public diagnostic bundle format. */
 final class DiagnosticBundleFormat {
-	static final int FORMAT_VERSION = 1;
+	static final int FORMAT_VERSION = 2;
 	static final String REPORT_ENTRY = "report.md";
 	static final String INCIDENT_ENTRY = "incident.json";
 	static final String ANR_ENTRY = "evidence/anr-trace.txt";
@@ -66,9 +60,7 @@ final class DiagnosticBundleFormat {
 			updateDigest(digest, TOMBSTONE_ENTRY, optionalText(tombstoneSummary));
 			byte[] hash = digest.digest();
 			StringBuilder result = new StringBuilder(hash.length * 2);
-			for (byte value : hash) {
-				result.append(String.format(Locale.US, "%02x", value & 0xff));
-			}
+			for (byte value : hash) result.append(String.format(Locale.US, "%02x", value & 0xff));
 			return result.toString();
 		} catch (NoSuchAlgorithmException impossible) {
 			throw new AssertionError("SHA-256 unavailable", impossible);
@@ -108,55 +100,109 @@ final class DiagnosticBundleFormat {
 	static String incidentJson(IncidentSummary incident,
 			NativeTombstoneSummary.Summary nativeSummary, ValueSanitizer sanitizer) {
 		if (sanitizer == null) sanitizer = IDENTITY;
-		boolean hasExit = incident.associatedProcessExit != null;
-		boolean hasNative = nativeSummary != null;
-		StringBuilder json = new StringBuilder(1024);
+		StringBuilder json = new StringBuilder(2048);
 		json.append("{\n");
 		field(json, "formatVersion", Integer.toString(FORMAT_VERSION), false, true);
 		field(json, "category", incident.category.name(), true, true);
+		field(json, "failureOrigin", incident.failureOrigin.name(), true, true);
 		field(json, "timestampMillis", Long.toString(incident.incidentTimestampMillis), false, true);
 		field(json, "subject", safe(sanitizer, incident.subject), true, true);
-		field(json, "failureType", safe(sanitizer, incident.rootFailure == null ? null : incident.rootFailure.type), true, true);
-		field(json, "failureMessage", safe(sanitizer, incident.rootFailure == null ? null : incident.rootFailure.message), true, true);
+		appendFailure(json, "primaryFailure", incident.primaryFailure, sanitizer, true);
+		appendFailure(json, "underlyingCause", incident.underlyingCause, sanitizer, true);
+		field(json, "javaEvidenceKind", incident.javaEvidenceKind, true, true);
+		field(json, "javaFailureSource", incident.primaryFailure == null ? null : "java-evidence", true, true);
 		field(json, "operation", safe(sanitizer, incident.operation), true, true);
+		field(json, "operationSource", incident.operation == null ? null : "session-journal", true, true);
 		field(json, "boundary", safe(sanitizer, incident.boundary), true, true);
 		field(json, "lifecycleStage", safe(sanitizer, incident.lifecycleStage), true, true);
-		field(json, "topRelevantFrame", safe(sanitizer, incident.topRelevantFrame), true, true);
 		field(json, "midletVersion", safe(sanitizer, incident.midletVersion), true, true);
 		field(json, "entrypoint", safe(sanitizer, incident.entrypoint), true, true);
 		field(json, "jarFingerprint", safe(sanitizer, incident.jarFingerprint), true, true);
 		field(json, "build", safe(sanitizer, incident.build), true, true);
-		field(json, "environment", safe(sanitizer, incident.environment), true, true);
+		field(json, "androidRelease", safe(sanitizer, incident.androidRelease), true, true);
+		field(json, "androidSdk", incident.androidSdk < 0 ? null : Integer.toString(incident.androidSdk),
+				false, true);
+		field(json, "device", safe(sanitizer, incident.device), true, true);
+		field(json, "primaryAbi", safe(sanitizer, incident.primaryAbi), true, true);
 		field(json, "process", safe(sanitizer, incident.process), true, true);
 		field(json, "eventId", safe(sanitizer, incident.eventId), true, true);
 		field(json, "sessionId", safe(sanitizer, incident.sessionId), true, true);
-		field(json, "fingerprint", incident.fingerprint, true, hasExit || hasNative);
-		if (hasExit) {
-			IncidentSummary.ProcessExitEvidence exit = incident.associatedProcessExit;
-			json.append("  \"associatedProcessExit\": {\n");
-			field(json, "reason", Integer.toString(exit.reason), false, true, 4);
-			field(json, "status", Integer.toString(exit.status), false, true, 4);
-			field(json, "reasonLabel", safe(sanitizer, exit.reasonLabel), true, true, 4);
-			field(json, "statusLabel", safe(sanitizer, exit.statusLabel), true, true, 4);
-			field(json, "importance", safe(sanitizer, exit.importance), true, true, 4);
-			field(json, "cause", safe(sanitizer, exit.cause), true, true, 4);
-			field(json, "processName", safe(sanitizer, exit.processName), true, true, 4);
-			field(json, "processRole", safe(sanitizer, exit.processRole), true, false, 4);
-			json.append("  }").append(hasNative ? ',' : ' ').append('\n');
+		field(json, "fingerprint", incident.fingerprint, true,
+				incident.associatedProcessExit != null || nativeSummary != null || !incident.limitations.isEmpty());
+		if (incident.associatedProcessExit != null) {
+			appendProcessExit(json, incident.associatedProcessExit, sanitizer,
+					nativeSummary != null || !incident.limitations.isEmpty());
 		}
-		if (hasNative) {
-			json.append("  \"nativeCrash\": {\n");
-			field(json, "signalNumber", number(nativeSummary.signalNumber), false, true, 4);
-			field(json, "signalName", safe(sanitizer, nativeSummary.signalName), true, true, 4);
-			field(json, "signalCode", number(nativeSummary.signalCode), false, true, 4);
-			field(json, "signalCodeName", safe(sanitizer, nativeSummary.signalCodeName), true, true, 4);
-			field(json, "cause", safe(sanitizer, nativeSummary.cause), true, true, 4);
-			field(json, "crashingThread", safe(sanitizer, nativeSummary.threadName), true, true, 4);
-			field(json, "topProjectFrame", safe(sanitizer, topProjectFrame(nativeSummary)), true, false, 4);
-			json.append("  }\n");
+		if (nativeSummary != null) {
+			appendNative(json, nativeSummary, sanitizer, !incident.limitations.isEmpty());
+		}
+		if (!incident.limitations.isEmpty()) {
+			json.append("  \"limitations\": [\n");
+			for (int i = 0; i < incident.limitations.size(); i++) {
+				json.append("    \"").append(escape(safe(sanitizer, incident.limitations.get(i)))).append("\"");
+				if (i + 1 < incident.limitations.size()) json.append(',');
+				json.append('\n');
+			}
+			json.append("  ]\n");
 		}
 		json.append("}\n");
 		return json.toString();
+	}
+
+	private static void appendFailure(StringBuilder json, String name, IncidentSummary.JavaFailure failure,
+			ValueSanitizer sanitizer, boolean comma) {
+		if (failure == null) {
+			field(json, name, null, true, comma);
+			return;
+		}
+		json.append("  \"").append(name).append("\": {\n");
+		field(json, "type", safe(sanitizer, failure.type), true, true, 4);
+		field(json, "message", safe(sanitizer, failure.message), true, true, 4);
+		field(json, "frame", safe(sanitizer, failure.frame), true, false, 4);
+		json.append("  }").append(comma ? ',' : ' ').append('\n');
+	}
+
+	private static void appendProcessExit(StringBuilder json, IncidentSummary.ProcessExitEvidence exit,
+			ValueSanitizer sanitizer, boolean comma) {
+		json.append("  \"associatedProcessExit\": {\n");
+		field(json, "source", exit.sdk >= 30 ? "android-application-exit-info"
+				: "legacy-process-disappearance", true, true, 4);
+		field(json, "reason", Integer.toString(exit.reason), false, true, 4);
+		field(json, "status", Integer.toString(exit.status), false, true, 4);
+		field(json, "reasonLabel", safe(sanitizer, exit.reasonLabel), true, true, 4);
+		field(json, "statusLabel", safe(sanitizer, exit.statusLabel), true, true, 4);
+		field(json, "importance", safe(sanitizer, exit.importance), true, true, 4);
+		field(json, "summary", safe(sanitizer, exit.summary), true, true, 4);
+		field(json, "limitation", safe(sanitizer, exit.limitation), true, true, 4);
+		field(json, "description", safe(sanitizer, exit.description), true, true, 4);
+		field(json, "pssKb", exit.pssKb > 0 ? Long.toString(exit.pssKb) : null, false, true, 4);
+		field(json, "rssKb", exit.rssKb > 0 ? Long.toString(exit.rssKb) : null, false, true, 4);
+		field(json, "lowMemoryKillReportSupported",
+				Boolean.toString(exit.lowMemoryKillReportSupported), false, true, 4);
+		field(json, "traceKind", exit.traceKind, true, true, 4);
+		field(json, "traceAvailable", Boolean.toString(exit.traceAvailable), false, true, 4);
+		field(json, "traceTruncated", Boolean.toString(exit.traceTruncated), false, true, 4);
+		field(json, "anrType", exit.anrType >= 0 ? Integer.toString(exit.anrType) : null, false, true, 4);
+		field(json, "anrTimeoutMillis", exit.anrTimeoutMillis >= 0
+				? Long.toString(exit.anrTimeoutMillis) : null, false, true, 4);
+		field(json, "anrId", exit.anrId >= 0 ? Integer.toString(exit.anrId) : null, false, true, 4);
+		field(json, "anrUserPerceptible", exit.anrUserPerceptible == null ? null
+				: Boolean.toString(exit.anrUserPerceptible), false, false, 4);
+		json.append("  }").append(comma ? ',' : ' ').append('\n');
+	}
+
+	private static void appendNative(StringBuilder json, NativeTombstoneSummary.Summary nativeSummary,
+			ValueSanitizer sanitizer, boolean comma) {
+		json.append("  \"nativeCrash\": {\n");
+		field(json, "source", "android-tombstone", true, true, 4);
+		field(json, "signalNumber", number(nativeSummary.signalNumber), false, true, 4);
+		field(json, "signalName", safe(sanitizer, nativeSummary.signalName), true, true, 4);
+		field(json, "signalCode", number(nativeSummary.signalCode), false, true, 4);
+		field(json, "signalCodeName", safe(sanitizer, nativeSummary.signalCodeName), true, true, 4);
+		field(json, "cause", safe(sanitizer, nativeSummary.cause), true, true, 4);
+		field(json, "crashingThread", safe(sanitizer, nativeSummary.threadName), true, true, 4);
+		field(json, "topProjectFrame", safe(sanitizer, topProjectFrame(nativeSummary)), true, false, 4);
+		json.append("  }").append(comma ? ',' : ' ').append('\n');
 	}
 
 	private static String safe(ValueSanitizer sanitizer, String value) {
@@ -226,16 +272,12 @@ final class DiagnosticBundleFormat {
 						if (tombstone != null) return false;
 						tombstone = value;
 					}
-					default -> {
-						return false;
-					}
+					default -> { return false; }
 				}
 			}
 		}
-		return report != null
-				&& incident != null
-				&& expectedFingerprint.equals(
-						contentFingerprint(report, incident, anrTrace, tombstone));
+		return report != null && incident != null && expectedFingerprint.equals(
+				contentFingerprint(report, incident, anrTrace, tombstone));
 	}
 
 	private static String readTextEntry(ZipInputStream zip) throws IOException {
@@ -256,11 +298,9 @@ final class DiagnosticBundleFormat {
 	private static byte[] boundedBytes(String text) {
 		byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
 		if (bytes.length <= MAX_TEXT_ENTRY_BYTES) return bytes;
-
 		byte[] marker = TRUNCATION_MARKER.getBytes(StandardCharsets.UTF_8);
 		int cut = MAX_TEXT_ENTRY_BYTES - marker.length;
 		while (cut > 0 && (bytes[cut] & 0xc0) == 0x80) cut--;
-
 		byte[] bounded = new byte[cut + marker.length];
 		System.arraycopy(bytes, 0, bounded, 0, cut);
 		System.arraycopy(marker, 0, bounded, cut, marker.length);
@@ -300,11 +340,8 @@ final class DiagnosticBundleFormat {
 				case '\r' -> escaped.append("\\r");
 				case '\t' -> escaped.append("\\t");
 				default -> {
-					if (ch < 0x20) {
-						escaped.append(String.format(java.util.Locale.US, "\\u%04x", (int) ch));
-					} else {
-						escaped.append(ch);
-					}
+					if (ch < 0x20) escaped.append(String.format(Locale.US, "\\u%04x", (int) ch));
+					else escaped.append(ch);
 				}
 			}
 		}
