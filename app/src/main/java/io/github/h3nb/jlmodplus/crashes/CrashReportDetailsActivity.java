@@ -24,6 +24,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -240,10 +241,9 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		Intent locate = new Intent(Intent.ACTION_OPEN_DOCUMENT)
 				.addCategory(Intent.CATEGORY_OPENABLE)
 				.setType("application/zip");
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-				&& preparedBundle.uri != null
-				&& DocumentsContract.isDocumentUri(this, preparedBundle.uri)) {
-			locate.putExtra(DocumentsContract.EXTRA_INITIAL_URI, preparedBundle.uri);
+		Uri initial = initialDocumentUri(preparedBundle.uri);
+		if (initial != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			locate.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initial);
 		}
 		try {
 			startActivity(locate);
@@ -258,6 +258,29 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 			startActivity(fallback);
 		} catch (ActivityNotFoundException | SecurityException e) {
 			ThemedToast.show(this, R.string.crash_report_locate_failed, Toast.LENGTH_LONG);
+		}
+	}
+
+	private Uri initialDocumentUri(Uri bundleUri) {
+		if (bundleUri == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return null;
+		if (DocumentsContract.isDocumentUri(this, bundleUri)) return bundleUri;
+		if (ContentResolver.SCHEME_CONTENT.equals(bundleUri.getScheme())
+				&& MediaStore.AUTHORITY.equals(bundleUri.getAuthority())) {
+			try {
+				return Api26Impl.documentUri(this, bundleUri);
+			} catch (RuntimeException ignored) {
+				// Provider support is best-effort; the generic picker remains available.
+			}
+		}
+		return null;
+	}
+
+	@androidx.annotation.RequiresApi(Build.VERSION_CODES.O)
+	private static final class Api26Impl {
+		private Api26Impl() {}
+
+		static Uri documentUri(Context context, Uri mediaUri) {
+			return MediaStore.getDocumentUri(context, mediaUri);
 		}
 	}
 
