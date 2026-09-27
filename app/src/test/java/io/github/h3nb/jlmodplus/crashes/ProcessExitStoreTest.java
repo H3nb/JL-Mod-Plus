@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
-import android.system.OsConstants;
 
 import org.junit.Test;
 
@@ -42,7 +41,7 @@ public class ProcessExitStoreTest {
 		assertTrue(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_CRASH, 0, CACHED, false));
 		assertTrue(ProcessExitStore.shouldRetain(
-				ApplicationExitInfo.REASON_CRASH_NATIVE, OsConstants.SIGSEGV, CACHED, false));
+				ApplicationExitInfo.REASON_CRASH_NATIVE, ProcessExitStore.SIGNAL_SEGV, CACHED, false));
 		assertTrue(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_ANR, 0, CACHED, false));
 		assertTrue(ProcessExitStore.shouldRetain(
@@ -74,11 +73,11 @@ public class ProcessExitStoreTest {
 	@Test
 	public void sigkillRequiresMidletOrForegroundEvidence() {
 		assertFalse(ProcessExitStore.shouldRetain(
-				ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, CACHED, false));
+				ApplicationExitInfo.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, CACHED, false));
 		assertTrue(ProcessExitStore.shouldRetain(
-				ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, CACHED, true));
+				ApplicationExitInfo.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, CACHED, true));
 		assertTrue(ProcessExitStore.shouldRetain(
-				ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, FOREGROUND, false));
+				ApplicationExitInfo.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, FOREGROUND, false));
 	}
 
 	@Test

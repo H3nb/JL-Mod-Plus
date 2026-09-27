@@ -12,7 +12,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
-import android.system.OsConstants;
 
 import org.junit.Test;
 
@@ -81,7 +80,7 @@ public class DiagnosticReportTextTest {
 				new File("exit"), null, "key",
 				ProcessExitStore.SOURCE_APPLICATION_EXIT_INFO,
 				1100L, "pkg:midlet", "midlet", 123,
-				ProcessExitStore.REASON_SIGNALED, OsConstants.SIGKILL,
+				ProcessExitStore.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL,
 				ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
 				100, 200, null, true, 1, 36, "16",
 				session.sessionId, "POCO", "F7", "arm64-v8a",

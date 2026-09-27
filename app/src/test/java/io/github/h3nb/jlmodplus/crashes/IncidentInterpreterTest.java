@@ -13,7 +13,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
-import android.system.OsConstants;
 
 import org.junit.Test;
 
@@ -39,7 +38,7 @@ public class IncidentInterpreterTest {
 						"dalvik.system.BaseDexClassLoader", "findClass"));
 		JavaDiagnosticStore.Snapshot java = javaEvidence(chain, 2, "GloftOTSP");
 		ProcessExitStore.Snapshot exit = exit(
-				ProcessExitStore.REASON_SIGNALED, OsConstants.SIGKILL, true, 36);
+				ProcessExitStore.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, true, 36);
 		IncidentSummary incident = IncidentInterpreter.interpret(
 				session(MidletSessionJournal.FailureBoundary.LIFECYCLE_START),
 				java,
@@ -107,9 +106,9 @@ public class IncidentInterpreterTest {
 	@Test
 	public void sigkillLimitationDependsOnPlatformCapability() {
 		String unsupported = IncidentInterpreter.processExitLimitation(
-				exit(ProcessExitStore.REASON_SIGNALED, OsConstants.SIGKILL, false, 36));
+				exit(ProcessExitStore.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, false, 36));
 		String supported = IncidentInterpreter.processExitLimitation(
-				exit(ProcessExitStore.REASON_SIGNALED, OsConstants.SIGKILL, true, 36));
+				exit(ProcessExitStore.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, true, 36));
 
 		assertTrue(unsupported.contains("cannot reliably distinguish"));
 		assertTrue(supported.contains("did not provide a more specific termination cause"));

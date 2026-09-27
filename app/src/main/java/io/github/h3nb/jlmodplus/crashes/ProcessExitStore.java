@@ -18,7 +18,6 @@ import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
 import android.content.Context;
 import android.os.Build;
-import android.system.OsConstants;
 import android.util.AtomicFile;
 import android.util.Log;
 
@@ -71,6 +70,17 @@ public final class ProcessExitStore {
 	static final int REASON_FREEZER = 14;
 	static final int REASON_PACKAGE_STATE_CHANGE = 15;
 	static final int REASON_PACKAGE_UPDATED = 16;
+
+	// Linux/Android signal numbers are ABI-stable values from signal(7). Keep these primitives in
+	// common diagnostic code so unit tests and API23 devices do not depend on android.system stubs.
+	static final int SIGNAL_ILLEGAL = 4;
+	static final int SIGNAL_TRAP = 5;
+	static final int SIGNAL_ABORT = 6;
+	static final int SIGNAL_BUS = 7;
+	static final int SIGNAL_FPE = 8;
+	static final int SIGNAL_KILL = 9;
+	static final int SIGNAL_SEGV = 11;
+	static final int SIGNAL_TERM = 15;
 
 	static final String SOURCE_APPLICATION_EXIT_INFO = "android-application-exit-info";
 	static final String SOURCE_LEGACY_PROCESS_DISAPPEARANCE = "legacy-process-disappearance";
@@ -383,7 +393,7 @@ public final class ProcessExitStore {
 					REASON_INITIALIZATION_FAILURE,
 					REASON_EXCESSIVE_RESOURCE_USAGE -> true;
 			case REASON_LOW_MEMORY -> midletProcess || foregroundish;
-			case REASON_SIGNALED -> status != OsConstants.SIGKILL || midletProcess || foregroundish;
+			case REASON_SIGNALED -> status != SIGNAL_KILL || midletProcess || foregroundish;
 			case REASON_DEPENDENCY_DIED, REASON_FREEZER -> midletProcess || foregroundish;
 			case REASON_EXIT_SELF -> status != 0 && (midletProcess || foregroundish);
 			case REASON_UNKNOWN,
@@ -768,14 +778,14 @@ public final class ProcessExitStore {
 	}
 
 	private static String signalName(int signal) {
-		if (signal == OsConstants.SIGABRT) return "SIGABRT";
-		if (signal == OsConstants.SIGBUS) return "SIGBUS";
-		if (signal == OsConstants.SIGFPE) return "SIGFPE";
-		if (signal == OsConstants.SIGILL) return "SIGILL";
-		if (signal == OsConstants.SIGKILL) return "SIGKILL";
-		if (signal == OsConstants.SIGSEGV) return "SIGSEGV";
-		if (signal == OsConstants.SIGTERM) return "SIGTERM";
-		if (signal == OsConstants.SIGTRAP) return "SIGTRAP";
+		if (signal == SIGNAL_ABORT) return "SIGABRT";
+		if (signal == SIGNAL_BUS) return "SIGBUS";
+		if (signal == SIGNAL_FPE) return "SIGFPE";
+		if (signal == SIGNAL_ILLEGAL) return "SIGILL";
+		if (signal == SIGNAL_KILL) return "SIGKILL";
+		if (signal == SIGNAL_SEGV) return "SIGSEGV";
+		if (signal == SIGNAL_TERM) return "SIGTERM";
+		if (signal == SIGNAL_TRAP) return "SIGTRAP";
 		return null;
 	}
 

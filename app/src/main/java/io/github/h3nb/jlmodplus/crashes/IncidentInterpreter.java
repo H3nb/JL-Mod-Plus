@@ -8,7 +8,6 @@
 
 package io.github.h3nb.jlmodplus.crashes;
 
-import android.system.OsConstants;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -232,7 +231,7 @@ final class IncidentInterpreter {
 			return "Exact OS termination reason is unavailable on Android API "
 					+ exit.stateSdk + ".";
 		}
-		if (exit.reason == ProcessExitStore.REASON_SIGNALED && exit.status == OsConstants.SIGKILL) {
+		if (exit.reason == ProcessExitStore.REASON_SIGNALED && exit.status == ProcessExitStore.SIGNAL_KILL) {
 			if (exit.lowMemoryKillReportSupported) {
 				return "Android did not provide a more specific termination cause. "
 						+ "Low-memory kills are separately reportable on this device, "

@@ -17,7 +17,6 @@ package io.github.h3nb.jlmodplus.crashes;
 import android.content.Context;
 import android.os.Build;
 import android.os.Process;
-import android.util.AtomicFile;
 import android.util.Log;
 
 import org.json.JSONObject;
@@ -219,7 +218,9 @@ final class JavaDiagnosticStore {
 			File base = canonicalRecordFile(file);
 			if (base != null && !containsPath(bases, base)) bases.add(base);
 		}
-		bases.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
+		Collections.sort(
+				bases,
+				(left, right) -> Long.compare(right.lastModified(), left.lastModified()));
 		ArrayList<Snapshot> result = new ArrayList<>(bases.size());
 		for (File file : bases) {
 			try {
@@ -732,7 +733,7 @@ final class JavaDiagnosticStore {
 
 	static Snapshot read(File file) throws IOException {
 		Properties p = new Properties();
-		try (FileInputStream input = new AtomicFile(file).openRead()) {
+		try (FileInputStream input = openAtomicRead(file)) {
 			p.load(input);
 		}
 		if (parseInt(p.getProperty(KEY_SCHEMA), -1) != SCHEMA_VERSION) {
@@ -895,22 +896,67 @@ final class JavaDiagnosticStore {
 		}
 	}
 
-	private static void writeAtomic(File destination, Properties p) throws IOException {
-		AtomicFile atomic = new AtomicFile(destination);
-		FileOutputStream output = null;
-		try {
-			output = atomic.startWrite();
-			p.store(output, null);
-			atomic.finishWrite(output);
-		} catch (Throwable error) {
-			if (output != null) {
-				try {
-					atomic.failWrite(output);
-				} catch (Throwable ignored) {}
+	private static FileInputStream openAtomicRead(File destination) throws IOException {
+		File backup = new File(destination.getPath() + BACKUP_SUFFIX);
+		File pending = new File(destination.getPath() + NEW_SUFFIX);
+		if (backup.isFile()) {
+			if (destination.isFile()) {
+				// A published base plus backup means replacement reached its commit point and only
+				// backup cleanup was interrupted. Keep the published base.
+				deleteIfExists(backup);
+			} else if (!backup.renameTo(destination)) {
+				throw new IOException("Unable to restore Java diagnostic backup");
 			}
-			if (error instanceof IOException) throw (IOException) error;
-			if (error instanceof Error) throw (Error) error;
-			throw new IOException("Unable to persist Java diagnostic", error);
+		}
+		// A .new file is never authoritative until it has been renamed to the base path.
+		deleteIfExists(pending);
+		return new FileInputStream(destination);
+	}
+
+	private static void writeAtomic(File destination, Properties p) throws IOException {
+		File parent = destination.getParentFile();
+		if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
+			throw new IOException("Unable to create Java diagnostic directory");
+		}
+		File backup = new File(destination.getPath() + BACKUP_SUFFIX);
+		File pending = new File(destination.getPath() + NEW_SUFFIX);
+		try (FileInputStream ignored = destination.exists() || backup.exists()
+				? openAtomicRead(destination) : null) {
+			// openAtomicRead performs recovery/cleanup only; no bytes are consumed here.
+		}
+		if (pending.exists() && !deleteIfExists(pending)) {
+			throw new IOException("Unable to clear stale Java diagnostic write");
+		}
+		if (destination.isFile()) {
+			if (backup.exists() && !deleteIfExists(backup)) {
+				throw new IOException("Unable to clear stale Java diagnostic backup");
+			}
+			if (!destination.renameTo(backup)) {
+				throw new IOException("Unable to stage Java diagnostic backup");
+			}
+		}
+
+		boolean published = false;
+		try {
+			try (FileOutputStream output = new FileOutputStream(pending, false)) {
+				p.store(output, null);
+				output.flush();
+				output.getFD().sync();
+			}
+			if (!pending.renameTo(destination)) {
+				throw new IOException("Unable to publish Java diagnostic");
+			}
+			published = true;
+			// The base file is now authoritative. A stale backup is harmless and will also be
+			// cleaned by the next read, so deletion failure must not roll back a committed record.
+			deleteIfExists(backup);
+		} finally {
+			if (!published) {
+				deleteIfExists(pending);
+				if (!destination.exists() && backup.isFile()) {
+					backup.renameTo(destination);
+				}
+			}
 		}
 	}
 
