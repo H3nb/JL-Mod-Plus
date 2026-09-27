@@ -29,7 +29,7 @@ final class GitHubDiagnosticIssue {
 					+ failure + frameSuffix(incident.topRelevantFrame);
 			case JL_MOD_PLUS -> "[JL-Mod Plus] " + failure + frameSuffix(incident.topRelevantFrame);
 			case NATIVE_CRASH -> "[Native crash] " + subject + " — "
-					+ nativeFailureLabel(incident, nativeSummary) + nativeFrameSuffix(nativeSummary);
+					+ nativeFailureLabel(incident, nativeSummary);
 			case ANR -> "[ANR] " + subject + " — Android reported an unresponsive process";
 			case PROCESS_EXIT -> "[Process exit] " + subject + " — "
 					+ processExitTitle(incident.associatedProcessExit);
@@ -212,11 +212,6 @@ final class GitHubDiagnosticIssue {
 	private static String frameSuffix(String frame) {
 		String call = callSite(frame);
 		return call == null ? "" : " in " + call;
-	}
-
-	private static String nativeFrameSuffix(NativeTombstoneSummary.Summary summary) {
-		String frame = topProjectFrame(summary);
-		return frame == null ? "" : " in " + callSite(frame);
 	}
 
 	private static String nativeFailureLabel(IncidentSummary incident,
