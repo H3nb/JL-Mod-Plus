@@ -526,9 +526,7 @@ public final class LocalDiagnosticRepository {
 	static IncidentSummary.Category standaloneJavaCategory(
 			String midletName, IncidentSummary.JavaFailure failure) {
 		if (midletName == null || failure == null || failure.frame == null) {
-			return midletName == null
-					? IncidentSummary.Category.JL_MOD_PLUS
-					: IncidentSummary.Category.MIDLET_CRASH;
+			return IncidentSummary.Category.JL_MOD_PLUS;
 		}
 		String frame = failure.frame;
 		if (frame.startsWith("io.github.h3nb.jlmodplus.")

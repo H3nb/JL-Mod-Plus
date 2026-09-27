@@ -79,6 +79,8 @@ public class DiagnosticBundleFormatTest {
 				"# report\n", "{\"formatVersion\":1}\n", "ANR trace", null);
 
 		assertEquals(first, same);
+		assertEquals(first, DiagnosticBundleFormat.contentFingerprint(
+				"# report\n", "{\"formatVersion\":1}\n", "   ", null));
 		assertFalse(first.equals(withExitEvidence));
 		assertFalse(first.equals(withAnr));
 	}

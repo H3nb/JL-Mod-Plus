@@ -97,6 +97,9 @@ public class IncidentSummaryTest {
 				IncidentSummary.Category.JL_MOD_PLUS,
 				LocalDiagnosticRepository.standaloneJavaCategory("Example Game", hostFailure));
 		assertEquals(
+				IncidentSummary.Category.JL_MOD_PLUS,
+				LocalDiagnosticRepository.standaloneJavaCategory("Example Game", null));
+		assertEquals(
 				IncidentSummary.Category.MIDLET_CRASH,
 				LocalDiagnosticRepository.standaloneJavaCategory("Example Game", guestFailure));
 	}

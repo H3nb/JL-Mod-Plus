@@ -62,8 +62,8 @@ final class DiagnosticBundleFormat {
 			MessageDigest digest = MessageDigest.getInstance("SHA-256");
 			updateDigest(digest, REPORT_ENTRY, reportMarkdown);
 			updateDigest(digest, INCIDENT_ENTRY, incidentJson);
-			updateDigest(digest, ANR_ENTRY, anrTrace);
-			updateDigest(digest, TOMBSTONE_ENTRY, tombstoneSummary);
+			updateDigest(digest, ANR_ENTRY, optionalText(anrTrace));
+			updateDigest(digest, TOMBSTONE_ENTRY, optionalText(tombstoneSummary));
 			byte[] hash = digest.digest();
 			StringBuilder result = new StringBuilder(hash.length * 2);
 			for (byte value : hash) {
@@ -73,6 +73,10 @@ final class DiagnosticBundleFormat {
 		} catch (NoSuchAlgorithmException impossible) {
 			throw new AssertionError("SHA-256 unavailable", impossible);
 		}
+	}
+
+	private static String optionalText(String text) {
+		return text == null || text.trim().isEmpty() ? null : text;
 	}
 
 	private static void updateDigest(MessageDigest digest, String name, String text) {
