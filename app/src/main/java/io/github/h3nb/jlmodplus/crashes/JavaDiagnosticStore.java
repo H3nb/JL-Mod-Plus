@@ -313,7 +313,11 @@ final class JavaDiagnosticStore {
 		if (!atomicExists(destination)) {
 			write(destination, snapshot.withFile(destination));
 		} else {
-			read(destination);
+			Snapshot existing = read(destination);
+			if (existing.legacyRecordId == null && snapshot.legacyRecordId != null) {
+				write(destination, existing.withLegacyRecordId(snapshot.legacyRecordId));
+				read(destination);
+			}
 		}
 		return !source.exists() || source.delete();
 	}

@@ -224,6 +224,21 @@ public class JavaDiagnosticStoreTest {
 	}
 
 	@Test
+	public void migrationRetryBackfillsLegacyIdentityBeforeDeletingSource() throws Exception {
+		File source = temporary.newFile("retry.stacktrace");
+		File destination = new File(temporary.getRoot(), "retry.java.properties");
+		JavaDiagnosticStore.write(destination, minimalSnapshot(destination));
+		JavaDiagnosticStore.Snapshot incoming =
+				minimalSnapshot(destination).withLegacyRecordId("acra:retry.stacktrace");
+
+		assertTrue(JavaDiagnosticStore.commitMigration(source, destination, incoming));
+
+		assertFalse(source.exists());
+		assertEquals("acra:retry.stacktrace",
+				JavaDiagnosticStore.read(destination).legacyRecordId);
+	}
+
+	@Test
 	public void failedLegacyMigrationLeavesSourceIntact() throws Exception {
 		File source = temporary.newFile("legacy-failed.stacktrace");
 		File parentFile = temporary.newFile("not-a-directory");
