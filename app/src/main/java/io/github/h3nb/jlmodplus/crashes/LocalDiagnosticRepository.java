@@ -292,6 +292,7 @@ public final class LocalDiagnosticRepository {
 		public String getMidletName() { return midletName; }
 		public String getProcessRole() { return processRole; }
 		public String getStackTrace() { return primaryJava == null ? null : primaryJava.stackTrace; }
+		public String getDetailText() { return DiagnosticReportText.build(this); }
 		IncidentSummary getIncidentSummary() { return incidentSummary; }
 		ProcessExitStore.Snapshot getProcessExitSnapshot() { return processExit; }
 		JavaDiagnosticStore.Snapshot getJavaEvidence() { return primaryJava; }

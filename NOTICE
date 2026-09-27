@@ -25,7 +25,7 @@ Distinct bundled source components include:
 - TinyMidiLoader — Zlib
 
 Runtime libraries such as AndroidX, Kotlin, Material Components, Gson, Oboe,
-ACRA, RxJava/RxAndroid, Zip4j, ASM, FFmpegKit and their shipped transitive
+RxJava/RxAndroid, Zip4j, ASM, FFmpegKit and their shipped transitive
 components retain their upstream licenses. Exact origins, coordinates, license
 identifiers, source-availability pointers for reciprocal licenses, and important
 transitive notices are recorded in THIRD_PARTY_NOTICES.md and summarized in the

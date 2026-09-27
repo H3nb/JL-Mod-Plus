@@ -145,7 +145,6 @@ final class JavaDiagnosticStore {
 				upstream,
 				() -> {
 					Process.killProcess(Process.myPid());
-					System.exit(10);
 				});
 		Thread.setDefaultUncaughtExceptionHandler(handler);
 		installed = true;
@@ -212,12 +211,16 @@ final class JavaDiagnosticStore {
 
 	static List<Snapshot> loadStored(Context context) {
 		if (context == null) return Collections.emptyList();
-		File[] files = directory(context).listFiles(file ->
-				file != null && file.isFile() && file.getName().endsWith(SUFFIX));
+		File[] files = directory(context).listFiles();
 		if (files == null || files.length == 0) return Collections.emptyList();
-		Arrays.sort(files, (left, right) -> Long.compare(right.lastModified(), left.lastModified()));
-		ArrayList<Snapshot> result = new ArrayList<>(files.length);
+		ArrayList<File> bases = new ArrayList<>();
 		for (File file : files) {
+			File base = canonicalRecordFile(file);
+			if (base != null && !containsPath(bases, base)) bases.add(base);
+		}
+		bases.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
+		ArrayList<Snapshot> result = new ArrayList<>(bases.size());
+		for (File file : bases) {
 			try {
 				result.add(read(file));
 			} catch (IOException | RuntimeException error) {
@@ -233,6 +236,7 @@ final class JavaDiagnosticStore {
 			migrateAcraDirectory(context, context.getDir(ACRA_UNAPPROVED, Context.MODE_PRIVATE));
 			migrateAcraDirectory(context, context.getDir(ACRA_APPROVED, Context.MODE_PRIVATE));
 			migrateFatalV1(context);
+			deduplicateMigratedFallbacks(context);
 			prune(context);
 		} catch (Throwable error) {
 			logFailure("Java diagnostic legacy migration failed open", error);
@@ -288,6 +292,17 @@ final class JavaDiagnosticStore {
 				}
 			} catch (IOException | RuntimeException error) {
 				Log.w(TAG, "Keeping fatal-v1 report after failed migration: " + source.getName());
+			}
+		}
+	}
+
+	private static void deduplicateMigratedFallbacks(Context context) {
+		List<Snapshot> records = loadStored(context);
+		for (Snapshot candidate : records) {
+			if (candidate.kind != Kind.LEGACY_FATAL) continue;
+			Snapshot richer = findRicherEquivalent(records, candidate);
+			if (richer != null && !delete(candidate)) {
+				Log.w(TAG, "Unable to remove migrated duplicate fatal-v1 evidence");
 			}
 		}
 	}
@@ -632,9 +647,17 @@ final class JavaDiagnosticStore {
 		if (!directory.isDirectory() && !directory.mkdirs()) {
 			throw new IOException("Unable to create Java diagnostic directory");
 		}
-		String key = snapshot.timestampMillis + "-" + Math.max(0, snapshot.pid) + "-"
-				+ Long.toUnsignedString(SEQUENCE.incrementAndGet(), 36);
-		File destination = new File(directory, key + SUFFIX);
+		File destination = null;
+		for (int attempt = 0; attempt < 32; attempt++) {
+			String key = snapshot.timestampMillis + "-" + Math.max(0, snapshot.pid) + "-"
+					+ Long.toUnsignedString(SEQUENCE.incrementAndGet(), 36);
+			File candidate = new File(directory, key + SUFFIX);
+			if (!atomicExists(candidate)) {
+				destination = candidate;
+				break;
+			}
+		}
+		if (destination == null) throw new IOException("Unable to allocate Java diagnostic identity");
 		write(destination, snapshot.withFile(destination));
 	}
 
@@ -688,7 +711,7 @@ final class JavaDiagnosticStore {
 
 	static Snapshot read(File file) throws IOException {
 		Properties p = new Properties();
-		try (FileInputStream input = new FileInputStream(file)) {
+		try (FileInputStream input = new AtomicFile(file).openRead()) {
 			p.load(input);
 		}
 		if (parseInt(p.getProperty(KEY_SCHEMA), -1) != SCHEMA_VERSION) {
@@ -884,6 +907,24 @@ final class JavaDiagnosticStore {
 
 	private static File directory(Context context) {
 		return new File(context.getFilesDir(), DIRECTORY);
+	}
+
+	private static File canonicalRecordFile(File file) {
+		if (file == null || !file.isFile()) return null;
+		String path = file.getPath();
+		if (path.endsWith(SUFFIX)) return file;
+		if (path.endsWith(SUFFIX + BACKUP_SUFFIX)) {
+			return new File(path.substring(0, path.length() - BACKUP_SUFFIX.length()));
+		}
+		if (path.endsWith(SUFFIX + NEW_SUFFIX)) {
+			return new File(path.substring(0, path.length() - NEW_SUFFIX.length()));
+		}
+		return null;
+	}
+
+	private static boolean containsPath(List<File> files, File candidate) {
+		for (File file : files) if (file.getPath().equals(candidate.getPath())) return true;
+		return false;
 	}
 
 	private static boolean atomicExists(File file) {

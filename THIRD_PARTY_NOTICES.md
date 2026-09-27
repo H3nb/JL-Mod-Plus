@@ -78,7 +78,6 @@ The table below covers direct runtime dependencies and license-significant trans
 | Kotlin stdlib and `kotlinx-coroutines-*`, plus `org.jetbrains:annotations` | JetBrains Kotlin projects | Apache-2.0 |
 | `com.google.code.gson:gson` | Google Gson | Apache-2.0 |
 | `com.google.oboe:oboe` | Google Oboe | Apache-2.0 |
-| `ch.acra:acra-core` | ACRA | Apache-2.0 |
 | `org.jspecify:jspecify` | JSpecify | Apache-2.0 |
 | `org.checkerframework:checker-qual` | Checker Framework | MIT |
 | `io.github.nikita36078:ffmpeg-kit:6.0.LTS` | Maven SCM / source: `https://github.com/nikita36078/ffmpeg-kit` | Published POM declares LGPL-3.0. FFmpegKit documentation notes GPL-3.0 applies when GPL libraries are enabled; FFmpeg and bundled external libraries retain their own upstream terms. |
