@@ -340,6 +340,7 @@ class RuntimeMenuComposeTest {
             }
         }
 
+        composeRule.onNodeWithText("Maximum").assertIsDisplayed()
         composeRule.onNodeWithTag("runtime_fps_input").performTextInput("60")
         composeRule.onNodeWithText("OK").performClick()
         assertEquals(60, confirmed)

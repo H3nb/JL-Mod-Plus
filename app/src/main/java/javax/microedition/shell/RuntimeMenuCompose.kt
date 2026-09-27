@@ -461,7 +461,7 @@ internal fun RuntimeLimitFpsDialog(
                 onValueChange = { next -> value = next.filter(Char::isDigit) },
                 modifier = Modifier.testTag("runtime_fps_input"),
                 singleLine = true,
-                placeholder = { Text(stringResource(R.string.unlimited)) },
+                placeholder = { Text(stringResource(R.string.fps_limit_maximum)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
         },
