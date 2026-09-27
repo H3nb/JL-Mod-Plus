@@ -514,7 +514,7 @@ public class CrashRuntimeIsolationTest {
 		assertNotNull(record.getSessionId());
 		assertEquals(CrashRuntimeProbeActivity.MIDLET_NAME, record.getMidletName());
 		assertEquals("midlet", record.getProcessRole());
-		assertTrue(record.getDetailText().contains("Failure boundary: UNCAUGHT_THREAD"));
+		assertTrue(record.getDetailText().contains("Lifecycle boundary: UNCAUGHT_THREAD"));
 		assertNotNull(record.getStackTrace());
 		assertTrue(record.getStackTrace().contains("runtimeProbe=true;"));
 	}
@@ -526,7 +526,7 @@ public class CrashRuntimeIsolationTest {
 		assertNotNull(record.getSessionId());
 		assertEquals(LIFECYCLE_MIDLET_NAME, record.getMidletName());
 		assertEquals("midlet", record.getProcessRole());
-		assertTrue(record.getDetailText().contains("Failure boundary: " + expectedBoundary.name()));
+		assertTrue(record.getDetailText().contains("Lifecycle boundary: " + expectedBoundary.name()));
 		assertTrue(record.getDetailText().contains("Entrypoint: " + LifecycleMidlet.CLASS_NAME));
 		assertNotNull(record.getStackTrace());
 		assertTrue(record.getStackTrace().contains(failureMarker));

@@ -119,6 +119,22 @@ public class DiagnosticBundleFormatTest {
 				new ByteArrayInputStream(modified.toByteArray()), fingerprint));
 	}
 
+	@Test
+	public void tombstoneSummaryIsPublishedAsTextNotOpaqueProtobuf() throws Exception {
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		DiagnosticBundleFormat.write(
+				bytes,
+				"# report\n",
+				"{\"formatVersion\":2}\n",
+				null,
+				"Native crash details\nSignal: SIGSEGV (11)");
+
+		Map<String, String> entries = unzip(bytes.toByteArray());
+		assertTrue(entries.containsKey(DiagnosticBundleFormat.TOMBSTONE_ENTRY));
+		assertFalse(entries.keySet().stream().anyMatch(name -> name.endsWith(".pb")));
+		assertFalse(entries.keySet().stream().anyMatch(name -> name.endsWith(".proto")));
+	}
+
 	private static IncidentSummary minimalIncident() {
 		return new IncidentSummary(
 				IncidentSummary.Category.MIDLET_LIFECYCLE,

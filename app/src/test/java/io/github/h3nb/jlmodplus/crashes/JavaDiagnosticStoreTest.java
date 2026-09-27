@@ -10,7 +10,6 @@ package io.github.h3nb.jlmodplus.crashes;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -59,6 +58,29 @@ public class JavaDiagnosticStoreTest {
 				captured.throwables.get(captured.primaryIndex).className);
 		assertEquals(ClassNotFoundException.class.getName(),
 				captured.throwables.get(captured.primaryIndex + 1).className);
+	}
+
+	@Test
+	public void frameBudgetCannotHideDeeperPrimaryThrowable() {
+		RuntimeException primary = new RuntimeException("primary");
+		Throwable current = primary;
+		for (int i = 0; i < 4; i++) {
+			RuntimeException wrapper = new RuntimeException("wrapper-" + i, current);
+			StackTraceElement[] frames =
+					new StackTraceElement[JavaDiagnosticStore.MAX_FRAMES_PER_THROWABLE];
+			for (int frame = 0; frame < frames.length; frame++) {
+				frames[frame] = new StackTraceElement(
+						"wrapper." + i, "frame" + frame, "Wrapper.java", frame);
+			}
+			wrapper.setStackTrace(frames);
+			current = wrapper;
+		}
+
+		JavaDiagnosticStore.ThrowableCapture captured =
+				JavaDiagnosticStore.captureThrowableChain(current, primary);
+
+		assertTrue(captured.primaryIndex >= 0);
+		assertEquals("primary", captured.throwables.get(captured.primaryIndex).message);
 	}
 
 	@Test

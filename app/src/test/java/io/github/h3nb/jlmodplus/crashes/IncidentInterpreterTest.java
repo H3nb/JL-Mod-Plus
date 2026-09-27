@@ -92,6 +92,19 @@ public class IncidentInterpreterTest {
 	}
 
 	@Test
+	public void unrelatedFrameWithMidletMetadataRemainsNeutral() {
+		JavaDiagnosticStore.ThrowableData unknown = throwable(
+				"java.lang.IllegalStateException", "boom", "third.party.Library", "run");
+		IncidentSummary incident = IncidentInterpreter.interpret(
+				null, javaEvidence(List.of(unknown), 0, "game.Main"), null);
+
+		assertEquals(IncidentSummary.Category.JAVA_FAILURE, incident.category);
+		assertEquals(IncidentSummary.FailureOrigin.UNKNOWN, incident.failureOrigin);
+		assertTrue(GitHubDiagnosticIssue.description(incident, null)
+				.contains("does not establish guest or emulator ownership"));
+	}
+
+	@Test
 	public void sigkillLimitationDependsOnPlatformCapability() {
 		String unsupported = IncidentInterpreter.processExitLimitation(
 				exit(ProcessExitStore.REASON_SIGNALED, OsConstants.SIGKILL, false, 36));

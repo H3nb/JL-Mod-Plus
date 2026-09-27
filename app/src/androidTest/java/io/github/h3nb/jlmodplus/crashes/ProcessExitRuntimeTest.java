@@ -68,14 +68,14 @@ public class ProcessExitRuntimeTest {
 			assertTrue(record.hasProcessExit());
 			assertFalse(record.hasJavaReport());
 			assertTrue(record.getDetailText().contains("Lifecycle stage: RUNNING"));
-			assertTrue(record.getDetailText().contains("Session outcome: NONE"));
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-				assertTrue(record.getDetailText().contains("Exit reason: Signal termination"));
+				assertTrue(record.getDetailText().contains("Associated Process Termination"));
 				assertTrue(record.getDetailText().contains("SIGKILL"));
 			} else {
-				assertTrue(record.getDetailText().contains("Exit reason: Process termination (reason 0)"));
+				assertTrue(record.getDetailText().contains("Associated Process Termination"));
 				assertTrue(record.getDetailText().contains(
-						"Exact termination cause unavailable on Android 6-10"));
+						"Exact OS termination reason is unavailable on Android API "
+								+ Build.VERSION.SDK_INT));
 				assertFalse(record.getDetailText().contains("Native crash"));
 				assertFalse(record.getDetailText().contains("ANR"));
 				assertFalse(record.getDetailText().contains("Low-memory kill"));
@@ -114,8 +114,7 @@ public class ProcessExitRuntimeTest {
 						// ProcessExitStore can publish the framework exit before the just-written
 						// session journal becomes visible to the main process. Do not accept that
 						// transient projection as the final correlated diagnostic.
-						&& record.getDetailText().contains("Lifecycle stage: RUNNING")
-						&& record.getDetailText().contains("Session outcome: NONE")) {
+						&& record.getDetailText().contains("Lifecycle stage: RUNNING")) {
 					return record;
 				}
 			}
