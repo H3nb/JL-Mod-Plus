@@ -23,16 +23,22 @@ final class IncidentInterpreter {
 		IncidentSummary.JavaFailure primary = failure(java == null ? null : java.primaryThrowable());
 		IncidentSummary.JavaFailure underlying =
 				failure(java == null ? null : java.underlyingCause());
-		IncidentSummary.FailureOrigin origin = failureOrigin(primary, session, java);
+		String entrypoint = first(
+				session == null ? null : session.mainClass,
+				java == null ? null : java.midletMainClass);
+		IncidentSummary.FailureOrigin origin = failureOrigin(
+				java == null ? null : java.primaryThrowable(), entrypoint);
 		boolean lifecycle = session != null && session.failureBoundary != null
 				&& session.failureBoundary.name().startsWith("LIFECYCLE_");
 		IncidentSummary.Category category;
 		if (lifecycle) {
 			category = IncidentSummary.Category.MIDLET_LIFECYCLE;
 		} else if (java != null) {
-			category = origin == IncidentSummary.FailureOrigin.MIDLET
-					? IncidentSummary.Category.MIDLET_CRASH
-					: IncidentSummary.Category.JL_MOD_PLUS;
+			category = switch (origin) {
+				case MIDLET -> IncidentSummary.Category.MIDLET_CRASH;
+				case JL_MOD_PLUS -> IncidentSummary.Category.JL_MOD_PLUS;
+				case UNKNOWN -> IncidentSummary.Category.JAVA_FAILURE;
+			};
 		} else if (exit != null && exit.reason == ProcessExitStore.REASON_CRASH_NATIVE) {
 			category = IncidentSummary.Category.NATIVE_CRASH;
 		} else if (exit != null && exit.reason == ProcessExitStore.REASON_ANR) {
@@ -54,13 +60,11 @@ final class IncidentInterpreter {
 				java == null ? null : java.midletName,
 				exit == null ? null : exit.processRole,
 				exit == null ? null : exit.processName,
-				category == IncidentSummary.Category.JL_MOD_PLUS ? "JL-Mod Plus" : "process");
+				category == IncidentSummary.Category.JL_MOD_PLUS ? "JL-Mod Plus"
+						: category == IncidentSummary.Category.JAVA_FAILURE ? "Java failure" : "process");
 		String midletVersion = first(
 				session == null ? null : session.midletVersion,
 				java == null ? null : java.midletVersion);
-		String entrypoint = first(
-				session == null ? null : session.mainClass,
-				java == null ? null : java.midletMainClass);
 		String jar = IncidentSummary.shortFingerprint(first(
 				session == null ? null : session.jarSha256,
 				java == null ? null : java.jarSha256));
@@ -132,16 +136,20 @@ final class IncidentInterpreter {
 				frame == null ? null : frame.display());
 	}
 
-	static IncidentSummary.FailureOrigin failureOrigin(IncidentSummary.JavaFailure primary,
-			MidletSessionJournal.Snapshot session, JavaDiagnosticStore.Snapshot java) {
-		if (primary == null || primary.frame == null) return IncidentSummary.FailureOrigin.UNKNOWN;
-		String frame = primary.frame;
-		if (frame.startsWith("io.github.h3nb.jlmodplus.")
-				|| frame.startsWith("ru.playsoftware.j2meloader.")
-				|| frame.startsWith("javax.microedition.")) {
+	static IncidentSummary.FailureOrigin failureOrigin(
+			JavaDiagnosticStore.ThrowableData primary, String entrypoint) {
+		if (primary == null || primary.firstFrame() == null) {
+			return IncidentSummary.FailureOrigin.UNKNOWN;
+		}
+		String frameClass = primary.firstFrame().className;
+		if (frameClass == null) return IncidentSummary.FailureOrigin.UNKNOWN;
+		if (frameClass.startsWith("io.github.h3nb.jlmodplus.")
+				|| frameClass.startsWith("ru.playsoftware.j2meloader.")
+				|| frameClass.startsWith("javax.microedition.")) {
 			return IncidentSummary.FailureOrigin.JL_MOD_PLUS;
 		}
-		if (session != null || java != null && java.midletName != null) {
+		if (entrypoint != null
+				&& (frameClass.equals(entrypoint) || frameClass.startsWith(entrypoint + "$"))) {
 			return IncidentSummary.FailureOrigin.MIDLET;
 		}
 		return IncidentSummary.FailureOrigin.UNKNOWN;

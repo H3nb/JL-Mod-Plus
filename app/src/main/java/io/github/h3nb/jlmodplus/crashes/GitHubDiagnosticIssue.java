@@ -25,6 +25,8 @@ final class GitHubDiagnosticIssue {
 					+ failure + operationSuffix(incident);
 			case MIDLET_CRASH -> "[MIDlet crash] " + subject + " — "
 					+ failure + frameSuffix(incident.topRelevantFrame);
+			case JAVA_FAILURE -> "[Java failure] " + subject + " — "
+					+ failure + frameSuffix(incident.topRelevantFrame);
 			case JL_MOD_PLUS -> "[JL-Mod Plus] " + failure + frameSuffix(incident.topRelevantFrame);
 			case NATIVE_CRASH -> "[Native crash] " + subject + " — "
 					+ nativeFailureLabel(incident, nativeSummary) + nativeFrameSuffix(nativeSummary);
@@ -140,6 +142,12 @@ final class GitHubDiagnosticIssue {
 				String frame = callSite(incident.topRelevantFrame);
 				return javaFailureLabel(incident.primaryFailure) + " occurred in the MIDlet"
 						+ (frame == null ? "." : " at " + frame + ".");
+			}
+			case JAVA_FAILURE -> {
+				String frame = callSite(incident.topRelevantFrame);
+				return "A Java failure was recorded"
+						+ (frame == null ? "." : " at " + frame + ".")
+						+ " The available evidence does not establish guest or emulator ownership.";
 			}
 			case JL_MOD_PLUS -> {
 				String frame = callSite(incident.topRelevantFrame);
@@ -322,6 +330,7 @@ final class GitHubDiagnosticIssue {
 		return switch (category) {
 			case JL_MOD_PLUS -> "JL-Mod Plus";
 			case MIDLET_LIFECYCLE, MIDLET_CRASH -> "MIDlet";
+			case JAVA_FAILURE -> "Java failure";
 			case NATIVE_CRASH, ANR, PROCESS_EXIT -> "process";
 		};
 	}

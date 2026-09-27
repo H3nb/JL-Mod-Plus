@@ -625,7 +625,8 @@ final class JavaDiagnosticStore {
 					bound(current.getClass().getName(), MAX_TEXT_CHARS),
 					bound(current.getMessage(), MAX_MESSAGE_CHARS),
 					frames));
-			if (totalFrames >= MAX_TOTAL_FRAMES) break;
+			// Preserve the bounded cause chain even after the frame budget is exhausted so an
+			// explicitly identified primary Throwable cannot disappear behind large wrappers.
 			current = current.getCause();
 		}
 		if (primaryIndex < 0 && !chain.isEmpty()) primaryIndex = 0;
@@ -917,9 +918,6 @@ final class JavaDiagnosticStore {
 		if (path.endsWith(SUFFIX)) return file;
 		if (path.endsWith(SUFFIX + BACKUP_SUFFIX)) {
 			return new File(path.substring(0, path.length() - BACKUP_SUFFIX.length()));
-		}
-		if (path.endsWith(SUFFIX + NEW_SUFFIX)) {
-			return new File(path.substring(0, path.length() - NEW_SUFFIX.length()));
 		}
 		return null;
 	}

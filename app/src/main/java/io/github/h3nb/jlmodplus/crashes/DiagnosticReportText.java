@@ -30,7 +30,7 @@ final class DiagnosticReportText {
 		appendSection(text, "Underlying Cause", failure(incident.underlyingCause));
 
 		text.append("\nIncident Context\n");
-		appendLine(text, "MIDlet", incident.subject);
+		appendLine(text, isMidletIncident(incident) ? "MIDlet" : "Subject", incident.subject);
 		appendLine(text, "MIDlet version", incident.midletVersion);
 		appendLine(text, "Entrypoint", incident.entrypoint);
 		appendLine(text, "Operation", incident.operation);
@@ -124,6 +124,12 @@ final class DiagnosticReportText {
 			case JL_MOD_PLUS -> "JL-Mod Plus/emulator frame";
 			case UNKNOWN -> null;
 		};
+	}
+
+	private static boolean isMidletIncident(IncidentSummary incident) {
+		return incident.category == IncidentSummary.Category.MIDLET_LIFECYCLE
+				|| incident.category == IncidentSummary.Category.MIDLET_CRASH
+				|| incident.entrypoint != null;
 	}
 
 	private static void appendSection(StringBuilder text, String title, String value) {

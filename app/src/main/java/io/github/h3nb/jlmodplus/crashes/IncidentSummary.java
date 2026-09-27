@@ -30,6 +30,7 @@ final class IncidentSummary {
 	enum Category {
 		MIDLET_LIFECYCLE,
 		MIDLET_CRASH,
+		JAVA_FAILURE,
 		JL_MOD_PLUS,
 		NATIVE_CRASH,
 		ANR,
