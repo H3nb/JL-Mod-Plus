@@ -234,7 +234,9 @@ final class IncidentInterpreter {
 		}
 		if (exit.reason == ProcessExitStore.REASON_SIGNALED && exit.status == OsConstants.SIGKILL) {
 			if (exit.lowMemoryKillReportSupported) {
-				return "Low-memory kills are separately reportable on this device; Android did not classify this exit as one.";
+				return "Android did not provide a more specific termination cause. "
+						+ "Low-memory kills are separately reportable on this device, "
+						+ "and this exit was not classified as one.";
 			}
 			return "This device cannot reliably distinguish a low-memory kill from other SIGKILL terminations.";
 		}

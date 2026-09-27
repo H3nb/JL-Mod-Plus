@@ -112,8 +112,9 @@ public class IncidentInterpreterTest {
 				exit(ProcessExitStore.REASON_SIGNALED, OsConstants.SIGKILL, true, 36));
 
 		assertTrue(unsupported.contains("cannot reliably distinguish"));
+		assertTrue(supported.contains("did not provide a more specific termination cause"));
 		assertTrue(supported.contains("separately reportable"));
-		assertTrue(supported.contains("did not classify"));
+		assertTrue(supported.contains("was not classified as one"));
 	}
 
 	@Test
