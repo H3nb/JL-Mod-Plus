@@ -175,7 +175,7 @@ final class IncidentSummary {
 			String build, String androidRelease, int androidSdk, String device, String primaryAbi,
 			String process, String eventId, String sessionId, List<Breadcrumb> breadcrumbs,
 			ProcessExitEvidence associatedProcessExit, List<String> limitations) {
-		this.category = category == null ? Category.JL_MOD_PLUS : category;
+		this.category = category == null ? Category.JAVA_FAILURE : category;
 		this.failureOrigin = failureOrigin == null ? FailureOrigin.UNKNOWN : failureOrigin;
 		this.incidentTimestampMillis = Math.max(0, incidentTimestampMillis);
 		this.subject = clean(subject);

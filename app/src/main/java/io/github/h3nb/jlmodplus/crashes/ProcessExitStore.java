@@ -391,7 +391,7 @@ public final class ProcessExitStore {
 		};
 	}
 
-	/** ACRA's private helper process is reporting infrastructure, not a user-facing app incident. */
+	/** Historical ACRA helper-process exits are reporting infrastructure, not user incidents. */
 	static boolean shouldRetainProcess(String processRole, int reason, int status, int importance) {
 		return !"reporter".equals(processRole)
 				&& shouldRetain(reason, status, importance, "midlet".equals(processRole));
