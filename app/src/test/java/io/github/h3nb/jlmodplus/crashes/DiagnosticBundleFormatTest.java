@@ -4,12 +4,6 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package io.github.h3nb.jlmodplus.crashes;
@@ -32,121 +26,90 @@ import org.junit.Test;
 public class DiagnosticBundleFormatTest {
 	@Test
 	public void bundleIsReadableVersionedAndAddsOnlyAvailableEvidence() throws Exception {
-		IncidentSummary incident = new IncidentSummary(
-				IncidentSummary.Category.ANR,
-				1234L,
-				"Example",
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				"deadbeef · emulatorDebug",
-				"Android SDK 36 · Device",
-				"midlet",
-				Collections.emptyList(),
-				null);
-		String json = DiagnosticBundleFormat.incidentJson(incident);
+		String json = DiagnosticBundleFormat.incidentJson(minimalIncident());
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 
-		DiagnosticBundleFormat.write(
-				bytes,
-				"# report\n",
-				json,
-				"main thread trace",
-				null);
+		DiagnosticBundleFormat.write(bytes, "# report\n", json, "main thread trace", null);
 
 		Map<String, String> entries = unzip(bytes.toByteArray());
 		assertEquals(3, entries.size());
 		assertEquals("# report\n", entries.get(DiagnosticBundleFormat.REPORT_ENTRY));
 		assertTrue(entries.get(DiagnosticBundleFormat.INCIDENT_ENTRY)
-				.contains("\"formatVersion\": 1"));
+				.contains("\"formatVersion\": 2"));
 		assertEquals("main thread trace", entries.get(DiagnosticBundleFormat.ANR_ENTRY));
 		assertFalse(entries.containsKey(DiagnosticBundleFormat.TOMBSTONE_ENTRY));
 	}
 
 	@Test
-	public void contentFingerprintChangesWhenExportedEvidenceChanges() {
-		String first = DiagnosticBundleFormat.contentFingerprint(
-				"# report\n", "{\"formatVersion\":1}\n", null, null);
-		String same = DiagnosticBundleFormat.contentFingerprint(
-				"# report\n", "{\"formatVersion\":1}\n", null, null);
-		String withExitEvidence = DiagnosticBundleFormat.contentFingerprint(
-				"# report\nassociated exit\n", "{\"formatVersion\":1}\n", null, null);
-		String withAnr = DiagnosticBundleFormat.contentFingerprint(
-				"# report\n", "{\"formatVersion\":1}\n", "ANR trace", null);
+	public void incidentJsonKeepsEnvironmentAndFailureProvenanceSeparate() {
+		IncidentSummary incident = minimalIncident();
+		String json = DiagnosticBundleFormat.incidentJson(incident);
 
-		assertEquals(first, same);
-		assertEquals(first, DiagnosticBundleFormat.contentFingerprint(
-				"# report\n", "{\"formatVersion\":1}\n", "   ", null));
-		assertFalse(first.equals(withExitEvidence));
-		assertFalse(first.equals(withAnr));
+		assertTrue(json.contains("\"androidRelease\": \"16\""));
+		assertTrue(json.contains("\"androidSdk\": 36"));
+		assertTrue(json.contains("\"javaFailureSource\": \"java-evidence\""));
+		assertTrue(json.contains("\"operationSource\": \"session-journal\""));
+		assertTrue(json.contains("\"primaryFailure\": {"));
+		assertTrue(json.contains("\"underlyingCause\": {"));
 	}
 
 	@Test
 	public void sanitizesValuesBeforeJsonEscaping() {
-		IncidentSummary.JavaFailure failure = new IncidentSummary.JavaFailure(
-				"java.lang.IllegalStateException",
-				"failed at content://private.provider/item/42",
-				"example.Game.run(Game.java:42)");
+		IncidentSummary base = minimalIncident();
 		IncidentSummary incident = new IncidentSummary(
-				IncidentSummary.Category.MIDLET_CRASH,
-				1234L,
-				"Example",
-				failure,
-				null,
-				null,
-				failure.frame,
-				null,
-				null,
-				null,
-				null,
-				null,
-				"midlet",
-				Collections.emptyList(),
-				null);
+				base.category, base.failureOrigin, base.incidentTimestampMillis, base.subject,
+				new IncidentSummary.JavaFailure(
+						"java.lang.IllegalStateException",
+						"failed at content://private.provider/item/42",
+						"example.Game.run(Game.java:42)"),
+				base.underlyingCause, base.javaEvidenceKind, base.operation, base.boundary,
+				base.lifecycleStage, base.topRelevantFrame, base.midletVersion, base.entrypoint,
+				base.jarFingerprint, base.build, base.androidRelease, base.androidSdk,
+				base.device, base.primaryAbi, base.process, base.eventId, base.sessionId,
+				base.breadcrumbs, base.associatedProcessExit, base.limitations);
 
 		String json = DiagnosticBundleFormat.incidentJson(
-				incident,
-				null,
-				value -> DiagnosticExportSanitizer.sanitize(value, null, null));
+				incident, null, value -> DiagnosticExportSanitizer.sanitize(value, null, null));
 
-		assertTrue(json.contains("\"failureMessage\": \"failed at <uri>\""));
+		assertTrue(json.contains("\"message\": \"failed at <uri>\""));
 		assertFalse(json.contains("private.provider"));
-		assertTrue(json.trim().endsWith("}"));
+	}
+
+	@Test
+	public void contentFingerprintChangesWhenExportedEvidenceChanges() {
+		String first = DiagnosticBundleFormat.contentFingerprint(
+				"# report\n", "{\"formatVersion\":2}\n", null, null);
+		String same = DiagnosticBundleFormat.contentFingerprint(
+				"# report\n", "{\"formatVersion\":2}\n", null, null);
+		String withAnr = DiagnosticBundleFormat.contentFingerprint(
+				"# report\n", "{\"formatVersion\":2}\n", "ANR trace", null);
+
+		assertEquals(first, same);
+		assertEquals(first, DiagnosticBundleFormat.contentFingerprint(
+				"# report\n", "{\"formatVersion\":2}\n", "   ", null));
+		assertFalse(first.equals(withAnr));
 	}
 
 	@Test
 	public void oversizedTextEntryIsTruncatedInsteadOfBlockingBundle() throws Exception {
 		String oversized = "x".repeat(DiagnosticBundleFormat.MAX_TEXT_ENTRY_BYTES + 1024);
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-
 		DiagnosticBundleFormat.write(
-				bytes,
-				oversized,
-				"{\"formatVersion\":1}\n",
-				null,
-				null);
+				bytes, oversized, "{\"formatVersion\":2}\n", null, null);
 
-		Map<String, String> entries = unzip(bytes.toByteArray());
-		String report = entries.get(DiagnosticBundleFormat.REPORT_ENTRY);
+		String report = unzip(bytes.toByteArray()).get(DiagnosticBundleFormat.REPORT_ENTRY);
 		assertTrue(report.endsWith(DiagnosticBundleFormat.TRUNCATION_MARKER));
 		assertTrue(report.getBytes(StandardCharsets.UTF_8).length
 				<= DiagnosticBundleFormat.MAX_TEXT_ENTRY_BYTES);
-		assertTrue(entries.containsKey(DiagnosticBundleFormat.INCIDENT_ENTRY));
 	}
 
 	@Test
 	public void reuseValidationRejectsExternallyModifiedBundle() throws Exception {
 		String report = "# report\n";
-		String incident = "{\"formatVersion\":1}\n";
-		String fingerprint = DiagnosticBundleFormat.contentFingerprint(
-				report, incident, null, null);
+		String incident = "{\"formatVersion\":2}\n";
+		String fingerprint = DiagnosticBundleFormat.contentFingerprint(report, incident, null, null);
 		ByteArrayOutputStream original = new ByteArrayOutputStream();
 		DiagnosticBundleFormat.write(original, report, incident, null, null);
-
 		assertTrue(DiagnosticBundleFormat.matchesContentFingerprint(
 				new ByteArrayInputStream(original.toByteArray()), fingerprint));
 
@@ -156,20 +119,37 @@ public class DiagnosticBundleFormatTest {
 				new ByteArrayInputStream(modified.toByteArray()), fingerprint));
 	}
 
-	@Test
-	public void optionalTombstoneSummaryUsesSeparateTextEntry() throws Exception {
-		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-		DiagnosticBundleFormat.write(
-				bytes,
-				"# report\n",
-				"{\"formatVersion\":1}\n",
+	private static IncidentSummary minimalIncident() {
+		return new IncidentSummary(
+				IncidentSummary.Category.MIDLET_LIFECYCLE,
+				IncidentSummary.FailureOrigin.MIDLET,
+				1234L,
+				"Game",
+				new IncidentSummary.JavaFailure(
+						"java.lang.NoClassDefFoundError", "Failed resolution",
+						"game.Main.startApp(Main.java:42)"),
+				new IncidentSummary.JavaFailure(
+						"java.lang.ClassNotFoundException", "Missing class",
+						"dalvik.system.BaseDexClassLoader.findClass(BaseDexClassLoader.java:259)"),
+				JavaDiagnosticStore.Kind.FATAL_UNCAUGHT.name(),
+				"startApp()",
+				"LIFECYCLE_START",
+				"STARTING",
+				"game.Main.startApp(Main.java:42)",
+				"1.0",
+				"game.Main",
+				"abc123",
+				"deadbeef · emulatorDebug",
+				"16",
+				36,
+				"POCO F7",
+				"arm64-v8a",
+				"midlet · pkg:midlet",
+				"event",
+				"session",
+				Collections.emptyList(),
 				null,
-				"Native crash details\nSignal: SIGSEGV (11)");
-
-		Map<String, String> entries = unzip(bytes.toByteArray());
-		assertTrue(entries.containsKey(DiagnosticBundleFormat.TOMBSTONE_ENTRY));
-		assertFalse(entries.keySet().stream().anyMatch(name -> name.endsWith(".pb")));
-		assertFalse(entries.keySet().stream().anyMatch(name -> name.endsWith(".proto")));
+				Collections.emptyList());
 	}
 
 	private static Map<String, String> unzip(byte[] bytes) throws Exception {

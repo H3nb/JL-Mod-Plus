@@ -1,0 +1,216 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
+
+package io.github.h3nb.jlmodplus.crashes;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import android.app.ActivityManager;
+import android.system.OsConstants;
+
+import org.junit.Test;
+
+import java.io.File;
+import java.util.List;
+
+public class IncidentInterpreterTest {
+	private static final String SESSION = "123e4567-e89b-12d3-a456-426614174000";
+	private static final String EVENT = "223e4567-e89b-12d3-a456-426614174000";
+
+	@Test
+	public void realStartAppShapeKeepsPrimaryAndUnderlyingCauseDistinct() {
+		List<JavaDiagnosticStore.ThrowableData> chain = List.of(
+				throwable("io.github.h3nb.jlmodplus.crashes.CrashReporter$SessionFailureException",
+						"session wrapper", "io.github.h3nb.jlmodplus.crashes.CrashReporter", "wrap"),
+				throwable("java.lang.RuntimeException", "Failed startApp",
+						"javax.microedition.shell.MidletThread", "start"),
+				throwable("java.lang.NoClassDefFoundError",
+						"Failed resolution of Lcom/skt/m/AudioSystem;",
+						"GloftOTSP", "startApp"),
+				throwable("java.lang.ClassNotFoundException",
+						"Didn't find class \"com.skt.m.AudioSystem\"",
+						"dalvik.system.BaseDexClassLoader", "findClass"));
+		JavaDiagnosticStore.Snapshot java = javaEvidence(chain, 2, "GloftOTSP");
+		ProcessExitStore.Snapshot exit = exit(
+				ProcessExitStore.REASON_SIGNALED, OsConstants.SIGKILL, true, 36);
+		IncidentSummary incident = IncidentInterpreter.interpret(
+				session(MidletSessionJournal.FailureBoundary.LIFECYCLE_START),
+				java,
+				exit);
+
+		assertEquals(IncidentSummary.Category.MIDLET_LIFECYCLE, incident.category);
+		assertEquals("startApp()", incident.operation);
+		assertEquals("NoClassDefFoundError", incident.primaryFailure.simpleType());
+		assertEquals("ClassNotFoundException", incident.underlyingCause.simpleType());
+		assertEquals(IncidentSummary.FailureOrigin.MIDLET, incident.failureOrigin);
+		assertEquals("Android 16 (SDK 36)", incident.androidLabel());
+		assertTrue(incident.associatedProcessExit.summary.contains("SIGKILL"));
+		assertTrue(incident.associatedProcessExit.limitation.contains("separately reportable"));
+		assertFalse(incident.associatedProcessExit.limitation.toLowerCase().contains("cause: unknown"));
+	}
+
+	@Test
+	public void obfuscatedLifecycleFrameCannotOverrideStructuredDestroyOperation() {
+		JavaDiagnosticStore.ThrowableData failure = new JavaDiagnosticStore.ThrowableData(
+				"java.lang.NullPointerException",
+				"Attempt to get length of null array",
+				List.of(
+						new JavaDiagnosticStore.FrameData("a", "a", "SourceFile", 12, false),
+						new JavaDiagnosticStore.FrameData("a", "a", "SourceFile", 34, false),
+						new JavaDiagnosticStore.FrameData(
+								"GloftOTSP", "destroyApp", "SourceFile", 42, false)));
+		IncidentSummary incident = IncidentInterpreter.interpret(
+				session(MidletSessionJournal.FailureBoundary.LIFECYCLE_DESTROY),
+				javaEvidence(List.of(failure), 0, "GloftOTSP"),
+				null);
+
+		String description = GitHubDiagnosticIssue.description(incident, null);
+		assertEquals("destroyApp()", incident.operation);
+		assertTrue(description.contains("destroyApp() callback"));
+		assertFalse(description.contains("a.a()"));
+	}
+
+	@Test
+	public void midletMetadataDoesNotTurnHostFrameIntoGuestBlame() {
+		JavaDiagnosticStore.ThrowableData host = throwable(
+				"java.lang.IllegalStateException",
+				"host",
+				"io.github.h3nb.jlmodplus.runtime.HostBridge",
+				"run");
+		IncidentSummary incident = IncidentInterpreter.interpret(
+				null, javaEvidence(List.of(host), 0, "game.Main"), null);
+
+		assertEquals(IncidentSummary.Category.JL_MOD_PLUS, incident.category);
+		assertEquals(IncidentSummary.FailureOrigin.JL_MOD_PLUS, incident.failureOrigin);
+	}
+
+	@Test
+	public void sigkillLimitationDependsOnPlatformCapability() {
+		String unsupported = IncidentInterpreter.processExitLimitation(
+				exit(ProcessExitStore.REASON_SIGNALED, OsConstants.SIGKILL, false, 36));
+		String supported = IncidentInterpreter.processExitLimitation(
+				exit(ProcessExitStore.REASON_SIGNALED, OsConstants.SIGKILL, true, 36));
+
+		assertTrue(unsupported.contains("cannot reliably distinguish"));
+		assertTrue(supported.contains("separately reportable"));
+		assertTrue(supported.contains("did not classify"));
+	}
+
+	@Test
+	public void api28ProcessDisappearanceStatesPlatformLimitation() {
+		ProcessExitStore.Snapshot exit =
+				exit(ProcessExitStore.REASON_UNKNOWN, 0, false, 28);
+		IncidentSummary incident = IncidentInterpreter.interpret(null, null, exit);
+
+		assertEquals(IncidentSummary.Category.PROCESS_EXIT, incident.category);
+		assertTrue(incident.associatedProcessExit.limitation.contains("Android API 28"));
+		assertFalse(incident.associatedProcessExit.summary.toLowerCase().contains("anr"));
+		assertFalse(incident.associatedProcessExit.summary.toLowerCase().contains("low-memory"));
+	}
+
+	private static JavaDiagnosticStore.ThrowableData throwable(
+			String type, String message, String frameClass, String method) {
+		return new JavaDiagnosticStore.ThrowableData(
+				type,
+				message,
+				List.of(new JavaDiagnosticStore.FrameData(
+						frameClass, method, "SourceFile", 42, false)));
+	}
+
+	private static JavaDiagnosticStore.Snapshot javaEvidence(
+			List<JavaDiagnosticStore.ThrowableData> chain, int primaryIndex, String mainClass) {
+		return new JavaDiagnosticStore.Snapshot(
+				new File("incident.java.properties"),
+				JavaDiagnosticStore.Kind.FATAL_UNCAUGHT,
+				1000L,
+				"io.github.h3nb.jlmodplus:midlet",
+				"midlet",
+				123,
+				"MidletMain",
+				17,
+				5,
+				SESSION,
+				"OregonTrailAmericanSettler",
+				"1.0",
+				mainClass,
+				"abc123",
+				"1.0",
+				"16",
+				36,
+				"POCO",
+				"F7",
+				"arm64-v8a",
+				null,
+				"stack",
+				chain,
+				primaryIndex,
+				null,
+				null,
+				null);
+	}
+
+	private static MidletSessionJournal.Snapshot session(
+			MidletSessionJournal.FailureBoundary boundary) {
+		return new MidletSessionJournal.Snapshot(
+				2,
+				SESSION,
+				"io.github.h3nb.jlmodplus:midlet",
+				123,
+				900L,
+				1L,
+				1000L,
+				2L,
+				boundary == MidletSessionJournal.FailureBoundary.LIFECYCLE_DESTROY
+						? MidletSessionJournal.Stage.STOPPING : MidletSessionJournal.Stage.STARTING,
+				MidletSessionJournal.Outcome.UNEXPECTED_FAILURE,
+				EVENT,
+				boundary,
+				"OregonTrailAmericanSettler",
+				"Vendor",
+				"1.0",
+				"GloftOTSP",
+				"1",
+				"abc123");
+	}
+
+	private static ProcessExitStore.Snapshot exit(
+			int reason, int status, boolean lmkSupported, int sdk) {
+		return new ProcessExitStore.Snapshot(
+				new File("exit.properties"),
+				null,
+				"key",
+				1100L,
+				"io.github.h3nb.jlmodplus:midlet",
+				"midlet",
+				123,
+				reason,
+				status,
+				ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+				412L * 1024,
+				596L * 1024,
+				null,
+				lmkSupported,
+				1L,
+				sdk,
+				sdk == 36 ? "16" : null,
+				SESSION,
+				"POCO",
+				"F7",
+				"arm64-v8a",
+				null,
+				0,
+				false,
+				-1,
+				-1,
+				-1,
+				null,
+				null);
+	}
+}
