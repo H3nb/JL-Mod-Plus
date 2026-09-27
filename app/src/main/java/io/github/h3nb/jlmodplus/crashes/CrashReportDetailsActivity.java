@@ -18,14 +18,13 @@ package io.github.h3nb.jlmodplus.crashes;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.DocumentsContract;
-import android.provider.MediaStore;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -239,12 +238,25 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 
 	private void locateBundle() {
 		if (preparedBundle == null) return;
+		Uri directory = diagnosticsDirectoryDocumentUri();
+
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+			Intent folder = new Intent(Intent.ACTION_VIEW)
+					.setDataAndType(directory, DocumentsContract.Document.MIME_TYPE_DIR)
+					.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			try {
+				startActivity(folder);
+				return;
+			} catch (ActivityNotFoundException | SecurityException ignored) {
+				// Android 6-7 have no standard initial-folder extra; fall through to a picker.
+			}
+		}
+
 		Intent locate = new Intent(Intent.ACTION_OPEN_DOCUMENT)
 				.addCategory(Intent.CATEGORY_OPENABLE)
 				.setType("application/zip");
-		Uri initial = initialDocumentUri(preparedBundle.uri);
-		if (initial != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			locate.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initial);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			locate.putExtra(DocumentsContract.EXTRA_INITIAL_URI, directory);
 		}
 		try {
 			startActivity(locate);
@@ -262,27 +274,11 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		}
 	}
 
-	private Uri initialDocumentUri(Uri bundleUri) {
-		if (bundleUri == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return null;
-		if (DocumentsContract.isDocumentUri(this, bundleUri)) return bundleUri;
-		if (ContentResolver.SCHEME_CONTENT.equals(bundleUri.getScheme())
-				&& MediaStore.AUTHORITY.equals(bundleUri.getAuthority())) {
-			try {
-				return Api26Impl.documentUri(this, bundleUri);
-			} catch (RuntimeException ignored) {
-				// Provider support is best-effort; the generic picker remains available.
-			}
-		}
-		return null;
-	}
-
-	@androidx.annotation.RequiresApi(Build.VERSION_CODES.O)
-	private static final class Api26Impl {
-		private Api26Impl() {}
-
-		static Uri documentUri(Context context, Uri mediaUri) {
-			return MediaStore.getDocumentUri(context, mediaUri);
-		}
+	static Uri diagnosticsDirectoryDocumentUri() {
+		return DocumentsContract.buildDocumentUri(
+				"com.android.externalstorage.documents",
+				"primary:" + Environment.DIRECTORY_DOWNLOADS + "/"
+						+ DiagnosticBundleStore.PUBLIC_DIRECTORY);
 	}
 
 	private void openGitHub() {
