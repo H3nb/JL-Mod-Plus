@@ -14,13 +14,16 @@
 
 package io.github.h3nb.jlmodplus.crashes;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /** Versioned, transparent public diagnostic bundle format. */
@@ -31,6 +34,7 @@ final class DiagnosticBundleFormat {
 	static final String ANR_ENTRY = "evidence/anr-trace.txt";
 	static final String TOMBSTONE_ENTRY = "evidence/tombstone-summary.txt";
 	static final int MAX_TEXT_ENTRY_BYTES = 256 * 1024;
+	static final String TRUNCATION_MARKER = "\n\n[... diagnostic entry truncated ...]\n";
 
 	interface ValueSanitizer {
 		String sanitize(String value);
@@ -81,7 +85,7 @@ final class DiagnosticBundleFormat {
 			return;
 		}
 		digest.update((byte) 1);
-		byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+		byte[] bytes = boundedBytes(text);
 		digest.update((byte) (bytes.length >>> 24));
 		digest.update((byte) (bytes.length >>> 16));
 		digest.update((byte) (bytes.length >>> 8));
@@ -181,15 +185,82 @@ final class DiagnosticBundleFormat {
 	}
 
 	private static void writeEntry(ZipOutputStream zip, String name, String text) throws IOException {
-		byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
-		if (bytes.length > MAX_TEXT_ENTRY_BYTES) {
-			throw new IOException("Diagnostic bundle entry exceeds retention bound: " + name);
-		}
+		byte[] bytes = boundedBytes(text);
 		ZipEntry entry = new ZipEntry(name);
 		entry.setTime(0L);
 		zip.putNextEntry(entry);
 		zip.write(bytes);
 		zip.closeEntry();
+	}
+
+	static boolean matchesContentFingerprint(InputStream source, String expectedFingerprint)
+			throws IOException {
+		if (source == null || expectedFingerprint == null) return false;
+		String report = null;
+		String incident = null;
+		String anrTrace = null;
+		String tombstone = null;
+		try (ZipInputStream zip = new ZipInputStream(source)) {
+			ZipEntry entry;
+			while ((entry = zip.getNextEntry()) != null) {
+				String name = entry.getName();
+				String value = readTextEntry(zip);
+				switch (name) {
+					case REPORT_ENTRY -> {
+						if (report != null) return false;
+						report = value;
+					}
+					case INCIDENT_ENTRY -> {
+						if (incident != null) return false;
+						incident = value;
+					}
+					case ANR_ENTRY -> {
+						if (anrTrace != null) return false;
+						anrTrace = value;
+					}
+					case TOMBSTONE_ENTRY -> {
+						if (tombstone != null) return false;
+						tombstone = value;
+					}
+					default -> {
+						return false;
+					}
+				}
+			}
+		}
+		return report != null
+				&& incident != null
+				&& expectedFingerprint.equals(
+						contentFingerprint(report, incident, anrTrace, tombstone));
+	}
+
+	private static String readTextEntry(ZipInputStream zip) throws IOException {
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		byte[] buffer = new byte[4096];
+		int total = 0;
+		int count;
+		while ((count = zip.read(buffer)) != -1) {
+			total += count;
+			if (total > MAX_TEXT_ENTRY_BYTES) {
+				throw new IOException("Diagnostic bundle entry exceeds retention bound");
+			}
+			output.write(buffer, 0, count);
+		}
+		return new String(output.toByteArray(), StandardCharsets.UTF_8);
+	}
+
+	private static byte[] boundedBytes(String text) {
+		byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+		if (bytes.length <= MAX_TEXT_ENTRY_BYTES) return bytes;
+
+		byte[] marker = TRUNCATION_MARKER.getBytes(StandardCharsets.UTF_8);
+		int cut = MAX_TEXT_ENTRY_BYTES - marker.length;
+		while (cut > 0 && (bytes[cut] & 0xc0) == 0x80) cut--;
+
+		byte[] bounded = new byte[cut + marker.length];
+		System.arraycopy(bytes, 0, bounded, 0, cut);
+		System.arraycopy(marker, 0, bounded, cut, marker.length);
+		return bounded;
 	}
 
 	private static void field(StringBuilder json, String name, String value, boolean quote,

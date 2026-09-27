@@ -497,8 +497,7 @@ public final class LocalDiagnosticRepository {
 
 	private static IncidentSummary incidentForRaw(RawJavaReport raw, ProcessExitStore.Snapshot exit) {
 		IncidentSummary.JavaFailure failure = IncidentSummary.analyzeJavaFailure(raw.stackTrace);
-		IncidentSummary.Category category = raw.midletName != null
-				? IncidentSummary.Category.MIDLET_CRASH : IncidentSummary.Category.JL_MOD_PLUS;
+		IncidentSummary.Category category = standaloneJavaCategory(raw.midletName, failure);
 		String projectFrame = topAppFrame(raw.stackTrace);
 		String relevantFrame = category == IncidentSummary.Category.JL_MOD_PLUS
 				? (projectFrame != null ? projectFrame : failure == null ? null : failure.frame)
@@ -522,6 +521,22 @@ public final class LocalDiagnosticRepository {
 				processExitEvidence(exit),
 				null,
 				raw.sessionId);
+	}
+
+	static IncidentSummary.Category standaloneJavaCategory(
+			String midletName, IncidentSummary.JavaFailure failure) {
+		if (midletName == null || failure == null || failure.frame == null) {
+			return midletName == null
+					? IncidentSummary.Category.JL_MOD_PLUS
+					: IncidentSummary.Category.MIDLET_CRASH;
+		}
+		String frame = failure.frame;
+		if (frame.startsWith("io.github.h3nb.jlmodplus.")
+				|| frame.startsWith("ru.playsoftware.j2meloader.")
+				|| frame.startsWith("javax.microedition.")) {
+			return IncidentSummary.Category.JL_MOD_PLUS;
+		}
+		return IncidentSummary.Category.MIDLET_CRASH;
 	}
 
 	private static IncidentSummary incidentForProcessExit(ProcessExitStore.Snapshot exit,

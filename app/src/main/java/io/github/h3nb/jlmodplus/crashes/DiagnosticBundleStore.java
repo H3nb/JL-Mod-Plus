@@ -37,8 +37,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
  * Owns the one public derived bundle associated with a diagnostic record.
@@ -283,18 +281,9 @@ final class DiagnosticBundleStore {
 
 	private static boolean isReusable(Context context, Metadata metadata) {
 		if (!exists(context, metadata)) return false;
-		try (InputStream raw = open(context, metadata);
-				ZipInputStream zip = raw == null ? null : new ZipInputStream(raw)) {
-			if (zip == null) return false;
-			boolean report = false;
-			boolean incident = false;
-			ZipEntry entry;
-			while ((entry = zip.getNextEntry()) != null) {
-				if (DiagnosticBundleFormat.REPORT_ENTRY.equals(entry.getName())) report = true;
-				if (DiagnosticBundleFormat.INCIDENT_ENTRY.equals(entry.getName())) incident = true;
-				if (report && incident) return true;
-			}
-			return false;
+		try (InputStream raw = open(context, metadata)) {
+			return DiagnosticBundleFormat.matchesContentFingerprint(
+					raw, metadata.contentFingerprint);
 		} catch (IOException | RuntimeException e) {
 			return false;
 		}

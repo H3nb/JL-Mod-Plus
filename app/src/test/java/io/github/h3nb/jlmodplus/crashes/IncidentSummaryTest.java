@@ -30,7 +30,11 @@ public class IncidentSummaryTest {
 				+ "Caused by: java.lang.RuntimeException: Failed destroyApp\n"
 				+ "\tat javax.microedition.shell.MidletThread.stop(MidletThread.java:100)\n"
 				+ "Caused by: java.lang.NullPointerException: Attempt to get length of null array\n"
-				+ "\tat GloftOTSP.destroyApp(SourceFile:42)\n";
+				+ "\tat a.a(SourceFile:12)\n"
+				+ "\tat a.a(SourceFile:34)\n"
+				+ "\tat a.a(SourceFile:56)\n"
+				+ "\tat GloftOTSP.destroyApp(SourceFile:42)\n"
+				+ "\tat javax.microedition.shell.MidletThread.stop(MidletThread.java:100)\n";
 		IncidentSummary.JavaFailure failure = IncidentSummary.analyzeJavaFailure(stack);
 		IncidentSummary.ProcessExitEvidence exit = new IncidentSummary.ProcessExitEvidence(
 				ProcessExitStore.REASON_SIGNALED,
@@ -62,14 +66,15 @@ public class IncidentSummaryTest {
 				exit);
 
 		assertEquals("java.lang.NullPointerException", failure.type);
-		assertEquals("GloftOTSP.destroyApp(SourceFile:42)", failure.frame);
+		assertEquals("a.a(SourceFile:12)", failure.frame);
 		assertEquals(
 				"[MIDlet lifecycle] OregonTrailAmericanSettler — NullPointerException in destroyApp()",
 				GitHubDiagnosticIssue.title(incident, null));
 		String description = GitHubDiagnosticIssue.description(incident, null);
 		assertTrue(description.contains("NullPointerException"));
-		assertTrue(description.contains("GloftOTSP.destroyApp()"));
-		assertTrue(description.contains("during teardown"));
+		assertTrue(description.contains("destroyApp() callback"));
+		assertTrue(description.contains("during MIDlet teardown"));
+		assertFalse(description.contains("a.a()"));
 
 		String summary = GitHubDiagnosticIssue.compactSummary(
 				incident, null, incident.bundleFileName());
@@ -77,6 +82,23 @@ public class IncidentSummaryTest {
 		assertTrue(summary.contains("Cause:** unknown"));
 		assertFalse(summary.toLowerCase(java.util.Locale.ROOT).contains("caused the java"));
 		assertFalse(summary.toLowerCase(java.util.Locale.ROOT).contains("low-memory"));
+	}
+
+	@Test
+	public void standaloneMidletMetadataDoesNotOverrideJlModRootFrame() {
+		IncidentSummary.JavaFailure hostFailure = IncidentSummary.analyzeJavaFailure(
+				"java.lang.IllegalStateException: host failure\n"
+						+ "\tat io.github.h3nb.jlmodplus.runtime.HostBridge.run(HostBridge.java:42)");
+		IncidentSummary.JavaFailure guestFailure = IncidentSummary.analyzeJavaFailure(
+				"java.lang.NullPointerException: guest failure\n"
+						+ "\tat a.a(SourceFile:12)");
+
+		assertEquals(
+				IncidentSummary.Category.JL_MOD_PLUS,
+				LocalDiagnosticRepository.standaloneJavaCategory("Example Game", hostFailure));
+		assertEquals(
+				IncidentSummary.Category.MIDLET_CRASH,
+				LocalDiagnosticRepository.standaloneJavaCategory("Example Game", guestFailure));
 	}
 
 	@Test

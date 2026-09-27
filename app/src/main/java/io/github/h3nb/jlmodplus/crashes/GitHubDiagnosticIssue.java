@@ -119,16 +119,21 @@ final class GitHubDiagnosticIssue {
 		switch (incident.category) {
 			case MIDLET_LIFECYCLE -> {
 				if (incident.rootFailure != null) {
+					if (incident.operation != null) {
+						if (incident.operation.endsWith("()")) {
+							String context = "destroyApp()".equals(incident.operation)
+									? " during MIDlet teardown" : " during MIDlet lifecycle handling";
+							return "The MIDlet threw " + javaFailureLabel(incident.rootFailure)
+									+ " while its " + incident.operation + " callback was running"
+									+ context + ".";
+						}
+						return "The MIDlet threw " + javaFailureLabel(incident.rootFailure)
+								+ " during " + incident.operation + ".";
+					}
 					String frame = callSite(incident.rootFailure.frame);
 					if (frame != null) {
-						String context = "destroyApp()".equals(incident.operation)
-								? " during teardown" : " during MIDlet lifecycle handling";
 						return "The MIDlet threw " + javaFailureLabel(incident.rootFailure)
-								+ " while " + frame + " was being called" + context + ".";
-					}
-					if (incident.operation != null) {
-						return "The MIDlet threw " + javaFailureLabel(incident.rootFailure)
-								+ " while " + incident.operation + " was being called.";
+								+ " in " + frame + ".";
 					}
 				}
 				return "JL-Mod Plus recorded an unexpected MIDlet lifecycle failure for " + subject + ".";

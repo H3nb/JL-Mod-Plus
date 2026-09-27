@@ -117,6 +117,44 @@ public class DiagnosticBundleFormatTest {
 	}
 
 	@Test
+	public void oversizedTextEntryIsTruncatedInsteadOfBlockingBundle() throws Exception {
+		String oversized = "x".repeat(DiagnosticBundleFormat.MAX_TEXT_ENTRY_BYTES + 1024);
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+
+		DiagnosticBundleFormat.write(
+				bytes,
+				oversized,
+				"{\"formatVersion\":1}\n",
+				null,
+				null);
+
+		Map<String, String> entries = unzip(bytes.toByteArray());
+		String report = entries.get(DiagnosticBundleFormat.REPORT_ENTRY);
+		assertTrue(report.endsWith(DiagnosticBundleFormat.TRUNCATION_MARKER));
+		assertTrue(report.getBytes(StandardCharsets.UTF_8).length
+				<= DiagnosticBundleFormat.MAX_TEXT_ENTRY_BYTES);
+		assertTrue(entries.containsKey(DiagnosticBundleFormat.INCIDENT_ENTRY));
+	}
+
+	@Test
+	public void reuseValidationRejectsExternallyModifiedBundle() throws Exception {
+		String report = "# report\n";
+		String incident = "{\"formatVersion\":1}\n";
+		String fingerprint = DiagnosticBundleFormat.contentFingerprint(
+				report, incident, null, null);
+		ByteArrayOutputStream original = new ByteArrayOutputStream();
+		DiagnosticBundleFormat.write(original, report, incident, null, null);
+
+		assertTrue(DiagnosticBundleFormat.matchesContentFingerprint(
+				new ByteArrayInputStream(original.toByteArray()), fingerprint));
+
+		ByteArrayOutputStream modified = new ByteArrayOutputStream();
+		DiagnosticBundleFormat.write(modified, "# changed\n", incident, null, null);
+		assertFalse(DiagnosticBundleFormat.matchesContentFingerprint(
+				new ByteArrayInputStream(modified.toByteArray()), fingerprint));
+	}
+
+	@Test
 	public void optionalTombstoneSummaryUsesSeparateTextEntry() throws Exception {
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 		DiagnosticBundleFormat.write(
