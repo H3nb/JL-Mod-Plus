@@ -14,21 +14,6 @@
 
 package io.github.h3nb.jlmodplus.crashes;
 
-import static org.acra.ReportField.ANDROID_VERSION;
-import static org.acra.ReportField.APP_VERSION_CODE;
-import static org.acra.ReportField.APP_VERSION_NAME;
-import static org.acra.ReportField.BRAND;
-import static org.acra.ReportField.CUSTOM_DATA;
-import static org.acra.ReportField.IS_SILENT;
-import static org.acra.ReportField.PACKAGE_NAME;
-import static org.acra.ReportField.PHONE_MODEL;
-import static org.acra.ReportField.REPORT_ID;
-import static org.acra.ReportField.STACK_TRACE;
-import static org.acra.ReportField.STACK_TRACE_HASH;
-import static org.acra.ReportField.THREAD_DETAILS;
-import static org.acra.ReportField.USER_APP_START_DATE;
-import static org.acra.ReportField.USER_CRASH_DATE;
-
 import android.app.Activity;
 import android.app.Application;
 import android.os.Build;
@@ -40,25 +25,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
-import org.acra.ACRA;
-import org.acra.ErrorReporter;
-import org.acra.ReportField;
-import org.acra.config.CoreConfigurationBuilder;
-
-import java.util.Arrays;
-import java.util.List;
-
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.EmulatorApplication;
 
 /**
- * Configures ACRA as a local Java exception collector for JL-Mod Plus.
+ * Coordinates local diagnostic evidence without owning interpretation or presentation.
  *
- * Fatal failures are captured at process/lifecycle boundaries. Non-fatal collection is deliberately
- * allowlisted: only actionable emulator-owned incidents get a dedicated reporting method. Do not
- * report arbitrary caught MIDlet/vendor exceptions here; those are often compatibility behavior,
- * can be high-frequency, and observability must not perturb emulator hot paths. Current allowlisted
- * caught incidents are installer failures and app-repository operation failures.
+ * Fatal Java evidence is owned exclusively by {@link JavaDiagnosticStore}. Caught reporting remains
+ * deliberately allowlisted for emulator-owned failures; arbitrary caught MIDlet/vendor exceptions
+ * must not be promoted into diagnostics.
  */
 public final class CrashReporter {
 	private static final int MAX_CONTEXT_VALUE_LENGTH = 256;
@@ -70,50 +45,14 @@ public final class CrashReporter {
 	private static final String ROLE_REPORTER = "reporter";
 	private static final String ROLE_OTHER = "other";
 
-	static final String KEY_PROCESS_NAME = "jlmod.process.name";
-	static final String KEY_PROCESS_ROLE = "jlmod.process.role";
-	static final String KEY_PROCESS_PID = "jlmod.process.pid";
-	static final String KEY_MIDLET_NAME = "jlmod.midlet.name";
-	static final String KEY_MIDLET_VENDOR = "jlmod.midlet.vendor";
-	static final String KEY_MIDLET_VERSION = "jlmod.midlet.version";
-	static final String KEY_MIDLET_JAR_SIZE = "jlmod.midlet.jar.size";
-	static final String KEY_MIDLET_JAR_SHA256 = "jlmod.midlet.jar.sha256";
-	static final String KEY_MIDLET_MAIN_CLASS = "jlmod.midlet.mainClass";
-	static final String KEY_SESSION_ID = "jlmod.session.id";
-	static final String KEY_RUN_ID = "jlmod.run.id";
-	static final String KEY_BUILD_COMMIT = "jlmod.build.commit";
-	static final String KEY_BUILD_VARIANT = "jlmod.build.variant";
-	static final String KEY_CONTEXT_LOCATION = "jlmod.context.location";
-	static final String KEY_CONTEXT_PREVIOUS = "jlmod.context.previous";
-	static final String KEY_CONTEXT_ACTION = "jlmod.context.action";
-	static final String KEY_CONTEXT_PHASE = "jlmod.context.phase";
-	static final String KEY_CONTEXT_UPDATED = "jlmod.context.updated";
-
-	private static final List<ReportField> REPORT_FIELDS = Arrays.asList(
-			REPORT_ID,
-			APP_VERSION_CODE,
-			APP_VERSION_NAME,
-			PACKAGE_NAME,
-			PHONE_MODEL,
-			ANDROID_VERSION,
-			BRAND,
-			CUSTOM_DATA,
-			STACK_TRACE,
-			STACK_TRACE_HASH,
-			USER_APP_START_DATE,
-			USER_CRASH_DATE,
-			IS_SILENT,
-			THREAD_DETAILS
-	);
-
 	private static final Object DIAGNOSTIC_REFRESH_LOCK = new Object();
 	private static Application activeApplication;
 	private static boolean mainProcess;
 	private static boolean lifecycleCallbacksRegistered;
-	private static boolean fatalFallbackInstalled;
 	private static boolean diagnosticRefreshRunning;
 	private static boolean diagnosticRefreshPending;
 	private static volatile boolean diagnosticRefreshReady;
+	private static volatile DiagnosticContext diagnosticContext;
 
 	public enum AppContextPhase {
 		ENTERING("entering"),
@@ -131,59 +70,28 @@ public final class CrashReporter {
 	private CrashReporter() {}
 
 	/**
-	 * Initializes local-only crash collection and publishes only current-process identity/state.
-	 * Historical ingestion and retention maintenance are deliberately deferred until onCreate().
-	 *
-	 * @return true when running in ACRA's private reporter process, where normal app initialization
-	 * should be skipped.
+	 * Installs process-local diagnostics. Historical migration/retention remains deferred until
+	 * {@link #scheduleMaintenance(Application)} so Application startup stays small.
 	 */
-	public static boolean initialize(Application application) {
-		CoreConfigurationBuilder configuration = new CoreConfigurationBuilder()
-				.withParallel(false)
-				.withDeleteUnapprovedReportsOnApplicationStart(false)
-				.withReportContent(REPORT_FIELDS);
-
-		// Report sending and ACRA startup processing are intentionally disabled. JL-Mod Plus owns
-		// local retention and later presentation/export of the persisted report files.
-		ACRA.init(application, configuration, false);
-
+	public static void initialize(Application application) {
 		String processName = EmulatorApplication.getProcessName();
 		String processRole = classifyProcess(application.getPackageName(), processName);
 		mainProcess = ROLE_MAIN.equals(processRole);
 		diagnosticRefreshRunning = false;
 		diagnosticRefreshPending = false;
 		diagnosticRefreshReady = !mainProcess;
-		boolean reporterProcess = ROLE_REPORTER.equals(processRole) || ACRA.isACRASenderServiceProcess();
-		if (reporterProcess) {
-			return true;
-		}
-
 		activeApplication = application;
-		ErrorReporter reporter = ACRA.getErrorReporter();
-		putBounded(reporter, KEY_PROCESS_NAME, processName);
-		putBounded(reporter, KEY_PROCESS_ROLE, processRole);
-		putBounded(reporter, KEY_PROCESS_PID, Integer.toString(Process.myPid()));
+		diagnosticContext = new DiagnosticContext(processName, processRole,
+				null, null, null, null, null);
 
-		CrashContextStore.Snapshot context = CrashContextStore.initialize(
+		CrashContextStore.initialize(
 				application, processRole, BuildConfig.JLMOD_BUILD_COMMIT, BuildConfig.JLMOD_BUILD_VARIANT);
-		context = CrashContextStore.update(application, "process.start", "start", AppContextPhase.ACTIVE.id);
-		publishCrashContext(reporter, context);
+		CrashContextStore.update(application, "process.start", "start", AppContextPhase.ACTIVE.id);
 
-		// Android 11+ keeps a small process-owned state summary. Publish it synchronously so any
-		// later process death can still be attributed even if deferred maintenance never gets CPU.
+		// Android 11+ state and the Java uncaught bridge are published synchronously because the
+		// process may die before deferred maintenance gets CPU.
 		ProcessExitStore.initializeProcess(application, processRole);
-		installFatalFallback(application, processRole);
-		return false;
-	}
-
-	private static synchronized void installFatalFallback(Application application, String processRole) {
-		if (fatalFallbackInstalled) return;
-		Thread.UncaughtExceptionHandler delegate = Thread.getDefaultUncaughtExceptionHandler();
-		Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
-			FatalJavaCrashStore.capture(application, thread, error, processRole);
-			if (delegate != null) delegate.uncaughtException(thread, error);
-		});
-		fatalFallbackInstalled = true;
+		JavaDiagnosticStore.install(application, processName, processRole);
 	}
 
 	/** Schedules one best-effort main-process diagnostics refresh after Application startup. */
@@ -197,33 +105,20 @@ public final class CrashReporter {
 	}
 
 	/**
-	 * Records one high-level, stable app state. This is intentionally not a generic telemetry API:
-	 * callers should use route/operation IDs such as "config.graphics", never translated labels,
-	 * user-entered values, scroll positions, frames, or recomposition events.
+	 * Records one high-level, stable app state. This is intentionally not a generic telemetry API.
 	 */
 	public static void recordAppContext(String location, String action, AppContextPhase phase) {
 		Application application = activeApplication;
-		if (application == null || phase == null) {
-			return;
-		}
+		if (application == null || phase == null) return;
 		try {
 			CrashContextStore.Snapshot snapshot = CrashContextStore.update(
 					application, location, action, phase.id);
-			if (snapshot == null) {
-				return;
-			}
-			publishCrashContext(ACRA.getErrorReporter(), snapshot);
-			ProcessExitStore.updateProcessContext(application);
+			if (snapshot != null) ProcessExitStore.updateProcessContext(application);
 		} catch (Throwable error) {
 			logMaintenanceFailure("Unable to update crash context", error);
 		}
 	}
 
-	/**
-	 * Refreshes durable diagnostics after the main window regains focus without blocking the UI.
-	 * A focus callback arriving during an active pass queues one follow-up pass instead of spawning
-	 * another thread, so a just-finished MIDlet process cannot be missed by an older system snapshot.
-	 */
 	public static void requestDiagnosticRefresh(Application application) {
 		if (!mainProcess) {
 			diagnosticRefreshReady = true;
@@ -232,16 +127,13 @@ public final class CrashReporter {
 		startDiagnosticRefresh(application, true, "jlmod-diagnostics-focus-refresh");
 	}
 
-	/** True once the latest requested background reconciliation and retention pass has finished. */
 	public static boolean isDiagnosticRefreshReady() {
 		return diagnosticRefreshReady;
 	}
 
 	private static void startDiagnosticRefresh(Application application, boolean queueIfRunning,
 			String threadName) {
-		if (!beginDiagnosticRefresh(queueIfRunning)) {
-			return;
-		}
+		if (!beginDiagnosticRefresh(queueIfRunning)) return;
 		try {
 			Thread refresh = new Thread(() -> {
 				setBackgroundThreadPriority();
@@ -299,12 +191,11 @@ public final class CrashReporter {
 	}
 
 	private static void refreshDiagnostics(Application application) {
-		// Both exit paths are API-gated internally. Keep retention in the same background pass so
-		// recovery UI never performs report/journal pruning from its window-focus callback.
+		runMaintenanceStep("legacy Java diagnostic migration",
+				() -> JavaDiagnosticStore.migrateLegacyAndPrune(application));
 		runMaintenanceStep("legacy process-exit reconciliation",
 				() -> LegacyProcessExitFallback.ingest(application));
 		runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
-		runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
 		runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
 		runMaintenanceStep("process context pruning", () -> CrashContextStore.prune(application));
 	}
@@ -329,83 +220,109 @@ public final class CrashReporter {
 		} catch (Throwable ignored) {}
 	}
 
-	public static void setMidletContext(String name, String vendor, String version,
-											 String jarSize, String jarSha256) {
-		ErrorReporter reporter = ACRA.getErrorReporter();
-		clearMidletContext(reporter);
-		clearSessionContext(reporter);
-		putBounded(reporter, KEY_MIDLET_NAME, name);
-		putBounded(reporter, KEY_MIDLET_VENDOR, vendor);
-		putBounded(reporter, KEY_MIDLET_VERSION, version);
-		putBounded(reporter, KEY_MIDLET_JAR_SIZE, jarSize);
-		putBounded(reporter, KEY_MIDLET_JAR_SHA256, jarSha256);
+	public static synchronized void setMidletContext(String name, String vendor, String version,
+			String jarSize, String jarSha256) {
+		DiagnosticContext current = diagnosticContext;
+		if (current == null) return;
+		diagnosticContext = new DiagnosticContext(
+				current.processName,
+				current.processRole,
+				boundValue(name),
+				boundValue(version),
+				null,
+				boundValue(jarSha256),
+				null);
 	}
 
-	public static void setMidletMainClass(String mainClass) {
-		putBounded(ACRA.getErrorReporter(), KEY_MIDLET_MAIN_CLASS, mainClass);
+	public static synchronized void setMidletMainClass(String mainClass) {
+		DiagnosticContext current = diagnosticContext;
+		if (current == null) return;
+		diagnosticContext = current.withMainClass(boundValue(mainClass));
 	}
 
-	static void setSessionContext(String sessionId) {
-		putBounded(ACRA.getErrorReporter(), KEY_SESSION_ID, sessionId);
-		EmulatorApplication application = EmulatorApplication.getInstance();
+	static synchronized void setSessionContext(String sessionId) {
+		DiagnosticContext current = diagnosticContext;
+		if (current != null) diagnosticContext = current.withSession(boundValue(sessionId));
+		Application application = activeApplication;
 		if (application != null) {
-			// The same immutable session key now survives Java exceptions (ACRA), durable journal
-			// writes, and Android process death (ApplicationExitInfo) without timestamp heuristics.
+			// The immutable session key is shared by the journal, Java evidence and Android process
+			// state. New-format Java correlation never depends on parsing a stack marker.
 			ProcessExitStore.setMidletSession(application, sessionId);
 		}
 	}
 
 	/**
 	 * Allowlisted non-fatal incident: the emulator-owned installer operation failed.
-	 * This is intentionally not a generic caught-exception API.
 	 */
 	public static void reportInstallerFailure(Throwable error, String sourceScheme,
-												  String midletName, String midletVendor,
-												  String midletVersion, String jarSize) {
-		String message = buildInstallerContext(sourceScheme, midletName, midletVendor,
-				midletVersion, jarSize);
+			String midletName, String midletVendor, String midletVersion, String jarSize) {
+		if (error == null) return;
+		String message = buildInstallerContext(
+				sourceScheme, midletName, midletVendor, midletVersion, jarSize);
 		try {
-			ACRA.getErrorReporter().handleException(new InstallerFailureException(message, error), false);
+			InstallerFailureException wrapper = new InstallerFailureException(message, error);
+			JavaDiagnosticStore.captureCaught(
+					activeApplication,
+					JavaDiagnosticStore.Kind.CAUGHT_INSTALLER,
+					wrapper,
+					error,
+					message);
 		} catch (Throwable reportingFailure) {
 			logMaintenanceFailure("Unable to persist installer failure diagnostic", reportingFailure);
 		}
 	}
 
 	/**
-	 * Allowlisted non-fatal incident: a Room/filesystem operation owned by the app repository failed.
-	 * Keep this narrow API instead of exposing arbitrary caught-exception reporting to callers.
+	 * Allowlisted non-fatal incident: an app-repository operation failed.
 	 */
 	public static void reportAppRepositoryFailure(Throwable error) {
-		if (error == null) {
-			return;
-		}
+		if (error == null) return;
 		try {
-			ACRA.getErrorReporter().handleException(error, false);
+			JavaDiagnosticStore.captureCaught(
+					activeApplication,
+					JavaDiagnosticStore.Kind.CAUGHT_APP_REPOSITORY,
+					error,
+					error,
+					"App repository operation failure");
 		} catch (Throwable reportingFailure) {
 			logMaintenanceFailure("Unable to persist app-repository failure diagnostic", reportingFailure);
 		}
 	}
 
+	/**
+	 * Carries correlation metadata and the already-known original Throwable without changing MIDP
+	 * lifecycle behavior. The wrapper is reporting infrastructure; {@code primaryFailure} is the
+	 * semantic Java failure for interpretation.
+	 */
+	public static Throwable wrapSessionFailure(String eventId,
+			MidletSessionJournal.FailureBoundary boundary, Throwable propagated,
+			Throwable primaryFailure) {
+		if (propagated == null || eventId == null || boundary == null) return propagated;
+		return new SessionFailureException(eventId, boundary, propagated,
+				primaryFailure == null ? propagated : primaryFailure);
+	}
+
+	static Throwable primaryFailure(Throwable reported) {
+		return reported instanceof SessionFailureException
+				? ((SessionFailureException) reported).primaryFailure : reported;
+	}
+
+	static DiagnosticContext currentDiagnosticContext() {
+		return diagnosticContext;
+	}
+
 	static String classifyProcess(String packageName, String processName) {
-		if (processName == null || processName.trim().isEmpty()) {
-			return ROLE_OTHER;
-		}
-		if (processName.equals(packageName)) {
-			return ROLE_MAIN;
-		}
-		if (processName.equals(packageName + ":midlet")) {
-			return ROLE_MIDLET;
-		}
-		if (processName.equals(packageName + ":acra")) {
-			return ROLE_REPORTER;
-		}
+		if (processName == null || processName.trim().isEmpty()) return ROLE_OTHER;
+		if (processName.equals(packageName)) return ROLE_MAIN;
+		if (processName.equals(packageName + ":midlet")) return ROLE_MIDLET;
+		// Kept only so historical ApplicationExitInfo entries created by older ACRA-enabled builds
+		// remain recognized as reporting infrastructure and stay out of the inbox.
+		if (processName.equals(packageName + ":acra")) return ROLE_REPORTER;
 		return ROLE_OTHER;
 	}
 
 	private static void registerActivityContextCallbacks(Application application) {
-		if (lifecycleCallbacksRegistered) {
-			return;
-		}
+		if (lifecycleCallbacksRegistered) return;
 		lifecycleCallbacksRegistered = true;
 		Application.ActivityLifecycleCallbacks callbacks = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 				? new Api29ActivityContextCallbacks() : new ActivityContextCallbacks();
@@ -417,23 +334,8 @@ public final class CrashReporter {
 		return "activity." + (simpleName == null || simpleName.isEmpty() ? "unknown" : simpleName);
 	}
 
-	private static void publishCrashContext(ErrorReporter reporter, CrashContextStore.Snapshot snapshot) {
-		if (snapshot == null) {
-			return;
-		}
-		putBounded(reporter, KEY_RUN_ID, snapshot.runId);
-		putBounded(reporter, KEY_BUILD_COMMIT, snapshot.buildCommit);
-		putBounded(reporter, KEY_BUILD_VARIANT, snapshot.buildVariant);
-		putBounded(reporter, KEY_CONTEXT_LOCATION, snapshot.location);
-		putBounded(reporter, KEY_CONTEXT_PREVIOUS, snapshot.previousLocation);
-		putBounded(reporter, KEY_CONTEXT_ACTION, snapshot.action);
-		putBounded(reporter, KEY_CONTEXT_PHASE, snapshot.phase);
-		putBounded(reporter, KEY_CONTEXT_UPDATED,
-				snapshot.updatedWallTimeMillis > 0 ? Long.toString(snapshot.updatedWallTimeMillis) : null);
-	}
-
 	private static String buildInstallerContext(String sourceScheme, String midletName,
-												String midletVendor, String midletVersion, String jarSize) {
+			String midletVendor, String midletVersion, String jarSize) {
 		StringBuilder message = new StringBuilder("Installer failure");
 		appendContext(message, "sourceScheme", sourceScheme);
 		appendContext(message, "midletName", midletName);
@@ -445,49 +347,19 @@ public final class CrashReporter {
 
 	private static void appendContext(StringBuilder message, String key, String value) {
 		String bounded = boundValue(value);
-		if (bounded == null || message.length() >= MAX_CONTEXT_MESSAGE_LENGTH) {
-			return;
-		}
+		if (bounded == null || message.length() >= MAX_CONTEXT_MESSAGE_LENGTH) return;
 		message.append("; ").append(key).append('=').append(bounded);
 		if (message.length() > MAX_CONTEXT_MESSAGE_LENGTH) {
 			message.setLength(MAX_CONTEXT_MESSAGE_LENGTH);
 		}
 	}
 
-	private static void clearMidletContext(ErrorReporter reporter) {
-		reporter.removeCustomData(KEY_MIDLET_NAME);
-		reporter.removeCustomData(KEY_MIDLET_VENDOR);
-		reporter.removeCustomData(KEY_MIDLET_VERSION);
-		reporter.removeCustomData(KEY_MIDLET_JAR_SIZE);
-		reporter.removeCustomData(KEY_MIDLET_JAR_SHA256);
-		reporter.removeCustomData(KEY_MIDLET_MAIN_CLASS);
-	}
-
-	private static void clearSessionContext(ErrorReporter reporter) {
-		reporter.removeCustomData(KEY_SESSION_ID);
-	}
-
-	private static void putBounded(ErrorReporter reporter, String key, String value) {
-		String bounded = boundValue(value);
-		if (bounded == null) {
-			reporter.removeCustomData(key);
-		} else {
-			reporter.putCustomData(key, bounded);
-		}
-	}
-
 	static String boundValue(String value) {
-		if (value == null) {
-			return null;
-		}
+		if (value == null) return null;
 		String normalized = value.replace('\n', ' ').replace('\r', ' ').trim();
-		if (normalized.isEmpty()) {
-			return null;
-		}
-		if (normalized.length() > MAX_CONTEXT_VALUE_LENGTH) {
-			return normalized.substring(0, MAX_CONTEXT_VALUE_LENGTH);
-		}
-		return normalized;
+		if (normalized.isEmpty()) return null;
+		return normalized.length() <= MAX_CONTEXT_VALUE_LENGTH
+				? normalized : normalized.substring(0, MAX_CONTEXT_VALUE_LENGTH);
 	}
 
 	private static class ActivityContextCallbacks implements Application.ActivityLifecycleCallbacks {
@@ -525,9 +397,51 @@ public final class CrashReporter {
 		}
 	}
 
+	static final class DiagnosticContext {
+		final String processName;
+		final String processRole;
+		final String midletName;
+		final String midletVersion;
+		final String midletMainClass;
+		final String jarSha256;
+		final String sessionId;
+
+		DiagnosticContext(String processName, String processRole, String midletName,
+				String midletVersion, String midletMainClass, String jarSha256, String sessionId) {
+			this.processName = processName;
+			this.processRole = processRole;
+			this.midletName = midletName;
+			this.midletVersion = midletVersion;
+			this.midletMainClass = midletMainClass;
+			this.jarSha256 = jarSha256;
+			this.sessionId = sessionId;
+		}
+
+		DiagnosticContext withMainClass(String value) {
+			return new DiagnosticContext(processName, processRole, midletName, midletVersion,
+					value, jarSha256, sessionId);
+		}
+
+		DiagnosticContext withSession(String value) {
+			return new DiagnosticContext(processName, processRole, midletName, midletVersion,
+					midletMainClass, jarSha256, value);
+		}
+	}
+
 	private static final class InstallerFailureException extends RuntimeException {
 		InstallerFailureException(String message, Throwable cause) {
 			super(message, cause);
+		}
+	}
+
+	private static final class SessionFailureException extends RuntimeException {
+		final Throwable primaryFailure;
+
+		SessionFailureException(String eventId, MidletSessionJournal.FailureBoundary boundary,
+				Throwable cause, Throwable primaryFailure) {
+			super("JL-Mod Plus session failure; eventId=" + eventId + "; boundary=" + boundary.name(),
+					cause);
+			this.primaryFailure = primaryFailure;
 		}
 	}
 }

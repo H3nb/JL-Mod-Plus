@@ -36,6 +36,7 @@ import javax.microedition.util.ContextHolder;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import io.github.h3nb.jlmodplus.crashes.CrashReporter;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionJournal;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
@@ -70,6 +71,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private volatile Thread primaryFailureThread;
 	private volatile String primaryFailureEventId;
 	private volatile MidletSessionJournal.FailureBoundary primaryFailureBoundary;
+	private volatile Throwable primaryFailureThrowable;
 	private MidletSessionJournal.Outcome requestedTerminationOutcome;
 	private long displayForegroundGeneration;
 	private volatile boolean runtimeSelected = true;
@@ -331,7 +333,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		} catch (Throwable t) {
 			lifecycle.tryBeginDestroy();
 			lifecycle.completeDestroy();
-			claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_INIT);
+			claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_INIT, t);
 			finalizeFatalRuntime();
 			throw new RuntimeException("Init midlet failed", t);
 		}
@@ -391,7 +393,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		} catch (Throwable primaryFailure) {
 			lifecycle.completeStartFailure();
 			boolean cleanupCommitted = lifecycle.tryBeginDestroy();
-			claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_START);
+			claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_START, primaryFailure);
 			if (cleanupCommitted && midlet != null) {
 				invokeUnconditionalDestroy("cleanup after startApp failure", false);
 				lifecycle.completeDestroy();
@@ -419,7 +421,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		} catch (Throwable primaryFailure) {
 			lifecycle.completePauseFailure();
 			boolean cleanupCommitted = lifecycle.tryBeginDestroy();
-			claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_PAUSE);
+			claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_PAUSE, primaryFailure);
 			if (cleanupCommitted && midlet != null) {
 				invokeUnconditionalDestroy("cleanup after pauseApp failure", false);
 				lifecycle.completeDestroy();
@@ -487,10 +489,12 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		activity.leaveRuntimeHost(returnToLibrary, processCleanup);
 	}
 
-	private void claimLifecycleFailure(MidletSessionJournal.FailureBoundary boundary) {
+	private void claimLifecycleFailure(
+			MidletSessionJournal.FailureBoundary boundary, Throwable primaryFailure) {
 		if (!beginFatalFailure(Thread.currentThread(), boundary)) {
 			return;
 		}
+		primaryFailureThrowable = primaryFailure;
 		try {
 			primaryFailureEventId = journal.recordUnexpectedFailure(boundary);
 			if (primaryFailureEventId == null) {
@@ -505,6 +509,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		if (!fatalFailureClaimed.get()) {
 			MidletSessionJournal.FailureBoundary boundary = classifyFailureBoundary(thread);
 			if (beginFatalFailure(thread, boundary)) {
+				primaryFailureThrowable = error;
 				try {
 					primaryFailureEventId = journal.recordUnexpectedFailure(boundary);
 					if (primaryFailureEventId == null) {
@@ -532,7 +537,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		MidletSessionJournal.FailureBoundary boundary = primaryFailureBoundary;
 		if (eventId != null && boundary != null) {
 			try {
-				reportError = new SessionFailureException(eventId, boundary, error);
+				reportError = CrashReporter.wrapSessionFailure(
+						eventId, boundary, error,
+						primaryFailureThrowable == null ? error : primaryFailureThrowable);
 			} catch (OutOfMemoryError ignored) {
 				// Preserve the original Throwable; sessionId still correlates it to the durable journal.
 			}
@@ -586,6 +593,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			primaryFailureThread = null;
 			primaryFailureEventId = null;
 			primaryFailureBoundary = null;
+		primaryFailureThrowable = null;
 			fatalFailureClaimed.set(false);
 		}
 	}
@@ -678,13 +686,6 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			journal.complete(outcome);
 		} catch (RuntimeException | OutOfMemoryError ignored) {
 			// Process termination must remain reliable even when diagnostics cannot allocate/write.
-		}
-	}
-
-	private static final class SessionFailureException extends RuntimeException {
-		SessionFailureException(String eventId, MidletSessionJournal.FailureBoundary boundary,
-				Throwable cause) {
-			super("JL-Mod Plus session failure; eventId=" + eventId + "; boundary=" + boundary.name(), cause);
 		}
 	}
 }
