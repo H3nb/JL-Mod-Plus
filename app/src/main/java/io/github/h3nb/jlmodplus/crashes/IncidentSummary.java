@@ -82,6 +82,7 @@ final class IncidentSummary {
 	}
 
 	static final class ProcessExitEvidence {
+		final String source;
 		final int reason;
 		final int status;
 		final String reasonLabel;
@@ -107,13 +108,14 @@ final class IncidentSummary {
 		final String summary;
 		final String limitation;
 
-		ProcessExitEvidence(int reason, int status, String reasonLabel, String statusLabel,
+		ProcessExitEvidence(String source, int reason, int status, String reasonLabel, String statusLabel,
 				String importance, String processName, String processRole, String description,
 				int sdk, String androidRelease, String device, String primaryAbi,
 				long pssKb, long rssKb, boolean lowMemoryKillReportSupported,
 				String traceKind, boolean traceAvailable, boolean traceTruncated,
 				int anrType, long anrTimeoutMillis, int anrId, Boolean anrUserPerceptible,
 				String summary, String limitation) {
+			this.source = clean(source);
 			this.reason = reason;
 			this.status = status;
 			this.reasonLabel = clean(reasonLabel);

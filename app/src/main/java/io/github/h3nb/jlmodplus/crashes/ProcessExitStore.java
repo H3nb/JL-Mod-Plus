@@ -72,6 +72,11 @@ public final class ProcessExitStore {
 	static final int REASON_PACKAGE_STATE_CHANGE = 15;
 	static final int REASON_PACKAGE_UPDATED = 16;
 
+	static final String SOURCE_APPLICATION_EXIT_INFO = "android-application-exit-info";
+	static final String SOURCE_LEGACY_PROCESS_DISAPPEARANCE = "legacy-process-disappearance";
+	static final String LEGACY_FALLBACK_DESCRIPTION =
+			"Exact termination cause unavailable on Android 6-10; ApplicationExitInfo requires API 30+.";
+
 	private static final int MAX_HISTORY_RESULTS = 64;
 	private static final int MAX_DESCRIPTION_LENGTH = 1024;
 	private static final int MAX_DEVICE_VALUE_LENGTH = 128;
@@ -92,6 +97,7 @@ public final class ProcessExitStore {
 
 	private static final String KEY_SCHEMA = "schemaVersion";
 	private static final String KEY_KEY = "key";
+	private static final String KEY_SOURCE = "source";
 	private static final String KEY_TIMESTAMP = "timestampMillis";
 	private static final String KEY_PROCESS_NAME = "processName";
 	private static final String KEY_PROCESS_ROLE = "processRole";
@@ -466,6 +472,7 @@ public final class ProcessExitStore {
 				file,
 				traceFile,
 				key,
+				readSource(p),
 				parseLong(p, KEY_TIMESTAMP),
 				optional(p, KEY_PROCESS_NAME),
 				optional(p, KEY_PROCESS_ROLE),
@@ -499,6 +506,7 @@ public final class ProcessExitStore {
 		Properties p = new Properties();
 		p.setProperty(KEY_SCHEMA, Integer.toString(SCHEMA_VERSION));
 		p.setProperty(KEY_KEY, snapshot.key);
+		put(p, KEY_SOURCE, snapshot.source);
 		p.setProperty(KEY_TIMESTAMP, Long.toString(snapshot.timestampMillis));
 		put(p, KEY_PROCESS_NAME, snapshot.processName);
 		put(p, KEY_PROCESS_ROLE, snapshot.processRole);
@@ -836,6 +844,19 @@ public final class ProcessExitStore {
 		return value == null || value.trim().isEmpty() ? null : value;
 	}
 
+	private static String readSource(Properties p) {
+		String source = optional(p, KEY_SOURCE);
+		if (SOURCE_APPLICATION_EXIT_INFO.equals(source)
+				|| SOURCE_LEGACY_PROCESS_DISAPPEARANCE.equals(source)) {
+			return source;
+		}
+		// Before schema v2 gained an explicit provenance field, only the API23-29 fallback used
+		// this exact app-authored description. Other retained records came from ApplicationExitInfo.
+		return LEGACY_FALLBACK_DESCRIPTION.equals(optional(p, KEY_DESCRIPTION))
+				? SOURCE_LEGACY_PROCESS_DISAPPEARANCE
+				: SOURCE_APPLICATION_EXIT_INFO;
+	}
+
 	private static String require(Properties p, String key) throws IOException {
 		String value = optional(p, key);
 		if (value == null) {
@@ -894,6 +915,7 @@ public final class ProcessExitStore {
 		final File traceFile;
 		final String key;
 		final String id;
+		final String source;
 		final long timestampMillis;
 		final String processName;
 		final String processRole;
@@ -921,7 +943,7 @@ public final class ProcessExitStore {
 		final Boolean anrUserPerceptible;
 		final CrashContextStore.Snapshot appContext;
 
-		Snapshot(File recordFile, File traceFile, String key, long timestampMillis,
+		Snapshot(File recordFile, File traceFile, String key, String source, long timestampMillis,
 				 String processName, String processRole, int pid, int reason, int status,
 				 int importance, long pssKb, long rssKb, String description,
 				 boolean lowMemoryKillReportSupported, long stateVersionCode, int stateSdk,
@@ -933,6 +955,8 @@ public final class ProcessExitStore {
 			this.traceFile = traceFile;
 			this.key = key;
 			this.id = "exit:" + key;
+			this.source = SOURCE_LEGACY_PROCESS_DISAPPEARANCE.equals(source)
+					? SOURCE_LEGACY_PROCESS_DISAPPEARANCE : SOURCE_APPLICATION_EXIT_INFO;
 			this.timestampMillis = timestampMillis;
 			this.processName = processName;
 			this.processRole = processRole;
@@ -1125,6 +1149,7 @@ public final class ProcessExitStore {
 						metadata,
 						retainedTraceFile,
 						key,
+						SOURCE_APPLICATION_EXIT_INFO,
 						info.getTimestamp(),
 						bound(processName, MAX_PROCESS_NAME_LENGTH),
 						processRole,
