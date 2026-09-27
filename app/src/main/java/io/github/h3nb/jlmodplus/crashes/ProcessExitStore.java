@@ -46,7 +46,8 @@ import java.util.Set;
  * low-memory termination. Normal process-management exits are intentionally filtered out.
  */
 public final class ProcessExitStore {
-	static final int SCHEMA_VERSION = 1;
+	static final int SCHEMA_VERSION = 2;
+	private static final int LEGACY_SCHEMA_VERSION = 1;
 	static final int MAX_RECORD_COUNT = 64;
 	static final long MAX_RECORD_AGE_MILLIS = 30L * 24L * 60L * 60L * 1000L;
 	static final int MAX_TRACE_BYTES = 512 * 1024;
@@ -104,6 +105,7 @@ public final class ProcessExitStore {
 	private static final String KEY_LMK_SUPPORTED = "lowMemoryKillReportSupported";
 	private static final String KEY_VERSION_CODE = "stateVersionCode";
 	private static final String KEY_SDK = "stateSdk";
+	private static final String KEY_ANDROID_RELEASE = "androidRelease";
 	private static final String KEY_SESSION_ID = "sessionId";
 	private static final String KEY_DEVICE_BRAND = "deviceBrand";
 	private static final String KEY_DEVICE_MODEL = "deviceModel";
@@ -111,6 +113,10 @@ public final class ProcessExitStore {
 	private static final String KEY_TRACE_KIND = "traceKind";
 	private static final String KEY_TRACE_BYTES = "traceBytes";
 	private static final String KEY_TRACE_TRUNCATED = "traceTruncated";
+	private static final String KEY_ANR_TYPE = "anrType";
+	private static final String KEY_ANR_TIMEOUT = "anrTimeoutMillis";
+	private static final String KEY_ANR_ID = "anrId";
+	private static final String KEY_ANR_USER_PERCEPTIBLE = "anrUserPerceptible";
 	private static final String KEY_CONTEXT_RUN_ID = "context.runId";
 	private static final String KEY_CONTEXT_BUILD_COMMIT = "context.buildCommit";
 	private static final String KEY_CONTEXT_BUILD_VARIANT = "context.buildVariant";
@@ -326,9 +332,6 @@ public final class ProcessExitStore {
 		String signal = signalName(snapshot.status);
 		String value = signal == null ? Integer.toString(snapshot.status)
 				: signal + " (" + snapshot.status + ")";
-		if (snapshot.status == OsConstants.SIGKILL && !snapshot.lowMemoryKillReportSupported) {
-			return value + "; may represent low-memory kill on this device";
-		}
 		return value;
 	}
 
@@ -445,7 +448,8 @@ public final class ProcessExitStore {
 		try (InputStream input = new AtomicFile(file).openRead()) {
 			p.load(input);
 		}
-		if (parseInt(p, KEY_SCHEMA) != SCHEMA_VERSION) {
+		int schema = parseInt(p, KEY_SCHEMA);
+		if (schema != LEGACY_SCHEMA_VERSION && schema != SCHEMA_VERSION) {
 			throw new IOException("Unsupported process-exit schema");
 		}
 		String key = require(p, KEY_KEY);
@@ -475,6 +479,7 @@ public final class ProcessExitStore {
 				Boolean.parseBoolean(p.getProperty(KEY_LMK_SUPPORTED, "false")),
 				parseLongDefault(p, KEY_VERSION_CODE, -1),
 				parseIntDefault(p, KEY_SDK, -1),
+				optional(p, KEY_ANDROID_RELEASE),
 				optional(p, KEY_SESSION_ID),
 				optional(p, KEY_DEVICE_BRAND),
 				optional(p, KEY_DEVICE_MODEL),
@@ -482,6 +487,10 @@ public final class ProcessExitStore {
 				optional(p, KEY_TRACE_KIND),
 				declaredTraceBytes,
 				Boolean.parseBoolean(p.getProperty(KEY_TRACE_TRUNCATED, "false")),
+				parseIntDefault(p, KEY_ANR_TYPE, -1),
+				parseLongDefault(p, KEY_ANR_TIMEOUT, -1),
+				parseIntDefault(p, KEY_ANR_ID, -1),
+				optionalBoolean(p, KEY_ANR_USER_PERCEPTIBLE),
 				readStoredContext(p)
 		);
 	}
@@ -507,6 +516,7 @@ public final class ProcessExitStore {
 		if (snapshot.stateSdk >= 0) {
 			p.setProperty(KEY_SDK, Integer.toString(snapshot.stateSdk));
 		}
+		put(p, KEY_ANDROID_RELEASE, snapshot.androidRelease);
 		put(p, KEY_SESSION_ID, snapshot.sessionId);
 		put(p, KEY_DEVICE_BRAND, snapshot.deviceBrand);
 		put(p, KEY_DEVICE_MODEL, snapshot.deviceModel);
@@ -514,6 +524,15 @@ public final class ProcessExitStore {
 		put(p, KEY_TRACE_KIND, snapshot.traceKind);
 		p.setProperty(KEY_TRACE_BYTES, Long.toString(snapshot.traceBytes));
 		p.setProperty(KEY_TRACE_TRUNCATED, Boolean.toString(snapshot.traceTruncated));
+		if (snapshot.anrType >= 0) p.setProperty(KEY_ANR_TYPE, Integer.toString(snapshot.anrType));
+		if (snapshot.anrTimeoutMillis >= 0) {
+			p.setProperty(KEY_ANR_TIMEOUT, Long.toString(snapshot.anrTimeoutMillis));
+		}
+		if (snapshot.anrId >= 0) p.setProperty(KEY_ANR_ID, Integer.toString(snapshot.anrId));
+		if (snapshot.anrUserPerceptible != null) {
+			p.setProperty(KEY_ANR_USER_PERCEPTIBLE,
+					Boolean.toString(snapshot.anrUserPerceptible));
+		}
 		writeStoredContext(p, snapshot.appContext);
 		writeProperties(snapshot.recordFile, p);
 	}
@@ -842,6 +861,11 @@ public final class ProcessExitStore {
 		}
 	}
 
+	private static Boolean optionalBoolean(Properties p, String key) {
+		String value = optional(p, key);
+		return value == null ? null : Boolean.valueOf(value);
+	}
+
 	private static long parseLong(Properties p, String key) throws IOException {
 		return parseLongValue(require(p, key), key);
 	}
@@ -883,6 +907,7 @@ public final class ProcessExitStore {
 		final boolean lowMemoryKillReportSupported;
 		final long stateVersionCode;
 		final int stateSdk;
+		final String androidRelease;
 		final String sessionId;
 		final String deviceBrand;
 		final String deviceModel;
@@ -890,14 +915,19 @@ public final class ProcessExitStore {
 		final String traceKind;
 		final long traceBytes;
 		final boolean traceTruncated;
+		final int anrType;
+		final long anrTimeoutMillis;
+		final int anrId;
+		final Boolean anrUserPerceptible;
 		final CrashContextStore.Snapshot appContext;
 
 		Snapshot(File recordFile, File traceFile, String key, long timestampMillis,
 				 String processName, String processRole, int pid, int reason, int status,
 				 int importance, long pssKb, long rssKb, String description,
 				 boolean lowMemoryKillReportSupported, long stateVersionCode, int stateSdk,
-				 String sessionId, String deviceBrand, String deviceModel, String primaryAbi,
-				 String traceKind, long traceBytes, boolean traceTruncated,
+				 String androidRelease, String sessionId, String deviceBrand, String deviceModel,
+				 String primaryAbi, String traceKind, long traceBytes, boolean traceTruncated,
+				 int anrType, long anrTimeoutMillis, int anrId, Boolean anrUserPerceptible,
 				 CrashContextStore.Snapshot appContext) {
 			this.recordFile = recordFile;
 			this.traceFile = traceFile;
@@ -916,6 +946,7 @@ public final class ProcessExitStore {
 			this.lowMemoryKillReportSupported = lowMemoryKillReportSupported;
 			this.stateVersionCode = stateVersionCode;
 			this.stateSdk = stateSdk;
+			this.androidRelease = androidRelease;
 			this.sessionId = sessionId;
 			this.deviceBrand = deviceBrand;
 			this.deviceModel = deviceModel;
@@ -923,6 +954,10 @@ public final class ProcessExitStore {
 			this.traceKind = traceKind;
 			this.traceBytes = traceBytes;
 			this.traceTruncated = traceTruncated;
+			this.anrType = anrType;
+			this.anrTimeoutMillis = anrTimeoutMillis;
+			this.anrId = anrId;
+			this.anrUserPerceptible = anrUserPerceptible;
 			this.appContext = appContext;
 		}
 	}
@@ -979,6 +1014,34 @@ public final class ProcessExitStore {
 		}
 	}
 
+	private static final class AnrData {
+		final int type;
+		final long timeoutMillis;
+		final int id;
+		final Boolean userPerceptible;
+
+		AnrData(int type, long timeoutMillis, int id, boolean userPerceptible) {
+			this.type = type;
+			this.timeoutMillis = timeoutMillis;
+			this.id = id;
+			this.userPerceptible = userPerceptible;
+		}
+	}
+
+	@RequiresApi(37)
+	private static final class Api37Impl {
+		private Api37Impl() {}
+
+		static AnrData readAnr(ApplicationExitInfo exit) {
+			ApplicationExitInfo.AnrInfo info = exit.getAnrInfo();
+			return info == null ? null : new AnrData(
+					info.getAnrType(),
+					info.getTimeoutMillis(),
+					info.getAnrId(),
+					info.isUserPerceptible());
+		}
+	}
+
 	@RequiresApi(Build.VERSION_CODES.R)
 	private static final class Api30Impl {
 		private Api30Impl() {}
@@ -993,6 +1056,7 @@ public final class ProcessExitStore {
 					appContext == null ? null : appContext.runId,
 					appContext == null ? null : appContext.buildCommit,
 					Build.VERSION.SDK_INT,
+					Build.VERSION.RELEASE,
 					sessionId,
 					appContext == null ? null : appContext.location,
 					appContext == null ? null : appContext.action,
@@ -1055,6 +1119,8 @@ public final class ProcessExitStore {
 
 				CrashContextStore.Snapshot appContext = resolveAppContext(context, processRole, state);
 				String primaryAbi = Build.SUPPORTED_ABIS.length == 0 ? null : Build.SUPPORTED_ABIS[0];
+				AnrData anr = info.getReason() == ApplicationExitInfo.REASON_ANR
+						&& Build.VERSION.SDK_INT >= 37 ? Api37Impl.readAnr(info) : null;
 				Snapshot snapshot = new Snapshot(
 						metadata,
 						retainedTraceFile,
@@ -1072,6 +1138,7 @@ public final class ProcessExitStore {
 						lmkSupported,
 						state.versionCode,
 						state.sdk,
+						state.androidRelease,
 						state.sessionId,
 						bound(Build.BRAND, MAX_DEVICE_VALUE_LENGTH),
 						bound(Build.MODEL, MAX_DEVICE_VALUE_LENGTH),
@@ -1079,6 +1146,10 @@ public final class ProcessExitStore {
 						trace == null ? null : trace.kind,
 						trace == null ? 0 : trace.bytes,
 						trace != null && trace.truncated,
+						anr == null ? -1 : anr.type,
+						anr == null ? -1 : anr.timeoutMillis,
+						anr == null ? -1 : anr.id,
+						anr == null ? null : anr.userPerceptible,
 						appContext
 				);
 				try {

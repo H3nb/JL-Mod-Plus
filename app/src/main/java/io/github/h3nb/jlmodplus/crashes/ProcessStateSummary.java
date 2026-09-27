@@ -21,14 +21,16 @@ final class ProcessStateSummary {
 	static final int MAX_BYTES = 128;
 	private static final String PREFIX_V1 = "jlp1";
 	private static final String PREFIX_V2 = "jlp2";
+	private static final String PREFIX_V3 = "jlp3";
 
 	private ProcessStateSummary() {}
 
-	static byte[] build(String runId, String buildCommit, int sdk, String sessionId,
-			String location, String action, String phase) {
-		StringBuilder text = new StringBuilder(96).append(PREFIX_V2);
+	static byte[] build(String runId, String buildCommit, int sdk, String androidRelease,
+			String sessionId, String location, String action, String phase) {
+		StringBuilder text = new StringBuilder(96).append(PREFIX_V3);
 		appendIfFits(text, "u", runId);
 		appendIfFits(text, "sdk", Integer.toString(sdk));
+		appendIfFits(text, "rel", androidRelease);
 		appendIfFits(text, "s", sessionId);
 		appendIfFits(text, "b", shortCommit(buildCommit));
 		appendIfFits(text, "c", location);
@@ -42,11 +44,13 @@ final class ProcessStateSummary {
 			return Data.empty();
 		}
 		String[] fields = new String(bytes, StandardCharsets.US_ASCII).split("\\|");
-		if (fields.length == 0 || (!PREFIX_V1.equals(fields[0]) && !PREFIX_V2.equals(fields[0]))) {
+		if (fields.length == 0 || (!PREFIX_V1.equals(fields[0])
+				&& !PREFIX_V2.equals(fields[0]) && !PREFIX_V3.equals(fields[0]))) {
 			return Data.empty();
 		}
 		long versionCode = -1;
 		int sdk = -1;
+		String androidRelease = null;
 		String sessionId = null;
 		String runId = null;
 		String buildCommit = null;
@@ -64,6 +68,7 @@ final class ProcessStateSummary {
 				switch (key) {
 					case "vc" -> versionCode = Long.parseLong(value);
 					case "sdk" -> sdk = Integer.parseInt(value);
+					case "rel" -> androidRelease = safeToken(value, 32);
 					case "s" -> sessionId = MidletFailureRecovery.isSafeEventId(value) ? value : null;
 					case "u" -> runId = CrashContextStore.isSafeRunId(value) ? value : null;
 					case "b" -> buildCommit = safeToken(value, 12);
@@ -77,7 +82,8 @@ final class ProcessStateSummary {
 				}
 			} catch (NumberFormatException ignored) {}
 		}
-		return new Data(versionCode, sdk, sessionId, runId, buildCommit, location, action, phase);
+		return new Data(versionCode, sdk, androidRelease, sessionId,
+				runId, buildCommit, location, action, phase);
 	}
 
 	private static void appendIfFits(StringBuilder text, String key, String value) {
@@ -119,6 +125,7 @@ final class ProcessStateSummary {
 	static final class Data {
 		final long versionCode;
 		final int sdk;
+		final String androidRelease;
 		final String sessionId;
 		final String runId;
 		final String buildCommit;
@@ -126,10 +133,11 @@ final class ProcessStateSummary {
 		final String action;
 		final String phase;
 
-		Data(long versionCode, int sdk, String sessionId, String runId, String buildCommit,
-				 String location, String action, String phase) {
+		Data(long versionCode, int sdk, String androidRelease, String sessionId,
+				 String runId, String buildCommit, String location, String action, String phase) {
 			this.versionCode = versionCode;
 			this.sdk = sdk;
+			this.androidRelease = androidRelease;
 			this.sessionId = sessionId;
 			this.runId = runId;
 			this.buildCommit = buildCommit;
@@ -139,7 +147,7 @@ final class ProcessStateSummary {
 		}
 
 		static Data empty() {
-			return new Data(-1, -1, null, null, null, null, null, null);
+			return new Data(-1, -1, null, null, null, null, null, null, null);
 		}
 	}
 }

@@ -49,7 +49,7 @@ public final class LegacyProcessExitFallback {
 	// These values intentionally mirror ProcessExitStore schema v1. Keeping the fallback writer
 	// independent of ApplicationExitInfo prevents verifier/API coupling on Android 6-10 while making
 	// the existing inbox, acknowledgment, correlation, and deletion paths consume the same records.
-	private static final int SCHEMA_VERSION = 1;
+	private static final int SCHEMA_VERSION = 2;
 	private static final int REASON_UNKNOWN = 0;
 	private static final String RECORD_DIR = "diagnostics/process-exits";
 	private static final String RECORD_SUFFIX = ".properties";
@@ -186,6 +186,7 @@ public final class LegacyProcessExitFallback {
 			p.setProperty("stateVersionCode", Long.toString(versionCode));
 		}
 		p.setProperty("stateSdk", Integer.toString(Build.VERSION.SDK_INT));
+		p.setProperty("androidRelease", Build.VERSION.RELEASE);
 		p.setProperty("sessionId", session.sessionId);
 		put(p, "deviceBrand", bound(Build.BRAND, 128));
 		put(p, "deviceModel", bound(Build.MODEL, 128));

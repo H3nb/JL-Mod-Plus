@@ -69,7 +69,10 @@ final class IncidentInterpreter {
 		String build = buildLabel(appContext, java == null ? null : java.appVersion);
 		String androidRelease = java == null ? null : java.androidRelease;
 		int androidSdk = java == null ? -1 : java.androidSdk;
-		if (androidSdk < 0 && exit != null) androidSdk = exit.stateSdk;
+		if (exit != null) {
+			if (androidRelease == null) androidRelease = exit.androidRelease;
+			if (androidSdk < 0) androidSdk = exit.stateSdk;
+		}
 		String device = joinDevice(
 				java == null ? null : java.brand,
 				java == null ? null : java.model);
@@ -179,7 +182,7 @@ final class IncidentInterpreter {
 				exit.processRole,
 				exit.description,
 				exit.stateSdk,
-				null,
+				exit.androidRelease,
 				joinDevice(exit.deviceBrand, exit.deviceModel),
 				exit.primaryAbi,
 				exit.pssKb,
@@ -188,10 +191,10 @@ final class IncidentInterpreter {
 				exit.traceKind,
 				exit.traceFile != null && exit.traceBytes > 0,
 				exit.traceTruncated,
-				-1,
-				-1,
-				-1,
-				null,
+				exit.anrType,
+				exit.anrTimeoutMillis,
+				exit.anrId,
+				exit.anrUserPerceptible,
 				summary,
 				limitation);
 	}
