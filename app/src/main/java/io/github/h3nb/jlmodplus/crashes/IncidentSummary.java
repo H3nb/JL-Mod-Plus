@@ -25,12 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-/**
- * Small immutable projection of one correlated diagnostic incident.
- *
- * <p>The source of truth remains {@link LocalDiagnosticRepository.Record} and its retained
- * evidence. This class contains only stable facts needed by export/reporting surfaces.</p>
- */
+/** Immutable, regenerable semantic interpretation of one correlated diagnostic record. */
 final class IncidentSummary {
 	enum Category {
 		MIDLET_LIFECYCLE,
@@ -39,6 +34,12 @@ final class IncidentSummary {
 		NATIVE_CRASH,
 		ANR,
 		PROCESS_EXIT
+	}
+
+	enum FailureOrigin {
+		MIDLET,
+		JL_MOD_PLUS,
+		UNKNOWN
 	}
 
 	static final class JavaFailure {
@@ -56,6 +57,12 @@ final class IncidentSummary {
 			if (type == null) return null;
 			int dot = Math.max(type.lastIndexOf('.'), type.lastIndexOf('$'));
 			return dot >= 0 && dot + 1 < type.length() ? type.substring(dot + 1) : type;
+		}
+
+		boolean sameFailure(JavaFailure other) {
+			return other != null
+					&& equal(type, other.type)
+					&& equal(message, other.message);
 		}
 	}
 
@@ -79,34 +86,67 @@ final class IncidentSummary {
 		final String reasonLabel;
 		final String statusLabel;
 		final String importance;
-		final String cause;
 		final String processName;
 		final String processRole;
 		final String description;
 		final int sdk;
+		final String androidRelease;
 		final String device;
+		final String primaryAbi;
+		final long pssKb;
+		final long rssKb;
+		final boolean lowMemoryKillReportSupported;
+		final String traceKind;
+		final boolean traceAvailable;
+		final boolean traceTruncated;
+		final int anrType;
+		final long anrTimeoutMillis;
+		final int anrId;
+		final Boolean anrUserPerceptible;
+		final String summary;
+		final String limitation;
 
 		ProcessExitEvidence(int reason, int status, String reasonLabel, String statusLabel,
-				String importance, String cause, String processName, String processRole,
-				String description, int sdk, String device) {
+				String importance, String processName, String processRole, String description,
+				int sdk, String androidRelease, String device, String primaryAbi,
+				long pssKb, long rssKb, boolean lowMemoryKillReportSupported,
+				String traceKind, boolean traceAvailable, boolean traceTruncated,
+				int anrType, long anrTimeoutMillis, int anrId, Boolean anrUserPerceptible,
+				String summary, String limitation) {
 			this.reason = reason;
 			this.status = status;
 			this.reasonLabel = clean(reasonLabel);
 			this.statusLabel = clean(statusLabel);
 			this.importance = clean(importance);
-			this.cause = clean(cause);
 			this.processName = clean(processName);
 			this.processRole = clean(processRole);
 			this.description = clean(description);
 			this.sdk = sdk;
+			this.androidRelease = clean(androidRelease);
 			this.device = clean(device);
+			this.primaryAbi = clean(primaryAbi);
+			this.pssKb = Math.max(0, pssKb);
+			this.rssKb = Math.max(0, rssKb);
+			this.lowMemoryKillReportSupported = lowMemoryKillReportSupported;
+			this.traceKind = clean(traceKind);
+			this.traceAvailable = traceAvailable;
+			this.traceTruncated = traceTruncated;
+			this.anrType = anrType;
+			this.anrTimeoutMillis = anrTimeoutMillis;
+			this.anrId = anrId;
+			this.anrUserPerceptible = anrUserPerceptible;
+			this.summary = clean(summary);
+			this.limitation = clean(limitation);
 		}
 	}
 
 	final Category category;
+	final FailureOrigin failureOrigin;
 	final long incidentTimestampMillis;
 	final String subject;
-	final JavaFailure rootFailure;
+	final JavaFailure primaryFailure;
+	final JavaFailure underlyingCause;
+	final String javaEvidenceKind;
 	final String operation;
 	final String boundary;
 	final String lifecycleStage;
@@ -115,34 +155,33 @@ final class IncidentSummary {
 	final String entrypoint;
 	final String jarFingerprint;
 	final String build;
-	final String environment;
+	final String androidRelease;
+	final int androidSdk;
+	final String device;
+	final String primaryAbi;
 	final String process;
 	final String eventId;
 	final String sessionId;
 	final List<Breadcrumb> breadcrumbs;
 	final ProcessExitEvidence associatedProcessExit;
+	final List<String> limitations;
 	final String fingerprint;
 
-	IncidentSummary(Category category, long incidentTimestampMillis, String subject,
-			JavaFailure rootFailure, String operation, String lifecycleStage,
-			String topRelevantFrame, String midletVersion, String entrypoint,
-			String jarFingerprint, String build, String environment, String process,
-			List<Breadcrumb> breadcrumbs, ProcessExitEvidence associatedProcessExit) {
-		this(category, incidentTimestampMillis, subject, rootFailure, operation, null,
-				lifecycleStage, topRelevantFrame, midletVersion, entrypoint, jarFingerprint,
-				build, environment, process, breadcrumbs, associatedProcessExit, null, null);
-	}
-
-	IncidentSummary(Category category, long incidentTimestampMillis, String subject,
-			JavaFailure rootFailure, String operation, String boundary, String lifecycleStage,
-			String topRelevantFrame, String midletVersion, String entrypoint,
-			String jarFingerprint, String build, String environment, String process,
-			List<Breadcrumb> breadcrumbs, ProcessExitEvidence associatedProcessExit,
-			String eventId, String sessionId) {
+	IncidentSummary(Category category, FailureOrigin failureOrigin, long incidentTimestampMillis,
+			String subject, JavaFailure primaryFailure, JavaFailure underlyingCause,
+			String javaEvidenceKind, String operation, String boundary, String lifecycleStage,
+			String topRelevantFrame, String midletVersion, String entrypoint, String jarFingerprint,
+			String build, String androidRelease, int androidSdk, String device, String primaryAbi,
+			String process, String eventId, String sessionId, List<Breadcrumb> breadcrumbs,
+			ProcessExitEvidence associatedProcessExit, List<String> limitations) {
 		this.category = category == null ? Category.JL_MOD_PLUS : category;
-		this.incidentTimestampMillis = Math.max(0L, incidentTimestampMillis);
+		this.failureOrigin = failureOrigin == null ? FailureOrigin.UNKNOWN : failureOrigin;
+		this.incidentTimestampMillis = Math.max(0, incidentTimestampMillis);
 		this.subject = clean(subject);
-		this.rootFailure = rootFailure;
+		this.primaryFailure = primaryFailure;
+		this.underlyingCause = primaryFailure != null && primaryFailure.sameFailure(underlyingCause)
+				? null : underlyingCause;
+		this.javaEvidenceKind = clean(javaEvidenceKind);
 		this.operation = clean(operation);
 		this.boundary = clean(boundary);
 		this.lifecycleStage = clean(lifecycleStage);
@@ -151,7 +190,10 @@ final class IncidentSummary {
 		this.entrypoint = clean(entrypoint);
 		this.jarFingerprint = clean(jarFingerprint);
 		this.build = clean(build);
-		this.environment = clean(environment);
+		this.androidRelease = clean(androidRelease);
+		this.androidSdk = androidSdk;
+		this.device = clean(device);
+		this.primaryAbi = clean(primaryAbi);
 		this.process = clean(process);
 		this.eventId = clean(eventId);
 		this.sessionId = clean(sessionId);
@@ -159,6 +201,9 @@ final class IncidentSummary {
 				? Collections.emptyList()
 				: Collections.unmodifiableList(new ArrayList<>(breadcrumbs));
 		this.associatedProcessExit = associatedProcessExit;
+		this.limitations = limitations == null
+				? Collections.emptyList()
+				: Collections.unmodifiableList(new ArrayList<>(limitations));
 		this.fingerprint = fingerprint(this);
 	}
 
@@ -168,80 +213,26 @@ final class IncidentSummary {
 		return format.format(new Date(incidentTimestampMillis)) + "-" + fingerprint + ".zip";
 	}
 
-	static JavaFailure analyzeJavaFailure(String stackTrace) {
-		if (stackTrace == null || stackTrace.trim().isEmpty()) return null;
-		String[] lines = stackTrace.split("\\r?\\n");
-		String headline = null;
-		String deepestCause = null;
-		int deepestCauseLine = -1;
-		for (int i = 0; i < lines.length; i++) {
-			String line = lines[i].trim();
-			if (line.isEmpty() || line.startsWith("eventId=") || "jlamf".equals(line)) continue;
-			if (line.startsWith("Caused by:")) {
-				String cause = clean(line.substring("Caused by:".length()));
-				if (cause != null) {
-					deepestCause = cause;
-					deepestCauseLine = i;
-				}
-				continue;
-			}
-			if (headline == null && !line.startsWith("at ") && !line.startsWith("...")) {
-				headline = line;
-			}
+	String androidLabel() {
+		if (androidRelease != null && androidSdk >= 0) {
+			return "Android " + androidRelease + " (SDK " + androidSdk + ")";
 		}
-
-		String selected = deepestCause != null ? deepestCause : headline;
-		if (selected == null) return null;
-		String frame = firstFrame(lines, deepestCauseLine >= 0 ? deepestCauseLine + 1 : 0);
-		if (frame == null && deepestCauseLine > 0) frame = firstFrame(lines, 0);
-
-		int colon = selected.indexOf(':');
-		String type = colon < 0 ? selected : selected.substring(0, colon);
-		String message = colon < 0 ? null : selected.substring(colon + 1);
-		type = clean(type);
-		if (type != null && type.indexOf(' ') >= 0) {
-			// A non-Throwable wrapper headline is less useful than an actual cause, but when no
-			// cause exists retain it verbatim rather than inventing an exception type.
-			message = clean(selected);
-			type = null;
-		}
-		return new JavaFailure(type, message, frame);
-	}
-
-	static String lifecycleOperation(MidletSessionJournal.FailureBoundary boundary) {
-		if (boundary == null) return null;
-		return switch (boundary) {
-			case LIFECYCLE_START -> "startApp()";
-			case LIFECYCLE_PAUSE -> "pauseApp()";
-			case LIFECYCLE_DESTROY -> "destroyApp()";
-			case LIFECYCLE_INIT -> "MIDlet initialization";
-			case MIDLET_THREAD, UNCAUGHT_THREAD -> null;
-		};
-	}
-
-	private static String firstFrame(String[] lines, int start) {
-		for (int i = Math.max(0, start); i < lines.length; i++) {
-			String line = lines[i].trim();
-			if (line.startsWith("Caused by:")) break;
-			if (line.startsWith("at ") && line.length() > 3) return line.substring(3);
-		}
-		return null;
+		if (androidRelease != null) return "Android " + androidRelease;
+		return androidSdk >= 0 ? "Android SDK " + androidSdk : null;
 	}
 
 	private static String fingerprint(IncidentSummary incident) {
 		StringBuilder canonical = new StringBuilder();
 		appendCanonical(canonical, incident.category.name());
+		appendCanonical(canonical, incident.failureOrigin.name());
 		appendCanonical(canonical, incident.subject);
-		appendCanonical(canonical, incident.rootFailure == null ? null : incident.rootFailure.type);
+		appendCanonical(canonical, incident.primaryFailure == null ? null : incident.primaryFailure.type);
 		appendCanonical(canonical, incident.operation);
 		appendCanonical(canonical, incident.boundary);
 		appendCanonical(canonical, normalizeFrame(incident.topRelevantFrame));
 		appendCanonical(canonical, incident.entrypoint);
 		appendCanonical(canonical, incident.jarFingerprint);
-		if (incident.associatedProcessExit != null
-				&& (incident.category == Category.NATIVE_CRASH
-				|| incident.category == Category.ANR
-				|| incident.category == Category.PROCESS_EXIT)) {
+		if (incident.primaryFailure == null && incident.associatedProcessExit != null) {
 			appendCanonical(canonical, Integer.toString(incident.associatedProcessExit.reason));
 			appendCanonical(canonical, Integer.toString(incident.associatedProcessExit.status));
 		}
@@ -278,5 +269,9 @@ final class IncidentSummary {
 		if (value == null) return null;
 		String result = value.replace('\r', ' ').replace('\n', ' ').trim();
 		return result.isEmpty() ? null : result;
+	}
+
+	private static boolean equal(String left, String right) {
+		return left == null ? right == null : left.equals(right);
 	}
 }
