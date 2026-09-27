@@ -100,6 +100,12 @@ public class ProcessExitStoreTest {
 	}
 
 	@Test
+	public void unknownFutureReasonRemainsActionableAndNumericallyLabeled() {
+		assertTrue(ProcessExitStore.shouldRetain(42, 0, FOREGROUND, false));
+		assertEquals("Process termination (reason 42)", ProcessExitStore.reasonLabel(42));
+	}
+
+	@Test
 	public void boundedCopyPreservesEmptyInput() throws IOException {
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 

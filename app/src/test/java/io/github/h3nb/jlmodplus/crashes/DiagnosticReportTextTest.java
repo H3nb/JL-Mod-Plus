@@ -78,7 +78,9 @@ public class DiagnosticReportTextTest {
 				MidletSessionJournal.FailureBoundary.LIFECYCLE_START,
 				"Game", "Vendor", "1.0", "game.Main", "1", "abc");
 		ProcessExitStore.Snapshot exit = new ProcessExitStore.Snapshot(
-				new File("exit"), null, "key", 1100L, "pkg:midlet", "midlet", 123,
+				new File("exit"), null, "key",
+				ProcessExitStore.SOURCE_APPLICATION_EXIT_INFO,
+				1100L, "pkg:midlet", "midlet", 123,
 				ProcessExitStore.REASON_SIGNALED, OsConstants.SIGKILL,
 				ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
 				100, 200, null, true, 1, 36, "16",

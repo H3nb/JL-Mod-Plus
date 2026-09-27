@@ -157,10 +157,12 @@ final class IncidentInterpreter {
 
 	private static long incidentTimestamp(MidletSessionJournal.Snapshot session,
 			JavaDiagnosticStore.Snapshot java, ProcessExitStore.Snapshot exit) {
-		long value = session == null ? 0 : session.updatedWallTimeMillis;
-		if (java != null) value = value == 0 ? java.timestampMillis : Math.min(value, java.timestampMillis);
-		if (value == 0 && exit != null) value = exit.timestampMillis;
-		return value;
+		// Use the timestamp of the evidence that defines the incident. A later associated exit must
+		// not rename a Java incident, while a process-exit-only record must use the OS/fallback exit
+		// observation rather than an older session-journal update.
+		if (java != null) return java.timestampMillis;
+		if (exit != null) return exit.timestampMillis;
+		return session == null ? 0 : session.updatedWallTimeMillis;
 	}
 
 	static String lifecycleOperation(MidletSessionJournal.FailureBoundary boundary) {
@@ -181,6 +183,7 @@ final class IncidentInterpreter {
 		String summary = processExitSummary(exit, status);
 		String limitation = processExitLimitation(exit);
 		return new IncidentSummary.ProcessExitEvidence(
+				exit.source,
 				exit.reason,
 				exit.status,
 				ProcessExitStore.reasonLabel(exit.reason),
@@ -218,8 +221,7 @@ final class IncidentInterpreter {
 			case ProcessExitStore.REASON_SIGNALED -> "Android recorded "
 					+ first(status, "signal " + exit.status) + ".";
 			case ProcessExitStore.REASON_UNKNOWN -> "The process ended unexpectedly.";
-			default -> "Android reported " + ProcessExitStore.reasonLabel(exit.reason)
-					+ " (reason " + exit.reason + ").";
+			default -> "Android reported process-exit reason " + exit.reason + ".";
 		};
 	}
 

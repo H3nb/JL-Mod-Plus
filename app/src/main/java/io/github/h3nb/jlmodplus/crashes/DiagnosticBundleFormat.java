@@ -165,8 +165,7 @@ final class DiagnosticBundleFormat {
 	private static void appendProcessExit(StringBuilder json, IncidentSummary.ProcessExitEvidence exit,
 			ValueSanitizer sanitizer, boolean comma) {
 		json.append("  \"associatedProcessExit\": {\n");
-		field(json, "source", exit.sdk >= 30 ? "android-application-exit-info"
-				: "legacy-process-disappearance", true, true, 4);
+		field(json, "source", exit.source, true, true, 4);
 		field(json, "reason", Integer.toString(exit.reason), false, true, 4);
 		field(json, "status", Integer.toString(exit.status), false, true, 4);
 		field(json, "reasonLabel", safe(sanitizer, exit.reasonLabel), true, true, 4);

@@ -117,6 +117,30 @@ public class IncidentInterpreterTest {
 	}
 
 	@Test
+	public void processExitOnlyUsesExitTimestampAndStoredProvenance() {
+		ProcessExitStore.Snapshot exit =
+				exit(ProcessExitStore.REASON_ANR, 0, false, -1);
+		IncidentSummary incident = IncidentInterpreter.interpret(cleanSession(), null, exit);
+		String json = DiagnosticBundleFormat.incidentJson(incident);
+
+		assertEquals(1100L, incident.incidentTimestampMillis);
+		assertEquals(ProcessExitStore.SOURCE_APPLICATION_EXIT_INFO,
+				incident.associatedProcessExit.source);
+		assertTrue(json.contains("\"source\": \"android-application-exit-info\""));
+	}
+
+	@Test
+	public void unknownFutureExitReasonSurvivesNumerically() {
+		ProcessExitStore.Snapshot exit = exit(42, 0, false, 36);
+		IncidentSummary incident = IncidentInterpreter.interpret(null, null, exit);
+
+		assertEquals("Process termination (reason 42)",
+				incident.associatedProcessExit.reasonLabel);
+		assertEquals("Android reported process-exit reason 42.",
+				incident.associatedProcessExit.summary);
+	}
+
+	@Test
 	public void api28ProcessDisappearanceStatesPlatformLimitation() {
 		ProcessExitStore.Snapshot exit =
 				exit(ProcessExitStore.REASON_UNKNOWN, 0, false, 28);
@@ -193,12 +217,38 @@ public class IncidentInterpreterTest {
 				"abc123");
 	}
 
+	private static MidletSessionJournal.Snapshot cleanSession() {
+		return new MidletSessionJournal.Snapshot(
+				2,
+				SESSION,
+				"io.github.h3nb.jlmodplus:midlet",
+				123,
+				900L,
+				1L,
+				1000L,
+				2L,
+				MidletSessionJournal.Stage.RUNNING,
+				MidletSessionJournal.Outcome.NONE,
+				null,
+				null,
+				"OregonTrailAmericanSettler",
+				"Vendor",
+				"1.0",
+				"GloftOTSP",
+				"1",
+				"abc123");
+	}
+
 	private static ProcessExitStore.Snapshot exit(
 			int reason, int status, boolean lmkSupported, int sdk) {
+		String source = sdk >= 23 && sdk < 30
+				? ProcessExitStore.SOURCE_LEGACY_PROCESS_DISAPPEARANCE
+				: ProcessExitStore.SOURCE_APPLICATION_EXIT_INFO;
 		return new ProcessExitStore.Snapshot(
 				new File("exit.properties"),
 				null,
 				"key",
+				source,
 				1100L,
 				"io.github.h3nb.jlmodplus:midlet",
 				"midlet",
