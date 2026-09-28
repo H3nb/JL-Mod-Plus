@@ -19,6 +19,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,6 +52,20 @@ public class JavaDiagnosticStoreTest {
 				captured.throwables.get(captured.primaryIndex).className);
 		assertEquals(ClassNotFoundException.class.getName(),
 				captured.throwables.get(captured.primaryIndex + 1).className);
+	}
+
+	@Test
+	public void reflectionWrapperCanRetainGuestConstructorFailureAsPrimary() {
+		IllegalStateException primary = new IllegalStateException("constructor failure");
+		InvocationTargetException reported = new InvocationTargetException(primary);
+
+		JavaDiagnosticStore.ThrowableCapture captured =
+				JavaDiagnosticStore.captureThrowableChain(reported, primary);
+
+		assertEquals(2, captured.throwables.size());
+		assertEquals(1, captured.primaryIndex);
+		assertEquals(IllegalStateException.class.getName(),
+				captured.throwables.get(captured.primaryIndex).className);
 	}
 
 	@Test

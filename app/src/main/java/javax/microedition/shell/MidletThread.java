@@ -24,6 +24,7 @@ import android.os.Message;
 import android.os.Process;
 import android.util.Log;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.lcdui.Canvas;
@@ -334,7 +335,15 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		} catch (Throwable t) {
 			lifecycle.tryBeginDestroy();
 			lifecycle.completeDestroy();
-			if (claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_INIT, t)) {
+			Throwable primaryFailure = t;
+			if (t instanceof InvocationTargetException
+					&& ((InvocationTargetException) t).getCause() != null) {
+				// Constructor.newInstance() is the reflection boundary; preserve the guest
+				// Throwable as primary while retaining InvocationTargetException in raw evidence.
+				primaryFailure = ((InvocationTargetException) t).getCause();
+			}
+			if (claimLifecycleFailure(
+					MidletSessionJournal.FailureBoundary.LIFECYCLE_INIT, primaryFailure)) {
 				capturePrimarySessionFailure(Thread.currentThread(), t);
 				terminateFatalRuntime();
 			}
