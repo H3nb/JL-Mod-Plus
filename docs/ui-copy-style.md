@@ -62,9 +62,9 @@ values. The following mapping is the review baseline:
   metadata uses `bodyMedium`/`bodySmall` with `onSurfaceVariant`.
 - Field labels, units, and compact secondary annotations use `labelMedium` or
   `labelSmall`.
-- `fontScale`, long translations, and landscape width must be checked before
-  introducing a custom size. A custom `sp` value needs a component-specific
-  reason and a screenshot/regression case.
+- A custom `sp` value needs a component-specific reason and verification of
+  relevant font-scale, translation, and width risks. Reuse suitable coverage or
+  inspect a targeted render; a custom size alone does not require a new golden.
 - Do not shrink text, reduce system font scaling, or change the typography
   hierarchy merely because the window is landscape or short. Reflow and scroll
   the content instead. Input fields and interactive lists retain the Material
@@ -122,7 +122,8 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
 - Keep a visible themed scroll hint while content remains below the viewport.
   The hint should be distinct from the text beneath it and disappear at the end.
   A preview's initial frame is insufficient evidence: verify the hint and the
-  last item/action after layout in an interaction test.
+  last item/action after layout through existing behavioral coverage or a
+  targeted interaction/manual check, following [Testing strategy](development.md#testing-strategy).
 - Keep actions reachable. Wrap action rows when labels need more width, and
   allow a short-window fallback to scroll the complete custom popup when its
   title/actions cannot sensibly fit outside the body. Never clip an action
@@ -149,7 +150,7 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
 For interaction architecture, accessibility behavior, performance, and general UI testing policy, follow [App-owned UI development](app-ui-development.md) and [Testing strategy](development.md#testing-strategy). This document adds only copy and presentation-specific checks.
 
 - When copy, typography, theme, or popup presentation changes materially, inspect the rendered contexts that can expose the change, such as a narrow width, long localization, large text, or light/dark theme. Choose cases from the actual risk rather than running a universal visual matrix.
-- When a screenshot baseline changes, compare the reference, actual, and diff before accepting it. A green screenshot test does not by itself establish that spacing, wrapping, hierarchy, or readability is correct.
+- Follow [Visual verification](development.md#visual-verification-and-screenshot-references) for baseline selection and updates. A green comparison does not by itself establish that spacing, wrapping, hierarchy, or readability is correct.
 
 ## Review checklist
 

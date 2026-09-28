@@ -11,11 +11,11 @@ Read only the sections relevant to the task. [AGENTS.md](../AGENTS.md) defines t
 
 The repository contains task-specific guidance under `.agents/skills/`. When a task matches a vendored skill, read its `SKILL.md` and the matching project-interpretation section in [.agents/UPSTREAM.md](../.agents/UPSTREAM.md) before planning or editing; do not load unrelated skill interpretations.
 
-- User instructions take precedence over skill guidance. Apply [AGENTS.md](../AGENTS.md) and verified current project behavior when interpreting a matching skill; do not let unclear or conflicting skill steps silently redirect the task.
+- Apply the precedence in [AGENTS.md](../AGENTS.md) and read the matching project interpretation before following a skill recipe. Current behavior is evidence, not a requirement to preserve a known defect.
 - Use only skills that match the current task. A skill prerequisite is a planning constraint, not permission to widen the PR or perform unrelated migrations.
 - Do not install every framework, dependency, test tool, or architectural pattern suggested by a general skill. Prefer the current project stack and add only what the current task concretely requires.
 - Follow a skill's local `references/`, scripts, and validation instructions when they apply; do not substitute remembered or historical guidance for repository-provided material.
-- If a skill's assumptions do not match the project, preserve the task scope and current behavior, then adapt or defer the incompatible part rather than forcing the project to fit the skill.
+- If a skill's assumptions do not match the project, preserve the task scope and required behavior, then adapt or defer the incompatible part rather than forcing the project to fit the skill.
 - Skill approval steps do not override authorization already given under [AGENTS.md](../AGENTS.md). If a skill would require a material pause, scope change, or divergence from the user's request, identify the exact instruction and explain why it applies.
 - Keep vendored skills unchanged for project policy adaptations; record provenance and local interpretation in [.agents/UPSTREAM.md](../.agents/UPSTREAM.md).
 
@@ -40,12 +40,12 @@ Available skill routing:
 
 ## Change discipline
 
-- Add abstractions, modules, dependencies, frameworks, helpers, state, or configuration layers only when they enforce a real boundary, remove meaningful duplication or complexity, or are required for correctness.
-- Do not mix unrelated cleanup, formatting churn, dependency or toolchain upgrades, renames, or broad refactors into a focused change.
+Apply the scope and design priorities in [AGENTS.md](../AGENTS.md).
+
 - Prefer existing project patterns and dependencies when they fit, but do not preserve an incorrect boundary or duplicated ownership merely for consistency.
 - When replacing an existing flow, identify its active entry points, state owners, persistence paths, and compatibility obligations. Route retained behavior through one authoritative implementation and remove superseded paths once their callers and contracts are accounted for.
 - Treat historical or experimental branches as reference material rather than structures to replay wholesale. Reconstruct required behavior against the current architecture.
-- Keep migration status, roadmap state, and branch-specific reconstruction decisions in dedicated tracking artifacts rather than this file.
+- Keep migration status, roadmap state, and branch-specific reconstruction decisions in dedicated tracking artifacts rather than this file. Define each durable behavior contract in one authoritative document; other documents should link to it. Update affected documentation when behavior changes.
 
 ## Source language policy
 
@@ -78,8 +78,7 @@ Available skill routing:
 
 ## Git, PR, and CI workflow
 
-- Use the repository's current default/integration branch as the base. Do normal development on a dedicated branch and integrate through a PR rather than working directly on the integration branch unless explicitly requested.
-- Start unrelated work from the latest integration branch on a fresh branch. Use scratch/staging branches only when they are actually useful or explicitly requested.
+- Follow the branch policy in [AGENTS.md](../AGENTS.md). When continuing an existing PR, use its current head branch and preserve concurrent work. Use scratch/staging branches only when they are actually useful or explicitly requested.
 - Keep one PR centered on one coherent concern. Intermediate experiment/fixup commits may remain when they are useful to the development process.
 - Treat GitHub autolinks as repository-sensitive data, not harmless formatting. Never publish an ambiguous shorthand that could resolve to the wrong repository, fork, issue, PR, workflow run, commit, release, discussion, or other object.
 - Do not use a bare `#N` unless it intentionally refers to an issue or PR in the current repository and that target has been verified. When repository identity matters, use an explicit repository-qualified reference such as `owner/repository#N`.
@@ -103,9 +102,8 @@ Available skill routing:
 - See [Build and validation](development.md) for the current CLI workflow and test source sets.
 - Use the narrowest relevant test/build while iterating; derive exact commands and ABI scope from the current repository configuration rather than this file.
 - Prefer debug validation unless release, signing, shrinking, R8, or distribution behavior is specifically under test.
-- Do not run `clean` routinely.
-- For documentation-only edits, check the diff, links, and instruction consistency; Android builds are unnecessary. For code changes, stop after relevant checks pass unless new edits, failures, or unresolved risks justify more testing. Apply relevant checks in [app-owned UI development](app-ui-development.md), [Java ME compatibility](java-me-compatibility.md), and the Library migration source and tests linked from [AGENTS.md](../AGENTS.md) when those areas change.
+- For documentation-only edits, check the diff, links, and instruction consistency; Android builds are unnecessary. For code changes, apply the validation stopping rule in [AGENTS.md](../AGENTS.md) and relevant checks in [app-owned UI development](app-ui-development.md), [Java ME compatibility](java-me-compatibility.md), and the Library migration source and tests linked from [AGENTS.md](../AGENTS.md) when those areas change.
 - Add focused regression or characterization tests for compatibility-sensitive changes when practical.
-- If validation cannot be run, state exactly what remains unverified.
+- When local tooling is unavailable, follow [Validation through CI](development.md#validation-through-ci); distinguish checks executed successfully from tests only written or compiled, and identify remaining verification gaps.
 - Before handoff, review the final diff for unrelated changes, dead code, temporary workarounds, licensing issues, and unintended behavior changes.
 - Lead with the result in the user's language. Include changed files, validation evidence, and material limitations; use plain paragraphs or short lists without filler. Brevity must not hide missing checks or unfinished work.

@@ -72,8 +72,8 @@ non-Canvas Displayables.
 
 - Use the relevant commands in [Build and validation](development.md).
 - Keep focused automated coverage for the runtime contracts actually affected by the change, such as Canvas versus non-Canvas action visibility, virtual-keyboard state, command dispatch, or dismiss-before-callback ordering.
-- Keep screenshot baselines for materially distinct runtime presentation states when visual behavior changes.
-- Select device/emulator smoke cases from Canvas/GL rendering size, Back and menu keys, rotation, IME, screenshot, FPS, virtual-keyboard editing, non-Canvas screens, and transitions according to the boundary changed. Run the full matrix for broad runtime-boundary changes or release validation, not for every local edit.
+- Select renders and golden baselines using [Visual verification](development.md#visual-verification-and-screenshot-references); distinct runtime states do not each require a permanent reference.
+- Select device/emulator smoke cases from Canvas/GL rendering size, Back and menu keys, rotation, IME, screenshot, FPS, virtual-keyboard editing, non-Canvas screens, and transitions according to the boundary changed. Broaden coverage for cross-boundary changes or stable-release qualification according to the supported contracts and platforms. An automatic alpha build does not itself require every smoke case.
 
 ## Screen soft-key boundary
 
