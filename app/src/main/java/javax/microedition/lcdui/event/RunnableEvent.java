@@ -43,7 +43,7 @@ public class RunnableEvent extends Event {
 	}
 
 	@Override
-	public void recycle() {
+	protected void recycleEvent() {
 		runnable = null;
 		recycled.push(this);
 	}

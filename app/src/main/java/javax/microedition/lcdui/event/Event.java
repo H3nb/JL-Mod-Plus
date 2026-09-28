@@ -40,7 +40,13 @@ public abstract class Event implements Runnable {
 	 * If a pool of events is used, then the event must be reset
 	 * and returned to the pool.
 	 */
-	public abstract void recycle();
+	public final void recycle() {
+		guestCallback = false;
+		recycleEvent();
+	}
+
+	/** Clears subclass-owned pooled state after base transient ownership has been reset. */
+	protected abstract void recycleEvent();
 
 	/** Marks this event as a known guest-code callback boundary. */
 	public final Event asGuestCallback() {
@@ -70,7 +76,6 @@ public abstract class Event implements Runnable {
 			if (guest) {
 				MidletThread.exitGuestExecution(enteredGuest);
 			}
-			guestCallback = false;
 			leaveQueue();
 			recycle();
 		}

@@ -155,7 +155,7 @@ public class CanvasEvent extends Event {
 	}
 
 	@Override
-	public void recycle() {
+	protected void recycleEvent() {
 		canvas = null;
 		recycled.push(this);
 	}

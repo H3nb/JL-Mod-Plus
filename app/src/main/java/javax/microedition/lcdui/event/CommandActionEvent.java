@@ -75,7 +75,7 @@ public class CommandActionEvent extends Event {
 	}
 
 	@Override
-	public void recycle() {
+	protected void recycleEvent() {
 		listener = null;
 		itemlistener = null;
 
