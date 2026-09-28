@@ -290,21 +290,27 @@ public final class CrashReporter {
 	}
 
 	/**
-	 * Carries correlation metadata and the already-known original Throwable without changing MIDP
-	 * lifecycle behavior. The wrapper is reporting infrastructure; {@code primaryFailure} is the
-	 * semantic Java failure for interpretation.
+	 * Persists a terminal MIDlet failure directly from its owning session boundary.
+	 *
+	 * This path deliberately does not invoke the process uncaught handler. MidletThread owns the
+	 * subsequent isolated-process termination after this synchronous best-effort capture returns.
 	 */
-	public static Throwable wrapSessionFailure(String eventId,
-			MidletSessionJournal.FailureBoundary boundary, Throwable propagated,
-			Throwable primaryFailure) {
-		if (propagated == null || boundary == null) return propagated;
-		return new SessionFailureException(eventId, boundary, propagated,
-				primaryFailure == null ? propagated : primaryFailure);
-	}
-
-	static Throwable primaryFailure(Throwable reported) {
-		return reported instanceof SessionFailureException
-				? ((SessionFailureException) reported).primaryFailure : reported;
+	public static boolean captureMidletSessionFailure(Thread thread, MidletSessionJournal journal,
+			Throwable reported, Throwable primaryFailure) {
+		Application application = activeApplication;
+		if (application == null || journal == null || reported == null) return false;
+		try {
+			return JavaDiagnosticStore.captureMidletSessionFailure(
+					application,
+					thread,
+					journal.snapshotForDiagnostics(),
+					reported,
+					primaryFailure == null ? reported : primaryFailure);
+		} catch (Throwable reportingFailure) {
+			logMaintenanceFailure("Unable to persist handled MIDlet session failure",
+					reportingFailure);
+			return false;
+		}
 	}
 
 	static DiagnosticContext currentDiagnosticContext() {
@@ -434,15 +440,4 @@ public final class CrashReporter {
 		}
 	}
 
-	private static final class SessionFailureException extends RuntimeException {
-		final Throwable primaryFailure;
-
-		SessionFailureException(String eventId, MidletSessionJournal.FailureBoundary boundary,
-				Throwable cause, Throwable primaryFailure) {
-			super("JL-Mod Plus session failure; "
-					+ (eventId == null ? "" : "eventId=" + eventId + "; ")
-					+ "boundary=" + boundary.name(), cause);
-			this.primaryFailure = primaryFailure;
-		}
-	}
 }

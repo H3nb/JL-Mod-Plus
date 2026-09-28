@@ -118,6 +118,7 @@ final class JavaDiagnosticStore {
 
 	enum Kind {
 		FATAL_UNCAUGHT(true, false),
+		MIDLET_SESSION_FAILURE(true, false),
 		CAUGHT_INSTALLER(false, false),
 		CAUGHT_APP_REPOSITORY(false, false),
 		LEGACY_ACRA(true, true),
@@ -141,13 +142,30 @@ final class JavaDiagnosticStore {
 		FatalHandler handler = new FatalHandler(
 				(thread, error) -> persistLive(
 						appContext, Kind.FATAL_UNCAUGHT, thread, error,
-						CrashReporter.primaryFailure(error), null, processName, processRole),
+						error, null, processName, processRole),
 				upstream,
 				() -> {
 					Process.killProcess(Process.myPid());
 				});
 		Thread.setDefaultUncaughtExceptionHandler(handler);
 		installed = true;
+	}
+
+	static boolean captureMidletSessionFailure(Context context, Thread thread,
+			MidletSessionJournal.Snapshot session, Throwable reported, Throwable primary) {
+		if (context == null || session == null || reported == null) return false;
+		try {
+			persistSessionFailure(
+					context.getApplicationContext(),
+					thread,
+					session,
+					reported,
+					primary == null ? reported : primary);
+			return true;
+		} catch (Throwable error) {
+			logFailure("Unable to persist handled MIDlet session failure", error);
+			return false;
+		}
 	}
 
 	static void captureCaught(Context context, Kind kind, Throwable reported,
@@ -173,25 +191,71 @@ final class JavaDiagnosticStore {
 			Throwable primary, String contextNote, String processName, String processRole)
 			throws IOException {
 		CrashReporter.DiagnosticContext diagnostic = CrashReporter.currentDiagnosticContext();
+		persistLive(
+				context,
+				kind,
+				thread,
+				reported,
+				primary,
+				contextNote,
+				processName,
+				processRole,
+				Process.myPid(),
+				diagnostic == null ? null : diagnostic.sessionId,
+				diagnostic == null ? null : diagnostic.midletName,
+				diagnostic == null ? null : diagnostic.midletVersion,
+				diagnostic == null ? null : diagnostic.midletMainClass,
+				diagnostic == null ? null : diagnostic.jarSha256,
+				null,
+				null);
+	}
+
+	private static void persistSessionFailure(Context context, Thread thread,
+			MidletSessionJournal.Snapshot session, Throwable reported, Throwable primary)
+			throws IOException {
+		persistLive(
+				context,
+				Kind.MIDLET_SESSION_FAILURE,
+				thread,
+				reported,
+				primary,
+				null,
+				session.processName,
+				"midlet",
+				session.processPid,
+				session.sessionId,
+				session.midletName,
+				session.midletVersion,
+				session.mainClass,
+				session.jarSha256,
+				session.failureEventId,
+				session.failureBoundary == null ? null : session.failureBoundary.name());
+	}
+
+	private static void persistLive(Context context, Kind kind, Thread thread, Throwable reported,
+			Throwable primary, String contextNote, String processName, String processRole, int pid,
+			String sessionId, String midletName, String midletVersion, String midletMainClass,
+			String jarSha256, String eventId, String failureBoundary) throws IOException {
 		CrashContextStore.Snapshot appContext = CrashContextStore.currentSnapshot();
 		ThrowableCapture captured = captureThrowableChain(reported, primary);
 		long timestamp = System.currentTimeMillis();
-		String primaryAbi = Build.SUPPORTED_ABIS.length == 0 ? null : Build.SUPPORTED_ABIS[0];
+		String[] abis = Build.SUPPORTED_ABIS;
+		String primaryAbi = abis == null || abis.length == 0 ? null : abis[0];
 		Snapshot snapshot = new Snapshot(
 				null,
 				kind,
 				timestamp,
 				bound(processName, MAX_TEXT_CHARS),
 				bound(processRole, 32),
-				Process.myPid(),
+				pid,
 				bound(thread == null ? null : thread.getName(), MAX_TEXT_CHARS),
 				thread == null ? -1 : thread.getId(),
 				thread == null ? -1 : thread.getPriority(),
-				diagnostic == null ? null : diagnostic.sessionId,
-				diagnostic == null ? null : diagnostic.midletName,
-				diagnostic == null ? null : diagnostic.midletVersion,
-				diagnostic == null ? null : diagnostic.midletMainClass,
-				diagnostic == null ? null : diagnostic.jarSha256,
+				sessionId,
+				midletName,
+				midletVersion,
+				midletMainClass,
+				jarSha256,
 				BuildConfig.VERSION_NAME,
 				bound(Build.VERSION.RELEASE, 64),
 				Build.VERSION.SDK_INT,
@@ -202,8 +266,8 @@ final class JavaDiagnosticStore {
 				captured.stackTrace,
 				captured.throwables,
 				captured.primaryIndex,
-				null,
-				null,
+				eventId,
+				failureBoundary,
 				appContext);
 		writeNew(context, snapshot);
 		prune(context);

@@ -106,6 +106,7 @@ public class MicroLoader {
 	private String midletVersion;
 	private String jarSize;
 	private String jarSha256;
+	private ClassLoader midletClassLoader;
 	private TimingSession timingSession;
 	private RuntimeStorageLease storageLease;
 	private AutoSpeedController autoSpeedController;
@@ -396,7 +397,8 @@ public class MicroLoader {
 			Thread.currentThread().setContextClassLoader(loader);
 			//noinspection unchecked
 			Class<MIDlet> clazz = (Class<MIDlet>) loader.loadClass(mainClass);
-			Thread.currentThread().setContextClassLoader(clazz.getClassLoader());
+			midletClassLoader = clazz.getClassLoader();
+			Thread.currentThread().setContextClassLoader(midletClassLoader);
 			Constructor<MIDlet> init = clazz.getDeclaredConstructor();
 			init.setAccessible(true);
 			MIDlet midlet = init.newInstance();
@@ -410,10 +412,22 @@ public class MicroLoader {
 			AppClassLoader.setDataDir(appDir);
 			//noinspection unchecked
 			Class<MIDlet> clazz = (Class<MIDlet>) Class.forName(mainClass);
-			Thread.currentThread().setContextClassLoader(clazz.getClassLoader());
+			midletClassLoader = clazz.getClassLoader();
+			Thread.currentThread().setContextClassLoader(midletClassLoader);
 			Constructor<MIDlet> init = clazz.getDeclaredConstructor();
 			init.setAccessible(true);
 			return init.newInstance();
+		}
+	}
+
+	boolean ownsGuestThread(Thread thread) {
+		if (!BuildConfig.FULL_EMULATOR || thread == null || midletClassLoader == null) {
+			return false;
+		}
+		try {
+			return thread.getContextClassLoader() == midletClassLoader;
+		} catch (SecurityException ignored) {
+			return false;
 		}
 	}
 
