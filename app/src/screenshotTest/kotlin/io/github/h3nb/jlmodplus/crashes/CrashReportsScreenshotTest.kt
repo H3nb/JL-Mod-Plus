@@ -118,17 +118,10 @@ fun CrashReportBundleReadyScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "Share confirmation", widthDp = 360, heightDp = 640, showBackground = true)
-@Composable
-fun CrashReportShareConfirmationScreenshot() {
-    CrashReportConfirmationPreview(CrashReportConfirmation.Share)
-}
-
-@PreviewTest
 @Preview(name = "Delete confirmation", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun CrashReportDeleteConfirmationScreenshot() {
-    CrashReportConfirmationPreview(CrashReportConfirmation.Delete)
+    CrashReportDeleteConfirmationPreview()
 }
 
 @Composable
@@ -142,10 +135,9 @@ private fun CrashReportDetailsPreview(darkTheme: Boolean) {
 }
 
 @Composable
-private fun CrashReportConfirmationPreview(confirmation: CrashReportConfirmation) {
+private fun CrashReportDeleteConfirmationPreview() {
     JLModPlusTheme(darkTheme = false) {
-        CrashReportConfirmationDialog(
-            confirmation = confirmation,
+        CrashReportDeleteConfirmationDialog(
             onDismiss = {},
             onConfirm = {},
         )
@@ -159,8 +151,6 @@ private object NoOpListActions : CrashReportsActions {
 
     override fun onCopySelected(reportIds: List<String>) = Unit
 
-    override fun onShareSelected(reportIds: List<String>) = Unit
-
     override fun onDeleteSelected(reportIds: List<String>) = Unit
 }
 
@@ -168,8 +158,6 @@ private object NoOpDetailActions : CrashReportDetailsActions {
     override fun onBack() = Unit
 
     override fun onCopy() = Unit
-
-    override fun onShare() = Unit
 
     override fun onReportGitHub() = Unit
 
