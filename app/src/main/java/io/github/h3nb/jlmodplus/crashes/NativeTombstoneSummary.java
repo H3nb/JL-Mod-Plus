@@ -14,8 +14,7 @@
 
 package io.github.h3nb.jlmodplus.crashes;
 
-import android.content.Context;
-import android.net.Uri;
+import android.util.AtomicFile;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,18 +39,17 @@ final class NativeTombstoneSummary {
 
 	private NativeTombstoneSummary() {}
 
-	static String summarize(Context context, Uri traceUri) {
-		return format(read(context, traceUri));
+	static String summarize(ProcessExitStore.Snapshot exit) {
+		return format(read(exit));
 	}
 
-	static Summary read(Context context, Uri traceUri) {
-		if (context == null || traceUri == null) {
+	static Summary read(ProcessExitStore.Snapshot exit) {
+		if (exit == null
+				|| exit.traceFile == null
+				|| !"native-tombstone-protobuf".equals(exit.traceKind)) {
 			return null;
 		}
-		try (InputStream input = context.getContentResolver().openInputStream(traceUri)) {
-			if (input == null) {
-				return null;
-			}
+		try (InputStream input = new AtomicFile(exit.traceFile).openRead()) {
 			byte[] data = new byte[MAX_INPUT_BYTES + 1];
 			int size = readBounded(input, data);
 			return size < 0 ? null : parse(data, size);

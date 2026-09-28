@@ -66,7 +66,7 @@ final class DiagnosticBundleStore {
 		String fileName = incident.bundleFileName();
 		String key = key(record.getId());
 		SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-		NativeTombstoneSummary.Summary nativeSummary = nativeSummary(context, record);
+		NativeTombstoneSummary.Summary nativeSummary = nativeSummary(record);
 
 		String javaStack = DiagnosticExportSanitizer.sanitize(context, record.getStackTrace());
 		String report = DiagnosticExportSanitizer.sanitize(
@@ -148,12 +148,10 @@ final class DiagnosticBundleStore {
 	}
 
 	private static NativeTombstoneSummary.Summary nativeSummary(
-			Context context, LocalDiagnosticRepository.Record record) {
+			LocalDiagnosticRepository.Record record) {
 		ProcessExitStore.Snapshot exit = record.getProcessExitSnapshot();
-		if (exit == null || !"native-tombstone-protobuf".equals(exit.traceKind)) return null;
-		DiagnosticTraceAttachment.Attachment attachment = DiagnosticTraceAttachment.find(
-				context, record.getId(), record.getSessionId());
-		return attachment == null ? null : NativeTombstoneSummary.read(context, attachment.uri);
+		return exit == null || !"native-tombstone-protobuf".equals(exit.traceKind)
+				? null : NativeTombstoneSummary.read(exit);
 	}
 
 	@RequiresApi(Build.VERSION_CODES.Q)
