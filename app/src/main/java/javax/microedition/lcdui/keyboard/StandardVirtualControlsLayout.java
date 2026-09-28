@@ -42,7 +42,7 @@ final class StandardVirtualControlsLayout {
 	private static final float SIDE_SHOULDER_Y_KEYS = 1.45f;
 	private static final float SIDE_CLUSTER_Y_KEYS = 4.13f;
 	private static final float SIDE_ACTION_FIRE_OFFSET_KEYS = 0.60f;
-	private static final float SIDE_ACTION_BOTTOM_OFFSET_KEYS = 0.48f;
+	private static final float SIDE_ACTION_BOTTOM_OFFSET_KEYS = 0.56f;
 
 	private static final float BOTTOM_MOVEMENT_EDGE_BIAS_KEYS = 0.06f;
 	private static final float BOTTOM_ZONE_GAP_KEYS = 0.20f;
@@ -53,7 +53,7 @@ final class StandardVirtualControlsLayout {
 	private static final float BOTTOM_MIN_HEIGHT_KEYS = 4.96f;
 	private static final float BOTTOM_CLUSTER_FRACTION = 0.55f;
 	private static final float BOTTOM_ACTION_FIRE_OFFSET_KEYS = 0.48f;
-	private static final float BOTTOM_ACTION_BOTTOM_OFFSET_KEYS = 0.58f;
+	private static final float BOTTOM_ACTION_BOTTOM_OFFSET_KEYS = 0.68f;
 	private static final float BOTTOM_SHOULDER_GAP_KEYS = 0.35f;
 
 	private static final float COMPACT_WIDTH_KEYS = BOTTOM_MIN_WIDTH_KEYS;
