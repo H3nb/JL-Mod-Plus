@@ -6,17 +6,20 @@ not applied to every piece of UI copy.
 This is a product style decision, not a claim that Material 3 requires title
 case everywhere. Current Android guidance recommends sentence case for button
 labels, while Android Auto guidance permits either sentence case or title case
-when the choice is applied consistently. We choose Capitalize Each Word for
-titles, labels, and compact controls because it matches the product's visual language and must remain
-consistent across the library, profiles, and installer surfaces.
+when the choice is applied consistently. We choose natural English title case for
+titles, labels, options, and compact controls because it matches the product's visual language and
+must remain consistent across the library, profiles, and installer surfaces.
 
 ## Rules
 
-- Use Capitalize Each Word for product/screen/dialog titles, section titles,
-  header titles, option names, and field titles/names: `JL-Mod Plus`,
-  `MIDlet Installer`, `Screen Orientation`, `Screen Size`, and `Profile Name`.
-- Use Capitalize Each Word for buttons, menu items, toolbar actions, and other
-  compact controls: `Install`, `Start`, `Cancel`, `Try Again`, and `Save Profile`.
+- Use natural English title case for product/screen/dialog titles, section titles,
+  header titles, option names, and field titles/names: capitalize major words, while
+  ordinary short articles, conjunctions, and prepositions such as `a`, `an`, `the`,
+  `and`, `or`, `of`, `on`, `in`, and `to` normally remain lowercase unless
+  they begin the label/title or grammar or proper-noun conventions require otherwise.
+- Apply the same natural title case to buttons, menu items, toolbar actions, and
+  other compact controls: `Report on GitHub`, `Save to File`, `Open in Browser`,
+  `Terms of Use`, `Delete Report`, and `Diagnostic Bundle Ready`.
 - Keep descriptions, explanations, statuses, hints, and helper text in sentence
   case. Capitalization follows the text's role, not its length or wording:
 
@@ -25,7 +28,7 @@ consistent across the library, profiles, and installer surfaces.
   | Section/header title | `Application Information` |
   | Field title | `Profile Name` |
   | Field placeholder | `Enter a profile name` |
-  | Option/checkbox name | `Save Screen Parameters On Exit` |
+  | Option/checkbox name | `Save Screen Parameters on Exit` |
   | Description beneath that option | `Save the current screen parameters when the game closes.` |
   | Progress status while reading a file | `Loading information…` |
   | Action button | `Save Profile` |
@@ -35,8 +38,8 @@ consistent across the library, profiles, and installer surfaces.
   because it is prominent. Review the actual placement and semantics.
   For example, `Enter Profile Name` is valid as a dialog title, while
   `Enter a profile name` is a field hint. Prefer `Profile Name` for the field's
-  persistent label. Here, Capitalize Each Word includes short words such as
-  `On`, `Of`, and `The`; it is not editorial title case with lowercase exceptions.
+  persistent label. English labels use natural title case rather than mechanically
+  capitalizing every short function word.
 - Use normal sentence case for body and confirmation messages. Do not use ALL CAPS for ordinary rendered copy.
 - Resource keys such as `START_CMD` and `CANCEL_CMD` are legacy identifiers and do not define rendered capitalization.
 - Write full messages as normal sentences: capitalize the first word, use ordinary punctuation, and start a new sentence after a newline with a capital letter.
@@ -157,7 +160,7 @@ For interaction architecture, accessibility behavior, performance, and general U
 When adding or changing a string, check the rendered context rather than only the resource value:
 
 1. Is it a title/header/section, option name, field title/name, or compact
-   interactive control? Use Capitalize Each Word.
+   interactive control? Use natural English title case.
 2. Otherwise, is it a description, explanation, status, or hint? Use sentence
    case. Sentence-like wording does not override an option or title's role.
 3. Is it a proper noun, acronym, unit, URL, or identifier? Preserve its established form.

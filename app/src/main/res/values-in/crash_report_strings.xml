@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="crash_reports">Laporan Crash</string>
+    <string name="crash_reports">Laporan Diagnostik</string>
+    <string name="diagnostic_report">Laporan Diagnostik</string>
     <string name="view_reports">Lihat Laporan</string>
-    <string name="crash_reports_empty">Tidak ada laporan crash lokal</string>
-    <string name="crash_reports_loading">Memuat laporan crash</string>
+    <string name="crash_reports_empty">Tidak ada laporan diagnostik lokal</string>
+    <string name="crash_reports_loading">Memuat laporan diagnostik</string>
     <string name="crash_report_midlet_failure">Kegagalan sesi MIDlet</string>
     <string name="crash_report_java_report">Laporan diagnostik Java</string>
     <string name="crash_report_process_exit">Diagnostik proses berhenti</string>
@@ -29,10 +30,10 @@
     <string name="crash_report_locate_failed">Tidak ada pemilih file sistem yang tersedia untuk menemukan bundle diagnostik</string>
     <string name="crash_report_bundle_cleanup_failed">Laporan diagnostik telah dihapus, tetapi JL-Mod Plus tidak dapat menghapus bundle yang dibuat untuknya</string>
     <string name="crash_report_github_unavailable">Tidak ada aplikasi yang dapat membuka formulir issue GitHub</string>
-    <string name="crash_report_delete_title">Hapus Laporan Crash?</string>
+    <string name="crash_report_delete_title">Hapus Laporan Diagnostik?</string>
     <string name="crash_report_delete_message">Tindakan ini akan menghapus secara permanen laporan diagnostik dan bundle yang dibuat untuknya dari perangkat ini. File yang sudah diunggah ke tempat lain tidak akan terpengaruh.</string>
     <plurals name="crash_reports_batch_delete_title">
-        <item quantity="other">Hapus %1$d Laporan Crash?</item>
+        <item quantity="other">Hapus %1$d Laporan Diagnostik?</item>
     </plurals>
     <string name="crash_reports_batch_delete_message">Tindakan ini akan menghapus secara permanen laporan diagnostik terpilih dan bundle yang dibuat untuknya dari perangkat ini. File yang sudah diunggah ke tempat lain tidak akan terpengaruh.</string>
     <string name="crash_report_delete_failed">Tidak dapat menghapus laporan secara lengkap</string>

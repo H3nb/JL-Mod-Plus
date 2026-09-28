@@ -400,7 +400,7 @@ fun CrashReportDetailsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.crash_reports),
+                        text = stringResource(R.string.diagnostic_report),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -422,7 +422,7 @@ fun CrashReportDetailsScreen(
                     }
                     IconButton(onClick = actions::onReportGitHub) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_bug_report),
+                            painter = painterResource(R.drawable.ic_send),
                             contentDescription = stringResource(R.string.report_on_github),
                         )
                     }

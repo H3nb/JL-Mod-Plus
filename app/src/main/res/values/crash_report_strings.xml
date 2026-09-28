@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <!-- Crash-report UI remains translatable; locales without coverage fall back to default English. -->
-    <string name="crash_reports">Crash Reports</string>
-    <string name="view_reports">View Reports</string>
-    <string name="crash_reports_empty">No local crash reports</string>
-    <string name="crash_reports_loading">Loading crash reports</string>
+    <string name="crash_reports">Diagnostic Reports</string>
+    <string name="diagnostic_report">Diagnostic Report</string>
+    <string name="view_reports">View Diagnostic Reports</string>
+    <string name="crash_reports_empty">No local diagnostic reports</string>
+    <string name="crash_reports_loading">Loading diagnostic reports</string>
     <string name="crash_report_midlet_failure">MIDlet session failure</string>
     <string name="crash_report_java_report">Java diagnostic report</string>
     <string name="crash_report_process_exit">Process exit diagnostic</string>
@@ -16,27 +17,27 @@
     <string name="copy_report">Copy</string>
     <string name="report_on_github">Report on GitHub</string>
     <string name="delete_report">Delete</string>
-    <string name="copy_selected_reports">Copy selected reports</string>
-    <string name="delete_selected_reports">Delete selected reports</string>
+    <string name="copy_selected_reports">Copy Selected Reports</string>
+    <string name="delete_selected_reports">Delete Selected Reports</string>
     <string name="crash_report_copied">Report copied</string>
     <plurals name="crash_reports_copied">
         <item quantity="one">%1$d report copied</item>
         <item quantity="other">%1$d reports copied</item>
     </plurals>
     <string name="crash_report_bundle_preparing">Preparing diagnostic bundle…</string>
-    <string name="crash_report_bundle_ready_title">Diagnostic bundle ready</string>
+    <string name="crash_report_bundle_ready_title">Diagnostic Bundle Ready</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nGitHub will ask you to upload this file before submitting the report. The diagnostic bundle will be public with your issue.</string>
-    <string name="locate_bundle">Locate bundle</string>
+    <string name="locate_bundle">Locate Bundle</string>
     <string name="open_github">Open GitHub</string>
     <string name="crash_report_bundle_failed">Could not prepare the diagnostic bundle</string>
     <string name="crash_report_locate_failed">No system file picker is available to locate the diagnostic bundle</string>
     <string name="crash_report_bundle_cleanup_failed">The diagnostic report was deleted, but JL-Mod Plus could not remove its generated bundle</string>
     <string name="crash_report_github_unavailable">No app is available to open the GitHub issue form</string>
-    <string name="crash_report_delete_title">Delete Crash Report?</string>
+    <string name="crash_report_delete_title">Delete Diagnostic Report?</string>
     <string name="crash_report_delete_message">This permanently removes the diagnostic report and any bundle generated for it from this device. Files already uploaded elsewhere are not affected.</string>
     <plurals name="crash_reports_batch_delete_title">
-        <item quantity="one">Delete %1$d Crash Report?</item>
-        <item quantity="other">Delete %1$d Crash Reports?</item>
+        <item quantity="one">Delete %1$d Diagnostic Report?</item>
+        <item quantity="other">Delete %1$d Diagnostic Reports?</item>
     </plurals>
     <string name="crash_reports_batch_delete_message">This permanently removes the selected diagnostic reports and any bundles generated for them from this device. Files already uploaded elsewhere are not affected.</string>
     <string name="crash_report_delete_failed">Could not delete the complete report</string>
@@ -45,6 +46,6 @@
     <string name="process_exit_recovery_message">JL-Mod Plus previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
     <string name="process_exit_recovery_message_midlet">A MIDlet process previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
     <string name="process_exit_recovery_message_named">%1$s previously ended unexpectedly (%2$s). Diagnostic details were saved locally.</string>
-    <string name="select_all_reports">Select all reports</string>
-    <string name="clear_report_selection">Clear report selection</string>
+    <string name="select_all_reports">Select All Reports</string>
+    <string name="clear_report_selection">Clear Report Selection</string>
 </resources>

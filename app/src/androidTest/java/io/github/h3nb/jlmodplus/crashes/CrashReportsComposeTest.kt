@@ -114,7 +114,7 @@ class CrashReportsComposeTest {
         composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
         composeRule.onNodeWithText("1 selected").assertIsDisplayed()
 
-        composeRule.onNodeWithContentDescription("Copy selected reports").performClick()
+        composeRule.onNodeWithContentDescription("Copy Selected Reports").performClick()
         assertEquals(listOf("report-1"), actions.copiedIds)
 
         composeRule.onNodeWithText("Other MIDlet").performClick()
@@ -125,8 +125,8 @@ class CrashReportsComposeTest {
             composeRule.onAllNodesWithText("Share selected reports").fetchSemanticsNodes().size,
         )
 
-        composeRule.onNodeWithContentDescription("Delete selected reports").performClick()
-        composeRule.onNodeWithText("Delete selected reports").performClick()
+        composeRule.onNodeWithContentDescription("Delete Selected Reports").performClick()
+        composeRule.onNodeWithText("Delete Selected Reports").performClick()
         assertEquals(listOf("report-1", "report-2"), actions.deletedIds)
     }
 
@@ -149,10 +149,10 @@ class CrashReportsComposeTest {
         }
 
         composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
-        composeRule.onNodeWithContentDescription("Select all reports").performClick()
+        composeRule.onNodeWithContentDescription("Select All Reports").performClick()
         composeRule.onNodeWithText("2 selected").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Clear report selection").performClick()
-        composeRule.onNodeWithText("Crash Reports").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Clear Report Selection").performClick()
+        composeRule.onNodeWithText("Diagnostic Reports").assertIsDisplayed()
     }
 
     @Test
@@ -170,8 +170,8 @@ class CrashReportsComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Diagnostic bundle ready").assertIsDisplayed()
-        composeRule.onNodeWithText("Locate bundle").performClick()
+        composeRule.onNodeWithText("Diagnostic Bundle Ready").assertIsDisplayed()
+        composeRule.onNodeWithText("Locate Bundle").performClick()
         assertEquals(1, actions.locateCount)
         composeRule.onNodeWithText("Open GitHub").performClick()
         assertEquals(1, actions.openGitHubCount)
@@ -189,6 +189,7 @@ class CrashReportsComposeTest {
             }
         }
 
+        composeRule.onNodeWithText("Diagnostic Report").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Copy").performClick()
         assertEquals(1, actions.copyCount)
 
