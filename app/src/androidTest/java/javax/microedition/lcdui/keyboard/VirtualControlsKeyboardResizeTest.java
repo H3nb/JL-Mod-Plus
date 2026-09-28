@@ -294,16 +294,31 @@ public class VirtualControlsKeyboardResizeTest {
         keyboard.resize(screen, 0f, 0f, 1200f, 600f);
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
 
+        boolean[] hidden = keyboard.getKeysVisibility();
+        String[] names = keyboard.getKeyNames();
+        for (int i = 0; i < names.length; i++) {
+            if ("#".equals(names[i])) hidden[i] = true;
+        }
+        keyboard.setKeysVisibility(hidden);
+
         VirtualDpadGeometry dpad = geometry("dpadGeometry");
         assertTrue(keyboard.pointerPressed(0, dpad.getCenterX(), dpad.getCenterY()));
         assertTrue(keyboard.pointerDragged(0, dpad.getCenterX() + 20f, dpad.getCenterY()));
         assertTrue(keyboard.pointerReleased(0, dpad.getCenterX() + 20f, dpad.getCenterY()));
         keyboard.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
 
+        assertTrue(ProfilesManager.saveConfig(settings));
+        try (FileOutputStream stream = new FileOutputStream(layoutFile())) {
+            stream.write(keyboard.encodeCurrentLayoutForPersistence());
+        }
+
         float[][] before = legacyCenters();
         recreateKeyboardFromDisk(screen);
 
         assertEquals(VirtualKeyboard.TYPE_CUSTOM, keyboard.getLayout());
+        for (int i = 0; i < names.length; i++) {
+            if ("#".equals(names[i])) assertTrue(keyboard.getKeysVisibility()[i]);
+        }
         float[][] after = legacyCenters();
         for (int i = 0; i < before.length; i++) {
             assertEquals(before[i][0], after[i][0], EPS);
