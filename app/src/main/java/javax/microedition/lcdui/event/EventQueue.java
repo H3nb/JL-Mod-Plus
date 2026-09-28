@@ -63,7 +63,7 @@ public class EventQueue implements Runnable {
 		}
 
 		@Override
-		public void recycle() {
+		protected void recycleEvent() {
 			continuation = null;
 		}
 

@@ -19,7 +19,7 @@ package javax.microedition.lcdui.event;
 
 public abstract class SimpleEvent extends Event {
 	@Override
-	public void recycle() {
+	protected void recycleEvent() {
 	}
 
 	@Override
