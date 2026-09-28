@@ -18,6 +18,7 @@ package io.github.h3nb.jlmodplus.crashes;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -25,6 +26,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -256,13 +258,16 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 				.addCategory(Intent.CATEGORY_OPENABLE)
 				.setType("application/zip");
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			locate.putExtra(DocumentsContract.EXTRA_INITIAL_URI, directory);
+			Uri initialUri = preferredInitialDocumentUri(preparedBundle.uri, directory);
+			if (initialUri != null) {
+				locate.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initialUri);
+			}
 		}
 		try {
 			startActivity(locate);
 			return;
 		} catch (ActivityNotFoundException | SecurityException ignored) {
-			// Fall through to the generic document-provider surface.
+			// Fall through only when the system document picker itself is unavailable.
 		}
 		Intent fallback = new Intent(Intent.ACTION_GET_CONTENT)
 				.addCategory(Intent.CATEGORY_OPENABLE)
@@ -272,6 +277,31 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		} catch (ActivityNotFoundException | SecurityException e) {
 			ThemedToast.show(this, R.string.crash_report_locate_failed, Toast.LENGTH_LONG);
 		}
+	}
+
+	@Nullable
+	private Uri preferredInitialDocumentUri(Uri bundleUri, Uri directoryUri) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+				&& bundleUri != null
+				&& ContentResolver.SCHEME_CONTENT.equals(bundleUri.getScheme())
+				&& MediaStore.AUTHORITY.equals(bundleUri.getAuthority())) {
+			try {
+				Uri documentUri = MediaStore.getDocumentUri(this, bundleUri);
+				if (resolvesDocumentsProvider(documentUri)) {
+					return documentUri;
+				}
+			} catch (RuntimeException ignored) {
+				// Conversion is best-effort and grants no new permissions.
+			}
+		}
+		return resolvesDocumentsProvider(directoryUri) ? directoryUri : null;
+	}
+
+	private boolean resolvesDocumentsProvider(Uri uri) {
+		return uri != null
+				&& ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())
+				&& uri.getAuthority() != null
+				&& getPackageManager().resolveContentProvider(uri.getAuthority(), 0) != null;
 	}
 
 	static Uri diagnosticsDirectoryDocumentUri() {

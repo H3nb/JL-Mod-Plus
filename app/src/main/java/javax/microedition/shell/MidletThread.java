@@ -57,6 +57,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final int RESUME_REQUEST = 7;
 
 	private static volatile MidletThread instance;
+	private static final InheritableThreadLocal<Boolean> GUEST_EXECUTION =
+			new InheritableThreadLocal<>();
+	private static final ThreadLocal<Throwable> ESCAPING_GUEST_FAILURE = new ThreadLocal<>();
 
 	private final MicroLoader microLoader;
 	private final String mainClass;
@@ -85,6 +88,35 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		this.microLoader = microLoader;
 		this.mainClass = mainClass;
 		this.journal = journal;
+	}
+
+	/**
+	 * Marks a known guest callback boundary. Guest-created worker threads inherit this signal,
+	 * covering callbacks executed on emulator-owned threads without changing their classloader.
+	 */
+	public static boolean enterGuestExecution() {
+		if (instance == null || Boolean.TRUE.equals(GUEST_EXECUTION.get())) {
+			return false;
+		}
+		GUEST_EXECUTION.set(Boolean.TRUE);
+		return true;
+	}
+
+	public static void exitGuestExecution(boolean entered) {
+		if (entered) {
+			GUEST_EXECUTION.remove();
+		}
+	}
+
+	public static void markEscapingGuestFailure(Throwable error) {
+		if (error == null || !Boolean.TRUE.equals(GUEST_EXECUTION.get())) {
+			return;
+		}
+		try {
+			ESCAPING_GUEST_FAILURE.set(error);
+		} catch (Throwable ignored) {
+			// The original fatal Throwable must continue even if ownership marking cannot allocate.
+		}
 	}
 
 	public static void notifyDestroyed() {
@@ -534,7 +566,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private void handleUncaughtSessionFailure(Thread thread, Throwable error) {
 		if (!fatalFailureClaimed.get()) {
 			MidletSessionJournal.FailureBoundary boundary = classifyFailureBoundary(thread);
-			if (!isClaimableSessionUncaught(thread, boundary)) {
+			if (!isClaimableSessionUncaught(thread, error, boundary)) {
 				delegateProcessUnhandled(thread, error);
 				return;
 			}
@@ -557,7 +589,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 
 		if (thread != primaryFailureThread) {
-			if (!microLoader.ownsGuestThread(thread)) {
+			if (!hasProvenGuestOwnership(thread, error)) {
 				delegateProcessUnhandled(thread, error);
 				return;
 			}
@@ -570,12 +602,26 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		terminateFatalRuntime();
 	}
 
-	private boolean isClaimableSessionUncaught(Thread thread,
+	private boolean isClaimableSessionUncaught(Thread thread, Throwable error,
 			MidletSessionJournal.FailureBoundary boundary) {
 		if (boundary != MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD) {
 			// Lifecycle failures are claimed explicitly at their callback boundaries. A generic
 			// MidletMain crash outside those boundaries remains a true process-unhandled failure.
 			return false;
+		}
+		return hasProvenGuestOwnership(thread, error);
+	}
+
+	private boolean hasProvenGuestOwnership(Thread thread, Throwable error) {
+		if (thread == Thread.currentThread()) {
+			Throwable marked = ESCAPING_GUEST_FAILURE.get();
+			if (marked == error) {
+				ESCAPING_GUEST_FAILURE.remove();
+				return true;
+			}
+			if (Boolean.TRUE.equals(GUEST_EXECUTION.get())) {
+				return true;
+			}
 		}
 		return microLoader.ownsGuestThread(thread);
 	}

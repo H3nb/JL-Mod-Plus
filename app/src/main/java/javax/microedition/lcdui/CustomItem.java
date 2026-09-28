@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2018 Nikita Shakarun
  * Copyright 2020-2026 Yury Kharchenko
  *
@@ -25,6 +26,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import javax.microedition.shell.MidletThread;
 import javax.microedition.util.ContextHolder;
 
 public abstract class CustomItem extends Item {
@@ -120,10 +122,16 @@ public abstract class CustomItem extends Item {
 		if (view == null) return;
 		Graphics graphics = offscreen.getSingleGraphics();
 		graphics.reset(x, y, x + width, y + height);
+		boolean enteredGuest = MidletThread.enterGuestExecution();
 		try {
 			paint(graphics, width, height);
-		} catch (Throwable t) {
-			Log.e(TAG, "repaint: ", t);
+		} catch (Exception e) {
+			Log.e(TAG, "repaint: ", e);
+		} catch (Error fatal) {
+			MidletThread.markEscapingGuestFailure(fatal);
+			throw fatal;
+		} finally {
+			MidletThread.exitGuestExecution(enteredGuest);
 		}
 		view.postInvalidate();
 	}

@@ -74,6 +74,48 @@ public class IncidentInterpreterTest {
 	}
 
 	@Test
+	public void provenGuestWorkerFallbackHandlesObfuscationButHostFrameStillWins() {
+		JavaDiagnosticStore.Snapshot guest = javaEvidence(
+				JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE,
+				List.of(throwable("java.lang.NullPointerException", "boom", "bz", "a")),
+				0,
+				"game.Main",
+				MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD);
+		IncidentSummary guestIncident = IncidentInterpreter.interpret(null, guest, null);
+
+		assertEquals(IncidentSummary.Category.MIDLET_CRASH, guestIncident.category);
+		assertEquals(IncidentSummary.FailureOrigin.MIDLET, guestIncident.failureOrigin);
+
+		JavaDiagnosticStore.Snapshot host = javaEvidence(
+				JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE,
+				List.of(throwable("java.lang.IllegalStateException", "host",
+						"javax.microedition.lcdui.event.EventQueue", "run")),
+				0,
+				"game.Main",
+				MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD);
+		IncidentSummary hostIncident = IncidentInterpreter.interpret(null, host, null);
+
+		assertEquals(IncidentSummary.Category.JL_MOD_PLUS, hostIncident.category);
+		assertEquals(IncidentSummary.FailureOrigin.JL_MOD_PLUS, hostIncident.failureOrigin);
+	}
+
+	@Test
+	public void authoritativeNativeAndAnrEvidencePrecedeNonLifecycleJavaCategory() {
+		JavaDiagnosticStore.Snapshot java = javaEvidence(
+				List.of(throwable("java.lang.IllegalStateException", "boom", "game.Main", "run")),
+				0,
+				"game.Main");
+
+		assertEquals(IncidentSummary.Category.NATIVE_CRASH,
+				IncidentInterpreter.interpret(
+						null, java, exit(ProcessExitStore.REASON_CRASH_NATIVE,
+								ProcessExitStore.SIGNAL_SEGV, false, 36)).category);
+		assertEquals(IncidentSummary.Category.ANR,
+				IncidentInterpreter.interpret(
+						null, java, exit(ProcessExitStore.REASON_ANR, 0, false, 36)).category);
+	}
+
+	@Test
 	public void midletMetadataDoesNotTurnHostFrameIntoGuestBlame() {
 		JavaDiagnosticStore.ThrowableData host = throwable(
 				"java.lang.IllegalStateException",
@@ -210,6 +252,23 @@ public class IncidentInterpreterTest {
 	}
 
 	@Test
+	public void memoryLimiterSupportsDedicatedReasonAndDocumentedOtherMarker() {
+		IncidentSummary dedicated = IncidentInterpreter.interpret(
+				null, null, exit(ProcessExitStore.REASON_MEMORY_LIMITER, 0, false, 37));
+		IncidentSummary marker = IncidentInterpreter.interpret(
+				null, null, exit(ProcessExitStore.REASON_OTHER, 0, false, 37,
+						"MemoryLimiter:AnonSwap threshold exceeded"));
+
+		assertEquals(IncidentSummary.Category.PROCESS_EXIT, dedicated.category);
+		assertEquals("Memory-limit termination", dedicated.associatedProcessExit.reasonLabel);
+		assertTrue(dedicated.associatedProcessExit.summary.contains("system memory limit"));
+		assertEquals("Memory-limit termination", marker.associatedProcessExit.reasonLabel);
+		assertTrue(marker.associatedProcessExit.summary.contains("system memory limit"));
+		assertEquals("MemoryLimiter:AnonSwap threshold exceeded",
+				marker.associatedProcessExit.description);
+	}
+
+	@Test
 	public void api28ProcessDisappearanceStatesPlatformLimitation() {
 		ProcessExitStore.Snapshot exit =
 				exit(ProcessExitStore.REASON_UNKNOWN, 0, false, 28);
@@ -239,6 +298,13 @@ public class IncidentInterpreterTest {
 	private static JavaDiagnosticStore.Snapshot javaEvidence(
 			JavaDiagnosticStore.Kind kind, List<JavaDiagnosticStore.ThrowableData> chain,
 			int primaryIndex, String mainClass) {
+		return javaEvidence(kind, chain, primaryIndex, mainClass, null);
+	}
+
+	private static JavaDiagnosticStore.Snapshot javaEvidence(
+			JavaDiagnosticStore.Kind kind, List<JavaDiagnosticStore.ThrowableData> chain,
+			int primaryIndex, String mainClass,
+			MidletSessionJournal.FailureBoundary boundary) {
 		return new JavaDiagnosticStore.Snapshot(
 				new File("incident.java.properties"),
 				kind,
@@ -265,7 +331,7 @@ public class IncidentInterpreterTest {
 				chain,
 				primaryIndex,
 				null,
-				null,
+				boundary == null ? null : boundary.name(),
 				null);
 	}
 
@@ -317,6 +383,11 @@ public class IncidentInterpreterTest {
 
 	private static ProcessExitStore.Snapshot exit(
 			int reason, int status, boolean lmkSupported, int sdk) {
+		return exit(reason, status, lmkSupported, sdk, null);
+	}
+
+	private static ProcessExitStore.Snapshot exit(
+			int reason, int status, boolean lmkSupported, int sdk, String description) {
 		String source = sdk >= 23 && sdk < 30
 				? ProcessExitStore.SOURCE_LEGACY_PROCESS_DISAPPEARANCE
 				: ProcessExitStore.SOURCE_APPLICATION_EXIT_INFO;
@@ -334,7 +405,7 @@ public class IncidentInterpreterTest {
 				ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
 				412L * 1024,
 				596L * 1024,
-				null,
+				description,
 				lmkSupported,
 				1L,
 				sdk,

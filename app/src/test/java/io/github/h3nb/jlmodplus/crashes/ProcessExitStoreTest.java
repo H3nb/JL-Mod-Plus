@@ -57,7 +57,7 @@ public class ProcessExitStoreTest {
 	}
 
 	@Test
-	public void expectedUserPackageAndNonActionableSystemExitsAreSuppressed() {
+	public void expectedUserAndPackageExitsAreSuppressed() {
 		assertFalse(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_USER_REQUESTED, 0, FOREGROUND, true));
 		assertFalse(ProcessExitStore.shouldRetain(
@@ -66,8 +66,39 @@ public class ProcessExitStoreTest {
 				ApplicationExitInfo.REASON_PACKAGE_UPDATED, 0, FOREGROUND, true));
 		assertFalse(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_PACKAGE_STATE_CHANGE, 0, FOREGROUND, true));
+	}
+
+	@Test
+	public void unknownAndOtherRequireActionableProcessState() {
 		assertFalse(ProcessExitStore.shouldRetain(
-				ProcessExitStore.REASON_OTHER, 0, FOREGROUND, true));
+				ProcessExitStore.REASON_UNKNOWN, 0, CACHED, false));
+		assertTrue(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_UNKNOWN, 0, CACHED, true));
+		assertTrue(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_UNKNOWN, 0, FOREGROUND, false));
+
+		assertFalse(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_OTHER, 0, CACHED, false));
+		assertTrue(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_OTHER, 0, CACHED, true));
+		assertTrue(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_OTHER, 0, FOREGROUND, false));
+	}
+
+	@Test
+	public void memoryLimiterSemanticsUseOnlyDedicatedReasonOrDocumentedMarker() {
+		assertTrue(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_MEMORY_LIMITER, 0, FOREGROUND, false));
+		assertEquals("Memory-limit termination",
+				ProcessExitStore.reasonLabel(ProcessExitStore.REASON_MEMORY_LIMITER));
+		assertTrue(ProcessExitStore.isMemoryLimiterTermination(
+				ProcessExitStore.REASON_MEMORY_LIMITER, null));
+		assertTrue(ProcessExitStore.isMemoryLimiterTermination(
+				ProcessExitStore.REASON_OTHER,
+				"MemoryLimiter:AnonSwap threshold exceeded"));
+		assertFalse(ProcessExitStore.isMemoryLimiterTermination(
+				ProcessExitStore.REASON_OTHER,
+				"generic memory pressure"));
 	}
 
 	@Test

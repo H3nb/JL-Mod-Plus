@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
  *
@@ -19,10 +20,14 @@ package javax.microedition.lcdui.event;
 
 import android.util.Log;
 
+import javax.microedition.shell.MidletThread;
+
 /**
  * The base class for all events.
  */
 public abstract class Event implements Runnable {
+	private boolean guestCallback;
+
 	/**
 	 * Event handling.
 	 * This is where you need to perform the required actions.
@@ -37,16 +42,35 @@ public abstract class Event implements Runnable {
 	 */
 	public abstract void recycle();
 
+	/** Marks this event as a known guest-code callback boundary. */
+	public final Event asGuestCallback() {
+		guestCallback = true;
+		return this;
+	}
+
 	/**
 	 * Handle the event and recycle it.
 	 */
 	@Override
 	public void run() {
+		boolean guest = guestCallback;
+		boolean enteredGuest = guest && MidletThread.enterGuestExecution();
 		try {
-			process();
-		} catch (Exception e) {
-			Log.e(getClass().getName(), "process: ", e);
+			try {
+				process();
+			} catch (Exception e) {
+				Log.e(getClass().getName(), "process: ", e);
+			} catch (Error fatal) {
+				if (guest) {
+					MidletThread.markEscapingGuestFailure(fatal);
+				}
+				throw fatal;
+			}
 		} finally {
+			if (guest) {
+				MidletThread.exitGuestExecution(enteredGuest);
+			}
+			guestCallback = false;
 			leaveQueue();
 			recycle();
 		}

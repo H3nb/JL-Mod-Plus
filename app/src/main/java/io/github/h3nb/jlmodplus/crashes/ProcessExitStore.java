@@ -70,6 +70,10 @@ public final class ProcessExitStore {
 	static final int REASON_FREEZER = 14;
 	static final int REASON_PACKAGE_STATE_CHANGE = 15;
 	static final int REASON_PACKAGE_UPDATED = 16;
+	// Android 17 documentation is transitional: newer references expose reason 17, while
+	// current behavior documentation also identifies the exact marker below under REASON_OTHER.
+	static final int REASON_MEMORY_LIMITER = 17;
+	static final String MEMORY_LIMITER_ANON_SWAP_MARKER = "MemoryLimiter:AnonSwap";
 
 	// Linux/Android signal numbers are ABI-stable values from signal(7). Keep these primitives in
 	// common diagnostic code so unit tests and API23 devices do not depend on android.system stubs.
@@ -321,7 +325,18 @@ public final class ProcessExitStore {
 		return !marker.exists() || (marker.isFile() && marker.delete());
 	}
 
+	static String reasonLabel(Snapshot snapshot) {
+		return snapshot == null ? null : reasonLabel(snapshot.reason, snapshot.description);
+	}
+
 	static String reasonLabel(int reason) {
+		return reasonLabel(reason, null);
+	}
+
+	static String reasonLabel(int reason, String description) {
+		if (isMemoryLimiterTermination(reason, description)) {
+			return "Memory-limit termination";
+		}
 		return switch (reason) {
 			case REASON_CRASH -> "Java crash";
 			case REASON_CRASH_NATIVE -> "Native crash";
@@ -333,9 +348,16 @@ public final class ProcessExitStore {
 			case REASON_DEPENDENCY_DIED -> "Dependency died";
 			case REASON_FREEZER -> "App freezer termination";
 			case REASON_EXIT_SELF -> "Self exit";
-			case REASON_OTHER -> "Other process termination";
+			case REASON_OTHER -> "Other system termination";
 			default -> "Process termination (reason " + reason + ")";
 		};
+	}
+
+	static boolean isMemoryLimiterTermination(int reason, String description) {
+		return reason == REASON_MEMORY_LIMITER
+				|| reason == REASON_OTHER
+				&& description != null
+				&& description.contains(MEMORY_LIMITER_ANON_SWAP_MARKER);
 	}
 
 	static String statusLabel(Snapshot snapshot) {
@@ -392,13 +414,14 @@ public final class ProcessExitStore {
 					REASON_ANR,
 					REASON_INITIALIZATION_FAILURE,
 					REASON_EXCESSIVE_RESOURCE_USAGE -> true;
-			case REASON_LOW_MEMORY -> midletProcess || foregroundish;
+			case REASON_LOW_MEMORY,
+					REASON_UNKNOWN,
+					REASON_OTHER,
+					REASON_MEMORY_LIMITER -> midletProcess || foregroundish;
 			case REASON_SIGNALED -> status != SIGNAL_KILL || midletProcess || foregroundish;
 			case REASON_DEPENDENCY_DIED, REASON_FREEZER -> midletProcess || foregroundish;
 			case REASON_EXIT_SELF -> status != 0 && (midletProcess || foregroundish);
-			case REASON_UNKNOWN,
-					REASON_OTHER,
-					REASON_PERMISSION_CHANGE,
+			case REASON_PERMISSION_CHANGE,
 					REASON_USER_REQUESTED,
 					REASON_USER_STOPPED,
 					REASON_PACKAGE_STATE_CHANGE,
@@ -1006,7 +1029,7 @@ public final class ProcessExitStore {
 			this.id = snapshot.id;
 			this.processRole = snapshot.processRole;
 			this.midletName = midletName;
-			this.reason = reasonLabel(snapshot.reason);
+			this.reason = reasonLabel(snapshot);
 		}
 
 		public String getId() {

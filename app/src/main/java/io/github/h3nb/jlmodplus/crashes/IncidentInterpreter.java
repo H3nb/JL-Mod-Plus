@@ -25,27 +25,30 @@ final class IncidentInterpreter {
 		String entrypoint = first(
 				session == null ? null : session.mainClass,
 				java == null ? null : java.midletMainClass);
-		IncidentSummary.FailureOrigin origin = failureOrigin(
-				java == null ? null : java.primaryThrowable(), entrypoint);
 		MidletSessionJournal.FailureBoundary effectiveBoundary =
 				session != null && session.failureBoundary != null
 						? session.failureBoundary
 						: storedBoundary(java == null ? null : java.legacyBoundary);
+		IncidentSummary.FailureOrigin origin = failureOrigin(
+				java == null ? null : java.primaryThrowable(),
+				entrypoint,
+				java == null ? null : java.kind,
+				effectiveBoundary);
 		boolean lifecycle = effectiveBoundary != null
 				&& effectiveBoundary.name().startsWith("LIFECYCLE_");
 		IncidentSummary.Category category;
 		if (lifecycle) {
 			category = IncidentSummary.Category.MIDLET_LIFECYCLE;
+		} else if (exit != null && exit.reason == ProcessExitStore.REASON_CRASH_NATIVE) {
+			category = IncidentSummary.Category.NATIVE_CRASH;
+		} else if (exit != null && exit.reason == ProcessExitStore.REASON_ANR) {
+			category = IncidentSummary.Category.ANR;
 		} else if (java != null) {
 			category = switch (origin) {
 				case MIDLET -> IncidentSummary.Category.MIDLET_CRASH;
 				case JL_MOD_PLUS -> IncidentSummary.Category.JL_MOD_PLUS;
 				case UNKNOWN -> IncidentSummary.Category.JAVA_FAILURE;
 			};
-		} else if (exit != null && exit.reason == ProcessExitStore.REASON_CRASH_NATIVE) {
-			category = IncidentSummary.Category.NATIVE_CRASH;
-		} else if (exit != null && exit.reason == ProcessExitStore.REASON_ANR) {
-			category = IncidentSummary.Category.ANR;
 		} else {
 			category = IncidentSummary.Category.PROCESS_EXIT;
 		}
@@ -151,19 +154,28 @@ final class IncidentInterpreter {
 	}
 
 	static IncidentSummary.FailureOrigin failureOrigin(
-			JavaDiagnosticStore.ThrowableData primary, String entrypoint) {
-		if (primary == null || primary.firstFrame() == null) {
-			return IncidentSummary.FailureOrigin.UNKNOWN;
+			JavaDiagnosticStore.ThrowableData primary,
+			String entrypoint,
+			JavaDiagnosticStore.Kind kind,
+			MidletSessionJournal.FailureBoundary boundary) {
+		if (primary != null && primary.firstFrame() != null) {
+			String frameClass = primary.firstFrame().className;
+			if (frameClass != null) {
+				// Proven framework origin wins over session ownership. The fallback below exists
+				// only for an uncaught worker already proven to be guest-owned at capture time.
+				if (frameClass.startsWith("io.github.h3nb.jlmodplus.")
+						|| frameClass.startsWith("ru.playsoftware.j2meloader.")
+						|| frameClass.startsWith("javax.microedition.")) {
+					return IncidentSummary.FailureOrigin.JL_MOD_PLUS;
+				}
+				if (entrypoint != null
+						&& (frameClass.equals(entrypoint) || frameClass.startsWith(entrypoint + "$"))) {
+					return IncidentSummary.FailureOrigin.MIDLET;
+				}
+			}
 		}
-		String frameClass = primary.firstFrame().className;
-		if (frameClass == null) return IncidentSummary.FailureOrigin.UNKNOWN;
-		if (frameClass.startsWith("io.github.h3nb.jlmodplus.")
-				|| frameClass.startsWith("ru.playsoftware.j2meloader.")
-				|| frameClass.startsWith("javax.microedition.")) {
-			return IncidentSummary.FailureOrigin.JL_MOD_PLUS;
-		}
-		if (entrypoint != null
-				&& (frameClass.equals(entrypoint) || frameClass.startsWith(entrypoint + "$"))) {
+		if (kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE
+				&& boundary == MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD) {
 			return IncidentSummary.FailureOrigin.MIDLET;
 		}
 		return IncidentSummary.FailureOrigin.UNKNOWN;
@@ -211,7 +223,7 @@ final class IncidentInterpreter {
 				exit.source,
 				exit.reason,
 				exit.status,
-				ProcessExitStore.reasonLabel(exit.reason),
+				ProcessExitStore.reasonLabel(exit),
 				status,
 				ProcessExitStore.importanceLabel(exit.importance),
 				exit.processName,
@@ -247,6 +259,9 @@ final class IncidentInterpreter {
 
 	static String processExitSummary(ProcessExitStore.Snapshot exit, String status) {
 		if (exit == null) return null;
+		if (ProcessExitStore.isMemoryLimiterTermination(exit.reason, exit.description)) {
+			return "Android reported that the process exceeded its system memory limit.";
+		}
 		return switch (exit.reason) {
 			case ProcessExitStore.REASON_LOW_MEMORY -> "Android reported a low-memory kill.";
 			case ProcessExitStore.REASON_ANR -> "Android reported an ANR.";
@@ -255,7 +270,21 @@ final class IncidentInterpreter {
 			case ProcessExitStore.REASON_CRASH -> "Android reported a Java process crash.";
 			case ProcessExitStore.REASON_SIGNALED -> "Android recorded "
 					+ first(status, "signal " + exit.status) + ".";
-			case ProcessExitStore.REASON_UNKNOWN -> "The process ended unexpectedly.";
+			case ProcessExitStore.REASON_INITIALIZATION_FAILURE ->
+					"Android reported a process initialization failure.";
+			case ProcessExitStore.REASON_EXCESSIVE_RESOURCE_USAGE ->
+					"Android reported termination for excessive resource usage.";
+			case ProcessExitStore.REASON_DEPENDENCY_DIED ->
+					"Android reported that a required process dependency died.";
+			case ProcessExitStore.REASON_FREEZER ->
+					"Android reported an app-freezer termination.";
+			case ProcessExitStore.REASON_EXIT_SELF ->
+					"The process exited itself with status " + exit.status + ".";
+			case ProcessExitStore.REASON_OTHER ->
+					"Android reported another system termination.";
+			case ProcessExitStore.REASON_UNKNOWN ->
+					"Android recorded an unexpected process termination but did not provide "
+							+ "a specific reason.";
 			default -> "Android reported process-exit reason " + exit.reason + ".";
 		};
 	}
