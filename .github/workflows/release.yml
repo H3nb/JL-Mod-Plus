@@ -131,7 +131,7 @@ jobs:
         env:
           JLMOD_BUILD_COMMIT: ${{ github.sha }}
         run: >-
-          ./gradlew --no-daemon --stacktrace --continue
+          ./gradlew --daemon --stacktrace --profile --continue
           :app:lintEmulatorDebug
           :dexlib:lintDebug
           :app:testEmulatorDebugUnitTest
@@ -143,7 +143,7 @@ jobs:
           VERSION_SUFFIX: ${{ steps.channel.outputs.version_suffix }}
           JLMOD_BUILD_COMMIT: ${{ github.sha }}
         run: >-
-          ./gradlew --no-daemon --stacktrace
+          ./gradlew --daemon --stacktrace --profile
           :app:assembleEmulatorRelease
 
       - name: Prepare release artifacts
@@ -296,5 +296,6 @@ jobs:
             dexlib/build/test-results/**
             app/build/reports/screenshotTest/**
             build/reports/problems/**
+            build/reports/profile/**
           if-no-files-found: warn
           retention-days: 7

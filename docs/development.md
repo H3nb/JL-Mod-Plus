@@ -89,7 +89,7 @@ from the PR head. Manual dispatch checks the selected branch revision instead.
 
 | Mode | Result |
 | --- | --- |
-| `validate` (default; automatic on PRs) | Separate assembly, lint/unit-test/instrumentation-compilation, and screenshot steps; failures remain failures while independent checks continue |
+| `validate` (default; automatic on PRs) | Separate assembly, lint/unit-test/instrumentation-compilation, and screenshot steps; comparison failures also produce reviewable candidates from the same render |
 | `update-screenshots` (manual) | Renderer-generated candidate references and a binary patch for review; does not validate or publish the app |
 | `runtime-smoke` (manual) | Selected existing instrumentation tests on one fresh API 35 x86_64 emulator; does not run the full Android suite or replace normal PR validation |
 
@@ -98,24 +98,31 @@ candidates or passing the runtime subset does not satisfy the PR `build` check.
 Dispatch options require the workflow to be available through GitHub's default
 branch; do not add a temporary push-triggered updater when dispatch is unavailable.
 
-The debug APK artifact is uploaded when assembly and artifact staging succeed,
-even if lint, tests, or screenshot comparison fail. It includes `validation.txt`
-with the source commit, run URL, and step outcomes. Artifact availability does not
-mean the build is validated or ready to merge. Diagnostic artifacts include app
-and dexlib reports, screenshot reports, and connected-test reports/logcat when run.
-Inspect the individual reports when a combined step fails.
+The debug APK artifact is uploaded immediately after successful assembly and
+staging, before validation finishes. Its `BUILD-INFO.txt` records the source commit
+and run URL and labels it unverified. The final job summary and diagnostic artifact's
+`ci-artifacts/validation.txt` contain the final step outcomes; the early APK artifact
+is not rewritten. Artifact availability does not mean the build is validated or
+ready to merge. Diagnostic artifacts include app and dexlib reports, screenshot
+reports, and connected-test reports/logcat when run. Inspect the individual reports
+when a combined step fails.
 
 ### Screenshot updates without a local Android toolchain
 
 1. Diagnose the mismatch from the `validate` run's screenshot report and authorized UI change.
-2. Dispatch Android CI with `mode=update-screenshots` on the intended branch. Do not advance the branch while generating candidates if it would make the output stale.
-3. Download `JL-Mod-Plus-screenshot-candidates`. It contains `before/`, `after/`, `changes.txt`, `source-commit.txt`, and `baselines.patch`. Compare the actual images; inspect added, renamed, and obsolete references as well as changed ones.
-4. Confirm the recorded source commit matches the UI revision being reviewed. From the repository root, use `git apply --check path/to/baselines.patch`, then apply the reviewed patch. If only some changes are justified, transfer only those renderer-produced files and review deletions explicitly. An empty patch means the renderer produced no reference changes.
-5. Commit the accepted references with the UI change and run normal validation again. Candidate generation alone is not a passing screenshot check. Never accept unrelated visual changes just to make CI green.
+2. For supported comparison failures, the run automatically uploads `JL-Mod-Plus-screenshot-candidates`. It contains `before/`, `after/`, `diff/` where available, `changes.txt`, `source-commit.txt`, `source-context.json`, and `baselines.patch`. These are the original PNG bytes from validation; there is no second render and no automatic baseline acceptance.
+3. Compare the images and confirm the recorded build/head/base commits match the source being reviewed. PR renders include the temporary merge with the base branch. If either branch has changed in a relevant way, regenerate before accepting the images.
+4. From the repository root, use `git apply --check path/to/baselines.patch`, then apply the reviewed patch. If only some changes are justified, transfer only those renderer-produced files. Automatic candidates cover supported mismatches only, not obsolete-reference cleanup or every rendering failure.
+5. For deliberate full regeneration or cases without automatic candidates, dispatch `mode=update-screenshots` on the intended branch. This runs the official update task and packages all references as `before/` and `after/`, with `changes.txt`, `source-commit.txt`, and a binary patch. Inspect added, renamed, and obsolete references. Skip patch application when the patch is empty.
+6. Commit accepted references and run normal validation again. Candidate packaging/generation does not change the failed validation result. Never accept unrelated visual changes just to make CI green.
 
-Scripts and GitHub tools may transfer or package the generated images unchanged;
-they must not redraw expected pixels. A full binary patch includes new images as
-well as changes and deletions reported by Git; it is not automatically committed.
+The automatic packager reads the pinned plugin's XML reference/actual/diff mapping,
+accepts only recognized image-comparison failures, and excludes other failures.
+Missing or invalid output remains a diagnostic problem, not an acceptable baseline.
+Its temporary Git index leaves both committed references and the real index intact.
+Review this mapping when updating the screenshot plugin. Scripts and GitHub tools
+may transfer images unchanged; they must not redraw expected pixels. No patch is
+automatically committed.
 
 If rendering or inspection is unavailable, preserve the references, complete other
 scoped work, and report the precise gap and next required check. Missing checks
@@ -134,6 +141,20 @@ Keep this mode opt-in until successful CI execution, stability, and cost are
 established. Record which selected tests actually ran; the rest of `androidTest`
 remains unverified unless separately executed. Physical arm64/native behavior and
 other Android versions still require appropriate device or targeted checks.
+
+### CI performance
+
+CI reuses a Gradle daemon across steps in the same job and preserves the existing
+Gradle build cache. Each invocation writes an HTML timing profile under
+`build/reports/profile/`, included in diagnostic artifacts. Compare equivalent task
+sets and cache conditions before attributing timing differences to an optimization;
+measure time to APK separately from time to completed validation.
+
+Do not run `clean` routinely or discard relevant checks to improve timings.
+Configuration cache is not enabled: the custom native-packaging verification task
+still captures build-script state at execution time and needs compatibility work.
+Use the timing profiles to justify that work before changing the task or enabling
+configuration cache. Do not suppress configuration-cache problems as warnings.
 
 ### Release checks
 
