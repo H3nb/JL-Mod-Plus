@@ -89,7 +89,7 @@ from the PR head. Manual dispatch checks the selected branch revision instead.
 
 | Mode | Result |
 | --- | --- |
-| `validate` (default; automatic on PRs) | Separate assembly, lint/unit-test/instrumentation-compilation, and screenshot steps; comparison failures also produce reviewable candidates from the same render |
+| `validate` (default; automatic on PRs) | Parallel lint and build/test jobs, followed by the required `build` status; comparison failures also produce reviewable candidates from the same render |
 | `update-screenshots` (manual) | Renderer-generated candidate references and a binary patch for review; does not validate or publish the app |
 | `runtime-smoke` (manual) | Selected existing instrumentation tests on one fresh API 35 x86_64 emulator; does not run the full Android suite or replace normal PR validation |
 
@@ -100,12 +100,14 @@ branch; do not add a temporary push-triggered updater when dispatch is unavailab
 
 The debug APK artifact is uploaded immediately after successful assembly and
 staging, before validation finishes. Its `BUILD-INFO.txt` records the source commit
-and run URL and labels it unverified. The final job summary and diagnostic artifact's
-`ci-artifacts/validation.txt` contain the final step outcomes; the early APK artifact
-is not rewritten. Artifact availability does not mean the build is validated or
-ready to merge. Diagnostic artifacts include app and dexlib reports, screenshot
-reports, and connected-test reports/logcat when run. Inspect the individual reports
-when a combined step fails.
+and run URL and labels it unverified. The final `build` check requires both
+`Build and tests` and `Lint` to succeed. `JL-Mod-Plus-ci-diagnostics` contains
+`ci-artifacts/validation.txt`, app/dexlib test reports, screenshot reports, and
+connected-test reports/logcat when run. `JL-Mod-Plus-lint-diagnostics` contains lint
+reports. The validation file records its own job's step outcomes, not the separate
+lint result; consult the final `build` check for overall status. The early APK
+artifact is not rewritten. Artifact availability does not mean validation passed.
+Inspect the individual reports when a combined step fails.
 
 ### Screenshot updates without a local Android toolchain
 
@@ -145,7 +147,10 @@ other Android versions still require appropriate device or targeted checks.
 ### CI performance
 
 CI reuses a Gradle daemon across steps in the same job and preserves the existing
-Gradle build cache. Each invocation writes an HTML timing profile under
+Gradle build cache. Lint runs independently of assembly and tests to shorten the
+critical path without dropping checks. This duplicates some setup/compilation, so
+compare total runner minutes as well as elapsed time when assessing the split.
+Each invocation writes an HTML timing profile under
 `build/reports/profile/`, included in diagnostic artifacts. Compare equivalent task
 sets and cache conditions before attributing timing differences to an optimization;
 measure time to APK separately from time to completed validation.
