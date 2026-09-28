@@ -30,7 +30,6 @@
     <string name="FORCE_CLOSE_CONFIRMATION">Erzwungenes Schließen der Anwendung kann zu Datenverlust führen oder die Anwendung beschädigen!\nFortfahren?</string>
     <string name="help">Hilfe</string>
     <string name="help_message">&#8226; Das Aktivieren der Filterung kann in einigen Fällen die Leistung erheblich beeinträchtigen. Deaktivieren Sie diese Option, wenn das Spiel zu langsam ist.&lt;BR&gt;&#8226; Bildflimmerprobleme können behoben werden, indem die Option \"Sofortiger Verarbeitungsmodus\" aktiviert wird.</string>
-    <string name="hide_buttons">Tasten ausblenden</string>
     <string name="identity_filter">Schnell (kein Filter)</string>
     <string name="install">Installieren</string>
     <string name="install_done">Die Anwendung wurde erfolgreich eingerichtet!</string>

@@ -95,7 +95,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	public static final int TYPE_CUSTOM = 0;
 	private static final int TYPE_PHONE = 1;
 	private static final int TYPE_PHONE_ARROWS = 2;
-	private static final int TYPE_NUM_ARR = 3;
+	public static final int TYPE_NUMBERS_ARROWS = 3;
 	private static final int TYPE_ARR_NUM = 4;
 	private static final int TYPE_NUMBERS = 5;
 	private static final int TYPE_ARROWS = 6;
@@ -269,7 +269,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		if (layoutVariant == -1) {
 			layoutVariant = settings.vkType;
 			if (layoutVariant == TYPE_CUSTOM) {
-				layoutVariant = TYPE_NUM_ARR;
+				layoutVariant = TYPE_NUMBERS_ARROWS;
 			}
 		}
 		if (loadedLayoutVersion > 0 && loadedLayoutVersion < 4 &&
@@ -293,8 +293,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			} catch (IOException e) {
 				Log.w(TAG, "Could not load Custom virtual keyboard layout; using safe in-memory fallback", e);
 				storedCustomLayoutState = null;
-				resetLayout(TYPE_NUM_ARR);
-				layoutVariant = TYPE_NUM_ARR;
+				resetLayout(TYPE_NUMBERS_ARROWS);
+				layoutVariant = TYPE_NUMBERS_ARROWS;
 			}
 		}
 		HandlerThread thread = new HandlerThread("MidletVirtualKeyboard");
@@ -400,7 +400,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 				setSnap(KEY_DOWN_RIGHT, KEY_NUM6, RectSnap.EXT_SOUTH, false);
 				setSnap(KEY_NUM8, KEY_NUM5, RectSnap.EXT_SOUTH, false);
 			}
-			// case TYPE_NUM_ARR,
+			// case TYPE_NUMBERS_ARROWS,
 			default -> {
 				Arrays.fill(keyScales, 1.0f);
 

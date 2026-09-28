@@ -23,7 +23,6 @@
     <string name="FORCE_CLOSE_CONFIRMATION">La chiusura forzata dell\'applicazione potrebbe causare una perdita di dati o la loro perdita completa!\nProcedere?</string>
     <string name="help">Guida</string>
     <string name="help_message">&#8226; L\'abilitazione del filtro in alcuni casi può ridurre notevolmente le prestazioni. Disabilitare questa opzione se il gioco è troppo lento.&lt;BR&gt;&#8226; Problemi di tremolio dell\'immagine possono essere risolti abilitando l\'opzione \"modalità di elaborazione immediata\".</string>
-    <string name="hide_buttons">Nascondi tasti</string>
     <string name="identity_filter">Veloce (nessun filtro)</string>
     <string name="layout_edit_finish">Termina modalità modifica</string>
     <string name="layout_edit_finished">Modalità modifica conclusa</string>

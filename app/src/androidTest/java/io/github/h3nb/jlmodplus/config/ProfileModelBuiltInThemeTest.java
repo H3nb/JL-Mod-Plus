@@ -21,6 +21,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;
 
 import java.io.File;
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 
 public class ProfileModelBuiltInThemeTest {
 	@Test
@@ -38,6 +39,7 @@ public class ProfileModelBuiltInThemeTest {
 		assertEquals(0x000000, profile.vkBgColorSelected);
 		assertEquals(0xFFFFFF, profile.vkFgColorSelected);
 		assertEquals(0x000000, profile.vkOutlineColor);
+		assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, profile.vkType);
 	}
 
 	@Test
@@ -55,4 +57,5 @@ public class ProfileModelBuiltInThemeTest {
 		assertEquals(0x000000, profile.vkFgColorSelected);
 		assertEquals(0xFFFFFF, profile.vkOutlineColor);
 	}
+
 }

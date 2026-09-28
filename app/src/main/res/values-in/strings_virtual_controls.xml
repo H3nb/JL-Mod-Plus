@@ -19,7 +19,7 @@
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Jangan Tampilkan Lagi</string>
     <string name="runtime_virtual_controls_edit_started">Mode edit kontrol virtual: geser untuk memindahkan dan gunakan dua jari untuk mengubah ukuran.</string>
     <string name="runtime_virtual_controls_switch_layout">Pilih Templat Tata Letak</string>
-    <string name="runtime_virtual_controls_hide_buttons">Tampilkan Atau Sembunyikan Kontrol</string>
+    <string name="runtime_virtual_controls_show_controls">Tampilkan Kontrol</string>
     <string name="runtime_virtual_controls_template_dpad_standard">D-pad Standar</string>
     <string name="runtime_virtual_controls_template_analog_standard">Stik Analog Standar</string>
     <string name="config_gamepad_directions_numeric_v2">Numerik</string>

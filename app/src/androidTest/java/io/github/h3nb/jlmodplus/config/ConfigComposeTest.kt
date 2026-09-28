@@ -309,6 +309,7 @@ class ConfigComposeTest {
     @Test
     fun builtInDefaultProfileIsNotShownAsCustom() {
         val base = sampleState()
+        val events = RecordingConfigEvents()
         val state = ConfigUiState(
             base.form,
             base.screenPresets,
@@ -321,16 +322,21 @@ class ConfigComposeTest {
         )
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(state, RecordingConfigEvents())
+                ConfigScreen(state, events)
             }
         }
 
         composeRule.onNodeWithText("JL-Mod Defaults").assertExists()
-        composeRule.onNodeWithText("Built-in MIDlet settings.").assertDoesNotExist()
+        composeRule.onNodeWithText("Built-in MIDlet settings and virtual controls.").assertDoesNotExist()
         composeRule.onNodeWithText("Current Configuration").assertDoesNotExist()
         composeRule.onNodeWithText("Use Profile").performClick()
-        composeRule.onNodeWithText("Built-in MIDlet settings.").assertExists()
-        composeRule.onNodeWithText("Cancel").performClick()
+        composeRule.onNodeWithText("Built-in MIDlet settings and virtual controls.").assertExists()
+        composeRule.onNode(hasText("JL-Mod Defaults") and hasAnyAncestor(isDialog())).performClick()
+        composeRule.onNodeWithText("Choose Parts").assertDoesNotExist()
+        composeRule.onNodeWithTag("profile_scope_settings").assertDoesNotExist()
+        composeRule.onNodeWithText("Apply").performClick()
+        assertEquals(1, events.applyBuiltInCalls)
+        assertEquals(ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE, events.appliedBuiltInScope)
     }
 
     @Test
@@ -542,21 +548,21 @@ class ConfigComposeTest {
         composeRule.onNodeWithTag("config_reset_settings_action").performScrollTo().assertIsDisplayed().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText(
-            "Reset all emulator settings for this app to their defaults? App data and the custom button layout will not be deleted.",
+            "Reset this MIDlet’s settings and virtual controls to their defaults? MIDlet data will not be deleted.",
         ).assertExists()
         composeRule.onNode(hasText("Reset All Settings") and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
         assertEquals(1, menuActions.resetSettingsCalls)
 
         composeRule.onNodeWithTag("config_clear_data_action").performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNodeWithText(
-            "Permanently delete all saves and data created by this app? Emulator settings will not be deleted.",
+            "Permanently delete all saves and data created by this MIDlet? MIDlet settings will not be deleted.",
         ).assertExists()
-        composeRule.onNode(hasText("Delete App Data") and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
+        composeRule.onNode(hasText("Delete MIDlet Data") and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
         assertEquals(1, menuActions.clearDataCalls)
 
         composeRule.onRoot().performTouchInput { swipeRight() }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Reset Key Layout").performScrollTo().performClick()
+        composeRule.onNodeWithText("Reset Control Layout").performScrollTo().performClick()
         composeRule.onNodeWithText("Reset the button layout to its default?").assertExists()
     }
 
@@ -574,10 +580,10 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Delete App Data").assertDoesNotExist()
+        composeRule.onNodeWithText("Delete MIDlet Data").assertDoesNotExist()
         composeRule.onNodeWithTag("config_reset_settings_action").performClick()
         composeRule.onNodeWithText(
-            "Reset all settings in this profile to their defaults? The profile can be edited again before leaving this page.",
+            "Reset this profile’s settings and virtual controls to their defaults? You can still edit or cancel before saving.",
         ).assertExists()
     }
 
@@ -833,6 +839,7 @@ class ConfigComposeTest {
         var removed: Size? = null
         var colorPickerField: ConfigFormEvents.ColorField? = null
         var applyBuiltInCalls = 0
+        var appliedBuiltInScope: ConfigFormEvents.PresetApplyScope? = null
         var applyTemplateCalls = 0
         var appliedTemplate: String? = null
         var appliedScope: ConfigFormEvents.PresetApplyScope? = null
@@ -841,6 +848,7 @@ class ConfigComposeTest {
 
         override fun onApplyBuiltInTemplate(scope: ConfigFormEvents.PresetApplyScope): Boolean {
             applyBuiltInCalls++
+            appliedBuiltInScope = scope
             return true
         }
 

@@ -41,15 +41,18 @@ public class StandardVirtualControlsLayoutTest {
 		assertEquals(111.0f, layout.shoulderLeftX, EPS);
 		assertEquals(598.0f, layout.shoulderRightX, EPS);
 		assertEquals(1006.0f, layout.shoulderCenterY, EPS);
-		assertEquals(540.0f, layout.actionCenterX, EPS);
+		assertEquals(521.0f, layout.actionCenterX, EPS);
 		assertEquals(1221.0f, layout.actionCenterY, EPS);
-		assertEquals(449.0f, layout.bottomLeftX, EPS);
+		assertEquals(412.0f, layout.bottomLeftX, EPS);
 		assertEquals(630.0f, layout.bottomRightX, EPS);
-		assertEquals(1328.0f, layout.bottomRowY, EPS);
+		assertEquals(1338.0f, layout.bottomRowY, EPS);
 
 		assertTrue(layout.movementCenterY - layout.movementRadius > guestBottom);
 		assertTrue(layout.shoulderCenterY - layout.shoulderHeight * 0.5f > guestBottom);
 		assertTrue(layout.actionCenterY - layout.fireSize * 0.5f > guestBottom);
+		assertTrue(layout.bottomRowY - layout.keySize * 0.5f > guestBottom);
+		assertTrue(layout.bottomRowY + layout.keySize * 0.5f <= height);
+		assertActionRow(layout, 0.0f, width);
 	}
 
 	@Test
@@ -75,12 +78,14 @@ public class StandardVirtualControlsLayoutTest {
 		assertEquals(355.0f, layout.actionCenterY, EPS);
 		assertEquals(1191.0f, layout.bottomLeftX, EPS);
 		assertEquals(1409.0f, layout.bottomRightX, EPS);
-		assertEquals(464.0f, layout.bottomRowY, EPS);
+		assertEquals(472.0f, layout.bottomRowY, EPS);
 
 		assertTrue(layout.movementCenterX + layout.movementRadius < guestLeft);
 		assertTrue(layout.shoulderLeftX + layout.shoulderWidth * 0.5f < guestLeft);
 		assertTrue(layout.shoulderRightX - layout.shoulderWidth * 0.5f > guestRight);
 		assertTrue(layout.bottomLeftX - layout.keySize * 0.5f > guestRight);
+		assertTrue(layout.bottomRowY + layout.keySize * 0.5f <= height);
+		assertActionRow(layout, guestRight, width);
 	}
 
 	@Test
@@ -105,5 +110,19 @@ public class StandardVirtualControlsLayoutTest {
 		assertTrue(layout.bottomLeftX - layout.keySize * 0.5f >= 0.0f);
 		assertTrue(layout.bottomRightX + layout.keySize * 0.5f <= width);
 		assertTrue(layout.bottomRowY + layout.keySize * 0.5f <= height);
+		assertActionRow(layout, 0.0f, width);
+	}
+
+	private static void assertActionRow(StandardVirtualControlsLayout layout, float left, float right) {
+		assertTrue(layout.bottomRowY - layout.keySize * 0.5f >
+				layout.actionCenterY + layout.fireSize * 0.5f + layout.keySize * 0.04f);
+		assertTrue(layout.bottomLeftX + layout.keySize * 0.5f <
+				layout.actionCenterX - layout.keySize * 0.5f);
+		assertTrue(layout.actionCenterX + layout.keySize * 0.5f <
+				layout.bottomRightX - layout.keySize * 0.5f);
+		assertEquals(layout.actionCenterX - layout.bottomLeftX,
+				layout.bottomRightX - layout.actionCenterX, EPS);
+		assertTrue(layout.bottomLeftX - layout.keySize * 0.5f >= left);
+		assertTrue(layout.bottomRightX + layout.keySize * 0.5f <= right);
 	}
 }

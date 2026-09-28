@@ -20,8 +20,11 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -35,6 +38,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import io.github.h3nb.jlmodplus.R
@@ -47,6 +51,62 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 class RuntimeMenuComposeTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun showControlsGridPreservesOrderAndConvertsVisibleSelectionToHiddenFlags() {
+        val events = mutableListOf<String>()
+        val selections = mutableListOf<BooleanArray>()
+        val names = listOf("First", "Second", "Third", "Fourth", "Analog Stick")
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.ShowControls(
+                        names = names,
+                        hidden = booleanArrayOf(false, true, false, true, false),
+                    ),
+                    actions = RecordingRuntimeHostDialogActions(events, selections),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Show Controls").assertIsDisplayed()
+        composeRule.onNodeWithText("First").assertIsOn()
+        composeRule.onNodeWithText("Second").assertIsOff()
+        val first = composeRule.onNodeWithText("First").getUnclippedBoundsInRoot()
+        val second = composeRule.onNodeWithText("Second").getUnclippedBoundsInRoot()
+        val third = composeRule.onNodeWithText("Third").getUnclippedBoundsInRoot()
+        val fourth = composeRule.onNodeWithText("Fourth").getUnclippedBoundsInRoot()
+        assertTrue(first.left < second.left && second.left < third.left)
+        assertTrue(fourth.top > first.top)
+
+        composeRule.onNodeWithText("Second").performClick()
+        composeRule.onNodeWithText("Second").assertIsOn()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(listOf("dismiss", "showControls"), events)
+        assertEquals(listOf(false, false, false, true, false), selections.single().toList())
+    }
+
+    @Test
+    fun showControlsCompactLandscapeKeepsLastCellAndActionsReachable() {
+        val names = (1..29).map { it.toString() } + "Stik Analog"
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
+            ) {
+                JLModPlusTheme {
+                    RuntimeHostDialogs(
+                        state = RuntimeHostDialogState.ShowControls(names, BooleanArray(names.size)),
+                        actions = RecordingRuntimeHostDialogActions(mutableListOf(), mutableListOf()),
+                        onDismiss = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Stik Analog").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("OK").assertIsDisplayed()
+    }
 
     @Test
     fun compactHeightBackMenuExposesScrollHint() {
@@ -202,7 +262,7 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("Virtual Controls").performScrollTo().performClick()
         composeRule.onNodeWithText("Finish Editing").assertIsDisplayed()
         composeRule.onNodeWithText("Layout Templates").assertIsDisplayed()
-        composeRule.onNodeWithText("Show Or Hide Controls").assertIsDisplayed()
+        composeRule.onNodeWithText("Show Controls").assertIsDisplayed()
         composeRule.onAllNodesWithText("D-pad").assertCountEquals(0)
         composeRule.onAllNodesWithText("Analog Stick").assertCountEquals(0)
         composeRule.onAllNodesWithText("Key Layout Resize Mode").assertCountEquals(0)
@@ -212,7 +272,7 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun virtualControlActionsDismissBeforeDispatchingTheirCallbacks() {
+    fun showControlsActionDismissesBeforeDispatchingCallback() {
         val events = mutableListOf<String>()
         composeRule.setContent {
             JLModPlusTheme {
@@ -230,13 +290,8 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Edit Layout").performClick()
-        composeRule.onNodeWithText("Layout Templates").performClick()
-        composeRule.onNodeWithText("Show Or Hide Controls").performClick()
-        assertEquals(
-            listOf("dismiss", "edit", "dismiss", "switch", "dismiss", "hide"),
-            events,
-        )
+        composeRule.onNodeWithText("Show Controls").performClick()
+        assertEquals(listOf("dismiss", "showControls"), events)
     }
 
     @Test
@@ -964,13 +1019,14 @@ private class RecordingRuntimeMenuActions(
         events += "switch"
     }
 
-    override fun onHideVirtualKeyboardButtons() {
-        events += "hide"
+    override fun onShowControls() {
+        events += "showControls"
     }
 }
 
 private class RecordingRuntimeHostDialogActions(
     private val events: MutableList<String>,
+    private val hiddenSelections: MutableList<BooleanArray> = mutableListOf(),
 ) : RuntimeHostDialogActions {
     override fun onMidletSelected(index: Int) {
         events += "midlet:$index"
@@ -988,8 +1044,9 @@ private class RecordingRuntimeHostDialogActions(
         events += if (openSettings) "settings" else "exit"
     }
 
-    override fun onHideButtonsConfirmed(states: BooleanArray) {
-        events += "hide"
+    override fun onShowControlsConfirmed(hidden: BooleanArray) {
+        events += "showControls"
+        hiddenSelections += hidden.copyOf()
     }
 
     override fun onSaveVirtualKeyboard(updateTarget: String?) {

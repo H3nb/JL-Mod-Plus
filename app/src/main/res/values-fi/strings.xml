@@ -16,7 +16,6 @@
     <string name="FORCE_CLOSE_CONFIRMATION">Sovelluksen sulkeutuminen voi johtaa tietojen menetykseen tai jopa rikkoa sen kokonaan!\nJatketaanko?</string>
     <string name="help">Apua</string>
     <string name="help_message">&#8226; Suodattimen käyttöönotto saattaa joissakin tapauksissa huomattavasti vähentää suorituskykyä. Ota se pois käytöstä, jos peli on liian hidas.&lt;BR&gt;&#8226; Kuvan välkkymisen voi korjata laittamalla päälle \"Välittömän käsittelytilan\" asetuksista.</string>
-    <string name="hide_buttons">Piilota painikkeet</string>
     <string name="layout_edit_finish">Lopeta muokkaustila</string>
     <string name="layout_edit_finished">Muokkaustila päättynyt</string>
     <string name="layout_edit_mode">Näppäinasettelun editointitila</string>

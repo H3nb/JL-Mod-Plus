@@ -14,6 +14,7 @@ import io.github.h3nb.jlmodplus.config.ProfilesManager
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppEntity
 import io.github.h3nb.jlmodplus.librarydb.LibraryDatabase
 import io.github.h3nb.jlmodplus.util.Constants
+import javax.microedition.lcdui.keyboard.VirtualKeyboard
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -113,7 +114,7 @@ class KeyMapperInstalledIdentityTest {
             version = ProfileModel.VERSION
             screenWidth = width
             screenHeight = 320
-            vkType = 3
+            vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS
             systemProperties = ""
         }
         assertTrue(ProfilesManager.saveConfig(profile))

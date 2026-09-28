@@ -281,7 +281,7 @@ private fun PresetPickerDialog(
             isBuiltIn = true,
             hasSettings = true,
             hasKeyboardLayout = false,
-            completeSnapshotReady = false,
+            completeSnapshotReady = true,
         )
         selectedKey != null -> templates.firstOrNull { savedPresetKey(it.name) == selectedKey }?.let { template ->
             PresetChoice(
@@ -294,10 +294,10 @@ private fun PresetPickerDialog(
         }
         else -> null
     }
-    val availableScopes = buildList {
-        if (selectedChoice?.completeSnapshotReady == true) {
-            add(ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE)
-        }
+    val availableScopes = if (selectedChoice?.isBuiltIn == true) {
+        listOf(ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE)
+    } else buildList {
+        if (selectedChoice?.completeSnapshotReady == true) add(ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE)
         if (selectedChoice?.hasSettings == true) add(ConfigFormEvents.PresetApplyScope.SETTINGS)
         if (selectedChoice?.hasKeyboardLayout == true) add(ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT)
     }
@@ -337,7 +337,7 @@ private fun PresetPickerDialog(
                         },
                     )
                 }
-                if (selectedChoice != null) {
+                if (selectedChoice != null && !selectedChoice.isBuiltIn) {
                     item(key = "apply-scope-title") {
                         Text(
                             text = stringResource(R.string.preset_choose_parts),
@@ -349,7 +349,6 @@ private fun PresetPickerDialog(
                         PresetScopeRow(
                             scope = scope,
                             selected = selectedScope == scope,
-                            isBuiltIn = selectedChoice.isBuiltIn,
                             hasLayout = selectedChoice.hasKeyboardLayout,
                             onClick = {
                                 scopeKey = scope.name
@@ -357,13 +356,13 @@ private fun PresetPickerDialog(
                             },
                         )
                     }
-                    if (applyErrorVisible) item(key = "apply-error") {
-                        Text(
-                            text = stringResource(R.string.preset_apply_failed_summary),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
+                }
+                if (selectedChoice != null && applyErrorVisible) item(key = "apply-error") {
+                    Text(
+                        text = stringResource(R.string.preset_apply_failed_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
                 }
             }
         },
@@ -388,7 +387,6 @@ private fun PresetPickerDialog(
 private fun PresetScopeRow(
     scope: ConfigFormEvents.PresetApplyScope,
     selected: Boolean,
-    isBuiltIn: Boolean,
     hasLayout: Boolean,
     onClick: () -> Unit,
 ) {
@@ -402,10 +400,7 @@ private fun PresetScopeRow(
             if (hasLayout) R.string.profile_apply_whole_follows
             else R.string.profile_apply_whole_without_layout,
         )
-        ConfigFormEvents.PresetApplyScope.SETTINGS -> stringResource(
-            if (isBuiltIn) R.string.profile_apply_builtin_settings
-            else R.string.profile_apply_settings_keeps_layout,
-        )
+        ConfigFormEvents.PresetApplyScope.SETTINGS -> stringResource(R.string.profile_apply_settings_keeps_layout)
         ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT -> stringResource(R.string.profile_apply_layout_keeps_settings)
     }
     Row(

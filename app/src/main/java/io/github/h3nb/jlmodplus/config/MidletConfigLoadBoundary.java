@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
+
 /**
  * Prepares one active MIDlet's materialized config snapshot before any local config/layout read.
  *
@@ -38,6 +40,9 @@ public final class MidletConfigLoadBoundary {
 		}
 
 		PresetLinkage linkage = new PresetLinkage(preferences, configDir);
+		if (!normalizeLegacyBuiltIn(preferences, configDir, linkage)) {
+			return false;
+		}
 		if (!linkage.isLinked()) {
 			return true;
 		}
@@ -66,6 +71,29 @@ public final class MidletConfigLoadBoundary {
 			return true;
 		}
 		}
+	}
+
+	private static boolean normalizeLegacyBuiltIn(@NonNull SharedPreferences preferences,
+			@NonNull File configDir, @NonNull PresetLinkage linkage) {
+		String builtInKey = ProfileModel.builtInThemePreferenceKey(configDir);
+		if (!preferences.getBoolean(builtInKey, false)) return true;
+		// A named origin is a separate owner; conflicting Built-in metadata cannot redefine it.
+		if (linkage.getOrigin() != null) {
+			return preferences.edit().remove(builtInKey).commit();
+		}
+		// Keep the marker as evidence until any version-sensitive config migration is durable.
+		ProfileModel config = ProfilesManager.loadBuiltInConfigForNormalization(configDir);
+		if (config == null) return false;
+		// An existing layout is user data, including a layout awaiting recovery from .bak.
+		if (ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir)) {
+			return preferences.edit().remove(builtInKey).commit();
+		}
+		if (config.vkType == VirtualKeyboard.TYPE_NUMBERS_ARROWS) return true;
+		if (config.vkType != VirtualKeyboard.TYPE_CUSTOM) {
+			return preferences.edit().remove(builtInKey).commit();
+		}
+		config.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS;
+		return ProfilesManager.saveConfig(config);
 	}
 
 	@Nullable

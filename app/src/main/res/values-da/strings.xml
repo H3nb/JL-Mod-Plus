@@ -14,7 +14,6 @@
     <string name="FORCE_CLOSE_CONFIRMATION">Tvangslukning af programmet kan medføre tab af data eller endda ødelægge det helt!\nFortsæt?</string>
     <string name="help">Hjælp</string>
     <string name="help_message">&#8226; Aktivering af filtrering kan i nogle tilfælde reducere ydeevnen. Deaktiver denne indstilling, hvis spillet er for langsomt.&lt;BR&gt;&#8226; Problemer med flimmer kan rettes ved aktivering af indstillingen \"Omgående behandlingstilstand\".</string>
-    <string name="hide_buttons">Skjul knapper</string>
     <string name="layout_edit_finish">Afslut redigeringstilstand</string>
     <string name="layout_edit_finished">Redigeringstilstand afsluttet</string>
     <string name="layout_edit_mode">Tastelayout redigeringstilstand</string>

@@ -113,7 +113,7 @@ interface RuntimeMenuActions {
 
     fun onFinishVirtualKeyboardLayout()
     fun onSwitchVirtualKeyboardLayout()
-    fun onHideVirtualKeyboardButtons()
+    fun onShowControls()
 }
 
 /**
@@ -356,7 +356,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                     else actions.onEditVirtualKeyboardLayout()
                 })
                 add(ControllerMenuItem { closeMenu(); actions.onSwitchVirtualKeyboardLayout() })
-                add(ControllerMenuItem { closeMenu(); actions.onHideVirtualKeyboardButtons() })
+                add(ControllerMenuItem { closeMenu(); actions.onShowControls() })
             }
         }
         return buildList {
@@ -391,9 +391,9 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         changeControllerSurface { hostDialogState = RuntimeHostDialogState.ExitConfirmation }
     }
 
-    fun showHideButtons(names: Array<String>, checked: BooleanArray) {
+    fun showControls(names: Array<String>, hidden: BooleanArray) {
         changeControllerSurface {
-            hostDialogState = RuntimeHostDialogState.HideButtons(names.toList(), checked.copyOf())
+            hostDialogState = RuntimeHostDialogState.ShowControls(names.toList(), hidden.copyOf())
         }
     }
 
@@ -818,14 +818,14 @@ private fun LazyListScope.runtimeMenuItems(
                 focused = switchFocused,
             )
         }
-        val hideFocused = nextFocused()
+        val showControlsFocused = nextFocused()
         item {
             RuntimeActionItem(
-                R.string.runtime_virtual_controls_hide_buttons,
+                R.string.runtime_virtual_controls_show_controls,
                 onDismiss,
-                actions::onHideVirtualKeyboardButtons,
+                actions::onShowControls,
                 leadingIcon = R.drawable.ic_runtime_hide,
-                focused = hideFocused,
+                focused = showControlsFocused,
             )
         }
         return

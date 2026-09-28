@@ -33,26 +33,30 @@ final class StandardVirtualControlsLayout {
 	private static final float SHOULDER_HEIGHT_KEYS = 0.68f;
 	private static final float FIRE_SIZE_KEYS = 1.16f;
 	private static final float OUTER_MARGIN_KEYS = 0.28f;
+	private static final float ACTION_ROW_SPACING_KEYS = 1.08f;
+	private static final float ACTION_ROW_WIDTH_KEYS = 2 * ACTION_ROW_SPACING_KEYS + 1.0f;
 
 	private static final float SIDE_MIN_GUTTER_WIDTH_KEYS = 3.40f;
 	private static final float SIDE_MIN_HEIGHT_KEYS = 5.83f;
 	private static final float SIDE_OUTWARD_BIAS_KEYS = 0.15f;
 	private static final float SIDE_SHOULDER_Y_KEYS = 1.45f;
 	private static final float SIDE_CLUSTER_Y_KEYS = 4.13f;
-	private static final float SIDE_ACTION_HALF_SPAN_KEYS = 1.08f;
 	private static final float SIDE_ACTION_FIRE_OFFSET_KEYS = 0.60f;
-	private static final float SIDE_ACTION_BOTTOM_OFFSET_KEYS = 0.48f;
+	private static final float SIDE_ACTION_BOTTOM_OFFSET_KEYS = 0.56f;
 
-	private static final float BOTTOM_MIN_WIDTH_KEYS = 6.30f;
+	private static final float BOTTOM_MOVEMENT_EDGE_BIAS_KEYS = 0.06f;
+	private static final float BOTTOM_ZONE_GAP_KEYS = 0.20f;
+	// Movement diameter and the three-key action row, with outer margins and a zone gap.
+	private static final float BOTTOM_MIN_WIDTH_KEYS =
+			2 * OUTER_MARGIN_KEYS + 2 * MOVEMENT_RADIUS_KEYS +
+			BOTTOM_MOVEMENT_EDGE_BIAS_KEYS + ACTION_ROW_WIDTH_KEYS + BOTTOM_ZONE_GAP_KEYS;
 	private static final float BOTTOM_MIN_HEIGHT_KEYS = 4.96f;
 	private static final float BOTTOM_CLUSTER_FRACTION = 0.55f;
-	private static final float BOTTOM_MOVEMENT_EDGE_BIAS_KEYS = 0.06f;
-	private static final float BOTTOM_ACTION_HALF_SPAN_KEYS = 0.90f;
 	private static final float BOTTOM_ACTION_FIRE_OFFSET_KEYS = 0.48f;
-	private static final float BOTTOM_ACTION_BOTTOM_OFFSET_KEYS = 0.58f;
+	private static final float BOTTOM_ACTION_BOTTOM_OFFSET_KEYS = 0.68f;
 	private static final float BOTTOM_SHOULDER_GAP_KEYS = 0.35f;
 
-	private static final float COMPACT_WIDTH_KEYS = 6.40f;
+	private static final float COMPACT_WIDTH_KEYS = BOTTOM_MIN_WIDTH_KEYS;
 	private static final float COMPACT_HEIGHT_KEYS = 5.90f;
 
 	final Placement placement;
@@ -205,7 +209,7 @@ final class StandardVirtualControlsLayout {
 				clusterCenterY - keySize * SIDE_ACTION_FIRE_OFFSET_KEYS;
 		float bottomRowY =
 				clusterCenterY + keySize * SIDE_ACTION_BOTTOM_OFFSET_KEYS;
-		float actionHalfSpan = keySize * SIDE_ACTION_HALF_SPAN_KEYS;
+		float actionRowSpacing = keySize * ACTION_ROW_SPACING_KEYS;
 
 		return new StandardVirtualControlsLayout(
 				Placement.SIDE_GUTTERS,
@@ -219,8 +223,8 @@ final class StandardVirtualControlsLayout {
 				shoulderWidth,
 				shoulderHeight,
 				fireSize,
-				rightCenter - actionHalfSpan,
-				rightCenter + actionHalfSpan,
+				rightCenter - actionRowSpacing,
+				rightCenter + actionRowSpacing,
 				rightCenter,
 				actionCenterY,
 				bottomRowY);
@@ -248,9 +252,9 @@ final class StandardVirtualControlsLayout {
 		float movementCenterX =
 				screenLeft + margin + movementRadius +
 				keySize * BOTTOM_MOVEMENT_EDGE_BIAS_KEYS;
-		float actionHalfSpan = keySize * BOTTOM_ACTION_HALF_SPAN_KEYS;
+		float actionRowSpacing = keySize * ACTION_ROW_SPACING_KEYS;
 		float actionCenterX =
-				screenRight - margin - actionHalfSpan - keySize * 0.5f;
+				screenRight - margin - actionRowSpacing - keySize * 0.5f;
 
 		float minimumClusterY =
 				shoulderCenterY + shoulderHeight * 0.5f +
@@ -278,8 +282,8 @@ final class StandardVirtualControlsLayout {
 				shoulderWidth,
 				shoulderHeight,
 				fireSize,
-				actionCenterX - actionHalfSpan,
-				actionCenterX + actionHalfSpan,
+				actionCenterX - actionRowSpacing,
+				actionCenterX + actionRowSpacing,
 				actionCenterX,
 				actionCenterY,
 				bottomRowY);
@@ -305,9 +309,9 @@ final class StandardVirtualControlsLayout {
 		float fireSize = keySize * FIRE_SIZE_KEYS;
 
 		float movementCenterX = screenLeft + margin + movementRadius;
-		float actionHalfSpan = keySize * BOTTOM_ACTION_HALF_SPAN_KEYS;
+		float actionRowSpacing = keySize * ACTION_ROW_SPACING_KEYS;
 		float actionCenterX =
-				screenRight - margin - actionHalfSpan - keySize * 0.5f;
+				screenRight - margin - actionRowSpacing - keySize * 0.5f;
 		float shoulderCenterY = screenTop + margin + shoulderHeight * 0.5f;
 		float clusterCenterY = screenBottom - margin - movementRadius;
 
@@ -323,8 +327,8 @@ final class StandardVirtualControlsLayout {
 				shoulderWidth,
 				shoulderHeight,
 				fireSize,
-				actionCenterX - actionHalfSpan,
-				actionCenterX + actionHalfSpan,
+				actionCenterX - actionRowSpacing,
+				actionCenterX + actionRowSpacing,
 				actionCenterX,
 				clusterCenterY - keySize * BOTTOM_ACTION_FIRE_OFFSET_KEYS,
 				clusterCenterY + keySize * BOTTOM_ACTION_BOTTOM_OFFSET_KEYS);

@@ -34,7 +34,6 @@
     <string name="FORCE_CLOSE_CONFIRMATION">فرض اغلاق التطبيق قد يؤدي لفقد بعض البيانات او تدميرها بالكامل!\nمتابعه؟</string>
     <string name="help">مساعدة</string>
     <string name="help_message">&#8226; تمكين التصفية في بعض الحالات يمكن أن يقلل كثيرا من الأداء.قم بتعطيل هذا الخيار إذا كانت اللعبة بطيئة جداً.&lt;BR&gt;&#8226; خفقان الصورة يمكن اصلاحه عن طريق تمكين الخيار \"وضع المعالجة الفورية\".</string>
-    <string name="hide_buttons">إخفاء أزرار</string>
     <string name="identity_filter">سريع (بدون فلترة)</string>
     <string name="install">تثبيت</string>
     <string name="install_done">تم تثبيت التطبيق بنجاح!</string>

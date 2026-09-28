@@ -323,6 +323,7 @@ public class ProfileModel {
 	static ProfileModel createBuiltIn(
 			File dir, boolean darkTheme, String defaultSystemProperties) {
 		ProfileModel profile = new ProfileModel(dir, defaultSystemProperties);
+		profile.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS;
 		profile.screenBackgroundMode = BackgroundMode.THEME;
 		// Keep a deterministic dormant custom value so switching back to Custom is reversible.
 		profile.screenBackgroundColor = AppBackgroundColors.rgb(darkTheme);

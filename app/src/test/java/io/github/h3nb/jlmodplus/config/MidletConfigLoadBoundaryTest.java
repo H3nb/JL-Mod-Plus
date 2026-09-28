@@ -29,6 +29,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.microedition.lcdui.keyboard.VirtualControlsKeyboard;
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
+
 public class MidletConfigLoadBoundaryTest {
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
 	private static final int LAYOUT_TYPE = 3;
@@ -36,6 +39,85 @@ public class MidletConfigLoadBoundaryTest {
 	private static final String SYNC_ROLLBACK_DIR = ".preset-sync.rollback";
 	private static final String SYNC_STAGING_DIR = ".preset-sync.tmp";
 	private static final String SYNC_READY_MARKER = ".ready";
+
+	@Test
+	public void legacyBuiltInWithoutLayoutBecomesNumbersAndArrowsBeforeLoad() throws Exception {
+		File profiles = tempDir("profiles-legacy-built-in");
+		File target = tempDir("target-legacy-built-in");
+		writeConfig(target, 240, VirtualKeyboard.TYPE_CUSTOM, 6);
+		FakePreferences preferences = new FakePreferences();
+		preferences.edit().putBoolean(ProfileModel.builtInThemePreferenceKey(target), true).commit();
+
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
+
+		ProfileModel migrated = readConfig(target);
+		assertEquals(ProfileModel.VERSION, migrated.version);
+		assertEquals(BackgroundMode.THEME, migrated.screenBackgroundMode);
+		assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, migrated.vkType);
+		assertTrue(preferences.getBoolean(ProfileModel.builtInThemePreferenceKey(target), false));
+		assertFalse(layoutFile(target).exists());
+	}
+
+	@Test
+	public void versionSixBuiltInWithRecoverableLayoutKeepsThemeAndLayout() throws Exception {
+		File profiles = tempDir("profiles-legacy-layout");
+		File target = tempDir("target-legacy-layout");
+		writeConfig(target, 240, VirtualKeyboard.TYPE_CUSTOM, 6);
+		writeLayout(target, 2);
+		byte[] layout = readLayout(target);
+		File backup = new File(target, Config.MIDLET_KEY_LAYOUT_FILE + ".bak");
+		assertTrue(layoutFile(target).renameTo(backup));
+		FakePreferences preferences = new FakePreferences();
+		preferences.edit().putBoolean(ProfileModel.builtInThemePreferenceKey(target), true).commit();
+
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
+
+		assertFalse(preferences.getBoolean(ProfileModel.builtInThemePreferenceKey(target), false));
+		ProfileModel migrated = readConfig(target);
+		assertEquals(ProfileModel.VERSION, migrated.version);
+		assertEquals(BackgroundMode.THEME, migrated.screenBackgroundMode);
+		assertEquals(VirtualKeyboard.TYPE_CUSTOM, migrated.vkType);
+		assertFalse(layoutFile(target).exists());
+		assertArrayEquals(layout, Files.readAllBytes(backup.toPath()));
+	}
+
+	@Test
+	public void unmarkedCustomAndUnexpectedBuiltInTypeAreNeverGuessedIntoDefaults() throws Exception {
+		File profiles = tempDir("profiles-no-guess");
+		File custom = tempDir("target-unmarked-custom");
+		writeConfig(custom, 240, VirtualKeyboard.TYPE_CUSTOM);
+		assertTrue(MidletConfigLoadBoundary.prepare(new FakePreferences(), custom, profiles));
+		assertEquals(VirtualKeyboard.TYPE_CUSTOM, readConfig(custom).vkType);
+
+		File unexpected = tempDir("target-unexpected-built-in");
+		writeConfig(unexpected, 240, VirtualControlsKeyboard.TYPE_DPAD_STANDARD, 6);
+		FakePreferences preferences = new FakePreferences();
+		preferences.edit().putBoolean(ProfileModel.builtInThemePreferenceKey(unexpected), true).commit();
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, unexpected, profiles));
+		ProfileModel migrated = readConfig(unexpected);
+		assertEquals(ProfileModel.VERSION, migrated.version);
+		assertEquals(BackgroundMode.THEME, migrated.screenBackgroundMode);
+		assertEquals(VirtualControlsKeyboard.TYPE_DPAD_STANDARD, migrated.vkType);
+		assertFalse(preferences.getBoolean(ProfileModel.builtInThemePreferenceKey(unexpected), false));
+	}
+
+	@Test
+	public void conflictingNamedOriginDoesNotNormalizeItsCustomLayoutType() throws Exception {
+		File profiles = tempDir("profiles-conflicting-ownership");
+		File target = tempDir("target-conflicting-ownership");
+		writeConfig(target, 240, VirtualKeyboard.TYPE_CUSTOM);
+		FakePreferences preferences = new FakePreferences();
+		preferences.edit()
+				.putString(PresetLinkage.originPreferenceKey(target), "Named")
+				.putBoolean(ProfileModel.builtInThemePreferenceKey(target), true)
+				.commit();
+
+		assertTrue(MidletConfigLoadBoundary.prepare(preferences, target, profiles));
+
+		assertEquals(VirtualKeyboard.TYPE_CUSTOM, readConfig(target).vkType);
+		assertEquals("Named", preferences.getString(PresetLinkage.originPreferenceKey(target), null));
+		assertFalse(preferences.getBoolean(ProfileModel.builtInThemePreferenceKey(target), false));
+	}
 
 	@Test
 	public void unlinkedReadyTransactionIsRecoveredBeforeLoad() throws Exception {
@@ -301,8 +383,12 @@ public class MidletConfigLoadBoundaryTest {
 	}
 
 	private static void writeConfig(File dir, int screenWidth, int vkType) throws IOException {
+		writeConfig(dir, screenWidth, vkType, ProfileModel.VERSION);
+	}
+
+	private static void writeConfig(File dir, int screenWidth, int vkType, int version) throws IOException {
 		ProfileModel model = new ProfileModel();
-		model.version = ProfileModel.VERSION;
+		model.version = version;
 		model.screenWidth = screenWidth;
 		model.vkType = vkType;
 		model.systemProperties = "";

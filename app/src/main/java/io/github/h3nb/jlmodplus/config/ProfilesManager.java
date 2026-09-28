@@ -372,6 +372,7 @@ public class ProfilesManager {
 			throws IOException {
 		synchronized (PRESET_SOURCE_LOCK) {
 		recoverInterruptedPresetSave(sourceDir);
+		normalizeVirtualKeyboardLayout(new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE));
 		copyPresetArtifactIfFile(new File(sourceDir, Config.MIDLET_CONFIG_FILE),
 				new File(draftDir, Config.MIDLET_CONFIG_FILE));
 		copyPresetArtifactIfFile(new File(sourceDir, "config.xml"),
@@ -631,7 +632,24 @@ public class ProfilesManager {
 			prepareLocalPublicationTarget(targetDir, true);
 			publishLocalSnapshotArtifacts(
 					targetDir, targetDir, null,
-					false, true, true, false, null, layoutPayload);
+					false, true, true, false, null, layoutPayload, false);
+		}
+	}
+
+	/** Publishes the app-provided profile as one config-plus-absent-layout snapshot. */
+	static boolean publishBuiltInSnapshot(@NonNull ProfileModel profile) {
+		if (profile.dir == null) return false;
+		synchronized (PRESET_SOURCE_LOCK) {
+			try {
+				prepareLocalPublicationTarget(profile.dir, true);
+				publishLocalSnapshotArtifacts(
+						profile.dir, profile.dir, profile,
+						true, true, false, false, null, null, true);
+				return true;
+			} catch (IOException | RuntimeException e) {
+				Log.e(TAG, "Unable to publish Built-in profile snapshot", e);
+				return false;
+			}
 		}
 	}
 
@@ -646,7 +664,7 @@ public class ProfilesManager {
 			@Nullable LocalPublicationHook hook) throws IOException {
 		publishLocalSnapshotArtifacts(
 				sourceDir, targetDir, sourceConfig, config, keyboard, sourceHasLayout,
-				verifyCompleteSource, hook, null);
+				verifyCompleteSource, hook, null, false);
 	}
 
 	private static void publishLocalSnapshotArtifacts(
@@ -658,7 +676,8 @@ public class ProfilesManager {
 			boolean sourceHasLayout,
 			boolean verifyCompleteSource,
 			@Nullable LocalPublicationHook hook,
-			@Nullable byte[] layoutPayload) throws IOException {
+			@Nullable byte[] layoutPayload,
+			boolean stageProvidedConfig) throws IOException {
 		File staging = new File(targetDir, PRESET_SYNC_STAGING_DIR);
 		File rollback = new File(targetDir, PRESET_SYNC_ROLLBACK_DIR);
 		File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
@@ -679,7 +698,7 @@ public class ProfilesManager {
 			File stagedLayout = new File(staging, Config.MIDLET_KEY_LAYOUT_FILE);
 			if (config) {
 				File source = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
-				if (source.isFile()) {
+				if (!stageProvidedConfig && source.isFile()) {
 					FileUtils.copyFileUsingChannel(source, stagedConfig);
 				} else {
 					if (sourceConfig == null) {
@@ -719,7 +738,10 @@ public class ProfilesManager {
 				}
 			}
 			if (keyboard && !sourceHasLayout && !verifyCompleteSource) {
-				throw new IOException("Partial keyboard apply requires a usable source layout");
+				boolean authoritativeAbsentLayout = config && stageProvidedConfig;
+				if (!authoritativeAbsentLayout) {
+					throw new IOException("Partial keyboard apply requires a usable source layout");
+				}
 			}
 
 			if (verifyCompleteSource) {
@@ -1169,16 +1191,17 @@ public class ProfilesManager {
 			throw new IOException("Preset draft configuration is not loadable");
 		}
 		File srcKeyLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		File keyLayout = new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE);
 
 		boolean transactionCreatedProfile = !profileDir.exists();
 		if (profileDir.exists() && !profileDir.isDirectory()) {
 			throw new IOException("Preset path is not a directory");
 		}
+		if (!srcKeyLayout.exists()) normalizeVirtualKeyboardLayout(keyLayout);
 		PresetSaveTransaction transaction =
 				beginPresetSave(profileDir, transactionCreatedProfile);
 		File config = new File(profileDir, Config.MIDLET_CONFIG_FILE);
 		File legacyConfig = new File(profileDir, "config.xml");
-		File keyLayout = new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		try {
 			FileUtils.copyFileUsingChannel(srcConfig, config);
 			if (legacyConfig.exists() && !legacyConfig.delete()) {
@@ -1186,8 +1209,11 @@ public class ProfilesManager {
 			}
 			if (KeyboardLayoutValidator.validate(srcKeyLayout) == null) {
 				FileUtils.copyFileUsingChannel(srcKeyLayout, keyLayout);
-			} else if (!srcKeyLayout.exists() && keyLayout.exists() && !keyLayout.delete()) {
-				throw new IOException("Unable to remove deleted profile keyboard layout");
+			} else if (!srcKeyLayout.exists()) {
+				removeVirtualKeyboardLayoutSidecars(keyLayout);
+				if (keyLayout.exists() && !keyLayout.delete()) {
+					throw new IOException("Unable to remove deleted profile keyboard layout");
+				}
 			}
 			transaction.commit();
 		} catch (IOException | RuntimeException failure) {
@@ -1218,7 +1244,14 @@ public class ProfilesManager {
 	@Nullable
 	public static ProfileModel loadConfig(File dir, boolean persistMigrations,
 			@NonNull BackgroundMigrationContext context, boolean legacyThemeLinked) {
-		return loadConfigInternal(dir, persistMigrations, context, legacyThemeLinked, true);
+		return loadConfigInternal(dir, persistMigrations, context, legacyThemeLinked, true, false);
+	}
+
+	/** Built-in ownership may be detached only after its legacy config migration is durable. */
+	@Nullable
+	static ProfileModel loadBuiltInConfigForNormalization(@NonNull File dir) {
+		return loadConfigInternal(dir, true, BackgroundMigrationContext.MIDLET_CONFIG,
+				true, true, true);
 	}
 
 	/**
@@ -1228,7 +1261,7 @@ public class ProfilesManager {
 	public static ProfileModel loadPreparedMidletConfig(
 			@NonNull File dir, boolean legacyThemeLinked) {
 		return loadConfigInternal(
-				dir, false, BackgroundMigrationContext.MIDLET_CONFIG, legacyThemeLinked, false);
+				dir, false, BackgroundMigrationContext.MIDLET_CONFIG, legacyThemeLinked, false, false);
 	}
 
 	@Nullable
@@ -1237,7 +1270,8 @@ public class ProfilesManager {
 			boolean persistMigrations,
 			@NonNull BackgroundMigrationContext context,
 			boolean legacyThemeLinked,
-			boolean recoverAtomic) {
+			boolean recoverAtomic,
+			boolean requireMigrationSave) {
 		File file = new File(dir, Config.MIDLET_CONFIG_FILE);
 		if (recoverAtomic) recoverAtomicConfig(file);
 		ProfileModel params = null;
@@ -1315,7 +1349,9 @@ public class ProfilesManager {
 		}
 		if (persistMigrations && (versionNeedsMigration || timingModeNeedsMigration
 				|| backgroundModeNeedsMigration)) {
-			if (saveConfig(params) && loadedLegacyFile && oldFile.delete()) {
+			boolean saved = saveConfig(params);
+			if (!saved && requireMigrationSave) return null;
+			if (saved && loadedLegacyFile && oldFile.delete()) {
 				Log.d(TAG, "loadConfig: old config file deleted");
 			}
 		}

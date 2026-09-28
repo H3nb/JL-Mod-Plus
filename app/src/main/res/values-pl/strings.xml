@@ -16,7 +16,6 @@
     <string name="FORCE_CLOSE_CONFIRMATION">Wymuszenie zamknięcia aplikacji może spowodować utratę danych lub nawet całkowicie ją zepsuć! \nKontynuować?</string>
     <string name="help">Pomoc</string>
     <string name="help_message">&#8226;Włączenie filtrowania w niektórych przypadkach może negatywnie wpłynąć na wydajność. Wyłącz tą opcję jeśli gra działa zbyt wolno.&lt;BR&gt;&#8226;Problem migotania obrazu może być naprawiony poprzez zaznaczenie opcji \"Tryb natychmiastowego przetwarzania\".</string>
-    <string name="hide_buttons">Ukryj przyciski</string>
     <string name="layout_edit_finish">Zakończ tryb edycji</string>
     <string name="layout_edit_finished">Tryb edycji został zakończony</string>
     <string name="layout_edit_mode">Tryb edycji układu przycisków</string>

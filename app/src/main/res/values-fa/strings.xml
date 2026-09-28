@@ -19,7 +19,6 @@
     <string name="help">راهنما</string>
     <string name="help_message">• فعال کردن فیلتر در بعضی موارد می تواند عملکرد را به شدت کاهش دهد اگر بازی خیلی کند است این گزینه را غیرفعال کنید
 • با فعال کردن گزینه \"حالت پردازش فوری\" می توانید مشکل لرزش تصویر را برطرف کنید</string>
-    <string name="hide_buttons">دکمه ها مخفی شود</string>
     <string name="identity_filter">سریع (بدون فیلتر)</string>
     <string name="install">نصب</string>
     <string name="install_done">برنامه با موفقیت نصب شده</string>

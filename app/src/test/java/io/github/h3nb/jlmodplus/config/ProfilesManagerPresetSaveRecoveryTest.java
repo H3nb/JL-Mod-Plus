@@ -32,6 +32,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
+
 public class ProfilesManagerPresetSaveRecoveryTest {
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
 	private static final int LAYOUT_TYPE = 3;
@@ -378,6 +380,29 @@ public class ProfilesManagerPresetSaveRecoveryTest {
 		assertEquals(360, readConfig(target).screenWidth);
 		assertArrayEquals(oldLayout, readLayout(target));
 		assertFalse(saveRollback(target).exists());
+	}
+
+	@Test
+	public void builtInReplacesEditorDraftAndSavedNamedProfileAsCompleteSnapshot() throws Exception {
+		File target = tempDir("built-in-editor-target");
+		File draft = tempDir("built-in-editor-draft");
+		writeConfig(target, 176);
+		writeLayout(target, 2);
+		byte[] originalLayout = readLayout(target);
+		ProfilesManager.PresetEditSession session = ProfilesManager.beginPresetEditSession(target, draft);
+		File staleLayoutBackup = new File(target, Config.MIDLET_KEY_LAYOUT_FILE + ".bak");
+		Files.write(staleLayoutBackup.toPath(), originalLayout);
+
+		assertTrue(ProfilesManager.publishBuiltInSnapshot(
+				ProfileModel.createBuiltIn(draft, false, "")));
+		assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, readConfig(draft).vkType);
+		assertFalse(layoutFile(draft).exists());
+		assertArrayEquals(originalLayout, readLayout(target));
+
+		ProfilesManager.saveEditedSnapshot(session, draft);
+		assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, readConfig(target).vkType);
+		assertFalse(layoutFile(target).exists());
+		assertFalse(staleLayoutBackup.exists());
 	}
 
 	@Test

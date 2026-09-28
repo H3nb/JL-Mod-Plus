@@ -16,7 +16,6 @@
     <string name="FORCE_CLOSE_CONFIRMATION">Închiderea forțată a aplicației ar putea duce la pierderea datelor!\nVrei să continui?</string>
     <string name="help">Ajutor</string>
     <string name="help_message">&#8226; Permitand filtrarea poate reduce cu mult performanta in unele cazuri. Dezactiveaza aceasta optiune daca jocul ruleaza incet.&lt;BR&gt;&#8226; Problemele legate de imagine pot fi reparate cu ajutorul optiunii \"Mod de procesare imediata\".</string>
-    <string name="hide_buttons">Ascunde butoanele</string>
     <string name="layout_edit_finish">Termină modul de editare</string>
     <string name="layout_edit_finished">Modul de editare a fost terminat</string>
     <string name="layout_edit_mode">Modul de editare al formatului tastaturii</string>

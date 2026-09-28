@@ -26,6 +26,7 @@ import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.io.File
 import java.io.IOException
+import javax.microedition.lcdui.keyboard.VirtualKeyboard
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -503,7 +504,7 @@ class PresetAuthorityIpcRuntimeTest {
             version = ProfileModel.VERSION
             screenWidth = width
             screenHeight = 320
-            vkType = 3
+            vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS
             systemProperties = ""
         }
         assertTrue(ProfilesManager.saveConfig(profile))

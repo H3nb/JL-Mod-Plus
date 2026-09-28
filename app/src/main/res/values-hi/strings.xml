@@ -34,7 +34,6 @@
     <string name="FORCE_CLOSE_CONFIRMATION">अनुप्रयोग को बंद करने से डेटा हानि हो सकती है या पूरी तरह से टूट भी सकती है!\nआगे बढ़ें?</string>
     <string name="help">मदद</string>
     <string name="help_message">&#8226;कुछ मामलों में फ़िल्टरिंग सक्षम करना प्रदर्शन को कम कर सकता है। यदि गेम बहुत धीमा है तो इस विकल्प को अक्षम करें&lt;BR&gt;&#8226;इमेज फ़्लिकरिंग मुद्दों को \"तत्काल प्रसंस्करण मोड\" विकल्प को सक्षम करके ठीक किया जा सकता है।</string>
-    <string name="hide_buttons">बटन छिपाएं</string>
     <string name="identity_filter">तेज़ (कोई फ़िल्टर नहीं)</string>
     <string name="install">इंस्टॉल</string>
     <string name="install_done">एप्लिकेशन सफलतापूर्वक इंस्टॉल किया गया!</string>

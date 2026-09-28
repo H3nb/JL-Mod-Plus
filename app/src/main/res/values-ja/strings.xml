@@ -25,7 +25,6 @@
     <string name="exit">終了</string>
     <string name="FORCE_CLOSE_CONFIRMATION">アプリケーションを強制終了すると、データが失われたり、完全に破損する可能性があります。 続行しますか？</string>
     <string name="help">ヘルプ</string>
-    <string name="hide_buttons">ボタンを隠す</string>
     <string name="install">インストール</string>
     <string name="invalid_resolution_not_saved">不正な解像度: 保存されていません！</string>
     <string name="layout_edit_finish">編集モードを終了</string>

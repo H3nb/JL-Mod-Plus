@@ -55,7 +55,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public static final int TYPE_DPAD_STANDARD = 7;
 	public static final int TYPE_ANALOG_STANDARD = 8;
 
-	private static final int LEGACY_TEMPLATE_NUMBERS_ARROWS = 3;
 	private static final int GROUPED_CONTROL_COUNT = 2;
 	private static final float DEFAULT_DPAD_CENTER_X = 0.82f;
 	private static final float DEFAULT_DPAD_CENTER_Y = 0.78f;
@@ -425,7 +424,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			endDpad();
 			endAnalog();
 			// Build the template in memory first. Only the final Save/persistent selection writes it.
-			super.setLayoutForEditing(LEGACY_TEMPLATE_NUMBERS_ARROWS);
+			super.setLayoutForEditing(TYPE_NUMBERS_ARROWS);
 			applyStandardLegacyVisibility();
 			StandardVirtualControlsLayout layout = standardTemplateLayout();
 			arrangeStandardLegacyButtons(layout);
@@ -474,7 +473,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		for (int i = 0; i < legacyNames.length; i++) {
 			String name = legacyNames[i];
 			if ("F".equals(name) || "L".equals(name) || "R".equals(name) ||
-					"*".equals(name) || "0".equals(name)) {
+					"*".equals(name) || "0".equals(name) || "#".equals(name)) {
 				hidden[i] = false;
 			}
 		}
@@ -500,7 +499,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	/**
 	 * Lay out the standard controls as two ergonomic zones: shoulder buttons across the upper
-	 * corners, movement in the lower-left, and F, *, and 0 in the lower-right.
+	 * corners, movement in the lower-left, and F above *, 0, and # in the lower-right.
 	 */
 	private void arrangeStandardLegacyButtons(StandardVirtualControlsLayout layout) {
 		if (screenBounds == null || layout == null) return;
@@ -523,7 +522,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		setKeyCenterByLabel("R", layout.shoulderRightX, layout.shoulderCenterY);
 		setKeyCenterByLabel("F", layout.actionCenterX, layout.actionCenterY);
 		setKeyCenterByLabel("*", layout.bottomLeftX, layout.bottomRowY);
-		setKeyCenterByLabel("0", layout.bottomRightX, layout.bottomRowY);
+		setKeyCenterByLabel("0", layout.actionCenterX, layout.bottomRowY);
+		setKeyCenterByLabel("#", layout.bottomRightX, layout.bottomRowY);
 		refreshDirectKeyLayout();
 	}
 
@@ -797,7 +797,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				return;
 			}
 
-			applyBuiltInLayoutInMemory(LEGACY_TEMPLATE_NUMBERS_ARROWS);
+			applyBuiltInLayoutInMemory(TYPE_NUMBERS_ARROWS);
 			applyStandardLegacyVisibility();
 			StandardVirtualControlsLayout layout = standardTemplateLayout();
 			arrangeStandardLegacyButtons(layout);

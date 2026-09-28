@@ -23,7 +23,6 @@
     <string name="exit">Verlaten</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Als u de toepassing forceert om de toepassing te sluiten, kan dit leiden tot gegevensverlies of zelfs helemaal breken! \nVerder?</string>
     <string name="help_message">&#8226; Het inschakelen van filteren kan in sommige gevallen de prestaties aanzienlijk verminderen. Schakel deze optie uit als het spel te traag is.&lt;BR&gt;&#8226; Problemen met het flikken van afbeeldingen kunnen worden opgelost door de optie \"Directe verwerking modus\" in te schakelen.</string>
-    <string name="hide_buttons">Verberg knoppen</string>
     <string name="identity_filter">Snel (geen filter)</string>
     <string name="layout_edit_finish">Voltooi de bewerkingsmodus</string>
     <string name="layout_edit_finished">Bewerkingsmodus voltooid</string>
