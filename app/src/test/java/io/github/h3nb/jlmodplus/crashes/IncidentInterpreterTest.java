@@ -50,6 +50,8 @@ public class IncidentInterpreterTest {
 				.contains("terminated the isolated MIDlet process"));
 		assertTrue(incident.associatedProcessExit.limitation == null);
 		assertTrue(incident.limitations.isEmpty());
+		assertTrue(DiagnosticBundleFormat.incidentJson(incident)
+				.contains("\"controlledByJlMod\": true"));
 	}
 	@Test
 	public void obfuscatedLifecycleFrameCannotOverrideStructuredDestroyOperation() {

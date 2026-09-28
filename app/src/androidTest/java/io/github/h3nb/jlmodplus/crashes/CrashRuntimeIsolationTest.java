@@ -489,8 +489,16 @@ public class CrashRuntimeIsolationTest {
 		assertEquals(mainPid, processPid(context, mainProcessName));
 		LocalDiagnosticRepository.Record refreshed =
 				LocalDiagnosticRepository.find(context, failure.getId());
-		assertLifecycleFailure(
-				refreshed == null ? failure : refreshed, expectedBoundary, failureMarker);
+		LocalDiagnosticRepository.Record correlated = refreshed == null ? failure : refreshed;
+		int sameSessionRecords = 0;
+		for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
+			if (journalFailure.sessionId.equals(record.getSessionId())) {
+				sameSessionRecords++;
+			}
+		}
+		assertEquals("One physical MIDlet failure must remain one logical incident",
+				1, sameSessionRecords);
+		assertLifecycleFailure(correlated, expectedBoundary, failureMarker);
 	}
 
 	private static void assertMidletFacingActivitiesUseMidletProcess(
