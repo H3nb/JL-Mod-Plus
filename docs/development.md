@@ -64,10 +64,13 @@ The goal is useful regression confidence, not test count or coverage percentage.
 - `app/src/androidTest/`: AndroidJUnitRunner tests, including Compose interaction, file-picker intents, database, and runtime boundary checks on Android.
 - `app/src/screenshotTest/`: Compose Preview Screenshot Testing cases. Committed references are under `app/src/screenshotTestEmulatorDebug/reference/`; inspect rendered images before accepting reference changes.
 
-Android CI runs lint, app JVM unit tests, screenshot validation, and app/instrumentation
-assembly. It currently does not invoke dexlib JVM tests or connected instrumentation.
-Markdown and `docs/**` changes are excluded from automatic PR runs. See the workflow
-for current tasks rather than assuming all source sets execute.
+The default Android CI mode runs lint, app and dexlib JVM unit tests, screenshot
+validation, and app/instrumentation assembly. Connected instrumentation runs only
+in the separate manual `runtime-smoke` mode described below. See the workflow for
+current tasks rather than assuming all source sets execute.
+Automatic PR runs exclude PRs whose entire diff consists of Markdown and `docs/**`.
+A documentation-only commit on a PR that also changes code can still trigger CI
+and cancel an earlier PR run, because path filtering uses the whole PR diff.
 For UI or runtime changes, use the affected checks in [UI ownership](ui-ownership-map.md)
 and [Runtime UI](runtime-ui.md), including rendering geometry, key/touch dispatch,
 Back, rotation, IME, and guest transitions where relevant.
@@ -79,15 +82,70 @@ Inspect the run for the relevant source revision and the specific task results;
 a green workflow proves only the checks it executed. Report the run/commit,
 checks passed, and any compiled-only, skipped, or unverified behavior.
 
-The current Android CI supports manual dispatch and uploads diagnostic reports,
-including screenshot reports, but has no dedicated baseline-update mode. Its
-combined validation/assembly step can prevent the later APK upload after a
-screenshot failure. Do not claim baseline generation or APK availability without
-checking the run and artifacts.
+Android CI has three modes. Select the intended branch under **Run workflow**;
+the run records the exact checked-out commit. Normal PR validation checks the
+temporary merge commit with the base branch, so its build identity can differ
+from the PR head. Manual dispatch checks the selected branch revision instead.
 
-Use actual renderer output from an available compatible local/CI run for baseline
-updates. If rendering or inspection is unavailable, preserve the references,
-complete other scoped work, and report the precise gap and next required check.
-A reusable CI update path is a workflow change to implement when in scope, not
-a temporary workflow to add repeatedly for individual UI edits. Missing checks
+| Mode | Result |
+| --- | --- |
+| `validate` (default; automatic on PRs) | Separate assembly, lint/unit-test/instrumentation-compilation, and screenshot steps; failures remain failures while independent checks continue |
+| `update-screenshots` (manual) | Renderer-generated candidate references and a binary patch for review; does not validate or publish the app |
+| `runtime-smoke` (manual) | Selected existing instrumentation tests on one fresh API 35 x86_64 emulator; does not run the full Android suite or replace normal PR validation |
+
+Maintenance modes use distinct check names and concurrency groups. Generating
+candidates or passing the runtime subset does not satisfy the PR `build` check.
+Dispatch options require the workflow to be available through GitHub's default
+branch; do not add a temporary push-triggered updater when dispatch is unavailable.
+
+The debug APK artifact is uploaded when assembly and artifact staging succeed,
+even if lint, tests, or screenshot comparison fail. It includes `validation.txt`
+with the source commit, run URL, and step outcomes. Artifact availability does not
+mean the build is validated or ready to merge. Diagnostic artifacts include app
+and dexlib reports, screenshot reports, and connected-test reports/logcat when run.
+Inspect the individual reports when a combined step fails.
+
+### Screenshot updates without a local Android toolchain
+
+1. Diagnose the mismatch from the `validate` run's screenshot report and authorized UI change.
+2. Dispatch Android CI with `mode=update-screenshots` on the intended branch. Do not advance the branch while generating candidates if it would make the output stale.
+3. Download `JL-Mod-Plus-screenshot-candidates`. It contains `before/`, `after/`, `changes.txt`, `source-commit.txt`, and `baselines.patch`. Compare the actual images; inspect added, renamed, and obsolete references as well as changed ones.
+4. Confirm the recorded source commit matches the UI revision being reviewed. From the repository root, use `git apply --check path/to/baselines.patch`, then apply the reviewed patch. If only some changes are justified, transfer only those renderer-produced files and review deletions explicitly. An empty patch means the renderer produced no reference changes.
+5. Commit the accepted references with the UI change and run normal validation again. Candidate generation alone is not a passing screenshot check. Never accept unrelated visual changes just to make CI green.
+
+Scripts and GitHub tools may transfer or package the generated images unchanged;
+they must not redraw expected pixels. A full binary patch includes new images as
+well as changes and deletions reported by Git; it is not automatically committed.
+
+If rendering or inspection is unavailable, preserve the references, complete other
+scoped work, and report the precise gap and next required check. Missing checks
 remain verification gaps; they do not authorize bypassing required merge checks.
+
+### Runtime smoke checks
+
+Use `runtime-smoke` for relevant UI/database/IPC/lifecycle changes and before a
+release involving those boundaries. The workflow selects existing tests for
+Android SQLite, crash-report interactions, stale cross-process preset identity,
+and repeated remote crashes that must leave the main process alive. It uses the
+emulator's default English locale, disables animations, and captures logcat before
+the emulator shuts down. Tests share one fresh installation and run without sharding.
+
+Keep this mode opt-in until successful CI execution, stability, and cost are
+established. Record which selected tests actually ran; the rest of `androidTest`
+remains unverified unless separately executed. Physical arm64/native behavior and
+other Android versions still require appropriate device or targeted checks.
+
+### Release checks
+
+The release workflow excludes documentation-only pushes to `alpha`, validates app
+and dexlib JVM tests, and preserves diagnostic reports on failure. Publishing still
+requires successful validation, release assembly, and signature verification.
+PR debug validation does not exercise R8/release-only behavior; validate the release
+variant before merging changes to shrinking, signing, release configuration, or
+dependencies that can affect it. Manual release dispatch publishes an APK and is
+not a substitute for a non-publishing release build check.
+
+`jlmod.versionCode` remains source-controlled. The workflow checks that it is a
+positive integer, not that it exceeds every previously published APK. Follow the
+[versioning policy](agent-workflow.md#versioning) before publishing; a unique alpha
+version name or tag does not establish monotonic version codes.

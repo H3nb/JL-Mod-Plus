@@ -9,16 +9,28 @@ on:
       - '**/*.md'
       - 'docs/**'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Validate, generate screenshot candidates, or run selected Android runtime tests'
+        type: choice
+        required: true
+        default: validate
+        options:
+          - validate
+          - update-screenshots
+          - runtime-smoke
 
 permissions:
   contents: read
 
 concurrency:
-  group: android-ci-${{ github.workflow }}-${{ github.ref }}
+  group: android-ci-${{ github.event_name }}-${{ github.ref }}-${{ inputs.mode || 'validate' }}
   cancel-in-progress: true
 
 jobs:
   build:
+    # Maintenance runs must not report the same check name as PR validation.
+    name: ${{ inputs.mode == 'update-screenshots' && 'screenshot-candidates' || inputs.mode == 'runtime-smoke' && 'runtime-smoke' || 'build' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -30,6 +42,7 @@ jobs:
           submodules: recursive
 
       - name: Restore shared debug keystore
+        if: github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate'
         shell: bash
         env:
           ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
@@ -68,20 +81,129 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-37.0'
 
-      - name: Grant execute permission for Gradle wrapper
-        run: chmod +x gradlew
-
-      - name: Lint, test, and assemble
+      - name: Prepare build identity
+        id: prepare
+        shell: bash
         env:
-          JLMOD_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+          MODE: ${{ inputs.mode || 'validate' }}
+        run: |
+          set -euo pipefail
+          case "$MODE" in
+            validate|update-screenshots|runtime-smoke) ;;
+            *) echo "Unsupported CI mode: $MODE" >&2; exit 1 ;;
+          esac
+          chmod +x gradlew
+          echo "JLMOD_BUILD_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Assemble arm64 debug APK
+        id: assemble
+        if: github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate'
+        run: ./gradlew --no-daemon --stacktrace :app:assembleEmulatorDebug
+
+      - name: Lint, unit tests, and instrumentation compilation
+        id: checks
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && (github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate') }}
         run: >-
           ./gradlew --no-daemon --stacktrace --continue
           :app:lintEmulatorDebug
           :dexlib:lintDebug
           :app:testEmulatorDebugUnitTest
-          :app:validateEmulatorDebugScreenshotTest
-          :app:assembleEmulatorDebug
+          :dexlib:testDebugUnitTest
           :app:assembleEmulatorDebugAndroidTest
+
+      - name: Validate screenshot references
+        id: screenshots
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && (github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate') }}
+        run: ./gradlew --no-daemon --stacktrace :app:validateEmulatorDebugScreenshotTest
+
+      - name: Generate screenshot candidates
+        id: candidates
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && github.event_name == 'workflow_dispatch' && inputs.mode == 'update-screenshots' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p screenshot-candidates
+          cp -a app/src/screenshotTestEmulatorDebug/reference screenshot-candidates/before
+          ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
+          cp -a app/src/screenshotTestEmulatorDebug/reference screenshot-candidates/after
+          # Include newly generated files as well as changed/deleted references.
+          git add --intent-to-add -- app/src/screenshotTestEmulatorDebug/reference
+          git diff --binary HEAD -- app/src/screenshotTestEmulatorDebug/reference > screenshot-candidates/baselines.patch
+          git rev-parse HEAD > screenshot-candidates/source-commit.txt
+          git diff --stat HEAD -- app/src/screenshotTestEmulatorDebug/reference > screenshot-candidates/changes.txt
+
+      - name: Upload screenshot candidates for review
+        if: ${{ !cancelled() && steps.candidates.outcome == 'success' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-screenshot-candidates
+          path: screenshot-candidates/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Enable emulator acceleration
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && github.event_name == 'workflow_dispatch' && inputs.mode == 'runtime-smoke' }}
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run selected Android runtime contracts
+        id: runtime
+        if: ${{ success() && github.event_name == 'workflow_dispatch' && inputs.mode == 'runtime-smoke' }}
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: >-
+            bash -c 'trap "adb logcat -d -v threadtime > runtime-logcat.txt 2>&1 || true" EXIT;
+            ./gradlew --no-daemon --stacktrace
+            -PjlmodRuntimeTestAbi=x86_64
+            -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.librarydb.LibraryDatabaseAndroidTest,io.github.h3nb.jlmodplus.crashes.CrashReportsComposeTest,io.github.h3nb.jlmodplus.config.PresetAuthorityIpcRuntimeTest#staleRuntimeIdentityCannotModifyReplacementApp,io.github.h3nb.jlmodplus.crashes.CrashRuntimeIsolationTest#repeatedRemoteSessionCrashesKeepMainProcessAndPersistExactReports
+            :app:connectedEmulatorDebugAndroidTest'
+
+      - name: Record validation results
+        if: always()
+        shell: bash
+        env:
+          MODE: ${{ inputs.mode || 'validate' }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          ASSEMBLE_RESULT: ${{ steps.assemble.outcome }}
+          CHECKS_RESULT: ${{ steps.checks.outcome }}
+          SCREENSHOT_RESULT: ${{ steps.screenshots.outcome }}
+          CANDIDATE_RESULT: ${{ steps.candidates.outcome }}
+          RUNTIME_RESULT: ${{ steps.runtime.outcome }}
+        run: |
+          mkdir -p ci-artifacts
+          {
+            echo "Mode: $MODE"
+            echo "Built source commit: ${JLMOD_BUILD_COMMIT:-unavailable}"
+            echo "PR head commit: ${PR_HEAD_SHA:-not a PR run}"
+            echo "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "APK assembly: $ASSEMBLE_RESULT"
+            echo "Lint, app/dexlib unit tests, instrumentation compilation: $CHECKS_RESULT"
+            echo "Screenshot validation: $SCREENSHOT_RESULT"
+            echo "Screenshot candidate generation: $CANDIDATE_RESULT"
+            echo "Selected runtime tests: $RUNTIME_RESULT"
+            echo 'An APK artifact is not evidence that validation passed. Inspect the task reports.'
+          } | tee ci-artifacts/validation.txt >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stage successfully assembled APK
+        id: stage_apk
+        if: ${{ !cancelled() && steps.assemble.outcome == 'success' }}
+        run: cp app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk ci-artifacts/
+
+      - name: Upload arm64 emulator debug APK and validation status
+        if: ${{ !cancelled() && steps.stage_apk.outcome == 'success' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-emulator-debug-arm64-v8a
+          path: ci-artifacts/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
 
       - name: Upload CI diagnostics
         if: always()
@@ -97,16 +219,13 @@ jobs:
             dexlib/build/reports/lint-results-*.sarif
             app/build/reports/tests/**
             app/build/test-results/**
+            dexlib/build/reports/tests/**
+            dexlib/build/test-results/**
             app/build/reports/screenshotTest/**
+            app/build/reports/androidTests/**
+            app/build/outputs/androidTest-results/**
             build/reports/problems/**
+            ci-artifacts/validation.txt
+            runtime-logcat.txt
           if-no-files-found: warn
           retention-days: 7
-
-      - name: Upload arm64 emulator debug APK
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: JL-Mod-Plus-emulator-debug-arm64-v8a
-          path: app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk
-          if-no-files-found: error
-          retention-days: 7
-          compression-level: 0
