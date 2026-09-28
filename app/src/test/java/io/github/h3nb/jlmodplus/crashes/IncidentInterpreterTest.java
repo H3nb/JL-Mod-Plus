@@ -102,6 +102,49 @@ public class IncidentInterpreterTest {
 	}
 
 	@Test
+	public void directJavaEvidencePreservesLifecycleBoundaryWithoutJournal() {
+		JavaDiagnosticStore.ThrowableData primary = throwable(
+				"java.lang.NoClassDefFoundError", "missing", "GloftOTSP", "startApp");
+		JavaDiagnosticStore.Snapshot java = new JavaDiagnosticStore.Snapshot(
+				new File("journal-degraded.java.properties"),
+				JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE,
+				1000L,
+				"io.github.h3nb.jlmodplus:midlet",
+				"midlet",
+				123,
+				"MidletMain",
+				17,
+				5,
+				SESSION,
+				"OregonTrailAmericanSettler",
+				"1.0",
+				"GloftOTSP",
+				"abc123",
+				"1.0",
+				"16",
+				36,
+				"POCO",
+				"F7",
+				"arm64-v8a",
+				null,
+				"stack",
+				List.of(primary),
+				0,
+				EVENT,
+				MidletSessionJournal.FailureBoundary.LIFECYCLE_START.name(),
+				null);
+
+		IncidentSummary incident = IncidentInterpreter.interpret(null, java, null);
+
+		assertEquals(IncidentSummary.Category.MIDLET_LIFECYCLE, incident.category);
+		assertEquals("startApp()", incident.operation);
+		assertEquals("LIFECYCLE_START", incident.boundary);
+		assertEquals(EVENT, incident.eventId);
+		assertEquals(SESSION, incident.sessionId);
+		assertEquals("NoClassDefFoundError", incident.primaryFailure.simpleType());
+	}
+
+	@Test
 	public void handledSessionFailureDoesNotHideIndependentAndroidCrash() {
 		JavaDiagnosticStore.Snapshot java = javaEvidence(
 				JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE,

@@ -27,8 +27,12 @@ final class IncidentInterpreter {
 				java == null ? null : java.midletMainClass);
 		IncidentSummary.FailureOrigin origin = failureOrigin(
 				java == null ? null : java.primaryThrowable(), entrypoint);
-		boolean lifecycle = session != null && session.failureBoundary != null
-				&& session.failureBoundary.name().startsWith("LIFECYCLE_");
+		MidletSessionJournal.FailureBoundary effectiveBoundary =
+				session != null && session.failureBoundary != null
+						? session.failureBoundary
+						: storedBoundary(java == null ? null : java.legacyBoundary);
+		boolean lifecycle = effectiveBoundary != null
+				&& effectiveBoundary.name().startsWith("LIFECYCLE_");
 		IncidentSummary.Category category;
 		if (lifecycle) {
 			category = IncidentSummary.Category.MIDLET_LIFECYCLE;
@@ -46,10 +50,10 @@ final class IncidentInterpreter {
 			category = IncidentSummary.Category.PROCESS_EXIT;
 		}
 
-		String operation = lifecycleOperation(session == null ? null : session.failureBoundary);
-		String boundary = session != null && session.failureBoundary != null
-				? session.failureBoundary.name()
-				: (java == null ? null : java.legacyBoundary);
+		String operation = lifecycleOperation(effectiveBoundary);
+		String boundary = effectiveBoundary == null
+				? (java == null ? null : java.legacyBoundary)
+				: effectiveBoundary.name();
 		String stage = session == null || session.stage == null ? null : session.stage.name();
 		String eventId = session == null ? (java == null ? null : java.legacyEventId)
 				: session.failureEventId;
@@ -172,6 +176,15 @@ final class IncidentInterpreter {
 		if (java != null) return java.timestampMillis;
 		if (exit != null) return exit.timestampMillis;
 		return session == null ? 0 : session.updatedWallTimeMillis;
+	}
+
+	private static MidletSessionJournal.FailureBoundary storedBoundary(String value) {
+		if (value == null) return null;
+		try {
+			return MidletSessionJournal.FailureBoundary.valueOf(value);
+		} catch (IllegalArgumentException ignored) {
+			return null;
+		}
 	}
 
 	static String lifecycleOperation(MidletSessionJournal.FailureBoundary boundary) {
