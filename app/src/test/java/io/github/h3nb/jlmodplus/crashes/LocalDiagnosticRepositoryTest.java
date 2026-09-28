@@ -21,7 +21,14 @@ public class LocalDiagnosticRepositoryTest {
 	private static final String EVENT = "223e4567-e89b-12d3-a456-426614174000";
 
 	@Test
-	public void newFatalUsesStructuredSessionIdWithoutStackMarker() {
+	public void handledSessionFailureUsesStructuredSessionIdWithoutStackMarker() {
+		assertTrue(LocalDiagnosticRepository.shouldAttachToSession(
+				session(SESSION, EVENT),
+				javaEvidence(JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE, SESSION, EVENT)));
+	}
+
+	@Test
+	public void priorProcessFatalUsesStructuredSessionIdWithoutStackMarker() {
 		assertTrue(LocalDiagnosticRepository.shouldAttachToSession(
 				session(SESSION, EVENT),
 				javaEvidence(JavaDiagnosticStore.Kind.FATAL_UNCAUGHT, SESSION, null)));
@@ -59,8 +66,8 @@ public class LocalDiagnosticRepositoryTest {
 	public void mismatchedNewSessionNeverCorrelatesByFatalKindAlone() {
 		assertFalse(LocalDiagnosticRepository.shouldAttachToSession(
 				session(SESSION, EVENT),
-				javaEvidence(JavaDiagnosticStore.Kind.FATAL_UNCAUGHT,
-						"323e4567-e89b-12d3-a456-426614174000", null)));
+				javaEvidence(JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE,
+						"323e4567-e89b-12d3-a456-426614174000", EVENT)));
 	}
 
 	private static MidletSessionJournal.Snapshot session(String sessionId, String eventId) {

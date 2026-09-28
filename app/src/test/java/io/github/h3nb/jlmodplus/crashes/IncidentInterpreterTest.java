@@ -24,25 +24,20 @@ public class IncidentInterpreterTest {
 	private static final String EVENT = "223e4567-e89b-12d3-a456-426614174000";
 
 	@Test
-	public void realStartAppShapeKeepsPrimaryAndUnderlyingCauseDistinct() {
+	public void realStartAppShapeKeepsPrimaryCauseAndControlledTerminationDistinct() {
 		List<JavaDiagnosticStore.ThrowableData> chain = List.of(
-				throwable("io.github.h3nb.jlmodplus.crashes.CrashReporter$SessionFailureException",
-						"session wrapper", "io.github.h3nb.jlmodplus.crashes.CrashReporter", "wrap"),
-				throwable("java.lang.RuntimeException", "Failed startApp",
-						"javax.microedition.shell.MidletThread", "start"),
 				throwable("java.lang.NoClassDefFoundError",
 						"Failed resolution of Lcom/skt/m/AudioSystem;",
 						"GloftOTSP", "startApp"),
 				throwable("java.lang.ClassNotFoundException",
 						"Didn't find class \"com.skt.m.AudioSystem\"",
 						"dalvik.system.BaseDexClassLoader", "findClass"));
-		JavaDiagnosticStore.Snapshot java = javaEvidence(chain, 2, "GloftOTSP");
+		JavaDiagnosticStore.Snapshot java = javaEvidence(
+				JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE, chain, 0, "GloftOTSP");
 		ProcessExitStore.Snapshot exit = exit(
 				ProcessExitStore.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, true, 36);
 		IncidentSummary incident = IncidentInterpreter.interpret(
-				session(MidletSessionJournal.FailureBoundary.LIFECYCLE_START),
-				java,
-				exit);
+				session(MidletSessionJournal.FailureBoundary.LIFECYCLE_START), java, exit);
 
 		assertEquals(IncidentSummary.Category.MIDLET_LIFECYCLE, incident.category);
 		assertEquals("startApp()", incident.operation);
@@ -50,11 +45,12 @@ public class IncidentInterpreterTest {
 		assertEquals("ClassNotFoundException", incident.underlyingCause.simpleType());
 		assertEquals(IncidentSummary.FailureOrigin.MIDLET, incident.failureOrigin);
 		assertEquals("Android 16 (SDK 36)", incident.androidLabel());
-		assertTrue(incident.associatedProcessExit.summary.contains("SIGKILL"));
-		assertTrue(incident.associatedProcessExit.limitation.contains("separately reportable"));
-		assertFalse(incident.associatedProcessExit.limitation.toLowerCase().contains("cause: unknown"));
+		assertTrue(incident.associatedProcessExit.controlledByJlMod);
+		assertTrue(incident.associatedProcessExit.summary
+				.contains("terminated the isolated MIDlet process"));
+		assertTrue(incident.associatedProcessExit.limitation == null);
+		assertTrue(incident.limitations.isEmpty());
 	}
-
 	@Test
 	public void obfuscatedLifecycleFrameCannotOverrideStructuredDestroyOperation() {
 		JavaDiagnosticStore.ThrowableData failure = new JavaDiagnosticStore.ThrowableData(
@@ -101,6 +97,35 @@ public class IncidentInterpreterTest {
 		assertEquals(IncidentSummary.FailureOrigin.UNKNOWN, incident.failureOrigin);
 		assertTrue(GitHubDiagnosticIssue.description(incident, null)
 				.contains("does not establish guest or emulator ownership"));
+	}
+
+	@Test
+	public void handledSessionFailureDoesNotHideIndependentAndroidCrash() {
+		JavaDiagnosticStore.Snapshot java = javaEvidence(
+				JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE,
+				List.of(throwable("java.lang.IllegalStateException", "boom", "GloftOTSP", "startApp")),
+				0,
+				"GloftOTSP");
+		IncidentSummary incident = IncidentInterpreter.interpret(
+				session(MidletSessionJournal.FailureBoundary.LIFECYCLE_START),
+				java,
+				exit(ProcessExitStore.REASON_CRASH, 0, true, 36));
+
+		assertFalse(incident.associatedProcessExit.controlledByJlMod);
+		assertEquals("Android reported a Java process crash.",
+				incident.associatedProcessExit.summary);
+	}
+
+	@Test
+	public void journalOnlyTerminalFailureExposesMissingJavaEvidence() {
+		IncidentSummary incident = IncidentInterpreter.interpret(
+				session(MidletSessionJournal.FailureBoundary.LIFECYCLE_START),
+				null,
+				exit(ProcessExitStore.REASON_CRASH, 0, true, 36));
+
+		assertTrue(incident.primaryFailure == null);
+		assertTrue(incident.limitations.stream()
+				.anyMatch(value -> value.contains("Java evidence was not retained")));
 	}
 
 	@Test
@@ -163,9 +188,15 @@ public class IncidentInterpreterTest {
 
 	private static JavaDiagnosticStore.Snapshot javaEvidence(
 			List<JavaDiagnosticStore.ThrowableData> chain, int primaryIndex, String mainClass) {
+		return javaEvidence(JavaDiagnosticStore.Kind.FATAL_UNCAUGHT, chain, primaryIndex, mainClass);
+	}
+
+	private static JavaDiagnosticStore.Snapshot javaEvidence(
+			JavaDiagnosticStore.Kind kind, List<JavaDiagnosticStore.ThrowableData> chain,
+			int primaryIndex, String mainClass) {
 		return new JavaDiagnosticStore.Snapshot(
 				new File("incident.java.properties"),
-				JavaDiagnosticStore.Kind.FATAL_UNCAUGHT,
+				kind,
 				1000L,
 				"io.github.h3nb.jlmodplus:midlet",
 				"midlet",

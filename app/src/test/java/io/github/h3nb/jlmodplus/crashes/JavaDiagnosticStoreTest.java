@@ -41,19 +41,12 @@ public class JavaDiagnosticStoreTest {
 		primary.setStackTrace(new StackTraceElement[]{
 				new StackTraceElement("GloftOTSP", "startApp", "SourceFile", 42)
 		});
-		RuntimeException lifecycle = new RuntimeException("Failed startApp", primary);
-		Throwable reported = CrashReporter.wrapSessionFailure(
-				"123e4567-e89b-12d3-a456-426614174000",
-				MidletSessionJournal.FailureBoundary.LIFECYCLE_START,
-				lifecycle,
-				primary);
 
 		JavaDiagnosticStore.ThrowableCapture captured =
-				JavaDiagnosticStore.captureThrowableChain(
-						reported, CrashReporter.primaryFailure(reported));
+				JavaDiagnosticStore.captureThrowableChain(primary, primary);
 
-		assertEquals(4, captured.throwables.size());
-		assertEquals(2, captured.primaryIndex);
+		assertEquals(2, captured.throwables.size());
+		assertEquals(0, captured.primaryIndex);
 		assertEquals(NoClassDefFoundError.class.getName(),
 				captured.throwables.get(captured.primaryIndex).className);
 		assertEquals(ClassNotFoundException.class.getName(),
@@ -84,26 +77,6 @@ public class JavaDiagnosticStoreTest {
 	}
 
 	@Test
-	public void missingEventIdDoesNotLoseKnownLifecyclePrimaryThrowable() {
-		NoClassDefFoundError primary = new NoClassDefFoundError("missing");
-		RuntimeException lifecycle = new RuntimeException("Failed startApp", primary);
-		Throwable reported = CrashReporter.wrapSessionFailure(
-				null,
-				MidletSessionJournal.FailureBoundary.LIFECYCLE_START,
-				lifecycle,
-				primary);
-
-		JavaDiagnosticStore.ThrowableCapture captured =
-				JavaDiagnosticStore.captureThrowableChain(
-						reported, CrashReporter.primaryFailure(reported));
-
-		assertTrue(reported != lifecycle);
-		assertEquals(2, captured.primaryIndex);
-		assertEquals(NoClassDefFoundError.class.getName(),
-				captured.throwables.get(captured.primaryIndex).className);
-	}
-
-	@Test
 	public void structuredEvidenceRoundTripKeepsReleaseSdkAndPrimaryIndex() throws Exception {
 		JavaDiagnosticStore.ThrowableData primary = new JavaDiagnosticStore.ThrowableData(
 				NoClassDefFoundError.class.getName(),
@@ -119,7 +92,7 @@ public class JavaDiagnosticStoreTest {
 		File file = new File(temporary.getRoot(), "roundtrip.java.properties");
 		JavaDiagnosticStore.Snapshot original = new JavaDiagnosticStore.Snapshot(
 				file,
-				JavaDiagnosticStore.Kind.FATAL_UNCAUGHT,
+				JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE,
 				1234L,
 				"io.github.h3nb.jlmodplus:midlet",
 				"midlet",
@@ -142,13 +115,17 @@ public class JavaDiagnosticStoreTest {
 				"stack",
 				List.of(primary, underlying),
 				0,
-				null,
-				null,
+				"223e4567-e89b-12d3-a456-426614174000",
+				"LIFECYCLE_START",
 				null);
 
 		JavaDiagnosticStore.write(file, original);
 		JavaDiagnosticStore.Snapshot restored = JavaDiagnosticStore.read(file);
 
+		assertEquals(JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE, restored.kind);
+		assertEquals("123e4567-e89b-12d3-a456-426614174000", restored.sessionId);
+		assertEquals("223e4567-e89b-12d3-a456-426614174000", restored.legacyEventId);
+		assertEquals("LIFECYCLE_START", restored.legacyBoundary);
 		assertEquals("16", restored.androidRelease);
 		assertEquals(36, restored.androidSdk);
 		assertEquals(NoClassDefFoundError.class.getName(), restored.primaryThrowable().className);
@@ -200,10 +177,11 @@ public class JavaDiagnosticStoreTest {
 	}
 
 	@Test
-	public void caughtKindsRemainExplicitlyNonFatal() {
+	public void terminalAndCaughtEvidenceKindsRemainDistinct() {
+		assertTrue(JavaDiagnosticStore.Kind.FATAL_UNCAUGHT.fatal);
+		assertTrue(JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE.fatal);
 		assertFalse(JavaDiagnosticStore.Kind.CAUGHT_INSTALLER.fatal);
 		assertFalse(JavaDiagnosticStore.Kind.CAUGHT_APP_REPOSITORY.fatal);
-		assertTrue(JavaDiagnosticStore.Kind.FATAL_UNCAUGHT.fatal);
 	}
 
 	@Test
