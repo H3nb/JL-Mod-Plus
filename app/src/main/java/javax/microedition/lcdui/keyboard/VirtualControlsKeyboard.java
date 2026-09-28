@@ -474,7 +474,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		for (int i = 0; i < legacyNames.length; i++) {
 			String name = legacyNames[i];
 			if ("F".equals(name) || "L".equals(name) || "R".equals(name) ||
-					"*".equals(name) || "0".equals(name)) {
+					"*".equals(name) || "0".equals(name) || "#".equals(name)) {
 				hidden[i] = false;
 			}
 		}
@@ -500,7 +500,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	/**
 	 * Lay out the standard controls as two ergonomic zones: shoulder buttons across the upper
-	 * corners, movement in the lower-left, and F, *, and 0 in the lower-right.
+	 * corners, movement in the lower-left, and F above *, 0, and # in the lower-right.
 	 */
 	private void arrangeStandardLegacyButtons(StandardVirtualControlsLayout layout) {
 		if (screenBounds == null || layout == null) return;
@@ -523,7 +523,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		setKeyCenterByLabel("R", layout.shoulderRightX, layout.shoulderCenterY);
 		setKeyCenterByLabel("F", layout.actionCenterX, layout.actionCenterY);
 		setKeyCenterByLabel("*", layout.bottomLeftX, layout.bottomRowY);
-		setKeyCenterByLabel("0", layout.bottomRightX, layout.bottomRowY);
+		setKeyCenterByLabel("0", layout.actionCenterX, layout.bottomRowY);
+		setKeyCenterByLabel("#", layout.bottomRightX, layout.bottomRowY);
 		refreshDirectKeyLayout();
 	}
 

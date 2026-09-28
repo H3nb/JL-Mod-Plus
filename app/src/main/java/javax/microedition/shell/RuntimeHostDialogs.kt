@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
@@ -69,7 +70,7 @@ interface RuntimeHostDialogActions {
     fun onMidletCancelled()
     fun onErrorAcknowledged()
     fun onExitConfirmed(openSettings: Boolean)
-    fun onHideButtonsConfirmed(states: BooleanArray)
+    fun onHideButtonsConfirmed(hidden: BooleanArray)
     fun onSaveVirtualKeyboard(updateTarget: String?)
     fun onVirtualKeyboardEditSaved(updateTarget: String?) = Unit
     fun onVirtualKeyboardEditDiscarded() = Unit
@@ -82,7 +83,7 @@ internal sealed interface RuntimeHostDialogState {
     data class MidletSelection(val names: List<String>) : RuntimeHostDialogState
     data class Error(val message: String) : RuntimeHostDialogState
     data object ExitConfirmation : RuntimeHostDialogState
-    data class HideButtons(val names: List<String>, val checked: BooleanArray) : RuntimeHostDialogState
+    data class HideButtons(val names: List<String>, val hidden: BooleanArray) : RuntimeHostDialogState
     data class SaveVirtualKeyboard(
         val updateTarget: String? = null,
     ) : RuntimeHostDialogState
@@ -331,45 +332,56 @@ private fun HideButtonsDialog(
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
-    var checked by remember(state) { mutableStateOf(state.checked.copyOf()) }
+    var visible by remember(state) {
+        mutableStateOf(BooleanArray(state.hidden.size) { !state.hidden[it] })
+    }
     val layout = runtimeDialogLayout()
-    val listState = rememberLazyListState()
+    val scrollState = rememberScrollState()
     val maxListHeight = runtimeDialogListHeight()
-    val canScrollForward = rememberLazyListCanScrollForward(listState)
+    val canScrollForward = rememberScrollCanScrollForward(scrollState)
     AlertDialog(
         textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.hide_buttons)) },
+        title = { Text(stringResource(R.string.runtime_virtual_controls_show_controls)) },
         text = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = maxListHeight),
             ) {
-                LazyColumn(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = maxListHeight),
-                    state = listState,
+                        .heightIn(max = maxListHeight)
+                        .verticalScroll(scrollState),
                 ) {
-                    itemsIndexed(state.names) { index, name ->
-                        val isChecked = checked.getOrNull(index) == true
-                        ListItem(
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            headlineContent = { Text(name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                            leadingContent = {
-                                Checkbox(checked = isChecked, onCheckedChange = null)
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .toggleable(value = isChecked, role = Role.Checkbox) {
-                                    checked = checked.copyOf().also { copy ->
-                                        if (index in copy.indices) copy[index] = !isChecked
+                    for (rowStart in state.names.indices step 3) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            repeat(3) { column ->
+                                val index = rowStart + column
+                                if (index >= state.names.size) {
+                                    Spacer(Modifier.weight(1f))
+                                } else {
+                                    val isVisible = visible.getOrNull(index) == true
+                                    Row(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .heightIn(min = 48.dp)
+                                            .toggleable(value = isVisible, role = Role.Checkbox) {
+                                                visible = visible.copyOf().also {
+                                                    if (index in it.indices) it[index] = !isVisible
+                                                }
+                                            },
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Checkbox(checked = isVisible, onCheckedChange = null)
+                                        Text(state.names[index], style = MaterialTheme.typography.bodySmall)
                                     }
-                                },
-                        )
+                                }
+                            }
+                        }
                     }
                 }
                 ScrollableContentHint(
@@ -380,7 +392,10 @@ private fun HideButtonsDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onDismiss(); actions.onHideButtonsConfirmed(checked) }) {
+            TextButton(onClick = {
+                onDismiss()
+                actions.onHideButtonsConfirmed(BooleanArray(visible.size) { !visible[it] })
+            }) {
                 Text(stringResource(android.R.string.ok))
             }
         },

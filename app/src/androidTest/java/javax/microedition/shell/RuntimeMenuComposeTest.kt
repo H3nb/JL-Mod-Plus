@@ -20,8 +20,11 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -35,6 +38,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import io.github.h3nb.jlmodplus.R
@@ -47,6 +51,40 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 class RuntimeMenuComposeTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun showControlsGridPreservesOrderAndConvertsVisibleSelectionToHiddenFlags() {
+        val events = mutableListOf<String>()
+        val selections = mutableListOf<BooleanArray>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.HideButtons(
+                        names = listOf("First", "Second", "Third", "Fourth", "Analog Stick"),
+                        hidden = booleanArrayOf(false, true, false, true, false),
+                    ),
+                    actions = RecordingRuntimeHostDialogActions(events, selections),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Show Controls").assertIsDisplayed()
+        composeRule.onNodeWithText("First").assertIsOn()
+        composeRule.onNodeWithText("Second").assertIsOff()
+        val first = composeRule.onNodeWithText("First").getUnclippedBoundsInRoot()
+        val second = composeRule.onNodeWithText("Second").getUnclippedBoundsInRoot()
+        val third = composeRule.onNodeWithText("Third").getUnclippedBoundsInRoot()
+        val fourth = composeRule.onNodeWithText("Fourth").getUnclippedBoundsInRoot()
+        assertTrue(first.left < second.left && second.left < third.left)
+        assertTrue(fourth.top > first.top)
+
+        composeRule.onNodeWithText("Second").performClick()
+        composeRule.onNodeWithText("Second").assertIsOn()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(listOf("dismiss", "hide"), events)
+        assertEquals(listOf(false, false, false, true, false), selections.single().toList())
+    }
 
     @Test
     fun compactHeightBackMenuExposesScrollHint() {
@@ -971,6 +1009,7 @@ private class RecordingRuntimeMenuActions(
 
 private class RecordingRuntimeHostDialogActions(
     private val events: MutableList<String>,
+    private val hiddenSelections: MutableList<BooleanArray> = mutableListOf(),
 ) : RuntimeHostDialogActions {
     override fun onMidletSelected(index: Int) {
         events += "midlet:$index"
@@ -988,8 +1027,9 @@ private class RecordingRuntimeHostDialogActions(
         events += if (openSettings) "settings" else "exit"
     }
 
-    override fun onHideButtonsConfirmed(states: BooleanArray) {
+    override fun onHideButtonsConfirmed(hidden: BooleanArray) {
         events += "hide"
+        hiddenSelections += hidden.copyOf()
     }
 
     override fun onSaveVirtualKeyboard(updateTarget: String?) {

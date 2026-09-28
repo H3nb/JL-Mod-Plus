@@ -94,14 +94,27 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
-    public void standardTemplatesEnableOnlyTheirIntendedGroupedControl() {
+    public void standardTemplatesEnableOnlyTheirIntendedGroupedControl() throws Exception {
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
         assertTrue(settings.virtualDpadEnabled);
         assertFalse(settings.virtualAnalogEnabled);
+        assertStandardActionRow();
 
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD);
         assertFalse(settings.virtualDpadEnabled);
         assertTrue(settings.virtualAnalogEnabled);
+        assertStandardActionRow();
+
+        boolean[] hidden = keyboard.getKeysVisibility();
+        String[] names = keyboard.getKeyNames();
+        for (int i = 0; i < names.length; i++) {
+            if ("#".equals(names[i])) hidden[i] = true;
+        }
+        keyboard.setKeysVisibility(hidden);
+        assertEquals(VirtualKeyboard.TYPE_CUSTOM, keyboard.getLayout());
+        for (int i = 0; i < names.length; i++) {
+            if ("#".equals(names[i])) assertTrue(keyboard.getKeysVisibility()[i]);
+        }
     }
 
     @Test
@@ -186,6 +199,8 @@ public class VirtualControlsKeyboardResizeTest {
         assertTrue(fire.top > guestBottom);
         assertTrue(star.top > guestBottom);
         assertTrue(zero.top > guestBottom);
+        assertTrue(rectField(keyByLabel("#")).top > guestBottom);
+        assertStandardActionRow();
         assertTrue(settings.virtualDpadCenterY * 2048f - settings.virtualDpadRadius * 945f
                 > guestBottom);
     }
@@ -213,6 +228,8 @@ public class VirtualControlsKeyboardResizeTest {
         assertTrue(fire.left > guestRight);
         assertTrue(star.left > guestRight);
         assertTrue(zero.left > guestRight);
+        assertTrue(rectField(keyByLabel("#")).left > guestRight);
+        assertStandardActionRow();
     }
 
     @Test
@@ -244,7 +261,7 @@ public class VirtualControlsKeyboardResizeTest {
         keyboard.resize(screen, 0f, 0f, 1200f, 600f);
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
 
-        for (String label : new String[] { "F", "L", "R", "*", "0" }) {
+        for (String label : new String[] { "F", "L", "R", "*", "0", "#" }) {
             Object key = keyByLabel(label);
             RectF generated = rectField(key);
             int origin = intField(key, "snapOrigin");
@@ -1435,6 +1452,22 @@ public class VirtualControlsKeyboardResizeTest {
         assertEquals(expected.movementCenterX, grouped.getCenterX(), EPS);
         assertEquals(expected.movementCenterY, grouped.getCenterY(), EPS);
         assertEquals(expected.movementRadius, grouped.getRadius(), EPS);
+    }
+
+    private void assertStandardActionRow() throws Exception {
+        RectF fire = rectField(keyByLabel("F"));
+        RectF star = rectField(keyByLabel("*"));
+        RectF zero = rectField(keyByLabel("0"));
+        RectF pound = rectField(keyByLabel("#"));
+        assertTrue(star.right < zero.left);
+        assertTrue(zero.right < pound.left);
+        assertEquals(fire.centerX(), zero.centerX(), EPS);
+        assertEquals(zero.centerX() - star.centerX(), pound.centerX() - zero.centerX(), EPS);
+        String[] names = keyboard.getKeyNames();
+        boolean[] hidden = keyboard.getKeysVisibility();
+        for (int i = 0; i < names.length; i++) {
+            if ("#".equals(names[i])) assertFalse(hidden[i]);
+        }
     }
 
     private void assertAnalogVisualMatchesResolvedGeometry() throws Exception {

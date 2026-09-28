@@ -391,9 +391,9 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         changeControllerSurface { hostDialogState = RuntimeHostDialogState.ExitConfirmation }
     }
 
-    fun showHideButtons(names: Array<String>, checked: BooleanArray) {
+    fun showHideButtons(names: Array<String>, hidden: BooleanArray) {
         changeControllerSurface {
-            hostDialogState = RuntimeHostDialogState.HideButtons(names.toList(), checked.copyOf())
+            hostDialogState = RuntimeHostDialogState.HideButtons(names.toList(), hidden.copyOf())
         }
     }
 

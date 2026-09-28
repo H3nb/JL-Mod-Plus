@@ -530,8 +530,8 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
-					public void onHideButtonsConfirmed(boolean[] states) {
-						applyHiddenButtons(states);
+					public void onHideButtonsConfirmed(boolean[] hidden) {
+						applyHiddenButtons(hidden);
 					}
 
 					@Override
@@ -1629,8 +1629,8 @@ public class MicroActivity extends AppCompatActivity {
 		if (vk == null || runtimeMenuController == null) {
 			return;
 		}
-		boolean[] states = vk.getKeysVisibility();
-		runtimeMenuController.showHideButtons(vk.getKeyNames(), states);
+		boolean[] hidden = vk.getKeysVisibility();
+		runtimeMenuController.showHideButtons(vk.getKeyNames(), hidden);
 	}
 
 	private void showSaveVkAlert() {
