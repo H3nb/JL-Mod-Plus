@@ -23,4 +23,17 @@ public class MidletThreadOwnershipTest {
 		assertFalse(MidletThread.isCurrentGuestExecutionToken(current, stale));
 		assertFalse(MidletThread.isCurrentGuestExecutionToken(current, null));
 	}
+
+	@Test
+	public void escapingFailureMarkerRequiresExactSessionAndThrowableIdentity() {
+		Object current = new Object();
+		Object stale = new Object();
+		Throwable failure = new IllegalStateException("guest");
+		MidletThread.EscapingGuestFailure marker =
+				new MidletThread.EscapingGuestFailure(current, failure);
+
+		assertTrue(marker.matches(current, failure));
+		assertFalse(marker.matches(stale, failure));
+		assertFalse(marker.matches(current, new IllegalStateException("other")));
+	}
 }

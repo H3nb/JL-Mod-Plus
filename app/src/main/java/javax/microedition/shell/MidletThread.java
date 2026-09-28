@@ -56,9 +56,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final int RESUME_REQUEST = 7;
 
 	private static volatile MidletThread instance;
+	private static volatile Object liveGuestExecutionToken;
 	private static final InheritableThreadLocal<Object> GUEST_EXECUTION =
 			new InheritableThreadLocal<>();
-	private static final ThreadLocal<WeakReference<Throwable>> ESCAPING_GUEST_FAILURE =
+	private static final ThreadLocal<EscapingGuestFailure> ESCAPING_GUEST_FAILURE =
 			new ThreadLocal<>();
 
 	private final MicroLoader microLoader;
@@ -96,13 +97,12 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	 * covering callbacks executed on emulator-owned threads without changing their classloader.
 	 */
 	public static boolean enterGuestExecution() {
-		MidletThread current = instance;
-		if (current == null
-				|| isCurrentGuestExecutionToken(
-						current.guestExecutionToken, GUEST_EXECUTION.get())) {
+		Object currentToken = liveGuestExecutionToken;
+		if (currentToken == null
+				|| isCurrentGuestExecutionToken(currentToken, GUEST_EXECUTION.get())) {
 			return false;
 		}
-		GUEST_EXECUTION.set(current.guestExecutionToken);
+		GUEST_EXECUTION.set(currentToken);
 		return true;
 	}
 
@@ -117,14 +117,12 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	public static void markEscapingGuestFailure(Throwable error) {
-		MidletThread current = instance;
-		if (error == null || current == null
-				|| !isCurrentGuestExecutionToken(
-						current.guestExecutionToken, GUEST_EXECUTION.get())) {
+		Object token = GUEST_EXECUTION.get();
+		if (error == null || token == null) {
 			return;
 		}
 		try {
-			ESCAPING_GUEST_FAILURE.set(new WeakReference<>(error));
+			ESCAPING_GUEST_FAILURE.set(new EscapingGuestFailure(token, error));
 		} catch (Throwable ignored) {
 			// The original fatal Throwable must continue even if ownership marking cannot allocate.
 		}
@@ -304,6 +302,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		Thread.setDefaultUncaughtExceptionHandler(sessionUncaughtHandler);
 		handler = new Handler(getLooper(), this);
 		instance = this;
+		liveGuestExecutionToken = guestExecutionToken;
 		send(INIT);
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null && activity.isVisible()) {
@@ -636,19 +635,33 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			return false;
 		}
 		if (thread == Thread.currentThread()) {
-			WeakReference<Throwable> marker = ESCAPING_GUEST_FAILURE.get();
-			Throwable marked = marker == null ? null : marker.get();
+			EscapingGuestFailure marker = ESCAPING_GUEST_FAILURE.get();
 			if (marker != null) {
 				ESCAPING_GUEST_FAILURE.remove();
-			}
-			if (marked == error) {
-				return true;
+				if (marker.matches(guestExecutionToken, error)) {
+					return true;
+				}
 			}
 			if (isCurrentGuestExecutionToken(guestExecutionToken, GUEST_EXECUTION.get())) {
 				return true;
 			}
 		}
 		return microLoader.ownsGuestThread(thread);
+	}
+
+	static final class EscapingGuestFailure {
+		private final Object token;
+		private final WeakReference<Throwable> error;
+
+		EscapingGuestFailure(Object token, Throwable error) {
+			this.token = token;
+			this.error = new WeakReference<>(error);
+		}
+
+		boolean matches(Object currentToken, Throwable candidate) {
+			return isCurrentGuestExecutionToken(currentToken, token)
+					&& error.get() == candidate;
+		}
 	}
 
 	private void capturePrimarySessionFailure(Thread thread, Throwable reported) {
