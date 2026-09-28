@@ -24,6 +24,7 @@ import android.os.Message;
 import android.os.Process;
 import android.util.Log;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -44,8 +45,6 @@ import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
-	private static final UncaughtExceptionHandler POST_DESTROY_UNCAUGHT_HANDLER = (t, e) ->
-			Log.e(TAG, "Error in thread: \"" + t + "\" after MIDlet termination", e);
 
 	private static final int INIT = 0;
 	private static final int AMS_FOREGROUND = 1;
@@ -57,9 +56,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final int RESUME_REQUEST = 7;
 
 	private static volatile MidletThread instance;
-	private static final InheritableThreadLocal<Boolean> GUEST_EXECUTION =
+	private static final InheritableThreadLocal<Object> GUEST_EXECUTION =
 			new InheritableThreadLocal<>();
-	private static final ThreadLocal<Throwable> ESCAPING_GUEST_FAILURE = new ThreadLocal<>();
+	private static final ThreadLocal<WeakReference<Throwable>> ESCAPING_GUEST_FAILURE =
+			new ThreadLocal<>();
 
 	private final MicroLoader microLoader;
 	private final String mainClass;
@@ -67,6 +67,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private final MidletLifecycleState lifecycle = new MidletLifecycleState();
 	private final AtomicBoolean fatalFailureClaimed = new AtomicBoolean();
 	private final Object terminationLock = new Object();
+	private final Object guestExecutionToken = new Object();
 	private final UncaughtExceptionHandler sessionUncaughtHandler = this::handleUncaughtSessionFailure;
 
 	private MIDlet midlet;
@@ -81,7 +82,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private long displayForegroundGeneration;
 	private volatile boolean runtimeSelected = true;
 	private boolean returnToLibraryOnTermination = true;
-	private boolean terminalFinalized;
+	private volatile boolean terminalFinalized;
 
 	MidletThread(MicroLoader microLoader, String mainClass, MidletSessionJournal journal) {
 		super("MidletMain");
@@ -95,10 +96,13 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	 * covering callbacks executed on emulator-owned threads without changing their classloader.
 	 */
 	public static boolean enterGuestExecution() {
-		if (instance == null || Boolean.TRUE.equals(GUEST_EXECUTION.get())) {
+		MidletThread current = instance;
+		if (current == null
+				|| isCurrentGuestExecutionToken(
+						current.guestExecutionToken, GUEST_EXECUTION.get())) {
 			return false;
 		}
-		GUEST_EXECUTION.set(Boolean.TRUE);
+		GUEST_EXECUTION.set(current.guestExecutionToken);
 		return true;
 	}
 
@@ -108,12 +112,19 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 	}
 
+	static boolean isCurrentGuestExecutionToken(Object currentToken, Object inheritedToken) {
+		return currentToken != null && currentToken == inheritedToken;
+	}
+
 	public static void markEscapingGuestFailure(Throwable error) {
-		if (error == null || !Boolean.TRUE.equals(GUEST_EXECUTION.get())) {
+		MidletThread current = instance;
+		if (error == null || current == null
+				|| !isCurrentGuestExecutionToken(
+						current.guestExecutionToken, GUEST_EXECUTION.get())) {
 			return;
 		}
 		try {
-			ESCAPING_GUEST_FAILURE.set(error);
+			ESCAPING_GUEST_FAILURE.set(new WeakReference<>(error));
 		} catch (Throwable ignored) {
 			// The original fatal Throwable must continue even if ownership marking cannot allocate.
 		}
@@ -565,6 +576,14 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 
 	private void handleUncaughtSessionFailure(Thread thread, Throwable error) {
 		if (!fatalFailureClaimed.get()) {
+			if (terminalFinalized) {
+				if (hasProvenGuestOwnership(thread, error)) {
+					Log.e(TAG, "Uncaught guest failure after MIDlet termination", error);
+				} else {
+					delegateProcessUnhandled(thread, error);
+				}
+				return;
+			}
 			MidletSessionJournal.FailureBoundary boundary = classifyFailureBoundary(thread);
 			if (!isClaimableSessionUncaught(thread, error, boundary)) {
 				delegateProcessUnhandled(thread, error);
@@ -613,13 +632,19 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	private boolean hasProvenGuestOwnership(Thread thread, Throwable error) {
+		if (CrashReporter.hasProvenFrameworkOrigin(error)) {
+			return false;
+		}
 		if (thread == Thread.currentThread()) {
-			Throwable marked = ESCAPING_GUEST_FAILURE.get();
-			if (marked == error) {
+			WeakReference<Throwable> marker = ESCAPING_GUEST_FAILURE.get();
+			Throwable marked = marker == null ? null : marker.get();
+			if (marker != null) {
 				ESCAPING_GUEST_FAILURE.remove();
+			}
+			if (marked == error) {
 				return true;
 			}
-			if (Boolean.TRUE.equals(GUEST_EXECUTION.get())) {
+			if (isCurrentGuestExecutionToken(guestExecutionToken, GUEST_EXECUTION.get())) {
 				return true;
 			}
 		}
@@ -727,8 +752,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			if (instance == this) {
 				instance = null;
 			}
-			Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
 		}
+		// Keep the session-aware uncaught handler until the isolated process exits. It contains
+		// proven guest teardown failures while delegating host/process failures upstream.
 		finalizeSessionState(outcome);
 		return true;
 	}

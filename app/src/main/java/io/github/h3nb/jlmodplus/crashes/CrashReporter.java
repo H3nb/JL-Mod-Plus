@@ -295,6 +295,18 @@ public final class CrashReporter {
 	 * This path deliberately does not invoke the process uncaught handler. MidletThread owns the
 	 * subsequent isolated-process termination after this synchronous best-effort capture returns.
 	 */
+	/** True only when the Throwable's primary frame proves JL-Mod Plus/framework origin. */
+	public static boolean hasProvenFrameworkOrigin(Throwable error) {
+		if (error == null) return false;
+		try {
+			StackTraceElement[] frames = error.getStackTrace();
+			return frames.length > 0
+					&& IncidentInterpreter.isFrameworkClass(frames[0].getClassName());
+		} catch (Throwable ignored) {
+			return false;
+		}
+	}
+
 	public static boolean captureMidletSessionFailure(Thread thread, MidletSessionJournal journal,
 			Throwable reported, Throwable primaryFailure) {
 		Application application = activeApplication;
