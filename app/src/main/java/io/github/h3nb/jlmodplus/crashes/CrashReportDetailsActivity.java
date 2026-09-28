@@ -21,6 +21,7 @@ import android.content.ClipboardManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -287,7 +288,8 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 				&& MediaStore.AUTHORITY.equals(bundleUri.getAuthority())) {
 			try {
 				Uri documentUri = MediaStore.getDocumentUri(this, bundleUri);
-				if (resolvesDocumentsProvider(documentUri)) {
+				if (resolvesDocumentsProvider(documentUri)
+						&& hasReadPermission(documentUri)) {
 					return documentUri;
 				}
 			} catch (RuntimeException ignored) {
@@ -302,6 +304,14 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 				&& ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())
 				&& uri.getAuthority() != null
 				&& getPackageManager().resolveContentProvider(uri.getAuthority(), 0) != null;
+	}
+
+	private boolean hasReadPermission(Uri uri) {
+		return checkUriPermission(
+				uri,
+				android.os.Process.myPid(),
+				android.os.Process.myUid(),
+				Intent.FLAG_GRANT_READ_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED;
 	}
 
 	static Uri diagnosticsDirectoryDocumentUri() {
