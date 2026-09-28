@@ -557,7 +557,12 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 
 		if (thread != primaryFailureThread) {
-			Log.e(TAG, "Secondary uncaught failure while primary session failure is being reported", error);
+			if (!microLoader.ownsGuestThread(thread)) {
+				delegateProcessUnhandled(thread, error);
+				return;
+			}
+			Log.e(TAG, "Secondary uncaught guest failure while primary session failure is being reported",
+					error);
 			return;
 		}
 
