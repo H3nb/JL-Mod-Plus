@@ -309,6 +309,7 @@ class ConfigComposeTest {
     @Test
     fun builtInDefaultProfileIsNotShownAsCustom() {
         val base = sampleState()
+        val events = RecordingConfigEvents()
         val state = ConfigUiState(
             base.form,
             base.screenPresets,
@@ -321,7 +322,7 @@ class ConfigComposeTest {
         )
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(state, RecordingConfigEvents())
+                ConfigScreen(state, events)
             }
         }
 
@@ -330,7 +331,12 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Current Configuration").assertDoesNotExist()
         composeRule.onNodeWithText("Use Profile").performClick()
         composeRule.onNodeWithText("Built-in MIDlet settings.").assertExists()
-        composeRule.onNodeWithText("Cancel").performClick()
+        composeRule.onNode(hasText("JL-Mod Defaults") and hasAnyAncestor(isDialog())).performClick()
+        composeRule.onNodeWithText("Choose Parts").assertDoesNotExist()
+        composeRule.onNodeWithTag("profile_scope_settings").assertDoesNotExist()
+        composeRule.onNodeWithText("Apply").performClick()
+        assertEquals(1, events.applyBuiltInCalls)
+        assertEquals(ConfigFormEvents.PresetApplyScope.SETTINGS, events.appliedBuiltInScope)
     }
 
     @Test
@@ -833,6 +839,7 @@ class ConfigComposeTest {
         var removed: Size? = null
         var colorPickerField: ConfigFormEvents.ColorField? = null
         var applyBuiltInCalls = 0
+        var appliedBuiltInScope: ConfigFormEvents.PresetApplyScope? = null
         var applyTemplateCalls = 0
         var appliedTemplate: String? = null
         var appliedScope: ConfigFormEvents.PresetApplyScope? = null
@@ -841,6 +848,7 @@ class ConfigComposeTest {
 
         override fun onApplyBuiltInTemplate(scope: ConfigFormEvents.PresetApplyScope): Boolean {
             applyBuiltInCalls++
+            appliedBuiltInScope = scope
             return true
         }
 

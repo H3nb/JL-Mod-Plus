@@ -166,7 +166,6 @@
     <string name="profile_apply_whole_without_layout">Ganti konfigurasi, hapus tata letak lokal, dan ikuti pembaruan.</string>
     <string name="profile_apply_settings_only">Konfigurasi MIDlet saja</string>
     <string name="profile_apply_settings_keeps_layout">Pertahankan tata letak MIDlet ini; gunakan konfigurasi kustom.</string>
-    <string name="profile_apply_builtin_settings">Gunakan pengaturan bawaan JL-Mod dan pertahankan tata letak MIDlet ini.</string>
     <string name="profile_apply_layout_only">Tata letak kontrol virtual saja</string>
     <string name="profile_apply_layout_keeps_settings">Pertahankan konfigurasi MIDlet ini; gunakan konfigurasi kustom.</string>
 </resources>

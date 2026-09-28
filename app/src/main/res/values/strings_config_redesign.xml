@@ -160,7 +160,6 @@
     <string name="profile_apply_whole_without_layout">Replace settings, remove the local layout, and follow updates.</string>
     <string name="profile_apply_settings_only">MIDlet settings only</string>
     <string name="profile_apply_settings_keeps_layout">Keep this MIDlet’s layout; use a custom configuration.</string>
-    <string name="profile_apply_builtin_settings">Use JL-Mod default settings and keep this MIDlet’s layout.</string>
     <string name="profile_apply_layout_only">Virtual controls layout only</string>
     <string name="profile_apply_layout_keeps_settings">Keep this MIDlet’s settings; use a custom configuration.</string>
 </resources>
