@@ -68,18 +68,26 @@ public abstract class CustomItem extends Item {
 		@SuppressLint("ClickableViewAccessibility")
 		@Override
 		public boolean onTouchEvent(MotionEvent event) {
-			switch (event.getActionMasked()) {
-				case MotionEvent.ACTION_DOWN:
-					pointerPressed(convertPointerX(event.getX()), convertPointerY(event.getY()));
-					break;
-				case MotionEvent.ACTION_MOVE:
-					pointerDragged(convertPointerX(event.getX()), convertPointerY(event.getY()));
-					break;
-				case MotionEvent.ACTION_UP:
-					pointerReleased(convertPointerX(event.getX()), convertPointerY(event.getY()));
-					break;
-				default:
-					return super.onTouchEvent(event);
+			boolean enteredGuest = MidletThread.enterGuestExecution();
+			try {
+				switch (event.getActionMasked()) {
+					case MotionEvent.ACTION_DOWN:
+						pointerPressed(convertPointerX(event.getX()), convertPointerY(event.getY()));
+						break;
+					case MotionEvent.ACTION_MOVE:
+						pointerDragged(convertPointerX(event.getX()), convertPointerY(event.getY()));
+						break;
+					case MotionEvent.ACTION_UP:
+						pointerReleased(convertPointerX(event.getX()), convertPointerY(event.getY()));
+						break;
+					default:
+						return super.onTouchEvent(event);
+				}
+			} catch (RuntimeException | Error failure) {
+				MidletThread.markEscapingGuestFailure(failure);
+				throw failure;
+			} finally {
+				MidletThread.exitGuestExecution(enteredGuest);
 			}
 			super.onTouchEvent(event);
 			return true;

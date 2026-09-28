@@ -168,7 +168,7 @@ public class Form extends Screen {
 					l.itemStateChanged(item);
 				}
 			}
-		});
+		}.asGuestCallback());
 	}
 
 	@Override
