@@ -94,8 +94,9 @@ final class IncidentInterpreter {
 		IncidentSummary.ProcessExitEvidence processExit =
 				processExitEvidence(exit, controlledTermination);
 		ArrayList<String> limitations = new ArrayList<>();
-		if (processExit != null && processExit.limitation != null) {
-			limitations.add(processExit.limitation);
+		String exitLimitation = controlledTermination ? null : processExitLimitation(exit);
+		if (exitLimitation != null) {
+			limitations.add(exitLimitation);
 		}
 		if (session != null
 				&& session.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
@@ -206,7 +207,6 @@ final class IncidentInterpreter {
 				? "JL-Mod Plus terminated the isolated MIDlet process after recording "
 						+ "the fatal session failure."
 				: processExitSummary(exit, status);
-		String limitation = controlledByJlMod ? null : processExitLimitation(exit);
 		return new IncidentSummary.ProcessExitEvidence(
 				exit.source,
 				exit.reason,
@@ -232,8 +232,7 @@ final class IncidentInterpreter {
 				exit.anrId,
 				exit.anrUserPerceptible,
 				controlledByJlMod,
-				summary,
-				limitation);
+				summary);
 	}
 
 	static boolean isControlledTerminationExit(ProcessExitStore.Snapshot exit) {

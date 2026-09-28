@@ -172,7 +172,6 @@ final class DiagnosticBundleFormat {
 		field(json, "statusLabel", safe(sanitizer, exit.statusLabel), true, true, 4);
 		field(json, "importance", safe(sanitizer, exit.importance), true, true, 4);
 		field(json, "summary", safe(sanitizer, exit.summary), true, true, 4);
-		field(json, "limitation", safe(sanitizer, exit.limitation), true, true, 4);
 		field(json, "description", safe(sanitizer, exit.description), true, true, 4);
 		field(json, "pssKb", exit.pssKb > 0 ? Long.toString(exit.pssKb) : null, false, true, 4);
 		field(json, "rssKb", exit.rssKb > 0 ? Long.toString(exit.rssKb) : null, false, true, 4);

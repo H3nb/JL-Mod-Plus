@@ -107,7 +107,6 @@ final class IncidentSummary {
 		final Boolean anrUserPerceptible;
 		final boolean controlledByJlMod;
 		final String summary;
-		final String limitation;
 
 		ProcessExitEvidence(String source, int reason, int status, String reasonLabel, String statusLabel,
 				String importance, String processName, String processRole, String description,
@@ -115,7 +114,7 @@ final class IncidentSummary {
 				long pssKb, long rssKb, boolean lowMemoryKillReportSupported,
 				String traceKind, boolean traceAvailable, boolean traceTruncated,
 				int anrType, long anrTimeoutMillis, int anrId, Boolean anrUserPerceptible,
-				boolean controlledByJlMod, String summary, String limitation) {
+				boolean controlledByJlMod, String summary) {
 			this.source = clean(source);
 			this.reason = reason;
 			this.status = status;
@@ -141,7 +140,6 @@ final class IncidentSummary {
 			this.anrUserPerceptible = anrUserPerceptible;
 			this.controlledByJlMod = controlledByJlMod;
 			this.summary = clean(summary);
-			this.limitation = clean(limitation);
 		}
 	}
 

@@ -48,7 +48,6 @@ public class IncidentInterpreterTest {
 		assertTrue(incident.associatedProcessExit.controlledByJlMod);
 		assertTrue(incident.associatedProcessExit.summary
 				.contains("terminated the isolated MIDlet process"));
-		assertTrue(incident.associatedProcessExit.limitation == null);
 		assertTrue(incident.limitations.isEmpty());
 		assertTrue(DiagnosticBundleFormat.incidentJson(incident)
 				.contains("\"controlledByJlMod\": true"));
@@ -217,7 +216,8 @@ public class IncidentInterpreterTest {
 		IncidentSummary incident = IncidentInterpreter.interpret(null, null, exit);
 
 		assertEquals(IncidentSummary.Category.PROCESS_EXIT, incident.category);
-		assertTrue(incident.associatedProcessExit.limitation.contains("Android API 28"));
+		assertTrue(incident.limitations.stream()
+				.anyMatch(value -> value.contains("Android API 28")));
 		assertFalse(incident.associatedProcessExit.summary.toLowerCase().contains("anr"));
 		assertFalse(incident.associatedProcessExit.summary.toLowerCase().contains("low-memory"));
 	}
