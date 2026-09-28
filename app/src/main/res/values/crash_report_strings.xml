@@ -13,25 +13,16 @@
         <item quantity="one">%1$d selected</item>
         <item quantity="other">%1$d selected</item>
     </plurals>
-    <string name="copy_report">Copy Report</string>
-    <string name="share_report">Share Report</string>
+    <string name="copy_report">Copy</string>
     <string name="report_on_github">Report on GitHub</string>
-    <string name="delete_report">Delete Report</string>
+    <string name="delete_report">Delete</string>
     <string name="copy_selected_reports">Copy selected reports</string>
-    <string name="share_selected_reports">Share selected reports</string>
     <string name="delete_selected_reports">Delete selected reports</string>
     <string name="crash_report_copied">Report copied</string>
     <plurals name="crash_reports_copied">
         <item quantity="one">%1$d report copied</item>
         <item quantity="other">%1$d reports copied</item>
     </plurals>
-    <string name="crash_report_share_title">Share Diagnostic Report</string>
-    <string name="crash_report_share_disclosure">This diagnostic report may contain device information, MIDlet metadata, identifiers used only for crash correlation, Java stack traces, or Android process-exit details. When a raw ANR trace or native tombstone was retained, it will also be attached to this share. Review the report before sharing it.</string>
-    <plurals name="crash_reports_batch_share_title">
-        <item quantity="one">Share %1$d Diagnostic Report?</item>
-        <item quantity="other">Share %1$d Diagnostic Reports?</item>
-    </plurals>
-    <string name="crash_reports_batch_share_disclosure">The selected diagnostic reports may contain device information, MIDlet metadata, crash-correlation identifiers, Java stack traces, or Android process-exit details. Retained raw traces will also be attached. Review the reports before sharing them.</string>
     <string name="crash_report_bundle_preparing">Preparing diagnostic bundle…</string>
     <string name="crash_report_bundle_ready_title">Diagnostic bundle ready</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nGitHub will ask you to upload this file before submitting the report. The diagnostic bundle will be public with your issue.</string>
@@ -42,12 +33,12 @@
     <string name="crash_report_bundle_cleanup_failed">The diagnostic report was deleted, but JL-Mod Plus could not remove its generated bundle</string>
     <string name="crash_report_github_unavailable">No app is available to open the GitHub issue form</string>
     <string name="crash_report_delete_title">Delete Crash Report?</string>
-    <string name="crash_report_delete_message">This permanently removes the diagnostic report and any bundle generated for it from this device. Files already uploaded or shared elsewhere are not affected.</string>
+    <string name="crash_report_delete_message">This permanently removes the diagnostic report and any bundle generated for it from this device. Files already uploaded elsewhere are not affected.</string>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Delete %1$d Crash Report?</item>
         <item quantity="other">Delete %1$d Crash Reports?</item>
     </plurals>
-    <string name="crash_reports_batch_delete_message">This permanently removes the selected diagnostic reports and any bundles generated for them from this device. Files already uploaded or shared elsewhere are not affected.</string>
+    <string name="crash_reports_batch_delete_message">This permanently removes the selected diagnostic reports and any bundles generated for them from this device. Files already uploaded elsewhere are not affected.</string>
     <string name="crash_report_delete_failed">Could not delete the complete report</string>
     <string name="crash_report_unavailable">This report is no longer available</string>
     <string name="process_exit_recovery_title">Unexpected Process Exit Detected</string>

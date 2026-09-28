@@ -19,7 +19,6 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -115,11 +114,6 @@ public class CrashReportsActivity extends AppCompatActivity {
 			}
 
 			@Override
-			public void onShareSelected(List<String> reportIds) {
-				shareSelected(reportIds);
-			}
-
-			@Override
 			public void onDeleteSelected(List<String> reportIds) {
 				deleteSelected(reportIds);
 			}
@@ -154,51 +148,6 @@ public class CrashReportsActivity extends AppCompatActivity {
 					R.plurals.crash_reports_copied, records.size(), records.size()),
 					Toast.LENGTH_SHORT);
 		}
-	}
-
-	private void shareSelected(List<String> reportIds) {
-		List<LocalDiagnosticRepository.Record> records = selectedRecords(reportIds);
-		if (records.isEmpty()) {
-			return;
-		}
-		String exportText = DiagnosticExportSanitizer.sanitize(
-				this, DiagnosticReportText.buildBatch(records));
-		ArrayList<Uri> attachments = new ArrayList<>();
-		ArrayList<String> mimeTypes = new ArrayList<>();
-		HashSet<String> seenUris = new HashSet<>();
-		for (LocalDiagnosticRepository.Record record : records) {
-			DiagnosticTraceAttachment.Attachment attachment = DiagnosticTraceAttachment.find(
-					this, record.getId(), record.getSessionId());
-			if (attachment != null && seenUris.add(attachment.uri.toString())) {
-				attachments.add(attachment.uri);
-				mimeTypes.add(attachment.mimeType);
-			}
-		}
-
-		Intent share;
-		if (attachments.size() > 1) {
-			share = new Intent(Intent.ACTION_SEND_MULTIPLE);
-			share.setType("*/*");
-			share.putParcelableArrayListExtra(Intent.EXTRA_STREAM, attachments);
-		} else {
-			share = new Intent(Intent.ACTION_SEND);
-			share.setType(attachments.isEmpty() ? "text/plain" : mimeTypes.get(0));
-			if (!attachments.isEmpty()) {
-				share.putExtra(Intent.EXTRA_STREAM, attachments.get(0));
-			}
-		}
-		share.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crash_reports));
-		share.putExtra(Intent.EXTRA_TEXT, exportText);
-		if (!attachments.isEmpty()) {
-			ClipData clipData = ClipData.newUri(
-					getContentResolver(), getString(R.string.crash_reports), attachments.get(0));
-			for (int i = 1; i < attachments.size(); i++) {
-				clipData.addItem(new ClipData.Item(attachments.get(i)));
-			}
-			share.setClipData(clipData);
-			share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-		}
-		startActivity(Intent.createChooser(share, getString(R.string.crash_report_share_title)));
 	}
 
 	private void deleteSelected(List<String> reportIds) {
