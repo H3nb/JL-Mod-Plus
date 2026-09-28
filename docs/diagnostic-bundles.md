@@ -32,11 +32,17 @@ bundle.
 
 ## Privacy contract
 
-Public export redacts the actual app-private data root, the configured emulator-storage root,
-user-controlled private storage paths, URI credentials, sensitive URI query strings/fragments,
-and non-public URI values. Useful technical evidence is intentionally preserved, including Java
-frames, build and correlation metadata, and Android system/module paths under `/system`, `/apex`,
-`/vendor`, and `/product`.
+Public export redacts the actual app-private data root, including credential- and
+device-protected Android app storage, the configured emulator-storage root, user-controlled
+private storage paths, and non-public URI values. HTTP(S) values retain only scheme, host, and
+port; arbitrary path, credentials, query, and fragment data are not exported. Useful technical
+evidence is intentionally preserved, including Java frames, build and correlation metadata, and
+Android system/module paths under `/system`, `/apex`, `/vendor`, and `/product`.
+
+Sanitization targets known high-risk structures; it cannot prove that arbitrary exception messages
+or guest-generated text contain no personal or secret values. Raw evidence stays local, bundles
+are created only by explicit **Report on GitHub** action, and JL-Mod Plus never uploads diagnostics
+automatically.
 
 The bundle is not encrypted. Privacy is enforced by selecting and sanitizing the exported
 evidence, rather than by embedding a client-side decryption secret.
@@ -51,5 +57,4 @@ match; newer correlated evidence regenerates the ZIP with the same logical filen
 Ownership is persisted before the bundle is written or published. Interrupted legacy writes can
 therefore clean their deterministic partial file on retry, and failed cleanup keeps the ownership
 mapping instead of guessing by filename. Deleting the diagnostic attempts to remove only that
-tracked artifact. Files already uploaded, copied, or shared elsewhere are outside JL-Mod Plus
-ownership.
+tracked artifact. Files already uploaded elsewhere are outside JL-Mod Plus ownership.

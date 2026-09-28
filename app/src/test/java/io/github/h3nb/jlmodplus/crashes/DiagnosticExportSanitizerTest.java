@@ -56,12 +56,34 @@ public class DiagnosticExportSanitizerTest {
 
 		String sanitized = DiagnosticExportSanitizer.sanitize(input, null, null);
 
-		assertTrue(sanitized.contains("https://example.com/api/crash"));
+		assertTrue(sanitized.contains("https://example.com/<path>"));
+		assertFalse(sanitized.contains("api/crash"));
 		assertFalse(sanitized.contains("user:secret"));
 		assertFalse(sanitized.contains("token=abc"));
 		assertFalse(sanitized.contains("#fragment"));
 		assertFalse(sanitized.contains("com.example.provider"));
 		assertTrue(sanitized.contains("<uri>"));
+	}
+
+	@Test
+	public void redactsDeviceProtectedAppStorage() {
+		String input = "state=/data/user_de/0/io.github.h3nb.jlmodplus/files/state.json";
+
+		String sanitized = DiagnosticExportSanitizer.sanitize(input, null, null);
+
+		assertFalse(sanitized.contains("/data/user_de/0/"));
+		assertTrue(sanitized.contains("<user-path>"));
+	}
+
+	@Test
+	public void httpExportRetainsAuthorityButNotArbitraryPath() {
+		String input = "https://example.com:8443/private/token?id=42";
+
+		String sanitized = DiagnosticExportSanitizer.sanitize(input, null, null);
+
+		assertTrue(sanitized.contains("https://example.com:8443/<path>"));
+		assertFalse(sanitized.contains("private/token"));
+		assertFalse(sanitized.contains("id=42"));
 	}
 
 	@Test

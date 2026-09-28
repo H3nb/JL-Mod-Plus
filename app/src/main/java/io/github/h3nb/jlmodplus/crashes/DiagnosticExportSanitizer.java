@@ -37,6 +37,7 @@ final class DiagnosticExportSanitizer {
 					+ "|/mnt/sdcard/[^\\s]+"
 					+ "|/mnt/media_rw/[^\\s]+"
 					+ "|/data/user/[0-9]+/[^\\s]+"
+					+ "|/data/user_de/[0-9]+/[^\\s]+"
 					+ "|/data/data/[^\\s]+"
 					+ "|/home/[^\\s]+"
 					+ "|/Users/[^\\s]+"
@@ -92,31 +93,18 @@ final class DiagnosticExportSanitizer {
 		try {
 			URI uri = new URI(value);
 			if (uri.getHost() == null) return "<uri>";
-			return new URI(
+			String authority = new URI(
 					uri.getScheme().toLowerCase(java.util.Locale.ROOT),
 					null,
 					uri.getHost(),
 					uri.getPort(),
-					uri.getPath(),
+					null,
 					null,
 					null).toASCIIString();
+			return authority + "/<path>";
 		} catch (URISyntaxException | IllegalArgumentException e) {
-			int sensitive = firstPositive(value.indexOf('?'), value.indexOf('#'));
-			String withoutSecrets = sensitive < 0 ? value : value.substring(0, sensitive);
-			int credentials = withoutSecrets.indexOf('@');
-			int scheme = withoutSecrets.indexOf("://");
-			if (credentials > scheme + 3) {
-				withoutSecrets = withoutSecrets.substring(0, scheme + 3)
-						+ withoutSecrets.substring(credentials + 1);
-			}
-			return withoutSecrets;
+			return "<uri>";
 		}
-	}
-
-	private static int firstPositive(int first, int second) {
-		if (first < 0) return second;
-		if (second < 0) return first;
-		return Math.min(first, second);
 	}
 
 	private static String replacePath(String text, String path, String replacement) {
