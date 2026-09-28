@@ -19,6 +19,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.graphics.PointF;
@@ -94,17 +95,22 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
-    public void standardTemplatesEnableOnlyTheirIntendedGroupedControl() throws Exception {
+    public void standardTemplatesEnableOnlyTheirIntendedGroupedControl() {
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
         assertTrue(settings.virtualDpadEnabled);
         assertFalse(settings.virtualAnalogEnabled);
-        assertStandardActionRow();
 
         keyboard.setLayout(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD);
         assertFalse(settings.virtualDpadEnabled);
         assertTrue(settings.virtualAnalogEnabled);
-        assertStandardActionRow();
+    }
 
+    @Test
+    public void standardTemplatesExposePound() {
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
+        assertPoundVisible();
+        keyboard.setLayout(VirtualControlsKeyboard.TYPE_ANALOG_STANDARD);
+        assertPoundVisible();
     }
 
     @Test
@@ -646,11 +652,11 @@ public class VirtualControlsKeyboardResizeTest {
                 createAndSaveTwoOrientationDpadCustom(portrait, landscape);
 
         keyboard.setLayout(VirtualKeyboard.TYPE_NUMBERS_ARROWS);
-        assertEquals(3, keyboard.getLayout());
+        assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
         assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
 
         recreateKeyboardFromDisk(landscape);
-        assertEquals(3, keyboard.getLayout());
+        assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
         assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
 
         keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
@@ -670,7 +676,7 @@ public class VirtualControlsKeyboardResizeTest {
         VirtualKeyboardLayoutState saved =
                 createAndSaveTwoOrientationDpadCustom(portrait, landscape);
 
-        for (int type : new int[] { 3, 6, 2 }) {
+        for (int type : new int[] { VirtualKeyboard.TYPE_NUMBERS_ARROWS, 6, 2 }) {
             keyboard.setLayout(type);
             assertEquals(type, keyboard.getLayout());
             assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
@@ -695,7 +701,7 @@ public class VirtualControlsKeyboardResizeTest {
 
         keyboard.setLayout(VirtualKeyboard.TYPE_NUMBERS_ARROWS);
         recreateKeyboardFromDisk(landscape);
-        assertEquals(3, keyboard.getLayout());
+        assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
 
         keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
         assertEquals(saved, keyboard.captureLayoutEditState().customLayout());
@@ -711,14 +717,14 @@ public class VirtualControlsKeyboardResizeTest {
         dragGrouped("dpadGeometry", 24f, -18f);
         dragLegacy("F", 18f, 0f);
         writeLegacyV3Layout(keyboard.captureLayoutSnapshot());
-        patchLayoutType(3);
+        patchLayoutType(VirtualKeyboard.TYPE_NUMBERS_ARROWS);
 
         settings.virtualDpadEnabled = true;
         settings.virtualAnalogEnabled = false;
         ProfilesManager.saveConfig(settings);
         recreateKeyboardFromDisk(portrait);
 
-        assertEquals(3, keyboard.getLayout());
+        assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
         VirtualKeyboardLayoutState dormant =
                 keyboard.captureLayoutEditState().dormantCustomLayout();
         assertNotNull(dormant);
@@ -751,7 +757,7 @@ public class VirtualControlsKeyboardResizeTest {
 
         keyboard.setLayout(VirtualKeyboard.TYPE_NUMBERS_ARROWS);
         recreateKeyboardFromDisk(portrait);
-        assertEquals(3, keyboard.getLayout());
+        assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
         assertEquals(migrated, keyboard.captureLayoutEditState().dormantCustomLayout());
 
         keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
@@ -776,7 +782,7 @@ public class VirtualControlsKeyboardResizeTest {
                 keyboard.captureLayoutEditState().customLayout().baseVariant());
 
         keyboard.restoreLayoutEditState(baseline);
-        assertEquals(3, keyboard.getLayout());
+        assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
         assertEquals(saved, keyboard.captureLayoutEditState().dormantCustomLayout());
 
         keyboard.setLayout(VirtualKeyboard.TYPE_CUSTOM);
@@ -1468,11 +1474,18 @@ public class VirtualControlsKeyboardResizeTest {
         assertTrue(zero.right < pound.left);
         assertEquals(fire.centerX(), zero.centerX(), EPS);
         assertEquals(zero.centerX() - star.centerX(), pound.centerX() - zero.centerX(), EPS);
+    }
+
+    private void assertPoundVisible() {
         String[] names = keyboard.getKeyNames();
         boolean[] hidden = keyboard.getKeysVisibility();
         for (int i = 0; i < names.length; i++) {
-            if ("#".equals(names[i])) assertFalse(hidden[i]);
+            if ("#".equals(names[i])) {
+                assertFalse(hidden[i]);
+                return;
+            }
         }
+        fail("Pound key is missing");
     }
 
     private void assertAnalogVisualMatchesResolvedGeometry() throws Exception {

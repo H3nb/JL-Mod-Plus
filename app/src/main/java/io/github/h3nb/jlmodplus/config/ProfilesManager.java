@@ -1244,7 +1244,14 @@ public class ProfilesManager {
 	@Nullable
 	public static ProfileModel loadConfig(File dir, boolean persistMigrations,
 			@NonNull BackgroundMigrationContext context, boolean legacyThemeLinked) {
-		return loadConfigInternal(dir, persistMigrations, context, legacyThemeLinked, true);
+		return loadConfigInternal(dir, persistMigrations, context, legacyThemeLinked, true, false);
+	}
+
+	/** Built-in ownership may be detached only after its legacy config migration is durable. */
+	@Nullable
+	static ProfileModel loadBuiltInConfigForNormalization(@NonNull File dir) {
+		return loadConfigInternal(dir, true, BackgroundMigrationContext.MIDLET_CONFIG,
+				true, true, true);
 	}
 
 	/**
@@ -1254,7 +1261,7 @@ public class ProfilesManager {
 	public static ProfileModel loadPreparedMidletConfig(
 			@NonNull File dir, boolean legacyThemeLinked) {
 		return loadConfigInternal(
-				dir, false, BackgroundMigrationContext.MIDLET_CONFIG, legacyThemeLinked, false);
+				dir, false, BackgroundMigrationContext.MIDLET_CONFIG, legacyThemeLinked, false, false);
 	}
 
 	@Nullable
@@ -1263,7 +1270,8 @@ public class ProfilesManager {
 			boolean persistMigrations,
 			@NonNull BackgroundMigrationContext context,
 			boolean legacyThemeLinked,
-			boolean recoverAtomic) {
+			boolean recoverAtomic,
+			boolean requireMigrationSave) {
 		File file = new File(dir, Config.MIDLET_CONFIG_FILE);
 		if (recoverAtomic) recoverAtomicConfig(file);
 		ProfileModel params = null;
@@ -1341,7 +1349,9 @@ public class ProfilesManager {
 		}
 		if (persistMigrations && (versionNeedsMigration || timingModeNeedsMigration
 				|| backgroundModeNeedsMigration)) {
-			if (saveConfig(params) && loadedLegacyFile && oldFile.delete()) {
+			boolean saved = saveConfig(params);
+			if (!saved && requireMigrationSave) return null;
+			if (saved && loadedLegacyFile && oldFile.delete()) {
 				Log.d(TAG, "loadConfig: old config file deleted");
 			}
 		}

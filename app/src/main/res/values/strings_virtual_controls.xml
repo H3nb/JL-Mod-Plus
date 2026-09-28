@@ -20,7 +20,6 @@
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Do Not Show Again</string>
     <string name="runtime_virtual_controls_edit_started">Virtual controls edit mode: drag to move and use two fingers to resize.</string>
     <string name="runtime_virtual_controls_switch_layout">Choose Layout Template</string>
-    <string name="runtime_virtual_controls_show_controls_menu">Show Controls</string>
     <string name="runtime_virtual_controls_show_controls">Show Controls</string>
     <string name="runtime_virtual_controls_template_dpad_standard">Standard D-pad</string>
     <string name="runtime_virtual_controls_template_analog_standard">Standard Analog Stick</string>

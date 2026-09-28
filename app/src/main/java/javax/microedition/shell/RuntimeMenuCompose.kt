@@ -821,7 +821,7 @@ private fun LazyListScope.runtimeMenuItems(
         val showControlsFocused = nextFocused()
         item {
             RuntimeActionItem(
-                R.string.runtime_virtual_controls_show_controls_menu,
+                R.string.runtime_virtual_controls_show_controls,
                 onDismiss,
                 actions::onShowControls,
                 leadingIcon = R.drawable.ic_runtime_hide,

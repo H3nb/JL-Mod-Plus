@@ -81,13 +81,13 @@ public final class MidletConfigLoadBoundary {
 		if (linkage.getOrigin() != null) {
 			return preferences.edit().remove(builtInKey).commit();
 		}
+		// Keep the marker as evidence until any version-sensitive config migration is durable.
+		ProfileModel config = ProfilesManager.loadBuiltInConfigForNormalization(configDir);
+		if (config == null) return false;
 		// An existing layout is user data, including a layout awaiting recovery from .bak.
 		if (ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir)) {
 			return preferences.edit().remove(builtInKey).commit();
 		}
-		ProfileModel config = ProfilesManager.loadConfig(configDir, false,
-				ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG, true);
-		if (config == null) return false;
 		if (config.vkType == VirtualKeyboard.TYPE_NUMBERS_ARROWS) return true;
 		if (config.vkType != VirtualKeyboard.TYPE_CUSTOM) {
 			return preferences.edit().remove(builtInKey).commit();
