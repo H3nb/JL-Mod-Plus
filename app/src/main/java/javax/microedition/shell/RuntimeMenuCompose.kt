@@ -95,6 +95,32 @@ internal data class RuntimeMenuUiState(
     val memoryEditorBubbleEnabled: Boolean = false,
 )
 
+// Display positions only. The indices in the visibility array remain in VirtualKeyboard order.
+private val SHOW_CONTROLS_KEY_ROWS = listOf(
+    listOf("L", "M", "R"),
+    listOf("A", "B", "C"),
+    listOf("D"),
+    listOf("↖", "↑", "↗"),
+    listOf("←", "F", "→"),
+    listOf("↙", "↓", "↘"),
+    listOf("1", "2", "3"),
+    listOf("4", "5", "6"),
+    listOf("7", "8", "9"),
+    listOf("*", "0", "#"),
+)
+
+internal fun showControlsGridRows(names: List<String>): List<List<Int?>> {
+    val keyNames = names.take(28)
+    if (names.size in setOf(28, 30) && keyNames.toSet() == SHOW_CONTROLS_KEY_ROWS.flatten().toSet()) {
+        return SHOW_CONTROLS_KEY_ROWS.mapIndexed { rowIndex, row ->
+            val indices = row.map(keyNames::indexOf)
+            if (rowIndex == 2 && names.size == 30) indices + listOf(28, 29)
+            else indices + List<Int?>(3 - indices.size) { null }
+        }
+    }
+    return names.indices.chunked(3).map { row -> row + List<Int?>(3 - row.size) { null } }
+}
+
 interface RuntimeMenuActions {
     fun onExit()
     fun onSaveLog()
@@ -393,7 +419,10 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
 
     fun showHideButtons(names: Array<String>, hidden: BooleanArray) {
         changeControllerSurface {
-            hostDialogState = RuntimeHostDialogState.HideButtons(names.toList(), hidden.copyOf())
+            val labels = names.toList()
+            hostDialogState = RuntimeHostDialogState.HideButtons(
+                labels, hidden.copyOf(), showControlsGridRows(labels),
+            )
         }
     }
 

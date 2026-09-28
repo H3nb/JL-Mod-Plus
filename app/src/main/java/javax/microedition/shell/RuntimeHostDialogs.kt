@@ -83,7 +83,11 @@ internal sealed interface RuntimeHostDialogState {
     data class MidletSelection(val names: List<String>) : RuntimeHostDialogState
     data class Error(val message: String) : RuntimeHostDialogState
     data object ExitConfirmation : RuntimeHostDialogState
-    data class HideButtons(val names: List<String>, val hidden: BooleanArray) : RuntimeHostDialogState
+    data class HideButtons(
+        val names: List<String>,
+        val hidden: BooleanArray,
+        val rows: List<List<Int?>>,
+    ) : RuntimeHostDialogState
     data class SaveVirtualKeyboard(
         val updateTarget: String? = null,
     ) : RuntimeHostDialogState
@@ -356,12 +360,15 @@ private fun HideButtonsDialog(
                         .fillMaxWidth()
                         .heightIn(max = maxListHeight)
                         .verticalScroll(scrollState),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    for (rowStart in state.names.indices step 3) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            repeat(3) { column ->
-                                val index = rowStart + column
-                                if (index >= state.names.size) {
+                    for (row in state.rows) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            for (index in row) {
+                                if (index == null || index !in state.names.indices) {
                                     Spacer(Modifier.weight(1f))
                                 } else {
                                     val isVisible = visible.getOrNull(index) == true
@@ -373,11 +380,19 @@ private fun HideButtonsDialog(
                                                 visible = visible.copyOf().also {
                                                     if (index in it.indices) it[index] = !isVisible
                                                 }
-                                            },
+                                            }
+                                            .padding(horizontal = 4.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
-                                        Checkbox(checked = isVisible, onCheckedChange = null)
-                                        Text(state.names[index], style = MaterialTheme.typography.bodySmall)
+                                        Checkbox(
+                                            checked = isVisible,
+                                            onCheckedChange = null,
+                                        )
+                                        Text(
+                                            state.names[index],
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            modifier = Modifier.padding(start = 4.dp),
+                                        )
                                     }
                                 }
                             }

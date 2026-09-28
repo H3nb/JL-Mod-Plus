@@ -56,12 +56,14 @@ class RuntimeMenuComposeTest {
     fun showControlsGridPreservesOrderAndConvertsVisibleSelectionToHiddenFlags() {
         val events = mutableListOf<String>()
         val selections = mutableListOf<BooleanArray>()
+        val names = listOf("First", "Second", "Third", "Fourth", "Analog Stick")
         composeRule.setContent {
             JLModPlusTheme {
                 RuntimeHostDialogs(
                     state = RuntimeHostDialogState.HideButtons(
-                        names = listOf("First", "Second", "Third", "Fourth", "Analog Stick"),
+                        names = names,
                         hidden = booleanArrayOf(false, true, false, true, false),
+                        rows = showControlsGridRows(names),
                     ),
                     actions = RecordingRuntimeHostDialogActions(events, selections),
                     onDismiss = { events += "dismiss" },
@@ -84,6 +86,39 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("OK").performClick()
         assertEquals(listOf("dismiss", "hide"), events)
         assertEquals(listOf(false, false, false, true, false), selections.single().toList())
+    }
+
+    @Test
+    fun showControlsGroupsLegacyKeysWithoutChangingVisibilityIndices() {
+        val names = listOf(
+            "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "*", "#",
+            "L", "R", "D", "C", "↖", "↑", "↗", "←", "→", "↙", "↓", "↘",
+            "F", "A", "B", "M", "D-pad", "Analog Stick",
+        )
+        val rows = showControlsGridRows(names)
+        assertEquals(
+            listOf(
+                listOf("L", "M", "R"), listOf("A", "B", "C"), listOf("D", "D-pad", "Analog Stick"),
+                listOf("↖", "↑", "↗"), listOf("←", "F", "→"), listOf("↙", "↓", "↘"),
+                listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"),
+                listOf("*", "0", "#"),
+            ),
+            rows.map { row -> row.map { index -> index?.let(names::get) } },
+        )
+
+        val selections = mutableListOf<BooleanArray>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.HideButtons(names, BooleanArray(names.size), rows),
+                    actions = RecordingRuntimeHostDialogActions(mutableListOf(), selections),
+                    onDismiss = {},
+                )
+            }
+        }
+        composeRule.onNodeWithText("M").performClick()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(listOf(27), selections.single().indices.filter { selections.single()[it] })
     }
 
     @Test
