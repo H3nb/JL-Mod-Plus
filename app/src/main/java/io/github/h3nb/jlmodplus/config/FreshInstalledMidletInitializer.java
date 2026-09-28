@@ -226,8 +226,7 @@ public final class FreshInstalledMidletInitializer {
 		PresetSourceReplacement.Guard ownership =
 				PresetSourceReplacement.begin(preferences, configDir);
 		if (!ownership.canWrite()) return false;
-		if (!ProfilesManager.removeLocalKeyboardLayout(configDir)) return false;
-		if (!ProfilesManager.saveConfig(ProfileModel.createBuiltIn(
+		if (!ProfilesManager.publishBuiltInSnapshot(ProfileModel.createBuiltIn(
 				configDir, darkTheme, defaultSystemProperties))) {
 			return false;
 		}

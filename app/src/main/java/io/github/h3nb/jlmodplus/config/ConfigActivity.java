@@ -67,6 +67,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.shell.transform.MidletTransformMetadata;
 import javax.microedition.util.ContextHolder;
 
@@ -1172,6 +1173,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (params == null) {
 			if (isProfile) {
 				params = newBuiltInProfile();
+				// A new named profile keeps its existing user-owned Custom layout default.
+				params.vkType = VirtualKeyboard.TYPE_CUSTOM;
 				builtInThemeLinked = false;
 				return true;
 			}
@@ -1673,12 +1676,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			builtInThemeLinked = false;
 			params = newBuiltInProfile();
 			currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
-			if (!saveParamsWithInstalledIdentity()) {
+			params = ProfileConfigMatcher.effectiveConfig(params, currentForm);
+			if (!ProfilesManager.publishBuiltInSnapshot(params)) {
 				if (previousParams != null) params = previousParams;
 				currentForm = previousForm;
 				restoreSourceOwnership(ownership);
 				return false;
 			}
+			persistedBaseline = ProfileConfigMatcher.copyConfig(params);
 			if (!ownership.publishBuiltInOwnership()) {
 				builtInThemeLinked = false;
 				return false;

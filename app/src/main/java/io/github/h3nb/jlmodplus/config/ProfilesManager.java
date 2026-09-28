@@ -631,7 +631,24 @@ public class ProfilesManager {
 			prepareLocalPublicationTarget(targetDir, true);
 			publishLocalSnapshotArtifacts(
 					targetDir, targetDir, null,
-					false, true, true, false, null, layoutPayload);
+					false, true, true, false, null, layoutPayload, false);
+		}
+	}
+
+	/** Publishes the app-provided profile as one config-plus-absent-layout snapshot. */
+	static boolean publishBuiltInSnapshot(@NonNull ProfileModel profile) {
+		if (profile.dir == null) return false;
+		synchronized (PRESET_SOURCE_LOCK) {
+			try {
+				prepareLocalPublicationTarget(profile.dir, true);
+				publishLocalSnapshotArtifacts(
+						profile.dir, profile.dir, profile,
+						true, true, false, false, null, null, true);
+				return true;
+			} catch (IOException | RuntimeException e) {
+				Log.e(TAG, "Unable to publish Built-in profile snapshot", e);
+				return false;
+			}
 		}
 	}
 
@@ -646,7 +663,7 @@ public class ProfilesManager {
 			@Nullable LocalPublicationHook hook) throws IOException {
 		publishLocalSnapshotArtifacts(
 				sourceDir, targetDir, sourceConfig, config, keyboard, sourceHasLayout,
-				verifyCompleteSource, hook, null);
+				verifyCompleteSource, hook, null, false);
 	}
 
 	private static void publishLocalSnapshotArtifacts(
@@ -658,7 +675,8 @@ public class ProfilesManager {
 			boolean sourceHasLayout,
 			boolean verifyCompleteSource,
 			@Nullable LocalPublicationHook hook,
-			@Nullable byte[] layoutPayload) throws IOException {
+			@Nullable byte[] layoutPayload,
+			boolean configFromModel) throws IOException {
 		File staging = new File(targetDir, PRESET_SYNC_STAGING_DIR);
 		File rollback = new File(targetDir, PRESET_SYNC_ROLLBACK_DIR);
 		File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
@@ -679,7 +697,7 @@ public class ProfilesManager {
 			File stagedLayout = new File(staging, Config.MIDLET_KEY_LAYOUT_FILE);
 			if (config) {
 				File source = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
-				if (source.isFile()) {
+				if (!configFromModel && source.isFile()) {
 					FileUtils.copyFileUsingChannel(source, stagedConfig);
 				} else {
 					if (sourceConfig == null) {
@@ -718,7 +736,8 @@ public class ProfilesManager {
 							"Profile keyboard layout changed while applying: " + layoutError);
 				}
 			}
-			if (keyboard && !sourceHasLayout && !verifyCompleteSource) {
+			if (keyboard && !sourceHasLayout && !verifyCompleteSource
+					&& !(config && configFromModel)) {
 				throw new IOException("Partial keyboard apply requires a usable source layout");
 			}
 

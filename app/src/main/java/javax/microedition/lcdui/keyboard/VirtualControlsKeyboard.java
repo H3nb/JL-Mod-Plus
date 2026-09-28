@@ -55,7 +55,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	public static final int TYPE_DPAD_STANDARD = 7;
 	public static final int TYPE_ANALOG_STANDARD = 8;
 
-	private static final int LEGACY_TEMPLATE_NUMBERS_ARROWS = 3;
 	private static final int GROUPED_CONTROL_COUNT = 2;
 	private static final float DEFAULT_DPAD_CENTER_X = 0.82f;
 	private static final float DEFAULT_DPAD_CENTER_Y = 0.78f;
@@ -425,7 +424,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			endDpad();
 			endAnalog();
 			// Build the template in memory first. Only the final Save/persistent selection writes it.
-			super.setLayoutForEditing(LEGACY_TEMPLATE_NUMBERS_ARROWS);
+			super.setLayoutForEditing(TYPE_NUMBERS_ARROWS);
 			applyStandardLegacyVisibility();
 			StandardVirtualControlsLayout layout = standardTemplateLayout();
 			arrangeStandardLegacyButtons(layout);
@@ -798,7 +797,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				return;
 			}
 
-			applyBuiltInLayoutInMemory(LEGACY_TEMPLATE_NUMBERS_ARROWS);
+			applyBuiltInLayoutInMemory(TYPE_NUMBERS_ARROWS);
 			applyStandardLegacyVisibility();
 			StandardVirtualControlsLayout layout = standardTemplateLayout();
 			arrangeStandardLegacyButtons(layout);
