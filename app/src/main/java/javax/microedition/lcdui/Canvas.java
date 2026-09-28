@@ -1656,7 +1656,7 @@ public abstract class Canvas extends Displayable {
 		}
 
 		@Override
-		public void recycle() {
+		protected void recycleEvent() {
 		}
 
 		@Override
