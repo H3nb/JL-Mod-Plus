@@ -70,7 +70,7 @@ interface RuntimeHostDialogActions {
     fun onMidletCancelled()
     fun onErrorAcknowledged()
     fun onExitConfirmed(openSettings: Boolean)
-    fun onHideButtonsConfirmed(hidden: BooleanArray)
+    fun onShowControlsConfirmed(hidden: BooleanArray)
     fun onSaveVirtualKeyboard(updateTarget: String?)
     fun onVirtualKeyboardEditSaved(updateTarget: String?) = Unit
     fun onVirtualKeyboardEditDiscarded() = Unit
@@ -83,10 +83,9 @@ internal sealed interface RuntimeHostDialogState {
     data class MidletSelection(val names: List<String>) : RuntimeHostDialogState
     data class Error(val message: String) : RuntimeHostDialogState
     data object ExitConfirmation : RuntimeHostDialogState
-    data class HideButtons(
+    data class ShowControls(
         val names: List<String>,
         val hidden: BooleanArray,
-        val rows: List<List<Int?>>,
     ) : RuntimeHostDialogState
     data class SaveVirtualKeyboard(
         val updateTarget: String? = null,
@@ -126,7 +125,7 @@ internal fun RuntimeHostDialogs(
             actions = actions,
             onDismiss = onDismiss,
         )
-        is RuntimeHostDialogState.HideButtons -> HideButtonsDialog(
+        is RuntimeHostDialogState.ShowControls -> ShowControlsDialog(
             state = state,
             actions = actions,
             onDismiss = onDismiss,
@@ -331,8 +330,8 @@ private fun ExitConfirmationDialog(
 }
 
 @Composable
-private fun HideButtonsDialog(
-    state: RuntimeHostDialogState.HideButtons,
+private fun ShowControlsDialog(
+    state: RuntimeHostDialogState.ShowControls,
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
@@ -362,40 +361,32 @@ private fun HideButtonsDialog(
                         .verticalScroll(scrollState),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    for (row in state.rows) {
+                    for (row in state.names.indices.chunked(3)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             for (index in row) {
-                                if (index == null || index !in state.names.indices) {
-                                    Spacer(Modifier.weight(1f))
-                                } else {
-                                    val isVisible = visible.getOrNull(index) == true
-                                    Row(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .heightIn(min = 48.dp)
-                                            .toggleable(value = isVisible, role = Role.Checkbox) {
-                                                visible = visible.copyOf().also {
-                                                    if (index in it.indices) it[index] = !isVisible
-                                                }
-                                            }
-                                            .padding(horizontal = 4.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        Checkbox(
-                                            checked = isVisible,
-                                            onCheckedChange = null,
-                                        )
-                                        Text(
-                                            state.names[index],
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            modifier = Modifier.padding(start = 4.dp),
-                                        )
-                                    }
+                                val isVisible = visible.getOrNull(index) == true
+                                Row(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .heightIn(min = 48.dp)
+                                        .toggleable(value = isVisible, role = Role.Checkbox) {
+                                            visible = visible.copyOf().also { it[index] = !isVisible }
+                                        }
+                                        .padding(horizontal = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Checkbox(checked = isVisible, onCheckedChange = null)
+                                    Text(
+                                        state.names[index],
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.padding(start = 4.dp),
+                                    )
                                 }
                             }
+                            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                         }
                     }
                 }
@@ -409,7 +400,7 @@ private fun HideButtonsDialog(
         confirmButton = {
             TextButton(onClick = {
                 onDismiss()
-                actions.onHideButtonsConfirmed(BooleanArray(visible.size) { !visible[it] })
+                actions.onShowControlsConfirmed(BooleanArray(visible.size) { !visible[it] })
             }) {
                 Text(stringResource(android.R.string.ok))
             }

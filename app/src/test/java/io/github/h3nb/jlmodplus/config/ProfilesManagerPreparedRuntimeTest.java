@@ -15,6 +15,8 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
+
 public class ProfilesManagerPreparedRuntimeTest {
     private static final Gson GSON = new Gson();
 
@@ -92,7 +94,7 @@ public class ProfilesManagerPreparedRuntimeTest {
         profile.version = version;
         profile.screenWidth = width;
         profile.screenHeight = 320;
-        profile.vkType = 3;
+        profile.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS;
         profile.systemProperties = "";
         return GSON.toJson(profile).getBytes(StandardCharsets.UTF_8);
     }

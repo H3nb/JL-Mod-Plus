@@ -77,12 +77,12 @@ class ProfilesComposeTest {
         setProfilesContent(actions)
 
         composeRule.onNodeWithText("Built-in").assertDoesNotExist()
-        composeRule.onNodeWithText("Built-in MIDlet settings.").assertDoesNotExist()
+        composeRule.onNodeWithText("Built-in MIDlet settings and virtual controls.").assertDoesNotExist()
         composeRule.onNodeWithText("Change").performClick()
         composeRule.onNode(hasText("JL-Mod Defaults") and hasAnyAncestor(isDialog())).assertExists()
         composeRule.onNodeWithText("Apply").performClick()
         assertEquals(1, actions.builtInDefaultCalls)
-        composeRule.onNodeWithText("Built-in MIDlet settings").assertDoesNotExist()
+        composeRule.onNodeWithText("Built-in MIDlet settings and virtual controls.").assertDoesNotExist()
     }
 
     @Test

@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
+
 public class PresetAuthorityTest {
     private static final String STORAGE_KEY = "fixture";
 
@@ -377,7 +379,7 @@ public class PresetAuthorityTest {
         profile.version = ProfileModel.VERSION;
         profile.screenWidth = width;
         profile.screenHeight = 320;
-        profile.vkType = 3;
+        profile.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS;
         profile.systemProperties = "";
         assertTrue(ProfilesManager.saveConfig(profile));
     }

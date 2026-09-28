@@ -34,7 +34,6 @@
     <string name="FORCE_CLOSE_CONFIRMATION">Forcer la fermeture de l\'application peut entraîner une perte de données ou même la stopper complètement!\nProcédure?</string>
     <string name="help">Aide</string>
     <string name="help_message">&#8226; Activer le filtrage dans certains cas peut considérablement réduire les performances. Désactiver cette option si le jeu est trop lent.&lt;BR&gt;&#8226; Les problèmes de scintillement d\'image peuvent être résolus en activant l\'option \"Mode de traitement immédiat\".</string>
-    <string name="hide_buttons">Cacher les boutons</string>
     <string name="identity_filter">Rapide mais sans filtre</string>
     <string name="install">Installer</string>
     <string name="install_done">Votre application est installé</string>

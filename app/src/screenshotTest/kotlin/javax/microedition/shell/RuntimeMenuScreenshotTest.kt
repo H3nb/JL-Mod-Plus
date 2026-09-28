@@ -39,7 +39,7 @@ private object NoOpRuntimeMenuActions : RuntimeMenuActions {
     override fun onEditVirtualKeyboardLayout() = Unit
     override fun onFinishVirtualKeyboardLayout() = Unit
     override fun onSwitchVirtualKeyboardLayout() = Unit
-    override fun onHideVirtualKeyboardButtons() = Unit
+    override fun onShowControls() = Unit
 }
 
 private object NoOpRuntimeHostDialogActions : RuntimeHostDialogActions {
@@ -47,7 +47,7 @@ private object NoOpRuntimeHostDialogActions : RuntimeHostDialogActions {
     override fun onMidletCancelled() = Unit
     override fun onErrorAcknowledged() = Unit
     override fun onExitConfirmed(openSettings: Boolean) = Unit
-    override fun onHideButtonsConfirmed(states: BooleanArray) = Unit
+    override fun onShowControlsConfirmed(hidden: BooleanArray) = Unit
     override fun onSaveVirtualKeyboard(updateTarget: String?) = Unit
     override fun onLayoutSelected(index: Int, updateTarget: String?) = Unit
 }
@@ -150,6 +150,26 @@ fun RuntimeExitConfirmationScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         RuntimeHostDialogs(
             state = RuntimeHostDialogState.ExitConfirmation,
+            actions = NoOpRuntimeHostDialogActions,
+            onDismiss = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Show controls phone", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+fun RuntimeShowControlsScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        RuntimeHostDialogs(
+            state = RuntimeHostDialogState.ShowControls(
+                names = listOf(
+                    "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "*", "#",
+                    "L", "R", "D", "C", "↖", "↑", "↗", "←", "→", "↙", "↓", "↘",
+                    "F", "A", "B", "M", "D-pad", "Analog Stick",
+                ),
+                hidden = BooleanArray(30) { it in 0..8 || it == 29 },
+            ),
             actions = NoOpRuntimeHostDialogActions,
             onDismiss = {},
         )

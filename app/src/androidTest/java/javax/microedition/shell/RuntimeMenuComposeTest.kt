@@ -60,10 +60,9 @@ class RuntimeMenuComposeTest {
         composeRule.setContent {
             JLModPlusTheme {
                 RuntimeHostDialogs(
-                    state = RuntimeHostDialogState.HideButtons(
+                    state = RuntimeHostDialogState.ShowControls(
                         names = names,
                         hidden = booleanArrayOf(false, true, false, true, false),
-                        rows = showControlsGridRows(names),
                     ),
                     actions = RecordingRuntimeHostDialogActions(events, selections),
                     onDismiss = { events += "dismiss" },
@@ -84,41 +83,29 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("Second").performClick()
         composeRule.onNodeWithText("Second").assertIsOn()
         composeRule.onNodeWithText("OK").performClick()
-        assertEquals(listOf("dismiss", "hide"), events)
+        assertEquals(listOf("dismiss", "showControls"), events)
         assertEquals(listOf(false, false, false, true, false), selections.single().toList())
     }
 
     @Test
-    fun showControlsGroupsLegacyKeysWithoutChangingVisibilityIndices() {
-        val names = listOf(
-            "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "*", "#",
-            "L", "R", "D", "C", "↖", "↑", "↗", "←", "→", "↙", "↓", "↘",
-            "F", "A", "B", "M", "D-pad", "Analog Stick",
-        )
-        val rows = showControlsGridRows(names)
-        assertEquals(
-            listOf(
-                listOf("L", "M", "R"), listOf("A", "B", "C"), listOf("D", "D-pad", "Analog Stick"),
-                listOf("↖", "↑", "↗"), listOf("←", "F", "→"), listOf("↙", "↓", "↘"),
-                listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"),
-                listOf("*", "0", "#"),
-            ),
-            rows.map { row -> row.map { index -> index?.let(names::get) } },
-        )
-
-        val selections = mutableListOf<BooleanArray>()
+    fun showControlsCompactLandscapeKeepsLastCellAndActionsReachable() {
+        val names = (1..29).map { it.toString() } + "Stik Analog"
         composeRule.setContent {
-            JLModPlusTheme {
-                RuntimeHostDialogs(
-                    state = RuntimeHostDialogState.HideButtons(names, BooleanArray(names.size), rows),
-                    actions = RecordingRuntimeHostDialogActions(mutableListOf(), selections),
-                    onDismiss = {},
-                )
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
+            ) {
+                JLModPlusTheme {
+                    RuntimeHostDialogs(
+                        state = RuntimeHostDialogState.ShowControls(names, BooleanArray(names.size)),
+                        actions = RecordingRuntimeHostDialogActions(mutableListOf(), mutableListOf()),
+                        onDismiss = {},
+                    )
+                }
             }
         }
-        composeRule.onNodeWithText("M").performClick()
-        composeRule.onNodeWithText("OK").performClick()
-        assertEquals(listOf(27), selections.single().indices.filter { selections.single()[it] })
+
+        composeRule.onNodeWithText("Stik Analog").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("OK").assertIsDisplayed()
     }
 
     @Test
@@ -275,7 +262,7 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("Virtual Controls").performScrollTo().performClick()
         composeRule.onNodeWithText("Finish Editing").assertIsDisplayed()
         composeRule.onNodeWithText("Layout Templates").assertIsDisplayed()
-        composeRule.onNodeWithText("Show Or Hide Controls").assertIsDisplayed()
+        composeRule.onNodeWithText("Show Controls").assertIsDisplayed()
         composeRule.onAllNodesWithText("D-pad").assertCountEquals(0)
         composeRule.onAllNodesWithText("Analog Stick").assertCountEquals(0)
         composeRule.onAllNodesWithText("Key Layout Resize Mode").assertCountEquals(0)
@@ -285,7 +272,7 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun virtualControlActionsDismissBeforeDispatchingTheirCallbacks() {
+    fun showControlsActionDismissesBeforeDispatchingCallback() {
         val events = mutableListOf<String>()
         composeRule.setContent {
             JLModPlusTheme {
@@ -303,13 +290,8 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Edit Layout").performClick()
-        composeRule.onNodeWithText("Layout Templates").performClick()
-        composeRule.onNodeWithText("Show Or Hide Controls").performClick()
-        assertEquals(
-            listOf("dismiss", "edit", "dismiss", "switch", "dismiss", "hide"),
-            events,
-        )
+        composeRule.onNodeWithText("Show Controls").performClick()
+        assertEquals(listOf("dismiss", "showControls"), events)
     }
 
     @Test
@@ -1037,8 +1019,8 @@ private class RecordingRuntimeMenuActions(
         events += "switch"
     }
 
-    override fun onHideVirtualKeyboardButtons() {
-        events += "hide"
+    override fun onShowControls() {
+        events += "showControls"
     }
 }
 
@@ -1062,8 +1044,8 @@ private class RecordingRuntimeHostDialogActions(
         events += if (openSettings) "settings" else "exit"
     }
 
-    override fun onHideButtonsConfirmed(hidden: BooleanArray) {
-        events += "hide"
+    override fun onShowControlsConfirmed(hidden: BooleanArray) {
+        events += "showControls"
         hiddenSelections += hidden.copyOf()
     }
 

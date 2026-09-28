@@ -34,7 +34,6 @@
     <string name="FORCE_CLOSE_CONFIRMATION">Uygulamayı zorla kapatmak veri kaybına neden olabilir veya tamamen bozabilir!\nDevam edilsin mi?</string>
     <string name="help">Yardım</string>
     <string name="help_message">&#8226; Bazı durumlarda filtrelemeyi etkinleştirmek, performansı önemli ölçüde azaltabilir. Oyun çok yavaşsa bu seçeneği devre dışı bırakın.&lt;BR&gt;&#8226; Görüntüde oluşan titreme sorununu \"Acil işleme modu\" seçeneğini etkinleştirerek düzeltilebilirsiniz.</string>
-    <string name="hide_buttons">Tuşları gizle</string>
     <string name="identity_filter">Hızlı (filtre yok)</string>
     <string name="install">yükle</string>
     <string name="install_done">Uygulama başarıyla yüklendi!</string>

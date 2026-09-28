@@ -15,19 +15,12 @@
 package io.github.h3nb.jlmodplus.config;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import android.os.Handler;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 
 import java.io.File;
-import java.lang.reflect.Field;
-
-import javax.microedition.lcdui.keyboard.VirtualControlsKeyboard;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 
 public class ProfileModelBuiltInThemeTest {
@@ -65,42 +58,4 @@ public class ProfileModelBuiltInThemeTest {
 		assertEquals(0xFFFFFF, profile.vkOutlineColor);
 	}
 
-	@Test
-	public void applyingBuiltInReplacesMaterializedLayoutWithNumbersAndArrows() throws Exception {
-		File dir = new File(
-				InstrumentationRegistry.getInstrumentation().getTargetContext().getCacheDir(),
-				"built-in-layout-" + System.nanoTime());
-		assertTrue(dir.mkdirs());
-		ProfileModel profile = ProfileModel.createBuiltIn(dir, false);
-		VirtualKeyboard keyboard = null;
-		try {
-			keyboard = new VirtualKeyboard(profile);
-			keyboard.setLayoutForEditing(VirtualControlsKeyboard.TYPE_DPAD_STANDARD);
-			ProfilesManager.publishRuntimeLayout(dir, keyboard.encodeCurrentLayoutForPersistence());
-			stopKeyboard(keyboard);
-			keyboard = new VirtualKeyboard(profile);
-			assertEquals(VirtualControlsKeyboard.TYPE_DPAD_STANDARD, keyboard.getLayout());
-			stopKeyboard(keyboard);
-			keyboard = null;
-
-			assertTrue(ProfilesManager.publishBuiltInSnapshot(profile));
-			assertFalse(new File(dir, Config.MIDLET_KEY_LAYOUT_FILE).exists());
-			ProfileModel saved = ProfilesManager.loadConfig(dir);
-			assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, saved.vkType);
-			keyboard = new VirtualKeyboard(saved);
-			assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, keyboard.getLayout());
-		} finally {
-			if (keyboard != null) stopKeyboard(keyboard);
-			File[] files = dir.listFiles();
-			if (files != null) for (File file : files) file.delete();
-			dir.delete();
-		}
-	}
-
-	private static void stopKeyboard(VirtualKeyboard keyboard) throws Exception {
-		keyboard.cancel();
-		Field field = VirtualKeyboard.class.getDeclaredField("handler");
-		field.setAccessible(true);
-		((Handler) field.get(keyboard)).getLooper().quitSafely();
-	}
 }

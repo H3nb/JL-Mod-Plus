@@ -372,6 +372,7 @@ public class ProfilesManager {
 			throws IOException {
 		synchronized (PRESET_SOURCE_LOCK) {
 		recoverInterruptedPresetSave(sourceDir);
+		normalizeVirtualKeyboardLayout(new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE));
 		copyPresetArtifactIfFile(new File(sourceDir, Config.MIDLET_CONFIG_FILE),
 				new File(draftDir, Config.MIDLET_CONFIG_FILE));
 		copyPresetArtifactIfFile(new File(sourceDir, "config.xml"),
@@ -676,7 +677,7 @@ public class ProfilesManager {
 			boolean verifyCompleteSource,
 			@Nullable LocalPublicationHook hook,
 			@Nullable byte[] layoutPayload,
-			boolean configFromModel) throws IOException {
+			boolean stageProvidedConfig) throws IOException {
 		File staging = new File(targetDir, PRESET_SYNC_STAGING_DIR);
 		File rollback = new File(targetDir, PRESET_SYNC_ROLLBACK_DIR);
 		File dstConfig = new File(targetDir, Config.MIDLET_CONFIG_FILE);
@@ -697,7 +698,7 @@ public class ProfilesManager {
 			File stagedLayout = new File(staging, Config.MIDLET_KEY_LAYOUT_FILE);
 			if (config) {
 				File source = new File(sourceDir, Config.MIDLET_CONFIG_FILE);
-				if (!configFromModel && source.isFile()) {
+				if (!stageProvidedConfig && source.isFile()) {
 					FileUtils.copyFileUsingChannel(source, stagedConfig);
 				} else {
 					if (sourceConfig == null) {
@@ -736,9 +737,11 @@ public class ProfilesManager {
 							"Profile keyboard layout changed while applying: " + layoutError);
 				}
 			}
-			if (keyboard && !sourceHasLayout && !verifyCompleteSource
-					&& !(config && configFromModel)) {
-				throw new IOException("Partial keyboard apply requires a usable source layout");
+			if (keyboard && !sourceHasLayout && !verifyCompleteSource) {
+				boolean authoritativeAbsentLayout = config && stageProvidedConfig;
+				if (!authoritativeAbsentLayout) {
+					throw new IOException("Partial keyboard apply requires a usable source layout");
+				}
 			}
 
 			if (verifyCompleteSource) {
@@ -1188,16 +1191,17 @@ public class ProfilesManager {
 			throw new IOException("Preset draft configuration is not loadable");
 		}
 		File srcKeyLayout = new File(sourceDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		File keyLayout = new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE);
 
 		boolean transactionCreatedProfile = !profileDir.exists();
 		if (profileDir.exists() && !profileDir.isDirectory()) {
 			throw new IOException("Preset path is not a directory");
 		}
+		if (!srcKeyLayout.exists()) normalizeVirtualKeyboardLayout(keyLayout);
 		PresetSaveTransaction transaction =
 				beginPresetSave(profileDir, transactionCreatedProfile);
 		File config = new File(profileDir, Config.MIDLET_CONFIG_FILE);
 		File legacyConfig = new File(profileDir, "config.xml");
-		File keyLayout = new File(profileDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		try {
 			FileUtils.copyFileUsingChannel(srcConfig, config);
 			if (legacyConfig.exists() && !legacyConfig.delete()) {
@@ -1205,8 +1209,11 @@ public class ProfilesManager {
 			}
 			if (KeyboardLayoutValidator.validate(srcKeyLayout) == null) {
 				FileUtils.copyFileUsingChannel(srcKeyLayout, keyLayout);
-			} else if (!srcKeyLayout.exists() && keyLayout.exists() && !keyLayout.delete()) {
-				throw new IOException("Unable to remove deleted profile keyboard layout");
+			} else if (!srcKeyLayout.exists()) {
+				removeVirtualKeyboardLayoutSidecars(keyLayout);
+				if (keyLayout.exists() && !keyLayout.delete()) {
+					throw new IOException("Unable to remove deleted profile keyboard layout");
+				}
 			}
 			transaction.commit();
 		} catch (IOException | RuntimeException failure) {

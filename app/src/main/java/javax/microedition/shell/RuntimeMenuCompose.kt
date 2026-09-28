@@ -95,32 +95,6 @@ internal data class RuntimeMenuUiState(
     val memoryEditorBubbleEnabled: Boolean = false,
 )
 
-// Display positions only. The indices in the visibility array remain in VirtualKeyboard order.
-private val SHOW_CONTROLS_KEY_ROWS = listOf(
-    listOf("L", "M", "R"),
-    listOf("A", "B", "C"),
-    listOf("D"),
-    listOf("↖", "↑", "↗"),
-    listOf("←", "F", "→"),
-    listOf("↙", "↓", "↘"),
-    listOf("1", "2", "3"),
-    listOf("4", "5", "6"),
-    listOf("7", "8", "9"),
-    listOf("*", "0", "#"),
-)
-
-internal fun showControlsGridRows(names: List<String>): List<List<Int?>> {
-    val keyNames = names.take(28)
-    if (names.size in setOf(28, 30) && keyNames.toSet() == SHOW_CONTROLS_KEY_ROWS.flatten().toSet()) {
-        return SHOW_CONTROLS_KEY_ROWS.mapIndexed { rowIndex, row ->
-            val indices = row.map(keyNames::indexOf)
-            if (rowIndex == 2 && names.size == 30) indices + listOf(28, 29)
-            else indices + List<Int?>(3 - indices.size) { null }
-        }
-    }
-    return names.indices.chunked(3).map { row -> row + List<Int?>(3 - row.size) { null } }
-}
-
 interface RuntimeMenuActions {
     fun onExit()
     fun onSaveLog()
@@ -139,7 +113,7 @@ interface RuntimeMenuActions {
 
     fun onFinishVirtualKeyboardLayout()
     fun onSwitchVirtualKeyboardLayout()
-    fun onHideVirtualKeyboardButtons()
+    fun onShowControls()
 }
 
 /**
@@ -382,7 +356,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                     else actions.onEditVirtualKeyboardLayout()
                 })
                 add(ControllerMenuItem { closeMenu(); actions.onSwitchVirtualKeyboardLayout() })
-                add(ControllerMenuItem { closeMenu(); actions.onHideVirtualKeyboardButtons() })
+                add(ControllerMenuItem { closeMenu(); actions.onShowControls() })
             }
         }
         return buildList {
@@ -417,12 +391,9 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         changeControllerSurface { hostDialogState = RuntimeHostDialogState.ExitConfirmation }
     }
 
-    fun showHideButtons(names: Array<String>, hidden: BooleanArray) {
+    fun showControls(names: Array<String>, hidden: BooleanArray) {
         changeControllerSurface {
-            val labels = names.toList()
-            hostDialogState = RuntimeHostDialogState.HideButtons(
-                labels, hidden.copyOf(), showControlsGridRows(labels),
-            )
+            hostDialogState = RuntimeHostDialogState.ShowControls(names.toList(), hidden.copyOf())
         }
     }
 
@@ -847,14 +818,14 @@ private fun LazyListScope.runtimeMenuItems(
                 focused = switchFocused,
             )
         }
-        val hideFocused = nextFocused()
+        val showControlsFocused = nextFocused()
         item {
             RuntimeActionItem(
-                R.string.runtime_virtual_controls_hide_buttons,
+                R.string.runtime_virtual_controls_show_controls_menu,
                 onDismiss,
-                actions::onHideVirtualKeyboardButtons,
+                actions::onShowControls,
                 leadingIcon = R.drawable.ic_runtime_hide,
-                focused = hideFocused,
+                focused = showControlsFocused,
             )
         }
         return

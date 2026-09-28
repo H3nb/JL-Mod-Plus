@@ -484,9 +484,9 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
-					public void onHideVirtualKeyboardButtons() {
+					public void onShowControls() {
 						if (ContextHolder.getVk() != null) {
-							showHideButtonDialog();
+							showControlsDialog();
 						}
 					}
 				},
@@ -530,7 +530,7 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
-					public void onHideButtonsConfirmed(boolean[] hidden) {
+					public void onShowControlsConfirmed(boolean[] hidden) {
 						applyHiddenButtons(hidden);
 					}
 
@@ -1624,13 +1624,13 @@ public class MicroActivity extends AppCompatActivity {
 		}
 	}
 
-	private void showHideButtonDialog() {
+	private void showControlsDialog() {
 		final VirtualKeyboard vk = ContextHolder.getVk();
 		if (vk == null || runtimeMenuController == null) {
 			return;
 		}
 		boolean[] hidden = vk.getKeysVisibility();
-		runtimeMenuController.showHideButtons(vk.getKeyNames(), hidden);
+		runtimeMenuController.showControls(vk.getKeyNames(), hidden);
 	}
 
 	private void showSaveVkAlert() {

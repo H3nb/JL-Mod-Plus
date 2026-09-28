@@ -51,7 +51,7 @@ public class LegacyVirtualKeyboardTouchTest {
 
         ProfileModel settings = new ProfileModel();
         settings.dir = profileDir;
-        settings.vkType = 3; // Numbers & Arrows: F occupies the center of the arrow cluster.
+        settings.vkType = VirtualKeyboard.TYPE_NUMBERS_ARROWS; // F occupies the center of the arrow cluster.
         settings.vkFeedback = false;
         settings.vkAlpha = 255;
 

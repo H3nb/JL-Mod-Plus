@@ -481,10 +481,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					operationRunning = true;
 					try {
 						if (isProfile) {
-							profileDraftDirty = true;
-							params = newBuiltInProfile();
+							if (!replaceProfileDraftWithBuiltIn()) {
+								ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
+								return;
+							}
 							loadParams(false);
-							builtInThemeLinked = true;
 							return;
 						}
 						if (!replaceActiveConfigWithBuiltIn()) {
@@ -1166,15 +1167,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				isProfile ? ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE
 						: ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
 				!isProfile && profileOrigin == null && readBuiltInThemeLinked());
-		if (!isProfile && params != null) {
-			persistedBaseline = ProfileConfigMatcher.copyConfig(params);
-		}
 
 		if (params == null) {
 			if (isProfile) {
-				params = newBuiltInProfile();
-				// A new named profile keeps its existing user-owned Custom layout default.
-				params.vkType = VirtualKeyboard.TYPE_CUSTOM;
+				params = newNamedProfileDefaults();
 				builtInThemeLinked = false;
 				return true;
 			}
@@ -1191,7 +1187,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					ProfilesManager.BackgroundMigrationContext.MIDLET_CONFIG,
 					true);
 			if (params == null) return false;
-			persistedBaseline = ProfileConfigMatcher.copyConfig(params);
 		}
 		if (isProfile) {
 			builtInThemeLinked = false;
@@ -1206,6 +1201,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (builtInThemeLinked) {
 			ProfileModel.applyBuiltInTheme(params, isDarkTheme());
 		}
+		persistedBaseline = ProfileConfigMatcher.copyConfig(params);
 		return true;
 	}
 
@@ -1617,29 +1613,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private boolean applyBuiltInTemplate(@NonNull ConfigFormEvents.PresetApplyScope scope) {
 		if (operationRunning) return false;
-		if (scope != ConfigFormEvents.PresetApplyScope.SETTINGS) {
+		if (scope != ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE) {
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			return false;
 		}
 		operationRunning = true;
 		try {
 			if (isProfile) {
-				ProfileModel previousParams = params == null
-						? null : ProfileConfigMatcher.copyConfig(params);
-				ConfigFormState previousForm = currentForm;
-				boolean previousBuiltInThemeLinked = builtInThemeLinked;
-				params = newBuiltInProfile();
-				currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
-				if (!saveParams()) {
-					if (previousParams != null) params = previousParams;
-					currentForm = previousForm;
-					builtInThemeLinked = previousBuiltInThemeLinked;
+				if (!replaceProfileDraftWithBuiltIn()) {
 					ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 					return false;
-				}
-				builtInThemeLinked = true;
-				if (!setProfileOrigin(null)) {
-					Log.e(TAG, "Unable to clear preset editor provenance");
 				}
 			} else if (!replaceActiveConfigWithBuiltIn()) {
 				ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
@@ -1657,6 +1640,22 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		} finally {
 			operationRunning = false;
 		}
+	}
+
+	private boolean replaceProfileDraftWithBuiltIn() {
+		ProfileModel previousParams = params;
+		ConfigFormState previousForm = currentForm;
+		params = newBuiltInProfile();
+		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+		if (!ProfilesManager.publishBuiltInSnapshot(params)) {
+			params = previousParams;
+			currentForm = previousForm;
+			return false;
+		}
+		profileDraftDirty = true;
+		builtInThemeLinked = true;
+		setProfileOrigin(null);
+		return true;
 	}
 
 	private boolean replaceActiveConfigWithBuiltIn() {
@@ -1697,6 +1696,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return ProfileModel.createBuiltIn(configDir, isDarkTheme());
 	}
 
+	private ProfileModel newNamedProfileDefaults() {
+		ProfileModel profile = newBuiltInProfile();
+		// A new named profile keeps its existing user-owned Custom layout default.
+		profile.vkType = VirtualKeyboard.TYPE_CUSTOM;
+		return profile;
+	}
+
 	/** Re-derives theme-owned built-in colors without turning the profile into a custom snapshot. */
 	private void syncLinkedBuiltInTheme() {
 		if (isProfile || !builtInThemeLinked || params == null || configDir == null) return;
@@ -1710,6 +1716,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		ProfileModel.applyBuiltInTheme(params, isDarkTheme());
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+		persistedBaseline = ProfileConfigMatcher.copyConfig(params);
 		builtInDefaultParams = newBuiltInProfile();
 		refreshProfileMatchCache();
 		if (composeController != null) {

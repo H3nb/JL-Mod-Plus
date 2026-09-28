@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
+import javax.microedition.lcdui.keyboard.VirtualKeyboard;
+
 public class ProfilesManagerLocalPublicationTest {
 	private static final int LAYOUT_SIGNATURE = 0x564B4C00;
 	private static final int LAYOUT_TYPE = 3;
@@ -28,6 +30,20 @@ public class ProfilesManagerLocalPublicationTest {
 	private static final String ROLLBACK_DIR = ".preset-sync.rollback";
 	private static final String READY = ".ready";
 	private static final String OWNED = ".owned";
+
+	@Test
+	public void builtInPublicationReplacesConfigAndAuthoritativelyRemovesLayout() throws Exception {
+		File target = tempDir("built-in-target");
+		writeConfig(target, 176);
+		writeLayout(target, 2);
+
+		assertTrue(ProfilesManager.publishBuiltInSnapshot(
+				ProfileModel.createBuiltIn(target, false, "")));
+
+		assertEquals(VirtualKeyboard.TYPE_NUMBERS_ARROWS, readConfig(target).vkType);
+		assertFalse(layoutFile(target).exists());
+		assertFalse(new File(target, Config.MIDLET_KEY_LAYOUT_FILE + ".bak").exists());
+	}
 
 	@Test
 	public void settingsOnlySuccessLeavesLayoutByteForByteUnchanged() throws Exception {

@@ -281,7 +281,7 @@ private fun PresetPickerDialog(
             isBuiltIn = true,
             hasSettings = true,
             hasKeyboardLayout = false,
-            completeSnapshotReady = false,
+            completeSnapshotReady = true,
         )
         selectedKey != null -> templates.firstOrNull { savedPresetKey(it.name) == selectedKey }?.let { template ->
             PresetChoice(
@@ -294,10 +294,10 @@ private fun PresetPickerDialog(
         }
         else -> null
     }
-    val availableScopes = buildList {
-        if (selectedChoice?.completeSnapshotReady == true) {
-            add(ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE)
-        }
+    val availableScopes = if (selectedChoice?.isBuiltIn == true) {
+        listOf(ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE)
+    } else buildList {
+        if (selectedChoice?.completeSnapshotReady == true) add(ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE)
         if (selectedChoice?.hasSettings == true) add(ConfigFormEvents.PresetApplyScope.SETTINGS)
         if (selectedChoice?.hasKeyboardLayout == true) add(ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT)
     }
