@@ -72,6 +72,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private volatile String primaryFailureEventId;
 	private volatile MidletSessionJournal.FailureBoundary primaryFailureBoundary;
 	private volatile Throwable primaryFailureThrowable;
+	private boolean primaryFailureCaptureAttempted;
 	private MidletSessionJournal.Outcome requestedTerminationOutcome;
 	private long displayForegroundGeneration;
 	private volatile boolean runtimeSelected = true;
@@ -333,9 +334,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		} catch (Throwable t) {
 			lifecycle.tryBeginDestroy();
 			lifecycle.completeDestroy();
-			claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_INIT, t);
-			finalizeFatalRuntime();
-			throw new RuntimeException("Init midlet failed", t);
+			if (claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_INIT, t)) {
+				capturePrimarySessionFailure(Thread.currentThread(), t);
+				terminateFatalRuntime();
+			}
+			return;
 		}
 		if (finishSelfDestructionIfNeeded()) {
 			return;
@@ -393,14 +396,20 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		} catch (Throwable primaryFailure) {
 			lifecycle.completeStartFailure();
 			boolean cleanupCommitted = lifecycle.tryBeginDestroy();
-			claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_START, primaryFailure);
+			boolean claimed = claimLifecycleFailure(
+					MidletSessionJournal.FailureBoundary.LIFECYCLE_START, primaryFailure);
+			if (claimed) {
+				capturePrimarySessionFailure(Thread.currentThread(), primaryFailure);
+			}
 			if (cleanupCommitted && midlet != null) {
 				invokeUnconditionalDestroy("cleanup after startApp failure", false);
 				lifecycle.completeDestroy();
 			}
 			Log.e(TAG, "startApp failed; MIDlet terminated after best-effort cleanup", primaryFailure);
-			finalizeFatalRuntime();
-			throw new RuntimeException("Failed startApp", primaryFailure);
+			if (claimed) {
+				terminateFatalRuntime();
+			}
+			return;
 		}
 	}
 
@@ -421,14 +430,20 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		} catch (Throwable primaryFailure) {
 			lifecycle.completePauseFailure();
 			boolean cleanupCommitted = lifecycle.tryBeginDestroy();
-			claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_PAUSE, primaryFailure);
+			boolean claimed = claimLifecycleFailure(
+					MidletSessionJournal.FailureBoundary.LIFECYCLE_PAUSE, primaryFailure);
+			if (claimed) {
+				capturePrimarySessionFailure(Thread.currentThread(), primaryFailure);
+			}
 			if (cleanupCommitted && midlet != null) {
 				invokeUnconditionalDestroy("cleanup after pauseApp failure", false);
 				lifecycle.completeDestroy();
 			}
 			Log.e(TAG, "pauseApp failed; MIDlet terminated after best-effort cleanup", primaryFailure);
-			finalizeFatalRuntime();
-			throw new RuntimeException("Failed pauseApp", primaryFailure);
+			if (claimed) {
+				terminateFatalRuntime();
+			}
+			return;
 		}
 	}
 
@@ -489,25 +504,31 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		activity.leaveRuntimeHost(returnToLibrary, processCleanup);
 	}
 
-	private void claimLifecycleFailure(
+	private boolean claimLifecycleFailure(
 			MidletSessionJournal.FailureBoundary boundary, Throwable primaryFailure) {
 		if (!beginFatalFailure(Thread.currentThread(), boundary)) {
-			return;
+			return false;
 		}
 		primaryFailureThrowable = primaryFailure;
 		try {
 			primaryFailureEventId = journal.recordUnexpectedFailure(boundary);
 			if (primaryFailureEventId == null) {
 				clearPrimaryFailureClaim();
+				return false;
 			}
 		} catch (Throwable journalFailure) {
 			markJournalOutcome(MidletSessionJournal.Outcome.UNEXPECTED_FAILURE);
 		}
+		return true;
 	}
 
 	private void handleUncaughtSessionFailure(Thread thread, Throwable error) {
 		if (!fatalFailureClaimed.get()) {
 			MidletSessionJournal.FailureBoundary boundary = classifyFailureBoundary(thread);
+			if (!isClaimableSessionUncaught(thread, boundary)) {
+				delegateProcessUnhandled(thread, error);
+				return;
+			}
 			if (beginFatalFailure(thread, boundary)) {
 				primaryFailureThrowable = error;
 				try {
@@ -518,6 +539,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 						return;
 					}
 				} catch (Throwable journalFailure) {
+					markJournalOutcome(MidletSessionJournal.Outcome.UNEXPECTED_FAILURE);
 					try {
 						Log.e(TAG, "Unable to correlate uncaught MIDlet session failure", journalFailure);
 					} catch (Throwable ignored) {}
@@ -530,33 +552,43 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			return;
 		}
 
-		finalizeFatalRuntime();
+		capturePrimarySessionFailure(thread, error);
+		terminateFatalRuntime();
+	}
 
-		Throwable reportError = error;
-		String eventId = primaryFailureEventId;
-		MidletSessionJournal.FailureBoundary boundary = primaryFailureBoundary;
-		if (boundary != null) {
-			try {
-				reportError = CrashReporter.wrapSessionFailure(
-						eventId, boundary, error,
-						primaryFailureThrowable == null ? error : primaryFailureThrowable);
-			} catch (OutOfMemoryError ignored) {
-				// Preserve the original Throwable; sessionId still provides correlation when available.
-			}
+	private boolean isClaimableSessionUncaught(Thread thread,
+			MidletSessionJournal.FailureBoundary boundary) {
+		if (boundary != MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD) {
+			// Lifecycle failures are claimed explicitly at their callback boundaries. A generic
+			// MidletMain crash outside those boundaries remains a true process-unhandled failure.
+			return false;
 		}
+		return microLoader.ownsGuestThread(thread);
+	}
 
-		UncaughtExceptionHandler reporter = upstreamUncaughtHandler;
-		if (reporter != null && reporter != sessionUncaughtHandler) {
-			try {
-				reporter.uncaughtException(thread, reportError);
+	private void capturePrimarySessionFailure(Thread thread, Throwable reported) {
+		Throwable primary;
+		synchronized (terminationLock) {
+			if (!fatalFailureClaimed.get() || thread != primaryFailureThread
+					|| primaryFailureCaptureAttempted) {
 				return;
-			} catch (Throwable reporterFailure) {
-				try {
-					Log.e(TAG, "Crash reporter failed while handling MIDlet session failure", reporterFailure);
-				} catch (Throwable ignored) {}
 			}
+			primaryFailureCaptureAttempted = true;
+			primary = primaryFailureThrowable == null ? reported : primaryFailureThrowable;
 		}
+		if (!CrashReporter.captureMidletSessionFailure(thread, journal, reported, primary)) {
+			try {
+				Log.e(TAG, "MIDlet session failure Java evidence could not be persisted");
+			} catch (Throwable ignored) {}
+		}
+	}
 
+	private void delegateProcessUnhandled(Thread thread, Throwable error) {
+		UncaughtExceptionHandler upstream = upstreamUncaughtHandler;
+		if (upstream != null && upstream != sessionUncaughtHandler) {
+			upstream.uncaughtException(thread, error);
+			return;
+		}
 		Process.killProcess(Process.myPid());
 	}
 
@@ -593,7 +625,8 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			primaryFailureThread = null;
 			primaryFailureEventId = null;
 			primaryFailureBoundary = null;
-		primaryFailureThrowable = null;
+			primaryFailureThrowable = null;
+			primaryFailureCaptureAttempted = false;
 			fatalFailureClaimed.set(false);
 		}
 	}
@@ -638,6 +671,22 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 		finalizeSessionState(outcome);
 		return true;
+	}
+
+	private void terminateFatalRuntime() {
+		boolean returnToLibrary;
+		synchronized (terminationLock) {
+			returnToLibrary = returnToLibraryOnTermination;
+		}
+		finalizeFatalRuntime();
+		Runnable processCleanup = () -> Process.killProcess(Process.myPid());
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity == null) {
+			// Keep process death outside the failing guest callback/uncaught-handler stack.
+			new Handler(Looper.getMainLooper()).post(processCleanup);
+			return;
+		}
+		activity.leaveRuntimeHost(returnToLibrary, processCleanup);
 	}
 
 	private void finalizeFatalRuntime() {
