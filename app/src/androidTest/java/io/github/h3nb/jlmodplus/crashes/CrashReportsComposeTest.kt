@@ -15,7 +15,6 @@
 
 package io.github.h3nb.jlmodplus.crashes
 
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -121,7 +120,10 @@ class CrashReportsComposeTest {
         composeRule.onNodeWithText("Other MIDlet").performClick()
         composeRule.onNodeWithText("2 selected").assertIsDisplayed()
 
-        composeRule.onNodeWithContentDescription("Share selected reports").assertDoesNotExist()
+        assertEquals(
+            0,
+            composeRule.onAllNodesWithText("Share selected reports").fetchSemanticsNodes().size,
+        )
 
         composeRule.onNodeWithContentDescription("Delete selected reports").performClick()
         composeRule.onNodeWithText("Delete selected reports").performClick()
@@ -190,7 +192,10 @@ class CrashReportsComposeTest {
         composeRule.onNodeWithContentDescription("Copy").performClick()
         assertEquals(1, actions.copyCount)
 
-        composeRule.onNodeWithContentDescription("Share Report").assertDoesNotExist()
+        assertEquals(
+            0,
+            composeRule.onAllNodesWithText("Share Report").fetchSemanticsNodes().size,
+        )
 
         composeRule.onNodeWithContentDescription("Report on GitHub").performClick()
         assertEquals(1, actions.githubCount)
