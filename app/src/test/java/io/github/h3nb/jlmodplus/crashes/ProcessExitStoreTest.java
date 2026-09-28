@@ -136,6 +136,21 @@ public class ProcessExitStoreTest {
 	}
 
 	@Test
+	public void intentionalSessionSuppressesOnlyExactControlledSigkill() {
+		MidletSessionJournal.Snapshot session = session(MidletSessionJournal.Outcome.USER_STOP);
+
+		assertTrue(ProcessExitStore.isExpectedIntentionalSessionExit(
+				session, session.sessionId,
+				ProcessExitStore.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, "midlet"));
+		assertFalse(ProcessExitStore.isExpectedIntentionalSessionExit(
+				session, session.sessionId,
+				ProcessExitStore.REASON_CRASH, 0, "midlet"));
+		assertFalse(ProcessExitStore.isExpectedIntentionalSessionExit(
+				session, null,
+				ProcessExitStore.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, "midlet"));
+	}
+
+	@Test
 	public void boundedCopyPreservesEmptyInput() throws IOException {
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 
@@ -255,6 +270,28 @@ public class ProcessExitStoreTest {
 
 		assertThrows(OutOfMemoryError.class, () -> ProcessExitStore.copyBounded(
 				failing, new ByteArrayOutputStream(), 8));
+	}
+
+	private static MidletSessionJournal.Snapshot session(MidletSessionJournal.Outcome outcome) {
+		return new MidletSessionJournal.Snapshot(
+				2,
+				"123e4567-e89b-12d3-a456-426614174000",
+				"io.github.h3nb.jlmodplus:midlet",
+				123,
+				1L,
+				1L,
+				2L,
+				2L,
+				MidletSessionJournal.Stage.COMPLETED,
+				outcome,
+				null,
+				null,
+				"Game",
+				"Vendor",
+				"1.0",
+				"game.Main",
+				"1",
+				"abc123");
 	}
 
 	private static byte[] bytes(int count) {

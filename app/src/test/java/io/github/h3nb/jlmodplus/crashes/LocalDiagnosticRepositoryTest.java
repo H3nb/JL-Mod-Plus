@@ -28,8 +28,8 @@ public class LocalDiagnosticRepositoryTest {
 	}
 
 	@Test
-	public void priorProcessFatalUsesStructuredSessionIdWithoutStackMarker() {
-		assertTrue(LocalDiagnosticRepository.shouldAttachToSession(
+	public void modernProcessFatalIsIndependentEvenWithSameSessionId() {
+		assertFalse(LocalDiagnosticRepository.shouldAttachToSession(
 				session(SESSION, EVENT),
 				javaEvidence(JavaDiagnosticStore.Kind.FATAL_UNCAUGHT, SESSION, null)));
 	}
@@ -42,14 +42,45 @@ public class LocalDiagnosticRepositoryTest {
 	}
 
 	@Test
-	public void legacyEvidenceCanUseExactEventMarkerAsCompatibilityKey() {
+	public void legacyEvidenceRequiresExactWrapperEventAndBoundary() {
 		assertTrue(LocalDiagnosticRepository.shouldAttachToSession(
 				session(SESSION, EVENT),
-				javaEvidence(JavaDiagnosticStore.Kind.LEGACY_FATAL, null, EVENT)));
+				legacySessionFailure(EVENT, "LIFECYCLE_START")));
 		assertFalse(LocalDiagnosticRepository.shouldAttachToSession(
 				session(SESSION, EVENT),
-				javaEvidence(JavaDiagnosticStore.Kind.LEGACY_FATAL, null,
-						"323e4567-e89b-12d3-a456-426614174000")));
+				legacySessionFailure("323e4567-e89b-12d3-a456-426614174000",
+						"LIFECYCLE_START")));
+		assertFalse(LocalDiagnosticRepository.shouldAttachToSession(
+				session(SESSION, EVENT),
+				legacySessionFailure(EVENT, "LIFECYCLE_PAUSE")));
+		assertFalse(LocalDiagnosticRepository.shouldAttachToSession(
+				session(SESSION, EVENT),
+				javaEvidence(JavaDiagnosticStore.Kind.LEGACY_FATAL, null, EVENT)));
+	}
+
+	@Test
+	public void onlyControlledSigkillAttachesToHandledSessionFailure() {
+		MidletSessionJournal.Snapshot session = session(SESSION, EVENT);
+		assertTrue(LocalDiagnosticRepository.shouldAttachExitToSession(
+				session, processExit(ProcessExitStore.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL)));
+		assertFalse(LocalDiagnosticRepository.shouldAttachExitToSession(
+				session, processExit(ProcessExitStore.REASON_CRASH, 0)));
+		assertFalse(LocalDiagnosticRepository.shouldAttachExitToSession(
+				session, processExit(ProcessExitStore.REASON_CRASH_NATIVE, ProcessExitStore.SIGNAL_SEGV)));
+		assertFalse(LocalDiagnosticRepository.shouldAttachExitToSession(
+				session, processExit(ProcessExitStore.REASON_ANR, 0)));
+	}
+
+	@Test
+	public void processJavaExitRequiresExactPidSessionRoleAndJavaCrashReason() {
+		JavaDiagnosticStore.Snapshot fatal =
+				javaEvidence(JavaDiagnosticStore.Kind.FATAL_UNCAUGHT, SESSION, null);
+		assertTrue(LocalDiagnosticRepository.shouldAttachExitToJava(
+				fatal, processExit(ProcessExitStore.REASON_CRASH, 0)));
+		assertFalse(LocalDiagnosticRepository.shouldAttachExitToJava(
+				fatal, processExit(ProcessExitStore.REASON_CRASH_NATIVE, ProcessExitStore.SIGNAL_SEGV)));
+		assertFalse(LocalDiagnosticRepository.shouldAttachExitToJava(
+				fatal, processExit(ProcessExitStore.REASON_CRASH, 0, 124, SESSION)));
 	}
 
 	@Test
@@ -90,6 +121,82 @@ public class LocalDiagnosticRepositoryTest {
 				"game.Main",
 				"1",
 				"abc123");
+	}
+
+	private static JavaDiagnosticStore.Snapshot legacySessionFailure(
+			String eventId, String boundary) {
+		JavaDiagnosticStore.ThrowableData wrapper = new JavaDiagnosticStore.ThrowableData(
+				"javax.microedition.shell.MidletThread$SessionFailureException",
+				"JL-Mod Plus session failure; eventId=" + eventId + "; boundary=" + boundary,
+				List.of(new JavaDiagnosticStore.FrameData(
+						"javax.microedition.shell.MidletThread", "run", "MidletThread.java", 42, false)));
+		return new JavaDiagnosticStore.Snapshot(
+				new File("legacy-test.properties"),
+				JavaDiagnosticStore.Kind.LEGACY_FATAL,
+				2L,
+				"io.github.h3nb.jlmodplus:midlet",
+				"midlet",
+				123,
+				"MidletMain",
+				1,
+				5,
+				null,
+				"Game",
+				"1.0",
+				"game.Main",
+				"abc123",
+				"1.0",
+				"16",
+				36,
+				"POCO",
+				"F7",
+				"arm64-v8a",
+				null,
+				"stack",
+				List.of(wrapper),
+				0,
+				eventId,
+				boundary,
+				null);
+	}
+
+	private static ProcessExitStore.Snapshot processExit(int reason, int status) {
+		return processExit(reason, status, 123, SESSION);
+	}
+
+	private static ProcessExitStore.Snapshot processExit(
+			int reason, int status, int pid, String sessionId) {
+		return new ProcessExitStore.Snapshot(
+				new File("exit.properties"),
+				null,
+				"1-123-" + reason + "-" + status,
+				ProcessExitStore.SOURCE_APPLICATION_EXIT_INFO,
+				3L,
+				"io.github.h3nb.jlmodplus:midlet",
+				"midlet",
+				pid,
+				reason,
+				status,
+				100,
+				0,
+				0,
+				null,
+				true,
+				1,
+				36,
+				"16",
+				sessionId,
+				"POCO",
+				"F7",
+				"arm64-v8a",
+				null,
+				0,
+				false,
+				-1,
+				-1,
+				-1,
+				null,
+				null);
 	}
 
 	private static JavaDiagnosticStore.Snapshot javaEvidence(

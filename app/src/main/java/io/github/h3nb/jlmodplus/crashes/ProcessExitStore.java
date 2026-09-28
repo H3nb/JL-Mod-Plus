@@ -238,7 +238,7 @@ public final class ProcessExitStore {
 				}
 				// The isolated MIDlet process is deliberately killed after a graceful MIDlet exit.
 				// Exact journal outcome keeps that expected SIGKILL out of the crash inbox.
-				if (isIntentionalSessionExit(context, snapshot.sessionId)) {
+				if (isExpectedIntentionalSessionExit(context, snapshot)) {
 					delete(context, snapshot);
 					continue;
 				}
@@ -277,7 +277,7 @@ public final class ProcessExitStore {
 		pruneAcknowledgments(context, retained);
 		for (Snapshot record : records) {
 			if (acknowledged.contains(record.key)
-					|| isRepresentedByUnexpectedMidletFailure(context, record.sessionId)) {
+					|| isRepresentedByUnexpectedMidletFailure(context, record)) {
 				continue;
 			}
 			MidletSessionJournal.Snapshot session = findSession(context, record.sessionId);
@@ -434,6 +434,17 @@ public final class ProcessExitStore {
 	static boolean shouldRetainProcess(String processRole, int reason, int status, int importance) {
 		return !"reporter".equals(processRole)
 				&& shouldRetain(reason, status, importance, "midlet".equals(processRole));
+	}
+
+	static boolean isControlledRuntimeShutdown(Snapshot exit) {
+		return exit != null
+				&& isControlledRuntimeShutdown(exit.reason, exit.status, exit.processRole);
+	}
+
+	static boolean isControlledRuntimeShutdown(int reason, int status, String processRole) {
+		return "midlet".equals(processRole)
+				&& reason == REASON_SIGNALED
+				&& status == SIGNAL_KILL;
 	}
 
 	private static void prune(Context context) {
@@ -737,18 +748,46 @@ public final class ProcessExitStore {
 		}
 	}
 
-	private static boolean isRepresentedByUnexpectedMidletFailure(Context context, String sessionId) {
-		MidletSessionJournal.Snapshot session = findSession(context, sessionId);
+	private static boolean isRepresentedByUnexpectedMidletFailure(
+			Context context, Snapshot exit) {
+		MidletSessionJournal.Snapshot session =
+				exit == null ? null : findSession(context, exit.sessionId);
 		return session != null
 				&& session.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
-				&& MidletFailureRecovery.isSafeEventId(session.failureEventId);
+				&& MidletFailureRecovery.isSafeEventId(session.failureEventId)
+				&& isControlledRuntimeShutdown(exit);
 	}
 
-	private static boolean isIntentionalSessionExit(Context context, String sessionId) {
-		MidletSessionJournal.Snapshot session = findSession(context, sessionId);
-		return session != null && (session.outcome == MidletSessionJournal.Outcome.MIDLET_REQUEST
-				|| session.outcome == MidletSessionJournal.Outcome.USER_STOP
-				|| session.outcome == MidletSessionJournal.Outcome.LIFECYCLE_STOP);
+	private static boolean isExpectedIntentionalSessionExit(Context context, Snapshot exit) {
+		if (exit == null) return false;
+		return isExpectedIntentionalSessionExit(
+				findSession(context, exit.sessionId),
+				exit.sessionId,
+				exit.reason,
+				exit.status,
+				exit.processRole);
+	}
+
+	private static boolean isExpectedIntentionalSessionExit(
+			Context context, String sessionId, int reason, int status, String processRole) {
+		return isExpectedIntentionalSessionExit(
+				findSession(context, sessionId), sessionId, reason, status, processRole);
+	}
+
+	static boolean isExpectedIntentionalSessionExit(
+			MidletSessionJournal.Snapshot session, String exitSessionId,
+			int reason, int status, String processRole) {
+		return session != null
+				&& session.sessionId != null
+				&& session.sessionId.equals(exitSessionId)
+				&& isIntentionalOutcome(session.outcome)
+				&& isControlledRuntimeShutdown(reason, status, processRole);
+	}
+
+	private static boolean isIntentionalOutcome(MidletSessionJournal.Outcome outcome) {
+		return outcome == MidletSessionJournal.Outcome.MIDLET_REQUEST
+				|| outcome == MidletSessionJournal.Outcome.USER_STOP
+				|| outcome == MidletSessionJournal.Outcome.LIFECYCLE_STOP;
 	}
 
 	static MidletSessionJournal.Snapshot findSession(Context context, String sessionId) {
@@ -1154,7 +1193,8 @@ public final class ProcessExitStore {
 				}
 				String processRole = CrashReporter.classifyProcess(context.getPackageName(), processName);
 				ProcessStateSummary.Data state = ProcessStateSummary.parse(info.getProcessStateSummary());
-				if (isIntentionalSessionExit(context, state.sessionId)) {
+				if (isExpectedIntentionalSessionExit(
+						context, state.sessionId, info.getReason(), info.getStatus(), processRole)) {
 					continue;
 				}
 				if (!shouldRetainProcess(

@@ -163,9 +163,7 @@ final class IncidentInterpreter {
 			if (frameClass != null) {
 				// Proven framework origin wins over session ownership. The fallback below exists
 				// only for an uncaught worker already proven to be guest-owned at capture time.
-				if (frameClass.startsWith("io.github.h3nb.jlmodplus.")
-						|| frameClass.startsWith("ru.playsoftware.j2meloader.")
-						|| frameClass.startsWith("javax.microedition.")) {
+				if (isFrameworkClass(frameClass)) {
 					return IncidentSummary.FailureOrigin.JL_MOD_PLUS;
 				}
 				if (entrypoint != null
@@ -179,6 +177,13 @@ final class IncidentInterpreter {
 			return IncidentSummary.FailureOrigin.MIDLET;
 		}
 		return IncidentSummary.FailureOrigin.UNKNOWN;
+	}
+
+	static boolean isFrameworkClass(String className) {
+		return className != null
+				&& (className.startsWith("io.github.h3nb.jlmodplus.")
+				|| className.startsWith("ru.playsoftware.j2meloader.")
+				|| className.startsWith("javax.microedition."));
 	}
 
 	private static long incidentTimestamp(MidletSessionJournal.Snapshot session,
@@ -248,13 +253,7 @@ final class IncidentInterpreter {
 	}
 
 	static boolean isControlledTerminationExit(ProcessExitStore.Snapshot exit) {
-		if (exit == null) return true;
-		if (exit.reason == ProcessExitStore.REASON_SIGNALED
-				&& exit.status == ProcessExitStore.SIGNAL_KILL) {
-			return true;
-		}
-		return ProcessExitStore.SOURCE_LEGACY_PROCESS_DISAPPEARANCE.equals(exit.source)
-				&& exit.reason == ProcessExitStore.REASON_UNKNOWN;
+		return ProcessExitStore.isControlledRuntimeShutdown(exit);
 	}
 
 	static String processExitSummary(ProcessExitStore.Snapshot exit, String status) {

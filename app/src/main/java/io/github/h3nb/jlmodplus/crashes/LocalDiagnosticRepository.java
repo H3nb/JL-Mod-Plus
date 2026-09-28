@@ -66,28 +66,25 @@ public final class LocalDiagnosticRepository {
 		}
 
 		ArrayList<StandaloneJavaRecord> javaIncidents = new ArrayList<>(standaloneJava.size());
-		Map<String, StandaloneJavaRecord> fatalJavaBySession = new HashMap<>();
 		for (JavaDiagnosticStore.Snapshot java : standaloneJava) {
-			StandaloneJavaRecord record = new StandaloneJavaRecord(java);
-			javaIncidents.add(record);
-			if (isNewFatal(java) && java.sessionId != null) {
-				fatalJavaBySession.put(java.sessionId, record);
-			}
+			javaIncidents.add(new StandaloneJavaRecord(java));
 		}
 
 		ArrayList<Record> standaloneExits = new ArrayList<>();
 		for (ProcessExitStore.Snapshot exit : ProcessExitStore.loadStored(context)) {
 			MutableRecord journal = exit.sessionId == null ? null : failuresBySession.get(exit.sessionId);
-			if (journal != null) {
+			if (journal != null && shouldAttachExitToSession(journal.snapshot, exit)) {
 				journal.attach(exit);
 				continue;
 			}
-			StandaloneJavaRecord java = exit.sessionId == null ? null : fatalJavaBySession.get(exit.sessionId);
-			if (java != null && java.processExit == null) {
+			StandaloneJavaRecord java = matchingJavaIncident(exit, javaIncidents);
+			if (java != null) {
 				java.processExit = exit;
 				continue;
 			}
-			standaloneExits.add(Record.fromProcessExit(exit, sessionsById.get(exit.sessionId)));
+			SessionRecord session = exit.sessionId == null ? null : sessionsById.get(exit.sessionId);
+			standaloneExits.add(Record.fromProcessExit(
+					exit, session == null ? null : session.snapshot.midletName));
 		}
 
 		ArrayList<Record> records = new ArrayList<>(
@@ -108,23 +105,16 @@ public final class LocalDiagnosticRepository {
 				|| session.outcome != MidletSessionJournal.Outcome.UNEXPECTED_FAILURE) {
 			return false;
 		}
-		if (java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT
-				|| java.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE) {
+		if (java.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE) {
 			return session.sessionId != null && session.sessionId.equals(java.sessionId);
 		}
-		if (!java.kind.legacy
-				|| !MidletFailureRecovery.isSafeEventId(session.failureEventId)
-				|| !session.failureEventId.equals(java.legacyEventId)) {
-			return false;
-		}
-		return java.sessionId == null || session.sessionId != null && session.sessionId.equals(java.sessionId);
+		return isVerifiedLegacySessionFailure(session, java);
 	}
 
 	private static MutableRecord matchingJournal(JavaDiagnosticStore.Snapshot java,
 			Map<String, MutableRecord> bySession, Map<String, MutableRecord> byEvent) {
 		if (java == null) return null;
-		if ((java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT
-				|| java.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE)
+		if (java.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE
 				&& java.sessionId != null) {
 			MutableRecord candidate = bySession.get(java.sessionId);
 			return candidate != null && shouldAttachToSession(candidate.snapshot, java) ? candidate : null;
@@ -136,9 +126,68 @@ public final class LocalDiagnosticRepository {
 		return null;
 	}
 
-	private static boolean isNewFatal(JavaDiagnosticStore.Snapshot java) {
-		return java != null && (java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT
-				|| java.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE);
+	private static boolean isVerifiedLegacySessionFailure(
+			MidletSessionJournal.Snapshot session, JavaDiagnosticStore.Snapshot java) {
+		if (session.failureBoundary == null
+				|| !java.kind.legacy
+				|| !MidletFailureRecovery.isSafeEventId(session.failureEventId)
+				|| !session.failureEventId.equals(java.legacyEventId)
+				|| !session.failureBoundary.name().equals(java.legacyBoundary)
+				|| !hasLegacySessionFailureWrapper(java)) {
+			return false;
+		}
+		return java.sessionId == null
+				|| session.sessionId != null && session.sessionId.equals(java.sessionId);
+	}
+
+	private static boolean hasLegacySessionFailureWrapper(JavaDiagnosticStore.Snapshot java) {
+		for (JavaDiagnosticStore.ThrowableData throwable : java.throwables) {
+			if ("javax.microedition.shell.MidletThread$SessionFailureException"
+					.equals(throwable.className)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static boolean shouldAttachExitToSession(MidletSessionJournal.Snapshot session,
+			ProcessExitStore.Snapshot exit) {
+		return session != null
+				&& exit != null
+				&& session.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
+				&& MidletFailureRecovery.isSafeEventId(session.failureEventId)
+				&& session.sessionId != null
+				&& session.sessionId.equals(exit.sessionId)
+				&& ProcessExitStore.isControlledRuntimeShutdown(exit);
+	}
+
+	static boolean shouldAttachExitToJava(JavaDiagnosticStore.Snapshot java,
+			ProcessExitStore.Snapshot exit) {
+		return java != null
+				&& exit != null
+				&& java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT
+				&& java.sessionId != null
+				&& java.sessionId.equals(exit.sessionId)
+				&& java.pid > 0
+				&& java.pid == exit.pid
+				&& java.processRole != null
+				&& java.processRole.equals(exit.processRole)
+				&& exit.reason == ProcessExitStore.REASON_CRASH;
+	}
+
+	private static StandaloneJavaRecord matchingJavaIncident(
+			ProcessExitStore.Snapshot exit, List<StandaloneJavaRecord> candidates) {
+		StandaloneJavaRecord match = null;
+		for (StandaloneJavaRecord candidate : candidates) {
+			if (candidate.processExit != null || !shouldAttachExitToJava(candidate.java, exit)) {
+				continue;
+			}
+			if (match != null) {
+				return null;
+			}
+			match = candidate;
+		}
+		return match;
 	}
 
 	public static Record find(Context context, String id) {
@@ -270,19 +319,18 @@ public final class LocalDiagnosticRepository {
 					exit);
 		}
 
-		private static Record fromProcessExit(ProcessExitStore.Snapshot exit, SessionRecord session) {
-			MidletSessionJournal.Snapshot snapshot = session == null ? null : session.snapshot;
-			IncidentSummary incident = IncidentInterpreter.interpret(snapshot, null, exit);
+		private static Record fromProcessExit(ProcessExitStore.Snapshot exit, String midletName) {
+			IncidentSummary incident = IncidentInterpreter.interpret(null, null, exit);
 			return new Record(
 					exit.id,
 					Kind.PROCESS_EXIT,
 					incident.incidentTimestampMillis,
-					snapshot == null ? null : snapshot.failureEventId,
+					null,
 					exit.sessionId,
-					snapshot == null ? null : snapshot.midletName,
+					midletName,
 					exit.processRole,
 					incident,
-					session == null ? null : session.file,
+					null,
 					Collections.emptyList(),
 					null,
 					exit);
@@ -377,20 +425,17 @@ public final class LocalDiagnosticRepository {
 
 	private static JavaDiagnosticStore.Snapshot selectPrimaryJava(
 			List<JavaDiagnosticStore.Snapshot> evidence) {
-		JavaDiagnosticStore.Snapshot best = null;
-		int bestScore = Integer.MIN_VALUE;
+		if (evidence.isEmpty()) return null;
 		for (JavaDiagnosticStore.Snapshot item : evidence) {
-			int score = item.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE ? 40
-					: item.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT ? 30
-					: item.kind == JavaDiagnosticStore.Kind.LEGACY_ACRA ? 20
-					: item.kind == JavaDiagnosticStore.Kind.LEGACY_FATAL ? 10 : 0;
-			if (item.primaryThrowable() != null) score += 3;
-			if (item.sessionId != null) score += 1;
-			if (best == null || score > bestScore) {
-				best = item;
-				bestScore = score;
+			if (item.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE) {
+				return item;
 			}
 		}
-		return best;
+		for (JavaDiagnosticStore.Snapshot item : evidence) {
+			if (item.kind == JavaDiagnosticStore.Kind.LEGACY_ACRA) {
+				return item;
+			}
+		}
+		return evidence.get(0);
 	}
 }
