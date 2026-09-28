@@ -186,7 +186,9 @@ final class DiagnosticBundleFormat {
 				? Long.toString(exit.anrTimeoutMillis) : null, false, true, 4);
 		field(json, "anrId", exit.anrId >= 0 ? Integer.toString(exit.anrId) : null, false, true, 4);
 		field(json, "anrUserPerceptible", exit.anrUserPerceptible == null ? null
-				: Boolean.toString(exit.anrUserPerceptible), false, false, 4);
+				: Boolean.toString(exit.anrUserPerceptible), false, true, 4);
+		field(json, "controlledByJlMod", Boolean.toString(exit.controlledByJlMod),
+				false, false, 4);
 		json.append("  }").append(comma ? ',' : ' ').append('\n');
 	}
 

@@ -108,7 +108,8 @@ public final class LocalDiagnosticRepository {
 				|| session.outcome != MidletSessionJournal.Outcome.UNEXPECTED_FAILURE) {
 			return false;
 		}
-		if (java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT) {
+		if (java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT
+				|| java.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE) {
 			return session.sessionId != null && session.sessionId.equals(java.sessionId);
 		}
 		if (!java.kind.legacy
@@ -122,7 +123,9 @@ public final class LocalDiagnosticRepository {
 	private static MutableRecord matchingJournal(JavaDiagnosticStore.Snapshot java,
 			Map<String, MutableRecord> bySession, Map<String, MutableRecord> byEvent) {
 		if (java == null) return null;
-		if (java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT && java.sessionId != null) {
+		if ((java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT
+				|| java.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE)
+				&& java.sessionId != null) {
 			MutableRecord candidate = bySession.get(java.sessionId);
 			return candidate != null && shouldAttachToSession(candidate.snapshot, java) ? candidate : null;
 		}
@@ -134,7 +137,8 @@ public final class LocalDiagnosticRepository {
 	}
 
 	private static boolean isNewFatal(JavaDiagnosticStore.Snapshot java) {
-		return java != null && java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT;
+		return java != null && (java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT
+				|| java.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE);
 	}
 
 	public static Record find(Context context, String id) {
@@ -376,7 +380,8 @@ public final class LocalDiagnosticRepository {
 		JavaDiagnosticStore.Snapshot best = null;
 		int bestScore = Integer.MIN_VALUE;
 		for (JavaDiagnosticStore.Snapshot item : evidence) {
-			int score = item.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT ? 30
+			int score = item.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE ? 40
+					: item.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT ? 30
 					: item.kind == JavaDiagnosticStore.Kind.LEGACY_ACRA ? 20
 					: item.kind == JavaDiagnosticStore.Kind.LEGACY_FATAL ? 10 : 0;
 			if (item.primaryThrowable() != null) score += 3;

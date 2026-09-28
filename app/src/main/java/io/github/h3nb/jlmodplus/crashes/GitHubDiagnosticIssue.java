@@ -56,10 +56,15 @@ final class GitHubDiagnosticIssue {
 		appendBullet(text, "Device", incident.device);
 		appendBullet(text, "Process", incident.process);
 		if (incident.associatedProcessExit != null) {
-			text.append("\n### Associated process termination\n");
+			text.append(incident.associatedProcessExit.controlledByJlMod
+					? "\n### Runtime termination\n" : "\n### Associated process termination\n");
 			appendBullet(text, "Termination", incident.associatedProcessExit.summary);
 			appendBullet(text, "Importance", incident.associatedProcessExit.importance);
-			appendBullet(text, "OS limitation", incident.associatedProcessExit.limitation);
+		} else if (incident.handledMidletSessionFailure()) {
+			text.append("\n### Runtime termination\n");
+			appendBullet(text, "Termination",
+					"JL-Mod Plus terminated the isolated MIDlet process after recording "
+							+ "the fatal session failure.");
 		}
 		appendBullet(text, "Diagnostic fingerprint", incident.fingerprint);
 		appendBullet(text, "Diagnostic bundle", bundleFileName);

@@ -49,11 +49,13 @@ final class DiagnosticReportText {
 
 		if (incident.associatedProcessExit != null) {
 			IncidentSummary.ProcessExitEvidence exit = incident.associatedProcessExit;
-			text.append("\nAssociated Process Termination\n");
+			text.append(exit.controlledByJlMod
+					? "\nRuntime Termination\n" : "\nAssociated Process Termination\n");
 			appendLine(text, "Termination", exit.summary);
 			appendLine(text, "Importance", exit.importance);
-			appendLine(text, "OS termination detail", exit.description);
-			appendLine(text, "OS limitation", exit.limitation);
+			if (!exit.controlledByJlMod) {
+				appendLine(text, "OS termination detail", exit.description);
+			}
 			if (exit.pssKb > 0 || exit.rssKb > 0) {
 				StringBuilder memory = new StringBuilder();
 				if (exit.pssKb > 0) memory.append("PSS ").append(exit.pssKb).append(" kB");
@@ -71,6 +73,11 @@ final class DiagnosticReportText {
 				appendLine(text, "ANR user perceptible", exit.anrUserPerceptible == null
 						? null : Boolean.toString(exit.anrUserPerceptible));
 			}
+		} else if (incident.handledMidletSessionFailure()) {
+			text.append("\nRuntime Termination\n");
+			appendLine(text, "Termination",
+					"JL-Mod Plus terminated the isolated MIDlet process after recording "
+							+ "the fatal session failure.");
 		}
 
 		if (!incident.breadcrumbs.isEmpty()) {

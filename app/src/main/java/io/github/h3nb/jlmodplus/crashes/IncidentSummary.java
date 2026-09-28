@@ -105,6 +105,7 @@ final class IncidentSummary {
 		final long anrTimeoutMillis;
 		final int anrId;
 		final Boolean anrUserPerceptible;
+		final boolean controlledByJlMod;
 		final String summary;
 		final String limitation;
 
@@ -114,7 +115,7 @@ final class IncidentSummary {
 				long pssKb, long rssKb, boolean lowMemoryKillReportSupported,
 				String traceKind, boolean traceAvailable, boolean traceTruncated,
 				int anrType, long anrTimeoutMillis, int anrId, Boolean anrUserPerceptible,
-				String summary, String limitation) {
+				boolean controlledByJlMod, String summary, String limitation) {
 			this.source = clean(source);
 			this.reason = reason;
 			this.status = status;
@@ -138,6 +139,7 @@ final class IncidentSummary {
 			this.anrTimeoutMillis = anrTimeoutMillis;
 			this.anrId = anrId;
 			this.anrUserPerceptible = anrUserPerceptible;
+			this.controlledByJlMod = controlledByJlMod;
 			this.summary = clean(summary);
 			this.limitation = clean(limitation);
 		}
@@ -214,6 +216,10 @@ final class IncidentSummary {
 		SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US);
 		format.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return format.format(new Date(incidentTimestampMillis)) + "-" + fingerprint + ".zip";
+	}
+
+	boolean handledMidletSessionFailure() {
+		return JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE.name().equals(javaEvidenceKind);
 	}
 
 	String androidLabel() {

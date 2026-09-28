@@ -84,10 +84,20 @@ final class IncidentInterpreter {
 				exit == null ? null : exit.primaryAbi);
 		String process = processLabel(java, exit);
 		String topFrame = primary == null ? null : primary.frame;
-		IncidentSummary.ProcessExitEvidence processExit = processExitEvidence(exit);
+		boolean handledMidletFailure = java != null
+				&& java.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE;
+		boolean controlledTermination = handledMidletFailure && isControlledTerminationExit(exit);
+		IncidentSummary.ProcessExitEvidence processExit =
+				processExitEvidence(exit, controlledTermination);
 		ArrayList<String> limitations = new ArrayList<>();
 		if (processExit != null && processExit.limitation != null) {
 			limitations.add(processExit.limitation);
+		}
+		if (session != null
+				&& session.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
+				&& java == null) {
+			limitations.add("JL-Mod Plus recorded a terminal MIDlet Java failure, "
+					+ "but the corresponding Java evidence was not retained.");
 		}
 		if (exit != null && exit.reason == ProcessExitStore.REASON_CRASH_NATIVE
 				&& !processExit.traceAvailable) {
@@ -176,11 +186,14 @@ final class IncidentInterpreter {
 	}
 
 	private static IncidentSummary.ProcessExitEvidence processExitEvidence(
-			ProcessExitStore.Snapshot exit) {
+			ProcessExitStore.Snapshot exit, boolean controlledByJlMod) {
 		if (exit == null) return null;
 		String status = ProcessExitStore.statusLabel(exit);
-		String summary = processExitSummary(exit, status);
-		String limitation = processExitLimitation(exit);
+		String summary = controlledByJlMod
+				? "JL-Mod Plus terminated the isolated MIDlet process after recording "
+						+ "the fatal session failure."
+				: processExitSummary(exit, status);
+		String limitation = controlledByJlMod ? null : processExitLimitation(exit);
 		return new IncidentSummary.ProcessExitEvidence(
 				exit.source,
 				exit.reason,
@@ -205,8 +218,19 @@ final class IncidentInterpreter {
 				exit.anrTimeoutMillis,
 				exit.anrId,
 				exit.anrUserPerceptible,
+				controlledByJlMod,
 				summary,
 				limitation);
+	}
+
+	static boolean isControlledTerminationExit(ProcessExitStore.Snapshot exit) {
+		if (exit == null) return true;
+		if (exit.reason == ProcessExitStore.REASON_SIGNALED
+				&& exit.status == ProcessExitStore.SIGNAL_KILL) {
+			return true;
+		}
+		return ProcessExitStore.SOURCE_LEGACY_PROCESS_DISAPPEARANCE.equals(exit.source)
+				&& exit.reason == ProcessExitStore.REASON_UNKNOWN;
 	}
 
 	static String processExitSummary(ProcessExitStore.Snapshot exit, String status) {
