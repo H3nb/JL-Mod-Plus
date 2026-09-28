@@ -33,7 +33,7 @@ must remain consistent across the library, profiles, and installer surfaces.
   | Progress status while reading a file | `Loading information…` |
   | Action button | `Save Profile` |
 
-  If a phrase is used as an option name, it uses Capitalize Each Word even when
+  If a phrase is used as an option name, it uses natural English title case even when
   it reads like an instruction. A progress status is not a section title merely
   because it is prominent. Review the actual placement and semantics.
   For example, `Enter Profile Name` is valid as a dialog title, while
