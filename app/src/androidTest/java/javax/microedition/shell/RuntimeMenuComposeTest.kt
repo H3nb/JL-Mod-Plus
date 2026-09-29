@@ -88,8 +88,64 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun showControlsCompactLandscapeKeepsLastCellAndActionsReachable() {
-        val names = (1..29).map { it.toString() } + "Stik Analog"
+    fun showControlsCanonicalMappingPreservesUnderlyingVisibilityIndices() {
+        val selections = mutableListOf<BooleanArray>()
+        val names = canonicalShowControlNames()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.ShowControls(names, BooleanArray(names.size)),
+                    actions = RecordingRuntimeHostDialogActions(mutableListOf(), selections),
+                    onDismiss = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("M").performClick()
+        composeRule.onNodeWithText("D-pad").performClick()
+        composeRule.onNodeWithText("Analog Stick").performClick()
+        composeRule.onNodeWithText("OK").performClick()
+
+        val hidden = selections.single()
+        assertTrue(hidden[27])
+        assertTrue(hidden[28])
+        assertTrue(hidden[29])
+        assertEquals(3, hidden.count { it })
+    }
+
+    @Test
+    fun showControlsWideWindowUsesTwoPaneSemanticPlacement() {
+        val names = canonicalShowControlNames()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(900.dp, 600.dp)),
+            ) {
+                JLModPlusTheme {
+                    RuntimeHostDialogs(
+                        state = RuntimeHostDialogState.ShowControls(names, BooleanArray(names.size)),
+                        actions = RecordingRuntimeHostDialogActions(mutableListOf(), mutableListOf()),
+                        onDismiss = {},
+                    )
+                }
+            }
+        }
+
+        val l = composeRule.onNodeWithText("L").getUnclippedBoundsInRoot()
+        val one = composeRule.onNodeWithText("1").getUnclippedBoundsInRoot()
+        val upLeft = composeRule.onNodeWithText("↖").getUnclippedBoundsInRoot()
+        val four = composeRule.onNodeWithText("4").getUnclippedBoundsInRoot()
+        val seven = composeRule.onNodeWithText("7").getUnclippedBoundsInRoot()
+        val star = composeRule.onNodeWithText("*").getUnclippedBoundsInRoot()
+
+        assertTrue(one.left > l.left)
+        assertTrue(upLeft.top > l.top)
+        assertTrue(one.top < four.top && four.top < seven.top && seven.top < star.top)
+        composeRule.onNodeWithText("OK").assertIsDisplayed()
+    }
+
+    @Test
+    fun showControlsCompactLandscapeKeepsSemanticControlsAndActionsReachable() {
+        val names = canonicalShowControlNames()
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
@@ -104,8 +160,10 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Stik Analog").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Analog Stick").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("#").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("OK").assertIsDisplayed()
+        composeRule.onNodeWithText("Cancel").assertIsDisplayed()
     }
 
     @Test
@@ -1023,6 +1081,12 @@ private class RecordingRuntimeMenuActions(
         events += "showControls"
     }
 }
+
+private fun canonicalShowControlNames() = listOf(
+    "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "*", "#",
+    "L", "R", "D", "C", "↖", "↑", "↗", "←", "→", "↙", "↓", "↘",
+    "F", "A", "B", "M", "D-pad", "Analog Stick",
+)
 
 private class RecordingRuntimeHostDialogActions(
     private val events: MutableList<String>,
