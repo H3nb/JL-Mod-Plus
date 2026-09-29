@@ -38,7 +38,11 @@ jobs:
           ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
           git status --short
           expected='app/src/screenshotTestEmulatorDebug/reference/javax/microedition/shell/RuntimeMenuScreenshotTestKt'
-          mapfile -t changed < <(git status --short -- "$expected" | sed -E 's/^.. //')
+          mapfile -d '' entries < <(git status --porcelain=v1 -z -- "$expected")
+          changed=()
+          for entry in "${entries[@]}"; do
+            changed+=("${entry:3}")
+          done
           if [[ "${#changed[@]}" -ne 2 ]]; then
             printf 'Expected exactly two Show Controls reference changes, got %s\n' "${#changed[@]}" >&2
             printf '%s\n' "${changed[@]}" >&2
