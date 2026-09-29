@@ -11,8 +11,8 @@
     <string name="crash_report_process_exit">Process exit diagnostic</string>
     <string name="crash_report_list_subtitle">%1$s · %2$s</string>
     <plurals name="crash_reports_selected_count">
-        <item quantity="one">%1$d selected</item>
-        <item quantity="other">%1$d selected</item>
+        <item quantity="one">%1$d Selected</item>
+        <item quantity="other">%1$d Selected</item>
     </plurals>
     <string name="copy_report">Copy</string>
     <string name="report_on_github">Report on GitHub</string>

@@ -112,13 +112,13 @@ class CrashReportsComposeTest {
         }
 
         composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
-        composeRule.onNodeWithText("1 selected").assertIsDisplayed()
+        composeRule.onNodeWithText("1 Selected").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("Copy Selected Reports").performClick()
         assertEquals(listOf("report-1"), actions.copiedIds)
 
         composeRule.onNodeWithText("Other MIDlet").performClick()
-        composeRule.onNodeWithText("2 selected").assertIsDisplayed()
+        composeRule.onNodeWithText("2 Selected").assertIsDisplayed()
 
         assertEquals(
             0,
@@ -150,7 +150,7 @@ class CrashReportsComposeTest {
 
         composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
         composeRule.onNodeWithContentDescription("Select All Reports").performClick()
-        composeRule.onNodeWithText("2 selected").assertIsDisplayed()
+        composeRule.onNodeWithText("2 Selected").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Clear Report Selection").performClick()
         composeRule.onNodeWithText("Diagnostic Reports").assertIsDisplayed()
     }
