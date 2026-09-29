@@ -269,6 +269,50 @@ public class IncidentInterpreterTest {
 	}
 
 	@Test
+	public void memoryEngineProcessExitUsesReadableSubjectAndStableRole() {
+		ProcessExitStore.Snapshot original = exit(
+				ProcessExitStore.REASON_CRASH, 0, false, 36, null);
+		ProcessExitStore.Snapshot memoryEngine = new ProcessExitStore.Snapshot(
+				original.recordFile,
+				original.traceFile,
+				original.key,
+				original.source,
+				original.timestampMillis,
+				"io.github.h3nb.jlmodplus.debug:memory_engine",
+				"memory_engine",
+				original.pid,
+				original.reason,
+				original.status,
+				original.importance,
+				original.pssKb,
+				original.rssKb,
+				original.description,
+				original.lowMemoryKillReportSupported,
+				original.stateVersionCode,
+				original.stateSdk,
+				original.androidRelease,
+				original.sessionId,
+				original.deviceBrand,
+				original.deviceModel,
+				original.primaryAbi,
+				original.traceKind,
+				original.traceBytes,
+				original.traceTruncated,
+				original.anrType,
+				original.anrTimeoutMillis,
+				original.anrId,
+				original.anrUserPerceptible,
+				original.appContext);
+
+		IncidentSummary incident = IncidentInterpreter.interpret(null, null, memoryEngine);
+
+		assertEquals("Memory Engine", incident.subject);
+		assertEquals("memory_engine · io.github.h3nb.jlmodplus.debug:memory_engine",
+				incident.process);
+		assertEquals("memory_engine", incident.associatedProcessExit.processRole);
+	}
+
+	@Test
 	public void api28ProcessDisappearanceStatesPlatformLimitation() {
 		ProcessExitStore.Snapshot exit =
 				exit(ProcessExitStore.REASON_UNKNOWN, 0, false, 28);

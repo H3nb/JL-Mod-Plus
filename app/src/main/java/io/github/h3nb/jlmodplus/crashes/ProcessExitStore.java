@@ -226,13 +226,21 @@ public final class ProcessExitStore {
 		for (File file : files) {
 			try {
 				Snapshot snapshot = read(file);
+				String currentRole = currentProcessRole(
+						context.getPackageName(), snapshot.processName, snapshot.processRole);
+				if (!same(snapshot.processRole, currentRole)) {
+					snapshot = snapshot.withProcessRole(currentRole);
+				}
 				// A user deletion marker outranks a stale/racing local projection. Keep the marker
 				// durable until its source can no longer recreate this exact key.
 				if (ProcessExitDeletionStore.isDeleted(context, snapshot.key)) {
 					delete(context, snapshot);
 					continue;
 				}
-				if ("reporter".equals(snapshot.processRole)) {
+				// Re-apply the current retention policy to local projections. Policy pruning is not
+				// a user deletion, so it deliberately does not create a deletion tombstone.
+				if (!shouldRetainProcess(snapshot.processRole, snapshot.reason, snapshot.status,
+						snapshot.importance, snapshot.description)) {
 					delete(context, snapshot);
 					continue;
 				}
@@ -360,6 +368,33 @@ public final class ProcessExitStore {
 				&& description.contains(MEMORY_LIMITER_ANON_SWAP_MARKER);
 	}
 
+	static boolean isKnownUserInitiatedCleanup(int reason, String description) {
+		if (reason != REASON_OTHER || description == null) {
+			return false;
+		}
+		return switch (description.trim()) {
+			case "OneKeyClean",
+					"ForceClean",
+					"GarbageClean",
+					"LockScreenClean",
+					"GameClean",
+					"OptimizationClean",
+					"SwipeUpClean" -> true;
+			default -> false;
+		};
+	}
+
+	private static boolean isKnownMemoryEngineResourceTermination(int reason, String description) {
+		if (isMemoryLimiterTermination(reason, description)) {
+			return true;
+		}
+		if (reason != REASON_OTHER || description == null) {
+			return false;
+		}
+		String marker = description.trim();
+		return "AutoPowerKill".equals(marker) || "AutoThermalKill".equals(marker);
+	}
+
 	static String statusLabel(Snapshot snapshot) {
 		if (snapshot == null) {
 			return null;
@@ -432,8 +467,43 @@ public final class ProcessExitStore {
 
 	/** Historical ACRA helper-process exits are reporting infrastructure, not user incidents. */
 	static boolean shouldRetainProcess(String processRole, int reason, int status, int importance) {
-		return !"reporter".equals(processRole)
-				&& shouldRetain(reason, status, importance, "midlet".equals(processRole));
+		return shouldRetainProcess(processRole, reason, status, importance, null);
+	}
+
+	static boolean shouldRetainProcess(String processRole, int reason, int status, int importance,
+			String description) {
+		if ("reporter".equals(processRole) || isKnownUserInitiatedCleanup(reason, description)) {
+			return false;
+		}
+		if ("memory_engine".equals(processRole)) {
+			return shouldRetainMemoryEngine(reason, status, description);
+		}
+		return shouldRetain(reason, status, importance, "midlet".equals(processRole));
+	}
+
+	private static boolean shouldRetainMemoryEngine(int reason, int status, String description) {
+		if (isKnownMemoryEngineResourceTermination(reason, description)) {
+			return true;
+		}
+		return switch (reason) {
+			case REASON_CRASH,
+					REASON_CRASH_NATIVE,
+					REASON_ANR,
+					REASON_INITIALIZATION_FAILURE,
+					REASON_EXCESSIVE_RESOURCE_USAGE -> true;
+			case REASON_SIGNALED -> status != SIGNAL_KILL;
+			default -> false;
+		};
+	}
+
+	static String currentProcessRole(String packageName, String processName, String storedRole) {
+		String current = CrashReporter.classifyProcess(packageName, processName);
+		return "other".equals(current) && storedRole != null && !"other".equals(storedRole)
+				? storedRole : current;
+	}
+
+	private static boolean same(String left, String right) {
+		return left == null ? right == null : left.equals(right);
 	}
 
 	static boolean isControlledRuntimeShutdown(Snapshot exit) {
@@ -1056,6 +1126,40 @@ public final class ProcessExitStore {
 			this.anrUserPerceptible = anrUserPerceptible;
 			this.appContext = appContext;
 		}
+
+		Snapshot withProcessRole(String role) {
+			return new Snapshot(
+					recordFile,
+					traceFile,
+					key,
+					source,
+					timestampMillis,
+					processName,
+					role,
+					pid,
+					reason,
+					status,
+					importance,
+					pssKb,
+					rssKb,
+					description,
+					lowMemoryKillReportSupported,
+					stateVersionCode,
+					stateSdk,
+					androidRelease,
+					sessionId,
+					deviceBrand,
+					deviceModel,
+					primaryAbi,
+					traceKind,
+					traceBytes,
+					traceTruncated,
+					anrType,
+					anrTimeoutMillis,
+					anrId,
+					anrUserPerceptible,
+					appContext);
+		}
 	}
 
 	public static final class PendingExit {
@@ -1198,7 +1302,8 @@ public final class ProcessExitStore {
 					continue;
 				}
 				if (!shouldRetainProcess(
-						processRole, info.getReason(), info.getStatus(), info.getImportance())) {
+						processRole, info.getReason(), info.getStatus(), info.getImportance(),
+						info.getDescription())) {
 					continue;
 				}
 

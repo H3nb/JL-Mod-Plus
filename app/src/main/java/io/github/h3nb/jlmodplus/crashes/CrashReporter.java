@@ -42,6 +42,7 @@ public final class CrashReporter {
 	private static final String TAG = CrashReporter.class.getSimpleName();
 	private static final String ROLE_MAIN = "main";
 	private static final String ROLE_MIDLET = "midlet";
+	private static final String ROLE_MEMORY_ENGINE = "memory_engine";
 	private static final String ROLE_REPORTER = "reporter";
 	private static final String ROLE_OTHER = "other";
 
@@ -333,6 +334,7 @@ public final class CrashReporter {
 		if (processName == null || processName.trim().isEmpty()) return ROLE_OTHER;
 		if (processName.equals(packageName)) return ROLE_MAIN;
 		if (processName.equals(packageName + ":midlet")) return ROLE_MIDLET;
+		if (processName.equals(packageName + ":memory_engine")) return ROLE_MEMORY_ENGINE;
 		// Kept only so historical ApplicationExitInfo entries created by older ACRA-enabled builds
 		// remain recognized as reporting infrastructure and stay out of the inbox.
 		if (processName.equals(packageName + ":acra")) return ROLE_REPORTER;
