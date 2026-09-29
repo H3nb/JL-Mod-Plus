@@ -64,6 +64,7 @@ final class IncidentInterpreter {
 		String subject = first(
 				session == null ? null : session.midletName,
 				java == null ? null : java.midletName,
+				java == null ? null : javaProcessSubject(java.processRole),
 				exit == null ? null : processSubject(exit.processRole),
 				exit == null ? null : exit.processName,
 				category == IncidentSummary.Category.JL_MOD_PLUS ? "JL-Mod Plus"
@@ -337,6 +338,10 @@ final class IncidentInterpreter {
 			}
 		}
 		return fallbackVersion;
+	}
+
+	private static String javaProcessSubject(String role) {
+		return "memory_engine".equals(role) ? "Memory Engine" : null;
 	}
 
 	private static String processSubject(String role) {

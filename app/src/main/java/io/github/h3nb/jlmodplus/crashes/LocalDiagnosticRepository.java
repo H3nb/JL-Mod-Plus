@@ -166,13 +166,22 @@ public final class LocalDiagnosticRepository {
 		return java != null
 				&& exit != null
 				&& java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT
-				&& java.sessionId != null
-				&& java.sessionId.equals(exit.sessionId)
 				&& java.pid > 0
 				&& java.pid == exit.pid
 				&& java.processRole != null
 				&& java.processRole.equals(exit.processRole)
-				&& exit.reason == ProcessExitStore.REASON_CRASH;
+				&& exit.reason == ProcessExitStore.REASON_CRASH
+				&& hasSameProcessFailureIdentity(java, exit);
+	}
+
+	private static boolean hasSameProcessFailureIdentity(
+			JavaDiagnosticStore.Snapshot java, ProcessExitStore.Snapshot exit) {
+		if (java.sessionId != null && java.sessionId.equals(exit.sessionId)) {
+			return true;
+		}
+		String javaRunId = java.appContext == null ? null : java.appContext.runId;
+		String exitRunId = exit.appContext == null ? null : exit.appContext.runId;
+		return javaRunId != null && javaRunId.equals(exitRunId);
 	}
 
 	private static StandaloneJavaRecord matchingJavaIncident(

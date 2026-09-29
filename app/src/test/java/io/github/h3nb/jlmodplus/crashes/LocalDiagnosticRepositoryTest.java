@@ -84,6 +84,45 @@ public class LocalDiagnosticRepositoryTest {
 	}
 
 	@Test
+	public void nullSessionJavaCrashCorrelatesByExactProcessRunIdentity() {
+		String processName = "io.github.h3nb.jlmodplus:memory_engine";
+		JavaDiagnosticStore.Snapshot fatal = javaEvidence(
+				JavaDiagnosticStore.Kind.FATAL_UNCAUGHT, null, null,
+				processName, "memory_engine", 123, "run-memory-1");
+		ProcessExitStore.Snapshot exit = processExit(
+				ProcessExitStore.REASON_CRASH, 0, 123, null,
+				processName, "memory_engine", "run-memory-1");
+
+		assertTrue(LocalDiagnosticRepository.shouldAttachExitToJava(fatal, exit));
+	}
+
+	@Test
+	public void nullSessionJavaCrashRejectsDifferentOrMissingProcessRunIdentity() {
+		String processName = "io.github.h3nb.jlmodplus:memory_engine";
+		JavaDiagnosticStore.Snapshot fatal = javaEvidence(
+				JavaDiagnosticStore.Kind.FATAL_UNCAUGHT, null, null,
+				processName, "memory_engine", 123, "run-memory-1");
+
+		assertFalse(LocalDiagnosticRepository.shouldAttachExitToJava(
+				fatal, processExit(ProcessExitStore.REASON_CRASH, 0, 123, null,
+						processName, "memory_engine", "run-memory-2")));
+		assertFalse(LocalDiagnosticRepository.shouldAttachExitToJava(
+				fatal, processExit(ProcessExitStore.REASON_CRASH, 0, 123, null,
+						processName, "memory_engine", null)));
+		assertFalse(LocalDiagnosticRepository.shouldAttachExitToJava(
+				javaEvidence(JavaDiagnosticStore.Kind.FATAL_UNCAUGHT, null, null,
+						processName, "memory_engine", 123, null),
+				processExit(ProcessExitStore.REASON_CRASH, 0, 123, null,
+						processName, "memory_engine", "run-memory-1")));
+		assertFalse(LocalDiagnosticRepository.shouldAttachExitToJava(
+				fatal, processExit(ProcessExitStore.REASON_CRASH, 0, 124, null,
+						processName, "memory_engine", "run-memory-1")));
+		assertFalse(LocalDiagnosticRepository.shouldAttachExitToJava(
+				fatal, processExit(ProcessExitStore.REASON_CRASH, 0, 123, null,
+						processName, "other", "run-memory-1")));
+	}
+
+	@Test
 	public void migratedStandaloneJavaKeepsLegacyLogicalRecordId() {
 		JavaDiagnosticStore.Snapshot migrated = javaEvidence(
 				JavaDiagnosticStore.Kind.LEGACY_ACRA, null, null)
@@ -166,14 +205,22 @@ public class LocalDiagnosticRepositoryTest {
 
 	private static ProcessExitStore.Snapshot processExit(
 			int reason, int status, int pid, String sessionId) {
+		return processExit(
+				reason, status, pid, sessionId,
+				"io.github.h3nb.jlmodplus:midlet", "midlet", null);
+	}
+
+	private static ProcessExitStore.Snapshot processExit(
+			int reason, int status, int pid, String sessionId,
+			String processName, String processRole, String runId) {
 		return new ProcessExitStore.Snapshot(
 				new File("exit.properties"),
 				null,
 				"1-123-" + reason + "-" + status,
 				ProcessExitStore.SOURCE_APPLICATION_EXIT_INFO,
 				3L,
-				"io.github.h3nb.jlmodplus:midlet",
-				"midlet",
+				processName,
+				processRole,
 				pid,
 				reason,
 				status,
@@ -196,11 +243,19 @@ public class LocalDiagnosticRepositoryTest {
 				-1,
 				-1,
 				null,
-				null);
+				appContext(runId, processRole));
 	}
 
 	private static JavaDiagnosticStore.Snapshot javaEvidence(
 			JavaDiagnosticStore.Kind kind, String sessionId, String legacyEventId) {
+		return javaEvidence(
+				kind, sessionId, legacyEventId,
+				"io.github.h3nb.jlmodplus:midlet", "midlet", 123, null);
+	}
+
+	private static JavaDiagnosticStore.Snapshot javaEvidence(
+			JavaDiagnosticStore.Kind kind, String sessionId, String legacyEventId,
+			String processName, String processRole, int pid, String runId) {
 		JavaDiagnosticStore.ThrowableData failure = new JavaDiagnosticStore.ThrowableData(
 				"java.lang.IllegalStateException",
 				"boom",
@@ -210,17 +265,17 @@ public class LocalDiagnosticRepositoryTest {
 				new File("java-test.properties"),
 				kind,
 				2L,
-				"io.github.h3nb.jlmodplus:midlet",
-				"midlet",
-				123,
+				processName,
+				processRole,
+				pid,
 				"MidletMain",
 				1,
 				5,
 				sessionId,
-				"Game",
-				"1.0",
-				"game.Main",
-				"abc123",
+				"midlet".equals(processRole) ? "Game" : null,
+				"midlet".equals(processRole) ? "1.0" : null,
+				"midlet".equals(processRole) ? "game.Main" : null,
+				"midlet".equals(processRole) ? "abc123" : null,
 				"1.0",
 				"16",
 				36,
@@ -233,6 +288,20 @@ public class LocalDiagnosticRepositoryTest {
 				0,
 				legacyEventId,
 				legacyEventId == null ? null : "LIFECYCLE_START",
-				null);
+				appContext(runId, processRole));
+	}
+
+	private static CrashContextStore.Snapshot appContext(String runId, String processRole) {
+		return runId == null ? null : new CrashContextStore.Snapshot(
+				runId,
+				processRole,
+				"abc123",
+				"emulatorDebug",
+				null,
+				null,
+				null,
+				null,
+				1L,
+				List.of());
 	}
 }

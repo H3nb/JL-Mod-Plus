@@ -269,6 +269,48 @@ public class IncidentInterpreterTest {
 	}
 
 	@Test
+	public void memoryEngineStandaloneJavaEvidenceUsesReadableSubject() {
+		JavaDiagnosticStore.ThrowableData failure = throwable(
+				"java.lang.IllegalStateException",
+				"boom",
+				"io.github.h3nb.jlmodplus.memory.MemoryEngineService",
+				"onStartCommand");
+		JavaDiagnosticStore.Snapshot java = new JavaDiagnosticStore.Snapshot(
+				new File("memory-engine.java.properties"),
+				JavaDiagnosticStore.Kind.FATAL_UNCAUGHT,
+				1000L,
+				"io.github.h3nb.jlmodplus:memory_engine",
+				"memory_engine",
+				123,
+				"main",
+				1,
+				5,
+				null,
+				null,
+				null,
+				null,
+				null,
+				"1.0",
+				"16",
+				36,
+				"POCO",
+				"F7",
+				"arm64-v8a",
+				null,
+				"stack",
+				List.of(failure),
+				0,
+				null,
+				null,
+				null);
+
+		IncidentSummary incident = IncidentInterpreter.interpret(null, java, null);
+
+		assertEquals("Memory Engine", incident.subject);
+		assertEquals("memory_engine · io.github.h3nb.jlmodplus:memory_engine", incident.process);
+	}
+
+	@Test
 	public void memoryEngineProcessExitUsesReadableSubjectAndStableRole() {
 		ProcessExitStore.Snapshot original = exit(
 				ProcessExitStore.REASON_CRASH, 0, false, 36, null);
