@@ -57,16 +57,27 @@ public class ProcessExitStoreTest {
 	}
 
 	@Test
-	public void storedMemoryEngineOtherRoleIsReclassifiedBeforeRetention() {
+	public void storedMemoryEngineSwipeUpProjectionIsPrunedUnderCurrentPolicy() {
 		String packageName = "io.github.h3nb.jlmodplus.debug";
-		String role = ProcessExitStore.currentProcessRole(
-				packageName, packageName + ":memory_engine", "other");
+		String processName = packageName + ":memory_engine";
 
-		assertEquals("memory_engine", role);
-		assertEquals("memory_engine",
-				CrashReporter.classifyProcess(packageName, packageName + ":memory_engine"));
-		assertFalse(ProcessExitStore.shouldRetainProcess(
-				role, ProcessExitStore.REASON_OTHER, 0, FOREGROUND, "SwipeUpClean"));
+		assertEquals("memory_engine", CrashReporter.classifyProcess(packageName, processName));
+		assertEquals(null, ProcessExitStore.retainedStoredProcessRole(
+				packageName,
+				processName,
+				"other",
+				ProcessExitStore.REASON_OTHER,
+				0,
+				FOREGROUND,
+				"SwipeUpClean"));
+		assertEquals("memory_engine", ProcessExitStore.retainedStoredProcessRole(
+				packageName,
+				processName,
+				"other",
+				ProcessExitStore.REASON_CRASH,
+				0,
+				CACHED,
+				null));
 	}
 
 	@Test

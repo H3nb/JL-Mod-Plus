@@ -226,23 +226,28 @@ public final class ProcessExitStore {
 		for (File file : files) {
 			try {
 				Snapshot snapshot = read(file);
-				String currentRole = currentProcessRole(
-						context.getPackageName(), snapshot.processName, snapshot.processRole);
-				if (!same(snapshot.processRole, currentRole)) {
-					snapshot = snapshot.withProcessRole(currentRole);
-				}
 				// A user deletion marker outranks a stale/racing local projection. Keep the marker
 				// durable until its source can no longer recreate this exact key.
 				if (ProcessExitDeletionStore.isDeleted(context, snapshot.key)) {
 					delete(context, snapshot);
 					continue;
 				}
+				String retainedRole = retainedStoredProcessRole(
+						context.getPackageName(),
+						snapshot.processName,
+						snapshot.processRole,
+						snapshot.reason,
+						snapshot.status,
+						snapshot.importance,
+						snapshot.description);
 				// Re-apply the current retention policy to local projections. Policy pruning is not
 				// a user deletion, so it deliberately does not create a deletion tombstone.
-				if (!shouldRetainProcess(snapshot.processRole, snapshot.reason, snapshot.status,
-						snapshot.importance, snapshot.description)) {
+				if (retainedRole == null) {
 					delete(context, snapshot);
 					continue;
+				}
+				if (!same(snapshot.processRole, retainedRole)) {
+					snapshot = snapshot.withProcessRole(retainedRole);
 				}
 				// The isolated MIDlet process is deliberately killed after a graceful MIDlet exit.
 				// Exact journal outcome keeps that expected SIGKILL out of the crash inbox.
@@ -500,6 +505,19 @@ public final class ProcessExitStore {
 		String current = CrashReporter.classifyProcess(packageName, processName);
 		return "other".equals(current) && storedRole != null && !"other".equals(storedRole)
 				? storedRole : current;
+	}
+
+	static String retainedStoredProcessRole(
+			String packageName,
+			String processName,
+			String storedRole,
+			int reason,
+			int status,
+			int importance,
+			String description) {
+		String currentRole = currentProcessRole(packageName, processName, storedRole);
+		return shouldRetainProcess(currentRole, reason, status, importance, description)
+				? currentRole : null;
 	}
 
 	private static boolean same(String left, String right) {
