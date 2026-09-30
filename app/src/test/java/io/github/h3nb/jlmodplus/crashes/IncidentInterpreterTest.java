@@ -143,6 +143,35 @@ public class IncidentInterpreterTest {
 	}
 
 	@Test
+	public void associatedExitDoesNotRedefineJlModPlusJavaIdentity() {
+		JavaDiagnosticStore.Snapshot java = mainJavaEvidence(
+				"io.github.h3nb.jlmodplus.runtime.HostBridge");
+		IncidentSummary standalone = IncidentInterpreter.interpret(null, java, null);
+		IncidentSummary enriched = IncidentInterpreter.interpret(null, java, mainCrashExit());
+
+		assertEquals(IncidentSummary.Category.JL_MOD_PLUS, standalone.category);
+		assertEquals("JL-Mod Plus", standalone.subject);
+		assertEquals(standalone.subject, enriched.subject);
+		assertEquals(standalone.fingerprint, enriched.fingerprint);
+		assertEquals(standalone.bundleFileName(), enriched.bundleFileName());
+		assertTrue(enriched.associatedProcessExit != null);
+	}
+
+	@Test
+	public void associatedExitDoesNotRedefineUnknownJavaIdentity() {
+		JavaDiagnosticStore.Snapshot java = mainJavaEvidence("third.party.Library");
+		IncidentSummary standalone = IncidentInterpreter.interpret(null, java, null);
+		IncidentSummary enriched = IncidentInterpreter.interpret(null, java, mainCrashExit());
+
+		assertEquals(IncidentSummary.Category.JAVA_FAILURE, standalone.category);
+		assertEquals("Java failure", standalone.subject);
+		assertEquals(standalone.subject, enriched.subject);
+		assertEquals(standalone.fingerprint, enriched.fingerprint);
+		assertEquals(standalone.bundleFileName(), enriched.bundleFileName());
+		assertTrue(enriched.associatedProcessExit != null);
+	}
+
+	@Test
 	public void directJavaEvidencePreservesLifecycleBoundaryWithoutJournal() {
 		JavaDiagnosticStore.ThrowableData primary = throwable(
 				"java.lang.NoClassDefFoundError", "missing", "GloftOTSP", "startApp");
@@ -305,46 +334,31 @@ public class IncidentInterpreterTest {
 				null);
 
 		IncidentSummary incident = IncidentInterpreter.interpret(null, java, null);
+		IncidentSummary enriched = IncidentInterpreter.interpret(
+				null,
+				java,
+				withProcessIdentity(
+						exit(ProcessExitStore.REASON_CRASH, 0, false, 36, null),
+						"io.github.h3nb.jlmodplus:memory_engine",
+						"memory_engine",
+						null));
 
 		assertEquals("Memory Engine", incident.subject);
 		assertEquals("memory_engine · io.github.h3nb.jlmodplus:memory_engine", incident.process);
+		assertEquals(incident.subject, enriched.subject);
+		assertEquals(incident.fingerprint, enriched.fingerprint);
+		assertEquals(incident.bundleFileName(), enriched.bundleFileName());
 	}
 
 	@Test
 	public void memoryEngineProcessExitUsesReadableSubjectAndStableRole() {
 		ProcessExitStore.Snapshot original = exit(
 				ProcessExitStore.REASON_CRASH, 0, false, 36, null);
-		ProcessExitStore.Snapshot memoryEngine = new ProcessExitStore.Snapshot(
-				original.recordFile,
-				original.traceFile,
-				original.key,
-				original.source,
-				original.timestampMillis,
+		ProcessExitStore.Snapshot memoryEngine = withProcessIdentity(
+				original,
 				"io.github.h3nb.jlmodplus.debug:memory_engine",
 				"memory_engine",
-				original.pid,
-				original.reason,
-				original.status,
-				original.importance,
-				original.pssKb,
-				original.rssKb,
-				original.description,
-				original.lowMemoryKillReportSupported,
-				original.stateVersionCode,
-				original.stateSdk,
-				original.androidRelease,
-				original.sessionId,
-				original.deviceBrand,
-				original.deviceModel,
-				original.primaryAbi,
-				original.traceKind,
-				original.traceBytes,
-				original.traceTruncated,
-				original.anrType,
-				original.anrTimeoutMillis,
-				original.anrId,
-				original.anrUserPerceptible,
-				original.appContext);
+				original.sessionId);
 
 		IncidentSummary incident = IncidentInterpreter.interpret(null, null, memoryEngine);
 
@@ -419,6 +433,81 @@ public class IncidentInterpreterTest {
 				null,
 				boundary == null ? null : boundary.name(),
 				null);
+	}
+
+	private static JavaDiagnosticStore.Snapshot mainJavaEvidence(String frameClass) {
+		return new JavaDiagnosticStore.Snapshot(
+				new File("main.java.properties"),
+				JavaDiagnosticStore.Kind.FATAL_UNCAUGHT,
+				1000L,
+				"io.github.h3nb.jlmodplus",
+				"main",
+				123,
+				"main",
+				1,
+				5,
+				null,
+				null,
+				null,
+				null,
+				null,
+				"1.0",
+				"16",
+				36,
+				"POCO",
+				"F7",
+				"arm64-v8a",
+				null,
+				"stack",
+				List.of(throwable("java.lang.IllegalStateException", "boom", frameClass, "run")),
+				0,
+				null,
+				null,
+				null);
+	}
+
+	private static ProcessExitStore.Snapshot mainCrashExit() {
+		return withProcessIdentity(
+				exit(ProcessExitStore.REASON_CRASH, 0, false, 36, null),
+				"io.github.h3nb.jlmodplus",
+				"main",
+				null);
+	}
+
+	private static ProcessExitStore.Snapshot withProcessIdentity(
+			ProcessExitStore.Snapshot original, String processName, String processRole,
+			String sessionId) {
+		return new ProcessExitStore.Snapshot(
+				original.recordFile,
+				original.traceFile,
+				original.key,
+				original.source,
+				original.timestampMillis,
+				processName,
+				processRole,
+				original.pid,
+				original.reason,
+				original.status,
+				original.importance,
+				original.pssKb,
+				original.rssKb,
+				original.description,
+				original.lowMemoryKillReportSupported,
+				original.stateVersionCode,
+				original.stateSdk,
+				original.androidRelease,
+				sessionId,
+				original.deviceBrand,
+				original.deviceModel,
+				original.primaryAbi,
+				original.traceKind,
+				original.traceBytes,
+				original.traceTruncated,
+				original.anrType,
+				original.anrTimeoutMillis,
+				original.anrId,
+				original.anrUserPerceptible,
+				original.appContext);
 	}
 
 	private static MidletSessionJournal.Snapshot session(

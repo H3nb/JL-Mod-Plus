@@ -63,12 +63,10 @@ final class IncidentInterpreter {
 		String sessionId = session == null ? (java == null ? null : java.sessionId) : session.sessionId;
 		String subject = first(
 				session == null ? null : session.midletName,
-				java == null ? null : java.midletName,
-				java == null ? null : javaProcessSubject(java.processRole),
+				javaSubject(java, category),
 				exit == null ? null : processSubject(exit.processRole),
 				exit == null ? null : exit.processName,
-				category == IncidentSummary.Category.JL_MOD_PLUS ? "JL-Mod Plus"
-						: category == IncidentSummary.Category.JAVA_FAILURE ? "Java failure" : "process");
+				fallbackSubject(category));
 		String midletVersion = first(
 				session == null ? null : session.midletVersion,
 				java == null ? null : java.midletVersion);
@@ -340,8 +338,23 @@ final class IncidentInterpreter {
 		return fallbackVersion;
 	}
 
+	private static String javaSubject(
+			JavaDiagnosticStore.Snapshot java, IncidentSummary.Category category) {
+		if (java == null) return null;
+		// A correlated process exit may enrich a Java incident, but it must not replace
+		// the semantic subject that the Java evidence would have established on its own.
+		String fallback = category == IncidentSummary.Category.NATIVE_CRASH
+				|| category == IncidentSummary.Category.ANR ? null : fallbackSubject(category);
+		return first(java.midletName, javaProcessSubject(java.processRole), fallback);
+	}
+
 	private static String javaProcessSubject(String role) {
 		return "memory_engine".equals(role) ? "Memory Engine" : null;
+	}
+
+	private static String fallbackSubject(IncidentSummary.Category category) {
+		return category == IncidentSummary.Category.JL_MOD_PLUS ? "JL-Mod Plus"
+				: category == IncidentSummary.Category.JAVA_FAILURE ? "Java failure" : "process";
 	}
 
 	private static String processSubject(String role) {
