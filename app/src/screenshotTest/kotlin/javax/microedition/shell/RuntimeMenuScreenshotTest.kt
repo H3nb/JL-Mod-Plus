@@ -177,6 +177,26 @@ fun RuntimeShowControlsScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Show controls wide", widthDp = 900, heightDp = 600, showBackground = true)
+@Composable
+fun RuntimeShowControlsWideScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        RuntimeHostDialogs(
+            state = RuntimeHostDialogState.ShowControls(
+                names = listOf(
+                    "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "*", "#",
+                    "L", "R", "D", "C", "↖", "↑", "↗", "←", "→", "↙", "↓", "↘",
+                    "F", "A", "B", "M", "D-pad", "Analog Stick",
+                ),
+                hidden = BooleanArray(30) { it in 0..8 || it == 29 },
+            ),
+            actions = NoOpRuntimeHostDialogActions,
+            onDismiss = {},
+        )
+    }
+}
+
+@PreviewTest
 @Preview(
     name = "Runtime layout selection dark landscape",
     widthDp = 640,

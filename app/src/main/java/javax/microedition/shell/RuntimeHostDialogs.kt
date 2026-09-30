@@ -18,6 +18,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -329,6 +330,17 @@ private fun ExitConfirmationDialog(
     )
 }
 
+private const val ShowControlsColumnCount = 3
+private val ShowControlsCellGap = 4.dp
+private val ShowControlsPaneGap = 16.dp
+// 104 dp leaves 56 dp beside the 48 dp checkbox target, enough for labels such as "Analog".
+private val ShowControlsMinimumCellWidth = 104.dp
+private val ShowControlsMinimumPaneWidth =
+    ShowControlsMinimumCellWidth * ShowControlsColumnCount.toFloat() +
+        ShowControlsCellGap * (ShowControlsColumnCount - 1).toFloat()
+private val ShowControlsTwoPaneMinimumWidth =
+    ShowControlsMinimumPaneWidth * 2f + ShowControlsPaneGap
+
 @Composable
 private fun ShowControlsDialog(
     state: RuntimeHostDialogState.ShowControls,
@@ -338,6 +350,7 @@ private fun ShowControlsDialog(
     var visible by remember(state) {
         mutableStateOf(BooleanArray(state.hidden.size) { !state.hidden[it] })
     }
+    val plan = remember(state.names) { ShowControlsPlan.resolve(state.names) }
     val layout = runtimeDialogLayout()
     val scrollState = rememberScrollState()
     val maxListHeight = runtimeDialogListHeight()
@@ -359,41 +372,49 @@ private fun ShowControlsDialog(
                         .fillMaxWidth()
                         .heightIn(max = maxListHeight)
                         .verticalScroll(scrollState),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    for (row in state.names.indices.chunked(3)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            for (index in row) {
-                                val isVisible = visible.getOrNull(index) == true
-                                Row(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .heightIn(min = 48.dp)
-                                        .toggleable(value = isVisible, role = Role.Checkbox) {
-                                            visible = visible.copyOf().also { it[index] = !isVisible }
-                                        }
-                                        .padding(horizontal = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                        val twoPane =
+                            plan.semantic && maxWidth >= ShowControlsTwoPaneMinimumWidth
+                        if (twoPane) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(ShowControlsPaneGap),
+                            ) {
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
-                                    Checkbox(checked = isVisible, onCheckedChange = null)
-                                    Text(
-                                        state.names[index],
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier.padding(start = 4.dp),
-                                    )
+                                    ShowControlsGroup(state.names, visible, plan.actionRows) { index ->
+                                        visible = visible.copyOf().also { it[index] = !it[index] }
+                                    }
+                                    ShowControlsGroup(state.names, visible, plan.directionalRows) { index ->
+                                        visible = visible.copyOf().also { it[index] = !it[index] }
+                                    }
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    ShowControlsGroup(state.names, visible, plan.numericRows) { index ->
+                                        visible = visible.copyOf().also { it[index] = !it[index] }
+                                    }
                                 }
                             }
-                            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                        } else {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                plan.groups.forEach { rows ->
+                                    ShowControlsGroup(state.names, visible, rows) { index ->
+                                        visible = visible.copyOf().also { it[index] = !it[index] }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
                 ScrollableContentHint(
                     visible = canScrollForward,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter),
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
         },
@@ -411,6 +432,57 @@ private fun ShowControlsDialog(
             }
         },
     )
+}
+
+@Composable
+private fun ShowControlsGroup(
+    names: List<String>,
+    visible: BooleanArray,
+    rows: List<List<Int?>>,
+    onToggle: (Int) -> Unit,
+) {
+    if (rows.isEmpty()) return
+    Column(verticalArrangement = Arrangement.spacedBy(ShowControlsCellGap)) {
+        rows.forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(ShowControlsCellGap),
+            ) {
+                row.forEach { index ->
+                    if (index == null) {
+                        Spacer(Modifier.weight(1f))
+                    } else {
+                        val isVisible = visible.getOrNull(index) == true
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .heightIn(min = 48.dp)
+                                .toggleable(
+                                    value = isVisible,
+                                    enabled = index in visible.indices,
+                                    role = Role.Checkbox,
+                                ) {
+                                    onToggle(index)
+                                }
+                                .padding(horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = isVisible,
+                                enabled = index in visible.indices,
+                                onCheckedChange = null,
+                            )
+                            Text(
+                                names[index],
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(start = 4.dp),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
