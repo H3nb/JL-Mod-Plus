@@ -18,7 +18,6 @@ import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
 import android.content.Context;
 import android.os.Build;
-import android.system.OsConstants;
 import android.util.AtomicFile;
 import android.util.Log;
 
@@ -46,7 +45,8 @@ import java.util.Set;
  * low-memory termination. Normal process-management exits are intentionally filtered out.
  */
 public final class ProcessExitStore {
-	static final int SCHEMA_VERSION = 1;
+	static final int SCHEMA_VERSION = 2;
+	private static final int LEGACY_SCHEMA_VERSION = 1;
 	static final int MAX_RECORD_COUNT = 64;
 	static final long MAX_RECORD_AGE_MILLIS = 30L * 24L * 60L * 60L * 1000L;
 	static final int MAX_TRACE_BYTES = 512 * 1024;
@@ -70,6 +70,26 @@ public final class ProcessExitStore {
 	static final int REASON_FREEZER = 14;
 	static final int REASON_PACKAGE_STATE_CHANGE = 15;
 	static final int REASON_PACKAGE_UPDATED = 16;
+	// Android 17 documentation is transitional: newer references expose reason 17, while
+	// current behavior documentation also identifies the exact marker below under REASON_OTHER.
+	static final int REASON_MEMORY_LIMITER = 17;
+	static final String MEMORY_LIMITER_ANON_SWAP_MARKER = "MemoryLimiter:AnonSwap";
+
+	// Linux/Android signal numbers are ABI-stable values from signal(7). Keep these primitives in
+	// common diagnostic code so unit tests and API23 devices do not depend on android.system stubs.
+	static final int SIGNAL_ILLEGAL = 4;
+	static final int SIGNAL_TRAP = 5;
+	static final int SIGNAL_ABORT = 6;
+	static final int SIGNAL_BUS = 7;
+	static final int SIGNAL_FPE = 8;
+	static final int SIGNAL_KILL = 9;
+	static final int SIGNAL_SEGV = 11;
+	static final int SIGNAL_TERM = 15;
+
+	static final String SOURCE_APPLICATION_EXIT_INFO = "android-application-exit-info";
+	static final String SOURCE_LEGACY_PROCESS_DISAPPEARANCE = "legacy-process-disappearance";
+	static final String LEGACY_FALLBACK_DESCRIPTION =
+			"Exact termination cause unavailable on Android 6-10; ApplicationExitInfo requires API 30+.";
 
 	private static final int MAX_HISTORY_RESULTS = 64;
 	private static final int MAX_DESCRIPTION_LENGTH = 1024;
@@ -91,6 +111,7 @@ public final class ProcessExitStore {
 
 	private static final String KEY_SCHEMA = "schemaVersion";
 	private static final String KEY_KEY = "key";
+	private static final String KEY_SOURCE = "source";
 	private static final String KEY_TIMESTAMP = "timestampMillis";
 	private static final String KEY_PROCESS_NAME = "processName";
 	private static final String KEY_PROCESS_ROLE = "processRole";
@@ -104,6 +125,7 @@ public final class ProcessExitStore {
 	private static final String KEY_LMK_SUPPORTED = "lowMemoryKillReportSupported";
 	private static final String KEY_VERSION_CODE = "stateVersionCode";
 	private static final String KEY_SDK = "stateSdk";
+	private static final String KEY_ANDROID_RELEASE = "androidRelease";
 	private static final String KEY_SESSION_ID = "sessionId";
 	private static final String KEY_DEVICE_BRAND = "deviceBrand";
 	private static final String KEY_DEVICE_MODEL = "deviceModel";
@@ -111,6 +133,10 @@ public final class ProcessExitStore {
 	private static final String KEY_TRACE_KIND = "traceKind";
 	private static final String KEY_TRACE_BYTES = "traceBytes";
 	private static final String KEY_TRACE_TRUNCATED = "traceTruncated";
+	private static final String KEY_ANR_TYPE = "anrType";
+	private static final String KEY_ANR_TIMEOUT = "anrTimeoutMillis";
+	private static final String KEY_ANR_ID = "anrId";
+	private static final String KEY_ANR_USER_PERCEPTIBLE = "anrUserPerceptible";
 	private static final String KEY_CONTEXT_RUN_ID = "context.runId";
 	private static final String KEY_CONTEXT_BUILD_COMMIT = "context.buildCommit";
 	private static final String KEY_CONTEXT_BUILD_VARIANT = "context.buildVariant";
@@ -206,13 +232,26 @@ public final class ProcessExitStore {
 					delete(context, snapshot);
 					continue;
 				}
-				if ("reporter".equals(snapshot.processRole)) {
+				String retainedRole = retainedStoredProcessRole(
+						context.getPackageName(),
+						snapshot.processName,
+						snapshot.processRole,
+						snapshot.reason,
+						snapshot.status,
+						snapshot.importance,
+						snapshot.description);
+				// Re-apply the current retention policy to local projections. Policy pruning is not
+				// a user deletion, so it deliberately does not create a deletion tombstone.
+				if (retainedRole == null) {
 					delete(context, snapshot);
 					continue;
 				}
+				if (!same(snapshot.processRole, retainedRole)) {
+					snapshot = snapshot.withProcessRole(retainedRole);
+				}
 				// The isolated MIDlet process is deliberately killed after a graceful MIDlet exit.
 				// Exact journal outcome keeps that expected SIGKILL out of the crash inbox.
-				if (isIntentionalSessionExit(context, snapshot.sessionId)) {
+				if (isExpectedIntentionalSessionExit(context, snapshot)) {
 					delete(context, snapshot);
 					continue;
 				}
@@ -251,7 +290,7 @@ public final class ProcessExitStore {
 		pruneAcknowledgments(context, retained);
 		for (Snapshot record : records) {
 			if (acknowledged.contains(record.key)
-					|| isRepresentedByUnexpectedMidletFailure(context, record.sessionId)) {
+					|| isRepresentedByUnexpectedMidletFailure(context, record)) {
 				continue;
 			}
 			MidletSessionJournal.Snapshot session = findSession(context, record.sessionId);
@@ -299,7 +338,18 @@ public final class ProcessExitStore {
 		return !marker.exists() || (marker.isFile() && marker.delete());
 	}
 
+	static String reasonLabel(Snapshot snapshot) {
+		return snapshot == null ? null : reasonLabel(snapshot.reason, snapshot.description);
+	}
+
 	static String reasonLabel(int reason) {
+		return reasonLabel(reason, null);
+	}
+
+	static String reasonLabel(int reason, String description) {
+		if (isMemoryLimiterTermination(reason, description)) {
+			return "Memory-limit termination";
+		}
 		return switch (reason) {
 			case REASON_CRASH -> "Java crash";
 			case REASON_CRASH_NATIVE -> "Native crash";
@@ -311,9 +361,43 @@ public final class ProcessExitStore {
 			case REASON_DEPENDENCY_DIED -> "Dependency died";
 			case REASON_FREEZER -> "App freezer termination";
 			case REASON_EXIT_SELF -> "Self exit";
-			case REASON_OTHER -> "Other process termination";
+			case REASON_OTHER -> "Other system termination";
 			default -> "Process termination (reason " + reason + ")";
 		};
+	}
+
+	static boolean isMemoryLimiterTermination(int reason, String description) {
+		return reason == REASON_MEMORY_LIMITER
+				|| reason == REASON_OTHER
+				&& description != null
+				&& description.contains(MEMORY_LIMITER_ANON_SWAP_MARKER);
+	}
+
+	static boolean isKnownUserInitiatedCleanup(int reason, String description) {
+		if (reason != REASON_OTHER || description == null) {
+			return false;
+		}
+		return switch (description.trim()) {
+			case "OneKeyClean",
+					"ForceClean",
+					"GarbageClean",
+					"LockScreenClean",
+					"GameClean",
+					"OptimizationClean",
+					"SwipeUpClean" -> true;
+			default -> false;
+		};
+	}
+
+	private static boolean isKnownMemoryEngineResourceTermination(int reason, String description) {
+		if (isMemoryLimiterTermination(reason, description)) {
+			return true;
+		}
+		if (reason != REASON_OTHER || description == null) {
+			return false;
+		}
+		String marker = description.trim();
+		return "AutoPowerKill".equals(marker) || "AutoThermalKill".equals(marker);
 	}
 
 	static String statusLabel(Snapshot snapshot) {
@@ -326,9 +410,6 @@ public final class ProcessExitStore {
 		String signal = signalName(snapshot.status);
 		String value = signal == null ? Integer.toString(snapshot.status)
 				: signal + " (" + snapshot.status + ")";
-		if (snapshot.status == OsConstants.SIGKILL && !snapshot.lowMemoryKillReportSupported) {
-			return value + "; may represent low-memory kill on this device";
-		}
 		return value;
 	}
 
@@ -373,13 +454,14 @@ public final class ProcessExitStore {
 					REASON_ANR,
 					REASON_INITIALIZATION_FAILURE,
 					REASON_EXCESSIVE_RESOURCE_USAGE -> true;
-			case REASON_LOW_MEMORY -> midletProcess || foregroundish;
-			case REASON_SIGNALED -> status != OsConstants.SIGKILL || midletProcess || foregroundish;
+			case REASON_LOW_MEMORY,
+					REASON_UNKNOWN,
+					REASON_OTHER,
+					REASON_MEMORY_LIMITER -> midletProcess || foregroundish;
+			case REASON_SIGNALED -> status != SIGNAL_KILL || midletProcess || foregroundish;
 			case REASON_DEPENDENCY_DIED, REASON_FREEZER -> midletProcess || foregroundish;
 			case REASON_EXIT_SELF -> status != 0 && (midletProcess || foregroundish);
-			case REASON_UNKNOWN,
-					REASON_OTHER,
-					REASON_PERMISSION_CHANGE,
+			case REASON_PERMISSION_CHANGE,
 					REASON_USER_REQUESTED,
 					REASON_USER_STOPPED,
 					REASON_PACKAGE_STATE_CHANGE,
@@ -388,10 +470,69 @@ public final class ProcessExitStore {
 		};
 	}
 
-	/** ACRA's private helper process is reporting infrastructure, not a user-facing app incident. */
+	/** Historical ACRA helper-process exits are reporting infrastructure, not user incidents. */
 	static boolean shouldRetainProcess(String processRole, int reason, int status, int importance) {
-		return !"reporter".equals(processRole)
-				&& shouldRetain(reason, status, importance, "midlet".equals(processRole));
+		return shouldRetainProcess(processRole, reason, status, importance, null);
+	}
+
+	static boolean shouldRetainProcess(String processRole, int reason, int status, int importance,
+			String description) {
+		if ("reporter".equals(processRole) || isKnownUserInitiatedCleanup(reason, description)) {
+			return false;
+		}
+		if ("memory_engine".equals(processRole)) {
+			return shouldRetainMemoryEngine(reason, status, description);
+		}
+		return shouldRetain(reason, status, importance, "midlet".equals(processRole));
+	}
+
+	private static boolean shouldRetainMemoryEngine(int reason, int status, String description) {
+		if (isKnownMemoryEngineResourceTermination(reason, description)) {
+			return true;
+		}
+		return switch (reason) {
+			case REASON_CRASH,
+					REASON_CRASH_NATIVE,
+					REASON_ANR,
+					REASON_INITIALIZATION_FAILURE,
+					REASON_EXCESSIVE_RESOURCE_USAGE -> true;
+			case REASON_SIGNALED -> status != SIGNAL_KILL;
+			default -> false;
+		};
+	}
+
+	static String currentProcessRole(String packageName, String processName, String storedRole) {
+		String current = CrashReporter.classifyProcess(packageName, processName);
+		return "other".equals(current) && storedRole != null && !"other".equals(storedRole)
+				? storedRole : current;
+	}
+
+	static String retainedStoredProcessRole(
+			String packageName,
+			String processName,
+			String storedRole,
+			int reason,
+			int status,
+			int importance,
+			String description) {
+		String currentRole = currentProcessRole(packageName, processName, storedRole);
+		return shouldRetainProcess(currentRole, reason, status, importance, description)
+				? currentRole : null;
+	}
+
+	private static boolean same(String left, String right) {
+		return left == null ? right == null : left.equals(right);
+	}
+
+	static boolean isControlledRuntimeShutdown(Snapshot exit) {
+		return exit != null
+				&& isControlledRuntimeShutdown(exit.reason, exit.status, exit.processRole);
+	}
+
+	static boolean isControlledRuntimeShutdown(int reason, int status, String processRole) {
+		return "midlet".equals(processRole)
+				&& reason == REASON_SIGNALED
+				&& status == SIGNAL_KILL;
 	}
 
 	private static void prune(Context context) {
@@ -445,7 +586,8 @@ public final class ProcessExitStore {
 		try (InputStream input = new AtomicFile(file).openRead()) {
 			p.load(input);
 		}
-		if (parseInt(p, KEY_SCHEMA) != SCHEMA_VERSION) {
+		int schema = parseInt(p, KEY_SCHEMA);
+		if (schema != LEGACY_SCHEMA_VERSION && schema != SCHEMA_VERSION) {
 			throw new IOException("Unsupported process-exit schema");
 		}
 		String key = require(p, KEY_KEY);
@@ -462,6 +604,7 @@ public final class ProcessExitStore {
 				file,
 				traceFile,
 				key,
+				readSource(p),
 				parseLong(p, KEY_TIMESTAMP),
 				optional(p, KEY_PROCESS_NAME),
 				optional(p, KEY_PROCESS_ROLE),
@@ -475,6 +618,7 @@ public final class ProcessExitStore {
 				Boolean.parseBoolean(p.getProperty(KEY_LMK_SUPPORTED, "false")),
 				parseLongDefault(p, KEY_VERSION_CODE, -1),
 				parseIntDefault(p, KEY_SDK, -1),
+				optional(p, KEY_ANDROID_RELEASE),
 				optional(p, KEY_SESSION_ID),
 				optional(p, KEY_DEVICE_BRAND),
 				optional(p, KEY_DEVICE_MODEL),
@@ -482,6 +626,10 @@ public final class ProcessExitStore {
 				optional(p, KEY_TRACE_KIND),
 				declaredTraceBytes,
 				Boolean.parseBoolean(p.getProperty(KEY_TRACE_TRUNCATED, "false")),
+				parseIntDefault(p, KEY_ANR_TYPE, -1),
+				parseLongDefault(p, KEY_ANR_TIMEOUT, -1),
+				parseIntDefault(p, KEY_ANR_ID, -1),
+				optionalBoolean(p, KEY_ANR_USER_PERCEPTIBLE),
 				readStoredContext(p)
 		);
 	}
@@ -490,6 +638,7 @@ public final class ProcessExitStore {
 		Properties p = new Properties();
 		p.setProperty(KEY_SCHEMA, Integer.toString(SCHEMA_VERSION));
 		p.setProperty(KEY_KEY, snapshot.key);
+		put(p, KEY_SOURCE, snapshot.source);
 		p.setProperty(KEY_TIMESTAMP, Long.toString(snapshot.timestampMillis));
 		put(p, KEY_PROCESS_NAME, snapshot.processName);
 		put(p, KEY_PROCESS_ROLE, snapshot.processRole);
@@ -507,6 +656,7 @@ public final class ProcessExitStore {
 		if (snapshot.stateSdk >= 0) {
 			p.setProperty(KEY_SDK, Integer.toString(snapshot.stateSdk));
 		}
+		put(p, KEY_ANDROID_RELEASE, snapshot.androidRelease);
 		put(p, KEY_SESSION_ID, snapshot.sessionId);
 		put(p, KEY_DEVICE_BRAND, snapshot.deviceBrand);
 		put(p, KEY_DEVICE_MODEL, snapshot.deviceModel);
@@ -514,6 +664,15 @@ public final class ProcessExitStore {
 		put(p, KEY_TRACE_KIND, snapshot.traceKind);
 		p.setProperty(KEY_TRACE_BYTES, Long.toString(snapshot.traceBytes));
 		p.setProperty(KEY_TRACE_TRUNCATED, Boolean.toString(snapshot.traceTruncated));
+		if (snapshot.anrType >= 0) p.setProperty(KEY_ANR_TYPE, Integer.toString(snapshot.anrType));
+		if (snapshot.anrTimeoutMillis >= 0) {
+			p.setProperty(KEY_ANR_TIMEOUT, Long.toString(snapshot.anrTimeoutMillis));
+		}
+		if (snapshot.anrId >= 0) p.setProperty(KEY_ANR_ID, Integer.toString(snapshot.anrId));
+		if (snapshot.anrUserPerceptible != null) {
+			p.setProperty(KEY_ANR_USER_PERCEPTIBLE,
+					Boolean.toString(snapshot.anrUserPerceptible));
+		}
 		writeStoredContext(p, snapshot.appContext);
 		writeProperties(snapshot.recordFile, p);
 	}
@@ -677,18 +836,46 @@ public final class ProcessExitStore {
 		}
 	}
 
-	private static boolean isRepresentedByUnexpectedMidletFailure(Context context, String sessionId) {
-		MidletSessionJournal.Snapshot session = findSession(context, sessionId);
+	private static boolean isRepresentedByUnexpectedMidletFailure(
+			Context context, Snapshot exit) {
+		MidletSessionJournal.Snapshot session =
+				exit == null ? null : findSession(context, exit.sessionId);
 		return session != null
 				&& session.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
-				&& MidletFailureRecovery.isSafeEventId(session.failureEventId);
+				&& MidletFailureRecovery.isSafeEventId(session.failureEventId)
+				&& isControlledRuntimeShutdown(exit);
 	}
 
-	private static boolean isIntentionalSessionExit(Context context, String sessionId) {
-		MidletSessionJournal.Snapshot session = findSession(context, sessionId);
-		return session != null && (session.outcome == MidletSessionJournal.Outcome.MIDLET_REQUEST
-				|| session.outcome == MidletSessionJournal.Outcome.USER_STOP
-				|| session.outcome == MidletSessionJournal.Outcome.LIFECYCLE_STOP);
+	private static boolean isExpectedIntentionalSessionExit(Context context, Snapshot exit) {
+		if (exit == null) return false;
+		return isExpectedIntentionalSessionExit(
+				findSession(context, exit.sessionId),
+				exit.sessionId,
+				exit.reason,
+				exit.status,
+				exit.processRole);
+	}
+
+	private static boolean isExpectedIntentionalSessionExit(
+			Context context, String sessionId, int reason, int status, String processRole) {
+		return isExpectedIntentionalSessionExit(
+				findSession(context, sessionId), sessionId, reason, status, processRole);
+	}
+
+	static boolean isExpectedIntentionalSessionExit(
+			MidletSessionJournal.Snapshot session, String exitSessionId,
+			int reason, int status, String processRole) {
+		return session != null
+				&& session.sessionId != null
+				&& session.sessionId.equals(exitSessionId)
+				&& isIntentionalOutcome(session.outcome)
+				&& isControlledRuntimeShutdown(reason, status, processRole);
+	}
+
+	private static boolean isIntentionalOutcome(MidletSessionJournal.Outcome outcome) {
+		return outcome == MidletSessionJournal.Outcome.MIDLET_REQUEST
+				|| outcome == MidletSessionJournal.Outcome.USER_STOP
+				|| outcome == MidletSessionJournal.Outcome.LIFECYCLE_STOP;
 	}
 
 	static MidletSessionJournal.Snapshot findSession(Context context, String sessionId) {
@@ -741,14 +928,14 @@ public final class ProcessExitStore {
 	}
 
 	private static String signalName(int signal) {
-		if (signal == OsConstants.SIGABRT) return "SIGABRT";
-		if (signal == OsConstants.SIGBUS) return "SIGBUS";
-		if (signal == OsConstants.SIGFPE) return "SIGFPE";
-		if (signal == OsConstants.SIGILL) return "SIGILL";
-		if (signal == OsConstants.SIGKILL) return "SIGKILL";
-		if (signal == OsConstants.SIGSEGV) return "SIGSEGV";
-		if (signal == OsConstants.SIGTERM) return "SIGTERM";
-		if (signal == OsConstants.SIGTRAP) return "SIGTRAP";
+		if (signal == SIGNAL_ABORT) return "SIGABRT";
+		if (signal == SIGNAL_BUS) return "SIGBUS";
+		if (signal == SIGNAL_FPE) return "SIGFPE";
+		if (signal == SIGNAL_ILLEGAL) return "SIGILL";
+		if (signal == SIGNAL_KILL) return "SIGKILL";
+		if (signal == SIGNAL_SEGV) return "SIGSEGV";
+		if (signal == SIGNAL_TERM) return "SIGTERM";
+		if (signal == SIGNAL_TRAP) return "SIGTRAP";
 		return null;
 	}
 
@@ -817,6 +1004,19 @@ public final class ProcessExitStore {
 		return value == null || value.trim().isEmpty() ? null : value;
 	}
 
+	private static String readSource(Properties p) {
+		String source = optional(p, KEY_SOURCE);
+		if (SOURCE_APPLICATION_EXIT_INFO.equals(source)
+				|| SOURCE_LEGACY_PROCESS_DISAPPEARANCE.equals(source)) {
+			return source;
+		}
+		// Before schema v2 gained an explicit provenance field, only the API23-29 fallback used
+		// this exact app-authored description. Other retained records came from ApplicationExitInfo.
+		return LEGACY_FALLBACK_DESCRIPTION.equals(optional(p, KEY_DESCRIPTION))
+				? SOURCE_LEGACY_PROCESS_DISAPPEARANCE
+				: SOURCE_APPLICATION_EXIT_INFO;
+	}
+
 	private static String require(Properties p, String key) throws IOException {
 		String value = optional(p, key);
 		if (value == null) {
@@ -840,6 +1040,11 @@ public final class ProcessExitStore {
 		} catch (NumberFormatException e) {
 			throw new IOException("Invalid process-exit integer: " + key, e);
 		}
+	}
+
+	private static Boolean optionalBoolean(Properties p, String key) {
+		String value = optional(p, key);
+		return value == null ? null : Boolean.valueOf(value);
 	}
 
 	private static long parseLong(Properties p, String key) throws IOException {
@@ -870,6 +1075,7 @@ public final class ProcessExitStore {
 		final File traceFile;
 		final String key;
 		final String id;
+		final String source;
 		final long timestampMillis;
 		final String processName;
 		final String processRole;
@@ -883,6 +1089,7 @@ public final class ProcessExitStore {
 		final boolean lowMemoryKillReportSupported;
 		final long stateVersionCode;
 		final int stateSdk;
+		final String androidRelease;
 		final String sessionId;
 		final String deviceBrand;
 		final String deviceModel;
@@ -890,19 +1097,26 @@ public final class ProcessExitStore {
 		final String traceKind;
 		final long traceBytes;
 		final boolean traceTruncated;
+		final int anrType;
+		final long anrTimeoutMillis;
+		final int anrId;
+		final Boolean anrUserPerceptible;
 		final CrashContextStore.Snapshot appContext;
 
-		Snapshot(File recordFile, File traceFile, String key, long timestampMillis,
+		Snapshot(File recordFile, File traceFile, String key, String source, long timestampMillis,
 				 String processName, String processRole, int pid, int reason, int status,
 				 int importance, long pssKb, long rssKb, String description,
 				 boolean lowMemoryKillReportSupported, long stateVersionCode, int stateSdk,
-				 String sessionId, String deviceBrand, String deviceModel, String primaryAbi,
-				 String traceKind, long traceBytes, boolean traceTruncated,
+				 String androidRelease, String sessionId, String deviceBrand, String deviceModel,
+				 String primaryAbi, String traceKind, long traceBytes, boolean traceTruncated,
+				 int anrType, long anrTimeoutMillis, int anrId, Boolean anrUserPerceptible,
 				 CrashContextStore.Snapshot appContext) {
 			this.recordFile = recordFile;
 			this.traceFile = traceFile;
 			this.key = key;
 			this.id = "exit:" + key;
+			this.source = SOURCE_LEGACY_PROCESS_DISAPPEARANCE.equals(source)
+					? SOURCE_LEGACY_PROCESS_DISAPPEARANCE : SOURCE_APPLICATION_EXIT_INFO;
 			this.timestampMillis = timestampMillis;
 			this.processName = processName;
 			this.processRole = processRole;
@@ -916,6 +1130,7 @@ public final class ProcessExitStore {
 			this.lowMemoryKillReportSupported = lowMemoryKillReportSupported;
 			this.stateVersionCode = stateVersionCode;
 			this.stateSdk = stateSdk;
+			this.androidRelease = androidRelease;
 			this.sessionId = sessionId;
 			this.deviceBrand = deviceBrand;
 			this.deviceModel = deviceModel;
@@ -923,7 +1138,45 @@ public final class ProcessExitStore {
 			this.traceKind = traceKind;
 			this.traceBytes = traceBytes;
 			this.traceTruncated = traceTruncated;
+			this.anrType = anrType;
+			this.anrTimeoutMillis = anrTimeoutMillis;
+			this.anrId = anrId;
+			this.anrUserPerceptible = anrUserPerceptible;
 			this.appContext = appContext;
+		}
+
+		Snapshot withProcessRole(String role) {
+			return new Snapshot(
+					recordFile,
+					traceFile,
+					key,
+					source,
+					timestampMillis,
+					processName,
+					role,
+					pid,
+					reason,
+					status,
+					importance,
+					pssKb,
+					rssKb,
+					description,
+					lowMemoryKillReportSupported,
+					stateVersionCode,
+					stateSdk,
+					androidRelease,
+					sessionId,
+					deviceBrand,
+					deviceModel,
+					primaryAbi,
+					traceKind,
+					traceBytes,
+					traceTruncated,
+					anrType,
+					anrTimeoutMillis,
+					anrId,
+					anrUserPerceptible,
+					appContext);
 		}
 	}
 
@@ -937,7 +1190,7 @@ public final class ProcessExitStore {
 			this.id = snapshot.id;
 			this.processRole = snapshot.processRole;
 			this.midletName = midletName;
-			this.reason = reasonLabel(snapshot.reason);
+			this.reason = reasonLabel(snapshot);
 		}
 
 		public String getId() {
@@ -979,6 +1232,34 @@ public final class ProcessExitStore {
 		}
 	}
 
+	private static final class AnrData {
+		final int type;
+		final long timeoutMillis;
+		final int id;
+		final Boolean userPerceptible;
+
+		AnrData(int type, long timeoutMillis, int id, boolean userPerceptible) {
+			this.type = type;
+			this.timeoutMillis = timeoutMillis;
+			this.id = id;
+			this.userPerceptible = userPerceptible;
+		}
+	}
+
+	@RequiresApi(37)
+	private static final class Api37Impl {
+		private Api37Impl() {}
+
+		static AnrData readAnr(ApplicationExitInfo exit) {
+			ApplicationExitInfo.AnrInfo info = exit.getAnrInfo();
+			return info == null ? null : new AnrData(
+					info.getAnrType(),
+					info.getTimeoutMillis(),
+					info.getAnrId(),
+					info.isUserPerceptible());
+		}
+	}
+
 	@RequiresApi(Build.VERSION_CODES.R)
 	private static final class Api30Impl {
 		private Api30Impl() {}
@@ -993,6 +1274,7 @@ public final class ProcessExitStore {
 					appContext == null ? null : appContext.runId,
 					appContext == null ? null : appContext.buildCommit,
 					Build.VERSION.SDK_INT,
+					Build.VERSION.RELEASE,
 					sessionId,
 					appContext == null ? null : appContext.location,
 					appContext == null ? null : appContext.action,
@@ -1033,11 +1315,13 @@ public final class ProcessExitStore {
 				}
 				String processRole = CrashReporter.classifyProcess(context.getPackageName(), processName);
 				ProcessStateSummary.Data state = ProcessStateSummary.parse(info.getProcessStateSummary());
-				if (isIntentionalSessionExit(context, state.sessionId)) {
+				if (isExpectedIntentionalSessionExit(
+						context, state.sessionId, info.getReason(), info.getStatus(), processRole)) {
 					continue;
 				}
 				if (!shouldRetainProcess(
-						processRole, info.getReason(), info.getStatus(), info.getImportance())) {
+						processRole, info.getReason(), info.getStatus(), info.getImportance(),
+						info.getDescription())) {
 					continue;
 				}
 
@@ -1055,10 +1339,13 @@ public final class ProcessExitStore {
 
 				CrashContextStore.Snapshot appContext = resolveAppContext(context, processRole, state);
 				String primaryAbi = Build.SUPPORTED_ABIS.length == 0 ? null : Build.SUPPORTED_ABIS[0];
+				AnrData anr = info.getReason() == ApplicationExitInfo.REASON_ANR
+						&& Build.VERSION.SDK_INT >= 37 ? Api37Impl.readAnr(info) : null;
 				Snapshot snapshot = new Snapshot(
 						metadata,
 						retainedTraceFile,
 						key,
+						SOURCE_APPLICATION_EXIT_INFO,
 						info.getTimestamp(),
 						bound(processName, MAX_PROCESS_NAME_LENGTH),
 						processRole,
@@ -1072,6 +1359,7 @@ public final class ProcessExitStore {
 						lmkSupported,
 						state.versionCode,
 						state.sdk,
+						state.androidRelease,
 						state.sessionId,
 						bound(Build.BRAND, MAX_DEVICE_VALUE_LENGTH),
 						bound(Build.MODEL, MAX_DEVICE_VALUE_LENGTH),
@@ -1079,6 +1367,10 @@ public final class ProcessExitStore {
 						trace == null ? null : trace.kind,
 						trace == null ? 0 : trace.bytes,
 						trace != null && trace.truncated,
+						anr == null ? -1 : anr.type,
+						anr == null ? -1 : anr.timeoutMillis,
+						anr == null ? -1 : anr.id,
+						anr == null ? null : anr.userPerceptible,
 						appContext
 				);
 				try {

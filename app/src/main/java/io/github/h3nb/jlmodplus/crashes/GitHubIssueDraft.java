@@ -16,45 +16,38 @@ package io.github.h3nb.jlmodplus.crashes;
 
 import java.nio.charset.StandardCharsets;
 
-/** Builds a bounded, UTF-8 percent-encoded GitHub new-issue URL without splitting Unicode. */
+/** Builds a bounded GitHub Issue Form URL without splitting UTF-8/UTF-16 characters. */
 final class GitHubIssueDraft {
-	// GitHub documents 414 for an oversized issue URL but does not publish the server limit. Keep
-	// a conservative client-side ceiling on the final encoded URI rather than on the raw body text.
+	// GitHub does not publish a practical browser/server URL limit for issue prefills. Retain the
+	// project's conservative transport guard; normal content is deliberately compact before here.
 	static final int MAX_URL_CHARS = 4096;
 	private static final int MAX_TITLE_ENCODED_CHARS = 768;
+	private static final String SHORTENED_NOTICE =
+			"\n\n[Diagnostic summary shortened to fit the GitHub prefill URL. The ZIP is authoritative.]";
 
 	private static final char[] HEX = "0123456789ABCDEF".toCharArray();
 
 	private GitHubIssueDraft() {}
 
-	static String buildUrl(String baseUrl, String template, String title, String body,
-			String truncationNotice) {
-		String fixedPrefix = value(baseUrl)
+	static String buildIssueFormUrl(String baseUrl, String template, String title,
+			String fieldId, String fieldValue) {
+		String prefix = value(baseUrl)
 				+ "?template=" + encode(value(template))
 				+ "&title=";
-		String bodySeparator = "&body=";
-		int availableTitleBudget = MAX_URL_CHARS - fixedPrefix.length() - bodySeparator.length();
-		if (availableTitleBudget <= 0) {
-			return value(baseUrl);
-		}
+		int titleBudget = Math.min(
+				MAX_TITLE_ENCODED_CHARS,
+				Math.max(0, MAX_URL_CHARS - prefix.length()));
+		Encoded encodedTitle = encodeBounded(value(title), titleBudget);
+		String fieldPrefix = prefix + encodedTitle.text + "&" + encode(value(fieldId)) + "=";
+		int fieldBudget = MAX_URL_CHARS - fieldPrefix.length();
+		if (fieldBudget <= 0) return prefix + encodedTitle.text;
 
-		int titleBudget = Math.min(MAX_TITLE_ENCODED_CHARS, availableTitleBudget);
-		Encoded titleEncoded = encodeBounded(value(title), titleBudget);
-		String prefix = fixedPrefix + titleEncoded.text + bodySeparator;
-		int bodyBudget = MAX_URL_CHARS - prefix.length();
-		if (bodyBudget <= 0) {
-			return prefix;
-		}
+		Encoded summary = encodeBounded(value(fieldValue), fieldBudget);
+		if (summary.complete) return fieldPrefix + summary.text;
 
-		Encoded fullBody = encodeBounded(value(body), bodyBudget);
-		if (fullBody.complete) {
-			return prefix + fullBody.text;
-		}
-
-		Encoded notice = encodeBounded(value(truncationNotice), bodyBudget);
-		int truncatedBodyBudget = Math.max(0, bodyBudget - notice.text.length());
-		Encoded truncatedBody = encodeBounded(value(body), truncatedBodyBudget);
-		return prefix + truncatedBody.text + notice.text;
+		Encoded notice = encodeBounded(SHORTENED_NOTICE, fieldBudget);
+		int summaryBudget = Math.max(0, fieldBudget - notice.text.length());
+		return fieldPrefix + encodeBounded(value(fieldValue), summaryBudget).text + notice.text;
 	}
 
 	private static String encode(String value) {
@@ -62,12 +55,8 @@ final class GitHubIssueDraft {
 	}
 
 	private static Encoded encodeBounded(String value, int maxChars) {
-		if (value.isEmpty()) {
-			return new Encoded("", true);
-		}
-		if (maxChars <= 0) {
-			return new Encoded("", false);
-		}
+		if (value.isEmpty()) return new Encoded("", true);
+		if (maxChars <= 0) return new Encoded("", false);
 
 		StringBuilder encoded = new StringBuilder(Math.min(maxChars, Math.max(16, value.length())));
 		for (int offset = 0; offset < value.length(); ) {
@@ -85,9 +74,7 @@ final class GitHubIssueDraft {
 
 	private static int encodedLength(byte[] bytes) {
 		int length = 0;
-		for (byte value : bytes) {
-			length += isUnreserved(value & 0xff) ? 1 : 3;
-		}
+		for (byte value : bytes) length += isUnreserved(value & 0xff) ? 1 : 3;
 		return length;
 	}
 

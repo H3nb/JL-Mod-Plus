@@ -45,9 +45,7 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 	@Override
 	protected void attachBaseContext(Context base) {
 		super.attachBaseContext(base);
-		if (CrashReporter.initialize(this)) {
-			return;
-		}
+		CrashReporter.initialize(this);
 		instance = this;
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);

@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +44,7 @@ public class RunnableEvent extends Event {
 	}
 
 	@Override
-	public void recycle() {
+	protected void recycleEvent() {
 		runnable = null;
 		recycled.push(this);
 	}

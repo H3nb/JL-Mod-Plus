@@ -83,6 +83,7 @@ import javax.microedition.lcdui.overlay.Overlay;
 import javax.microedition.lcdui.overlay.OverlayView;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.MicroActivity;
+import javax.microedition.shell.MidletThread;
 import javax.microedition.shell.GuestTimingBridge;
 import javax.microedition.shell.timing.AutoSpeedController;
 import javax.microedition.shell.timing.FramePacer;
@@ -1633,10 +1634,16 @@ public abstract class Canvas extends Displayable {
 			}
 			Graphics g = offscreen.getSingleGraphics();
 			g.reset(l, t, r, b);
+			boolean enteredGuest = MidletThread.enterGuestExecution();
 			try {
 				paint(g);
-			} catch (Throwable e) {
+			} catch (Exception e) {
 				Log.e(TAG, "Error in paint()", e);
+			} catch (Error fatal) {
+				MidletThread.markEscapingGuestFailure(fatal);
+				throw fatal;
+			} finally {
+				MidletThread.exitGuestExecution(enteredGuest);
 			}
 			synchronized (bufferLock) {
 				offscreen.copyTo(offscreenCopy);
@@ -1649,7 +1656,7 @@ public abstract class Canvas extends Displayable {
 		}
 
 		@Override
-		public void recycle() {
+		protected void recycleEvent() {
 		}
 
 		@Override

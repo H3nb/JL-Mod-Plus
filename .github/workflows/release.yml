@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - alpha
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:
     inputs:
       prerelease_suffix:
@@ -128,10 +131,11 @@ jobs:
         env:
           JLMOD_BUILD_COMMIT: ${{ github.sha }}
         run: >-
-          ./gradlew --no-daemon --stacktrace
+          ./gradlew --daemon --stacktrace --profile --continue
           :app:lintEmulatorDebug
           :dexlib:lintDebug
           :app:testEmulatorDebugUnitTest
+          :dexlib:testDebugUnitTest
           :app:validateEmulatorDebugScreenshotTest
 
       - name: Assemble versioned release
@@ -139,7 +143,7 @@ jobs:
           VERSION_SUFFIX: ${{ steps.channel.outputs.version_suffix }}
           JLMOD_BUILD_COMMIT: ${{ github.sha }}
         run: >-
-          ./gradlew --no-daemon --stacktrace
+          ./gradlew --daemon --stacktrace --profile
           :app:assembleEmulatorRelease
 
       - name: Prepare release artifacts
@@ -273,3 +277,25 @@ jobs:
           fi
 
           gh "${args[@]}"
+
+      - name: Upload release diagnostics
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-release-diagnostics
+          path: |
+            app/build/reports/lint-results-*.html
+            app/build/reports/lint-results-*.xml
+            app/build/reports/lint-results-*.sarif
+            dexlib/build/reports/lint-results-*.html
+            dexlib/build/reports/lint-results-*.xml
+            dexlib/build/reports/lint-results-*.sarif
+            app/build/reports/tests/**
+            app/build/test-results/**
+            dexlib/build/reports/tests/**
+            dexlib/build/test-results/**
+            app/build/reports/screenshotTest/**
+            build/reports/problems/**
+            build/reports/profile/**
+          if-no-files-found: warn
+          retention-days: 7

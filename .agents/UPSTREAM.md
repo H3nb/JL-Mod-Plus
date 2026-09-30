@@ -32,7 +32,7 @@ When a selected skill references a missing `references/...` or `scripts/...` fil
 
 ## Project interpretation for coding agents
 
-These sections record JL-Mod Plus interpretations of the corresponding vendored skills. [AGENTS.md](../AGENTS.md) and [Agent development workflow](../docs/agent-workflow.md#repository-skills) define precedence and routing.
+These sections override conflicting generic recipes in the corresponding vendored skills. [AGENTS.md](../AGENTS.md) and [Agent development workflow](../docs/agent-workflow.md#repository-skills) define precedence and routing.
 
 ### migrate-xml-views-to-jetpack-compose
 
@@ -46,7 +46,7 @@ These sections record JL-Mod Plus interpretations of the corresponding vendored 
 
 ### adaptive
 
-- Step 3.3 requests user verification of screenshots. Inspect rendered output yourself and provide reviewable artifacts; ask for a product decision only when visual intent remains materially ambiguous.
+- Step 1's screenshot setup, Step 3.3's instruction to record references, and the final step's prohibition on updating them all follow [Visual verification](../docs/development.md#visual-verification-and-screenshot-references). Select coverage by risk; inspect actual renders and diffs before accepting authorized baseline changes. The final step does not require handing baseline updates back to the user.
 - JL-Mod Plus intentionally mixes app-owned Compose surfaces with protected View/Java ME/runtime boundaries. The skill's whole-app Compose and Navigation 3 prerequisites do not authorize migration of unrelated or compatibility-sensitive boundaries. Apply adaptive guidance only to the app-owned surface in scope.
 - Instructions to add Navigation 3 scenes or experimental Grid apply only when those choices solve the requested layout problem within the current stack. Prefer a stable, simpler layout when it meets the requirement; ask about an experimental API only if its use is necessary and materially changes the product or compatibility decision.
 
@@ -64,7 +64,10 @@ These sections record JL-Mod Plus interpretations of the corresponding vendored 
 
 ### testing-setup
 
-- This skill is for creating or materially changing testing infrastructure, not for ordinary regression tests that already fit the current stack. Its broad framework/DI installation sequence is not a default migration plan; add infrastructure only when the requested testing capability genuinely requires it. Follow [Testing strategy](../docs/development.md#testing-strategy).
+- This skill is for creating or materially changing testing infrastructure, not ordinary regression tests. [Testing strategy](../docs/development.md#testing-strategy) governs selection and maintenance; use only recipe steps needed for the requested capability.
+- Steps 2, 4, 13, and 14 do not mandate Hilt/DI, interface/Default pairs, Dropshots, or JaCoCo. Prefer existing boundaries and tools; add infrastructure only for a concrete unmet need.
+- Steps 5, 8, and 12 do not require per-file test expansion, nine-size screenshot matrices, every theme/font combination, or an end-to-end percentage. Select distinct failure modes using the project testing and visual-verification policies.
+- Document authorized testing changes in `docs/development.md` without a separate approval pause. Keep `AGENTS.md` as the router rather than copying task commands or the skill's testing recipe into it.
 
 ### camerax
 

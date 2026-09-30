@@ -269,10 +269,6 @@ dependencies {
 
     implementation(libs.google.gson)
     implementation(libs.google.oboe)
-
-    implementation(libs.acra.core) {
-        exclude(group = "com.google.auto.service", module = "auto-service")
-    }
     implementation(libs.ffmpeg.kit)
     implementation(libs.pngj)
     implementation(libs.rx.android)

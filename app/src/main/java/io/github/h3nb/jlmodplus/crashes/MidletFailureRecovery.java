@@ -43,7 +43,7 @@ public final class MidletFailureRecovery {
 		// Keep this entry point self-contained for non-startup callers. MainActivity uses the
 		// stored-only variant after CrashReporter has completed background retention maintenance.
 		MidletSessionJournal.prune(context);
-		LocalCrashReportStore.prune(context);
+		JavaDiagnosticStore.migrateLegacyAndPrune(context);
 		return findPendingStoredFailure(context);
 	}
 

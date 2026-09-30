@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
@@ -80,6 +81,7 @@ public class CanvasEvent extends Event {
 		}
 		instance.canvas = canvas;
 		instance.eventType = eventType;
+		instance.asGuestCallback();
 		return instance;
 	}
 
@@ -153,7 +155,7 @@ public class CanvasEvent extends Event {
 	}
 
 	@Override
-	public void recycle() {
+	protected void recycleEvent() {
 		canvas = null;
 		recycled.push(this);
 	}

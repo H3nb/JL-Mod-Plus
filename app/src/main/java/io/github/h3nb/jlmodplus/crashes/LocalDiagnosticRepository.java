@@ -4,187 +4,228 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package io.github.h3nb.jlmodplus.crashes;
 
-import static org.acra.ReportField.ANDROID_VERSION;
-import static org.acra.ReportField.APP_VERSION_NAME;
-import static org.acra.ReportField.BRAND;
-import static org.acra.ReportField.CUSTOM_DATA;
-import static org.acra.ReportField.PHONE_MODEL;
-import static org.acra.ReportField.REPORT_ID;
-import static org.acra.ReportField.STACK_TRACE;
-import static org.acra.ReportField.STACK_TRACE_HASH;
-import static org.acra.ReportField.THREAD_DETAILS;
-
 import android.content.Context;
-import android.system.OsConstants;
 import android.util.Log;
 
-import org.acra.data.CrashReportData;
-import org.acra.file.CrashReportPersister;
-import org.acra.file.ReportLocator;
-import org.json.JSONObject;
-
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
-/** Reads, correlates, and projects bounded local evidence into actionable logical incidents. */
+/**
+ * Correlates durable evidence into logical incidents.
+ *
+ * This repository does not decode active collector formats or diagnose failures. Evidence stores
+ * own persistence; {@link IncidentInterpreter} owns semantic interpretation.
+ */
 public final class LocalDiagnosticRepository {
 	private static final String TAG = LocalDiagnosticRepository.class.getSimpleName();
 
 	private LocalDiagnosticRepository() {}
 
-	/** Self-contained load for background/non-UI callers that also snapshots framework history. */
+	/** Self-contained background load that also harvests/migrates external evidence sources. */
 	public static List<Record> load(Context context) {
+		JavaDiagnosticStore.migrateLegacyAndPrune(context);
 		ProcessExitStore.ingest(context);
 		return loadStored(context);
 	}
 
-	/** Reads only the already-maintained durable projection without historical ingestion. */
+	/** Reads only the already-maintained durable evidence without historical ingestion/migration. */
 	public static List<Record> loadStored(Context context) {
 		ArrayList<SessionRecord> sessions = readSessionRecords(context);
-		Map<String, SessionRecord> allSessions = new HashMap<>();
-		ArrayList<MutableRecord> journalRecords = new ArrayList<>();
+		Map<String, SessionRecord> sessionsById = new HashMap<>();
 		Map<String, MutableRecord> failuresBySession = new HashMap<>();
+		Map<String, MutableRecord> failuresByEvent = new HashMap<>();
+		ArrayList<MutableRecord> journalIncidents = new ArrayList<>();
 		for (SessionRecord session : sessions) {
-			if (session.snapshot.sessionId != null) {
-				allSessions.put(session.snapshot.sessionId, session);
-			}
-			if (session.snapshot.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
-					&& MidletFailureRecovery.isSafeEventId(session.snapshot.failureEventId)) {
-				MutableRecord failure = new MutableRecord(session);
-				journalRecords.add(failure);
-				failuresBySession.put(failure.sessionId, failure);
-			}
-		}
-
-		ArrayList<Record> standaloneReports = new ArrayList<>();
-		ArrayList<RawJavaReport> rawReports = collapseFallbackDuplicates(readRawJavaReports(context));
-		ArrayList<RawJavaReport> standaloneRawReports = new ArrayList<>();
-		Map<String, RawJavaReport> fatalByRun = new HashMap<>();
-		for (RawJavaReport raw : rawReports) {
-			MutableRecord journal = failuresBySession.get(raw.sessionId);
-			if (journal != null && isExactEventMatch(
-					journal.sessionId, journal.eventId, raw.sessionId, raw.stackTrace)) {
-				journal.attach(raw);
-			} else {
-				standaloneRawReports.add(raw);
-				String runKey = raw.fatalFallback ? fatalRunKey(raw) : null;
-				if (runKey != null) fatalByRun.put(runKey, raw);
+			MidletSessionJournal.Snapshot snapshot = session.snapshot;
+			if (snapshot.sessionId != null) sessionsById.put(snapshot.sessionId, session);
+			if (snapshot.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
+					&& MidletFailureRecovery.isSafeEventId(snapshot.failureEventId)) {
+				MutableRecord incident = new MutableRecord(session);
+				journalIncidents.add(incident);
+				if (snapshot.sessionId != null) failuresBySession.put(snapshot.sessionId, incident);
+				failuresByEvent.put(snapshot.failureEventId, incident);
 			}
 		}
 
-		for (ProcessExitStore.Snapshot exit : ProcessExitStore.loadStored(context)) {
-			MutableRecord journal = failuresBySession.get(exit.sessionId);
+		ArrayList<JavaDiagnosticStore.Snapshot> standaloneJava = new ArrayList<>();
+		for (JavaDiagnosticStore.Snapshot java : JavaDiagnosticStore.loadStored(context)) {
+			MutableRecord journal = matchingJournal(java, failuresBySession, failuresByEvent);
 			if (journal != null) {
-				journal.attach(exit);
+				journal.attach(java);
 			} else {
-				RawJavaReport fatal = fatalByRun.remove(processRunKey(exit));
-				if (fatal != null) {
-					standaloneRawReports.remove(fatal);
-					standaloneReports.add(Record.fromRaw(fatal, exit));
-				} else {
-					standaloneReports.add(Record.fromProcessExit(exit, allSessions.get(exit.sessionId)));
-				}
+				standaloneJava.add(java);
 			}
-		}
-		for (RawJavaReport raw : standaloneRawReports) {
-			standaloneReports.add(Record.fromRaw(raw));
 		}
 
-		ArrayList<Record> records = new ArrayList<>(journalRecords.size() + standaloneReports.size());
-		for (MutableRecord journal : journalRecords) {
-			records.add(journal.freeze());
+		ArrayList<StandaloneJavaRecord> javaIncidents = new ArrayList<>(standaloneJava.size());
+		for (JavaDiagnosticStore.Snapshot java : standaloneJava) {
+			javaIncidents.add(new StandaloneJavaRecord(java));
 		}
-		records.addAll(standaloneReports);
-		Collections.sort(records, (left, right) -> {
-			if (left.timestampMillis == right.timestampMillis) {
-				return left.id.compareTo(right.id);
+
+		ArrayList<Record> standaloneExits = new ArrayList<>();
+		for (ProcessExitStore.Snapshot exit : ProcessExitStore.loadStored(context)) {
+			MutableRecord journal = exit.sessionId == null ? null : failuresBySession.get(exit.sessionId);
+			if (journal != null && shouldAttachExitToSession(journal.snapshot, exit)) {
+				journal.attach(exit);
+				continue;
 			}
+			StandaloneJavaRecord java = matchingJavaIncident(exit, javaIncidents);
+			if (java != null) {
+				java.processExit = exit;
+				continue;
+			}
+			SessionRecord session = exit.sessionId == null ? null : sessionsById.get(exit.sessionId);
+			standaloneExits.add(Record.fromProcessExit(
+					exit, session == null ? null : session.snapshot.midletName));
+		}
+
+		ArrayList<Record> records = new ArrayList<>(
+				journalIncidents.size() + javaIncidents.size() + standaloneExits.size());
+		for (MutableRecord incident : journalIncidents) records.add(incident.freeze());
+		for (StandaloneJavaRecord java : javaIncidents) records.add(java.freeze());
+		records.addAll(standaloneExits);
+		Collections.sort(records, (left, right) -> {
+			if (left.timestampMillis == right.timestampMillis) return left.id.compareTo(right.id);
 			return left.timestampMillis < right.timestampMillis ? 1 : -1;
 		});
 		return records;
 	}
 
-	private static ArrayList<RawJavaReport> collapseFallbackDuplicates(List<RawJavaReport> reports) {
-		ArrayList<RawJavaReport> result = new ArrayList<>(reports);
-		for (RawJavaReport fallback : reports) {
-			if (!fallback.fatalFallback || fallback.stackTrace == null) continue;
-			String fallbackRun = fatalRunKey(fallback);
-			for (RawJavaReport candidate : reports) {
-				if (candidate == fallback || candidate.fatalFallback || candidate.stackTrace == null) continue;
-				if (fallbackRun != null && fallbackRun.equals(fatalRunKey(candidate))
-						&& fallback.stackTrace.equals(candidate.stackTrace)) {
-					fallback.files.addAll(candidate.files);
-					result.remove(candidate);
-				}
+	static boolean shouldAttachToSession(MidletSessionJournal.Snapshot session,
+			JavaDiagnosticStore.Snapshot java) {
+		if (session == null || java == null
+				|| session.outcome != MidletSessionJournal.Outcome.UNEXPECTED_FAILURE) {
+			return false;
+		}
+		if (java.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE) {
+			return session.sessionId != null && session.sessionId.equals(java.sessionId);
+		}
+		return isVerifiedLegacySessionFailure(session, java);
+	}
+
+	private static MutableRecord matchingJournal(JavaDiagnosticStore.Snapshot java,
+			Map<String, MutableRecord> bySession, Map<String, MutableRecord> byEvent) {
+		if (java == null) return null;
+		if (java.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE
+				&& java.sessionId != null) {
+			MutableRecord candidate = bySession.get(java.sessionId);
+			return candidate != null && shouldAttachToSession(candidate.snapshot, java) ? candidate : null;
+		}
+		if (java.kind.legacy && MidletFailureRecovery.isSafeEventId(java.legacyEventId)) {
+			MutableRecord candidate = byEvent.get(java.legacyEventId);
+			return candidate != null && shouldAttachToSession(candidate.snapshot, java) ? candidate : null;
+		}
+		return null;
+	}
+
+	private static boolean isVerifiedLegacySessionFailure(
+			MidletSessionJournal.Snapshot session, JavaDiagnosticStore.Snapshot java) {
+		if (session.failureBoundary == null
+				|| !java.kind.legacy
+				|| !MidletFailureRecovery.isSafeEventId(session.failureEventId)
+				|| !session.failureEventId.equals(java.legacyEventId)
+				|| !session.failureBoundary.name().equals(java.legacyBoundary)
+				|| !hasLegacySessionFailureWrapper(java)) {
+			return false;
+		}
+		return java.sessionId == null
+				|| session.sessionId != null && session.sessionId.equals(java.sessionId);
+	}
+
+	private static boolean hasLegacySessionFailureWrapper(JavaDiagnosticStore.Snapshot java) {
+		for (JavaDiagnosticStore.ThrowableData throwable : java.throwables) {
+			if ("javax.microedition.shell.MidletThread$SessionFailureException"
+					.equals(throwable.className)) {
+				return true;
 			}
 		}
-		return result;
+		return false;
 	}
 
-	private static String fatalRunKey(RawJavaReport raw) {
-		if (raw == null || raw.appContext == null || raw.appContext.runId == null) return null;
-		return raw.appContext.runId + "\u0000" + String.valueOf(raw.processRole);
+	static boolean shouldAttachExitToSession(MidletSessionJournal.Snapshot session,
+			ProcessExitStore.Snapshot exit) {
+		return session != null
+				&& exit != null
+				&& session.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
+				&& MidletFailureRecovery.isSafeEventId(session.failureEventId)
+				&& session.sessionId != null
+				&& session.sessionId.equals(exit.sessionId)
+				&& ProcessExitStore.isControlledRuntimeShutdown(exit);
 	}
 
-	private static String processRunKey(ProcessExitStore.Snapshot exit) {
-		if (exit == null || exit.appContext == null || exit.appContext.runId == null) return null;
-		return exit.appContext.runId + "\u0000" + String.valueOf(exit.processRole);
+	static boolean shouldAttachExitToJava(JavaDiagnosticStore.Snapshot java,
+			ProcessExitStore.Snapshot exit) {
+		return java != null
+				&& exit != null
+				&& java.kind == JavaDiagnosticStore.Kind.FATAL_UNCAUGHT
+				&& java.pid > 0
+				&& java.pid == exit.pid
+				&& java.processRole != null
+				&& java.processRole.equals(exit.processRole)
+				&& exit.reason == ProcessExitStore.REASON_CRASH
+				&& hasSameProcessFailureIdentity(java, exit);
+	}
+
+	private static boolean hasSameProcessFailureIdentity(
+			JavaDiagnosticStore.Snapshot java, ProcessExitStore.Snapshot exit) {
+		if (java.sessionId != null && java.sessionId.equals(exit.sessionId)) {
+			return true;
+		}
+		String javaRunId = java.appContext == null ? null : java.appContext.runId;
+		String exitRunId = exit.appContext == null ? null : exit.appContext.runId;
+		return javaRunId != null && javaRunId.equals(exitRunId);
+	}
+
+	private static StandaloneJavaRecord matchingJavaIncident(
+			ProcessExitStore.Snapshot exit, List<StandaloneJavaRecord> candidates) {
+		StandaloneJavaRecord match = null;
+		for (StandaloneJavaRecord candidate : candidates) {
+			if (candidate.processExit != null || !shouldAttachExitToJava(candidate.java, exit)) {
+				continue;
+			}
+			if (match != null) {
+				return null;
+			}
+			match = candidate;
+		}
+		return match;
 	}
 
 	public static Record find(Context context, String id) {
-		if (id == null) {
-			return null;
-		}
-		for (Record record : load(context)) {
-			if (id.equals(record.id)) {
-				return record;
-			}
-		}
+		if (id == null) return null;
+		for (Record record : load(context)) if (id.equals(record.id)) return record;
 		return null;
 	}
 
 	public static Record findStored(Context context, String id) {
-		if (id == null) {
-			return null;
-		}
-		for (Record record : loadStored(context)) {
-			if (id.equals(record.id)) {
-				return record;
-			}
-		}
+		if (id == null) return null;
+		for (Record record : loadStored(context)) if (id.equals(record.id)) return record;
 		return null;
 	}
 
-	/**
-	 * Deletes exactly the selected logical record. The durable suppression marker is created only
-	 * immediately before process-exit evidence is removed, so an earlier dependent-file failure does
-	 * not hide evidence that the failed delete left behind.
-	 */
 	public static boolean delete(Context context, Record record) {
-		if (record == null) {
-			return false;
-		}
-		for (File rawFile : record.rawFiles) {
-			if (rawFile.isFile() && !rawFile.delete()) {
-				Log.w(TAG, "Unable to delete raw crash report: " + rawFile.getName());
+		return deleteWithArtifacts(context, record).sourceDeleted;
+	}
+
+	static DeleteResult deleteWithArtifacts(Context context, Record record) {
+		if (!deleteSource(context, record)) return new DeleteResult(false, true);
+		boolean bundleDeleted = DiagnosticBundleStore.deleteTracked(context, record);
+		return new DeleteResult(true, bundleDeleted);
+	}
+
+	private static boolean deleteSource(Context context, Record record) {
+		if (record == null) return false;
+		for (JavaDiagnosticStore.Snapshot java : record.javaEvidence) {
+			if (!JavaDiagnosticStore.delete(java)) {
+				Log.w(TAG, "Unable to delete Java diagnostic evidence");
 				return false;
 			}
 		}
@@ -208,44 +249,14 @@ public final class LocalDiagnosticRepository {
 		return true;
 	}
 
-	static boolean isExactEventMatch(String journalSessionId, String eventId, String rawSessionId,
-			String stackTrace) {
-		return journalSessionId != null
-				&& journalSessionId.equals(rawSessionId)
-				&& MidletFailureRecovery.isSafeEventId(eventId)
-				&& stackTrace != null
-				&& stackTrace.contains("eventId=" + eventId + ";");
-	}
+	static final class DeleteResult {
+		final boolean sourceDeleted;
+		final boolean bundleDeleted;
 
-	static String failureHeadline(String stackTrace) {
-		if (stackTrace == null) {
-			return null;
+		DeleteResult(boolean sourceDeleted, boolean bundleDeleted) {
+			this.sourceDeleted = sourceDeleted;
+			this.bundleDeleted = bundleDeleted;
 		}
-		for (String line : stackTrace.split("\\r?\\n")) {
-			String trimmed = line.trim();
-			if (trimmed.isEmpty() || trimmed.startsWith("eventId=")) {
-				continue;
-			}
-			if (!trimmed.startsWith("at ") && !trimmed.startsWith("...")
-					&& !trimmed.startsWith("Caused by:")) {
-				return trimmed;
-			}
-		}
-		return null;
-	}
-
-	static String topAppFrame(String stackTrace) {
-		if (stackTrace == null) {
-			return null;
-		}
-		for (String line : stackTrace.split("\\r?\\n")) {
-			String trimmed = line.trim();
-			if (trimmed.startsWith("at io.github.h3nb.jlmodplus.")
-					|| trimmed.startsWith("at ru.playsoftware.j2meloader.")) {
-				return trimmed.substring(3);
-			}
-		}
-		return null;
 	}
 
 	private static ArrayList<SessionRecord> readSessionRecords(Context context) {
@@ -254,227 +265,11 @@ public final class LocalDiagnosticRepository {
 		for (File file : files) {
 			try {
 				records.add(new SessionRecord(file, MidletSessionJournal.read(file)));
-			} catch (IOException | RuntimeException e) {
-				Log.w(TAG, "Ignoring unreadable MIDlet diagnostic journal: " + file.getName(), e);
+			} catch (Exception error) {
+				Log.w(TAG, "Ignoring unreadable MIDlet diagnostic journal: " + file.getName());
 			}
 		}
 		return records;
-	}
-
-	private static List<RawJavaReport> readRawJavaReports(Context context) {
-		ReportLocator locator = new ReportLocator(context);
-		ArrayList<File> files = new ArrayList<>();
-		Collections.addAll(files, locator.getApprovedReports());
-		Collections.addAll(files, locator.getUnapprovedReports());
-		ArrayList<RawJavaReport> reports = new ArrayList<>(files.size());
-		CrashReportPersister persister = new CrashReportPersister();
-		Set<String> seenPaths = new HashSet<>();
-		for (File file : files) {
-			if (file == null || !file.isFile() || !seenPaths.add(file.getAbsolutePath())) {
-				continue;
-			}
-			try {
-				CrashReportData data = persister.load(file);
-				reports.add(RawJavaReport.from(context, file, data));
-			} catch (Exception e) {
-				Log.w(TAG, "Ignoring unreadable local Java crash report: " + file.getName(), e);
-			}
-		}
-		for (FatalJavaCrashStore.Snapshot fallback : FatalJavaCrashStore.load(context)) {
-			reports.add(RawJavaReport.fromFallback(fallback));
-		}
-		return reports;
-	}
-
-	private static String stringValue(Object value) {
-		if (value == null || JSONObject.NULL.equals(value)) {
-			return null;
-		}
-		String text = String.valueOf(value).trim();
-		return text.isEmpty() ? null : text;
-	}
-
-	private static String custom(JSONObject custom, String key) {
-		return custom == null ? null : stringValue(custom.opt(key));
-	}
-
-	private static void appendLine(StringBuilder text, String label, String value) {
-		if (value != null && !value.isEmpty()) {
-			text.append(label).append(": ").append(value).append('\n');
-		}
-	}
-
-	private static void appendSessionSummary(StringBuilder detail, MidletSessionJournal.Snapshot snapshot) {
-		if (snapshot == null) {
-			return;
-		}
-		appendLine(detail, "Lifecycle stage", snapshot.stage == null ? null : snapshot.stage.name());
-		appendLine(detail, "Session outcome", snapshot.outcome == null ? null : snapshot.outcome.name());
-		appendLine(detail, "MIDlet", snapshot.midletName);
-		appendLine(detail, "MIDlet version", snapshot.midletVersion);
-		appendLine(detail, "Entrypoint", snapshot.mainClass);
-		appendLine(detail, "JAR fingerprint", shortFingerprint(snapshot.jarSha256));
-	}
-
-	private static void appendJavaFailureSummary(StringBuilder detail, RawJavaReport raw) {
-		appendLine(detail, "Failure", failureHeadline(raw.stackTrace));
-		appendLine(detail, "Top app frame", topAppFrame(raw.stackTrace));
-		appendLine(detail, "Thread", raw.threadDetails);
-		appendLine(detail, "Fingerprint", shortFingerprint(raw.stackTraceHash));
-	}
-
-	private static void appendProcessExitSummary(StringBuilder detail, ProcessExitStore.Snapshot exit) {
-		if (exit == null) {
-			return;
-		}
-		String status = ProcessExitStore.statusLabel(exit);
-		String mechanism = ProcessExitStore.reasonLabel(exit.reason);
-		if ((exit.reason == ProcessExitStore.REASON_SIGNALED
-				|| exit.reason == ProcessExitStore.REASON_CRASH_NATIVE) && status != null) {
-			mechanism = mechanism + " · " + status;
-		}
-		appendLine(detail, "Exit reason", mechanism);
-		appendLine(detail, "Failure", mechanism);
-		appendLine(detail, "Process", processLabel(exit));
-		appendLine(detail, "PID", exit.pid > 0 ? Integer.toString(exit.pid) : null);
-		appendLine(detail, "Exit status", status);
-		appendLine(detail, "Importance", ProcessExitStore.importanceLabel(exit.importance));
-		if (exit.reason == ProcessExitStore.REASON_SIGNALED && exit.status == OsConstants.SIGKILL
-				&& exit.lowMemoryKillReportSupported) {
-			appendLine(detail, "Cause", "unknown");
-		}
-		appendAppContext(detail, exit.appContext, exit.timestampMillis);
-		appendBuild(detail, exit.appContext, null);
-		appendEnvironment(detail, exit.stateSdk, joinDevice(exit.deviceBrand, exit.deviceModel), null);
-		if (shouldShowMemory(exit)) {
-			appendLine(detail, "Memory sample", memorySample(exit.pssKb, exit.rssKb));
-		}
-		appendLine(detail, "System description", exit.description);
-		if (exit.traceBytes > 0) {
-			String evidence = "native-tombstone-protobuf".equals(exit.traceKind)
-					? "native tombstone retained" : "system trace retained";
-			if (exit.traceTruncated) {
-				evidence += " (truncated at retention limit)";
-			}
-			appendLine(detail, "Evidence", evidence);
-		} else if (exit.reason == ProcessExitStore.REASON_CRASH) {
-			appendLine(detail, "Evidence",
-					"Android supplied no Java stack trace for this process exit");
-		}
-		String trace = ProcessExitStore.readDisplayTrace(exit);
-		if (trace != null && !trace.trim().isEmpty()) {
-			detail.append("\nANR trace:\n").append(trace.trim()).append('\n');
-		}
-	}
-
-	private static String processLabel(ProcessExitStore.Snapshot exit) {
-		if (exit.processRole == null) return exit.processName;
-		if (exit.processName == null) return exit.processRole;
-		return exit.processRole + " · " + exit.processName;
-	}
-
-	private static boolean shouldShowMemory(ProcessExitStore.Snapshot exit) {
-		return exit.reason == ProcessExitStore.REASON_LOW_MEMORY
-				|| exit.reason == ProcessExitStore.REASON_EXCESSIVE_RESOURCE_USAGE
-				|| (exit.reason == ProcessExitStore.REASON_SIGNALED && exit.status == OsConstants.SIGKILL);
-	}
-
-	private static String memorySample(long pssKb, long rssKb) {
-		StringBuilder value = new StringBuilder();
-		if (pssKb > 0) {
-			value.append("PSS ").append(pssKb).append(" kB");
-		}
-		if (rssKb > 0) {
-			if (value.length() > 0) value.append(" · ");
-			value.append("RSS ").append(rssKb).append(" kB");
-		}
-		return value.length() == 0 ? null : value.toString();
-	}
-
-	private static void appendBuild(StringBuilder detail, CrashContextStore.Snapshot context,
-			String fallbackVersion) {
-		if (context != null) {
-			String commit = shortFingerprint(context.buildCommit);
-			if (commit != null || context.buildVariant != null) {
-				StringBuilder value = new StringBuilder();
-				if (commit != null) value.append(commit);
-				if (context.buildVariant != null) {
-					if (value.length() > 0) value.append(" · ");
-					value.append(context.buildVariant);
-				}
-				appendLine(detail, "Build", value.toString());
-				return;
-			}
-		}
-		appendLine(detail, "App version", fallbackVersion);
-	}
-
-	private static void appendEnvironment(StringBuilder detail, int sdk, String device,
-			String androidVersion) {
-		StringBuilder value = new StringBuilder();
-		if (sdk >= 0) {
-			value.append("Android SDK ").append(sdk);
-		} else if (androidVersion != null) {
-			value.append("Android ").append(androidVersion);
-		}
-		if (device != null) {
-			if (value.length() > 0) value.append(" · ");
-			value.append(device);
-		}
-		appendLine(detail, "Environment", value.length() == 0 ? null : value.toString());
-	}
-
-	private static void appendAppContext(StringBuilder detail, CrashContextStore.Snapshot context,
-			long failureTimeMillis) {
-		if (context == null || context.location == null) {
-			return;
-		}
-		detail.append("\nLast app context\n");
-		appendLine(detail, "Location", context.location);
-		appendLine(detail, "Previous", context.previousLocation);
-		appendLine(detail, "Action", context.action);
-		appendLine(detail, "Phase", context.phase);
-		appendLine(detail, "Context age", relativeAge(failureTimeMillis, context.updatedWallTimeMillis));
-		if (!context.breadcrumbs.isEmpty()) {
-			detail.append("Recent transitions:\n");
-			for (CrashContextStore.Breadcrumb breadcrumb : context.breadcrumbs) {
-				detail.append("- ");
-				String age = relativeAge(failureTimeMillis, breadcrumb.wallTimeMillis);
-				if (age != null) {
-					detail.append(age).append(" · ");
-				}
-				detail.append(breadcrumb.location);
-				if (breadcrumb.action != null) detail.append(" · ").append(breadcrumb.action);
-				if (breadcrumb.phase != null) detail.append(" · ").append(breadcrumb.phase);
-				detail.append('\n');
-			}
-		}
-	}
-
-	private static String relativeAge(long failureTimeMillis, long contextTimeMillis) {
-		if (failureTimeMillis <= 0 || contextTimeMillis <= 0 || failureTimeMillis < contextTimeMillis) {
-			return null;
-		}
-		long delta = failureTimeMillis - contextTimeMillis;
-		if (delta < 1000) {
-			return delta + " ms before failure";
-		}
-		if (delta < 60_000) {
-			return String.format(Locale.US, "%.1f s before failure", delta / 1000.0);
-		}
-		return (delta / 60_000) + " min before failure";
-	}
-
-	private static String shortFingerprint(String value) {
-		if (value == null || value.trim().isEmpty() || "unknown".equalsIgnoreCase(value.trim())) {
-			return null;
-		}
-		String trimmed = value.trim();
-		return trimmed.length() <= 12 ? trimmed : trimmed.substring(0, 12);
-	}
-
-	private static boolean same(String left, String right) {
-		return left == null ? right == null : left.equals(right);
 	}
 
 	public enum Kind {
@@ -491,15 +286,16 @@ public final class LocalDiagnosticRepository {
 		private final String sessionId;
 		private final String midletName;
 		private final String processRole;
-		private final String stackTrace;
-		private final String detailText;
+		private final IncidentSummary incidentSummary;
 		private final File journalFile;
-		private final List<File> rawFiles;
+		private final List<JavaDiagnosticStore.Snapshot> javaEvidence;
+		private final JavaDiagnosticStore.Snapshot primaryJava;
 		private final ProcessExitStore.Snapshot processExit;
 
 		private Record(String id, Kind kind, long timestampMillis, String eventId, String sessionId,
-				String midletName, String processRole, String stackTrace, String detailText,
-				File journalFile, List<File> rawFiles, ProcessExitStore.Snapshot processExit) {
+				String midletName, String processRole, IncidentSummary incidentSummary,
+				File journalFile, List<JavaDiagnosticStore.Snapshot> javaEvidence,
+				JavaDiagnosticStore.Snapshot primaryJava, ProcessExitStore.Snapshot processExit) {
 			this.id = id;
 			this.kind = kind;
 			this.timestampMillis = timestampMillis;
@@ -507,75 +303,46 @@ public final class LocalDiagnosticRepository {
 			this.sessionId = sessionId;
 			this.midletName = midletName;
 			this.processRole = processRole;
-			this.stackTrace = stackTrace;
-			this.detailText = detailText;
+			this.incidentSummary = incidentSummary;
 			this.journalFile = journalFile;
-			this.rawFiles = Collections.unmodifiableList(new ArrayList<>(rawFiles));
+			this.javaEvidence = Collections.unmodifiableList(new ArrayList<>(javaEvidence));
+			this.primaryJava = primaryJava;
 			this.processExit = processExit;
 		}
 
-		private static Record fromRaw(RawJavaReport raw) {
-			return fromRaw(raw, null);
-		}
-
-		private static Record fromRaw(RawJavaReport raw, ProcessExitStore.Snapshot exit) {
-			StringBuilder detail = new StringBuilder("Type: Java diagnostic report\n");
-			appendJavaFailureSummary(detail, raw);
-			appendAppContext(detail, raw.appContext, raw.timestampMillis);
-			appendBuild(detail, raw.appContext, raw.appVersion);
-			appendEnvironment(detail, -1, joinDevice(raw.brand, raw.phoneModel), raw.androidVersion);
-			if (exit != null) {
-				detail.append('\n');
-				appendProcessExitSummary(detail, exit);
-			}
-			if (raw.midletName != null) {
-				detail.append('\n');
-				appendLine(detail, "MIDlet", raw.midletName);
-				appendLine(detail, "MIDlet version", raw.midletVersion);
-				appendLine(detail, "Entrypoint", raw.mainClass);
-				appendLine(detail, "JAR fingerprint", shortFingerprint(raw.jarSha256));
-			}
-			if (raw.stackTrace != null) {
-				detail.append("\nStack trace:\n").append(raw.stackTrace.trim()).append('\n');
-			}
-			String reportKey = raw.reportId != null ? raw.reportId : raw.file.getName();
+		private static Record fromJava(JavaDiagnosticStore.Snapshot java,
+				ProcessExitStore.Snapshot exit) {
+			IncidentSummary incident = IncidentInterpreter.interpret(null, java, exit);
 			return new Record(
-					"acra:" + reportKey,
+					javaRecordId(java),
 					Kind.JAVA_REPORT,
-					Math.max(raw.timestampMillis, exit == null ? 0 : exit.timestampMillis),
+					incident.incidentTimestampMillis,
+					java.legacyEventId,
+					java.sessionId,
+					java.midletName,
+					java.processRole,
+					incident,
 					null,
-					raw.sessionId,
-					raw.midletName,
-					raw.processRole,
-					raw.stackTrace,
-					detail.toString().trim(),
-					null,
-					raw.files,
-					exit
-			);
+					Collections.singletonList(java),
+					java,
+					exit);
 		}
 
-		private static Record fromProcessExit(ProcessExitStore.Snapshot exit, SessionRecord session) {
-			StringBuilder detail = new StringBuilder("Type: Process exit diagnostic\n");
-			appendProcessExitSummary(detail, exit);
-			if (session != null) {
-				detail.append('\n');
-				appendSessionSummary(detail, session.snapshot);
-			}
+		private static Record fromProcessExit(ProcessExitStore.Snapshot exit, String midletName) {
+			IncidentSummary incident = IncidentInterpreter.interpret(null, null, exit);
 			return new Record(
 					exit.id,
 					Kind.PROCESS_EXIT,
-					exit.timestampMillis,
+					incident.incidentTimestampMillis,
 					null,
 					exit.sessionId,
-					session == null ? null : session.snapshot.midletName,
+					midletName,
 					exit.processRole,
+					incident,
 					null,
-					detail.toString().trim(),
-					session == null ? null : session.file,
 					Collections.emptyList(),
-					exit
-			);
+					null,
+					exit);
 		}
 
 		public String getId() { return id; }
@@ -585,247 +352,99 @@ public final class LocalDiagnosticRepository {
 		public String getSessionId() { return sessionId; }
 		public String getMidletName() { return midletName; }
 		public String getProcessRole() { return processRole; }
-		public String getStackTrace() { return stackTrace; }
-		public String getDetailText() { return detailText; }
-		public boolean hasJavaReport() { return !rawFiles.isEmpty(); }
+		public String getStackTrace() { return primaryJava == null ? null : primaryJava.stackTrace; }
+		public String getDetailText() { return DiagnosticReportText.build(this); }
+		IncidentSummary getIncidentSummary() { return incidentSummary; }
+		ProcessExitStore.Snapshot getProcessExitSnapshot() { return processExit; }
+		JavaDiagnosticStore.Snapshot getJavaEvidence() { return primaryJava; }
+		public boolean hasJavaReport() { return primaryJava != null; }
 		public boolean hasProcessExit() { return processExit != null; }
 	}
 
 	private static final class SessionRecord {
-		private final File file;
-		private final MidletSessionJournal.Snapshot snapshot;
+		final File file;
+		final MidletSessionJournal.Snapshot snapshot;
 
-		private SessionRecord(File file, MidletSessionJournal.Snapshot snapshot) {
+		SessionRecord(File file, MidletSessionJournal.Snapshot snapshot) {
 			this.file = file;
 			this.snapshot = snapshot;
 		}
 	}
 
+	private static final class StandaloneJavaRecord {
+		final JavaDiagnosticStore.Snapshot java;
+		ProcessExitStore.Snapshot processExit;
+
+		StandaloneJavaRecord(JavaDiagnosticStore.Snapshot java) {
+			this.java = java;
+		}
+
+		Record freeze() {
+			return Record.fromJava(java, processExit);
+		}
+	}
+
 	private static final class MutableRecord {
-		private final File journalFile;
-		private final MidletSessionJournal.Snapshot snapshot;
-		private final String eventId;
-		private final String sessionId;
-		private final String midletName;
-		private final ArrayList<RawJavaReport> rawReports = new ArrayList<>();
-		private ProcessExitStore.Snapshot processExit;
+		final File journalFile;
+		final MidletSessionJournal.Snapshot snapshot;
+		final ArrayList<JavaDiagnosticStore.Snapshot> javaEvidence = new ArrayList<>();
+		ProcessExitStore.Snapshot processExit;
 
-		private MutableRecord(SessionRecord session) {
-			this.journalFile = session.file;
-			this.snapshot = session.snapshot;
-			this.eventId = snapshot.failureEventId;
-			this.sessionId = snapshot.sessionId;
-			this.midletName = snapshot.midletName;
+		MutableRecord(SessionRecord session) {
+			journalFile = session.file;
+			snapshot = session.snapshot;
 		}
 
-		private void attach(RawJavaReport raw) {
-			rawReports.add(raw);
+		void attach(JavaDiagnosticStore.Snapshot java) {
+			javaEvidence.add(java);
 		}
 
-		private void attach(ProcessExitStore.Snapshot exit) {
+		void attach(ProcessExitStore.Snapshot exit) {
 			if (processExit == null || exit.timestampMillis > processExit.timestampMillis) {
 				processExit = exit;
 			}
 		}
 
-		private Record freeze() {
-			StringBuilder detail = new StringBuilder("Type: MIDlet session failure\n");
-			appendLine(detail, "Failure boundary", snapshot.failureBoundary == null
-					? null : snapshot.failureBoundary.name());
-			appendSessionSummary(detail, snapshot);
-
-			String stackTrace = null;
-			String processRole = "midlet";
-			ArrayList<File> rawFiles = new ArrayList<>();
-			RawJavaReport primaryRaw = null;
-			for (RawJavaReport raw : rawReports) {
-				rawFiles.addAll(raw.files);
-				if (primaryRaw == null && raw.stackTrace != null) {
-					primaryRaw = raw;
-					stackTrace = raw.stackTrace;
-				}
-				if (raw.processRole != null) {
-					processRole = raw.processRole;
-				}
-			}
-			if (primaryRaw != null) {
-				appendJavaFailureSummary(detail, primaryRaw);
-				appendAppContext(detail, primaryRaw.appContext, primaryRaw.timestampMillis);
-				appendBuild(detail, primaryRaw.appContext, primaryRaw.appVersion);
-				appendEnvironment(detail, -1,
-						joinDevice(primaryRaw.brand, primaryRaw.phoneModel), primaryRaw.androidVersion);
-			}
-			if (processExit != null) {
-				detail.append('\n');
-				appendProcessExitSummary(detail, processExit);
-				if (processExit.processRole != null) {
-					processRole = processExit.processRole;
-				}
-			}
-			if (stackTrace != null) {
-				detail.append("\nStack trace:\n").append(stackTrace.trim()).append('\n');
-			}
+		Record freeze() {
+			JavaDiagnosticStore.Snapshot primary = selectPrimaryJava(javaEvidence);
+			IncidentSummary incident = IncidentInterpreter.interpret(snapshot, primary, processExit);
+			String processRole = primary != null && primary.processRole != null
+					? primary.processRole
+					: (processExit == null ? "midlet" : processExit.processRole);
 			return new Record(
-					"event:" + eventId,
+					"event:" + snapshot.failureEventId,
 					Kind.MIDLET_FAILURE,
-					Math.max(snapshot.updatedWallTimeMillis,
-							processExit == null ? 0 : processExit.timestampMillis),
-					eventId,
-					sessionId,
-					midletName,
+					incident.incidentTimestampMillis,
+					snapshot.failureEventId,
+					snapshot.sessionId,
+					snapshot.midletName,
 					processRole,
-					stackTrace,
-					detail.toString().trim(),
+					incident,
 					journalFile,
-					rawFiles,
-					processExit
-			);
+					javaEvidence,
+					primary,
+					processExit);
 		}
 	}
 
-	private static final class RawJavaReport {
-		private final File file;
-		private final ArrayList<File> files;
-		private final boolean fatalFallback;
-		private final long timestampMillis;
-		private final String reportId;
-		private final String sessionId;
-		private final String processRole;
-		private final String midletName;
-		private final String midletVersion;
-		private final String mainClass;
-		private final String jarSha256;
-		private final String appVersion;
-		private final String androidVersion;
-		private final String brand;
-		private final String phoneModel;
-		private final String threadDetails;
-		private final String stackTrace;
-		private final String stackTraceHash;
-		private final CrashContextStore.Snapshot appContext;
+	static String javaRecordId(JavaDiagnosticStore.Snapshot java) {
+		if (java == null) return null;
+		return java.legacyRecordId != null ? java.legacyRecordId : "java:" + java.file.getName();
+	}
 
-		private RawJavaReport(File file, boolean fatalFallback, long timestampMillis,
-				String reportId, String sessionId,
-				String processRole, String midletName, String midletVersion, String mainClass,
-				String jarSha256, String appVersion, String androidVersion, String brand,
-				String phoneModel, String threadDetails, String stackTrace, String stackTraceHash,
-				CrashContextStore.Snapshot appContext) {
-			this.file = file;
-			this.files = new ArrayList<>(Collections.singletonList(file));
-			this.fatalFallback = fatalFallback;
-			this.timestampMillis = timestampMillis;
-			this.reportId = reportId;
-			this.sessionId = sessionId;
-			this.processRole = processRole;
-			this.midletName = midletName;
-			this.midletVersion = midletVersion;
-			this.mainClass = mainClass;
-			this.jarSha256 = jarSha256;
-			this.appVersion = appVersion;
-			this.androidVersion = androidVersion;
-			this.brand = brand;
-			this.phoneModel = phoneModel;
-			this.threadDetails = threadDetails;
-			this.stackTrace = stackTrace;
-			this.stackTraceHash = stackTraceHash;
-			this.appContext = appContext;
-		}
-
-		private static RawJavaReport from(Context context, File file, CrashReportData data) {
-			Object customValue = data.get(CUSTOM_DATA.toString());
-			JSONObject custom = customValue instanceof JSONObject ? (JSONObject) customValue : null;
-			String runId = custom(custom, CrashReporter.KEY_RUN_ID);
-			String capturedLocation = CrashContextStore.normalizeToken(
-					custom(custom, CrashReporter.KEY_CONTEXT_LOCATION), CrashContextStore.MAX_LOCATION_LENGTH);
-			String capturedPrevious = CrashContextStore.normalizeToken(
-					custom(custom, CrashReporter.KEY_CONTEXT_PREVIOUS), CrashContextStore.MAX_LOCATION_LENGTH);
-			String capturedAction = CrashContextStore.normalizeToken(
-					custom(custom, CrashReporter.KEY_CONTEXT_ACTION), CrashContextStore.MAX_ACTION_LENGTH);
-			String capturedPhase = CrashContextStore.normalizeToken(
-					custom(custom, CrashReporter.KEY_CONTEXT_PHASE), CrashContextStore.MAX_PHASE_LENGTH);
-			long capturedUpdated = parseLong(custom(custom, CrashReporter.KEY_CONTEXT_UPDATED));
-
-			CrashContextStore.Snapshot appContext = CrashContextStore.readForRun(context, runId);
-			boolean exactStoredSnapshot = appContext != null
-					&& appContext.updatedWallTimeMillis == capturedUpdated
-					&& same(appContext.location, capturedLocation)
-					&& same(appContext.previousLocation, capturedPrevious)
-					&& same(appContext.action, capturedAction)
-					&& same(appContext.phase, capturedPhase);
-			if (!exactStoredSnapshot && CrashContextStore.isSafeRunId(runId)) {
-				appContext = new CrashContextStore.Snapshot(
-						runId,
-						custom(custom, CrashReporter.KEY_PROCESS_ROLE),
-						custom(custom, CrashReporter.KEY_BUILD_COMMIT),
-						custom(custom, CrashReporter.KEY_BUILD_VARIANT),
-						capturedLocation,
-						capturedPrevious,
-						capturedAction,
-						capturedPhase,
-						capturedUpdated,
-						Collections.emptyList()
-				);
+	private static JavaDiagnosticStore.Snapshot selectPrimaryJava(
+			List<JavaDiagnosticStore.Snapshot> evidence) {
+		if (evidence.isEmpty()) return null;
+		for (JavaDiagnosticStore.Snapshot item : evidence) {
+			if (item.kind == JavaDiagnosticStore.Kind.MIDLET_SESSION_FAILURE) {
+				return item;
 			}
-			return new RawJavaReport(
-					file,
-					false,
-					file.lastModified(),
-					stringValue(data.get(REPORT_ID.toString())),
-					custom(custom, CrashReporter.KEY_SESSION_ID),
-					custom(custom, CrashReporter.KEY_PROCESS_ROLE),
-					custom(custom, CrashReporter.KEY_MIDLET_NAME),
-					custom(custom, CrashReporter.KEY_MIDLET_VERSION),
-					custom(custom, CrashReporter.KEY_MIDLET_MAIN_CLASS),
-					custom(custom, CrashReporter.KEY_MIDLET_JAR_SHA256),
-					stringValue(data.get(APP_VERSION_NAME.toString())),
-					stringValue(data.get(ANDROID_VERSION.toString())),
-					stringValue(data.get(BRAND.toString())),
-					stringValue(data.get(PHONE_MODEL.toString())),
-					stringValue(data.get(THREAD_DETAILS.toString())),
-					stringValue(data.get(STACK_TRACE.toString())),
-					stringValue(data.get(STACK_TRACE_HASH.toString())),
-					appContext
-			);
 		}
-
-		private static RawJavaReport fromFallback(FatalJavaCrashStore.Snapshot fallback) {
-			return new RawJavaReport(
-					fallback.file,
-					true,
-					fallback.timestampMillis,
-					fallback.file.getName(),
-					null,
-					fallback.processRole,
-					null,
-					null,
-					null,
-					null,
-					fallback.appVersion,
-					fallback.androidVersion,
-					fallback.brand,
-					fallback.model,
-					fallback.thread,
-					fallback.stackTrace,
-					null,
-					fallback.appContext
-			);
+		for (JavaDiagnosticStore.Snapshot item : evidence) {
+			if (item.kind == JavaDiagnosticStore.Kind.LEGACY_ACRA) {
+				return item;
+			}
 		}
-	}
-
-	private static long parseLong(String value) {
-		if (value == null) {
-			return 0;
-		}
-		try {
-			return Long.parseLong(value);
-		} catch (NumberFormatException ignored) {
-			return 0;
-		}
-	}
-
-	private static String joinDevice(String brand, String model) {
-		if (brand == null) return model;
-		if (model == null) return brand;
-		return brand + " " + model;
+		return evidence.get(0);
 	}
 }

@@ -5,21 +5,21 @@ This file contains guidance every agent needs. Keep task-specific instructions a
 ## Core priorities
 
 - Follow the user's explicit task and constraints first. Carry forward authorization already given; ask only when a missing decision materially affects correctness, compatibility, scope, or authority.
-- Preserve required behavior and emulator compatibility, not accidental implementation structure. Within the requested scope, refactor or replace flawed structure when that produces a simpler, more coherent model without weakening correctness, compatibility, data safety, performance, or maintainability.
+- Preserve required behavior and emulator compatibility, not accidental implementation structure. Within the requested scope, refactor or replace flawed structure when that produces a simpler, more coherent model while meeting correctness, compatibility, data-safety, and relevant performance requirements.
 - User requirements and explicit project contracts define intended behavior. Applicable specifications define the default compatibility contract except where JL-Mod Plus deliberately preserves verified compatibility behavior. Current source, configuration, workflows, and tests describe the current implementation and provide evidence; they are not requirements merely because they exist. Treat history as context unless the task specifically requires it.
 - Keep changes focused on the problem. Do not mix unrelated cleanup, dependency or toolchain churn, or speculative architecture into a scoped change.
 - Work CLI-first; Android Studio is not required unless the user asks for it.
 
 ## Think Before Coding. Simplify First.
 
-Establish the root cause and simplest correct model before changing code. Do not settle for the first plausible solution.
+Ground the solution in current evidence before committing to a production fix. Bounded, reversible experiments are appropriate when needed to establish the cause; remove temporary diagnostic changes before handoff unless they serve an ongoing requirement.
 
 - Understand the relevant invariants, state and behavior owners, lifecycle and concurrency boundaries, persistence/data ownership, compatibility contracts, and affected behavior from current evidence.
-- Compare plausible approaches only to the depth the change warrants. Choose the technically strongest solution that meets the requirements with the least accidental complexity.
+- Compare plausible approaches only to the depth the change warrants. Choose the simplest design that meets the required contracts and operating constraints; explain material tradeoffs rather than seeking superiority on every dimension.
 - Prefer fewer independent states, sources of truth, special cases, abstractions, and moving parts. An abstraction or new layer should pay for itself by enforcing a real boundary, removing meaningful duplication or complexity, or enabling required correctness.
 - Fix the underlying model or invariant rather than layering workarounds over symptoms. Restructure flawed code when necessary; do not preserve a bad boundary merely to minimize line count or diff size.
-- Prefer the simpler design when correctness, compatibility, failure semantics, data safety, performance, and maintainability remain at least as strong.
-- Review the result as if reviewing someone else's PR. Verify that it is correct, necessary, appropriately scoped, and simpler than reasonable alternatives.
+- Proceed when evidence supports the approach and no unresolved question is likely to change the design or its correctness. Further investigation or review should resolve a concrete uncertainty, not satisfy a quota of alternatives or review passes.
+- Review the result as if reviewing someone else's PR. Check correctness, failure paths, scope, unnecessary complexity, and whether a reasonable simpler approach meets the same contracts. For nontrivial changes, briefly report the cause, design rationale, and validation evidence.
 
 ## Working in this repository
 
@@ -29,7 +29,7 @@ Establish the root cause and simplest correct model before changing code. Do not
 - Use validation proportional to the change. When designing or adding tests, follow [Testing strategy](docs/development.md#testing-strategy). Once relevant checks pass, broaden or repeat validation only when new changes, failures, or unresolved risks justify it. Inspect the final diff and report what passed and what remains unverified. Do not run `clean` routinely.
 - Preserve inherited rights and attribution notices. Do not make ownership or licensing assumptions.
 - Preserve the surrounding Markdown wrapping style and avoid reflow-only changes.
-- Use only task-relevant repository skills; follow [Skill routing](docs/agent-workflow.md#repository-skills) for precedence, project interpretations, and prerequisites.
+- Use only task-relevant repository skills. Project policy and the matching interpretation in `.agents/UPSTREAM.md` override conflicting generic skill recipes; follow [Skill routing](docs/agent-workflow.md#repository-skills).
 
 ## Read when relevant
 

@@ -30,6 +30,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.SystemClock;
@@ -487,7 +488,18 @@ public class CrashRuntimeIsolationTest {
 		assertRemoteProcessStops(context, midletProcessName);
 		assertEquals(mainPid, Process.myPid());
 		assertEquals(mainPid, processPid(context, mainProcessName));
-		assertLifecycleFailure(failure, expectedBoundary, failureMarker);
+		LocalDiagnosticRepository.Record refreshed =
+				LocalDiagnosticRepository.find(context, failure.getId());
+		LocalDiagnosticRepository.Record correlated = refreshed == null ? failure : refreshed;
+		int sameSessionRecords = 0;
+		for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
+			if (journalFailure.sessionId.equals(record.getSessionId())) {
+				sameSessionRecords++;
+			}
+		}
+		assertEquals("One physical MIDlet failure must remain one logical incident",
+				1, sameSessionRecords);
+		assertLifecycleFailure(correlated, expectedBoundary, failureMarker);
 	}
 
 	private static void assertMidletFacingActivitiesUseMidletProcess(
@@ -514,7 +526,7 @@ public class CrashRuntimeIsolationTest {
 		assertNotNull(record.getSessionId());
 		assertEquals(CrashRuntimeProbeActivity.MIDLET_NAME, record.getMidletName());
 		assertEquals("midlet", record.getProcessRole());
-		assertTrue(record.getDetailText().contains("Failure boundary: UNCAUGHT_THREAD"));
+		assertTrue(record.getDetailText().contains("Lifecycle boundary: UNCAUGHT_THREAD"));
 		assertNotNull(record.getStackTrace());
 		assertTrue(record.getStackTrace().contains("runtimeProbe=true;"));
 	}
@@ -526,8 +538,15 @@ public class CrashRuntimeIsolationTest {
 		assertNotNull(record.getSessionId());
 		assertEquals(LIFECYCLE_MIDLET_NAME, record.getMidletName());
 		assertEquals("midlet", record.getProcessRole());
-		assertTrue(record.getDetailText().contains("Failure boundary: " + expectedBoundary.name()));
+		assertTrue(record.getDetailText().contains("Lifecycle boundary: " + expectedBoundary.name()));
 		assertTrue(record.getDetailText().contains("Entrypoint: " + LifecycleMidlet.CLASS_NAME));
+		assertTrue(record.getDetailText().contains("Runtime Termination"));
+		assertFalse(record.getDetailText().contains("OS limitation:"));
+		ProcessExitStore.Snapshot exit = record.getProcessExitSnapshot();
+		if (exit != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+			assertFalse("Handled MIDlet failure became Android REASON_CRASH",
+					exit.reason == ProcessExitStore.REASON_CRASH);
+		}
 		assertNotNull(record.getStackTrace());
 		assertTrue(record.getStackTrace().contains(failureMarker));
 		assertTrue(record.getStackTrace().contains(LifecycleMidlet.CLASS_NAME));

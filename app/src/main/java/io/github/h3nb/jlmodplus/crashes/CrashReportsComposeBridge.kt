@@ -71,7 +71,6 @@ interface CrashReportsActions {
     fun onBack()
     fun onOpen(reportId: String)
     fun onCopySelected(reportIds: List<String>)
-    fun onShareSelected(reportIds: List<String>)
     fun onDeleteSelected(reportIds: List<String>)
 }
 
@@ -79,8 +78,10 @@ interface CrashReportsActions {
 interface CrashReportDetailsActions {
     fun onBack()
     fun onCopy()
-    fun onShare()
     fun onReportGitHub()
+    fun onDismissBundleReady()
+    fun onLocateBundle()
+    fun onOpenGitHub()
     fun onDelete()
 }
 
@@ -90,19 +91,38 @@ data class CrashReportListItem(
     val subtitle: String,
 )
 
+data class DiagnosticBundleReadyState(
+    val fileName: String,
+)
+
 data class CrashReportDetailState(
     val displayText: String,
+    val readyBundle: DiagnosticBundleReadyState? = null,
 )
+
+class CrashReportDetailsController internal constructor(
+    displayText: String,
+) {
+    var state by mutableStateOf(CrashReportDetailState(displayText))
+        private set
+
+    fun updateDisplay(displayText: String) {
+        state = state.copy(displayText = displayText)
+    }
+
+    fun showBundleReady(fileName: String) {
+        state = state.copy(readyBundle = DiagnosticBundleReadyState(fileName))
+    }
+
+    fun dismissBundleReady() {
+        state = state.copy(readyBundle = null)
+    }
+}
 
 data class CrashReportsListState(
     val loading: Boolean,
     val records: List<CrashReportListItem>,
 )
-
-enum class CrashReportConfirmation {
-    Share,
-    Delete,
-}
 
 /** Keeps list data observable without reinstalling the Activity's Compose content. */
 class CrashReportsListController internal constructor(
@@ -156,7 +176,7 @@ fun CrashReportsScreen(
 ) {
     val loadingDescription = stringResource(R.string.crash_reports_loading)
     var selectedIds by rememberSaveable { mutableStateOf(emptyList<String>()) }
-    var confirmation by rememberSaveable { mutableStateOf<CrashReportConfirmation?>(null) }
+    var showDeleteConfirmation by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(state.records) {
         val retainedIds = state.records.mapTo(HashSet()) { it.id }
@@ -197,7 +217,7 @@ fun CrashReportsScreen(
                     IconButton(
                         onClick = {
                             if (selectionMode) {
-                                confirmation = null
+                                showDeleteConfirmation = false
                                 selectedIds = emptyList()
                             } else {
                                 actions.onBack()
@@ -241,13 +261,7 @@ fun CrashReportsScreen(
                                 contentDescription = stringResource(R.string.copy_selected_reports),
                             )
                         }
-                        IconButton(onClick = { confirmation = CrashReportConfirmation.Share }) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_share),
-                                contentDescription = stringResource(R.string.share_selected_reports),
-                            )
-                        }
-                        IconButton(onClick = { confirmation = CrashReportConfirmation.Delete }) {
+                        IconButton(onClick = { showDeleteConfirmation = true }) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_delete_report),
                                 contentDescription = stringResource(R.string.delete_selected_reports),
@@ -359,16 +373,13 @@ fun CrashReportsScreen(
         }
     }
 
-    confirmation?.let { pendingConfirmation ->
-        CrashReportConfirmationDialog(
-            confirmation = pendingConfirmation,
-            onDismiss = { confirmation = null },
+
+    if (showDeleteConfirmation) {
+        CrashReportDeleteConfirmationDialog(
+            onDismiss = { showDeleteConfirmation = false },
             onConfirm = {
-                confirmation = null
-                when (pendingConfirmation) {
-                    CrashReportConfirmation.Share -> actions.onShareSelected(selectedIds.toList())
-                    CrashReportConfirmation.Delete -> actions.onDeleteSelected(selectedIds.toList())
-                }
+                showDeleteConfirmation = false
+                actions.onDeleteSelected(selectedIds.toList())
             },
             batchSelection = true,
             reportCount = selectedIds.size,
@@ -382,14 +393,14 @@ fun CrashReportDetailsScreen(
     state: CrashReportDetailState,
     actions: CrashReportDetailsActions,
 ) {
-    var confirmation by rememberSaveable { mutableStateOf<CrashReportConfirmation?>(null) }
+    var showDeleteConfirmation by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.crash_reports),
+                        text = stringResource(R.string.diagnostic_report),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -409,19 +420,13 @@ fun CrashReportDetailsScreen(
                             contentDescription = stringResource(R.string.copy_report),
                         )
                     }
-                    IconButton(onClick = { confirmation = CrashReportConfirmation.Share }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_share),
-                            contentDescription = stringResource(R.string.share_report),
-                        )
-                    }
                     IconButton(onClick = actions::onReportGitHub) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_bug_report),
+                            painter = painterResource(R.drawable.ic_send),
                             contentDescription = stringResource(R.string.report_on_github),
                         )
                     }
-                    IconButton(onClick = { confirmation = CrashReportConfirmation.Delete }) {
+                    IconButton(onClick = { showDeleteConfirmation = true }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_delete_report),
                             contentDescription = stringResource(R.string.delete_report),
@@ -456,133 +461,110 @@ fun CrashReportDetailsScreen(
         }
     }
 
-    confirmation?.let { pendingConfirmation ->
-        CrashReportConfirmationDialog(
-            confirmation = pendingConfirmation,
-            onDismiss = { confirmation = null },
-            onConfirm = {
-                confirmation = null
-                when (pendingConfirmation) {
-                    CrashReportConfirmation.Share -> actions.onShare()
-                    CrashReportConfirmation.Delete -> actions.onDelete()
+    state.readyBundle?.let { ready ->
+        AlertDialog(
+            onDismissRequest = actions::onDismissBundleReady,
+            title = {
+                Text(stringResource(R.string.crash_report_bundle_ready_title))
+            },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.crash_report_bundle_ready_message,
+                        ready.fileName,
+                    ),
+                )
+            },
+            dismissButton = {
+                androidx.compose.foundation.layout.Row {
+                    TextButton(onClick = actions::onDismissBundleReady) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                    TextButton(onClick = actions::onLocateBundle) {
+                        Text(stringResource(R.string.locate_bundle))
+                    }
                 }
+            },
+            confirmButton = {
+                TextButton(onClick = actions::onOpenGitHub) {
+                    Text(stringResource(R.string.open_github))
+                }
+            },
+        )
+    }
+
+    if (showDeleteConfirmation) {
+        CrashReportDeleteConfirmationDialog(
+            onDismiss = { showDeleteConfirmation = false },
+            onConfirm = {
+                showDeleteConfirmation = false
+                actions.onDelete()
             },
         )
     }
 }
 
 @Composable
-fun CrashReportConfirmationDialog(
-    confirmation: CrashReportConfirmation,
+fun CrashReportDeleteConfirmationDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     batchSelection: Boolean = false,
     reportCount: Int = 1,
 ) {
-    when (confirmation) {
-        CrashReportConfirmation.Share -> AlertDialog(
-            onDismissRequest = onDismiss,
-            title = {
-                Text(
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                painter = painterResource(R.drawable.ic_delete_report),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+            )
+        },
+        title = {
+            Text(
+                if (batchSelection) {
+                    pluralStringResource(
+                        R.plurals.crash_reports_batch_delete_title,
+                        reportCount,
+                        reportCount,
+                    )
+                } else {
+                    stringResource(R.string.crash_report_delete_title)
+                },
+            )
+        },
+        text = {
+            Text(
+                stringResource(
                     if (batchSelection) {
-                        pluralStringResource(
-                            R.plurals.crash_reports_batch_share_title,
-                            reportCount,
-                            reportCount,
-                        )
+                        R.string.crash_reports_batch_delete_message
                     } else {
-                        stringResource(R.string.share_report)
+                        R.string.crash_report_delete_message
                     },
-                )
-            },
-            text = {
+                ),
+            )
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
                 Text(
                     stringResource(
                         if (batchSelection) {
-                            R.string.crash_reports_batch_share_disclosure
+                            R.string.delete_selected_reports
                         } else {
-                            R.string.crash_report_share_disclosure
+                            R.string.delete_report
                         },
                     ),
                 )
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = onConfirm) {
-                    Text(
-                        stringResource(
-                            if (batchSelection) {
-                                R.string.share_selected_reports
-                            } else {
-                                R.string.share_report
-                            },
-                        ),
-                    )
-                }
-            },
-        )
-
-        CrashReportConfirmation.Delete -> AlertDialog(
-            onDismissRequest = onDismiss,
-            icon = {
-                Icon(
-                    painter = painterResource(R.drawable.ic_delete_report),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                )
-            },
-            title = {
-                Text(
-                    if (batchSelection) {
-                        pluralStringResource(
-                            R.plurals.crash_reports_batch_delete_title,
-                            reportCount,
-                            reportCount,
-                        )
-                    } else {
-                        stringResource(R.string.crash_report_delete_title)
-                    },
-                )
-            },
-            text = {
-                Text(
-                    stringResource(
-                        if (batchSelection) {
-                            R.string.crash_reports_batch_delete_message
-                        } else {
-                            R.string.crash_report_delete_message
-                        },
-                    ),
-                )
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = onConfirm) {
-                    Text(
-                        text = stringResource(
-                            if (batchSelection) {
-                                R.string.delete_selected_reports
-                            } else {
-                                R.string.delete_report
-                            },
-                        ),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            },
-        )
-    }
+            }
+        },
+    )
 }
 
-/** Feature-local bridge used by the existing Java Activities; it owns no domain state. */
 object CrashReportsComposeBridge {
     @JvmStatic
     fun installList(
@@ -607,15 +589,17 @@ object CrashReportsComposeBridge {
         view: ComposeView,
         displayText: String,
         actions: CrashReportDetailsActions,
-    ) {
+    ): CrashReportDetailsController {
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+        val controller = CrashReportDetailsController(displayText)
         view.setContent {
             JLModPlusTheme {
                 CrashReportDetailsScreen(
-                    state = CrashReportDetailState(displayText),
+                    state = controller.state,
                     actions = actions,
                 )
             }
         }
+        return controller
     }
 }

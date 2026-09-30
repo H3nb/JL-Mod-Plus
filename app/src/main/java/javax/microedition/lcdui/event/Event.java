@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
  *
@@ -19,10 +20,14 @@ package javax.microedition.lcdui.event;
 
 import android.util.Log;
 
+import javax.microedition.shell.MidletThread;
+
 /**
  * The base class for all events.
  */
 public abstract class Event implements Runnable {
+	private boolean guestCallback;
+
 	/**
 	 * Event handling.
 	 * This is where you need to perform the required actions.
@@ -35,18 +40,42 @@ public abstract class Event implements Runnable {
 	 * If a pool of events is used, then the event must be reset
 	 * and returned to the pool.
 	 */
-	public abstract void recycle();
+	public final void recycle() {
+		guestCallback = false;
+		recycleEvent();
+	}
+
+	/** Clears subclass-owned pooled state after base transient ownership has been reset. */
+	protected abstract void recycleEvent();
+
+	/** Marks this event as a known guest-code callback boundary. */
+	public final Event asGuestCallback() {
+		guestCallback = true;
+		return this;
+	}
 
 	/**
 	 * Handle the event and recycle it.
 	 */
 	@Override
 	public void run() {
+		boolean guest = guestCallback;
+		boolean enteredGuest = guest && MidletThread.enterGuestExecution();
 		try {
-			process();
-		} catch (Exception e) {
-			Log.e(getClass().getName(), "process: ", e);
+			try {
+				process();
+			} catch (Exception e) {
+				Log.e(getClass().getName(), "process: ", e);
+			} catch (Error fatal) {
+				if (guest) {
+					MidletThread.markEscapingGuestFailure(fatal);
+				}
+				throw fatal;
+			}
 		} finally {
+			if (guest) {
+				MidletThread.exitGuestExecution(enteredGuest);
+			}
 			leaveQueue();
 			recycle();
 		}

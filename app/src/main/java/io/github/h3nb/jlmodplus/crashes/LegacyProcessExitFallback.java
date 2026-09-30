@@ -46,17 +46,16 @@ public final class LegacyProcessExitFallback {
 	private static final String TAG = LegacyProcessExitFallback.class.getSimpleName();
 	private static final long ORPHAN_GRACE_MILLIS = 1_500L;
 
-	// These values intentionally mirror ProcessExitStore schema v1. Keeping the fallback writer
-	// independent of ApplicationExitInfo prevents verifier/API coupling on Android 6-10 while making
-	// the existing inbox, acknowledgment, correlation, and deletion paths consume the same records.
-	private static final int SCHEMA_VERSION = 1;
+	// Keep the fallback record compatible with ProcessExitStore while keeping ApplicationExitInfo
+	// references out of this Android 6-10 code path. Common code stores only stable primitive/text
+	// evidence and the source provenance below.
+	private static final int SCHEMA_VERSION = 2;
 	private static final int REASON_UNKNOWN = 0;
 	private static final String RECORD_DIR = "diagnostics/process-exits";
 	private static final String RECORD_SUFFIX = ".properties";
 	private static final String BACKUP_SUFFIX = ".bak";
 	private static final String NEW_SUFFIX = ".new";
-	private static final String DESCRIPTION =
-			"Exact termination cause unavailable on Android 6-10; ApplicationExitInfo requires API 30+.";
+	private static final String DESCRIPTION = ProcessExitStore.LEGACY_FALLBACK_DESCRIPTION;
 
 	private LegacyProcessExitFallback() {}
 
@@ -169,6 +168,7 @@ public final class LegacyProcessExitFallback {
 		Properties p = new Properties();
 		p.setProperty("schemaVersion", Integer.toString(SCHEMA_VERSION));
 		p.setProperty("key", key);
+		p.setProperty("source", ProcessExitStore.SOURCE_LEGACY_PROCESS_DISAPPEARANCE);
 		p.setProperty("timestampMillis", Long.toString(session.updatedWallTimeMillis));
 		put(p, "processName", session.processName);
 		p.setProperty("processRole", "midlet");
@@ -186,6 +186,7 @@ public final class LegacyProcessExitFallback {
 			p.setProperty("stateVersionCode", Long.toString(versionCode));
 		}
 		p.setProperty("stateSdk", Integer.toString(Build.VERSION.SDK_INT));
+		p.setProperty("androidRelease", Build.VERSION.RELEASE);
 		p.setProperty("sessionId", session.sessionId);
 		put(p, "deviceBrand", bound(Build.BRAND, 128));
 		put(p, "deviceModel", bound(Build.MODEL, 128));
