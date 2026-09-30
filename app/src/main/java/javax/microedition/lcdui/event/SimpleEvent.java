@@ -1,6 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +20,7 @@ package javax.microedition.lcdui.event;
 
 public abstract class SimpleEvent extends Event {
 	@Override
-	public void recycle() {
+	protected void recycleEvent() {
 	}
 
 	@Override

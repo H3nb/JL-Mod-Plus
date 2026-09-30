@@ -33,7 +33,7 @@
     <string name="library_selection_unchecked">Tidak dipilih</string>
 
     <string name="library_action_settings_summary">Atur perilaku dan tampilan global aplikasi.</string>
-    <string name="library_action_crash_reports_summary">Tinjau laporan crash dan bukti diagnostik yang tersimpan.</string>
+    <string name="library_action_crash_reports_summary">Tinjau laporan diagnostik dan bukti yang tersimpan.</string>
     <string name="library_action_save_log_summary">Simpan log aplikasi saat ini untuk pemecahan masalah.</string>
     <string name="library_action_about_summary">Informasi versi, proyek, dan maintainer.</string>
     <string name="library_action_licenses_summary">Pemberitahuan pihak ketiga dan ketentuan lisensi yang disertakan.</string>

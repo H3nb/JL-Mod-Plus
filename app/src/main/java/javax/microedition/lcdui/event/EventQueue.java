@@ -2,7 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
  * Copyright 2019-2024 Yury Kharchenko
- * Modified in 2026 for callback context tracking.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class EventQueue implements Runnable {
 		}
 
 		@Override
-		public void recycle() {
+		protected void recycleEvent() {
 			continuation = null;
 		}
 

@@ -193,8 +193,8 @@ public final class MidletSessionJournal {
 		}
 		journal.persist();
 		try {
-			// ACRA custom data is a process-global HashMap. Publish only the immutable session ID;
-			// stage/outcome stay authoritative in the durable journal and are never mutated there.
+			// Publish only the immutable session ID to process-level context. Lifecycle stage and
+			// outcome remain authoritative in this durable journal.
 			CrashReporter.setSessionContext(sessionId);
 		} catch (RuntimeException e) {
 			Log.w(TAG, "Unable to publish MIDlet session ID to crash context", e);
@@ -433,7 +433,7 @@ public final class MidletSessionJournal {
 	private void persist() {
 		FileOutputStream output = null;
 		try {
-			Snapshot snapshot = snapshot();
+			Snapshot snapshot = snapshotForDiagnostics();
 			output = atomicFile.startWrite();
 			write(snapshot, output);
 			atomicFile.finishWrite(output);
@@ -460,7 +460,7 @@ public final class MidletSessionJournal {
 		}
 	}
 
-	private synchronized Snapshot snapshot() {
+	synchronized Snapshot snapshotForDiagnostics() {
 		MidletSessionPlayStats.Snapshot stats = playStats.snapshot();
 		return new Snapshot(
 				CURRENT_SCHEMA_VERSION,

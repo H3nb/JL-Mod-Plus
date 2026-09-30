@@ -3,6 +3,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2026 Yury Kharchenko
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +169,7 @@ public class Form extends Screen {
 					l.itemStateChanged(item);
 				}
 			}
-		});
+		}.asGuestCallback());
 	}
 
 	@Override

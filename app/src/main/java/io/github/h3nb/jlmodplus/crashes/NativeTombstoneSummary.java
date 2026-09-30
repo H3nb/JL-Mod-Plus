@@ -14,8 +14,7 @@
 
 package io.github.h3nb.jlmodplus.crashes;
 
-import android.content.Context;
-import android.net.Uri;
+import android.util.AtomicFile;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,20 +39,20 @@ final class NativeTombstoneSummary {
 
 	private NativeTombstoneSummary() {}
 
-	static String summarize(Context context, Uri traceUri) {
-		if (context == null || traceUri == null) {
+	static String summarize(ProcessExitStore.Snapshot exit) {
+		return format(read(exit));
+	}
+
+	static Summary read(ProcessExitStore.Snapshot exit) {
+		if (exit == null
+				|| exit.traceFile == null
+				|| !"native-tombstone-protobuf".equals(exit.traceKind)) {
 			return null;
 		}
-		try (InputStream input = context.getContentResolver().openInputStream(traceUri)) {
-			if (input == null) {
-				return null;
-			}
+		try (InputStream input = new AtomicFile(exit.traceFile).openRead()) {
 			byte[] data = new byte[MAX_INPUT_BYTES + 1];
 			int size = readBounded(input, data);
-			if (size < 0) {
-				return null;
-			}
-			return format(parse(data, size));
+			return size < 0 ? null : parse(data, size);
 		} catch (IOException | RuntimeException ignored) {
 			return null;
 		}
@@ -410,7 +409,7 @@ final class NativeTombstoneSummary {
 	private static String frameFileLabel(String fileName) {
 		if (fileName == null || fileName.isEmpty() || fileName.charAt(0) == '[') return null;
 		if (fileName.startsWith("/system/") || fileName.startsWith("/apex/")
-				|| fileName.startsWith("/vendor/")) return fileName;
+				|| fileName.startsWith("/vendor/") || fileName.startsWith("/product/")) return fileName;
 		int slash = fileName.lastIndexOf('/');
 		return slash >= 0 && slash + 1 < fileName.length() ? fileName.substring(slash + 1) : fileName;
 	}

@@ -112,20 +112,21 @@ class CrashReportsComposeTest {
         }
 
         composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
-        composeRule.onNodeWithText("1 selected").assertIsDisplayed()
+        composeRule.onNodeWithText("1 Selected").assertIsDisplayed()
 
-        composeRule.onNodeWithContentDescription("Copy selected reports").performClick()
+        composeRule.onNodeWithContentDescription("Copy Selected Reports").performClick()
         assertEquals(listOf("report-1"), actions.copiedIds)
 
         composeRule.onNodeWithText("Other MIDlet").performClick()
-        composeRule.onNodeWithText("2 selected").assertIsDisplayed()
+        composeRule.onNodeWithText("2 Selected").assertIsDisplayed()
 
-        composeRule.onNodeWithContentDescription("Share selected reports").performClick()
-        composeRule.onNodeWithText("Share selected reports").performClick()
-        assertEquals(listOf("report-1", "report-2"), actions.sharedIds)
+        assertEquals(
+            0,
+            composeRule.onAllNodesWithText("Share selected reports").fetchSemanticsNodes().size,
+        )
 
-        composeRule.onNodeWithContentDescription("Delete selected reports").performClick()
-        composeRule.onNodeWithText("Delete selected reports").performClick()
+        composeRule.onNodeWithContentDescription("Delete Selected Reports").performClick()
+        composeRule.onNodeWithText("Delete Selected Reports").performClick()
         assertEquals(listOf("report-1", "report-2"), actions.deletedIds)
     }
 
@@ -148,14 +149,36 @@ class CrashReportsComposeTest {
         }
 
         composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
-        composeRule.onNodeWithContentDescription("Select all reports").performClick()
-        composeRule.onNodeWithText("2 selected").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Clear report selection").performClick()
-        composeRule.onNodeWithText("Crash Reports").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Select All Reports").performClick()
+        composeRule.onNodeWithText("2 Selected").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Clear Report Selection").performClick()
+        composeRule.onNodeWithText("Diagnostic Reports").assertIsDisplayed()
     }
 
     @Test
-    fun detailActionsInvokeCopyShareGitHubAndDeleteCallbacks() {
+    fun bundleReadyDialogInvokesLocateAndOpenActions() {
+        val actions = RecordingDetailActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                CrashReportDetailsScreen(
+                    state = CrashReportDetailState(
+                        displayText = "diagnostic details",
+                        readyBundle = DiagnosticBundleReadyState("20260926-134500-012-deadbeef.zip"),
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Diagnostic Bundle Ready").assertIsDisplayed()
+        composeRule.onNodeWithText("Locate Bundle").performClick()
+        assertEquals(1, actions.locateCount)
+        composeRule.onNodeWithText("Open GitHub").performClick()
+        assertEquals(1, actions.openGitHubCount)
+    }
+
+    @Test
+    fun detailActionsExposeOnlyCopyGitHubAndDeleteCallbacks() {
         val actions = RecordingDetailActions()
         composeRule.setContent {
             JLModPlusTheme {
@@ -166,25 +189,26 @@ class CrashReportsComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Copy Report").performClick()
+        composeRule.onNodeWithText("Diagnostic Report").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Copy").performClick()
         assertEquals(1, actions.copyCount)
 
-        composeRule.onNodeWithContentDescription("Share Report").performClick()
-        composeRule.onAllNodesWithText("Share Report").get(1).performClick()
-        assertEquals(1, actions.shareCount)
+        assertEquals(
+            0,
+            composeRule.onAllNodesWithText("Share Report").fetchSemanticsNodes().size,
+        )
 
         composeRule.onNodeWithContentDescription("Report on GitHub").performClick()
         assertEquals(1, actions.githubCount)
 
-        composeRule.onNodeWithContentDescription("Delete Report").performClick()
-        composeRule.onAllNodesWithText("Delete Report").get(0).performClick()
+        composeRule.onNodeWithContentDescription("Delete").performClick()
+        composeRule.onAllNodesWithText("Delete").get(0).performClick()
         assertEquals(1, actions.deleteCount)
     }
 
     private class RecordingListActions : CrashReportsActions {
         var openedId: String? = null
         var copiedIds: List<String> = emptyList()
-        var sharedIds: List<String> = emptyList()
         var deletedIds: List<String> = emptyList()
 
         override fun onBack() = Unit
@@ -197,10 +221,6 @@ class CrashReportsComposeTest {
             copiedIds = reportIds
         }
 
-        override fun onShareSelected(reportIds: List<String>) {
-            sharedIds = reportIds
-        }
-
         override fun onDeleteSelected(reportIds: List<String>) {
             deletedIds = reportIds
         }
@@ -208,8 +228,9 @@ class CrashReportsComposeTest {
 
     private class RecordingDetailActions : CrashReportDetailsActions {
         var copyCount = 0
-        var shareCount = 0
         var githubCount = 0
+        var locateCount = 0
+        var openGitHubCount = 0
         var deleteCount = 0
 
         override fun onBack() = Unit
@@ -218,12 +239,18 @@ class CrashReportsComposeTest {
             copyCount++
         }
 
-        override fun onShare() {
-            shareCount++
-        }
-
         override fun onReportGitHub() {
             githubCount++
+        }
+
+        override fun onDismissBundleReady() = Unit
+
+        override fun onLocateBundle() {
+            locateCount++
+        }
+
+        override fun onOpenGitHub() {
+            openGitHubCount++
         }
 
         override fun onDelete() {

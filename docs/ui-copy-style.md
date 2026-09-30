@@ -6,17 +6,20 @@ not applied to every piece of UI copy.
 This is a product style decision, not a claim that Material 3 requires title
 case everywhere. Current Android guidance recommends sentence case for button
 labels, while Android Auto guidance permits either sentence case or title case
-when the choice is applied consistently. We choose Capitalize Each Word for
-titles, labels, and compact controls because it matches the product's visual language and must remain
-consistent across the library, profiles, and installer surfaces.
+when the choice is applied consistently. We choose natural English title case for
+titles, labels, options, and compact controls because it matches the product's visual language and
+must remain consistent across the library, profiles, and installer surfaces.
 
 ## Rules
 
-- Use Capitalize Each Word for product/screen/dialog titles, section titles,
-  header titles, option names, and field titles/names: `JL-Mod Plus`,
-  `MIDlet Installer`, `Screen Orientation`, `Screen Size`, and `Profile Name`.
-- Use Capitalize Each Word for buttons, menu items, toolbar actions, and other
-  compact controls: `Install`, `Start`, `Cancel`, `Try Again`, and `Save Profile`.
+- Use natural English title case for product/screen/dialog titles, section titles,
+  header titles, option names, and field titles/names: capitalize major words, while
+  ordinary short articles, conjunctions, and prepositions such as `a`, `an`, `the`,
+  `and`, `or`, `of`, `on`, `in`, and `to` normally remain lowercase unless
+  they begin the label/title or grammar or proper-noun conventions require otherwise.
+- Apply the same natural title case to buttons, menu items, toolbar actions, and
+  other compact controls: `Report on GitHub`, `Save to File`, `Open in Browser`,
+  `Terms of Use`, `Delete Report`, and `Diagnostic Bundle Ready`.
 - Keep descriptions, explanations, statuses, hints, and helper text in sentence
   case. Capitalization follows the text's role, not its length or wording:
 
@@ -25,18 +28,18 @@ consistent across the library, profiles, and installer surfaces.
   | Section/header title | `Application Information` |
   | Field title | `Profile Name` |
   | Field placeholder | `Enter a profile name` |
-  | Option/checkbox name | `Save Screen Parameters On Exit` |
+  | Option/checkbox name | `Save Screen Parameters on Exit` |
   | Description beneath that option | `Save the current screen parameters when the game closes.` |
   | Progress status while reading a file | `Loading information…` |
   | Action button | `Save Profile` |
 
-  If a phrase is used as an option name, it uses Capitalize Each Word even when
+  If a phrase is used as an option name, it uses natural English title case even when
   it reads like an instruction. A progress status is not a section title merely
   because it is prominent. Review the actual placement and semantics.
   For example, `Enter Profile Name` is valid as a dialog title, while
   `Enter a profile name` is a field hint. Prefer `Profile Name` for the field's
-  persistent label. Here, Capitalize Each Word includes short words such as
-  `On`, `Of`, and `The`; it is not editorial title case with lowercase exceptions.
+  persistent label. English labels use natural title case rather than mechanically
+  capitalizing every short function word.
 - Use normal sentence case for body and confirmation messages. Do not use ALL CAPS for ordinary rendered copy.
 - Resource keys such as `START_CMD` and `CANCEL_CMD` are legacy identifiers and do not define rendered capitalization.
 - Write full messages as normal sentences: capitalize the first word, use ordinary punctuation, and start a new sentence after a newline with a capital letter.
@@ -62,9 +65,9 @@ values. The following mapping is the review baseline:
   metadata uses `bodyMedium`/`bodySmall` with `onSurfaceVariant`.
 - Field labels, units, and compact secondary annotations use `labelMedium` or
   `labelSmall`.
-- `fontScale`, long translations, and landscape width must be checked before
-  introducing a custom size. A custom `sp` value needs a component-specific
-  reason and a screenshot/regression case.
+- A custom `sp` value needs a component-specific reason and verification of
+  relevant font-scale, translation, and width risks. Reuse suitable coverage or
+  inspect a targeted render; a custom size alone does not require a new golden.
 - Do not shrink text, reduce system font scaling, or change the typography
   hierarchy merely because the window is landscape or short. Reflow and scroll
   the content instead. Input fields and interactive lists retain the Material
@@ -122,7 +125,8 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
 - Keep a visible themed scroll hint while content remains below the viewport.
   The hint should be distinct from the text beneath it and disappear at the end.
   A preview's initial frame is insufficient evidence: verify the hint and the
-  last item/action after layout in an interaction test.
+  last item/action after layout through existing behavioral coverage or a
+  targeted interaction/manual check, following [Testing strategy](development.md#testing-strategy).
 - Keep actions reachable. Wrap action rows when labels need more width, and
   allow a short-window fallback to scroll the complete custom popup when its
   title/actions cannot sensibly fit outside the body. Never clip an action
@@ -149,14 +153,14 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
 For interaction architecture, accessibility behavior, performance, and general UI testing policy, follow [App-owned UI development](app-ui-development.md) and [Testing strategy](development.md#testing-strategy). This document adds only copy and presentation-specific checks.
 
 - When copy, typography, theme, or popup presentation changes materially, inspect the rendered contexts that can expose the change, such as a narrow width, long localization, large text, or light/dark theme. Choose cases from the actual risk rather than running a universal visual matrix.
-- When a screenshot baseline changes, compare the reference, actual, and diff before accepting it. A green screenshot test does not by itself establish that spacing, wrapping, hierarchy, or readability is correct.
+- Follow [Visual verification](development.md#visual-verification-and-screenshot-references) for baseline selection and updates. A green comparison does not by itself establish that spacing, wrapping, hierarchy, or readability is correct.
 
 ## Review checklist
 
 When adding or changing a string, check the rendered context rather than only the resource value:
 
 1. Is it a title/header/section, option name, field title/name, or compact
-   interactive control? Use Capitalize Each Word.
+   interactive control? Use natural English title case.
 2. Otherwise, is it a description, explanation, status, or hint? Use sentence
    case. Sentence-like wording does not override an option or title's role.
 3. Is it a proper noun, acronym, unit, URL, or identifier? Preserve its established form.

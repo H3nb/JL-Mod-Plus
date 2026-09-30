@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="crash_reports">Laporan Crash</string>
+    <string name="crash_reports">Laporan Diagnostik</string>
+    <string name="diagnostic_report">Laporan Diagnostik</string>
     <string name="view_reports">Lihat Laporan</string>
-    <string name="crash_reports_empty">Tidak ada laporan crash lokal</string>
-    <string name="crash_reports_loading">Memuat laporan crash</string>
+    <string name="crash_reports_empty">Tidak ada laporan diagnostik lokal</string>
+    <string name="crash_reports_loading">Memuat laporan diagnostik</string>
     <string name="crash_report_midlet_failure">Kegagalan sesi MIDlet</string>
     <string name="crash_report_java_report">Laporan diagnostik Java</string>
     <string name="crash_report_process_exit">Diagnostik proses berhenti</string>
@@ -11,33 +12,30 @@
     <plurals name="crash_reports_selected_count">
         <item quantity="other">%1$d terpilih</item>
     </plurals>
-    <string name="copy_report">Salin Laporan</string>
-    <string name="share_report">Bagikan Laporan</string>
+    <string name="copy_report">Salin</string>
     <string name="report_on_github">Laporkan di GitHub</string>
-    <string name="delete_report">Hapus Laporan</string>
+    <string name="delete_report">Hapus</string>
     <string name="copy_selected_reports">Salin laporan terpilih</string>
-    <string name="share_selected_reports">Bagikan laporan terpilih</string>
     <string name="delete_selected_reports">Hapus laporan terpilih</string>
     <string name="crash_report_copied">Laporan disalin</string>
     <plurals name="crash_reports_copied">
         <item quantity="other">%1$d laporan disalin</item>
     </plurals>
-    <string name="crash_report_share_title">Bagikan Laporan Diagnostik</string>
-    <string name="crash_report_share_disclosure">Laporan diagnostik ini mungkin berisi informasi perangkat, metadata MIDlet, pengenal yang hanya digunakan untuk korelasi crash, stack trace Java, atau detail proses Android yang berhenti. Jika raw ANR trace atau native tombstone disimpan, bukti tersebut juga akan dilampirkan saat dibagikan. Tinjau laporan sebelum membagikannya.</string>
-    <plurals name="crash_reports_batch_share_title">
-        <item quantity="other">Bagikan %1$d Laporan Diagnostik?</item>
-    </plurals>
-    <string name="crash_reports_batch_share_disclosure">Laporan diagnostik yang dipilih mungkin berisi informasi perangkat, metadata MIDlet, pengenal korelasi crash, stack trace Java, atau detail proses Android yang berhenti. Raw trace yang disimpan juga akan dilampirkan. Tinjau laporan sebelum membagikannya.</string>
-    <string name="crash_report_github_issue_title">Laporan Diagnostik: %1$s</string>
-    <string name="crash_report_github_intro">Sebelum mengirim, jelaskan apa yang sedang Anda lakukan saat masalah terjadi. Tinjau teks diagnostik yang telah diisi dan hapus apa pun yang tidak ingin Anda publikasikan.\n\n---\n\nLaporan diagnostik (disanitasi oleh JL-Mod Plus):</string>
-    <string name="crash_report_github_truncated">\n\n[Isian awal diagnostik dipersingkat untuk formulir issue GitHub. Gunakan Bagikan Laporan di JL-Mod Plus jika bukti tambahan diperlukan.]</string>
+    <string name="crash_report_bundle_preparing">Menyiapkan bundle diagnostik…</string>
+    <string name="crash_report_bundle_ready_title">Bundle diagnostik siap</string>
+    <string name="crash_report_bundle_ready_message">%1$s\n\nDisimpan di Downloads → JL-Mod Plus Diagnostics.\n\nGitHub akan meminta Anda mengunggah file ini sebelum mengirim laporan. Bundle diagnostik akan dipublikasikan bersama issue Anda.</string>
+    <string name="locate_bundle">Temukan bundle</string>
+    <string name="open_github">Buka GitHub</string>
+    <string name="crash_report_bundle_failed">Tidak dapat menyiapkan bundle diagnostik</string>
+    <string name="crash_report_locate_failed">Tidak ada pemilih file sistem yang tersedia untuk menemukan bundle diagnostik</string>
+    <string name="crash_report_bundle_cleanup_failed">Laporan diagnostik telah dihapus, tetapi JL-Mod Plus tidak dapat menghapus bundle yang dibuat untuknya</string>
     <string name="crash_report_github_unavailable">Tidak ada aplikasi yang dapat membuka formulir issue GitHub</string>
-    <string name="crash_report_delete_title">Hapus Laporan Crash?</string>
-    <string name="crash_report_delete_message">Tindakan ini akan menghapus secara permanen catatan diagnostik lokal yang dipilih dari JL-Mod Plus.</string>
+    <string name="crash_report_delete_title">Hapus Laporan Diagnostik?</string>
+    <string name="crash_report_delete_message">Tindakan ini akan menghapus secara permanen laporan diagnostik dan bundle yang dibuat untuknya dari perangkat ini. File yang sudah diunggah ke tempat lain tidak akan terpengaruh.</string>
     <plurals name="crash_reports_batch_delete_title">
-        <item quantity="other">Hapus %1$d Laporan Crash?</item>
+        <item quantity="other">Hapus %1$d Laporan Diagnostik?</item>
     </plurals>
-    <string name="crash_reports_batch_delete_message">Tindakan ini akan menghapus secara permanen catatan diagnostik lokal yang dipilih dari JL-Mod Plus.</string>
+    <string name="crash_reports_batch_delete_message">Tindakan ini akan menghapus secara permanen laporan diagnostik terpilih dan bundle yang dibuat untuknya dari perangkat ini. File yang sudah diunggah ke tempat lain tidak akan terpengaruh.</string>
     <string name="crash_report_delete_failed">Tidak dapat menghapus laporan secara lengkap</string>
     <string name="crash_report_unavailable">Laporan ini tidak lagi tersedia</string>
     <string name="process_exit_recovery_title">Terdeteksi Proses Berhenti Secara Tak Terduga</string>

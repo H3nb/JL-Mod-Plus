@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2018 Nikita Shakarun
  * Copyright 2020-2026 Yury Kharchenko
  *
@@ -25,6 +26,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import javax.microedition.shell.MidletThread;
 import javax.microedition.util.ContextHolder;
 
 public abstract class CustomItem extends Item {
@@ -66,18 +68,31 @@ public abstract class CustomItem extends Item {
 		@SuppressLint("ClickableViewAccessibility")
 		@Override
 		public boolean onTouchEvent(MotionEvent event) {
-			switch (event.getActionMasked()) {
-				case MotionEvent.ACTION_DOWN:
-					pointerPressed(convertPointerX(event.getX()), convertPointerY(event.getY()));
-					break;
-				case MotionEvent.ACTION_MOVE:
-					pointerDragged(convertPointerX(event.getX()), convertPointerY(event.getY()));
-					break;
-				case MotionEvent.ACTION_UP:
-					pointerReleased(convertPointerX(event.getX()), convertPointerY(event.getY()));
-					break;
-				default:
-					return super.onTouchEvent(event);
+			int action = event.getActionMasked();
+			if (action != MotionEvent.ACTION_DOWN
+					&& action != MotionEvent.ACTION_MOVE
+					&& action != MotionEvent.ACTION_UP) {
+				return super.onTouchEvent(event);
+			}
+
+			boolean enteredGuest = MidletThread.enterGuestExecution();
+			try {
+				switch (action) {
+					case MotionEvent.ACTION_DOWN:
+						pointerPressed(convertPointerX(event.getX()), convertPointerY(event.getY()));
+						break;
+					case MotionEvent.ACTION_MOVE:
+						pointerDragged(convertPointerX(event.getX()), convertPointerY(event.getY()));
+						break;
+					default:
+						pointerReleased(convertPointerX(event.getX()), convertPointerY(event.getY()));
+						break;
+				}
+			} catch (RuntimeException | Error failure) {
+				MidletThread.markEscapingGuestFailure(failure);
+				throw failure;
+			} finally {
+				MidletThread.exitGuestExecution(enteredGuest);
 			}
 			super.onTouchEvent(event);
 			return true;
@@ -120,10 +135,16 @@ public abstract class CustomItem extends Item {
 		if (view == null) return;
 		Graphics graphics = offscreen.getSingleGraphics();
 		graphics.reset(x, y, x + width, y + height);
+		boolean enteredGuest = MidletThread.enterGuestExecution();
 		try {
 			paint(graphics, width, height);
-		} catch (Throwable t) {
-			Log.e(TAG, "repaint: ", t);
+		} catch (Exception e) {
+			Log.e(TAG, "repaint: ", e);
+		} catch (Error fatal) {
+			MidletThread.markEscapingGuestFailure(fatal);
+			throw fatal;
+		} finally {
+			MidletThread.exitGuestExecution(enteredGuest);
 		}
 		view.postInvalidate();
 	}

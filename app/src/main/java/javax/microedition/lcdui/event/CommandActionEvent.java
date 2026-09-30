@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
  *
@@ -44,6 +45,7 @@ public class CommandActionEvent extends Event {
 		instance.listener = listener;
 		instance.command = command;
 		instance.displayable = displayable;
+		instance.asGuestCallback();
 
 		return instance;
 	}
@@ -58,6 +60,7 @@ public class CommandActionEvent extends Event {
 		instance.itemlistener = itemlistener;
 		instance.command = command;
 		instance.item = item;
+		instance.asGuestCallback();
 
 		return instance;
 	}
@@ -72,7 +75,7 @@ public class CommandActionEvent extends Event {
 	}
 
 	@Override
-	public void recycle() {
+	protected void recycleEvent() {
 		listener = null;
 		itemlistener = null;
 

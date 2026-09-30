@@ -18,35 +18,41 @@ package io.github.h3nb.jlmodplus.crashes;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
 
-import java.util.ArrayList;
-
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.ui.ThemedToast;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 
-/** Read-only diagnostic detail view with explicit copy/share/report/delete actions. */
+/** Read-only diagnostic detail view with explicit copy/report/delete actions. */
 public class CrashReportDetailsActivity extends AppCompatActivity {
 	static final String EXTRA_REPORT_ID = "ru.playsoftware.j2meloader.crashes.REPORT_ID";
 	private static final String GITHUB_NEW_ISSUE_URL =
 			"https://github.com/H3nb/JL-Mod-Plus/issues/new";
-	private static final String GITHUB_ISSUE_TEMPLATE = "issue-template.md";
-	private static final String NATIVE_TOMBSTONE_MIME_TYPE = "application/x-protobuf";
+	private static final String GITHUB_ISSUE_TEMPLATE = "diagnostic-report.yml";
+	private static final String GITHUB_SUMMARY_FIELD = "diagnostic-summary";
 
 	private LocalDiagnosticRepository.Record record;
 	private String exportText;
-	private String githubExportText;
 	private ComposeView composeView;
-	private DiagnosticTraceAttachment.Attachment traceAttachment;
+	private CrashReportDetailsController composeController;
+	private DiagnosticBundleStore.PreparedBundle preparedBundle;
+	private volatile boolean preparingBundle;
+	private volatile boolean deletingRecord;
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -65,68 +71,73 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 			return;
 		}
 
-		traceAttachment = DiagnosticTraceAttachment.find(this, record.getId(), record.getSessionId());
 		String displayText = DiagnosticReportText.build(record);
-		String githubText = DiagnosticReportText.buildForGitHub(record);
-		applyReportText(displayText, githubText);
-		renderDetails(displayText);
-		loadNativeSummaryAsync(displayText, githubText);
+		applyReportText(displayText);
+		composeController = CrashReportsComposeBridge.installDetails(
+				composeView, displayText, createActions());
+		loadNativeSummaryAsync(displayText);
 	}
 
-	private void renderDetails(String displayText) {
-		CrashReportsComposeBridge.installDetails(composeView, displayText,
-				new CrashReportDetailsActions() {
-					@Override
-					public void onBack() {
-						finish();
-					}
+	private CrashReportDetailsActions createActions() {
+		return new CrashReportDetailsActions() {
+			@Override
+			public void onBack() {
+				finish();
+			}
 
-					@Override
-					public void onCopy() {
-						copyReport();
-					}
+			@Override
+			public void onCopy() {
+				copyReport();
+			}
 
-					@Override
-					public void onShare() {
-						shareReport();
-					}
+			@Override
+			public void onReportGitHub() {
+				reportOnGitHub();
+			}
 
-					@Override
-					public void onReportGitHub() {
-						reportOnGitHub();
-					}
+			@Override
+			public void onDismissBundleReady() {
+				composeController.dismissBundleReady();
+			}
 
-					@Override
-					public void onDelete() {
-						deleteReport();
-					}
-				});
+			@Override
+			public void onLocateBundle() {
+				locateBundle();
+			}
+
+			@Override
+			public void onOpenGitHub() {
+				openGitHub();
+			}
+
+			@Override
+			public void onDelete() {
+				deleteReport();
+			}
+		};
 	}
 
-	private void loadNativeSummaryAsync(String baseDisplayText, String baseGithubText) {
-		if (traceAttachment == null || !NATIVE_TOMBSTONE_MIME_TYPE.equals(traceAttachment.mimeType)) {
+	private void loadNativeSummaryAsync(String baseDisplayText) {
+		ProcessExitStore.Snapshot exit = record.getProcessExitSnapshot();
+		if (exit == null || !"native-tombstone-protobuf".equals(exit.traceKind)) {
 			return;
 		}
-		Uri traceUri = traceAttachment.uri;
 		Thread parser = new Thread(() -> {
-			String nativeSummary = NativeTombstoneSummary.summarize(this, traceUri);
+			String nativeSummary = NativeTombstoneSummary.summarize(exit);
 			if (nativeSummary == null) return;
 			runOnUiThread(() -> {
 				if (isFinishing() || isDestroyed()) return;
 				String displayText = DiagnosticReportText.withNativeSummary(
 						baseDisplayText, nativeSummary);
-				String githubText = DiagnosticReportText.withNativeSummary(
-						baseGithubText, nativeSummary);
-				applyReportText(displayText, githubText);
-				renderDetails(displayText);
+				applyReportText(displayText);
+				composeController.updateDisplay(displayText);
 			});
 		}, "JLP-native-diagnostic");
 		parser.start();
 	}
 
-	private void applyReportText(String displayText, String githubText) {
+	private void applyReportText(String displayText) {
 		exportText = DiagnosticExportSanitizer.sanitize(this, displayText);
-		githubExportText = DiagnosticExportSanitizer.sanitize(this, githubText);
 	}
 
 	private void copyReport() {
@@ -137,72 +148,129 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		}
 	}
 
-	private void shareReport() {
-		if (traceAttachment == null) {
-			shareTextOnly();
-			return;
-		}
-		DiagnosticSummaryAttachment.Attachment summaryAttachment = DiagnosticSummaryAttachment.create(
-				this, record.getId(), exportText);
-		if (summaryAttachment == null) {
-			shareSingleTrace();
-			return;
-		}
-
-		ArrayList<Uri> streams = new ArrayList<>(2);
-		streams.add(summaryAttachment.uri);
-		streams.add(traceAttachment.uri);
-		Intent share = new Intent(Intent.ACTION_SEND_MULTIPLE);
-		share.setType("*/*");
-		share.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crash_reports));
-		share.putExtra(Intent.EXTRA_TEXT, exportText);
-		share.putParcelableArrayListExtra(Intent.EXTRA_STREAM, streams);
-		ClipData clipData = ClipData.newUri(
-				getContentResolver(), getString(R.string.crash_reports), summaryAttachment.uri);
-		clipData.addItem(new ClipData.Item(traceAttachment.uri));
-		share.setClipData(clipData);
-		share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-		startActivity(Intent.createChooser(share, getString(R.string.crash_report_share_title)));
-	}
-
-	private void shareTextOnly() {
-		Intent share = new Intent(Intent.ACTION_SEND);
-		share.setType("text/plain");
-		share.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crash_reports));
-		share.putExtra(Intent.EXTRA_TEXT, exportText);
-		startActivity(Intent.createChooser(share, getString(R.string.crash_report_share_title)));
-	}
-
-	private void shareSingleTrace() {
-		Intent share = new Intent(Intent.ACTION_SEND);
-		share.setType(traceAttachment.mimeType);
-		share.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crash_reports));
-		share.putExtra(Intent.EXTRA_TEXT, exportText);
-		share.putExtra(Intent.EXTRA_STREAM, traceAttachment.uri);
-		share.setClipData(ClipData.newUri(
-				getContentResolver(), getString(R.string.crash_reports), traceAttachment.uri));
-		share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-		startActivity(Intent.createChooser(share, getString(R.string.crash_report_share_title)));
-	}
-
 	private void reportOnGitHub() {
-		String subject = record.getMidletName();
-		if (subject == null || subject.trim().isEmpty()) {
-			subject = getString(switch (record.getKind()) {
-				case MIDLET_FAILURE -> R.string.crash_report_midlet_failure;
-				case JAVA_REPORT -> R.string.crash_report_java_report;
-				case PROCESS_EXIT -> R.string.crash_report_process_exit;
+		if (preparingBundle || deletingRecord) return;
+		preparingBundle = true;
+		ThemedToast.show(this, R.string.crash_report_bundle_preparing, Toast.LENGTH_SHORT);
+		Context appContext = getApplicationContext();
+		LocalDiagnosticRepository.Record target = record;
+		new Thread(() -> {
+			DiagnosticBundleStore.PreparedBundle result;
+			try {
+				result = DiagnosticBundleStore.ensure(appContext, target);
+			} catch (Exception e) {
+				result = null;
+			}
+			if (deletingRecord) {
+				if (result != null) DiagnosticBundleStore.deleteTracked(appContext, target);
+				preparingBundle = false;
+				return;
+			}
+			DiagnosticBundleStore.PreparedBundle finalResult = result;
+			runOnUiThread(() -> {
+				preparingBundle = false;
+				if (isFinishing() || isDestroyed() || deletingRecord) return;
+				if (finalResult == null) {
+					ThemedToast.show(
+							this, R.string.crash_report_bundle_failed, Toast.LENGTH_LONG);
+					return;
+				}
+				preparedBundle = finalResult;
+				composeController.showBundleReady(finalResult.fileName);
 			});
+		}, "JLP-diagnostic-bundle").start();
+	}
+
+	private void locateBundle() {
+		if (preparedBundle == null) return;
+		Uri directory = diagnosticsDirectoryDocumentUri();
+
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+			Intent folder = new Intent(Intent.ACTION_VIEW)
+					.setDataAndType(directory, DocumentsContract.Document.MIME_TYPE_DIR)
+					.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			try {
+				startActivity(folder);
+				return;
+			} catch (ActivityNotFoundException | SecurityException ignored) {
+				// Android 6-7 have no standard initial-folder extra; fall through to a picker.
+			}
 		}
-		subject = DiagnosticExportSanitizer.sanitize(this, subject);
-		String title = getString(R.string.crash_report_github_issue_title, subject);
-		String body = getString(R.string.crash_report_github_intro) + "\n\n" + githubExportText;
-		String issueUrl = GitHubIssueDraft.buildUrl(
+
+		Intent locate = new Intent(Intent.ACTION_OPEN_DOCUMENT)
+				.addCategory(Intent.CATEGORY_OPENABLE)
+				.setType("application/zip");
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			Uri initialUri = preferredInitialDocumentUri(preparedBundle.uri, directory);
+			if (initialUri != null) {
+				locate.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initialUri);
+			}
+		}
+		try {
+			startActivity(locate);
+			return;
+		} catch (ActivityNotFoundException | SecurityException ignored) {
+			// Fall through only when the system document picker itself is unavailable.
+		}
+		Intent fallback = new Intent(Intent.ACTION_GET_CONTENT)
+				.addCategory(Intent.CATEGORY_OPENABLE)
+				.setType("application/zip");
+		try {
+			startActivity(fallback);
+		} catch (ActivityNotFoundException | SecurityException e) {
+			ThemedToast.show(this, R.string.crash_report_locate_failed, Toast.LENGTH_LONG);
+		}
+	}
+
+	@Nullable
+	private Uri preferredInitialDocumentUri(Uri bundleUri, Uri directoryUri) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+				&& bundleUri != null
+				&& ContentResolver.SCHEME_CONTENT.equals(bundleUri.getScheme())
+				&& MediaStore.AUTHORITY.equals(bundleUri.getAuthority())) {
+			try {
+				Uri documentUri = MediaStore.getDocumentUri(this, bundleUri);
+				if (resolvesDocumentsProvider(documentUri)
+						&& hasReadPermission(documentUri)) {
+					return documentUri;
+				}
+			} catch (RuntimeException ignored) {
+				// Conversion is best-effort and grants no new permissions.
+			}
+		}
+		return resolvesDocumentsProvider(directoryUri) ? directoryUri : null;
+	}
+
+	private boolean resolvesDocumentsProvider(Uri uri) {
+		return uri != null
+				&& ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())
+				&& uri.getAuthority() != null
+				&& getPackageManager().resolveContentProvider(uri.getAuthority(), 0) != null;
+	}
+
+	private boolean hasReadPermission(Uri uri) {
+		return checkUriPermission(
+				uri,
+				android.os.Process.myPid(),
+				android.os.Process.myUid(),
+				Intent.FLAG_GRANT_READ_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED;
+	}
+
+	static Uri diagnosticsDirectoryDocumentUri() {
+		return DocumentsContract.buildDocumentUri(
+				"com.android.externalstorage.documents",
+				"primary:" + Environment.DIRECTORY_DOWNLOADS + "/"
+						+ DiagnosticBundleStore.PUBLIC_DIRECTORY);
+	}
+
+	private void openGitHub() {
+		if (preparedBundle == null) return;
+		String issueUrl = GitHubIssueDraft.buildIssueFormUrl(
 				GITHUB_NEW_ISSUE_URL,
 				GITHUB_ISSUE_TEMPLATE,
-				title,
-				body,
-				getString(R.string.crash_report_github_truncated));
+				preparedBundle.issueTitle,
+				GITHUB_SUMMARY_FIELD,
+				preparedBundle.issueSummary);
 		Intent issueIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(issueUrl))
 				.addCategory(Intent.CATEGORY_BROWSABLE);
 		try {
@@ -213,10 +281,29 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 	}
 
 	private void deleteReport() {
-		if (LocalDiagnosticRepository.delete(this, record)) {
-			finish();
-		} else {
-			ThemedToast.show(this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG);
-		}
+		if (deletingRecord) return;
+		deletingRecord = true;
+		Context appContext = getApplicationContext();
+		LocalDiagnosticRepository.Record target = record;
+		new Thread(() -> {
+			LocalDiagnosticRepository.DeleteResult result =
+					LocalDiagnosticRepository.deleteWithArtifacts(appContext, target);
+			runOnUiThread(() -> {
+				if (!result.sourceDeleted) {
+					deletingRecord = false;
+					if (!isFinishing() && !isDestroyed()) {
+						ThemedToast.show(
+								this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG);
+					}
+					return;
+				}
+				if (!result.bundleDeleted && !isFinishing() && !isDestroyed()) {
+					ThemedToast.show(
+							this, R.string.crash_report_bundle_cleanup_failed, Toast.LENGTH_LONG);
+				}
+				finish();
+			});
+		}, "JLP-delete-diagnostic").start();
 	}
+
 }

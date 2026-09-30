@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
-import android.system.OsConstants;
 
 import org.junit.Test;
 
@@ -42,7 +41,7 @@ public class ProcessExitStoreTest {
 		assertTrue(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_CRASH, 0, CACHED, false));
 		assertTrue(ProcessExitStore.shouldRetain(
-				ApplicationExitInfo.REASON_CRASH_NATIVE, OsConstants.SIGSEGV, CACHED, false));
+				ApplicationExitInfo.REASON_CRASH_NATIVE, ProcessExitStore.SIGNAL_SEGV, CACHED, false));
 		assertTrue(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_ANR, 0, CACHED, false));
 		assertTrue(ProcessExitStore.shouldRetain(
@@ -58,7 +57,111 @@ public class ProcessExitStoreTest {
 	}
 
 	@Test
-	public void expectedUserPackageAndNonActionableSystemExitsAreSuppressed() {
+	public void storedMemoryEngineSwipeUpProjectionIsPrunedUnderCurrentPolicy() {
+		String packageName = "io.github.h3nb.jlmodplus.debug";
+		String processName = packageName + ":memory_engine";
+
+		assertEquals("memory_engine", CrashReporter.classifyProcess(packageName, processName));
+		assertEquals(null, ProcessExitStore.retainedStoredProcessRole(
+				packageName,
+				processName,
+				"other",
+				ProcessExitStore.REASON_OTHER,
+				0,
+				FOREGROUND,
+				"SwipeUpClean"));
+		assertEquals("memory_engine", ProcessExitStore.retainedStoredProcessRole(
+				packageName,
+				processName,
+				"other",
+				ProcessExitStore.REASON_CRASH,
+				0,
+				CACHED,
+				null));
+	}
+
+	@Test
+	public void knownUserInitiatedCleanupMarkersAreSuppressedExactly() {
+		String[] markers = {
+				"SwipeUpClean",
+				"OneKeyClean",
+				"ForceClean",
+				"GarbageClean",
+				"LockScreenClean",
+				"GameClean",
+				"OptimizationClean"
+		};
+		for (String marker : markers) {
+			assertTrue(ProcessExitStore.isKnownUserInitiatedCleanup(
+					ProcessExitStore.REASON_OTHER, "  " + marker + "  "));
+			assertFalse(ProcessExitStore.shouldRetainProcess(
+					"memory_engine", ProcessExitStore.REASON_OTHER, 0, FOREGROUND, marker));
+		}
+		assertFalse(ProcessExitStore.isKnownUserInitiatedCleanup(
+				ProcessExitStore.REASON_OTHER, "SwipeUpCleanLater"));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"main", ProcessExitStore.REASON_OTHER, 0, FOREGROUND, "SwipeUpCleanLater"));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"main", ProcessExitStore.REASON_CRASH, 0, FOREGROUND, "SwipeUpClean"));
+	}
+
+	@Test
+	public void memoryEngineRetainsOnlyActionableFailures() {
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_CRASH, 0, CACHED, null));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_CRASH_NATIVE,
+				ProcessExitStore.SIGNAL_SEGV, CACHED, null));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_ANR, 0, CACHED, null));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_INITIALIZATION_FAILURE, 0, CACHED, null));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_EXCESSIVE_RESOURCE_USAGE, 0, CACHED, null));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_MEMORY_LIMITER, 0, CACHED, null));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_OTHER, 0, CACHED,
+				ProcessExitStore.MEMORY_LIMITER_ANON_SWAP_MARKER));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_OTHER, 0, CACHED, "AutoPowerKill"));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_OTHER, 0, CACHED, "AutoThermalKill"));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_SIGNALED,
+				ProcessExitStore.SIGNAL_TERM, CACHED, null));
+
+		assertFalse(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_LOW_MEMORY, 0, FOREGROUND, null));
+		assertFalse(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_DEPENDENCY_DIED, 0, FOREGROUND, null));
+		assertFalse(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_FREEZER, 0, FOREGROUND, null));
+		assertFalse(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_SIGNALED,
+				ProcessExitStore.SIGNAL_KILL, FOREGROUND, null));
+		assertFalse(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_UNKNOWN, 0, FOREGROUND, null));
+		assertFalse(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", ProcessExitStore.REASON_OTHER, 0, FOREGROUND, "Unclassified"));
+		assertFalse(ProcessExitStore.shouldRetainProcess(
+				"memory_engine", 42, 0, FOREGROUND, null));
+	}
+
+	@Test
+	public void mainAndMidletKeepExistingUnknownAndOtherSensitivity() {
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"main", ProcessExitStore.REASON_UNKNOWN, 0, FOREGROUND, null));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"main", ProcessExitStore.REASON_OTHER, 0, FOREGROUND, "Unclassified"));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"midlet", ProcessExitStore.REASON_UNKNOWN, 0, CACHED, null));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"midlet", ProcessExitStore.REASON_OTHER, 0, CACHED, "Unclassified"));
+	}
+
+	@Test
+	public void expectedUserAndPackageExitsAreSuppressed() {
 		assertFalse(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_USER_REQUESTED, 0, FOREGROUND, true));
 		assertFalse(ProcessExitStore.shouldRetain(
@@ -67,18 +170,49 @@ public class ProcessExitStoreTest {
 				ApplicationExitInfo.REASON_PACKAGE_UPDATED, 0, FOREGROUND, true));
 		assertFalse(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_PACKAGE_STATE_CHANGE, 0, FOREGROUND, true));
+	}
+
+	@Test
+	public void unknownAndOtherRequireActionableProcessState() {
 		assertFalse(ProcessExitStore.shouldRetain(
-				ProcessExitStore.REASON_OTHER, 0, FOREGROUND, true));
+				ProcessExitStore.REASON_UNKNOWN, 0, CACHED, false));
+		assertTrue(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_UNKNOWN, 0, CACHED, true));
+		assertTrue(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_UNKNOWN, 0, FOREGROUND, false));
+
+		assertFalse(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_OTHER, 0, CACHED, false));
+		assertTrue(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_OTHER, 0, CACHED, true));
+		assertTrue(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_OTHER, 0, FOREGROUND, false));
+	}
+
+	@Test
+	public void memoryLimiterSemanticsUseOnlyDedicatedReasonOrDocumentedMarker() {
+		assertTrue(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_MEMORY_LIMITER, 0, FOREGROUND, false));
+		assertEquals("Memory-limit termination",
+				ProcessExitStore.reasonLabel(ProcessExitStore.REASON_MEMORY_LIMITER));
+		assertTrue(ProcessExitStore.isMemoryLimiterTermination(
+				ProcessExitStore.REASON_MEMORY_LIMITER, null));
+		assertTrue(ProcessExitStore.isMemoryLimiterTermination(
+				ProcessExitStore.REASON_OTHER,
+				"MemoryLimiter:AnonSwap threshold exceeded"));
+		assertFalse(ProcessExitStore.isMemoryLimiterTermination(
+				ProcessExitStore.REASON_OTHER,
+				"generic memory pressure"));
 	}
 
 	@Test
 	public void sigkillRequiresMidletOrForegroundEvidence() {
 		assertFalse(ProcessExitStore.shouldRetain(
-				ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, CACHED, false));
+				ApplicationExitInfo.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, CACHED, false));
 		assertTrue(ProcessExitStore.shouldRetain(
-				ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, CACHED, true));
+				ApplicationExitInfo.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, CACHED, true));
 		assertTrue(ProcessExitStore.shouldRetain(
-				ApplicationExitInfo.REASON_SIGNALED, OsConstants.SIGKILL, FOREGROUND, false));
+				ApplicationExitInfo.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, FOREGROUND, false));
 	}
 
 	@Test
@@ -97,6 +231,27 @@ public class ProcessExitStoreTest {
 				ApplicationExitInfo.REASON_EXIT_SELF, 0, FOREGROUND, true));
 		assertTrue(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_EXIT_SELF, 1, FOREGROUND, true));
+	}
+
+	@Test
+	public void unknownFutureReasonRemainsActionableAndNumericallyLabeled() {
+		assertTrue(ProcessExitStore.shouldRetain(42, 0, FOREGROUND, false));
+		assertEquals("Process termination (reason 42)", ProcessExitStore.reasonLabel(42));
+	}
+
+	@Test
+	public void intentionalSessionSuppressesOnlyExactControlledSigkill() {
+		MidletSessionJournal.Snapshot session = session(MidletSessionJournal.Outcome.USER_STOP);
+
+		assertTrue(ProcessExitStore.isExpectedIntentionalSessionExit(
+				session, session.sessionId,
+				ProcessExitStore.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, "midlet"));
+		assertFalse(ProcessExitStore.isExpectedIntentionalSessionExit(
+				session, session.sessionId,
+				ProcessExitStore.REASON_CRASH, 0, "midlet"));
+		assertFalse(ProcessExitStore.isExpectedIntentionalSessionExit(
+				session, null,
+				ProcessExitStore.REASON_SIGNALED, ProcessExitStore.SIGNAL_KILL, "midlet"));
 	}
 
 	@Test
@@ -219,6 +374,28 @@ public class ProcessExitStoreTest {
 
 		assertThrows(OutOfMemoryError.class, () -> ProcessExitStore.copyBounded(
 				failing, new ByteArrayOutputStream(), 8));
+	}
+
+	private static MidletSessionJournal.Snapshot session(MidletSessionJournal.Outcome outcome) {
+		return new MidletSessionJournal.Snapshot(
+				2,
+				"123e4567-e89b-12d3-a456-426614174000",
+				"io.github.h3nb.jlmodplus:midlet",
+				123,
+				1L,
+				1L,
+				2L,
+				2L,
+				MidletSessionJournal.Stage.COMPLETED,
+				outcome,
+				null,
+				null,
+				"Game",
+				"Vendor",
+				"1.0",
+				"game.Main",
+				"1",
+				"abc123");
 	}
 
 	private static byte[] bytes(int count) {
