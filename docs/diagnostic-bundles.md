@@ -17,12 +17,12 @@ from the incident timestamp and stable diagnostic fingerprint:
 The timestamp is formatted in UTC so retrying the same retained incident does not change the
 logical filename when the device time zone changes.
 
-## Format version 1
+## Format version 2
 
 Bundles are ordinary, unencrypted ZIP files containing:
 
 - `report.md` — canonical-English human-readable evidence and the useful Java stack trace.
-- `incident.json` — stable machine-readable incident facts with `formatVersion: 1`.
+- `incident.json` — stable machine-readable incident facts with `formatVersion: 2`.
 - `evidence/anr-trace.txt` — only when a retained text ANR trace is available.
 - `evidence/tombstone-summary.txt` — only when a retained native tombstone can be represented by
   the bounded structured tombstone parser.
