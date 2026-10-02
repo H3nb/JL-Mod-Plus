@@ -1003,6 +1003,8 @@ public class Render {
 					return;
 				}
 
+				float localScaleX = pointSpriteAxisScale(env.viewMatrix, 0);
+				float localScaleY = pointSpriteAxisScale(env.viewMatrix, 3);
 				float[] vertex = new float[6 * 4];
 
 				vcBuf = BufferUtils.createFloatBuffer(numPrimitives * 6 * 4);
@@ -1030,7 +1032,10 @@ public class Render {
 						ty0 = (byte) textureCoords[to++];
 						tx1 = (byte) (textureCoords[to++] - 1);
 						ty1 = (byte) (textureCoords[to++] - 1);
-						switch (textureCoords[to++]) {
+						int flags = textureCoords[to++];
+						width = scalePointSpriteDimension(width, flags, localScaleX);
+						height = scalePointSpriteDimension(height, flags, localScaleY);
+						switch (flags) {
 							case Graphics3D.POINT_SPRITE_LOCAL_SIZE | Graphics3D.POINT_SPRITE_PERSPECTIVE:
 								halfWidth = width * env.projMatrix[0] * 0.5f;
 								halfHeight = height * env.projMatrix[5] * 0.5f;
@@ -1079,6 +1084,14 @@ public class Render {
 				throw new IllegalArgumentException();
 		}
 		stack.add(new RenderNode.PrimitiveNode(this, command, vcBuf, ncBuf, tcBuf, colorBuf));
+	}
+
+	static float pointSpriteAxisScale(float[] viewMatrix, int offset) {
+		return MathUtil.vectorLength(viewMatrix[offset], viewMatrix[offset + 1], viewMatrix[offset + 2]);
+	}
+
+	static float scalePointSpriteDimension(float dimension, int flags, float localScale) {
+		return (flags & Graphics3D.POINT_SPRITE_PIXEL_SIZE) == 0 ? dimension * localScale : dimension;
 	}
 
 	public synchronized void drawFigure(FigureImpl figure) {
