@@ -711,10 +711,7 @@ public class Render {
 					setPerspectiveWH(cmds[i++], cmds[i++], cmds[i++], cmds[i++]);
 					break;
 				case Graphics3D.COMMAND_TEXTURE_INDEX:
-					int tid = cmd & 0xFFFFFF;
-					if (tid > 0 && tid < 16) {
-						env.textureIdx = tid;
-					}
+					env.selectTexture(cmd & 0xFFFFFF);
 					break;
 				case Graphics3D.COMMAND_THRESHOLD:
 					setToonParam(cmds[i++], cmds[i++], cmds[i++]);
@@ -1482,6 +1479,12 @@ public class Render {
 		TextureImpl specular;
 
 		Environment() {}
+
+		void selectTexture(int index) {
+			if (index < textures.length) {
+				textureIdx = index;
+			}
+		}
 
 		TextureImpl getTexture() {
 			if (textureIdx < 0 || textureIdx >= texturesLen) {
