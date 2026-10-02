@@ -1028,10 +1028,14 @@ public class Render {
 						float width = textureCoords[to++];
 						float height = textureCoords[to++];
 						angle = textureCoords[to++];
-						tx0 = (byte) textureCoords[to++];
-						ty0 = (byte) textureCoords[to++];
-						tx1 = (byte) (textureCoords[to++] - 1);
-						ty1 = (byte) (textureCoords[to++] - 1);
+						int rawX0 = textureCoords[to++];
+						int rawY0 = textureCoords[to++];
+						int rawX1 = textureCoords[to++];
+						int rawY1 = textureCoords[to++];
+						tx0 = (byte) adjustPointSpriteTextureStart(rawX0, rawX1);
+						ty0 = (byte) adjustPointSpriteTextureStart(rawY0, rawY1);
+						tx1 = (byte) adjustPointSpriteTextureEnd(rawX0, rawX1);
+						ty1 = (byte) adjustPointSpriteTextureEnd(rawY0, rawY1);
 						int flags = textureCoords[to++];
 						width = scalePointSpriteDimension(width, flags, localScaleX);
 						height = scalePointSpriteDimension(height, flags, localScaleY);
@@ -1092,6 +1096,14 @@ public class Render {
 
 	static float scalePointSpriteDimension(float dimension, int flags, float localScale) {
 		return (flags & Graphics3D.POINT_SPRITE_PIXEL_SIZE) == 0 ? dimension * localScale : dimension;
+	}
+
+	static int adjustPointSpriteTextureStart(int start, int end) {
+		return end < start ? start - 1 : start;
+	}
+
+	static int adjustPointSpriteTextureEnd(int start, int end) {
+		return end < start ? end : end - 1;
 	}
 
 	public synchronized void drawFigure(FigureImpl figure) {

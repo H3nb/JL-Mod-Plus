@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.micro3d;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.mascotcapsule.micro3d.v3.Graphics3D;
 
@@ -91,9 +92,60 @@ public class RenderPointSpriteTest {
 				0.25f), EPSILON);
 	}
 
+	@Test
+	public void pointSpriteTextureRangePreservesForwardCoordinates() {
+		assertTextureRange(10, 20, 10, 19);
+		assertTextureRange(10, 11, 10, 10);
+	}
+
+	@Test
+	public void pointSpriteTextureRangeMirrorsReversedCoordinates() {
+		assertTextureRange(20, 10, 19, 10);
+		assertTextureRange(11, 10, 10, 10);
+	}
+
+	@Test
+	public void pointSpriteTextureRangeDoesNotWrapAtZero() {
+		assertTextureRange(1, 0, 0, 0);
+	}
+
+	@Test
+	public void pointSpriteTextureRangePreservesEqualCaseBehavior() {
+		assertTextureRange(10, 10, 10, 9);
+	}
+
+	@Test
+	public void pointSpriteTextureRangePreservesDirectionAndSpan() {
+		int[][] ranges = {
+				{2, 9},
+				{9, 2},
+				{0, 1},
+				{1, 0},
+				{31, 64},
+				{64, 31}
+		};
+
+		for (int[] range : ranges) {
+			int adjustedStart = Render.adjustPointSpriteTextureStart(range[0], range[1]);
+			int adjustedEnd = Render.adjustPointSpriteTextureEnd(range[0], range[1]);
+			if (range[0] < range[1]) {
+				assertTrue(adjustedStart <= adjustedEnd);
+			} else {
+				assertTrue(adjustedStart >= adjustedEnd);
+			}
+			assertEquals(Math.abs(range[1] - range[0]) - 1,
+					Math.abs(adjustedEnd - adjustedStart));
+		}
+	}
+
 	private static void assertScale(float[] matrix, float scaleX, float scaleY) {
 		assertEquals(scaleX, Render.pointSpriteAxisScale(matrix, 0), EPSILON);
 		assertEquals(scaleY, Render.pointSpriteAxisScale(matrix, 3), EPSILON);
+	}
+
+	private static void assertTextureRange(int start, int end, int expectedStart, int expectedEnd) {
+		assertEquals(expectedStart, Render.adjustPointSpriteTextureStart(start, end));
+		assertEquals(expectedEnd, Render.adjustPointSpriteTextureEnd(start, end));
 	}
 
 	private static float[] affine(float m00, float m01, float m02,
