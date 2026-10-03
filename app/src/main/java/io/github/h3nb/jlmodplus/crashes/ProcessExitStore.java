@@ -200,14 +200,17 @@ public final class ProcessExitStore {
 
 	/** Copies useful framework exit history into app-private durable storage. */
 	static void ingest(Context context) {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-			return;
-		}
 		// Startup maintenance and on-demand repository loading can enter here concurrently.
 		// Keep serialization local to this store so persisted evidence remains single-writer.
 		synchronized (INGEST_LOCK) {
 			try {
-				Api30Impl.ingest(context);
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+					Api30Impl.ingest(context);
+				} else {
+					// No reliable OS crash reason: retire obsolete orphan-projection receipts.
+					// Journals still reconcile play stats independently of diagnostic reports.
+					ProcessExitDeletionStore.pruneAgainstHistoricalKeys(context, Collections.emptySet());
+				}
 				prune(context);
 			} catch (RuntimeException e) {
 				Log.w(TAG, "Unable to ingest Android process-exit diagnostics", e);
@@ -242,9 +245,13 @@ public final class ProcessExitStore {
 						snapshot.description);
 				// Re-apply the current retention policy to local projections. Policy pruning is not
 				// a user deletion, so it deliberately does not create a deletion tombstone.
-				if (retainedRole == null) {
+				if (retainedRole == null && !isRepresentedByUnexpectedMidletFailure(context, snapshot)) {
 					delete(context, snapshot);
 					continue;
+				}
+				if (retainedRole == null) {
+					retainedRole = currentProcessRole(context.getPackageName(), snapshot.processName,
+							snapshot.processRole);
 				}
 				if (!same(snapshot.processRole, retainedRole)) {
 					snapshot = snapshot.withProcessRole(retainedRole);
@@ -269,13 +276,13 @@ public final class ProcessExitStore {
 		return result;
 	}
 
-	/** Refreshes system history, then returns one unacknowledged abnormal exit. */
+	/** Refreshes system history, then returns one unacknowledged fatal exit for automatic notice. */
 	public static PendingExit findPendingExit(Context context) {
 		ingest(context);
 		return findPendingStoredExit(context);
 	}
 
-	/** Returns one pending exit from already-persisted evidence without harvesting system history. */
+	/** Returns one pending fatal exit from stored evidence; nonfatal evidence stays available manually. */
 	public static PendingExit findPendingStoredExit(Context context) {
 		List<Snapshot> records = loadStored(context);
 		if (records.isEmpty()) {
@@ -289,7 +296,8 @@ public final class ProcessExitStore {
 		}
 		pruneAcknowledgments(context, retained);
 		for (Snapshot record : records) {
-			if (acknowledged.contains(record.key)
+			if (!isFatalProcessEvidence(record.reason, record.status)
+					|| acknowledged.contains(record.key)
 					|| isRepresentedByUnexpectedMidletFailure(context, record)) {
 				continue;
 			}
@@ -373,33 +381,6 @@ public final class ProcessExitStore {
 				&& description.contains(MEMORY_LIMITER_ANON_SWAP_MARKER);
 	}
 
-	static boolean isKnownUserInitiatedCleanup(int reason, String description) {
-		if (reason != REASON_OTHER || description == null) {
-			return false;
-		}
-		return switch (description.trim()) {
-			case "OneKeyClean",
-					"ForceClean",
-					"GarbageClean",
-					"LockScreenClean",
-					"GameClean",
-					"OptimizationClean",
-					"SwipeUpClean" -> true;
-			default -> false;
-		};
-	}
-
-	private static boolean isKnownMemoryEngineResourceTermination(int reason, String description) {
-		if (isMemoryLimiterTermination(reason, description)) {
-			return true;
-		}
-		if (reason != REASON_OTHER || description == null) {
-			return false;
-		}
-		String marker = description.trim();
-		return "AutoPowerKill".equals(marker) || "AutoThermalKill".equals(marker);
-	}
-
 	static String statusLabel(Snapshot snapshot) {
 		if (snapshot == null) {
 			return null;
@@ -445,60 +426,48 @@ public final class ProcessExitStore {
 		}
 	}
 
-	/** Pure retention policy so noise filtering is unit-testable on the JVM. */
-	static boolean shouldRetain(int reason, int status, int importance, boolean midletProcess) {
-		boolean foregroundish = importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE;
+	/** Fatal framework evidence: process importance and ordinary disappearance do not prove a crash. */
+	static boolean isFatalProcessEvidence(int reason, int status) {
 		return switch (reason) {
-			case REASON_CRASH,
-					REASON_CRASH_NATIVE,
-					REASON_ANR,
-					REASON_INITIALIZATION_FAILURE,
-					REASON_EXCESSIVE_RESOURCE_USAGE -> true;
-			case REASON_LOW_MEMORY,
-					REASON_UNKNOWN,
-					REASON_OTHER,
-					REASON_MEMORY_LIMITER -> midletProcess || foregroundish;
-			case REASON_SIGNALED -> status != SIGNAL_KILL || midletProcess || foregroundish;
-			case REASON_DEPENDENCY_DIED, REASON_FREEZER -> midletProcess || foregroundish;
-			case REASON_EXIT_SELF -> status != 0 && (midletProcess || foregroundish);
-			case REASON_PERMISSION_CHANGE,
-					REASON_USER_REQUESTED,
-					REASON_USER_STOPPED,
-					REASON_PACKAGE_STATE_CHANGE,
-					REASON_PACKAGE_UPDATED -> false;
-			default -> midletProcess || foregroundish;
+			case REASON_CRASH, REASON_CRASH_NATIVE, REASON_ANR -> true;
+			case REASON_SIGNALED -> switch (status) {
+				case SIGNAL_ILLEGAL, SIGNAL_TRAP, SIGNAL_ABORT, SIGNAL_BUS, SIGNAL_FPE,
+						SIGNAL_SEGV -> true;
+				default -> false;
+			};
+			default -> false;
 		};
 	}
 
-	/** Historical ACRA helper-process exits are reporting infrastructure, not user incidents. */
-	static boolean shouldRetainProcess(String processRole, int reason, int status, int importance) {
-		return shouldRetainProcess(processRole, reason, status, importance, null);
-	}
-
-	static boolean shouldRetainProcess(String processRole, int reason, int status, int importance,
-			String description) {
-		if ("reporter".equals(processRole) || isKnownUserInitiatedCleanup(reason, description)) {
-			return false;
-		}
-		if ("memory_engine".equals(processRole)) {
-			return shouldRetainMemoryEngine(reason, status, description);
-		}
-		return shouldRetain(reason, status, importance, "midlet".equals(processRole));
-	}
-
-	private static boolean shouldRetainMemoryEngine(int reason, int status, String description) {
-		if (isKnownMemoryEngineResourceTermination(reason, description)) {
+	/** Android-classified failures that are useful diagnostics without being crash evidence. */
+	static boolean isActionableSystemExit(int reason, int importance, String description) {
+		if (isMemoryLimiterTermination(reason, description)) {
 			return true;
 		}
 		return switch (reason) {
-			case REASON_CRASH,
-					REASON_CRASH_NATIVE,
-					REASON_ANR,
-					REASON_INITIALIZATION_FAILURE,
-					REASON_EXCESSIVE_RESOURCE_USAGE -> true;
-			case REASON_SIGNALED -> status != SIGNAL_KILL;
+			case REASON_INITIALIZATION_FAILURE, REASON_EXCESSIVE_RESOURCE_USAGE -> true;
+			case REASON_LOW_MEMORY -> isUserRelevantImportance(importance);
 			default -> false;
 		};
+	}
+
+	private static boolean isUserRelevantImportance(int importance) {
+		return importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+				|| importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE
+				|| importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE
+				|| importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE;
+	}
+
+	static boolean shouldRetain(int reason, int status, int importance, String description) {
+		return isFatalProcessEvidence(reason, status)
+				|| isActionableSystemExit(reason, importance, description);
+	}
+
+	/** Historical ACRA helper-process exits are reporting infrastructure, not user incidents. */
+	static boolean shouldRetainProcess(
+			String processRole, int reason, int status, int importance, String description) {
+		return !"reporter".equals(processRole)
+				&& shouldRetain(reason, status, importance, description);
 	}
 
 	static String currentProcessRole(String packageName, String processName, String storedRole) {
@@ -840,10 +809,18 @@ public final class ProcessExitStore {
 			Context context, Snapshot exit) {
 		MidletSessionJournal.Snapshot session =
 				exit == null ? null : findSession(context, exit.sessionId);
+		return exit != null && isFatalSessionShutdown(
+				session, exit.sessionId, exit.reason, exit.status, exit.processRole);
+	}
+
+	/** SIGKILL can support a recorded fatal session; it can never establish one by itself. */
+	static boolean isFatalSessionShutdown(MidletSessionJournal.Snapshot session, String exitSessionId,
+			int reason, int status, String processRole) {
 		return session != null
+				&& session.sessionId != null && session.sessionId.equals(exitSessionId)
 				&& session.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
 				&& MidletFailureRecovery.isSafeEventId(session.failureEventId)
-				&& isControlledRuntimeShutdown(exit);
+				&& isControlledRuntimeShutdown(reason, status, processRole);
 	}
 
 	private static boolean isExpectedIntentionalSessionExit(Context context, Snapshot exit) {
@@ -1320,8 +1297,13 @@ public final class ProcessExitStore {
 					continue;
 				}
 				if (!shouldRetainProcess(
-						processRole, info.getReason(), info.getStatus(), info.getImportance(),
-						info.getDescription())) {
+						processRole,
+						info.getReason(),
+						info.getStatus(),
+						info.getImportance(),
+						info.getDescription())
+						&& !isFatalSessionShutdown(findSession(context, state.sessionId), state.sessionId,
+								info.getReason(), info.getStatus(), processRole)) {
 					continue;
 				}
 
