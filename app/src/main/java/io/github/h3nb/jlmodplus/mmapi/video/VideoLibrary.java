@@ -557,7 +557,8 @@ public final class VideoLibrary implements Library, VideoDisplay.SurfaceOwner {
                                                 ? source.format.getLong(
                                                         android.media.MediaFormat.KEY_DURATION)
                                                 : -1;
-                        length = VideoTimeline.duration(videoDuration, event[1]);
+                        long observed = VideoTimeline.duration(videoDuration, event[1]);
+                        if (observed >= 0) length = observed;
                         clock.finishAudio(event[1], now);
                     } else if (type >= 3) {
                         events.add(

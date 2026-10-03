@@ -230,6 +230,15 @@ public class VideoPlayerTest {
                 assertTrue("Unknown video end missing", ended.await(3, TimeUnit.SECONDS));
                 assertTrue("Known decoded duration missing", duration.await(1, TimeUnit.SECONDS));
                 assertTrue(video.getDuration() >= 3900000);
+                long known = video.getDuration();
+                video.start();
+                await(
+                        () -> video.getMediaTime() > 2800000,
+                        5000,
+                        "Replay soundtrack did not finish");
+                assertEquals(known, video.getDuration());
+                assertEquals(
+                        "Replay lost its known seek bound", known, video.setMediaTime(9000000));
             } finally {
                 video.close();
             }
