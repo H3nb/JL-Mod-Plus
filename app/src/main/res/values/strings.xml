@@ -36,6 +36,7 @@
     <string name="enter_new_name">Enter new name</string>
     <string name="err_missing_app">Application not found.\nPlease check storage device %1$savailability or re-create shortcut.</string>
     <string name="error">Error</string>
+    <string name="runtime_replacement_failed">The running MIDlet could not be stopped. Try opening the new MIDlet again.</string>
     <string name="error_name">Enter a name.</string>
     <string name="exit">Exit</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Force-closing the application may result in data loss or even break it completely!\nProceed?</string>

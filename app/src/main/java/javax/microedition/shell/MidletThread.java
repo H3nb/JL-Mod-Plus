@@ -155,6 +155,26 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		return current != null && !current.lifecycle.isDestroyed();
 	}
 
+	/** A terminated guest heap is not reusable while its process cleanup is still pending. */
+	static boolean hasRuntimeHeap() {
+		return liveGuestExecutionToken != null;
+	}
+
+	/** User-requested replacement never calls guest teardown or navigates back to Library. */
+	static void forceStopForReplacement() {
+		try {
+			MidletThread current = instance;
+			if (current != null) {
+				current.requestIntentionalTermination(MidletSessionJournal.Outcome.USER_STOP, false);
+				current.finalizeIntentionalTermination(MidletSessionJournal.Outcome.USER_STOP);
+			}
+		} finally {
+			// Do not release the storage lease early. Binder death is the main process's proof that
+			// the previous guest's workers and native state can no longer affect the replacement.
+			Process.killProcess(Process.myPid());
+		}
+	}
+
 	/** Returns the in-process AMS foreground selection for the current live runtime. */
 	static boolean isRuntimeSelected() {
 		MidletThread current = instance;

@@ -34,6 +34,7 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String CLASS_NAME = "jlmod.runtimefixture.LifecycleMidlet";
 	public static final String MODE_PROPERTY = "JLMod-Runtime-Mode";
 	public static final String MARKER_PROPERTY = "JLMod-Runtime-Marker";
+	public static final String DESTROY_MARKER_PROPERTY = "JLMod-Runtime-Destroy-Marker";
 	public static final String UNEXPECTED_FOREGROUND_PROPERTY =
 			"JLMod-Runtime-Unexpected-Foreground";
 	public static final String MODE_CRASH_INIT = "crash-init";
@@ -227,6 +228,8 @@ public final class LifecycleMidlet extends MIDlet {
 
 	@Override
 	public void destroyApp(boolean unconditional) throws MIDletStateChangeException {
+		String destroyMarker = getAppProperty(DESTROY_MARKER_PROPERTY);
+		if (destroyMarker != null) writeMarker(destroyMarker);
 		String mode = getAppProperty(MODE_PROPERTY);
 		if (MODE_CSI_STYLE_EXIT.equals(mode) && destroyed) {
 			throw new IllegalStateException("CSI-style fixture destroyed twice");

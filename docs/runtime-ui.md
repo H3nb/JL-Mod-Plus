@@ -58,6 +58,10 @@ non-Canvas Displayables.
 - The explicit Exit item remains the only host-menu exit path and continues to
   use `showExitConfirmation()`. A MIDlet-owned Exit command and system-level
   task removal/force-stop remain independent termination paths.
+- Until multiple runtimes are supported, launching a different MIDlet force-stops
+  the previous runtime as an intentional user stop. A main-process handoff retains
+  the launch request and waits for the old process's Binder death before starting
+  a fresh heap. Reopening the same live runtime retains its session and heap.
 - A `Displayable` transition closes the menu before replacing its View, then
   refreshes the host title and action visibility.
 - `CanvasView` and `GlesView` report `onCheckIsTextEditor() == true` alongside
