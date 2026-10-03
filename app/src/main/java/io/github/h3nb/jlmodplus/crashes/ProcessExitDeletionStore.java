@@ -34,9 +34,8 @@ import java.util.Set;
  * Android 11+ may keep ApplicationExitInfo after JL-Mod Plus removes its local projection. A small
  * app-private marker therefore survives only while the original system-history key is still visible,
  * preventing a deliberately deleted report from being imported and notified again. Android 6-10
- * uses the same marker while the authoritative MIDlet journal that could recreate the legacy UNKNOWN
- * projection still exists. Markers contain only the immutable process-exit key, never trace/report
- * payloads.
+ * cannot prove an OS crash and no longer imports process-disappearance projections. Markers contain
+ * only the immutable process-exit key, never trace/report payloads.
  */
 final class ProcessExitDeletionStore {
 	private static final String TAG = ProcessExitDeletionStore.class.getSimpleName();
@@ -86,11 +85,6 @@ final class ProcessExitDeletionStore {
 	/** API30+: marker is needed only while the exact key remains in the bounded framework history. */
 	static void pruneAgainstHistoricalKeys(Context context, Set<String> historicalKeys) {
 		pruneAgainstRetainedKeys(context, historicalKeys);
-	}
-
-	/** API23-29: marker is needed only while a journal remains capable of recreating the key. */
-	static void pruneAgainstLegacyKeys(Context context, Set<String> retainedLegacyKeys) {
-		pruneAgainstRetainedKeys(context, retainedLegacyKeys);
 	}
 
 	private static void pruneAgainstRetainedKeys(Context context, Set<String> retainedKeys) {

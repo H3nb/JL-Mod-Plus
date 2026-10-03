@@ -31,13 +31,11 @@ import io.github.h3nb.jlmodplus.EmulatorApplication;
 /**
  * Coordinates local diagnostic evidence without owning interpretation or presentation.
  *
- * Fatal Java evidence is owned exclusively by {@link JavaDiagnosticStore}. Caught reporting remains
- * deliberately allowlisted for emulator-owned failures; arbitrary caught MIDlet/vendor exceptions
- * must not be promoted into diagnostics.
+ * Fatal Java evidence is owned exclusively by {@link JavaDiagnosticStore}. Ordinary caught operation
+ * failures and unclassified process disappearance must not be promoted into diagnostic reports.
  */
 public final class CrashReporter {
 	private static final int MAX_CONTEXT_VALUE_LENGTH = 256;
-	private static final int MAX_CONTEXT_MESSAGE_LENGTH = 768;
 
 	private static final String TAG = CrashReporter.class.getSimpleName();
 	private static final String ROLE_MAIN = "main";
@@ -194,8 +192,6 @@ public final class CrashReporter {
 	private static void refreshDiagnostics(Application application) {
 		runMaintenanceStep("legacy Java diagnostic migration",
 				() -> JavaDiagnosticStore.migrateLegacyAndPrune(application));
-		runMaintenanceStep("legacy process-exit reconciliation",
-				() -> LegacyProcessExitFallback.ingest(application));
 		runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
 		runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
 		runMaintenanceStep("process context pruning", () -> CrashContextStore.prune(application));
@@ -249,44 +245,6 @@ public final class CrashReporter {
 			// The immutable session key is shared by the journal, Java evidence and Android process
 			// state. New-format Java correlation never depends on parsing a stack marker.
 			ProcessExitStore.setMidletSession(application, sessionId);
-		}
-	}
-
-	/**
-	 * Allowlisted non-fatal incident: the emulator-owned installer operation failed.
-	 */
-	public static void reportInstallerFailure(Throwable error, String sourceScheme,
-			String midletName, String midletVendor, String midletVersion, String jarSize) {
-		if (error == null) return;
-		String message = buildInstallerContext(
-				sourceScheme, midletName, midletVendor, midletVersion, jarSize);
-		try {
-			InstallerFailureException wrapper = new InstallerFailureException(message, error);
-			JavaDiagnosticStore.captureCaught(
-					activeApplication,
-					JavaDiagnosticStore.Kind.CAUGHT_INSTALLER,
-					wrapper,
-					error,
-					message);
-		} catch (Throwable reportingFailure) {
-			logMaintenanceFailure("Unable to persist installer failure diagnostic", reportingFailure);
-		}
-	}
-
-	/**
-	 * Allowlisted non-fatal incident: an app-repository operation failed.
-	 */
-	public static void reportAppRepositoryFailure(Throwable error) {
-		if (error == null) return;
-		try {
-			JavaDiagnosticStore.captureCaught(
-					activeApplication,
-					JavaDiagnosticStore.Kind.CAUGHT_APP_REPOSITORY,
-					error,
-					error,
-					"App repository operation failure");
-		} catch (Throwable reportingFailure) {
-			logMaintenanceFailure("Unable to persist app-repository failure diagnostic", reportingFailure);
 		}
 	}
 
@@ -352,26 +310,6 @@ public final class CrashReporter {
 	private static String activityLocation(Activity activity) {
 		String simpleName = activity.getClass().getSimpleName();
 		return "activity." + (simpleName == null || simpleName.isEmpty() ? "unknown" : simpleName);
-	}
-
-	private static String buildInstallerContext(String sourceScheme, String midletName,
-			String midletVendor, String midletVersion, String jarSize) {
-		StringBuilder message = new StringBuilder("Installer failure");
-		appendContext(message, "sourceScheme", sourceScheme);
-		appendContext(message, "midletName", midletName);
-		appendContext(message, "midletVendor", midletVendor);
-		appendContext(message, "midletVersion", midletVersion);
-		appendContext(message, "jarSize", jarSize);
-		return message.toString();
-	}
-
-	private static void appendContext(StringBuilder message, String key, String value) {
-		String bounded = boundValue(value);
-		if (bounded == null || message.length() >= MAX_CONTEXT_MESSAGE_LENGTH) return;
-		message.append("; ").append(key).append('=').append(bounded);
-		if (message.length() > MAX_CONTEXT_MESSAGE_LENGTH) {
-			message.setLength(MAX_CONTEXT_MESSAGE_LENGTH);
-		}
 	}
 
 	static String boundValue(String value) {
@@ -445,12 +383,6 @@ public final class CrashReporter {
 		DiagnosticContext withSession(String value) {
 			return new DiagnosticContext(processName, processRole, midletName, midletVersion,
 					midletMainClass, jarSha256, value);
-		}
-	}
-
-	private static final class InstallerFailureException extends RuntimeException {
-		InstallerFailureException(String message, Throwable cause) {
-			super(message, cause);
 		}
 	}
 
