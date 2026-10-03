@@ -9,6 +9,7 @@ import android.os.SystemClock;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import com.arthenica.ffmpegkit.FFmpegKitConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,6 +41,10 @@ public class UnifiedAudioRuntimeTest {
         for (Player player : players) player.close();
         assertEquals(initialHandles, LibEAS.liveHandles());
         host.close();
+    }
+
+    @Test public void retainedLegacyWrapperLoadsWithTheSingleNativeDependencySet() {
+        assertTrue(FFmpegKitConfig.getFFmpegVersion().startsWith("6.0"));
     }
 
     @Test public void retainedFormatsResolveWithoutMimeAndDrainThroughCommonPlayer() throws Exception {

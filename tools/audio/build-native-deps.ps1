@@ -32,13 +32,28 @@ foreach($spec in @(@($sourceRoot,"$OutRoot/ffmpeg-6.0.tar.xz"),@($amrRoot,"$OutR
 }
 $patchHash=(Get-FileHash -LiteralPath "$PSScriptRoot/ffmpegkit-saf-setters.patch" -Algorithm SHA256).Hash
 $patchStamp="$sourceRoot/jlmod-patch.txt"
-if(!(Test-Path -LiteralPath $patchStamp) -or [IO.File]::ReadAllText($patchStamp).Trim() -ne $patchHash){
+$patchedSource=[IO.File]::ReadAllText("$sourceRoot/libavutil/file.c").Contains('void av_set_saf_open(')
+if(!(Test-Path -LiteralPath $patchStamp) -or [IO.File]::ReadAllText($patchStamp).Trim() -ne $patchHash -or !$patchedSource){
  # Restore only the two recipe-owned source files before changing the patch.
  & $tar -xf "$OutRoot/ffmpeg-6.0.tar.xz" --strip-components=1 -C $sourceRoot ffmpeg-6.0/libavutil/file.c ffmpeg-6.0/libavutil/file.h
  if($LASTEXITCODE){throw 'Original patch-source extraction failed'}
- & git -C $sourceRoot apply "$PSScriptRoot/ffmpegkit-saf-setters.patch"
+ # git apply inside a parent checkout can silently skip these untracked paths.
+ # Apply absolute, recipe-owned targets from outside that checkout, then verify.
+ & git -C ([IO.Path]::GetTempPath()) apply --unsafe-paths "--directory=$sourceRoot" "$PSScriptRoot/ffmpegkit-saf-setters.patch"
  if($LASTEXITCODE){throw 'SAF setter patch failed'}
+ if(![IO.File]::ReadAllText("$sourceRoot/libavutil/file.c").Contains('void av_set_saf_close(') -or
+     ![IO.File]::ReadAllText("$sourceRoot/libavutil/file.h").Contains('typedef int (*saf_open_function)(int);')){throw 'SAF patch was not applied to the recipe source'}
  Set-Content -LiteralPath $patchStamp -Value $patchHash
+}
+function HasSafExports([string]$installRoot){
+ $library=Get-ChildItem "$installRoot/lib" -Filter 'libavutil*.so' -ErrorAction SilentlyContinue | Select-Object -First 1
+ if(!$library){return $false}
+ $symbols=@(& "$llvmRoot/llvm-nm$exe" -D --defined-only $library.FullName)
+ if($LASTEXITCODE){return $false}
+ foreach($name in @('av_get_saf_open','av_get_saf_close','av_set_saf_open','av_set_saf_close')){
+  if(!($symbols -match ('\b'+[regex]::Escape($name)+'(@.*)?$'))){return $false}
+ }
+ return $true
 }
 $profiles=@{
  'arm64-v8a'=@('aarch64-linux-android23','aarch64','armv8-a','')
@@ -53,7 +68,7 @@ foreach($abi in (($Abis -join ',') -split ',')){
  $stamp="$installRoot/recipe.txt"
  $signature="$recipeHash`:$NdkVersion`:$abi`:$hostTag"
  if((Test-Path -LiteralPath $stamp) -and ([IO.File]::ReadAllText($stamp).Trim() -eq $signature) -and
-     (Get-ChildItem "$installRoot/lib" -Filter '*.so').Count -eq 7){Write-Output "Cached native audio dependencies: $abi";continue}
+     (Get-ChildItem "$installRoot/lib" -Filter '*.so').Count -eq 7 -and (HasSafExports $installRoot)){Write-Output "Cached native audio dependencies: $abi";continue}
  $amrOut="$OutRoot/opencore-$abi"
  & "$PSScriptRoot/build-opencore.ps1" -Target $profile[0] -DecoderOnly -SourceRoot $amrRoot -OutputRoot $amrOut -LlvmRoot $llvmRoot -ToolSuffix $exe
  New-Item -ItemType Directory -Force -Path $buildRoot,$installRoot | Out-Null
@@ -87,6 +102,7 @@ foreach($abi in (($Abis -join ',') -split ',')){
   }finally{Pop-Location}
  }finally{$env:PATH=$oldPath}
  & "$PSScriptRoot/install-public-headers.ps1" -SourceRoot $sourceRoot -BuildRoot $buildRoot -InstallRoot $installRoot
+ if(!(HasSafExports $installRoot)){throw "Missing FFmpegKit SAF ABI exports: $abi"}
  Get-ChildItem "$installRoot/lib" -Filter '*.so' | ForEach-Object {[pscustomobject]@{name=$_.Name;sha256=(Get-FileHash $_.FullName -Algorithm SHA256).Hash}} | ConvertTo-Json | Set-Content "$installRoot/checksums.json"
  Set-Content -LiteralPath $stamp -Value $signature
  Write-Output "PASS build $abi => $installRoot"
