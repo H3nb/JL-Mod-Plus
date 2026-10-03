@@ -71,6 +71,21 @@ public class InternalMetaData implements MetaDataControl {
 		return metaData.get(key);
 	}
 
+    /** FFmpeg tags are decoded as UTF-8 by the management bridge. */
+    public void updateDemuxerMetaData(String[] tags) {
+        metaKeys.clear(); metaData.clear();
+        for (int i = 0; i + 1 < tags.length; i += 2) {
+            String key = switch (tags[i].toLowerCase(java.util.Locale.ROOT)) {
+                case "track" -> TRACK_NUMBER_KEY;
+                case "album_artist" -> ALBUM_ARTIST_KEY;
+                case "disc" -> DISC_NUMBER_KEY;
+                default -> tags[i].toLowerCase(java.util.Locale.ROOT);
+            };
+            if (!metaData.containsKey(key)) metaKeys.add(key);
+            metaData.put(key, tags[i + 1]);
+        }
+    }
+
 	public void updateMetaData(DataSource source) {
 		try {
 			MediaMetadataRetriever retriever = new MediaMetadataRetriever();

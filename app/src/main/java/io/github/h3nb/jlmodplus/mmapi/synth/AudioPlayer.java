@@ -39,6 +39,8 @@ import javax.microedition.media.InternalEqualizer;
 import javax.microedition.media.InternalMetaData;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.PlayerListener;
+import javax.microedition.media.Manager;
+import javax.microedition.media.TimeBase;
 import javax.microedition.media.control.MIDIControl;
 import javax.microedition.media.control.MetaDataControl;
 import javax.microedition.media.control.ToneControl;
@@ -48,8 +50,8 @@ import javax.microedition.media.protocol.DataSource;
 import io.github.h3nb.jlmodplus.mmapi.control.MIDIControlImpl;
 import io.github.h3nb.jlmodplus.mmapi.protocol.device.DeviceMetaData;
 
-class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneControl, RuntimeAudioCoordinator.Participant {
-	private static final String TAG = SynthPlayer.class.getSimpleName();
+public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl, ToneControl, RuntimeAudioCoordinator.Participant {
+	private static final String TAG = AudioPlayer.class.getSimpleName();
 
 	private final ExecutorService callbackExecutor = Executors.newSingleThreadExecutor(r -> {
 		Thread thread = new Thread(r, "MidletPlayerCallback");
@@ -58,7 +60,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	});
 	private ScheduledFuture<?> eventPoll;
 	private final RuntimeAudioCoordinator audio = RuntimeAudioCoordinator.current();
-	private long outputGeneration;
+	private long sourceGeneration;
 	private final long outputGroup;
 	private long playbackToken;
 	private boolean hostSuspended;
@@ -77,7 +79,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	private boolean mute;
 	private int pan;
 
-	SynthPlayer(Library library, DataSource dataSource) {
+	public AudioPlayer(Library library, DataSource dataSource) {
 		String locator = dataSource.getLocator();
 		if (MIDI_DEVICE_LOCATOR.equals(locator) || TONE_DEVICE_LOCATOR.equals(locator)) {
 			metadata = new DeviceMetaData();
@@ -107,7 +109,8 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 					controls.put(ToneControl.class.getName(), this);
 				}
 				controls.put(VolumeControl.class.getName(), this);
-				controls.put(MIDIControl.class.getName(), new MIDIControlImpl(this, library, handle, this::prepareMidiOutput));
+				if (library.isSynthesis()) controls.put(MIDIControl.class.getName(),
+						new MIDIControlImpl(this, library, handle, this::prepareMidiOutput));
 				controls.put(PanControl.class.getName(), this);
 				controls.put(MetaDataControl.class.getName(), metadata);
 				controls.put(EqualizerControl.class.getName(), new InternalEqualizer());
@@ -127,19 +130,21 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 
 		if (state == REALIZED) {
 			try {
-				metadata.updateMetaData(dataSource);
+				String[] tags = library.metadata(handle);
+				if (tags == null) metadata.updateMetaData(dataSource);
+				else metadata.updateDemuxerMetaData(tags);
 			} catch (Exception e) {
 				Log.w(TAG, "prefetch: update metadata failed", e);
 			}
 			try { library.prefetch(handle); }
 			catch (Exception error) {
-				if (library.outputFailed(handle)) fail("Cannot prefetch runtime output: " + error);
+				fail("Cannot prefetch audio: " + error);
 				throw new MediaException("Cannot prefetch runtime output: " + error);
 			}
 			state = PREFETCHED;
 			mediaTime = library.getMediaTime(handle);
 			duration = library.getDuration(handle);
-			outputGeneration = library.getGeneration(handle);
+			sourceGeneration = library.getGeneration(handle);
 			eventPoll = audio.scheduleManagement(this::pollEvents);
 		}
 	}
@@ -162,13 +167,17 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 			long epoch = audio.requestEpoch(this, token);
 			if (midiOnly) library.activateMidi(handle, epoch);
 			else library.start(handle, epoch);
-			outputGeneration = library.getGeneration(handle);
+			sourceGeneration = library.getGeneration(handle);
 			playbackToken = token;
 			requestedPlayback = true;
-			hostSuspended = false;
+            hostSuspended = library.isOutputSuspended(handle);
+            if (hostSuspended && audio.isPlaybackAllowed(this, token)) {
+                library.resumeOutput(handle);
+                hostSuspended = library.isOutputSuspended(handle);
+            }
 		} catch (Exception e) {
 			audio.cancelPlayback(this);
-			String message = "Cannot start synthesis output: " + e;
+			String message = "Cannot start audio output: " + e;
 			// Focus/foreground denial happens before this try. A backend activation
 			// failure has no healthy output to retry and remains a terminal engine
 			// fact even when shortMidiEvent must hide delivery exceptions.
@@ -190,7 +199,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 		checkClosed();
 		if (requestedPlayback) {
 			library.pause(handle);
-			outputGeneration = library.getGeneration(handle);
+			sourceGeneration = library.getGeneration(handle);
 			mediaTime = library.getMediaTime(handle);
 			requestedPlayback = false;
 			hostSuspended = false;
@@ -206,12 +215,12 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	public synchronized void deallocate() {
 		checkClosed();
 		try { stop(); }
-		catch (MediaException e) { fail("Cannot stop synthesis output: " + e); return; }
+		catch (MediaException e) { fail("Cannot stop audio output: " + e); return; }
 		if (state == PREFETCHED) {
 			mediaTime = library.getMediaTime(handle);
 			duration = library.getDuration(handle);
 			library.deallocate(handle);
-			outputGeneration = library.getGeneration(handle);
+			sourceGeneration = library.getGeneration(handle);
 			state = REALIZED;
 			if (eventPoll != null) { eventPoll.cancel(false); eventPoll = null; }
 		}
@@ -252,10 +261,10 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 				audio.isPlaybackAllowed(this, token)) return;
 		try {
 			library.suspendOutput(handle);
-			outputGeneration = library.getGeneration(handle);
+			sourceGeneration = library.getGeneration(handle);
 			mediaTime = library.getMediaTime(handle);
 			hostSuspended = true;
-		} catch (Exception e) { fail("Cannot suspend synthesis output: " + e); }
+		} catch (Exception e) { fail("Cannot suspend audio output: " + e); }
 	}
 
 	@Override
@@ -264,9 +273,9 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 				!audio.isPlaybackAllowed(this, token)) return;
 		try {
 			library.resumeOutput(handle);
-			outputGeneration = library.getGeneration(handle);
-			hostSuspended = false;
-		} catch (Exception e) { fail("Cannot resume synthesis output: " + e); }
+			sourceGeneration = library.getGeneration(handle);
+			hostSuspended = library.isOutputSuspended(handle);
+		} catch (Exception e) { fail("Cannot resume audio output: " + e); }
 	}
 
 	@Override
@@ -278,11 +287,26 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	@Override
 	public void closeForRuntime() { close(); }
 
+    @Override
+    public synchronized TimeBase getTimeBase() {
+        checkClosed();
+        if (state == UNREALIZED) throw new IllegalStateException("Player must be realized");
+        return Manager.getSystemTimeBase();
+    }
+
+    @Override
+    public synchronized void setTimeBase(TimeBase master) throws MediaException {
+        checkClosed();
+        if (state == UNREALIZED || state == STARTED) throw new IllegalStateException("Player must be realized and stopped");
+        if (master != null && master != Manager.getSystemTimeBase())
+            throw new MediaException("Custom synchronized TimeBase is unsupported");
+    }
+
 	@Override
 	public synchronized long setMediaTime(long now) throws MediaException {
 		checkRealized();
 		mediaTime = library.setMediaTime(handle, now);
-		outputGeneration = library.getGeneration(handle);
+		sourceGeneration = library.getGeneration(handle);
 		return mediaTime;
 	}
 
@@ -300,7 +324,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	@Override
 	public synchronized long getDuration() {
 		checkClosed();
-		if (duration == TIME_UNKNOWN) duration = library.getDuration(handle);
+		if (!library.isSynthesis() || duration == TIME_UNKNOWN) duration = library.getDuration(handle);
 		return duration;
 	}
 
@@ -324,7 +348,8 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	@Override
 	public synchronized String getContentType() {
 		checkRealized();
-		return dataSource.getContentType();
+		String actual = library.contentType(handle);
+		return actual.isEmpty() ? dataSource.getContentType() : actual;
 	}
 
 	@Override
@@ -437,11 +462,12 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 		try {
 			long[] event;
 			while ((event = library.pollEvent(handle)) != null) {
-				if (event[2] != outputGeneration) continue;
+				if (event[2] != sourceGeneration) continue;
 				acceptEvent((int) event[0], event[1], event.length > 3 ? event[3] : 0);
 				if (state == CLOSED) return;
 			}
-		} catch (Exception e) { fail("Synthesis management failed: " + e); }
+			if (library.isOutputSuspended(handle)) hostSuspended = true;
+		} catch (Exception e) { fail("Audio management failed: " + e); }
 	}
 
 	private void acceptEvent(int type, long time, long error) {
@@ -449,18 +475,18 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 		if (type == 4) {
 			if (requestedPlayback && !hostSuspended && audio.isPlaybackAllowed(this, playbackToken)) {
 				library.recoverOutput(handle);
-				outputGeneration = library.getGeneration(handle);
+				sourceGeneration = library.getGeneration(handle);
 			}
 			return;
 		}
 		if (type == 5) { audio.sharedOutputFailure(outputGroup, "Runtime output failure (code " + error + ")"); return; }
-		if (type == 3) { fail("Sonivox failure (code " + error + ")"); return; }
+		if (type == 3) { fail("Audio source failure (code " + error + ")"); return; }
 		if (state != STARTED) return;
 		mediaTime = time;
 		postEvent(PlayerListener.END_OF_MEDIA, time);
 		if (type == 1) {
 			mediaTime = 0;
-			outputGeneration = library.getGeneration(handle);
+			sourceGeneration = library.getGeneration(handle);
 			postEvent(PlayerListener.STARTED, 0L);
 		} else if (type == 2) {
 			state = PREFETCHED;
@@ -508,7 +534,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 			library.setDataSource(handle, sequence);
 			mediaTime = 0;
 			duration = library.getDuration(handle);
-			outputGeneration = library.getGeneration(handle);
+			sourceGeneration = library.getGeneration(handle);
 		} catch (Exception e) {
 			Log.e(TAG, "setSequence: ", e);
 			throw new IllegalArgumentException(e);

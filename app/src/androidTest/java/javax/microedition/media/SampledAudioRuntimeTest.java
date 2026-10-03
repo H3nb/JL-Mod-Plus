@@ -20,6 +20,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import io.github.h3nb.jlmodplus.mmapi.synth.AudioPlayer;
+import io.github.h3nb.jlmodplus.mmapi.synth.eas.LibEAS;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +40,7 @@ import io.github.h3nb.jlmodplus.mmapi.synth.AudioQualificationActivity;
 
 /** Sampled output shares the same runtime policy without guest STOPPED/STARTED on suspension. */
 @RunWith(AndroidJUnit4.class)
-public class MicroPlayerRuntimeTest {
+public class SampledAudioRuntimeTest {
     private ActivityScenario<AudioQualificationActivity> host;
     private Player sampled;
     private Player synthesis;
@@ -53,7 +56,7 @@ public class MicroPlayerRuntimeTest {
     }
 
     @Test public void hostSuspensionPreservesGuestIntentAndGuestStopPreventsResume() throws Exception {
-        sampled = new MicroPlayer(wavSource());
+        sampled = new AudioPlayer(LibEAS.sampled(), wavSource());
         AtomicInteger starts = new AtomicInteger();
         sampled.addPlayerListener((player, event, data) -> {
             if (PlayerListener.STARTED.equals(event)) starts.incrementAndGet();
@@ -80,7 +83,7 @@ public class MicroPlayerRuntimeTest {
 
     @Test public void runtimeTerminationClosesSampledAndSynthesisWithOneFinalEvent() throws Exception {
         FileCacheDataSource source = wavSource();
-        sampled = new MicroPlayer(source);
+        sampled = new AudioPlayer(LibEAS.sampled(), source);
         // A held middle-C note with an end ten seconds later; entirely generated MIDI.
         byte[] midi = new byte[]{'M','T','h','d',0,0,0,6,0,0,0,1,0,96,
                 'M','T','r','k',0,0,0,13,0,(byte)0x90,60,100,
@@ -107,7 +110,7 @@ public class MicroPlayerRuntimeTest {
     }
 
     @Test public void queuedCompletionAfterHostSuspensionStillEndsAndDoesNotRestart() throws Exception {
-        MicroPlayer player = new MicroPlayer(wavSource());
+        AudioPlayer player = new AudioPlayer(LibEAS.sampled(), wavSource());
         sampled = player;
         AtomicInteger completions = new AtomicInteger();
         CountDownLatch ended = new CountDownLatch(1);
@@ -120,10 +123,10 @@ public class MicroPlayerRuntimeTest {
         player.start();
         awaitProgress(player, 100000);
         foreground(false);
-        // Inject an already-queued Android completion at the wrapper boundary after freeze.
-        // Avoid depending on scheduler timing to hit a five-second media endpoint.
-        player.onCompletion(player.player);
-        player.onCompletion(player.player);
+        // Inject an already-queued native completion at the same common contract boundary.
+        Method completion = AudioPlayer.class.getDeclaredMethod("acceptEvent", int.class, long.class, long.class);
+        completion.setAccessible(true);
+        synchronized (player) { completion.invoke(player, 2, player.getDuration(), 0); }
         assertEquals(Player.PREFETCHED, player.getState());
         assertTrue("Suspension discarded completion", ended.await(2, TimeUnit.SECONDS));
         long stopped = player.getMediaTime();
@@ -135,7 +138,7 @@ public class MicroPlayerRuntimeTest {
     }
 
     @Test public void freshRequestAfterPermanentLossDoesNotDuplicateGuestStartedEvent() throws Exception {
-        MicroPlayer player = new MicroPlayer(wavSource());
+        AudioPlayer player = new AudioPlayer(LibEAS.sampled(), wavSource());
         sampled = player;
         AtomicInteger starts = new AtomicInteger();
         CountDownLatch started = new CountDownLatch(1);
@@ -145,7 +148,7 @@ public class MicroPlayerRuntimeTest {
         player.start();
         awaitProgress(player, 100000);
         assertTrue(started.await(2, TimeUnit.SECONDS));
-        Field tokenField = MicroPlayer.class.getDeclaredField("playbackToken");
+        Field tokenField = AudioPlayer.class.getDeclaredField("playbackToken");
         tokenField.setAccessible(true);
         long token = tokenField.getLong(player);
         // Inject the permanent-loss boundary: revoke coordinator intent before its callback.

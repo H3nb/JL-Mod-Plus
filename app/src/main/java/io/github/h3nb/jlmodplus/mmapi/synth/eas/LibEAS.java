@@ -19,16 +19,21 @@ package io.github.h3nb.jlmodplus.mmapi.synth.eas;
 
 import io.github.h3nb.jlmodplus.mmapi.synth.Library;
 import io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator;
+import java.nio.charset.StandardCharsets;
 
 public class LibEAS implements Library {
 	private final String soundBank;
 	private final long sessionId;
+	private final boolean sampled;
 
 	public LibEAS() {
 		this(null);
 	}
 
-	public LibEAS(String soundBank) {
+	public LibEAS(String soundBank) { this(soundBank, false); }
+	public static LibEAS sampled() { return new LibEAS(null, true); }
+	private LibEAS(String soundBank, boolean sampled) {
+        this.sampled = sampled;
         this.soundBank = soundBank;
         RuntimeAudioCoordinator audio = RuntimeAudioCoordinator.current();
         sessionId = audio.sessionId();
@@ -41,9 +46,9 @@ public class LibEAS implements Library {
 	}
 	@Override
 	public long createPlayer(String locator) {
-		return createNative(locator, soundBank, sessionId);
+		return createNative(locator, soundBank, sessionId, sampled);
 	}
-	private native long createNative(String locator, String bank, long sessionId);
+	private native long createNative(String locator, String bank, long sessionId, boolean sampled);
 	private static native void setPolicy(long session, long epoch, long minimum, boolean allowed);
 	private static native void closeSession(long session);
 	private native void activateNative(long handle, boolean midiOnly, long requestEpoch);
@@ -52,6 +57,18 @@ public class LibEAS implements Library {
 	@Override public native long getOutputIdentity(long handle);
 	@Override public native boolean outputFailed(long handle);
 	public native long[] runtimeDiagnostics(long handle);
+    public native long[] decoderDiagnostics(long handle);
+    @Override public boolean isSynthesis() { return !sampled; }
+    @Override public native boolean isOutputSuspended(long handle);
+    @Override public native String contentType(long handle);
+    private native byte[][] metadataBytes(long handle);
+    @Override public String[] metadata(long handle) {
+        if (!sampled) return null;
+        byte[][] bytes = metadataBytes(handle);
+        String[] values = new String[bytes.length];
+        for (int i = 0; i < bytes.length; ++i) values[i] = new String(bytes[i], StandardCharsets.UTF_8);
+        return values;
+    }
 	@Override
 	public native void realize(long handle);
 	@Override

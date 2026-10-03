@@ -18,6 +18,7 @@ class Engine final : public std::enable_shared_from_this<Engine> {
         const int64_t epoch;
         std::atomic<bool> enabled{true};
         std::atomic<int> error{0};
+        std::atomic<int> callbacksActive{0};
         std::atomic<int64_t> progress{0};
         Output(std::shared_ptr<Engine> engine, int64_t epoch) : owner(std::move(engine)), epoch(epoch) {}
         oboe::DataCallbackResult onAudioReady(oboe::AudioStream *, void *, int32_t) override;
@@ -40,13 +41,14 @@ class Engine final : public std::enable_shared_from_this<Engine> {
     void remove(Player *, int);
     void detach(Player *, int, bool bounded = true);
     bool eligible(const Player *) const;
+    bool granted(const Player *) const;
     bool hasActive() const;
     void closeOutput();
     void openOutput();
     bool needsRecovery();
     void replaceOutput();
     void prepare(Player *);
-    void activate(Player *, bool fresh);
+    bool activate(Player *, bool fresh);
     void idle();
     void release(Player *);
     void recover();
@@ -55,7 +57,7 @@ class Engine final : public std::enable_shared_from_this<Engine> {
 public:
     void policy(int64_t minimum, bool enabled);
     bool failed() const { return fatal.load(std::memory_order_acquire); }
-    std::array<int64_t, 10> diagnostics();
+    std::array<int64_t, 12> diagnostics();
 };
 }
 #endif

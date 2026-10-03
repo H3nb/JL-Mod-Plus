@@ -4,6 +4,7 @@
 #include "eas.h"
 #include "eas_file.h"
 #include "audio_engine.h"
+#include "../mmapi_pcm/pcm_decoder.h"
 #include <oboe/Oboe.h>
 #include <array>
 #include <atomic>
@@ -12,13 +13,14 @@
 
 namespace mmapi::eas {
 struct Event { int64_t type, time, generation, error; };
-// Java owns guest state. This class owns only the context and output resources.
+// Java owns guest state. Each source owns its decoder/context; Engine owns output.
 // Controls serialize every producer and quiesce callbacks before touching EAS.
-class Player final : public std::enable_shared_from_this<Player> {
+class Player final {
     std::mutex controls;
     EAS_DATA_HANDLE eas = nullptr;
     EAS_HANDLE media = nullptr, interactive = nullptr;
     std::unique_ptr<MemoryFile> source;
+    std::unique_ptr<pcm::Decoder> sampled;
     const std::shared_ptr<Engine> engine;
     int slot = -1;
     int64_t outputIdentity = 0, seenOutputEpoch = 0;
@@ -26,7 +28,8 @@ class Player final : public std::enable_shared_from_this<Player> {
     std::atomic<bool> prepared{false};
     std::atomic<int64_t> requestEpoch{0};
     std::atomic<bool> rendering{false};
-    bool requested = false, closed = false, ended = false, midiOnly = false, hostSuspended = false;
+    std::atomic<bool> requested{false};
+    bool closed = false, ended = false, midiOnly = false, hostSuspended = false;
     int looping = 1, remaining = 1;
     std::atomic<int64_t> position{0}, generation{1};
     int64_t duration = -1, blockEndTime = 0;
@@ -57,7 +60,7 @@ public:
     static constexpr size_t MEDIA_LIMIT = 16 * 1024 * 1024;
     static constexpr size_t BANK_LIMIT = 128 * 1024 * 1024;
     Player(const std::string &locator, const std::string &bank,
-        std::shared_ptr<Engine> engine = std::make_shared<Engine>());
+        std::shared_ptr<Engine> engine = std::make_shared<Engine>(), bool pcm = false);
     ~Player();
     void prefetch();
     void start(int64_t policyEpoch = 0);
@@ -78,8 +81,12 @@ public:
     bool poll(Event &event);
     void recoverOutput();
     std::array<int64_t, 9> diagnostics();
-    std::array<int64_t, 10> runtimeDiagnostics() { return engine->diagnostics(); }
+    std::array<int64_t, 12> runtimeDiagnostics() { return engine->diagnostics(); }
     int64_t outputGroup() const { return outputIdentity; }
+    bool suspended();
+    std::vector<std::string> metadata();
+    std::string contentType();
+    std::array<int64_t, 4> decoderDiagnostics();
     bool outputFailed() const { return engine->failed(); }
 };
 }

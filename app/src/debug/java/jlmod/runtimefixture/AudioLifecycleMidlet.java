@@ -22,6 +22,7 @@ public final class AudioLifecycleMidlet extends MIDlet {
     public static final String ROOT_PROPERTY = "JLMod-Audio-Fixture-Root";
     private volatile boolean destroyed;
     private Player player;
+    private final Player[] effects = new Player[2];
     private String lastCommand = "";
     private final AtomicInteger errors = new AtomicInteger();
     private final AtomicInteger closed = new AtomicInteger();
@@ -42,6 +43,16 @@ public final class AudioLifecycleMidlet extends MIDlet {
                 if (PlayerListener.STARTED.equals(event)) starts.incrementAndGet();
                 if (PlayerListener.END_OF_MEDIA.equals(event)) ends.incrementAndGet();
             });
+            String[] names = {"effect.wav", "effect.mp3"};
+            for (int i = 0; i < effects.length; ++i) {
+                try (FileInputStream input = new FileInputStream(new File(root, names[i]))) {
+                    effects[i] = Manager.createPlayer(input, i == 0 ? "audio/wav" : "audio/mpeg");
+                }
+                effects[i].addPlayerListener((owner, event, value) -> {
+                    if (PlayerListener.ERROR.equals(event)) errors.incrementAndGet();
+                });
+                effects[i].setLoopCount(-1); effects[i].start();
+            }
             player.setLoopCount(-1);
             player.start();
             new Thread(() -> monitor(root), "AudioFixtureTelemetry").start();
@@ -106,6 +117,24 @@ public final class AudioLifecycleMidlet extends MIDlet {
                 report.setProperty("xruns", Long.toString(stats[5]));
                 report.setProperty("sampleRate", Long.toString(stats[6]));
                 report.setProperty("deviceId", Long.toString(stats[7]));
+                long[] runtimeStats = (long[]) library.getClass().getMethod("runtimeDiagnostics", long.class)
+                        .invoke(library, handleField.getLong(player));
+                String[] runtimeKeys = {"outputGroup", "runtimeOpens", "activeOutputs", "sources", "activeSources",
+                        "clippedSamples", "callbackMaxNanos", "callbackCount", "runtimeXruns", "outputEpoch",
+                        "latencyMicros", "bufferFrames"};
+                for (int i = 0; i < runtimeKeys.length; ++i)
+                    report.setProperty(runtimeKeys[i], Long.toString(runtimeStats[i]));
+                long pcmFrames = 0, underflows = 0, workers = 0;
+                for (Player effect : effects) {
+                    Object effectLibrary = libraryField.get(effect);
+                    long effectHandle = handleField.getLong(effect);
+                    long[] decoder = (long[]) effectLibrary.getClass().getMethod("decoderDiagnostics", long.class)
+                            .invoke(effectLibrary, effectHandle);
+                    pcmFrames += decoder[0]; underflows += decoder[1]; workers += decoder[3];
+                }
+                report.setProperty("pcmFrames", Long.toString(pcmFrames));
+                report.setProperty("underflowFrames", Long.toString(underflows));
+                report.setProperty("decoderWorkers", Long.toString(workers));
                 Field bankField = library.getClass().getDeclaredField("soundBank");
                 bankField.setAccessible(true);
                 report.setProperty("customBank", Boolean.toString(bankField.get(library) != null));

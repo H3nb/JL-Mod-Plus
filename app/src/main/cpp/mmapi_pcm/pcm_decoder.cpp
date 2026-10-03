@@ -48,7 +48,7 @@ struct Decoder::State {
     std::array<Chunk, SLOTS> ring;
     std::atomic<uint32_t> head{0}, tail{0};
     int cursor = 0; // consumer only; reset only after detaching/joining
-    std::atomic<int64_t> position{0}, consumed{0}, underflow{0};
+    std::atomic<int64_t> position{0}, consumed{0}, underflow{0}, audible{0};
     std::atomic<int64_t> length{-1};
     int64_t streamStart = 0, seekTarget = 0;
     bool trimDeclaredWave = false;
@@ -63,6 +63,7 @@ struct Decoder::State {
     AVFrame *frame = nullptr;
     AVPacket *packet = nullptr;
     int streamIndex = -1;
+    int inputRate = 0, inputChannels = 0, inputFormat = -1;
     std::atomic<bool> stop{false}, cancelIO{false}, finished{true}, eof{false};
     std::atomic<int> failure{0}, workers{0};
     std::thread worker;
@@ -111,6 +112,22 @@ struct Decoder::State {
                 || static_cast<uint64_t>(info.st_size) > MEDIA_LIMIT)
             throw std::runtime_error("Sampled cache must be a regular file within 64 MiB");
         fileSize = info.st_size;
+        // Bind recognized containers to their parser. Corrupt WAV/AMR/MP4 or
+        // framed MPEG audio must not be rescued by a different probe result.
+        unsigned char header[16]{};
+        const size_t headerSize = fread(header, 1, sizeof(header), file);
+        rewind(file);
+        const char *recognized = nullptr;
+        if (headerSize >= 4 && !memcmp(header, "RIFF", 4)) {
+            if (headerSize < 12 || memcmp(header + 8, "WAVE", 4))
+                throw std::runtime_error("Unsupported or corrupt sampled RIFF container");
+            recognized = "wav";
+        } else if (headerSize >= 5 && !memcmp(header, "#!AMR", 5)) recognized = "amr";
+        else if (headerSize >= 8 && !memcmp(header + 4, "ftyp", 4)) recognized = "mov";
+        else if (headerSize >= 2 && header[0] == 255) {
+            if ((header[1] & 246) == 240) recognized = "aac";
+            else if ((header[1] & 224) == 224 && (header[1] & 6) != 0) recognized = "mp3";
+        }
         auto *buffer = static_cast<unsigned char *>(av_malloc(32768));
         if (!buffer) throw std::bad_alloc();
         io = avio_alloc_context(buffer, 32768, 0, this, readIO, nullptr, seekIO);
@@ -121,12 +138,16 @@ struct Decoder::State {
         format->interrupt_callback = {interrupted, this};
         // Probe only the configured retained demuxers, never protocols/network IO.
         format->probesize = 1024 * 1024; format->max_analyze_duration = 5000000;
-        check(avformat_open_input(&format, nullptr, nullptr, nullptr), "Recognize sampled audio");
+        format->max_streams = 16;
+        format->max_index_size = 1024 * 1024;
+        check(avformat_open_input(&format, nullptr, recognized ? av_find_input_format(recognized) : nullptr, nullptr),
+            "Recognize sampled audio");
         check(avformat_find_stream_info(format, nullptr), "Read sampled stream information");
         streamIndex = av_find_best_stream(format, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
         check(streamIndex, "Find audio stream");
         auto *stream = format->streams[streamIndex];
         if (!retained(stream->codecpar->codec_id)) throw std::runtime_error("Sampled codec is outside retained audio support");
+        if (stream->codecpar->extradata_size > 65536) throw std::runtime_error("Sampled codec configuration exceeds 64 KiB");
         const AVCodec *implementation = avcodec_find_decoder(stream->codecpar->codec_id);
         if (!implementation) throw std::runtime_error("Retained sampled decoder is not built");
         codec = avcodec_alloc_context3(implementation);
@@ -138,6 +159,8 @@ struct Decoder::State {
         if (codec->sample_rate <= 0 || codec->sample_rate > 384000
                 || codec->ch_layout.nb_channels < 1 || codec->ch_layout.nb_channels > 8)
             throw std::runtime_error("Sampled stream exceeds rate/channel limits");
+        inputRate = codec->sample_rate; inputChannels = codec->ch_layout.nb_channels;
+        inputFormat = codec->sample_fmt;
         AVChannelLayout stereo{};
         av_channel_layout_default(&stereo, CHANNELS);
         check(swr_alloc_set_opts2(&resampler, &stereo, AV_SAMPLE_FMT_FLT, RATE,
@@ -183,6 +206,9 @@ struct Decoder::State {
         return true;
     }
     void convert(bool drain) {
+        if (!drain && ((frame->sample_rate > 0 && frame->sample_rate != inputRate)
+                || frame->ch_layout.nb_channels != inputChannels || frame->format != inputFormat))
+            throw std::runtime_error("Sampled stream changed its PCM configuration");
         int capacity = drain ? swr_get_out_samples(resampler, 0)
             : swr_get_out_samples(resampler, frame->nb_samples);
         check(capacity, "Calculate sampled PCM capacity");
@@ -214,7 +240,10 @@ struct Decoder::State {
         if (decoderEnd) {
             convert(true);
             if (!stagingFrames) {
-                if (durationEstimated && havePts) length.store(std::max<int64_t>(0, nextPts), std::memory_order_release);
+                // Compressed container durations can include encoder priming and
+                // padding. After drain, decoded timestamps are authoritative.
+                if (!trimDeclaredWave || length.load() < 0)
+                    length.store(havePts ? std::max<int64_t>(0, nextPts) : 0, std::memory_order_release);
                 eof.store(true, std::memory_order_release); return false;
             }
             return true;
@@ -309,19 +338,23 @@ int64_t Decoder::seek(int64_t microseconds) {
 }
 int Decoder::read(float *bus, int frames, float left, float right) {
     int copied = 0;
+    int64_t audible = 0;
     while (copied < frames) {
         auto read = state->tail.load(std::memory_order_relaxed);
         if (read == state->head.load(std::memory_order_acquire)) break;
         auto &chunk = state->ring[read % SLOTS];
         int count = std::min(frames - copied, chunk.count - state->cursor);
         for (int i = 0; i < count; ++i) {
-            bus[(copied + i) * 2] += chunk.samples[(state->cursor + i) * 2] * left;
-            bus[(copied + i) * 2 + 1] += chunk.samples[(state->cursor + i) * 2 + 1] * right;
+            const float l = chunk.samples[(state->cursor + i) * 2] * left;
+            const float r = chunk.samples[(state->cursor + i) * 2 + 1] * right;
+            bus[(copied + i) * 2] += l; bus[(copied + i) * 2 + 1] += r;
+            audible += l != 0; audible += r != 0;
         }
         copied += count; state->cursor += count;
         state->position.store(std::max<int64_t>(0, chunk.pts + static_cast<int64_t>(state->cursor) * 1000000 / RATE));
         if (state->cursor == chunk.count) { state->cursor = 0; state->tail.store(read + 1, std::memory_order_release); }
     }
+    state->audible.fetch_add(audible, std::memory_order_relaxed);
     state->consumed.fetch_add(copied, std::memory_order_relaxed);
     if (copied < frames && !state->eof.load(std::memory_order_acquire) && !state->failure.load())
         state->underflow.fetch_add(frames - copied, std::memory_order_relaxed);
@@ -331,7 +364,22 @@ bool Decoder::drained() const { return state->eof.load(std::memory_order_acquire
 int Decoder::error() const { return state->failure.load(std::memory_order_acquire); }
 int64_t Decoder::time() const { return state->position.load(); }
 int64_t Decoder::duration() const { return state->length; }
-std::vector<std::string> Decoder::metadata() const { return state->tags; }
+int64_t Decoder::audibleSamples() const { return state->audible.load(); }
+std::string Decoder::contentType() const {
+    const char *format = state->format->iformat->name;
+    if (!strcmp(format, "wav")) return "audio/wav";
+    if (!strcmp(format, "mp3")) return "audio/mpeg";
+    if (!strcmp(format, "aac")) return "audio/aac";
+    if (!strcmp(format, "amr")) return state->codec->codec_id == AV_CODEC_ID_AMR_WB ? "audio/amr-wb" : "audio/amr";
+    return "audio/mp4";
+}
+std::vector<std::string> Decoder::metadata() const {
+    auto tags = state->tags;
+    tags.insert(tags.end(), {"mimetype", contentType(), "samplerate", std::to_string(state->inputRate),
+        "channels", std::to_string(state->inputChannels)});
+    if (duration() >= 0) tags.insert(tags.end(), {"duration", std::to_string(duration() / 1000)});
+    return tags;
+}
 std::array<int64_t, 4> Decoder::diagnostics() const {
     auto queued = std::min<uint32_t>(SLOTS, state->head.load() - state->tail.load());
     return {state->consumed.load(), state->underflow.load(), queued * CHUNK, state->workers.load()};

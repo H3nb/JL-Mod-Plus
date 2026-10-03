@@ -88,7 +88,7 @@ extern "C" JNIEXPORT void JNICALL JNI_NAME(closeSession)(JNIEnv *, jclass, jlong
     sessions.erase(found);
 }
 extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, jstring locator,
-        jstring bank, jlong sessionId) {
+        jstring bank, jlong sessionId, jboolean sampled) {
     bool reserved = false;
     try {
         auto path = string(env, locator);
@@ -106,7 +106,7 @@ extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, 
             handle = nextHandle++; ++creating; reserved = true;
         }
         // Bank and source IO must not hold the handle registry against peer management.
-        auto owned = std::make_shared<Player>(path, font, engine);
+        auto owned = std::make_shared<Player>(path, font, engine, sampled);
         {
             std::lock_guard<std::mutex> lock(registryLock);
             registry.emplace(handle, std::move(owned)); --creating; reserved = false;
@@ -131,11 +131,47 @@ extern "C" JNIEXPORT jboolean JNICALL JNI_NAME(outputFailed)(JNIEnv *env, jobjec
 extern "C" JNIEXPORT jlongArray JNICALL JNI_NAME(runtimeDiagnostics)(JNIEnv *env, jobject, jlong handle) {
     try {
         auto values = player(handle)->runtimeDiagnostics();
-        jlong longs[10]; std::copy(values.begin(), values.end(), longs);
-        auto result = env->NewLongArray(10);
-        if (result) env->SetLongArrayRegion(result, 0, 10, longs);
+        jlong longs[12]; std::copy(values.begin(), values.end(), longs);
+        auto result = env->NewLongArray(12);
+        if (result) env->SetLongArrayRegion(result, 0, 12, longs);
         return result;
     } catch (...) { translate(env); return nullptr; }
+}
+extern "C" JNIEXPORT jobjectArray JNICALL JNI_NAME(metadataBytes)(JNIEnv *env, jobject, jlong handle) {
+    try {
+        auto tags = player(handle)->metadata();
+        auto klass = env->FindClass("[B");
+        if (!klass) return nullptr;
+        auto result = env->NewObjectArray(static_cast<jsize>(tags.size()), klass, nullptr);
+        env->DeleteLocalRef(klass);
+        if (!result) return nullptr;
+        for (size_t i = 0; i < tags.size(); ++i) {
+            auto value = env->NewByteArray(static_cast<jsize>(tags[i].size()));
+            if (!value) return result;
+            env->SetByteArrayRegion(value, 0, static_cast<jsize>(tags[i].size()),
+                reinterpret_cast<const jbyte *>(tags[i].data()));
+            env->SetObjectArrayElement(result, static_cast<jsize>(i), value);
+            env->DeleteLocalRef(value);
+            if (env->ExceptionCheck()) return result;
+        }
+        return result;
+    } catch (...) { translate(env); return nullptr; }
+}
+extern "C" JNIEXPORT jstring JNICALL JNI_NAME(contentType)(JNIEnv *env, jobject, jlong handle) {
+    try { auto value = player(handle)->contentType(); return env->NewStringUTF(value.c_str()); }
+    catch (...) { translate(env); return nullptr; }
+}
+extern "C" JNIEXPORT jlongArray JNICALL JNI_NAME(decoderDiagnostics)(JNIEnv *env, jobject, jlong handle) {
+    try {
+        auto values = player(handle)->decoderDiagnostics();
+        jlong longs[4]; std::copy(values.begin(), values.end(), longs);
+        auto result = env->NewLongArray(4);
+        if (result) env->SetLongArrayRegion(result, 0, 4, longs);
+        return result;
+    } catch (...) { translate(env); return nullptr; }
+}
+extern "C" JNIEXPORT jboolean JNICALL JNI_NAME(isOutputSuspended)(JNIEnv *env, jobject, jlong handle) {
+    try { return player(handle)->suspended(); } catch (...) { translate(env); return false; }
 }
 VOID_METHOD(close, dispose(handle))
 VOID_METHOD(realize, (void)player(handle))

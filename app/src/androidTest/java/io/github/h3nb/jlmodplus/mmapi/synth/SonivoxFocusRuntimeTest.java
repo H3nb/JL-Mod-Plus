@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,7 @@ public class SonivoxFocusRuntimeTest {
     private static final String RESULT = "io.github.h3nb.jlmodplus.audioqualification.FOCUS_RESULT";
     private ActivityScenario<AudioQualificationActivity> host;
     private Context context;
-    private final List<SynthPlayer> players = new ArrayList<>();
+    private final List<AudioPlayer> players = new ArrayList<>();
 
     @Before public void setup() {
         Assume.assumeTrue("Requires external production-focus-rival companion and controlled OEM policy",
@@ -61,13 +62,13 @@ public class SonivoxFocusRuntimeTest {
 
     @After public void cleanup() {
         if (context != null) context.stopService(new Intent().setComponent(RIVAL));
-        for (SynthPlayer player : players) player.close();
+        for (AudioPlayer player : players) player.close();
         if (host != null) host.close();
     }
 
     @Test public void transientLossFreezesBothAndOnlyStillRequestedPlayerResumes() throws Exception {
-        SynthPlayer first = player();
-        SynthPlayer stopped = player();
+        AudioPlayer first = player();
+        AudioPlayer stopped = sampled();
         first.start();
         stopped.start();
         await(() -> first.getMediaTime() > 150000 && stats(first)[2] > 0, 3000, "Initial audible MIDI");
@@ -101,55 +102,67 @@ public class SonivoxFocusRuntimeTest {
     }
 
     @Test public void permanentLossRequiresFreshGuestRequestWithoutDuplicateStarted() throws Exception {
-        SynthPlayer player = player();
+        AudioPlayer player = player();
         AtomicInteger starts = new AtomicInteger();
         player.addPlayerListener((p, event, data) -> {
             if (PlayerListener.STARTED.equals(event)) starts.incrementAndGet();
         });
         player.start();
+        AudioPlayer peer = sampled();
+        peer.start();
         await(() -> player.getMediaTime() > 150000 && stats(player)[2] > 0 && starts.get() == 1,
                 3000, "Initial audible MIDI");
         long token = token(player);
         RuntimeAudioCoordinator audio = RuntimeAudioCoordinator.current();
         try (Rival rival = new Rival(AudioManager.AUDIOFOCUS_GAIN)) {
             rival.awaitGrant();
-            await(() -> !audio.isPlaybackRequested(player, token) && suspended(player), 2000,
+            await(() -> !audio.isPlaybackRequested(player, token) && suspended(player) && suspended(peer), 2000,
                     "Actual permanent focus loss did not revoke intent");
             assertEquals(Lifecycle.State.RESUMED, host.getState());
             assertEquals(Player.STARTED, player.getState());
             long paused = player.getMediaTime();
             long pcm = stats(player)[2];
+            long peerPaused = peer.getMediaTime();
             rival.release();
             SystemClock.sleep(200);
             assertEquals("Permanent loss auto-resumed", paused, player.getMediaTime());
             assertEquals(pcm, stats(player)[2]);
+            assertEquals(peerPaused, peer.getMediaTime());
             player.start();
             await(() -> player.getMediaTime() > paused + 50000 && stats(player)[2] > pcm,
                     3000, "Fresh guest request did not restore output");
             assertEquals(1, starts.get());
+            assertEquals("Fresh MIDI request resumed a revoked sampled peer", peerPaused, peer.getMediaTime());
             evidence("permanent", rival.uid.get(), paused, player.getMediaTime(), stats(player)[2] - pcm);
         }
     }
 
-    private SynthPlayer player() throws Exception {
+    private AudioPlayer player() throws Exception {
         // Thirty seconds of held middle C, with wholly generated SMF content.
         byte[] midi = new byte[]{'M','T','h','d',0,0,0,6,0,0,0,1,0,96,
                 'M','T','r','k',0,0,0,13,0,(byte) 0x90,60,100,
                 (byte) 0xad,0,(byte) 0x80,60,0,0,(byte) 0xff,0x2f,0};
-        SynthPlayer player = (SynthPlayer) Manager.createPlayer(new ByteArrayInputStream(midi), "audio/midi");
+        AudioPlayer player = (AudioPlayer) Manager.createPlayer(new ByteArrayInputStream(midi), "audio/midi");
         players.add(player);
         return player;
     }
 
-    private static long token(SynthPlayer player) throws Exception {
+    private AudioPlayer sampled() throws Exception {
+        try (InputStream input = InstrumentationRegistry.getInstrumentation().getContext().getAssets().open("audio/pcm.wav")) {
+            AudioPlayer player = (AudioPlayer) Manager.createPlayer(input, "audio/wav");
+            player.setLoopCount(-1); players.add(player); return player;
+        }
+    }
+
+    private static long token(AudioPlayer player) throws Exception {
         synchronized (player) { return field("playbackToken").getLong(player); }
     }
 
-    private static boolean suspended(SynthPlayer player) throws Exception {
+    private static boolean suspended(AudioPlayer player) throws Exception {
         synchronized (player) { return field("hostSuspended").getBoolean(player); }
     }
 
-    private static long[] stats(SynthPlayer player) throws Exception {
+    private static long[] stats(AudioPlayer player) throws Exception {
         synchronized (player) {
             LibEAS library = (LibEAS) field("library").get(player);
             return library.diagnostics(field("handle").getLong(player));
@@ -157,7 +170,7 @@ public class SonivoxFocusRuntimeTest {
     }
 
     private static Field field(String name) throws Exception {
-        Field field = SynthPlayer.class.getDeclaredField(name);
+        Field field = AudioPlayer.class.getDeclaredField(name);
         field.setAccessible(true);
         return field;
     }

@@ -2,12 +2,8 @@
 #include "eas_player.h"
 #include "eas_data.h"
 #include <algorithm>
-#include <chrono>
-#include <cstring>
 #include <stdexcept>
-#include <thread>
 
-extern "C" void JL_EAS_Realtime(int);
 namespace mmapi::eas {
 namespace {
 void checked(EAS_RESULT result, const char *operation) {
@@ -17,10 +13,11 @@ void checked(EAS_RESULT result, const char *operation) {
 
 }
 
-Player::Player(const std::string &locator, const std::string &bank, std::shared_ptr<Engine> shared)
+Player::Player(const std::string &locator, const std::string &bank, std::shared_ptr<Engine> shared, bool pcm)
     : engine(std::move(shared)) {
     slot = engine->reserve(this);
     try {
+        if (pcm) { sampled = std::make_unique<pcm::Decoder>(locator); duration = sampled->duration(); return; }
         checked(EAS_Init(&eas), "Initialize Sonivox");
         if (EAS_Config()->sampleRate != 44100 || EAS_Config()->mixBufferSize != 256
                 || EAS_Config()->numChannels != 2) throw std::runtime_error("Unsupported Sonivox configuration");
@@ -49,8 +46,16 @@ void Player::quiesce() {
     rendering.store(false, std::memory_order_release);
     engine->detach(this, slot);
     engine->idle();
+    if (sampled) sampled->pause();
 }
-void Player::runOutput(bool fresh) { engine->activate(this, fresh); }
+void Player::runOutput(bool fresh) {
+    if (sampled) sampled->resume();
+    try {
+        hostSuspended = !engine->activate(this, fresh);
+        if (hostSuspended && sampled) sampled->pause();
+    }
+    catch (...) { if (sampled) sampled->pause(); throw; }
+}
 void Player::invalidate() {
     generation.fetch_add(1, std::memory_order_acq_rel);
     pending.store(0); renderError.store(0);
@@ -79,6 +84,7 @@ void Player::openMedia(std::vector<uint8_t> bytes) {
 void Player::prefetch() {
     std::lock_guard<std::mutex> lock(controls);
     ensureOpen();
+    if (sampled) sampled->prefetch();
     engine->prepare(this);
 }
 void Player::start(int64_t policyEpoch) {
@@ -86,6 +92,9 @@ void Player::start(int64_t policyEpoch) {
     ensureOpen();
     if (!prepared.load()) throw std::runtime_error("Synthesis output is not prefetched");
     quiesce(); invalidate();
+    if (sampled && ended) {
+        sampled->seek(0); sampled->prefetch(); position.store(0); remaining = looping; ended = false;
+    }
     EAS_STATE mediaState = EAS_STATE_READY;
     if (media) checked(EAS_State(eas, media, &mediaState), "Read synthesis state");
     if (media && (ended || mediaState == EAS_STATE_STOPPED)) {
@@ -99,6 +108,7 @@ void Player::start(int64_t policyEpoch) {
 void Player::activateMidi(int64_t policyEpoch) {
     std::lock_guard<std::mutex> lock(controls);
     ensureOpen();
+    if (sampled) throw std::runtime_error("Sampled Player has no MIDI control");
     if (!prepared.load()) throw std::runtime_error("MIDI requires prefetched output");
     quiesce(); invalidate();
     midiOnly = media != nullptr; requested = true; hostSuspended = false;
@@ -123,7 +133,9 @@ void Player::resumeOutput() {
 }
 void Player::deallocate() {
     std::lock_guard<std::mutex> lock(controls);
-    ensureOpen(); quiesce(); requested = false; invalidate(); engine->release(this);
+    ensureOpen(); quiesce(); requested = false; invalidate();
+    if (sampled) sampled->deallocate();
+    engine->release(this);
 }
 void Player::shutdown() {
     std::lock_guard<std::mutex> lock(controls);
@@ -131,16 +143,23 @@ void Player::shutdown() {
     closed = true; requested = false;
     rendering.store(false); prepared.store(false);
     engine->remove(this, slot);
+    sampled.reset();
     closeMedia();
     if (eas) { EAS_Shutdown(eas); eas = nullptr; }
 }
 int64_t Player::seek(int64_t time) {
     std::lock_guard<std::mutex> lock(controls);
     ensureOpen();
-    if (!media) throw std::runtime_error("Media time is unsupported for interactive MIDI");
+    if (!media && !sampled) throw std::runtime_error("Media time is unsupported for interactive MIDI");
     quiesce(); invalidate();
     time = std::max<int64_t>(0, time);
     if (duration >= 0) time = std::min(time, duration);
+    if (sampled) {
+        position.store(sampled->seek(time)); ended = false;
+        if (prepared.load()) sampled->prefetch();
+        if (prepared.load() && requested && !hostSuspended) runOutput();
+        return position.load();
+    }
     time = std::min<int64_t>(time / 1000, INT32_MAX);
     checked(EAS_Locate(eas, media, static_cast<EAS_I32>(time), EAS_FALSE), "Seek synthesis media");
     position.store(time * 1000); blockEndTime = time * 1000;
@@ -149,7 +168,7 @@ int64_t Player::seek(int64_t time) {
     return position.load();
 }
 int64_t Player::length() {
-    std::lock_guard<std::mutex> lock(controls); ensureOpen(); return duration;
+    std::lock_guard<std::mutex> lock(controls); ensureOpen(); if (sampled) duration = sampled->duration(); return duration;
 }
 void Player::repeat(int count) {
     std::lock_guard<std::mutex> lock(controls); ensureOpen();
@@ -158,10 +177,13 @@ void Player::repeat(int count) {
 }
 void Player::data(std::vector<uint8_t> bytes) {
     std::lock_guard<std::mutex> lock(controls);
-    ensureOpen(); quiesce(); invalidate(); openMedia(std::move(bytes));
+    ensureOpen();
+    if (sampled) throw std::runtime_error("Sampled Player has no ToneControl source");
+    quiesce(); invalidate(); openMedia(std::move(bytes));
 }
 int Player::writeMidi(const uint8_t *bytes, int length) {
     std::lock_guard<std::mutex> lock(controls); ensureOpen();
+    if (sampled) throw std::runtime_error("Sampled Player has no MIDI control");
     if (!prepared.load()) throw std::runtime_error("MIDI requires prefetched output");
     uint32_t head = midiHead.load(std::memory_order_relaxed);
     uint32_t tail = midiTail.load(std::memory_order_acquire);
@@ -232,16 +254,22 @@ bool Player::renderBlock(bool onlyMidi) {
 }
 bool Player::poll(Event &event) {
     std::lock_guard<std::mutex> lock(controls); ensureOpen();
+    // The management poll also retires policy-blocked renderers/workers if the
+    // main-thread participant callback has not arrived yet. Preserve guest intent.
+    if (requested && !hostSuspended && !engine->granted(this)) {
+        quiesce(); hostSuspended = true;
+    }
     int type = pending.load(std::memory_order_acquire);
     if (type) {
         quiesce();
         event = {type, eventTime.load(), eventGeneration.load(), renderError.load()};
         pending.store(0);
         if (event.generation != generation.load()) return false;
-        if (type == 2 && media) {
+        if (type == 2 && (media || sampled)) {
             ended = true;
             if (requested && (looping == -1 || --remaining > 0)) {
-                checked(EAS_Locate(eas, media, 0, EAS_FALSE), "Loop synthesis media");
+                if (sampled) { sampled->seek(0); sampled->prefetch(); }
+                else checked(EAS_Locate(eas, media, 0, EAS_FALSE), "Loop synthesis media");
                 position.store(0); blockEndTime = 0; cursor = 256; ended = false;
                 if (!hostSuspended) runOutput();
                 event.type = 1;
@@ -274,7 +302,31 @@ std::array<int64_t, 9> Player::diagnostics() {
     return {frames.load(), callbacks.load(), nonzero.load(), engine->opens, disconnects.load(), xruns,
         stream ? stream->getSampleRate() : 0, stream ? stream->getDeviceId() : 0, generation.load()};
 }
+bool Player::suspended() {
+    std::lock_guard<std::mutex> lock(controls); ensureOpen(); return hostSuspended;
+}
+std::vector<std::string> Player::metadata() {
+    std::lock_guard<std::mutex> lock(controls); ensureOpen();
+    return sampled ? sampled->metadata() : std::vector<std::string>{};
+}
+std::string Player::contentType() {
+    std::lock_guard<std::mutex> lock(controls); ensureOpen();
+    return sampled ? sampled->contentType() : std::string{};
+}
+std::array<int64_t, 4> Player::decoderDiagnostics() {
+    std::lock_guard<std::mutex> lock(controls); ensureOpen();
+    return sampled ? sampled->diagnostics() : std::array<int64_t, 4>{};
+}
 int Player::mix(float *out, int32_t count) {
+    if (sampled && rendering.load(std::memory_order_acquire)) {
+        int copied = sampled->read(out, count, left.load(), right.load());
+        position.store(sampled->time());
+        frames.fetch_add(copied); callbacks.fetch_add(1); nonzero.store(sampled->audibleSamples());
+        int error = sampled->error();
+        if (error) signal(3, error);
+        else if (sampled->drained()) signal(2, 0);
+        return copied;
+    }
     if (rendering.load(std::memory_order_acquire)) {
         int offset = 0;
         int &read = midiOnly ? interactiveCursor : cursor;

@@ -45,7 +45,7 @@ public class SynthPlugin implements Plugin {
 				throw new MediaException("Cannot read synthesis source: " + e);
 			}
 		}
-		return new SynthPlayer(library, source);
+		return new AudioPlayer(library, source);
 	}
 
 	@Override

@@ -88,7 +88,7 @@ public class SonivoxRuntimeTest {
         } finally { connection.close(); }
         Player locator = keep(Manager.createPlayer(locatorUrl));
         for (Player player : new Player[]{stream, protocol, locator}) {
-            assertTrue("Manager bypassed synthesis", player instanceof SynthPlayer);
+            assertTrue("Manager bypassed synthesis", player instanceof AudioPlayer);
             player.prefetch();
             assertTrue(player.getDuration() > 0);
         }
@@ -125,14 +125,22 @@ public class SonivoxRuntimeTest {
     @Test public void ultraShortMidiOrdersStartBeforeEndAndFiniteLoopsComplete() throws Exception {
         Player player = keep(Manager.createPlayer(new ByteArrayInputStream(midi(1, 2)), "audio/midi"));
         List<String> events = new CopyOnWriteArrayList<>();
+        List<String> failures = new CopyOnWriteArrayList<>();
         CountDownLatch ended = new CountDownLatch(3);
         player.addPlayerListener((p, event, data) -> {
             if (PlayerListener.STARTED.equals(event) || PlayerListener.END_OF_MEDIA.equals(event)) events.add(event);
             if (PlayerListener.END_OF_MEDIA.equals(event)) ended.countDown();
+            if (PlayerListener.ERROR.equals(event)) failures.add(String.valueOf(data));
         });
         player.setLoopCount(3);
         player.start();
-        assertTrue("finite loop failed to end", ended.await(5, TimeUnit.SECONDS));
+        boolean complete = ended.await(5, TimeUnit.SECONDS);
+        if (!complete) {
+            String diagnostics = player.getState() == Player.CLOSED ? "closed"
+                    : java.util.Arrays.toString(UnifiedAudioRuntimeTest.runtime(player));
+            fail("finite loop failed to end: state=" + player.getState() + " events=" + events
+                    + " errors=" + failures + " runtime=" + diagnostics);
+        }
         await(() -> player.getState() == Player.PREFETCHED, 1000, "EOM state");
         assertEquals(List.of(PlayerListener.STARTED, PlayerListener.END_OF_MEDIA,
                 PlayerListener.STARTED, PlayerListener.END_OF_MEDIA,
@@ -227,7 +235,7 @@ public class SonivoxRuntimeTest {
         };
         for (byte[] bytes : payloads) {
             Player player = keep(Manager.createPlayer(new ByteArrayInputStream(bytes), "audio/midi"));
-            assertTrue(player instanceof SynthPlayer);
+            assertTrue(player instanceof AudioPlayer);
             CountDownLatch end = end(player);
             player.start();
             assertTrue("ringtone parser failed to reach EOM", end.await(5, TimeUnit.SECONDS));
@@ -308,8 +316,8 @@ public class SonivoxRuntimeTest {
     private Player keep(Player player) { assertNotNull(player); players.add(player); return player; }
     /** Read backend diagnostics through the existing wrapper ownership boundary. */
     private static long[] stats(Player player) throws Exception {
-        Field library = SynthPlayer.class.getDeclaredField("library");
-        Field handle = SynthPlayer.class.getDeclaredField("handle");
+        Field library = AudioPlayer.class.getDeclaredField("library");
+        Field handle = AudioPlayer.class.getDeclaredField("handle");
         library.setAccessible(true); handle.setAccessible(true);
         return ((LibEAS) library.get(player)).diagnostics(handle.getLong(player));
     }

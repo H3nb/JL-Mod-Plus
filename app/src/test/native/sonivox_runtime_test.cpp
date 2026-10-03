@@ -77,6 +77,17 @@ public:
         render(*player, {511,511,511,511,511,511,511,511,511});
         const auto epoch = player->epoch();
 
+        auto claimedOutput = player->engine->output;
+        claimedOutput->callbacksActive.store(1);
+        claimedOutput->onError(player->engine->stream.get(), oboe::Result::ErrorDisconnected);
+        auto serializedRecovery = std::async(std::launch::async, [&] { player->recoverOutput(); });
+        while (claimedOutput->enabled.load()) std::this_thread::yield();
+        require(serializedRecovery.wait_for(std::chrono::milliseconds(20)) == std::future_status::timeout,
+            "Replacement begins before old consumer acknowledges exit");
+        claimedOutput->callbacksActive.store(0); serializedRecovery.get();
+        render(*player, {511,511,511,511,511,511,511,511,511});
+        std::puts("PASS: output replacement acknowledges the old PCM consumer before starting a new one");
+
         // Resolve the old callback's origin, then deliberately hold publication
         // until close/reopen/start has finished. No sleeps or shipping hooks.
         auto old = player->engine->output;
@@ -261,11 +272,62 @@ public:
         require(two.poll(terminal) && terminal.type == 5 && engine->failed(),
             "Fatal output is not runtime scoped");
         two.shutdown();
+        Player looping("device://midi", bank, engine), shortEffect("device://midi", bank, engine);
+        looping.data(smf); activate(looping); shortEffect.prefetch();
+        // Pending EOM still owns a looping playback request, even in its management gap.
+        looping.signal(2, 0);
+        for (int attempt = 0; attempt < 3; ++attempt) {
+            engine->output->onError(engine->stream.get(), oboe::Result::ErrorDisconnected);
+            shortEffect.start(); shortEffect.pause();
+        }
+        engine->output->onError(engine->stream.get(), oboe::Result::ErrorDisconnected);
+        bool exhausted = false;
+        try { shortEffect.start(); } catch (const std::runtime_error &) { exhausted = true; }
+        require(exhausted && engine->failed(), "Fresh short effects replenish peer recovery storm budget");
+        shortEffect.shutdown(); looping.shutdown();
         std::puts("PASS: one output, two synths, stop/seek/deallocate/close isolation, policy fencing, clipping, lifetime acknowledgment");
     }
-    static void run(const std::string &bank) {
+    static void mixedPcm(const std::string &bank, const std::string &path) {
+        auto engine = std::make_shared<Engine>();
+        Player synth("device://midi", bank, engine), reference("device://midi", bank);
+        Player effect(path, "", engine, true);
+        uint8_t note[] = {0x90, 60, 100};
+        activate(synth); activate(reference); effect.prefetch();
+        require(effect.time() == 0 && effect.length() == 1000000, "Prefetch advances sampled time");
+        synth.writeMidi(note, sizeof(note)); reference.writeMidi(note, sizeof(note));
+        effect.start();
+        render(synth, {257,511}); render(reference, {257,511});
+        require(effect.time() > 0 && effect.nonzero.load() > 0 && engine->opens == 1,
+            "Sampled and synthesis do not share one output");
+        effect.pause();
+        require(render(synth, {257,511}) == render(reference, {257,511}), "Sampled stop changes synth PCM");
+        auto sourceEpoch = effect.epoch(); auto synthEpoch = synth.epoch();
+        require(effect.seek(500000) == 500000 && effect.epoch() != sourceEpoch, "Sampled seek retains old generation");
+        require(render(synth, {511}) == render(reference, {511}) && synth.epoch() == synthEpoch,
+            "Sampled seek disrupts synth clock/voices");
+        effect.deallocate();
+        require(effect.time() == 500000 && effect.length() == 1000000 && engine->stream,
+            "Sampled deallocate loses known state or peer output");
+        effect.prefetch(); effect.repeat(2); effect.start();
+        Event end{}; int ends = 0;
+        for (int i = 0; i < 400 && ends < 2; ++i) {
+            render(synth, {511});
+            if (effect.poll(end)) { require(end.type == (ends ? 2 : 1), "Sampled loop event mismatch"); ++ends; }
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
+        require(ends == 2 && effect.time() >= 999000, "Sampled EOS before drain or finite loop missing");
+        effect.seek(0); effect.start(); render(synth, {257});
+        effect.signal(3, -1);
+        require(effect.poll(end) && end.type == 3 && !engine->failed(), "Local decoder error poisons shared output");
+        auto frames = synth.frames.load(); effect.shutdown(); render(synth, {511});
+        require(synth.frames.load() == frames + 511 && engine->stream, "Sampled error/close stops synthesis peer");
+        synth.shutdown(); reference.shutdown();
+        std::puts("PASS: mixed PCM+synthesis, consumed clock, seek/deallocate, finite drain/loops and local failure isolation");
+    }
+    static void run(const std::string &bank, const std::string &pcm) {
         outputRecovery(bank);
         sharedSources(bank);
+        if (!pcm.empty()) mixedPcm(bank, pcm);
         Player regular("device://midi", bank), varied("device://midi", bank);
         uint8_t note[] = {0xc0, 0, 0x90, 60, 100};
         require(EAS_WriteMIDIStream(regular.eas, regular.interactive, note, sizeof(note)) == EAS_SUCCESS, "MIDI note");
@@ -385,7 +447,7 @@ public:
 }
 int main(int argc, char **argv) {
     try {
-        mmapi::eas::PlayerTest::run(argc > 1 ? argv[1] : "");
+        mmapi::eas::PlayerTest::run(argc > 1 && std::string(argv[1]) != "-" ? argv[1] : "", argc > 2 ? argv[2] : "");
         std::puts("PASS: production callback 257/511 framing, guard buffers, frozen held voices/PCM, generations, readAt ownership");
         return 0;
     } catch (const std::exception &error) {

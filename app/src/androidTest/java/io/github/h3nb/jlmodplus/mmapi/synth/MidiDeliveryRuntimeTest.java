@@ -32,7 +32,7 @@ import io.github.h3nb.jlmodplus.mmapi.synth.eas.LibEAS;
 @RunWith(AndroidJUnit4.class)
 public class MidiDeliveryRuntimeTest {
     private ActivityScenario<AudioQualificationActivity> host;
-    private final List<SynthPlayer> players = new ArrayList<>();
+    private final List<AudioPlayer> players = new ArrayList<>();
     private int initialHandles;
 
     @Before public void setup() {
@@ -41,13 +41,13 @@ public class MidiDeliveryRuntimeTest {
     }
 
     @After public void cleanup() throws Exception {
-        for (SynthPlayer player : players) player.close();
+        for (AudioPlayer player : players) player.close();
         if (host != null) host.close();
         await(() -> LibEAS.liveHandles() == initialHandles, 2500, "MIDI context leaked after close");
     }
 
     @Test public void fullSuspendedQueueRejectsDeliveryWithoutGuestExceptionOrTerminalEvents() throws Exception {
-        SynthPlayer player = player();
+        AudioPlayer player = player();
         List<String> events = new CopyOnWriteArrayList<>();
         player.addPlayerListener((p, event, data) -> events.add(event));
         MIDIControl midi = (MIDIControl) player.getControl("MIDIControl");
@@ -74,7 +74,7 @@ public class MidiDeliveryRuntimeTest {
     }
 
     @Test public void deniedForegroundDeliveryDoesNotLeaveAutoplayIntent() throws Exception {
-        SynthPlayer player = player();
+        AudioPlayer player = player();
         List<String> events = new CopyOnWriteArrayList<>();
         player.addPlayerListener((p, event, data) -> events.add(event));
         MIDIControl midi = (MIDIControl) player.getControl("MIDIControl");
@@ -95,8 +95,8 @@ public class MidiDeliveryRuntimeTest {
         assertEquals(Player.PREFETCHED, player.getState());
     }
 
-    private SynthPlayer player() throws Exception {
-        SynthPlayer player = (SynthPlayer) Manager.createPlayer(Manager.MIDI_DEVICE_LOCATOR);
+    private AudioPlayer player() throws Exception {
+        AudioPlayer player = (AudioPlayer) Manager.createPlayer(Manager.MIDI_DEVICE_LOCATOR);
         players.add(player);
         player.prefetch();
         return player;
@@ -107,11 +107,11 @@ public class MidiDeliveryRuntimeTest {
         assertFalse(events.contains(PlayerListener.CLOSED));
     }
 
-    private static boolean flag(SynthPlayer player, String name) throws Exception {
+    private static boolean flag(AudioPlayer player, String name) throws Exception {
         synchronized (player) { return field(name).getBoolean(player); }
     }
 
-    private static long[] stats(SynthPlayer player) throws Exception {
+    private static long[] stats(AudioPlayer player) throws Exception {
         synchronized (player) {
             LibEAS library = (LibEAS) field("library").get(player);
             return library.diagnostics(field("handle").getLong(player));
@@ -119,7 +119,7 @@ public class MidiDeliveryRuntimeTest {
     }
 
     private static Field field(String name) throws Exception {
-        Field field = SynthPlayer.class.getDeclaredField(name);
+        Field field = AudioPlayer.class.getDeclaredField(name);
         field.setAccessible(true);
         return field;
     }

@@ -44,6 +44,37 @@ public class SynthPlayerContractTest {
         host.close();
     }
 
+    @Test public void sharedOutputFailureClosesUnrealizedPeerButLocalFailureDoesNot() throws Exception {
+        FakeLibrary first = new FakeLibrary() {
+            @Override public long getOutputIdentity(long handle) { return 412; }
+        };
+        FakeLibrary second = new FakeLibrary() {
+            @Override public long getOutputIdentity(long handle) { return 412; }
+        };
+        Player active = player(first, new CountingSource());
+        Player unrealized = player(second, new CountingSource());
+        AtomicInteger errors = new AtomicInteger(), closed = new AtomicInteger();
+        PlayerListener listener = (p, event, data) -> {
+            if (PlayerListener.ERROR.equals(event)) errors.incrementAndGet();
+            if (PlayerListener.CLOSED.equals(event)) closed.incrementAndGet();
+        };
+        active.addPlayerListener(listener); unrealized.addPlayerListener(listener);
+        active.prefetch();
+        first.events.add(new long[]{5, 0, first.generation, -1});
+        await(() -> active.getState() == Player.CLOSED && unrealized.getState() == Player.CLOSED,
+                2000, "Shared failure did not close every source");
+        await(() -> errors.get() == 2 && closed.get() == 2, 2000, "Shared terminal callbacks missing");
+        assertEquals(1, first.closes); assertEquals(1, second.closes);
+
+        FakeLibrary local = new FakeLibrary(), peerBackend = new FakeLibrary();
+        Player damaged = player(local, new CountingSource()), peer = player(peerBackend, new CountingSource());
+        damaged.prefetch(); peer.prefetch();
+        local.events.add(new long[]{3, 0, local.generation, -1});
+        await(() -> damaged.getState() == Player.CLOSED, 2000, "Local failure not terminal");
+        assertEquals(Player.PREFETCHED, peer.getState());
+        assertEquals(0, peerBackend.closes);
+    }
+
     @Test public void closeDisconnectsAndNotifiesOnceEvenWhenListenerClosesAgain() throws Exception {
         FakeLibrary backend = new FakeLibrary();
         CountingSource source = new CountingSource();
@@ -208,7 +239,7 @@ public class SynthPlayerContractTest {
     }
 
     private Player player(FakeLibrary backend, CountingSource source) {
-        Player player = new SynthPlayer(backend, source);
+        Player player = new AudioPlayer(backend, source);
         players.add(player);
         return player;
     }

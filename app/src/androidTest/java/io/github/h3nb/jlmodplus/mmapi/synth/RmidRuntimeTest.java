@@ -81,7 +81,7 @@ public class RmidRuntimeTest {
         long duration = raw.getDuration();
         assertTrue("SMF metadata missing", duration > 0);
         for (Player player : new Player[]{stream, protocol, locator}) {
-            assertTrue("RMID bypassed synthesis", player instanceof SynthPlayer);
+            assertTrue("RMID bypassed synthesis", player instanceof AudioPlayer);
             player.prefetch();
             assertEquals("RMID duration differs from its SMF", duration, player.getDuration());
             player.start();
@@ -142,16 +142,17 @@ public class RmidRuntimeTest {
                 .putShort((short) 2).putShort((short) 16);
         Player wave = keep(Manager.createPlayer(new ByteArrayInputStream(riff("WAVE",
                 chunk("fmt ", format.array()), chunk("data", new byte[samples * 2]))), "audio/wav"));
-        assertEquals("WAVE was routed to synthesis", "javax.microedition.media.MicroPlayer", wave.getClass().getName());
+        assertEquals("WAVE bypassed common audio Player", "io.github.h3nb.jlmodplus.mmapi.synth.AudioPlayer", wave.getClass().getName());
         wave.prefetch();
-        wave.start(); // AndroidPlayer prepares its sampled source lazily on start.
+        assertNull(wave.getControl("MIDIControl"));
+        wave.start();
         assertTrue(wave.getDuration() > 0);
     }
 
     private Player keep(Player player) { players.add(player); return player; }
     private static long[] stats(Player player) throws Exception {
-        Field library = SynthPlayer.class.getDeclaredField("library");
-        Field handle = SynthPlayer.class.getDeclaredField("handle");
+        Field library = AudioPlayer.class.getDeclaredField("library");
+        Field handle = AudioPlayer.class.getDeclaredField("handle");
         library.setAccessible(true); handle.setAccessible(true);
         return ((LibEAS) library.get(player)).diagnostics(handle.getLong(player));
     }

@@ -37,6 +37,8 @@ import javax.microedition.util.ContextHolder;
 import io.github.h3nb.jlmodplus.mmapi.Plugin;
 import io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator;
 import io.github.h3nb.jlmodplus.mmapi.synth.SynthPluginFactory;
+import io.github.h3nb.jlmodplus.mmapi.synth.AudioPlayer;
+import io.github.h3nb.jlmodplus.mmapi.synth.eas.LibEAS;
 
 public class Manager {
 	public static final String TONE_DEVICE_LOCATOR = "device://tone";
@@ -122,16 +124,13 @@ public class Manager {
 			Player player = plugin.createPlayer(source);
 			if (player != null) return player;
 		}
-		String type = source.getContentType();
-		if (type != null) {
-			for (String supported : getSupportedContentTypes(null)) {
-				if (supported.equalsIgnoreCase(type)) {
-					source.prepareSampled();
-					return new MicroPlayer(source);
-				}
-			}
-		}
-		throw new MediaException("Unsupported media content type: " + type);
+        if (source.isSmaf()) {
+            source.prepareLegacySmaf();
+            return new MicroPlayer(source);
+        }
+        // The native retained demuxer/codec subset resolves actual structure;
+        // recognized corrupt media fails here, without another parser/output fallback.
+        return new AudioPlayer(LibEAS.sampled(), source);
 	}
 
 	public static String[] getSupportedContentTypes(String str) {

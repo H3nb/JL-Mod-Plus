@@ -102,6 +102,12 @@ public class AudioMidletRuntimeTest {
             assertTrue("fixture profile was not saved", ProfilesManager.saveConfig(profile));
             write(new File(root, "sustain.mid"), sessionSeconds == 0
                     ? SonivoxRuntimeTest.midi(56640, 57600) : loopingWorkload());
+            for (String[] fixture : new String[][]{{"pcm.wav", "effect.wav"}, {"effect.mp3", "effect.mp3"}}) {
+                try (InputStream input = InstrumentationRegistry.getInstrumentation().getContext().getAssets()
+                        .open("audio/" + fixture[0]); FileOutputStream output = new FileOutputStream(new File(root, fixture[1]))) {
+                    input.transferTo(output);
+                }
+            }
             String manifest = "Manifest-Version: 1.0\nMIDlet-Name: Audio Lifecycle Fixture\n"
                     + "MIDlet-Vendor: JL-Mod Plus\nMIDlet-Version: 1.0\n"
                     + "MIDlet-1: Audio Lifecycle Fixture,," + AudioLifecycleMidlet.CLASS_NAME + "\n"
@@ -127,9 +133,11 @@ public class AudioMidletRuntimeTest {
             SystemClock.sleep(300);
             long frozen = number(report(root), "position");
             long frames = number(report(root), "frames");
+            long pcmFrames = number(report(root), "pcmFrames");
             SystemClock.sleep(200);
             assertEquals("Android Home did not suspend media", frozen, number(report(root), "position"));
             assertEquals("Android Home did not suspend output", frames, number(report(root), "frames"));
+            assertEquals("Android Home did not suspend PCM", pcmFrames, number(report(root), "pcmFrames"));
             assertEquals(Player.STARTED, number(report(root), "state"));
             launch(context, app, appId, false);
             await(() -> number(report(root), "position") > frozen + 100000, 6000, "host return did not resume");
@@ -143,17 +151,21 @@ public class AudioMidletRuntimeTest {
                     6000, "Activity recreation did not restore output");
             assertEquals(initialPid, pid(context, processName));
             assertEquals(generation, MidletSessionStore.read(context).getGeneration());
-            assertEquals(1, number(report(root), "liveHandles"));
+            assertEquals(3, number(report(root), "liveHandles"));
+            assertEquals(1, number(report(root), "activeOutputs"));
+            assertTrue(number(report(root), "pcmFrames") > 0);
 
             command(root, "stop");
             await(() -> "stop".equals(report(root).getProperty("command")), 3000, "guest stop did not execute");
             long stopped = number(report(root), "position");
+            long effectsBeforeReturn = number(report(root), "pcmFrames");
             shell("am start -W -a android.intent.action.MAIN -c android.intent.category.HOME");
             SystemClock.sleep(100);
             launch(context, app, appId, false);
             SystemClock.sleep(300);
             assertEquals("host return restarted a guest-stopped Player", Player.PREFETCHED, number(report(root), "state"));
             assertEquals(stopped, number(report(root), "position"));
+            assertTrue("Stopping MIDI stopped sampled peers", number(report(root), "pcmFrames") > effectsBeforeReturn);
             command(root, "start");
             await(() -> number(report(root), "position") > stopped + 100000, 6000, "fresh guest start failed");
 
@@ -174,9 +186,13 @@ public class AudioMidletRuntimeTest {
                     assertEquals("bounded guest lost STARTED", Player.STARTED, number(current, "state"));
                     assertEquals("guest ERROR during bounded workload", 0, number(current, "errors"));
                     assertEquals("guest CLOSED during bounded workload", 0, number(current, "closed"));
-                    assertEquals("native context count changed", 1, number(current, "liveHandles"));
+                    assertEquals("native context count changed", 3, number(current, "liveHandles"));
                     assertTrue("bounded output frames stalled", number(current, "frames") > previousFrames);
                     assertTrue("bounded PCM stalled", number(current, "nonzeroSamples") > previousSamples);
+                    assertEquals("multiple active output streams", 1, number(current, "activeOutputs"));
+                    assertEquals("source count changed", 3, number(current, "sources"));
+                    assertTrue("sampled PCM stalled", number(current, "pcmFrames") > number(first, "pcmFrames"));
+                    assertTrue("unbounded decoder workers", number(current, "decoderWorkers") <= 2);
                     assertEquals(initialPid, pid(context, processName));
                     assertEquals(generation, MidletSessionStore.read(context).getGeneration());
                     previousFrames = number(current, "frames");

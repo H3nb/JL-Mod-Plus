@@ -33,6 +33,8 @@ public:
     int error() const;
     int64_t time() const;
     int64_t duration() const;
+    int64_t audibleSamples() const;
+    std::string contentType() const;
     std::vector<std::string> metadata() const;
     std::array<int64_t, 4> diagnostics() const; // consumed, underflow, queued, workers
 };

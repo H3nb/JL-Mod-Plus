@@ -18,6 +18,10 @@
 package io.github.h3nb.jlmodplus.mmapi.synth;
 
 public interface Library {
+    default boolean isSynthesis() { return true; }
+    default String[] metadata(long handle) { return null; }
+    default String contentType(long handle) { return ""; }
+    default boolean isOutputSuspended(long handle) { return false; }
 	long createPlayer(String locator);
 	void realize(long handle);
 	void prefetch(long handle);
@@ -37,7 +41,7 @@ public interface Library {
 	void setDataSource(long handle, byte[] data);
 	int writeMIDI(long handle, byte[] data, int offset, int length);
 
-	/** Management-thread events: type, media time, output generation, error code. */
+	/** Management-thread events: type, media time, source generation, error code. */
 	default long[] pollEvent(long handle) { return null; }
 	default long getGeneration(long handle) { return 0; }
 	default void recoverOutput(long handle) {}

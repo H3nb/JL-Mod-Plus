@@ -3,6 +3,11 @@
 These are generated test signals, without recordings or commercial-game assets.
 They are packaged only in the instrumentation APK.
 
+`tagged.wav` copies `pcm.wav` and appends a RIFF LIST/INFO INAM chunk containing
+the UTF-8 title `Nada 🟢` and its terminating zero. Chunk lengths include the
+terminator, odd lengths receive zero padding, and the RIFF size is updated.
+It checks demuxer metadata and supplementary UTF-8 characters across JNI.
+
 The one-second sine fixtures use frequency 997 Hz and mono output:
 
 ```powershell

@@ -53,6 +53,10 @@ bool Engine::eligible(const Player *player) const {
     return player->rendering.load(std::memory_order_acquire)
         && player->requestEpoch.load(std::memory_order_acquire) >= minimumRequestEpoch.load(std::memory_order_acquire);
 }
+bool Engine::granted(const Player *player) const {
+    return allowed.load(std::memory_order_acquire)
+        && player->requestEpoch.load(std::memory_order_acquire) >= minimumRequestEpoch.load(std::memory_order_acquire);
+}
 bool Engine::hasActive() const {
     for (const auto &slot : slots) if (slot.reserved && eligible(slot.reserved)) return true;
     return false;
@@ -63,8 +67,11 @@ void Engine::policy(int64_t minimum, bool enabled) {
     allowed.store(enabled, std::memory_order_release);
 }
 void Engine::closeOutput() {
-    if (output) output->enabled.store(false, std::memory_order_release);
+    if (output) output->enabled.store(false, std::memory_order_seq_cst);
     if (stream) { stream->close(); stream.reset(); }
+    // Do not rely on device-specific close behavior to serialize old/new
+    // consumers. A callback entering after this acknowledgment sees disabled.
+    while (output && output->callbacksActive.load(std::memory_order_seq_cst)) std::this_thread::yield();
     output.reset();
 }
 void Engine::openOutput() {
@@ -109,19 +116,26 @@ void Engine::prepare(Player *player) {
         player->prepared.store(true);
     } catch (...) { fatal.store(true); throw; }
 }
-void Engine::activate(Player *player, bool fresh) {
+bool Engine::activate(Player *player, bool fresh) {
     std::lock_guard<std::mutex> lock(controls);
     try {
         if (fatal.load()) throw std::runtime_error("Runtime output has failed");
         if (!player->prepared.load() || !stream) throw std::runtime_error("Audio source is not prefetched");
-        if (fresh && !hasActive()) recoveries = 0;
-        if (!allowed.load() || player->requestEpoch.load() < minimumRequestEpoch.load()) return;
+        bool peerIntent = false;
+        for (const auto &slot : slots) {
+            auto peer = slot.reserved;
+            if (peer && peer != player && peer->requested.load() && peer->prepared.load()
+                    && peer->requestEpoch.load() >= minimumRequestEpoch.load()) peerIntent = true;
+        }
+        if (fresh && !peerIntent) recoveries = 0;
+        if (!granted(player)) return false;
         if (needsRecovery()) replaceOutput();
         player->rendering.store(true, std::memory_order_release);
         slots[player->slot].published.store(player, std::memory_order_seq_cst);
         auto state = stream->getState();
         if (state != oboe::StreamState::Started && state != oboe::StreamState::Starting)
             checked(stream->start(1000000000LL), "Start runtime output");
+        return true;
     } catch (...) { fatal.store(true); player->rendering.store(false); throw; }
 }
 void Engine::idle() {
@@ -130,8 +144,11 @@ void Engine::idle() {
         auto state = stream->getState();
         if (state == oboe::StreamState::Started || state == oboe::StreamState::Starting) {
             auto result = stream->pause(1000000000LL);
-            if (result != oboe::Result::ErrorDisconnected && result != oboe::Result::ErrorInvalidState)
+            if (result != oboe::Result::OK && result != oboe::Result::ErrorDisconnected
+                    && result != oboe::Result::ErrorInvalidState) {
+                fatal.store(true);
                 checked(result, "Pause runtime output");
+            }
         }
     }
 }
@@ -170,10 +187,11 @@ bool Engine::Output::onError(oboe::AudioStream *, oboe::Result failure) {
 }
 oboe::DataCallbackResult Engine::render(Output &origin, void *audio, int32_t count) {
     if (count <= 0) return oboe::DataCallbackResult::Continue;
+    origin.callbacksActive.fetch_add(1, std::memory_order_seq_cst);
     const auto began = std::chrono::steady_clock::now();
     auto out = static_cast<float *>(audio);
     std::fill(out, out + static_cast<size_t>(count) * 2, 0.0f);
-    if (allowed.load(std::memory_order_acquire) && !fatal.load() && origin.enabled.load()
+    if (allowed.load(std::memory_order_acquire) && !fatal.load() && origin.enabled.load(std::memory_order_seq_cst)
             && !origin.error.load()) {
         JL_EAS_Realtime(1);
         int progress = 0;
@@ -195,14 +213,19 @@ oboe::DataCallbackResult Engine::render(Output &origin, void *audio, int32_t cou
     auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - began).count();
     auto maximum = callbackNanos.load();
     while (nanos > maximum && !callbackNanos.compare_exchange_weak(maximum, nanos)) {}
+    origin.callbacksActive.fetch_sub(1, std::memory_order_seq_cst);
     return oboe::DataCallbackResult::Continue;
 }
-std::array<int64_t, 10> Engine::diagnostics() {
+std::array<int64_t, 12> Engine::diagnostics() {
     std::lock_guard<std::mutex> lock(controls);
-    int64_t sources = 0, active = 0, xruns = -1;
+    int64_t sources = 0, active = 0, xruns = -1, latency = -1;
     for (const auto &slot : slots) if (slot.reserved) { ++sources; active += eligible(slot.reserved); }
-    if (stream) { auto result = stream->getXRunCount(); if (result) xruns = result.value(); }
+    if (stream) {
+        auto result = stream->getXRunCount(); if (result) xruns = result.value();
+        auto measured = stream->calculateLatencyMillis();
+        if (measured) latency = static_cast<int64_t>(measured.value() * 1000);
+    }
     return {identity, opens, stream ? 1 : 0, sources, active, clipped.load(), callbackNanos.load(),
-        callbackCount.load(), xruns, outputEpoch};
+        callbackCount.load(), xruns, outputEpoch, latency, stream ? stream->getBufferSizeInFrames() : 0};
 }
 }
