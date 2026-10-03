@@ -81,6 +81,21 @@ public class PerformanceOverlaySettingsTest {
 	}
 
 	@Test
+	public void rendererMetricsAreRequiredOnlyForRenderConsumptionSelections() {
+		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(0));
+		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(
+				PerformanceOverlayOptions.FPS
+						| PerformanceOverlayOptions.CPU
+						| PerformanceOverlayOptions.RAM));
+		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
+				PerformanceOverlayOptions.RENDER_FPS));
+		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
+				PerformanceOverlayOptions.COALESCED));
+		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
+				PerformanceOverlayOptions.FPS | PerformanceOverlayOptions.COALESCED));
+	}
+
+	@Test
 	public void malformedPersistedValuesAreSanitizedAtTheFormBoundary() {
 		ProfileModel profile = gson.fromJson(
 				"{\"PerformanceOverlayMetrics\":1073741825,\"PerformanceOverlayPosition\":99}",

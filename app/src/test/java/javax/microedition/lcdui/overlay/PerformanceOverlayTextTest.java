@@ -44,6 +44,27 @@ public class PerformanceOverlayTextTest {
 	}
 
 	@Test
+	public void unavailableSpeedDoesNotAssumeNormalAndCapRemainsReportable() {
+		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
+		v.fps = 47;
+		v.cap = 60;
+		assertArrayEquals(new String[]{"FPS 47/60", "SPD —"},
+				PerformanceOverlayText.format(FPS | CAP | SPEED, v)[0]);
+		assertFalse(Arrays.deepToString(PerformanceOverlayText.format(SPEED, v))
+				.contains("1.00x"));
+	}
+
+	@Test
+	public void availableSpeedFormatsManualAndAutoMultipliers() {
+		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
+		v.speedPercent = 50;
+		assertEquals("SPD 0.50x", PerformanceOverlayText.format(SPEED, v)[0][0]);
+		v.speedPercent = 125;
+		v.autoSpeed = true;
+		assertEquals("SPD AUTO 1.25x", PerformanceOverlayText.format(SPEED, v)[0][0]);
+	}
+
+	@Test
 	public void unavailableSensorsAreNotZeroAndMulticoreCpuIsNotClamped() {
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
 		v.cpu = 182;
@@ -71,6 +92,7 @@ public class PerformanceOverlayTextTest {
 	public void allMetricsHaveUppercaseLabelsAndLocaleIndependentUnits() {
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
 		v.interval = 33.3;
+		v.speedPercent = 100;
 		v.autoSpeed = true;
 		String text = Arrays.deepToString(PerformanceOverlayText.format(ALL, v));
 		assertTrue(text.contains("FI 33.3 ms"));

@@ -56,6 +56,10 @@ public final class PerformanceOverlayOptions {
 		return metrics & ALL;
 	}
 
+	public static boolean requiresRendererMetrics(int metrics) {
+		return (sanitize(metrics) & (RENDER_FPS | COALESCED)) != 0;
+	}
+
 	public static int sanitizePosition(int position) {
 		return position >= TOP_LEFT && position <= BOTTOM_RIGHT ? position : TOP_LEFT;
 	}

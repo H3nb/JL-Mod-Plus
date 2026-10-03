@@ -33,9 +33,9 @@ There is no universal original-device FPS target for Java ME applications.
 | Label | Measurement |
 | --- | --- |
 | FPS | Complete guest buffer publications per real second, including visually unchanged buffers. |
-| CAP | Effective pacing target after the applied speed multiplier. It is not the game's native target or a guaranteed ceiling for non-blocking callback paths. FPS and CAP combine as `FPS actual/cap`; an unrestricted target is `∞`. |
+| CAP | Effective host pacing target after the speed multiplier used by the pacer. It remains independently reportable when SPD is unavailable; an untransformed or incompatible MIDlet uses the normal 100% timing baseline. It is not the game's native target or a guaranteed ceiling for non-blocking callback paths. FPS and CAP combine as `FPS actual/cap`; an unrestricted target is `∞`. |
 | RFPS | New guest sequences consumed by the host renderer per real second; repeated draws of one sequence are excluded. Not physical display presentation. |
-| SPD | Applied timing multiplier, with `AUTO` when selected by the governor. |
+| SPD | Authoritative applied emulation-speed multiplier, with `AUTO` when selected by the governor. If the compatible timing transform/controller is unavailable, SPD is `—` rather than assuming `1.00x`. |
 | FI / P95 / MAX | Mean, nearest-rank 95th percentile, and maximum gaps between complete guest publications. Not render work or input latency. |
 | PAINT | Mean elapsed time in the guest paint callback; absent for games using only flush APIs. |
 | COPY | Mean elapsed time in buffer copy operations. |
@@ -56,8 +56,9 @@ second. Timing statistics retain up to the newest 4096 samples within five real
 seconds; sufficiently high event rates shorten this bounded window. CPU samples
 update every second; PSS, heap, hardware temperature, and thermal samples update
 every five seconds. Battery temperature follows Android battery broadcasts.
-Only selected optional diagnostics are collected. Existing timing/governor frame
-counters remain available to their independent runtime consumers.
+Only selected optional diagnostics are collected. Publication counts remain
+available when needed by overlay FPS or Auto Speed. Renderer-consumption ownership
+and accounting are enabled only when RFPS or COAL is selected.
 
 The temperature fallback discovers `/sys/class/thermal/thermal_zone*/type` once
 per sampler and reads selected sensors' `temp` files on the five-second worker
@@ -82,7 +83,10 @@ window. Publication timestamps and sequences are captured together under the
 buffer lock. Repeated or stale render callbacks cannot contribute new samples.
 
 Mailbox sequences restart with a new presentation surface. Frame counter
-sequences belong to the counter owner and continue independently; all renderer
-paths capture that owner and its sequence with the selected buffer. Activation
-abandons previously pending sequences without resetting lifetime totals, so
-pre-pause frames do not inflate the new visible window's COAL or RFPS.
+sequences belong to the counter owner and continue independently. When RFPS or
+COAL is selected, renderer paths capture that owner and its sequence with the
+selected buffer. Activation then abandons previously pending sequences under the
+same serialized FrameMetrics boundary without resetting lifetime totals, so an
+old in-flight render cannot inflate the new visible window's COAL or RFPS. When
+renderer-consumption metrics are disabled, no renderer ownership is carried and
+no abandonment is performed solely for those metrics.

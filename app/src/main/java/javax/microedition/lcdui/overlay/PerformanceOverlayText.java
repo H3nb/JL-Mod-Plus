@@ -28,7 +28,7 @@ final class PerformanceOverlayText {
 	static final class Values {
 		double fps = Double.NaN, renderFps = Double.NaN, coalesced = Double.NaN;
 		double cap = Double.NaN;
-		int speedPercent = 100;
+		double speedPercent = Double.NaN;
 		boolean autoSpeed;
 		double interval = Double.NaN, p95 = Double.NaN, maximum = Double.NaN;
 		double paint = Double.NaN, copy = Double.NaN, submit = Double.NaN;
@@ -54,8 +54,10 @@ final class PerformanceOverlayText {
 		}
 		add(row, mask, RENDER_FPS, "RFPS", v.renderFps, 0, "");
 		if ((mask & SPEED) != 0) {
-			row.add("SPD " + (v.autoSpeed ? "AUTO " : "")
-					+ String.format(Locale.ROOT, "%.2fx", v.speedPercent / 100d));
+			row.add(Double.isFinite(v.speedPercent)
+					? "SPD " + (v.autoSpeed ? "AUTO " : "")
+							+ String.format(Locale.ROOT, "%.2fx", v.speedPercent / 100d)
+					: "SPD —");
 		}
 		finish(groups, row);
 		add(row, mask, FRAME_INTERVAL, "FI", v.interval, 1, " ms");

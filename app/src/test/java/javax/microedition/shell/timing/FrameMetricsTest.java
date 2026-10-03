@@ -15,6 +15,11 @@
 package javax.microedition.shell.timing;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -88,18 +93,34 @@ public class FrameMetricsTest {
 	}
 
 	@Test
-	public void activationAbandonsOldPendingFramesWithoutResettingCounters() {
+	public void activationAbandonsOldPendingFramesWithoutResettingCounters() throws Exception {
 		FrameMetrics metrics = new FrameMetrics();
 		metrics.recordRender(metrics.recordGameFrame());
 		long abandoned = metrics.recordGameFrame();
 		metrics.recordGameFrame();
-		metrics.abandonPendingFrames();
-		FrameMetricsSnapshot atActivation = metrics.snapshot();
-		assertEquals(3L, atActivation.gameFrames());
-		assertEquals(1L, atActivation.renderFrames());
-		assertEquals(0L, atActivation.coalescedFrames());
-		// A callback already in flight cannot revive the abandoned buffer after activation.
-		metrics.recordRender(abandoned);
+
+		CountDownLatch staleCallbackReady = new CountDownLatch(1);
+		Thread staleRenderer = new Thread(() -> {
+			staleCallbackReady.countDown();
+			metrics.recordRender(abandoned);
+		});
+		FrameMetricsSnapshot atActivation;
+		synchronized (metrics) {
+			staleRenderer.start();
+			assertTrue(staleCallbackReady.await(1, TimeUnit.SECONDS));
+			// The stale callback is now waiting on the same serialization boundary.
+			metrics.abandonPendingFrames();
+			atActivation = metrics.snapshot();
+			assertEquals(3L, atActivation.gameFrames());
+			assertEquals(1L, atActivation.renderFrames());
+			assertEquals(0L, atActivation.coalescedFrames());
+		}
+		staleRenderer.join(1000L);
+		assertFalse(staleRenderer.isAlive());
+		FrameMetricsSnapshot afterStaleCallback = metrics.snapshot();
+		assertEquals(atActivation.renderFrames(), afterStaleCallback.renderFrames());
+		assertEquals(atActivation.coalescedFrames(), afterStaleCallback.coalescedFrames());
+
 		metrics.recordRender(metrics.recordGameFrame());
 		assertEquals(2L, metrics.snapshot().renderFrames());
 		assertEquals(0L, metrics.snapshot().coalescedFrames());

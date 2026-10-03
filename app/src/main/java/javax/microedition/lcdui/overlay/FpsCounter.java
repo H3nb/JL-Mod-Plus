@@ -21,6 +21,7 @@ import static io.github.h3nb.jlmodplus.config.PerformanceOverlayOptions.*;
 import android.graphics.RectF;
 import android.view.View;
 import androidx.core.content.ContextCompat;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.microedition.lcdui.Canvas;
@@ -63,8 +64,12 @@ public class FpsCounter extends TimerTask implements Layer {
 		this.position = sanitizePosition(position);
 		contentColor = ContextCompat.getColor(view.getContext(), R.color.fps_overlay_content);
 		resources = new PerformanceResources(view.getContext(), this.mask);
-		timer = new Timer("PerformanceOverlay", true);
-		if (this.mask != 0) timer.schedule(this, 0, 500);
+		if (this.mask == 0) {
+			timer = null;
+		} else {
+			timer = new Timer("PerformanceOverlay", true);
+			timer.schedule(this, 0, 500);
+		}
 	}
 
 	@Override
@@ -149,7 +154,8 @@ public class FpsCounter extends TimerTask implements Layer {
 		float density = view.getResources().getDisplayMetrics().density;
 		float gap = 2f * density;
 		float lineHeight = g.getDiagnosticTextHeight() + gap;
-		if (laidOutGroups != current || layoutWidth != bounds.width() || layoutHeight != bounds.height()) {
+		if (!Arrays.deepEquals(laidOutGroups, current)
+				|| layoutWidth != bounds.width() || layoutHeight != bounds.height()) {
 			laidOutGroups = current;
 			layoutWidth = bounds.width();
 			layoutHeight = bounds.height();
@@ -189,7 +195,7 @@ public class FpsCounter extends TimerTask implements Layer {
 
 	public synchronized void stop() {
 		stopped = true;
-		timer.cancel();
+		if (timer != null) timer.cancel();
 		resources.close();
 	}
 }

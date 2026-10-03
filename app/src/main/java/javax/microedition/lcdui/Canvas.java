@@ -99,6 +99,7 @@ import io.github.h3nb.jlmodplus.config.BackgroundMode;
 import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
 import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
+import io.github.h3nb.jlmodplus.config.PerformanceOverlayOptions;
 import io.github.h3nb.jlmodplus.input.GuestKeyLedgerAdapter;
 import io.github.h3nb.jlmodplus.input.ControllerPointerConsumer;
 import javax.microedition.lcdui.graphics.AmbientCanvasRenderer;
@@ -183,6 +184,7 @@ public abstract class Canvas extends Displayable {
 	private long publishedMetricsSequence;
 	private FrameMetrics publishedMetricsOwner;
 	private volatile FrameMetrics frameMetrics;
+	private boolean renderMetricsEnabled;
 	private volatile PerformanceDiagnostics performanceDiagnostics;
 	private long publishedFrameNanos;
 	private volatile long performanceGeneration;
@@ -706,7 +708,7 @@ public abstract class Canvas extends Displayable {
 	private void setEffectiveVisibilityLocked(boolean shown) {
 		synchronized (bufferLock) {
 			FrameMetrics metrics = frameMetrics;
-			if (shown && metrics != null) metrics.abandonPendingFrames();
+			if (shown && renderMetricsEnabled && metrics != null) metrics.abandonPendingFrames();
 			PerformanceDiagnostics diagnostics = performanceDiagnostics;
 			if (diagnostics != null) diagnostics.setActive(shown);
 			performanceGeneration++;
@@ -1242,8 +1244,14 @@ public abstract class Canvas extends Displayable {
 			diagnostics.recordPublication(sequence, publishedFrameNanos);
 		}
 		FrameMetrics metrics = frameMetrics;
-		publishedMetricsOwner = metrics;
-		publishedMetricsSequence = metrics == null ? 0L : metrics.recordGameFrame();
+		long metricsSequence = metrics == null ? 0L : metrics.recordGameFrame();
+		if (renderMetricsEnabled && metrics != null) {
+			publishedMetricsOwner = metrics;
+			publishedMetricsSequence = metricsSequence;
+		} else {
+			publishedMetricsOwner = null;
+			publishedMetricsSequence = 0L;
+		}
 	}
 
 	@SuppressLint("NewApi")
@@ -1895,6 +1903,7 @@ public abstract class Canvas extends Displayable {
 			}
 			synchronized (bufferLock) {
 				frameMetrics = null;
+				renderMetricsEnabled = false;
 				publishedMetricsOwner = null;
 				publishedMetricsSequence = 0L;
 				publishedFrameSequence = 0L;
@@ -2148,6 +2157,11 @@ public abstract class Canvas extends Displayable {
 				return;
 			}
 			refreshDisplayMaximumFps(mView);
+			int mask = settings.showFps
+					? PerformanceOverlayOptions.sanitize(settings.performanceOverlayMetrics) : 0;
+			synchronized (bufferLock) {
+				renderMetricsEnabled = PerformanceOverlayOptions.requiresRendererMetrics(mask);
+			}
 			surfaceAttached = true;
 			presentationMailbox.begin();
 			if (renderer != null) {
@@ -2159,8 +2173,7 @@ public abstract class Canvas extends Displayable {
 				frameMetrics = autoSpeedController == null
 						? new FrameMetrics() : autoSpeedController.frameMetrics();
 			}
-			if (settings.showFps) {
-				int mask = settings.performanceOverlayMetrics;
+			if (settings.showFps && mask != 0) {
 				if ((mask & PerformanceDiagnostics.TIMING_MASK) != 0) {
 					performanceDiagnostics = new PerformanceDiagnostics(mask);
 				}
