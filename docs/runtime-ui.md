@@ -6,6 +6,10 @@ Renderer, input, and MIDP lifecycle behavior remain in the runtime implementatio
 
 ## Contract references
 
+Performance diagnostics remain a passive native overlay. Metric definitions,
+configuration, sampling, and lifecycle rules are documented in
+[Performance overlay](performance-overlay.md).
+
 For compatibility work, consult [J2ME_Docs](https://github.com/shinovon/J2ME_Docs)
 under `docs/midp-2.0/`, especially these pages:
 
