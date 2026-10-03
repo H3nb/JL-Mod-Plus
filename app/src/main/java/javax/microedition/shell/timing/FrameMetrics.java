@@ -17,12 +17,13 @@ package javax.microedition.shell.timing;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Thread-safe frame ownership metrics for one Canvas lifecycle.
+ * Thread-safe frame ownership metrics for a timing source, retained across surface lifecycles.
  *
  * <p>A game frame is counted only after the complete guest buffer has been copied into the
  * presentation buffer. A render frame is counted only when a renderer consumes a sequence newer
  * than the last sequence it consumed. This keeps host redraw callbacks and repeated display of a
- * static buffer out of the Game FPS value.</p>
+ * static buffer out of the Game FPS value. Renderers must consume the sequence returned by this
+ * owner, not a presentation mailbox sequence that can restart on surface replacement.</p>
  */
 public final class FrameMetrics {
 	private final AtomicLong nextSequence = new AtomicLong();
@@ -48,8 +49,11 @@ public final class FrameMetrics {
 		return sequence;
 	}
 
-	/** Records consumption of the newest complete frame. Repeated consumption is ignored. */
-	public void recordRender(long sequence) {
+	/**
+	 * Records consumption of the newest complete frame. Repeated consumption is ignored. Serialized
+	 * with abandonment so an old in-flight render cannot increment counters after activation.
+	 */
+	public synchronized void recordRender(long sequence) {
 		if (sequence <= 0L) {
 			return;
 		}
@@ -65,6 +69,21 @@ public final class FrameMetrics {
 			addSaturated(coalescedFrames, skipped);
 		}
 		incrementSaturated(renderFrames);
+	}
+
+	/**
+	 * Abandons frames pending at a source activation boundary without changing lifetime counters.
+	 * A later renderer callback for an abandoned buffer is stale; the first new publication must
+	 * not report pre-pause frames as coalescing in its new visible window. Publication owners call
+	 * this before reopening their source, under the same lock that protects complete publication.
+	 */
+	public synchronized void abandonPendingFrames() {
+		long boundary = nextSequence.get();
+		long previous;
+		do {
+			previous = lastRenderedSequence.get();
+			if (previous >= boundary) return;
+		} while (!lastRenderedSequence.compareAndSet(previous, boundary));
 	}
 
 	/** Returns lifetime totals without interfering with another diagnostics consumer. */

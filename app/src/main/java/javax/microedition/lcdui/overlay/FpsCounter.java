@@ -1,6 +1,6 @@
 /*
  * Copyright 2019 Yury Kharchenko
- * Modified in 2026 for guest/render frame telemetry.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,116 +16,182 @@
  */
 package javax.microedition.lcdui.overlay;
 
+import static io.github.h3nb.jlmodplus.config.PerformanceOverlayOptions.*;
+
+import android.graphics.RectF;
 import android.view.View;
-
 import androidx.core.content.ContextCompat;
-
 import java.util.Timer;
 import java.util.TimerTask;
-
+import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
 import javax.microedition.shell.timing.AutoSpeedController;
-import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.shell.timing.FrameMetricsSnapshot;
-import javax.microedition.util.ContextHolder;
-
+import javax.microedition.shell.timing.PerformanceDiagnostics;
 import io.github.h3nb.jlmodplus.R;
 
+/** Host diagnostics: sampling/formatting off the UI thread, drawing without guest input ownership. */
 public class FpsCounter extends TimerTask implements Layer {
-
 	private final View view;
-	private final String frameRateFormat;
-	private final int pillBackgroundColor;
-	private final int pillContentColor;
-	private volatile String previousFrameRate;
+	private final Canvas owner;
 	private final FrameMetrics metrics;
 	private final AutoSpeedController speedController;
+	private final PerformanceResources resources;
+	private final int mask, position, contentColor;
 	private final Timer timer;
+	private volatile String[][] groups = new String[0][];
+	private boolean stopped;
 	private FrameMetricsSnapshot previousSnapshot;
-	private long previousSampleNanos;
+	private long previousSampleNanos, previousGeneration = Long.MIN_VALUE;
+	private double fps = Double.NaN, renderFps = Double.NaN, coalesced = Double.NaN;
+	// UI-thread layout cache; reflow only when text or available bounds change.
+	private String[][] laidOutGroups;
+	private String[] rows = new String[0];
+	private float layoutWidth, layoutHeight, columnWidth;
+	private int columnRows;
+	private final RectF drawingBounds = new RectF();
+	private final int[] viewLocation = new int[2], rootLocation = new int[2];
 
-	public FpsCounter(
-			View view, FrameMetrics metrics, AutoSpeedController speedController) {
+	public FpsCounter(View view, FrameMetrics metrics, AutoSpeedController speedController,
+			Canvas owner, int mask, int position) {
 		this.view = view;
 		this.metrics = metrics;
 		this.speedController = speedController;
-		frameRateFormat = ContextHolder.getAppContext().getString(R.string.fps_overlay_value);
-		pillBackgroundColor = ContextCompat.getColor(
-				ContextHolder.getAppContext(), R.color.fps_overlay_surface);
-		pillContentColor = ContextCompat.getColor(
-				ContextHolder.getAppContext(), R.color.fps_overlay_content);
-		previousSnapshot = metrics.snapshot();
-		previousSampleNanos = System.nanoTime();
-		previousFrameRate = format(0L, 0L, 0L);
-		timer = new Timer("FpsCounter", true);
-		// Avoid catch-up bursts after a cached process resumes on Android 16.
-		timer.schedule(this, 0, 1000);
+		this.owner = owner;
+		this.mask = sanitize(mask);
+		this.position = sanitizePosition(position);
+		contentColor = ContextCompat.getColor(view.getContext(), R.color.fps_overlay_content);
+		resources = new PerformanceResources(view.getContext(), this.mask);
+		timer = new Timer("PerformanceOverlay", true);
+		if (this.mask != 0) timer.schedule(this, 0, 500);
 	}
 
-	public void run() {
-		long nowNanos = System.nanoTime();
+	@Override
+	public synchronized void run() {
+		if (stopped) return;
+		try {
+			sample();
+		} catch (RuntimeException ignored) {
+			// Diagnostics must never terminate the guest or the host sampler.
+		}
+	}
+
+	private void sample() {
+		long now = System.nanoTime();
+		long generation = owner.getPerformanceGeneration();
+		boolean active = owner.getPerformanceSourceActive();
 		FrameMetricsSnapshot snapshot = metrics.snapshot();
-		long elapsedNanos = nowNanos - previousSampleNanos;
-		long gameFrames = delta(snapshot.gameFrames(), previousSnapshot.gameFrames());
-		long renderFrames = delta(snapshot.renderFrames(), previousSnapshot.renderFrames());
-		long coalescedFrames = delta(
-				snapshot.coalescedFrames(), previousSnapshot.coalescedFrames());
-		previousSnapshot = snapshot;
-		previousSampleNanos = nowNanos;
-		previousFrameRate = format(
-				ratePerSecond(gameFrames, elapsedNanos),
-				ratePerSecond(renderFrames, elapsedNanos),
-				dropPercent(gameFrames, coalescedFrames));
+		if (!active || generation != previousGeneration || previousSnapshot == null) {
+			previousSnapshot = snapshot;
+			previousSampleNanos = now;
+			previousGeneration = generation;
+			fps = renderFps = coalesced = Double.NaN;
+			resources.resetCpuSample();
+		} else {
+			long elapsed = now - previousSampleNanos;
+			if (elapsed >= 1_000_000_000L) {
+				fps = rate(snapshot.gameFrames(), previousSnapshot.gameFrames(), elapsed);
+				renderFps = rate(snapshot.renderFrames(), previousSnapshot.renderFrames(), elapsed);
+				coalesced = rate(snapshot.coalescedFrames(), previousSnapshot.coalescedFrames(), elapsed);
+				previousSnapshot = snapshot;
+				previousSampleNanos = now;
+			}
+		}
+		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
+		v.fps = fps;
+		v.renderFps = renderFps;
+		v.coalesced = coalesced;
+		v.cap = owner.getPerformanceFpsCap();
+		if (speedController != null) {
+			v.speedPercent = speedController.speedPercent();
+			v.autoSpeed = speedController.isAutoEnabled();
+		}
+		v.renderer = owner.getPerformanceRenderer();
+		v.displayHz = owner.getPerformanceDisplayHz();
+		PerformanceDiagnostics diagnostics = owner.getPerformanceDiagnostics();
+		if (active && diagnostics != null) {
+			PerformanceDiagnostics.Snapshot timing = diagnostics.snapshot(now);
+			v.interval = timing.intervalMeanMs;
+			v.p95 = timing.intervalP95Ms;
+			v.maximum = timing.intervalMaxMs;
+			v.paint = timing.paintMeanMs;
+			v.copy = timing.copyMeanMs;
+			v.submit = timing.submitMeanMs;
+			v.inputQueue = timing.inputQueueMeanMs;
+			v.frameQueue = timing.frameQueueMeanMs;
+		}
+		PerformanceResources.Snapshot system = resources.sample(now);
+		v.cpu = active ? system.getCpuPercent() : Double.NaN;
+		v.ram = system.getRamMiB();
+		v.javaHeap = system.getJavaHeapMiB();
+		v.nativeHeap = system.getNativeHeapMiB();
+		v.cpuTemp = system.getCpuTempC();
+		v.gpuTemp = system.getGpuTempC();
+		v.batteryTemp = system.getBatteryTempC();
+		v.thermal = system.getThermalStatus();
+		groups = PerformanceOverlayText.format(mask, v);
 		view.postInvalidate();
 	}
 
-	private String format(long gameFrames, long renderFrames, long dropPercent) {
-		String speed = "N/A";
-		if (speedController != null) {
-			speed = EmulationSpeed.formatRuntimeMultiplier(speedController.speedPercent());
-			if (speedController.isAutoEnabled()) {
-				speed = "AUTO " + speed;
+	private static double rate(long current, long previous, long elapsedNanos) {
+		return elapsedNanos > 0 && current >= previous
+				? (current - previous) * 1_000_000_000d / elapsedNanos : Double.NaN;
+	}
+
+	@Override
+	public void paint(CanvasWrapper g) {
+		String[][] current = groups;
+		if (current.length == 0) return;
+		RectF bounds = drawingBounds;
+		DiagnosticOverlayLayout.bounds(view, bounds, viewLocation, rootLocation);
+		if (bounds.width() <= 0 || bounds.height() <= 0) return;
+		float density = view.getResources().getDisplayMetrics().density;
+		float gap = 2f * density;
+		float lineHeight = g.getDiagnosticTextHeight() + gap;
+		if (laidOutGroups != current || layoutWidth != bounds.width() || layoutHeight != bounds.height()) {
+			laidOutGroups = current;
+			layoutWidth = bounds.width();
+			layoutHeight = bounds.height();
+			columnRows = Math.max(1, (int) ((bounds.height() + gap) / lineHeight));
+			int columns = 1;
+			columnWidth = bounds.width();
+			rows = PerformanceOverlayText.wrap(current, columnWidth, g::measureDiagnosticText);
+			// Short wide windows can use columns without shrinking text or intercepting input.
+			while (rows.length > columnRows * columns && columns < 4
+					&& bounds.width() / (columns + 1) >= g.measureDiagnosticText("NATIVE 000 MiB")) {
+				columns++;
+				columnWidth = (bounds.width() - 8f * density * (columns - 1)) / columns;
+				rows = PerformanceOverlayText.wrap(current, columnWidth, g::measureDiagnosticText);
 			}
 		}
-		return String.format(
-				java.util.Locale.ROOT,
-				frameRateFormat,
-				gameFrames,
-				renderFrames,
-				dropPercent,
-				speed);
-	}
-
-	private static long ratePerSecond(long count, long elapsedNanos) {
-		if (count <= 0L || elapsedNanos <= 0L) {
-			return 0L;
+		int columns = Math.max(1, (rows.length + columnRows - 1) / columnRows);
+		// When content cannot fit, retain the selected corner and clip to the safe host viewport.
+		columns = Math.min(columns, Math.max(1, (int) ((bounds.width() + 8f * density)
+				/ (columnWidth + 8f * density))));
+		float blockWidth = 0f;
+		for (String row : rows) blockWidth = Math.max(blockWidth, g.measureDiagnosticText(row));
+		blockWidth += (columns - 1) * (columnWidth + 8f * density);
+		float blockHeight = Math.min(rows.length, columnRows) * lineHeight - gap;
+		boolean right = position == TOP_RIGHT || position == BOTTOM_RIGHT;
+		boolean bottom = position == BOTTOM_LEFT || position == BOTTOM_RIGHT;
+		float left = right ? bounds.right - blockWidth : bounds.left;
+		float top = bottom ? bounds.bottom - blockHeight : bounds.top;
+		int save = g.clipDiagnostics(bounds);
+		try {
+			for (int i = 0; i < Math.min(rows.length, columnRows * columns); i++) {
+				g.drawDiagnosticText(rows[i], contentColor,
+						left + (i / columnRows) * (columnWidth + 8f * density),
+						top + (i % columnRows) * lineHeight);
+			}
+		} finally {
+			g.restoreDiagnostics(save);
 		}
-		return Math.round(count * 1_000_000_000d / elapsedNanos);
 	}
 
-	private static long dropPercent(long gameFrames, long coalescedFrames) {
-		if (gameFrames <= 0L || coalescedFrames <= 0L) {
-			return 0L;
-		}
-		return Math.min(100L, Math.round(coalescedFrames * 100d / gameFrames));
-	}
-
-	private static long delta(long current, long previous) {
-		return current >= previous ? current - previous : current;
-	}
-
-	public void paint(CanvasWrapper g) {
-		g.drawPillBackgroundedText(
-				previousFrameRate,
-				pillBackgroundColor,
-				pillContentColor,
-				DiagnosticOverlayLayout.PILL_SCALE,
-				DiagnosticOverlayLayout.left(view),
-				DiagnosticOverlayLayout.rowTop(view, g, 0));
-	}
-
-	public void stop() {
+	public synchronized void stop() {
+		stopped = true;
 		timer.cancel();
+		resources.close();
 	}
 }

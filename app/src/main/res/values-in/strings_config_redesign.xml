@@ -78,7 +78,6 @@
     <string name="reconversion_error">MIDlet ini tidak dapat dikonversi secara otomatis.
 
 %1$s</string>
-    <string name="fps_overlay_value">FPS %1$d | RENDER %2$d | DROP %3$d%% | SPD %4$s</string>
     <string name="config_help_generic_toggle">Mengaktifkan atau menonaktifkan fitur ini untuk MIDlet ini.</string>
     <string name="config_help_generic_color">Mengatur warna bagian tampilan ini.</string>
     <string name="config_help_action_generic">Membuka pengaturan ini.</string>

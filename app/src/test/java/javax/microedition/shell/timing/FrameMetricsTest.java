@@ -66,6 +66,51 @@ public class FrameMetricsTest {
 	}
 
 	@Test
+	public void surfaceMailboxRestartKeepsMetricsSequenceOwnership() {
+		FrameMetrics metrics = new FrameMetrics();
+		PresentationMailbox mailbox = new PresentationMailbox();
+		mailbox.begin();
+		for (int i = 1; i <= 3; i++) {
+			assertEquals(i, mailbox.publish());
+			metrics.recordRender(metrics.recordGameFrame());
+		}
+		mailbox.close();
+		mailbox.begin();
+		assertEquals(1L, mailbox.publish());
+		long replacementMetricsSequence = metrics.recordGameFrame();
+		assertEquals(4L, replacementMetricsSequence);
+		metrics.recordRender(replacementMetricsSequence);
+		metrics.recordRender(replacementMetricsSequence);
+		FrameMetricsSnapshot snapshot = metrics.snapshot();
+		assertEquals(4L, snapshot.gameFrames());
+		assertEquals(4L, snapshot.renderFrames());
+		assertEquals(0L, snapshot.coalescedFrames());
+	}
+
+	@Test
+	public void activationAbandonsOldPendingFramesWithoutResettingCounters() {
+		FrameMetrics metrics = new FrameMetrics();
+		metrics.recordRender(metrics.recordGameFrame());
+		long abandoned = metrics.recordGameFrame();
+		metrics.recordGameFrame();
+		metrics.abandonPendingFrames();
+		FrameMetricsSnapshot atActivation = metrics.snapshot();
+		assertEquals(3L, atActivation.gameFrames());
+		assertEquals(1L, atActivation.renderFrames());
+		assertEquals(0L, atActivation.coalescedFrames());
+		// A callback already in flight cannot revive the abandoned buffer after activation.
+		metrics.recordRender(abandoned);
+		metrics.recordRender(metrics.recordGameFrame());
+		assertEquals(2L, metrics.snapshot().renderFrames());
+		assertEquals(0L, metrics.snapshot().coalescedFrames());
+		// Genuine latest-buffer replacement within the new visible window still contributes.
+		metrics.recordGameFrame();
+		metrics.recordRender(metrics.recordGameFrame());
+		assertEquals(3L, metrics.snapshot().renderFrames());
+		assertEquals(1L, metrics.snapshot().coalescedFrames());
+	}
+
+	@Test
 	public void cumulativeSnapshotDoesNotConsumeAnotherObserversData() {
 		FrameMetrics metrics = new FrameMetrics();
 		metrics.recordGameFrame();

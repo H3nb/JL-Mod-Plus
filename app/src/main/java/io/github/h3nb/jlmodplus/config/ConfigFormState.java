@@ -74,6 +74,8 @@ public final class ConfigFormState {
 	public final boolean parallelRedrawScreen;
 	public final boolean forceFullscreen;
 	public final boolean showFps;
+	public final int performanceOverlayMetrics;
+	public final int performanceOverlayPosition;
 	public final int timingMode;
 	public final boolean fontApplyDimensions;
 	public final boolean fontAA;
@@ -119,6 +121,8 @@ public final class ConfigFormState {
 		parallelRedrawScreen = builder.parallelRedrawScreen;
 		forceFullscreen = builder.forceFullscreen;
 		showFps = builder.showFps;
+		performanceOverlayMetrics = PerformanceOverlayOptions.sanitize(builder.performanceOverlayMetrics);
+		performanceOverlayPosition = PerformanceOverlayOptions.sanitizePosition(builder.performanceOverlayPosition);
 		timingMode = TimingMode.sanitize(builder.timingMode);
 		fontApplyDimensions = builder.fontApplyDimensions;
 		fontAA = builder.fontAA;
@@ -160,6 +164,8 @@ public final class ConfigFormState {
 				.shader(params.shader)
 				.controller(params.controller == null ? null : params.controller.deepCopy())
 				.showFps(params.showFps)
+				.performanceOverlayMetrics(params.performanceOverlayMetrics)
+				.performanceOverlayPosition(params.performanceOverlayPosition)
 				.timingMode(TimingMode.sanitize(params.timingMode))
 				.fpsLimit(optionalInt(params.fpsLimit))
 				.fontSizeSmall(Integer.toString(params.fontSizeSmall))
@@ -209,6 +215,8 @@ public final class ConfigFormState {
 		params.parallelRedrawScreen = parallelRedrawScreen;
 		params.forceFullscreen = forceFullscreen;
 		params.showFps = showFps;
+		params.performanceOverlayMetrics = performanceOverlayMetrics;
+		params.performanceOverlayPosition = performanceOverlayPosition;
 		params.timingMode = TimingMode.sanitize(timingMode);
 		params.fpsLimit = parseInt(fpsLimit, 0);
 
@@ -320,6 +328,8 @@ public final class ConfigFormState {
 		private boolean parallelRedrawScreen;
 		private boolean forceFullscreen;
 		private boolean showFps;
+		private int performanceOverlayMetrics = PerformanceOverlayOptions.STANDARD;
+		private int performanceOverlayPosition = PerformanceOverlayOptions.TOP_LEFT;
 		private int timingMode = TimingMode.FULL_GUEST_TIME;
 		private boolean fontApplyDimensions;
 		private boolean fontAA;
@@ -368,6 +378,8 @@ public final class ConfigFormState {
 			parallelRedrawScreen = source.parallelRedrawScreen;
 			forceFullscreen = source.forceFullscreen;
 			showFps = source.showFps;
+			performanceOverlayMetrics = source.performanceOverlayMetrics;
+			performanceOverlayPosition = source.performanceOverlayPosition;
 			timingMode = source.timingMode;
 			fontApplyDimensions = source.fontApplyDimensions;
 			fontAA = source.fontAA;
@@ -416,6 +428,8 @@ public final class ConfigFormState {
 		public Builder parallelRedrawScreen(boolean value) { parallelRedrawScreen = value; return this; }
 		public Builder forceFullscreen(boolean value) { forceFullscreen = value; return this; }
 		public Builder showFps(boolean value) { showFps = value; return this; }
+		public Builder performanceOverlayMetrics(int value) { performanceOverlayMetrics = value; return this; }
+		public Builder performanceOverlayPosition(int value) { performanceOverlayPosition = value; return this; }
 		public Builder timingMode(int value) { timingMode = TimingMode.sanitize(value); return this; }
 		public Builder fontApplyDimensions(boolean value) { fontApplyDimensions = value; return this; }
 		public Builder fontAA(boolean value) { fontAA = value; return this; }

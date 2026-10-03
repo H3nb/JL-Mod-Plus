@@ -14,78 +14,43 @@
 
 package javax.microedition.lcdui.overlay;
 
+import android.graphics.RectF;
 import android.view.View;
 
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import javax.microedition.lcdui.graphics.CanvasWrapper;
-
-/**
- * Shared host layout for diagnostic pills drawn above the guest surface.
- *
- * <p>Coordinates returned by this class are pixels, matching {@link CanvasWrapper}. The row
- * position is calculated from the actual pill font metrics so FPS and emulation-speed diagnostics
- * do not overlap on devices with different density or font scale.</p>
- */
+/** Safe host viewport expressed in the translated OverlayView canvas coordinates. */
 final class DiagnosticOverlayLayout {
-	static final float PILL_SCALE = 0.68f;
-
-	private static final float MARGIN_DP = 10f;
-	private static final float ROW_GAP_DP = 6f;
-
 	private DiagnosticOverlayLayout() {
 	}
-
-	static float left(View view) {
-		return margin(view) + safeLeftInset(view);
-	}
-
-	static float rowTop(View view, CanvasWrapper canvas, int row) {
-		int safeRow = Math.max(0, row);
-		float density = density(view);
-		return margin(view) + safeTopInset(view)
-				+ safeRow * (canvas.getPillHeight(PILL_SCALE) + ROW_GAP_DP * density);
-	}
-
-	private static float margin(View view) {
-		return MARGIN_DP * density(view);
-	}
-
-	private static float density(View view) {
-		float density = view.getResources().getDisplayMetrics().density;
-		return density > 0f ? density : 1f;
-	}
-
-	private static int safeLeftInset(View view) {
-		return Math.max(0, safeInsets(view).left - contentOffsetX(view));
-	}
-
-	private static int safeTopInset(View view) {
-		return Math.max(0, safeInsets(view).top - contentOffsetY(view));
-	}
-
-	private static int contentOffsetX(View view) {
-		return view instanceof OverlayView ? ((OverlayView) view).getContentOffsetX() : 0;
-	}
-
-	private static int contentOffsetY(View view) {
-		return view instanceof OverlayView ? ((OverlayView) view).getContentOffsetY() : 0;
-	}
-
-	private static Insets safeInsets(View view) {
+	static void bounds(View view, RectF bounds, int[] location, int[] rootLocation) {
 		WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(view);
-		if (insets == null) {
-			return Insets.of(0, 0, 0, 0);
-		}
-		Insets cutout = insets.getInsetsIgnoringVisibility(
-				WindowInsetsCompat.Type.displayCutout());
-		Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+		Insets bars = insets == null ? Insets.NONE : insets.getInsets(WindowInsetsCompat.Type.systemBars());
+		Insets cutout = insets == null ? Insets.NONE
+				: insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.displayCutout());
+		Insets safe = Insets.max(bars, cutout);
+		View root = view.getRootView();
+		view.getLocationInWindow(location);
+		root.getLocationInWindow(rootLocation);
+		Insets overlap = overlap(safe, rootLocation[0], rootLocation[1], root.getWidth(), root.getHeight(),
+				location[0], location[1], view.getWidth(), view.getHeight());
+		float margin = 8f * view.getResources().getDisplayMetrics().density;
+		int x = view instanceof OverlayView ? ((OverlayView) view).getContentOffsetX() : 0;
+		int y = view instanceof OverlayView ? ((OverlayView) view).getContentOffsetY() : 0;
+		bounds.set(overlap.left + margin - x, overlap.top + margin - y,
+				view.getWidth() - overlap.right - margin - x,
+				view.getHeight() - overlap.bottom - margin - y);
+	}
+
+	/** Avoid applying bars twice when the host already fitted or padded the child viewport. */
+	static Insets overlap(Insets safe, int rootX, int rootY, int rootWidth, int rootHeight,
+			int viewX, int viewY, int width, int height) {
 		return Insets.of(
-				Math.max(cutout.left, systemBars.left),
-				Math.max(cutout.top, systemBars.top),
-				Math.max(cutout.right, systemBars.right),
-				Math.max(cutout.bottom, systemBars.bottom));
+				Math.max(0, rootX + safe.left - viewX),
+				Math.max(0, rootY + safe.top - viewY),
+				Math.max(0, viewX + width - (rootX + rootWidth - safe.right)),
+				Math.max(0, viewY + height - (rootY + rootHeight - safe.bottom)));
 	}
 }
