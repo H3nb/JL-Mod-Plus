@@ -1,51 +1,21 @@
-//
-// Created by woesss on 30.06.2023.
-//
-
+// SPDX-License-Identifier: Apache-2.0
 #ifndef MMAPI_EAS_FILE_H
 #define MMAPI_EAS_FILE_H
+#include "eas_types.h"
+#include <cstdint>
+#include <string>
+#include <vector>
 
-#include <stdio.h>
-#include <jni.h>
-#include "libsonivox/eas_types.h"
-
-namespace mmapi {
-    namespace eas {
-        class BaseFile {
-
-            static int readAt(void *handle, void *buf, int offset, int size);
-            static int size(void *handle);
-
-        public:
-            virtual ~BaseFile();
-
-            EAS_FILE easFile{this, readAt, size};
-
-        protected:
-            virtual int readAt(void *buf, int offset, int size) = 0;
-            size_t length = 0;
-        };
-
-        class IOFile : public BaseFile {
-            FILE *file;
-
-        public:
-            IOFile(const char *path, const char *const mode);
-            ~IOFile() override;
-
-            int readAt(void *buf, int offset, int size) override;
-        }; // class FileImpl
-
-        class MemFile : public BaseFile {
-            char *data;
-
-        public:
-            MemFile(JNIEnv *env, jbyteArray array);
-            ~MemFile() override;
-
-            int readAt(void *buf, int offset, int size) override;
-        }; // class MemFileImpl
-    } // namespace eas
-} // namespace mmapi
-
-#endif //MMAPI_EAS_FILE_H
+namespace mmapi::eas {
+// Stable address: EAS stores this locator for all parser track cursors.
+class MemoryFile final {
+    std::vector<uint8_t> bytes;
+    static int readAt(void *handle, void *buffer, int offset, int length);
+    static int size(void *handle);
+public:
+    explicit MemoryFile(std::vector<uint8_t> data);
+    EAS_FILE locator{this, readAt, size};
+    static std::vector<uint8_t> readFile(const std::string &path, size_t limit);
+};
+}
+#endif

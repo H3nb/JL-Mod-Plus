@@ -34,10 +34,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
+import javax.microedition.media.protocol.DataSource;
+
 import io.github.h3nb.jlmodplus.mmapi.FileCacheDataSource;
 
 class InternalDataSource extends FileCacheDataSource {
 	private static final String TAG = InternalDataSource.class.getSimpleName();
+	private DataSource upstream;
+	private boolean disconnected;
 
 	InternalDataSource(InputStream stream, String type) throws IllegalArgumentException, IOException {
 		super(type);
@@ -46,26 +50,37 @@ class InternalDataSource extends FileCacheDataSource {
 		Log.d(TAG, "Starting media pipe: " + name);
 
 		try (RandomAccessFile raf = new RandomAccessFile(mediaFile, "rw")) {
-			int length = stream.available();
-			if (length >= 0) {
-				raf.setLength(length);
-				Log.d(TAG, "Changing file size to " + length + " bytes: " + name);
-			}
 			byte[] buf = new byte[4096];
 			int read;
 			while ((read = stream.read(buf)) != -1) {
-				raf.write(buf, 0, read);
+				if (read == 0) {
+					int single = stream.read();
+					if (single == -1) break;
+					raf.write(single);
+				} else raf.write(buf, 0, read);
 			}
-		} catch (IOException e) {
+		} catch (IOException | RuntimeException | Error e) {
 			Log.d(TAG, "Media pipe failure: " + e);
+			mediaFile.delete();
 			throw e;
 		}
 		Log.d(TAG, "Media pipe closed: " + name);
-
-		convert();
 	}
 
-	private void convert() {
+	InternalDataSource(InputStream stream, String type, DataSource upstream) throws IOException {
+		this(stream, type);
+		this.upstream = upstream;
+	}
+
+	@Override
+	public synchronized void disconnect() {
+		if (disconnected) return;
+		disconnected = true;
+		try { if (upstream != null) upstream.disconnect(); }
+		finally { super.disconnect(); }
+	}
+
+	void prepareSampled() {
 		try {
 			String path = mediaFile.getPath();
 			MediaInformationSession mediaInformationSession = FFprobeKit.getMediaInformation(path);

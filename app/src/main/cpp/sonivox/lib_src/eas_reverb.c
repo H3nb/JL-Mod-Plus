@@ -76,10 +76,8 @@ static EAS_RESULT ReverbInit(EAS_DATA_HANDLE pEASData, EAS_VOID_PTR *pInstData)
 {
     EAS_I32 i;
     EAS_U16 nOffset;
-    EAS_INT temp;
 
     S_REVERB_OBJECT *pReverbData;
-    S_REVERB_PRESET *pPreset;
 
     /* check Configuration Module for data allocation */
     if (pEASData->staticMemoryModel)
@@ -168,13 +166,7 @@ static EAS_RESULT ReverbInit(EAS_DATA_HANDLE pEASData, EAS_VOID_PTR *pInstData)
     // for debugging purposes, allow bypass
     pReverbData->m_bBypass = EAS_TRUE;  //EAS_FALSE;
 
-    pReverbData->m_nNextRoom = 1;
-
-    pReverbData->m_nCurrentRoom = pReverbData->m_nNextRoom + 1; // force update on first iteration
-
-    pReverbData->m_nWet = REVERB_DEFAULT_WET;
-
-    pReverbData->m_nDry = REVERB_DEFAULT_DRY;
+    pReverbData->m_nNextRoom = REVERB_DEFAULT_ROOM_NUMBER;
 
     // set base index into circular buffer
     pReverbData->m_nBaseIndex = 0;
@@ -207,43 +199,7 @@ static EAS_RESULT ReverbInit(EAS_DATA_HANDLE pEASData, EAS_VOID_PTR *pInstData)
         pReverbData->m_nDelayLine[i] = 0;
     }
 
-    ////////////////////////////////
-    ///code from the EAS DEMO Reverb
-    //now copy from the new preset into the reverb
-    pPreset = &pReverbData->m_sPreset.m_sPreset[pReverbData->m_nNextRoom];
-
-    pReverbData->m_nLpfFbk = pPreset->m_nLpfFbk;
-    pReverbData->m_nLpfFwd = pPreset->m_nLpfFwd;
-
-    pReverbData->m_nEarly = pPreset->m_nEarly;
-    pReverbData->m_nWet = pPreset->m_nWet;
-    pReverbData->m_nDry = pPreset->m_nDry;
-
-    pReverbData->m_nMaxExcursion = pPreset->m_nMaxExcursion;
-    //stored as time based, convert to sample based
-    temp = pPreset->m_nXfadeInterval;
-    /*lint -e{702} shift for performance */
-    temp = (temp * _OUTPUT_SAMPLE_RATE) >> 16;
-    pReverbData->m_nXfadeInterval = (EAS_U16) temp;
-    //gsReverbObject.m_nXfadeInterval = pPreset->m_nXfadeInterval;
-
-    pReverbData->m_sAp0.m_nApGain = pPreset->m_nAp0_ApGain;
-    //stored as time based, convert to absolute sample value
-    temp = pPreset->m_nAp0_ApOut;
-    /*lint -e{702} shift for performance */
-    temp = (temp * _OUTPUT_SAMPLE_RATE) >> 16;
-    pReverbData->m_sAp0.m_zApOut = (EAS_U16) (pReverbData->m_sAp0.m_zApIn + temp);
-    //gsReverbObject.m_sAp0.m_zApOut = pPreset->m_nAp0_ApOut;
-
-    pReverbData->m_sAp1.m_nApGain = pPreset->m_nAp1_ApGain;
-    //stored as time based, convert to absolute sample value
-    temp = pPreset->m_nAp1_ApOut;
-    /*lint -e{702} shift for performance */
-    temp = (temp * _OUTPUT_SAMPLE_RATE) >> 16;
-    pReverbData->m_sAp1.m_zApOut = (EAS_U16) (pReverbData->m_sAp1.m_zApIn + temp);
-    //gsReverbObject.m_sAp1.m_zApOut = pPreset->m_nAp1_ApOut;
-    ///code from the EAS DEMO Reverb
-    ////////////////////////////////
+    ReverbUpdateRoom(pReverbData);
 
     *pInstData = pReverbData;
 
@@ -877,6 +833,7 @@ static EAS_RESULT ReverbSetParam (EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32
                 value!=EAS_PARAM_REVERB_CHAMBER && value!=EAS_PARAM_REVERB_ROOM)
                 return EAS_ERROR_INVALID_PARAMETER;
             p->m_nNextRoom = (EAS_I16)value;
+            ReverbUpdateRoom(p); // change parameters immediately
             break;
         case EAS_PARAM_REVERB_WET:
             if(value>EAS_REVERB_WET_MAX || value<EAS_REVERB_WET_MIN)

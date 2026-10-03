@@ -14,10 +14,8 @@ This ledger is a provenance/notice inventory for the current project state, not 
 | MicroEmulator subset | `app/src/main/java/org/microemu/**` | MicroEmulator; source headers identify the project and Bartek Teodorczyk | Source offers LGPL-2.1-or-later **OR** Apache-2.0; JL-Mod Plus relies on the Apache-2.0 alternative for redistribution |
 | Android dx/dex | `dexlib/src/main/java/com/android/dx/**`, `dexlib/src/main/java/com/android/dex/**` | Android Open Source Project | Apache-2.0 |
 | Nokia M3G / JSR-184 native reference code | `app/src/main/cpp/m3g/src/**`; source headers identify Nokia Corporation | Nokia M3G reference implementation lineage carried by JL-Mod | EPL-1.0; source is available in the public JL-Mod Plus repository at the local path shown |
-| SoniVox EAS | `app/src/main/cpp/sonivox/**`; source headers identify Sonic Network Inc. | Android/SoniVox Embedded Audio Synthesis code lineage | Apache-2.0 |
+| SoniVox EAS | Vendored `app/src/main/cpp/sonivox/**`; local patches in `UPSTREAM.md`, upstream `NOTICE` and license retained | `https://github.com/EmbeddedSynth/sonivox`, v4.0.2 at `bb8668b91118318b0e6017aca59ce34e7bc93bf8`; Sonic Network Inc. / Android lineage | Apache-2.0 |
 | Mascot Capsule Micro3D implementation | `app/src/main/java/com/mascotcapsule/micro3d/**` and `app/src/main/cpp/micro3d/**`; current files identify JL-Mod/Yury Kharchenko/woesss authorship | JL-Mod implementation currently in this tree | Apache-2.0 where stated by the source files |
-| TinySoundFont | Git submodule `app/src/main/cpp/mmapi_tsf/TinySoundFont` pinned at `0d10306120037ce049a7699f9eaa5314d5b888f8` | `https://github.com/schellingb/TinySoundFont` | MIT |
-| TinyMidiLoader | `tml.h` in the same pinned TinySoundFont submodule | `https://github.com/schellingb/TinySoundFont` | Zlib |
 
 ## Material Symbols assets
 
@@ -67,7 +65,7 @@ SOFTWARE.
 
 ### `third_party/` audit
 
-The current repository tree does **not** contain a `third_party/` directory. The active external native checkout is the TinySoundFont submodule at `app/src/main/cpp/mmapi_tsf/TinySoundFont`, and `.gitmodules` points to its upstream repository directly. Historical notices for `third_party/minimp3`, `third_party/stb`, Mesa-derived code, or other absent paths must not be treated as current shipped provenance.
+The current repository tree does **not** contain a `third_party/` directory. Sonivox is a vendored, pinned snapshot rather than an external submodule; TinySoundFont and TinyMidiLoader were removed by the synthesis migration. Historical notices for `third_party/minimp3`, `third_party/stb`, Mesa-derived code, or other absent paths must not be treated as current shipped provenance.
 
 ## Runtime dependency families
 
@@ -105,6 +103,8 @@ The Gradle runtime graph is the authority for what resolves into the current APK
 
 ## Repository-only vendored material
 
+`app/src/main/cpp/sonivox/lib_src/minimp3.h` is retained from the pinned upstream snapshot under its CC0 notice. Its optional decoder is disabled in the Android build and is not shipped as active runtime code.
+
 `.agents/skills/**` contains selected Android Skills reference material used for development/agent guidance, not application runtime code. Its provenance is pinned in [.agents/UPSTREAM.md](.agents/UPSTREAM.md), with the corresponding Apache-2.0 terms in `.agents/LICENSE.txt`. It is intentionally excluded from the app-facing Licenses screen because it is not shipped as emulator runtime content.
 
 ## Audit corrections from the legacy in-app notice
@@ -116,7 +116,7 @@ The previous `licenses.html` mixed historical and current components. This audit
 - replaces the ambiguous `Symbian OS` label with the actual Nokia M3G / JSR-184 native source attribution and EPL-1.0;
 - removes the old FreeJ2ME M3D(O) attribution because current Mascot Capsule/Micro3D source in this tree carries JL-Mod/Yury Kharchenko/woesss provenance instead;
 - removes the old Aha-Soft launcher attribution because the JL-Mod Plus launcher assets were replaced in the project-foundation change and are not the inherited upstream launcher blobs;
-- adds TinyMidiLoader separately from TinySoundFont because its source header uses the Zlib license rather than TinySoundFont's MIT license;
+- the earlier inventory listed TinySoundFont and TinyMidiLoader separately; both have since been removed from source and APK packaging;
 - records JUnit 4.12 and Hamcrest Core 1.3 because the current PNGJ fork places them on `emulatorDebugRuntimeClasspath`, even though JL-Mod Plus does not declare them directly.
 
 ## License references

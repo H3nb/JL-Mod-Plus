@@ -41,11 +41,12 @@ import javax.microedition.media.tone.ToneSequence;
 
 import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.mmapi.FileCacheDataSource;
+import io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator;
 import io.github.h3nb.jlmodplus.mmapi.control.MIDIControlImpl;
 import io.github.h3nb.jlmodplus.mmapi.protocol.device.DeviceMetaData;
 
 class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener,
-		VolumeControl, PanControl, ToneControl {
+		VolumeControl, PanControl, ToneControl, RuntimeAudioCoordinator.Participant {
 	private static final String TAG = MicroPlayer.class.getSimpleName();
 
 	protected final HashMap<String, Control> controls = new HashMap<>();
@@ -66,6 +67,10 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	private boolean mute = false;
 	private int level = 100;
 	private int pan;
+	private final RuntimeAudioCoordinator audio = RuntimeAudioCoordinator.current();
+	private long playbackToken;
+	private boolean hostSuspended;
+	private boolean hostFocusRevoked;
 
 	public MicroPlayer(String locator) throws IOException {
 		if (!Manager.TONE_DEVICE_LOCATOR.equals(locator)) {
@@ -84,7 +89,23 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	private void init() {
+		try {
+			audio.register(this);
+		} catch (RuntimeException failure) {
+			player.release();
+			source.disconnect();
+			throw failure;
+		}
 		player.setOnCompletionListener(this);
+		player.setOnErrorListener((media, what, extra) -> {
+			synchronized (this) {
+				if (state != CLOSED) {
+					postEvent(PlayerListener.ERROR, "Sampled audio failure (" + what + ", " + extra + ")");
+					close();
+				}
+			}
+			return true;
+		});
 		controls.put(VolumeControl.class.getName(), this);
 		controls.put(PanControl.class.getName(), this);
 		controls.put(MetaDataControl.class.getName(), metadata);
@@ -123,28 +144,42 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	private synchronized void postEvent(String event, Object eventData) {
-		for (PlayerListener listener : listeners) {
-			// Callbacks should be async
-			callbackExecutor.execute(() -> listener.playerUpdate(this, event, eventData));
-		}
+		PlayerListener[] snapshot = listeners.toArray(new PlayerListener[0]);
+		if (callbackExecutor.isShutdown()) return;
+		callbackExecutor.execute(() -> {
+			for (PlayerListener listener : snapshot) {
+				synchronized (this) {
+					if (state == CLOSED && !PlayerListener.CLOSED.equals(event)
+							&& !PlayerListener.ERROR.equals(event)) return;
+				}
+				try {
+					listener.playerUpdate(this, event, eventData);
+				} catch (Throwable error) {
+					Log.e(TAG, "Player listener failed", error);
+				}
+			}
+		});
 	}
 
 	@Override
 	public synchronized void onCompletion(MediaPlayer mp) {
-		if (state == CLOSED) {
+		if (state != STARTED) {
 			return;
 		}
 		postEvent(PlayerListener.END_OF_MEDIA, getMediaTime());
 
 		if (loopCount == 1) {
 			state = PREFETCHED;
-			player.reset();
+			playbackToken = 0;
+			audio.cancelPlayback(this);
 		} else if (loopCount > 1) {
 			loopCount--;
 		}
 
 		if (state == STARTED && loopCount != -1) {
-			player.start();
+			player.seekTo(0);
+			if (audio.isPlaybackAllowed(this, playbackToken)) player.start();
+			else hostSuspended = true;
 			postEvent(PlayerListener.STARTED, getMediaTime());
 		}
 	}
@@ -183,11 +218,22 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	public synchronized void start() throws MediaException {
 		prefetch();
 
-		if (state == PREFETCHED) {
-			player.start();
+		if (state == PREFETCHED || (state == STARTED &&
+				(hostFocusRevoked || !audio.isPlaybackRequested(this, playbackToken)))) {
+			boolean notifyStarted = state != STARTED;
+			playbackToken = audio.requestPlayback(this);
+			try {
+				player.start();
+			} catch (RuntimeException failure) {
+				audio.cancelPlayback(this);
+				playbackToken = 0;
+				throw new MediaException("Unable to start sampled audio: " + failure.getMessage());
+			}
+			hostSuspended = false;
+			hostFocusRevoked = false;
 
 			state = STARTED;
-			postEvent(PlayerListener.STARTED, getMediaTime());
+			if (notifyStarted) postEvent(PlayerListener.STARTED, getMediaTime());
 		}
 	}
 
@@ -195,7 +241,11 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	public synchronized void stop() {
 		checkClosed();
 		if (state == STARTED) {
-			player.pause();
+			if (!hostSuspended) player.pause();
+			playbackToken = 0;
+			hostSuspended = false;
+			hostFocusRevoked = false;
+			audio.cancelPlayback(this);
 
 			state = PREFETCHED;
 			postEvent(PlayerListener.STOPPED, getMediaTime());
@@ -220,14 +270,63 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 
 	@Override
 	public synchronized void close() {
-		if (state != CLOSED) {
-			player.release();
-		}
-
-		source.disconnect();
-
+		if (state == CLOSED) return;
 		state = CLOSED;
-		postEvent(PlayerListener.CLOSED, null);
+		playbackToken = 0;
+		audio.unregister(this);
+		try {
+			player.release();
+		} finally {
+			try {
+				source.disconnect();
+			} finally {
+				try {
+					postEvent(PlayerListener.CLOSED, null);
+				} finally {
+					// Never join from a guest listener; terminate even if final scheduling fails.
+					callbackExecutor.shutdown();
+				}
+			}
+		}
+	}
+
+	@Override
+	public synchronized void onHostSuspend(long token) {
+		if (state != STARTED || playbackToken != token || hostSuspended
+				|| audio.isPlaybackAllowed(this, token)) return;
+		try {
+			player.pause();
+			hostSuspended = true;
+		} catch (RuntimeException failure) {
+			postEvent(PlayerListener.ERROR, "Unable to suspend sampled audio: " + failure.getMessage());
+			close();
+		}
+	}
+
+	@Override
+	public synchronized void onHostResume(long token) {
+		if (state != STARTED || playbackToken != token || !hostSuspended
+				|| !audio.isPlaybackAllowed(this, token)) return;
+		try {
+			player.start();
+			hostSuspended = false;
+		} catch (RuntimeException failure) {
+			postEvent(PlayerListener.ERROR, "Unable to resume sampled audio: " + failure.getMessage());
+			close();
+		}
+	}
+
+	@Override
+	public synchronized void onHostFocusRevoked(long token) {
+		if (state != STARTED || playbackToken != token) return;
+		onHostSuspend(token);
+		if (state == CLOSED) return;
+		hostFocusRevoked = true;
+	}
+
+	@Override
+	public void closeForRuntime() {
+		close();
 	}
 
 	private void checkClosed() {
@@ -245,7 +344,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public long setMediaTime(long now) throws MediaException {
+	public synchronized long setMediaTime(long now) throws MediaException {
 		checkRealized();
 		if (state < PREFETCHED) {
 			return 0;
@@ -259,7 +358,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public long getMediaTime() {
+	public synchronized long getMediaTime() {
 		checkClosed();
 		if (state < PREFETCHED) {
 			return TIME_UNKNOWN;
@@ -269,7 +368,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public long getDuration() {
+	public synchronized long getDuration() {
 		checkClosed();
 		if (state < PREFETCHED) {
 			return TIME_UNKNOWN;
@@ -279,7 +378,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public void setLoopCount(int count) {
+	public synchronized void setLoopCount(int count) {
 		checkClosed();
 		if (state == STARTED)
 			throw new IllegalStateException("player must not be in STARTED state while using setLoopCount()");
@@ -294,7 +393,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public int getState() {
+	public synchronized int getState() {
 		return state;
 	}
 
@@ -334,7 +433,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public void setMute(boolean mute) {
+	public synchronized void setMute(boolean mute) {
 		if (state == CLOSED) {
 			// Avoid IllegalStateException in MediaPlayer.setVolume()
 			return;
@@ -345,12 +444,12 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public boolean isMuted() {
+	public synchronized boolean isMuted() {
 		return mute;
 	}
 
 	@Override
-	public int setLevel(int level) {
+	public synchronized int setLevel(int level) {
 		if (state == CLOSED) {
 			// Avoid IllegalStateException in MediaPlayer.setVolume()
 			return this.level;
@@ -369,7 +468,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public int getLevel() {
+	public synchronized int getLevel() {
 		return level;
 	}
 
@@ -377,7 +476,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	// PanControl
 
 	@Override
-	public int setPan(int pan) {
+	public synchronized int setPan(int pan) {
 		if (pan < -100) {
 			pan = -100;
 		} else if (pan > 100) {
@@ -391,14 +490,14 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public int getPan() {
+	public synchronized int getPan() {
 		return pan;
 	}
 
 	// ToneControl
 
 	@Override
-	public void setSequence(byte[] sequence) {
+	public synchronized void setSequence(byte[] sequence) {
 		if (state >= PREFETCHED) {
 			throw new IllegalStateException();
 		} else if (sequence == null) {

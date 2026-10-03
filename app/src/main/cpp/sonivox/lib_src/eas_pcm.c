@@ -1479,3 +1479,4 @@ EAS_RESULT EAS_PESeek (S_EAS_DATA *pEASData, S_PCM_STATE *pState, EAS_I32 *pLoca
     }
     return EAS_SUCCESS;
 }
+

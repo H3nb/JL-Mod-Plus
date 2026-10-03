@@ -18,10 +18,11 @@
 package io.github.h3nb.jlmodplus.mmapi;
 
 import javax.microedition.media.Player;
+import javax.microedition.media.MediaException;
 import javax.microedition.media.protocol.DataSource;
 
 public interface Plugin {
-	Player createPlayer(DataSource dataSource);
+	Player createPlayer(DataSource dataSource) throws MediaException;
 
-	Player createPlayer(String locator);
+	Player createPlayer(String locator) throws MediaException;
 }

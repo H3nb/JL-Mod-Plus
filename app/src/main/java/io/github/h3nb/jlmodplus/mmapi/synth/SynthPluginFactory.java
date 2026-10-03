@@ -17,40 +17,15 @@
 
 package io.github.h3nb.jlmodplus.mmapi.synth;
 
-import android.util.Log;
-
 import java.util.List;
 
 import javax.microedition.shell.MicroLoader;
-import javax.microedition.util.ContextHolder;
 
-import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.mmapi.Plugin;
 import io.github.h3nb.jlmodplus.mmapi.synth.eas.LibEAS;
-import io.github.h3nb.jlmodplus.mmapi.synth.tsf.LibTSF;
 
 public class SynthPluginFactory {
-	private static final String TAG = SynthPluginFactory.class.getSimpleName();
-
 	public static void loadPlugins(List<Plugin> plugins) {
-		String soundBank = MicroLoader.getSoundBank();
-		if (soundBank == null) {
-			plugins.add(new MIDIDevicePlugin());
-			return;
-		}
-		try {
-			plugins.add(new SynthPlugin(new LibEAS(soundBank)));
-		} catch (Throwable e) {
-			Log.w(TAG, "create EAS plugin failed", e);
-		}
-		try {
-			plugins.add(new SynthPlugin(new LibTSF(soundBank)));
-		} catch (Throwable e) {
-			Log.w(TAG, "create TSF plugin failed", e);
-		}
-		if (plugins.isEmpty()) {
-			ContextHolder.getActivity().toast(R.string.msg_unsupported_soundbank);
-			plugins.add(new MIDIDevicePlugin());
-		}
+		plugins.add(new SynthPlugin(new LibEAS(MicroLoader.getSoundBank())));
 	}
 }

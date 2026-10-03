@@ -211,7 +211,9 @@ val verifyEmulatorDebugNativePackaging = tasks.register("verifyEmulatorDebugNati
         check(apk.isFile) {
             "Expected emulator debug APK for $abi was not produced: ${apk.absolutePath}"
         }
-        val forbiddenLibraries = listOf("libjlmem.so", "libjlmem_target.so")
+        val forbiddenLibraries = listOf(
+            "libjlmem.so", "libjlmem_target.so", "libmmapi_tsf.so", "libmmapi_common.so"
+        )
         ZipFile(apk).use { archive ->
             forbiddenLibraries.forEach { library ->
                 val entry = archive.getEntry("lib/$abi/$library")

@@ -22,13 +22,14 @@ import static javax.microedition.media.Manager.TONE_DEVICE_LOCATOR;
 
 import android.util.Log;
 
-import androidx.annotation.Keep;
+import io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
 
 import javax.microedition.amms.control.PanControl;
 import javax.microedition.amms.control.audioeffect.EqualizerControl;
@@ -43,20 +44,26 @@ import javax.microedition.media.control.MetaDataControl;
 import javax.microedition.media.control.ToneControl;
 import javax.microedition.media.control.VolumeControl;
 import javax.microedition.media.protocol.DataSource;
-import javax.microedition.media.tone.ToneSequence;
 
 import io.github.h3nb.jlmodplus.mmapi.control.MIDIControlImpl;
 import io.github.h3nb.jlmodplus.mmapi.protocol.device.DeviceMetaData;
 
-class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneControl {
+class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneControl, RuntimeAudioCoordinator.Participant {
 	private static final String TAG = SynthPlayer.class.getSimpleName();
 
 	private final ExecutorService callbackExecutor = Executors.newSingleThreadExecutor(r -> {
 		Thread thread = new Thread(r, "MidletPlayerCallback");
-		thread.setUncaughtExceptionHandler((t, e) ->
-				Log.e(t.getName(), "UncaughtException in " + t, e));
+		thread.setDaemon(true);
 		return thread;
 	});
+	private ScheduledFuture<?> eventPoll;
+	private final RuntimeAudioCoordinator audio = RuntimeAudioCoordinator.current();
+	private long outputGeneration;
+	private long playbackToken;
+	private boolean hostSuspended;
+	private boolean requestedPlayback;
+	private long mediaTime = TIME_UNKNOWN;
+	private long duration = TIME_UNKNOWN;
 	private final ArrayList<PlayerListener> listeners = new ArrayList<>();
 	private final InternalMetaData metadata;
 	private final DataSource dataSource;
@@ -79,11 +86,15 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 		this.library = library;
 		this.dataSource = dataSource;
 		handle = library.createPlayer(locator);
-		library.setListener(handle, this);
+		boolean registered = false;
+		try {
+			audio.register(this);
+			registered = true;
+		} finally { if (!registered) library.close(handle); }
 	}
 
 	@Override
-	public void realize() throws MediaException {
+	public synchronized void realize() throws MediaException {
 		checkClosed();
 
 		if (state == UNREALIZED) {
@@ -94,17 +105,18 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 					controls.put(ToneControl.class.getName(), this);
 				}
 				controls.put(VolumeControl.class.getName(), this);
-				controls.put(MIDIControl.class.getName(), new MIDIControlImpl(this, library, handle));
+				controls.put(MIDIControl.class.getName(), new MIDIControlImpl(this, library, handle, this::prepareMidiOutput));
 				controls.put(PanControl.class.getName(), this);
 				controls.put(MetaDataControl.class.getName(), metadata);
 				controls.put(EqualizerControl.class.getName(), new InternalEqualizer());
 			}
 			state = REALIZED;
+			duration = library.getDuration(handle);
 		}
 	}
 
 	@Override
-	public void prefetch() throws MediaException {
+	public synchronized void prefetch() throws MediaException {
 		checkClosed();
 
 		if (state == UNREALIZED) {
@@ -119,104 +131,186 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 			}
 			library.prefetch(handle);
 			state = PREFETCHED;
+			mediaTime = library.getMediaTime(handle);
+			duration = library.getDuration(handle);
+			outputGeneration = library.getGeneration(handle);
+			eventPoll = audio.scheduleManagement(this::pollEvents);
 		}
 	}
 
 	@Override
-	public void start() throws MediaException {
+	public synchronized void start() throws MediaException {
 		prefetch();
+		if (state == PREFETCHED || !requestedPlayback || !audio.isPlaybackRequested(this, playbackToken)) {
+			activateOutput(false);
+			if (state != STARTED) {
+				state = STARTED;
+				postEvent(PlayerListener.STARTED, getMediaTime());
+			}
+		}
+	}
 
-		if (state == PREFETCHED) {
-			library.start(handle);
+	private void activateOutput(boolean midiOnly) throws MediaException {
+		long token = audio.requestPlayback(this);
+		try {
+			if (midiOnly) library.activateMidi(handle);
+			else library.start(handle);
+			outputGeneration = library.getGeneration(handle);
+			playbackToken = token;
+			requestedPlayback = true;
+			hostSuspended = false;
+		} catch (Exception e) {
+			audio.cancelPlayback(this);
+			throw new MediaException("Cannot start synthesis output: " + e);
+		}
+	}
 
-			state = STARTED;
-			postEvent(PlayerListener.STARTED, getMediaTime());
+	private synchronized void prepareMidiOutput() {
+		if (state < PREFETCHED) throw new IllegalStateException("Player must be prefetched");
+		if (!requestedPlayback || !audio.isPlaybackRequested(this, playbackToken)) {
+			try { activateOutput(state != STARTED); }
+			catch (MediaException e) { throw new IllegalStateException(e); }
 		}
 	}
 
 	@Override
-	public void stop() throws MediaException {
+	public synchronized void stop() throws MediaException {
 		checkClosed();
-		if (state == STARTED) {
+		if (requestedPlayback) {
 			library.pause(handle);
-
+			outputGeneration = library.getGeneration(handle);
+			mediaTime = library.getMediaTime(handle);
+			requestedPlayback = false;
+			hostSuspended = false;
+			audio.cancelPlayback(this);
+		}
+		if (state == STARTED) {
 			state = PREFETCHED;
 			postEvent(PlayerListener.STOPPED, getMediaTime());
 		}
 	}
 
 	@Override
-	public void deallocate() {
-		try {
-			stop();
-		} catch (MediaException e) {
-			Log.e(TAG, "deallocate: stop() failed", e);
-		}
-
+	public synchronized void deallocate() {
+		checkClosed();
+		try { stop(); }
+		catch (MediaException e) { fail("Cannot stop synthesis output: " + e); return; }
 		if (state == PREFETCHED) {
+			mediaTime = library.getMediaTime(handle);
+			duration = library.getDuration(handle);
 			library.deallocate(handle);
+			outputGeneration = library.getGeneration(handle);
 			state = REALIZED;
+			if (eventPoll != null) { eventPoll.cancel(false); eventPoll = null; }
 		}
 	}
 
 	@Override
-	public void close() {
-		if (state != CLOSED) {
-			state = CLOSED;
-			library.close(handle);
+	public synchronized void close() {
+		if (state == CLOSED) return;
+		state = CLOSED;
+		requestedPlayback = false;
+		audio.unregister(this);
+		if (eventPoll != null) { eventPoll.cancel(false); eventPoll = null; }
+		try { library.close(handle); }
+		finally {
+			try { dataSource.disconnect(); }
+			finally {
+				try { postEvent(PlayerListener.CLOSED, null); }
+				finally { callbackExecutor.shutdown(); }
+			}
 		}
+	}
 
-		dataSource.disconnect();
-		postEvent(PlayerListener.CLOSED, null);
+	private void fail(String message) {
+		if (state == CLOSED) return;
+		postEvent(PlayerListener.ERROR, message);
+		close();
 	}
 
 	@Override
-	public long setMediaTime(long now) throws MediaException {
+	public synchronized void onHostSuspend(long token) {
+		if (state == CLOSED || !requestedPlayback || token != playbackToken || hostSuspended ||
+				audio.isPlaybackAllowed(this, token)) return;
+		try {
+			library.suspendOutput(handle);
+			outputGeneration = library.getGeneration(handle);
+			mediaTime = library.getMediaTime(handle);
+			hostSuspended = true;
+		} catch (Exception e) { fail("Cannot suspend synthesis output: " + e); }
+	}
+
+	@Override
+	public synchronized void onHostResume(long token) {
+		if (state == CLOSED || !requestedPlayback || token != playbackToken || !hostSuspended ||
+				!audio.isPlaybackAllowed(this, token)) return;
+		try {
+			library.resumeOutput(handle);
+			outputGeneration = library.getGeneration(handle);
+			hostSuspended = false;
+		} catch (Exception e) { fail("Cannot resume synthesis output: " + e); }
+	}
+
+	@Override
+	public synchronized void onHostFocusRevoked(long token) {
+		onHostSuspend(token);
+		if (token == playbackToken) requestedPlayback = false;
+	}
+
+	@Override
+	public void closeForRuntime() { close(); }
+
+	@Override
+	public synchronized long setMediaTime(long now) throws MediaException {
 		checkRealized();
-		return library.setMediaTime(handle, now);
+		mediaTime = library.setMediaTime(handle, now);
+		outputGeneration = library.getGeneration(handle);
+		return mediaTime;
 	}
 
 	@Override
-	public long getMediaTime() {
+	public synchronized long getMediaTime() {
 		checkClosed();
 		if (state < PREFETCHED) {
-			return TIME_UNKNOWN;
+			return mediaTime;
 		} else {
-			return library.getMediaTime(handle);
+			mediaTime = library.getMediaTime(handle);
+			return mediaTime;
 		}
 	}
 
 	@Override
-	public long getDuration() {
+	public synchronized long getDuration() {
 		checkClosed();
-		return library.getDuration(handle);
+		if (duration == TIME_UNKNOWN) duration = library.getDuration(handle);
+		return duration;
 	}
 
 	@Override
-	public void setLoopCount(int count) {
+	public synchronized void setLoopCount(int count) {
 		checkClosed();
 		if (state == STARTED)
 			throw new IllegalStateException("player must not be in STARTED state while using setLoopCount()");
 
-		if (count == 0) {
+		if (count == 0 || count < -1) {
 			throw new IllegalArgumentException("loop count must not be 0");
 		}
 		library.setRepeat(handle, count);
 	}
 
 	@Override
-	public int getState() {
+	public synchronized int getState() {
 		return state;
 	}
 
 	@Override
-	public String getContentType() {
+	public synchronized String getContentType() {
 		checkRealized();
 		return dataSource.getContentType();
 	}
 
 	@Override
-	public int setPan(int pan) {
+	public synchronized int setPan(int pan) {
 		if (pan < -100) {
 			pan = -100;
 		} else if (pan > 100) {
@@ -236,12 +330,12 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	}
 
 	@Override
-	public int getPan() {
+	public synchronized int getPan() {
 		return pan;
 	}
 
 	@Override
-	public void setMute(boolean mute) {
+	public synchronized void setMute(boolean mute) {
 		if (this.mute == mute) {
 			return;
 		}
@@ -258,12 +352,12 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	}
 
 	@Override
-	public boolean isMuted() {
+	public synchronized boolean isMuted() {
 		return mute;
 	}
 
 	@Override
-	public int setLevel(int level) {
+	public synchronized int setLevel(int level) {
 		if (level < 0) {
 			level = 0;
 		} else if (level > 100) {
@@ -284,12 +378,12 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	}
 
 	@Override
-	public int getLevel() {
+	public synchronized int getLevel() {
 		return volume;
 	}
 
 	@Override
-	public Control getControl(String controlType) {
+	public synchronized Control getControl(String controlType) {
 		checkRealized();
 		if (controlType == null) {
 			throw new IllegalArgumentException();
@@ -301,7 +395,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	}
 
 	@Override
-	public Control[] getControls() {
+	public synchronized Control[] getControls() {
 		checkRealized();
 		return controls.values().toArray(new Control[0]);
 	}
@@ -320,30 +414,54 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 		listeners.remove(playerListener);
 	}
 
-	/** @noinspection unused */
-	@Keep // call from native
-	private void postEvent(int type, long time) {
-		switch (type) {
-			case 1 -> { // restart
-				postEvent(PlayerListener.END_OF_MEDIA, time);
-				postEvent(PlayerListener.STARTED, 0);
+	private synchronized void pollEvents() {
+		if (state < PREFETCHED) return;
+		try {
+			long[] event;
+			while ((event = library.pollEvent(handle)) != null) {
+				if (event[2] != outputGeneration) continue;
+				acceptEvent((int) event[0], event[1], event.length > 3 ? event[3] : 0);
+				if (state == CLOSED) return;
 			}
-			case 2 -> { // stop
-				postEvent(PlayerListener.END_OF_MEDIA, time);
-				state = PREFETCHED;
+		} catch (Exception e) { fail("Synthesis management failed: " + e); }
+	}
+
+	private void acceptEvent(int type, long time, long error) {
+		if (state == CLOSED) return;
+		if (type == 4) {
+			if (requestedPlayback && !hostSuspended && audio.isPlaybackAllowed(this, playbackToken)) {
+				library.recoverOutput(handle);
+				outputGeneration = library.getGeneration(handle);
 			}
-			case 3 -> { // error
-				postEvent(PlayerListener.ERROR, null);
-				state = PREFETCHED;
-			}
+			return;
+		}
+		if (type == 3) { fail("Sonivox failure (code " + error + ")"); return; }
+		if (state != STARTED) return;
+		mediaTime = time;
+		postEvent(PlayerListener.END_OF_MEDIA, time);
+		if (type == 1) {
+			mediaTime = 0;
+			outputGeneration = library.getGeneration(handle);
+			postEvent(PlayerListener.STARTED, 0L);
+		} else if (type == 2) {
+			state = PREFETCHED;
+			requestedPlayback = false;
+			audio.cancelPlayback(this);
 		}
 	}
 
 	private synchronized void postEvent(String event, Object eventData) {
-		for (PlayerListener listener : listeners) {
-			// Callbacks should be async
-			callbackExecutor.execute(() -> listener.playerUpdate(this, event, eventData));
-		}
+		PlayerListener[] snapshot = listeners.toArray(new PlayerListener[0]);
+		if (snapshot.length == 0) return;
+		callbackExecutor.execute(() -> {
+			for (PlayerListener listener : snapshot) {
+				synchronized (this) {
+					if (state == CLOSED && !PlayerListener.CLOSED.equals(event) && !PlayerListener.ERROR.equals(event)) return;
+				}
+				try { listener.playerUpdate(this, event, eventData); }
+				catch (Throwable e) { Log.e(TAG, "Player listener failed", e); }
+			}
+		});
 	}
 
 	private void checkClosed() {
@@ -360,29 +478,22 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	}
 
 	@Override
-	public void setSequence(byte[] sequence) {
+	public synchronized void setSequence(byte[] sequence) {
+		checkClosed();
 		if (state >= PREFETCHED) {
 			throw new IllegalStateException();
 		} else if (sequence == null) {
 			throw new IllegalArgumentException("sequence is NULL");
 		}
 		try {
-			if (!library.hasToneControl()) {
-				ToneSequence tone = new ToneSequence(sequence);
-				tone.process();
-				sequence = tone.getByteArray();
-			}
 			library.setDataSource(handle, sequence);
+			mediaTime = 0;
+			duration = library.getDuration(handle);
+			outputGeneration = library.getGeneration(handle);
 		} catch (Exception e) {
 			Log.e(TAG, "setSequence: ", e);
 			throw new IllegalArgumentException(e);
 		}
-	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		library.finalize(handle);
-		super.finalize();
 	}
 
 	private void updateVolume() {

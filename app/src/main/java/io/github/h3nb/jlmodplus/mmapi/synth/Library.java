@@ -18,9 +18,7 @@
 package io.github.h3nb.jlmodplus.mmapi.synth;
 
 public interface Library {
-	void loadSoundBank(String soundBank);
 	long createPlayer(String locator);
-	void finalize(long handle);
 	void realize(long handle);
 	void prefetch(long handle);
 	void start(long handle);
@@ -32,9 +30,14 @@ public interface Library {
 	void setRepeat(long handle, int count);
 	void setVolume(long handle, float left, float right);
 	long getDuration(long handle);
-	void setListener(long handle, Object listener);
 	void setDataSource(long handle, byte[] data);
 	int writeMIDI(long handle, byte[] data, int offset, int length);
 
-	boolean hasToneControl();
+	/** Management-thread events: type, media time, output generation, error code. */
+	default long[] pollEvent(long handle) { return null; }
+	default long getGeneration(long handle) { return 0; }
+	default void recoverOutput(long handle) {}
+	default void activateMidi(long handle) { start(handle); }
+	default void suspendOutput(long handle) { pause(handle); }
+	default void resumeOutput(long handle) { start(handle); }
 }

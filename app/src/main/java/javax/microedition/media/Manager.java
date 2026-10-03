@@ -25,7 +25,6 @@ import android.webkit.MimeTypeMap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -36,6 +35,7 @@ import javax.microedition.media.tone.ToneManager;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.mmapi.Plugin;
+import io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator;
 import io.github.h3nb.jlmodplus.mmapi.synth.SynthPluginFactory;
 
 public class Manager {
@@ -46,30 +46,32 @@ public class Manager {
 	private static final String FILE_LOCATOR = "file://";
 	private static final String CAPTURE_AUDIO_LOCATOR = "capture://audio";
 	private static final TimeBase DEFAULT_TIMEBASE = () -> System.nanoTime() / 1000L;
-	private static final List<Plugin> PLUGINS = new ArrayList<>();
+	private static List<Plugin> plugins;
+	private static RuntimeAudioCoordinator pluginSession;
 
 	public static Player createPlayer(String locator) throws IOException, MediaException {
 		if (locator == null) {
 			throw new IllegalArgumentException();
 		}
 		if (MIDI_DEVICE_LOCATOR.equals(locator) || TONE_DEVICE_LOCATOR.equals(locator)) {
-			for (Plugin plugin : PLUGINS) {
+			for (Plugin plugin : plugins()) {
 				Player player = plugin.createPlayer(locator);
 				if (player != null) {
 					return player;
 				}
 			}
-			return new MicroPlayer(locator);
+			throw new MediaException("Unsupported device locator: " + locator);
 		} else if (locator.startsWith(FILE_LOCATOR) || locator.startsWith(RESOURCE_LOCATOR)) {
-			InputStream stream = Connector.openInputStream(locator);
-			String extension = locator.substring(locator.lastIndexOf('.') + 1);
+			String extension = locator.substring(locator.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
 			String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-			return createPlayer(stream, type);
+			try (InputStream stream = Connector.openInputStream(locator)) {
+				return createPlayer(stream, type);
+			}
 		} else if (locator.startsWith(CAPTURE_AUDIO_LOCATOR) &&
 				ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
 			return new RecordPlayer();
 		} else {
-			return new BasePlayer();
+			throw new MediaException("Unsupported media locator: " + locator);
 		}
 	}
 
@@ -77,47 +79,67 @@ public class Manager {
 		if (source == null) {
 			throw new IllegalArgumentException();
 		}
-		String type = source.getContentType();
-		String[] supportedTypes = getSupportedContentTypes(null);
-		if (type != null && Arrays.asList(supportedTypes).contains(type.toLowerCase(Locale.ROOT))) {
-			source.connect();
-			SourceStream[] sourceStreams = source.getStreams();
-			if (sourceStreams == null || sourceStreams.length == 0) {
-				throw new MediaException();
+		if (MIDI_DEVICE_LOCATOR.equals(source.getLocator()) || TONE_DEVICE_LOCATOR.equals(source.getLocator())) {
+			for (Plugin plugin : plugins()) {
+				Player player = plugin.createPlayer(source);
+				if (player != null) return player;
 			}
-			SourceStream sourceStream = sourceStreams[0];
-			InputStream stream = new InternalSourceStream(sourceStream);
-			InternalDataSource datasource = new InternalDataSource(stream, type);
-			return new MicroPlayer(datasource);
-		} else {
-			return new BasePlayer();
+		}
+		InternalDataSource cached = null;
+		boolean transferred = false;
+		try {
+			source.connect();
+			source.start();
+			SourceStream[] streams = source.getStreams();
+			if (streams == null || streams.length == 0) throw new MediaException("Media source has no streams");
+			cached = new InternalDataSource(new InternalSourceStream(streams[0]), source.getContentType(), source);
+			source.stop();
+			Player player = createCachedPlayer(cached);
+			transferred = true;
+			return player;
+		} finally {
+			if (!transferred) {
+				if (cached != null) cached.disconnect();
+				else source.disconnect();
+			}
 		}
 	}
 
 	public static Player createPlayer(final InputStream stream, String type)
 			throws IOException, MediaException {
-		if (stream == null) {
-			throw new IllegalArgumentException();
+		if (stream == null) throw new IllegalArgumentException();
+		InternalDataSource cached = new InternalDataSource(stream, type);
+		boolean transferred = false;
+		try {
+			Player player = createCachedPlayer(cached);
+			transferred = true;
+			return player;
+		} finally { if (!transferred) cached.disconnect(); }
+	}
+
+	private static Player createCachedPlayer(InternalDataSource source) throws MediaException {
+		for (Plugin plugin : plugins()) {
+			Player player = plugin.createPlayer(source);
+			if (player != null) return player;
 		}
-		InternalDataSource datasource = new InternalDataSource(stream, type);
-		for (Plugin plugin : PLUGINS) {
-			Player player = plugin.createPlayer(datasource);
-			if (player != null) {
-				return player;
+		String type = source.getContentType();
+		if (type != null) {
+			for (String supported : getSupportedContentTypes(null)) {
+				if (supported.equalsIgnoreCase(type)) {
+					source.prepareSampled();
+					return new MicroPlayer(source);
+				}
 			}
 		}
-		String[] supportedTypes = getSupportedContentTypes(null);
-		if (type != null && Arrays.asList(supportedTypes).contains(type.toLowerCase(Locale.ROOT))) {
-			return new MicroPlayer(datasource);
-		} else {
-			return new BasePlayer();
-		}
+		throw new MediaException("Unsupported media content type: " + type);
 	}
 
 	public static String[] getSupportedContentTypes(String str) {
 		return new String[]{"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
 				"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
-				"audio/mp4", "audio/mmf", "audio/x-tone-seq"};
+				"audio/mp4", "audio/mmf", "audio/x-tone-seq", "audio/sp-midi", "audio/xmf",
+				"audio/mobile-xmf", "audio/imelody", "text/x-imelody", "audio/rtttl", "audio/x-rtttl",
+				"audio/ota", "audio/x-ota"};
 	}
 
 	public static String[] getSupportedProtocols(String str) {
@@ -133,7 +155,14 @@ public class Manager {
 		ToneManager.getInstance().playTone(note, duration, volume);
 	}
 
-	static {
-		SynthPluginFactory.loadPlugins(PLUGINS);
+	private static synchronized List<Plugin> plugins() {
+		RuntimeAudioCoordinator session = RuntimeAudioCoordinator.current();
+		if (pluginSession != session) {
+			List<Plugin> loaded = new ArrayList<>();
+			SynthPluginFactory.loadPlugins(loaded);
+			plugins = loaded;
+			pluginSession = session;
+		}
+		return plugins;
 	}
 }

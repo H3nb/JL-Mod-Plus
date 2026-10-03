@@ -21,8 +21,6 @@ Distinct bundled source components include:
 - Android Open Source Project dx/dex sources — Apache-2.0
 - Nokia M3G / JSR-184 native reference code — EPL-1.0
 - SoniVox EAS native code — Apache-2.0
-- TinySoundFont — MIT
-- TinyMidiLoader — Zlib
 
 Runtime libraries such as AndroidX, Kotlin, Material Components, Gson, Oboe,
 RxJava/RxAndroid, Zip4j, ASM, FFmpegKit and their shipped transitive

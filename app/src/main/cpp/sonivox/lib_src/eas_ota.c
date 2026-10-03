@@ -1,3 +1,4 @@
+// Modified for JL-Mod Plus.
 /*----------------------------------------------------------------------------
  *
  * File:
@@ -28,7 +29,7 @@
 */
 
 #define LOG_TAG "Sonivox"
-#include "util/log.h"
+#include <log/log.h>
 
 #include "eas_data.h"
 #include "eas_miditypes.h"
@@ -93,8 +94,8 @@ static EAS_RESULT OTA_Close (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT OTA_Reset (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT OTA_Pause (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT OTA_Resume (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
-static EAS_RESULT OTA_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 value);
-static EAS_RESULT OTA_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 *pValue);
+static EAS_RESULT OTA_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR value);
+static EAS_RESULT OTA_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR *pValue);
 static EAS_RESULT OTA_ParseHeader (S_EAS_DATA *pEASData, S_OTA_DATA* pData);
 static EAS_RESULT OTA_FetchBitField (EAS_HW_DATA_HANDLE hwInstData, S_OTA_DATA *pData, EAS_I32 numBits, EAS_U8 *pValue);
 static EAS_RESULT OTA_SavePosition (EAS_HW_DATA_HANDLE hwInstData, S_OTA_DATA *pData, S_OTA_LOC *pLoc);
@@ -550,24 +551,6 @@ static EAS_RESULT OTA_Event (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I
             pData->velocity = temp ? (EAS_U8) (temp * OTA_VEL_MUL + OTA_VEL_OFS) : 0;
             break;
 
-        case 0:
-            /* workaround for "New Skool Skater" */
-            /* get filler bits */
-            if ((result = OTA_FetchBitField(pEASData->hwInstData, pData, pData->current.bitCount, &temp)) != EAS_SUCCESS)
-                return result;
-            if (temp != 0) {
-                return EAS_ERROR_FILE_FORMAT;
-            }
-            /* get command-end */
-            if ((result = EAS_HWGetByte(pEASData->hwInstData, pData->fileHandle, &temp)) != EAS_SUCCESS)
-                return result;
-            if (temp != 0) {
-                return EAS_ERROR_FILE_FORMAT;
-            }
-
-            pData->current.patternLen = 0;
-            return EAS_SUCCESS;
-
         default:
             { /* dpp: EAS_ReportEx(_EAS_SEVERITY_ERROR, "Unexpected instruction ID in OTA stream\n"); */ }
             return EAS_ERROR_FILE_FORMAT;
@@ -597,7 +580,7 @@ static EAS_RESULT OTA_Event (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) common decoder interface - pEASData not used */
-static EAS_RESULT OTA_State (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 *pState)
+static EAS_RESULT OTA_State (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_STATE *pState)
 {
     S_OTA_DATA* pData;
 
@@ -782,7 +765,7 @@ static EAS_RESULT OTA_Resume (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData)
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) common decoder interface - pEASData not used */
-static EAS_RESULT OTA_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 value)
+static EAS_RESULT OTA_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR value)
 {
     S_OTA_DATA *pData;
 
@@ -820,7 +803,7 @@ static EAS_RESULT OTA_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) common decoder interface - pEASData not used */
-static EAS_RESULT OTA_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 *pValue)
+static EAS_RESULT OTA_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR *pValue)
 {
     S_OTA_DATA *pData;
 
@@ -840,7 +823,7 @@ static EAS_RESULT OTA_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS
 #endif
 
         case PARSER_DATA_SYNTH_HANDLE:
-            *pValue = (EAS_I32) pData->pSynth;
+            *pValue = (EAS_IPTR) pData->pSynth;
             break;
 
         case PARSER_DATA_GAIN_OFFSET:

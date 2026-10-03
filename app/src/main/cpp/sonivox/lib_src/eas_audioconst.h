@@ -31,12 +31,14 @@
 #ifndef _EAS_AUDIOCONST_H
 #define _EAS_AUDIOCONST_H
 
+#include "eas_options.h"
+
 /*----------------------------------------------------------------------------
  * These macros define the various characteristics of the defined sample rates
  *----------------------------------------------------------------------------
- * BUFFER_SIZE_IN_MONO_SAMPLES  size of buffer in samples
+ * BUFFER_SIZE_IN_MONO_SAMPLES  size of buffer in samples, length of an audio frame
  * _OUTPUT_SAMPLE_RATE          compiled output sample rate
- * AUDIO_FRAME_LENGTH           length of an audio frame in 256ths of a millisecond
+ * AUDIO_FRAME_LENGTH           length of an audio frame in 256ths of a millisecond (equals to bufsize/srate*1000*256)
  * SYNTH_UPDATE_PERIOD_IN_BITS  length of an audio frame (2^x samples)
  *----------------------------------------------------------------------------
 */

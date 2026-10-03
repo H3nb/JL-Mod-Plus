@@ -1,156 +1,154 @@
-//
-// Created by woesss on 08.07.2023.
-//
-
-#include <jni.h>
+// SPDX-License-Identifier: Apache-2.0
 #include "eas_player.h"
-#include "util/jstring.h"
-#include "eas_util.h"
-#include "util/jbytearray.h"
-
-/* for C++ linkage */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_loadSoundBank
-(JNIEnv *env, jobject /*thiz*/, jstring sound_bank) {
-    if (sound_bank == nullptr) {
-        return;
+#include <jni.h>
+#include <limits>
+#include <unordered_map>
+using mmapi::eas::Player;
+using mmapi::eas::Event;
+namespace {
+std::mutex registryLock;
+std::unordered_map<jlong, std::shared_ptr<Player>> registry;
+jlong nextHandle = 1;
+constexpr size_t MAX_PLAYERS = 16;
+std::shared_ptr<Player> player(jlong handle) {
+    std::lock_guard<std::mutex> lock(registryLock);
+    auto found = registry.find(handle);
+    if (found == registry.end()) throw std::invalid_argument("Invalid or closed synthesis handle");
+    return found->second;
+}
+void exception(JNIEnv *env, const char *type, const char *message) {
+    if (env->ExceptionCheck()) return;
+    jclass klass = env->FindClass(type);
+    if (klass) { env->ThrowNew(klass, message); env->DeleteLocalRef(klass); }
+}
+void translate(JNIEnv *env) {
+    try { throw; }
+    catch (const std::bad_alloc &) { exception(env, "java/lang/OutOfMemoryError", "Sonivox allocation failed"); }
+    catch (const std::invalid_argument &error) { exception(env, "java/lang/IllegalArgumentException", error.what()); }
+    catch (const std::exception &error) { exception(env, "javax/microedition/media/MediaException", error.what()); }
+    catch (...) { exception(env, "javax/microedition/media/MediaException", "Unexpected synthesis failure"); }
+}
+std::string string(JNIEnv *env, jstring value, bool nullable = false) {
+    if (!value) {
+        if (nullable) return {};
+        throw std::invalid_argument("Null synthesis locator");
     }
-
-    util::JStringPtr sb(env, sound_bank);
-    int32_t result = mmapi::eas::Player::initSoundBank(*sb);
-    if (result != 0) {
-        const char *message = mmapi::eas::EAS_GetErrorString(result);
-        env->ThrowNew(env->FindClass("java/lang/RuntimeException"), message);
+    const char *chars = env->GetStringUTFChars(value, nullptr);
+    if (!chars) throw std::bad_alloc();
+    std::string result;
+    try { result.assign(chars); }
+    catch (...) { env->ReleaseStringUTFChars(value, chars); throw; }
+    env->ReleaseStringUTFChars(value, chars);
+    return result;
+}
+std::vector<uint8_t> bytes(JNIEnv *env, jbyteArray value, jint offset, jint count, size_t limit) {
+    if (!value) throw std::invalid_argument("Null synthesis data");
+    jsize length = env->GetArrayLength(value);
+    if (offset < 0 || count < 0 || offset > length || count > length - offset)
+        throw std::invalid_argument("Synthesis data range is out of bounds");
+    if (static_cast<size_t>(count) > limit) throw std::runtime_error("Synthesis data exceeds configured size limit");
+    std::vector<uint8_t> result(count);
+    if (count) env->GetByteArrayRegion(value, offset, count, reinterpret_cast<jbyte *>(result.data()));
+    if (env->ExceptionCheck()) throw std::runtime_error("Unable to copy synthesis data");
+    return result;
+}
+void dispose(jlong handle) {
+    std::shared_ptr<Player> owned;
+    {
+        std::lock_guard<std::mutex> lock(registryLock);
+        auto found = registry.find(handle);
+        if (found == registry.end()) return;
+        owned = std::move(found->second); registry.erase(found);
     }
+    owned->shutdown();
 }
-
-JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_createPlayer
-(JNIEnv *env, jobject /*thiz*/, jstring pLocator) {
-    mmapi::eas::Player *player;
-    util::JStringPtr locator(env, pLocator);
-    int32_t result = mmapi::eas::Player::createPlayer(*locator, &player);
-    if (result != 0) {
-        const char *message = mmapi::eas::EAS_GetErrorString(result);
-        env->ThrowNew(env->FindClass("javax/microedition/media/MediaException"), message);
-        return 0;
-    }
-    return reinterpret_cast<jlong>(player);
 }
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_finalize
-(JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    delete player;
+#define JNI_NAME(method) Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_##method
+#define VOID_METHOD(method, statement) \
+extern "C" JNIEXPORT void JNICALL JNI_NAME(method)(JNIEnv *env, jobject, jlong handle) { \
+    try { statement; } catch (...) { translate(env); } \
 }
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_realize
-(JNIEnv *env, jobject /*thiz*/, jlong handle) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    if (!player->realize()) {
-        env->ThrowNew(env->FindClass("javax/microedition/media/MediaException"), "Dummy message");
-    }
+extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, jstring locator, jstring bank) {
+    try {
+        auto path = string(env, locator);
+        auto font = string(env, bank, true);
+        std::lock_guard<std::mutex> lock(registryLock);
+        if (registry.size() >= MAX_PLAYERS) throw std::runtime_error("Synthesis context limit reached (16 Players)");
+        if (nextHandle == std::numeric_limits<jlong>::max()) throw std::runtime_error("Synthesis handle space exhausted");
+        auto owned = std::make_shared<Player>(path, font);
+        jlong handle = nextHandle++;
+        registry.emplace(handle, std::move(owned));
+        return handle;
+    } catch (...) { translate(env); return 0; }
 }
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_prefetch
-(JNIEnv *env, jobject /*thiz*/, jlong handle) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    oboe::Result result = player->prefetch();
-    if (result != oboe::Result::OK) {
-        auto &&message = oboe::convertToText(result);
-        env->ThrowNew(env->FindClass("javax/microedition/media/MediaException"), message);
-    }
+VOID_METHOD(close, dispose(handle))
+VOID_METHOD(realize, (void)player(handle))
+VOID_METHOD(prefetch, player(handle)->prefetch())
+VOID_METHOD(start, player(handle)->start())
+VOID_METHOD(activateMidi, player(handle)->activateMidi())
+VOID_METHOD(pause, player(handle)->pause())
+VOID_METHOD(suspendOutput, player(handle)->suspendOutput())
+VOID_METHOD(resumeOutput, player(handle)->resumeOutput())
+VOID_METHOD(deallocate, player(handle)->deallocate())
+VOID_METHOD(recoverOutput, player(handle)->recoverOutput())
+extern "C" JNIEXPORT jlong JNICALL JNI_NAME(setMediaTime)(JNIEnv *env, jobject, jlong handle, jlong time) {
+    try { return player(handle)->seek(time); } catch (...) { translate(env); return -1; }
 }
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_start
-(JNIEnv *env, jobject /*thiz*/, jlong handle) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    oboe::Result result = player->start();
-    if (result != oboe::Result::OK) {
-        auto message = oboe::convertToText(result);
-        env->ThrowNew(env->FindClass("javax/microedition/media/MediaException"), message);
-    }
+extern "C" JNIEXPORT jlong JNICALL JNI_NAME(getMediaTime)(JNIEnv *env, jobject, jlong handle) {
+    try { return player(handle)->time(); } catch (...) { translate(env); return -1; }
 }
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_pause
-(JNIEnv *env, jobject /*thiz*/, jlong handle) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    oboe::Result result = player->pause();
-    if (result != oboe::Result::OK) {
-        auto message = oboe::convertToText(result);
-        env->ThrowNew(env->FindClass("javax/microedition/media/MediaException"), message);
-    }
+extern "C" JNIEXPORT jlong JNICALL JNI_NAME(getDuration)(JNIEnv *env, jobject, jlong handle) {
+    try { return player(handle)->length(); } catch (...) { translate(env); return -1; }
 }
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_deallocate
-(JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    player->deallocate();
+extern "C" JNIEXPORT jlong JNICALL JNI_NAME(getGeneration)(JNIEnv *env, jobject, jlong handle) {
+    try { return player(handle)->epoch(); } catch (...) { translate(env); return -1; }
 }
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_close
-(JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    player->close();
+extern "C" JNIEXPORT void JNICALL JNI_NAME(setRepeat)(JNIEnv *env, jobject, jlong handle, jint count) {
+    try { player(handle)->repeat(count); } catch (...) { translate(env); }
 }
-
-JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_setMediaTime
-(JNIEnv */*env*/, jobject /*thiz*/, jlong handle, jlong now) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    return player->setMediaTime(now);
+extern "C" JNIEXPORT void JNICALL JNI_NAME(setVolume)(JNIEnv *env, jobject, jlong handle, jfloat left, jfloat right) {
+    try { player(handle)->gain(left, right); } catch (...) { translate(env); }
 }
-
-JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_getMediaTime
-(JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    return player->getMediaTime();
+extern "C" JNIEXPORT void JNICALL JNI_NAME(setDataSource)(JNIEnv *env, jobject, jlong handle, jbyteArray data) {
+    try {
+        if (!data) throw std::invalid_argument("Null synthesis source");
+        auto copy = bytes(env, data, 0, env->GetArrayLength(data), Player::MEDIA_LIMIT);
+        player(handle)->data(std::move(copy));
+    } catch (...) { translate(env); }
 }
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_setRepeat
-(JNIEnv */*env*/, jobject /*thiz*/, jlong handle, jint count) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    player->setRepeat(count);
+extern "C" JNIEXPORT jint JNICALL JNI_NAME(writeMIDI)(JNIEnv *env, jobject, jlong handle, jbyteArray data, jint offset, jint count) {
+    try {
+        auto owned = player(handle);
+        if (!data) throw std::invalid_argument("Null MIDI data");
+        jsize length = env->GetArrayLength(data);
+        if (offset < 0 || count < 0 || offset > length || count > length - offset)
+            throw std::invalid_argument("MIDI data range is out of bounds");
+        if (count > 16384) return -1;
+        auto copy = bytes(env, data, offset, count, 16384);
+        return owned->writeMidi(copy.data(), count);
+    } catch (...) { translate(env); return -1; }
 }
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_setVolume
-(JNIEnv */*env*/, jobject /*thiz*/, jlong handle, jfloat left, jfloat right) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    player->setVolume(left, right);
+extern "C" JNIEXPORT jlongArray JNICALL JNI_NAME(pollEvent)(JNIEnv *env, jobject, jlong handle) {
+    try {
+        Event event{};
+        if (!player(handle)->poll(event)) return nullptr;
+        jlong values[] = {event.type, event.time, event.generation, event.error};
+        auto result = env->NewLongArray(4);
+        if (result) env->SetLongArrayRegion(result, 0, 4, values);
+        return result;
+    } catch (...) { translate(env); return nullptr; }
 }
-
-JNIEXPORT jlong JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_getDuration
-(JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    return player->duration;
+extern "C" JNIEXPORT jlongArray JNICALL JNI_NAME(diagnostics)(JNIEnv *env, jobject, jlong handle) {
+    try {
+        auto values = player(handle)->diagnostics();
+        jlong resultValues[9];
+        std::copy(values.begin(), values.end(), resultValues);
+        auto result = env->NewLongArray(9);
+        if (result) env->SetLongArrayRegion(result, 0, 9, resultValues);
+        return result;
+    } catch (...) { translate(env); return nullptr; }
 }
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_setListener
-(JNIEnv *env, jobject /*thiz*/, jlong handle, jobject listener) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    player->setListener(new mmapi::PlayerListener(env, listener));
+extern "C" JNIEXPORT jint JNICALL JNI_NAME(liveHandles)(JNIEnv *, jclass) {
+    std::lock_guard<std::mutex> lock(registryLock);
+    return static_cast<jint>(registry.size());
 }
-
-JNIEXPORT void JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_setDataSource
-(JNIEnv *env, jobject /*thiz*/, jlong handle, jbyteArray data) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    auto *file = new mmapi::eas::MemFile(env, data);
-    int32_t result = player->setDataSource(file);
-    if (result != 0) {
-        delete file;
-        const char *message = mmapi::eas::EAS_GetErrorString(result);
-        env->ThrowNew(env->FindClass("javax/microedition/media/MediaException"), message);
-    }
-}
-
-JNIEXPORT jint JNICALL Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_writeMIDI
-(JNIEnv *env, jobject /*thiz*/, jlong handle, jbyteArray data, jint offset, jint length) {
-    auto *player = reinterpret_cast<mmapi::eas::Player *>(handle);
-    util::JByteArrayPtr ptr(env, data, offset, length);
-    return player->writeMIDI(ptr);
-}
-
-#ifdef __cplusplus
-} /* end extern "C" */
-#endif

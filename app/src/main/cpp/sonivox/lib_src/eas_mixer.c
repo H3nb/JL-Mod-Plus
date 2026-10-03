@@ -109,9 +109,9 @@ void EAS_MixEnginePrep (S_EAS_DATA *pEASData, EAS_I32 numSamples)
 
     /* clear the mix buffer */
 #if (NUM_OUTPUT_CHANNELS == 2)
-    EAS_HWMemSet(pEASData->pMixBuffer, 0, numSamples * (EAS_I32) sizeof(long) * 2);
+    EAS_HWMemSet(pEASData->pMixBuffer, 0, numSamples * (EAS_I32) sizeof(EAS_I32) * 2);
 #else
-    EAS_HWMemSet(pEASData->pMixBuffer, 0, (EAS_I32) numSamples * (EAS_I32) sizeof(long));
+    EAS_HWMemSet(pEASData->pMixBuffer, 0, (EAS_I32) numSamples * (EAS_I32) sizeof(EAS_I32));
 #endif
 
     /* need to clear other side-chain effect buffers (chorus & reverb) */
@@ -134,7 +134,7 @@ void EAS_MixEnginePrep (S_EAS_DATA *pEASData, EAS_I32 numSamples)
 */
 void EAS_MixEnginePost (S_EAS_DATA *pEASData, EAS_I32 numSamples)
 {
-    EAS_U16 gain;
+    EAS_I32 gain;
 
 //3 dls: Need to restore the mix engine metrics
 
@@ -153,19 +153,7 @@ void EAS_MixEnginePost (S_EAS_DATA *pEASData, EAS_I32 numSamples)
     else
         gain = (EAS_U16) pEASData->masterGain;
 #else
-    gain = (EAS_U16) pEASData->masterGain;
-#endif
-
-    /* Not using all the gain bits for now
-     * Reduce the input to the compressor by 6dB to prevent saturation
-     */
-#ifdef _COMPRESSOR_ENABLED
-    if (pEASData->effectsModules[EAS_MODULE_COMPRESSOR].effectData)
-        gain = gain >> 5;
-    else
-        gain = gain >> 4;
-#else
-    gain = gain >> 4;
+    gain = pEASData->masterGain;
 #endif
 
     /* convert 32-bit mix buffer to 16-bit output format */
@@ -230,7 +218,7 @@ void EAS_MixEnginePost (S_EAS_DATA *pEASData, EAS_I32 numSamples)
 
 #ifdef _REVERB_ENABLED
     /* Reverb effect */
-    if (pEASData->effectsModules[EAS_MODULE_REVERB].effectData)
+    if (pEASData->effectsModules[EAS_MODULE_REVERB].effectData && pEASData->pVoiceMgr->reverbModule.effectData == NULL)
         (*pEASData->effectsModules[EAS_MODULE_REVERB].effect->pfProcess)
             (pEASData->effectsModules[EAS_MODULE_REVERB].effectData,
             pEASData->pOutputAudioBuffer,
@@ -240,7 +228,7 @@ void EAS_MixEnginePost (S_EAS_DATA *pEASData, EAS_I32 numSamples)
 
 #ifdef _CHORUS_ENABLED
     /* Chorus effect */
-    if (pEASData->effectsModules[EAS_MODULE_CHORUS].effectData)
+    if (pEASData->effectsModules[EAS_MODULE_CHORUS].effectData && pEASData->pVoiceMgr->chorusModule.effectData == NULL)
         (*pEASData->effectsModules[EAS_MODULE_CHORUS].effect->pfProcess)
             (pEASData->effectsModules[EAS_MODULE_CHORUS].effectData,
             pEASData->pOutputAudioBuffer,
@@ -263,31 +251,16 @@ void EAS_MixEnginePost (S_EAS_DATA *pEASData, EAS_I32 numSamples)
  *
  *----------------------------------------------------------------------------
 */
-void SynthMasterGain (long *pInputBuffer, EAS_PCM *pOutputBuffer, EAS_U16 nGain, EAS_U16 numSamples) {
-
+void SynthMasterGain(EAS_I32 *pInputBuffer,
+                     EAS_PCM *pOutputBuffer,
+                     EAS_I32 nGain,
+                     EAS_U16 numSamples)
+{
     /* loop through the buffer */
     while (numSamples) {
-        long s;
-
+        EAS_I32 s = *pInputBuffer++;
+        *pOutputBuffer++ = (EAS_PCM)SATURATE(FMUL_15x15(s, nGain));
         numSamples--;
-        /* read a sample from the input buffer and add some guard bits */
-        s = *pInputBuffer++;
-
-        /* add some guard bits */
-        /*lint -e{704} <avoid divide for performance>*/
-        s = s >> 7;
-
-        /* apply master gain */
-        s *= (long) nGain;
-
-        /* shift to lower 16-bits */
-        /*lint -e{704} <avoid divide for performance>*/
-        s = s >> 9;
-
-        /* saturate */
-        s = SATURATE(s);
-
-        *pOutputBuffer++ = (EAS_PCM)s;
     }
 }
 #endif

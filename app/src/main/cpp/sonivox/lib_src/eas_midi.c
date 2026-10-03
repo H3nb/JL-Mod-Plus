@@ -207,7 +207,7 @@ EAS_RESULT EAS_ParseMIDIStream (S_EAS_DATA *pEASData, S_SYNTH *pSynth, S_MIDI_ST
     }
 
     /* no status byte received, provide a warning, but we should be able to recover */
-    { /* dpp: EAS_ReportEx(_EAS_SEVERITY_WARNING, "Received MIDI data without a valid status byte: %d\n",c); */ }
+    EAS_Report(_EAS_SEVERITY_WARNING, "Received MIDI data without a valid status byte: %d\n",c);
     pMIDIStream->pending = EAS_FALSE;
     return EAS_SUCCESS;
 }
@@ -450,7 +450,7 @@ static EAS_RESULT ProcessSysExMessage (S_EAS_DATA *pEASData, S_SYNTH *pSynth, S_
             {
                 EAS_I32 gain = ((EAS_I32) c << 8) | ((EAS_I32) pMIDIStream->d1 << 1);
                 gain = (gain * gain) >> 15;
-                VMSetVolume(pSynth, (EAS_U16) gain);
+                VMSetVolume(pSynth, gain);
             }
             pMIDIStream->sysExState = eSysExEOX;
             break;

@@ -44,6 +44,10 @@
 #include "eas_miditypes.h"
 #include "eas_effects.h"
 
+#ifdef DLS_SYNTHESIZER
+#include "eas_dlslib.h"
+#endif
+
 #ifdef AUX_MIXER
 #include "eas_auxmixdata.h"
 #endif
@@ -78,13 +82,13 @@ typedef struct s_eas_stream_tag
     EAS_BOOL8                       streamFlags;
 } S_EAS_STREAM;
 
-/* default master volume is -10dB */
-#define DEFAULT_VOLUME              90
+/* default master volume is +0dB */
+#define DEFAULT_VOLUME              100
 #define DEFAULT_STREAM_VOLUME       100
 #define DEFAULT_STREAM_GAIN         14622
 
 /* 10 dB of boost available for individual parsers */
-#define STREAM_VOLUME_HEADROOM      10
+#define STREAM_VOLUME_HEADROOM      0
 
 /* amalgamated persistent data type */
 typedef struct s_eas_data_tag
@@ -123,12 +127,10 @@ typedef struct s_eas_data_tag
 #endif
 
     EAS_U32                         renderTime;
-    EAS_I16                         masterGain;
+    EAS_I32                         masterGain;
     EAS_U8                          masterVolume;
     EAS_BOOL8                       staticMemoryModel;
-#ifdef FILE_HEADER_SEARCH
     EAS_BOOL8                       searchHeaderFlag;
-#endif
 } S_EAS_DATA;
 
 #endif

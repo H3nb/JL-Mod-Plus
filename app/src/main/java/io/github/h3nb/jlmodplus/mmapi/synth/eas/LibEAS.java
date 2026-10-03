@@ -20,19 +20,20 @@ package io.github.h3nb.jlmodplus.mmapi.synth.eas;
 import io.github.h3nb.jlmodplus.mmapi.synth.Library;
 
 public class LibEAS implements Library {
+	private final String soundBank;
 
-	public LibEAS() {}
-
-	public LibEAS(String soundBank) {
-		loadSoundBank(soundBank);
+	public LibEAS() {
+		this(null);
 	}
 
+	public LibEAS(String soundBank) {
+		this.soundBank = soundBank;
+	}
 	@Override
-	public native void loadSoundBank(String soundBank);
-	@Override
-	public native long createPlayer(String locator);
-	@Override
-	public native void finalize(long handle);
+	public long createPlayer(String locator) {
+		return createNative(locator, soundBank);
+	}
+	private native long createNative(String locator, String bank);
 	@Override
 	public native void realize(long handle);
 	@Override
@@ -56,21 +57,28 @@ public class LibEAS implements Library {
 	@Override
 	public native long getDuration(long handle);
 	@Override
-	public native void setListener(long handle, Object listener);
-	@Override
 	public native void setDataSource(long handle, byte[] data);
 	@Override
 	public native int writeMIDI(long handle, byte[] data, int offset, int length);
-
 	@Override
-	public boolean hasToneControl() {
-		return true;
-	}
+	public native long[] pollEvent(long handle);
+	@Override
+	public native long getGeneration(long handle);
+	@Override
+	public native void recoverOutput(long handle);
+	@Override
+	public native void activateMidi(long handle);
+	@Override
+	public native void suspendOutput(long handle);
+	@Override
+	public native void resumeOutput(long handle);
+	/** Frames, callbacks, nonzero samples, opens, disconnects, xruns, rate, device, generation. */
+	public native long[] diagnostics(long handle);
+	public static native int liveHandles();
 
 	static {
 		System.loadLibrary("c++_shared");
 		System.loadLibrary("oboe");
-		System.loadLibrary("mmapi_common");
 		System.loadLibrary("mmapi_eas");
 	}
 }
