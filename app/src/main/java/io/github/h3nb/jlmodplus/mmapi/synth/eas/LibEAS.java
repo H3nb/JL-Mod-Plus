@@ -18,22 +18,40 @@
 package io.github.h3nb.jlmodplus.mmapi.synth.eas;
 
 import io.github.h3nb.jlmodplus.mmapi.synth.Library;
+import io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator;
 
 public class LibEAS implements Library {
 	private final String soundBank;
+	private final long sessionId;
 
 	public LibEAS() {
 		this(null);
 	}
 
 	public LibEAS(String soundBank) {
-		this.soundBank = soundBank;
+        this.soundBank = soundBank;
+        RuntimeAudioCoordinator audio = RuntimeAudioCoordinator.current();
+        sessionId = audio.sessionId();
+        audio.attachOutputGate(new RuntimeAudioCoordinator.OutputGate() {
+            public void update(long epoch, long minimum, boolean allowed) {
+                setPolicy(sessionId, epoch, minimum, allowed);
+            }
+            public void close() { closeSession(sessionId); }
+        });
 	}
 	@Override
 	public long createPlayer(String locator) {
-		return createNative(locator, soundBank);
+		return createNative(locator, soundBank, sessionId);
 	}
-	private native long createNative(String locator, String bank);
+	private native long createNative(String locator, String bank, long sessionId);
+	private static native void setPolicy(long session, long epoch, long minimum, boolean allowed);
+	private static native void closeSession(long session);
+	private native void activateNative(long handle, boolean midiOnly, long requestEpoch);
+	@Override public void start(long handle, long epoch) { activateNative(handle, false, epoch); }
+	@Override public void activateMidi(long handle, long epoch) { activateNative(handle, true, epoch); }
+	@Override public native long getOutputIdentity(long handle);
+	@Override public native boolean outputFailed(long handle);
+	public native long[] runtimeDiagnostics(long handle);
 	@Override
 	public native void realize(long handle);
 	@Override

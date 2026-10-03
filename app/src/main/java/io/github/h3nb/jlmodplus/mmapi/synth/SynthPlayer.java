@@ -59,6 +59,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	private ScheduledFuture<?> eventPoll;
 	private final RuntimeAudioCoordinator audio = RuntimeAudioCoordinator.current();
 	private long outputGeneration;
+	private final long outputGroup;
 	private long playbackToken;
 	private boolean hostSuspended;
 	private boolean requestedPlayback;
@@ -86,6 +87,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 		this.library = library;
 		this.dataSource = dataSource;
 		handle = library.createPlayer(locator);
+		outputGroup = library.getOutputIdentity(handle);
 		boolean registered = false;
 		try {
 			audio.register(this);
@@ -129,7 +131,11 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 			} catch (Exception e) {
 				Log.w(TAG, "prefetch: update metadata failed", e);
 			}
-			library.prefetch(handle);
+			try { library.prefetch(handle); }
+			catch (Exception error) {
+				if (library.outputFailed(handle)) fail("Cannot prefetch runtime output: " + error);
+				throw new MediaException("Cannot prefetch runtime output: " + error);
+			}
 			state = PREFETCHED;
 			mediaTime = library.getMediaTime(handle);
 			duration = library.getDuration(handle);
@@ -153,8 +159,9 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	private void activateOutput(boolean midiOnly) throws MediaException {
 		long token = audio.requestPlayback(this);
 		try {
-			if (midiOnly) library.activateMidi(handle);
-			else library.start(handle);
+			long epoch = audio.requestEpoch(this, token);
+			if (midiOnly) library.activateMidi(handle, epoch);
+			else library.start(handle, epoch);
 			outputGeneration = library.getGeneration(handle);
 			playbackToken = token;
 			requestedPlayback = true;
@@ -229,9 +236,15 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 
 	private void fail(String message) {
 		if (state == CLOSED) return;
+		if (library.outputFailed(handle)) audio.sharedOutputFailure(outputGroup, message);
 		postEvent(PlayerListener.ERROR, message);
 		close();
 	}
+
+    @Override
+    public synchronized void onSharedOutputFailure(long group, String message) {
+        if (state != CLOSED && outputGroup == group) fail(message);
+    }
 
 	@Override
 	public synchronized void onHostSuspend(long token) {
@@ -440,6 +453,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 			}
 			return;
 		}
+		if (type == 5) { audio.sharedOutputFailure(outputGroup, "Runtime output failure (code " + error + ")"); return; }
 		if (type == 3) { fail("Sonivox failure (code " + error + ")"); return; }
 		if (state != STARTED) return;
 		mediaTime = time;

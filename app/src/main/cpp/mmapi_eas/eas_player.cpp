@@ -9,22 +9,17 @@
 
 extern "C" void JL_EAS_Realtime(int);
 namespace mmapi::eas {
-#ifdef JL_EAS_OUTPUT_TEST
-// Standalone tests substitute only the device opener; all callbacks and Player
-// management remain production code. This seam is absent from shipping builds.
-oboe::Result testOpenOutput(const oboe::AudioStreamBuilder &, std::shared_ptr<oboe::AudioStream> &);
-#endif
 namespace {
 void checked(EAS_RESULT result, const char *operation) {
     if (result == EAS_ERROR_MALLOC_FAILED) throw std::bad_alloc();
     if (result != EAS_SUCCESS) throw std::runtime_error(std::string(operation) + ": EAS " + std::to_string(result));
 }
-void checked(oboe::Result result, const char *operation) {
-    if (result != oboe::Result::OK) throw std::runtime_error(std::string(operation) + ": " + oboe::convertToText(result));
-}
+
 }
 
-Player::Player(const std::string &locator, const std::string &bank) {
+Player::Player(const std::string &locator, const std::string &bank, std::shared_ptr<Engine> shared)
+    : engine(std::move(shared)) {
+    slot = engine->reserve(this);
     try {
         checked(EAS_Init(&eas), "Initialize Sonivox");
         if (EAS_Config()->sampleRate != 44100 || EAS_Config()->mixBufferSize != 256
@@ -42,6 +37,7 @@ Player::Player(const std::string &locator, const std::string &bank) {
         closeMedia();
         if (eas) EAS_Shutdown(eas);
         eas = nullptr;
+        engine->remove(this, slot);
         throw;
     }
 }
@@ -51,88 +47,10 @@ void Player::ensureOpen() const {
 }
 void Player::quiesce() {
     rendering.store(false, std::memory_order_release);
-    // Pause is bounded. Even if the device is disconnected, close later joins it.
-    if (stream) {
-        auto state = stream->getState();
-        if (state == oboe::StreamState::Started || state == oboe::StreamState::Starting
-                || state == oboe::StreamState::Pausing) {
-            auto result = stream->pause(1000000000LL);
-            if (result != oboe::Result::OK && result != oboe::Result::ErrorDisconnected
-                    && result != oboe::Result::ErrorInvalidState) checked(result, "Pause output");
-        }
-    }
-    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(1);
-    while (callbacksActive.load(std::memory_order_acquire)) {
-        if (std::chrono::steady_clock::now() >= deadline)
-            throw std::runtime_error("Synthesis callback did not quiesce");
-        std::this_thread::yield();
-    }
+    engine->detach(this, slot);
+    engine->idle();
 }
-void Player::closeOutput() {
-    rendering.store(false, std::memory_order_release);
-    if (output) output->enabled.store(false, std::memory_order_release);
-    if (stream) {
-        // Close joins data callbacks. The stream's shared callback ownership also
-        // keeps Player alive until Oboe's separately dispatched error callback ends.
-        stream->close();
-        stream.reset();
-    }
-    output.reset();
-}
-void Player::openOutput() {
-    auto next = std::make_shared<Output>(shared_from_this());
-    oboe::AudioStreamBuilder builder;
-    builder.setDirection(oboe::Direction::Output)
-        ->setSharingMode(oboe::SharingMode::Shared)
-        ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-        ->setFormat(oboe::AudioFormat::Float)
-        ->setChannelCount(2)->setSampleRate(44100)
-        ->setSampleRateConversionQuality(oboe::SampleRateConversionQuality::Medium)
-        ->setUsage(oboe::Usage::Game)->setContentType(oboe::ContentType::Music)
-        ->setDataCallback(std::static_pointer_cast<oboe::AudioStreamDataCallback>(next))
-        ->setErrorCallback(std::static_pointer_cast<oboe::AudioStreamErrorCallback>(next));
-#ifdef JL_EAS_OUTPUT_TEST
-    checked(testOpenOutput(builder, stream), "Open synthesis output");
-#else
-    checked(builder.openStream(stream), "Open synthesis output");
-#endif
-    if (stream->getSampleRate() != 44100 || stream->getChannelCount() != 2) {
-        closeOutput();
-        throw std::runtime_error("Oboe did not provide the synthesis format");
-    }
-    output = std::move(next);
-    ++opens;
-}
-void Player::runOutput() {
-    if (needsRecovery()) replaceOutput();
-    rendering.store(true, std::memory_order_release);
-    auto result = stream->start(1000000000LL);
-    if (result != oboe::Result::OK) {
-        rendering.store(false, std::memory_order_release);
-        checked(result, "Start synthesis output");
-    }
-}
-bool Player::needsRecovery() const {
-    if (!stream) return false;
-    const int error = output->error.load(std::memory_order_acquire);
-    if (error && error != static_cast<int>(oboe::Result::ErrorDisconnected))
-        checked(static_cast<oboe::Result>(error), "Synthesis output failure");
-    return error ||
-        !output->enabled.load(std::memory_order_acquire) ||
-        stream->getState() == oboe::StreamState::Disconnected ||
-        stream->getState() == oboe::StreamState::Closed;
-}
-void Player::beginRecovery() {
-    // Only rendered progress proves recovery: open/start can succeed immediately
-    // before another disconnect. Suspended output cannot replenish this budget.
-    if (output && output->progress.load(std::memory_order_acquire) >= 4410) recoveries = 0;
-    if (++recoveries > 3)
-        throw std::runtime_error("Synthesis output recovery exhausted (3 attempts without healthy output)");
-}
-void Player::replaceOutput() {
-    beginRecovery();
-    closeOutput(); openOutput();
-}
+void Player::runOutput(bool fresh) { engine->activate(this, fresh); }
 void Player::invalidate() {
     generation.fetch_add(1, std::memory_order_acq_rel);
     pending.store(0); renderError.store(0);
@@ -161,12 +79,12 @@ void Player::openMedia(std::vector<uint8_t> bytes) {
 void Player::prefetch() {
     std::lock_guard<std::mutex> lock(controls);
     ensureOpen();
-    if (!stream) openOutput();
+    engine->prepare(this);
 }
-void Player::start() {
+void Player::start(int64_t policyEpoch) {
     std::lock_guard<std::mutex> lock(controls);
     ensureOpen();
-    if (!stream) throw std::runtime_error("Synthesis output is not prefetched");
+    if (!prepared.load()) throw std::runtime_error("Synthesis output is not prefetched");
     quiesce(); invalidate();
     EAS_STATE mediaState = EAS_STATE_READY;
     if (media) checked(EAS_State(eas, media, &mediaState), "Read synthesis state");
@@ -174,17 +92,17 @@ void Player::start() {
         checked(EAS_Locate(eas, media, 0, EAS_FALSE), "Restart synthesis media");
         position.store(0); cursor = 256; blockEndTime = 0; remaining = looping; ended = false;
     }
-    midiOnly = false; requested = true; hostSuspended = false; recoveries = 0;
-    runOutput();
+    midiOnly = false; requested = true; hostSuspended = false;
+    if (remaining == 0) remaining = looping;
+    requestEpoch.store(policyEpoch); runOutput(true);
 }
-void Player::activateMidi() {
+void Player::activateMidi(int64_t policyEpoch) {
     std::lock_guard<std::mutex> lock(controls);
     ensureOpen();
-    if (!stream) throw std::runtime_error("MIDI requires prefetched output");
-    if (requested && rendering.load()) return;
+    if (!prepared.load()) throw std::runtime_error("MIDI requires prefetched output");
     quiesce(); invalidate();
-    midiOnly = media != nullptr; requested = true; hostSuspended = false; recoveries = 0;
-    runOutput();
+    midiOnly = media != nullptr; requested = true; hostSuspended = false;
+    requestEpoch.store(policyEpoch); runOutput(true);
 }
 void Player::pause() {
     std::lock_guard<std::mutex> lock(controls);
@@ -200,18 +118,19 @@ void Player::suspendOutput() {
 void Player::resumeOutput() {
     std::lock_guard<std::mutex> lock(controls);
     ensureOpen(); hostSuspended = false;
-    if (!stream || !requested || pending.load(std::memory_order_acquire)) return;
+    if (!prepared.load() || !requested || pending.load(std::memory_order_acquire)) return;
     runOutput();
 }
 void Player::deallocate() {
     std::lock_guard<std::mutex> lock(controls);
-    ensureOpen(); quiesce(); requested = false; invalidate(); closeOutput();
+    ensureOpen(); quiesce(); requested = false; invalidate(); engine->release(this);
 }
 void Player::shutdown() {
     std::lock_guard<std::mutex> lock(controls);
     if (closed) return;
     closed = true; requested = false;
-    closeOutput();
+    rendering.store(false); prepared.store(false);
+    engine->remove(this, slot);
     closeMedia();
     if (eas) { EAS_Shutdown(eas); eas = nullptr; }
 }
@@ -226,7 +145,7 @@ int64_t Player::seek(int64_t time) {
     checked(EAS_Locate(eas, media, static_cast<EAS_I32>(time), EAS_FALSE), "Seek synthesis media");
     position.store(time * 1000); blockEndTime = time * 1000;
     cursor = interactiveCursor = 256; ended = false;
-    if (stream && requested && !hostSuspended) runOutput();
+    if (prepared.load() && requested && !hostSuspended) runOutput();
     return position.load();
 }
 int64_t Player::length() {
@@ -243,7 +162,7 @@ void Player::data(std::vector<uint8_t> bytes) {
 }
 int Player::writeMidi(const uint8_t *bytes, int length) {
     std::lock_guard<std::mutex> lock(controls); ensureOpen();
-    if (!stream) throw std::runtime_error("MIDI requires prefetched output");
+    if (!prepared.load()) throw std::runtime_error("MIDI requires prefetched output");
     uint32_t head = midiHead.load(std::memory_order_relaxed);
     uint32_t tail = midiTail.load(std::memory_order_acquire);
     // All JNI producers serialize under controls; callback is the sole consumer.
@@ -330,55 +249,49 @@ bool Player::poll(Event &event) {
         } else if (type == 3) requested = false;
         return true;
     }
-    int error = output && !output->reported ? output->error.load(std::memory_order_acquire) : 0;
-    if (error) {
-        output->reported = true;
-        if (error == static_cast<int>(oboe::Result::ErrorDisconnected)) disconnects.fetch_add(1);
-        event = {error == static_cast<int>(oboe::Result::ErrorDisconnected) ? 4 : 3,
-                 position.load(), generation.load(), error};
+    if (fatalReported) return false;
+    int error = 0;
+    if (engine->poll(seenOutputEpoch, error)) {
+        const bool disconnected = error == static_cast<int>(oboe::Result::ErrorDisconnected) && !engine->failed();
+        if (disconnected) disconnects.fetch_add(1);
+        else fatalReported = true;
+        event = {disconnected ? 4 : 5, position.load(), generation.load(), error};
         return true;
     }
     return false;
 }
 void Player::recoverOutput() {
     std::lock_guard<std::mutex> lock(controls); ensureOpen();
-    if (!needsRecovery() || !requested || hostSuspended) return;
-    quiesce();
-    replaceOutput();
-    if (requested && !hostSuspended) runOutput();
+    if (!requested || hostSuspended) return;
+    try { engine->recover(); } catch (...) { rendering.store(false); throw; }
 }
 std::array<int64_t, 9> Player::diagnostics() {
     std::lock_guard<std::mutex> lock(controls); ensureOpen();
+    std::lock_guard<std::mutex> outputLock(engine->controls);
+    auto stream = engine->stream;
     int64_t xruns = -1;
     if (stream) { auto result = stream->getXRunCount(); if (result) xruns = result.value(); }
-    return {frames.load(), callbacks.load(), nonzero.load(), opens, disconnects.load(), xruns,
+    return {frames.load(), callbacks.load(), nonzero.load(), engine->opens, disconnects.load(), xruns,
         stream ? stream->getSampleRate() : 0, stream ? stream->getDeviceId() : 0, generation.load()};
 }
-oboe::DataCallbackResult Player::Output::onAudioReady(oboe::AudioStream *, void *audio, int32_t count) {
-    return owner->render(*this, audio, count);
-}
-oboe::DataCallbackResult Player::render(Output &origin, void *audio, int32_t count) {
-    callbacksActive.fetch_add(1, std::memory_order_acq_rel);
-    auto out = static_cast<float *>(audio);
-    std::fill(out, out + static_cast<size_t>(count) * 2, 0.0f);
-    if (origin.enabled.load(std::memory_order_acquire) && !origin.error.load(std::memory_order_acquire)
-            && rendering.load(std::memory_order_acquire)) {
-        JL_EAS_Realtime(1);
+int Player::mix(float *out, int32_t count) {
+    if (rendering.load(std::memory_order_acquire)) {
         int offset = 0;
         int &read = midiOnly ? interactiveCursor : cursor;
         const auto &samples = midiOnly ? interactiveBlock : block;
         float l = left.load(), r = right.load();
         int64_t audible = 0;
         while (offset < count && rendering.load(std::memory_order_acquire)
-                && origin.enabled.load(std::memory_order_acquire)
-                && !origin.error.load(std::memory_order_acquire)) {
+) {
             if (read == 256 && !renderBlock(midiOnly)) break;
             int amount = std::min(count - offset, 256 - read);
             for (int i = 0; i < amount; ++i) {
-                out[2 * (offset + i)] = samples[2 * (read + i)] * (l / 32768.0f);
-                out[2 * (offset + i) + 1] = samples[2 * (read + i) + 1] * (r / 32768.0f);
-                audible += out[2 * (offset + i)] != 0;
-                audible += out[2 * (offset + i) + 1] != 0;
+                const float sourceLeft = samples[2 * (read + i)] * (l / 32768.0f);
+                const float sourceRight = samples[2 * (read + i) + 1] * (r / 32768.0f);
+                out[2 * (offset + i)] += sourceLeft;
+                out[2 * (offset + i) + 1] += sourceRight;
+                audible += sourceLeft != 0;
+                audible += sourceRight != 0;
             }
             read += amount; offset += amount;
             if (media && !midiOnly) {
@@ -388,16 +301,8 @@ oboe::DataCallbackResult Player::render(Output &origin, void *audio, int32_t cou
             }
         }
         nonzero.fetch_add(audible); frames.fetch_add(offset); callbacks.fetch_add(1);
-        origin.progress.fetch_add(offset, std::memory_order_release);
-        JL_EAS_Realtime(0);
+        return offset;
     }
-    callbacksActive.fetch_sub(1, std::memory_order_release);
-    return oboe::DataCallbackResult::Continue;
-}
-bool Player::Output::onError(oboe::AudioStream *, oboe::Result failure) {
-    int empty = 0;
-    error.compare_exchange_strong(empty, static_cast<int>(failure), std::memory_order_acq_rel);
-    // Java management polling closes/reopens. Oboe must not close on this callback.
-    return true;
+    return 0;
 }
 }

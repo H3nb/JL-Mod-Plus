@@ -2,7 +2,7 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := mmapi_eas
-LOCAL_SRC_FILES := eas_player.cpp eas_player_jni.cpp eas_file.cpp eas_host.c
+LOCAL_SRC_FILES := audio_engine.cpp eas_player.cpp eas_player_jni.cpp eas_file.cpp eas_host.c
 LOCAL_CFLAGS := -O2 -fvisibility=hidden
 LOCAL_CPPFLAGS := -std=c++17 -fexceptions
 LOCAL_C_INCLUDES := $(LOCAL_PATH)

@@ -5,10 +5,14 @@
 #include <unordered_map>
 using mmapi::eas::Player;
 using mmapi::eas::Event;
+using mmapi::eas::Engine;
 namespace {
 std::mutex registryLock;
 std::unordered_map<jlong, std::shared_ptr<Player>> registry;
 jlong nextHandle = 1;
+size_t creating = 0;
+struct Session { std::weak_ptr<Engine> engine; int64_t epoch = 0, minimum = 0; bool allowed = false; };
+std::unordered_map<jlong, Session> sessions;
 constexpr size_t MAX_PLAYERS = 16;
 std::shared_ptr<Player> player(jlong handle) {
     std::lock_guard<std::mutex> lock(registryLock);
@@ -68,18 +72,70 @@ void dispose(jlong handle) {
 extern "C" JNIEXPORT void JNICALL JNI_NAME(method)(JNIEnv *env, jobject, jlong handle) { \
     try { statement; } catch (...) { translate(env); } \
 }
-extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, jstring locator, jstring bank) {
+extern "C" JNIEXPORT void JNICALL JNI_NAME(setPolicy)(JNIEnv *, jclass, jlong id, jlong epoch,
+        jlong minimum, jboolean allowed) {
+    std::lock_guard<std::mutex> lock(registryLock);
+    auto &session = sessions[id];
+    if (epoch < session.epoch) return;
+    session.epoch = epoch; session.minimum = minimum; session.allowed = allowed;
+    if (auto engine = session.engine.lock()) engine->policy(minimum, allowed);
+}
+extern "C" JNIEXPORT void JNICALL JNI_NAME(closeSession)(JNIEnv *, jclass, jlong id) {
+    std::lock_guard<std::mutex> lock(registryLock);
+    auto found = sessions.find(id);
+    if (found == sessions.end()) return;
+    if (auto engine = found->second.engine.lock()) engine->policy(INT64_MAX, false);
+    sessions.erase(found);
+}
+extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, jstring locator,
+        jstring bank, jlong sessionId) {
+    bool reserved = false;
     try {
         auto path = string(env, locator);
         auto font = string(env, bank, true);
-        std::lock_guard<std::mutex> lock(registryLock);
-        if (registry.size() >= MAX_PLAYERS) throw std::runtime_error("Synthesis context limit reached (16 Players)");
-        if (nextHandle == std::numeric_limits<jlong>::max()) throw std::runtime_error("Synthesis handle space exhausted");
-        auto owned = std::make_shared<Player>(path, font);
-        jlong handle = nextHandle++;
-        registry.emplace(handle, std::move(owned));
+        std::shared_ptr<Engine> engine;
+        jlong handle;
+        {
+            std::lock_guard<std::mutex> lock(registryLock);
+            if (registry.size() + creating >= MAX_PLAYERS) throw std::runtime_error("Audio context limit reached (16 Players)");
+            if (nextHandle == std::numeric_limits<jlong>::max()) throw std::runtime_error("Audio handle space exhausted");
+            auto &session = sessions.at(sessionId);
+            engine = session.engine.lock();
+            if (!engine) { engine = std::make_shared<Engine>(); session.engine = engine; }
+            engine->policy(session.minimum, session.allowed);
+            handle = nextHandle++; ++creating; reserved = true;
+        }
+        // Bank and source IO must not hold the handle registry against peer management.
+        auto owned = std::make_shared<Player>(path, font, engine);
+        {
+            std::lock_guard<std::mutex> lock(registryLock);
+            registry.emplace(handle, std::move(owned)); --creating; reserved = false;
+        }
         return handle;
-    } catch (...) { translate(env); return 0; }
+    } catch (...) {
+        if (reserved) { std::lock_guard<std::mutex> lock(registryLock); --creating; }
+        translate(env); return 0;
+    }
+}
+extern "C" JNIEXPORT void JNICALL JNI_NAME(activateNative)(JNIEnv *env, jobject, jlong handle,
+        jboolean midiOnly, jlong epoch) {
+    try { auto owned = player(handle); if (midiOnly) owned->activateMidi(epoch); else owned->start(epoch); }
+    catch (...) { translate(env); }
+}
+extern "C" JNIEXPORT jlong JNICALL JNI_NAME(getOutputIdentity)(JNIEnv *env, jobject, jlong handle) {
+    try { return player(handle)->outputGroup(); } catch (...) { translate(env); return 0; }
+}
+extern "C" JNIEXPORT jboolean JNICALL JNI_NAME(outputFailed)(JNIEnv *env, jobject, jlong handle) {
+    try { return player(handle)->outputFailed(); } catch (...) { translate(env); return false; }
+}
+extern "C" JNIEXPORT jlongArray JNICALL JNI_NAME(runtimeDiagnostics)(JNIEnv *env, jobject, jlong handle) {
+    try {
+        auto values = player(handle)->runtimeDiagnostics();
+        jlong longs[10]; std::copy(values.begin(), values.end(), longs);
+        auto result = env->NewLongArray(10);
+        if (result) env->SetLongArrayRegion(result, 0, 10, longs);
+        return result;
+    } catch (...) { translate(env); return nullptr; }
 }
 VOID_METHOD(close, dispose(handle))
 VOID_METHOD(realize, (void)player(handle))

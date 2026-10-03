@@ -12,6 +12,36 @@ import javax.microedition.media.MediaException;
 
 public class RuntimeAudioCoordinatorTest {
     @Test
+    public void outputGateFencesOldGrantsBeforeQueuedParticipantCallbacks() throws Exception {
+        Driver driver = new Driver();
+        RuntimeAudioCoordinator audio = new RuntimeAudioCoordinator(driver, true);
+        long[] policy = new long[3];
+        audio.attachOutputGate((epoch, minimum, allowed) -> {
+            policy[0] = epoch; policy[1] = minimum; policy[2] = allowed ? 1 : 0;
+        });
+        Player old = new Player(audio);
+        old.start();
+        long grant = audio.requestEpoch(old, old.token);
+        assertEquals(1, policy[2]);
+        driver.change(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT);
+        assertEquals(0, policy[2]);
+        assertTrue(grant >= policy[1]);
+        driver.change(AudioManager.AUDIOFOCUS_GAIN);
+        assertEquals(1, policy[2]);
+        driver.change(AudioManager.AUDIOFOCUS_LOSS);
+        assertTrue(grant < policy[1]);
+        assertFalse(old.revoked); // The native gate precedes queued Java delivery.
+        Player fresh = new Player(audio);
+        fresh.start();
+        assertTrue(audio.requestEpoch(fresh, fresh.token) >= policy[1]);
+        assertEquals(grant, audio.requestEpoch(old, old.token));
+        driver.drain();
+        assertTrue(audio.isPlaybackAllowed(fresh, fresh.token));
+        audio.close();
+        assertEquals(0, policy[2]);
+    }
+
+    @Test
     public void oneFocusOwnerSuspendsBothBackendsAndGuestStopCancelsResume() throws Exception {
         Driver driver = new Driver();
         RuntimeAudioCoordinator audio = new RuntimeAudioCoordinator(driver, true);

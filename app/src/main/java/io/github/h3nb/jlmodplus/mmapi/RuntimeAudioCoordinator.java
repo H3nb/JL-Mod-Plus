@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.microedition.media.MediaException;
 import javax.microedition.util.ContextHolder;
@@ -40,6 +41,7 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
         void onHostResume(long token);
         void onHostFocusRevoked(long token);
         void closeForRuntime();
+        default void onSharedOutputFailure(long group, String message) {}
     }
 
     interface FocusListener {
@@ -53,6 +55,14 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
         void execute(Runnable action);
     }
 
+    public interface OutputGate {
+        void update(long epoch, long minimumRequestEpoch, boolean allowed);
+        default void close() {}
+    }
+    private static final AtomicLong nextSession = new AtomicLong();
+    private final long sessionId = nextSession.incrementAndGet();
+    private OutputGate outputGate;
+    private long policyEpoch, minimumRequestEpoch, failedGroup;
     private static RuntimeAudioCoordinator active;
     private static boolean hostForeground;
     private final FocusDriver driver;
@@ -66,7 +76,7 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
     private long focusEpoch;
 
     private static final class Entry {
-        long token;
+        long token, requestEpoch;
         boolean requested;
     }
 
@@ -117,6 +127,38 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
         if (!participants.containsKey(participant)) participants.put(participant, new Entry());
     }
 
+    public long sessionId() { return sessionId; }
+
+    public synchronized void attachOutputGate(OutputGate gate) {
+        if (closed) throw new IllegalStateException("Audio runtime is closed");
+        if (outputGate == null) { outputGate = gate; publishPolicy(); }
+    }
+
+    private void publishPolicy() {
+        ++policyEpoch;
+        if (outputGate != null) outputGate.update(policyEpoch, minimumRequestEpoch,
+                !closed && foreground && focusHeld);
+    }
+
+    public synchronized long requestEpoch(Participant participant, long token) {
+        Entry entry = participants.get(participant);
+        return entry != null && entry.token == token ? entry.requestEpoch : -1;
+    }
+
+    public synchronized void sharedOutputFailure(long group, String message) {
+        if (closed || group == 0 || failedGroup == group) return;
+        failedGroup = group;
+        ArrayList<Participant> snapshot = new ArrayList<>(participants.keySet());
+        management.execute(() -> {
+            for (Participant participant : snapshot) {
+                try { participant.onSharedOutputFailure(group, message); }
+                catch (RuntimeException error) {
+                    Log.w("RuntimeAudio", "Unable to close failed output participant", error);
+                }
+            }
+        });
+    }
+
     /** Native state/output management must remain independent of arbitrary guest listeners. */
     public synchronized ScheduledFuture<?> scheduleManagement(Runnable action) {
         if (closed) throw new IllegalStateException("Audio runtime is closed");
@@ -133,6 +175,7 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
         }
         entry.token = ++nextToken;
         entry.requested = true;
+        entry.requestEpoch = policyEpoch;
         return entry.token;
     }
 
@@ -172,7 +215,7 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
             focusHeld = false;
         }
         if (!focusHeld) abandonFocus();
-        else dispatchRequested(false, false);
+        else { publishPolicy(); dispatchRequested(false, false); }
         return focusHeld;
     }
 
@@ -183,6 +226,7 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
             focusRequested = false;
             driver.abandon();
         }
+        publishPolicy();
     }
 
     synchronized void setForeground(boolean value) {
@@ -202,15 +246,19 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
         if (closed || !focusRequested || epoch != focusEpoch) return;
         if (change == AudioManager.AUDIOFOCUS_GAIN) {
             focusHeld = foreground;
+            publishPolicy();
             if (focusHeld) dispatchRequested(false, false);
         } else if (change == AudioManager.AUDIOFOCUS_LOSS) {
             focusHeld = false;
+            minimumRequestEpoch = policyEpoch + 1;
+            publishPolicy();
             dispatchRequested(true, true);
             for (Entry entry : participants.values()) entry.requested = false;
             abandonFocus();
         } else if (change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT
                 || change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
             focusHeld = false;
+            publishPolicy();
             dispatchRequested(true, false);
         }
     }
@@ -247,6 +295,7 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
                 Log.w("RuntimeAudio", "Unable to close runtime audio participant", error);
             }
         }
+        if (outputGate != null) outputGate.close();
     }
 
     private static final class AndroidFocusDriver implements FocusDriver {

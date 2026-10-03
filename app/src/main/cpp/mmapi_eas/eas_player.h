@@ -3,6 +3,7 @@
 #define MMAPI_EAS_PLAYER_H
 #include "eas.h"
 #include "eas_file.h"
+#include "audio_engine.h"
 #include <oboe/Oboe.h>
 #include <array>
 #include <atomic>
@@ -14,28 +15,19 @@ struct Event { int64_t type, time, generation, error; };
 // Java owns guest state. This class owns only the context and output resources.
 // Controls serialize every producer and quiesce callbacks before touching EAS.
 class Player final : public std::enable_shared_from_this<Player> {
-    // Oboe error callbacks can outlive close. Each callback owns only its output's
-    // facts, so delayed publication cannot disable or poison a replacement.
-    struct Output final : oboe::AudioStreamDataCallback, oboe::AudioStreamErrorCallback {
-        const std::shared_ptr<Player> owner;
-        std::atomic<bool> enabled{true};
-        std::atomic<int> error{0};
-        std::atomic<int64_t> progress{0};
-        bool reported = false; // Management-only; keep the error fact after delivery.
-        explicit Output(std::shared_ptr<Player> player) : owner(std::move(player)) {}
-        oboe::DataCallbackResult onAudioReady(oboe::AudioStream *, void *, int32_t) override;
-        bool onError(oboe::AudioStream *, oboe::Result) override;
-    };
     std::mutex controls;
     EAS_DATA_HANDLE eas = nullptr;
     EAS_HANDLE media = nullptr, interactive = nullptr;
     std::unique_ptr<MemoryFile> source;
-    std::shared_ptr<oboe::AudioStream> stream;
-    std::shared_ptr<Output> output;
-    std::atomic<int> callbacksActive{0};
+    const std::shared_ptr<Engine> engine;
+    int slot = -1;
+    int64_t outputIdentity = 0, seenOutputEpoch = 0;
+    bool fatalReported = false;
+    std::atomic<bool> prepared{false};
+    std::atomic<int64_t> requestEpoch{0};
     std::atomic<bool> rendering{false};
     bool requested = false, closed = false, ended = false, midiOnly = false, hostSuspended = false;
-    int looping = 1, remaining = 1, recoveries = 0;
+    int looping = 1, remaining = 1;
     std::atomic<int64_t> position{0}, generation{1};
     int64_t duration = -1, blockEndTime = 0;
     std::array<EAS_PCM, 512> block{};
@@ -49,31 +41,27 @@ class Player final : public std::enable_shared_from_this<Player> {
     std::atomic<int> pending{0}, renderError{0};
     std::atomic<int64_t> eventTime{0}, eventGeneration{0};
     std::atomic<int64_t> frames{0}, callbacks{0}, nonzero{0}, disconnects{0};
-    int64_t opens = 0;
     void ensureOpen() const;
     void quiesce();
-    void closeOutput();
-    void openOutput();
-    void runOutput();
-    bool needsRecovery() const;
-    void beginRecovery();
-    void replaceOutput();
+    void runOutput(bool fresh = false);
     void invalidate();
     void closeMedia();
     void openMedia(std::vector<uint8_t> bytes);
     void signal(int type, int error);
     bool renderBlock(bool onlyMidi);
     void drainMidi();
-    oboe::DataCallbackResult render(Output &origin, void *audio, int32_t count);
+    int mix(float *audio, int32_t count);
 public:
     friend class PlayerTest;
+    friend class Engine;
     static constexpr size_t MEDIA_LIMIT = 16 * 1024 * 1024;
     static constexpr size_t BANK_LIMIT = 128 * 1024 * 1024;
-    Player(const std::string &locator, const std::string &bank);
+    Player(const std::string &locator, const std::string &bank,
+        std::shared_ptr<Engine> engine = std::make_shared<Engine>());
     ~Player();
     void prefetch();
-    void start();
-    void activateMidi();
+    void start(int64_t policyEpoch = 0);
+    void activateMidi(int64_t policyEpoch = 0);
     void pause();
     void suspendOutput();
     void resumeOutput();
@@ -90,6 +78,9 @@ public:
     bool poll(Event &event);
     void recoverOutput();
     std::array<int64_t, 9> diagnostics();
+    std::array<int64_t, 10> runtimeDiagnostics() { return engine->diagnostics(); }
+    int64_t outputGroup() const { return outputIdentity; }
+    bool outputFailed() const { return engine->failed(); }
 };
 }
 #endif

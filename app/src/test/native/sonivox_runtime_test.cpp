@@ -52,15 +52,13 @@ class PlayerTest {
         if (!condition) throw std::runtime_error(message);
     }
     static void activate(Player &player) {
-        if (!player.output) player.output = std::make_shared<Player::Output>(
-            std::shared_ptr<Player>(&player, [](Player *) {}));
-        player.rendering.store(true); player.requested = true;
+        player.prefetch(); player.start();
     }
     static std::vector<float> render(Player &player, const std::vector<int> &sizes) {
         std::vector<float> all;
         for (int count : sizes) {
             std::vector<float> guarded(count * 2 + 16, 123456.0f);
-            player.output->onAudioReady(nullptr, guarded.data() + 8, count);
+            player.engine->output->onAudioReady(nullptr, guarded.data() + 8, count);
             require(JL_EAS_RealtimeAllocations() == 0, "Core allocates while rendering");
             require(std::all_of(guarded.begin(), guarded.begin() + 8,
                 [](float x) { return x == 123456.0f; }), "Callback writes before buffer");
@@ -81,8 +79,8 @@ public:
 
         // Resolve the old callback's origin, then deliberately hold publication
         // until close/reopen/start has finished. No sleeps or shipping hooks.
-        auto old = player->output;
-        auto oldStream = std::static_pointer_cast<TestStream>(player->stream);
+        auto old = player->engine->output;
+        auto oldStream = std::static_pointer_cast<TestStream>(player->engine->stream);
         std::promise<void> entered, publish;
         auto permission = publish.get_future();
         std::thread delayed([&] {
@@ -93,8 +91,8 @@ public:
         entered.get_future().wait();
         oldStream->state = oboe::StreamState::Disconnected;
         player->recoverOutput();
-        auto replacement = player->output;
-        auto replacementStream = std::static_pointer_cast<TestStream>(player->stream);
+        auto replacement = player->engine->output;
+        auto replacementStream = std::static_pointer_cast<TestStream>(player->engine->stream);
         publish.set_value(); delayed.join();
         require(old->error.load() != 0 && replacement->error.load() == 0 && replacement->enabled.load(),
             "Old callback error poisons replacement");
@@ -107,8 +105,8 @@ public:
 
         // Six independent healthy episodes on the same request, including GAIN.
         for (int episode = 0; episode < 6; ++episode) {
-            auto current = player->output;
-            auto device = std::static_pointer_cast<TestStream>(player->stream);
+            auto current = player->engine->output;
+            auto device = std::static_pointer_cast<TestStream>(player->engine->stream);
             current->onError(device.get(), oboe::Result::ErrorDisconnected);
             device->state = oboe::StreamState::Disconnected;
             require(player->poll(event) && event.type == 4, "Disconnect not recoverable");
@@ -116,59 +114,59 @@ public:
             if (episode == 3) {
                 player->suspendOutput();
                 player->recoverOutput();
-                require(player->output == current && !player->rendering.load(), "Suspension reopens or autoplays");
+                require(player->engine->output == current && !player->rendering.load(), "Suspension reopens or autoplays");
                 player->resumeOutput();
             } else player->recoverOutput();
-            require(player->output != current && player->epoch() == epoch, "Recovery changes media request");
+            require(player->engine->output != current && player->epoch() == epoch, "Recovery changes media request");
             render(*player, {511,511,511,511,511,511,511,511,511});
-            require(player->output->progress.load() >= 4410, "Replacement not healthy");
+            require(player->engine->output->progress.load() >= 4410, "Replacement not healthy");
         }
         // A fresh storm gets three attempts, not three attempts per request.
         for (int attempt = 0; attempt < 3; ++attempt) {
-            player->output->onError(player->stream.get(), oboe::Result::ErrorDisconnected);
+            player->engine->output->onError(player->engine->stream.get(), oboe::Result::ErrorDisconnected);
             player->recoverOutput();
         }
-        player->output->onError(player->stream.get(), oboe::Result::ErrorDisconnected);
+        player->engine->output->onError(player->engine->stream.get(), oboe::Result::ErrorDisconnected);
         bool exhausted = false;
         try { player->recoverOutput(); } catch (const std::runtime_error &) { exhausted = true; }
         require(exhausted && !player->rendering.load(), "Disconnect storm unbounded");
         player->shutdown();
         auto last = replacement;
         last->onError(nullptr, oboe::Result::ErrorDisconnected);
-        require(!last->enabled.load() && !player->stream, "Close allows stale recovery");
+        require(!last->enabled.load() && !player->engine->stream, "Close allows stale recovery");
 
         auto failing = std::make_shared<Player>("device://midi", bank);
         failing->prefetch(); failing->start();
-        failing->output->onError(failing->stream.get(), oboe::Result::ErrorDisconnected);
+        failing->engine->output->onError(failing->engine->stream.get(), oboe::Result::ErrorDisconnected);
         rejectOpen = true;
         bool rejected = false;
         try { failing->recoverOutput(); } catch (const std::runtime_error &) { rejected = true; }
         rejectOpen = false;
-        require(rejected && !failing->stream && !failing->rendering.load(), "Open failure leaves output running");
+        require(rejected && !failing->engine->stream && !failing->rendering.load(), "Open failure leaves output running");
         failing->shutdown();
         auto stopped = std::make_shared<Player>("device://midi", bank);
         stopped->prefetch(); stopped->start(); stopped->pause();
-        auto idle = stopped->output;
-        idle->onError(stopped->stream.get(), oboe::Result::ErrorDisconnected);
+        auto idle = stopped->engine->output;
+        idle->onError(stopped->engine->stream.get(), oboe::Result::ErrorDisconnected);
         stopped->recoverOutput(); stopped->resumeOutput();
-        require(stopped->output == idle && !stopped->rendering.load(), "Guest stop recovers into autoplay");
+        require(stopped->engine->output == idle && !stopped->rendering.load(), "Guest stop recovers into autoplay");
         stopped->start();
-        require(stopped->output != idle && stopped->rendering.load(), "Fresh start cannot recover stopped output");
+        require(stopped->engine->output != idle && stopped->rendering.load(), "Fresh start cannot recover stopped output");
         stopped->shutdown();
         auto fatal = std::make_shared<Player>("device://midi", bank);
         fatal->prefetch(); fatal->start(); fatal->suspendOutput();
-        fatal->output->onError(fatal->stream.get(), oboe::Result::ErrorInternal);
+        fatal->engine->output->onError(fatal->engine->stream.get(), oboe::Result::ErrorInternal);
         bool failed = false;
         try { fatal->resumeOutput(); } catch (const std::runtime_error &) { failed = true; }
-        require(failed && fatal->opens == 1 && !fatal->rendering.load(), "GAIN hides a fatal output error");
-        require(fatal->poll(event) && event.type == 3 && !fatal->poll(event), "Fatal error not delivered once");
+        require(failed && fatal->engine->opens == 1 && !fatal->rendering.load(), "GAIN hides a fatal output error");
+        require(fatal->poll(event) && event.type == 5 && !fatal->poll(event), "Fatal error not delivered once");
         failed = false;
         try { fatal->recoverOutput(); } catch (const std::runtime_error &) { failed = true; }
-        require(failed && fatal->opens == 1, "Polling loses fatal cause");
+        require(failed && fatal->engine->opens == 1, "Polling loses fatal cause");
         fatal->shutdown();
         auto closing = std::make_shared<Player>("device://midi", bank);
         closing->prefetch(); closing->start();
-        closing->output->onError(closing->stream.get(), oboe::Result::ErrorDisconnected);
+        closing->engine->output->onError(closing->engine->stream.get(), oboe::Result::ErrorDisconnected);
         std::promise<void> reopening, finishOpen, closeEntered;
         auto releaseOpen = finishOpen.get_future();
         beforeOpen = [&] { reopening.set_value(); releaseOpen.wait(); };
@@ -181,13 +179,93 @@ public:
         bool closeBlocked = closure.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
         finishOpen.set_value(); recovery.get(); closure.get(); beforeOpen = {};
         require(closeBlocked, "Close destroys context while reopen owns controls");
-        require(closing->closed && !closing->stream && !closing->output && !closing->rendering.load(),
+        require(closing->closed && !closing->engine->stream && !closing->engine->output && !closing->rendering.load(),
             "Recovery reopens output after concurrent close returns");
         std::puts("PASS: close requested during a controlled blocked reopen leaves no output/context");
         std::puts("PASS: delayed old publication, 7 healthy recoveries including GAIN, bounded storm and open failure");
     }
+    static void sharedSources(const std::string &bank) {
+        auto engine = std::make_shared<Engine>();
+        Player a("device://midi", bank, engine), b("device://midi", bank, engine);
+        Player reference("device://midi", bank);
+        const std::vector<uint8_t> smf = {
+            'M','T','h','d',0,0,0,6,0,0,0,1,0,96,
+            'M','T','r','k',0,0,0,15,0,0xc0,0,0,0x90,60,100,
+            96,0x80,60,0,0,0xff,0x2f,0
+        };
+        a.data(smf);
+        uint8_t note[] = {0x90, 64, 100};
+        b.prefetch(); reference.prefetch();
+        b.writeMidi(note, sizeof(note)); reference.writeMidi(note, sizeof(note));
+        b.start(); reference.start(); a.prefetch(); a.start();
+        require(a.engine == b.engine && engine->opens == 1, "Sources open separate runtime outputs");
+        render(b, {257,511}); render(reference, {257,511});
+        a.pause();
+        require(render(b, {257,511}) == render(reference, {257,511}), "Stop A changes B PCM");
+        auto bEpoch = b.epoch(); auto device = engine->stream;
+        a.seek(250000);
+        require(render(b, {511}) == render(reference, {511}), "Seek A consumes B staging");
+        a.deallocate();
+        require(engine->stream == device && engine->opens == 1, "Deallocate A replaces shared output");
+        require(render(b, {257}) == render(reference, {257}), "Deallocate A changes B PCM");
+        a.shutdown();
+        require(render(b, {511}) == render(reference, {511}) && b.epoch() == bEpoch,
+            "Close A loses B voices or generation");
+        require(engine->stream == device && device->getState() == oboe::StreamState::Started,
+            "Close A pauses B output");
+        reference.shutdown(); b.shutdown();
+
+        Player old("device://midi", bank, engine), fresh("device://midi", bank, engine);
+        old.prefetch(); old.start(0); fresh.prefetch();
+        engine->policy(7, true); fresh.start(7);
+        auto oldFrames = old.frames.load();
+        render(fresh, {257});
+        require(old.frames.load() == oldFrames && fresh.frames.load() == 257,
+            "Permanent loss plays stale request beside fresh source");
+        old.suspendOutput();
+        require(engine->stream->getState() == oboe::StreamState::Started,
+            "Late old source suspension pauses fresh output");
+        engine->policy(7, false);
+        auto freshFrames = fresh.frames.load();
+        render(fresh, {511});
+        require(fresh.frames.load() == freshFrames, "Policy suspension consumes PCM");
+        fresh.suspendOutput(); engine->policy(7, true); fresh.resumeOutput();
+        render(fresh, {257});
+        require(fresh.frames.load() == freshFrames + 257, "Transient gain loses fresh intent");
+        fresh.shutdown(); old.shutdown();
+
+        engine->policy(0, true);
+        Player one("device://midi", bank, engine), two("device://midi", bank, engine);
+        activate(one); activate(two);
+        one.cursor = two.cursor = 0;
+        one.block.fill(32000); two.block.fill(32000);
+        auto saturated = render(one, {256});
+        require(std::all_of(saturated.begin(), saturated.end(), [](float x) { return x == 1; })
+                && engine->clipped.load() >= 512, "Mixer overload policy is not measured hard clipping");
+        one.cursor = two.cursor = 0; one.gain(.25f, .25f); two.gain(.5f, .5f);
+        auto attenuated = render(one, {256});
+        require(std::all_of(attenuated.begin(), attenuated.end(), [](float x) {
+            return x == 32000 * .75f / 32768;
+        }), "Mixer normalizes by source count or loses gain");
+        auto claimed = one.slot;
+        engine->slots[claimed].hazard.store(&one);
+        std::promise<void> entered;
+        auto closing = std::async(std::launch::async, [&] { entered.set_value(); one.shutdown(); });
+        entered.get_future().wait();
+        require(closing.wait_for(std::chrono::milliseconds(20)) == std::future_status::timeout,
+            "Close frees a source claimed by callback");
+        engine->slots[claimed].hazard.store(nullptr); closing.get();
+        require(engine->stream && two.prepared.load(), "Acknowledged close frees peer output");
+        engine->output->onError(engine->stream.get(), oboe::Result::ErrorInternal);
+        Event terminal{};
+        require(two.poll(terminal) && terminal.type == 5 && engine->failed(),
+            "Fatal output is not runtime scoped");
+        two.shutdown();
+        std::puts("PASS: one output, two synths, stop/seek/deallocate/close isolation, policy fencing, clipping, lifetime acknowledgment");
+    }
     static void run(const std::string &bank) {
         outputRecovery(bank);
+        sharedSources(bank);
         Player regular("device://midi", bank), varied("device://midi", bank);
         uint8_t note[] = {0xc0, 0, 0x90, 60, 100};
         require(EAS_WriteMIDIStream(regular.eas, regular.interactive, note, sizeof(note)) == EAS_SUCCESS, "MIDI note");
@@ -217,26 +295,18 @@ public:
         try { varied.seek(1000); }
         catch (const std::runtime_error &) { unsupported = true; }
         require(unsupported, "Interactive seek accepted");
-        // Only writeMidi's prefetched-resource guard reads this non-null output
-        // sentinel; no Oboe method is called and it is reset before shutdown.
-        varied.stream = std::shared_ptr<oboe::AudioStream>(reinterpret_cast<oboe::AudioStream *>(&varied),
-            [](oboe::AudioStream *) {});
-        std::vector<uint8_t> capacity(16384, 0xf8);
-        auto tail = varied.midiTail.load();
-        varied.midiHead.store(tail);
-        require(varied.writeMidi(capacity.data(), capacity.size()) == 16384, "Queue rejects complete capacity write");
-        auto head = varied.midiHead.load();
-        uint8_t noteOff[] = {0x80, 60, 0};
-        require(varied.writeMidi(noteOff, sizeof(noteOff)) == -1, "Full queue drops note-off silently");
-        require(varied.midiHead.load() == head && varied.midiTail.load() == tail, "Rejected MIDI partially changes queue");
-        varied.stream.reset();
-        varied.output->onError(nullptr, oboe::Result::ErrorDisconnected);
+        varied.prefetch();
+        varied.midiHead.store(varied.midiTail.load());
+        uint8_t large[16384]{};
+        require(varied.writeMidi(large, sizeof(large)) == sizeof(large), "MIDI queue capacity");
+        require(varied.writeMidi(large, 1) == -1, "MIDI queue overflow accepted");
+        varied.engine->output->onError(nullptr, oboe::Result::ErrorDisconnected);
         Event outputEvent{};
         require(varied.poll(outputEvent) && outputEvent.type == 4, "Disconnect is not recoverable");
         require(!varied.poll(outputEvent), "Disconnect event repeated");
-        varied.output = std::make_shared<Player::Output>(std::shared_ptr<Player>(&varied, [](Player *) {}));
-        varied.output->onError(nullptr, oboe::Result::ErrorInternal);
-        require(varied.poll(outputEvent) && outputEvent.type == 3, "Permanent output failure not fatal");
+        varied.engine->output = std::make_shared<Engine::Output>(varied.engine, ++varied.engine->outputEpoch);
+        varied.engine->output->onError(nullptr, oboe::Result::ErrorInternal);
+        require(varied.poll(outputEvent) && outputEvent.type == 5, "Permanent output failure not fatal");
         varied.shutdown(); varied.shutdown();
 
         // A project-owned half-second SMF fixture exercises the production

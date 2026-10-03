@@ -22,6 +22,10 @@ public interface Library {
 	void realize(long handle);
 	void prefetch(long handle);
 	void start(long handle);
+	default void start(long handle, long requestEpoch) { start(handle); }
+	default void activateMidi(long handle, long requestEpoch) { activateMidi(handle); }
+	default long getOutputIdentity(long handle) { return 0; }
+	default boolean outputFailed(long handle) { return false; }
 	void pause(long handle);
 	void deallocate(long handle);
 	void close(long handle);

@@ -27,7 +27,7 @@ if ($LASTEXITCODE) { throw 'Native memory host compilation failed.' }
 & (Join-Path $toolchain 'clang++.exe') --target=aarch64-linux-android23 -std=c++17 -O2 -DJL_EAS_OUTPUT_TEST=1 `
     "-I$cpp/mmapi_eas" "-I$cpp/sonivox/host_src" "-I$cpp/sonivox/lib_src" "-I$oboeInclude" `
     (Join-Path $PSScriptRoot 'sonivox_runtime_test.cpp') "$cpp/mmapi_eas/eas_player.cpp" `
-    "$cpp/mmapi_eas/eas_file.cpp" $hostObject $archive.FullName "-L$nativeLibs" -loboe -llog -landroid -o $executable
+    "$cpp/mmapi_eas/audio_engine.cpp" "$cpp/mmapi_eas/eas_file.cpp" $hostObject $archive.FullName "-L$nativeLibs" -loboe -llog -landroid -o $executable
 if ($LASTEXITCODE) { throw 'Native runtime test compilation failed.' }
 Write-Output "Built $executable"
 if ($Device) {
