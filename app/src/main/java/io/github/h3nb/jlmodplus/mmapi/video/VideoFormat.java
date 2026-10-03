@@ -73,14 +73,19 @@ public final class VideoFormat {
                 int selected = -1;
                 MediaFormat video = null;
                 boolean audio = false;
-                long duration = -1;
+                long duration = 0;
                 for (int i = 0; i < extractor.getTrackCount(); ++i) {
                     MediaFormat format = extractor.getTrackFormat(i);
                     String mime = format.getString(MediaFormat.KEY_MIME);
                     if (mime == null) throw new MediaException("Container track has no MIME");
                     audio |= mime.startsWith("audio/");
-                    if (format.containsKey(MediaFormat.KEY_DURATION))
-                        duration = Math.max(duration, format.getLong(MediaFormat.KEY_DURATION));
+                    if (mime.startsWith("audio/") || mime.startsWith("video/"))
+                        duration =
+                                VideoTimeline.duration(
+                                        duration,
+                                        format.containsKey(MediaFormat.KEY_DURATION)
+                                                ? format.getLong(MediaFormat.KEY_DURATION)
+                                                : -1);
                     if (mime.startsWith("video/")) {
                         if (selected >= 0)
                             throw new MediaException("Multiple video tracks are unsupported");

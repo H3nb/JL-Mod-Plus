@@ -193,6 +193,50 @@ public class VideoPlayerTest {
     }
 
     @Test
+    public void unknownVideoDurationDoesNotBecomeShorterSoundtrackDurationOrClampSeek()
+            throws Exception {
+        try (ActivityScenario<AudioQualificationActivity> host =
+                ActivityScenario.launch(AudioQualificationActivity.class)) {
+            Player video = asset("video/offset.mp4");
+            try {
+                VideoLibrary library = backend(video);
+                // Metadata absence is independent of this owned fixture's packets.
+                // Remove it before codec/guest observation to exercise unknown end.
+                Field sf = VideoLibrary.class.getDeclaredField("source");
+                sf.setAccessible(true);
+                Object source = sf.get(library);
+                Field ff = source.getClass().getDeclaredField("format");
+                ff.setAccessible(true);
+                ((android.media.MediaFormat) ff.get(source))
+                        .removeKey(android.media.MediaFormat.KEY_DURATION);
+                Field lf = VideoLibrary.class.getDeclaredField("length");
+                lf.setAccessible(true);
+                lf.setLong(library, Player.TIME_UNKNOWN);
+                CountDownLatch ended = new CountDownLatch(1), duration = new CountDownLatch(1);
+                video.addPlayerListener(
+                        (p, e, value) -> {
+                            if (PlayerListener.DURATION_UPDATED.equals(e)
+                                    && value instanceof Long
+                                    && (Long) value >= 3900000) duration.countDown();
+                            if (PlayerListener.END_OF_MEDIA.equals(e)) ended.countDown();
+                        });
+                video.start();
+                await(
+                        () -> video.getMediaTime() > 2800000,
+                        5000,
+                        "Short soundtrack did not finish");
+                assertEquals(Player.TIME_UNKNOWN, video.getDuration());
+                assertEquals(3000000, video.setMediaTime(3000000));
+                assertTrue("Unknown video end missing", ended.await(3, TimeUnit.SECONDS));
+                assertTrue("Known decoded duration missing", duration.await(1, TimeUnit.SECONDS));
+                assertTrue(video.getDuration() >= 3900000);
+            } finally {
+                video.close();
+            }
+        }
+    }
+
+    @Test
     public void selectedExternalJ2meCorpusRendersThroughTheSharedOutput() throws Exception {
         org.junit.Assume.assumeTrue(
                 "External commercial corpus is opt-in",

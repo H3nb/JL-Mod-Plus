@@ -161,6 +161,9 @@ Known video-track duration bounds its last frame, including variable frame
 intervals; without it, the last decoded PTS and nominal interval define the end,
 even if that frame was dropped. Seeking or restarting in a shorter soundtrack's
 silent tail keeps its PCM source inactive while video continues.
+If either track's duration is unknown, the whole-media duration stays unknown
+until both ends can be determined; a shorter known soundtrack cannot clamp
+seeks into the remaining video.
 
 A fixed native segment ring maps bus frames to source media timestamps, fenced
 by source generation and output epoch. Management queries the current Oboe

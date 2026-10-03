@@ -44,6 +44,9 @@ public class VideoTimelineTest {
 
     @Test
     public void endUsesTrackDurationOrLastDecodedPtsEvenWhenFramesWereDropped() {
+        assertEquals(-1, VideoTimeline.duration(-1, 500000));
+        assertEquals(-1, VideoTimeline.duration(1000000, -1));
+        assertEquals(1000000, VideoTimeline.duration(1000000, 500000));
         // VFR metadata's nominal frame interval must not extend a known track end.
         assertEquals(1000000, VideoTimeline.endTime(980000, 66666, 1000000, 0));
         assertEquals(1046666, VideoTimeline.endTime(980000, 66666, -1, 0));
