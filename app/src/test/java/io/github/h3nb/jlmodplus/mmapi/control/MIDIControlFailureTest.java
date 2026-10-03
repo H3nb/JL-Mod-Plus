@@ -16,14 +16,58 @@ import javax.microedition.media.Player;
 import io.github.h3nb.jlmodplus.mmapi.synth.Library;
 
 public class MIDIControlFailureTest {
-    @Test public void deviceFailureReturnsMinusOneForLongAndExplicitRuntimeErrorForShort() {
+    @Test public void deviceFailureReturnsMinusOneForLongAndFailsSilentlyForShort() {
         AtomicReference<Throwable> failure = new AtomicReference<>(new MediaException("MIDI queue full"));
         Library backend = failingBackend(failure);
-        MIDIControlImpl control = new MIDIControlImpl(prefetched(), backend, 1);
+        Player player = prefetched();
+        MIDIControlImpl control = new MIDIControlImpl(player, backend, 1);
         assertEquals(-1, control.longMidiEvent(new byte[]{(byte) 0xf8}, 0, 1));
-        IllegalStateException shortFailure = assertThrows(IllegalStateException.class,
-                () -> control.shortMidiEvent(0x80, 60, 0));
-        assertNotNull(shortFailure.getCause());
+        control.shortMidiEvent(0x80, 60, 0);
+        assertEquals(Player.PREFETCHED, player.getState());
+    }
+
+    @Test public void atomicQueueRejectionDoesNotClosePlayerAndDeliveryCanRecover() {
+        AtomicInteger writes = new AtomicInteger();
+        Library backend = (Library) Proxy.newProxyInstance(Library.class.getClassLoader(),
+                new Class[]{Library.class}, (proxy, method, args) -> {
+                    if (method.getName().equals("writeMIDI")) {
+                        return writes.incrementAndGet() <= 2 ? -1 : (int) args[3];
+                    }
+                    throw new AssertionError("Queue rejection changed lifecycle: " + method.getName());
+                });
+        Player player = prefetched();
+        MIDIControlImpl control = new MIDIControlImpl(player, backend, 1);
+        control.shortMidiEvent(0x80, 60, 0);
+        assertEquals(-1, control.longMidiEvent(new byte[]{(byte) 0xf8}, 0, 1));
+        assertEquals(1, control.longMidiEvent(new byte[]{(byte) 0xf8}, 0, 1));
+        assertEquals(Player.PREFETCHED, player.getState());
+    }
+
+    @Test public void outputDenialFailsSilentlyButValidationPrecedesDelivery() {
+        AtomicInteger preparations = new AtomicInteger();
+        AtomicInteger state = new AtomicInteger(Player.PREFETCHED);
+        Player player = new BasePlayer() {
+            @Override public int getState() { return state.get(); }
+        };
+        MIDIControlImpl control = new MIDIControlImpl(player,
+                failingBackend(new AtomicReference<>(new AssertionError("Denied output attempted MIDI"))), 1,
+                () -> {
+                    preparations.incrementAndGet();
+                    throw new IllegalStateException("Audio focus denied");
+                });
+        control.shortMidiEvent(0x90, 60, 100);
+        assertEquals(-1, control.longMidiEvent(new byte[]{(byte) 0xf8}, 0, 1));
+        assertEquals(Player.PREFETCHED, player.getState());
+        assertEquals(2, preparations.get());
+        assertThrows(IllegalArgumentException.class, () -> control.shortMidiEvent(0xf0, 0, 0));
+        assertThrows(IllegalArgumentException.class, () -> control.shortMidiEvent(0x90, 128, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> control.longMidiEvent(new byte[1], Integer.MAX_VALUE, Integer.MAX_VALUE));
+        state.set(Player.REALIZED);
+        assertThrows(IllegalStateException.class, () -> control.shortMidiEvent(0x90, 60, 100));
+        assertThrows(IllegalStateException.class,
+                () -> control.longMidiEvent(new byte[]{(byte) 0xf8}, 0, 1));
+        assertEquals(2, preparations.get());
     }
 
     @Test public void zeroLengthEventDoesNotActivateOutputAndAllocationFailureIsNotHidden() {

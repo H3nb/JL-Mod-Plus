@@ -163,11 +163,10 @@ public class MIDIControlImpl implements MIDIControl {
 			if (library != null) {
 				try {
 					prepareOutput.run();
-					if (library.writeMIDI(handle, data, 0, data.length) != data.length) {
-						throw new IllegalStateException("MIDI queue capacity exceeded");
-					}
+					library.writeMIDI(handle, data, 0, data.length);
 				} catch (Exception failure) {
-					throw new IllegalStateException("Cannot send MIDI event", failure);
+					// JSR135: unsupported or undelivered events fail silently. State and
+					// parameter errors are checked above; VM Errors remain observable.
 				}
 			}
 		}

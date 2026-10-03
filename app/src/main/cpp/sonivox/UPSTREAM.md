@@ -60,5 +60,10 @@ the adapter contains no second resampler. Controls pause/quiesce the callback
 before accessing EAS. Stop and output recovery preserve voices and remaining
 PCM; seek discards staging data. Native events are polled on Java management
 threads, with generation checks. Native code retains no JNI global references
-and creates no dispatch/recovery thread. Stream errors only record a signal;
-management permits three recovery attempts until a fresh explicit start.
+and creates no dispatch/recovery thread. Each output instance owns its callback
+error/enabled/progress facts and retains the Player until those callbacks end.
+Closing output retires that instance; delayed errors cannot mutate a replacement.
+Management permits three recovery attempts without healthy output. At least
+4,410 rendered frames (100 ms at 44.1 kHz) on the replacement replenish the
+budget for a later episode; open/start success alone does not. Host suspension
+does not render or replenish the budget. Recovery never restarts media.

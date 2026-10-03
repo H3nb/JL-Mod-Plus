@@ -5,12 +5,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Form;
 import javax.microedition.media.Manager;
 import javax.microedition.media.Player;
+import javax.microedition.media.PlayerListener;
 import javax.microedition.midlet.MIDlet;
 
 /** Project-owned guest fixture, loaded by the real MicroLoader in the isolated runtime. */
@@ -20,6 +23,10 @@ public final class AudioLifecycleMidlet extends MIDlet {
     private volatile boolean destroyed;
     private Player player;
     private String lastCommand = "";
+    private final AtomicInteger errors = new AtomicInteger();
+    private final AtomicInteger closed = new AtomicInteger();
+    private final AtomicInteger starts = new AtomicInteger();
+    private final AtomicInteger ends = new AtomicInteger();
 
     @Override public synchronized void startApp() {
         if (player != null) return; // Host reattachment must not replace guest stop intent.
@@ -29,6 +36,12 @@ public final class AudioLifecycleMidlet extends MIDlet {
             try (FileInputStream input = new FileInputStream(new File(root, "sustain.mid"))) {
                 player = Manager.createPlayer(input, "audio/midi");
             }
+            player.addPlayerListener((owner, event, value) -> {
+                if (PlayerListener.ERROR.equals(event)) errors.incrementAndGet();
+                if (PlayerListener.CLOSED.equals(event)) closed.incrementAndGet();
+                if (PlayerListener.STARTED.equals(event)) starts.incrementAndGet();
+                if (PlayerListener.END_OF_MEDIA.equals(event)) ends.incrementAndGet();
+            });
             player.setLoopCount(-1);
             player.start();
             new Thread(() -> monitor(root), "AudioFixtureTelemetry").start();
@@ -49,6 +62,9 @@ public final class AudioLifecycleMidlet extends MIDlet {
 
     private void monitor(File root) {
         try {
+            // Guest loading deliberately excludes Android APIs; observe through the host wrapper loader.
+            Method nativeHeap = player.getClass().getClassLoader().loadClass("android.os.Debug")
+                    .getMethod("getNativeHeapAllocatedSize");
             while (!destroyed) {
                 File commandFile = new File(root, "command.properties");
                 if (commandFile.isFile()) {
@@ -58,6 +74,7 @@ public final class AudioLifecycleMidlet extends MIDlet {
                     if (!request.equals(lastCommand)) {
                         if (request.equals("stop")) player.stop();
                         if (request.equals("start")) player.start();
+                        if (request.startsWith("seek:")) player.setMediaTime(Long.parseLong(request.substring(5)));
                         lastCommand = request;
                     }
                 }
@@ -66,6 +83,15 @@ public final class AudioLifecycleMidlet extends MIDlet {
                 report.setProperty("position", Long.toString(player.getMediaTime()));
                 report.setProperty("command", lastCommand);
                 report.setProperty("updatedAt", Long.toString(System.currentTimeMillis()));
+                report.setProperty("errors", Integer.toString(errors.get()));
+                report.setProperty("closed", Integer.toString(closed.get()));
+                report.setProperty("starts", Integer.toString(starts.get()));
+                report.setProperty("ends", Integer.toString(ends.get()));
+                report.setProperty("nativeHeapBytes", nativeHeap.invoke(null).toString());
+                Runtime runtime = Runtime.getRuntime();
+                report.setProperty("javaHeapBytes", Long.toString(runtime.totalMemory() - runtime.freeMemory()));
+                String[] threads = new File("/proc/self/task").list();
+                report.setProperty("threadCount", Integer.toString(threads == null ? -1 : threads.length));
                 // Diagnostics are observed from the actual parent-owned wrapper, not another backend.
                 Field libraryField = player.getClass().getDeclaredField("library");
                 Field handleField = player.getClass().getDeclaredField("handle");
@@ -75,6 +101,11 @@ public final class AudioLifecycleMidlet extends MIDlet {
                         .invoke(library, handleField.getLong(player));
                 report.setProperty("frames", Long.toString(stats[0]));
                 report.setProperty("nonzeroSamples", Long.toString(stats[2]));
+                report.setProperty("outputOpens", Long.toString(stats[3]));
+                report.setProperty("disconnects", Long.toString(stats[4]));
+                report.setProperty("xruns", Long.toString(stats[5]));
+                report.setProperty("sampleRate", Long.toString(stats[6]));
+                report.setProperty("deviceId", Long.toString(stats[7]));
                 Field bankField = library.getClass().getDeclaredField("soundBank");
                 bankField.setAccessible(true);
                 report.setProperty("customBank", Boolean.toString(bankField.get(library) != null));

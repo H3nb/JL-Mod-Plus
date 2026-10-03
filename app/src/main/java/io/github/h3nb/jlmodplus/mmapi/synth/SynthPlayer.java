@@ -161,7 +161,12 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 			hostSuspended = false;
 		} catch (Exception e) {
 			audio.cancelPlayback(this);
-			throw new MediaException("Cannot start synthesis output: " + e);
+			String message = "Cannot start synthesis output: " + e;
+			// Focus/foreground denial happens before this try. A backend activation
+			// failure has no healthy output to retry and remains a terminal engine
+			// fact even when shortMidiEvent must hide delivery exceptions.
+			fail(message);
+			throw new MediaException(message);
 		}
 	}
 

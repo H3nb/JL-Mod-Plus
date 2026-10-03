@@ -16,6 +16,9 @@ public:
     explicit MemoryFile(std::vector<uint8_t> data);
     EAS_FILE locator{this, readAt, size};
     static std::vector<uint8_t> readFile(const std::string &path, size_t limit);
+    // Validate an RMID container and expose its sole SMF to the existing parser.
+    // Other synthesis formats keep their original bytes.
+    static std::vector<uint8_t> synthesisMedia(std::vector<uint8_t> data);
 };
 }
 #endif

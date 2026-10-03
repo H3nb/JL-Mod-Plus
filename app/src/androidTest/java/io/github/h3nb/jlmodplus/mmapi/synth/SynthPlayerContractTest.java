@@ -143,6 +143,27 @@ public class SynthPlayerContractTest {
         assertEquals(0, Collections.frequency(events, PlayerListener.END_OF_MEDIA));
     }
 
+    @Test public void terminalActivationFailureStillClosesForSilentShortMidiDelivery() throws Exception {
+        FakeLibrary backend = new FakeLibrary() {
+            @Override public void activateMidi(long handle) { throw new IllegalStateException("Output cannot open"); }
+        };
+        CountingSource source = new CountingSource();
+        Player player = player(backend, source);
+        List<String> events = new CopyOnWriteArrayList<>();
+        CountDownLatch closed = new CountDownLatch(1);
+        player.addPlayerListener((p, event, value) -> {
+            events.add(event);
+            if (PlayerListener.CLOSED.equals(event)) closed.countDown();
+        });
+        player.prefetch();
+        ((MIDIControl) player.getControl("MIDIControl")).shortMidiEvent(0x90, 60, 100);
+        assertTrue("Terminal activation failure missing CLOSED", closed.await(2, TimeUnit.SECONDS));
+        assertEquals(Player.CLOSED, player.getState());
+        assertEquals(List.of(PlayerListener.ERROR, PlayerListener.CLOSED), events);
+        assertEquals(1, backend.closes);
+        assertEquals(1, source.disconnects);
+    }
+
     @Test public void staleCompletionAfterSeekCannotStopCurrentPlayback() throws Exception {
         FakeLibrary backend = new FakeLibrary();
         Player player = player(backend, new CountingSource());
@@ -236,7 +257,7 @@ public class SynthPlayerContractTest {
         @Override public Control getControl(String name) { return null; }
     }
 
-    private static final class FakeLibrary implements Library {
+    private static class FakeLibrary implements Library {
         final ConcurrentLinkedQueue<long[]> events = new ConcurrentLinkedQueue<>();
         volatile long generation = 1;
         long time;

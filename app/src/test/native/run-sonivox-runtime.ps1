@@ -24,7 +24,7 @@ $executable = Join-Path $tempOutput 'sonivox_runtime_test'
 & (Join-Path $toolchain 'clang.exe') --target=aarch64-linux-android23 -std=c11 -O2 `
     "-I$cpp/sonivox/host_src" -c "$cpp/mmapi_eas/eas_host.c" -o $hostObject
 if ($LASTEXITCODE) { throw 'Native memory host compilation failed.' }
-& (Join-Path $toolchain 'clang++.exe') --target=aarch64-linux-android23 -std=c++17 -O2 `
+& (Join-Path $toolchain 'clang++.exe') --target=aarch64-linux-android23 -std=c++17 -O2 -DJL_EAS_OUTPUT_TEST=1 `
     "-I$cpp/mmapi_eas" "-I$cpp/sonivox/host_src" "-I$cpp/sonivox/lib_src" "-I$oboeInclude" `
     (Join-Path $PSScriptRoot 'sonivox_runtime_test.cpp') "$cpp/mmapi_eas/eas_player.cpp" `
     "$cpp/mmapi_eas/eas_file.cpp" $hostObject $archive.FullName "-L$nativeLibs" -loboe -llog -landroid -o $executable

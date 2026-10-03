@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.SystemClock;
@@ -22,6 +23,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -55,7 +58,22 @@ public class AudioMidletRuntimeTest {
         qualify(bank);
     }
 
+    @Test public void boundedLoopingMidletSession() throws Exception {
+        String requested = InstrumentationRegistry.getArguments().getString("sonivoxSessionSeconds");
+        Assume.assumeTrue("No bounded session duration supplied", requested != null);
+        int seconds = Integer.parseInt(requested);
+        assertTrue("session duration must be 30..600 seconds", seconds >= 30 && seconds <= 600);
+        String path = InstrumentationRegistry.getArguments().getString("sonivoxBankPath");
+        File bank = path == null ? null : new File(path);
+        if (bank != null) assertTrue("local bank missing", bank.isFile());
+        qualify(bank, seconds);
+    }
+
     private void qualify(File bank) throws Exception {
+        qualify(bank, 0);
+    }
+
+    private void qualify(File bank, int sessionSeconds) throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Assume.assumeTrue("Run through audio-qualification.init.gradle to protect the normal installation",
                 "io.github.h3nb.jlmodplus.audioqualification.debug".equals(context.getPackageName()));
@@ -82,7 +100,8 @@ public class AudioMidletRuntimeTest {
                 profile.soundBank = "qualification-bank";
             }
             assertTrue("fixture profile was not saved", ProfilesManager.saveConfig(profile));
-            write(new File(root, "sustain.mid"), SonivoxRuntimeTest.midi(56640, 57600));
+            write(new File(root, "sustain.mid"), sessionSeconds == 0
+                    ? SonivoxRuntimeTest.midi(56640, 57600) : loopingWorkload());
             String manifest = "Manifest-Version: 1.0\nMIDlet-Name: Audio Lifecycle Fixture\n"
                     + "MIDlet-Vendor: JL-Mod Plus\nMIDlet-Version: 1.0\n"
                     + "MIDlet-1: Audio Lifecycle Fixture,," + AudioLifecycleMidlet.CLASS_NAME + "\n"
@@ -138,6 +157,61 @@ public class AudioMidletRuntimeTest {
             command(root, "start");
             await(() -> number(report(root), "position") > stopped + 100000, 6000, "fresh guest start failed");
 
+            if (sessionSeconds != 0) {
+                long sessionStart = SystemClock.elapsedRealtime();
+                Properties first = report(root);
+                telemetry(first, 0);
+                long previousFrames = number(first, "frames");
+                long previousSamples = number(first, "nonzeroSamples");
+                long end = sessionStart + sessionSeconds * 1000L;
+                boolean returned = false;
+                boolean sought = false;
+                while (SystemClock.elapsedRealtime() < end) {
+                    // A last sub-monitor-period sleep can read the preceding report unchanged.
+                    // Allow one final 100ms sampling interval beyond the requested duration.
+                    SystemClock.sleep(Math.max(100, Math.min(10000, end - SystemClock.elapsedRealtime())));
+                    Properties current = report(root);
+                    assertEquals("bounded guest lost STARTED", Player.STARTED, number(current, "state"));
+                    assertEquals("guest ERROR during bounded workload", 0, number(current, "errors"));
+                    assertEquals("guest CLOSED during bounded workload", 0, number(current, "closed"));
+                    assertEquals("native context count changed", 1, number(current, "liveHandles"));
+                    assertTrue("bounded output frames stalled", number(current, "frames") > previousFrames);
+                    assertTrue("bounded PCM stalled", number(current, "nonzeroSamples") > previousSamples);
+                    assertEquals(initialPid, pid(context, processName));
+                    assertEquals(generation, MidletSessionStore.read(context).getGeneration());
+                    previousFrames = number(current, "frames");
+                    previousSamples = number(current, "nonzeroSamples");
+                    long elapsed = SystemClock.elapsedRealtime() - sessionStart;
+                    telemetry(current, elapsed);
+                    if (!returned && elapsed >= sessionSeconds * 1000L / 3) {
+                        shell("am start -W -a android.intent.action.MAIN -c android.intent.category.HOME");
+                        SystemClock.sleep(300);
+                        long pausedFrames = number(report(root), "frames");
+                        long pausedPosition = number(report(root), "position");
+                        SystemClock.sleep(500);
+                        assertEquals("long-session Home failed to freeze frames", pausedFrames, number(report(root), "frames"));
+                        assertEquals("long-session Home failed to freeze time", pausedPosition, number(report(root), "position"));
+                        launch(context, app, appId, false);
+                        await(() -> number(report(root), "frames") > pausedFrames, 6000, "long-session return failed");
+                        returned = true;
+                    }
+                    if (!sought && elapsed >= sessionSeconds * 2000L / 3) {
+                        command(root, "stop");
+                        await(() -> "stop".equals(report(root).getProperty("command")), 3000, "bounded guest stop failed");
+                        command(root, "seek:250000");
+                        await(() -> "seek:250000".equals(report(root).getProperty("command")), 3000, "bounded seek failed");
+                        assertEquals(250000, number(report(root), "position"));
+                        command(root, "start");
+                        await(() -> number(report(root), "position") > 350000, 6000, "bounded seek/start failed");
+                        sought = true;
+                    }
+                }
+                assertTrue("bounded session did not exercise host return", returned);
+                assertTrue("bounded session did not exercise seek", sought);
+                assertTrue("looped workload did not emit END_OF_MEDIA", number(report(root), "ends") > number(first, "ends"));
+                telemetry(report(root), SystemClock.elapsedRealtime() - sessionStart);
+            }
+
             context.startActivity(new Intent(context, CrashRuntimeLifecycleControlActivity.class)
                     .putExtra(CrashRuntimeLifecycleControlActivity.EXTRA_COMMAND,
                             CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY)
@@ -156,6 +230,34 @@ public class AudioMidletRuntimeTest {
             restore.commit();
             removeFixture(root, context.getFilesDir());
         }
+    }
+
+    /** Eight melodic voices plus percussion, with bank-defined presets and four-second loops. */
+    private static byte[] loopingWorkload() throws Exception {
+        ByteArrayOutputStream events = new ByteArrayOutputStream();
+        events.write(new byte[]{0, (byte) 0xff, 0x51, 3, 7, (byte) 0xa1, 0x20});
+        int[] programs = {0, 24, 32, 40, 48, 56, 80, 104};
+        for (int channel = 0; channel < programs.length; channel++) {
+            events.write(new byte[]{0, (byte) (0xc0 | channel), (byte) programs[channel],
+                    0, (byte) (0x90 | channel), (byte) (48 + channel * 3), 72});
+        }
+        events.write(new byte[]{0, (byte) 0x99, 36, 96});
+        // 3360 ticks = 3.5 seconds at division480/tempo500000.
+        events.write(new byte[]{(byte) 0x9a, 0x20, (byte) 0x80, 48, 0});
+        for (int channel = 1; channel < programs.length; channel++)
+            events.write(new byte[]{0, (byte) (0x80 | channel), (byte) (48 + channel * 3), 0});
+        events.write(new byte[]{0, (byte) 0x89, 36, 0, (byte) 0x83, 0x60, (byte) 0xff, 0x2f, 0});
+        ByteArrayOutputStream file = new ByteArrayOutputStream();
+        DataOutputStream output = new DataOutputStream(file);
+        output.writeBytes("MThd"); output.writeInt(6); output.writeShort(0); output.writeShort(1); output.writeShort(480);
+        output.writeBytes("MTrk"); output.writeInt(events.size()); events.writeTo(output);
+        return file.toByteArray();
+    }
+
+    private static void telemetry(Properties report, long elapsedMillis) {
+        Bundle status = new Bundle();
+        status.putString("stream", "Audio MIDlet session elapsedMs=" + elapsedMillis + " " + report + "\n");
+        InstrumentationRegistry.getInstrumentation().sendStatus(0, status);
     }
 
     private static void launch(Context context, File app, long appId, boolean fresh) {
