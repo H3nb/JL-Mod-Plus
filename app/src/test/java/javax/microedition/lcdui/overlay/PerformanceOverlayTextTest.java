@@ -9,6 +9,24 @@ import org.junit.Test;
 
 public class PerformanceOverlayTextTest {
 	@Test
+	public void intervalStatisticsAndHostInformationUseSeparateCompactGroups() {
+		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
+		v.interval = 33.3;
+		v.p95 = 34.0;
+		v.maximum = 40.1;
+		v.renderer = "GLES";
+		v.displayHz = 120;
+		v.thermal = 0;
+		String[][] groups = PerformanceOverlayText.format(
+				FRAME_INTERVAL | P95_INTERVAL | MAX_INTERVAL | RENDERER | DISPLAY | THERMAL, v);
+		assertArrayEquals(new String[]{"FI 33.3 ms", "P95 34.0 ms", "MAX 40.1 ms"}, groups[0]);
+		assertArrayEquals(new String[]{"REN GLES", "DISP 120 Hz", "THRM NONE"}, groups[1]);
+		assertArrayEquals(new String[]{"FI 33.3 ms | P95 34.0 ms | MAX 40.1 ms",
+				"REN GLES | DISP 120 Hz | THRM NONE"},
+				PerformanceOverlayText.wrap(groups, 1000, String::length));
+	}
+
+	@Test
 	public void optionalCapAndEmptySelectionNeverLeaveDanglingSeparators() {
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
 		v.fps = 46;

@@ -61,7 +61,6 @@ final class PerformanceOverlayText {
 		add(row, mask, FRAME_INTERVAL, "FI", v.interval, 1, " ms");
 		add(row, mask, P95_INTERVAL, "P95", v.p95, 1, " ms");
 		add(row, mask, MAX_INTERVAL, "MAX", v.maximum, 1, " ms");
-		add(row, mask, DISPLAY, "DISP", v.displayHz, 0, " Hz");
 		finish(groups, row);
 		add(row, mask, PAINT, "PAINT", v.paint, 1, " ms");
 		add(row, mask, COPY, "COPY", v.copy, 1, " ms");
@@ -81,8 +80,9 @@ final class PerformanceOverlayText {
 		add(row, mask, GPU_TEMP, "GPUT", v.gpuTemp, 1, "°C");
 		add(row, mask, BATTERY_TEMP, "BAT", v.batteryTemp, 1, "°C");
 		finish(groups, row);
-		if ((mask & THERMAL) != 0) row.add("THRM " + thermal(v.thermal));
 		if ((mask & RENDERER) != 0) row.add("REN " + (v.renderer == null ? "—" : v.renderer));
+		add(row, mask, DISPLAY, "DISP", v.displayHz, 0, " Hz");
+		if ((mask & THERMAL) != 0) row.add("THRM " + thermal(v.thermal));
 		finish(groups, row);
 		return groups.toArray(new String[0][]);
 	}

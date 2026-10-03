@@ -25,6 +25,14 @@ import androidx.core.view.WindowInsetsCompat;
 final class DiagnosticOverlayLayout {
 	private DiagnosticOverlayLayout() {
 	}
+
+	/** Anchor each row to its column's chosen edge without padding metric cells. */
+	static float rowLeft(float left, float right, float rowWidth, boolean alignRight,
+			int column, int columns, float columnStride) {
+		return alignRight ? right - (columns - 1 - column) * columnStride - rowWidth
+				: left + column * columnStride;
+	}
+
 	static void bounds(View view, RectF bounds, int[] location, int[] rootLocation) {
 		WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(view);
 		Insets bars = insets == null ? Insets.NONE : insets.getInsets(WindowInsetsCompat.Type.systemBars());

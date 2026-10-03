@@ -169,19 +169,17 @@ public class FpsCounter extends TimerTask implements Layer {
 		// When content cannot fit, retain the selected corner and clip to the safe host viewport.
 		columns = Math.min(columns, Math.max(1, (int) ((bounds.width() + 8f * density)
 				/ (columnWidth + 8f * density))));
-		float blockWidth = 0f;
-		for (String row : rows) blockWidth = Math.max(blockWidth, g.measureDiagnosticText(row));
-		blockWidth += (columns - 1) * (columnWidth + 8f * density);
 		float blockHeight = Math.min(rows.length, columnRows) * lineHeight - gap;
 		boolean right = position == TOP_RIGHT || position == BOTTOM_RIGHT;
 		boolean bottom = position == BOTTOM_LEFT || position == BOTTOM_RIGHT;
-		float left = right ? bounds.right - blockWidth : bounds.left;
 		float top = bottom ? bounds.bottom - blockHeight : bounds.top;
 		int save = g.clipDiagnostics(bounds);
 		try {
 			for (int i = 0; i < Math.min(rows.length, columnRows * columns); i++) {
 				g.drawDiagnosticText(rows[i], contentColor,
-						left + (i / columnRows) * (columnWidth + 8f * density),
+						DiagnosticOverlayLayout.rowLeft(bounds.left, bounds.right,
+								g.measureDiagnosticText(rows[i]), right, i / columnRows, columns,
+								columnWidth + 8f * density),
 						top + (i % columnRows) * lineHeight);
 			}
 		} finally {

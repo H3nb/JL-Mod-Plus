@@ -74,21 +74,21 @@ public class PerformanceOverlayRenderingTest {
 	}
 
 	@Test
-	public void diagnosticFontIsBoldWithOnlyAnOffsetShadow() {
+	public void diagnosticFontIsRegularWithOnlyAnOffsetShadow() {
 		CanvasWrapper graphics = new CanvasWrapper(false);
 		String text = "FPS 30/60 | RFPS 30";
 		Bitmap actual = Bitmap.createBitmap(600, 120, Bitmap.Config.ARGB_8888);
 		Bitmap expected = Bitmap.createBitmap(600, 120, Bitmap.Config.ARGB_8888);
 		graphics.bind(new android.graphics.Canvas(actual));
 		graphics.drawDiagnosticText(text, Color.WHITE, 10, 10);
-		Paint bold = new Paint(Paint.ANTI_ALIAS_FLAG);
-		bold.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.BOLD));
-		bold.setTextSize(targetContext().getResources().getDimension(R.dimen.performance_overlay_text_size));
-		bold.setColor(Color.WHITE);
-		bold.setShadowLayer(density(), density(), density(),
+		Paint regular = new Paint(Paint.ANTI_ALIAS_FLAG);
+		regular.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));
+		regular.setTextSize(targetContext().getResources().getDimension(R.dimen.performance_overlay_text_size));
+		regular.setColor(Color.WHITE);
+		regular.setShadowLayer(density(), density(), density(),
 				ContextCompat.getColor(targetContext(), R.color.fps_overlay_shadow));
-		new android.graphics.Canvas(expected).drawText(text, 10, 10 - bold.getFontMetrics().ascent, bold);
-		assertTrue("Diagnostic text must be filled bold glyphs with an offset shadow, no outline",
+		new android.graphics.Canvas(expected).drawText(text, 10, 10 - regular.getFontMetrics().ascent, regular);
+		assertTrue("Diagnostic text must be regular glyphs with an offset shadow, no outline",
 				actual.sameAs(expected));
 		actual.recycle();
 		expected.recycle();
@@ -135,9 +135,9 @@ public class PerformanceOverlayRenderingTest {
 		assertEquals("FPS 46/60", originalCells.get(0));
 		List<String> labels = new ArrayList<>();
 		for (String cell : originalCells) labels.add(cell.substring(0, cell.indexOf(' ')));
-		assertEquals(Arrays.asList("FPS", "RFPS", "SPD", "FI", "P95", "MAX", "DISP",
+		assertEquals(Arrays.asList("FPS", "RFPS", "SPD", "FI", "P95", "MAX",
 				"PAINT", "COPY", "SUB", "INQ", "FRQ", "COAL", "CPU", "RAM", "JAVA",
-				"NATIVE", "CPUT", "GPUT", "BAT", "THRM", "REN"), labels);
+				"NATIVE", "CPUT", "GPUT", "BAT", "REN", "DISP", "THRM"), labels);
 
 		float margin = 12 * density();
 		int panelWidth = (int) Math.ceil(360 * density());
@@ -179,7 +179,10 @@ public class PerformanceOverlayRenderingTest {
 			}
 			graphics.drawDiagnosticText(titles[panel], foreground, left + margin, margin);
 			for (int i = 0; i < rows.length; i++) {
-				graphics.drawDiagnosticText(rows[i], foreground, left + margin,
+				float rowLeft = DiagnosticOverlayLayout.rowLeft(left + margin,
+						left + panelWidth - margin, graphics.measureDiagnosticText(rows[i]),
+						panel != 0, 0, 1, availableWidth);
+				graphics.drawDiagnosticText(rows[i], foreground, rowLeft,
 						margin + (i + 2) * lineHeight);
 			}
 		}

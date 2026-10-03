@@ -7,7 +7,7 @@ profiles use Standard, while an explicitly empty selection remains empty.
 the selected bits, so there is no separate preset state to become inconsistent.
 
 The overlay remains a passive native `OverlayView` layer above the guest surface.
-It does not consume game input. It uses white 12sp bold monospaced text following
+It does not consume game input. It uses white 12sp regular monospaced text following
 system font scaling, with no outline or background panel. A black 80% opacity
 shadow uses a 1dp blur radius and 1dp offset on both axes to separate glyphs from
 bright game content.
@@ -15,6 +15,11 @@ Uppercase abbreviations are intentional for this diagnostic component; settings
 show full names and abbreviations in a compact checkbox list. Technical definitions
 are documented below.
 Selected cells reflow with ` | ` between cells, with no trailing separator.
+Cell widths follow their content, with no padding or reserved numeric slots.
+Left positions align each row to the left; right positions align each row to the
+right, so shorter rows and changing values keep their right edge anchored.
+Frame interval statistics share one group; renderer, display Hz, and thermal
+severity share the final host-information group.
 Short, wide windows can use columns without shrinking the font. If the available
 viewport cannot contain every selected metric at the user's font scale, content
 is clipped to the safe viewport; reduce the selection or choose another position.
