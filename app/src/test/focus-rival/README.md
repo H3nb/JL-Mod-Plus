@@ -23,8 +23,9 @@ adb shell am instrument -w -r -e class io.github.h3nb.jlmodplus.mmapi.synth.Soni
 ```
 
 The two tests verify actual transient suspension, preserved guest `STARTED`,
-held-note PCM recovery, cancellation of a stopped peer, and permanent-loss
-revocation requiring a fresh request without another guest `STARTED` event.
+held-note recovery alongside sampled PCM, cancellation of a stopped sampled
+peer, and permanent-loss revocation of both sources. A fresh MIDI request must
+leave the old sampled request suspended without another guest `STARTED` event.
 They assert that the host remains resumed and that the rival's UID differs from
 the owner. The rival abandons focus and stops itself within ten seconds even if
 the instrumented test fails. Default tests skip these optional scenarios unless

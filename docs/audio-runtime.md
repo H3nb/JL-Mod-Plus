@@ -7,11 +7,28 @@ ownership, stream management, and Android focus policy live outside that core.
 
 ## Ownership and playback policy
 
-Each synthesis Player owns its own EAS context, sequencer, voices, bank collection,
-and Oboe output. The runtime owns one audio-focus coordinator shared with sampled
-`MicroPlayer` audio. Streams are separate; there is no runtime PCM mixer. A bank
-choice is captured from the runtime preset when its synthesis library is created.
-Loading a new runtime does not mutate the bank in an existing Player.
+`AudioPlayer` supplies one MMAPI contract for synthesis and sampled audio. Each
+synthesis source owns its EAS context, sequencer, voices and bank collection;
+each sampled source owns a native FFmpeg decoder/resampler and bounded PCM ring.
+A native engine per runtime/session mixes both into one float stereo 44.1 kHz
+bus and owns at most one active Oboe output. Java `RuntimeAudioCoordinator`
+owns host/focus policy. A bank choice is captured from the runtime preset when
+its synthesis library is created; existing sources retain their bank snapshot.
+
+Gain and pan apply per source before summation. The bus uses hard clipping to
+[-1, 1], with a clipped-sample diagnostic, and never normalizes by Player count.
+Oboe performs hardware-rate conversion when needed. Sonivox renders directly
+from its memory-backed source; sampled demux/decode/resample runs on a worker.
+Each sampled ring has sixteen 1,024-frame stereo float slots (128 KiB), with at
+most one worker per active source. Prefetch workers finish after filling the ring;
+stop/suspension/deallocation join the worker. Underflow emits silence without
+advancing media time or claiming EOS. Decoder, resampler and ring drain precede EOM.
+
+The callback does no JNI, disk IO, compressed decoding, allocation, blocking lock
+or object destruction. Management detaches a source and waits for its callback
+hazard to clear before seek/context mutation/free; this never pauses a playing
+peer. Media generation, output-instance epoch and runtime output group identity
+are separate. An old output error cannot disable or poison its replacement.
 
 The Java wrapper owns guest MMAPI state. Native events report rendering and
 output facts through generation-fenced polling on the management path. Listeners
@@ -40,14 +57,24 @@ foreground selection.
 This host suspension does not emit MMAPI `DEVICE_UNAVAILABLE`: that event would
 require a transition to `REALIZED` and a later `DEVICE_AVAILABLE` or `ERROR`.
 Recoverable Oboe disconnection reopens output on the management path, preserving
-EAS voices, position, and staged PCM. Irrecoverable media/output failure closes
-the Player and emits an explained `ERROR` followed by `CLOSED`.
+EAS voices, sampled buffers, position and staged PCM. A media/decoder failure is
+local to its source. Irrecoverable shared-output failure closes all sources in
+that output group, including unrealized peers, with `ERROR` followed by `CLOSED`.
+Queued failure delivery cannot close a later output group.
 Callback errors belong to their output instance, including callbacks delayed
 past close/reopen. Management only consumes the current instance's error.
 Recovery is bounded to three attempts without healthy output; 4,410 rendered
 frames (100 ms) on a replacement replenish the budget for a later episode.
 Open/start success alone does not replenish it, and suspension preserves the
-unrecovered episode until output can resume.
+unrecovered episode until output can resume. Starting a short effect cannot
+replenish another source's unhealthy recovery episode, including a pending loop.
+A native policy gate immediately fences revoked requests before queued Java
+callbacks run. Each activation carries its captured focus grant epoch; a late
+suspension of an old source cannot halt fresh playback by another source.
+Management polling also retires a gated source's worker before its queued Java
+suspension callback arrives. Output replacement acknowledges the disabled old
+callback before a new consumer starts. Sampled prefetch fills the bounded ring
+or reaches EOF before start, rather than returning at the first PCM chunk.
 
 ## Content and compatibility boundaries
 
@@ -55,8 +82,27 @@ Manager locator, stream, and `DataSource` creation share backend selection.
 Bounded content recognition takes precedence over MIME hints, including Nokia
 OTA bytes labelled `audio/midi`. Recognized corrupt synthesis and bank failures
 are surfaced instead of falling through to sampled playback or a default bank.
-The source owner disconnects once after close or creation failure. Sampled codecs
-remain separate from synthesis.
+The source owner disconnects once after close or creation failure. Cached audio
+input is bounded to 64 MiB; caller-owned InputStreams remain caller-owned.
+Recognized WAV, AMR, MP4 and MPEG frame headers bind to the corresponding demuxer.
+Codec capability is an explicit native whitelist rather than a MIME promise.
+
+Retained sampled support is PCM WAV (U8, S16/S24/S32 little-endian, F32), G.711
+A-law/mu-law, Microsoft GSM WAV, IMA ADPCM WAV, MP3, AAC/MP4 and AMR NB/WB.
+OpenCORE supplies AMR NB/WB including the generated SID/DTX fixtures. Metadata
+comes from the demuxer and crosses JNI as UTF-8. Container durations may be
+estimates; final decoded timestamps replace compressed duration after drain,
+including encoder priming/padding corrections. Known time/duration survive
+stop and deallocation. The default TimeBase keeps ticking independently of the
+media cursor; unsupported custom TimeBases throw the specified MediaException.
+
+SMAF is entirely outside this migration: recognized MMMD sources retain legacy
+`MicroPlayer`/Android output and FFmpegKit conversion, including their existing
+cache policy. The FFmpegKit AAR retains its wrapper/resources/Java dependencies;
+only its seven core FFmpeg libraries are removed and replaced by the one pinned
+native build. There is no second sampled output or whole-file PCM conversion
+for the retained formats in scope. Recipe, pins, ABI and license details are in
+[the dependency instructions](../tools/audio/README.md).
 
 RIFF/RMID containers use a bounded, validated extraction of their single MIDI
 `data` chunk into the existing SMF parser, so duration, seek, resume, and loops
@@ -88,7 +134,9 @@ tests generate MIDI, ringtone, single-program SF2/DLS sine-wave, and WAV fixture
 They require no user bank or game asset. `SynthPlayerContractTest` uses a fake
 backend for shutdown, close, time, exception, fatal-error, and stale-event
 contracts; `SonivoxRuntimeTest` exercises the production JNI and Manager paths.
-`MicroPlayerRuntimeTest` covers the shared sampled/synthesis runtime boundary.
+`SampledAudioRuntimeTest` covers host policy and sampled lifecycle.
+`UnifiedAudioRuntimeTest` checks retained formats, demuxer metadata, TimeBase and
+corrupt-source isolation through the production Android bridge.
 `AudioMidletRuntimeTest` launches a project-owned guest through the real
 `MicroLoader`/`MidletThread` and isolated `MicroActivity`, including Home,
 host return/recreation, guest stop, and runtime termination. It uses a private
@@ -99,8 +147,8 @@ callbacks remain a separate check.
 The optional [distinct-UID focus companion](../app/src/test/focus-rival/README.md)
 qualifies transient and permanent loss while the host Activity stays resumed.
 
-The native test calls the production render callback directly without opening
-an output stream. After an ARM64 debug assembly, run:
+The native test substitutes only the device opener and calls the production
+engine callback with a deterministic stream. After an ARM64 debug assembly, run:
 
 ```powershell
 ./app/src/test/native/run-sonivox-runtime.ps1 -Device <adb-serial>
@@ -108,8 +156,10 @@ an output stream. After an ARM64 debug assembly, run:
 ```
 
 It checks 257/511-frame buffers, held voices and staged PCM across suspension,
-seek flushing, stale stream errors, MIDI backpressure, host cursors, and
-real-time allocation attempts. It requires the configured SDK/NDK and current
+seek flushing, stale stream errors, MIDI backpressure, host cursors, two-source
+isolation, hazard acknowledgment, gain/clipping, mixed PCM/synthesis drain and
+loops, and real-time allocation attempts. The standalone PCM adapter test adds
+retained-codec decoding, SID/DTX, underflow, IO cancellation and repeated close. It requires the configured SDK/NDK and current
 debug `libsonivox.a`; its executable and optional bank copy are temporary
 qualification inputs outside the APK.
 See [native checks](../app/src/test/native/README.md) for the desktop allocation
@@ -120,7 +170,7 @@ prototype library overlay:
 
 ```powershell
 ./gradlew.bat -I scripts/audio-qualification.init.gradle :app:assembleEmulatorDebug :app:assembleEmulatorDebugAndroidTest
-./gradlew.bat -I scripts/audio-qualification.init.gradle '-Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.mmapi.synth.SynthPlayerContractTest,io.github.h3nb.jlmodplus.mmapi.synth.SonivoxRuntimeTest,javax.microedition.media.MicroPlayerRuntimeTest,io.github.h3nb.jlmodplus.mmapi.synth.AudioMidletRuntimeTest,io.github.h3nb.jlmodplus.mmapi.synth.MidiDeliveryRuntimeTest,io.github.h3nb.jlmodplus.mmapi.synth.RmidRuntimeTest' :app:connectedEmulatorDebugAndroidTest
+./gradlew.bat -I scripts/audio-qualification.init.gradle '-Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.mmapi.synth.SynthPlayerContractTest,io.github.h3nb.jlmodplus.mmapi.synth.SonivoxRuntimeTest,javax.microedition.media.SampledAudioRuntimeTest,io.github.h3nb.jlmodplus.mmapi.synth.AudioMidletRuntimeTest,io.github.h3nb.jlmodplus.mmapi.synth.MidiDeliveryRuntimeTest,io.github.h3nb.jlmodplus.mmapi.synth.RmidRuntimeTest,io.github.h3nb.jlmodplus.mmapi.synth.UnifiedAudioRuntimeTest' :app:connectedEmulatorDebugAndroidTest
 ```
 
 The qualification target is `io.github.h3nb.jlmodplus.audioqualification.debug`;
@@ -150,9 +200,11 @@ adb shell am instrument -w -r -e class 'io.github.h3nb.jlmodplus.mmapi.synth.Aud
 ```
 
 The bounded session is optional (30..600 seconds), using a project-owned MIDlet
-with eight melodic channels and percussion in four-second loops. It checks
-fresh PCM, EOM, host return, stop/seek/start, process/session identity, and live
-contexts while recording heap, thread, output-device and xrun observations.
+with eight melodic channels and percussion in four-second loops, plus looping
+WAV and MP3 effects through the same output. It checks fresh synthesis/sampled
+PCM, EOM, host return, stop/seek/start, process/session identity, and three live
+sources while recording heap, threads, workers, clipping, callback duration,
+output latency/device and xruns.
 It does not run a commercial game or compare acoustic output. The default run
 skips this method unless `sonivoxSessionSeconds` is supplied.
 
@@ -172,7 +224,8 @@ qualified.
 
 ## Baseline qualification record, 3 October 2026
 
-This record describes commit `325c479992e413828405fb626f45a48a26cb9d14`;
+This historical record predates the unified mixer and describes commit
+`325c479992e413828405fb626f45a48a26cb9d14`;
 follow-up repair qualification is recorded separately below.
 
 Production source was exercised through the separate qualification application
@@ -266,3 +319,63 @@ Physical Bluetooth qualification was explicitly skipped at the user's request.
 Commercial-game sessions, matched reference timbre, complete SF2 modulation,
 and the pre-existing sampled-player time-after-deallocation issue remain
 separate follow-ups. Detailed logs and private assets remain outside the repo.
+
+## Unified audio qualification, 3 October 2026
+
+Retained synthesis and sampled audio share one native output in the qualified
+runtime. The final ARM64 checks cover common MMAPI lifecycle, MIDI delivery,
+retained decoder formats, UTF-8 metadata, TimeBase, RMID, corrupt-source isolation,
+shared failure, real MIDlet lifecycle, and distinct-UID transient/permanent focus.
+The native tests cover bit-exact peer isolation, clipping/gain, consumed clocks,
+finite drain/loops, policy fences, source/output callback acknowledgment and
+bounded recovery. A separate production JNI smoke test loads the retained
+FFmpegKit wrapper with the single replacement library set.
+The final device suite listed 38 methods: 35 executed successfully and three
+optional bank/session methods skipped. JVM results list 1,100 cases, 1,099
+executed and one pre-existing skip, with zero failures/errors.
+
+Sony and Nokia each passed 20 create/play/close cycles and whole-MIDlet lifecycle,
+then a final 120-second generated guest session with MIDI, WAV and MP3 together.
+Three live sources shared one output; sampled workers ranged from zero to two.
+Both sessions exercised host return/recreation and guest stop/seek/start while
+preserving process/session identity. Sampled prefetch was changed to fill its
+bounded ring or reach EOF before starting, after an earlier Nokia run counted
+435 underflow frames. The final sessions below counted no sampled underflow.
+These sessions use the final decoder/mixer code; the subsequent SAF wrapper ABI
+repair is separately verified by the packaged export and production JNI checks.
+
+| Final mixed session | Sony Ericsson W580i | Nokia Series 40 |
+| --- | --- | --- |
+| Observed duration | 120.011 s | 120.011 s |
+| Fresh synthesis frames | 5,240,960 | 5,238,912 |
+| Fresh combined sampled frames | 10,395,696 | 10,394,988 |
+| EOM events during session | 21 | 25 |
+| Active outputs / live sources | 1 / 3 | 1 / 3 |
+| Native heap, first / last snapshot | 30,962,688 / 30,513,424 bytes | 31,085,888 / 30,419,024 bytes |
+| Threads, first / last (observed range) | 41 / 41 (40..42) | 42 / 40 (39..42) |
+| Largest mixer callback | 1.117 ms | 1.081 ms |
+| Oboe latency estimate range | 28.435..31.575 ms | 28.998..32.321 ms |
+| Xruns, first / last snapshot | 0 / 0 | 1 / 1 |
+| Underflow frames / clipped samples / guest errors | 0 / 0 / 0 | 0 / 0 / 0 |
+
+The route was device ID 3 at 44.1 kHz, with a 384-frame buffer. Nokia's one xrun
+was already present in the first session snapshot; none were added during the
+120-second interval. These counters and estimates are not acoustic recordings,
+reference timbre comparisons, arbitrary-source-count benchmarks or proof of no
+leaks. The generated guest is not commercial gameplay. Effective OEM ignore-focus
+policy stayed false; the qualification did not modify device settings.
+
+Final JVM, lint, debug/release/R8 and four-ABI checks are local validation.
+The APK retains one seven-library FFmpeg set per ABI and the legacy wrapper;
+all 353 required wrapper symbols are present, with matching public headers.
+The recipe verifies SAF source patching and getter/setter exports instead of
+trusting a patch stamp alone. New FFmpeg libraries and 64-bit runtime libraries
+have 16 KiB ELF load alignment; existing 32-bit runtime builds retain 4 KiB.
+License assets are packaged, and shipping libraries exclude the native test seam.
+
+An earlier ultra-short MIDI loop timeout was not reproduced in ten separate cold
+runs or subsequent full runs; diagnostics were added, but its initial cause is
+unproved. Bluetooth remains explicitly skipped, and SF2 modulation/reference
+timbre limitations remain. The unified path fixes the earlier sampled time and
+duration loss after deallocation. Detailed evidence and private banks remain
+outside the repository.

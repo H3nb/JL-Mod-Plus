@@ -79,7 +79,9 @@ The table below covers direct runtime dependencies and license-significant trans
 | `com.google.oboe:oboe` | Google Oboe | Apache-2.0 |
 | `org.jspecify:jspecify` | JSpecify | Apache-2.0 |
 | `org.checkerframework:checker-qual` | Checker Framework | MIT |
-| `io.github.nikita36078:ffmpeg-kit:6.0.LTS` | Maven SCM / source: `https://github.com/nikita36078/ffmpeg-kit` | Published POM declares LGPL-3.0. FFmpegKit documentation notes GPL-3.0 applies when GPL libraries are enabled; FFmpeg and bundled external libraries retain their own upstream terms. |
+| `io.github.nikita36078:ffmpeg-kit:6.0.LTS` wrapper | Maven SCM / source: `https://github.com/nikita36078/ffmpeg-kit`; AAR SHA256 `29b01a7bc5b5b868ad741c2296e865554d92d080ceb247a86e6aa8723eefa891` | LGPL-3.0 metadata; wrapper/Java/resources remain for legacy SMAF. Its seven FFmpeg core libraries are replaced by the pinned build below. |
+| FFmpeg n6.0 native libraries | `https://ffmpeg.org/releases/ffmpeg-6.0.tar.xz`, revision `ea3d24bbe3c58b171e55fe2151fc7ffaca3ab3d2`; [recipe and patch](tools/audio/README.md) | Configured LGPL-3.0-or-later with `--enable-version3`, without GPL libraries. The SAF setter patch preserves Taner Sener/FFmpegKit attribution. |
+| OpenCORE-AMR 0.1.6 NB/WB decoders | `https://github.com/arthenica/opencore-amr`, revision `7dba8c32238418ce0b316a852b2224df586ca896`; [recipe](tools/audio/README.md) | Apache-2.0; PacketVideo and Martin Storsjo notices retained. Static decoder libraries are linked into the one FFmpeg build. |
 | `com.arthenica:smart-exception-java:0.2.1`, `smart-exception-common:0.2.1` | `https://github.com/tanersener/smart-exception` | BSD-3-Clause |
 | `com.github.nikita36078:pngj:2.2.3` | `https://github.com/nikita36078/pngj`, fork of `leonbloy/pngj` | Apache-2.0 |
 | `junit:junit:4.12` (runtime transitive of current PNGJ artifact) | JUnit 4, `https://github.com/junit-team/junit4` | EPL-1.0; source is available at the origin URL |
@@ -94,12 +96,19 @@ The table below covers direct runtime dependencies and license-significant trans
 The following public source locations are recorded so recipients can trace the source corresponding to reciprocal-license components in the current distribution:
 
 - Nokia M3G / JSR-184 EPL-1.0 source: `https://github.com/H3nb/JL-Mod-Plus/tree/alpha/app/src/main/cpp/m3g/src`
-- FFmpegKit 6.0.LTS LGPL-3.0 source/SCM: `https://github.com/nikita36078/ffmpeg-kit`
+- FFmpegKit 6.0.LTS LGPL-3.0 wrapper source/SCM: `https://github.com/nikita36078/ffmpeg-kit`
+- FFmpeg n6.0 source archive: `https://ffmpeg.org/releases/ffmpeg-6.0.tar.xz`; SHA256 `57be87c22d9b49c112b6d24bc67d42508660e6b718b3db89c44e47e289137082`. The corresponding local patch and build configuration are in `tools/audio/`.
+- OpenCORE-AMR 0.1.6 source: `https://github.com/arthenica/opencore-amr/tree/7dba8c32238418ce0b316a852b2224df586ca896`; archive SHA256 `fc302cea3b65072f87d950d77ee5a7014347536039a7de7668da2891d386147e`.
 - JUnit 4 EPL-1.0 source: `https://github.com/junit-team/junit4`
 
 The exact Maven coordinate or pinned submodule revision in this ledger identifies the artifact/source snapshot used by JL-Mod Plus where such a pin exists. These source links are notice/provenance pointers; they do not replace the upstream license terms or any additional redistribution obligations those licenses may impose.
 
-The Gradle runtime graph is the authority for what resolves into the current APK configuration. If a dependency is added, removed, or changes license/package composition, this ledger and the in-app notice must be reviewed in the same change or immediately before release.
+The APK includes the applicable FFmpeg LGPL/GPL license texts and the complete
+OpenCORE Apache license/upstream notice in `app/src/main/assets/audio-licenses/`,
+linked from the Licenses screen. The complete upstream OpenCORE notice also
+mentions portions outside the selected decoder build; it is preserved verbatim.
+
+The Gradle runtime graph and native packaging are the authority for what resolves into the current APK configuration. If a dependency is added, removed, or changes license/package composition, this ledger and the in-app notice must be reviewed in the same change or immediately before release.
 
 ## Repository-only vendored material
 

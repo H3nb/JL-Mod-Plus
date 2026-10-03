@@ -1,4 +1,4 @@
-# Sonivox production callback test
+# Unified audio production callback test
 
 After `:app:assembleEmulatorDebug` builds ARM64, run from the repository root:
 
@@ -8,8 +8,10 @@ After `:app:assembleEmulatorDebug` builds ARM64, run from the repository root:
 ```
 
 Without `-Device`, the script only compiles. It uses the selected NDK and the
-latest assembled ARM64 Sonivox archive, plus the current production Player and
-memory-host source. Build again after changing the core before running the test.
+latest assembled ARM64 Sonivox archive, the Gradle-built FFmpeg libraries under
+`app/build/audio-deps` (override with `-AudioDeps`), and the current production
+Player, decoder, mixer, and memory host. Build again after changing the core
+before running the test.
 An optional bank remains outside the repository; no proprietary asset is needed
 for the embedded-bank test. The script writes only to a unique host temporary
 directory and `/data/local/tmp/jl-sonivox-native-test` on the device. It does not
@@ -25,6 +27,11 @@ a controlled blocked reopen, source cursor
 duplication/bounds, SMF time/seek, PREFETCHED interactive
 MIDI without advancing the sequencer, completed-media suspension with two loops,
 guest-vs-host generation rules, and idempotent native resource shutdown.
+The unified runtime checks two independent synths and a sampled source sharing
+one output, stop/seek/deallocate/close isolation, consumed PCM time and finite
+loop draining, policy request fencing, per-source gain and hard clipping,
+source detach acknowledgment, and old-output callback acknowledgment before a
+replacement starts. It distinguishes source failure from shared output failure.
 Only this standalone build defines `JL_EAS_OUTPUT_TEST`: a fake Oboe device
 opener permits deterministic interleavings while the actual Player management,
 callback, and Sonivox core execute. The seam is absent from shipping builds.

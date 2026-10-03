@@ -44,7 +44,7 @@ public class UnifiedAudioRuntimeTest {
     }
 
     @Test public void retainedLegacyWrapperLoadsWithTheSingleNativeDependencySet() {
-        assertTrue(FFmpegKitConfig.getFFmpegVersion().startsWith("6.0"));
+        assertEquals("n6.0", FFmpegKitConfig.getFFmpegVersion());
     }
 
     @Test public void retainedFormatsResolveWithoutMimeAndDrainThroughCommonPlayer() throws Exception {

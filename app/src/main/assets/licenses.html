@@ -100,7 +100,22 @@ License: Apache License 2.0 for the listed artifacts.</p>
 <h6>FFmpegKit fork 6.0.LTS</h6>
 <p>Coordinate: io.github.nikita36078:ffmpeg-kit:6.0.LTS<br/>
 Source/SCM: <a href="https://github.com/nikita36078/ffmpeg-kit">https://github.com/nikita36078/ffmpeg-kit</a><br/>
-Published Maven metadata declares GNU LGPL 3.0. FFmpegKit documentation notes GPL 3.0 applies when GPL-licensed libraries are enabled. FFmpeg and bundled external libraries retain their own upstream license terms.</p>
+Published Maven metadata declares GNU LGPL 3.0. The wrapper, Java classes and resources remain for legacy SMAF; its seven core FFmpeg libraries are replaced by the pinned native build below.</p>
+
+<h6>FFmpeg n6.0 native audio libraries</h6>
+<p>Revision: ea3d24bbe3c58b171e55fe2151fc7ffaca3ab3d2<br/>
+Source: <a href="https://ffmpeg.org/releases/ffmpeg-6.0.tar.xz">FFmpeg 6.0 source archive</a><br/>
+Built with --enable-version3 and without GPL libraries. License: LGPL 3.0 or later.<br/>
+The corresponding build configuration and SAF setter patch are in the JL-Mod Plus tools/audio source directory; the patch retains Copyright (c) 2021 Taner Sener and FFmpegKit attribution.<br/>
+<a href="audio-licenses/FFmpeg-LGPL-3.0.txt">GNU Lesser General Public License 3.0</a> and
+<a href="audio-licenses/FFmpeg-GPL-3.0.txt">GNU General Public License 3.0 terms referenced by LGPL</a>.</p>
+
+<h6>OpenCORE-AMR 0.1.6 NB/WB decoders</h6>
+<p>Revision: 7dba8c32238418ce0b316a852b2224df586ca896<br/>
+Source: <a href="https://github.com/arthenica/opencore-amr/tree/7dba8c32238418ce0b316a852b2224df586ca896">OpenCORE-AMR source</a><br/>
+PacketVideo / Martin Storsjo. Apache License 2.0. Only decoders are included in the native audio build.<br/>
+<a href="audio-licenses/OpenCORE-Apache-2.0.txt">Apache License 2.0</a> and
+<a href="audio-licenses/OpenCORE-NOTICE.txt">complete inherited OpenCORE notice</a>.</p>
 
 <h6>smart-exception</h6>
 <p>Coordinates: com.arthenica:smart-exception-java:0.2.1 and smart-exception-common:0.2.1<br/>
