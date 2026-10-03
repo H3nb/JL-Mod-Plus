@@ -67,6 +67,10 @@ non-Canvas Displayables.
   session as a user stop, removes emulator tasks, and terminates runtime, memory
   engine, and main processes. MIDlet Exit returns to Library after runtime
   termination, including when a hung `destroyApp()` requires forced cleanup.
+  Normal emulator shutdown stops auxiliary processes, then runtime, then main.
+  If dispatch to the main coordinator fails, emergency shutdown stops auxiliary
+  processes first and keeps its caller alive until peer termination is requested;
+  a runtime caller therefore stops main immediately before terminating itself.
 - A `Displayable` transition closes the menu before replacing its View, then
   refreshes the host title and action visibility.
 - `CanvasView` and `GlesView` report `onCheckIsTextEditor() == true` alongside

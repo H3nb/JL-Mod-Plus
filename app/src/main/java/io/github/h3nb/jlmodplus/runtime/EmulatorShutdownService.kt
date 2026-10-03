@@ -49,25 +49,41 @@ class EmulatorShutdownService : Service() {
                     }
                 }
                 val processes = manager.runningAppProcesses ?: emptyList()
-                val runtime = processes.firstOrNull {
-                    it.pid != ownPid && it.uid == Process.myUid()
-                        && it.processName == context.packageName + ":midlet"
+                for (pid in otherProcessShutdownOrder(
+                    processes, context.packageName, ownPid, Process.myUid()
+                )) {
+                    Process.killProcess(pid)
                 }
-                for (process in processes) {
-                    if (process.pid != ownPid && process.pid != runtime?.pid
-                        && process.uid == Process.myUid()
-                        && (process.processName == context.packageName
-                            || process.processName.startsWith(context.packageName + ":"))
-                    ) {
-                        Process.killProcess(process.pid)
-                    }
-                }
-                // Engine death releases its target binding before the runtime process is killed.
-                runtime?.let { Process.killProcess(it.pid) }
             } finally {
-                // Main dies last: no surviving runtime binding can restart its authority services.
+                // The caller must survive to finish cleanup. Normally it is main and dies last.
+                // If dispatch failed in :midlet, main dies immediately before this runtime caller.
                 Process.killProcess(ownPid)
             }
+        }
+
+        /** Auxiliary processes die before runtime/main peers, regardless of Android's list order. */
+        internal fun otherProcessShutdownOrder(
+            processes: List<ActivityManager.RunningAppProcessInfo>,
+            packageName: String,
+            ownPid: Int,
+            ownUid: Int,
+        ): List<Int> {
+            val order = ArrayList<Int>(processes.size)
+            var runtimePid: Int? = null
+            var mainPid: Int? = null
+            for (process in processes) {
+                if (process.pid == ownPid || process.uid != ownUid) continue
+                when (process.processName) {
+                    packageName -> mainPid = process.pid
+                    "$packageName:midlet" -> runtimePid = process.pid
+                    else -> if (process.processName.startsWith("$packageName:")) {
+                        order.add(process.pid)
+                    }
+                }
+            }
+            runtimePid?.let { order.add(it) }
+            mainPid?.let { order.add(it) }
+            return order
         }
     }
 }
