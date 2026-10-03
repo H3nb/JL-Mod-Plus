@@ -259,6 +259,21 @@ final class JavaDiagnosticStore {
 	}
 
 	static List<Snapshot> loadStored(File directory) {
+		List<Snapshot> stored = loadAllStored(directory);
+		if (stored.isEmpty()) return stored;
+		ArrayList<Snapshot> result = new ArrayList<>(stored.size());
+		for (Snapshot snapshot : stored) {
+			// Recoverable operation failures remain storage records for bounded retention, but they
+			// are not crash evidence and therefore never enter the diagnostic inbox.
+			if (snapshot.kind.fatal && !(snapshot.kind == Kind.LEGACY_ACRA
+					&& isLegacyInstallerFailure(snapshot.throwables))) {
+				result.add(snapshot);
+			}
+		}
+		return result;
+	}
+
+	private static List<Snapshot> loadAllStored(File directory) {
 		File[] files = directory.listFiles();
 		if (files == null || files.length == 0) return Collections.emptyList();
 		ArrayList<File> bases = new ArrayList<>();
@@ -269,10 +284,7 @@ final class JavaDiagnosticStore {
 		ArrayList<Snapshot> result = new ArrayList<>(bases.size());
 		for (File file : bases) {
 			try {
-				Snapshot snapshot = read(file);
-				// Retain old files/exports, but never surface recoverable operation failures as crashes.
-				if (snapshot.kind.fatal && !(snapshot.kind == Kind.LEGACY_ACRA
-						&& isLegacyInstallerFailure(snapshot.throwables))) result.add(snapshot);
+				result.add(read(file));
 			} catch (IOException | RuntimeException error) {
 				Log.w(TAG, "Ignoring unreadable Java diagnostic: " + file.getName(), error);
 			}
@@ -1023,8 +1035,11 @@ final class JavaDiagnosticStore {
 	}
 
 	private static void prune(Context context) {
-		List<Snapshot> records = loadStored(context);
-		long now = System.currentTimeMillis();
+		pruneStored(directory(context), System.currentTimeMillis());
+	}
+
+	static void pruneStored(File directory, long now) {
+		List<Snapshot> records = loadAllStored(directory);
 		for (int i = 0; i < records.size(); i++) {
 			Snapshot item = records.get(i);
 			long age = item.timestampMillis > 0 && now >= item.timestampMillis

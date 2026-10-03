@@ -240,7 +240,9 @@ public final class ProcessExitStore {
 						snapshot.processName,
 						snapshot.processRole,
 						snapshot.reason,
-						snapshot.status);
+						snapshot.status,
+						snapshot.importance,
+						snapshot.description);
 				// Re-apply the current retention policy to local projections. Policy pruning is not
 				// a user deletion, so it deliberately does not create a deletion tombstone.
 				if (retainedRole == null && !isRepresentedByUnexpectedMidletFailure(context, snapshot)) {
@@ -423,8 +425,8 @@ public final class ProcessExitStore {
 		}
 	}
 
-	/** Positive fatal evidence only: process importance and disappearance do not prove a crash. */
-	static boolean shouldRetain(int reason, int status) {
+	/** Fatal framework evidence: process importance and ordinary disappearance do not prove a crash. */
+	static boolean isFatalProcessEvidence(int reason, int status) {
 		return switch (reason) {
 			case REASON_CRASH, REASON_CRASH_NATIVE, REASON_ANR -> true;
 			case REASON_SIGNALED -> switch (status) {
@@ -436,9 +438,35 @@ public final class ProcessExitStore {
 		};
 	}
 
+	/** Android-classified failures that are useful diagnostics without being crash evidence. */
+	static boolean isActionableSystemExit(int reason, int importance, String description) {
+		if (isMemoryLimiterTermination(reason, description)) {
+			return true;
+		}
+		return switch (reason) {
+			case REASON_INITIALIZATION_FAILURE, REASON_EXCESSIVE_RESOURCE_USAGE -> true;
+			case REASON_LOW_MEMORY -> isUserRelevantImportance(importance);
+			default -> false;
+		};
+	}
+
+	private static boolean isUserRelevantImportance(int importance) {
+		return importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+				|| importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE
+				|| importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE
+				|| importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE;
+	}
+
+	static boolean shouldRetain(int reason, int status, int importance, String description) {
+		return isFatalProcessEvidence(reason, status)
+				|| isActionableSystemExit(reason, importance, description);
+	}
+
 	/** Historical ACRA helper-process exits are reporting infrastructure, not user incidents. */
-	static boolean shouldRetainProcess(String processRole, int reason, int status) {
-		return !"reporter".equals(processRole) && shouldRetain(reason, status);
+	static boolean shouldRetainProcess(
+			String processRole, int reason, int status, int importance, String description) {
+		return !"reporter".equals(processRole)
+				&& shouldRetain(reason, status, importance, description);
 	}
 
 	static String currentProcessRole(String packageName, String processName, String storedRole) {
@@ -452,9 +480,11 @@ public final class ProcessExitStore {
 			String processName,
 			String storedRole,
 			int reason,
-			int status) {
+			int status,
+			int importance,
+			String description) {
 		String currentRole = currentProcessRole(packageName, processName, storedRole);
-		return shouldRetainProcess(currentRole, reason, status)
+		return shouldRetainProcess(currentRole, reason, status, importance, description)
 				? currentRole : null;
 	}
 
@@ -1265,7 +1295,12 @@ public final class ProcessExitStore {
 						context, state.sessionId, info.getReason(), info.getStatus(), processRole)) {
 					continue;
 				}
-				if (!shouldRetainProcess(processRole, info.getReason(), info.getStatus())
+				if (!shouldRetainProcess(
+						processRole,
+						info.getReason(),
+						info.getStatus(),
+						info.getImportance(),
+						info.getDescription())
 						&& !isFatalSessionShutdown(findSession(context, state.sessionId), state.sessionId,
 								info.getReason(), info.getStatus(), processRole)) {
 					continue;

@@ -5,16 +5,22 @@ derived, regenerable export created only when the user chooses **Report on GitHu
 
 ## Incident admission
 
-The diagnostic inbox admits confirmed fatal Java/process failures, terminal MIDlet session
-failures, and Android-reported Java crashes, native crashes, or ANRs. A signal termination needs
-a crash-class signal (SIGILL, SIGTRAP, SIGABRT, SIGBUS, SIGFPE, or SIGSEGV). A controlled SIGKILL
-may attach to an already-recorded fatal MIDlet session, but cannot establish an incident itself.
+The diagnostic inbox distinguishes fatal evidence from selected actionable Android process exits.
+Fatal evidence includes terminal Java/MIDlet failures, Android-reported Java or native crashes,
+ANRs, and crash-class signals (SIGILL, SIGTRAP, SIGABRT, SIGBUS, SIGFPE, or SIGSEGV). Selected
+Android-classified initialization failures, excessive-resource terminations, and memory-limiter
+terminations are retained as non-crash `PROCESS_EXIT` diagnostics. Low-memory kills are retained
+only when Android records foreground, foreground-service, visible, or perceptible importance.
 
-Low-memory reclamation, resource-policy termination, unknown process disappearance, task removal,
-intentional exits, and ordinary caught installer/conversion errors do not create diagnostic reports.
-This admission policy also applies to stored records from earlier versions. Previously exported
-bundles are not automatically removed. Android 6-10 has no reliable OS exit reason, so orphan session
-journals remain useful for play-stat reconciliation without being promoted into crash reports.
+Cached/background low-memory reclamation, unknown disappearance, ordinary SIGKILL or SIGTERM,
+generic `REASON_OTHER`, task removal, and intentional user/package/permission exits do not create
+standalone incidents. The documented memory-limiter marker under `REASON_OTHER` is the narrow
+exception. An exact controlled MIDlet SIGKILL may corroborate an already-proven
+`UNEXPECTED_FAILURE` session, but cannot establish a crash by itself. Caught installer/conversion
+errors are not crash reports. This admission policy also applies when reading stored records;
+previously exported bundles remain user-owned and are not automatically removed. Android 6-10 has
+no reliable OS exit reason, so orphan session journals remain useful for play-stat reconciliation
+without being promoted into guessed crash reports.
 
 ## Public location and identity
 

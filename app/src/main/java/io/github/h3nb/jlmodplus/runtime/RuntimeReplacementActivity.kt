@@ -25,7 +25,12 @@ class RuntimeReplacementActivity : Activity() {
     private var resumed = false
     private var deathRecipient: IBinder.DeathRecipient? = null
     private val timeout = Runnable {
-        if (!runtimeDead && !isFinishing && !isDestroyed) {
+        val observedRuntime = runtime ?: return@Runnable
+        if (isFinishing || isDestroyed) return@Runnable
+        if (!observedRuntime.isBinderAlive) {
+            runtimeDead = true
+            launchIfReady()
+        } else if (!runtimeDead) {
             failReplacement()
         }
     }
@@ -70,7 +75,7 @@ class RuntimeReplacementActivity : Activity() {
             runtimeDead = true
             return
         }
-        handler.postDelayed(timeout, 5_000L)
+        handler.postDelayed(timeout, REPLACEMENT_TIMEOUT_MILLIS)
         try {
             control.send(Message.obtain(null, STOP_RUNTIME))
         } catch (error: RemoteException) {
@@ -124,6 +129,7 @@ class RuntimeReplacementActivity : Activity() {
         const val EXTRA_LAUNCH = "runtime.replacement.launch"
         const val EXTRA_CONTROL = "runtime.replacement.control"
         const val STOP_RUNTIME = 1
+        private const val REPLACEMENT_TIMEOUT_MILLIS = 5_000L
         private const val TAG = "RuntimeReplacement"
     }
 }
