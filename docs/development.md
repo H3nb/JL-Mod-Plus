@@ -144,6 +144,15 @@ established. Record which selected tests actually ran; the rest of `androidTest`
 remains unverified unless separately executed. Physical arm64/native behavior and
 other Android versions still require appropriate device or targeted checks.
 
+For full-emulator Recents/Exit shutdown, install both debug APKs on an isolated
+emulator and run `./scripts/runtime-shutdown-smoke.ps1 -Serial emulator-5556`
+(pass `-Adb` if it is not on PATH). This opt-in host check prepares a live MIDlet,
+removes its task or requests emulator Exit, and verifies that all package processes
+and services stop without restarting. A subsequent fixture invocation verifies
+intentional session completion, no diagnostic report, and launcher return to
+Library, then restores the previous workdir. The external observer is required
+because successful emulator shutdown kills the main-process instrumentation too.
+
 ### CI performance
 
 CI reuses a Gradle daemon across steps in the same job and preserves the existing

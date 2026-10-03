@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -234,6 +235,52 @@ public class MidletSessionJournalTest {
 		String data = validProperties() + "failureEventId=event-2\n"
 				+ "failureBoundary=NOT_A_BOUNDARY\n";
 		assertReadFails(data);
+	}
+
+	@Test
+	public void readingCommittedBasePreservesActiveModernWrite() throws Exception {
+		File base = temporaryFolder.newFile("active.properties");
+		File pending = temporaryFolder.newFile("active.properties.new");
+		String committed = validProperties();
+		String next = committed.replace("stage=RUNNING", "stage=PAUSING");
+		Files.writeString(base.toPath(), committed);
+		Files.writeString(pending.toPath(), next);
+
+		assertEquals(MidletSessionJournal.Stage.RUNNING, MidletSessionJournal.read(base).stage);
+		assertEquals(committed, Files.readString(base.toPath()));
+		assertEquals(next, Files.readString(pending.toPath()));
+	}
+
+	@Test
+	public void readingLegacyBackupPreservesInterruptedOrActiveWrite() throws Exception {
+		File base = temporaryFolder.newFile("legacy-write.properties");
+		File backup = temporaryFolder.newFile("legacy-write.properties.bak");
+		Files.writeString(base.toPath(), "incomplete new snapshot");
+		Files.writeString(backup.toPath(), validProperties());
+
+		assertEquals(MidletSessionJournal.Stage.RUNNING, MidletSessionJournal.read(base).stage);
+		assertEquals("incomplete new snapshot", Files.readString(base.toPath()));
+		assertEquals(validProperties(), Files.readString(backup.toPath()));
+		// Enumeration also finds backup-only journals after the writer dies before creating a base.
+		Files.delete(base.toPath());
+		assertEquals(MidletSessionJournal.Stage.RUNNING, MidletSessionJournal.read(base).stage);
+		assertFalse(base.exists());
+		assertTrue(backup.isFile());
+	}
+
+	@Test
+	public void firstUncommittedPublicationIsUnavailableAndUntouched() throws Exception {
+		File base = new File(temporaryFolder.getRoot(), "first-write.properties");
+		File pending = temporaryFolder.newFile("first-write.properties.new");
+		Files.writeString(pending.toPath(), validProperties());
+
+		try {
+			MidletSessionJournal.read(base);
+			fail("An uncommitted .new snapshot must not become session authority");
+		} catch (IOException expected) {
+			assertFalse(base.exists());
+			assertEquals(validProperties(), Files.readString(pending.toPath()));
+		}
 	}
 
 	@Test

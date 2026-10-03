@@ -1,9 +1,8 @@
 /*
- * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ * Modified for JL-Mod Plus.
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
- * Modifications for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +60,7 @@ import io.github.h3nb.jlmodplus.crashes.CrashReportsActivity;
 import io.github.h3nb.jlmodplus.crashes.MidletFailureRecovery;
 import io.github.h3nb.jlmodplus.crashes.ProcessExitStore;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
+import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.util.FileUtils;
@@ -178,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
 			@Override
 			public void onExit() {
 				mainComposeController.dismiss();
+				MidletKeepAliveService.exitEmulator(MainActivity.this);
 				finish();
 			}
 

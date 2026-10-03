@@ -422,6 +422,51 @@ public class CrashRuntimeIsolationTest {
 	}
 
 	@Test
+	public void hungUserExitReturnsToLibraryAndTerminatesWithoutCrashReport() throws Exception {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		String processName = context.getPackageName() + ":midlet";
+		int mainPid = Process.myPid();
+		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean hadPreviousEmulatorDir = preferences.contains(Constants.PREF_EMULATOR_DIR);
+		String previousEmulatorDir = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
+		File appDir = new File(new File(root, "converted"), "fixture");
+		File marker = new File(root, "lifecycle.marker");
+		try {
+			deleteRecursively(root);
+			prepareLifecycleFixture(context, root, appDir);
+			assertTrue(preferences.edit()
+					.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_DESTROY_HANG, marker);
+			launchLifecycleMidlet(context, appDir);
+			awaitMarker(marker);
+			awaitActivityOnTop(context, MicroActivity.class);
+			MidletSessionStore.State state = MidletSessionStore.read(context);
+			assertNotNull(state);
+			launchLifecycleControl(context, CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY);
+			assertRemoteProcessStops(context, processName);
+			awaitActivityOnTop(context, MainActivity.class);
+			assertEquals(mainPid, processPid(context, context.getPackageName()));
+			assertNull(MidletSessionStore.read(context));
+			assertFalse(RuntimeStorageLease.isActive(context.getFilesDir(), appDir));
+			MidletSessionJournal.Snapshot journal =
+					ProcessExitStore.findSession(context, state.getGeneration());
+			assertNotNull(journal);
+			assertEquals(MidletSessionJournal.Stage.COMPLETED, journal.stage);
+			assertEquals(MidletSessionJournal.Outcome.USER_STOP, journal.outcome);
+			assertNoNewLifecycleFailure(context, baselineIds);
+		} finally {
+			killRemoteProcessBestEffort(context, processName);
+			MidletSessionStore.clear(context);
+			cleanupLifecycleDiagnostics(context, baselineIds);
+			restoreEmulatorDirectoryBestEffort(
+					preferences, hadPreviousEmulatorDir, previousEmulatorDir);
+			deleteRecursivelyBestEffort(root);
+		}
+	}
+
+	@Test
 	public void explicitDestinationSurvivesKeyEndBackgroundDuringDestroy() throws Exception {
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		String midletProcessName = context.getPackageName() + ":midlet";
@@ -712,7 +757,7 @@ public class CrashRuntimeIsolationTest {
 		return ids;
 	}
 
-	private static void launchLifecycleMidlet(Context context, File appDir) {
+	static void launchLifecycleMidlet(Context context, File appDir) {
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
 				context, MicroActivity.class)
 				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
@@ -722,7 +767,7 @@ public class CrashRuntimeIsolationTest {
 		context.startActivity(intent);
 	}
 
-	private static void sendAndroidTaskHome() throws IOException {
+	static void sendAndroidTaskHome() throws IOException {
 		ParcelFileDescriptor result = InstrumentationRegistry.getInstrumentation()
 				.getUiAutomation()
 				.executeShellCommand(
@@ -736,7 +781,7 @@ public class CrashRuntimeIsolationTest {
 		}
 	}
 
-	private static void awaitJournalStage(
+	static void awaitJournalStage(
 			Context context, String sessionId, MidletSessionJournal.Stage expectedStage) {
 		long deadline = SystemClock.uptimeMillis() + PROCESS_TIMEOUT_MILLIS;
 		do {
@@ -772,20 +817,27 @@ public class CrashRuntimeIsolationTest {
 	}
 
 	private static void launchLifecycleMidletFromLibrary(File appDir) {
-		InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
-			for (Activity activity : ActivityLifecycleMonitorRegistry.getInstance()
-					.getActivitiesInStage(Stage.RESUMED)) {
-				if (activity instanceof MainActivity) {
-					// NEW_TASK would only bring the fixture's existing Library task forward.
-					// Library opens a MIDlet from its Activity context, creating a fresh host.
-					activity.startActivity(new Intent(Intent.ACTION_DEFAULT,
-							Uri.parse(appDir.getAbsolutePath()), activity, MicroActivity.class)
-							.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME));
-					return;
+		long deadline = SystemClock.uptimeMillis() + PROCESS_TIMEOUT_MILLIS;
+		boolean[] launched = {false};
+		do {
+			InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+				for (Activity activity : ActivityLifecycleMonitorRegistry.getInstance()
+						.getActivitiesInStage(Stage.RESUMED)) {
+					if (activity instanceof MainActivity) {
+						// NEW_TASK would only bring the fixture's existing Library task forward.
+						// Library opens a MIDlet from its Activity context, creating a fresh host.
+						activity.startActivity(new Intent(Intent.ACTION_DEFAULT,
+								Uri.parse(appDir.getAbsolutePath()), activity, MicroActivity.class)
+								.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME));
+						launched[0] = true;
+						return;
+					}
 				}
-			}
-			fail("Library Activity is not resumed for explicit MIDlet selection");
-		});
+			});
+			if (launched[0]) return;
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Library Activity is not resumed for explicit MIDlet selection");
 	}
 
 	private static void launchLifecycleMidletWithoutClearingTask(
@@ -834,7 +886,7 @@ public class CrashRuntimeIsolationTest {
 		context.startActivity(intent);
 	}
 
-	private static void prepareLifecycleFixture(Context context, File root, File appDir) throws IOException {
+	static void prepareLifecycleFixture(Context context, File root, File appDir) throws IOException {
 		File configDir = new File(new File(root, "configs"), appDir.getName());
 		if (!appDir.mkdirs() && !appDir.isDirectory()) {
 			throw new IOException("Unable to create lifecycle fixture converted directory");
@@ -854,7 +906,7 @@ public class CrashRuntimeIsolationTest {
 				LIFECYCLE_MIDLET_NAME, LIFECYCLE_MIDLET_VENDOR, LIFECYCLE_MIDLET_VERSION);
 	}
 
-	private static void writeLifecycleManifest(File appDir, String mode, File marker) throws IOException {
+	static void writeLifecycleManifest(File appDir, String mode, File marker) throws IOException {
 		File manifest = new File(appDir, "converted.dex.conf");
 		File unexpectedForegroundMarker =
 				new File(marker.getParentFile(), "unexpected-foreground.marker");
@@ -879,7 +931,7 @@ public class CrashRuntimeIsolationTest {
 		}
 	}
 
-	private static void awaitMarker(File marker) {
+	static void awaitMarker(File marker) {
 		long deadline = SystemClock.uptimeMillis() + CLEAN_SESSION_TIMEOUT_MILLIS;
 		do {
 			if (marker.isFile() && marker.length() > 0) {
@@ -890,7 +942,7 @@ public class CrashRuntimeIsolationTest {
 		fail("MIDlet lifecycle fixture never reached its ready marker");
 	}
 
-	private static void awaitActivityOnTop(Context context, Class<?> activityClass) {
+	static void awaitActivityOnTop(Context context, Class<?> activityClass) {
 		ActivityManager activityManager =
 				(ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 		ComponentName expected = new ComponentName(context, activityClass);
@@ -931,7 +983,7 @@ public class CrashRuntimeIsolationTest {
 		assertFalse("Remote crash process is still alive", processPid(context, processName) != 0);
 	}
 
-	private static int processPid(Context context, String processName) {
+	static int processPid(Context context, String processName) {
 		ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 		List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
 		if (processes == null) {
@@ -1010,7 +1062,7 @@ public class CrashRuntimeIsolationTest {
 		}
 	}
 
-	private static void deleteRecursively(File file) {
+	static void deleteRecursively(File file) {
 		if (file == null || !file.exists()) {
 			return;
 		}

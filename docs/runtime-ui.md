@@ -62,6 +62,11 @@ non-Canvas Displayables.
   the previous runtime as an intentional user stop. A main-process handoff retains
   the launch request and waits for the old process's Binder death before starting
   a fresh heap. Reopening the same live runtime retains its session and heap.
+- Android Home retains the live runtime and its keep-alive service. Removing an
+  emulator task from Recents or explicitly exiting the emulator completes the
+  session as a user stop, removes emulator tasks, and terminates runtime, memory
+  engine, and main processes. MIDlet Exit returns to Library after runtime
+  termination, including when a hung `destroyApp()` requires forced cleanup.
 - A `Displayable` transition closes the menu before replacing its View, then
   refreshes the host title and action visibility.
 - `CanvasView` and `GlesView` report `onCheckIsTextEditor() == true` alongside

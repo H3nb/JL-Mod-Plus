@@ -46,7 +46,6 @@ import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.MainActivity;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
-import io.github.h3nb.jlmodplus.crashes.CrashReporter;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppBundleImporter;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.jar.Descriptor;
@@ -557,18 +556,6 @@ public class InstallerDialog extends DialogFragment {
 		if (cancelRequested) { closeInstaller(); return; }
 		bundleWorkerInFlight = false;
 		Log.e("Installer", e.toString(), e);
-		Bundle args = getArguments();
-		Uri uri = args == null ? null : args.getParcelable(ARG_URI);
-		Descriptor descriptor = installer == null ? null : installer.getNewDescriptor();
-		File jar = installer == null ? null : installer.getJar();
-		CrashReporter.reportInstallerFailure(
-				e,
-				uri == null ? null : uri.getScheme(),
-				descriptor == null ? null : descriptor.getName(),
-				descriptor == null ? null : descriptor.getVendor(),
-				descriptor == null ? null : descriptor.getVersion(),
-				jar == null ? null : Long.toString(jar.length())
-		);
 		if (!isAdded() || composeController == null) {
 			cleanupInstallerResources();
 			acknowledgeExternalRequest();

@@ -45,6 +45,7 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String MODE_CLEAN = "clean";
 	public static final String MODE_WORKER_DESTROY = "worker-destroy";
 	public static final String MODE_HOLD = "hold";
+	public static final String MODE_DESTROY_HANG = "destroy-hang";
 	public static final String MODE_BACKGROUND = "background";
 	public static final String MODE_END_KEY_BACKGROUND = "end-key-background";
 	public static final String MODE_CSI_STYLE_EXIT = "csi-style-exit";
@@ -97,7 +98,7 @@ public final class LifecycleMidlet extends MIDlet {
 			new Thread(this::notifyDestroyed, "LifecycleFixtureDestroyWorker").start();
 			return;
 		}
-		if (MODE_HOLD.equals(mode)) {
+		if (MODE_HOLD.equals(mode) || MODE_DESTROY_HANG.equals(mode)) {
 			writeMarker(getAppProperty(MARKER_PROPERTY));
 			return;
 		}
@@ -233,6 +234,13 @@ public final class LifecycleMidlet extends MIDlet {
 		String mode = getAppProperty(MODE_PROPERTY);
 		if (MODE_CSI_STYLE_EXIT.equals(mode) && destroyed) {
 			throw new IllegalStateException("CSI-style fixture destroyed twice");
+		}
+		if (MODE_DESTROY_HANG.equals(mode)) {
+			for (;;) {
+				try {
+					Thread.sleep(60_000L);
+				} catch (InterruptedException ignored) {}
+			}
 		}
 		destroyed = true;
 		if (MODE_CRASH_DESTROY.equals(mode)) {

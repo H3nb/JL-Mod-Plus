@@ -3,6 +3,19 @@
 JL-Mod Plus diagnostic records remain the source of truth. A public diagnostic bundle is a
 derived, regenerable export created only when the user chooses **Report on GitHub**.
 
+## Incident admission
+
+The diagnostic inbox admits confirmed fatal Java/process failures, terminal MIDlet session
+failures, and Android-reported Java crashes, native crashes, or ANRs. A signal termination needs
+a crash-class signal (SIGILL, SIGTRAP, SIGABRT, SIGBUS, SIGFPE, or SIGSEGV). A controlled SIGKILL
+may attach to an already-recorded fatal MIDlet session, but cannot establish an incident itself.
+
+Low-memory reclamation, resource-policy termination, unknown process disappearance, task removal,
+intentional exits, and ordinary caught installer/conversion errors do not create diagnostic reports.
+This admission policy also applies to stored records from earlier versions. Previously exported
+bundles are not automatically removed. Android 6-10 has no reliable OS exit reason, so orphan session
+journals remain useful for play-stat reconciliation without being promoted into crash reports.
+
 ## Public location and identity
 
 Bundles are written to:

@@ -42,6 +42,7 @@ import io.github.h3nb.jlmodplus.crashes.CrashReporter;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionJournal;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
+import io.github.h3nb.jlmodplus.runtime.EmulatorShutdownService;
 
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
@@ -163,15 +164,41 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	/** User-requested replacement never calls guest teardown or navigates back to Library. */
 	static void forceStopForReplacement() {
 		try {
-			MidletThread current = instance;
-			if (current != null) {
-				current.requestIntentionalTermination(MidletSessionJournal.Outcome.USER_STOP, false);
-				current.finalizeIntentionalTermination(MidletSessionJournal.Outcome.USER_STOP);
-			}
+			finalizeForcedUserStop();
 		} finally {
 			// Do not release the storage lease early. Binder death is the main process's proof that
 			// the previous guest's workers and native state can no longer affect the replacement.
 			Process.killProcess(Process.myPid());
+		}
+	}
+
+	/** Removing the emulator task is an explicit stop, independent of guest callbacks. */
+	public static void stopEmulator(android.content.Context context) {
+		try {
+			finalizeForcedUserStop();
+			MidletSessionStore.clear(context);
+			MidletKeepAliveService.stop(context);
+		} finally {
+			// Host teardown closes interactive memory-engine bindings too. The main process then
+			// shuts down last, after child death removes its authority bindings.
+			Runnable shutdown = () -> EmulatorShutdownService.request(context);
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity != null) {
+				activity.leaveRuntimeHost(false, shutdown);
+			} else {
+				new Handler(Looper.getMainLooper()).post(shutdown);
+			}
+		}
+	}
+
+	private static void finalizeForcedUserStop() {
+		MidletThread current = instance;
+		if (current != null) {
+			current.requestIntentionalTermination(MidletSessionJournal.Outcome.USER_STOP, false);
+			if (!current.finalizeIntentionalTermination(MidletSessionJournal.Outcome.USER_STOP)) {
+				// A real failure which already won stays fatal, but its bindings must still close.
+				current.finalizeFatalRuntime();
+			}
 		}
 	}
 
@@ -295,7 +322,6 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				Thread.currentThread().interrupt();
 				return;
 			}
-			MidletSessionJournal.Outcome outcome;
 			synchronized (terminationLock) {
 				// The watchdog is strictly for a destroyApp(true) callback which is still executing
 				// past the existing timeout. Successful teardown clears the callback phase first.
@@ -303,15 +329,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 						|| fatalFailureClaimed.get() || terminalFinalized) {
 					return;
 				}
-				outcome = requestedTerminationOutcome == null
-						? MidletSessionJournal.Outcome.USER_STOP : requestedTerminationOutcome;
-				terminalFinalized = true;
-				if (instance == this) {
-					instance = null;
-				}
 			}
-			finalizeSessionState(outcome);
-			Process.killProcess(Process.myPid());
+			// Use the same terminal destination as successful destruction. The guest callback may
+			// still be hung, but the Android host can return to Library before process cleanup.
+			terminateIntentional(MidletSessionJournal.Outcome.USER_STOP);
 		}, "ForceDestroyTimer").start();
 	}
 
