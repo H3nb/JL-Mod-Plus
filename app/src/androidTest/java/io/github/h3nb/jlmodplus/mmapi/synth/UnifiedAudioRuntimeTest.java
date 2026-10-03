@@ -47,6 +47,25 @@ public class UnifiedAudioRuntimeTest {
         assertEquals("n6.0", FFmpegKitConfig.getFFmpegVersion());
     }
 
+    @Test public void aacEofPublishesActualDurationBeforeEndWithoutGuestGetter() throws Exception {
+        Player player = asset("effect.aac", null);
+        ArrayList<Object> updates = new ArrayList<>();
+        CountDownLatch ended = new CountDownLatch(1);
+        player.prefetch();
+        assertEquals(Player.TIME_UNKNOWN, player.getDuration());
+        player.addPlayerListener((p, event, value) -> {
+            if (PlayerListener.DURATION_UPDATED.equals(event)) updates.add(value);
+            if (PlayerListener.END_OF_MEDIA.equals(event)) ended.countDown();
+        });
+        player.setLoopCount(2); player.start();
+        assertTrue(ended.await(7, TimeUnit.SECONDS));
+        await(() -> player.getState() == Player.PREFETCHED, 7000, "AAC loop did not drain");
+        player.close();
+        assertEquals(1, updates.size());
+        assertTrue(updates.get(0) instanceof Long);
+        assertEquals(1024013L, ((Long) updates.get(0)).longValue());
+    }
+
     @Test public void retainedFormatsResolveWithoutMimeAndDrainThroughCommonPlayer() throws Exception {
         String[] fixtures = {"pcm.wav", "adpcm.wav", "alaw.wav", "gsm.wav", "effect.mp3", "effect.aac",
                 "generated-tone-dtx-nb.amr", "generated-dtx-nb.amr", "generated-sid-wb.awb"};

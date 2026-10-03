@@ -67,6 +67,9 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
 	private boolean requestedPlayback;
 	private long mediaTime = TIME_UNKNOWN;
 	private long duration = TIME_UNKNOWN;
+	// Native playback generations also change on seek/pause. Duration belongs
+	// to the logical media, and only replacing that media invalidates delivery.
+	private long durationSource;
 	private final ArrayList<PlayerListener> listeners = new ArrayList<>();
 	private final InternalMetaData metadata;
 	private final DataSource dataSource;
@@ -116,7 +119,7 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
 				controls.put(EqualizerControl.class.getName(), new InternalEqualizer());
 			}
 			state = REALIZED;
-			duration = library.getDuration(handle);
+			updateDuration();
 		}
 	}
 
@@ -143,7 +146,7 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
 			}
 			state = PREFETCHED;
 			mediaTime = library.getMediaTime(handle);
-			duration = library.getDuration(handle);
+			updateDuration();
 			sourceGeneration = library.getGeneration(handle);
 			eventPoll = audio.scheduleManagement(this::pollEvents);
 		}
@@ -218,7 +221,7 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
 		catch (MediaException e) { fail("Cannot stop audio output: " + e); return; }
 		if (state == PREFETCHED) {
 			mediaTime = library.getMediaTime(handle);
-			duration = library.getDuration(handle);
+			updateDuration();
 			library.deallocate(handle);
 			sourceGeneration = library.getGeneration(handle);
 			state = REALIZED;
@@ -324,8 +327,18 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
 	@Override
 	public synchronized long getDuration() {
 		checkClosed();
-		if (!library.isSynthesis() || duration == TIME_UNKNOWN) duration = library.getDuration(handle);
+		updateDuration();
 		return duration;
+	}
+
+	private void updateDuration() {
+		long observed = library.getDuration(handle);
+		// Deallocation can release the decoder's duration. Retain the known
+		// duration of this media until setSequence explicitly replaces it.
+		if (observed != TIME_UNKNOWN && observed != duration) {
+			duration = observed;
+			postEvent(PlayerListener.DURATION_UPDATED, Long.valueOf(observed));
+		}
 	}
 
 	@Override
@@ -463,9 +476,11 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
 			long[] event;
 			while ((event = library.pollEvent(handle)) != null) {
 				if (event[2] != sourceGeneration) continue;
+				updateDuration();
 				acceptEvent((int) event[0], event[1], event.length > 3 ? event[3] : 0);
 				if (state == CLOSED) return;
 			}
+			updateDuration();
 			if (library.isOutputSuspended(handle)) hostSuspended = true;
 		} catch (Exception e) { fail("Audio management failed: " + e); }
 	}
@@ -498,10 +513,12 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
 	private synchronized void postEvent(String event, Object eventData) {
 		PlayerListener[] snapshot = listeners.toArray(new PlayerListener[0]);
 		if (snapshot.length == 0) return;
+		long media = durationSource;
 		callbackExecutor.execute(() -> {
 			for (PlayerListener listener : snapshot) {
 				synchronized (this) {
 					if (state == CLOSED && !PlayerListener.CLOSED.equals(event) && !PlayerListener.ERROR.equals(event)) return;
+					if (PlayerListener.DURATION_UPDATED.equals(event) && media != durationSource) return;
 				}
 				try { listener.playerUpdate(this, event, eventData); }
 				catch (Throwable e) { Log.e(TAG, "Player listener failed", e); }
@@ -532,8 +549,10 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
 		}
 		try {
 			library.setDataSource(handle, sequence);
+			durationSource++;
 			mediaTime = 0;
-			duration = library.getDuration(handle);
+			duration = TIME_UNKNOWN;
+			updateDuration();
 			sourceGeneration = library.getGeneration(handle);
 		} catch (Exception e) {
 			Log.e(TAG, "setSequence: ", e);

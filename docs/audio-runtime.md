@@ -35,6 +35,11 @@ output facts through generation-fenced polling on the management path. Listeners
 run outside the Player lock. `CLOSED` is terminal, source disconnection and the
 final `CLOSED` event happen once, and the callback executor ends after final
 delivery. Known media time and duration remain available after deallocation.
+Duration observations from lifecycle calls, getters and management share one
+cache/publication path. A changed known value emits `DURATION_UPDATED` with a
+`Long` payload, including duration discovered at decoded EOF without a guest
+getter. Equal values do not repeat across polling or loops; queued duration
+notifications are invalidated by close or ToneControl source replacement.
 MIDI sending requires `PREFETCHED` or `STARTED`; optional bank queries remain
 unsupported and do not advertise fictional bank contents.
 At a valid prefetched state, `shortMidiEvent` delivery rejection is silent as
