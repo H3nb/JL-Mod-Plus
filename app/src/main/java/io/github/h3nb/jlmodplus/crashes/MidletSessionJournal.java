@@ -21,6 +21,8 @@ import android.util.AtomicFile;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,8 +41,8 @@ import io.github.h3nb.jlmodplus.EmulatorApplication;
  * Small, app-private durable record of one MIDlet session.
  *
  * The :midlet process is the only writer for a session file. Writes use AtomicFile so a reader in
- * the main process can observe either the previous complete snapshot or the next complete snapshot,
- * never a partially written properties file.
+ * the main process can read available snapshots without interfering with the active writer.
+ * Readers prefer the legacy committed backup when present and leave write sidecars untouched.
  */
 public final class MidletSessionJournal {
 	/** Legacy schema retained for reader fixtures and rollback compatibility. */
@@ -569,11 +571,43 @@ public final class MidletSessionJournal {
 	}
 
 	static Snapshot read(File file) throws IOException {
-		// openRead() is required to restore the last committed state after an interrupted AtomicFile
-		// write. Directly reading the base path can observe an invalid/partial file on older Android.
-		try (InputStream input = new AtomicFile(file).openRead()) {
+		// AtomicFile.openRead() repairs interrupted writes by mutating sidecars. A main-process
+		// reader cannot tell an interrupted write from an active :midlet write, so it must never
+		// delete .new or restore .bak. Legacy AtomicFile keeps its last committed snapshot in .bak;
+		// modern AtomicFile keeps it in the base until .new is published by rename. A .new-only
+		// journal has no committed snapshot yet and is intentionally unavailable to readers.
+		try (InputStream input = openCommittedRead(file)) {
 			return read(input);
 		}
+	}
+
+	private static FileInputStream openCommittedRead(File file) throws IOException {
+		try {
+			return openCommittedReadOnce(file);
+		} catch (FileNotFoundException firstSelectionRaced) {
+			// The writer may finish a legacy base/.bak transition between selection and open.
+			// Re-select once; readers remain strictly non-mutating.
+			try {
+				return openCommittedReadOnce(file);
+			} catch (FileNotFoundException retryFailure) {
+				retryFailure.addSuppressed(firstSelectionRaced);
+				throw retryFailure;
+			}
+		}
+	}
+
+	private static FileInputStream openCommittedReadOnce(File file) throws IOException {
+		File backup = sidecar(file, LEGACY_BACKUP_SUFFIX);
+		boolean readingBackup = backup.isFile();
+		FileInputStream committed = new FileInputStream(readingBackup ? backup : file);
+		// A legacy writer may move the base to .bak and open a partial replacement between the
+		// initial backup check and our open. Recheck after opening: an old inode stays readable,
+		// but a newly-opened replacement must yield to the committed backup while it exists.
+		if (!readingBackup && backup.isFile()) {
+			committed.close();
+			return new FileInputStream(backup);
+		}
+		return committed;
 	}
 
 	private static void put(Properties properties, String key, String value) {

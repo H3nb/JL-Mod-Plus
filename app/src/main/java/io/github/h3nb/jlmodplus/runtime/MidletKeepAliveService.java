@@ -1,20 +1,4 @@
-/*
- * Copyright 2026 JL-Mod Plus contributors
- * Modified for JL-Mod Plus.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.runtime;
 
 import android.annotation.SuppressLint;
@@ -38,6 +22,7 @@ import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.LauncherActivity;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
+import javax.microedition.shell.MidletThread;
 
 /**
  * Keeps an active full-emulator MIDlet in the foreground process priority while it is backgrounded.
@@ -49,6 +34,18 @@ public final class MidletKeepAliveService extends Service {
     private static final String TAG = "MidletKeepAlive";
     private static final String CHANNEL_ID = "midlet_runtime";
     private static final int NOTIFICATION_ID = 0x4a4c;
+    private static final String ACTION_STOP_EMULATOR = "runtime.STOP_EMULATOR";
+
+    /** Finalize the guest in its process before the main process closes the emulator. */
+    public static void exitEmulator(Context context) {
+        try {
+            context.startService(new Intent(context, MidletKeepAliveService.class)
+                    .setAction(ACTION_STOP_EMULATOR));
+        } catch (RuntimeException error) {
+            Log.w(TAG, "Unable to request emulator stop", error);
+            EmulatorShutdownService.request(context);
+        }
+    }
 
     public static void start(Context context) {
         if (!BuildConfig.FULL_EMULATOR || context == null) {
@@ -87,6 +84,10 @@ public final class MidletKeepAliveService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && ACTION_STOP_EMULATOR.equals(intent.getAction())) {
+            MidletThread.stopEmulator(getApplicationContext());
+            return START_NOT_STICKY;
+        }
         MidletSessionStore.State state = MidletSessionStore.read(getApplicationContext());
         if (state == null || state.getGeneration() == null) {
             stopSelfResult(startId);
@@ -109,6 +110,13 @@ public final class MidletKeepAliveService extends Service {
             stopSelfResult(startId);
         }
         return START_NOT_STICKY;
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        // Home/Activity recreation do not remove the task. A Recents dismissal does, and must
+        // stop the entire emulator rather than leave the foreground service and guest resident.
+        MidletThread.stopEmulator(getApplicationContext());
     }
 
     @Override

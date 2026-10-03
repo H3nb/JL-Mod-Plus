@@ -200,6 +200,45 @@ public class JavaDiagnosticStoreTest {
 	}
 
 	@Test
+	public void storedRecoverableFailuresDoNotAppearAsCrashReports() throws Exception {
+		for (JavaDiagnosticStore.Kind kind : JavaDiagnosticStore.Kind.values()) {
+			File file = new File(temporary.getRoot(), kind.name() + ".java.properties");
+			JavaDiagnosticStore.write(file, minimalSnapshot(file, kind));
+		}
+		for (String host : new String[]{"io.github.h3nb.jlmodplus", "ru.playsoftware.j2meloader"}) {
+			File file = new File(temporary.getRoot(), host + "-installer.java.properties");
+			JavaDiagnosticStore.write(file, minimalSnapshot(file, JavaDiagnosticStore.Kind.LEGACY_ACRA,
+					new JavaDiagnosticStore.ThrowableData(
+							host + ".crashes.CrashReporter$InstallerFailureException",
+							"Installer failure", List.of())));
+		}
+		List<JavaDiagnosticStore.Snapshot> visible = JavaDiagnosticStore.loadStored(temporary.getRoot());
+		assertEquals(4, visible.size());
+		for (JavaDiagnosticStore.Snapshot snapshot : visible) assertTrue(snapshot.kind.fatal);
+		assertTrue(new File(temporary.getRoot(), "CAUGHT_INSTALLER.java.properties").isFile());
+		assertTrue(new File(temporary.getRoot(), "CAUGHT_APP_REPOSITORY.java.properties").isFile());
+	}
+
+	@Test
+	public void hiddenRecoverableFailuresParticipateInRetentionPruning() throws Exception {
+		long now = 40L * 24L * 60L * 60L * 1000L;
+		File installer = new File(temporary.getRoot(), "old-installer.java.properties");
+		File repository = new File(temporary.getRoot(), "old-repository.java.properties");
+		File fatal = new File(temporary.getRoot(), "recent-fatal.java.properties");
+		JavaDiagnosticStore.write(installer, minimalSnapshot(
+				installer, JavaDiagnosticStore.Kind.CAUGHT_INSTALLER, 1L));
+		JavaDiagnosticStore.write(repository, minimalSnapshot(
+				repository, JavaDiagnosticStore.Kind.CAUGHT_APP_REPOSITORY, 1L));
+		JavaDiagnosticStore.write(fatal, minimalSnapshot(
+				fatal, JavaDiagnosticStore.Kind.FATAL_UNCAUGHT, now - 1_000L));
+		JavaDiagnosticStore.pruneStored(temporary.getRoot(), now);
+		assertFalse(installer.exists());
+		assertFalse(repository.exists());
+		assertTrue(fatal.isFile());
+		assertEquals(1, JavaDiagnosticStore.loadStored(temporary.getRoot()).size());
+	}
+
+	@Test
 	public void boundedStructuredMessageDoesNotGrowWithoutLimit() {
 		JavaDiagnosticStore.ThrowableData data = new JavaDiagnosticStore.ThrowableData(
 				"example.Failure",
@@ -297,14 +336,33 @@ public class JavaDiagnosticStoreTest {
 	}
 
 	private static JavaDiagnosticStore.Snapshot minimalSnapshot(File file) {
+		return minimalSnapshot(file, JavaDiagnosticStore.Kind.LEGACY_ACRA);
+	}
+
+	private static JavaDiagnosticStore.Snapshot minimalSnapshot(File file, JavaDiagnosticStore.Kind kind) {
+		return minimalSnapshot(file, kind, 1L);
+	}
+
+	private static JavaDiagnosticStore.Snapshot minimalSnapshot(
+			File file, JavaDiagnosticStore.Kind kind, long timestampMillis) {
 		JavaDiagnosticStore.ThrowableData failure = new JavaDiagnosticStore.ThrowableData(
 				"java.lang.IllegalStateException", "legacy",
 				List.of(new JavaDiagnosticStore.FrameData(
 						"example.Game", "run", "Game.java", 1, false)));
+		return minimalSnapshot(file, kind, failure, timestampMillis);
+	}
+
+	private static JavaDiagnosticStore.Snapshot minimalSnapshot(File file, JavaDiagnosticStore.Kind kind,
+			JavaDiagnosticStore.ThrowableData failure) {
+		return minimalSnapshot(file, kind, failure, 1L);
+	}
+
+	private static JavaDiagnosticStore.Snapshot minimalSnapshot(File file, JavaDiagnosticStore.Kind kind,
+			JavaDiagnosticStore.ThrowableData failure, long timestampMillis) {
 		return new JavaDiagnosticStore.Snapshot(
 				file,
-				JavaDiagnosticStore.Kind.LEGACY_ACRA,
-				1L,
+				kind,
+				timestampMillis,
 				null,
 				"midlet",
 				-1,

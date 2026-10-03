@@ -15,7 +15,13 @@
 package javax.microedition.shell;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.ContextWrapper;
+import android.content.Intent;
 import android.os.Bundle;
+
+import java.io.File;
+import java.io.IOException;
 
 import javax.microedition.lcdui.event.EventQueue;
 
@@ -23,6 +29,8 @@ import javax.microedition.lcdui.event.EventQueue;
 public final class CrashRuntimeLifecycleControlActivity extends Activity {
 	public static final String EXTRA_COMMAND = "command";
 	public static final String COMMAND_PAUSE = "pause";
+	public static final String COMMAND_SHUTDOWN_DISPATCH_FAILURE = "shutdown-dispatch-failure";
+	public static final String EXTRA_DISPATCH_DENIED_MARKER = "dispatchDeniedMarker";
 	public static final String COMMAND_DESTROY = "destroy";
 	public static final String COMMAND_DESTROY_NO_LIBRARY_IMMEDIATE =
 			"destroy-no-library-immediate";
@@ -42,6 +50,22 @@ public final class CrashRuntimeLifecycleControlActivity extends Activity {
 			} finally {
 				EventQueue.setImmediate(false);
 			}
+		} else if (COMMAND_SHUTDOWN_DISPATCH_FAILURE.equals(command)) {
+			File deniedMarker = new File(getIntent().getStringExtra(EXTRA_DISPATCH_DENIED_MARKER));
+			// Host code can access Android classes; the guest class loader deliberately cannot.
+			MidletThread.stopEmulator(new ContextWrapper(getApplicationContext()) {
+				@Override
+				public ComponentName startService(Intent intent) {
+					try {
+						if (!deniedMarker.createNewFile()) {
+							throw new IOException("Dispatch marker already exists");
+						}
+					} catch (IOException error) {
+						throw new IllegalStateException("Unable to mark denied dispatch", error);
+					}
+					throw new IllegalStateException("Fixture denies shutdown service dispatch");
+				}
+			});
 		} else if (COMMAND_PAUSE.equals(command)) {
 			// Exercise the runtime owner's pause dispatcher directly. Instrumentation can launch this
 			// control activity in a separate task, so Android task ordering is not a reliable trigger.

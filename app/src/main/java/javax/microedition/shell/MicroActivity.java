@@ -36,6 +36,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.Messenger;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
@@ -93,6 +94,7 @@ import io.github.h3nb.jlmodplus.input.ControllerHostSink;
 import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.memory.MemoryEditorBubbleController;
+import io.github.h3nb.jlmodplus.runtime.RuntimeReplacementActivity;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.util.LogUtils;
 import io.github.h3nb.jlmodplus.ui.TransientNoticeComposeController;
@@ -229,9 +231,19 @@ public class MicroActivity extends AppCompatActivity {
 		String requestedMainClass = intent.getStringExtra(KEY_MIDLET_CLASS);
 		microLoader = MidletThread.findLiveRuntime(appPath, expectedAppId, requestedMainClass);
 		boolean reattachingRuntime = microLoader != null;
-		if (!reattachingRuntime && MidletThread.hasLiveRuntime()) {
-			// This isolated process already owns a different live Java heap. A second Activity must
-			// not steal its host globals or construct another MIDlet in the same process.
+		if (!reattachingRuntime && MidletThread.hasRuntimeHeap()) {
+			// A different or retiring guest heap cannot host this request. Keep the original intent
+			// in the main process, which waits for this exact process to die before launching it.
+			Messenger control = new Messenger(new Handler(Looper.getMainLooper(), message -> {
+				if (message.what == RuntimeReplacementActivity.STOP_RUNTIME) {
+					MidletThread.forceStopForReplacement();
+				}
+				return true;
+			}));
+			startActivity(new Intent(this, RuntimeReplacementActivity.class)
+					.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP)
+					.putExtra(RuntimeReplacementActivity.EXTRA_LAUNCH, new Intent(intent))
+					.putExtra(RuntimeReplacementActivity.EXTRA_CONTROL, control));
 			finish();
 			return;
 		}
