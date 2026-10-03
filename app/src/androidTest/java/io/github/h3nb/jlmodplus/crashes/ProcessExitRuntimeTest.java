@@ -15,11 +15,14 @@
 package io.github.h3nb.jlmodplus.crashes;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.os.Process;
 import android.os.SystemClock;
@@ -29,17 +32,78 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 @RunWith(AndroidJUnit4.class)
 public class ProcessExitRuntimeTest {
 	private static final long REPORT_TIMEOUT_MILLIS = 20_000L;
 	private static final long PROCESS_TIMEOUT_MILLIS = 10_000L;
+
+	@Test
+	public void newerNonfatalEvidenceStaysQueryableWithoutHidingFatalNotice() throws Exception {
+		Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		TemporaryFolder fixture = new TemporaryFolder(target.getCacheDir());
+		fixture.create();
+		Context context = new ContextWrapper(target) {
+			@Override
+			public File getFilesDir() {
+				return fixture.getRoot();
+			}
+		};
+		try {
+			long now = System.currentTimeMillis();
+			writeExitFixture(context, "2", now, ProcessExitStore.REASON_LOW_MEMORY,
+					ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE);
+			assertNull("A minimized foreground-service MIDlet's LMK must not interrupt Library",
+					ProcessExitStore.findPendingStoredExit(context));
+			assertNotNull(LocalDiagnosticRepository.findStored(context, "exit:2"));
+
+			writeExitFixture(context, "1", now - 1_000L, ProcessExitStore.REASON_CRASH,
+					ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED);
+			ProcessExitStore.PendingExit pending = ProcessExitStore.findPendingStoredExit(context);
+			assertNotNull(pending);
+			assertEquals("exit:1", pending.getId());
+			assertEquals(2, LocalDiagnosticRepository.loadStored(context).size());
+			assertEquals(ProcessExitStore.REASON_LOW_MEMORY,
+					LocalDiagnosticRepository.findStored(context, "exit:2").getProcessExitSnapshot().reason);
+
+			ProcessExitStore.acknowledgePendingExits(context);
+			assertNull(ProcessExitStore.findPendingStoredExit(context));
+			assertEquals("Acknowledgment changes notices without deleting manual evidence",
+					2, LocalDiagnosticRepository.loadStored(context).size());
+		} finally {
+			fixture.delete();
+		}
+	}
+
+	private static void writeExitFixture(Context context, String key, long timestampMillis,
+			int reason, int importance) throws IOException {
+		File directory = new File(context.getFilesDir(), "diagnostics/process-exits");
+		if (!directory.isDirectory() && !directory.mkdirs()) {
+			throw new IOException("Unable to create process-exit fixture directory");
+		}
+		Properties metadata = new Properties();
+		metadata.setProperty("schemaVersion", "1");
+		metadata.setProperty("key", key);
+		metadata.setProperty("timestampMillis", Long.toString(timestampMillis));
+		metadata.setProperty("processName", context.getPackageName() + ":midlet");
+		metadata.setProperty("processRole", "midlet");
+		metadata.setProperty("pid", "123");
+		metadata.setProperty("reason", Integer.toString(reason));
+		metadata.setProperty("status", "0");
+		metadata.setProperty("importance", Integer.toString(importance));
+		try (FileOutputStream output = new FileOutputStream(new File(directory, key + ".properties"))) {
+			metadata.store(output, null);
+		}
+	}
 
 	@Test
 	public void abruptRemoteSigkillDoesNotBecomeAFatalReport() throws Exception {

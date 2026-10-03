@@ -152,6 +152,8 @@ and services stop without restarting. A subsequent fixture invocation verifies
 intentional session completion, no diagnostic report, and launcher return to
 Library, then restores the previous workdir. The external observer is required
 because successful emulator shutdown kills the main-process instrumentation too.
+For an explicitly authorized physical-device check, use its ADB serial with
+`-AllowPhysicalDevice`. The script targets the debug package and never clears app data.
 
 ### CI performance
 

@@ -276,13 +276,13 @@ public final class ProcessExitStore {
 		return result;
 	}
 
-	/** Refreshes system history, then returns one unacknowledged abnormal exit. */
+	/** Refreshes system history, then returns one unacknowledged fatal exit for automatic notice. */
 	public static PendingExit findPendingExit(Context context) {
 		ingest(context);
 		return findPendingStoredExit(context);
 	}
 
-	/** Returns one pending exit from already-persisted evidence without harvesting system history. */
+	/** Returns one pending fatal exit from stored evidence; nonfatal evidence stays available manually. */
 	public static PendingExit findPendingStoredExit(Context context) {
 		List<Snapshot> records = loadStored(context);
 		if (records.isEmpty()) {
@@ -296,7 +296,8 @@ public final class ProcessExitStore {
 		}
 		pruneAcknowledgments(context, retained);
 		for (Snapshot record : records) {
-			if (acknowledged.contains(record.key)
+			if (!isFatalProcessEvidence(record.reason, record.status)
+					|| acknowledged.contains(record.key)
 					|| isRepresentedByUnexpectedMidletFailure(context, record)) {
 				continue;
 			}

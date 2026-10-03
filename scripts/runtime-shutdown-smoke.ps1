@@ -1,13 +1,17 @@
 # SPDX-License-Identifier: Apache-2.0
 param(
     [Parameter(Mandatory = $true)]
-    [ValidatePattern('^emulator-\d+$')]
+    [ValidateNotNullOrEmpty()]
     [string]$Serial,
+    [switch]$AllowPhysicalDevice,
     [string]$Adb = 'adb',
     [string]$Package = 'io.github.h3nb.jlmodplus.debug'
 )
 
 $ErrorActionPreference = 'Stop'
+if ($Serial -notmatch '^emulator-\d+$' -and -not $AllowPhysicalDevice) {
+    throw 'Physical-device validation requires -AllowPhysicalDevice and an explicit serial'
+}
 $fixture = 'io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#externalShutdownFixture'
 $runner = "$Package.test/androidx.test.runner.AndroidJUnitRunner"
 
@@ -38,7 +42,7 @@ function Get-EmulatorProcesses {
     return @($listing | Where-Object { $_ -match $pattern })
 }
 
-# Both APKs must already be installed. Only an explicitly selected emulator is touched.
+# Both debug APKs must already be installed. Only the explicitly selected device is touched.
 foreach ($action in @('remove', 'exit')) {
     # A new instrumentation invocation force-stops the target package. Prepare and trigger in
     # one invocation; its checkpoint proves all three processes were live after Android Home.
