@@ -294,6 +294,8 @@ public:
         uint8_t note[] = {0x90, 60, 100};
         activate(synth); activate(reference); effect.prefetch();
         require(effect.time() == 0 && effect.length() == 1000000, "Prefetch advances sampled time");
+        require(effect.decoderDiagnostics()[2] == 16384 && effect.decoderDiagnostics()[3] == 0,
+            "Prefetch returns before filling the bounded ring and joining its worker");
         synth.writeMidi(note, sizeof(note)); reference.writeMidi(note, sizeof(note));
         effect.start();
         render(synth, {257,511}); render(reference, {257,511});

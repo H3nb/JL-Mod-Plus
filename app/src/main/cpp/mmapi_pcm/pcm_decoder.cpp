@@ -311,7 +311,9 @@ Decoder::~Decoder() = default;
 void Decoder::prefetch() {
     state->run(false);
     auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
-    while (state->head.load(std::memory_order_acquire) == state->tail.load() && !state->finished.load()) {
+    // The bounded prefetch worker exits at a full ring or EOF. One available
+    // chunk is insufficient startup headroom when the decoder is rescheduled.
+    while (!state->finished.load(std::memory_order_acquire)) {
         if (std::chrono::steady_clock::now() >= deadline) { state->join(); throw std::runtime_error("Sampled prefetch timed out"); }
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
