@@ -33,6 +33,14 @@ class Player final {
     int looping = 1, remaining = 1;
     std::atomic<int64_t> position{0}, generation{1};
     int64_t duration = -1, blockEndTime = 0;
+    bool presentationDrain = false;
+    struct Segment {
+        std::atomic<int64_t> revision{0}, first{0}, last{0}, begin{0}, end{0}, generation{0}, output{0};
+    };
+    std::array<Segment, 128> presentationSegments;
+    std::atomic<uint32_t> presentationHead{0};
+    std::atomic<int64_t> presentationOrigin{0};
+    void recordPresentation(int64_t first, int count, int64_t begin, int64_t end, int64_t output);
     std::array<EAS_PCM, 512> block{};
     std::array<EAS_PCM, 512> interactiveBlock{};
     int cursor = 256;
@@ -60,7 +68,7 @@ public:
     static constexpr size_t MEDIA_LIMIT = 16 * 1024 * 1024;
     static constexpr size_t BANK_LIMIT = 128 * 1024 * 1024;
     Player(const std::string &locator, const std::string &bank,
-        std::shared_ptr<Engine> engine = std::make_shared<Engine>(), bool pcm = false);
+        std::shared_ptr<Engine> engine = std::make_shared<Engine>(), bool pcm = false, bool videoAudio = false);
     ~Player();
     void prefetch();
     void start(int64_t policyEpoch = 0);
@@ -87,6 +95,8 @@ public:
     std::vector<std::string> metadata();
     std::string contentType();
     std::array<int64_t, 4> decoderDiagnostics();
+    void timeline(int64_t origin);
+    std::array<int64_t, 8> presentation(int64_t at = 0);
     bool outputFailed() const { return engine->failed(); }
 };
 }

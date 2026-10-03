@@ -118,12 +118,43 @@ void corruptFixture(const char *path) {
     require(rejected && descriptors() == before, "Corrupt sampled header accepted or leaked resources");
     std::printf("PASS corrupt sampled header rejects and closes %s\n", path);
 }
+void videoOffsetFixture(const char *path) {
+    bool rejected = false;
+    try { Decoder audioOnly(path); }
+    catch (const std::exception &) { rejected = true; }
+    require(rejected, "Video silently routed to audio-only decoder");
+    Decoder decoder(path, true);
+    decoder.timeline(0); decoder.prefetch(); decoder.resume();
+    std::array<float, 1022> samples{};
+    int64_t frames = 0, firstAudible = -1;
+    auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (!decoder.drained()) {
+        samples.fill(0);
+        const int copied = decoder.read(samples.data(), 511, 1, 1);
+        for (int i = 0; i < copied; ++i)
+            if (firstAudible < 0 && std::abs(samples[2 * i]) > 0.01f) firstAudible = frames + i;
+        frames += copied;
+        require(!decoder.error() && std::chrono::steady_clock::now() < deadline, "Video soundtrack drain failed");
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    decoder.pause();
+    require(firstAudible >= 21000 && firstAudible <= 23000, "Track offset or AAC priming lost");
+    require(decoder.time() > 2450000 && decoder.time() < 2550000, "Audio track normalized independently");
+    decoder.seek(1250000); decoder.prefetch(); decoder.pause();
+    double energy = 0; consume(decoder, 511, energy);
+    require(decoder.time() >= 1250000 && decoder.time() < 1270000, "Container seek leaked old track offset");
+    std::printf("PASS video soundtrack offset firstAudible=%lld frames=%lld seekTime=%lld\n",
+        static_cast<long long>(firstAudible), static_cast<long long>(frames), static_cast<long long>(decoder.time()));
+}
 }
 int main(int argc, char **argv) {
     try {
         require(argc >= 2, "Supply generated sampled fixture paths");
         for (int i = 1; i < argc; ++i) {
-            if (!strcmp(argv[i], "--corrupt")) {
+            if (!strcmp(argv[i], "--video")) {
+                require(i + 1 < argc, "Supply offset video path");
+                videoOffsetFixture(argv[++i]);
+            } else if (!strcmp(argv[i], "--corrupt")) {
                 require(i + 1 < argc, "Supply corrupt sampled path");
                 corruptFixture(argv[++i]);
             } else if (!strcmp(argv[i], "--sid-nb") || !strcmp(argv[i], "--sid-wb")) {

@@ -32,4 +32,5 @@ foreach ($library in Get-ChildItem "$prefix/lib" -Filter '*.so') {
 }
 Invoke-TestAdb @('push', (Join-Path $Sdk "ndk/$NdkVersion/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so"), "$remote/libc++_shared.so")
 Invoke-TestAdb @('push', "$repo/app/src/androidTest/assets/audio/.", "$remote/")
-Invoke-TestAdb @('shell', "chmod 700 $remote/pcm_decoder_test && LD_LIBRARY_PATH=$remote $remote/pcm_decoder_test $remote/pcm.wav $remote/adpcm.wav $remote/alaw.wav $remote/gsm.wav $remote/effect.mp3 $remote/effect.aac $remote/generated-tone-dtx-nb.amr --sid-nb $remote/generated-dtx-nb.amr --sid-wb $remote/generated-sid-wb.awb --corrupt $remote/corrupt.wav")
+Invoke-TestAdb @('push', "$repo/app/src/androidTest/assets/video/offset.mp4", "$remote/offset.mp4")
+Invoke-TestAdb @('shell', "chmod 700 $remote/pcm_decoder_test && LD_LIBRARY_PATH=$remote $remote/pcm_decoder_test $remote/pcm.wav $remote/adpcm.wav $remote/alaw.wav $remote/gsm.wav $remote/effect.mp3 $remote/effect.aac $remote/generated-tone-dtx-nb.amr --sid-nb $remote/generated-dtx-nb.amr --sid-wb $remote/generated-sid-wb.awb --corrupt $remote/corrupt.wav --video $remote/offset.mp4")

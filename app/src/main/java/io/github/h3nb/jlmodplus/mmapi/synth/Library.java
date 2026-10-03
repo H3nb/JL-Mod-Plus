@@ -18,6 +18,9 @@
 package io.github.h3nb.jlmodplus.mmapi.synth;
 
 public interface Library {
+    default boolean requiresAudioFocus() { return true; }
+    default javax.microedition.media.control.VideoControl videoControl() { return null; }
+    default void setVideoSizeListener(Runnable listener) {}
     default boolean isSynthesis() { return true; }
     default String[] metadata(long handle) { return null; }
     default String contentType(long handle) { return ""; }

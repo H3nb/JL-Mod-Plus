@@ -42,6 +42,7 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
         void onHostFocusRevoked(long token);
         void closeForRuntime();
         default void onSharedOutputFailure(long group, String message) {}
+        default boolean requiresAudioFocus() { return true; }
     }
 
     interface FocusListener {
@@ -78,6 +79,8 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
     private static final class Entry {
         long token, requestEpoch;
         boolean requested;
+        final boolean requiresFocus;
+        Entry(boolean requiresFocus) { this.requiresFocus = requiresFocus; }
     }
 
     RuntimeAudioCoordinator(FocusDriver driver, boolean foreground) {
@@ -124,7 +127,7 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
 
     public synchronized void register(Participant participant) {
         if (closed) throw new IllegalStateException("Audio runtime is closed");
-        if (!participants.containsKey(participant)) participants.put(participant, new Entry());
+        if (!participants.containsKey(participant)) participants.put(participant, new Entry(participant.requiresAudioFocus()));
     }
 
     public long sessionId() { return sessionId; }
@@ -170,7 +173,7 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
         Entry entry = participants.get(participant);
         if (closed || entry == null) throw new MediaException("Audio runtime is closed");
         if (!foreground) throw new MediaException("Runtime audio requires a foreground host");
-        if (!focusHeld && !acquireFocus()) {
+        if (entry.requiresFocus && !focusHeld && !acquireFocus()) {
             throw new MediaException("Audio focus request was denied");
         }
         entry.token = ++nextToken;
@@ -180,7 +183,8 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
     }
 
     public synchronized boolean isPlaybackAllowed(Participant participant, long token) {
-        return foreground && focusHeld && isPlaybackRequested(participant, token);
+        Entry entry = participants.get(participant);
+        return foreground && entry != null && (!entry.requiresFocus || focusHeld) && isPlaybackRequested(participant, token);
     }
 
     public synchronized boolean isPlaybackRequested(Participant participant, long token) {
@@ -201,7 +205,7 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
     }
 
     private boolean hasRequests() {
-        for (Entry entry : participants.values()) if (entry.requested) return true;
+        for (Entry entry : participants.values()) if (entry.requested && entry.requiresFocus) return true;
         return false;
     }
 
@@ -215,7 +219,7 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
             focusHeld = false;
         }
         if (!focusHeld) abandonFocus();
-        else { publishPolicy(); dispatchRequested(false, false); }
+        else { publishPolicy(); dispatchRequested(false, false, true); }
         return focusHeld;
     }
 
@@ -234,11 +238,12 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
         foreground = value;
         if (!value) {
             abandonFocus();
-            dispatchRequested(true, false);
-        } else if (hasRequests()) {
+            dispatchRequested(true, false, false);
+        } else {
             // Recreation/return may resume prior intent. Denial keeps it suspended;
             // there is no delayed focus request or background autoplay.
-            acquireFocus();
+            if (hasRequests()) acquireFocus();
+            dispatchRequested(false, false, false);
         }
     }
 
@@ -247,25 +252,26 @@ public final class RuntimeAudioCoordinator implements AutoCloseable {
         if (change == AudioManager.AUDIOFOCUS_GAIN) {
             focusHeld = foreground;
             publishPolicy();
-            if (focusHeld) dispatchRequested(false, false);
+            if (focusHeld) dispatchRequested(false, false, true);
         } else if (change == AudioManager.AUDIOFOCUS_LOSS) {
             focusHeld = false;
             minimumRequestEpoch = policyEpoch + 1;
             publishPolicy();
-            dispatchRequested(true, true);
-            for (Entry entry : participants.values()) entry.requested = false;
+            dispatchRequested(true, true, true);
+            for (Entry entry : participants.values()) if (entry.requiresFocus) entry.requested = false;
             abandonFocus();
         } else if (change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT
                 || change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
             focusHeld = false;
             publishPolicy();
-            dispatchRequested(true, false);
+            dispatchRequested(true, false, true);
         }
     }
 
-    private void dispatchRequested(boolean suspend, boolean revoked) {
+    private void dispatchRequested(boolean suspend, boolean revoked, boolean focusOnly) {
         for (Map.Entry<Participant, Entry> item : participants.entrySet()) {
             if (!item.getValue().requested) continue;
+            if (focusOnly && !item.getValue().requiresFocus) continue;
             Participant participant = item.getKey();
             long token = item.getValue().token;
             driver.execute(() -> {

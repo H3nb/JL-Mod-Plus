@@ -53,7 +53,8 @@ class Engine final : public std::enable_shared_from_this<Engine> {
     void release(Player *);
     void recover();
     bool poll(int64_t &seen, int &error);
-    oboe::DataCallbackResult render(Output &, void *, int32_t);
+    oboe::DataCallbackResult render(Output &, oboe::AudioStream *, void *, int32_t);
+    std::array<int64_t, 8> presentation(Player *, int64_t at = 0);
 public:
     void policy(int64_t minimum, bool enabled);
     bool failed() const { return fatal.load(std::memory_order_acquire); }

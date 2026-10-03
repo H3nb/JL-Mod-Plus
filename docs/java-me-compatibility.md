@@ -16,3 +16,14 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 
 JL-Mod keeps Android task foreground, emulator/AMS foreground selection, MIDlet lifecycle, and LCDUI display foreground as separate facts. In particular, MIDP `Display.setCurrent(null)` retains the current `Displayable` and is treated as a request to yield emulator foreground to the Library; it never means Android Home. A live runtime may therefore coexist with Library foreground. Non-null `setCurrent()` calls update guest display state but do not directly foreground Android Activities. The runtime storage lease remains liveness evidence only; emulator foreground selection is persisted separately and generation-fenced.
 
+## MMAPI file video
+
+File 3GP/MP4 video has one Player contract and a soundtrack on the shared runtime
+audio bus. JSR135 `VideoControl` supports both direct Canvas and GUI Item/Form
+modes, including their initialization, default visibility, geometry and error
+contracts. Pure video follows Android host eligibility without audio focus.
+Unsupported codecs are rejected rather than presented as successful audio-only
+video; actual audio-only MP4 remains supported. See
+[the supported subset and timing policy](audio-runtime.md#file-video-and-presentation-clock)
+and [runtime UI ownership](runtime-ui.md#validation-gates).
+

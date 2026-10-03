@@ -45,6 +45,8 @@ import javax.microedition.media.control.MIDIControl;
 import javax.microedition.media.control.MetaDataControl;
 import javax.microedition.media.control.ToneControl;
 import javax.microedition.media.control.VolumeControl;
+import javax.microedition.media.control.VideoControl;
+import javax.microedition.media.control.GUIControl;
 import javax.microedition.media.protocol.DataSource;
 
 import io.github.h3nb.jlmodplus.mmapi.control.MIDIControlImpl;
@@ -117,6 +119,16 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
 				controls.put(PanControl.class.getName(), this);
 				controls.put(MetaDataControl.class.getName(), metadata);
 				controls.put(EqualizerControl.class.getName(), new InternalEqualizer());
+				VideoControl video = library.videoControl();
+				if (video != null) {
+					controls.put(VideoControl.class.getName(), video);
+					controls.put(GUIControl.class.getName(), video);
+					library.setVideoSizeListener(() -> {
+						synchronized (this) {
+							if (state != CLOSED) postEvent(PlayerListener.SIZE_CHANGED, video);
+						}
+					});
+				}
 			}
 			state = REALIZED;
 			updateDuration();
@@ -289,6 +301,8 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
 
 	@Override
 	public void closeForRuntime() { close(); }
+
+	@Override public boolean requiresAudioFocus() { return library.requiresAudioFocus(); }
 
     @Override
     public synchronized TimeBase getTimeBase() {

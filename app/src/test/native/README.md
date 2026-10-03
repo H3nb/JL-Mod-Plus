@@ -36,6 +36,12 @@ Only this standalone build defines `JL_EAS_OUTPUT_TEST`: a fake Oboe device
 opener permits deterministic interleavings while the actual Player management,
 callback, and Sonivox core execute. The seam is absent from shipping builds.
 
+File-video checks map the actual callback's bus frames to source presentation
+time, including timestamp/queue fallback, underflow holds, generation/output
+replacement and presentation drain. `run-pcm-decoder.ps1 -Device <adb-serial>`
+also checks container-origin offsets/priming and rejects video on the ordinary
+audio-only decoder path. Neither check measures acoustic output latency.
+
 This is deterministic callback/context evidence. It does not qualify physical
 audio routing, focus eligibility, Bluetooth, timbre, acoustic timing, complete
 SF2 modulation, sustained-session memory growth, or other ABIs. Android

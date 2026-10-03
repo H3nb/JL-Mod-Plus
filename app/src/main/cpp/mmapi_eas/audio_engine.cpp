@@ -5,6 +5,7 @@
 #include <chrono>
 #include <stdexcept>
 #include <thread>
+#include <time.h>
 extern "C" void JL_EAS_Realtime(int);
 namespace mmapi::eas {
 #ifdef JL_EAS_OUTPUT_TEST
@@ -177,15 +178,15 @@ bool Engine::poll(int64_t &seen, int &error) {
     if (error != static_cast<int>(oboe::Result::ErrorDisconnected)) fatal.store(true);
     return true;
 }
-oboe::DataCallbackResult Engine::Output::onAudioReady(oboe::AudioStream *, void *audio, int32_t count) {
-    return owner->render(*this, audio, count);
+oboe::DataCallbackResult Engine::Output::onAudioReady(oboe::AudioStream *stream, void *audio, int32_t count) {
+    return owner->render(*this, stream, audio, count);
 }
 bool Engine::Output::onError(oboe::AudioStream *, oboe::Result failure) {
     int empty = 0;
     error.compare_exchange_strong(empty, static_cast<int>(failure), std::memory_order_acq_rel);
     return true; // Management closes/reopens; old origins can only publish their own facts.
 }
-oboe::DataCallbackResult Engine::render(Output &origin, void *audio, int32_t count) {
+oboe::DataCallbackResult Engine::render(Output &origin, oboe::AudioStream *sink, void *audio, int32_t count) {
     if (count <= 0) return oboe::DataCallbackResult::Continue;
     origin.callbacksActive.fetch_add(1, std::memory_order_seq_cst);
     const auto began = std::chrono::steady_clock::now();
@@ -195,11 +196,16 @@ oboe::DataCallbackResult Engine::render(Output &origin, void *audio, int32_t cou
             && !origin.error.load()) {
         JL_EAS_Realtime(1);
         int progress = 0;
+        const int64_t first = sink->getFramesWritten();
         for (auto &slot : slots) {
             auto player = slot.published.load(std::memory_order_seq_cst);
             slot.hazard.store(player, std::memory_order_seq_cst);
-            if (player && player == slot.published.load(std::memory_order_seq_cst) && eligible(player))
+            if (player && player == slot.published.load(std::memory_order_seq_cst) && eligible(player)) {
+                const int64_t begin = player->position.load();
                 progress = std::max(progress, player->mix(out, count));
+                if (player->presentationDrain)
+                    player->recordPresentation(first, count, begin, player->position.load(), origin.epoch);
+            }
             slot.hazard.store(nullptr, std::memory_order_seq_cst);
         }
         int64_t clips = 0;
@@ -215,6 +221,54 @@ oboe::DataCallbackResult Engine::render(Output &origin, void *audio, int32_t cou
     while (nanos > maximum && !callbackNanos.compare_exchange_weak(maximum, nanos)) {}
     origin.callbacksActive.fetch_sub(1, std::memory_order_seq_cst);
     return oboe::DataCallbackResult::Continue;
+}
+std::array<int64_t, 8> Engine::presentation(Player *player, int64_t at) {
+    // Player controls precede Engine controls, as in diagnostics. Timestamp calls
+    // are serialized with close/reopen and never made by the audio callback.
+    std::lock_guard<std::mutex> lock(controls);
+    timespec time{}; clock_gettime(CLOCK_MONOTONIC, &time);
+    const int64_t now = time.tv_sec * 1000000000LL + time.tv_nsec;
+    const int64_t query = at > 0 ? std::min(at, now) : now;
+    int64_t bus = -1, available = 0, uncertainty = 0;
+    if (stream && output) {
+        auto stamp = stream->getTimestamp(CLOCK_MONOTONIC);
+        if (stamp) {
+            bus = stamp.value().position + (query - stamp.value().timestamp) * 44100 / 1000000000;
+            bus = std::min(bus, stream->getFramesWritten());
+            available = 1;
+            uncertainty = stream->getFramesPerBurst() * 1000000LL / 44100;
+        } else {
+            // Bounded queue estimate from the current sink, not a fixed delay.
+            const int64_t queue = stream->getBufferSizeInFrames();
+            const int64_t capacity = stream->getBufferCapacityInFrames();
+            if (capacity <= 0 || stream->getFramesPerBurst() <= 0)
+                throw std::runtime_error("Audio output has no bounded presentation estimate");
+            bus = std::max<int64_t>(0, stream->getFramesWritten() - (queue > 0 ? queue : capacity)
+                - (now - query) * 44100 / 1000000000);
+            uncertainty = (capacity + stream->getFramesPerBurst()) * 1000000LL / 44100;
+        }
+    }
+    int64_t media = player->presentationOrigin.load();
+    const auto generation = player->generation.load();
+    const auto head = player->presentationHead.load(std::memory_order_acquire);
+    bool found = false, mapped = false;
+    for (uint32_t n = 0; n < std::min<uint32_t>(head, 128); ++n) {
+        auto &segment = player->presentationSegments[(head - 1 - n) % 128];
+        const auto revision = segment.revision.load(std::memory_order_acquire);
+        if (revision & 1) continue;
+        const auto first = segment.first.load(), last = segment.last.load();
+        const auto begin = segment.begin.load(), end = segment.end.load();
+        const auto gen = segment.generation.load(), epoch = segment.output.load();
+        if (revision != segment.revision.load(std::memory_order_acquire) || gen != generation || epoch != outputEpoch) continue;
+        media = begin; found = true;
+        if (bus < first) continue;
+        mapped = true;
+        media = std::min(end, begin + std::max<int64_t>(0, bus - first) * 1000000 / 44100);
+        if (bus >= last) media = end;
+        break;
+    }
+    if (!found) media = player->presentationOrigin.load();
+    return {media, query, generation, outputEpoch, available, uncertainty, bus, mapped ? 1 : 0};
 }
 std::array<int64_t, 12> Engine::diagnostics() {
     std::lock_guard<std::mutex> lock(controls);

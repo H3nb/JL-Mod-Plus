@@ -10,10 +10,16 @@ import javax.microedition.util.ContextHolder;
 
 /** Requests recreation of the real runtime host, without ending its guest session. */
 public final class AudioRuntimeRecreationActivity extends Activity {
+    public static final String EXTRA_ORIENTATION="qualificationOrientation";
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         MicroActivity host = ContextHolder.getActivity();
         finish();
-        if (host != null) new Handler(Looper.getMainLooper()).post(host::recreate);
+        if (host != null) new Handler(Looper.getMainLooper()).post(() -> {
+            if(getIntent().hasExtra(EXTRA_ORIENTATION))
+                host.setRequestedOrientation(getIntent().getIntExtra(EXTRA_ORIENTATION,
+                        android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED));
+            else host.recreate();
+        });
     }
 }

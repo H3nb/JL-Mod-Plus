@@ -39,6 +39,8 @@ import io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator;
 import io.github.h3nb.jlmodplus.mmapi.synth.SynthPluginFactory;
 import io.github.h3nb.jlmodplus.mmapi.synth.AudioPlayer;
 import io.github.h3nb.jlmodplus.mmapi.synth.eas.LibEAS;
+import io.github.h3nb.jlmodplus.mmapi.video.VideoFormat;
+import io.github.h3nb.jlmodplus.mmapi.video.VideoLibrary;
 
 public class Manager {
 	public static final String TONE_DEVICE_LOCATOR = "device://tone";
@@ -128,6 +130,8 @@ public class Manager {
             source.prepareLegacySmaf();
             return new MicroPlayer(source);
         }
+        VideoFormat video = VideoFormat.inspect(source.getLocator());
+        if (video != null) return new AudioPlayer(new VideoLibrary(video), source);
         // The native retained demuxer/codec subset resolves actual structure;
         // recognized corrupt media fails here, without another parser/output fallback.
         return new AudioPlayer(LibEAS.sampled(), source);
@@ -138,7 +142,7 @@ public class Manager {
 				"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
 				"audio/mp4", "audio/mmf", "audio/x-tone-seq", "audio/sp-midi", "audio/xmf",
 				"audio/mobile-xmf", "audio/imelody", "text/x-imelody", "audio/rtttl", "audio/x-rtttl",
-				"audio/ota", "audio/x-ota"};
+				"audio/ota", "audio/x-ota", "video/mp4", "video/3gpp"};
 	}
 
 	public static String[] getSupportedProtocols(String str) {

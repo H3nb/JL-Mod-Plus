@@ -137,6 +137,48 @@ public class SonivoxFocusRuntimeTest {
         }
     }
 
+    @Test public void videoFocusFreezesFramesAndPureVideoKeepsItsOwnClock() throws Exception {
+        AudioPlayer video=video("markers.mp4"), pure=video("pure.mp4"), peer=sampled();
+        video.realize();
+        io.github.h3nb.jlmodplus.mmapi.video.VideoDisplay control=
+                (io.github.h3nb.jlmodplus.mmapi.video.VideoDisplay)video.getControl("VideoControl");
+        control.initDisplayMode(0,null);
+        host.onActivity(a -> a.setContentView(control.itemView(a,2)));
+        video.start(); pure.start(); peer.start();
+        io.github.h3nb.jlmodplus.mmapi.video.VideoLibrary backend=VideoPlayerTest.backend(video);
+        await(() -> backend.diagnostics()[0]>5,5000,"No video before focus loss");
+        try(Rival rival=new Rival(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)) {
+            rival.awaitGrant();
+            await(() -> suspended(video) && suspended(peer),2000,"Video focus did not freeze A/V");
+            long frozen=video.getMediaTime(), frames=backend.diagnostics()[0], pureBefore=pure.getMediaTime();
+            SystemClock.sleep(200);
+            assertEquals(frozen,video.getMediaTime()); assertEquals(frames,backend.diagnostics()[0]);
+            assertTrue("Pure video froze on peer focus loss",pure.getMediaTime()>pureBefore+50000);
+            video.stop(); rival.release(); SystemClock.sleep(200);
+            assertEquals(Player.PREFETCHED,video.getState()); assertEquals(frozen,video.getMediaTime());
+            video.start();
+            await(() -> backend.diagnostics()[0]>frames+3,4000,"Fresh video start did not render");
+        }
+        try(Rival rival=new Rival(AudioManager.AUDIOFOCUS_GAIN)) {
+            rival.awaitGrant(); await(() -> suspended(video) && suspended(peer),2000,"Permanent video focus loss");
+            long frozen=video.getMediaTime(), frames=backend.diagnostics()[0], peerTime=peer.getMediaTime();
+            assertEquals(Lifecycle.State.RESUMED,host.getState());
+            rival.release(); SystemClock.sleep(200);
+            assertEquals(frozen,video.getMediaTime()); assertEquals(frames,backend.diagnostics()[0]);
+            video.start();
+            await(() -> backend.diagnostics()[0]>frames+3,4000,"Explicit request failed after permanent loss");
+            assertEquals("Video request revived revoked peer",peerTime,peer.getMediaTime());
+            evidence("video-permanent",rival.uid.get(),frozen,video.getMediaTime(),backend.diagnostics()[0]-frames);
+        }
+    }
+
+    private AudioPlayer video(String name) throws Exception {
+        try(InputStream input=InstrumentationRegistry.getInstrumentation().getContext().getAssets().open("video/"+name)) {
+            AudioPlayer player=(AudioPlayer)Manager.createPlayer(input,null);
+            player.setLoopCount(-1); players.add(player); return player;
+        }
+    }
+
     private AudioPlayer player() throws Exception {
         // Thirty seconds of held middle C, with wholly generated SMF content.
         byte[] midi = new byte[]{'M','T','h','d',0,0,0,6,0,0,0,1,0,96,

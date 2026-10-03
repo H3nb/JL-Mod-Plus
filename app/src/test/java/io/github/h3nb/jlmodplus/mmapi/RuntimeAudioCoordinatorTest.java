@@ -11,6 +11,24 @@ import java.util.ArrayDeque;
 import javax.microedition.media.MediaException;
 
 public class RuntimeAudioCoordinatorTest {
+    @Test public void pureVideoNeedsForegroundButNeverRequestsFocusAndIgnoresPeerFocusRevocation() throws Exception {
+        Driver driver=new Driver();
+        RuntimeAudioCoordinator audio=new RuntimeAudioCoordinator(driver,true);
+        Player video=new Player(audio) {
+            @Override public boolean requiresAudioFocus() { return false; }
+        };
+        video.start(); assertEquals(0,driver.requests);
+        Player sound=new Player(audio); sound.start();
+        driver.change(AudioManager.AUDIOFOCUS_LOSS); driver.drain();
+        assertFalse(video.revoked); assertFalse(video.suspended);
+        assertTrue(audio.isPlaybackAllowed(video,video.token));
+        audio.setForeground(false); driver.drain();
+        assertTrue(video.suspended);
+        assertThrows(MediaException.class,video::start);
+        audio.setForeground(true); driver.drain();
+        assertFalse(video.suspended); assertEquals(1,driver.requests);
+        audio.close();
+    }
     @Test
     public void outputGateFencesOldGrantsBeforeQueuedParticipantCallbacks() throws Exception {
         Driver driver = new Driver();
@@ -174,7 +192,7 @@ public class RuntimeAudioCoordinatorTest {
         void drain() { while (!actions.isEmpty()) actions.remove().run(); }
     }
 
-    private static final class Player implements RuntimeAudioCoordinator.Participant {
+    private static class Player implements RuntimeAudioCoordinator.Participant {
         final RuntimeAudioCoordinator audio;
         long token;
         boolean suspended;

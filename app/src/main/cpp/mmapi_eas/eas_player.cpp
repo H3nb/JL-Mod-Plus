@@ -13,11 +13,11 @@ void checked(EAS_RESULT result, const char *operation) {
 
 }
 
-Player::Player(const std::string &locator, const std::string &bank, std::shared_ptr<Engine> shared, bool pcm)
+Player::Player(const std::string &locator, const std::string &bank, std::shared_ptr<Engine> shared, bool pcm, bool videoAudio)
     : engine(std::move(shared)) {
     slot = engine->reserve(this);
     try {
-        if (pcm) { sampled = std::make_unique<pcm::Decoder>(locator); duration = sampled->duration(); return; }
+        if (pcm) { sampled = std::make_unique<pcm::Decoder>(locator, videoAudio); duration = sampled->duration(); return; }
         checked(EAS_Init(&eas), "Initialize Sonivox");
         if (EAS_Config()->sampleRate != 44100 || EAS_Config()->mixBufferSize != 256
                 || EAS_Config()->numChannels != 2) throw std::runtime_error("Unsupported Sonivox configuration");
@@ -57,6 +57,7 @@ void Player::runOutput(bool fresh) {
     catch (...) { if (sampled) sampled->pause(); throw; }
 }
 void Player::invalidate() {
+    presentationOrigin.store(position.load());
     generation.fetch_add(1, std::memory_order_acq_rel);
     pending.store(0); renderError.store(0);
 }
@@ -93,7 +94,7 @@ void Player::start(int64_t policyEpoch) {
     if (!prepared.load()) throw std::runtime_error("Synthesis output is not prefetched");
     quiesce(); invalidate();
     if (sampled && ended) {
-        sampled->seek(0); sampled->prefetch(); position.store(0); remaining = looping; ended = false;
+        sampled->seek(0); sampled->prefetch(); position.store(0); presentationOrigin.store(0); remaining = looping; ended = false;
     }
     EAS_STATE mediaState = EAS_STATE_READY;
     if (media) checked(EAS_State(eas, media, &mediaState), "Read synthesis state");
@@ -155,7 +156,7 @@ int64_t Player::seek(int64_t time) {
     time = std::max<int64_t>(0, time);
     if (duration >= 0) time = std::min(time, duration);
     if (sampled) {
-        position.store(sampled->seek(time)); ended = false;
+        position.store(sampled->seek(time)); presentationOrigin.store(position.load()); ended = false;
         if (prepared.load()) sampled->prefetch();
         if (prepared.load() && requested && !hostSuspended) runOutput();
         return position.load();
@@ -259,6 +260,10 @@ bool Player::poll(Event &event) {
     if (requested && !hostSuspended && !engine->granted(this)) {
         quiesce(); hostSuspended = true;
     }
+    if (presentationDrain && rendering.load() && sampled && sampled->drained()) {
+        const auto stamp = engine->presentation(this);
+        if (stamp[7] && stamp[0] >= position.load()) signal(2, 0);
+    }
     int type = pending.load(std::memory_order_acquire);
     if (type) {
         quiesce();
@@ -324,7 +329,7 @@ int Player::mix(float *out, int32_t count) {
         frames.fetch_add(copied); callbacks.fetch_add(1); nonzero.store(sampled->audibleSamples());
         int error = sampled->error();
         if (error) signal(3, error);
-        else if (sampled->drained()) signal(2, 0);
+        else if (sampled->drained() && !presentationDrain) signal(2, 0);
         return copied;
     }
     if (rendering.load(std::memory_order_acquire)) {
@@ -356,5 +361,23 @@ int Player::mix(float *out, int32_t count) {
         return offset;
     }
     return 0;
+}
+void Player::recordPresentation(int64_t first, int count, int64_t begin, int64_t end, int64_t output) {
+    const auto head = presentationHead.load(std::memory_order_relaxed);
+    auto &segment = presentationSegments[head % 128];
+    segment.revision.fetch_add(1, std::memory_order_acq_rel);
+    segment.first.store(first); segment.last.store(first + count);
+    segment.begin.store(begin); segment.end.store(end);
+    segment.generation.store(generation.load()); segment.output.store(output);
+    segment.revision.fetch_add(1, std::memory_order_release);
+    presentationHead.store(head + 1, std::memory_order_release);
+}
+void Player::timeline(int64_t origin) {
+    std::lock_guard<std::mutex> lock(controls); ensureOpen();
+    if (!sampled || prepared.load()) throw std::runtime_error("Configure audio timeline before prefetch");
+    sampled->timeline(origin); presentationDrain = true;
+}
+std::array<int64_t, 8> Player::presentation(int64_t at) {
+    std::lock_guard<std::mutex> lock(controls); ensureOpen(); return engine->presentation(this, at);
 }
 }

@@ -7,7 +7,7 @@ ownership, stream management, and Android focus policy live outside that core.
 
 ## Ownership and playback policy
 
-`AudioPlayer` supplies one MMAPI contract for synthesis and sampled audio. Each
+`AudioPlayer` supplies one MMAPI contract for synthesis, sampled audio and file video. Each
 synthesis source owns its EAS context, sequencer, voices and bank collection;
 each sampled source owns a native FFmpeg decoder/resampler and bounded PCM ring.
 A native engine per runtime/session mixes both into one float stereo 44.1 kHz
@@ -131,6 +131,74 @@ SF2 support is not complete. In particular, the Nokia controller modulator
 `0x028a -> 0x0011` remains unsupported. Bank playback success does not establish
 reference-device timbre, every preset or drum key, acoustic fidelity, or seamless
 looping.
+
+## File video and presentation clock
+
+Cached ISO-BMFF input with a video track uses `VideoLibrary` subresources under
+the same `AudioPlayer`. MediaExtractor/MediaCodec decode MPEG-4 Part 2, H.263 or
+H.264 when the device supports the actual format. One video track, up to sixteen
+container tracks, 1920x1080 pictures and bounded codec configuration are accepted;
+the existing 64 MiB cache limit still applies. Unsupported video fails explicitly.
+Audio-only MP4 remains sampled audio. Capture, recording, DRM and snapshots are
+outside this file-playback path; `getSnapshot` throws `MediaException` after its
+normal initialization checks.
+
+Legacy MPEG-4 SP clips can contain a level-0 header with pictures larger than
+QCIF, or run below Android's reported 12 fps lower bound. Selection queries the
+actual size, supported profile and sufficient decoding throughput rather than
+the inconsistent declared level; codec configuration retains the original CSD
+and packet timestamps. Other codecs retain their declared level constraints.
+
+The soundtrack uses the existing FFmpeg/OpenCORE PCM source and shared Oboe
+bus. Both demuxers preserve container presentation time zero, track offsets and
+priming. A real audio track's leading gap contributes source-owned silence;
+pure video creates no audio output and requests no audio focus. While audio is
+active, its presentation cursor is the master. After its final presented PCM,
+video can continue monotonically. If video ends first, audio drains before EOM.
+There is one guest state, duration, loop count, seek transaction and EOM per
+iteration. Native PCM never loops independently of the video controller.
+Known video-track duration bounds its last frame, including variable frame
+intervals; without it, the last decoded PTS and nominal interval define the end,
+even if that frame was dropped. Seeking or restarting in a shorter soundtrack's
+silent tail keeps its PCM source inactive while video continues.
+
+A fixed native segment ring maps bus frames to source media timestamps, fenced
+by source generation and output epoch. Management queries the current Oboe
+timestamp under output lifetime serialization. If unavailable, the current
+sink's buffer size/capacity and burst provide a bounded estimate with reported
+uncertainty; a sink with neither timestamp nor bounded geometry fails the video
+source. Underflow does not advance the source cursor. No timestamp query, JNI,
+allocation or decoding runs in the audio callback.
+
+The video worker holds at most one decoded output until within 2 ms of its due
+time, then uses a monotonic timed release. Output later than one declared frame
+interval (at least 20 ms) is dropped, including seek preroll. TextureView does
+not promise SurfaceView-style future presentation, so submissions stay near
+their deadlines. Diagnostics compare rendered timestamps with mapped audio
+presentation, report skew buckets, drift, unmapped samples and sink uncertainty.
+These are scheduling measurements, not acoustic or panel-latency proof.
+
+`VideoControl` supports both LCDUI modes: direct Canvas defaults hidden and uses
+guest coordinates clipped to the LCD viewport; GUI primitive defaults visible
+and returns a real Item for Form ownership and scrolling. A separate TextureView
+Surface sits above the Canvas/GL surface and below the existing host overlay.
+Geometry and View ownership run on the main thread; codec teardown acknowledges
+Surface destruction on its worker. Hiding video or changing LCDUI screens does
+not stop playback. Host or transient focus suspension freezes A/V together;
+permanent audio focus loss requires a fresh request. Pure video follows host
+visibility while ignoring an audio peer's focus loss.
+
+`VideoPlayerTest` covers codec selection, offsets, unequal track lengths,
+pure video, seek/loops and peer isolation. `VideoMidletRuntimeTest` launches the
+owned guest in direct Canvas and Item/Form modes, including input, commands,
+scrolling, clipping, fullscreen, Home, recreation and rotation. Its physical
+portrait command tap is a qualification gesture, not a portable UI golden.
+Pass `-e videoGraphicsMode 1` to qualify GL. `SonivoxFocusRuntimeTest` includes
+video with the optional distinct-UID companion. The generated inputs and
+commands are in [the fixture notes](../app/src/androidTest/assets/video/README.md).
+The opt-in `-e videoCorpus true` test reads three externally supplied files
+(`0.3gp`, `4.3gp`, `6.3gp`) from the qualification package's `files/video-corpus`;
+commercial assets are never packaged in the repository/APK.
 
 ## Reproducible local checks
 

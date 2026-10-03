@@ -51,6 +51,7 @@ struct Decoder::State {
     std::atomic<int64_t> position{0}, consumed{0}, underflow{0}, audible{0};
     std::atomic<int64_t> length{-1};
     int64_t streamStart = 0, seekTarget = 0;
+    bool containerTimeline = false;
     bool trimDeclaredWave = false;
     bool durationEstimated = false;
     std::vector<std::string> tags;
@@ -104,7 +105,7 @@ struct Decoder::State {
     static int interrupted(void *opaque) {
         return static_cast<State *>(opaque)->cancelIO.load(std::memory_order_acquire);
     }
-    void open(const std::string &path) {
+    void open(const std::string &path, bool videoAudio) {
         file = fopen(path.c_str(), "rb");
         if (!file) throw std::runtime_error("Cannot open sampled cache");
         struct stat info{};
@@ -143,6 +144,10 @@ struct Decoder::State {
         check(avformat_open_input(&format, nullptr, recognized ? av_find_input_format(recognized) : nullptr, nullptr),
             "Recognize sampled audio");
         check(avformat_find_stream_info(format, nullptr), "Read sampled stream information");
+        for (unsigned i = 0; i < format->nb_streams; ++i)
+            if (!videoAudio && format->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO
+                    && !(format->streams[i]->disposition & AV_DISPOSITION_ATTACHED_PIC))
+                throw std::runtime_error("Video track requires the file video pipeline");
         streamIndex = av_find_best_stream(format, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
         check(streamIndex, "Find audio stream");
         auto *stream = format->streams[streamIndex];
@@ -306,7 +311,7 @@ struct Decoder::State {
         });
     }
 };
-Decoder::Decoder(const std::string &path) : state(std::make_unique<State>()) { state->open(path); }
+Decoder::Decoder(const std::string &path, bool videoAudio) : state(std::make_unique<State>()) { state->open(path, videoAudio); }
 Decoder::~Decoder() = default;
 void Decoder::prefetch() {
     state->run(false);
@@ -322,6 +327,14 @@ void Decoder::prefetch() {
 void Decoder::resume() { state->join(); state->run(true); }
 void Decoder::pause() { state->join(); }
 void Decoder::deallocate() { state->join(); seek(time()); }
+void Decoder::timeline(int64_t origin) {
+    state->join();
+    if (state->containerTimeline) throw std::runtime_error("Audio timeline already configured");
+    if (state->length >= 0) state->length.fetch_add(state->streamStart - origin);
+    state->streamStart = origin;
+    state->containerTimeline = true;
+    seek(0);
+}
 int64_t Decoder::seek(int64_t microseconds) {
     state->join();
     microseconds = std::max<int64_t>(0, microseconds);
@@ -345,6 +358,16 @@ int Decoder::read(float *bus, int frames, float left, float right) {
         auto read = state->tail.load(std::memory_order_relaxed);
         if (read == state->head.load(std::memory_order_acquire)) break;
         auto &chunk = state->ring[read % SLOTS];
+        if (state->containerTimeline) {
+            const int64_t pts = chunk.pts + static_cast<int64_t>(state->cursor) * 1000000 / RATE;
+            const int64_t gap = pts - state->position.load(std::memory_order_relaxed);
+            if (gap > 1000000 / RATE) {
+                const int silence = static_cast<int>(std::min<int64_t>(frames - copied, gap * RATE / 1000000));
+                copied += silence;
+                state->position.fetch_add(static_cast<int64_t>(silence) * 1000000 / RATE);
+                continue;
+            }
+        }
         int count = std::min(frames - copied, chunk.count - state->cursor);
         for (int i = 0; i < count; ++i) {
             const float l = chunk.samples[(state->cursor + i) * 2] * left;

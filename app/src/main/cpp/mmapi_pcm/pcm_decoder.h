@@ -17,7 +17,7 @@ class Decoder final {
 public:
     static constexpr int RATE = 44100, CHANNELS = 2;
     static constexpr size_t MEDIA_LIMIT = 64 * 1024 * 1024;
-    explicit Decoder(const std::string &path);
+    explicit Decoder(const std::string &path, bool videoAudio = false);
     ~Decoder();
     Decoder(const Decoder &) = delete;
     Decoder &operator=(const Decoder &) = delete;
@@ -26,6 +26,7 @@ public:
     void pause();
     void deallocate();
     int64_t seek(int64_t microseconds);
+    void timeline(int64_t containerOrigin);
     // Adds to interleaved stereo output, applying per-source gains. Returns the
     // consumed frame count; missing frames remain untouched (silence on this bus).
     int read(float *bus, int frames, float left, float right);

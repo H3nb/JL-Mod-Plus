@@ -11,6 +11,7 @@
 #include <thread>
 #include <stdexcept>
 #include <vector>
+#include <time.h>
 extern "C" int JL_EAS_RealtimeAllocations(void);
 
 namespace mmapi::eas {
@@ -20,7 +21,17 @@ class TestStream final : public oboe::AudioStream {
 public:
     oboe::StreamState state = oboe::StreamState::Open;
     int closes = 0;
-    explicit TestStream(const oboe::AudioStreamBuilder &builder) : AudioStream(builder) {}
+    int64_t written = 0, presented = 0;
+    bool timestampAvailable = false;
+    int64_t getFramesWritten() override { return written; }
+    oboe::ResultWithValue<oboe::FrameTimestamp> getTimestamp(clockid_t) override {
+        if (!timestampAvailable) return oboe::ResultWithValue<oboe::FrameTimestamp>(oboe::Result::ErrorUnimplemented);
+        timespec now{}; clock_gettime(CLOCK_MONOTONIC, &now);
+        return oboe::ResultWithValue<oboe::FrameTimestamp>(oboe::FrameTimestamp{presented, now.tv_sec * 1000000000LL + now.tv_nsec});
+    }
+    explicit TestStream(const oboe::AudioStreamBuilder &builder) : AudioStream(builder) {
+        mBufferSizeInFrames=100; mBufferCapacityInFrames=300; mFramesPerBurst=50;
+    }
     oboe::Result close() override { ++closes; state = oboe::StreamState::Closed; return oboe::Result::OK; }
     oboe::Result start(int64_t) override { return requestStart(); }
     oboe::Result pause(int64_t) override { return requestPause(); }
@@ -58,7 +69,8 @@ class PlayerTest {
         std::vector<float> all;
         for (int count : sizes) {
             std::vector<float> guarded(count * 2 + 16, 123456.0f);
-            player.engine->output->onAudioReady(nullptr, guarded.data() + 8, count);
+            player.engine->output->onAudioReady(player.engine->stream.get(), guarded.data() + 8, count);
+            static_cast<TestStream *>(player.engine->stream.get())->written += count;
             require(JL_EAS_RealtimeAllocations() == 0, "Core allocates while rendering");
             require(std::all_of(guarded.begin(), guarded.begin() + 8,
                 [](float x) { return x == 123456.0f; }), "Callback writes before buffer");
@@ -69,6 +81,41 @@ class PlayerTest {
         return all;
     }
 public:
+    static void presentationMapping(const std::string &pcm) {
+        Player player("device://midi", ""); activate(player);
+        auto stream=static_cast<TestStream *>(player.engine->stream.get());
+        stream->timestampAvailable=true; stream->written=200; stream->presented=50;
+        player.recordPresentation(0,100,100000,102267,player.engine->outputEpoch);
+        player.recordPresentation(100,100,102267,102267,player.engine->outputEpoch);
+        auto stamp=player.presentation();
+        require(stamp[4]==1 && std::abs(stamp[0]-101133)<100, "Presentation bus-to-source mapping");
+        stream->presented=150; stamp=player.presentation();
+        require(stamp[0]==102267, "Presentation advances through source underflow");
+        stream->timestampAvailable=false; stamp=player.presentation();
+        require(stamp[4]==0 && stamp[7] && stamp[0]==102267 && stamp[5]==7936,
+            "Unavailable sink timestamp lost bounded queue estimate/uncertainty");
+        player.position.store(250000); player.invalidate();
+        require(player.presentation()[0]==250000 && !player.presentation()[7], "Seek accepts old presentation generation");
+        player.position.store(270000);
+        require(player.presentation()[0]==250000, "Unmapped clock advances to submitted PCM");
+        player.recordPresentation(200,100,250000,252267,player.engine->outputEpoch);
+        player.engine->outputEpoch++;
+        require(player.presentation()[0]==250000, "Replacement accepts old output mapping");
+        if(pcm.empty())return;
+        Player effect(pcm,"",std::make_shared<Engine>(),true);
+        effect.timeline(0); activate(effect);
+        auto sink=static_cast<TestStream *>(effect.engine->stream.get());
+        sink->timestampAvailable=true;
+        for(int i=0;i<1000 && !effect.sampled->drained();++i) {
+            render(effect,{511}); std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        require(effect.sampled->drained() && effect.pending.load()==0, "Video audio claims EOM at submission");
+        Event event{};
+        require(!effect.poll(event), "EOM before final PCM presentation");
+        sink->presented=sink->written;
+        require(effect.poll(event) && event.type==2, "Presented PCM does not drain");
+        std::puts("PASS: presentation mapping, underflow freeze, bounded fallback, generation/output fences and final PCM drain");
+    }
     static void outputRecovery(const std::string &bank) {
         auto player = std::make_shared<Player>("device://midi", bank);
         player->prefetch(); player->start();
@@ -327,6 +374,7 @@ public:
         std::puts("PASS: mixed PCM+synthesis, consumed clock, seek/deallocate, finite drain/loops and local failure isolation");
     }
     static void run(const std::string &bank, const std::string &pcm) {
+        presentationMapping(pcm);
         outputRecovery(bank);
         sharedSources(bank);
         if (!pcm.empty()) mixedPcm(bank, pcm);

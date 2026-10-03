@@ -25,6 +25,7 @@ public class LibEAS implements Library {
 	private final String soundBank;
 	private final long sessionId;
 	private final boolean sampled;
+    private final boolean videoAudio;
 
 	public LibEAS() {
 		this(null);
@@ -32,8 +33,11 @@ public class LibEAS implements Library {
 
 	public LibEAS(String soundBank) { this(soundBank, false); }
 	public static LibEAS sampled() { return new LibEAS(null, true); }
-	private LibEAS(String soundBank, boolean sampled) {
+    public static LibEAS videoAudio() { return new LibEAS(null, true, true); }
+	private LibEAS(String soundBank, boolean sampled) { this(soundBank, sampled, false); }
+    private LibEAS(String soundBank, boolean sampled, boolean videoAudio) {
         this.sampled = sampled;
+        this.videoAudio = videoAudio;
         this.soundBank = soundBank;
         RuntimeAudioCoordinator audio = RuntimeAudioCoordinator.current();
         sessionId = audio.sessionId();
@@ -46,9 +50,9 @@ public class LibEAS implements Library {
 	}
 	@Override
 	public long createPlayer(String locator) {
-		return createNative(locator, soundBank, sessionId, sampled);
+		return createNative(locator, soundBank, sessionId, sampled, videoAudio);
 	}
-	private native long createNative(String locator, String bank, long sessionId, boolean sampled);
+	private native long createNative(String locator, String bank, long sessionId, boolean sampled, boolean videoAudio);
 	private static native void setPolicy(long session, long epoch, long minimum, boolean allowed);
 	private static native void closeSession(long session);
 	private native void activateNative(long handle, boolean midiOnly, long requestEpoch);
@@ -57,6 +61,10 @@ public class LibEAS implements Library {
 	@Override public native long getOutputIdentity(long handle);
 	@Override public native boolean outputFailed(long handle);
 	public native long[] runtimeDiagnostics(long handle);
+    public native void setTimelineOrigin(long handle, long origin);
+    /** Media us, monotonic ns, generation, output epoch, timestamp available, uncertainty us, bus frame, mapped. */
+    public native long[] presentation(long handle);
+    public native long[] presentationAt(long handle, long monotonicNanos);
     public native long[] decoderDiagnostics(long handle);
     @Override public boolean isSynthesis() { return !sampled; }
     @Override public native boolean isOutputSuspended(long handle);

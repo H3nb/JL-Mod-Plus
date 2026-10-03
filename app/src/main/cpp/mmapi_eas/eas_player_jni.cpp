@@ -88,7 +88,7 @@ extern "C" JNIEXPORT void JNICALL JNI_NAME(closeSession)(JNIEnv *, jclass, jlong
     sessions.erase(found);
 }
 extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, jstring locator,
-        jstring bank, jlong sessionId, jboolean sampled) {
+        jstring bank, jlong sessionId, jboolean sampled, jboolean videoAudio) {
     bool reserved = false;
     try {
         auto path = string(env, locator);
@@ -106,7 +106,7 @@ extern "C" JNIEXPORT jlong JNICALL JNI_NAME(createNative)(JNIEnv *env, jobject, 
             handle = nextHandle++; ++creating; reserved = true;
         }
         // Bank and source IO must not hold the handle registry against peer management.
-        auto owned = std::make_shared<Player>(path, font, engine, sampled);
+        auto owned = std::make_shared<Player>(path, font, engine, sampled, videoAudio);
         {
             std::lock_guard<std::mutex> lock(registryLock);
             registry.emplace(handle, std::move(owned)); --creating; reserved = false;
@@ -134,6 +134,27 @@ extern "C" JNIEXPORT jlongArray JNICALL JNI_NAME(runtimeDiagnostics)(JNIEnv *env
         jlong longs[12]; std::copy(values.begin(), values.end(), longs);
         auto result = env->NewLongArray(12);
         if (result) env->SetLongArrayRegion(result, 0, 12, longs);
+        return result;
+    } catch (...) { translate(env); return nullptr; }
+}
+extern "C" JNIEXPORT void JNICALL JNI_NAME(setTimelineOrigin)(JNIEnv *env, jobject, jlong handle, jlong origin) {
+    try { player(handle)->timeline(origin); } catch (...) { translate(env); }
+}
+extern "C" JNIEXPORT jlongArray JNICALL JNI_NAME(presentation)(JNIEnv *env, jobject, jlong handle) {
+    try {
+        auto values = player(handle)->presentation();
+        jlong longs[8]; std::copy(values.begin(), values.end(), longs);
+        auto result = env->NewLongArray(8);
+        if (result) env->SetLongArrayRegion(result, 0, 8, longs);
+        return result;
+    } catch (...) { translate(env); return nullptr; }
+}
+extern "C" JNIEXPORT jlongArray JNICALL JNI_NAME(presentationAt)(JNIEnv *env, jobject, jlong handle, jlong at) {
+    try {
+        auto values = player(handle)->presentation(at);
+        jlong longs[8]; std::copy(values.begin(), values.end(), longs);
+        auto result = env->NewLongArray(8);
+        if (result) env->SetLongArrayRegion(result, 0, 8, longs);
         return result;
     } catch (...) { translate(env); return nullptr; }
 }

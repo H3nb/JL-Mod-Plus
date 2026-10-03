@@ -70,6 +70,16 @@ non-Canvas Displayables.
 
 ## Validation gates
 
+File-video `VideoControl` uses an independent TextureView producer over the
+Canvas/GL surface, clipped to guest LCD geometry and below `OverlayView`.
+It does not paint into the Canvas Surface or intercept its key/pointer input.
+The GUI primitive is an LCDUI `VideoItem` in the existing Form hierarchy, with
+Form scrolling and command ownership. Android Views detach and reattach on the
+main thread; codec/Surface teardown is acknowledged by the video worker.
+Hide/show and LCDUI screen changes preserve playback intent, while host/focus
+suspension freezes the applicable media clock. See
+[file-video timing and qualification](audio-runtime.md#file-video-and-presentation-clock).
+
 - Use the relevant commands in [Build and validation](development.md).
 - Keep focused automated coverage for the runtime contracts actually affected by the change, such as Canvas versus non-Canvas action visibility, virtual-keyboard state, command dispatch, or dismiss-before-callback ordering.
 - Select renders and golden baselines using [Visual verification](development.md#visual-verification-and-screenshot-references); distinct runtime states do not each require a permanent reference.
