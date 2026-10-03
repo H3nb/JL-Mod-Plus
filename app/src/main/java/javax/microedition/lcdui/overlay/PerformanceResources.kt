@@ -50,6 +50,7 @@ class PerformanceResources(context: Context, private val metricsMask: Int) : Aut
     private var gpuTempC = Double.NaN
     private var thermalStatus = -1
     private var hardwareTemperaturesDenied = false
+    private val thermalSensors by lazy { ThermalSensorReader() }
 
     /** Unavailable values are NaN; thermal status is -1 when unavailable. */
     data class Snapshot(
@@ -191,10 +192,19 @@ class PerformanceResources(context: Context, private val metricsMask: Int) : Aut
                 -1
             }
         }
-        if (metricsMask and HARDWARE_TEMPERATURE_MASK != 0 && Build.VERSION.SDK_INT >= 24 &&
-            !hardwareTemperaturesDenied
-        ) {
-            sampleHardwareTemperatures()
+        if (metricsMask and HARDWARE_TEMPERATURE_MASK != 0) {
+            cpuTempC = Double.NaN
+            gpuTempC = Double.NaN
+            if (Build.VERSION.SDK_INT >= 24 && !hardwareTemperaturesDenied) {
+                sampleHardwareTemperatures()
+            }
+            val missingCpu = enabled(PerformanceOverlayOptions.CPU_TEMP) && !cpuTempC.isFinite()
+            val missingGpu = enabled(PerformanceOverlayOptions.GPU_TEMP) && !gpuTempC.isFinite()
+            if (missingCpu || missingGpu) {
+                val sensors = thermalSensors.sample(cpu = missingCpu, gpu = missingGpu)
+                if (missingCpu) cpuTempC = sensors.cpuTempC
+                if (missingGpu) gpuTempC = sensors.gpuTempC
+            }
         }
     }
 
@@ -210,8 +220,8 @@ class PerformanceResources(context: Context, private val metricsMask: Int) : Aut
                 gpuTempC = currentTemperature(manager, HardwarePropertiesManager.DEVICE_TEMPERATURE_GPU)
             }
         } catch (_: SecurityException) {
-            // Ordinary applications generally cannot access these sensors. Do not repeatedly
-            // make forbidden binder calls, guess device sysfs paths, or substitute battery data.
+            // Ordinary applications generally cannot access this service. Avoid repeated denied
+            // binder calls; explicitly named, readable thermal zones are handled separately.
             hardwareTemperaturesDenied = true
             cpuTempC = Double.NaN
             gpuTempC = Double.NaN

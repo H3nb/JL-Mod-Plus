@@ -75,6 +75,9 @@ public class CanvasWrapper {
 		diagnosticPaint.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.BOLD));
 		diagnosticPaint.setTextSize(context.getResources().getDimension(R.dimen.performance_overlay_text_size));
 		diagnosticPaint.setTextAlign(Paint.Align.LEFT);
+		float shadowOffset = context.getResources().getDisplayMetrics().density;
+		diagnosticPaint.setShadowLayer(shadowOffset, shadowOffset, shadowOffset,
+				context.getColor(R.color.fps_overlay_shadow));
 		Paint.FontMetrics diagnosticMetrics = diagnosticPaint.getFontMetrics();
 		diagnosticAscent = diagnosticMetrics.ascent;
 		diagnosticHeight = diagnosticMetrics.descent - diagnosticMetrics.ascent;

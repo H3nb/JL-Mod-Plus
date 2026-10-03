@@ -61,7 +61,6 @@ public class PerformanceOverlayRenderingTest {
 		for (int pixel : pixels) {
 			if (Color.alpha(pixel) != 0) {
 				painted++;
-				assertEquals("Glyphs have no outline color", 0xFFFFFF, pixel & 0xFFFFFF);
 			}
 		}
 		assertTrue("The native renderer must paint glyphs", painted > 0);
@@ -75,7 +74,7 @@ public class PerformanceOverlayRenderingTest {
 	}
 
 	@Test
-	public void diagnosticFontIsBoldWithoutOutline() {
+	public void diagnosticFontIsBoldWithOnlyAnOffsetShadow() {
 		CanvasWrapper graphics = new CanvasWrapper(false);
 		String text = "FPS 30/60 | RFPS 30";
 		Bitmap actual = Bitmap.createBitmap(600, 120, Bitmap.Config.ARGB_8888);
@@ -86,8 +85,11 @@ public class PerformanceOverlayRenderingTest {
 		bold.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.BOLD));
 		bold.setTextSize(targetContext().getResources().getDimension(R.dimen.performance_overlay_text_size));
 		bold.setColor(Color.WHITE);
+		bold.setShadowLayer(density(), density(), density(),
+				ContextCompat.getColor(targetContext(), R.color.fps_overlay_shadow));
 		new android.graphics.Canvas(expected).drawText(text, 10, 10 - bold.getFontMetrics().ascent, bold);
-		assertTrue("Diagnostic text must be plain bold glyphs", actual.sameAs(expected));
+		assertTrue("Diagnostic text must be filled bold glyphs with an offset shadow, no outline",
+				actual.sameAs(expected));
 		actual.recycle();
 		expected.recycle();
 	}
@@ -157,7 +159,9 @@ public class PerformanceOverlayRenderingTest {
 		graphics.bind(canvas);
 		Paint background = new Paint();
 		int foreground = ContextCompat.getColor(context, R.color.fps_overlay_content);
-		assertEquals("Diagnostic overlay uses neutral gray", 0xFF757575, foreground);
+		assertEquals("Diagnostic overlay uses white text", Color.WHITE, foreground);
+		assertEquals("Diagnostic shadow has 80% black opacity", 0xCC000000,
+				ContextCompat.getColor(context, R.color.fps_overlay_shadow));
 		String[] titles = {"DARK | ALL METRICS", "BRIGHT | ALL METRICS", "CONTRAST | ALL METRICS"};
 		for (int panel = 0; panel < 3; panel++) {
 			float left = panel * panelWidth;

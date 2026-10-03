@@ -7,8 +7,10 @@ profiles use Standard, while an explicitly empty selection remains empty.
 the selected bits, so there is no separate preset state to become inconsistent.
 
 The overlay remains a passive native `OverlayView` layer above the guest surface.
-It does not consume game input. It uses neutral gray (`#757575`) 12sp bold
-monospaced text following system font scaling, with no outline or background panel.
+It does not consume game input. It uses white 12sp bold monospaced text following
+system font scaling, with no outline or background panel. A black 80% opacity
+shadow uses a 1dp blur radius and 1dp offset on both axes to separate glyphs from
+bright game content.
 Uppercase abbreviations are intentional for this diagnostic component; settings
 show full names and abbreviations in a compact checkbox list. Technical definitions
 are documented below.
@@ -39,7 +41,7 @@ There is no universal original-device FPS target for Java ME applications.
 | CPU | Process CPU time divided by host elapsed time: 100% equals one occupied core; multiple threads may exceed 100%. Does not indicate CPU frequency or total device utilization. |
 | RAM | Runtime process proportional set size (PSS), in MiB. Not all JL-Mod processes or just the guest's allocations. |
 | JAVA / NATIVE | Used Java heap / allocated native heap in MiB; not additive components of PSS. |
-| CPUT / GPUT | Hottest valid current CPU/GPU sensor reading from Android's hardware properties service. Restricted or missing sensors produce `—`; battery readings are never substituted. |
+| CPUT / GPUT | Hottest valid current CPU/GPU sensor reading from Android's hardware properties service, falling back to readable thermal zones with explicit component labels. Restricted or missing sensors produce `—`; battery readings are never substituted. |
 | BAT | Android's reported battery temperature. |
 | THRM | Android thermal severity, when supported. |
 | REN / DISP | Host rendering backend / active display refresh rate reported by Android. Neither is the maximum supported display rate used by compatibility pacing. |
@@ -51,6 +53,17 @@ update every second; PSS, heap, hardware temperature, and thermal samples update
 every five seconds. Battery temperature follows Android battery broadcasts.
 Only selected optional diagnostics are collected. Existing timing/governor frame
 counters remain available to their independent runtime consumers.
+
+The temperature fallback discovers `/sys/class/thermal/thermal_zone*/type` once
+per sampler and reads selected sensors' `temp` files on the five-second worker
+interval. It recognizes `cpu`, `cpuss`, and `gpu` labels with optional numeric
+hyphen suffixes, including the CPU clusters and GPU sensors verified on the
+reported device. Values use the Linux thermal ABI's millidegrees Celsius; no
+unit guessing, root, shell, Shizuku, or zone-number mapping is used by the app.
+Ambiguous board, battery, anonymous TSENS, and SoC labels are excluded. Individual
+read failures remain unavailable and never retain an old temperature. Different
+tools may select or aggregate sensors differently; these values do not promise
+the same reading as DevCheck.
 
 Unavailable or insufficient data is `—`, not zero. A real zero-FPS static buffer
 is not treated as a failure. The overlay never infers achieved speed or marks a
