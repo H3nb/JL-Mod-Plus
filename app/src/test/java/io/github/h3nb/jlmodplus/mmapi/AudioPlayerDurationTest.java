@@ -13,6 +13,8 @@ import java.lang.reflect.Field;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import javax.microedition.media.Manager;
@@ -91,6 +93,48 @@ public class AudioPlayerDurationTest {
         assertTrue(durations.isEmpty());
     }
 
+    @Test public void finiteSeekProbeDoesNotHoldPlayerLockAndCloseFencesItsResult() throws Exception {
+        player.realize();
+        backend.probeEntered = new CountDownLatch(1);
+        backend.probeRelease = new CountDownLatch(1);
+        ExecutorService operations = Executors.newFixedThreadPool(2);
+        try {
+            Future<?> seek = operations.submit(() -> {
+                try { player.setMediaTime(9000000); fail("Closed seek committed"); }
+                catch (IllegalStateException expected) { /* Terminal close wins. */ }
+                catch (javax.microedition.media.MediaException unexpected) { throw new AssertionError(unexpected); }
+            });
+            assertTrue(backend.probeEntered.await(2, TimeUnit.SECONDS));
+            assertEquals(Player.REALIZED, player.getState());
+            operations.submit(player::close).get(2, TimeUnit.SECONDS);
+            backend.probeRelease.countDown();
+            seek.get(2, TimeUnit.SECONDS);
+            assertEquals(0, backend.seeks);
+            assertTrue(durations.isEmpty());
+        } finally { backend.probeRelease.countDown(); operations.shutdownNow(); }
+    }
+
+    @Test public void mediaReplacementFencesPreparedSeekAndBackendFailureUsesMediaException() throws Exception {
+        player.realize();
+        backend.probeEntered = new CountDownLatch(1);
+        backend.probeRelease = new CountDownLatch(1);
+        ExecutorService operations = Executors.newSingleThreadExecutor();
+        try {
+            Future<?> seek = operations.submit(() -> {
+                try { player.setMediaTime(9000000); fail("Replaced media seek committed"); }
+                catch (javax.microedition.media.MediaException expected) { /* Logical source changed. */ }
+            });
+            assertTrue(backend.probeEntered.await(2, TimeUnit.SECONDS));
+            player.setSequence(new byte[]{1});
+            backend.probeRelease.countDown();
+            seek.get(2, TimeUnit.SECONDS);
+            assertEquals(0, backend.seeks);
+            backend.seekFailure = true;
+            try { player.setMediaTime(1); fail("Backend failure escaped contract"); }
+            catch (javax.microedition.media.MediaException expected) { }
+        } finally { backend.probeRelease.countDown(); operations.shutdownNow(); }
+    }
+
     private ExecutorService callbacks() throws Exception {
         Field field = AudioPlayer.class.getDeclaredField("callbackExecutor");
         field.setAccessible(true); return (ExecutorService) field.get(player);
@@ -107,6 +151,9 @@ public class AudioPlayerDurationTest {
 
     private static final class Backend implements Library {
         volatile long duration = Player.TIME_UNKNOWN;
+        CountDownLatch probeEntered, probeRelease;
+        int seeks;
+        boolean seekFailure;
         final BlockingQueue<long[]> events = new LinkedBlockingQueue<>();
         public long createPlayer(String locator) { return 1; }
         public void realize(long handle) {}
@@ -115,7 +162,18 @@ public class AudioPlayerDurationTest {
         public void pause(long handle) {}
         public void deallocate(long handle) { duration = Player.TIME_UNKNOWN; }
         public void close(long handle) {}
-        public long setMediaTime(long handle, long time) { return time; }
+        public void prepareMediaTime(long handle, long time) {
+            if (probeEntered != null) {
+                probeEntered.countDown();
+                try { if (!probeRelease.await(3, TimeUnit.SECONDS)) throw new AssertionError("Probe timed out"); }
+                catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new AssertionError(e); }
+            }
+        }
+        public long setMediaTime(long handle, long time) {
+            if (seekFailure) throw new IllegalStateException("Injected seek failure");
+            seeks++;
+            return time;
+        }
         public long getMediaTime(long handle) { return 0; }
         public void setRepeat(long handle, int count) {}
         public void setVolume(long handle, float left, float right) {}

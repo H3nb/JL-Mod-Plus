@@ -25,6 +25,8 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.microedition.lcdui.Item;
 import javax.microedition.media.Manager;
@@ -246,6 +248,90 @@ public class VideoPlayerTest {
     }
 
     @Test
+    public void firstUnknownDurationSeekPastEndReturnsActualEndForVideoAndBothTrackOrders()
+            throws Exception {
+        try (ActivityScenario<AudioQualificationActivity> host =
+                ActivityScenario.launch(AudioQualificationActivity.class)) {
+            for (String name : new String[] {"pure.mp4", "offset.mp4", "short-video.mp4"}) {
+                Player video = asset("video/" + name);
+                try {
+                    hideDuration(video);
+                    AtomicInteger ends = new AtomicInteger();
+                    AtomicLong durationValue = new AtomicLong(-1), endValue = new AtomicLong(-1);
+                    CountDownLatch duration = new CountDownLatch(1), ended = new CountDownLatch(1);
+                    video.addPlayerListener((p, e, value) -> {
+                        if (PlayerListener.DURATION_UPDATED.equals(e)) {
+                            durationValue.set((Long) value);
+                            duration.countDown();
+                        }
+                        if (PlayerListener.END_OF_MEDIA.equals(e)) {
+                            endValue.set((Long) value);
+                            ends.incrementAndGet();
+                            ended.countDown();
+                        }
+                    });
+                    video.realize();
+                    assertEquals(Player.TIME_UNKNOWN, video.getDuration());
+                    if ("short-video.mp4".equals(name)) video.start();
+                    long actual = video.setMediaTime(9000000);
+                    assertTrue(name + " returned " + actual, actual >= 3900000 && actual < 4100000);
+                    assertEquals(actual, video.getMediaTime());
+                    assertEquals(actual, video.getDuration());
+                    assertTrue(name + " duration event missing", duration.await(2, TimeUnit.SECONDS));
+                    assertEquals(actual, durationValue.get());
+                    video.start();
+                    assertTrue(name + " end missing " + snapshot(video), ended.await(4, TimeUnit.SECONDS));
+                    // Native drain and the independent scan can round the last
+                    // resampled timestamp by one output sample (23 us).
+                    assertTrue(Math.abs(actual - video.getMediaTime()) <= 23);
+                    assertTrue(Math.abs(actual - video.getDuration()) <= 23);
+                    assertEquals(video.getMediaTime(), endValue.get());
+                    SystemClock.sleep(100);
+                    assertEquals(1, ends.get());
+                    Log.i("VideoQualification", name + " first unknown beyond-end actual=" + actual);
+                } finally { video.close(); }
+            }
+        }
+    }
+
+    @Test
+    public void internalAudioGapAdvancesPresentationWithSilenceAndRetainsPostGapSeek()
+            throws Exception {
+        try (ActivityScenario<AudioQualificationActivity> host =
+                ActivityScenario.launch(AudioQualificationActivity.class)) {
+            Player video = asset("video/gapped.mp4");
+            try {
+                video.realize();
+                VideoDisplay control = (VideoDisplay) video.getControl("VideoControl");
+                control.initDisplayMode(0, null);
+                host.onActivity(a -> a.setContentView(control.itemView(a, 2)));
+                CountDownLatch ended = new CountDownLatch(1);
+                video.addPlayerListener((p, e, v) -> {
+                    if (PlayerListener.END_OF_MEDIA.equals(e)) ended.countDown();
+                });
+                video.start();
+                await(() -> video.getMediaTime() >= 1250000, 4000, "Gap clock did not advance");
+                long audible = audioStats(video)[2];
+                // Rendered counters lead the presentation cursor by the output
+                // queue. Sample inside the gap, clear of the following tone.
+                await(() -> video.getMediaTime() >= 1400000, 2000, "Source-owned silence froze clock");
+                assertEquals("Second tone compacted into gap", audible, audioStats(video)[2]);
+                assertEquals(1500000, video.setMediaTime(1500000));
+                await(() -> video.getMediaTime() >= 2100000, 3000, "Gap seek never reached second segment");
+                assertEquals(2300000, video.setMediaTime(2300000));
+                long tailAudible = audioStats(video)[2];
+                await(() -> audioStats(video)[2] > tailAudible + 1024, 2000, "Post-gap seek lost tone");
+                assertTrue(ended.await(3, TimeUnit.SECONDS));
+                assertTrue(video.getDuration() > 2980000 && video.getDuration() < 3040000);
+                long[] stats = backend(video).diagnostics();
+                assertTrue("No mapped rendered frames", stats[4] + stats[5] > 0);
+                assertTrue(java.util.Arrays.toString(stats), stats[2] <= frameTolerance(backend(video), stats));
+                Log.i("VideoQualification", "gap " + java.util.Arrays.toString(stats));
+            } finally { video.close(); }
+        }
+    }
+
+    @Test
     public void selectedExternalJ2meCorpusRendersThroughTheSharedOutput() throws Exception {
         org.junit.Assume.assumeTrue(
                 "External commercial corpus is opt-in",
@@ -404,6 +490,28 @@ public class VideoPlayerTest {
                 InstrumentationRegistry.getInstrumentation().getContext().getAssets().open(path)) {
             return Manager.createPlayer(input, null);
         }
+    }
+
+    private static void hideDuration(Player player) throws Exception {
+        VideoLibrary library = backend(player);
+        Field sf = VideoLibrary.class.getDeclaredField("source");
+        sf.setAccessible(true);
+        Object source = sf.get(library);
+        Field ff = source.getClass().getDeclaredField("format");
+        ff.setAccessible(true);
+        ((android.media.MediaFormat) ff.get(source)).removeKey(android.media.MediaFormat.KEY_DURATION);
+        Field lf = VideoLibrary.class.getDeclaredField("length");
+        lf.setAccessible(true);
+        lf.setLong(library, Player.TIME_UNKNOWN);
+    }
+
+    private static long[] audioStats(Player player) throws Exception {
+        VideoLibrary video = backend(player);
+        Field af = VideoLibrary.class.getDeclaredField("audio");
+        Field hf = VideoLibrary.class.getDeclaredField("audioHandle");
+        af.setAccessible(true);
+        hf.setAccessible(true);
+        return ((io.github.h3nb.jlmodplus.mmapi.synth.eas.LibEAS) af.get(video)).diagnostics(hf.getLong(video));
     }
 
     static VideoLibrary backend(Player player) throws Exception {

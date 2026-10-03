@@ -43,7 +43,7 @@ public class InternalMetaData implements MetaDataControl {
 		androidMetaToMIDP.put(android, midp);
 	}
 
-	private void updateMetaData(MediaMetadataRetriever retriever) {
+	private synchronized void updateMetaData(MediaMetadataRetriever retriever) {
 		metaKeys.clear();
 		metaData.clear();
 
@@ -62,17 +62,18 @@ public class InternalMetaData implements MetaDataControl {
 	}
 
 	@Override
-	public String[] getKeys() {
+	public synchronized String[] getKeys() {
 		return metaKeys.toArray(new String[0]);
 	}
 
 	@Override
-	public String getKeyValue(String key) {
+	public synchronized String getKeyValue(String key) {
+		if (key == null || !metaData.containsKey(key)) throw new IllegalArgumentException("Invalid metadata key: " + key);
 		return metaData.get(key);
 	}
 
     /** FFmpeg tags are decoded as UTF-8 by the management bridge. */
-    public void updateDemuxerMetaData(String[] tags) {
+    public synchronized void updateDemuxerMetaData(String[] tags) {
         metaKeys.clear(); metaData.clear();
         for (int i = 0; i + 1 < tags.length; i += 2) {
             String key = switch (tags[i].toLowerCase(java.util.Locale.ROOT)) {

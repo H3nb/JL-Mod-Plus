@@ -62,6 +62,9 @@ public class LibEAS implements Library {
 	@Override public native boolean outputFailed(long handle);
 	public native long[] runtimeDiagnostics(long handle);
     public native void setTimelineOrigin(long handle, long origin);
+    /** Independent bounded PCM scan; no output context or playback mutation. */
+    public static native long inspectAudioDuration(String path, long origin,
+            java.util.function.BooleanSupplier cancelled);
     /** Media us, monotonic ns, generation, output epoch, timestamp available, uncertainty us, bus frame, mapped. */
     public native long[] presentation(long handle);
     public native long[] presentationAt(long handle, long monotonicNanos);

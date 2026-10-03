@@ -4,6 +4,7 @@
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -27,6 +28,8 @@ public:
     void deallocate();
     int64_t seek(int64_t microseconds);
     void timeline(int64_t containerOrigin);
+    // Management-only finite-input scan on an independent, unconsumed decoder.
+    int64_t scanDuration(const std::function<bool()> &cancelled);
     // Adds to interleaved stereo output, applying per-source gains. Returns the
     // consumed frame count; missing frames remain untouched (silence on this bus).
     int read(float *bus, int frames, float left, float right);

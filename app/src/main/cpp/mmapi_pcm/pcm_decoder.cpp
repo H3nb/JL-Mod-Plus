@@ -4,6 +4,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/channel_layout.h>
+#include <libavutil/common.h>
 #include <libavutil/dict.h>
 #include <libavutil/error.h>
 #include <libavutil/mathematics.h>
@@ -69,7 +70,7 @@ struct Decoder::State {
     std::atomic<int> failure{0}, workers{0};
     std::thread worker;
     bool demuxEnd = false, decoderEnd = false, sentEnd = false;
-    bool havePacket = false;
+    bool havePacket = false, haveFrame = false;
     std::vector<float> staging;
     int stagingFrames = 0, stagingCursor = 0;
     int64_t stagingPts = 0, nextPts = 0, anchorPts = 0, producedFrames = 0;
@@ -204,27 +205,47 @@ struct Decoder::State {
         if (write - tail.load(std::memory_order_acquire) == SLOTS) return false;
         Chunk &chunk = ring[write % SLOTS];
         chunk.count = std::min(CHUNK, stagingFrames - stagingCursor);
-        chunk.pts = stagingPts + static_cast<int64_t>(stagingCursor) * 1000000 / RATE;
+        chunk.pts = av_sat_add64(stagingPts, static_cast<int64_t>(stagingCursor) * 1000000 / RATE);
         std::copy_n(staging.data() + stagingCursor * 2, chunk.count * 2, chunk.samples.data());
         stagingCursor += chunk.count;
         head.store(write + 1, std::memory_order_release);
         return true;
     }
-    void convert(bool drain) {
+    bool convert(bool drain) {
         if (!drain && ((frame->sample_rate > 0 && frame->sample_rate != inputRate)
                 || frame->ch_layout.nb_channels != inputChannels || frame->format != inputFormat))
             throw std::runtime_error("Sampled stream changed its PCM configuration");
+        int64_t pts = nextPts;
+        const bool timestamped = !drain && frame->best_effort_timestamp != AV_NOPTS_VALUE;
+        if (timestamped) {
+            pts = av_sat_sub64(av_sat_sub64(av_rescale_q(frame->best_effort_timestamp,
+                format->streams[streamIndex]->time_base, US), streamStart),
+                av_rescale(swr_get_delay(resampler, inputRate), 1000000, inputRate));
+        }
+        // Quantized timestamps and resampler rounding must not split a continuous
+        // segment. Real discontinuities retain their PTS on the container clock.
+        const int64_t tolerance = std::max<int64_t>(2 + 1000000 / RATE + 1000000 / inputRate,
+            av_rescale_q(1, format->streams[streamIndex]->time_base, US));
+        const bool discontinuity = containerTimeline && havePts && timestamped
+            && (av_sat_sub64(pts, nextPts) > tolerance || av_sat_sub64(nextPts, pts) > tolerance);
+        if (discontinuity) {
+            // Drain the previous segment before resetting filter history. Keep
+            // this input frame until that bounded output has been queued.
+            if (swr_get_delay(resampler, inputRate) > 0) {
+                convert(true);
+                if (stagingFrames > 0) return false;
+            }
+            swr_close(resampler);
+            check(swr_init(resampler), "Reset discontinuous sampled resampler");
+            pts = av_sat_sub64(av_rescale_q(frame->best_effort_timestamp,
+                format->streams[streamIndex]->time_base, US), streamStart);
+        }
         int capacity = drain ? swr_get_out_samples(resampler, 0)
             : swr_get_out_samples(resampler, frame->nb_samples);
         check(capacity, "Calculate sampled PCM capacity");
         if (capacity > MAX_OUTPUT_FRAMES) throw std::runtime_error("Decoded sampled frame exceeds PCM limit");
         staging.resize(static_cast<size_t>(capacity) * 2);
         uint8_t *output = reinterpret_cast<uint8_t *>(staging.data());
-        int64_t pts = nextPts;
-        if (!drain && frame->best_effort_timestamp != AV_NOPTS_VALUE) {
-            pts = av_rescale_q(frame->best_effort_timestamp, format->streams[streamIndex]->time_base, US) - streamStart
-                - swr_get_delay(resampler, codec->sample_rate) * 1000000 / codec->sample_rate;
-        }
         stagingFrames = swr_convert(resampler, &output, capacity,
             drain ? nullptr : const_cast<const uint8_t **>(frame->extended_data), drain ? 0 : frame->nb_samples);
         check(stagingFrames, "Resample sampled audio");
@@ -232,16 +253,26 @@ struct Decoder::State {
             if (!std::isfinite(staging[i])) staging[i] = 0;
         stagingCursor = 0;
         // Codec timestamps anchor consumed PCM. Decode-ahead never updates position.
-        if (!havePts) { anchorPts = pts; producedFrames = 0; havePts = true; }
-        stagingPts = anchorPts + producedFrames * 1000000 / RATE;
+        const int64_t previousEnd = havePts ? nextPts : INT64_MIN;
+        if (!havePts || discontinuity) { anchorPts = pts; producedFrames = 0; havePts = true; }
+        stagingPts = av_sat_add64(anchorPts, av_rescale_rnd(producedFrames, 1000000, RATE, AV_ROUND_DOWN));
         producedFrames += stagingFrames;
-        nextPts = anchorPts + producedFrames * 1000000 / RATE;
+        nextPts = av_sat_add64(anchorPts, av_rescale_rnd(producedFrames, 1000000, RATE, AV_ROUND_DOWN));
+        if (containerTimeline) nextPts = std::max(previousEnd, nextPts);
         if (trimDeclaredWave && nextPts > length) stagingFrames = static_cast<int>(std::max<int64_t>(0,
             std::min<int64_t>(stagingFrames, av_rescale_rnd(length.load() - stagingPts, RATE, 1000000, AV_ROUND_DOWN))));
-        if (stagingPts < seekTarget) stagingCursor = static_cast<int>(std::min<int64_t>(stagingFrames,
-            av_rescale_rnd(seekTarget - stagingPts, RATE, 1000000, AV_ROUND_UP)));
+        // Missing PTS continues the rational clock. Overlapping/backward PTS
+        // trims already-covered samples instead of duplicating or rewinding time.
+        const int64_t discardBefore = containerTimeline ? std::max(seekTarget, previousEnd) : seekTarget;
+        if (stagingPts < discardBefore) stagingCursor = static_cast<int>(std::min<int64_t>(stagingFrames,
+            av_rescale_rnd(av_sat_sub64(discardBefore, stagingPts), RATE, 1000000, AV_ROUND_UP)));
+        return true;
     }
     bool decode() {
+        if (haveFrame) {
+            if (convert(false)) { av_frame_unref(frame); haveFrame = false; }
+            return true;
+        }
         if (decoderEnd) {
             convert(true);
             if (!stagingFrames) {
@@ -258,7 +289,8 @@ struct Decoder::State {
             int result = avcodec_receive_frame(codec, frame);
             if (result >= 0) {
                 if (frame->flags & AV_FRAME_FLAG_CORRUPT) throw std::runtime_error("Corrupt sampled frame");
-                convert(false); av_frame_unref(frame); return true;
+                haveFrame = true;
+                return decode();
             }
             if (result == AVERROR_EOF) { decoderEnd = true; return decode(); }
             if (result != AVERROR(EAGAIN)) check(result, "Decode sampled frame");
@@ -340,16 +372,26 @@ int64_t Decoder::seek(int64_t microseconds) {
     microseconds = std::max<int64_t>(0, microseconds);
     if (state->length >= 0) microseconds = std::min(microseconds, state->length.load());
     auto *stream = state->format->streams[state->streamIndex];
-    int64_t target = av_rescale_q(microseconds + state->streamStart, US, stream->time_base);
+    int64_t target = av_rescale_q(av_sat_add64(microseconds, state->streamStart), US, stream->time_base);
     check(avformat_seek_file(state->format, state->streamIndex, INT64_MIN, target, target, AVSEEK_FLAG_BACKWARD), "Seek sampled audio");
     avcodec_flush_buffers(state->codec); av_packet_unref(state->packet); av_frame_unref(state->frame);
     swr_close(state->resampler); check(swr_init(state->resampler), "Flush sampled resampler");
     state->head.store(0); state->tail.store(0); state->cursor = 0;
     state->stagingFrames = state->stagingCursor = 0; state->havePts = false;
-    state->demuxEnd = state->decoderEnd = state->sentEnd = state->havePacket = false;
+    state->demuxEnd = state->decoderEnd = state->sentEnd = state->havePacket = state->haveFrame = false;
     state->eof.store(false); state->failure.store(0); state->seekTarget = microseconds;
     state->position.store(microseconds); state->nextPts = microseconds;
     return microseconds;
+}
+int64_t Decoder::scanDuration(const std::function<bool()> &cancelled) {
+    state->join();
+    state->stop.store(false);
+    while (!state->eof.load(std::memory_order_acquire)) {
+        if (cancelled()) throw std::runtime_error("Media duration scan cancelled");
+        state->decode();
+        state->stagingCursor = state->stagingFrames;
+    }
+    return duration();
 }
 int Decoder::read(float *bus, int frames, float left, float right) {
     int copied = 0;
@@ -359,10 +401,12 @@ int Decoder::read(float *bus, int frames, float left, float right) {
         if (read == state->head.load(std::memory_order_acquire)) break;
         auto &chunk = state->ring[read % SLOTS];
         if (state->containerTimeline) {
-            const int64_t pts = chunk.pts + static_cast<int64_t>(state->cursor) * 1000000 / RATE;
-            const int64_t gap = pts - state->position.load(std::memory_order_relaxed);
+            const int64_t pts = av_sat_add64(chunk.pts, static_cast<int64_t>(state->cursor) * 1000000 / RATE);
+            const int64_t gap = av_sat_sub64(pts, state->position.load(std::memory_order_relaxed));
             if (gap > 1000000 / RATE) {
-                const int silence = static_cast<int>(std::min<int64_t>(frames - copied, gap * RATE / 1000000));
+                const int remaining = frames - copied;
+                const int silence = gap >= static_cast<int64_t>(remaining) * 1000000 / RATE
+                    ? remaining : static_cast<int>(gap * RATE / 1000000);
                 copied += silence;
                 state->position.fetch_add(static_cast<int64_t>(silence) * 1000000 / RATE);
                 continue;
@@ -376,7 +420,8 @@ int Decoder::read(float *bus, int frames, float left, float right) {
             audible += l != 0; audible += r != 0;
         }
         copied += count; state->cursor += count;
-        state->position.store(std::max<int64_t>(0, chunk.pts + static_cast<int64_t>(state->cursor) * 1000000 / RATE));
+        state->position.store(std::max<int64_t>(0, av_sat_add64(chunk.pts,
+            static_cast<int64_t>(state->cursor) * 1000000 / RATE)));
         if (state->cursor == chunk.count) { state->cursor = 0; state->tail.store(read + 1, std::memory_order_release); }
     }
     state->audible.fetch_add(audible, std::memory_order_relaxed);

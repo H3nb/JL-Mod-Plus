@@ -137,7 +137,9 @@ public class Manager {
         return new AudioPlayer(LibEAS.sampled(), source);
 	}
 
-	public static String[] getSupportedContentTypes(String str) {
+	public static String[] getSupportedContentTypes(String protocol) {
+		if ("device".equals(protocol)) return new String[]{"audio/midi", "audio/x-tone-seq"};
+		if (protocol != null && !"file".equals(protocol) && !"resource".equals(protocol)) return new String[0];
 		return new String[]{"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
 				"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
 				"audio/mp4", "audio/mmf", "audio/x-tone-seq", "audio/sp-midi", "audio/xmf",
@@ -145,8 +147,13 @@ public class Manager {
 				"audio/ota", "audio/x-ota", "video/mp4", "video/3gpp"};
 	}
 
-	public static String[] getSupportedProtocols(String str) {
-		return new String[]{"device", "file", "http", "resource"};
+	public static String[] getSupportedProtocols(String contentType) {
+		if (contentType == null || "audio/midi".equalsIgnoreCase(contentType) ||
+				"audio/x-tone-seq".equalsIgnoreCase(contentType)) return new String[]{"device", "file", "resource"};
+		for (String supported : getSupportedContentTypes(null)) {
+			if (supported.equalsIgnoreCase(contentType)) return new String[]{"file", "resource"};
+		}
+		return new String[0];
 	}
 
 	public static TimeBase getSystemTimeBase() {

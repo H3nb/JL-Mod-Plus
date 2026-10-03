@@ -57,10 +57,8 @@ final class VideoTimeline {
         return first < 0 || second < 0 ? -1 : Math.max(first, second);
     }
 
-    static long endTime(long lastPts, long frameDuration, long declaredDuration, long target) {
+    static long endTime(long lastPts, long frameDuration, long declaredDuration) {
         long decoded = lastPts < 0 ? 0 : lastPts + frameDuration;
-        return Math.max(
-                target,
-                declaredDuration >= 0 && declaredDuration >= lastPts ? declaredDuration : decoded);
+        return declaredDuration >= 0 && declaredDuration >= lastPts ? declaredDuration : decoded;
     }
 }

@@ -48,9 +48,10 @@ public class VideoTimelineTest {
         assertEquals(-1, VideoTimeline.duration(1000000, -1));
         assertEquals(1000000, VideoTimeline.duration(1000000, 500000));
         // VFR metadata's nominal frame interval must not extend a known track end.
-        assertEquals(1000000, VideoTimeline.endTime(980000, 66666, 1000000, 0));
-        assertEquals(1046666, VideoTimeline.endTime(980000, 66666, -1, 0));
-        // A seek beyond a shorter video track must keep the shared target.
-        assertEquals(2000000, VideoTimeline.endTime(980000, 66666, 1000000, 2000000));
+        assertEquals(1000000, VideoTimeline.endTime(980000, 66666, 1000000));
+        assertEquals(1046666, VideoTimeline.endTime(980000, 66666, -1));
+        // End evidence cannot depend on a scheduling/seek horizon.
+        assertEquals(4000000, VideoTimeline.endTime(3933333, 66667, -1));
+        assertEquals(0, VideoTimeline.endTime(-1, 66667, 0));
     }
 }

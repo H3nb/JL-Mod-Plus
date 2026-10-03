@@ -91,6 +91,10 @@ The source owner disconnects once after close or creation failure. Cached audio
 input is bounded to 64 MiB; caller-owned InputStreams remain caller-owned.
 Recognized WAV, AMR, MP4 and MPEG frame headers bind to the corresponding demuxer.
 Codec capability is an explicit native whitelist rather than a MIME promise.
+Capability queries filter by protocol and content type: interactive `device`
+locators expose MIDI and tone sequences; retained file playback uses `file` and
+`resource`. Unsupported protocols/types return an empty list, and HTTP playback
+is not advertised. Recording remains on its existing separate implementation.
 
 Retained sampled support is PCM WAV (U8, S16/S24/S32 little-endian, F32), G.711
 A-law/mu-law, Microsoft GSM WAV, IMA ADPCM WAV, MP3, AAC/MP4 and AMR NB/WB.
@@ -151,8 +155,13 @@ and packet timestamps. Other codecs retain their declared level constraints.
 
 The soundtrack uses the existing FFmpeg/OpenCORE PCM source and shared Oboe
 bus. Both demuxers preserve container presentation time zero, track offsets and
-priming. A real audio track's leading gap contributes source-owned silence;
-pure video creates no audio output and requests no audio focus. While audio is
+priming. Leading and internal forward PTS gaps contribute source-owned silence,
+consumed incrementally without gap-sized allocation or callback decoding.
+Continuous segments use accumulated output frames rather than rounded per-frame
+PTS; a discontinuity drains the old resampler before resetting filter history.
+Missing timestamps continue that clock; overlapping/backward timestamps trim
+already-covered PCM and never rewind the container cursor.
+Pure video creates no audio output and requests no audio focus. While audio is
 active, its presentation cursor is the master. After its final presented PCM,
 video can continue monotonically. If video ends first, audio drains before EOM.
 There is one guest state, duration, loop count, seek transaction and EOM per
@@ -164,6 +173,13 @@ silent tail keeps its PCM source inactive while video continues.
 If either track's duration is unknown, the whole-media duration stays unknown
 until both ends can be determined; a shorter known soundtrack cannot clamp
 seeks into the remaining video.
+For a positive seek while the whole-media duration is unknown, an independent
+bounded packet/PCM scan resolves the finite cached input before the seek
+transaction. It runs outside the guest Player lock, leaves playback and peers
+untouched, and cancels/fences publication on close. `setMediaTime` returns the
+clamped actual time, including a valid zero-duration end. Requested targets and
+scheduling horizons never establish track end or duration. The decoded bound is
+retained across replay and deallocation.
 
 A fixed native segment ring maps bus frames to source media timestamps, fenced
 by source generation and output epoch. Management queries the current Oboe

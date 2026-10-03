@@ -320,11 +320,25 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
     }
 
 	@Override
-	public synchronized long setMediaTime(long now) throws MediaException {
-		checkRealized();
-		mediaTime = library.setMediaTime(handle, now);
-		sourceGeneration = library.getGeneration(handle);
-		return mediaTime;
+	public long setMediaTime(long now) throws MediaException {
+        final long media;
+        synchronized (this) { checkRealized(); media = durationSource; }
+        // Finite video may need an independent packet/PCM scan. It neither
+        // mutates playback nor holds this lock against close, getters or peers.
+        library.prepareMediaTime(handle, now);
+        synchronized (this) {
+            checkRealized();
+            if (media != durationSource) throw new MediaException("Media changed during seek");
+            try {
+                mediaTime = library.setMediaTime(handle, now);
+                sourceGeneration = library.getGeneration(handle);
+                updateDuration();
+                return mediaTime;
+            } catch (Exception error) {
+                if (error instanceof MediaException) throw (MediaException) error;
+                throw new MediaException("Cannot set media time: " + error);
+            }
+        }
 	}
 
 	@Override

@@ -101,6 +101,8 @@ public class UnifiedAudioRuntimeTest {
         assertEquals("Nada 🟢", metadata.getKeyValue(MetaDataControl.TITLE_KEY));
         assertEquals("22050", metadata.getKeyValue("samplerate"));
         assertEquals("1", metadata.getKeyValue("channels"));
+        expectThrows(IllegalArgumentException.class, () -> metadata.getKeyValue(null));
+        expectThrows(IllegalArgumentException.class, () -> metadata.getKeyValue("missing"));
         TimeBase clock = player.getTimeBase();
         long before = clock.getTime(); SystemClock.sleep(30);
         assertTrue(clock.getTime() >= before + 20000);

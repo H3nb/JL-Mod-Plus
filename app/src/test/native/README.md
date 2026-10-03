@@ -41,6 +41,10 @@ time, including timestamp/queue fallback, underflow holds, generation/output
 replacement and presentation drain. `run-pcm-decoder.ps1 -Device <adb-serial>`
 also checks container-origin offsets/priming and rejects video on the ordinary
 audio-only decoder path. Neither check measures acoustic output latency.
+The PCM check also preserves internal AAC timestamp gaps at 44.1 and 48 kHz,
+including seek before/within/after the gap, resampler drain, final duration, and
+cancellation of an independent finite duration scan. Fixture generation is in
+[the video fixture README](../../androidTest/assets/video/README.md).
 
 This is deterministic callback/context evidence. It does not qualify physical
 audio routing, focus eligibility, Bluetooth, timbre, acoustic timing, complete

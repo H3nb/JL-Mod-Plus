@@ -146,12 +146,70 @@ void videoOffsetFixture(const char *path) {
     std::printf("PASS video soundtrack offset firstAudible=%lld frames=%lld seekTime=%lld\n",
         static_cast<long long>(firstAudible), static_cast<long long>(frames), static_cast<long long>(decoder.time()));
 }
+void videoGapFixture(const char *path) {
+    {
+        Decoder scan(path, true);
+        scan.timeline(0);
+        require(scan.scanDuration([] { return false; }) > 2980000, "Finite scan compacted PTS gap");
+        require(scan.time() == 0 && scan.diagnostics()[3] == 0, "Finite scan advanced playback or started worker");
+    }
+    {
+        Decoder scan(path, true);
+        scan.timeline(0);
+        bool cancelled = false;
+        try { scan.scanDuration([] { return true; }); }
+        catch (const std::runtime_error &) { cancelled = true; }
+        require(cancelled, "Finite scan ignored cancellation");
+    }
+    Decoder decoder(path, true);
+    decoder.timeline(0);
+    for (int64_t target : {0LL, 750000LL, 1500000LL, 2300000LL}) {
+        require(decoder.seek(target) == target, "Gap seek incorrectly clamped to compacted audio end");
+        decoder.prefetch(); decoder.resume();
+        std::array<float, 1022> samples{};
+        int64_t frames = 0, secondTone = -1;
+        double gapEnergy = 0, tailEnergy = 0;
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while (!decoder.drained()) {
+            samples.fill(0);
+            const int count = decoder.read(samples.data(), 511, 1, 1);
+            for (int i = 0; i < count; ++i) {
+                const int64_t time = target + (frames + i) * 1000000 / Decoder::RATE;
+                const double energy = samples[2 * i] * samples[2 * i];
+                if (time >= 1150000 && time < 1850000) gapEnergy += energy;
+                if (time >= 2200000 && time < 2800000) tailEnergy += energy;
+                if (time >= 1500000 && secondTone < 0 && std::abs(samples[2 * i]) > 0.01f)
+                    secondTone = time;
+            }
+            frames += count;
+            require(!decoder.error() && std::chrono::steady_clock::now() < deadline, "Gap soundtrack drain failed");
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        decoder.pause();
+        require(decoder.duration() > 2980000 && decoder.duration() < 3040000,
+            "Internal PTS gap was removed from final duration");
+        require(std::abs(decoder.time() - decoder.duration()) < 1000, "Gap soundtrack final cursor differs");
+        require(std::abs(target + frames * 1000000 / Decoder::RATE - decoder.duration()) < 3000,
+            "Source silence or decoded tail lost timeline frames");
+        require(gapEnergy < 0.001 && tailEnergy > 10, "Second tone moved into the timestamp gap");
+        if (target <= 1500000)
+            require(secondTone > 2000000 && secondTone < 2050000, "Post-gap tone started at wrong media time");
+        require(decoder.diagnostics()[2] == 0 && decoder.diagnostics()[3] == 0,
+            "Gap drain retained queued PCM or worker");
+        std::printf("PASS internal gap seek=%lld frames=%lld secondTone=%lld duration=%lld gapEnergy=%.6f tailEnergy=%.3f\n",
+            static_cast<long long>(target), static_cast<long long>(frames), static_cast<long long>(secondTone),
+            static_cast<long long>(decoder.duration()), gapEnergy, tailEnergy);
+    }
+}
 }
 int main(int argc, char **argv) {
     try {
         require(argc >= 2, "Supply generated sampled fixture paths");
         for (int i = 1; i < argc; ++i) {
-            if (!strcmp(argv[i], "--video")) {
+            if (!strcmp(argv[i], "--gap")) {
+                require(i + 1 < argc, "Supply gapped video path");
+                videoGapFixture(argv[++i]);
+            } else if (!strcmp(argv[i], "--video")) {
                 require(i + 1 < argc, "Supply offset video path");
                 videoOffsetFixture(argv[++i]);
             } else if (!strcmp(argv[i], "--corrupt")) {

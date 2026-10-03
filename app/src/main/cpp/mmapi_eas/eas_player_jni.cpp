@@ -68,6 +68,21 @@ void dispose(jlong handle) {
 }
 }
 #define JNI_NAME(method) Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_##method
+extern "C" JNIEXPORT jlong JNICALL JNI_NAME(inspectAudioDuration)(JNIEnv *env, jclass,
+        jstring path, jlong origin, jobject cancelled) {
+    try {
+        if (!cancelled) throw std::invalid_argument("Missing duration scan cancellation");
+        jclass type = env->GetObjectClass(cancelled);
+        jmethodID get = env->GetMethodID(type, "getAsBoolean", "()Z");
+        env->DeleteLocalRef(type);
+        if (!get) throw std::runtime_error("Cannot query duration scan cancellation");
+        mmapi::pcm::Decoder decoder(string(env, path), true);
+        decoder.timeline(origin);
+        return decoder.scanDuration([&] {
+            return env->CallBooleanMethod(cancelled, get) || env->ExceptionCheck();
+        });
+    } catch (...) { translate(env); return -1; }
+}
 #define VOID_METHOD(method, statement) \
 extern "C" JNIEXPORT void JNICALL JNI_NAME(method)(JNIEnv *env, jobject, jlong handle) { \
     try { statement; } catch (...) { translate(env); } \

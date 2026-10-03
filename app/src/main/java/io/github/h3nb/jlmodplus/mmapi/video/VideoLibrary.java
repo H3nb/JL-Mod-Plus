@@ -48,6 +48,7 @@ public final class VideoLibrary implements Library, VideoDisplay.SurfaceOwner {
     private long surfaceRevision;
     private ScheduledFuture<?> tick;
     private volatile boolean closed;
+    private final Object durationProbe = new Object();
     private boolean prepared, playing, suspended, inputEnd, videoEnd, audioEnd, ended;
     private long generation = 1,
             nativeGeneration,
@@ -217,7 +218,7 @@ public final class VideoLibrary implements Library, VideoDisplay.SurfaceOwner {
         inputEnd = false;
         videoEnd = false;
         pending = -1;
-        videoEndTime = target;
+        videoEndTime = -1;
         lastVideoPts = -1;
     }
 
@@ -431,7 +432,7 @@ public final class VideoLibrary implements Library, VideoDisplay.SurfaceOwner {
             tick = null;
         }
         target = Math.max(0, target);
-        if (length > 0) target = Math.min(target, length);
+        if (length >= 0) target = Math.min(target, length);
         boolean restartAudio = audioEnd;
         ++generation;
         events.clear();
@@ -457,6 +458,42 @@ public final class VideoLibrary implements Library, VideoDisplay.SurfaceOwner {
     }
 
     @Override
+    public void prepareMediaTime(long handle, long target) throws MediaException {
+        if (target <= 0) return;
+        synchronized (durationProbe) {
+            if (call(() -> length) >= 0) return;
+            // A separate extractor/PCM context scans immutable cached input.
+            // Playback, Surface ownership and peer output continue meanwhile.
+            MediaExtractor probe = new MediaExtractor();
+            try {
+                probe.setDataSource(source.path);
+                probe.selectTrack(source.track);
+                long last = -1;
+                do {
+                    if (closed) throw new IllegalStateException("Video source is closed");
+                    last = Math.max(last, probe.getSampleTime());
+                } while (probe.advance());
+                long videoDuration = VideoTimeline.endTime(last, source.frameDuration,
+                        source.format.containsKey(android.media.MediaFormat.KEY_DURATION)
+                                ? source.format.getLong(android.media.MediaFormat.KEY_DURATION) : -1);
+                long audioDuration = audio == null ? 0
+                        : LibEAS.inspectAudioDuration(source.path, 0, () -> closed);
+                long resolved = VideoTimeline.duration(videoDuration, audioDuration);
+                call(() -> {
+                    if (closed) throw new IllegalStateException("Video source is closed");
+                    length = resolved;
+                    return null;
+                });
+            } catch (IllegalStateException error) {
+                if (closed) throw error;
+                throw new MediaException("Cannot determine finite video seek bound: " + error);
+            } catch (Exception error) {
+                throw new MediaException("Cannot determine finite video seek bound: " + error);
+            } finally { probe.release(); }
+        }
+    }
+
+    @Override
     public long setMediaTime(long handle, long time) {
         return call(() -> seek(time));
     }
@@ -466,7 +503,8 @@ public final class VideoLibrary implements Library, VideoDisplay.SurfaceOwner {
             long[] stamp = audio.presentation(audioHandle);
             if (stamp[2] == nativeGeneration) clock.observeAudio(stamp[0], now);
         }
-        return Math.max(0, clock.time(now));
+        long time = Math.max(0, clock.time(now));
+        return length >= 0 ? Math.min(time, length) : time;
     }
 
     @Override
@@ -636,8 +674,7 @@ public final class VideoLibrary implements Library, VideoDisplay.SurfaceOwner {
                             source.frameDuration,
                             source.format.containsKey(android.media.MediaFormat.KEY_DURATION)
                                     ? source.format.getLong(android.media.MediaFormat.KEY_DURATION)
-                                    : -1,
-                            videoEndTime);
+                                    : -1);
         }
     }
 
@@ -646,25 +683,15 @@ public final class VideoLibrary implements Library, VideoDisplay.SurfaceOwner {
         if (audio != null) audio.pause(audioHandle);
         length = end;
         position = end;
-        if (loops == -1 || --remaining > 0) {
-            clock.pause(now);
-            playing = false;
-            ended = true;
-            if (tick != null) {
-                tick.cancel(false);
-                tick = null;
-            }
-            events.add(new long[] {1, end, generation});
-        } else {
-            clock.pause(now);
-            playing = false;
-            ended = true;
-            if (tick != null) {
-                tick.cancel(false);
-                tick = null;
-            }
-            events.add(new long[] {2, end, generation});
+        boolean repeat = loops == -1 || --remaining > 0;
+        clock.pause(now);
+        playing = false;
+        ended = true;
+        if (tick != null) {
+            tick.cancel(false);
+            tick = null;
         }
+        events.add(new long[] {repeat ? 1 : 2, end, generation});
     }
 
     @Override

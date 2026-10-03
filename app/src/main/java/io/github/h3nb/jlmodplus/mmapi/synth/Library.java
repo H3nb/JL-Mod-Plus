@@ -36,6 +36,8 @@ public interface Library {
 	void pause(long handle);
 	void deallocate(long handle);
 	void close(long handle);
+    /** Resolve finite-input seek bounds before acquiring the guest Player lock. */
+    default void prepareMediaTime(long handle, long now) throws javax.microedition.media.MediaException {}
 	long setMediaTime(long handle, long now);
 	long getMediaTime(long handle);
 	void setRepeat(long handle, int count);

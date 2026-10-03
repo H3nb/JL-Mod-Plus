@@ -16,6 +16,13 @@ a level-0 header (profile/level byte `0x08`), testing selection by actual size
 and decoding throughput. FFmpeg's numeric `-level:v 8` emits this byte;
 `-level:v 0` emits the reserved byte `0x00` instead.
 
+`gapped.mp4` retains a three-second video and AAC container timestamps while
+removing audio frames between one and two seconds. The second 1 kHz tone must
+resume near two seconds, with source-owned silence in between. `gapped-48k.mp4`
+uses 48 kHz input to exercise resampler delay/drain at the discontinuity; output
+remains 44.1 kHz. Native tests seek before, within and after the gap and measure
+tone energy against the original timeline, including final duration.
+
 Run from this directory with host FFmpeg (checked-in outputs generated with
 `N-123778-g3b55818764-win64-gpl`):
 
@@ -28,6 +35,8 @@ ffmpeg -y -i markers.mp4 -map 0:a -vn -c copy audio-only.mp4
 ffmpeg -y -i markers.mp4 -c:v h263 -g 15 -q:v 5 -c:a copy h263.3gp
 ffmpeg -y -i markers.mp4 -c:v libx264 -profile:v baseline -bf 0 -g 15 -c:a copy avc.mp4
 ffmpeg -y -i markers.mp4 -vf scale=240:320,setsar=1,fps=10 -c:v mpeg4 -level:v 8 -bf 0 -g 10 -q:v 5 -c:a copy -t 3 legacy-level.mp4
+ffmpeg -y -f lavfi -i "color=c=black:s=176x144:r=15:d=3" -f lavfi -i "sine=frequency=1000:sample_rate=44100:duration=3" -af "aselect='not(between(t,1,2))'" -c:v mpeg4 -bf 0 -g 15 -q:v 5 -c:a aac -b:a 48k gapped.mp4
+ffmpeg -y -f lavfi -i "color=c=black:s=176x144:r=15:d=3" -f lavfi -i "sine=frequency=1000:sample_rate=48000:duration=3" -af "aselect='not(between(t,1,2))'" -c:v mpeg4 -bf 0 -g 15 -q:v 5 -c:a aac -b:a 48k gapped-48k.mp4
 ```
 
 Frame-rendered timestamps compared with the mapped PCM presentation clock
