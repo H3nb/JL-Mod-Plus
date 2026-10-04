@@ -101,10 +101,11 @@ inside that same LCD-edge neighborhood. As the node moves farther from the LCD,
 the source coordinate stays edge-anchored while the renderer blends from the
 32×32 field toward the 16×16 and then 8×8 diffusion fields. In parallel, a
 Gaussian-like five-tap footprint spreads progressively farther along the local
-edge tangent, so neighboring edge colors overlap laterally instead of forming
-long color stripes. This makes the extension increasingly frosted and destroys
-readable detail without turning the guest frame into a full-surface blurred
-copy.
+edge tangent using the same physical-distance model, so neighboring edge colors
+overlap laterally instead of forming long color stripes. The same precomputed
+node geometry drives both Canvas and GLES field instances. This makes the
+extension increasingly frosted and destroys readable detail without turning the
+guest frame into a full-surface blurred copy.
 
 Guest-derived Immersive output does not fade toward the host theme. Once a valid
 opaque guest sample exists, the host theme remains only the pre-sample and
