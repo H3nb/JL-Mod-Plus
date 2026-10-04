@@ -28,11 +28,11 @@ public final class AmbientColorField {
     /** Legacy anchor-path falloff retained until that compatibility path can be removed safely. */
     private static final float EDGE_FALLOFF = 0.30f;
     /** Rounded only for the emitted light field; the guest LCD itself remains rectangular. */
-    private static final float EMITTER_CORNER_SCALE = 0.08f;
+    private static final float EMITTER_CORNER_SCALE = 0.10f;
     /** Physical distance over which local edge color diffuses into the coarser field. */
     private static final float DIFFUSION_DISTANCE_SCALE = 0.35f;
     /** Samples slightly inside the LCD so a one-pixel border cannot dominate the emitted light. */
-    private static final float SOURCE_INSET_NEAR_SCALE = 0.02f;
+    private static final float SOURCE_INSET_NEAR_SCALE = 0.03f;
     private static final float SOURCE_INSET_FAR_SCALE = 0.10f;
     /** Theme is only a terminal fade close to the host boundary. */
     private static final float OUTER_THEME_FADE_SCALE = 0.10f;
