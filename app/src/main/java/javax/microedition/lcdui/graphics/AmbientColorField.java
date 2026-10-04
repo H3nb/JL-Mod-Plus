@@ -544,7 +544,8 @@ public final class AmbientColorField {
             float diffusionDistance, float outerFadeWidth) {
         float px = x * aspect;
         float py = y;
-        boolean insideRect = px >= left && px <= right && py >= top && py <= bottom;
+        boolean insideRect = px > left + 1.0e-6f && px < right - 1.0e-6f
+                && py > top + 1.0e-6f && py < bottom - 1.0e-6f;
         float edgeDistance = Math.min(Math.min(px, aspect - px), Math.min(py, 1.0f - py));
         outerAmbient[index] = smoothStep(clamp01(edgeDistance / outerFadeWidth));
 
