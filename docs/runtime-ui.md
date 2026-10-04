@@ -120,10 +120,10 @@ publications or change the canonical presentation-mailbox sequence.
 
 Sampling and ambient host-redraw scheduling stop at the existing
 visibility/surface boundaries; temporal field state is evaluated against the
-monotonic host clock when presentation resumes. Active-backend geometry is rebuilt
-from the current host surface and guest LCD rectangle after size/orientation changes. Keep future Immersive work
-renderer agnostic unless profiling demonstrates a concrete reason for
-backend-specific behavior.
+monotonic host clock when presentation resumes. Active-backend geometry is
+rebuilt from the current host surface and guest LCD rectangle after
+size/orientation changes. Keep future Immersive work renderer agnostic unless
+profiling demonstrates a concrete reason for backend-specific behavior.
 
 ## Validation gates
 

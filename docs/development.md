@@ -135,14 +135,15 @@ remain verification gaps; they do not authorize bypassing required merge checks.
 
 ### Runtime smoke checks
 
-Use `runtime-smoke` for relevant UI/database/IPC/lifecycle changes and before a
-release involving those boundaries. The workflow selects existing tests for
-Android SQLite, ambient bitmap/sampler semantics, crash-report interactions, stale
-cross-process preset identity, and repeated remote crashes that must leave the main
-process alive. Generated media checks also cover the guest cache bound, legacy
-unknown duration, multi-audio video rejection, and synthesis/sampled/video playback
-and seek on one output. Media checks use a private temporary workdir and restore the prior
-preference; they require no commercial assets or custom soundbanks. It uses the
+Use `runtime-smoke` for relevant UI/rendering/database/IPC/lifecycle changes and
+before a release involving those boundaries. The workflow selects existing tests
+for Android SQLite, ambient bitmap/sampler semantics, crash-report interactions,
+stale cross-process preset identity, and repeated remote crashes that must leave
+the main process alive. Generated media checks also cover the guest cache bound,
+legacy unknown duration, multi-audio video rejection, and
+synthesis/sampled/video playback and seek on one output. Media checks use a
+private temporary workdir and restore the prior preference; they require no
+commercial assets or custom soundbanks. It uses the
 emulator's default English locale, disables animations, and captures logcat before
 the emulator shuts down. Tests share one fresh installation and run without sharding.
 
