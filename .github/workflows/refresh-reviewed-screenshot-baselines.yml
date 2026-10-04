@@ -1,0 +1,127 @@
+name: Refresh reviewed screenshot baselines
+
+on:
+  pull_request:
+    branches: [alpha]
+    types: [synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/localization-contract' }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out PR head
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 2
+          persist-credentials: true
+          submodules: recursive
+
+      - name: Verify one-time source
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(git rev-parse HEAD^)" == "aaeeee027b4f8efa457d53053ef27237fcd5290f" ]]
+          [[ "$(git diff --name-only HEAD^ HEAD)" == ".github/workflows/refresh-reviewed-screenshot-baselines.yml" ]]
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+        with:
+          cache-read-only: true
+
+      - name: Set up Android SDK and platform 37
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        with:
+          packages: 'platform-tools platforms;android-37.0'
+
+      - name: Generate and verify reviewed references
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
+          cat > "${RUNNER_TEMP}/expected.txt" <<'EOF'
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryCollectionAppPickerScreenshot_Library collection add apps_1a6a6ad5_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryCollectionBrowserScreenshot_Library collection browser_969a9aea_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryCollectionsScreenshot_Library collections list detail_5c2acfd8_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryFilteredEmptyScreenshot_Library filtered empty_9fe3ad92_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryGridLandscapeDarkScreenshot_Library grid landscape dark_c47f66d5_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryGridLandscapeScreenshot_Library grid landscape_37291ef3_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryGridPortraitScreenshot_Library grid portrait icons_f724ed39_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryGridScreenshot_Library grid_af76d491_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryLandscapeDarkScreenshot_Library landscape dark_12fe50ab_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryLandscapeScreenshot_Library landscape_479e46b1_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryListDarkScreenshot_Library list dark_644e5231_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryListPortraitScreenshot_Library list portrait icons_be6f4e0e_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryMediumPortraitScreenshot_Library medium portrait_df1762a3_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryReadyListScreenshot_Library ready list_ed2bef95_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibrarySelectionBulkActionsScreenshot_Library selection bulk actions_3edde41b_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/ProfilesContentScreenshot_Profiles content_e172abe0_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/ProfilesEmptyDarkScreenshot_Profiles empty dark_56d0000a_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigQuickDarkScreenshot_Config quick dark_758f3757_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigQuickScreenshot_Config quick light_dc46fefc_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/filepicker/FilePickerScreenshotTestKt/FilePickerLandscapeScreenshot_File picker landscape_ca3838b0_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/memory/MemoryEditorScreenshotTestKt/MemoryEditorLandscapeKnownSearchDialogScreenshot_Memory Editor landscape known search dialog_a2b3282f_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/settings/KeyMapperScreenshotTestKt/KeyMapperMappingPromptDarkScreenshot_Key mapper mapping prompt dark_4cf7fbb4_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/settings/KeyMapperScreenshotTestKt/KeyMapperMappingPromptScreenshot_Key mapper mapping prompt_1badc49d_0.png
+app/src/screenshotTestEmulatorDebug/reference/javax/microedition/shell/RuntimeMenuScreenshotTestKt/RuntimeFinishVirtualKeyboardEditScreenshot_Runtime finish edit narrow phone_ee78e4c1_0.png
+EOF
+          git diff --name-only -- app/src/screenshotTestEmulatorDebug/reference | LC_ALL=C sort > "${RUNNER_TEMP}/actual.txt"
+          diff -u "${RUNNER_TEMP}/expected.txt" "${RUNNER_TEMP}/actual.txt"
+          [[ "$(wc -l < "${RUNNER_TEMP}/actual.txt")" -eq 24 ]]
+
+      - name: Commit reviewed references and remove one-time workflow
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          rm -- ".github/workflows/refresh-reviewed-screenshot-baselines.yml"
+          git add -- app/src/screenshotTestEmulatorDebug/reference ".github/workflows/refresh-reviewed-screenshot-baselines.yml"
+          cat > "${RUNNER_TEMP}/expected-staged.txt" <<'EOF'
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryCollectionAppPickerScreenshot_Library collection add apps_1a6a6ad5_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryCollectionBrowserScreenshot_Library collection browser_969a9aea_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryCollectionsScreenshot_Library collections list detail_5c2acfd8_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryFilteredEmptyScreenshot_Library filtered empty_9fe3ad92_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryGridLandscapeDarkScreenshot_Library grid landscape dark_c47f66d5_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryGridLandscapeScreenshot_Library grid landscape_37291ef3_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryGridPortraitScreenshot_Library grid portrait icons_f724ed39_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryGridScreenshot_Library grid_af76d491_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryLandscapeDarkScreenshot_Library landscape dark_12fe50ab_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryLandscapeScreenshot_Library landscape_479e46b1_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryListDarkScreenshot_Library list dark_644e5231_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryListPortraitScreenshot_Library list portrait icons_be6f4e0e_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryMediumPortraitScreenshot_Library medium portrait_df1762a3_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibraryReadyListScreenshot_Library ready list_ed2bef95_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/LibrarySelectionBulkActionsScreenshot_Library selection bulk actions_3edde41b_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/ProfilesContentScreenshot_Profiles content_e172abe0_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTestKt/ProfilesEmptyDarkScreenshot_Profiles empty dark_56d0000a_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigQuickDarkScreenshot_Config quick dark_758f3757_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/config/ConfigScreenshotTestKt/ConfigQuickScreenshot_Config quick light_dc46fefc_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/filepicker/FilePickerScreenshotTestKt/FilePickerLandscapeScreenshot_File picker landscape_ca3838b0_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/memory/MemoryEditorScreenshotTestKt/MemoryEditorLandscapeKnownSearchDialogScreenshot_Memory Editor landscape known search dialog_a2b3282f_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/settings/KeyMapperScreenshotTestKt/KeyMapperMappingPromptDarkScreenshot_Key mapper mapping prompt dark_4cf7fbb4_0.png
+app/src/screenshotTestEmulatorDebug/reference/io/github/h3nb/jlmodplus/settings/KeyMapperScreenshotTestKt/KeyMapperMappingPromptScreenshot_Key mapper mapping prompt_1badc49d_0.png
+app/src/screenshotTestEmulatorDebug/reference/javax/microedition/shell/RuntimeMenuScreenshotTestKt/RuntimeFinishVirtualKeyboardEditScreenshot_Runtime finish edit narrow phone_ee78e4c1_0.png
+.github/workflows/refresh-reviewed-screenshot-baselines.yml
+EOF
+          LC_ALL=C sort -o "${RUNNER_TEMP}/expected-staged.txt" "${RUNNER_TEMP}/expected-staged.txt"
+          git diff --cached --name-only | LC_ALL=C sort > "${RUNNER_TEMP}/actual-staged.txt"
+          diff -u "${RUNNER_TEMP}/expected-staged.txt" "${RUNNER_TEMP}/actual-staged.txt"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh canonical English screenshot references"
+          git push origin "HEAD:${HEAD_REF}"
