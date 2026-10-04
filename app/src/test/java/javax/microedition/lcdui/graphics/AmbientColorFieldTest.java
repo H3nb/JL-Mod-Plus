@@ -155,7 +155,7 @@ public class AmbientColorFieldTest {
     @Test
     public void activeGridDoesNotRetargetWhenHostThemeChanges() {
         AmbientColorField field = new AmbientColorField();
-        field.configureNodes(new float[]{0.0f}, new float[]{0.5f},
+        field.configureNodes(new float[]{0.15f}, new float[]{0.5f},
                 0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
         field.setTargetGrid(solidGrid(1.0f, 0.0f, 0.0f), 0xFF000000, 0L, true);
 
@@ -171,36 +171,48 @@ public class AmbientColorFieldTest {
     }
 
     @Test
-    public void distantSurfaceKeepsDynamicBackdropInsteadOfReturningToTheme() {
+    public void phoneBoundaryFadesToThemeSymmetrically() {
         AmbientColorField field = new AmbientColorField();
-        field.configureNodes(new float[]{0.0f, 1.0f}, new float[]{0.5f, 0.5f},
-                0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
-        float[] grid = new float[AmbientColorField.GRID_CHANNEL_COUNT];
-        for (int y = 0; y < AmbientColorField.GRID_SIZE; y++) {
-            for (int x = 0; x < AmbientColorField.GRID_SIZE; x++) {
-                if (x < AmbientColorField.GRID_SIZE / 2) {
-                    setGridColor(grid, x, y, 1.0f, 0.0f, 0.0f);
-                } else {
-                    setGridColor(grid, x, y, 0.0f, 0.0f, 1.0f);
-                }
-            }
-        }
-        field.setTargetGrid(grid, 0xFF000000, 0L, true);
+        field.configureNodes(
+                new float[]{0.0f, 1.0f, 0.5f, 0.5f},
+                new float[]{0.5f, 0.5f, 0.0f, 1.0f},
+                0.30f, 0.30f, 0.70f, 0.70f, 1.0f);
+        field.setTargetGrid(solidGrid(1.0f, 0.0f, 0.0f), 0xFFFFFFFF, 0L, true);
 
-        float[] output = new float[2 * AmbientColorField.CHANNEL_COUNT];
+        float[] output = new float[4 * AmbientColorField.CHANNEL_COUNT];
         field.renderNodes(0L, output);
-        assertTrue(output[0] > 0.90f);
-        assertTrue(output[0] > output[2]);
-        assertTrue(output[5] > 0.90f);
-        assertTrue(output[5] > output[3]);
+        for (int node = 0; node < 4; node++) {
+            int offset = node * AmbientColorField.CHANNEL_COUNT;
+            assertEquals(1.0f, output[offset], 0.001f);
+            assertEquals(1.0f, output[offset + 1], 0.001f);
+            assertEquals(1.0f, output[offset + 2], 0.001f);
+        }
     }
 
     @Test
-    public void broadBackdropRemainsSpatiallyDistinctAfterDetailSuppression() {
+    public void themeOnlyEntersNearThePhoneBoundary() {
+        AmbientColorField field = new AmbientColorField();
+        field.configureNodes(
+                new float[]{0.0f, 0.03f, 0.15f},
+                new float[]{0.5f, 0.5f, 0.5f},
+                0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
+        field.setTargetGrid(solidGrid(1.0f, 0.0f, 0.0f), 0xFF000000, 0L, true);
+
+        float[] output = new float[3 * AmbientColorField.CHANNEL_COUNT];
+        field.renderNodes(0L, output);
+        assertTrue(output[0] < 0.01f);
+        assertTrue(output[3] > output[0]);
+        assertTrue(output[6] > 0.95f);
+        assertTrue(output[4] < 0.01f);
+        assertTrue(output[7] < 0.01f);
+    }
+
+    @Test
+    public void radialEmissionRemainsSpatiallyDistinctAfterDiffusion() {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(
                 new float[]{0.25f, 0.75f, 0.25f, 0.75f},
-                new float[]{0.0f, 0.0f, 1.0f, 1.0f},
+                new float[]{0.12f, 0.12f, 0.88f, 0.88f},
                 0.30f, 0.30f, 0.70f, 0.70f, 1.0f);
         float[] grid = new float[AmbientColorField.GRID_CHANNEL_COUNT];
         for (int y = 0; y < AmbientColorField.GRID_SIZE; y++) {
