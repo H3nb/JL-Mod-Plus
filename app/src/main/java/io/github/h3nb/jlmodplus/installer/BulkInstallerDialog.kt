@@ -55,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -541,7 +542,12 @@ private fun BulkItemRow(item: BulkInstallItem, onToggle: (String) -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            item.detail?.let {
+            val reviewText = item.reviewReason?.let {
+                bulkInstallReviewReasonText(LocalResources.current, it)
+            } ?: if (item.status == BulkInstallStatus.SourceError) {
+                stringResource(R.string.bulk_install_reason_source_error)
+            } else null
+            reviewText?.let {
                 Text(
                     it,
                     style = MaterialTheme.typography.bodySmall,

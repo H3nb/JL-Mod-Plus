@@ -1130,4 +1130,16 @@
     <plurals name="bulk_install_restored_count">
         <item quantity="other">%1$d dipulihkan</item>
     </plurals>
+    <string name="bulk_install_reason_ambiguous_match">%1$d aplikasi terinstal cocok dengan sumber ini.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD dan JAR mengidentifikasi aplikasi yang berbeda.</string>
+    <string name="bulk_install_reason_conflicting_jads">Berkas JAD dengan atribut berbeda merujuk ke JAR yang sama.</string>
+    <string name="bulk_install_reason_remote_jar">Pemasangan massal tidak dapat mengunduh berkas JAR dari URL jarak jauh.</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD tidak memiliki MIDlet-Jar-URL.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD merujuk ke JAR dengan skema URI yang tidak didukung: %1$s.</string>
+    <string name="bulk_install_reason_missing_parent">JAD tidak memiliki direktori induk.</string>
+    <string name="bulk_install_reason_jar_not_found">JAR yang dirujuk oleh JAD tidak ditemukan: %1$s.</string>
+    <string name="bulk_install_reason_duplicate_source">Sumber ini duplikat sumber lain dalam pemasangan massal ini.</string>
+    <string name="bulk_install_reason_version_conflict">Beberapa varian aplikasi dianggap memiliki versi yang sama.</string>
+    <string name="bulk_install_reason_older_candidate">Ada versi aplikasi yang lebih baru dalam pemasangan massal ini.</string>
+    <string name="bulk_install_reason_source_error">Sumber ini tidak dapat disiapkan untuk instalasi.</string>
 </resources>

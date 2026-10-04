@@ -42,6 +42,23 @@ enum class BulkInstallAction {
     InstallSeparateCopy,
 }
 
+/** Review explanations and their semantic inputs, independent of presentation language. */
+sealed interface BulkInstallReviewReason {
+    data class AmbiguousInstalledMatch(val matchCount: Int) : BulkInstallReviewReason
+    data object JadJarMismatch : BulkInstallReviewReason
+    data object ConflictingJads : BulkInstallReviewReason
+    data object RemoteJarUnsupported : BulkInstallReviewReason
+    data object JadMissingJarUrl : BulkInstallReviewReason
+    data class UnsupportedJarUriScheme(val scheme: String) : BulkInstallReviewReason
+    data object JadMissingParentDirectory : BulkInstallReviewReason
+    data class ReferencedJarMissing(val reference: String) : BulkInstallReviewReason
+    data object DuplicateBatchSource : BulkInstallReviewReason
+    data object SameVersionConflict : BulkInstallReviewReason
+    data object OlderBatchCandidate : BulkInstallReviewReason
+    /** Existing exact-identity reinstall review, rather than discovery of a selected source. */
+    data object RetainedReinstallSourceMissing : BulkInstallReviewReason
+}
+
 data class BulkSourceUnit(
     val id: String,
     val origin: BulkSourceOrigin,
@@ -54,7 +71,9 @@ data class BulkSourceUnit(
     val reinstallAppId: Long? = null,
     val reinstallStorageKey: String? = null,
     val discoveryStatus: BulkInstallStatus? = null,
-    val discoveryDetail: String? = null,
+    val reviewReason: BulkInstallReviewReason? = null,
+    /** Bounded parser/source evidence; never primary localized review copy. */
+    val diagnosticDetail: String? = null,
 )
 
 data class BulkInstallItem(
@@ -72,7 +91,9 @@ data class BulkInstallItem(
     val preflightStatus: BulkInstallStatus = status,
     val action: BulkInstallAction,
     val selected: Boolean,
-    val detail: String? = null,
+    val reviewReason: BulkInstallReviewReason? = null,
+    /** Bounded parser/source evidence, kept separate from the review explanation. */
+    val diagnosticDetail: String? = null,
     /** True when the source is a universal bundle carrying app-owned state for this item. */
     val bundlePayloadAvailable: Boolean = false,
     /** A retry after conversion committed restores only the remaining bundle payload. */

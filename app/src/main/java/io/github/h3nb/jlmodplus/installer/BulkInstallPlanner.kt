@@ -90,7 +90,8 @@ object BulkInstallPlanner {
                 preflightStatus = requireNotNull(discoveryStatus),
                 action = BulkInstallAction.Skip,
                 selected = false,
-                detail = unit.discoveryDetail,
+                reviewReason = unit.reviewReason,
+                diagnosticDetail = unit.diagnosticDetail,
             )
         }
 
@@ -130,13 +131,8 @@ object BulkInstallPlanner {
                 preflightStatus = authoritativeStatus,
                 action = defaults.first,
                 selected = defaults.second,
-                detail = unit.discoveryDetail ?: when (authoritativeStatus) {
-                    BulkInstallStatus.AmbiguousInstalledMatch ->
-                        "${candidates.size} installed applications match this source identity"
-                    BulkInstallStatus.JadJarMismatch ->
-                        "JAD and JAR source identity do not match"
-                    else -> null
-                },
+                reviewReason = inspectionReviewReason(unit, authoritativeStatus, candidates.size),
+                diagnosticDetail = unit.diagnosticDetail,
             )
         } catch (error: Throwable) {
             BulkInstallItem(
@@ -150,12 +146,23 @@ object BulkInstallPlanner {
                 preflightStatus = BulkInstallStatus.SourceError,
                 action = BulkInstallAction.Skip,
                 selected = false,
-                detail = boundedMessage(error),
+                diagnosticDetail = boundedMessage(error),
             )
         } finally {
             installer.clearCache()
             installer.deleteTemp()
         }
+    }
+
+    internal fun inspectionReviewReason(
+        unit: BulkSourceUnit,
+        status: BulkInstallStatus,
+        installedMatchCount: Int,
+    ): BulkInstallReviewReason? = unit.reviewReason ?: when (status) {
+        BulkInstallStatus.AmbiguousInstalledMatch ->
+            BulkInstallReviewReason.AmbiguousInstalledMatch(installedMatchCount)
+        BulkInstallStatus.JadJarMismatch -> BulkInstallReviewReason.JadJarMismatch
+        else -> null
     }
 
     private fun mapInstallerStatus(status: Int): BulkInstallStatus = when (status) {
@@ -180,12 +187,22 @@ object BulkInstallPlanner {
     private fun normalizeSources(
         files: List<File>,
         origin: BulkSourceOrigin,
+    ): List<BulkSourceUnit> = normalizeResolvedSources(
+        files,
+        origin,
+        files.filter { extension(it) == "jad" }.associateWith(::resolveJad),
+    )
+
+    /** Groups resolved sources without changing resolution or installer policy. */
+    internal fun normalizeResolvedSources(
+        files: List<File>,
+        origin: BulkSourceOrigin,
+        resolutions: Map<File, JadResolution>,
     ): List<BulkSourceUnit> {
         val jads = files.filter { extension(it) == "jad" }
         val jars = files.filter { extension(it) == "jar" }
         val kjx = files.filter { extension(it) == "kjx" }
         val jarByCanonicalPath = jars.associateBy { canonicalPath(it) }
-        val resolutions = jads.associateWith(::resolveJad)
         val consumedJarPaths = HashSet<String>()
         val localByJar = LinkedHashMap<String, MutableList<Pair<File, JadResolution.Local>>>()
         resolutions.forEach { (jad, resolution) ->
@@ -222,8 +239,8 @@ object BulkInstallPlanner {
                         jadFile = jad,
                         jarFile = resolution.jar,
                         discoveryStatus = if (conflict) BulkInstallStatus.BatchConflict else null,
-                        discoveryDetail = if (conflict) {
-                            "Multiple non-equivalent JADs resolve to the same JAR"
+                        reviewReason = if (conflict) {
+                            BulkInstallReviewReason.ConflictingJads
                         } else {
                             null
                         },
@@ -235,7 +252,7 @@ object BulkInstallPlanner {
                         jad,
                         origin,
                         BulkInstallStatus.RemoteSourceUnsupported,
-                        "Remote JAR acquisition is not supported by Bulk Install v1",
+                        BulkInstallReviewReason.RemoteJarUnsupported,
                     ),
                 )
 
@@ -244,7 +261,8 @@ object BulkInstallPlanner {
                         jad,
                         origin,
                         BulkInstallStatus.SourceError,
-                        resolution.message,
+                        resolution.reviewReason,
+                        resolution.diagnosticDetail,
                     ),
                 )
             }
@@ -279,7 +297,8 @@ object BulkInstallPlanner {
         jad: File,
         origin: BulkSourceOrigin,
         status: BulkInstallStatus,
-        detail: String,
+        reviewReason: BulkInstallReviewReason?,
+        diagnosticDetail: String? = null,
     ) = BulkSourceUnit(
         id = UUID.randomUUID().toString(),
         origin = origin,
@@ -288,44 +307,51 @@ object BulkInstallPlanner {
         sourceFiles = listOf(jad),
         jadFile = jad,
         discoveryStatus = status,
-        discoveryDetail = detail,
+        reviewReason = reviewReason,
+        diagnosticDetail = diagnosticDetail,
     )
 
-    private sealed interface JadResolution {
+    internal sealed interface JadResolution {
         data class Local(val jar: File) : JadResolution
         data object Remote : JadResolution
-        data class Error(val message: String) : JadResolution
+        data class Error(
+            val reviewReason: BulkInstallReviewReason? = null,
+            val diagnosticDetail: String? = null,
+        ) : JadResolution
     }
 
     private fun resolveJad(jad: File): JadResolution {
         return try {
             val descriptor = Descriptor(jad, true)
             val jarUrl = descriptor.jarUrl
-                ?: return JadResolution.Error("JAD has no MIDlet-Jar-URL")
-            val parsedUri = jarUrl.toUri()
-            val scheme = parsedUri.scheme
-            if (scheme != null) {
-                return if (scheme.equals("http", true) || scheme.equals("https", true)) {
-                    JadResolution.Remote
-                } else {
-                    JadResolution.Error("Unsupported JAD JAR URI scheme: $scheme")
-                }
-            }
-            val parent = jad.parentFile
-                ?: return JadResolution.Error("JAD has no parent directory")
-            var jar = File(parent, jarUrl)
-            if (!jar.isFile) jar = File(parent, jad.nameWithoutExtension + ".jar")
-            if (!jar.isFile) {
-                return JadResolution.Error("JAR referenced by JAD was not found: $jarUrl")
-            }
-            jar = jar.canonicalFile
-            JadResolution.Local(jar)
+            resolveJadReference(jad, jarUrl, jarUrl?.toUri()?.scheme)
         } catch (error: Throwable) {
-            JadResolution.Error(boundedMessage(error))
+            JadResolution.Error(diagnosticDetail = boundedMessage(error))
         }
     }
 
-    private fun markSemanticDuplicates(items: List<BulkInstallItem>): List<BulkInstallItem> {
+    /** The scheme is supplied by Android's existing URI parser; raw references stay exact. */
+    internal fun resolveJadReference(jad: File, jarUrl: String?, scheme: String?): JadResolution {
+        if (jarUrl == null) return JadResolution.Error(BulkInstallReviewReason.JadMissingJarUrl)
+        if (scheme != null) {
+            return if (scheme.equals("http", true) || scheme.equals("https", true)) {
+                JadResolution.Remote
+            } else {
+                JadResolution.Error(BulkInstallReviewReason.UnsupportedJarUriScheme(scheme))
+            }
+        }
+        val parent = jad.parentFile
+            ?: return JadResolution.Error(BulkInstallReviewReason.JadMissingParentDirectory)
+        var jar = File(parent, jarUrl)
+        if (!jar.isFile) jar = File(parent, jad.nameWithoutExtension + ".jar")
+        if (!jar.isFile) {
+            return JadResolution.Error(BulkInstallReviewReason.ReferencedJarMissing(jarUrl))
+        }
+        jar = jar.canonicalFile
+        return JadResolution.Local(jar)
+    }
+
+    internal fun markSemanticDuplicates(items: List<BulkInstallItem>): List<BulkInstallItem> {
         val seen = LinkedHashMap<String, String>()
         return items.map { item ->
             if (item.status == BulkInstallStatus.SourceError ||
@@ -350,13 +376,13 @@ object BulkInstallPlanner {
                     status = BulkInstallStatus.Duplicate,
                     action = BulkInstallAction.Skip,
                     selected = false,
-                    detail = "Duplicate of another source in this batch",
+                    reviewReason = BulkInstallReviewReason.DuplicateBatchSource,
                 )
             }
         }
     }
 
-    private fun applyBatchVersionGrouping(items: List<BulkInstallItem>): List<BulkInstallItem> {
+    internal fun applyBatchVersionGrouping(items: List<BulkInstallItem>): List<BulkInstallItem> {
         val replacements = items.toMutableList()
         val grouped = items.withIndex()
             .filter { (_, item) ->
@@ -392,7 +418,7 @@ object BulkInstallPlanner {
                             status = BulkInstallStatus.BatchConflict,
                             action = BulkInstallAction.Skip,
                             selected = false,
-                            detail = "Multiple variants have the same version ordering",
+                            reviewReason = BulkInstallReviewReason.SameVersionConflict,
                         )
                     }
                 }
@@ -403,7 +429,7 @@ object BulkInstallPlanner {
                     status = BulkInstallStatus.OlderBatchCandidate,
                     action = BulkInstallAction.Skip,
                     selected = false,
-                    detail = "A newer candidate for this application exists in the same batch",
+                    reviewReason = BulkInstallReviewReason.OlderBatchCandidate,
                 )
             }
         }

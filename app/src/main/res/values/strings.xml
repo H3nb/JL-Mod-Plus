@@ -1199,4 +1199,18 @@
         <item quantity="one">%1$d restored</item>
         <item quantity="other">%1$d restored</item>
     </plurals>
+    <string name="bulk_install_reason_ambiguous_match">%1$d installed apps match this source.</string>
+    <string name="bulk_install_reason_jad_jar_mismatch">The JAD and JAR identify different apps.</string>
+    <string name="bulk_install_reason_conflicting_jads">JAD files with different attributes reference the same JAR.</string>
+    <string name="bulk_install_reason_remote_jar">Bulk Install cannot download remote JAR files.</string>
+    <string name="bulk_install_reason_missing_jar_url">The JAD is missing MIDlet-Jar-URL.</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">The JAD references a JAR using an unsupported URI scheme: %1$s.</string>
+    <string name="bulk_install_reason_missing_parent">The JAD has no parent directory.</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">The JAR referenced by the JAD was not found: %1$s.</string>
+    <string name="bulk_install_reason_duplicate_source">This source duplicates another source in this batch.</string>
+    <string name="bulk_install_reason_version_conflict">Multiple app variants compare as the same version.</string>
+    <string name="bulk_install_reason_older_candidate">A newer version of this app is in the same batch.</string>
+    <string name="bulk_install_reason_source_error">This source could not be prepared for installation.</string>
 </resources>

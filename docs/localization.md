@@ -209,6 +209,10 @@ result codes, bounded reason codes, and independent write-outcome counts.
 The app-owned presentation maps these values to Android resources. Bounded
 backend diagnostic detail remains separate and is not used as UI copy.
 
+Bulk Install preflight review likewise carries typed semantic reasons and raw
+arguments separately from bounded source/parser diagnostics. Android presentation
+resolves the reasons into resources; the planner does not construct UI prose.
+
 ## Locale identity and target architecture
 
 Application locale identity uses canonical BCP-47-style language tags, such as

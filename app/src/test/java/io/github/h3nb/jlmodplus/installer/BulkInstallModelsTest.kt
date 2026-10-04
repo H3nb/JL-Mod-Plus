@@ -9,10 +9,28 @@ package io.github.h3nb.jlmodplus.installer
 
 import java.io.File
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import io.github.h3nb.jlmodplus.R
 
 class BulkInstallModelsTest {
+    @Test
+    fun sharedConflictStatusKeepsDistinctPresentationReasons() {
+        val first = BulkInstallReviewReason.ConflictingJads
+        val second = BulkInstallReviewReason.SameVersionConflict
+        assertEquals(R.string.bulk_install_reason_conflicting_jads, bulkInstallReviewReasonResource(first))
+        assertEquals(R.string.bulk_install_reason_version_conflict, bulkInstallReviewReasonResource(second))
+        assertNotEquals(bulkInstallReviewReasonResource(first), bulkInstallReviewReasonResource(second))
+    }
+
+    @Test
+    fun exactReinstallReviewKeepsItsExistingMissingSourceExplanation() {
+        assertEquals(R.string.bulk_install_reinstall_source_missing,
+            bulkInstallReviewReasonResource(BulkInstallReviewReason.RetainedReinstallSourceMissing))
+    }
+
     @Test
     fun exactReinstallActionMakesAlreadyInstalledItemSelectable() {
         val source = File("/tmp/retained.jar")
