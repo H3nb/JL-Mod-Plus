@@ -1,5 +1,9 @@
 # UI copy and presentation style
 
+The [Localization contract](localization.md) owns semantic copy quality,
+translation, text ownership, and locale/resource identity. This document retains
+ownership of capitalization, typography, presentation, and copy styling.
+
 JL-Mod Plus uses a hierarchy-aware capitalization policy. One casing rule is
 not applied to every piece of UI copy.
 
@@ -143,10 +147,9 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
 - Maintain readable foreground/background pairs. Do not paint app UI white or
   black merely to match one screenshot. Actual game colors and HSV picker
   gradients are content and retain their intended colors.
-- Use short, concrete titles, clear action verbs, and helpful error messages.
-  State what happened and the next useful action. Distinguish a failed operation
-  from an operation whose files were saved but whose remaining step needs retry.
-  Keep technical diagnostics behind an explicit copy/details action.
+- Follow the [Localization contract](localization.md#ui-roles) for title, action,
+  and error meaning. Keep technical diagnostics behind an explicit copy/details
+  action.
 
 ## Presentation review
 
