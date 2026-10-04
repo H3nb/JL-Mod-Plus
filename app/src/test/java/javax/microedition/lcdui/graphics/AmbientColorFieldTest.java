@@ -153,27 +153,9 @@ public class AmbientColorFieldTest {
     }
 
     @Test
-    public void outerSurfaceFadesStronglyBackTowardBaseColor() {
+    public void distantSurfaceKeepsDynamicBackdropInsteadOfReturningToTheme() {
         AmbientColorField field = new AmbientColorField();
-        field.configureNodes(new float[]{0.25f, 0.0f}, new float[]{0.5f, 0.5f},
-                0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
-        field.setTargetGrid(solidGrid(1.0f, 0.0f, 0.0f), 0xFF000000, 0L, true);
-
-        float[] output = new float[2 * AmbientColorField.CHANNEL_COUNT];
-        field.renderNodes(0L, output);
-        assertTrue(output[0] > 0.84f);
-        assertTrue(output[0] < 0.90f);
-        assertTrue(output[3] < 0.01f);
-        assertTrue(output[4] < 0.01f);
-        assertTrue(output[5] < 0.01f);
-    }
-
-    @Test
-    public void haloDiffusesLocalEdgeContrastBeforeItFadesOut() {
-        AmbientColorField field = new AmbientColorField();
-        field.configureNodes(
-                new float[]{0.35f, 0.65f, 0.35f, 0.65f},
-                new float[]{0.25f, 0.25f, 0.18f, 0.18f},
+        field.configureNodes(new float[]{0.0f, 1.0f}, new float[]{0.5f, 0.5f},
                 0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
         float[] grid = new float[AmbientColorField.GRID_CHANNEL_COUNT];
         for (int y = 0; y < AmbientColorField.GRID_SIZE; y++) {
@@ -187,13 +169,38 @@ public class AmbientColorFieldTest {
         }
         field.setTargetGrid(grid, 0xFF000000, 0L, true);
 
+        float[] output = new float[2 * AmbientColorField.CHANNEL_COUNT];
+        field.renderNodes(0L, output);
+        assertTrue(output[0] > 0.90f);
+        assertTrue(output[0] > output[2]);
+        assertTrue(output[5] > 0.90f);
+        assertTrue(output[5] > output[3]);
+    }
+
+    @Test
+    public void broadBackdropRemainsSpatiallyDistinctAfterDetailSuppression() {
+        AmbientColorField field = new AmbientColorField();
+        field.configureNodes(
+                new float[]{0.25f, 0.75f, 0.25f, 0.75f},
+                new float[]{0.0f, 0.0f, 1.0f, 1.0f},
+                0.30f, 0.30f, 0.70f, 0.70f, 1.0f);
+        float[] grid = new float[AmbientColorField.GRID_CHANNEL_COUNT];
+        for (int y = 0; y < AmbientColorField.GRID_SIZE; y++) {
+            for (int x = 0; x < AmbientColorField.GRID_SIZE; x++) {
+                float r = x < AmbientColorField.GRID_SIZE / 2 ? 1.0f : 0.0f;
+                float b = x < AmbientColorField.GRID_SIZE / 2 ? 0.0f : 1.0f;
+                float g = y >= AmbientColorField.GRID_SIZE / 2 ? 0.55f : 0.0f;
+                setGridColor(grid, x, y, r, g, b);
+            }
+        }
+        field.setTargetGrid(grid, 0xFF000000, 0L, true);
+
         float[] output = new float[4 * AmbientColorField.CHANNEL_COUNT];
         field.renderNodes(0L, output);
-        float nearContrast = (output[0] - output[2]) - (output[3] - output[5]);
-        float fartherContrast = (output[6] - output[8]) - (output[9] - output[11]);
-        assertTrue(nearContrast > 1.0f);
-        assertTrue(fartherContrast > 0.0f);
-        assertTrue(fartherContrast < nearContrast);
+        assertTrue(output[0] > output[2]);
+        assertTrue(output[5] > output[3]);
+        assertTrue(output[7] > output[1]);
+        assertTrue(output[10] > output[4]);
     }
 
     private static float[] solidGrid(float r, float g, float b) {
