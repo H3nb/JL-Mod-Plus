@@ -15,7 +15,7 @@
     <string name="add_resolution_preset">Tambahkan Prasetel Resolusi</string>
     <string name="message_reset_settings">Atur ulang semua pengaturan konfigurasi ke bawaan?</string>
     <string name="message_reset_layout">Atur ulang tata letak kontrol virtual ke bawaan?</string>
-    <string name="alert_map_menu">Tombol menu (M) belum ditetapkan!\nIni membuat opsi emulator tidak bisa diakses.</string>
+    <string name="alert_map_menu">Tombol menu (M) belum ditetapkan.\nHal ini dapat membuat opsi emulator tidak dapat diakses.</string>
     <string name="alert_msg_workdir_not_exists">Direktori kerja tidak ditemukan di:\n\'%1$s\'.\nApakah Anda ingin membuatnya atau memilih direktori lain?</string>
     <string name="CANCEL_CMD">Batal</string>
     <string name="change">Ubah</string>
