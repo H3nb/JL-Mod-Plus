@@ -83,7 +83,6 @@ import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
 import io.github.h3nb.jlmodplus.jar.Descriptor;
 import javax.microedition.shell.timing.EmulationSpeed;
-import javax.microedition.shell.timing.AutoSpeedController;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.TimingMode;
 import javax.microedition.shell.transform.MidletTransformMetadata;
@@ -109,7 +108,6 @@ public class MicroLoader {
 	private ClassLoader midletClassLoader;
 	private TimingSession timingSession;
 	private RuntimeStorageLease storageLease;
-	private AutoSpeedController autoSpeedController;
 	private long memoryRuntimeToken;
 	private boolean timingTransformCompatible;
 	/** Set only after the MIDlet thread has successfully received the timing session. */
@@ -180,26 +178,19 @@ public class MicroLoader {
 				timingTransformCompatible
 						? TimingMode.sanitize(params.timingMode)
 						: TimingMode.FULL_GUEST_TIME);
-		AutoSpeedController speedController = timingTransformCompatible
-				? new AutoSpeedController(session) : null;
 		try {
-			GuestTimingBridge.install(session, speedController);
+			GuestTimingBridge.install(session);
 		} catch (RuntimeException e) {
-			if (speedController != null) {
-				speedController.close();
-			}
 			session.close();
 			throw e;
 		}
 		timingSession = session;
-		autoSpeedController = speedController;
 		memoryRuntimeToken = MemoryRuntimeSession.start();
 	}
 
 	void closeTimingSession() {
 		TimingSession session = timingSession;
 		timingSession = null;
-		autoSpeedController = null;
 		GuestTimingBridge.clear(session);
 		long token = memoryRuntimeToken;
 		memoryRuntimeToken = 0L;
@@ -234,34 +225,25 @@ public class MicroLoader {
 		return timingSession;
 	}
 
-	AutoSpeedController getAutoSpeedController() {
-		return autoSpeedController;
-	}
-
 	boolean isTimingTransformCompatible() {
 		return timingTransformCompatible;
 	}
 
 	/** Applies a runtime-only speed change without mutating the persisted MIDlet profile. */
 	boolean setRuntimeEmulationSpeed(int speedPercent) {
-		AutoSpeedController controller = autoSpeedController;
+		TimingSession session = timingSession;
 		if (!timingTransformCompatible
-				|| controller == null
-				|| timingSession == null
-				|| GuestTimingBridge.activeSession() != timingSession) {
+				|| session == null
+				|| GuestTimingBridge.activeSession() != session
+				|| !EmulationSpeed.isValidPercent(speedPercent)) {
 			return false;
 		}
-		return controller.setManualSpeed(speedPercent);
-	}
-
-	/** Starts a fresh session-only calibration for uncapped adaptive emulation speed. */
-	boolean setRuntimeAutoEmulationSpeed() {
-		AutoSpeedController controller = autoSpeedController;
-		return timingTransformCompatible
-				&& controller != null
-				&& timingSession != null
-				&& GuestTimingBridge.activeSession() == timingSession
-				&& controller.enableAuto();
+		try {
+			session.updateSpeedPercent(speedPercent);
+			return true;
+		} catch (IllegalStateException closed) {
+			return false;
+		}
 	}
 
 	private boolean hasCompatibleTimingTransform() {

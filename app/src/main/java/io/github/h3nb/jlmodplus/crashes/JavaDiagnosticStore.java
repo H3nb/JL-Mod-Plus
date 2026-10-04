@@ -167,25 +167,6 @@ final class JavaDiagnosticStore {
 		}
 	}
 
-	static void captureCaught(Context context, Kind kind, Throwable reported,
-			Throwable primary, String contextNote) {
-		if (context == null || reported == null || kind == null || kind.fatal) return;
-		CrashReporter.DiagnosticContext diagnostic = CrashReporter.currentDiagnosticContext();
-		try {
-			persistLive(
-					context.getApplicationContext(),
-					kind,
-					Thread.currentThread(),
-					reported,
-					primary == null ? reported : primary,
-					contextNote,
-					diagnostic == null ? null : diagnostic.processName,
-					diagnostic == null ? null : diagnostic.processRole);
-		} catch (Throwable error) {
-			logFailure("Unable to persist caught Java diagnostic", error);
-		}
-	}
-
 	private static void persistLive(Context context, Kind kind, Thread thread, Throwable reported,
 			Throwable primary, String contextNote, String processName, String processRole)
 			throws IOException {
@@ -274,7 +255,26 @@ final class JavaDiagnosticStore {
 
 	static List<Snapshot> loadStored(Context context) {
 		if (context == null) return Collections.emptyList();
-		File[] files = directory(context).listFiles();
+		return loadStored(directory(context));
+	}
+
+	static List<Snapshot> loadStored(File directory) {
+		List<Snapshot> stored = loadAllStored(directory);
+		if (stored.isEmpty()) return stored;
+		ArrayList<Snapshot> result = new ArrayList<>(stored.size());
+		for (Snapshot snapshot : stored) {
+			// Recoverable operation failures remain storage records for bounded retention, but they
+			// are not crash evidence and therefore never enter the diagnostic inbox.
+			if (snapshot.kind.fatal && !(snapshot.kind == Kind.LEGACY_ACRA
+					&& isLegacyInstallerFailure(snapshot.throwables))) {
+				result.add(snapshot);
+			}
+		}
+		return result;
+	}
+
+	private static List<Snapshot> loadAllStored(File directory) {
+		File[] files = directory.listFiles();
 		if (files == null || files.length == 0) return Collections.emptyList();
 		ArrayList<File> bases = new ArrayList<>();
 		for (File file : files) {
@@ -571,13 +571,17 @@ final class JavaDiagnosticStore {
 			int index = lifecycle ? 2 : 1;
 			return Math.min(index, chain.size() - 1);
 		}
-		ThrowableData first = chain.get(0);
-		if (first.className != null
-				&& first.className.endsWith("CrashReporter$InstallerFailureException")
-				&& chain.size() > 1) {
+		if (isLegacyInstallerFailure(chain) && chain.size() > 1) {
 			return 1;
 		}
 		return 0;
+	}
+
+	private static boolean isLegacyInstallerFailure(List<ThrowableData> chain) {
+		if (chain.isEmpty()) return false;
+		String name = chain.get(0).className;
+		return "io.github.h3nb.jlmodplus.crashes.CrashReporter$InstallerFailureException".equals(name)
+				|| "ru.playsoftware.j2meloader.crashes.CrashReporter$InstallerFailureException".equals(name);
 	}
 
 	private static String legacyEventId(String stack) {
@@ -1031,8 +1035,11 @@ final class JavaDiagnosticStore {
 	}
 
 	private static void prune(Context context) {
-		List<Snapshot> records = loadStored(context);
-		long now = System.currentTimeMillis();
+		pruneStored(directory(context), System.currentTimeMillis());
+	}
+
+	static void pruneStored(File directory, long now) {
+		List<Snapshot> records = loadAllStored(directory);
 		for (int i = 0; i < records.size(); i++) {
 			Snapshot item = records.get(i);
 			long age = item.timestampMillis > 0 && now >= item.timestampMillis

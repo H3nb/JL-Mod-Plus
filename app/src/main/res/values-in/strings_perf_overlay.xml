@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="perf_overlay_title">Overlay Performa</string>
+    <string name="perf_overlay_help">Menampilkan pengukuran runtime yang dipilih.</string>
+    <string name="perf_overlay_preset">Preset Overlay</string>
+    <string name="perf_overlay_preset_help">Terapkan preset atau sesuaikan pilihan.</string>
+    <string name="perf_overlay_minimal">Minimal</string>
+    <string name="perf_overlay_standard">Standar</string>
+    <string name="perf_overlay_debug">Debug</string>
+    <string name="perf_overlay_custom">Kustom</string>
+    <string name="perf_overlay_parameters">Parameter Overlay</string>
+    <string name="perf_overlay_parameters_help">Pilih parameter yang akan ditampilkan.</string>
+    <plurals name="perf_overlay_selected">
+        <item quantity="one">%d parameter dipilih</item>
+        <item quantity="other">%d parameter dipilih</item>
+    </plurals>
+    <string name="perf_overlay_position">Posisi Overlay</string>
+    <string name="perf_overlay_position_help">Pilih sudut layar.</string>
+    <string name="perf_overlay_top_left">Kiri Atas</string>
+    <string name="perf_overlay_top_right">Kanan Atas</string>
+    <string name="perf_overlay_bottom_left">Kiri Bawah</string>
+    <string name="perf_overlay_bottom_right">Kanan Bawah</string>
+    <string name="perf_overlay_done">Selesai</string>
+    <string name="perf_overlay_group_rate">Laju Frame</string>
+    <string name="perf_overlay_group_timing">Timing Frame</string>
+    <string name="perf_overlay_group_pipeline">Timing Pipeline</string>
+    <string name="perf_overlay_group_queue">Input dan Antrean</string>
+    <string name="perf_overlay_group_resources">Sumber Daya</string>
+    <string name="perf_overlay_group_temperature">Suhu</string>
+    <string name="perf_overlay_group_runtime">Informasi Runtime</string>
+    <string name="perf_overlay_fps">Frame per Detik (FPS)</string>
+    <string name="perf_overlay_cap">Batas FPS (CAP)</string>
+    <string name="perf_overlay_render_fps">Frame Render per Detik (RFPS)</string>
+    <string name="perf_overlay_speed">Kecepatan Emulasi (SPD)</string>
+    <string name="perf_overlay_interval">Interval Frame (FI)</string>
+    <string name="perf_overlay_p95">Persentil ke-95 Interval Frame (P95)</string>
+    <string name="perf_overlay_max">Interval Frame Maksimum (MAX)</string>
+    <string name="perf_overlay_coalesced">Frame yang Digantikan Sebelum Render (COAL)</string>
+    <string name="perf_overlay_paint">Durasi Paint (PAINT)</string>
+    <string name="perf_overlay_copy">Durasi Salin Buffer (COPY)</string>
+    <string name="perf_overlay_submit">Durasi Submit Render (SUB)</string>
+    <string name="perf_overlay_input_queue">Waktu Antrean Input (INQ)</string>
+    <string name="perf_overlay_frame_queue">Waktu Antrean Frame (FRQ)</string>
+    <string name="perf_overlay_cpu">Penggunaan CPU (CPU)</string>
+    <string name="perf_overlay_ram">Penggunaan RAM (RAM)</string>
+    <string name="perf_overlay_java">Penggunaan Heap Java (JAVA)</string>
+    <string name="perf_overlay_native">Penggunaan Heap Native (NATIVE)</string>
+    <string name="perf_overlay_cpu_temp">Suhu CPU (CPUT)</string>
+    <string name="perf_overlay_gpu_temp">Suhu GPU (GPUT)</string>
+    <string name="perf_overlay_battery_temp">Suhu Baterai (BAT)</string>
+    <string name="perf_overlay_thermal">Status Termal (THRM)</string>
+    <string name="perf_overlay_renderer">Renderer (REN)</string>
+    <string name="perf_overlay_display">Laju Penyegaran Layar (DISP)</string>
+</resources>

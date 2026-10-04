@@ -34,6 +34,39 @@ private val NoOpConfigEvents = object : ConfigFormEvents {
     override fun onShaderTuning() = Unit
 }
 
+@PreviewTest
+@Preview(name = "Performance parameters narrow", widthDp = 320, heightDp = 640, showBackground = true)
+@Composable
+fun PerformanceOverlayParametersNarrowScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        PerformanceOverlayParametersDialog(
+            selectedMetrics = PerformanceOverlayOptions.ALL,
+            onMetricsChanged = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Performance parameters short large font",
+    widthDp = 640,
+    heightDp = 320,
+    fontScale = 2f,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+)
+@Composable
+fun PerformanceOverlayParametersShortLargeFontScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        PerformanceOverlayParametersDialog(
+            selectedMetrics = PerformanceOverlayOptions.STANDARD,
+            onMetricsChanged = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
 private val PreviewConfigState = ConfigUiState(
     ConfigFormState.builder()
         .screenWidth("240")

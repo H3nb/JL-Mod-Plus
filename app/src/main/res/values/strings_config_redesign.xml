@@ -63,16 +63,12 @@
     <string name="config_timing_mode_full_guest">Emulated Clock</string>
     <string name="config_timing_mode_real_wall">Real-World Clock</string>
     <string name="config_help_emulation_speed">Changes the MIDlet clock speed and supported delays. Android audio and UI stay normal.</string>
-    <string name="emulation_speed_auto">Auto</string>
-    <string name="emulation_speed_auto_summary">Automatically finds the fastest stable speed for the current workload.</string>
-    <string name="emulation_speed_auto_value">Auto · %1$s</string>
     <string name="config_help_timing_mode">Chooses whether the MIDlet uses emulated or real date and time. Delays still follow emulation speed.</string>
     <string name="config_help_timing_unavailable">This MIDlet lacks timing support. Reinstall or reconvert it to enable emulation speed.</string>
     <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start. Please wait…</string>
     <string name="reconversion_error">The MIDlet could not be converted automatically.
 
 %1$s</string>
-    <string name="fps_overlay_value">FPS %1$d | RENDER %2$d | DROP %3$d%% | SPD %4$s</string>
     <string name="config_help_generic_toggle">Turns this behavior on or off for this MIDlet.</string>
     <string name="config_help_generic_color">Sets the color of this visual element.</string>
     <string name="config_help_action_generic">Opens this configuration tool.</string>

@@ -91,7 +91,6 @@ internal data class RuntimeMenuUiState(
     val orientationLocked: Boolean = false,
     val emulationSpeedAvailable: Boolean = false,
     val emulationSpeedPercent: Int = EmulationSpeed.NORMAL_PERCENT,
-    val emulationSpeedAuto: Boolean = false,
     val memoryEditorBubbleEnabled: Boolean = false,
 )
 
@@ -106,7 +105,6 @@ interface RuntimeMenuActions {
     fun onResetFpsLimit()
     fun onEmulationSpeed()
     fun onSetEmulationSpeed(value: Int)
-    fun onSetAutoEmulationSpeed()
     fun onResetEmulationSpeed()
     fun onMemoryEditor()
     fun onEditVirtualKeyboardLayout()
@@ -213,12 +211,10 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                     ) {
                         RuntimeEmulationSpeedDialog(
                             currentPercent = state.emulationSpeedPercent,
-                            currentAutoEnabled = state.emulationSpeedAuto,
                             onDismiss = { changeControllerSurface { emulationSpeedVisible = false } },
-                            onConfirm = { value, autoEnabled ->
+                            onConfirm = { value ->
                                 changeControllerSurface { emulationSpeedVisible = false }
-                                if (autoEnabled) actions.onSetAutoEmulationSpeed()
-                                else actions.onSetEmulationSpeed(value)
+                                actions.onSetEmulationSpeed(value)
                             },
                             onReset = {
                                 changeControllerSurface { emulationSpeedVisible = false }
@@ -254,7 +250,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         orientationLocked: Boolean,
         emulationSpeedAvailable: Boolean,
         emulationSpeedPercent: Int,
-        emulationSpeedAuto: Boolean,
         memoryEditorBubbleEnabled: Boolean,
     ) {
         state = RuntimeMenuUiState(
@@ -267,7 +262,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             orientationLocked = orientationLocked,
             emulationSpeedAvailable = emulationSpeedAvailable,
             emulationSpeedPercent = emulationSpeedPercent,
-            emulationSpeedAuto = emulationSpeedAuto,
             memoryEditorBubbleEnabled = memoryEditorBubbleEnabled,
         )
     }
@@ -482,9 +476,8 @@ internal fun RuntimeLimitFpsDialog(
 @Composable
 internal fun RuntimeEmulationSpeedDialog(
     currentPercent: Int,
-    currentAutoEnabled: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (Int, Boolean) -> Unit,
+    onConfirm: (Int) -> Unit,
     onReset: () -> Unit,
 ) {
     val manualPercent = currentPercent.takeIf(EmulationSpeed::isValidPercent)
@@ -494,7 +487,6 @@ internal fun RuntimeEmulationSpeedDialog(
     }
     val currentIndex = presetValues.indexOf(manualPercent).coerceAtLeast(0)
     var draftIndex by remember(currentIndex, presetValues) { mutableFloatStateOf(currentIndex.toFloat()) }
-    var autoEnabled by remember(currentAutoEnabled) { mutableStateOf(currentAutoEnabled) }
     val selectedIndex = draftIndex.roundToInt().coerceIn(presetValues.indices)
     val selectedValue = presetValues[selectedIndex]
     val layout = runtimeMenuDialogLayout()
@@ -521,48 +513,14 @@ internal fun RuntimeEmulationSpeedDialog(
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
                     Text(
-                        text = if (autoEnabled) {
-                            stringResource(
-                                R.string.emulation_speed_auto_value,
-                                EmulationSpeed.formatRuntimeMultiplier(currentPercent),
-                            )
-                        } else {
-                            EmulationSpeed.formatMultiplier(selectedValue)
-                        },
+                        text = EmulationSpeed.formatMultiplier(selectedValue),
                         modifier = Modifier.fillMaxWidth(),
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.primary,
                     )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .toggleable(
-                                value = autoEnabled,
-                                role = Role.Switch,
-                                onValueChange = { autoEnabled = it },
-                            )
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.emulation_speed_auto),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium,
-                            )
-                            Text(
-                                text = stringResource(R.string.emulation_speed_auto_summary),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Switch(checked = autoEnabled, onCheckedChange = null)
-                    }
                     Slider(
                         value = draftIndex,
                         onValueChange = { draftIndex = it },
-                        enabled = !autoEnabled,
                         valueRange = 0f..presetValues.lastIndex.toFloat(),
                         steps = (presetValues.size - 2).coerceAtLeast(0),
                         modifier = Modifier
@@ -596,7 +554,7 @@ internal fun RuntimeEmulationSpeedDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(selectedValue, autoEnabled) }) {
+            TextButton(onClick = { onConfirm(selectedValue) }) {
                 Text(stringResource(android.R.string.ok))
             }
         },

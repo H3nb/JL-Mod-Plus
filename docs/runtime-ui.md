@@ -6,6 +6,10 @@ Renderer, input, and MIDP lifecycle behavior remain in the runtime implementatio
 
 ## Contract references
 
+Performance diagnostics remain a passive native overlay. Metric definitions,
+configuration, sampling, and lifecycle rules are documented in
+[Performance overlay](performance-overlay.md).
+
 For compatibility work, consult [J2ME_Docs](https://github.com/shinovon/J2ME_Docs)
 under `docs/midp-2.0/`, especially these pages:
 
@@ -33,6 +37,7 @@ ordering, or replace `Displayable` views.
 | Keyboard (IME) | Canvas when Android IME exists | Existing toggle semantics, posted after popup dismissal, using the Canvas/GLSurfaceView window token and its explicit `InputConnection` contract |
 | Take Screenshot | Canvas | `takeScreenshot()` and existing asynchronous result handling |
 | Limit FPS | Canvas | Compose Material 3 digits-only dialog and existing `Canvas.setLimitFps()` values (`0` display maximum, `-1` reset) |
+| Emulation Speed | Canvas with compatible timing transform | Manual session-only multiplier from 0.25x to 16x; Reset selects 1x. See [Emulation speed](emulation-speed.md). |
 | Virtual Keyboard options | Canvas when a virtual keyboard exists | Existing layout edit/resize/finish/switch/hide methods |
 
 The finish-layout item is visible only while the virtual keyboard is in an
@@ -58,6 +63,19 @@ non-Canvas Displayables.
 - The explicit Exit item remains the only host-menu exit path and continues to
   use `showExitConfirmation()`. A MIDlet-owned Exit command and system-level
   task removal/force-stop remain independent termination paths.
+- Until multiple runtimes are supported, launching a different MIDlet force-stops
+  the previous runtime as an intentional user stop. A main-process handoff retains
+  the launch request and waits for the old process's Binder death before starting
+  a fresh heap. Reopening the same live runtime retains its session and heap.
+- Android Home retains the live runtime and its keep-alive service. Removing an
+  emulator task from Recents or explicitly exiting the emulator completes the
+  session as a user stop, removes emulator tasks, and terminates runtime, memory
+  engine, and main processes. MIDlet Exit returns to Library after runtime
+  termination, including when a hung `destroyApp()` requires forced cleanup.
+  Normal emulator shutdown stops auxiliary processes, then runtime, then main.
+  If dispatch to the main coordinator fails, emergency shutdown stops auxiliary
+  processes first and keeps its caller alive until peer termination is requested;
+  a runtime caller therefore stops main immediately before terminating itself.
 - A `Displayable` transition closes the menu before replacing its View, then
   refreshes the host title and action visibility.
 - `CanvasView` and `GlesView` report `onCheckIsTextEditor() == true` alongside

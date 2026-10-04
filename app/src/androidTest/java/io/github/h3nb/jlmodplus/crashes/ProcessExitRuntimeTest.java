@@ -15,15 +15,15 @@
 package io.github.h3nb.jlmodplus.crashes;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Process;
 import android.os.SystemClock;
 
@@ -32,9 +32,14 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 @RunWith(AndroidJUnit4.class)
@@ -43,84 +48,118 @@ public class ProcessExitRuntimeTest {
 	private static final long PROCESS_TIMEOUT_MILLIS = 10_000L;
 
 	@Test
-	public void abruptRemoteSignalDeathIsCapturedWithoutJavaException() {
+	public void newerNonfatalEvidenceStaysQueryableWithoutHidingFatalNotice() throws Exception {
+		Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		TemporaryFolder fixture = new TemporaryFolder(target.getCacheDir());
+		fixture.create();
+		Context context = new ContextWrapper(target) {
+			@Override
+			public File getFilesDir() {
+				return fixture.getRoot();
+			}
+		};
+		try {
+			long now = System.currentTimeMillis();
+			writeExitFixture(context, "2", now, ProcessExitStore.REASON_LOW_MEMORY,
+					ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE);
+			assertNull("A minimized foreground-service MIDlet's LMK must not interrupt Library",
+					ProcessExitStore.findPendingStoredExit(context));
+			assertNotNull(LocalDiagnosticRepository.findStored(context, "exit:2"));
+
+			writeExitFixture(context, "1", now - 1_000L, ProcessExitStore.REASON_CRASH,
+					ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED);
+			ProcessExitStore.PendingExit pending = ProcessExitStore.findPendingStoredExit(context);
+			assertNotNull(pending);
+			assertEquals("exit:1", pending.getId());
+			assertEquals(2, LocalDiagnosticRepository.loadStored(context).size());
+			assertEquals(ProcessExitStore.REASON_LOW_MEMORY,
+					LocalDiagnosticRepository.findStored(context, "exit:2").getProcessExitSnapshot().reason);
+
+			ProcessExitStore.acknowledgePendingExits(context);
+			assertNull(ProcessExitStore.findPendingStoredExit(context));
+			assertEquals("Acknowledgment changes notices without deleting manual evidence",
+					2, LocalDiagnosticRepository.loadStored(context).size());
+		} finally {
+			fixture.delete();
+		}
+	}
+
+	private static void writeExitFixture(Context context, String key, long timestampMillis,
+			int reason, int importance) throws IOException {
+		File directory = new File(context.getFilesDir(), "diagnostics/process-exits");
+		if (!directory.isDirectory() && !directory.mkdirs()) {
+			throw new IOException("Unable to create process-exit fixture directory");
+		}
+		Properties metadata = new Properties();
+		metadata.setProperty("schemaVersion", "1");
+		metadata.setProperty("key", key);
+		metadata.setProperty("timestampMillis", Long.toString(timestampMillis));
+		metadata.setProperty("processName", context.getPackageName() + ":midlet");
+		metadata.setProperty("processRole", "midlet");
+		metadata.setProperty("pid", "123");
+		metadata.setProperty("reason", Integer.toString(reason));
+		metadata.setProperty("status", "0");
+		metadata.setProperty("importance", Integer.toString(importance));
+		try (FileOutputStream output = new FileOutputStream(new File(directory, key + ".properties"))) {
+			metadata.store(output, null);
+		}
+	}
+
+	@Test
+	public void abruptRemoteSigkillDoesNotBecomeAFatalReport() throws Exception {
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		String mainProcessName = context.getPackageName();
 		String midletProcessName = mainProcessName + ":midlet";
 		int mainPid = Process.myPid();
 		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
-
+		Set<String> existingSessions = new HashSet<>();
+		for (File file : MidletSessionJournal.journalFiles(context)) {
+			existingSessions.add(MidletSessionJournal.read(file).sessionId);
+		}
+		File probeJournal = null;
 		try {
 			Intent intent = new Intent(context, CrashRuntimeProbeActivity.class)
 					.putExtra(CrashRuntimeProbeActivity.EXTRA_MODE, CrashRuntimeProbeActivity.MODE_SIGNAL_KILL)
 					.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			context.startActivity(intent);
-
-			LocalDiagnosticRepository.Record record = awaitSignalExitRecord(context, baselineIds);
+			probeJournal = awaitSignalJournal(context, existingSessions);
 			awaitRemoteProcessStops(context, midletProcessName);
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
 
-			assertEquals(LocalDiagnosticRepository.Kind.PROCESS_EXIT, record.getKind());
-			assertEquals(CrashRuntimeProbeActivity.SIGNAL_MIDLET_NAME, record.getMidletName());
-			assertEquals("midlet", record.getProcessRole());
-			assertNotNull(record.getSessionId());
-			assertTrue(record.hasProcessExit());
-			assertFalse(record.hasJavaReport());
-			assertTrue(record.getDetailText().contains("Lifecycle stage: RUNNING"));
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-				assertTrue(record.getDetailText().contains("Associated Process Termination"));
-				assertTrue(record.getDetailText().contains("SIGKILL"));
-			} else {
-				assertTrue(record.getDetailText().contains("Associated Process Termination"));
-				assertTrue(record.getDetailText().contains(
-						"Exact OS termination reason is unavailable on Android API "
-								+ Build.VERSION.SDK_INT));
-				assertFalse(record.getDetailText().contains("Native crash"));
-				assertFalse(record.getDetailText().contains("ANR"));
-				assertFalse(record.getDetailText().contains("Low-memory kill"));
-			}
-
-			// Explicit user deletion must survive immediate historical reconciliation. On API30+
-			// ApplicationExitInfo still contains this exact death; on API23-29 the fallback journal
-			// is the source. Neither path may resurrect the report or make it pending again.
-			String deletedId = record.getId();
-			assertTrue(LocalDiagnosticRepository.delete(context, record));
-			for (int attempt = 0; attempt < 3; attempt++) {
-				LegacyProcessExitFallback.ingest(context);
-				ProcessExitStore.ingest(context);
-				assertFalse(recordIds(LocalDiagnosticRepository.loadStored(context)).contains(deletedId));
-				ProcessExitStore.PendingExit pending = ProcessExitStore.findPendingStoredExit(context);
-				assertTrue(pending == null || !deletedId.equals(pending.getId()));
-				SystemClock.sleep(50L);
-			}
-			assertFalse(recordIds(LocalDiagnosticRepository.load(context)).contains(deletedId));
+			// Observe beyond the former API23-29 orphan grace period. Neither disappearance nor
+			// API30+ unclassified SIGKILL establishes a crash, even with a live-session journal.
+			long deadline = SystemClock.uptimeMillis() + 2_000L;
+			do {
+				assertEquals(baselineIds, recordIds(LocalDiagnosticRepository.load(context)));
+				SystemClock.sleep(100L);
+			} while (SystemClock.uptimeMillis() < deadline);
+			MidletSessionJournal.Snapshot session = MidletSessionJournal.read(probeJournal);
+			assertEquals(MidletSessionJournal.Outcome.NONE, session.outcome);
+			assertTrue("An ended session still reconciles play stats without a crash report",
+					MidletSessionTerminalClassifier.isTerminal(context, session));
 		} finally {
-			cleanupSignalDiagnostics(context, baselineIds);
+			if (probeJournal != null) MidletSessionJournal.delete(probeJournal);
 		}
 	}
 
-	private static LocalDiagnosticRepository.Record awaitSignalExitRecord(
-			Context context, Set<String> existingIds) {
+	private static File awaitSignalJournal(Context context, Set<String> existingSessions)
+			throws Exception {
 		long deadline = SystemClock.uptimeMillis() + REPORT_TIMEOUT_MILLIS;
 		do {
-			// API30+ ingests ApplicationExitInfo from LocalDiagnosticRepository.load(). API23-29
-			// deliberately materialize only an UNKNOWN process exit after proving the journal owner died.
-			LegacyProcessExitFallback.ingest(context);
-			for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
-				if (!existingIds.contains(record.getId())
-						&& record.getKind() == LocalDiagnosticRepository.Kind.PROCESS_EXIT
-						&& CrashRuntimeProbeActivity.SIGNAL_MIDLET_NAME.equals(record.getMidletName())
-						// ProcessExitStore can publish the framework exit before the just-written
-						// session journal becomes visible to the main process. Do not accept that
-						// transient projection as the final correlated diagnostic.
-						&& record.getDetailText().contains("Lifecycle stage: RUNNING")) {
-					return record;
+			for (File file : MidletSessionJournal.journalFiles(context)) {
+				try {
+					MidletSessionJournal.Snapshot snapshot = MidletSessionJournal.read(file);
+					if (!existingSessions.contains(snapshot.sessionId)
+							&& CrashRuntimeProbeActivity.SIGNAL_MIDLET_NAME.equals(snapshot.midletName)
+							&& snapshot.stage == MidletSessionJournal.Stage.RUNNING) return file;
+				} catch (IOException incompletePublication) {
+					// A .new-only first publication has no committed snapshot yet; retry the reader.
 				}
 			}
 			SystemClock.sleep(100L);
 		} while (SystemClock.uptimeMillis() < deadline);
-		fail("Timed out waiting for abrupt MIDlet process-exit diagnostic");
+		fail("Timed out waiting for abrupt MIDlet process session journal");
 		return null;
 	}
 
@@ -155,14 +194,5 @@ public class ProcessExitRuntimeTest {
 			ids.add(record.getId());
 		}
 		return ids;
-	}
-
-	private static void cleanupSignalDiagnostics(Context context, Set<String> baselineIds) {
-		for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
-			if (!baselineIds.contains(record.getId())
-					&& CrashRuntimeProbeActivity.SIGNAL_MIDLET_NAME.equals(record.getMidletName())) {
-				LocalDiagnosticRepository.delete(context, record);
-			}
-		}
 	}
 }

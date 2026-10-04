@@ -62,23 +62,19 @@
     <string name="config_help_shader_tuning">Menyesuaikan pengaturan shader yang dipilih.</string>
     <string name="config_help_parallel_redraw">Menggambar ulang layar secara paralel jika didukung. Dapat meningkatkan kinerja pada konfigurasi tertentu.</string>
     <string name="config_help_force_fullscreen">Memungkinkan MIDlet menggunakan seluruh layar yang tersedia.</string>
-    <string name="config_help_show_fps">Menampilkan FPS serta informasi rendering, frame yang terlewat, dan kecepatan runtime.</string>
+    <string name="config_help_show_fps">Menampilkan laju frame MIDlet dan diagnostik rendering.</string>
     <string name="config_help_fps_limit">Membatasi FPS.</string>
     <string name="PREF_EMULATION_SPEED">Kecepatan Emulasi</string>
     <string name="PREF_TIMING_MODE">Mode Waktu</string>
     <string name="config_timing_mode_full_guest">Waktu Emulasi</string>
     <string name="config_timing_mode_real_wall">Waktu Nyata</string>
     <string name="config_help_emulation_speed">Mengatur kecepatan waktu dan delay di dalam MIDlet. Audio dan UI Android tetap berjalan normal.</string>
-    <string name="emulation_speed_auto">Auto</string>
-    <string name="emulation_speed_auto_summary">Mencari kecepatan tertinggi yang tetap stabil secara otomatis.</string>
-    <string name="emulation_speed_auto_value">Auto · %1$s</string>
     <string name="config_help_timing_mode">Memilih apakah waktu MIDlet mengikuti waktu emulasi atau waktu nyata. Delay tetap mengikuti kecepatan emulasi.</string>
     <string name="config_help_timing_unavailable">MIDlet ini belum memiliki dukungan timing. Instal ulang atau konversi ulang MIDlet ini untuk mengaktifkan kecepatan emulasi.</string>
     <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dapat dijalankan. Harap tunggu…</string>
     <string name="reconversion_error">MIDlet ini tidak dapat dikonversi secara otomatis.
 
 %1$s</string>
-    <string name="fps_overlay_value">FPS %1$d | RENDER %2$d | DROP %3$d%% | SPD %4$s</string>
     <string name="config_help_generic_toggle">Mengaktifkan atau menonaktifkan fitur ini untuk MIDlet ini.</string>
     <string name="config_help_generic_color">Mengatur warna bagian tampilan ini.</string>
     <string name="config_help_action_generic">Membuka pengaturan ini.</string>

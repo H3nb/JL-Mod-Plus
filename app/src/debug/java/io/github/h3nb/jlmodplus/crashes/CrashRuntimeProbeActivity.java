@@ -64,16 +64,22 @@ public final class CrashRuntimeProbeActivity extends Activity {
 			throw new IllegalStateException("Crash runtime probe could not claim a failure event");
 		}
 
-		// This probe claims UNCAUGHT_THREAD, so exercise a real non-main uncaught thread. Throwing
-		// directly from Activity.onCreate() tests Activity launch failure semantics instead and, on
-		// Android 6, the system can tear down the only Activity before the reporter's synchronous file
-		// write becomes observable. Actual MIDlet worker/lifecycle crashes occur off the UI thread.
+		// Exercise the same typed capture boundary as a fatal MIDlet worker failure. Stack text
+		// alone cannot correlate a process-uncaught report with this session's durable failure event.
 		Thread crashThread = new Thread(() -> {
-			throw new RuntimeException(
+			IllegalStateException primary = new IllegalStateException(
+					"Intentional debug-only crash runtime probe");
+			RuntimeException reported = new RuntimeException(
 					"JL-Mod Plus session failure; eventId=" + eventId
 							+ "; boundary=UNCAUGHT_THREAD; runtimeProbe=true;",
-					new IllegalStateException("Intentional debug-only crash runtime probe")
+					primary
 			);
+			if (!CrashReporter.captureMidletSessionFailure(
+					Thread.currentThread(), journal, reported, primary)) {
+				throw new IllegalStateException("Unable to persist debug session failure");
+			}
+			journal.complete(MidletSessionJournal.Outcome.UNEXPECTED_FAILURE);
+			Process.killProcess(Process.myPid());
 		}, "jlmod-crash-runtime-probe");
 		crashThread.start();
 	}
