@@ -105,12 +105,18 @@ including encoder priming/padding corrections. Known time/duration survive
 stop and deallocation. The default TimeBase keeps ticking independently of the
 media cursor; unsupported custom TimeBases throw the specified MediaException.
 
-SMAF is entirely outside this migration: recognized MMMD sources retain legacy
-`MicroPlayer`/Android output and FFmpegKit conversion, including their existing
-cache policy. The FFmpegKit AAR retains its wrapper/resources/Java dependencies;
-only its seven core FFmpeg libraries are removed and replaced by the one pinned
-native build. There is no second sampled output or whole-file PCM conversion
-for the retained formats in scope. Recipe, pins, ABI and license details are in
+SMAF sequence synthesis remains outside this migration: recognized MMMD sources
+retain legacy `MicroPlayer`/Android playback. Their existing ADPCM waveform
+conversion uses the same pinned FFmpeg libraries through a bounded native helper,
+without FFmpegKit or a command-line frontend. It preserves channels and writes
+U8 WAV at 16 kHz into an owned empty temporary file; the source publishes that
+file only after complete decoding, resampler drain and successful output close.
+Unsupported/non-ADPCM input or conversion failure retains the original source
+and deletes the unused temporary output. Conversion limits input and output to
+64 MiB, channels to two, and work to ten seconds. The MMMD input cache otherwise
+retains its existing policy. There is no second sampled output or whole-file PCM
+conversion for the retained formats in the shared mixer. Recipe, pins, ABI and
+license details are in
 [the dependency instructions](../tools/audio/README.md).
 
 RIFF/RMID containers use a bounded, validated extraction of their single MIDI

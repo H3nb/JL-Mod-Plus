@@ -21,14 +21,6 @@ package javax.microedition.media;
 
 import android.util.Log;
 
-import com.arthenica.ffmpegkit.FFmpegKit;
-import com.arthenica.ffmpegkit.FFmpegSession;
-import com.arthenica.ffmpegkit.FFprobeKit;
-import com.arthenica.ffmpegkit.MediaInformation;
-import com.arthenica.ffmpegkit.MediaInformationSession;
-import com.arthenica.ffmpegkit.ReturnCode;
-import com.arthenica.ffmpegkit.StreamInformation;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +29,7 @@ import java.io.RandomAccessFile;
 import javax.microedition.media.protocol.DataSource;
 
 import io.github.h3nb.jlmodplus.mmapi.FileCacheDataSource;
+import io.github.h3nb.jlmodplus.mmapi.synth.eas.LibEAS;
 
 class InternalDataSource extends FileCacheDataSource {
 	private static final String TAG = InternalDataSource.class.getSimpleName();
@@ -97,31 +90,22 @@ class InternalDataSource extends FileCacheDataSource {
         } catch (IOException error) { throw new MediaException("Cannot read cached audio: " + error); }
     }
 
-	void prepareLegacySmaf() {
+	synchronized void prepareLegacySmaf() {
+		File converted = null;
+		boolean installed = false;
 		try {
-			String path = mediaFile.getPath();
-			MediaInformationSession mediaInformationSession = FFprobeKit.getMediaInformation(path);
-			MediaInformation mediaInformation = mediaInformationSession.getMediaInformation();
-			if (mediaInformation != null) {
-				StreamInformation streamInformation = mediaInformation.getStreams().get(0);
-				if (FfmpegAudioConversion.requiresPcmU8Conversion(streamInformation.getCodec())) {
-					File pcmU8 = createCacheFile(null, ".wav");
-					String cmd = FfmpegAudioConversion.buildPcmU8Command(path, pcmU8.getPath());
-					FFmpegSession session = FFmpegKit.execute(cmd);
-					ReturnCode rc = session.getReturnCode();
-					if (ReturnCode.isSuccess(rc)) {
-						Log.i(TAG, "FFmpeg command execution completed successfully.");
-						if (!mediaFile.delete()) {
-							Log.w(TAG, "convert: error delete file=" + mediaFile);
-						}
-						mediaFile = pcmU8;
-					} else {
-						Log.w(TAG, "FFmpeg command execution failed with RETURN_CODE=" + rc);
-					}
-				}
+			converted = createCacheFile(null, ".wav");
+			if (LibEAS.convertLegacySmaf(mediaFile.getPath(), converted.getPath())) {
+				File original = mediaFile;
+				mediaFile = converted;
+				installed = true;
+				if (!original.delete()) Log.w(TAG, "Cannot delete converted SMAF cache: " + original);
 			}
-		} catch (Throwable t) {
-			Log.e(TAG, "FFmpeg error", t);
+		} catch (IOException | MediaException error) {
+			Log.w(TAG, "Legacy SMAF conversion unavailable; retaining original source", error);
+		} finally {
+			if (!installed && converted != null && !converted.delete())
+				Log.w(TAG, "Cannot delete unused SMAF conversion: " + converted);
 		}
 	}
 }

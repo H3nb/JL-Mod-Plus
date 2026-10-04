@@ -121,6 +121,15 @@ public class LibEAS implements Library {
 	/** Frames, callbacks, nonzero samples, opens, disconnects, xruns, rate, device, generation. */
 	public native long[] diagnostics(long handle);
 	public static native int liveHandles();
+    public static native String audioDecoderVersion();
+    /** Converts only legacy ADPCM MMF into the caller-owned empty WAV file. */
+    public static boolean convertLegacySmaf(String input, String output)
+            throws javax.microedition.media.MediaException {
+        return convertLegacySmafNative(input.getBytes(StandardCharsets.UTF_8),
+                output.getBytes(StandardCharsets.UTF_8));
+    }
+    private static native boolean convertLegacySmafNative(byte[] input, byte[] output)
+            throws javax.microedition.media.MediaException;
 
 	static {
 		System.loadLibrary("c++_shared");

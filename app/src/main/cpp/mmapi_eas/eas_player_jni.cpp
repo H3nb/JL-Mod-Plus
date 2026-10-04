@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "eas_player.h"
+#include "../mmapi_pcm/legacy_smaf.h"
+extern "C" {
+#include <libavutil/avutil.h>
+}
 #include <jni.h>
+#include <algorithm>
 #include <limits>
 #include <unordered_map>
 using mmapi::eas::Player;
@@ -68,6 +73,22 @@ void dispose(jlong handle) {
 }
 }
 #define JNI_NAME(method) Java_io_github_h3nb_jlmodplus_mmapi_synth_eas_LibEAS_##method
+extern "C" JNIEXPORT jstring JNICALL JNI_NAME(audioDecoderVersion)(JNIEnv *env, jclass) {
+    return env->NewStringUTF(av_version_info());
+}
+extern "C" JNIEXPORT jboolean JNICALL JNI_NAME(convertLegacySmafNative)(JNIEnv *env, jclass,
+        jbyteArray input, jbyteArray output) {
+    try {
+        auto path = [&](jbyteArray value) {
+            if (!value) throw std::invalid_argument("Null legacy SMAF path");
+            auto encoded = bytes(env, value, 0, env->GetArrayLength(value), 65536);
+            if (encoded.empty() || std::find(encoded.begin(), encoded.end(), 0) != encoded.end())
+                throw std::invalid_argument("Invalid legacy SMAF path");
+            return std::string(encoded.begin(), encoded.end());
+        };
+        return mmapi::pcm::convertLegacySmaf(path(input), path(output));
+    } catch (...) { translate(env); return JNI_FALSE; }
+}
 extern "C" JNIEXPORT jlong JNICALL JNI_NAME(inspectAudioDuration)(JNIEnv *env, jclass,
         jstring path, jlong origin, jobject cancelled) {
     try {

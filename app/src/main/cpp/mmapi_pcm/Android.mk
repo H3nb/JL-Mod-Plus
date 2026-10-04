@@ -13,4 +13,4 @@ LOCAL_SRC_FILES := $$(JLMOD_AUDIO_PREFIX)/lib/lib$(1)$$(JLMOD_AUDIO_SUFFIX).so
 LOCAL_EXPORT_C_INCLUDES := $$(JLMOD_AUDIO_PREFIX)/include
 include $$(PREBUILT_SHARED_LIBRARY)
 endef
-$(foreach library,avformat avcodec avutil swresample avdevice avfilter swscale,$(eval $(call jlmod_audio_prebuilt,$(library))))
+$(foreach library,avformat avcodec avutil swresample,$(eval $(call jlmod_audio_prebuilt,$(library))))

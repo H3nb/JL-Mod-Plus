@@ -9,7 +9,6 @@ import android.os.SystemClock;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
-import com.arthenica.ffmpegkit.FFmpegKitConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,8 +42,8 @@ public class UnifiedAudioRuntimeTest {
         host.close();
     }
 
-    @Test public void retainedLegacyWrapperLoadsWithTheSingleNativeDependencySet() {
-        assertEquals("n6.0", FFmpegKitConfig.getFFmpegVersion());
+    @Test public void pinnedNativeDecoderLoadsWithoutALegacyWrapper() {
+        assertEquals("8.1.3", LibEAS.audioDecoderVersion());
     }
 
     @Test public void aacEofPublishesActualDurationBeforeEndWithoutGuestGetter() throws Exception {

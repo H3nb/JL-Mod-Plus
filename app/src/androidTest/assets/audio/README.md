@@ -40,3 +40,17 @@ when regenerating these test fixtures. `generated-sid-wb.awb` is a structurally
 valid synthetic WB SID followed by three NO_DATA frames: header `#!AMR-WB\n`,
 bytes `4c 00 00 00 00 00 7c 7c 7c`. It covers existing WB support rather than
 adding a new format. Expected output is 3,528 stereo bus frames (80 ms).
+
+`legacy-yamaha.mmf` and `legacy-yamaha-stereo.mmf` contain a generated 997 Hz
+Yamaha ADPCM waveform, for the retained SMAF conversion path. Codec block
+padding extends the one-second input to 1.024 seconds: conversion to U8 WAV at
+16 kHz yields 16,384 frames with one or two channels respectively. They contain
+no SMAF sequence or commercial recording. Generate them with host FFmpeg:
+
+```powershell
+ffmpeg -f lavfi -i sine=frequency=997:sample_rate=8000:duration=1 -ac 1 -c:a adpcm_yamaha -f mmf legacy-yamaha.mmf
+ffmpeg -f lavfi -i sine=frequency=997:sample_rate=8000:duration=1 -ac 2 -c:a adpcm_yamaha -strict -2 -f mmf legacy-yamaha-stereo.mmf
+```
+
+`LegacySmafConversionTest` checks PCM WAV headers/channel preservation, UTF-8
+paths, source publication and fallback cleanup, and rejection of nonempty output.

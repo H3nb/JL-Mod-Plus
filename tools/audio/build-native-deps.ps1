@@ -15,45 +15,20 @@ $tar=(Get-Command tar).Source
 if(!$GitBash){$GitBash=if($IsWindows){"$env:ProgramFiles/Git/usr/bin/bash.exe"}else{(Get-Command bash).Source}}
 $shell=if($IsWindows){Join-Path (Split-Path $GitBash) 'sh.exe'}else{(Get-Command sh).Source}
 foreach($required in @($GitBash,$make,"$llvmRoot/clang$exe")){if(!(Test-Path -LiteralPath $required)){throw "Missing native build tool: $required"}}
-$recipeHash=(@('build-native-deps.ps1','build-opencore.ps1','install-public-headers.ps1','ffmpegkit-saf-setters.patch') | ForEach-Object {
+$recipeHash=(@('build-native-deps.ps1','build-opencore.ps1','install-public-headers.ps1') | ForEach-Object {
  (Get-FileHash -Algorithm SHA256 -LiteralPath "$PSScriptRoot/$_").Hash
 }) -join ':'
-$sourceRoot="$OutRoot/ffmpeg-6.0"
+$sourceRoot="$OutRoot/ffmpeg-8.1.3"
 $amrRoot="$OutRoot/opencore-amr-0.1.6"
 New-Item -ItemType Directory -Force -Path $OutRoot | Out-Null
 function FetchPinned($url,$file,$hash){
  if(!(Test-Path -LiteralPath $file)){Invoke-WebRequest -Uri $url -OutFile $file}
  if((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne $hash){throw "Checksum mismatch: $file"}
 }
-FetchPinned 'https://ffmpeg.org/releases/ffmpeg-6.0.tar.xz' "$OutRoot/ffmpeg-6.0.tar.xz" '57BE87C22D9B49C112B6D24BC67D42508660E6B718B3DB89C44E47E289137082'
+FetchPinned 'https://ffmpeg.org/releases/ffmpeg-8.1.3.tar.xz' "$OutRoot/ffmpeg-8.1.3.tar.xz" '7138D28C96D9D3E3AF4EE3D8CAD72741F8FFB40DA90C1112235DEA3ECD3178A3'
 FetchPinned 'https://codeload.github.com/arthenica/opencore-amr/tar.gz/7dba8c32238418ce0b316a852b2224df586ca896' "$OutRoot/opencore-amr-7dba8c3.tar.gz" 'FC302CEA3B65072F87D950D77EE5A7014347536039A7DE7668DA2891D386147E'
-foreach($spec in @(@($sourceRoot,"$OutRoot/ffmpeg-6.0.tar.xz"),@($amrRoot,"$OutRoot/opencore-amr-7dba8c3.tar.gz"))){
+foreach($spec in @(@($sourceRoot,"$OutRoot/ffmpeg-8.1.3.tar.xz"),@($amrRoot,"$OutRoot/opencore-amr-7dba8c3.tar.gz"))){
  if(!(Test-Path -LiteralPath $spec[0])){New-Item -ItemType Directory -Path $spec[0] | Out-Null; & $tar -xf $spec[1] --strip-components=1 -C $spec[0];if($LASTEXITCODE){throw 'Source extraction failed'}}
-}
-$patchHash=(Get-FileHash -LiteralPath "$PSScriptRoot/ffmpegkit-saf-setters.patch" -Algorithm SHA256).Hash
-$patchStamp="$sourceRoot/jlmod-patch.txt"
-$patchedSource=[IO.File]::ReadAllText("$sourceRoot/libavutil/file.c").Contains('void av_set_saf_open(')
-if(!(Test-Path -LiteralPath $patchStamp) -or [IO.File]::ReadAllText($patchStamp).Trim() -ne $patchHash -or !$patchedSource){
- # Restore only the two recipe-owned source files before changing the patch.
- & $tar -xf "$OutRoot/ffmpeg-6.0.tar.xz" --strip-components=1 -C $sourceRoot ffmpeg-6.0/libavutil/file.c ffmpeg-6.0/libavutil/file.h
- if($LASTEXITCODE){throw 'Original patch-source extraction failed'}
- # git apply inside a parent checkout can silently skip these untracked paths.
- # Apply absolute, recipe-owned targets from outside that checkout, then verify.
- & git -C ([IO.Path]::GetTempPath()) apply --unsafe-paths "--directory=$sourceRoot" "$PSScriptRoot/ffmpegkit-saf-setters.patch"
- if($LASTEXITCODE){throw 'SAF setter patch failed'}
- if(![IO.File]::ReadAllText("$sourceRoot/libavutil/file.c").Contains('void av_set_saf_close(') -or
-     ![IO.File]::ReadAllText("$sourceRoot/libavutil/file.h").Contains('typedef int (*saf_open_function)(int);')){throw 'SAF patch was not applied to the recipe source'}
- Set-Content -LiteralPath $patchStamp -Value $patchHash
-}
-function HasSafExports([string]$installRoot){
- $library=Get-ChildItem "$installRoot/lib" -Filter 'libavutil*.so' -ErrorAction SilentlyContinue | Select-Object -First 1
- if(!$library){return $false}
- $symbols=@(& "$llvmRoot/llvm-nm$exe" -D --defined-only $library.FullName)
- if($LASTEXITCODE){return $false}
- foreach($name in @('av_get_saf_open','av_get_saf_close','av_set_saf_open','av_set_saf_close')){
-  if(!($symbols -match ('\b'+[regex]::Escape($name)+'(@.*)?$'))){return $false}
- }
- return $true
 }
 $profiles=@{
  'arm64-v8a'=@('aarch64-linux-android23','aarch64','armv8-a','')
@@ -63,12 +38,13 @@ $profiles=@{
 }
 foreach($abi in (($Abis -join ',') -split ',')){
  $profile=$profiles[$abi];if(!$profile){throw "Unknown ABI: $abi"}
- $buildRoot="$OutRoot/build-$abi"
+ # A new upstream version must never reuse objects from an older source tree.
+ $buildRoot="$OutRoot/build-ffmpeg-8.1.3-$abi"
  $installRoot="$OutRoot/install-$abi"
  $stamp="$installRoot/recipe.txt"
  $signature="$recipeHash`:$NdkVersion`:$abi`:$hostTag"
  if((Test-Path -LiteralPath $stamp) -and ([IO.File]::ReadAllText($stamp).Trim() -eq $signature) -and
-     (Get-ChildItem "$installRoot/lib" -Filter '*.so').Count -eq 7 -and (HasSafExports $installRoot)){Write-Output "Cached native audio dependencies: $abi";continue}
+     (Get-ChildItem "$installRoot/lib" -Filter '*.so').Count -eq 4){Write-Output "Cached native audio dependencies: $abi";continue}
  $amrOut="$OutRoot/opencore-$abi"
  & "$PSScriptRoot/build-opencore.ps1" -Target $profile[0] -DecoderOnly -SourceRoot $amrRoot -OutputRoot $amrOut -LlvmRoot $llvmRoot -ToolSuffix $exe
  New-Item -ItemType Directory -Force -Path $buildRoot,$installRoot | Out-Null
@@ -77,9 +53,9 @@ foreach($abi in (($Abis -join ',') -split ',')){
   "--cc=$llvmRoot/clang$exe","--cxx=$llvmRoot/clang++$exe","--ar=$llvmRoot/llvm-ar$exe","--ranlib=$llvmRoot/llvm-ranlib$exe","--nm=$llvmRoot/llvm-nm$exe","--strip=$llvmRoot/llvm-strip$exe",
   "--extra-cflags=--target=$($profile[0]) --sysroot=$ndkRoot/toolchains/llvm/prebuilt/$hostTag/sysroot -O2 -fPIC -I$amrOut/include",
   "--extra-ldflags=--target=$($profile[0]) --sysroot=$ndkRoot/toolchains/llvm/prebuilt/$hostTag/sysroot -Wl,-z,max-page-size=16384 -L$amrOut/lib",
-  '--disable-autodetect','--disable-doc','--disable-programs','--disable-everything','--enable-avdevice','--enable-avfilter','--enable-swscale','--disable-network','--enable-jni','--enable-version3','--enable-libopencore-amrnb','--enable-libopencore-amrwb',
+  '--disable-autodetect','--disable-doc','--disable-programs','--disable-everything','--disable-avdevice','--disable-avfilter','--disable-swscale','--disable-network','--enable-version3','--enable-libopencore-amrnb','--enable-libopencore-amrwb',
   '--disable-asm','--disable-debug','--enable-small','--enable-pic','--enable-pthreads','--disable-static','--enable-shared','--enable-swresample',
-  '--enable-protocol=file','--enable-muxer=wav','--enable-encoder=pcm_u8','--enable-filter=aresample','--enable-demuxer=wav,mp3,aac,mov,amr,mmf',
+  '--enable-demuxer=wav,mp3,aac,mov,amr,mmf',
   '--enable-parser=mpegaudio,aac,ac3,amr','--enable-decoder=pcm_u8,pcm_s16le,pcm_s24le,pcm_s32le,pcm_f32le,pcm_alaw,pcm_mulaw,gsm_ms,adpcm_ima_wav,adpcm_yamaha,mp3float,aac,libopencore_amrnb,libopencore_amrwb')
  if($profile[3]){$configureArgs+=$profile[3]}
  $quoted=@($configureArgs | ForEach-Object {"'"+$_.Replace("'","'\''")+"'"})
@@ -102,7 +78,13 @@ foreach($abi in (($Abis -join ',') -split ',')){
   }finally{Pop-Location}
  }finally{$env:PATH=$oldPath}
  & "$PSScriptRoot/install-public-headers.ps1" -SourceRoot $sourceRoot -BuildRoot $buildRoot -InstallRoot $installRoot
- if(!(HasSafExports $installRoot)){throw "Missing FFmpegKit SAF ABI exports: $abi"}
+ # Retire only the old, recipe-owned libraries that are no longer configured.
+ $suffix=if($abi -eq 'armeabi-v7a'){'_neon'}else{''}
+ foreach($retired in @('avdevice','avfilter','swscale')){
+  $retiredPath=Join-Path $installRoot "lib/lib$retired$suffix.so"
+  if(Test-Path -LiteralPath $retiredPath){Remove-Item -LiteralPath $retiredPath}
+ }
+ if((Get-ChildItem "$installRoot/lib" -Filter '*.so').Count -ne 4){throw "Unexpected native audio library set: $abi"}
  Get-ChildItem "$installRoot/lib" -Filter '*.so' | ForEach-Object {[pscustomobject]@{name=$_.Name;sha256=(Get-FileHash $_.FullName -Algorithm SHA256).Hash}} | ConvertTo-Json | Set-Content "$installRoot/checksums.json"
  Set-Content -LiteralPath $stamp -Value $signature
  Write-Output "PASS build $abi => $installRoot"
