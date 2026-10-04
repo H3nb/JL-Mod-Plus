@@ -42,7 +42,7 @@
     <string name="help_message">&#8226; Mengaktifkan filter dalam beberapa kasus dapat sangat menurunkan kinerja. Nonaktifkan opsi ini jika aplikasi terlalu lambat.&lt;BR&gt;&#8226; Mode pemrosesan langsung melewati antrean event Java ME normal. Mode ini dapat meningkatkan respons, tetapi bisa menyebabkan perilaku yang tidak terduga.</string>
     <string name="identity_filter">Cepat (tanpa filter)</string>
     <string name="install">Pasang</string>
-    <string name="install_done">Aplikasi telah berhasil dipasang!</string>
+    <string name="install_done">Aplikasi terpasang.</string>
     <string name="installer_title">Penginstal MIDlet</string>
     <string name="installer_error_message">Aplikasi yang dipilih tidak dapat diinstal. Pilih file MIDlet yang valid lalu coba lagi.</string>
     <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD tersebut dan tetap pasang?</string>
@@ -80,7 +80,7 @@
     <string name="mapping_dialog_remove">Hapus</string>
     <string name="mapping_dialog_title">Tekan Tombol</string>
     <string name="message_clear_data">Apakah Anda yakin ingin menghapus data aplikasi?</string>
-    <string name="message_delete">Apakah Anda yakin ingin menghapus aplikasi ini?</string>
+    <string name="message_delete">Hapus aplikasi ini beserta pengaturan dan data simpanannya? Entri aplikasi di pustaka juga akan dihapus.</string>
     <string name="midlet_name"><b>Nama: </b></string>
     <string name="midlet_size"><b>Ukuran: </b></string>
     <string name="midlet_vendor"><b>Vendor: </b></string>
@@ -121,7 +121,7 @@
     <string name="library_show_list_description">Tampilkan Deskripsi MIDlet</string>
     <string name="library_show_list_description_summary">Tampilkan deskripsi MIDlet di bawah judul dan versinya.</string>
     <string name="library_collections_empty_title">Belum Ada Koleksi</string>
-    <string name="library_collections_empty_message">Koleksi dan folder akan tersedia pada pembaruan mendatang.</string>
+    <string name="library_collections_empty_message">Koleksi belum tersedia sampai pustaka selesai dimuat.</string>
     <string name="library_expand_description">Buka deskripsi lengkap</string>
     <string name="library_collapse_description">Tutup deskripsi</string>
     <string name="msg_press_again_to_close">Tekan lagi untuk menutup</string>
@@ -553,7 +553,7 @@
     <string name="select_all_reports">Pilih semua laporan</string>
     <string name="clear_report_selection">Batalkan semua pilihan laporan</string>
 
-    <string name="installer_ambiguous">Beberapa game terpasang cocok dengan aplikasi ini. Pasang salinan terpisah? Game yang ada beserta datanya akan tetap disimpan.</string>
+    <string name="installer_ambiguous">Beberapa aplikasi terpasang cocok dengan aplikasi ini. Pasang salinan terpisah? Aplikasi yang ada beserta datanya akan tetap disimpan.</string>
     <string name="installer_separate_copy">Pasang Salinan Terpisah</string>
     <string name="installer_stage_download">Mengunduh aplikasi…</string>
     <string name="installer_stage_wait">Menunggu operasi lain…</string>
@@ -566,8 +566,8 @@
     <string name="installer_cancel_pending">Menghentikan pada tahap aman berikutnya…</string>
     <string name="installer_retry_remaining">Tinjau Item Yang Belum Selesai</string>
     <string name="installer_not_processed">Belum diproses</string>
-    <string name="installer_partial_restore">Game terpasang; pemulihan data atau pengaturan gagal</string>
-    <string name="installer_removed_leftovers">Game dihapus; sebagian pengaturan atau data simpanan tidak dapat dihapus.</string>
+    <string name="installer_partial_restore">Aplikasi terpasang; pemulihan data atau pengaturan gagal</string>
+    <string name="installer_removed_leftovers">Aplikasi dihapus; sebagian pengaturan atau data simpanan tidak dapat dihapus.</string>
     <string name="installer_copy_details">Salin Detail</string>
 
     <string name="library_collection_new">Koleksi Baru</string>
@@ -760,7 +760,7 @@
     <string name="bulk_install_cancel_requested">Berhenti setelah aplikasi saat ini selesai…</string>
     <string name="bulk_install_complete">Instalasi Massal Selesai</string>
     <string name="bulk_install_cancelled">Instalasi Massal Dihentikan</string>
-    <string name="bulk_install_fatal">Instalasi massal dihentikan: %1$s</string>
+    <string name="bulk_install_fatal">Pemasangan massal berhenti. Tinjau item yang belum selesai sebelum mencoba lagi.</string>
     <string name="bulk_install_result_installed">Terinstal</string>
     <string name="bulk_install_result_updated">Diperbarui</string>
     <string name="bulk_install_result_reinstalled">Diinstal ulang</string>
@@ -1090,4 +1090,11 @@
     <string name="runtime_virtual_controls_template_analog_standard">Stik Analog Standar</string>
     <string name="config_gamepad_directions_numeric_v2">Numerik</string>
     <string name="config_gamepad_mapping_help_body_v2">Gunakan D-pad atau stik kiri untuk menavigasi JL-Mod Plus, A untuk memilih, dan B untuk kembali. Saat MIDlet berjalan, tombol keypad/keyboard/gamepad fisik memakai Pemetaan Tombol yang sama. Petakan tombol fisik apa pun ke M bila ingin tombol itu membuka menu runtime MIDlet. Stik analog, trigger, input pointer, kalibrasi, dan kontrol virtual dikonfigurasi secara terpisah.</string>
+    <string name="library_collections_unavailable_title">Koleksi Belum Tersedia</string>
+    <string name="library_indexing_progress">Mengindeks pustaka… %1$d/%2$d</string>
+    <string name="library_indexing_current">Memindai %1$s</string>
+    <string name="library_retry">Coba Lagi</string>
+    <string name="library_reinstall_source_missing">JAR yang disimpan tidak tersedia untuk pemasangan ulang.</string>
+    <string name="library_load_failed_message">Pustaka tidak dapat dimuat. Coba lagi.</string>
+    <string name="bulk_install_prepare_failed">Aplikasi yang dipilih tidak dapat disiapkan untuk pemasangan.</string>
 </resources>

@@ -44,7 +44,7 @@
     <string name="help_message">&#8226; Enabling filtering in some cases can greatly reduce performance. Disable this option if the app is too slow.&lt;BR>&#8226; Immediate processing mode bypasses the normal Java ME event queue. It may improve responsiveness, but can cause unpredictable behavior.</string>
     <string name="identity_filter">Fast (no filter)</string>
     <string name="install">Install</string>
-    <string name="install_done">Application successfully installed!</string>
+    <string name="install_done">Application installed.</string>
     <string name="installer_title">MIDlet Installer</string>
     <string name="installer_error_message">The selected application could not be installed. Choose a valid MIDlet file and try again.</string>
     <string name="install_jar_non_matched_jad">This app differs from the one described in the JAD.\nIgnore the JAD and install anyway?</string>
@@ -121,7 +121,7 @@
     <string name="message_clear_data">Do you really want to clear app data?</string>
     <string name="message_reset_settings">Reset all configuration settings to their defaults?</string>
     <string name="message_reset_layout">Reset the button layout to its default?</string>
-    <string name="message_delete">Do you really want to delete this app?</string>
+    <string name="message_delete">Delete this app, its settings, and save data? This also removes its Library entry.</string>
     <string name="midlet_name"><b>Name: </b></string>
     <string name="midlet_size"><b>Size: </b></string>
     <string name="midlet_vendor"><b>Vendor: </b></string>
@@ -161,7 +161,7 @@
     <string name="library_hide_grid_titles">Hide MIDlet Titles</string>
     <string name="library_show_list_description">Show MIDlet Descriptions</string>
     <string name="library_collections_empty_title">No Collections Yet</string>
-    <string name="library_collections_empty_message">Collections and folders will be available in a future update.</string>
+    <string name="library_collections_empty_message">Collections are unavailable until the library is loaded.</string>
     <string name="library_expand_description">Expand description</string>
     <string name="library_collapse_description">Collapse description</string>
     <string name="msg_press_again_to_close">Press again to close</string>
@@ -596,7 +596,7 @@
     <string name="select_all_reports">Select All Reports</string>
     <string name="clear_report_selection">Clear Report Selection</string>
 
-    <string name="installer_ambiguous">Several installed games match this application. Install a separate copy? Existing games and their data will be kept.</string>
+    <string name="installer_ambiguous">Several installed apps match this application. Install a separate copy? Existing apps and their data will be kept.</string>
     <string name="installer_separate_copy">Install Separate Copy</string>
     <string name="installer_stage_download">Downloading application…</string>
     <string name="installer_stage_wait">Waiting for another operation…</string>
@@ -609,8 +609,8 @@
     <string name="installer_cancel_pending">Stopping at the next safe point…</string>
     <string name="installer_retry_remaining">Review Unfinished Items</string>
     <string name="installer_not_processed">Not processed</string>
-    <string name="installer_partial_restore">Game installed; restoring data or settings failed</string>
-    <string name="installer_removed_leftovers">Game removed; some settings or save data could not be deleted.</string>
+    <string name="installer_partial_restore">App installed; restoring data or settings failed</string>
+    <string name="installer_removed_leftovers">App removed; some settings or save data could not be deleted.</string>
     <string name="installer_copy_details">Copy Details</string>
 
     <string name="library_collection_new">New Collection</string>
@@ -825,7 +825,7 @@
     <string name="bulk_install_cancel_requested">Stopping after the current application…</string>
     <string name="bulk_install_complete">Bulk Install Complete</string>
     <string name="bulk_install_cancelled">Bulk Install Stopped</string>
-    <string name="bulk_install_fatal">Bulk install stopped: %1$s</string>
+    <string name="bulk_install_fatal">Bulk install stopped. Review the unfinished items before trying again.</string>
     <string name="bulk_install_result_installed">Installed</string>
     <string name="bulk_install_result_updated">Updated</string>
     <string name="bulk_install_result_reinstalled">Reinstalled</string>
@@ -1160,4 +1160,7 @@
     <string name="runtime_virtual_controls_template_analog_standard">Standard Analog Stick</string>
     <string name="config_gamepad_directions_numeric_v2">Numeric</string>
     <string name="config_gamepad_mapping_help_body_v2">Use the D-pad or left stick to navigate JL-Mod Plus, A to activate, and B to go back. During MIDlet runtime, physical keyboard/keypad/gamepad buttons use the same Key Mappings. Map any physical button to M if you want it to open the runtime MIDlet menu. Analog sticks, triggers, pointer input, calibration, and virtual controls are configured separately.</string>
+    <string name="library_collections_unavailable_title">Collections Unavailable</string>
+    <string name="library_load_failed_message">The library could not be loaded. Try again.</string>
+    <string name="bulk_install_prepare_failed">The selected apps could not be prepared for installation.</string>
 </resources>

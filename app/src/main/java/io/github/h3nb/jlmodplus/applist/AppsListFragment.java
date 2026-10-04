@@ -672,7 +672,10 @@ public class AppsListFragment extends Fragment {
                         return;
                     }
                     if (result != null && (result.getLeftoverConfig() || result.getLeftoverSaveData())) {
-                        showError(new IOException(getString(R.string.installer_removed_leftovers)));
+                        LibraryComposeController controller = composeController;
+                        if (controller != null) {
+                            controller.showNotice(getString(R.string.installer_removed_leftovers));
+                        }
                     }
                 });
             }
@@ -863,7 +866,9 @@ public class AppsListFragment extends Fragment {
             return;
         }
         if (state instanceof LibraryViewModel.DisplayState.Error) {
-            controller.showError(((LibraryViewModel.DisplayState.Error) state).getMessage());
+            String detail = ((LibraryViewModel.DisplayState.Error) state).getMessage();
+            Log.e(TAG, "Library load failed: " + detail);
+            controller.showError(detail);
             return;
         }
         controller.showLoading();

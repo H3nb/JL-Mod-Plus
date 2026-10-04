@@ -629,13 +629,15 @@ private fun FinishedContent(
         ) {
             item {
                 Text(
-                    if (state.cancelled) stringResource(R.string.bulk_install_cancelled)
+                    if (state.cancelled || state.fatalError != null) stringResource(R.string.bulk_install_cancelled)
                     else stringResource(R.string.bulk_install_complete),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 state.fatalError?.let {
-                    Text(stringResource(R.string.bulk_install_fatal, it),
+                    Text(stringResource(R.string.bulk_install_fatal),
                         color = MaterialTheme.colorScheme.error)
+                    Text(it, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             item {
@@ -694,13 +696,16 @@ private fun ErrorContent(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        Text(stringResource(R.string.bulk_install_prepare_failed),
+            color = MaterialTheme.colorScheme.error)
         Text(
             text = message,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f, fill = false)
                 .verticalScroll(rememberScrollState()),
-            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             Button(onClick = onClose) {
