@@ -85,7 +85,7 @@ import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.shell.MidletThread;
 import javax.microedition.shell.GuestTimingBridge;
-import javax.microedition.shell.timing.AutoSpeedController;
+import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.FramePacer;
 import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.shell.timing.PresentationMailbox;
@@ -179,10 +179,10 @@ public abstract class Canvas extends Displayable {
 	private Image offscreenCopy;
 	private volatile long publishedFrameSequence;
 	private volatile FrameMetrics frameMetrics;
-	private AutoSpeedController autoSpeedController;
 	private final PresentationMailbox presentationMailbox = new PresentationMailbox();
 	private int onX, onY, onWidth, onHeight;
-	private final FramePacer framePacer = new FramePacer(GuestTimingBridge.activeSession());
+	private final TimingSession timingSession = GuestTimingBridge.activeSession();
+	private final FramePacer framePacer = new FramePacer(timingSession);
 	private volatile int displayMaximumFps;
 	private final Object ambientLock = new Object();
 	private final AmbientColorSampler ambientSampler = new AmbientColorSampler();
@@ -662,10 +662,6 @@ public abstract class Canvas extends Displayable {
 	private void onEffectiveVisibilityChanged(boolean shown) {
 		if (shown) {
 			guestKeyLedger.resetForShow();
-			AutoSpeedController controller = autoSpeedController;
-			if (controller != null) {
-				controller.setFrameSourceActive(true);
-			}
 			Display.postEvent(CanvasEvent.getInstance(this, CanvasEvent.SHOW_NOTIFY));
 			repaintInternal();
 			return;
@@ -673,10 +669,6 @@ public abstract class Canvas extends Displayable {
 		PointerEvent.cancel(this);
 		guestKeyLedger.endVisibility();
 		resetControllerBoundaryState();
-		AutoSpeedController controller = autoSpeedController;
-		if (controller != null) {
-			controller.setFrameSourceActive(false);
-		}
 		cancelAmbientHostTick();
 		Display.postEvent(CanvasEvent.getInstance(this, CanvasEvent.HIDE_NOTIFY));
 	}
@@ -1736,10 +1728,6 @@ public abstract class Canvas extends Displayable {
 
 		private void releaseSurface() {
 			updateSurfaceUsable(false);
-			if (autoSpeedController != null) {
-				autoSpeedController.setFrameSourceActive(false);
-				autoSpeedController = null;
-			}
 			presentationMailbox.close();
 			if (renderer != null) {
 				renderer.stop();
@@ -2005,16 +1993,14 @@ public abstract class Canvas extends Displayable {
 				renderer.start();
 			}
 			surface = holder.getSurface();
-			autoSpeedController = GuestTimingBridge.activeSpeedController();
-			if (settings.showFps || autoSpeedController != null) {
-				frameMetrics = autoSpeedController == null
-						? new FrameMetrics() : autoSpeedController.frameMetrics();
-			}
 			if (settings.showFps) {
+				// The mailbox sequence restarts with each surface. Diagnostics share that
+				// lifetime so renderer counts cannot retain a previous surface's sequence.
+				frameMetrics = new FrameMetrics();
 				fpsCounter = new FpsCounter(
 						overlayView,
 						frameMetrics,
-						timingOverlayEnabled ? autoSpeedController : null);
+						timingOverlayEnabled ? timingSession : null);
 				overlayView.addLayer(fpsCounter);
 			}
 			overlayView.addLayer(softBar, 0);

@@ -14,10 +14,9 @@
 
 package javax.microedition.shell.timing;
 
-/** Validated speed-domain constants shared by manual controls and runtime timing code. */
+/** One bounded speed domain shared by manual controls and runtime timing code. */
 public final class EmulationSpeed {
 	public static final int MIN_PERCENT = 25;
-	/** Maximum exposed by the deterministic manual picker; Auto is not capped to this value. */
 	public static final int MAX_PERCENT = 1600;
 	public static final int NORMAL_PERCENT = 100;
 
@@ -40,18 +39,6 @@ public final class EmulationSpeed {
 		return percent;
 	}
 
-	/**
-	 * Validates the timing engine's runtime domain. Auto speed is intentionally not constrained by
-	 * the manual picker's maximum; {@link Integer#MAX_VALUE} is only a representation limit.
-	 */
-	public static int requireRuntimePercent(int percent) {
-		if (percent < MIN_PERCENT) {
-			throw new IllegalArgumentException("Runtime emulation speed must be at least "
-					+ MIN_PERCENT + "%: " + percent);
-		}
-		return percent;
-	}
-
 	/** Returns the safe fallback for a missing or malformed manual value. */
 	public static int sanitizePercent(int percent) {
 		return isValidPercent(percent) ? percent : NORMAL_PERCENT;
@@ -65,19 +52,6 @@ public final class EmulationSpeed {
 	/** Formats a percentage as a locale-independent picker/overlay multiplier. */
 	public static String formatMultiplier(int percent) {
 		return formatMultiplierValue(sanitizePercent(percent));
-	}
-
-	/** Formats a measured diagnostic percentage without clamping it to the picker range. */
-	public static String formatMeasuredMultiplier(int percent) {
-		if (percent < 0) {
-			throw new IllegalArgumentException("Measured speed must not be negative: " + percent);
-		}
-		return formatMultiplierValue(percent);
-	}
-
-	/** Formats any valid runtime speed, including Auto values above the manual picker range. */
-	public static String formatRuntimeMultiplier(int percent) {
-		return formatMultiplierValue(requireRuntimePercent(percent));
 	}
 
 	private static String formatMultiplierValue(int percent) {

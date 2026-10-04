@@ -1,6 +1,6 @@
 /*
  * Copyright 2019 Yury Kharchenko
- * Modified in 2026 for guest/render frame telemetry.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.microedition.lcdui.graphics.CanvasWrapper;
-import javax.microedition.shell.timing.AutoSpeedController;
+import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.shell.timing.FrameMetricsSnapshot;
@@ -40,16 +40,16 @@ public class FpsCounter extends TimerTask implements Layer {
 	private final int pillContentColor;
 	private volatile String previousFrameRate;
 	private final FrameMetrics metrics;
-	private final AutoSpeedController speedController;
+	private final TimingSession timingSession;
 	private final Timer timer;
 	private FrameMetricsSnapshot previousSnapshot;
 	private long previousSampleNanos;
 
 	public FpsCounter(
-			View view, FrameMetrics metrics, AutoSpeedController speedController) {
+			View view, FrameMetrics metrics, TimingSession timingSession) {
 		this.view = view;
 		this.metrics = metrics;
-		this.speedController = speedController;
+		this.timingSession = timingSession;
 		frameRateFormat = ContextHolder.getAppContext().getString(R.string.fps_overlay_value);
 		pillBackgroundColor = ContextCompat.getColor(
 				ContextHolder.getAppContext(), R.color.fps_overlay_surface);
@@ -82,11 +82,9 @@ public class FpsCounter extends TimerTask implements Layer {
 
 	private String format(long gameFrames, long renderFrames, long dropPercent) {
 		String speed = "N/A";
-		if (speedController != null) {
-			speed = EmulationSpeed.formatRuntimeMultiplier(speedController.speedPercent());
-			if (speedController.isAutoEnabled()) {
-				speed = "AUTO " + speed;
-			}
+		if (timingSession != null) {
+			speed = EmulationSpeed.formatMultiplier(
+					timingSession.speedPercentOr(EmulationSpeed.NORMAL_PERCENT));
 		}
 		return String.format(
 				java.util.Locale.ROOT,
