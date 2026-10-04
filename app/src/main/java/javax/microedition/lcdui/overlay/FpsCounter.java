@@ -85,8 +85,10 @@ public class FpsCounter extends TimerTask implements Layer {
 
 	private void sample() {
 		long now = System.nanoTime();
-		long generation = owner.getPerformanceGeneration();
+		// Read visibility first: observing visible=true also observes the preceding
+		// performanceGeneration update from the same lifecycle transition.
 		boolean active = owner.getPerformanceSourceActive();
+		long generation = owner.getPerformanceGeneration();
 		FrameMetricsSnapshot snapshot = metrics == null ? null : metrics.snapshot();
 		if (!active || generation != previousGeneration) {
 			previousSnapshot = snapshot;
