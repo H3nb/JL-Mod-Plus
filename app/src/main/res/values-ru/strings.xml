@@ -209,4 +209,7 @@
     <string name="version">Версия: </string>
     <string name="warn_install_from_net">Файл будет загружен из сети Интернет</string>
     <string name="warning">Предупреждение!</string>
+    <string name="midlet_running_notification_title">MIDlet запущен</string>
+    <string name="midlet_running_notification_text">%1$s работает в фоновом режиме.</string>
+    <string name="midlet_running_notification_channel">Среда выполнения MIDlet</string>
 </resources>

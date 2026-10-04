@@ -227,16 +227,19 @@ application identity. Do not rename locale directories in Phase 1.
   and harden its dependency on generated locale metadata. Catalog presence alone
   does not establish translation completeness or review quality.
 
-Current implementation evidence, verified on the Phase 1 base:
+Current implementation evidence:
 
 - [resources.properties](../app/src/main/res/resources.properties) declares
   `unqualifiedResLocale=en`; [app Gradle configuration](../app/build.gradle.kts)
   enables `androidResources.generateLocaleConfig` and disables `MissingTranslation`.
 - English [default resources](../app/src/main/res/values/strings.xml) and
-  [Indonesian resources](../app/src/main/res/values-in/strings.xml) are fragmented
-  across strings, plurals, configuration, installer, Memory Editor, diagnostics,
-  and virtual-control files. Some other locales have only `strings.xml`; others
-  have additional files, such as [Russian runtime strings](../app/src/main/res/values-ru/strings_runtime.xml).
+  [Indonesian resources](../app/src/main/res/values-in/strings.xml) each use one
+  `strings.xml` catalog for strings and plurals after Phase 3 physical
+  consolidation, as do [Russian resources](../app/src/main/res/values-ru/strings.xml)
+  and the other base locale catalogs. Structural resources and configuration-specific
+  overrides remain in their own files/configurations. Semantic copy quality,
+  translation completeness, and the known placeholder debt remain pending;
+  physical consolidation does not establish compliance with those contracts.
 - [SettingsActivity.buildLanguageOptions](../app/src/main/java/io/github/h3nb/jlmodplus/settings/SettingsActivity.java)
   reads `_generated_res_locale_config`; unavailable/unreadable metadata leaves
   the system-language option. This requires later runtime hardening.
