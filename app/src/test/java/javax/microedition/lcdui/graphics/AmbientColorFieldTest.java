@@ -190,6 +190,25 @@ public class AmbientColorFieldTest {
     }
 
     @Test
+    public void roundedEmitterDoesNotSampleTheSharpGuestCornerDirectly() {
+        AmbientColorField field = new AmbientColorField();
+        field.configureNodes(
+                new float[]{0.30f}, new float[]{0.30f},
+                0.30f, 0.30f, 0.70f, 0.70f, 1.0f);
+        float[] grid = solidGrid(1.0f, 0.0f, 0.0f);
+        for (int y = 0; y < 2; y++) {
+            for (int x = 0; x < 2; x++) {
+                setGridColor(grid, x, y, 0.0f, 0.0f, 1.0f);
+            }
+        }
+        field.setTargetGrid(grid, 0xFF000000, 0L, true);
+
+        float[] output = new float[AmbientColorField.CHANNEL_COUNT];
+        field.renderNodes(0L, output);
+        assertTrue(output[0] > output[2]);
+    }
+
+    @Test
     public void terminalFadeUsesEqualPhysicalWidthOnPortraitSurface() {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(
