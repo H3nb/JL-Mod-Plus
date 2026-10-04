@@ -27,11 +27,15 @@ public final class AmbientColorField {
     private static final float RADIUS_SQUARED = 0.20f * 0.20f;
     /** Legacy anchor-path falloff retained until that compatibility path can be removed safely. */
     private static final float EDGE_FALLOFF = 0.30f;
-    /** Local edge enhancement radius relative to the shorter physical guest-screen dimension. */
-    private static final float EDGE_BOOST_RADIUS_SCALE = 0.18f;
-    /** The full-surface backdrop stays dominant; local edge color only strengthens continuity. */
-    private static final float MAX_EDGE_BOOST = 0.55f;
-    private static final float EDGE_INSET = 0.04f;
+    /** Rounded only for the emitted light field; the guest LCD itself remains rectangular. */
+    private static final float EMITTER_CORNER_SCALE = 0.08f;
+    /** Physical distance over which local edge color diffuses into the coarser field. */
+    private static final float DIFFUSION_DISTANCE_SCALE = 0.35f;
+    /** Samples slightly inside the LCD so a one-pixel border cannot dominate the emitted light. */
+    private static final float SOURCE_INSET_NEAR_SCALE = 0.02f;
+    private static final float SOURCE_INSET_FAR_SCALE = 0.10f;
+    /** Theme is only a terminal fade close to the host boundary. */
+    private static final float OUTER_THEME_FADE_SCALE = 0.10f;
     private static final float LINEAR_EPSILON = 1.0f / 4096.0f;
     /** Five-tap blur softens neighboring samples without erasing the higher-resolution field. */
     private static final float[] BLUR_KERNEL = {0.0625f, 0.25f, 0.375f, 0.25f, 0.0625f};
@@ -58,7 +62,10 @@ public final class AmbientColorField {
     private float[] nodeY = new float[0];
     private float[] weights = new float[0];
     private float[] fade = new float[0];
-    private float[] edgeBoost = new float[0];
+    private float[] emissionU = new float[0];
+    private float[] emissionV = new float[0];
+    private float[] diffusion = new float[0];
+    private float[] outerAmbient = new float[0];
     private int nodeCount;
     private float gameLeft;
     private float gameTop;
@@ -245,7 +252,10 @@ public final class AmbientColorField {
             nodeY = new float[0];
             weights = new float[0];
             fade = new float[0];
-            edgeBoost = new float[0];
+            emissionU = new float[0];
+            emissionV = new float[0];
+            diffusion = new float[0];
+            outerAmbient = new float[0];
             return;
         }
         nodeCount = Math.min(requestedCount, Math.min(normalizedX.length, normalizedY.length));
@@ -253,7 +263,10 @@ public final class AmbientColorField {
         nodeY = new float[nodeCount];
         weights = new float[nodeCount * ANCHOR_COUNT];
         fade = new float[nodeCount];
-        edgeBoost = new float[nodeCount];
+        emissionU = new float[nodeCount];
+        emissionV = new float[nodeCount];
+        diffusion = new float[nodeCount];
+        outerAmbient = new float[nodeCount];
         float safeAspect = aspectRatio > 0.0f && Float.isFinite(aspectRatio) ? aspectRatio : 1.0f;
         surfaceAspect = safeAspect;
         float left = clamp01(Math.min(gameLeft, gameRight));
@@ -264,11 +277,18 @@ public final class AmbientColorField {
         this.gameTop = top;
         this.gameRight = right;
         this.gameBottom = bottom;
-        float physicalGameWidth = Math.max((right - left) * safeAspect, 1.0e-6f);
+        float physicalLeft = left * safeAspect;
+        float physicalRight = right * safeAspect;
+        float physicalGameWidth = Math.max(physicalRight - physicalLeft, 1.0e-6f);
         float physicalGameHeight = Math.max(bottom - top, 1.0e-6f);
-        float edgeBoostRadius = Math.max(
-                Math.min(physicalGameWidth, physicalGameHeight) * EDGE_BOOST_RADIUS_SCALE,
-                1.0e-6f);
+        float shortGameSide = Math.min(physicalGameWidth, physicalGameHeight);
+        float cornerRadius = Math.min(shortGameSide * EMITTER_CORNER_SCALE,
+                0.5f * shortGameSide);
+        float diffusionDistance = Math.max(
+                shortGameSide * DIFFUSION_DISTANCE_SCALE, 1.0e-6f);
+        float hostShortSide = Math.max(Math.min(safeAspect, 1.0f), 1.0e-6f);
+        float outerFadeWidth = Math.max(
+                hostShortSide * OUTER_THEME_FADE_SCALE, 1.0e-6f);
         for (int n = 0; n < nodeCount; n++) {
             float x = clamp01(normalizedX[n]);
             float y = clamp01(normalizedY[n]);
@@ -300,14 +320,9 @@ public final class AmbientColorField {
             float d = clamp01(Math.max(normalizedOutsideX, normalizedOutsideY));
             fade[n] = smoothStep(d);
 
-            float edgeX = Math.max(this.gameLeft, Math.min(this.gameRight, x));
-            float edgeY = Math.max(this.gameTop, Math.min(this.gameBottom, y));
-            float physicalDx = (x - edgeX) * safeAspect;
-            float physicalDy = y - edgeY;
-            float physicalDistance =
-                    (float) Math.sqrt(physicalDx * physicalDx + physicalDy * physicalDy);
-            edgeBoost[n] =
-                    1.0f - smoothStep(clamp01(physicalDistance / edgeBoostRadius));
+            configureEmissionNode(n, x, y, safeAspect, physicalLeft, top, physicalRight, bottom,
+                    physicalGameWidth, physicalGameHeight, shortGameSide, cornerRadius,
+                    diffusionDistance, outerFadeWidth);
         }
     }
 
@@ -380,18 +395,19 @@ public final class AmbientColorField {
         boolean active = evaluateGrid(nowNs, evaluationGrid, evaluationBase);
         buildBroadGrid(evaluationGrid, evaluationBroadGrid);
         for (int n = 0; n < nodeCount; n++) {
-            sampleGridAt(nodeX[n], nodeY[n], evaluationBroadGrid, BROAD_GRID_SIZE, evaluationEdge);
+            sampleGridAt(emissionU[n], emissionV[n], evaluationGrid, GRID_SIZE, evaluationInner);
+            sampleGridAt(emissionU[n], emissionV[n],
+                    evaluationBroadGrid, BROAD_GRID_SIZE, evaluationEdge);
             int output = n * CHANNEL_COUNT;
-            float boost = MAX_EDGE_BOOST * edgeBoost[n];
-            if (boost > 0.0f) {
-                sampleLocalEdge(nodeX[n], nodeY[n], evaluationGrid, evaluationInner);
-            }
+            float spread = diffusion[n];
+            float ambientMix = outerAmbient[n];
             for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
-                float backdrop = evaluationEdge[channel];
-                float linear = boost > 0.0f
-                        ? clamp01(backdrop + (evaluationInner[channel] - backdrop) * boost)
-                        : backdrop;
-                outRgb[output + channel] = AmbientColorSampler.linearChannelToSrgb(linear);
+                float emitted = evaluationInner[channel]
+                        + (evaluationEdge[channel] - evaluationInner[channel]) * spread;
+                float linear = evaluationBase[channel]
+                        + (emitted - evaluationBase[channel]) * ambientMix;
+                outRgb[output + channel] =
+                        AmbientColorSampler.linearChannelToSrgb(clamp01(linear));
             }
         }
         return active;
@@ -401,17 +417,17 @@ public final class AmbientColorField {
         boolean active = evaluateGrid(nowNs, evaluationGrid, evaluationBase);
         buildBroadGrid(evaluationGrid, evaluationBroadGrid);
         for (int n = 0; n < nodeCount; n++) {
-            sampleGridAt(nodeX[n], nodeY[n], evaluationBroadGrid, BROAD_GRID_SIZE, evaluationEdge);
-            float boost = MAX_EDGE_BOOST * edgeBoost[n];
-            float r = evaluationEdge[0];
-            float g = evaluationEdge[1];
-            float b = evaluationEdge[2];
-            if (boost > 0.0f) {
-                sampleLocalEdge(nodeX[n], nodeY[n], evaluationGrid, evaluationInner);
-                r = clamp01(r + (evaluationInner[0] - r) * boost);
-                g = clamp01(g + (evaluationInner[1] - g) * boost);
-                b = clamp01(b + (evaluationInner[2] - b) * boost);
-            }
+            sampleGridAt(emissionU[n], emissionV[n], evaluationGrid, GRID_SIZE, evaluationInner);
+            sampleGridAt(emissionU[n], emissionV[n],
+                    evaluationBroadGrid, BROAD_GRID_SIZE, evaluationEdge);
+            float spread = diffusion[n];
+            float ambientMix = outerAmbient[n];
+            float r = evaluationInner[0] + (evaluationEdge[0] - evaluationInner[0]) * spread;
+            float g = evaluationInner[1] + (evaluationEdge[1] - evaluationInner[1]) * spread;
+            float b = evaluationInner[2] + (evaluationEdge[2] - evaluationInner[2]) * spread;
+            r = clamp01(evaluationBase[0] + (r - evaluationBase[0]) * ambientMix);
+            g = clamp01(evaluationBase[1] + (g - evaluationBase[1]) * ambientMix);
+            b = clamp01(evaluationBase[2] + (b - evaluationBase[2]) * ambientMix);
             outArgb[n] = 0xFF000000
                     | (AmbientColorSampler.linearChannelToByte(r) << 16)
                     | (AmbientColorSampler.linearChannelToByte(g) << 8)
@@ -519,42 +535,64 @@ public final class AmbientColorField {
     }
 
     /**
-     * Samples local guest color near the closest LCD edge. The broad backdrop already fills the
-     * surface, so this path only improves local continuity and never drives distant background.
+     * Maps one host node to the nearest point on a rounded LCD emitter. All distances are measured
+     * in physical host units so the light shape stays symmetric regardless of LCD placement.
      */
-    private void sampleLocalEdge(float x, float y, float[] fineGrid, float[] out) {
-        float width = gameRight - gameLeft;
-        float height = gameBottom - gameTop;
-        if (width <= 0.0f || height <= 0.0f) {
-            sampleGridAt(0.5f, 0.5f, fineGrid, GRID_SIZE, out);
+    private void configureEmissionNode(int index, float x, float y, float aspect,
+            float left, float top, float right, float bottom,
+            float gameWidth, float gameHeight, float shortGameSide, float cornerRadius,
+            float diffusionDistance, float outerFadeWidth) {
+        float px = x * aspect;
+        float py = y;
+        boolean insideRect = px >= left && px <= right && py >= top && py <= bottom;
+        float edgeDistance = Math.min(Math.min(px, aspect - px), Math.min(py, 1.0f - py));
+        outerAmbient[index] = smoothStep(clamp01(edgeDistance / outerFadeWidth));
+
+        if (insideRect) {
+            emissionU[index] = clamp01((px - left) / gameWidth);
+            emissionV[index] = clamp01((py - top) / gameHeight);
+            diffusion[index] = 0.0f;
             return;
         }
 
-        float relativeX = (x - gameLeft) / width;
-        float relativeY = (y - gameTop) / height;
-        boolean outside = x < gameLeft || x > gameRight || y < gameTop || y > gameBottom;
-        boolean boundary = Math.abs(x - gameLeft) < 1.0e-5f
-                || Math.abs(x - gameRight) < 1.0e-5f
-                || Math.abs(y - gameTop) < 1.0e-5f
-                || Math.abs(y - gameBottom) < 1.0e-5f;
-        if (!outside && !boundary) {
-            sampleGridAt(relativeX, relativeY, fineGrid, GRID_SIZE, out);
-            return;
+        float centerX = 0.5f * (left + right);
+        float centerY = 0.5f * (top + bottom);
+        float innerHalfWidth = Math.max(0.0f, 0.5f * gameWidth - cornerRadius);
+        float innerHalfHeight = Math.max(0.0f, 0.5f * gameHeight - cornerRadius);
+        float coreX = clamp(px, centerX - innerHalfWidth, centerX + innerHalfWidth);
+        float coreY = clamp(py, centerY - innerHalfHeight, centerY + innerHalfHeight);
+        float vx = px - coreX;
+        float vy = py - coreY;
+        float length = (float) Math.sqrt(vx * vx + vy * vy);
+        float nx;
+        float ny;
+        if (length > 1.0e-6f) {
+            nx = vx / length;
+            ny = vy / length;
+        } else {
+            float dx = px - centerX;
+            float dy = py - centerY;
+            if (Math.abs(dx) >= Math.abs(dy)) {
+                nx = dx < 0.0f ? -1.0f : 1.0f;
+                ny = 0.0f;
+            } else {
+                nx = 0.0f;
+                ny = dy < 0.0f ? -1.0f : 1.0f;
+            }
         }
 
-        float u = clamp01(relativeX);
-        float v = clamp01(relativeY);
-        if (x <= gameLeft + 1.0e-5f) {
-            u = EDGE_INSET;
-        } else if (x >= gameRight - 1.0e-5f) {
-            u = 1.0f - EDGE_INSET;
-        }
-        if (y <= gameTop + 1.0e-5f) {
-            v = EDGE_INSET;
-        } else if (y >= gameBottom - 1.0e-5f) {
-            v = 1.0f - EDGE_INSET;
-        }
-        sampleGridAt(u, v, fineGrid, GRID_SIZE, out);
+        float boundaryX = coreX + nx * cornerRadius;
+        float boundaryY = coreY + ny * cornerRadius;
+        float distance = Math.max(0.0f, length - cornerRadius);
+        float spread = smoothStep(clamp01(distance / diffusionDistance));
+        diffusion[index] = spread;
+
+        float insetDistance = shortGameSide
+                * (SOURCE_INSET_NEAR_SCALE + SOURCE_INSET_FAR_SCALE * spread);
+        float sampleX = boundaryX - nx * insetDistance;
+        float sampleY = boundaryY - ny * insetDistance;
+        emissionU[index] = clamp01((sampleX - left) / gameWidth);
+        emissionV[index] = clamp01((sampleY - top) / gameHeight);
     }
 
     /** Builds the broad full-frame backdrop while preserving a little post-blur chroma. */
@@ -675,7 +713,11 @@ public final class AmbientColorField {
         return t * t * (3.0f - 2.0f * t);
     }
 
+    private static float clamp(float value, float min, float max) {
+        return Float.isFinite(value) ? Math.max(min, Math.min(max, value)) : min;
+    }
+
     private static float clamp01(float value) {
-        return Float.isFinite(value) ? Math.max(0.0f, Math.min(1.0f, value)) : 0.0f;
+        return clamp(value, 0.0f, 1.0f);
     }
 }
