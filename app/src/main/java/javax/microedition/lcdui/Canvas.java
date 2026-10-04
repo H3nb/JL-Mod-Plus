@@ -204,7 +204,7 @@ public abstract class Canvas extends Displayable {
 	private final AmbientMesh ambientMesh = new AmbientMesh();
     private final float[] ambientGlX = new float[AmbientMesh.MAX_VERTEX_COUNT];
     private final float[] ambientGlY = new float[AmbientMesh.MAX_VERTEX_COUNT];
-    private final int[] ambientTargetArgb = new int[AmbientColorField.GRID_COLOR_COUNT];
+    private final float[] ambientTargetLinear = new float[AmbientColorField.GRID_CHANNEL_COUNT];
 	private final RectF ambientSurface = new RectF();
 	private final RectF ambientGameRect = new RectF();
 	private volatile int themeBackgroundArgb;
@@ -415,11 +415,11 @@ public abstract class Canvas extends Displayable {
 		}
 		nextAmbientSampleNs = nowNs + AmbientColorField.SAMPLE_INTERVAL_NS;
 		if (!sampled) return false;
-		ambientSampler.toneCapturedGrid(themeBackgroundArgb, ambientTargetArgb);
+		ambientSampler.toneCapturedGrid(themeBackgroundArgb, ambientTargetLinear);
 		synchronized (ambientLock) {
 			if (ambientField == null || !ambientLayoutValid || !isImmersiveMode()) return false;
-			ambientField.setTargetGrid(ambientTargetArgb, themeBackgroundArgb, nowNs, false);
-			ambientGlField.setTargetGrid(ambientTargetArgb, themeBackgroundArgb, nowNs, false);
+			ambientField.setTargetGrid(ambientTargetLinear, themeBackgroundArgb, nowNs, false);
+			ambientGlField.setTargetGrid(ambientTargetLinear, themeBackgroundArgb, nowNs, false);
 		}
 		lastAmbientSampleSequence = sampledSequence;
 		ambientGeometryDirty = false;
