@@ -65,9 +65,9 @@ public final class AmbientColorSampler {
 
     /** Downscales the complete active bitmap into one reusable low-resolution palette. */
     public boolean sampleGrid(Bitmap bitmap, int activeWidth, int activeHeight,
-            int baseArgb, int[] outGridArgb) {
+            int baseArgb, float[] outGridLinear) {
         if (!captureGrid(bitmap, activeWidth, activeHeight)) return false;
-        toneCapturedGrid(baseArgb, outGridArgb);
+        toneCapturedGrid(baseArgb, outGridLinear);
         return true;
     }
 
@@ -141,15 +141,18 @@ public final class AmbientColorSampler {
                 b *= cap;
             }
             outAnchorArgb[anchor] = 0xFF000000
-                    | (linearToByte(r) << 16)
-                    | (linearToByte(g) << 8)
-                    | linearToByte(b);
+                    | (linearChannelToByte(r) << 16)
+                    | (linearChannelToByte(g) << 8)
+                    | linearChannelToByte(b);
         }
     }
 
-    /** Tones the most recently captured full-frame palette without touching the bitmap. */
-    public void toneCapturedGrid(int baseArgb, int[] outGridArgb) {
-        if (outGridArgb == null || outGridArgb.length < GRID_COLOR_COUNT) return;
+    /** Tones the captured full-frame palette into linear RGB for later filtering. */
+    public void toneCapturedGrid(int baseArgb, float[] outGridLinear) {
+        if (outGridLinear == null
+                || outGridLinear.length < GRID_COLOR_COUNT * AmbientColorField.CHANNEL_COUNT) {
+            return;
+        }
         float baseR = SRGB_TO_LINEAR[(baseArgb >>> 16) & 0xFF];
         float baseG = SRGB_TO_LINEAR[(baseArgb >>> 8) & 0xFF];
         float baseB = SRGB_TO_LINEAR[baseArgb & 0xFF];
@@ -170,10 +173,10 @@ public final class AmbientColorSampler {
                 g *= cap;
                 b *= cap;
             }
-            outGridArgb[i] = 0xFF000000
-                    | (linearToByte(r) << 16)
-                    | (linearToByte(g) << 8)
-                    | linearToByte(b);
+            int offset = i * AmbientColorField.CHANNEL_COUNT;
+            outGridLinear[offset] = r;
+            outGridLinear[offset + 1] = g;
+            outGridLinear[offset + 2] = b;
         }
     }
 
@@ -181,9 +184,13 @@ public final class AmbientColorSampler {
         return SRGB_TO_LINEAR[value & 0xFF];
     }
 
-    private static int linearToByte(float value) {
+    static float linearChannelToSrgb(float value) {
         int index = Math.round(Math.max(0.0f, Math.min(1.0f, value)) * 4096.0f);
-        return Math.round(LINEAR_TO_SRGB[index] * 255.0f);
+        return LINEAR_TO_SRGB[index];
+    }
+
+    static int linearChannelToByte(float value) {
+        return Math.round(linearChannelToSrgb(value) * 255.0f);
     }
 
     private static int clamp(int value, int min, int max) {
