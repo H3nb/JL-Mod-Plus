@@ -26,18 +26,18 @@
     <string name="CONFIRMATION_REQUIRED">Memerlukan Konfirmasi</string>
     <string name="converting_wait">Mengonversi JAR…</string>
     <string name="create">Buat</string>
-    <string name="create_apps_dir_failed">Gagal membuat folder di:\n\'%1$s\'\nPilih direktori lain.</string>
+    <string name="create_apps_dir_failed">Folder kerja tidak dapat disiapkan di:\n%1$s\nPilih folder lain.</string>
     <string name="default_label">%1$s (bawaan)</string>
     <string name="dismiss">Abaikan</string>
     <string name="dismiss_mapping">Tutup pemetaan</string>
     <string name="edit">Ubah</string>
     <string name="enter_name">Masukkan nama</string>
     <string name="enter_new_name">Masukkan nama baru</string>
-    <string name="err_missing_app">Aplikasi tak ditemukan.\nMohon periksa ketersediaan %1$spenyimpanan perangkat atau buat ulang pintasan.</string>
+    <string name="err_missing_app">Aplikasi tidak ditemukan.\nPeriksa apakah penyimpanan %1$stersedia, atau buat ulang pintasan.</string>
     <string name="error">Galat</string>
     <string name="error_name">Masukkan nama.</string>
     <string name="exit">Keluar</string>
-    <string name="FORCE_CLOSE_CONFIRMATION">Menutup paksa aplikasi dapat menyebabkan kehilangan data atau merusaknya sepenuhnya!\nLanjutkan?</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">Hentikan MIDlet ini? Perubahan yang belum disimpan mungkin hilang.</string>
     <string name="help">Bantuan</string>
     <string name="help_message">&#8226; Mengaktifkan filter dalam beberapa kasus dapat sangat menurunkan kinerja. Nonaktifkan opsi ini jika aplikasi terlalu lambat.&lt;BR&gt;&#8226; Mode pemrosesan langsung melewati antrean event Java ME normal. Mode ini dapat meningkatkan respons, tetapi bisa menyebabkan perilaku yang tidak terduga.</string>
     <string name="identity_filter">Cepat (tanpa filter)</string>
@@ -68,7 +68,7 @@
     <string name="virtual_controls_save_failed">Kontrol virtual tidak dapat disimpan. Coba lagi.</string>
     <string name="layout_switch">Ganti Tata Letak Kontrol</string>
     <string name="licenses">Lisensi</string>
-    <string name="licenses_unavailable">Detail lisensi sementara tidak tersedia.</string>
+    <string name="licenses_unavailable">Detail lisensi tidak tersedia.</string>
     <string name="loading_apps">Memuat aplikasi</string>
     <string name="load_profile">Muat Profil</string>
     <string name="loading_info">Memuat informasi…</string>
@@ -87,8 +87,8 @@
     <string name="midlet_version"><b>Versi: </b></string>
     <string name="more">Lainnya</string>
     <string name="msg_error_loading_shader">Shader tidak didukung; shader bawaan digunakan!</string>
-    <string name="msg_immediate_mode_disabled">Mode pemrosesan langsung dinonaktifkan karena stack overflow</string>
-    <string name="msg_no_matches">Tidak ada kecocokan untuk \"%1$s\"</string>
+    <string name="msg_immediate_mode_disabled">Mode pemrosesan langsung dinonaktifkan karena callback event bertingkat terlalu dalam.</string>
+    <string name="msg_no_matches">Tidak ada hasil untuk \"%1$s\"</string>
     <string name="library_destination_apps">Aplikasi</string>
     <string name="library_destination_collections">Koleksi</string>
     <string name="library_destination_more">Lainnya</string>
@@ -126,7 +126,7 @@
     <string name="library_collapse_description">Tutup deskripsi</string>
     <string name="msg_press_again_to_close">Tekan lagi untuk menutup</string>
     <string name="msg_unsupported_soundbank">Soundbank tidak didukung; soundbank bawaan digunakan!</string>
-    <string name="no_data_for_display">Tak ada data</string>
+    <string name="no_data_for_display">Tidak ada aplikasi untuk ditampilkan</string>
     <string name="not_saved_exists">Sudah ada</string>
     <string name="parallel_screen_redrawing">Gambar Ulang Layar Paralel</string>
     <string name="permission_request_failed">Aplikasi ini perlu izin untuk menulis berkas</string>
@@ -445,7 +445,7 @@
     <string name="save_log">Simpan Log</string>
     <string name="save_profile">Simpan Profil</string>
     <string name="saved">Tersimpan %1$s</string>
-    <string name="screenshot_saved">Tangkapan layar telah disimpan ke</string>
+    <string name="screenshot_saved">Tangkapan layar disimpan di %1$s</string>
     <string name="search">Cari</string>
     <string name="select_dialog_title">Pilih MIDlet</string>
     <string name="set_as_default">Atur Sebagai Bawaan</string>
@@ -482,7 +482,7 @@
     <string name="file_picker_file">Berkas</string>
     <string name="file_picker_storage_volume">Volume Penyimpanan</string>
     <string name="file_picker_empty">Tidak ada berkas yang cocok</string>
-    <string name="file_picker_empty_folder">Folder kosong</string>
+    <string name="file_picker_empty_folder">Tidak ada folder yang ditemukan</string>
     <string name="file_picker_no_matches">Tidak ada kecocokan</string>
     <string name="file_picker_permission_required">Izin Penyimpanan Diperlukan</string>
     <string name="file_picker_permission_message">Izinkan akses penyimpanan untuk menelusuri bundel aplikasi, ikon, dan berkas MIDlet.</string>
@@ -494,7 +494,7 @@
     <string name="file_picker_create_folder_title">Buat Folder</string>
     <string name="file_picker_folder_name">Nama Folder</string>
     <string name="file_picker_invalid_folder_name">Masukkan nama folder yang valid.</string>
-    <string name="file_picker_folder_exists">Folder dengan nama ini sudah ada.</string>
+    <string name="file_picker_folder_exists">Item dengan nama ini sudah ada.</string>
     <string name="file_picker_create_folder_failed">Tidak dapat membuat folder.</string>
     <string name="file_picker_selection_unavailable">Item yang dipilih sudah tidak tersedia.</string>
     <string name="config_color_picker_title">Pilih Warna</string>
@@ -506,7 +506,7 @@
     <string name="config_color_picker_hue">Rona</string>
     <string name="config_decrease_value">Kurangi nilai</string>
     <string name="config_increase_value">Tambah nilai</string>
-    <string name="midlet_failure_recovery_title">Game Berhenti Secara Tak Terduga</string>
+    <string name="midlet_failure_recovery_title">MIDlet Berhenti Tak Terduga</string>
 
     <string name="crash_reports">Laporan Diagnostik</string>
     <string name="diagnostic_report">Laporan Diagnostik</string>
@@ -1039,11 +1039,11 @@
     <string name="pref_accent_pink">Merah Muda</string>
     <string name="runtime_invalid_intent">Permintaan peluncuran tidak valid: jalur MIDlet tidak tersedia.</string>
     <string name="runtime_storage_in_use">Penyimpanan MIDlet sedang digunakan.</string>
-    <string name="runtime_installation_changed">Instalasi MIDlet berubah sebelum dijalankan.</string>
-    <string name="runtime_storage_unavailable">Tidak dapat mencadangkan penyimpanan MIDlet.</string>
+    <string name="runtime_installation_changed">Instalasi MIDlet tidak dapat disiapkan untuk dijalankan.</string>
+    <string name="runtime_storage_unavailable">Akses ke penyimpanan MIDlet tidak dapat diperoleh.</string>
     <string name="runtime_no_midlets">Tidak ada MIDlet yang ditemukan dalam aplikasi ini.</string>
     <string name="midlet_running_notification_title">MIDlet Berjalan</string>
-    <string name="midlet_running_notification_text">%1$s sedang berjalan di latar belakang.</string>
+    <string name="midlet_running_notification_text">%1$s sedang berjalan.</string>
     <string name="midlet_running_notification_channel">Runtime MIDlet</string>
     <string name="library_selection_checkbox_description">Pilih %1$s</string>
     <string name="library_selection_checked">Dipilih</string>
@@ -1104,4 +1104,20 @@
     <string name="memory_editor_write_failure_outcome">%1$s\nPenulisan terkonfirmasi: %2$d. Belum terkonfirmasi: %3$d. Dilewati: %4$d. Belum dicoba: %5$d. Dilewati karena tipe data: %6$d.</string>
     <string name="memory_editor_next_scan_result">Hasil pemindaian berikutnya: %1$d → %2$d</string>
     <string name="memory_editor_type_auto">Otomatis</string>
+    <string name="about_maintainer">Pengelola: %1$s</string>
+    <string name="midlet_failure_recovery_message">MIDlet berhenti secara tak terduga. Informasi diagnostik disimpan secara lokal. Anda dapat terus menggunakan JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message_named">“%1$s” berhenti secara tak terduga. Informasi diagnostik disimpan secara lokal. Anda dapat terus menggunakan JL-Mod Plus.</string>
+    <string name="runtime_replacement_failed">MIDlet yang sedang berjalan tidak dapat dihentikan. Coba buka MIDlet baru lagi.</string>
+    <string name="about_version">Versi %1$s</string>
+    <string name="screenshot_save_failed">Tangkapan layar tidak dapat disimpan.</string>
+    <string name="log_save_started">Penyimpanan log dimulai.</string>
+    <string name="log_save_failed">Penyimpanan log tidak dapat dimulai.</string>
+    <string name="runtime_midlet_list_failed">Daftar MIDlet aplikasi ini tidak dapat dibaca.</string>
+    <string name="diagnostic_reason_java_crash">Crash Java</string>
+    <string name="diagnostic_reason_native_crash">Crash native</string>
+    <string name="diagnostic_reason_anr">Aplikasi tidak merespons</string>
+    <string name="diagnostic_reason_signal">Penghentian oleh sinyal</string>
+    <string name="diagnostic_reason_unknown">Penyebab tidak diketahui</string>
+    <string name="crash_reports_delete_failed">Sebagian laporan diagnostik terpilih tidak dapat dihapus. Laporan lain mungkin sudah dihapus.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Laporan diagnostik telah dihapus, tetapi sebagian bundle yang dibuat tidak dapat dihapus.</string>
 </resources>

@@ -805,9 +805,10 @@ public class AppsListFragment extends Fragment {
                 LibraryComposeController controller = composeController;
                 try {
                     LogUtils.writeLog();
-                    if (controller != null) controller.showNotice(getString(R.string.log_saved));
+                    if (controller != null) controller.showNotice(getString(R.string.log_save_started));
                 } catch (IOException e) {
-                    if (controller != null) controller.showNotice(getString(R.string.error));
+                    e.printStackTrace();
+                    if (controller != null) controller.showNotice(getString(R.string.log_save_failed));
                 }
             }
 

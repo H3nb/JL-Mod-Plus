@@ -4398,11 +4398,7 @@ private fun LibraryAboutBody(
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = buildString {
-                    append(stringResource(R.string.version))
-                    append(' ')
-                    append(BuildConfig.VERSION_NAME)
-                },
+                text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -4412,7 +4408,10 @@ private fun LibraryAboutBody(
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
-                text = stringResource(R.string.about_maintainer),
+                text = stringResource(
+                    R.string.about_maintainer,
+                    stringResource(R.string.about_maintainer_name),
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

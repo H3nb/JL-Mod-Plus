@@ -2,7 +2,8 @@
 <resources>
     <string name="about">About</string>
     <string name="about_github" translatable="false">GitHub: &lt;a href="https://github.com/H3nb/JL-Mod-Plus"&gt;H3nb/JL-Mod-Plus&lt;/a&gt;</string>
-    <string name="about_maintainer" translatable="false">Maintainer: Hendra Bara\'langi\' (H3NB)</string>
+    <!-- %1$s is the maintainer's exact name and account, preserved as invariant data. -->
+    <string name="about_maintainer">Maintainer: %1$s</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
     <string name="about_message">This app allows you to launch J2ME apps and games on Android.</string>
     <string name="about_lineage">JL-Mod Plus is a fork of JL-Mod by woesss (Yury Kharchenko), itself a fork and experimental mod of J2ME-Loader by Nikita Shakarun. The fork is maintained through sustained design, engineering, testing, and infrastructure work. Upstream attribution and license notices are preserved in the project.</string>
@@ -27,19 +28,20 @@
     <string name="CONFIRMATION_REQUIRED">Confirmation Required</string>
     <string name="converting_wait">Converting JAR…</string>
     <string name="create">Create</string>
-    <string name="create_apps_dir_failed">Failed to create a folder in the path:\n%1$s\nSelect another.</string>
+    <string name="create_apps_dir_failed">Could not prepare the working folder at:\n%1$s\nChoose another folder.</string>
     <string name="default_label">%1$s (default)</string>
     <string name="dismiss">Dismiss</string>
     <string name="dismiss_mapping">Dismiss mapping</string>
     <string name="edit">Edit</string>
     <string name="enter_name">Enter name</string>
     <string name="enter_new_name">Enter new name</string>
-    <string name="err_missing_app">Application not found.\nPlease check storage device %1$savailability or re-create shortcut.</string>
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <string name="err_missing_app">Application not found.\nCheck whether the storage device %1$sis available, or recreate the shortcut.</string>
     <string name="error">Error</string>
     <string name="runtime_replacement_failed">The running MIDlet could not be stopped. Try opening the new MIDlet again.</string>
     <string name="error_name">Enter a name.</string>
     <string name="exit">Exit</string>
-    <string name="FORCE_CLOSE_CONFIRMATION">Force-closing the application may result in data loss or even break it completely!\nProceed?</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">Stop this MIDlet? Unsaved changes may be lost.</string>
     <string name="help">Help</string>
     <string name="help_message">&#8226; Enabling filtering in some cases can greatly reduce performance. Disable this option if the app is too slow.&lt;BR>&#8226; Immediate processing mode bypasses the normal Java ME event queue. It may improve responsiveness, but can cause unpredictable behavior.</string>
     <string name="identity_filter">Fast (no filter)</string>
@@ -61,7 +63,7 @@
     <string name="file_picker_sort_type">Folders First</string>
     <string name="file_picker_sort_name_ascending">Name A–Z</string>
     <string name="file_picker_sort_name_descending">Name Z–A</string>
-    <string name="file_picker_sort_modified_newest">Modified Newest</string>
+    <string name="file_picker_sort_modified_newest">Modification: Newest</string>
     <string name="file_picker_sort_modified_oldest">Modification: Oldest</string>
     <string name="file_picker_choose">Choose</string>
     <string name="file_picker_current_folder">Current Folder</string>
@@ -70,7 +72,7 @@
     <string name="file_picker_file">File</string>
     <string name="file_picker_storage_volume">Storage Volume</string>
     <string name="file_picker_empty">No matching files</string>
-    <string name="file_picker_empty_folder">Folder is empty</string>
+    <string name="file_picker_empty_folder">No folders found</string>
     <string name="file_picker_no_matches">No matches</string>
     <string name="file_picker_permission_required">Storage Permission Required</string>
     <string name="file_picker_permission_message">Allow storage access to browse app bundles, icons, and MIDlet files.</string>
@@ -82,7 +84,7 @@
     <string name="file_picker_create_folder_title">Create Folder</string>
     <string name="file_picker_folder_name">Folder Name</string>
     <string name="file_picker_invalid_folder_name">Enter a valid folder name.</string>
-    <string name="file_picker_folder_exists">A folder with this name already exists.</string>
+    <string name="file_picker_folder_exists">An item with this name already exists.</string>
     <string name="file_picker_create_folder_failed">Unable to create the folder.</string>
     <string name="file_picker_selection_unavailable">The selected item is no longer available.</string>
     <string name="invalid_resolution_not_saved">Invalid resolution; changes were not saved!</string>
@@ -107,7 +109,7 @@
     <string name="layout_scale_mode">Virtual controls edit mode: drag to move and use two fingers to resize.</string>
     <string name="layout_switch">Switch Control Layout</string>
     <string name="licenses">Licenses</string>
-    <string name="licenses_unavailable">License details are temporarily unavailable.</string>
+    <string name="licenses_unavailable">License details are unavailable.</string>
     <string name="loading_apps">Loading apps</string>
     <string name="load_profile">Load Profile</string>
     <string name="loading_info">Loading information…</string>
@@ -128,7 +130,7 @@
     <string name="midlet_version"><b>Version: </b></string>
     <string name="more">More</string>
     <string name="msg_error_loading_shader">Unsupported shader; using the default shader!</string>
-    <string name="msg_immediate_mode_disabled">Immediate mode disabled due to stack overflow</string>
+    <string name="msg_immediate_mode_disabled">Immediate mode disabled because event callbacks nested too deeply.</string>
     <string name="msg_mascot_capsule" translatable="false">Mascot Capsule 3D!</string>
     <string name="msg_no_matches">No matches for \"%1$s\"</string>
     <string name="library_destination_apps">Apps</string>
@@ -166,7 +168,7 @@
     <string name="library_collapse_description">Collapse description</string>
     <string name="msg_press_again_to_close">Press again to close</string>
     <string name="msg_unsupported_soundbank">Unsupported soundbank; using the default bank!</string>
-    <string name="no_data_for_display">No data</string>
+    <string name="no_data_for_display">No apps to show</string>
     <string name="not_saved_exists">Already exists</string>
     <string name="parallel_screen_redrawing">Parallel Screen Redraw</string>
     <string name="permission_request_failed">This app requires storage write permission</string>
@@ -493,7 +495,8 @@
     <string name="save_log">Save Log</string>
     <string name="save_profile">Save Profile</string>
     <string name="saved">Saved %1$s</string>
-    <string name="screenshot_saved">Screenshot has been saved to</string>
+    <!-- %1$s is the saved screenshot's filesystem path. -->
+    <string name="screenshot_saved">Screenshot saved to %1$s</string>
     <string name="search">Search</string>
     <string name="select_dialog_title">Select MIDlet</string>
     <string name="set_as_default">Set As Default</string>
@@ -542,9 +545,9 @@
     <string name="config_color_picker_hue">Hue</string>
     <string name="config_decrease_value">Decrease value</string>
     <string name="config_increase_value">Increase value</string>
-    <string name="midlet_failure_recovery_title">Game Stopped Unexpectedly</string>
-    <string name="midlet_failure_recovery_message" translatable="false">The game stopped unexpectedly. Diagnostic information was saved locally. You can continue using JL-Mod Plus.</string>
-    <string name="midlet_failure_recovery_message_named" translatable="false">“%1$s” stopped unexpectedly. Diagnostic information was saved locally. You can continue using JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_title">MIDlet Stopped Unexpectedly</string>
+    <string name="midlet_failure_recovery_message">The MIDlet stopped unexpectedly. Diagnostic information was saved locally. You can continue using JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message_named">“%1$s” stopped unexpectedly. Diagnostic information was saved locally. You can continue using JL-Mod Plus.</string>
 
     <!-- Crash-report UI remains translatable; locales without coverage fall back to default English. -->
     <string name="crash_reports">Diagnostic Reports</string>
@@ -1110,11 +1113,11 @@
     <string name="pref_accent_pink">Pink</string>
     <string name="runtime_invalid_intent">Invalid launch request: the MIDlet path is missing.</string>
     <string name="runtime_storage_in_use">MIDlet storage is already in use.</string>
-    <string name="runtime_installation_changed">The MIDlet installation changed before launch.</string>
+    <string name="runtime_installation_changed">The MIDlet installation could not be prepared for launch.</string>
     <string name="runtime_storage_unavailable">Unable to reserve MIDlet storage.</string>
     <string name="runtime_no_midlets">No MIDlets were found in this application.</string>
     <string name="midlet_running_notification_title">MIDlet Running</string>
-    <string name="midlet_running_notification_text">%1$s is running in the background.</string>
+    <string name="midlet_running_notification_text">%1$s is running.</string>
     <string name="midlet_running_notification_channel">MIDlet Runtime</string>
     <string name="library_selection_checkbox_description">Select %1$s</string>
     <string name="library_selection_checked">Selected</string>
@@ -1172,4 +1175,17 @@
     <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
     <string name="memory_editor_next_scan_result">Next scan results: %1$d → %2$d</string>
     <string name="memory_editor_type_auto">Auto</string>
+    <string name="about_maintainer_name" translatable="false">Hendra Bara\'langi\' (H3NB)</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="screenshot_save_failed">Could not save the screenshot.</string>
+    <string name="log_save_started">Log saving started.</string>
+    <string name="log_save_failed">Could not start saving the log.</string>
+    <string name="runtime_midlet_list_failed">Could not read this application’s MIDlet list.</string>
+    <string name="diagnostic_reason_java_crash">Java crash</string>
+    <string name="diagnostic_reason_native_crash">Native crash</string>
+    <string name="diagnostic_reason_anr">App not responding</string>
+    <string name="diagnostic_reason_signal">Signal termination</string>
+    <string name="diagnostic_reason_unknown">Unknown cause</string>
+    <string name="crash_reports_delete_failed">Some selected diagnostic reports could not be deleted. Other reports may have been removed.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Diagnostic reports were deleted, but some generated bundles could not be removed.</string>
 </resources>

@@ -1014,7 +1014,8 @@ public class MicroActivity extends AppCompatActivity {
 		try {
 			midlets = microLoader.loadMIDletList();
 		} catch (IOException e) {
-			showErrorDialog(e.toString());
+			e.printStackTrace();
+			showErrorDialog(getString(R.string.runtime_midlet_list_failed));
 			return;
 		}
 		int size = midlets.size();
@@ -1612,14 +1613,14 @@ public class MicroActivity extends AppCompatActivity {
 
 			@Override
 			public void onSuccess(@NonNull String s) {
-				toast(getString(R.string.screenshot_saved) + " " + s);
+				toast(getString(R.string.screenshot_saved, s));
 				MediaScannerConnection.scanFile(MicroActivity.this, new String[]{s}, null, null);
 			}
 
 			@Override
 			public void onError(@NonNull Throwable e) {
 				e.printStackTrace();
-				toast(R.string.error);
+				toast(R.string.screenshot_save_failed);
 			}
 		});
 	}
@@ -1627,10 +1628,10 @@ public class MicroActivity extends AppCompatActivity {
 	private void saveLog() {
 		try {
 			LogUtils.writeLog();
-			toast(R.string.log_saved);
+			toast(R.string.log_save_started);
 		} catch (IOException e) {
 			e.printStackTrace();
-			toast(R.string.error);
+			toast(R.string.log_save_failed);
 		}
 	}
 
