@@ -7,7 +7,7 @@
  */
 package javax.microedition.lcdui.graphics;
 
-/** Full-frame low-resolution color field and single temporal transition used by both backends. */
+/** Full-frame low-resolution color field with one temporal transition per renderer instance. */
 public final class AmbientColorField {
     public static final int ANCHOR_COUNT = 8;
     public static final int CHANNEL_COUNT = 3;
