@@ -46,13 +46,14 @@ public class AmbientColorSamplerTest {
         }
         bitmap.setPixels(pixels, 0, 9, 0, 0, 9, 9);
 
-        int[] output = new int[AmbientColorSampler.GRID_COLOR_COUNT];
+        float[] output = new float[AmbientColorField.GRID_CHANNEL_COUNT];
         AmbientColorSampler sampler = new AmbientColorSampler();
         assertTrue(sampler.sampleGrid(bitmap, 9, 9, 0xFF000000, output));
 
-        int top = output[4];
-        int bottom = output[8 * AmbientColorSampler.GRID_SIZE + 4];
-        assertTrue(((top >>> 16) & 0xFF) > (top & 0xFF));
-        assertTrue((bottom & 0xFF) > ((bottom >>> 16) & 0xFF));
+        int top = 4 * AmbientColorField.CHANNEL_COUNT;
+        int bottom = ((AmbientColorSampler.GRID_SIZE - 1) * AmbientColorSampler.GRID_SIZE + 4)
+                * AmbientColorField.CHANNEL_COUNT;
+        assertTrue(output[top] > output[top + 2]);
+        assertTrue(output[bottom + 2] > output[bottom]);
     }
 }
