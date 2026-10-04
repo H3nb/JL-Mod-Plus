@@ -24,7 +24,7 @@ public final class AmbientColorField {
     private static final float EDGE_FALLOFF = 0.30f;
     /** At the surface edge, most sampled light has faded back toward the host theme. */
     private static final float OUTER_BASE_BLEND = 0.65f;
-    private static final float LINEAR_LINEAR_EPSILON = 1.0f / 4096.0f;
+    private static final float LINEAR_EPSILON = 1.0f / 4096.0f;
     /** Five-tap blur softens neighboring samples without erasing the higher-resolution field. */
     private static final float[] BLUR_KERNEL = {0.0625f, 0.25f, 0.375f, 0.25f, 0.0625f};
     private static final float[] ANCHOR_X = {INSET, 0.5f, 1.0f - INSET, 1.0f - INSET,
@@ -39,11 +39,11 @@ public final class AmbientColorField {
     private final float[] evaluationAnchors = new float[ANCHOR_COUNT * CHANNEL_COUNT];
     private final float[] evaluationBase = new float[CHANNEL_COUNT];
     private final float[] evaluationEdge = new float[CHANNEL_COUNT];
-    private final float[] gridStart = new float[GRID_COLOR_COUNT * CHANNEL_COUNT];
-    private final float[] gridTarget = new float[GRID_COLOR_COUNT * CHANNEL_COUNT];
-    private final float[] evaluationGrid = new float[GRID_COLOR_COUNT * CHANNEL_COUNT];
-    private final float[] blurredGridHorizontal = new float[GRID_COLOR_COUNT * CHANNEL_COUNT];
-    private final float[] blurredGrid = new float[GRID_COLOR_COUNT * CHANNEL_COUNT];
+    private final float[] gridStart = new float[GRID_CHANNEL_COUNT];
+    private final float[] gridTarget = new float[GRID_CHANNEL_COUNT];
+    private final float[] evaluationGrid = new float[GRID_CHANNEL_COUNT];
+    private final float[] blurredGridHorizontal = new float[GRID_CHANNEL_COUNT];
+    private final float[] blurredGrid = new float[GRID_CHANNEL_COUNT];
     private final float[] evaluationInner = new float[CHANNEL_COUNT];
     private float[] nodeX = new float[0];
     private float[] nodeY = new float[0];
@@ -284,7 +284,7 @@ public final class AmbientColorField {
         return nodeCount;
     }
 
-    /** Writes the current sRGB field into an RGB float array, with no allocation. */
+    /** Writes the current linear-light field as sRGB values, with no allocation. */
     public boolean renderNodes(long nowNs, float[] outRgb) {
         if (outRgb == null || outRgb.length < nodeCount * CHANNEL_COUNT) return false;
         if (gridMode) return renderGridNodes(nowNs, outRgb);
