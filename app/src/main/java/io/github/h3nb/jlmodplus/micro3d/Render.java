@@ -711,10 +711,7 @@ public class Render {
 					setPerspectiveWH(cmds[i++], cmds[i++], cmds[i++], cmds[i++]);
 					break;
 				case Graphics3D.COMMAND_TEXTURE_INDEX:
-					int tid = cmd & 0xFFFFFF;
-					if (tid > 0 && tid < 16) {
-						env.textureIdx = tid;
-					}
+					env.selectTexture(cmd & 0xFFFFFF);
 					break;
 				case Graphics3D.COMMAND_THRESHOLD:
 					setToonParam(cmds[i++], cmds[i++], cmds[i++]);
@@ -1006,6 +1003,8 @@ public class Render {
 					return;
 				}
 
+				float localScaleX = pointSpriteAxisScale(env.viewMatrix, 0);
+				float localScaleY = pointSpriteAxisScale(env.viewMatrix, 3);
 				float[] vertex = new float[6 * 4];
 
 				vcBuf = BufferUtils.createFloatBuffer(numPrimitives * 6 * 4);
@@ -1029,11 +1028,18 @@ public class Render {
 						float width = textureCoords[to++];
 						float height = textureCoords[to++];
 						angle = textureCoords[to++];
-						tx0 = (byte) textureCoords[to++];
-						ty0 = (byte) textureCoords[to++];
-						tx1 = (byte) (textureCoords[to++] - 1);
-						ty1 = (byte) (textureCoords[to++] - 1);
-						switch (textureCoords[to++]) {
+						int rawX0 = textureCoords[to++];
+						int rawY0 = textureCoords[to++];
+						int rawX1 = textureCoords[to++];
+						int rawY1 = textureCoords[to++];
+						tx0 = (byte) adjustPointSpriteTextureStart(rawX0, rawX1);
+						ty0 = (byte) adjustPointSpriteTextureStart(rawY0, rawY1);
+						tx1 = (byte) adjustPointSpriteTextureEnd(rawX0, rawX1);
+						ty1 = (byte) adjustPointSpriteTextureEnd(rawY0, rawY1);
+						int flags = textureCoords[to++];
+						width = scalePointSpriteDimension(width, flags, localScaleX);
+						height = scalePointSpriteDimension(height, flags, localScaleY);
+						switch (flags) {
 							case Graphics3D.POINT_SPRITE_LOCAL_SIZE | Graphics3D.POINT_SPRITE_PERSPECTIVE:
 								halfWidth = width * env.projMatrix[0] * 0.5f;
 								halfHeight = height * env.projMatrix[5] * 0.5f;
@@ -1082,6 +1088,22 @@ public class Render {
 				throw new IllegalArgumentException();
 		}
 		stack.add(new RenderNode.PrimitiveNode(this, command, vcBuf, ncBuf, tcBuf, colorBuf));
+	}
+
+	static float pointSpriteAxisScale(float[] viewMatrix, int offset) {
+		return MathUtil.vectorLength(viewMatrix[offset], viewMatrix[offset + 1], viewMatrix[offset + 2]);
+	}
+
+	static float scalePointSpriteDimension(float dimension, int flags, float localScale) {
+		return (flags & Graphics3D.POINT_SPRITE_PIXEL_SIZE) == 0 ? dimension * localScale : dimension;
+	}
+
+	static int adjustPointSpriteTextureStart(int start, int end) {
+		return end < start ? start - 1 : start;
+	}
+
+	static int adjustPointSpriteTextureEnd(int start, int end) {
+		return end < start ? end : end - 1;
 	}
 
 	public synchronized void drawFigure(FigureImpl figure) {
@@ -1482,6 +1504,12 @@ public class Render {
 		TextureImpl specular;
 
 		Environment() {}
+
+		void selectTexture(int index) {
+			if (index >= 0 && index < textures.length) {
+				textureIdx = index;
+			}
+		}
 
 		TextureImpl getTexture() {
 			if (textureIdx < 0 || textureIdx >= texturesLen) {
