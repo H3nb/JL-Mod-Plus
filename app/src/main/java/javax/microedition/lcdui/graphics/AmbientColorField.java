@@ -36,6 +36,10 @@ public final class AmbientColorField {
     private static final float MEDIUM_DISTANCE_SCALE = 0.20f;
     private static final float WIDE_START_DISTANCE_SCALE = 0.08f;
     private static final float WIDE_DISTANCE_SCALE = 0.38f;
+    /** Lateral spread makes neighboring edge colors overlap like light in frosted glass. */
+    private static final float TANGENT_SPREAD_NEAR_SCALE = 0.015f;
+    private static final float TANGENT_SPREAD_FAR_SCALE = 0.18f;
+    private static final float TANGENT_DISTANCE_SCALE = 0.45f;
     /** Fixed inward sample keeps the extension anchored to the same LCD-edge neighborhood. */
     private static final float SOURCE_INSET_SCALE = 0.04f;
     private static final float LINEAR_EPSILON = 1.0f / 4096.0f;
@@ -63,6 +67,7 @@ public final class AmbientColorField {
     private final float[] evaluationInner = new float[CHANNEL_COUNT];
     private final float[] evaluationMedium = new float[CHANNEL_COUNT];
     private final float[] evaluationWide = new float[CHANNEL_COUNT];
+    private final float[] evaluationTap = new float[CHANNEL_COUNT];
     private float[] nodeX = new float[0];
     private float[] nodeY = new float[0];
     private float[] weights = new float[0];
@@ -71,6 +76,8 @@ public final class AmbientColorField {
     private float[] emissionV = new float[0];
     private float[] mediumMix = new float[0];
     private float[] wideMix = new float[0];
+    private float[] tangentU = new float[0];
+    private float[] tangentV = new float[0];
     private int nodeCount;
     private float gameLeft;
     private float gameTop;
@@ -261,6 +268,8 @@ public final class AmbientColorField {
             emissionV = new float[0];
             mediumMix = new float[0];
             wideMix = new float[0];
+            tangentU = new float[0];
+            tangentV = new float[0];
             return;
         }
         nodeCount = Math.min(requestedCount, Math.min(normalizedX.length, normalizedY.length));
@@ -272,6 +281,8 @@ public final class AmbientColorField {
         emissionV = new float[nodeCount];
         mediumMix = new float[nodeCount];
         wideMix = new float[nodeCount];
+        tangentU = new float[nodeCount];
+        tangentV = new float[nodeCount];
         float safeAspect = aspectRatio > 0.0f && Float.isFinite(aspectRatio) ? aspectRatio : 1.0f;
         surfaceAspect = safeAspect;
         float left = clamp01(Math.min(gameLeft, gameRight));
@@ -294,6 +305,8 @@ public final class AmbientColorField {
         float wideStartDistance = shortGameSide * WIDE_START_DISTANCE_SCALE;
         float wideDistance = Math.max(
                 shortGameSide * WIDE_DISTANCE_SCALE, 1.0e-6f);
+        float tangentDistance = Math.max(
+                shortGameSide * TANGENT_DISTANCE_SCALE, 1.0e-6f);
         for (int n = 0; n < nodeCount; n++) {
             float x = clamp01(normalizedX[n]);
             float y = clamp01(normalizedY[n]);
@@ -327,7 +340,7 @@ public final class AmbientColorField {
 
             configureEmissionNode(n, x, y, safeAspect, physicalLeft, top, physicalRight, bottom,
                     physicalGameWidth, physicalGameHeight, shortGameSide, cornerRadius,
-                    mediumDistance, wideStartDistance, wideDistance);
+                    mediumDistance, wideStartDistance, wideDistance, tangentDistance);
         }
     }
 
@@ -400,10 +413,11 @@ public final class AmbientColorField {
         boolean active = evaluateGrid(nowNs, evaluationGrid, evaluationBase);
         buildDiffusionFields(evaluationGrid, evaluationMediumGrid, evaluationWideGrid);
         for (int n = 0; n < nodeCount; n++) {
-            sampleGridAt(emissionU[n], emissionV[n], evaluationGrid, GRID_SIZE, evaluationInner);
-            sampleGridAt(emissionU[n], emissionV[n],
+            sampleTangentially(emissionU[n], emissionV[n], tangentU[n], tangentV[n],
+                    evaluationGrid, GRID_SIZE, evaluationInner);
+            sampleTangentially(emissionU[n], emissionV[n], tangentU[n], tangentV[n],
                     evaluationMediumGrid, MEDIUM_GRID_SIZE, evaluationMedium);
-            sampleGridAt(emissionU[n], emissionV[n],
+            sampleTangentially(emissionU[n], emissionV[n], tangentU[n], tangentV[n],
                     evaluationWideGrid, WIDE_GRID_SIZE, evaluationWide);
             int output = n * CHANNEL_COUNT;
             float medium = mediumMix[n];
@@ -423,10 +437,11 @@ public final class AmbientColorField {
         boolean active = evaluateGrid(nowNs, evaluationGrid, evaluationBase);
         buildDiffusionFields(evaluationGrid, evaluationMediumGrid, evaluationWideGrid);
         for (int n = 0; n < nodeCount; n++) {
-            sampleGridAt(emissionU[n], emissionV[n], evaluationGrid, GRID_SIZE, evaluationInner);
-            sampleGridAt(emissionU[n], emissionV[n],
+            sampleTangentially(emissionU[n], emissionV[n], tangentU[n], tangentV[n],
+                    evaluationGrid, GRID_SIZE, evaluationInner);
+            sampleTangentially(emissionU[n], emissionV[n], tangentU[n], tangentV[n],
                     evaluationMediumGrid, MEDIUM_GRID_SIZE, evaluationMedium);
-            sampleGridAt(emissionU[n], emissionV[n],
+            sampleTangentially(emissionU[n], emissionV[n], tangentU[n], tangentV[n],
                     evaluationWideGrid, WIDE_GRID_SIZE, evaluationWide);
             float medium = mediumMix[n];
             float wide = wideMix[n];
@@ -549,7 +564,8 @@ public final class AmbientColorField {
     private void configureEmissionNode(int index, float x, float y, float aspect,
             float left, float top, float right, float bottom,
             float gameWidth, float gameHeight, float shortGameSide, float cornerRadius,
-            float mediumDistance, float wideStartDistance, float wideDistance) {
+            float mediumDistance, float wideStartDistance, float wideDistance,
+            float tangentDistance) {
         float px = x * aspect;
         float py = y;
         boolean insideRect = px > left + 1.0e-6f && px < right - 1.0e-6f
@@ -560,6 +576,8 @@ public final class AmbientColorField {
             emissionV[index] = clamp01((py - top) / gameHeight);
             mediumMix[index] = MIN_MEDIUM_MIX;
             wideMix[index] = 0.0f;
+            tangentU[index] = 0.0f;
+            tangentV[index] = 0.0f;
             return;
         }
 
@@ -602,6 +620,13 @@ public final class AmbientColorField {
         float sampleY = boundaryY - ny * insetDistance;
         emissionU[index] = clamp01((sampleX - left) / gameWidth);
         emissionV[index] = clamp01((sampleY - top) / gameHeight);
+
+        float tangentProgress = smoothStep(clamp01(distance / tangentDistance));
+        float tangentRadius = shortGameSide * (TANGENT_SPREAD_NEAR_SCALE
+                + (TANGENT_SPREAD_FAR_SCALE - TANGENT_SPREAD_NEAR_SCALE)
+                * tangentProgress);
+        tangentU[index] = (-ny * tangentRadius) / gameWidth;
+        tangentV[index] = (nx * tangentRadius) / gameHeight;
     }
 
     /** Builds successively wider blur levels while keeping the source position edge-anchored. */
@@ -631,6 +656,26 @@ public final class AmbientColorField {
                     output[outputOffset + channel] = sum * inverseCount;
                 }
             }
+        }
+    }
+
+    /**
+     * Samples a Gaussian-like footprint along the local edge tangent. The footprint widens in
+     * configureEmissionNode() as the host node moves away from the LCD, so neighboring edge colors
+     * overlap instead of forming long color stripes.
+     */
+    private void sampleTangentially(float u, float v, float du, float dv,
+            float[] grid, int gridSize, float[] out) {
+        out[0] = 0.0f;
+        out[1] = 0.0f;
+        out[2] = 0.0f;
+        for (int tap = -2; tap <= 2; tap++) {
+            float offset = tap * 0.5f;
+            sampleGridAt(u + du * offset, v + dv * offset, grid, gridSize, evaluationTap);
+            float weight = BLUR_KERNEL[tap + 2];
+            out[0] += evaluationTap[0] * weight;
+            out[1] += evaluationTap[1] * weight;
+            out[2] += evaluationTap[2] * weight;
         }
     }
 
