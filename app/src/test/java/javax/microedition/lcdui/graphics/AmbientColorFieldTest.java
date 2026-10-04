@@ -153,6 +153,24 @@ public class AmbientColorFieldTest {
     }
 
     @Test
+    public void activeGridDoesNotRetargetWhenHostThemeChanges() {
+        AmbientColorField field = new AmbientColorField();
+        field.configureNodes(new float[]{0.0f}, new float[]{0.5f},
+                0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
+        field.setTargetGrid(solidGrid(1.0f, 0.0f, 0.0f), 0xFF000000, 0L, true);
+
+        float[] before = new float[AmbientColorField.CHANNEL_COUNT];
+        field.renderNodes(0L, before);
+        field.setBaseColor(0xFFFFFFFF, AmbientColorField.TAU_NS, false);
+        float[] after = new float[AmbientColorField.CHANNEL_COUNT];
+        assertFalse(field.renderNodes(AmbientColorField.TAU_NS, after));
+
+        assertEquals(before[0], after[0], 0.0001f);
+        assertEquals(before[1], after[1], 0.0001f);
+        assertEquals(before[2], after[2], 0.0001f);
+    }
+
+    @Test
     public void distantSurfaceKeepsDynamicBackdropInsteadOfReturningToTheme() {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(new float[]{0.0f, 1.0f}, new float[]{0.5f, 0.5f},
