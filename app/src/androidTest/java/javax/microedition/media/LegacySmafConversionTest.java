@@ -131,8 +131,11 @@ public class LegacySmafConversionTest {
                 });
                 try {
                     player.prefetch();
-                    assertTrue(player.getDuration() >= 1000000 && player.getDuration() <= 1050000);
+                    // The retained AndroidPlayer loads its platform media synchronously on start.
                     player.start();
+                    long duration = player.getDuration();
+                    assertTrue("legacy waveform duration after loading: " + duration,
+                            duration >= 1000000 && duration <= 1050000);
                     assertTrue("legacy waveform did not finish", ended.await(5, TimeUnit.SECONDS));
                 } finally { player.close(); }
                 assertFalse("closed legacy Player retained its cache", wave.exists());
