@@ -141,6 +141,13 @@ parameter-contract change requires review of whether a new key is more correct,
 including affected callers and translations. Do not mass-rename legacy keys for
 naming consistency alone.
 
+The active Config missing-application path uses
+`config_missing_app_storage_named` and `config_missing_app_storage_generic`,
+whose named form receives the raw storage-volume description. Legacy
+`err_missing_app` retains its historical quoted-name/trailing-space formatter
+contract as a dormant cleanup candidate so partial secondary locales are not
+silently given a different argument contract.
+
 ### Complete messages and placeholders
 
 Store user-facing prose as complete messages: `Delete %1$s?`, not translated
@@ -250,15 +257,16 @@ Current implementation evidence:
   overrides remain in their own files/configurations. English and Indonesian have
   been reviewed by semantic domain, and Indonesian covers the full translatable
   source catalog. A follow-up canonical-English review rechecked the historical
-  `NEEDS_CONTEXT` set against current app-owned UI consumers: active copy now has
-  an established role or evidence-backed wording, while unreferenced legacy
-  declarations remain retained as dormant/dead-resource candidates until a separate
-  secondary-locale-safe cleanup. English and Indonesian canonical semantics are
-  frozen for secondary-locale completion. Russian now covers the full translatable
-  source catalog and has completed semantic and language review, including
-  locale-appropriate plurals and the current no-argument mapping-dialog contract.
-  The remaining secondary locales are still incomplete; catalog coverage alone does
-  not establish semantic quality.
+  `NEEDS_CONTEXT` set against current app-owned UI consumers. Phase 5A.1 then
+  corrected bounded active-copy terminology, parameter-contract, accessibility,
+  and language-quality findings. Active canonical English and Indonesian UI copy
+  has been reviewed and frozen; unreferenced legacy declarations remain retained
+  as dormant/dead-resource candidates until a separate secondary-locale-safe
+  cleanup. Russian covers the full translatable source catalog, has completed
+  semantic and language review, and was realigned only for canonical semantics
+  changed by Phase 5A.1. Its locale-appropriate plurals and current no-argument
+  mapping-dialog contract remain intact. The remaining 37 secondary locales are
+  still incomplete; catalog coverage alone does not establish semantic quality.
 - [SettingsActivity.buildLanguageOptions](../app/src/main/java/io/github/h3nb/jlmodplus/settings/SettingsActivity.java)
   reads `_generated_res_locale_config`; unavailable/unreadable metadata leaves
   the system-language option. This requires later runtime hardening.
@@ -330,6 +338,7 @@ The table is an initial review baseline, not authorization to rewrite resources.
 | Diagnostic Report | Retained diagnostic incident/evidence record, including qualifying nonfatal process exits. | Laporan Diagnostik | Derived public bundle, ordinary logs, GitHub issue, or crash-only classification. | No for UI labels; exported evidence follows its format contract. |
 | Memory Editor | App-owned UI for searching, inspecting, modifying, watching, and freezing supported values in the active runtime. | Editor Memori | Configuration/file editing or unrestricted process-wide memory access; actual capabilities constrain available operations. | No. |
 | Runtime | Active MIDlet execution environment/session, including host lifecycle, rendering, and input management. | Runtime | Installed app, persistent profile, host menu, or elapsed running time. | Yes, established technical usage. |
+| Immediate Processing | Compatibility option that processes MIDlet events directly instead of queuing them on the normal Java ME event queue. | Pemrosesan Langsung | Emulation Speed, Clock Mode, or ordinary asynchronous work. | No. |
 
 Meaning is grounded in the [preset/configuration contracts](preset-config-contract.md),
 [Library data contracts](library-data-contract.md), [runtime UI boundaries](runtime-ui.md),

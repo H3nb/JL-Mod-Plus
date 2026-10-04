@@ -21,6 +21,9 @@ must remain consistent across the library, profiles, and installer surfaces.
   ordinary short articles, conjunctions, and prepositions such as `a`, `an`, `the`,
   `and`, `or`, `of`, `on`, `in`, and `to` normally remain lowercase unless
   they begin the label/title or grammar or proper-noun conventions require otherwise.
+  Lowercase these short words only when they serve those ordinary grammatical roles;
+  capitalize a major semantic/state word, as in `Keep Screen On`, where `On` names
+  the target state rather than a prepositional relation.
 - Apply the same natural title case to buttons, menu items, toolbar actions, and
   other compact controls: `Report on GitHub`, `Save to File`, `Open in Browser`,
   `Terms of Use`, `Delete Report`, and `Diagnostic Bundle Ready`.
