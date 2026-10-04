@@ -171,21 +171,31 @@ public class AmbientColorFieldTest {
     }
 
     @Test
-    public void phoneBoundaryFadesToThemeSymmetrically() {
-        AmbientColorField field = new AmbientColorField();
-        field.configureNodes(
-                new float[]{0.0f, 1.0f, 0.5f, 0.5f},
-                new float[]{0.5f, 0.5f, 0.0f, 1.0f},
+    public void guestDerivedExtensionDoesNotFadeToHostThemeAtSurfaceEdge() {
+        AmbientColorField darkThemeField = new AmbientColorField();
+        AmbientColorField lightThemeField = new AmbientColorField();
+        float[] nodeX = {0.0f, 1.0f, 0.5f, 0.5f};
+        float[] nodeY = {0.5f, 0.5f, 0.0f, 1.0f};
+        darkThemeField.configureNodes(nodeX, nodeY,
                 0.30f, 0.30f, 0.70f, 0.70f, 1.0f);
-        field.setTargetGrid(solidGrid(1.0f, 0.0f, 0.0f), 0xFFFFFFFF, 0L, true);
+        lightThemeField.configureNodes(nodeX, nodeY,
+                0.30f, 0.30f, 0.70f, 0.70f, 1.0f);
+        float[] red = solidGrid(1.0f, 0.0f, 0.0f);
+        darkThemeField.setTargetGrid(red, 0xFF000000, 0L, true);
+        lightThemeField.setTargetGrid(red, 0xFFFFFFFF, 0L, true);
 
-        float[] output = new float[4 * AmbientColorField.CHANNEL_COUNT];
-        field.renderNodes(0L, output);
+        float[] darkOutput = new float[4 * AmbientColorField.CHANNEL_COUNT];
+        float[] lightOutput = new float[4 * AmbientColorField.CHANNEL_COUNT];
+        darkThemeField.renderNodes(0L, darkOutput);
+        lightThemeField.renderNodes(0L, lightOutput);
+        for (int i = 0; i < darkOutput.length; i++) {
+            assertEquals(darkOutput[i], lightOutput[i], 0.001f);
+        }
         for (int node = 0; node < 4; node++) {
             int offset = node * AmbientColorField.CHANNEL_COUNT;
-            assertEquals(1.0f, output[offset], 0.001f);
-            assertEquals(1.0f, output[offset + 1], 0.001f);
-            assertEquals(1.0f, output[offset + 2], 0.001f);
+            assertTrue(darkOutput[offset] > 0.95f);
+            assertTrue(darkOutput[offset + 1] < 0.01f);
+            assertTrue(darkOutput[offset + 2] < 0.01f);
         }
     }
 
@@ -209,43 +219,30 @@ public class AmbientColorFieldTest {
     }
 
     @Test
-    public void terminalFadeUsesEqualPhysicalWidthOnPortraitSurface() {
+    public void blurFootprintWidensAsTheExtensionMovesAwayFromTheLcd() {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(
-                new float[]{0.04f, 0.96f, 0.50f, 0.50f},
-                new float[]{0.50f, 0.50f, 0.02f, 0.98f},
-                0.25f, 0.25f, 0.75f, 0.75f, 0.50f);
-        field.setTargetGrid(solidGrid(1.0f, 0.0f, 0.0f), 0xFF000000, 0L, true);
+                new float[]{0.28f, 0.0f}, new float[]{0.50f, 0.50f},
+                0.30f, 0.30f, 0.70f, 0.70f, 1.0f);
+        float[] grid = solidGrid(1.0f, 0.0f, 0.0f);
+        int centerY = AmbientColorField.GRID_SIZE / 2;
+        for (int y = centerY - 1; y <= centerY; y++) {
+            for (int x = 0; x < 3; x++) {
+                setGridColor(grid, x, y, 0.0f, 0.0f, 1.0f);
+            }
+        }
+        field.setTargetGrid(grid, 0xFF000000, 0L, true);
 
-        float[] output = new float[4 * AmbientColorField.CHANNEL_COUNT];
+        float[] output = new float[2 * AmbientColorField.CHANNEL_COUNT];
         field.renderNodes(0L, output);
-        float expected = output[0];
-        assertTrue(expected > 0.0f && expected < 1.0f);
-        assertEquals(expected, output[3], 0.001f);
-        assertEquals(expected, output[6], 0.001f);
-        assertEquals(expected, output[9], 0.001f);
-    }
-
-    @Test
-    public void themeOnlyEntersNearThePhoneBoundary() {
-        AmbientColorField field = new AmbientColorField();
-        field.configureNodes(
-                new float[]{0.0f, 0.03f, 0.15f},
-                new float[]{0.5f, 0.5f, 0.5f},
-                0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
-        field.setTargetGrid(solidGrid(1.0f, 0.0f, 0.0f), 0xFF000000, 0L, true);
-
-        float[] output = new float[3 * AmbientColorField.CHANNEL_COUNT];
-        field.renderNodes(0L, output);
-        assertTrue(output[0] < 0.01f);
+        float nearBlue = output[2];
+        float farBlue = output[5];
+        assertTrue(nearBlue > farBlue + 0.02f);
         assertTrue(output[3] > output[0]);
-        assertTrue(output[6] > 0.95f);
-        assertTrue(output[4] < 0.01f);
-        assertTrue(output[7] < 0.01f);
     }
 
     @Test
-    public void radialEmissionRemainsSpatiallyDistinctAfterDiffusion() {
+    public void radialEdgeExtensionRemainsSpatiallyDistinctAfterDiffusion() {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(
                 new float[]{0.25f, 0.75f, 0.25f, 0.75f},
