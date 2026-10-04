@@ -653,7 +653,8 @@
     <string name="library_description_more">… More</string>
     <string name="library_description_less">Less</string>
 
-    <string name="memory_editor_bubble">Memory Editor floating button</string>
+    <string name="memory_editor_bubble">Memory Editor Floating Button</string>
+    <string name="memory_editor_bubble_content_description">Memory Editor floating button</string>
     <string name="memory_editor">Memory Editor</string>
     <string name="memory_editor_search_hint">Value</string>
     <string name="memory_editor_next_scan">Next Scan</string>

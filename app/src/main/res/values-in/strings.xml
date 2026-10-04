@@ -608,7 +608,8 @@
     <string name="library_description_more">… Selengkapnya</string>
     <string name="library_description_less">Ringkas</string>
 
-    <string name="memory_editor_bubble">Tombol mengambang Editor Memori</string>
+    <string name="memory_editor_bubble">Tombol Mengambang Editor Memori</string>
+    <string name="memory_editor_bubble_content_description">Tombol mengambang Editor Memori</string>
     <string name="memory_editor">Editor Memori</string>
     <string name="memory_editor_search_hint">Nilai</string>
     <string name="memory_editor_next_scan">Pindai berikutnya</string>

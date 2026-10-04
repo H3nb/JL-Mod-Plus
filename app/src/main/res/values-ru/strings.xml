@@ -743,6 +743,7 @@
     <string name="library_description_more">… Ещё</string>
     <string name="library_description_less">Свернуть</string>
     <string name="memory_editor_bubble">Плавающая кнопка редактора памяти</string>
+    <string name="memory_editor_bubble_content_description">Плавающая кнопка редактора памяти</string>
     <string name="memory_editor">Редактор памяти</string>
     <string name="memory_editor_search_hint">Значение</string>
     <plurals name="memory_editor_results">

@@ -359,13 +359,13 @@ class MemoryEditorBubbleController(
             iconView.visibility = View.VISIBLE
             progressView.visibility = View.GONE
             progressView.text = ""
-            bubbleView.contentDescription = activity.getString(R.string.memory_editor_bubble)
+            bubbleView.contentDescription = activity.getString(R.string.memory_editor_bubble_content_description)
         } else {
             iconView.visibility = View.GONE
             progressView.visibility = View.VISIBLE
             progressView.text = "$percent%"
             bubbleView.contentDescription =
-                "${activity.getString(R.string.memory_editor_bubble)} · $percent%"
+                "${activity.getString(R.string.memory_editor_bubble_content_description)} · $percent%"
         }
     }
 
