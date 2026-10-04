@@ -1988,18 +1988,22 @@ public abstract class Canvas extends Displayable {
 			}
 			refreshDisplayMaximumFps(mView);
 			surfaceAttached = true;
-			presentationMailbox.begin();
+			FrameMetrics nextMetrics = settings.showFps ? new FrameMetrics() : null;
+			synchronized (bufferLock) {
+				// Install diagnostics before accepting publications, and let any old
+				// publication finish before resetting the surface's sequence ownership.
+				frameMetrics = nextMetrics;
+				publishedFrameSequence = 0L;
+				presentationMailbox.begin();
+			}
 			if (renderer != null) {
 				renderer.start();
 			}
 			surface = holder.getSurface();
-			if (settings.showFps) {
-				// The mailbox sequence restarts with each surface. Diagnostics share that
-				// lifetime so renderer counts cannot retain a previous surface's sequence.
-				frameMetrics = new FrameMetrics();
+			if (nextMetrics != null) {
 				fpsCounter = new FpsCounter(
 						overlayView,
-						frameMetrics,
+						nextMetrics,
 						timingOverlayEnabled ? timingSession : null);
 				overlayView.addLayer(fpsCounter);
 			}

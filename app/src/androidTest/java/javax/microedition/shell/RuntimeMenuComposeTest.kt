@@ -466,20 +466,25 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun emulationSpeedDialog_appliesManualSpeedAndResetsInShortWindow() {
+    fun emulationSpeedDialog_appliesManualSpeedInShortWindow() {
         var confirmed = 0
-        var resets = 0
+        val visible = androidx.compose.runtime.mutableStateOf(true)
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
             ) {
                 JLModPlusTheme {
-                    RuntimeEmulationSpeedDialog(
-                        currentPercent = 125,
-                        onDismiss = {},
-                        onConfirm = { confirmed = it },
-                        onReset = { resets++ },
-                    )
+                    if (visible.value) {
+                        RuntimeEmulationSpeedDialog(
+                            currentPercent = 125,
+                            onDismiss = { visible.value = false },
+                            onConfirm = {
+                                visible.value = false
+                                confirmed = it
+                            },
+                            onReset = {},
+                        )
+                    }
                 }
             }
         }
@@ -496,8 +501,36 @@ class RuntimeMenuComposeTest {
         composeRule.onNodeWithText("OK").assertIsDisplayed().performClick()
 
         assertEquals(1600, confirmed)
+        composeRule.onNodeWithTag("runtime_emulation_speed_slider").assertDoesNotExist()
+    }
+
+    @Test
+    fun emulationSpeedDialog_resetsInShortWindow() {
+        var resets = 0
+        val visible = androidx.compose.runtime.mutableStateOf(true)
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
+            ) {
+                JLModPlusTheme {
+                    if (visible.value) {
+                        RuntimeEmulationSpeedDialog(
+                            currentPercent = 1600,
+                            onDismiss = { visible.value = false },
+                            onConfirm = {},
+                            onReset = {
+                                visible.value = false
+                                resets++
+                            },
+                        )
+                    }
+                }
+            }
+        }
+
         composeRule.onNodeWithText("Reset").assertIsDisplayed().performClick()
         assertEquals(1, resets)
+        composeRule.onNodeWithTag("runtime_emulation_speed_slider").assertDoesNotExist()
     }
 
     @Test

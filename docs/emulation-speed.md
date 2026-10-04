@@ -32,7 +32,9 @@ presentation and UI scheduling use host time. Media playback retains its own
 timebase and is not accelerated by this control.
 
 Canvas owns frame metrics for each attached surface when FPS diagnostics are
-enabled. Metrics restart together with the presentation mailbox sequence and
+enabled. Metrics are installed before opening the presentation mailbox, under
+the publication buffer lock, so each accepted publication belongs to the new
+surface's diagnostics. Metrics restart together with the mailbox sequence and
 are released on surface teardown. The overlay reads the selected speed from
 the Canvas's timing session and never changes it.
 
