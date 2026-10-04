@@ -219,7 +219,7 @@ public class AmbientColorFieldTest {
     }
 
     @Test
-    public void blurFootprintWidensAsTheExtensionMovesAwayFromTheLcd() {
+    public void tangentialDiffusionBlendsEdgeBandsMoreAsDistanceIncreases() {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(
                 new float[]{0.28f, 0.0f}, new float[]{0.50f, 0.50f},
@@ -227,7 +227,7 @@ public class AmbientColorFieldTest {
         float[] grid = solidGrid(1.0f, 0.0f, 0.0f);
         int centerY = AmbientColorField.GRID_SIZE / 2;
         for (int y = centerY - 1; y <= centerY; y++) {
-            for (int x = 0; x < 3; x++) {
+            for (int x = 0; x < 4; x++) {
                 setGridColor(grid, x, y, 0.0f, 0.0f, 1.0f);
             }
         }
@@ -235,10 +235,36 @@ public class AmbientColorFieldTest {
 
         float[] output = new float[2 * AmbientColorField.CHANNEL_COUNT];
         field.renderNodes(0L, output);
+        float nearRed = output[0];
         float nearBlue = output[2];
+        float farRed = output[3];
         float farBlue = output[5];
         assertTrue(nearBlue > farBlue + 0.02f);
-        assertTrue(output[3] > output[0]);
+        assertTrue(farRed > nearRed + 0.02f);
+    }
+
+    @Test
+    public void tangentialSpreadStillPreservesDifferentEdgeNeighborhoods() {
+        AmbientColorField field = new AmbientColorField();
+        field.configureNodes(
+                new float[]{0.0f, 0.0f}, new float[]{0.25f, 0.75f},
+                0.30f, 0.30f, 0.70f, 0.70f, 1.0f);
+        float[] grid = new float[AmbientColorField.GRID_CHANNEL_COUNT];
+        for (int y = 0; y < AmbientColorField.GRID_SIZE; y++) {
+            for (int x = 0; x < AmbientColorField.GRID_SIZE; x++) {
+                if (y < AmbientColorField.GRID_SIZE / 2) {
+                    setGridColor(grid, x, y, 1.0f, 0.0f, 0.0f);
+                } else {
+                    setGridColor(grid, x, y, 0.0f, 0.0f, 1.0f);
+                }
+            }
+        }
+        field.setTargetGrid(grid, 0xFF000000, 0L, true);
+
+        float[] output = new float[2 * AmbientColorField.CHANNEL_COUNT];
+        field.renderNodes(0L, output);
+        assertTrue(output[0] > output[2]);
+        assertTrue(output[5] > output[3]);
     }
 
     @Test
