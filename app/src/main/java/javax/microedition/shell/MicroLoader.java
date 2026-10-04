@@ -76,6 +76,7 @@ import io.github.h3nb.jlmodplus.crashes.CrashReporter;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionJournal;
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore;
 import io.github.h3nb.jlmodplus.memory.MemoryRuntimeSession;
+import io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator;
 import io.github.h3nb.jlmodplus.runtime.MidletKeepAliveService;
 import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 import io.github.h3nb.jlmodplus.util.AppUtils;
@@ -107,6 +108,7 @@ public class MicroLoader {
 	private String jarSha256;
 	private ClassLoader midletClassLoader;
 	private TimingSession timingSession;
+	private RuntimeAudioCoordinator audioSession;
 	private RuntimeStorageLease storageLease;
 	private long memoryRuntimeToken;
 	private boolean timingTransformCompatible;
@@ -185,10 +187,14 @@ public class MicroLoader {
 			throw e;
 		}
 		timingSession = session;
+		audioSession = RuntimeAudioCoordinator.beginRuntime();
 		memoryRuntimeToken = MemoryRuntimeSession.start();
 	}
 
 	void closeTimingSession() {
+		RuntimeAudioCoordinator audio = audioSession;
+		audioSession = null;
+		if (audio != null) audio.close();
 		TimingSession session = timingSession;
 		timingSession = null;
 		GuestTimingBridge.clear(session);

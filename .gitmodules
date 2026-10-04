@@ -1,3 +1,0 @@
-[submodule "TinySoundFont"]
-	path = app/src/main/cpp/mmapi_tsf/TinySoundFont
-	url = https://github.com/schellingb/TinySoundFont.git

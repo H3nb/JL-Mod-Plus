@@ -1,4 +1,5 @@
 /*
+ * Modified for JL-Mod Plus.
  * Copyright 2020 Nikita Shakarun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,7 +61,7 @@ public class AndroidPlayer extends MediaPlayer {
 		if (loaded) {
 			return super.getDuration();
 		} else {
-			return 0;
+			return -1;
 		}
 	}
 
@@ -91,6 +92,7 @@ public class AndroidPlayer extends MediaPlayer {
 	@Override
 	public void reset() {
 		if (loaded) {
+			timePos = super.getCurrentPosition();
 			super.reset();
 			loaded = false;
 		}
@@ -99,13 +101,14 @@ public class AndroidPlayer extends MediaPlayer {
 	private void load() {
 		if (!loaded) {
 			try {
+				super.setAudioAttributes(io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator.audioAttributes());
 				super.setDataSource(path);
 				super.prepare();
 				super.setVolume(leftVolume, rightVolume);
 				super.setLooping(looping);
 				super.seekTo(timePos);
 			} catch (IOException e) {
-				e.printStackTrace();
+				throw new IllegalStateException("Unable to prepare sampled audio", e);
 			}
 			loaded = true;
 		}

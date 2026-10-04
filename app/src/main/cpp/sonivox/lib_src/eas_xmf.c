@@ -27,7 +27,7 @@
  *----------------------------------------------------------------------------
 */
 
-#include <util/log.h>
+#include <log/log.h>
 
 #include "eas_data.h"
 #include "eas_miditypes.h"
@@ -41,6 +41,34 @@
 #include "eas_vm_protos.h"
 #include "eas_mdls.h"
 #include "eas_smf.h"
+
+#if defined (_ZLIB_UNPACKER)
+#include <zlib.h>
+#include <string.h>
+
+typedef struct {
+    char* ptr;
+    int size;
+} MemSpan;
+
+// ReadAt func for ZLIB packed data
+static int MemReadAt(void *handle, void *buf, int offset, int size){
+    MemSpan* span = handle;
+    if (size > span->size - offset) {
+        size = span->size - offset;
+    }
+
+    if (size > 0) {
+        memcpy(buf, span->ptr + offset, size);
+    }
+    return size;
+}
+
+static int MemSize(void *handle) {
+    MemSpan* span = handle;
+    return span->size;
+}
+#endif
 
 
 /* XMF header file type */
@@ -64,8 +92,8 @@ static EAS_RESULT XMF_Close (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT XMF_Reset (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT XMF_Pause (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT XMF_Resume (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
-static EAS_RESULT XMF_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 value);
-static EAS_RESULT XMF_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 *pValue);
+static EAS_RESULT XMF_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR value);
+static EAS_RESULT XMF_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR *pValue);
 static EAS_RESULT XMF_FindFileContents (EAS_HW_DATA_HANDLE hwInstData, S_XMF_DATA *pXMFData);
 static EAS_RESULT XMF_ReadNode (EAS_HW_DATA_HANDLE hwInstData, S_XMF_DATA *pXMFData, EAS_I32 nodeOffset, EAS_I32 endOffset, EAS_I32 *pLength, EAS_I32 depth);
 static EAS_RESULT XMF_ReadVLQ (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_HANDLE fileHandle, EAS_U32 *remainingBytes, EAS_I32 *value);
@@ -87,13 +115,8 @@ const S_FILE_PARSER_INTERFACE EAS_XMF_Parser =
     XMF_State,
     XMF_Close,
     XMF_Reset,
-#ifdef JET_INTERFACE
     XMF_Pause,
     XMF_Resume,
-#else
-    NULL,
-    NULL,
-#endif
     NULL,
     XMF_SetData,
     XMF_GetData,
@@ -185,17 +208,17 @@ static EAS_RESULT XMF_CheckFileType (S_EAS_DATA *pEASData, EAS_FILE_HANDLE fileH
     /* locate the SMF and DLS contents */
     if ((result = XMF_FindFileContents(pEASData->hwInstData, pXMFData)) != EAS_SUCCESS)
     {
-        { /* dpp: EAS_ReportEx(_EAS_SEVERITY_ERROR, "No SMF data found in XMF file\n"); */ }
+        EAS_Report(_EAS_SEVERITY_ERROR, "Failed to parse XMF file: %ld\n", result);
         EAS_HWFree(pEASData->hwInstData, pXMFData);
         return result;
     }
 
     /* let the SMF parser take over */
-    if ((result = EAS_HWFileSeek(pEASData->hwInstData, fileHandle, pXMFData->midiOffset)) != EAS_SUCCESS) {
+    if ((result = EAS_HWFileSeek(pEASData->hwInstData, pXMFData->smfFileHandle, pXMFData->smfOffset)) != EAS_SUCCESS) {
         EAS_HWFree(pEASData->hwInstData, pXMFData);
         return result;
     }
-    if ((result = SMF_CheckFileType(pEASData, fileHandle, &pXMFData->pSMFData, pXMFData->midiOffset)) != EAS_SUCCESS) {
+    if ((result = SMF_CheckFileType(pEASData, pXMFData->smfFileHandle, &pXMFData->pSMFData, pXMFData->smfOffset)) != EAS_SUCCESS) {
         EAS_HWFree(pEASData->hwInstData, pXMFData);
         return result;
     }
@@ -230,11 +253,22 @@ static EAS_RESULT XMF_Prepare (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData)
     pXMFData = (S_XMF_DATA*) pInstData;
     if (pXMFData->dlsOffset != 0)
     {
-        if ((result = DLSParser(pEASData->hwInstData, pXMFData->fileHandle, pXMFData->dlsOffset, &pXMFData->pDLS)) != EAS_SUCCESS)
+        if ((result = DLSParser(pEASData->hwInstData, pXMFData->dlsFileHandle, pXMFData->dlsOffset, &pXMFData->pDLS)) != EAS_SUCCESS)
         {
-            { /* dpp: EAS_ReportEx(_EAS_SEVERITY_WARNING, "Error converting XMF DLS data\n"); */ }
+            EAS_Report(_EAS_SEVERITY_WARNING, "Error converting XMF DLS data: %ld\n", result);
             return result;
         }
+#if defined (_ZLIB_UNPACKER)
+        if (pXMFData->dlsFileSpan != NULL) {
+            // dls is in memory, close and free it now
+            MemSpan* span = pXMFData->dlsFileSpan;
+            EAS_HWCloseFile(pEASData->hwInstData, pXMFData->dlsFileHandle);
+            EAS_HWFree(pEASData->hwInstData, span->ptr);
+            EAS_HWFree(pEASData->hwInstData, span);
+            pXMFData->dlsFileSpan = NULL;
+            pXMFData->dlsFileHandle = NULL;
+        }
+#endif
     }
 
     /* Prepare the SMF parser */
@@ -318,7 +352,7 @@ static EAS_RESULT XMF_Event (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I
  *
  *----------------------------------------------------------------------------
 */
-static EAS_RESULT XMF_State (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 *pState)
+static EAS_RESULT XMF_State (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_STATE *pState)
 {
     return SMF_State(pEASData, ((S_XMF_DATA*) pInstData)->pSMFData, pState);
 }
@@ -347,9 +381,23 @@ static EAS_RESULT XMF_Close (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData)
 
     pXMFData = (S_XMF_DATA *)pInstData;
 
-    /* close the SMF stream, it will close the file handle */
+    // if dls is in memory, its handle has been closed already after parsed
+    // close the SMF stream, it will close the smffilehandle
     if ((result = SMF_Close(pEASData, pXMFData->pSMFData)) != EAS_SUCCESS)
         return result;
+    // however smffilehandle could be a memfile, in this case xmf file handle is still open
+    // so check it
+#if defined (_ZLIB_UNPACKER)
+    if (pXMFData->smfFileSpan != NULL) {
+        // smf is in memory, free it now
+        MemSpan* span = pXMFData->smfFileSpan;
+        EAS_HWFree(pEASData->hwInstData, span->ptr);
+        EAS_HWFree(pEASData->hwInstData, span);
+
+        // then close xmf
+        EAS_HWCloseFile(pEASData->hwInstData, pXMFData->fileHandle);
+    }
+#endif
 
     if (pXMFData->pDLS)
         DLSCleanup(pEASData->hwInstData, pXMFData->pDLS);
@@ -386,7 +434,6 @@ static EAS_RESULT XMF_Reset (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData)
     return SMF_Reset(pEASData, ((S_XMF_DATA*) pInstData)->pSMFData);
 }
 
-#ifdef JET_INTERFACE
 /*----------------------------------------------------------------------------
  * XMF_Pause()
  *----------------------------------------------------------------------------
@@ -430,7 +477,6 @@ static EAS_RESULT XMF_Resume (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData)
 {
     return SMF_Resume(pEASData, ((S_XMF_DATA*) pInstData)->pSMFData);
 }
-#endif
 
 /*----------------------------------------------------------------------------
  * XMF_SetData()
@@ -450,7 +496,7 @@ static EAS_RESULT XMF_Resume (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData)
  *
  *----------------------------------------------------------------------------
 */
-static EAS_RESULT XMF_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 value)
+static EAS_RESULT XMF_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR value)
 {
     return SMF_SetData(pEASData, ((S_XMF_DATA*) pInstData)->pSMFData, param, value);
 }
@@ -473,7 +519,7 @@ static EAS_RESULT XMF_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS
  *
  *----------------------------------------------------------------------------
 */
-static EAS_RESULT XMF_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 *pValue)
+static EAS_RESULT XMF_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR *pValue)
 {
     EAS_RESULT result;
 
@@ -524,8 +570,8 @@ static EAS_RESULT XMF_FindFileContents (EAS_HW_DATA_HANDLE hwInstData, S_XMF_DAT
     EAS_I32 fileLength;
     EAS_U32 remainingBytes;
 
-    /* initialize offsets */
-    pXMFData->dlsOffset = pXMFData->midiOffset = 0;
+    /* initialize file handles to see if there is smf and dls */
+    pXMFData->smfFileHandle = pXMFData->dlsFileHandle = NULL;
 
     /* read file length. We're arbitrarily limiting the size of this field to
      * 16 bytes, since we don't yet have an actual limit. Once the field is
@@ -570,15 +616,15 @@ static EAS_RESULT XMF_FindFileContents (EAS_HW_DATA_HANDLE hwInstData, S_XMF_DAT
         return result;
 
     /* check for SMF data */
-    if (pXMFData->midiOffset == 0)
+    if (pXMFData->smfFileHandle == NULL)
     {
-        { /* dpp: EAS_ReportEx(_EAS_SEVERITY_ERROR, "No SMF data found in XMF file\n"); */ }
+        EAS_Report(_EAS_SEVERITY_ERROR, "No SMF data found in XMF file\n");
         return EAS_ERROR_FILE_FORMAT;
     }
 
     /* check for SFM in wrong order */
-    if ((pXMFData->dlsOffset > 0) && (pXMFData->midiOffset < pXMFData->dlsOffset))
-        { /* dpp: EAS_ReportEx(_EAS_SEVERITY_WARNING, "DLS data must precede SMF data in Mobile XMF file\n"); */ }
+    if ((pXMFData->dlsOffset > 0) && (pXMFData->smfOffset < pXMFData->dlsOffset))
+        EAS_Report(_EAS_SEVERITY_WARNING, "DLS data must precede SMF data in Mobile XMF file\n");
 
     return EAS_SUCCESS;
 }
@@ -608,6 +654,8 @@ static EAS_RESULT XMF_ReadNode (EAS_HW_DATA_HANDLE hwInstData, S_XMF_DATA *pXMFD
     EAS_U32 chunkType;
     EAS_U32 remainingInlineBytes;
     EAS_U32 deltaBytes;
+    EAS_BOOL zlibPacked = EAS_FALSE;
+    EAS_U32 unpackedSize = 0;
 
     /* check the depth of current node*/
     if ( depth > 100 )
@@ -652,6 +700,50 @@ static EAS_RESULT XMF_ReadNode (EAS_HW_DATA_HANDLE hwInstData, S_XMF_DATA *pXMFD
     if (length < 0)
         return EAS_ERROR_FILE_FORMAT;
 
+    // skip metadata and go to node unpackers
+    if ((result = EAS_HWFileSeekOfs(hwInstData, pXMFData->fileHandle, length)) != EAS_SUCCESS)
+        return result;
+
+    // get node unpackers length
+    if ((result = XMF_ReadVLQ(hwInstData, pXMFData->fileHandle, &remainingInlineBytes, &length)) != EAS_SUCCESS)
+        return result;
+
+    EAS_U32 nodeUnpackerRemaining = length;
+    while (nodeUnpackerRemaining != 0) {
+        EAS_U32 temp;
+        result = XMF_ReadVLQ(hwInstData, pXMFData->fileHandle, &nodeUnpackerRemaining, &temp);
+        if (result != EAS_SUCCESS)
+            return result;
+        if (temp != 0) {
+            EAS_Report(_EAS_SEVERITY_ERROR, "Unrecognized UnpackerTypeID 0x%x\n", temp);
+            return EAS_ERROR_FILE_FORMAT;
+        }
+        
+        result = XMF_ReadVLQ(hwInstData, pXMFData->fileHandle, &nodeUnpackerRemaining, &temp);
+        if (result != EAS_SUCCESS)
+            return result;
+        if (temp == 0) {
+            // no unpacker???
+        } else if (temp == 1) {
+            // ZLIB
+#if !defined (_ZLIB_UNPACKER)
+            EAS_Report(_EAS_SEVERITY_ERROR, "ZLIB unpacker is not supported in this build\n");
+            return EAS_ERROR_FILE_FORMAT;
+#endif
+            if (zlibPacked) {
+                EAS_Report(_EAS_SEVERITY_ERROR, "Multiple ZLIB unpackers found in one XMF node???\n");
+                return EAS_ERROR_FILE_FORMAT;
+            }
+            zlibPacked = EAS_TRUE;
+        } else {
+            EAS_Report(_EAS_SEVERITY_ERROR, "Unrecognized StandardUnpackerID 0x%x\n", temp);
+            return EAS_ERROR_FILE_FORMAT;
+        }
+        result = XMF_ReadVLQ(hwInstData, pXMFData->fileHandle, &nodeUnpackerRemaining, &unpackedSize);
+        if (result != EAS_SUCCESS)
+            return result;
+    }
+
     /* get the current location */
     if ((result = EAS_HWFilePos(hwInstData, pXMFData->fileHandle, &offset)) != EAS_SUCCESS)
         return result;
@@ -690,33 +782,129 @@ static EAS_RESULT XMF_ReadNode (EAS_HW_DATA_HANDLE hwInstData, S_XMF_DATA *pXMFD
         /* or else it must be an inline resource */
         else if (refType != 1)
         {
-            { /* dpp: EAS_ReportEx(_EAS_SEVERITY_ERROR, "Unexpected reference type %d\n", refType); */ }
+            EAS_Report(_EAS_SEVERITY_ERROR, "Unexpected reference type %d\n", refType);
             return EAS_ERROR_FILE_FORMAT;
         }
 
         /* at this point we stop enforcing reading past the node. */
+        
+        // now we are at the start of data
+
+        EAS_FILE_HANDLE dataFileHandle = pXMFData->fileHandle;
+        void* dataSpan = NULL;
+#if defined (_ZLIB_UNPACKER)
+        // if zlib:
+        if (zlibPacked)
+        {
+            unsigned char inputBuf[16384];
+            unsigned char* unpackedData = EAS_HWMalloc(hwInstData, unpackedSize);
+            if (!unpackedData)
+            {
+                EAS_Report(_EAS_SEVERITY_ERROR, "Failed to allocate memory in 0x%x bytes for unpacked XMF data\n", unpackedSize);
+                return EAS_ERROR_MALLOC_FAILED;
+            }
+
+            // init ZLIB
+            EAS_I32 bytesRead = 0;
+            z_stream strm;
+            strm.zalloc = Z_NULL;
+            strm.zfree = Z_NULL;
+            strm.opaque = Z_NULL;
+            strm.avail_in = 0;
+            strm.next_in = Z_NULL;
+            strm.next_out = unpackedData;
+            strm.avail_out = unpackedSize;
+            result = inflateInit(&strm);
+            if (result != Z_OK) {
+                EAS_Report(_EAS_SEVERITY_ERROR, "Failed to initialize zlib for unpacking XMF data: %ld\n", result);
+                EAS_HWFree(hwInstData, unpackedData);
+                return EAS_FAILURE;
+            }
+            // read the data
+            while (1) {
+                result = EAS_HWReadFile(hwInstData, pXMFData->fileHandle, inputBuf, sizeof(inputBuf), &bytesRead);
+                if (result != EAS_SUCCESS && result != EAS_EOF) {
+                    EAS_HWFree(hwInstData, unpackedData);
+                    inflateEnd(&strm);
+                    return result;
+                }
+                if (bytesRead == 0) {
+                    EAS_Report(_EAS_SEVERITY_ERROR, "Unexpected EOF while reading ZLIB data\n");
+                    EAS_HWFree(hwInstData, unpackedData);
+                    inflateEnd(&strm);
+                    return EAS_ERROR_FILE_FORMAT;
+                }
+                strm.avail_in = bytesRead;
+                strm.next_in = inputBuf;
+                // inflate
+                while (strm.avail_in != 0) {
+                    if (strm.avail_out == 0) {
+                        EAS_Report(_EAS_SEVERITY_ERROR, "Inconsistent ZLIB uncompressed size in XMF node\n");
+                        EAS_HWFree(hwInstData, unpackedData);
+                        inflateEnd(&strm);
+                        return EAS_ERROR_FILE_FORMAT;
+                    }
+                    result = inflate(&strm, Z_NO_FLUSH);
+                    if (result == Z_STREAM_END) {
+                        goto ZLIBReadFin;
+                    }
+                    if (result != Z_OK) {
+                        EAS_Report(_EAS_SEVERITY_ERROR, "ZLIB unpacking error in XMF node: %ld\n", result);
+                        EAS_HWFree(hwInstData, unpackedData);
+                        inflateEnd(&strm);
+                        return EAS_ERROR_FILE_FORMAT;
+                    }
+                }
+            }
+            ZLIBReadFin:
+            inflateEnd(&strm);
+
+            EAS_FILE memfile;
+            MemSpan* pSpan = EAS_HWMalloc(hwInstData, sizeof(MemSpan));
+            pSpan->ptr = unpackedData;
+            pSpan->size = unpackedSize;
+            memfile.handle = pSpan;
+            memfile.readAt = MemReadAt;
+            memfile.size = MemSize;
+            result = EAS_HWOpenFile(hwInstData, &memfile, &dataFileHandle, EAS_FILE_READ);
+            if (result != EAS_SUCCESS)
+            {
+                EAS_HWFree(hwInstData, unpackedData);
+                EAS_HWFree(hwInstData, pSpan);
+                return result;
+            }
+            offset = 0;
+            dataSpan = pSpan;
+        }
+#endif
 
         /* get the chunk type */
-        if ((result = EAS_HWGetDWord(hwInstData, pXMFData->fileHandle, &chunkType, EAS_TRUE)) != EAS_SUCCESS)
+        if ((result = EAS_HWGetDWord(hwInstData, dataFileHandle, &chunkType, EAS_TRUE)) != EAS_SUCCESS)
             return result;
 
         /* found a RIFF chunk, check for DLS type */
         if (chunkType == XMF_RIFF_CHUNK)
         {
             /* skip length */
-            if ((result = EAS_HWFileSeekOfs(hwInstData, pXMFData->fileHandle, 4)) != EAS_SUCCESS)
+            if ((result = EAS_HWFileSeekOfs(hwInstData, dataFileHandle, 4)) != EAS_SUCCESS)
                 return result;
 
             /* get RIFF file type */
-            if ((result = EAS_HWGetDWord(hwInstData, pXMFData->fileHandle, &chunkType, EAS_TRUE)) != EAS_SUCCESS)
+            if ((result = EAS_HWGetDWord(hwInstData, dataFileHandle, &chunkType, EAS_TRUE)) != EAS_SUCCESS)
                 return result;
-            if (chunkType == XMF_RIFF_DLS)
+            if (chunkType == XMF_RIFF_DLS) {
                 pXMFData->dlsOffset = offset;
+                pXMFData->dlsFileHandle = dataFileHandle;
+                pXMFData->dlsFileSpan = dataSpan;
+            }
         }
 
         /* found an SMF chunk */
-        else if (chunkType == XMF_SMF_CHUNK)
-            pXMFData->midiOffset = offset;
+        else if (chunkType == XMF_SMF_CHUNK) {
+            pXMFData->smfOffset = offset;
+            pXMFData->smfFileHandle = dataFileHandle;
+            pXMFData->smfFileSpan = dataSpan;
+        }
     }
 
     /* folder node, process the items in the list */

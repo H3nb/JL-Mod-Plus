@@ -21,11 +21,11 @@ Distinct bundled source components include:
 - Android Open Source Project dx/dex sources — Apache-2.0
 - Nokia M3G / JSR-184 native reference code — EPL-1.0
 - SoniVox EAS native code — Apache-2.0
-- TinySoundFont — MIT
-- TinyMidiLoader — Zlib
+- FFmpeg n8.1.3 native audio libraries — LGPL-3.0-or-later; FFmpeg contributors
+- OpenCORE-AMR NB/WB decoders — Apache-2.0; PacketVideo and Martin Storsjo
 
 Runtime libraries such as AndroidX, Kotlin, Material Components, Gson, Oboe,
-RxJava/RxAndroid, Zip4j, ASM, FFmpegKit and their shipped transitive
+RxJava/RxAndroid, Zip4j, ASM and their shipped transitive
 components retain their upstream licenses. Exact origins, coordinates, license
 identifiers, source-availability pointers for reciprocal licenses, and important
 transitive notices are recorded in THIRD_PARTY_NOTICES.md and summarized in the

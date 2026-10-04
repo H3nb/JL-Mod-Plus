@@ -10,7 +10,7 @@ Use the Gradle wrapper from the repository root. For current build, toolchain, d
 
 - Use JDK 21, matching CI. Java source/target compatibility is 17.
 - Configure the Android SDK through `ANDROID_HOME` or an untracked `local.properties` with `sdk.dir`. The project compiles against SDK 37, targets 36, supports API 23+, and selects NDK `28.2.13676358` in the root build file. CI installs `platforms;android-37.0`.
-- Initialize the native source submodule with `git submodule update --init --recursive`.
+- Native synthesis sources are vendored; no native source submodule initialization is required. Sampled audio dependencies are built from pinned archives by the Gradle native tasks; install PowerShell 7, Git and the POSIX shell/make prerequisites in [the native audio recipe](../tools/audio/README.md). The cache lives under `app/build/audio-deps`.
 - Normal debug builds target `arm64-v8a`. Use `-PjlmodRuntimeTestAbi=x86_64` when testing on an x86_64 emulator; the supported override values are `arm64-v8a` and `x86_64`.
 - Debug builds use `debug.keystore` when present, otherwise the normal local debug signing configuration. Release signing is configured separately; do not copy credentials into documentation.
 
@@ -34,6 +34,9 @@ The examples use PowerShell. On POSIX shells, replace `./gradlew.bat` with `./gr
 For an arm64 device, omit the ABI override in the connected command. Assembling
 the instrumentation APK does not run its tests. Use the smallest relevant
 selection while iterating; full CI tasks are listed in the workflow.
+
+See [audio runtime qualification](audio-runtime.md) for isolated synthesis,
+sampled-audio lifecycle, and whole-MIDlet checks.
 
 ## Testing strategy
 
@@ -135,7 +138,11 @@ remain verification gaps; they do not authorize bypassing required merge checks.
 Use `runtime-smoke` for relevant UI/database/IPC/lifecycle changes and before a
 release involving those boundaries. The workflow selects existing tests for
 Android SQLite, crash-report interactions, stale cross-process preset identity,
-and repeated remote crashes that must leave the main process alive. It uses the
+and repeated remote crashes that must leave the main process alive. Generated
+media checks also cover the guest cache bound, legacy unknown duration,
+multi-audio video rejection, and synthesis/sampled/video playback and seek on
+one output. Media checks use a private temporary workdir and restore the prior
+preference; they require no commercial assets or custom soundbanks. It uses the
 emulator's default English locale, disables animations, and captures logcat before
 the emulator shuts down. Tests share one fresh installation and run without sharding.
 

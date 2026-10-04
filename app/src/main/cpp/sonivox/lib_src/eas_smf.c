@@ -29,8 +29,11 @@
  *----------------------------------------------------------------------------
 */
 
+#include <stdint.h> // For uint64_t
+#include <limits.h> // For USHRT_MAX
+
 #define LOG_TAG "Sonivox"
-#include "util/log.h"
+#include "log/log.h"
 
 #include "eas_data.h"
 #include "eas_miditypes.h"
@@ -79,13 +82,8 @@ const S_FILE_PARSER_INTERFACE EAS_SMF_Parser =
     SMF_State,
     SMF_Close,
     SMF_Reset,
-#ifdef JET_INTERFACE
     SMF_Pause,
     SMF_Resume,
-#else
-    NULL,
-    NULL,
-#endif
     NULL,
     SMF_SetData,
     SMF_GetData,
@@ -119,7 +117,6 @@ EAS_RESULT SMF_CheckFileType (S_EAS_DATA *pEASData, EAS_FILE_HANDLE fileHandle, 
     if ((result = EAS_HWFileSeek(pEASData->hwInstData, fileHandle, offset)) != EAS_SUCCESS)
         return result;
 
-#ifdef FILE_HEADER_SEARCH
     /* search through file for header - slow method */
     if (pEASData->searchHeaderFlag)
     {
@@ -129,9 +126,7 @@ EAS_RESULT SMF_CheckFileType (S_EAS_DATA *pEASData, EAS_FILE_HANDLE fileHandle, 
     }
 
     /* read the first 4 bytes of the file - quick method */
-    else
-#endif
-    {
+    else {
         EAS_U8 header[4];
         EAS_I32 count;
         if ((result = EAS_HWReadFile(pEASData->hwInstData, fileHandle, header, sizeof(header), &count)) != EAS_SUCCESS)
@@ -390,7 +385,7 @@ EAS_RESULT SMF_Event (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_INT pars
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) reserved for future use */
-EAS_RESULT SMF_State (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 *pState)
+EAS_RESULT SMF_State (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_STATE *pState)
 {
     S_SMF_DATA* pSMFData;
 
@@ -533,7 +528,6 @@ EAS_RESULT SMF_Reset (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData)
     return EAS_SUCCESS;
 }
 
-#ifdef JET_INTERFACE
 /*----------------------------------------------------------------------------
  * SMF_Pause()
  *----------------------------------------------------------------------------
@@ -597,7 +591,6 @@ EAS_RESULT SMF_Resume (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData)
     pSMFData->state = EAS_STATE_PLAY;
     return EAS_SUCCESS;
 }
-#endif
 
 /*----------------------------------------------------------------------------
  * SMF_SetData()
@@ -617,7 +610,7 @@ EAS_RESULT SMF_Resume (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData)
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) reserved for future use */
-EAS_RESULT SMF_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 value)
+EAS_RESULT SMF_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR value)
 {
     S_SMF_DATA *pSMFData;
 
@@ -704,7 +697,7 @@ EAS_RESULT SMF_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 pa
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) reserved for future use */
-EAS_RESULT SMF_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 *pValue)
+EAS_RESULT SMF_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR *pValue)
 {
     S_SMF_DATA *pSMFData;
 
@@ -740,7 +733,7 @@ EAS_RESULT SMF_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 pa
 #endif
 
         case PARSER_DATA_SYNTH_HANDLE:
-            *pValue = (EAS_I32) pSMFData->pSynth;
+            *pValue = (EAS_IPTR) pSMFData->pSynth;
             break;
 
         default:
@@ -855,6 +848,7 @@ static EAS_RESULT SMF_ParseMetaEvent (S_EAS_DATA *pEASData, S_SMF_DATA *pSMFData
     /* prevent a large unsigned length from being treated as a negative length */
     if ((EAS_I32) len < 0) {
         /* note that EAS_I32 is a long, which can be 64-bits on some computers */
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s() negative len = %ld\n", __func__, (long) len);
         ALOGE("%s() negative len = %ld", __func__, (long) len);
         android_errorWriteLog(0x534e4554, "68953854");
         return EAS_ERROR_FILE_FORMAT;
@@ -862,6 +856,7 @@ static EAS_RESULT SMF_ParseMetaEvent (S_EAS_DATA *pEASData, S_SMF_DATA *pSMFData
     /* prevent numeric overflow caused by a very large len, assume pos > 0 */
     const EAS_I32 EAS_I32_MAX = 0x7FFFFFFF;
     if ((EAS_I32) len > (EAS_I32_MAX - pos)) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s() too large len = %ld\n", __func__, (long) len);
         ALOGE("%s() too large len = %ld", __func__, (long) len);
         android_errorWriteLog(0x534e4554, "68953854");
         return EAS_ERROR_FILE_FORMAT;
@@ -888,16 +883,19 @@ static EAS_RESULT SMF_ParseMetaEvent (S_EAS_DATA *pEASData, S_SMF_DATA *pSMFData
                 return result;
             temp = (temp << 8) | c;
         }
+        // note: temp is microseconds per quarter note. if SMF tempo is 120 quarters per minute, then:
+        // temp = 60'000'000 / 120 = 500'000 (SMF_DEFAULT_TIMEBASE)
+        // temp will be maximum 28 bits. See also SMF_ParseHeader() and SMF_UpdateTime()
         {
-            // pSMFData->tickConv = (EAS_U16) (((temp * 1024) / pSMFData->ppqn + 500) / 1000);
-            uint64_t temp64;
-            if (__builtin_mul_overflow(temp, 1024u, &temp64) ||
-                    pSMFData->ppqn == 0 ||
-                    (temp64 /= pSMFData->ppqn, false) ||
-                    __builtin_add_overflow(temp64, 500, &temp64) ||
-                    (temp64 /= 1000, false) ||
-                    temp64 > 65535) {
-                pSMFData->tickConv = 65535;
+            uint64_t temp64 = temp * 1024; // will never overflow
+            if (pSMFData->ppqn > 0) {
+              // see https://en.wikipedia.org/wiki/MIDI_beat_clock#Pulses_per_quarter_note
+              temp64 /= pSMFData->ppqn; // ticks per quarter note, values typically between 24 and 960
+              temp64 += 500;
+              temp64 /= 1000;
+            }
+            if (temp64 > USHRT_MAX) {
+                pSMFData->tickConv = 65535; // unlikely!
             } else {
                 pSMFData->tickConv = (EAS_U16) temp64;
             }

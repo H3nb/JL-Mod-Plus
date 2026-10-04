@@ -123,6 +123,7 @@ public class MicroActivity extends AppCompatActivity {
 	private boolean displayCutoutEnabled;
 	private boolean orientationLocked;
 	private MicroLoader microLoader;
+	private boolean pendingMidletLaunch;
 	private String appName;
 	private String[] pendingMidletClasses;
 	private InputMethodManager inputMethodManager;
@@ -389,7 +390,9 @@ public class MicroActivity extends AppCompatActivity {
 				display.attachHost(this);
 			}
 		} else {
-			loadMIDlet();
+			// A guest can start audio in its constructor/startApp. Launch only after Android
+			// has resumed this host so API 35+ focus eligibility is already established.
+			pendingMidletLaunch = true;
 		}
 	}
 
@@ -732,6 +735,11 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator.onHostForegroundChanged(true);
+		if (pendingMidletLaunch) {
+			pendingMidletLaunch = false;
+			loadMIDlet();
+		}
 		externalAndroidHandoff = false;
 		refreshCanvasBackground();
 		if (memoryEditorController != null) {
@@ -741,6 +749,9 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void onPause() {
+		if (ContextHolder.getActivity() == this) {
+			io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator.onHostForegroundChanged(false);
+		}
 		if (controllerInputRouter != null) {
 			controllerInputRouter.clear();
 		}

@@ -41,6 +41,24 @@ val diagnosticBuildCommit = (
     if (value.matches(Regex("[0-9a-fA-F]{7,40}"))) value.lowercase(Locale.ROOT) else "unknown"
 }
 
+val audioDependenciesRoot = layout.buildDirectory.dir("audio-deps")
+val audioDependencyTasks = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64").associateWith { abi ->
+    tasks.register<Exec>("buildNativeAudio${abi.replace("-", "").replace("_", "")}") {
+        inputs.files(rootProject.fileTree("tools/audio"))
+        inputs.property("ndk", rootProject.extra["ndkVersion"] as String)
+        outputs.dir(audioDependenciesRoot.map { it.dir("install-$abi") })
+        commandLine("pwsh", "-NoProfile", "-File", rootProject.file("tools/audio/build-native-deps.ps1"),
+            "-OutRoot", audioDependenciesRoot.get().asFile, "-Sdk",
+            androidComponents.sdkComponents.sdkDirectory.get().asFile,
+            "-NdkVersion", rootProject.extra["ndkVersion"] as String, "-Abis", abi)
+    }
+}
+tasks.configureEach {
+    if (name.startsWith("configureNdkBuild") || name.startsWith("buildNdkBuild")) {
+        audioDependencyTasks.forEach { (abi, build) -> if (name.endsWith("[$abi]")) dependsOn(build) }
+    }
+}
+
 android {
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
     compileSdk = rootProject.extra["compileSdk"] as Int
@@ -56,6 +74,7 @@ android {
         resValue("string", "app_name", "JL-Mod Plus")
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        externalNativeBuild.ndkBuild.arguments += "JLMOD_AUDIO_DEPS=${audioDependenciesRoot.get().asFile.absolutePath.replace('\\', '/')}"
     }
 
     @Suppress("UnstableApiUsage")
@@ -198,8 +217,7 @@ androidComponents {
     }
 }
 
-// The Managed Java editor has no Raw JNI dependency. Keep the ABI-specific install artifact
-// honest by rejecting stale memory-editor libraries left by an incremental native build.
+// Reject retired native modules left by incremental builds in the install artifact.
 val verifyEmulatorDebugNativePackaging = tasks.register("verifyEmulatorDebugNativePackaging") {
     dependsOn("packageEmulatorDebug")
     outputs.upToDateWhen { false }
@@ -211,12 +229,16 @@ val verifyEmulatorDebugNativePackaging = tasks.register("verifyEmulatorDebugNati
         check(apk.isFile) {
             "Expected emulator debug APK for $abi was not produced: ${apk.absolutePath}"
         }
-        val forbiddenLibraries = listOf("libjlmem.so", "libjlmem_target.so")
+        val forbiddenLibraries = listOf(
+            "libjlmem.so", "libjlmem_target.so", "libmmapi_tsf.so", "libmmapi_common.so",
+            "libffmpegkit.so", "libffmpegkit_abidetect.so", "libavdevice.so", "libavfilter.so", "libswscale.so",
+            "libavdevice_neon.so", "libavfilter_neon.so", "libswscale_neon.so"
+        )
         ZipFile(apk).use { archive ->
             forbiddenLibraries.forEach { library ->
                 val entry = archive.getEntry("lib/$abi/$library")
                 check(entry == null) {
-                    "${apk.name} still contains removed Raw memory library lib/$abi/$library"
+                    "${apk.name} still contains retired native library lib/$abi/$library"
                 }
             }
         }
@@ -269,7 +291,6 @@ dependencies {
 
     implementation(libs.google.gson)
     implementation(libs.google.oboe)
-    implementation(libs.ffmpeg.kit)
     implementation(libs.pngj)
     implementation(libs.rx.android)
 

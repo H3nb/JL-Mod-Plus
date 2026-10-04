@@ -39,7 +39,7 @@
 
 #include "eas.h"
 #include "eas_config.h"
-
+#include "eas_options.h"
 
 #ifdef _MFI_PARSER
 /*----------------------------------------------------------------------------
@@ -94,6 +94,10 @@ extern EAS_VOID_PTR EAS_RTTTL_Parser;
 extern EAS_VOID_PTR EAS_CMF_Parser;
 #endif
 
+#ifdef _RMID_PARSER
+extern EAS_VOID_PTR EAS_RMID_Parser;
+#endif
+
 /* initalize pointers to parser interfaces */
 /*lint -e{605} not pretty, but it works */
 EAS_VOID_PTR const parserModules[] =
@@ -125,7 +129,11 @@ EAS_VOID_PTR const parserModules[] =
 #endif
 
 #if defined (_CMX_PARSER) || defined(_MFI_PARSER)
-    &EAS_CMF_Parser
+    &EAS_CMF_Parser,
+#endif
+
+#ifdef _RMID_PARSER
+    &EAS_RMID_Parser
 #endif
 };
 #define NUM_PARSER_MODULES (sizeof(parserModules) / sizeof(EAS_VOID_PTR))

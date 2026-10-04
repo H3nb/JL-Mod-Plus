@@ -1,0 +1,10 @@
+// Run production audio instrumentation in a separate installation. No native overlay.
+gradle.beforeProject { project ->
+    if (project.path == ':app') {
+        project.plugins.withId('com.android.application') {
+            project.androidComponents.finalizeDsl { android ->
+                android.defaultConfig.applicationId = 'io.github.h3nb.jlmodplus.audioqualification'
+            }
+        }
+    }
+}

@@ -122,7 +122,7 @@ StereoGainLoop:
 
 	SUBS	numSamples, numSamples, #1
 
-	LDRSHGT	tmp0, [pInputBuffer], #2
+	LDRGTSH	tmp0, [pInputBuffer], #2
 	
 	STR		tmp2, [pMixBuffer], #4
 
@@ -155,8 +155,7 @@ MonoGainLoop:
 	SUBS	numSamples, numSamples, #1
 	BGT		MonoGainLoop
 
-    #endif
-@end Mono version
+	#endif	@end Mono version
 
 	LDMFD	sp!,{r4-r11,lr}
 	BX		lr
