@@ -28,8 +28,14 @@ public class MIDIControlImpl implements MIDIControl {
 
 	private final Player player;
 	private final Library library;
+	private final Runnable prepareOutput;
 
 	public MIDIControlImpl(Player player, Library library, long playerHandle) {
+		this(player, library, playerHandle, () -> {});
+	}
+
+	public MIDIControlImpl(Player player, Library library, long playerHandle, Runnable prepareOutput) {
+		this.prepareOutput = prepareOutput;
 		this.player = player;
 		this.library = library;
 		handle = playerHandle;
@@ -47,111 +53,142 @@ public class MIDIControlImpl implements MIDIControl {
 
 	@Override
 	public int[] getProgram(int channel) throws MediaException {
-		checkRealized();
-		checkChannel(channel);
-		notSupported();
-		return null; // satisfy compiler
+		synchronized (player) {
+			checkPrefetched();
+			checkChannel(channel);
+			notSupported();
+			return null; // satisfy compiler
+		}
 	}
 
 	@Override
 	public int getChannelVolume(int channel) {
-		checkRealized();
-		checkChannel(channel);
-		return -1; // not supported
+		synchronized (player) {
+			checkPrefetched();
+			checkChannel(channel);
+			return -1; // not supported
+		}
 	}
 
 	@Override
 	public void setProgram(int channel, int bank, int program) {
-		checkRealized();
-		checkChannel(channel);
-		checkProgram(program);
-		if (bank != -1) {
-			checkBank(bank);
-			shortMidiEvent(CONTROL_CHANGE | channel, 0x00, bank >> 7);
-			shortMidiEvent(CONTROL_CHANGE | channel, 0x20, bank & 0x7F);
+		synchronized (player) {
+			checkPrefetched();
+			checkChannel(channel);
+			checkProgram(program);
+			if (bank != -1) {
+				checkBank(bank);
+				shortMidiEvent(CONTROL_CHANGE | channel, 0x00, bank >> 7);
+				shortMidiEvent(CONTROL_CHANGE | channel, 0x20, bank & 0x7F);
+			}
+			shortMidiEvent(0xC0 | channel, program, 0);
 		}
-		shortMidiEvent(0xC0 | channel, program, 0);
 	}
 
 	@Override
 	public void setChannelVolume(int channel, int volume) {
-		checkRealized();
-		checkChannel(channel);
-		if (volume < 0 || volume > 127) {
-			throw new IllegalArgumentException("channel volume out of range");
-		}
-		shortMidiEvent(CONTROL_CHANGE | channel, 0x07, volume);
+		synchronized (player) {
+			checkPrefetched();
+			checkChannel(channel);
+			if (volume < 0 || volume > 127) {
+				throw new IllegalArgumentException("channel volume out of range");
+			}
+			shortMidiEvent(CONTROL_CHANGE | channel, 0x07, volume);
 
+		}
 	}
 
 	@Override
 	public int[] getBankList(boolean custom) throws MediaException {
-		checkRealized();
-		notSupported();
-		return null; // satisfy compiler
+		synchronized (player) {
+			checkPrefetched();
+			notSupported();
+			return null; // satisfy compiler
+		}
 	}
 
 	@Override
 	public int[] getProgramList(int bank) throws MediaException {
-		checkRealized();
-		checkBank(bank);
-		notSupported();
-		return null; // satisfy compiler
+		synchronized (player) {
+			checkPrefetched();
+			checkBank(bank);
+			notSupported();
+			return null; // satisfy compiler
+		}
 	}
 
 	@Override
 	public String getProgramName(int bank, int prog) throws MediaException {
-		checkRealized();
-		checkBank(bank);
-		checkProgram(prog);
-		notSupported();
-		return null; // satisfy compiler
+		synchronized (player) {
+			checkPrefetched();
+			checkBank(bank);
+			checkProgram(prog);
+			notSupported();
+			return null; // satisfy compiler
+		}
 	}
 
 	@Override
 	public String getKeyName(int bank, int prog, int key) throws MediaException {
-		checkRealized();
-		checkBank(bank);
-		checkProgram(prog);
-		if (key < 0 || key > 127) {
-			throw new IllegalArgumentException("key out of range");
+		synchronized (player) {
+			checkPrefetched();
+			checkBank(bank);
+			checkProgram(prog);
+			if (key < 0 || key > 127) {
+				throw new IllegalArgumentException("key out of range");
+			}
+			notSupported();
+			return null; // satisfy compiler
 		}
-		notSupported();
-		return null; // satisfy compiler
 	}
 
 	@Override
 	public void shortMidiEvent(int type, int data1, int data2) {
-		checkRealized();
-		if (type < 0x80 || type > 0xFF || data1 < 0 || data1 > 127 || data2 < 0 || data2 > 127) {
-			throw new IllegalArgumentException("shortMidiEvent parameter out of range");
-		}
-		// ignore sys ex and real time messages
-		if ((type & 0xF0) == 0xF0) {
-			return;
-		}
-		byte[] data;
-		if ((type & 0xF0) == 0xC0 || (type & 0xF0) == 0xD0) {
-			data = new byte[]{(byte) type, (byte) data1};
-		} else {
-			data = new byte[] {(byte) type, (byte) data1, (byte) data2};
-		}
+		synchronized (player) {
+			checkPrefetched();
+			if (type < 0x80 || type > 0xFF || type == 0xF0 || type == 0xF7 || data1 < 0 || data1 > 127 || data2 < 0 || data2 > 127) {
+				throw new IllegalArgumentException("shortMidiEvent parameter out of range");
+			}
+			// ignore sys ex and real time messages
+			if ((type & 0xF0) == 0xF0) {
+				return;
+			}
+			byte[] data;
+			if ((type & 0xF0) == 0xC0 || (type & 0xF0) == 0xD0) {
+				data = new byte[]{(byte) type, (byte) data1};
+			} else {
+				data = new byte[] {(byte) type, (byte) data1, (byte) data2};
+			}
 
-		if (library != null) {
-			library.writeMIDI(handle, data, 0, data.length);
+			if (library != null) {
+				try {
+					prepareOutput.run();
+					library.writeMIDI(handle, data, 0, data.length);
+				} catch (Exception failure) {
+					// JSR135: unsupported or undelivered events fail silently. State and
+					// parameter errors are checked above; VM Errors remain observable.
+				}
+			}
 		}
 	}
 
 	@Override
 	public int longMidiEvent(byte[] data, int offset, int length) {
-		checkRealized();
-		if (data == null || offset < 0 || offset + length > data.length || length < 0) {
-			throw new IllegalArgumentException("longMidiEvent parameter out of range");
+		synchronized (player) {
+			checkPrefetched();
+			if (data == null || offset < 0 || offset > data.length || length > data.length - offset || length < 0) {
+				throw new IllegalArgumentException("longMidiEvent parameter out of range");
+			}
+			if (library == null || length == 0) {
+				return 0;
+			}
+			try {
+				prepareOutput.run();
+				return library.writeMIDI(handle, data, offset, length);
+			} catch (Exception failure) {
+				return -1;
+			}
 		}
-		if (library == null) {
-			return 0;
-		}
-		return library.writeMIDI(handle, data, offset, length);
 	}
 
 	private void notSupported() throws MediaException {
@@ -176,9 +213,9 @@ public class MIDIControlImpl implements MIDIControl {
 		}
 	}
 
-	private void checkRealized() {
-		if (player.getState() < Player.REALIZED) {
-			throw new IllegalStateException("call realize() before using the player");
+	private void checkPrefetched() {
+		if (player.getState() < Player.PREFETCHED) {
+			throw new IllegalStateException("call prefetch() before using MIDIControl");
 		}
 	}
 }

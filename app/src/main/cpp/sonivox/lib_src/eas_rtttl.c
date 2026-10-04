@@ -1,3 +1,4 @@
+// Modified for JL-Mod Plus.
 /*----------------------------------------------------------------------------
  *
  * File:
@@ -71,8 +72,8 @@ static EAS_RESULT RTTTL_Close (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT RTTTL_Reset (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT RTTTL_Pause (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT RTTTL_Resume (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
-static EAS_RESULT RTTTL_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 value);
-static EAS_RESULT RTTTL_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 *pValue);
+static EAS_RESULT RTTTL_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR value);
+static EAS_RESULT RTTTL_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR *pValue);
 static EAS_RESULT RTTTL_GetStyle (EAS_HW_DATA_HANDLE hwInstData, S_RTTTL_DATA *pData);
 static EAS_RESULT RTTTL_GetDuration (EAS_HW_DATA_HANDLE hwInstData, S_RTTTL_DATA *pData, EAS_I8 *pDuration);
 static EAS_RESULT RTTTL_GetOctave (EAS_HW_DATA_HANDLE hwInstData, S_RTTTL_DATA *pData, EAS_U8 *pOctave);
@@ -137,7 +138,7 @@ const S_FILE_PARSER_INTERFACE EAS_RTTTL_Parser =
 */
 static EAS_RESULT RTTTL_CheckFileType (S_EAS_DATA *pEASData, EAS_FILE_HANDLE fileHandle, EAS_VOID_PTR *ppHandle, EAS_I32 offset)
 {
-    S_RTTTL_DATA data;
+    S_RTTTL_DATA data = {0};
     S_RTTTL_DATA *pData;
 
     /* see if we can parse the header */
@@ -541,7 +542,7 @@ static EAS_RESULT RTTTL_Event (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) reserved for future use */
-static EAS_RESULT RTTTL_State (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 *pState)
+static EAS_RESULT RTTTL_State (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_STATE *pState)
 {
     S_RTTTL_DATA* pData;
 
@@ -731,7 +732,7 @@ static EAS_RESULT RTTTL_Resume (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData)
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) reserved for future use */
-static EAS_RESULT RTTTL_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 value)
+static EAS_RESULT RTTTL_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR value)
 {
     S_RTTTL_DATA *pData;
 
@@ -769,7 +770,7 @@ static EAS_RESULT RTTTL_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, E
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) reserved for future use */
-static EAS_RESULT RTTTL_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 *pValue)
+static EAS_RESULT RTTTL_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR *pValue)
 {
     S_RTTTL_DATA *pData;
 
@@ -789,7 +790,7 @@ static EAS_RESULT RTTTL_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, E
 #endif
 
         case PARSER_DATA_SYNTH_HANDLE:
-            *pValue = (EAS_I32) pData->pSynth;
+            *pValue = (EAS_IPTR) pData->pSynth;
             break;
 
         case PARSER_DATA_GAIN_OFFSET:

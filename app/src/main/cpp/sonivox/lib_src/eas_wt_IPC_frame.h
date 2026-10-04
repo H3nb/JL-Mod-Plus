@@ -36,6 +36,8 @@
  *----------------------------------------------------------------------------
 */
 
+#include "eas_types.h"
+
 #ifndef _EAS_WT_IPC_FRAME_H
 #define _EAS_WT_IPC_FRAME_H
 
@@ -49,12 +51,20 @@
 typedef struct s_wt_frame_tag
 {
     EAS_I32         gainTarget;
-    EAS_I32         phaseIncrement;
+    EAS_I32         phaseIncrement; // phase increment per sample
 
 #if defined(_FILTER_ENABLED)
+#ifdef _FLOAT_DCF
+    // General 2-pole IIR transfer function is: H(z) = (b0 + b1 * z^-1 + b2 * z^-2) / (1 + a1 * z^-1 + a2 * z^-2)
+    float a1;
+    float a2;
+    float b02;
+    float b1;
+#else
     EAS_I32         k;
     EAS_I32         b1;
     EAS_I32         b2;
+#endif
 #endif
 } S_WT_FRAME;
 

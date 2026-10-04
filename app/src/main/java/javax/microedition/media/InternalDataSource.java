@@ -34,10 +34,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
+import javax.microedition.media.protocol.DataSource;
+
 import io.github.h3nb.jlmodplus.mmapi.FileCacheDataSource;
 
 class InternalDataSource extends FileCacheDataSource {
 	private static final String TAG = InternalDataSource.class.getSimpleName();
+	private DataSource upstream;
+	private boolean disconnected;
 
 	InternalDataSource(InputStream stream, String type) throws IllegalArgumentException, IOException {
 		super(type);
@@ -46,26 +50,54 @@ class InternalDataSource extends FileCacheDataSource {
 		Log.d(TAG, "Starting media pipe: " + name);
 
 		try (RandomAccessFile raf = new RandomAccessFile(mediaFile, "rw")) {
-			int length = stream.available();
-			if (length >= 0) {
-				raf.setLength(length);
-				Log.d(TAG, "Changing file size to " + length + " bytes: " + name);
-			}
 			byte[] buf = new byte[4096];
 			int read;
+            long cached = 0;
+            boolean legacySmaf = false;
+            int prefix = 0, prefixBytes = 0;
 			while ((read = stream.read(buf)) != -1) {
-				raf.write(buf, 0, read);
+                for (int i = 0; i < read && prefixBytes < 4; ++i) {
+                    prefix = (prefix << 8) | (buf[i] & 255); ++prefixBytes;
+                }
+                if (prefixBytes == 4) legacySmaf = prefix == 0x4d4d4d44;
+                if (!legacySmaf && cached + Math.max(1, read) > 64L * 1024 * 1024)
+                    throw new IOException("Audio cache exceeds 64 MiB");
+				if (read == 0) {
+					int single = stream.read();
+					if (single == -1) break;
+					if (prefixBytes < 4) { prefix = (prefix << 8) | single; ++prefixBytes; }
+                    if (prefixBytes == 4) legacySmaf = prefix == 0x4d4d4d44;
+                    raf.write(single); cached++;
+				} else { raf.write(buf, 0, read); cached += read; }
 			}
-		} catch (IOException e) {
+		} catch (IOException | RuntimeException | Error e) {
 			Log.d(TAG, "Media pipe failure: " + e);
+			mediaFile.delete();
 			throw e;
 		}
 		Log.d(TAG, "Media pipe closed: " + name);
-
-		convert();
 	}
 
-	private void convert() {
+	InternalDataSource(InputStream stream, String type, DataSource upstream) throws IOException {
+		this(stream, type);
+		this.upstream = upstream;
+	}
+
+	@Override
+	public synchronized void disconnect() {
+		if (disconnected) return;
+		disconnected = true;
+		try { if (upstream != null) upstream.disconnect(); }
+		finally { super.disconnect(); }
+	}
+
+    boolean isSmaf() throws MediaException {
+        try (RandomAccessFile input = new RandomAccessFile(mediaFile, "r")) {
+            return input.length() >= 4 && input.readInt() == 0x4d4d4d44;
+        } catch (IOException error) { throw new MediaException("Cannot read cached audio: " + error); }
+    }
+
+	void prepareLegacySmaf() {
 		try {
 			String path = mediaFile.getPath();
 			MediaInformationSession mediaInformationSession = FFprobeKit.getMediaInformation(path);

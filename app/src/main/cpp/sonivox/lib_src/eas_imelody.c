@@ -1,3 +1,4 @@
+// Modified for JL-Mod Plus.
 /*----------------------------------------------------------------------------
  *
  * File:
@@ -128,8 +129,8 @@ static EAS_RESULT IMY_Close (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT IMY_Reset (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT IMY_Pause (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
 static EAS_RESULT IMY_Resume (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData);
-static EAS_RESULT IMY_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 value);
-static EAS_RESULT IMY_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 *pValue);
+static EAS_RESULT IMY_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR value);
+static EAS_RESULT IMY_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR *pValue);
 static EAS_BOOL IMY_PlayNote (S_EAS_DATA *pEASData, S_IMELODY_DATA *pData, EAS_I8 note, EAS_INT parserMode);
 static EAS_BOOL IMY_PlayRest (S_EAS_DATA *pEASData, S_IMELODY_DATA *pData);
 static EAS_BOOL IMY_GetDuration (EAS_HW_DATA_HANDLE hwInstData, S_IMELODY_DATA *pData, EAS_I32 *pDuration);
@@ -584,7 +585,7 @@ static EAS_RESULT IMY_Event (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) common decoder interface - pEASData not used */
-static EAS_RESULT IMY_State (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 *pState)
+static EAS_RESULT IMY_State (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_STATE *pState)
 {
     S_IMELODY_DATA* pData;
 
@@ -804,7 +805,7 @@ static EAS_RESULT IMY_Resume (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData)
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) common decoder interface - pEASData not used */
-static EAS_RESULT IMY_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 value)
+static EAS_RESULT IMY_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR value)
 {
     S_IMELODY_DATA *pData;
 
@@ -842,7 +843,7 @@ static EAS_RESULT IMY_SetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS
  *----------------------------------------------------------------------------
 */
 /*lint -esym(715, pEASData) common decoder interface - pEASData not used */
-static EAS_RESULT IMY_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_I32 *pValue)
+static EAS_RESULT IMY_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS_I32 param, EAS_IPTR *pValue)
 {
     S_IMELODY_DATA *pData;
 
@@ -856,7 +857,7 @@ static EAS_RESULT IMY_GetData (S_EAS_DATA *pEASData, EAS_VOID_PTR pInstData, EAS
             break;
 
         case PARSER_DATA_SYNTH_HANDLE:
-            *pValue = (EAS_I32) pData->pSynth;
+            *pValue = (EAS_IPTR) pData->pSynth;
             break;
 
         case PARSER_DATA_GAIN_OFFSET:

@@ -14,10 +14,8 @@ This ledger is a provenance/notice inventory for the current project state, not 
 | MicroEmulator subset | `app/src/main/java/org/microemu/**` | MicroEmulator; source headers identify the project and Bartek Teodorczyk | Source offers LGPL-2.1-or-later **OR** Apache-2.0; JL-Mod Plus relies on the Apache-2.0 alternative for redistribution |
 | Android dx/dex | `dexlib/src/main/java/com/android/dx/**`, `dexlib/src/main/java/com/android/dex/**` | Android Open Source Project | Apache-2.0 |
 | Nokia M3G / JSR-184 native reference code | `app/src/main/cpp/m3g/src/**`; source headers identify Nokia Corporation | Nokia M3G reference implementation lineage carried by JL-Mod | EPL-1.0; source is available in the public JL-Mod Plus repository at the local path shown |
-| SoniVox EAS | `app/src/main/cpp/sonivox/**`; source headers identify Sonic Network Inc. | Android/SoniVox Embedded Audio Synthesis code lineage | Apache-2.0 |
+| SoniVox EAS | Vendored `app/src/main/cpp/sonivox/**`; local patches in `UPSTREAM.md`, upstream `NOTICE` and license retained | `https://github.com/EmbeddedSynth/sonivox`, v4.0.2 at `bb8668b91118318b0e6017aca59ce34e7bc93bf8`; Sonic Network Inc. / Android lineage | Apache-2.0 |
 | Mascot Capsule Micro3D implementation | `app/src/main/java/com/mascotcapsule/micro3d/**` and `app/src/main/cpp/micro3d/**`; current files identify JL-Mod/Yury Kharchenko/woesss authorship | JL-Mod implementation currently in this tree | Apache-2.0 where stated by the source files |
-| TinySoundFont | Git submodule `app/src/main/cpp/mmapi_tsf/TinySoundFont` pinned at `0d10306120037ce049a7699f9eaa5314d5b888f8` | `https://github.com/schellingb/TinySoundFont` | MIT |
-| TinyMidiLoader | `tml.h` in the same pinned TinySoundFont submodule | `https://github.com/schellingb/TinySoundFont` | Zlib |
 
 ## Material Symbols assets
 
@@ -67,7 +65,7 @@ SOFTWARE.
 
 ### `third_party/` audit
 
-The current repository tree does **not** contain a `third_party/` directory. The active external native checkout is the TinySoundFont submodule at `app/src/main/cpp/mmapi_tsf/TinySoundFont`, and `.gitmodules` points to its upstream repository directly. Historical notices for `third_party/minimp3`, `third_party/stb`, Mesa-derived code, or other absent paths must not be treated as current shipped provenance.
+The current repository tree does **not** contain a `third_party/` directory. Sonivox is a vendored, pinned snapshot rather than an external submodule; TinySoundFont and TinyMidiLoader were removed by the synthesis migration. Historical notices for `third_party/minimp3`, `third_party/stb`, Mesa-derived code, or other absent paths must not be treated as current shipped provenance.
 
 ## Runtime dependency families
 
@@ -81,7 +79,9 @@ The table below covers direct runtime dependencies and license-significant trans
 | `com.google.oboe:oboe` | Google Oboe | Apache-2.0 |
 | `org.jspecify:jspecify` | JSpecify | Apache-2.0 |
 | `org.checkerframework:checker-qual` | Checker Framework | MIT |
-| `io.github.nikita36078:ffmpeg-kit:6.0.LTS` | Maven SCM / source: `https://github.com/nikita36078/ffmpeg-kit` | Published POM declares LGPL-3.0. FFmpegKit documentation notes GPL-3.0 applies when GPL libraries are enabled; FFmpeg and bundled external libraries retain their own upstream terms. |
+| `io.github.nikita36078:ffmpeg-kit:6.0.LTS` wrapper | Maven SCM / source: `https://github.com/nikita36078/ffmpeg-kit`; AAR SHA256 `29b01a7bc5b5b868ad741c2296e865554d92d080ceb247a86e6aa8723eefa891` | LGPL-3.0 metadata; wrapper/Java/resources remain for legacy SMAF. Its seven FFmpeg core libraries are replaced by the pinned build below. |
+| FFmpeg n6.0 native libraries | `https://ffmpeg.org/releases/ffmpeg-6.0.tar.xz`, revision `ea3d24bbe3c58b171e55fe2151fc7ffaca3ab3d2`; [recipe and patch](tools/audio/README.md) | Configured LGPL-3.0-or-later with `--enable-version3`, without GPL libraries. The SAF setter patch preserves Taner Sener/FFmpegKit attribution. |
+| OpenCORE-AMR 0.1.6 NB/WB decoders | `https://github.com/arthenica/opencore-amr`, revision `7dba8c32238418ce0b316a852b2224df586ca896`; [recipe](tools/audio/README.md) | Apache-2.0; PacketVideo and Martin Storsjo notices retained. Static decoder libraries are linked into the one FFmpeg build. |
 | `com.arthenica:smart-exception-java:0.2.1`, `smart-exception-common:0.2.1` | `https://github.com/tanersener/smart-exception` | BSD-3-Clause |
 | `com.github.nikita36078:pngj:2.2.3` | `https://github.com/nikita36078/pngj`, fork of `leonbloy/pngj` | Apache-2.0 |
 | `junit:junit:4.12` (runtime transitive of current PNGJ artifact) | JUnit 4, `https://github.com/junit-team/junit4` | EPL-1.0; source is available at the origin URL |
@@ -96,14 +96,23 @@ The table below covers direct runtime dependencies and license-significant trans
 The following public source locations are recorded so recipients can trace the source corresponding to reciprocal-license components in the current distribution:
 
 - Nokia M3G / JSR-184 EPL-1.0 source: `https://github.com/H3nb/JL-Mod-Plus/tree/alpha/app/src/main/cpp/m3g/src`
-- FFmpegKit 6.0.LTS LGPL-3.0 source/SCM: `https://github.com/nikita36078/ffmpeg-kit`
+- FFmpegKit 6.0.LTS LGPL-3.0 wrapper source/SCM: `https://github.com/nikita36078/ffmpeg-kit`
+- FFmpeg n6.0 source archive: `https://ffmpeg.org/releases/ffmpeg-6.0.tar.xz`; SHA256 `57be87c22d9b49c112b6d24bc67d42508660e6b718b3db89c44e47e289137082`. The corresponding local patch and build configuration are in `tools/audio/`.
+- OpenCORE-AMR 0.1.6 source: `https://github.com/arthenica/opencore-amr/tree/7dba8c32238418ce0b316a852b2224df586ca896`; archive SHA256 `fc302cea3b65072f87d950d77ee5a7014347536039a7de7668da2891d386147e`.
 - JUnit 4 EPL-1.0 source: `https://github.com/junit-team/junit4`
 
 The exact Maven coordinate or pinned submodule revision in this ledger identifies the artifact/source snapshot used by JL-Mod Plus where such a pin exists. These source links are notice/provenance pointers; they do not replace the upstream license terms or any additional redistribution obligations those licenses may impose.
 
-The Gradle runtime graph is the authority for what resolves into the current APK configuration. If a dependency is added, removed, or changes license/package composition, this ledger and the in-app notice must be reviewed in the same change or immediately before release.
+The APK includes the applicable FFmpeg LGPL/GPL license texts and the complete
+OpenCORE Apache license/upstream notice in `app/src/main/assets/audio-licenses/`,
+linked from the Licenses screen. The complete upstream OpenCORE notice also
+mentions portions outside the selected decoder build; it is preserved verbatim.
+
+The Gradle runtime graph and native packaging are the authority for what resolves into the current APK configuration. If a dependency is added, removed, or changes license/package composition, this ledger and the in-app notice must be reviewed in the same change or immediately before release.
 
 ## Repository-only vendored material
+
+`app/src/main/cpp/sonivox/lib_src/minimp3.h` is retained from the pinned upstream snapshot under its CC0 notice. Its optional decoder is disabled in the Android build and is not shipped as active runtime code.
 
 `.agents/skills/**` contains selected Android Skills reference material used for development/agent guidance, not application runtime code. Its provenance is pinned in [.agents/UPSTREAM.md](.agents/UPSTREAM.md), with the corresponding Apache-2.0 terms in `.agents/LICENSE.txt`. It is intentionally excluded from the app-facing Licenses screen because it is not shipped as emulator runtime content.
 
@@ -116,7 +125,7 @@ The previous `licenses.html` mixed historical and current components. This audit
 - replaces the ambiguous `Symbian OS` label with the actual Nokia M3G / JSR-184 native source attribution and EPL-1.0;
 - removes the old FreeJ2ME M3D(O) attribution because current Mascot Capsule/Micro3D source in this tree carries JL-Mod/Yury Kharchenko/woesss provenance instead;
 - removes the old Aha-Soft launcher attribution because the JL-Mod Plus launcher assets were replaced in the project-foundation change and are not the inherited upstream launcher blobs;
-- adds TinyMidiLoader separately from TinySoundFont because its source header uses the Zlib license rather than TinySoundFont's MIT license;
+- the earlier inventory listed TinySoundFont and TinyMidiLoader separately; both have since been removed from source and APK packaging;
 - records JUnit 4.12 and Hamcrest Core 1.3 because the current PNGJ fork places them on `emulatorDebugRuntimeClasspath`, even though JL-Mod Plus does not declare them directly.
 
 ## License references

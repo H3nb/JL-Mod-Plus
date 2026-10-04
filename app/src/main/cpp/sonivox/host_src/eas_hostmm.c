@@ -51,10 +51,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <sys/mman.h>
 #include <errno.h>
 #include <signal.h>
 #include <pthread.h>
+#include <media/MediaPlayerInterface.h>
 #endif
 
 #include "eas_host.h"
@@ -73,6 +73,27 @@
 //                              + 1(after end of playing segment, before files closed)
 #define EAS_MAX_FILE_HANDLES    100
 #endif
+
+// ReadAt and Size functions for CRT file handles
+
+int CRTReadAt(void *handle, void *buf, int offset, int size)
+{
+    int ret;
+
+    ret = fseek((FILE *) handle, offset, SEEK_SET);
+    if (ret < 0) return 0;
+
+    return fread(buf, 1, size, (FILE *) handle);
+}
+
+int CRTSize(void *handle) {
+    int ret;
+
+    ret = fseek((FILE *) handle, 0, SEEK_END);
+    if (ret < 0) return ret;
+
+    return ftell((FILE *) handle);
+}
 
 /*
  * this structure and the related function are here
@@ -245,6 +266,14 @@ EAS_RESULT EAS_HWOpenFile (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_LOCATOR locat
     if (mode != EAS_FILE_READ)
         return EAS_ERROR_INVALID_FILE_MODE;
 
+    if (!(
+        (locator->readAt == NULL && locator->size == NULL)
+        || (locator->readAt != NULL && locator->size != NULL)
+    )) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "EAS_HWOpenFile: Must specify both readAt and size or neither\n");
+        return EAS_ERROR_INVALID_PARAMETER;
+    }
+
     /* find an empty entry in the file table */
     file = hwInstData->files;
     for (i = 0; i < EAS_MAX_FILE_HANDLES; i++)
@@ -253,8 +282,14 @@ EAS_RESULT EAS_HWOpenFile (EAS_HW_DATA_HANDLE hwInstData, EAS_FILE_LOCATOR locat
         if (file->handle == NULL)
         {
             file->handle = locator->handle;
-            file->readAt = locator->readAt;
-            file->size = locator->size;
+            if (locator->readAt == NULL) {
+                // CRT file handle
+                file->readAt = CRTReadAt;
+                file->size = CRTSize;
+            } else {
+                file->readAt = locator->readAt;
+                file->size = locator->size;
+            }
             file->filePos = 0;
             *pFile = file;
             return EAS_SUCCESS;

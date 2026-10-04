@@ -35,16 +35,15 @@
 #ifndef _EAS_H
 #define _EAS_H
 
+#include "eas_options.h"
 #include "eas_types.h"
+#include "eas_version.h"
+#include "eas_visibility.h"
 
 /* for C++ linkage */
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* library version macro */
-#define MAKE_LIB_VERSION(a,b,c,d) (((((((EAS_U32) a <<8) | (EAS_U32) b) << 8) | (EAS_U32) c) << 8) | (EAS_U32) d)
-#define LIB_VERSION MAKE_LIB_VERSION(3, 6, 10, 14)
 
 typedef struct
 {
@@ -100,7 +99,8 @@ typedef enum
 #define PCM_FLAGS_STREAMING     0x80000000  /* streaming mode */
 
 /* maximum volume setting */
-#define EAS_MAX_VOLUME          100
+#define EAS_MAX_VOLUME          196
+#define EAS_REF_VOLUME          100
 
 /*----------------------------------------------------------------------------
  * EAS_Init()
@@ -383,11 +383,12 @@ EAS_PUBLIC EAS_RESULT EAS_GetPriority (EAS_DATA_HANDLE pEASData, EAS_HANDLE stre
  *----------------------------------------------------------------------------
  * Purpose:
  * Set the master volume for the mixer. The default volume setting is
- * 90 (-10 dB). The volume range is 0 to 100 in 1dB increments.
+ * 100 (+0 dB). The volume range is 0 to EAS_MAX_VOLUME=196 in 1dB increments.
  *
  * Inputs:
  * pEASData         - pointer to overall EAS data structure
- * volume           - the desired master volume
+ * streamHandle     - file or stream handle (may be NULL)
+ * volume           - the desired master volume (EAS_MAX_VOLUME = 196 is max)
  *
  * Outputs:
  *
@@ -407,9 +408,10 @@ EAS_PUBLIC EAS_RESULT EAS_SetVolume (EAS_DATA_HANDLE pEASData, EAS_HANDLE stream
  *
  * Inputs:
  * pEASData         - pointer to overall EAS data structure
- * volume           - the desired master volume
+ * streamHandle     - file or stream handle
  *
  * Outputs:
+ * volume           - the current master volume
  *
  *
  * Side Effects:
@@ -947,7 +949,6 @@ EAS_PUBLIC EAS_RESULT EAS_SetHeaderSearchFlag (EAS_DATA_HANDLE pEASData, EAS_BOO
 */
 EAS_PUBLIC EAS_RESULT EAS_SetPlayMode (EAS_DATA_HANDLE pEASData, EAS_HANDLE pStream, EAS_I32 playMode);
 
-#ifdef DLS_SYNTHESIZER
 /*----------------------------------------------------------------------------
  * EAS_LoadDLSCollection()
  *----------------------------------------------------------------------------
@@ -968,9 +969,6 @@ EAS_PUBLIC EAS_RESULT EAS_SetPlayMode (EAS_DATA_HANDLE pEASData, EAS_HANDLE pStr
  *----------------------------------------------------------------------------
 */
 EAS_PUBLIC EAS_RESULT EAS_LoadDLSCollection (EAS_DATA_HANDLE pEASData, EAS_HANDLE streamHandle, EAS_FILE_LOCATOR locator);
-EAS_PUBLIC void EAS_GetGlobalDLSLib (EAS_DATA_HANDLE pEASData, EAS_DLSLIB_HANDLE *ppDls);
-EAS_PUBLIC void EAS_SetGlobalDLSLib (EAS_DATA_HANDLE pEASData, EAS_DLSLIB_HANDLE pDls);
-#endif
 
 /*----------------------------------------------------------------------------
  * EAS_SetFrameBuffer()
@@ -1055,7 +1053,21 @@ EAS_PUBLIC EAS_RESULT EAS_GetMIDIControllers (EAS_DATA_HANDLE pEASData, EAS_HAND
  * Returns EAS_EOF if end-of-file is reached
  *----------------------------------------------------------------------------
 */
-EAS_RESULT EAS_SearchFile (EAS_DATA_HANDLE pEASData, EAS_FILE_HANDLE fileHandle, const EAS_U8 *searchString, EAS_I32 len, EAS_I32 *pOffset);
+EAS_PUBLIC EAS_RESULT EAS_SearchFile(EAS_DATA_HANDLE pEASData,
+                                     EAS_FILE_HANDLE fileHandle,
+                                     const EAS_U8 *searchString,
+                                     EAS_I32 len,
+                                     EAS_I32 *pOffset);
+
+// Return the name of the default sound library for the specified type.
+// If sound library of the specified type is not available, NULL is returned.
+// The returned string is owned by the EAS library and must not be freed by the caller.
+EAS_PUBLIC const char* EAS_GetDefaultSoundLibrary(E_EAS_SNDLIB_TYPE sndlibType);
+
+// Return a handle to the sound library with the specified name.
+// The handle can be passed to EAS_SetSoundLibrary.
+// The returned handle is owned by the EAS library and must not be freed by the caller.
+EAS_PUBLIC EAS_SNDLIB_HANDLE EAS_GetSoundLibrary(EAS_DATA_HANDLE pEASData, const char* libraryName);
 
 #ifdef __cplusplus
 } /* end extern "C" */

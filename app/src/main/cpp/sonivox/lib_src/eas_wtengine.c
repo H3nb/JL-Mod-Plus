@@ -32,8 +32,10 @@
  * includes
  *------------------------------------
 */
-#define LOG_TAG "Sonivox"
-#include "util/log.h"
+#include "eas_options.h"
+#include "eas_report.h"
+#include "log/log.h"
+#include <cutils/log.h>
 
 #include "eas_types.h"
 #include "eas_math.h"
@@ -62,7 +64,11 @@ extern void WT_VoiceFilter (S_FILTER_CONTROL*pFilter, S_WT_INT_FRAME *pWTIntFram
 
 // The PRNG in WT_NoiseGenerator relies on modulo math
 #undef  NO_INT_OVERFLOW_CHECKS
+#if defined(_MSC_VER)
+#define NO_INT_OVERFLOW_CHECKS
+#else
 #define NO_INT_OVERFLOW_CHECKS __attribute__((no_sanitize("integer")))
+#endif
 
 #if defined(_OPTIMIZED_MONO) || !defined(NATIVE_EAS_KERNEL) || defined(_16_BIT_SAMPLES)
 /*----------------------------------------------------------------------------
@@ -84,9 +90,7 @@ void WT_VoiceGain (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
     EAS_PCM *pInputBuffer;
     EAS_I32 gain;
     EAS_I32 gainIncrement;
-    EAS_I32 tmp0;
-    EAS_I32 tmp1;
-    EAS_I32 tmp2;
+    EAS_I32 smp;
     EAS_I32 numSamples;
 
 #if (NUM_OUTPUT_CHANNELS == 2)
@@ -96,14 +100,21 @@ void WT_VoiceGain (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
     /* initialize some local variables */
     numSamples = pWTIntFrame->numSamples;
     if (numSamples <= 0) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s: numSamples <= 0\n", __func__);
         ALOGE("b/26366256");
         android_errorWriteLog(0x534e4554, "26366256");
         return;
+    } else if (numSamples > BUFFER_SIZE_IN_MONO_SAMPLES) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s: numSamples %d > %d BUFFER_SIZE_IN_MONO_SAMPLES\n", __func__, numSamples, BUFFER_SIZE_IN_MONO_SAMPLES);
+        ALOGE("b/317780080 clip numSamples %d -> %d", numSamples, BUFFER_SIZE_IN_MONO_SAMPLES);
+        android_errorWriteLog(0x534e4554, "317780080");
+        numSamples = BUFFER_SIZE_IN_MONO_SAMPLES;
     }
     pMixBuffer = pWTIntFrame->pMixBuffer;
     pInputBuffer = pWTIntFrame->pAudioBuffer;
 
-    gainIncrement = (pWTIntFrame->frame.gainTarget - pWTIntFrame->prevGain) * (1 << (16 - SYNTH_UPDATE_PERIOD_IN_BITS));
+    gainIncrement = (pWTIntFrame->frame.gainTarget - pWTIntFrame->prevGain) * (1 << 16) / BUFFER_SIZE_IN_MONO_SAMPLES;
+    // EAS_Report(_EAS_SEVERITY_DETAIL, "%s: prevGain %ld, gainTarget %ld\n", __func__, (long)pWTIntFrame->prevGain, (long)pWTIntFrame->frame.gainTarget);
     if (gainIncrement < 0)
         gainIncrement++;
     gain = pWTIntFrame->prevGain * (1 << 16);
@@ -114,51 +125,21 @@ void WT_VoiceGain (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
 #endif
 
     while (numSamples--) {
-
         /* incremental gain step to prevent zipper noise */
-        tmp0 = *pInputBuffer++;
         gain += gainIncrement;
-        /*lint -e{704} <avoid divide>*/
-        tmp2 = gain >> 16;
-
-        /* scale sample by gain */
-        tmp2 *= tmp0;
-
+        smp = *pInputBuffer++;
+        
+        smp = FMUL_15x15(smp, gain / (1 << 16));
 
         /* stereo output */
 #if (NUM_OUTPUT_CHANNELS == 2)
-        /*lint -e{704} <avoid divide>*/
-        tmp2 = tmp2 >> 14;
-
-        /* get the current sample in the final mix buffer */
-        tmp1 = *pMixBuffer;
-
         /* left channel */
-        tmp0 = tmp2 * gainLeft;
-        /*lint -e{704} <avoid divide>*/
-        tmp0 = tmp0 >> NUM_MIXER_GUARD_BITS;
-        tmp1 += tmp0;
-        *pMixBuffer++ = tmp1;
-
-        /* get the current sample in the final mix buffer */
-        tmp1 = *pMixBuffer;
-
+        *pMixBuffer++ = MULT_EG1_EG1(smp, gainLeft);
         /* right channel */
-        tmp0 = tmp2 * gainRight;
-        /*lint -e{704} <avoid divide>*/
-        tmp0 = tmp0 >> NUM_MIXER_GUARD_BITS;
-        tmp1 += tmp0;
-        *pMixBuffer++ = tmp1;
-
-        /* mono output */
+        *pMixBuffer++ = MULT_EG1_EG1(smp, gainRight);
 #else
-
-        /* get the current sample in the final mix buffer */
-        tmp1 = *pMixBuffer;
-        /*lint -e{704} <avoid divide>*/
-        tmp2 = tmp2 >> (NUM_MIXER_GUARD_BITS - 1);
-        tmp1 += tmp2;
-        *pMixBuffer++ = tmp1;
+        /* mono output */
+        *pMixBuffer++ = smp;
 #endif
 
     }
@@ -185,7 +166,7 @@ void WT_Interpolate (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
     EAS_I32 phaseFrac;
     EAS_I32 acc0;
     const EAS_SAMPLE *pSamples;
-    const EAS_SAMPLE *loopEnd;
+    const EAS_SAMPLE *loopEnd; // point to the 1 sample beyond
     EAS_I32 samp1;
     EAS_I32 samp2;
     EAS_I32 numSamples;
@@ -193,14 +174,20 @@ void WT_Interpolate (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
     /* initialize some local variables */
     numSamples = pWTIntFrame->numSamples;
     if (numSamples <= 0) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s: numSamples <= 0\n", __func__);
         ALOGE("b/26366256");
         android_errorWriteLog(0x534e4554, "26366256");
         return;
+    } else if (numSamples > BUFFER_SIZE_IN_MONO_SAMPLES) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s: numSamples %d > %d BUFFER_SIZE_IN_MONO_SAMPLES\n", __func__, numSamples, BUFFER_SIZE_IN_MONO_SAMPLES);
+        ALOGE("b/317780080 clip numSamples %d -> %d", numSamples, BUFFER_SIZE_IN_MONO_SAMPLES);
+        android_errorWriteLog(0x534e4554, "317780080");
+        numSamples = BUFFER_SIZE_IN_MONO_SAMPLES;
     }
     pOutputBuffer = pWTIntFrame->pAudioBuffer;
 
-    loopEnd = (const EAS_SAMPLE*) pWTVoice->loopEnd + 1;
-    pSamples = (const EAS_SAMPLE*) pWTVoice->phaseAccum;
+    loopEnd = pWTVoice->loopEnd + 1;
+    pSamples = pWTVoice->phaseAccum;
     /*lint -e{713} truncation is OK */
     phaseFrac = pWTVoice->phaseFrac & PHASE_FRAC_MASK;
     phaseInc = pWTIntFrame->frame.phaseIncrement;
@@ -228,7 +215,7 @@ void WT_Interpolate (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
 
         /* save new output sample in buffer */
         /*lint -e{704} <avoid divide>*/
-        *pOutputBuffer++ = (EAS_I16)(acc0 >> 2);
+        *pOutputBuffer++ = (EAS_I16)acc0;
 
         /* increment phase */
         phaseFrac += phaseInc;
@@ -244,7 +231,7 @@ void WT_Interpolate (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
             /* decrementing pSamples by entire buffer length until second pSample is within */
             /* loopEnd                                                                      */
             while (&pSamples[1] >= loopEnd) {
-                pSamples -= (loopEnd - (const EAS_SAMPLE*)pWTVoice->loopStart);
+                pSamples -= (loopEnd - pWTVoice->loopStart);
             }
 
             /* fetch new samples */
@@ -261,7 +248,7 @@ void WT_Interpolate (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
     }
 
     /* save pointer and phase */
-    pWTVoice->phaseAccum = (EAS_U32) pSamples;
+    pWTVoice->phaseAccum = pSamples;
     pWTVoice->phaseFrac = (EAS_U32) phaseFrac;
 }
 #endif
@@ -294,15 +281,21 @@ void WT_InterpolateNoLoop (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
     /* initialize some local variables */
     numSamples = pWTIntFrame->numSamples;
     if (numSamples <= 0) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s: numSamples <= 0\n", __func__);
         ALOGE("b/26366256");
         android_errorWriteLog(0x534e4554, "26366256");
         return;
+    } else if (numSamples > BUFFER_SIZE_IN_MONO_SAMPLES) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s: numSamples %d > %d BUFFER_SIZE_IN_MONO_SAMPLES\n", __func__, numSamples, BUFFER_SIZE_IN_MONO_SAMPLES);
+        ALOGE("b/317780080 clip numSamples %d -> %d", numSamples, BUFFER_SIZE_IN_MONO_SAMPLES);
+        android_errorWriteLog(0x534e4554, "317780080");
+        numSamples = BUFFER_SIZE_IN_MONO_SAMPLES;
     }
     pOutputBuffer = pWTIntFrame->pAudioBuffer;
 
     phaseInc = pWTIntFrame->frame.phaseIncrement;
-    bufferEndP1 = (const EAS_SAMPLE*) pWTVoice->loopEnd + 1;
-    pSamples = (const EAS_SAMPLE*) pWTVoice->phaseAccum;
+    bufferEndP1 = pWTVoice->loopEnd + 1;
+    pSamples = pWTVoice->phaseAccum;
     phaseFrac = (EAS_I32)(pWTVoice->phaseFrac & PHASE_FRAC_MASK);
 
     /* fetch adjacent samples */
@@ -328,7 +321,7 @@ void WT_InterpolateNoLoop (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
 
         /* save new output sample in buffer */
         /*lint -e{704} <avoid divide>*/
-        *pOutputBuffer++ = (EAS_I16)(acc0 >> 2);
+        *pOutputBuffer++ = (EAS_I16)acc0;
 
         /* increment phase */
         phaseFrac += phaseInc;
@@ -361,74 +354,13 @@ void WT_InterpolateNoLoop (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
     }
 
     /* save pointer and phase */
-    pWTVoice->phaseAccum = (EAS_U32) pSamples;
-    pWTVoice->phaseFrac = (EAS_U32) phaseFrac;
+    pWTVoice->phaseAccum = pSamples;
+    pWTVoice->phaseFrac = phaseFrac;
 }
 #endif
 
 #if defined(_FILTER_ENABLED) && !defined(NATIVE_EAS_KERNEL)
-/*----------------------------------------------------------------------------
- * WT_VoiceFilter
- *----------------------------------------------------------------------------
- * Purpose:
- * Implements a 2-pole filter
- *
- * Inputs:
- *
- * Outputs:
- *
- *----------------------------------------------------------------------------
-*/
-void WT_VoiceFilter (S_FILTER_CONTROL *pFilter, S_WT_INT_FRAME *pWTIntFrame)
-{
-    EAS_PCM *pAudioBuffer;
-    EAS_I32 k;
-    EAS_I32 b1;
-    EAS_I32 b2;
-    EAS_I32 z1;
-    EAS_I32 z2;
-    EAS_I32 acc0;
-    EAS_I32 acc1;
-    EAS_I32 numSamples;
 
-    /* initialize some local variables */
-    numSamples = pWTIntFrame->numSamples;
-    if (numSamples <= 0) {
-        ALOGE("b/26366256");
-        android_errorWriteLog(0x534e4554, "26366256");
-        return;
-    }
-    pAudioBuffer = pWTIntFrame->pAudioBuffer;
-
-    z1 = pFilter->z1;
-    z2 = pFilter->z2;
-    b1 = -pWTIntFrame->frame.b1;
-
-    /*lint -e{702} <avoid divide> */
-    b2 = -pWTIntFrame->frame.b2 >> 1;
-
-    /*lint -e{702} <avoid divide> */
-    k = pWTIntFrame->frame.k >> 1;
-
-    while (numSamples--)
-    {
-
-        /* do filter calculations */
-        acc0 = *pAudioBuffer;
-        acc1 = z1 * b1;
-        acc1 += z2 * b2;
-        acc0 = acc1 + k * acc0;
-        z2 = z1;
-
-        /*lint -e{702} <avoid divide> */
-        z1 = acc0 >> 14;
-        *pAudioBuffer++ = (EAS_I16) z1;
-    }
-
-    /* save delay values     */
-    pFilter->z1 = (EAS_I16) z1;
-    pFilter->z2 = (EAS_I16) z2;
-}
 #endif
 
 /*----------------------------------------------------------------------------
@@ -462,18 +394,24 @@ void WT_VoiceFilter (S_FILTER_CONTROL *pFilter, S_WT_INT_FRAME *pWTIntFrame)
     /* initialize some local variables */
     numSamples = pWTIntFrame->numSamples;
     if (numSamples <= 0) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s: numSamples <= 0\n", __func__);
         ALOGE("b/26366256");
         android_errorWriteLog(0x534e4554, "26366256");
         return;
+    } else if (numSamples > BUFFER_SIZE_IN_MONO_SAMPLES) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s: numSamples %d > %d BUFFER_SIZE_IN_MONO_SAMPLES\n", __func__, numSamples, BUFFER_SIZE_IN_MONO_SAMPLES);
+        ALOGE("b/317780080 clip numSamples %d -> %d", numSamples, BUFFER_SIZE_IN_MONO_SAMPLES);
+        android_errorWriteLog(0x534e4554, "317780080");
+        numSamples = BUFFER_SIZE_IN_MONO_SAMPLES;
     }
     pOutputBuffer = pWTIntFrame->pAudioBuffer;
     phaseInc = pWTIntFrame->frame.phaseIncrement;
 
     /* get last two samples generated */
     /*lint -e{704} <avoid divide for performance>*/
-    tmp0 = (EAS_I32) (pWTVoice->phaseAccum) >> 18;
+    tmp0 = pWTVoice->prngTmp0 >> 18;
     /*lint -e{704} <avoid divide for performance>*/
-    tmp1 = (EAS_I32) (pWTVoice->loopEnd) >> 18;
+    tmp1 = pWTVoice->prngTmp1 >> 18;
 
     /* generate a buffer of noise */
     while (numSamples--) {
@@ -485,9 +423,9 @@ void WT_VoiceFilter (S_FILTER_CONTROL *pFilter, S_WT_INT_FRAME *pWTIntFrame)
         pWTVoice->phaseFrac += (EAS_U32) phaseInc;
         if (GET_PHASE_INT_PART(pWTVoice->phaseFrac))    {
             tmp0 = tmp1;
-            pWTVoice->phaseAccum = pWTVoice->loopEnd;
-            pWTVoice->loopEnd = (5 * pWTVoice->loopEnd + 1);
-            tmp1 = (EAS_I32) (pWTVoice->loopEnd) >> 18;
+            pWTVoice->prngTmp0 = pWTVoice->prngTmp1;
+            pWTVoice->prngTmp1 = (5 * pWTVoice->prngTmp1 + 1);
+            tmp1 = pWTVoice->prngTmp1 >> 18;
             pWTVoice->phaseFrac = GET_PHASE_FRAC_PART(pWTVoice->phaseFrac);
         }
 
@@ -529,8 +467,12 @@ void WT_ProcessVoice (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
     }
 
 #ifdef _FILTER_ENABLED
+#ifdef _FLOAT_DCF
+    if (pWTIntFrame->frame.b02 != 0.0f)
+#else
     if (pWTIntFrame->frame.k != 0)
-        WT_VoiceFilter(&pWTVoice->filter, pWTIntFrame);
+#endif
+        { WT_VoiceFilter(&pWTVoice->filter, pWTIntFrame); }
 #endif
 
 //2 TEST NEW MIXER FUNCTION
@@ -610,9 +552,15 @@ void WT_InterpolateMono (S_WT_VOICE *pWTVoice, S_WT_INT_FRAME *pWTIntFrame)
 
     numSamples = pWTIntFrame->numSamples;
     if (numSamples <= 0) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s: numSamples <= 0\n", __func__);
         ALOGE("b/26366256");
         android_errorWriteLog(0x534e4554, "26366256");
         return;
+    } else if (numSamples > BUFFER_SIZE_IN_MONO_SAMPLES) {
+        EAS_Report(_EAS_SEVERITY_ERROR, "%s: numSamples %d > %d BUFFER_SIZE_IN_MONO_SAMPLES\n", __func__, numSamples, BUFFER_SIZE_IN_MONO_SAMPLES);
+        ALOGE("b/317780080 clip numSamples %d -> %d", numSamples, BUFFER_SIZE_IN_MONO_SAMPLES);
+        android_errorWriteLog(0x534e4554, "317780080");
+        numSamples = BUFFER_SIZE_IN_MONO_SAMPLES;
     }
     pMixBuffer = pWTIntFrame->pMixBuffer;
 

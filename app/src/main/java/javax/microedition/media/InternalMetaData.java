@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2019 Nikita Shakarun
  * Copyright 2023 Yury Kharchenko
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +44,7 @@ public class InternalMetaData implements MetaDataControl {
 		androidMetaToMIDP.put(android, midp);
 	}
 
-	private void updateMetaData(MediaMetadataRetriever retriever) {
+	private synchronized void updateMetaData(MediaMetadataRetriever retriever) {
 		metaKeys.clear();
 		metaData.clear();
 
@@ -62,14 +63,30 @@ public class InternalMetaData implements MetaDataControl {
 	}
 
 	@Override
-	public String[] getKeys() {
+	public synchronized String[] getKeys() {
 		return metaKeys.toArray(new String[0]);
 	}
 
 	@Override
-	public String getKeyValue(String key) {
+	public synchronized String getKeyValue(String key) {
+		if (key == null || !metaData.containsKey(key)) throw new IllegalArgumentException("Invalid metadata key: " + key);
 		return metaData.get(key);
 	}
+
+    /** FFmpeg tags are decoded as UTF-8 by the management bridge. */
+    public synchronized void updateDemuxerMetaData(String[] tags) {
+        metaKeys.clear(); metaData.clear();
+        for (int i = 0; i + 1 < tags.length; i += 2) {
+            String key = switch (tags[i].toLowerCase(java.util.Locale.ROOT)) {
+                case "track" -> TRACK_NUMBER_KEY;
+                case "album_artist" -> ALBUM_ARTIST_KEY;
+                case "disc" -> DISC_NUMBER_KEY;
+                default -> tags[i].toLowerCase(java.util.Locale.ROOT);
+            };
+            if (!metaData.containsKey(key)) metaKeys.add(key);
+            metaData.put(key, tags[i + 1]);
+        }
+    }
 
 	public void updateMetaData(DataSource source) {
 		try {

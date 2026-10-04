@@ -11,6 +11,8 @@
  *
  * Contributors:
  *
+ * Modified for JL-Mod Plus.
+ *
  * Description:  Manager.playTone implementation
  *
  */
@@ -63,7 +65,7 @@ public class ToneManager implements PlayerListener {
 			throw new IllegalArgumentException("Duration must be positive");
 		}
 
-		int tsDuration = duration * TONE_SEQUENCE_RESOLUTION * TONE_SEQUENCE_TEMPO / DURATION_DIVIDE;
+		int tsDuration = (int) Math.min(Integer.MAX_VALUE, (long) duration * TONE_SEQUENCE_RESOLUTION * TONE_SEQUENCE_TEMPO / DURATION_DIVIDE);
 
 		if (tsDuration < MidiToneConstants.TONE_SEQUENCE_NOTE_MIN_DURATION) {
 			tsDuration = MidiToneConstants.TONE_SEQUENCE_NOTE_MIN_DURATION;
@@ -79,15 +81,22 @@ public class ToneManager implements PlayerListener {
 				(byte) note, (byte) tsDuration
 		};
 
+		Player player = null;
+		boolean configured = false;
 		try {
-			Player player = Manager.createPlayer(Manager.TONE_DEVICE_LOCATOR);
+			player = Manager.createPlayer(Manager.TONE_DEVICE_LOCATOR);
 			player.realize();
 			ToneControl control = (ToneControl) player.getControl(MidiToneConstants.TONE_CONTROL_FULL_NAME);
 			control.setSequence(sequence);
+			configured = true;
 			return player;
 		} catch (Exception e) {
 			Log.e(TAG, "createPlayer: " + CANNOT_PLAY_TONE, e);
-			throw new MediaException(CANNOT_PLAY_TONE);
+			MediaException failure = new MediaException(CANNOT_PLAY_TONE);
+			failure.initCause(e);
+			throw failure;
+		} finally {
+			if (player != null && !configured) player.close();
 		}
 	}
 
@@ -99,19 +108,25 @@ public class ToneManager implements PlayerListener {
 	synchronized public void playTone(int note, int duration, int volume) throws MediaException {
 		Player p = createPlayer(note, duration, volume);
 
-		p.addPlayerListener(this);
-		players.addElement(p);
+		boolean started = false;
 		try {
+			p.addPlayerListener(this);
+			players.addElement(p);
 			p.start();
-		} catch (MediaException me) {
-			players.removeElement(p);
-			throw me;
+			started = true;
+		} finally {
+			if (!started) {
+				players.removeElement(p);
+				p.close();
+			}
 		}
 	}
 
 	public void playerUpdate(Player player, String event, Object eventData) {
 		if (END_OF_MEDIA.equals(event) || ERROR.equals(event)) {
 			player.close();
+			players.removeElement(player);
+		} else if (CLOSED.equals(event)) {
 			players.removeElement(player);
 		}
 	}

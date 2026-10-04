@@ -30,8 +30,16 @@
 #ifndef _EAS_SYNTH_H
 #define _EAS_SYNTH_H
 
-#include "eas_types.h"
+#include "eas_audioconst.h"
+#include "eas_effects.h"
+#include "eas_options.h"
 #include "eas_sndlib.h"
+#include "eas_synthcfg.h"
+#include "eas_types.h"
+
+#ifdef DLS_SYNTHESIZER
+#include "eas_dlslib.h"
+#endif
 
 #ifdef _WT_SYNTH
 #include "eas_wtsynth.h"
@@ -53,42 +61,6 @@
 #define MAX_VIRTUAL_SYNTHESIZERS    4
 #endif
 
-/* defines */
-#ifndef NUM_PRIMARY_VOICES
-#define NUM_PRIMARY_VOICES      MAX_SYNTH_VOICES
-#elif !defined(NUM_SECONDARY_VOICES)
-#define NUM_SECONDARY_VOICES    (MAX_SYNTH_VOICES - NUM_PRIMARY_VOICES)
-#endif
-
-#if defined(EAS_WT_SYNTH)
-#define NUM_WT_VOICES           MAX_SYNTH_VOICES
-
-/* FM on MCU */
-#elif defined(EAS_FM_SYNTH)
-#define NUM_FM_VOICES           MAX_SYNTH_VOICES
-
-/* wavetable drums on MCU, wavetable melodic on DSP */
-#elif defined(EAS_SPLIT_WT_SYNTH)
-#define NUM_WT_VOICES           MAX_SYNTH_VOICES
-
-/* wavetable drums and FM melodic on MCU */
-#elif defined(EAS_HYBRID_SYNTH)
-#define NUM_WT_VOICES           NUM_PRIMARY_VOICES
-#define NUM_FM_VOICES           NUM_SECONDARY_VOICES
-
-/* wavetable drums on MCU, FM melodic on DSP */
-#elif defined(EAS_SPLIT_HYBRID_SYNTH)
-#define NUM_WT_VOICES           NUM_PRIMARY_VOICES
-#define NUM_FM_VOICES           NUM_SECONDARY_VOICES
-
-/* FM synth on DSP */
-#elif defined(EAS_SPLIT_FM_SYNTH)
-#define NUM_FM_VOICES           MAX_SYNTH_VOICES
-
-#else
-#error "Unrecognized architecture option"
-#endif
-
 #define NUM_SYNTH_CHANNELS      16
 
 #define DEFAULT_SYNTH_VOICES    MAX_SYNTH_VOICES
@@ -98,8 +70,8 @@
 #define UNASSIGNED_SYNTH_VOICE      MAX_SYNTH_VOICES
 
 
-/* synth parameters are updated every SYNTH_UPDATE_PERIOD_IN_SAMPLES */
-#define SYNTH_UPDATE_PERIOD_IN_SAMPLES  (EAS_I32)(0x1L << SYNTH_UPDATE_PERIOD_IN_BITS)
+// /* synth parameters are updated every SYNTH_UPDATE_PERIOD_IN_SAMPLES */
+// #define SYNTH_UPDATE_PERIOD_IN_SAMPLES  (EAS_I32)(0x1L << SYNTH_UPDATE_PERIOD_IN_BITS)
 
 /* stealing weighting factors */
 #define NOTE_AGE_STEAL_WEIGHT           1
@@ -137,11 +109,11 @@
 #define DEFAULT_CHANNEL_VOLUME  0x64
 #define DEFAULT_PAN             0x40    /* decimal 64, center */
 
-#ifdef _REVERB
+#ifdef _CC_REVERB
 #define DEFAULT_REVERB_SEND     40      /* some reverb */
 #endif
 
-#ifdef _CHORUS
+#ifdef _CC_CHORUS
 #define DEFAULT_CHORUS_SEND     0       /* no chorus */
 #endif
 
@@ -228,14 +200,6 @@ typedef struct s_synth_channel_tag
 
     EAS_U8      pool;               /* SPMIDI channel voice pool */
     EAS_U8      mip;                /* SPMIDI MIP setting */
-
-#ifdef  _REVERB
-    EAS_U8      reverbSend;         /* CC91 */
-#endif
-
-#ifdef  _CHORUS
-    EAS_U8      chorusSend;         /* CC93 */
-#endif
 } S_SYNTH_CHANNEL;
 
 /*------------------------------------
@@ -306,6 +270,7 @@ typedef struct s_synth_tag
 {
     struct s_eas_data_tag   *pEASData;
     const S_EAS             *pEAS;
+    EAS_BOOL                isHybridLibrary;
 
 #ifdef DLS_SYNTHESIZER
     S_DLS                   *pDLS;
@@ -315,6 +280,15 @@ typedef struct s_synth_tag
     EAS_EXT_PRG_CHG_FUNC    cbProgChgFunc;
     EAS_EXT_EVENT_FUNC      cbEventFunc;
     EAS_VOID_PTR            *pExtAudioInstData;
+#endif
+
+    // Moved from S_SYNTH_CHANNEL to here
+    // to improve caching
+#if defined(_CC_REVERB)
+    EAS_U8                  reverbSendLevels[NUM_SYNTH_CHANNELS]; // CC91
+#endif
+#if defined(_CC_CHORUS)
+    EAS_U8                  chorusSendLevels[NUM_SYNTH_CHANNELS]; // CC93
 #endif
 
     S_SYNTH_CHANNEL         channels[NUM_SYNTH_CHANNELS];
@@ -330,6 +304,13 @@ typedef struct s_synth_tag
     EAS_U8                  vSynthNum;
     EAS_U8                  refCount;
     EAS_U8                  priority;
+
+#ifdef _CC_CHORUS
+    EAS_BOOL                chorusEnabled;
+#endif
+#ifdef _CC_REVERB
+    EAS_BOOL                reverbEnabled;
+#endif
 } S_SYNTH;
 
 /*------------------------------------
@@ -341,10 +322,11 @@ typedef struct s_synth_tag
 typedef struct s_voice_mgr_tag
 {
     S_SYNTH                 *pSynth[MAX_VIRTUAL_SYNTHESIZERS];
-    EAS_PCM                 voiceBuffer[SYNTH_UPDATE_PERIOD_IN_SAMPLES];
+    EAS_PCM                 voiceBuffer[BUFFER_SIZE_IN_MONO_SAMPLES];
 
 #ifdef _FM_SYNTH
-    EAS_PCM                 operMixBuffer[SYNTH_UPDATE_PERIOD_IN_SAMPLES];
+    EAS_I32                 operOutputBuffer[BUFFER_SIZE_IN_MONO_SAMPLES];
+    EAS_I32                 operMixBuffer[BUFFER_SIZE_IN_MONO_SAMPLES];
     S_FM_VOICE              fmVoices[NUM_FM_VOICES];
 #endif
 
@@ -352,12 +334,14 @@ typedef struct s_voice_mgr_tag
     S_WT_VOICE              wtVoices[NUM_WT_VOICES];
 #endif
 
-#ifdef _REVERB
-    EAS_PCM                 reverbSendBuffer[NUM_OUTPUT_CHANNELS * SYNTH_UPDATE_PERIOD_IN_SAMPLES];
+#ifdef _CC_REVERB
+    EAS_PCM                 reverbSendBuffer[NUM_OUTPUT_CHANNELS * BUFFER_SIZE_IN_MONO_SAMPLES];
+    S_EFFECTS_MODULE        reverbModule;
 #endif
 
-#ifdef _CHORUS
-    EAS_PCM                 chorusSendBuffer[NUM_OUTPUT_CHANNELS * SYNTH_UPDATE_PERIOD_IN_SAMPLES];
+#ifdef _CC_CHORUS
+    EAS_PCM                 chorusSendBuffer[NUM_OUTPUT_CHANNELS * BUFFER_SIZE_IN_MONO_SAMPLES];
+    S_EFFECTS_MODULE        chorusModule;
 #endif
     S_SYNTH_VOICE           voices[MAX_SYNTH_VOICES];
 
@@ -371,7 +355,7 @@ typedef struct s_voice_mgr_tag
     EAS_FRAME_BUFFER_HANDLE pFrameBuffer;
 #endif
 
-#if defined(_SECONDARY_SYNTH) || defined(EAS_SPLIT_WT_SYNTH)
+#if defined(_HYBRID_SYNTH) || defined(EAS_SPLIT_WT_SYNTH)
     EAS_U16                 maxPolyphonyPrimary;
     EAS_U16                 maxPolyphonySecondary;
 #endif

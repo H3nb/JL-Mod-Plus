@@ -30,19 +30,30 @@
 #ifndef _EAS_SYNTHCFG_H
 #define _EAS_SYNTHCFG_H
 
-#if defined(EAS_WT_SYNTH)
+#include "eas_options.h"
+
+// TODO: we may need a better way to handle these fx
+#ifdef _CHORUS_ENABLED
+#define _CC_CHORUS
+#endif
+
+#ifdef _REVERB_ENABLED
+#define _CC_REVERB
+#endif
+
+/* wavetable drums and FM melodic on MCU */
+#if (defined(EAS_WT_SYNTH) && defined(EAS_FM_SYNTH)) || defined(EAS_HYBRID_SYNTH)
+#define _WT_SYNTH
+#define _FM_SYNTH
+#define _SECONDARY_SYNTH
+#define _HYBRID_SYNTH
+
+#elif defined(EAS_WT_SYNTH)
 #define _WT_SYNTH
 
 /* FM on MCU */
 #elif defined(EAS_FM_SYNTH)
 #define _FM_SYNTH
-
-/* wavetable drums and FM melodic on MCU */
-#elif defined(EAS_HYBRID_SYNTH)
-#define _WT_SYNTH
-#define _FM_SYNTH
-#define _SECONDARY_SYNTH
-#define _HYBRID_SYNTH
 
 /* wavetable drums on MCU, wavetable melodic on DSP */
 #elif defined(EAS_SPLIT_WT_SYNTH)
@@ -66,5 +77,25 @@
 #error "Unrecognized architecture option"
 #endif
 
+#if !defined(_HYBRID_SYNTH)
+#define NUM_PRIMARY_VOICES      MAX_SYNTH_VOICES
+#if defined(_WT_SYNTH)
+#define NUM_WT_VOICES           MAX_SYNTH_VOICES
+#endif
+#if defined(_FM_SYNTH)
+#define NUM_FM_VOICES           MAX_SYNTH_VOICES
+#endif
+#else // _HYBRID_SYNTH
+#if !defined(NUM_PRIMARY_VOICES)
+#define NUM_PRIMARY_VOICES      (MAX_SYNTH_VOICES / 2)
 #endif
 
+#if !defined(NUM_SECONDARY_VOICES)
+#define NUM_SECONDARY_VOICES    (MAX_SYNTH_VOICES - NUM_PRIMARY_VOICES)
+#endif
+
+#define NUM_WT_VOICES           NUM_PRIMARY_VOICES
+#define NUM_FM_VOICES           NUM_SECONDARY_VOICES
+#endif
+
+#endif

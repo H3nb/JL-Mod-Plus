@@ -2,7 +2,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <queries>
+        <package android:name="io.github.h3nb.sonivox.productionfocusrival" />
+    </queries>
+
     <application tools:ignore="GoogleAppIndexingWarning,MissingApplicationIcon">
+        <activity
+            android:name="io.github.h3nb.jlmodplus.mmapi.synth.AudioQualificationActivity"
+            android:excludeFromRecents="true"
+            android:exported="false" />
+        <activity
+            android:name="javax.microedition.shell.AudioRuntimeRecreationActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:process=":midlet" />
         <activity
             android:name="io.github.h3nb.jlmodplus.crashes.CrashRuntimeProbeActivity"
             android:excludeFromRecents="true"

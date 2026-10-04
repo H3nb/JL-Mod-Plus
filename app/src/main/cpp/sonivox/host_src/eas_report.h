@@ -34,6 +34,8 @@
 #ifndef _EAS_REPORT_H
 #define _EAS_REPORT_H
 
+#include "eas_visibility.h"
+
 #define _EAS_SEVERITY_NOFILTER 0
 #define _EAS_SEVERITY_FATAL 1
 #define _EAS_SEVERITY_ERROR 2
@@ -46,8 +48,6 @@
 extern "C" {
 #endif
 
-#ifndef _NO_DEBUG_PREPROCESSOR
-
 /* structure for included debug message header files */
 typedef struct
 {
@@ -57,18 +57,17 @@ typedef struct
 } S_DEBUG_MESSAGES;
 
 /* debug message handling prototypes */
-extern void EAS_ReportEx (int severity, unsigned long hashCode, int serialNum, ...);
-
-#else
+EAS_PUBLIC void EAS_ReportEx (int severity, unsigned long hashCode, int serialNum, ...);
 
 /* these prototypes are used if the debug preprocessor is not used */
-extern void EAS_Report (int severity, const char* fmt, ...);
-extern void EAS_ReportX (int severity, const char* fmt, ...);
-
+#if defined (__GNUC__) || defined (__clang__)
+__attribute__((format(printf, 2, 3)))
 #endif
+EAS_PUBLIC void EAS_Report (int severity, const char* fmt, ...);
+EAS_PUBLIC void EAS_ReportX (int severity, const char* fmt, ...);
 
-extern void EAS_SetDebugLevel (int severity);
-extern void EAS_SetDebugFile (void *file, int flushAfterWrite);
+EAS_PUBLIC void EAS_SetDebugLevel (int severity);
+EAS_PUBLIC void EAS_SetDebugFile (void *file, int flushAfterWrite);
 
 #ifdef __cplusplus
 } /* end extern "C" */

@@ -47,6 +47,9 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.FrameLayout;
+import io.github.h3nb.jlmodplus.mmapi.video.VideoDisplay;
+import java.util.concurrent.CopyOnWriteArrayList;
 import android.widget.PopupWindow;
 
 import androidx.annotation.NonNull;
@@ -163,6 +166,8 @@ public abstract class Canvas extends Displayable {
 	protected int maxHeight;
 	private LinearLayout layout;
 	private SurfaceView innerView;
+	private FrameLayout videoHost;
+	private final CopyOnWriteArrayList<VideoDisplay> videoDisplays = new CopyOnWriteArrayList<>();
 	private Surface surface;
 	private GLRenderer renderer;
 	private int displayWidth;
@@ -660,6 +665,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void onEffectiveVisibilityChanged(boolean shown) {
+		ViewHandler.postEvent(this::updateVideoDisplays);
 		if (shown) {
 			guestKeyLedger.resetForShow();
 			AutoSpeedController controller = autoSpeedController;
@@ -897,6 +903,7 @@ public abstract class Canvas extends Displayable {
 			}
 		}
 		configureAmbientGeometry();
+		ViewHandler.postEvent(this::updateVideoDisplays);
 		if (overlay != null) {
 			overlay.resize(screen, onX, onY, onX + onWidth, onY + onHeight + softBarHeight);
 		}
@@ -961,7 +968,10 @@ public abstract class Canvas extends Displayable {
 			innerView.setOnTouchListener(viewCallbacks);
 			innerView.setOnKeyListener(viewCallbacks);
 			innerView.setFocusableInTouchMode(true);
-			layout.addView(innerView);
+			videoHost = new FrameLayout(activity);
+			videoHost.addView(innerView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+			layout.addView(videoHost, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+			updateVideoDisplays();
 			innerView.requestFocus();
 		}
 		return layout;
@@ -969,6 +979,8 @@ public abstract class Canvas extends Displayable {
 
 	@Override
 	public void clearDisplayableView() {
+		for (VideoDisplay video : videoDisplays) video.detachView();
+		videoHost = null;
 		ViewCallbacks callbacks = viewCallbacks;
 		if (callbacks != null) {
 			callbacks.detachFromCanvas();
@@ -979,6 +991,18 @@ public abstract class Canvas extends Displayable {
 		layout = null;
 		innerView = null;
 		viewCallbacks = null;
+	}
+
+	/** Independent video Surfaces sit above the LCD and below the host OverlayView. */
+	public void addVideoDisplay(VideoDisplay video) {
+		videoDisplays.addIfAbsent(video);
+		ViewHandler.postEvent(this::updateVideoDisplays);
+	}
+	public void removeVideoDisplay(VideoDisplay video) { videoDisplays.remove(video); }
+	public void updateVideoDisplays() {
+		if (videoHost == null) return;
+		for (VideoDisplay video : videoDisplays)
+			video.attachCanvas(videoHost, new RectF(virtualScreen), width, height, visible);
 	}
 
 	public void setFullScreenMode(boolean flag) {

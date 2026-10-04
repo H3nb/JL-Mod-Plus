@@ -813,7 +813,7 @@ EAS_RESULT VMGetPriority (S_VOICE_MGR *pVoiceMgr, S_SYNTH *pSynth, EAS_I32 *pPri
  *
  *----------------------------------------------------------------------------
 */
-void VMSetVolume (S_SYNTH *pSynth, EAS_U16 masterVolume);
+void VMSetVolume (S_SYNTH *pSynth, EAS_U32 masterVolume);
 
 /*----------------------------------------------------------------------------
  * VMSetPitchBendRange()
@@ -1080,6 +1080,16 @@ EAS_BOOL VMStartFrame (S_EAS_DATA *pEASData);
  *----------------------------------------------------------------------------
 */
 EAS_BOOL VMEndFrame (S_EAS_DATA *pEASData);
+#endif
+
+#ifdef _CC_REVERB
+EAS_RESULT VMInitReverb (S_EAS_DATA *pEASData, S_VOICE_MGR* pVoiceMgr);
+void VMShutdownReverb (S_EAS_DATA *pEASData, S_VOICE_MGR* pVoiceMgr);
+#endif
+
+#ifdef _CC_CHORUS
+EAS_RESULT VMInitChorus (S_EAS_DATA *pEASData, S_VOICE_MGR* pVoiceMgr);
+void VMShutdownChorus (S_EAS_DATA *pEASData, S_VOICE_MGR* pVoiceMgr);
 #endif
 
 #endif /* #ifdef _EAS_VM_PROTOS_H */

@@ -30,12 +30,9 @@
 #ifndef _EAS_SNDLIB_H
 #define _EAS_SNDLIB_H
 
-#include "eas_types.h"
+#include "eas_options.h"
 #include "eas_synthcfg.h"
-
-#ifdef _WT_SYNTH
-#include "eas_wtengine.h"
-#endif
+#include "eas_types.h"
 
 /*----------------------------------------------------------------------------
  * This is bit of a hack to allow us to keep the same structure
@@ -87,8 +84,8 @@ typedef struct s_region_tag
 
 /*
  * Bit fields for m_nKeyGroupAndFlags
- * Bits 0-2 are mode bits in FM synth
- * Bits 8-11 are the key group
+ * Bits 0-7 are flags
+ * Bits 8-14 are the key group
  */
 #define REGION_FLAG_IS_LOOPED                   0x01
 #define REGION_FLAG_USE_WAVE_GENERATOR          0x02
@@ -98,6 +95,7 @@ typedef struct s_region_tag
 #define REGION_FLAG_OFF_CHIP                    0x20
 #define REGION_FLAG_NON_SELF_EXCLUSIVE          0x40
 #define REGION_FLAG_LAST_REGION                 0x8000
+#define REGION_KEY_GROUP_MASK                   0x7f00
 
 /*----------------------------------------------------------------------------
  * Envelope data structure
@@ -110,23 +108,6 @@ typedef struct s_envelope_tag
     EAS_I16     sustainLevel;
     EAS_I16     releaseTime;
 } S_ENVELOPE;
-
-/*----------------------------------------------------------------------------
- * DLS envelope data structure
- *----------------------------------------------------------------------------
-*/
-typedef struct s_dls_envelope_tag
-{
-    EAS_I16         delayTime;
-    EAS_I16         attackTime;
-    EAS_I16         holdTime;
-    EAS_I16         decayTime;
-    EAS_I16         sustainLevel;
-    EAS_I16         releaseTime;
-    EAS_I16         velToAttack;
-    EAS_I16         keyNumToDecay;
-    EAS_I16         keyNumToHold;
-} S_DLS_ENVELOPE;
 
 /*----------------------------------------------------------------------------
  * LFO data structure
@@ -158,66 +139,6 @@ typedef struct s_articulation_tag
 } S_ARTICULATION;
 
 /*----------------------------------------------------------------------------
- * DLS articulation data structure
- *----------------------------------------------------------------------------
-*/
-
-typedef struct s_dls_articulation_tag
-{
-    S_LFO_PARAMS    modLFO;
-    S_LFO_PARAMS    vibLFO;
-
-    S_DLS_ENVELOPE  eg1;
-    S_DLS_ENVELOPE  eg2;
-
-    EAS_I16         eg1ShutdownTime;
-
-    EAS_I16         filterCutoff;
-    EAS_I16         modLFOToFc;
-    EAS_I16         modLFOCC1ToFc;
-    EAS_I16         modLFOChanPressToFc;
-    EAS_I16         eg2ToFc;
-    EAS_I16         velToFc;
-    EAS_I16         keyNumToFc;
-
-    EAS_I16         modLFOToGain;
-    EAS_I16         modLFOCC1ToGain;
-    EAS_I16         modLFOChanPressToGain;
-
-    EAS_I16         tuning;
-    EAS_I16         keyNumToPitch;
-    EAS_I16         vibLFOToPitch;
-    EAS_I16         vibLFOCC1ToPitch;
-    EAS_I16         vibLFOChanPressToPitch;
-    EAS_I16         modLFOToPitch;
-    EAS_I16         modLFOCC1ToPitch;
-    EAS_I16         modLFOChanPressToPitch;
-    EAS_I16         eg2ToPitch;
-
-    /* pad to 4-byte boundary */
-    EAS_U16         pad;
-
-    EAS_I8          pan;
-    EAS_U8          filterQandFlags;
-
-#ifdef _REVERB
-    EAS_I16         reverbSend;
-    EAS_I16         cc91ToReverbSend;
-#endif
-
-#ifdef _CHORUS
-    EAS_I16         chorusSend;
-    EAS_I16         cc93ToChorusSend;
-#endif
-} S_DLS_ARTICULATION;
-
-/* flags in filterQandFlags
- * NOTE: Q is stored in bottom 5 bits
- */
-#define FLAG_DLS_VELOCITY_SENSITIVE     0x80
-#define FILTER_Q_MASK                   0x1f
-
-/*----------------------------------------------------------------------------
  * Wavetable region data structure
  *----------------------------------------------------------------------------
 */
@@ -225,23 +146,12 @@ typedef struct s_wt_region_tag
 {
     S_REGION    region;
     EAS_I16     tuning;
-    EAS_I16     gain;
-    EAS_U32     loopStart;
-    EAS_U32     loopEnd;
+    EAS_I16     gain; // DLS: (in centibels, or 0.1 dB); WT: EG1 (.15) frac
+    EAS_U32     loopStart; // in samples
+    EAS_U32     loopEnd; // in samples, past end
     EAS_U16     waveIndex;
     EAS_U16     artIndex;
 } S_WT_REGION;
-
-/*----------------------------------------------------------------------------
- * DLS region data structure
- *----------------------------------------------------------------------------
-*/
-typedef struct s_dls_region_tag
-{
-    S_WT_REGION     wtRegion;
-    EAS_U8          velLow;
-    EAS_U8          velHigh;
-} S_DLS_REGION;
 
 /*----------------------------------------------------------------------------
  * FM synthesizer data structures
@@ -290,7 +200,7 @@ typedef struct s_fm_region_tag
 */
 typedef struct s_program_tag
 {
-    EAS_U32 locale;
+    EAS_U32 locale; // 0xdmmllpp d=0(melodic)/1(drums) (only exist in DLS programs), mm=bank MSB, ll=bank LSB, pp=program
     EAS_U16 regionIndex;
 } S_PROGRAM;
 
@@ -312,52 +222,25 @@ typedef struct s_bank_tag
 } S_BANK;
 
 
-/* defines for libFormat field
- * bits 0-17 are the sample rate
- * bit 18 is true if wavetable is present
- * bit 19 is true if FM is present
- * bit 20 is true if filter is enabled
- * bit 21 is sample depth (0 = 8-bits, 1 = 16-bits)
- * bits 22-31 are reserved
- */
-#define LIBFORMAT_SAMPLE_RATE_MASK      0x0003ffff
-#define LIB_FORMAT_TYPE_MASK            0x000c0000
-#define LIB_FORMAT_WAVETABLE            0x00000000
-#define LIB_FORMAT_FM                   0x00040000
-#define LIB_FORMAT_HYBRID               0x00080000
-#define LIB_FORMAT_FILTER_ENABLED       0x00100000
-#define LIB_FORMAT_16_BIT_SAMPLES       0x00200000
+// note that the original comment seems to be completely false
+// the libAttr field is: 0x0010xxxx for 8-bit samples and 0x0020xxxx for 16-bit samples
+// xxxx is sample rate (e.g. 0x5622 = 22050, 0xac44 = 44100)
 
-#ifdef DLS_SYNTHESIZER
-/*----------------------------------------------------------------------------
- * DLS data structure
- *
- * pDLSPrograms         pointer to array of DLS programs
- * pDLSRegions          pointer to array of DLS regions
- * pDLSArticulations    pointer to array of DLS articulations
- * pSampleLen           pointer to array of sample lengths
- * ppSamples            pointer to array of sample pointers
- * numDLSPrograms       number of DLS programs
- * numDLSRegions        number of DLS regions
- * numDLSArticulations  number of DLS articulations
- * numDLSSamples        number of DLS samples
- *----------------------------------------------------------------------------
-*/
-typedef struct s_eas_dls_tag
-{
-    S_PROGRAM           *pDLSPrograms;
-    S_DLS_REGION        *pDLSRegions;
-    S_DLS_ARTICULATION  *pDLSArticulations;
-    EAS_U32             *pDLSSampleLen;
-    EAS_U32             *pDLSSampleOffsets;
-    EAS_SAMPLE          *pDLSSamples;
-    EAS_U16             numDLSPrograms;
-    EAS_U16             numDLSRegions;
-    EAS_U16             numDLSArticulations;
-    EAS_U16             numDLSSamples;
-    EAS_U8              refCount;
-} S_DLS;
-#endif
+// /* defines for libFormat field
+//  * bits 0-17 are the sample rate
+//  * bit 18 is true if wavetable is present
+//  * bit 19 is true if FM is present
+//  * bit 20 is true if filter is enabled
+//  * bit 21 is sample depth (0 = 8-bits, 1 = 16-bits)
+//  * bits 22-31 are reserved
+//  */
+#define LIBFORMAT_SAMPLE_RATE_MASK      0x0003ffff
+// #define LIB_FORMAT_TYPE_MASK            0x000c0000
+// #define LIB_FORMAT_WAVETABLE            0x00000000
+// #define LIB_FORMAT_FM                   0x00040000
+// #define LIB_FORMAT_HYBRID               0x00080000
+// #define LIB_FORMAT_FILTER_ENABLED       0x00100000
+#define LIB_FORMAT_16_BIT_SAMPLES       0x00200000
 
 /*----------------------------------------------------------------------------
  * Sound library data structure
@@ -386,8 +269,8 @@ typedef struct s_eas_sndlib_tag
 
     SCNST S_WT_REGION           *pWTRegions;
     SCNST S_ARTICULATION        *pArticulations;
-    SCNST EAS_U32               *pSampleLen;
-    SCNST EAS_U32               *pSampleOffsets;
+    SCNST EAS_U32               *pSampleLen; // in bytes // TODO: in samples may be better?
+    SCNST EAS_U32               *pSampleOffsets; // in bytes
     SCNST EAS_SAMPLE            *pSamples;
 
     SCNST S_FM_REGION           *pFMRegions;
@@ -403,4 +286,3 @@ typedef struct s_eas_sndlib_tag
 } S_EAS;
 
 #endif
-

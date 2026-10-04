@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.github.h3nb.sonivox.productionfocusrival">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <application android:label="Production Audio Focus Qualification" android:allowBackup="false">
+        <service android:name=".FocusRivalService" android:exported="true" android:foregroundServiceType="mediaPlayback" />
+    </application>
+</manifest>

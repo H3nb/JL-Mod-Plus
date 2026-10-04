@@ -35,6 +35,13 @@
 #ifndef _EAS_TYPES_H
 #define _EAS_TYPES_H
 
+#include <stdint.h>
+
+#ifdef EXTERNAL_AUDIO
+// TODO: eas_synthcfg is not a public header
+#include "eas_synthcfg.h"
+#endif
+
 /* EAS_RESULT return codes */
 typedef long EAS_RESULT;
 #define EAS_SUCCESS                         0
@@ -83,7 +90,6 @@ typedef long EAS_RESULT;
 #define EAS_STREAM_BUFFERING                4
 #define EAS_BUFFER_FULL                     5
 
-/* EAS_STATE return codes */
 typedef long EAS_STATE;
 typedef enum
 {
@@ -103,32 +109,31 @@ typedef enum
 #define EAS_CONST const
 #endif
 
-/* definition for public interface functions */
-#ifndef EAS_PUBLIC
-#define EAS_PUBLIC
-#endif
+/* EAS_PUBLIC definition for public interface functions is now in eas_visibility.h */
 
 /* boolean values */
 typedef unsigned EAS_BOOL;
-typedef unsigned char EAS_BOOL8;
+typedef uint8_t EAS_BOOL8;
 
 #define EAS_FALSE   0
 #define EAS_TRUE    1
 
 /* scalar variable definitions */
-typedef unsigned char EAS_U8;
-typedef signed char EAS_I8;
+typedef uint8_t EAS_U8;
+typedef int8_t EAS_I8;
 typedef char EAS_CHAR;
 
-typedef unsigned short EAS_U16;
-typedef short EAS_I16;
+typedef uint16_t EAS_U16;
+typedef int16_t EAS_I16;
 
-typedef unsigned long EAS_U32;
-typedef long EAS_I32;
+typedef uint32_t EAS_U32;
+typedef int32_t EAS_I32;
 
 typedef unsigned EAS_UINT;
 typedef int EAS_INT;
 typedef long EAS_LONG;
+
+typedef intptr_t EAS_IPTR;
 
 /* audio output type */
 typedef short EAS_PCM;
@@ -182,6 +187,14 @@ typedef void *EAS_VOID_PTR;
 #ifndef NULL
 #define NULL 0
 #endif
+
+typedef enum
+{
+    EAS_SNDLIB_DEFAULT = 0,
+    EAS_SNDLIB_WT = 1,
+    EAS_SNDLIB_FM,
+    EAS_SNDLIB_HYBRID
+} E_EAS_SNDLIB_TYPE;
 
 /* metadata types for metadata return codes */
 typedef enum
@@ -243,6 +256,7 @@ typedef struct s_ext_audio_event_tag
     EAS_BOOL8   noteOn;
 } S_EXT_AUDIO_EVENT;
 
+#ifdef EXTERNAL_AUDIO
 typedef struct s_midi_controllers_tag
 {
     EAS_U8      modWheel;           /* CC1 */
@@ -251,14 +265,15 @@ typedef struct s_midi_controllers_tag
     EAS_U8      expression;         /* CC11 */
     EAS_U8      channelPressure;    /* MIDI channel pressure */
 
-#ifdef  _REVERB
+#ifdef  _CC_REVERB
     EAS_U8      reverbSend;         /* CC91 */
 #endif
 
-#ifdef  _CHORUS
+#ifdef  _CC_CHORUS
     EAS_U8      chorusSend;         /* CC93 */
 #endif
 } S_MIDI_CONTROLLERS;
+#endif
 
 /* iMode play modes enumeration for EAS_SetPlayMode */
 typedef enum

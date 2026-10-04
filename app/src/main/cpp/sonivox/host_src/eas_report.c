@@ -37,14 +37,13 @@
 #endif
 
 #include "eas_report.h"
+#include "eas_options.h"
 
 static int severityLevel = 9999;
 
 /* debug file */
 static FILE *debugFile = NULL;
 int flush = 0;
-
-#ifndef _NO_DEBUG_PREPROCESSOR
 
 /* structure should have an #include for each error message header file */
 S_DEBUG_MESSAGES debugMessages[] =
@@ -141,7 +140,7 @@ S_DEBUG_MESSAGES debugMessages[] =
  * messages to stdout. Modify this as needed for your system.
  *----------------------------------------------------------------------------
 */
-void EAS_ReportEx (int severity, unsigned long hashCode, int serialNum, ...)
+EAS_PUBLIC void EAS_ReportEx (int severity, unsigned long hashCode, int serialNum, ...)
 {
     va_list vargs;
     int i;
@@ -167,16 +166,15 @@ void EAS_ReportEx (int severity, unsigned long hashCode, int serialNum, ...)
             }
             else
             {
-                vprintf(debugMessages[i].m_pDebugMsg, vargs);
+                vfprintf(stderr, debugMessages[i].m_pDebugMsg, vargs);
             }
             va_end(vargs);
             return;
         }
     }
-    printf("Unrecognized error: Severity=%d; HashCode=%lu; SerialNum=%d\n", severity, hashCode, serialNum);
+    fprintf(stderr, "Unrecognized error: Severity=%d; HashCode=%lu; SerialNum=%d\n", severity, hashCode, serialNum);
 } /* end EAS_ReportEx */
 
-#else
 /*----------------------------------------------------------------------------
  * EAS_Report()
  *
@@ -184,7 +182,7 @@ void EAS_ReportEx (int severity, unsigned long hashCode, int serialNum, ...)
  * messages to stdout. Modify this as needed for your system.
  *----------------------------------------------------------------------------
 */
-void EAS_Report (int severity, const char *fmt, ...)
+EAS_PUBLIC void EAS_Report (int severity, const char *fmt, ...)
 {
     va_list vargs;
 
@@ -202,7 +200,7 @@ void EAS_Report (int severity, const char *fmt, ...)
     }
     else
     {
-        vprintf(fmt, vargs);
+        vfprintf(stderr, fmt, vargs);
     }
     va_end(vargs);
 } /* end EAS_Report */
@@ -214,7 +212,7 @@ void EAS_Report (int severity, const char *fmt, ...)
  * messages to stdout. Modify this as needed for your system.
  *----------------------------------------------------------------------------
 */
-void EAS_ReportX (int severity, const char *fmt, ...)
+EAS_PUBLIC void EAS_ReportX (int severity, const char *fmt, ...)
 {
     va_list vargs;
 
@@ -232,11 +230,10 @@ void EAS_ReportX (int severity, const char *fmt, ...)
     }
     else
     {
-        vprintf(fmt, vargs);
+        vfprintf(stderr, fmt, vargs);
     }
     va_end(vargs);
 } /* end EAS_ReportX */
-#endif
 
 /*----------------------------------------------------------------------------
  * EAS_SetDebugLevel()
@@ -245,7 +242,7 @@ void EAS_ReportX (int severity, const char *fmt, ...)
  *----------------------------------------------------------------------------
 */
 
-void EAS_SetDebugLevel (int severity)
+EAS_PUBLIC void EAS_SetDebugLevel (int severity)
 {
     severityLevel = severity;
 } /* end EAS_SetDebugLevel */
@@ -256,7 +253,7 @@ void EAS_SetDebugLevel (int severity)
  * Redirect debugger output to the specified file.
  *----------------------------------------------------------------------------
 */
-void EAS_SetDebugFile (void *file, int flushAfterWrite)
+EAS_PUBLIC void EAS_SetDebugFile (void *file, int flushAfterWrite)
 {
     debugFile = (FILE*) file;
     flush = flushAfterWrite;

@@ -45,9 +45,13 @@
 typedef struct
 {
     EAS_FILE_HANDLE     fileHandle;
+    EAS_FILE_HANDLE     smfFileHandle;
+    void*               smfFileSpan;
+    EAS_FILE_HANDLE     dlsFileHandle;
+    void*               dlsFileSpan;
     EAS_I32             fileOffset;
     EAS_VOID_PTR        pSMFData;
-    EAS_I32             midiOffset;
+    EAS_I32             smfOffset;
     EAS_I32             dlsOffset;
     S_DLS               *pDLS;
 } S_XMF_DATA;
