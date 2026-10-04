@@ -377,13 +377,16 @@ public final class AmbientColorField {
         buildBroadGrid(evaluationGrid, evaluationBroadGrid);
         for (int n = 0; n < nodeCount; n++) {
             sampleGridAt(nodeX[n], nodeY[n], evaluationBroadGrid, BROAD_GRID_SIZE, evaluationEdge);
-            sampleLocalEdge(nodeX[n], nodeY[n], evaluationGrid, evaluationInner);
             int output = n * CHANNEL_COUNT;
             float boost = MAX_EDGE_BOOST * edgeBoost[n];
+            if (boost > 0.0f) {
+                sampleLocalEdge(nodeX[n], nodeY[n], evaluationGrid, evaluationInner);
+            }
             for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
                 float backdrop = evaluationEdge[channel];
-                float linear = clamp01(
-                        backdrop + (evaluationInner[channel] - backdrop) * boost);
+                float linear = boost > 0.0f
+                        ? clamp01(backdrop + (evaluationInner[channel] - backdrop) * boost)
+                        : backdrop;
                 outRgb[output + channel] = AmbientColorSampler.linearChannelToSrgb(linear);
             }
         }
@@ -395,14 +398,16 @@ public final class AmbientColorField {
         buildBroadGrid(evaluationGrid, evaluationBroadGrid);
         for (int n = 0; n < nodeCount; n++) {
             sampleGridAt(nodeX[n], nodeY[n], evaluationBroadGrid, BROAD_GRID_SIZE, evaluationEdge);
-            sampleLocalEdge(nodeX[n], nodeY[n], evaluationGrid, evaluationInner);
             float boost = MAX_EDGE_BOOST * edgeBoost[n];
-            float r = clamp01(evaluationEdge[0]
-                    + (evaluationInner[0] - evaluationEdge[0]) * boost);
-            float g = clamp01(evaluationEdge[1]
-                    + (evaluationInner[1] - evaluationEdge[1]) * boost);
-            float b = clamp01(evaluationEdge[2]
-                    + (evaluationInner[2] - evaluationEdge[2]) * boost);
+            float r = evaluationEdge[0];
+            float g = evaluationEdge[1];
+            float b = evaluationEdge[2];
+            if (boost > 0.0f) {
+                sampleLocalEdge(nodeX[n], nodeY[n], evaluationGrid, evaluationInner);
+                r = clamp01(r + (evaluationInner[0] - r) * boost);
+                g = clamp01(g + (evaluationInner[1] - g) * boost);
+                b = clamp01(b + (evaluationInner[2] - b) * boost);
+            }
             outArgb[n] = 0xFF000000
                     | (AmbientColorSampler.linearChannelToByte(r) << 16)
                     | (AmbientColorSampler.linearChannelToByte(g) << 8)
