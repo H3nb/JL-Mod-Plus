@@ -146,6 +146,9 @@ public final class AmbientColorField {
     public void setTargetGrid(float[] gridLinear, int baseArgb, long nowNs, boolean instant) {
         if (gridLinear == null || gridLinear.length < GRID_CHANNEL_COUNT) return;
         evaluateGrid(nowNs, evaluationGrid, evaluationBase);
+        // Blur only when a new sample arrives. Blur is linear, so interpolating these filtered
+        // endpoints is equivalent to filtering every temporally interpolated frame.
+        blurGrid(gridLinear, blurredGridHorizontal, blurredGrid);
 
         float baseR = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 16) & 0xFF);
         float baseG = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 8) & 0xFF);
@@ -154,13 +157,13 @@ public final class AmbientColorField {
                 Math.max(Math.abs(targetBase[0] - baseR), Math.abs(targetBase[1] - baseG)),
                 Math.abs(targetBase[2] - baseB)) > LINEAR_EPSILON;
         for (int i = 0; i < GRID_CHANNEL_COUNT && !materiallyDifferent; i++) {
-            materiallyDifferent = Math.abs(gridTarget[i] - clamp01(gridLinear[i]))
+            materiallyDifferent = Math.abs(gridTarget[i] - clamp01(blurredGrid[i]))
                     > LINEAR_EPSILON;
         }
         if (!materiallyDifferent && !instant && gridMode) return;
 
         for (int i = 0; i < GRID_CHANNEL_COUNT; i++) {
-            float value = clamp01(gridLinear[i]);
+            float value = clamp01(blurredGrid[i]);
             gridStart[i] = instant ? value : evaluationGrid[i];
             gridTarget[i] = value;
         }
@@ -347,9 +350,8 @@ public final class AmbientColorField {
 
     private boolean renderGridNodes(long nowNs, float[] outRgb) {
         boolean active = evaluateGrid(nowNs, evaluationGrid, evaluationBase);
-        blurGrid(evaluationGrid, blurredGridHorizontal, blurredGrid);
         for (int n = 0; n < nodeCount; n++) {
-            sampleGridForNode(nodeX[n], nodeY[n], blurredGrid);
+            sampleGridForNode(nodeX[n], nodeY[n], evaluationGrid);
             int output = n * CHANNEL_COUNT;
             float outside = OUTER_BASE_BLEND * fade[n];
             for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
@@ -364,9 +366,8 @@ public final class AmbientColorField {
 
     private boolean renderGridNodesArgb(long nowNs, int[] outArgb) {
         boolean active = evaluateGrid(nowNs, evaluationGrid, evaluationBase);
-        blurGrid(evaluationGrid, blurredGridHorizontal, blurredGrid);
         for (int n = 0; n < nodeCount; n++) {
-            sampleGridForNode(nodeX[n], nodeY[n], blurredGrid);
+            sampleGridForNode(nodeX[n], nodeY[n], evaluationGrid);
             float outside = OUTER_BASE_BLEND * fade[n];
             float r = clamp01(evaluationEdge[0]
                     + (evaluationBase[0] - evaluationEdge[0]) * outside);
@@ -392,7 +393,8 @@ public final class AmbientColorField {
                     for (int tap = -2; tap <= 2; tap++) {
                         int sampleX = Math.max(0, Math.min(GRID_SIZE - 1, x + tap));
                         int sampleOffset = (y * GRID_SIZE + sampleX) * CHANNEL_COUNT;
-                        value += source[sampleOffset + channel] * BLUR_KERNEL[tap + 2];
+                        value += clamp01(source[sampleOffset + channel])
+                                * BLUR_KERNEL[tap + 2];
                     }
                     horizontal[outputOffset + channel] = value;
                 }
@@ -448,7 +450,7 @@ public final class AmbientColorField {
         return true;
     }
 
-    /** Evaluates the current full-frame palette using the same monotonic clock as the field. */
+    /** Evaluates the current filtered linear-light field on the shared monotonic clock. */
     public boolean evaluateGrid(long nowNs, float[] outGrid, float[] outBase) {
         if (outGrid == null || outGrid.length < gridTarget.length
                 || outBase == null || outBase.length < CHANNEL_COUNT) return false;
