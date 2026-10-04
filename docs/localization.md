@@ -249,10 +249,13 @@ Current implementation evidence:
   and the other base locale catalogs. Structural resources and configuration-specific
   overrides remain in their own files/configurations. English and Indonesian have
   been reviewed by semantic domain, and Indonesian covers the full translatable
-  source catalog. Retained legacy/dormant resources with unresolved context remain
-  subject to later review. Secondary-locale translation completion and the known
-  mapping-dialog placeholder debt remain pending; catalog coverage alone does not
-  establish semantic quality.
+  source catalog. A follow-up canonical-English review rechecked the historical
+  `NEEDS_CONTEXT` set against current app-owned UI consumers: active copy now has
+  an established role or evidence-backed wording, while unreferenced legacy
+  declarations remain retained as dormant/dead-resource candidates until a separate
+  secondary-locale-safe cleanup. Secondary-locale translation completion and the
+  known mapping-dialog placeholder debt remain pending; catalog coverage alone does
+  not establish semantic quality.
 - [SettingsActivity.buildLanguageOptions](../app/src/main/java/io/github/h3nb/jlmodplus/settings/SettingsActivity.java)
   reads `_generated_res_locale_config`; unavailable/unreadable metadata leaves
   the system-language option. This requires later runtime hardening.

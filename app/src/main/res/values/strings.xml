@@ -17,7 +17,7 @@
     <string name="action_settings">Settings</string>
     <string name="add_profile_description">Create New Profile</string>
     <string name="add_resolution_preset">Add Resolution Preset</string>
-    <string name="alert_map_menu">Menu key (M) is not assigned!\nThis may make it impossible to access the emulator options.</string>
+    <string name="alert_map_menu">Menu key (M) is not assigned.\nThis may prevent access to emulator options.</string>
     <string name="alert_msg_workdir_not_exists">Working directory was not found at:\n%1$s\nDo you want to create it or choose another one?</string>
     <string name="CANCEL_CMD">Cancel</string>
     <string name="change">Change</string>
@@ -44,7 +44,7 @@
     <string name="FORCE_CLOSE_CONFIRMATION">Stop this MIDlet? Unsaved changes may be lost.</string>
     <string name="help">Help</string>
     <string name="help_message">&#8226; Enabling filtering in some cases can greatly reduce performance. Disable this option if the app is too slow.&lt;BR>&#8226; Immediate processing mode bypasses the normal Java ME event queue. It may improve responsiveness, but can cause unpredictable behavior.</string>
-    <string name="identity_filter">Fast (no filter)</string>
+    <string name="identity_filter">Fast (No Filter)</string>
     <string name="install">Install</string>
     <string name="install_done">Application installed.</string>
     <string name="installer_title">MIDlet Installer</string>
@@ -87,7 +87,7 @@
     <string name="file_picker_folder_exists">An item with this name already exists.</string>
     <string name="file_picker_create_folder_failed">Unable to create the folder.</string>
     <string name="file_picker_selection_unavailable">The selected item is no longer available.</string>
-    <string name="invalid_resolution_not_saved">Invalid resolution; changes were not saved!</string>
+    <string name="invalid_resolution_not_saved">Invalid resolution. Changes were not saved.</string>
     <string name="layout_edit_finish">Finish Editing</string>
     <string name="layout_edit_done">✓ Done</string>
     <string name="layout_edit_save_changes">Save changes to virtual controls?</string>
@@ -95,8 +95,8 @@
     <string name="layout_edit_continue">Continue Editing</string>
     <string name="layout_edit_finished">Virtual controls editing is complete.</string>
     <string name="virtual_controls_save_failed">Virtual controls could not be saved. Try again.</string>
-    <string name="runtime_preset_save_destination">Save To</string>
-    <string name="runtime_preset_apply_destination">Apply To</string>
+    <string name="runtime_preset_save_destination">Save to</string>
+    <string name="runtime_preset_apply_destination">Apply to</string>
     <string name="runtime_preset_this_midlet_only">This MIDlet Only</string>
     <string name="runtime_preset_update_destination">Update %1$s</string>
     <string name="runtime_preset_local_explanation">Only this MIDlet’s virtual controls will change.</string>
@@ -119,7 +119,7 @@
     <string name="mapping_dialog_assigned_inputs">Assigned Inputs</string>
     <string name="mapping_dialog_add_input">You can assign more than one physical input.</string>
     <string name="mapping_dialog_remove">Remove</string>
-    <string name="mapping_dialog_title">Press A Key</string>
+    <string name="mapping_dialog_title">Press a Key</string>
     <string name="message_clear_data">Do you really want to clear app data?</string>
     <string name="message_reset_settings">Reset all configuration settings to their defaults?</string>
     <string name="message_reset_layout">Reset the virtual controls layout to its default?</string>
@@ -129,7 +129,7 @@
     <string name="midlet_vendor"><b>Vendor: </b></string>
     <string name="midlet_version"><b>Version: </b></string>
     <string name="more">More</string>
-    <string name="msg_error_loading_shader">Unsupported shader; using the default shader!</string>
+    <string name="msg_error_loading_shader">Unsupported shader. Using the default shader.</string>
     <string name="msg_immediate_mode_disabled">Immediate mode disabled because event callbacks nested too deeply.</string>
     <string name="msg_mascot_capsule" translatable="false">Mascot Capsule 3D!</string>
     <string name="msg_no_matches">No matches for \"%1$s\"</string>
@@ -138,8 +138,8 @@
     <string name="library_destination_more">More</string>
     <string name="library_search_placeholder">Search apps or developers…</string>
     <string name="library_filter_all">All</string>
-    <string name="library_filter_recently_opened">Recently opened</string>
-    <string name="library_filter_recently_added">Recently added</string>
+    <string name="library_filter_recently_opened">Recently Opened</string>
+    <string name="library_filter_recently_added">Recently Added</string>
     <string name="library_filter_favorites">Favorites</string>
     <string name="library_favorite_coming_soon">Favorites unavailable</string>
     <string name="library_remove_favorite_coming_soon">Remove favorite (coming soon)</string>
@@ -164,14 +164,14 @@
     <string name="library_show_list_description">Show MIDlet Descriptions</string>
     <string name="library_collections_empty_title">No Collections Yet</string>
     <string name="library_collections_empty_message">Collections are unavailable until the library is loaded.</string>
-    <string name="library_expand_description">Expand description</string>
-    <string name="library_collapse_description">Collapse description</string>
+    <string name="library_expand_description">Expand Description</string>
+    <string name="library_collapse_description">Collapse Description</string>
     <string name="msg_press_again_to_close">Press again to close</string>
-    <string name="msg_unsupported_soundbank">Unsupported soundbank; using the default bank!</string>
+    <string name="msg_unsupported_soundbank">Unsupported soundbank. Using the default soundbank.</string>
     <string name="no_data_for_display">No apps to show</string>
     <string name="not_saved_exists">Already exists</string>
     <string name="parallel_screen_redrawing">Parallel Screen Redraw</string>
-    <string name="permission_request_failed">This app requires storage write permission</string>
+    <string name="permission_request_failed">This app requires storage write permission.</string>
     <string name="pref_app_sort_date">Date</string>
     <string name="pref_app_sort_name">Name</string>
     <string name="pref_app_sort_title">App Sort Order</string>
@@ -213,7 +213,7 @@
     <string name="PREF_LAYOUT">Key-Code Layout</string>
     <string name="PREF_LIMIT_FPS">Frame Rate Limit</string>
     <string name="pref_map_keys">Key Mappings</string>
-    <string name="pref_mascot_summary">Show a message when used</string>
+    <string name="pref_mascot_summary">Show a message when used.</string>
     <string name="pref_mascot_title">Detect Mascot Capsule 3D</string>
     <string name="PREF_ORIENTATION">Screen Orientation</string>
     <string name="pref_orientation_auto">Auto</string>
@@ -233,7 +233,7 @@
     <string name="pref_screen_scale_type_fill">Fill Window (Ignore Aspect Ratio)</string>
     <string name="pref_screen_scale_type_fit">Fit to Window</string>
     <string name="pref_screen_scale_type_none">Original Size</string>
-    <string name="pref_screenshot_summary">Disable scaling and filtering for screenshots</string>
+    <string name="pref_screenshot_summary">Disable scaling and filtering for screenshots.</string>
     <string name="pref_screenshot_title">Raw Screenshot</string>
     <string name="PREF_SHADER_FILTER">Screen Shader</string>
     <string name="PREF_SHOW_FPS">Show Performance Overlay</string>
@@ -450,8 +450,8 @@
     <string name="config_custom_resolution">Custom Resolution</string>
     <string name="config_select">Select</string>
     <string name="profile_custom">Custom</string>
-    <string name="pref_theme_auto_battery">Auto, By Battery Saver</string>
-    <string name="pref_theme_auto_time">Auto, By Time of Day</string>
+    <string name="pref_theme_auto_battery">Auto, by Battery Saver</string>
+    <string name="pref_theme_auto_time">Auto, by Time of Day</string>
     <string name="pref_theme_default" translatable="false">light</string>
     <string name="pref_theme_light">Light</string>
     <string name="pref_theme_night">Dark</string>
@@ -465,14 +465,14 @@
     <string name="PREF_VK_ALPHA">Opacity</string>
     <string name="PREF_VK_BACK">Button Color</string>
     <string name="PREF_VK_FEEDBACK">Haptic Feedback</string>
-    <string name="PREF_VK_FORCE_OPACITY">Keep Controls Opaque Outside The MIDlet Screen</string>
-    <string name="PREF_VK_FORE">Label And Symbol Color</string>
+    <string name="PREF_VK_FORCE_OPACITY">Keep Controls Opaque Outside the MIDlet Screen</string>
+    <string name="PREF_VK_FORE">Label and Symbol Color</string>
     <string name="PREF_VK_HIDE_DELAY">Auto-Hide Delay</string>
     <string name="pref_vk_hide_hint">Disabled</string>
     <string name="PREF_VK_OUTLINE">Outline Color</string>
     <string name="pref_vk_save_alert">Replace the existing custom virtual controls layout with the current one?</string>
     <string name="PREF_VK_SEL_BACK">Pressed Button Color</string>
-    <string name="PREF_VK_SEL_FORE">Pressed Label And Symbol Color</string>
+    <string name="PREF_VK_SEL_FORE">Pressed Label and Symbol Color</string>
     <string name="pref_vk_type_arrows">Arrows</string>
     <string name="pref_vk_type_arrows_numbers">Arrows &amp; Numbers</string>
     <string name="pref_vk_type_custom">Custom</string>
@@ -498,7 +498,7 @@
     <string name="screenshot_saved">Screenshot has been saved to</string>
     <string name="search">Search</string>
     <string name="select_dialog_title">Select MIDlet</string>
-    <string name="set_as_default">Set As Default</string>
+    <string name="set_as_default">Set as Default</string>
     <string name="shader_setting" translatable="false">%1$s: %2$s</string>
     <string name="shader_tuning">Shader Tuning</string>
     <string name="SIZE_PRESETS">Font Size Presets</string>
@@ -532,7 +532,7 @@
     <string name="virtual_key_right_soft" translatable="false">R</string>
     <string name="virtual_key_star" translatable="false">*</string>
     <string name="virtual_key_up" translatable="false">↑</string>
-    <string name="warn_install_from_net">The file will be downloaded from the internet</string>
+    <string name="warn_install_from_net">The file will be downloaded from the internet.</string>
     <string name="warning">Warning</string>
     <string name="remove_screen_preset">Remove Resolution Preset</string>
     <string name="removed">Removed %1$s</string>
@@ -540,10 +540,10 @@
     <string name="config_color_picker_hex">Hex Color</string>
     <string name="config_color_picker_hint">Drag the color fields or enter a six-digit RGB value.</string>
     <string name="config_color_picker_invalid">Enter exactly six hexadecimal digits.</string>
-    <string name="config_color_picker_saturation_value">Saturation and brightness</string>
+    <string name="config_color_picker_saturation_value">Saturation and Brightness</string>
     <string name="config_color_picker_hue">Hue</string>
-    <string name="config_decrease_value">Decrease value</string>
-    <string name="config_increase_value">Increase value</string>
+    <string name="config_decrease_value">Decrease Value</string>
+    <string name="config_increase_value">Increase Value</string>
     <string name="midlet_failure_recovery_title">MIDlet Stopped Unexpectedly</string>
     <string name="midlet_failure_recovery_message">The MIDlet stopped unexpectedly. Diagnostic information was saved locally. You can continue using JL-Mod Plus.</string>
     <string name="midlet_failure_recovery_message_named">“%1$s” stopped unexpectedly. Diagnostic information was saved locally. You can continue using JL-Mod Plus.</string>
@@ -577,10 +577,10 @@
     <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nGitHub will ask you to upload this file before submitting the report. The diagnostic bundle will be public with your issue.</string>
     <string name="locate_bundle">Locate Bundle</string>
     <string name="open_github">Open GitHub</string>
-    <string name="crash_report_bundle_failed">Could not prepare the diagnostic bundle</string>
-    <string name="crash_report_locate_failed">No system file picker is available to locate the diagnostic bundle</string>
-    <string name="crash_report_bundle_cleanup_failed">The diagnostic report was deleted, but JL-Mod Plus could not remove its generated bundle</string>
-    <string name="crash_report_github_unavailable">No app is available to open the GitHub issue form</string>
+    <string name="crash_report_bundle_failed">Could not prepare the diagnostic bundle.</string>
+    <string name="crash_report_locate_failed">No system file picker is available to locate the diagnostic bundle.</string>
+    <string name="crash_report_bundle_cleanup_failed">The diagnostic report was deleted, but JL-Mod Plus could not remove its generated bundle.</string>
+    <string name="crash_report_github_unavailable">No app is available to open the GitHub issue form.</string>
     <string name="crash_report_delete_title">Delete Diagnostic Report?</string>
     <string name="crash_report_delete_message">This permanently removes the diagnostic report and any bundle generated for it from this device. Files already uploaded elsewhere are not affected.</string>
     <plurals name="crash_reports_batch_delete_title">
@@ -588,8 +588,8 @@
         <item quantity="other">Delete %1$d Diagnostic Reports?</item>
     </plurals>
     <string name="crash_reports_batch_delete_message">This permanently removes the selected diagnostic reports and any bundles generated for them from this device. Files already uploaded elsewhere are not affected.</string>
-    <string name="crash_report_delete_failed">Could not delete the complete report</string>
-    <string name="crash_report_unavailable">This report is no longer available</string>
+    <string name="crash_report_delete_failed">Could not delete the complete report.</string>
+    <string name="crash_report_unavailable">This report is no longer available.</string>
     <string name="process_exit_recovery_title">Unexpected Process Exit Detected</string>
     <string name="process_exit_recovery_message">JL-Mod Plus previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
     <string name="process_exit_recovery_message_midlet">A MIDlet process previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
@@ -617,12 +617,12 @@
     <string name="library_collection_new">New Collection</string>
     <string name="library_collection_ready_empty_message">Create collections to organize apps without moving their files.</string>
     <string name="library_collection_add_app">Add to Collection</string>
-    <string name="library_collection_add_apps">Add apps</string>
-    <string name="library_collection_manage_apps">Choose apps</string>
+    <string name="library_collection_add_apps">Add Apps</string>
+    <string name="library_collection_manage_apps">Choose Apps</string>
     <string name="library_collection_manage_apps_summary">Check apps to include them in this collection.</string>
-    <string name="library_collection_name">Collection name</string>
+    <string name="library_collection_name">Collection Name</string>
     <string name="library_collection_members_empty">No apps in this collection.</string>
-    <string name="library_collection_select_title">Select a collection</string>
+    <string name="library_collection_select_title">Select a Collection</string>
     <string name="library_collection_select_message">Choose a collection to view its apps.</string>
     <string name="library_collection_remove">Remove from collection</string>
     <string name="library_collection_remove_from_current">Remove from Collection</string>
@@ -644,17 +644,17 @@
     <string name="library_export_chooser_title">Export App Bundle</string>
     <string name="library_export_progress">Exporting… %1$d/%2$d</string>
     <string name="library_transfer_unavailable">Unable to prepare this app for transfer.</string>
-    <string name="library_back">Library back</string>
+    <string name="library_back">Back to Library</string>
     <string name="library_sort">App Sort Order</string>
-    <string name="library_search_clear">Clear search</string>
+    <string name="library_search_clear">Clear Search</string>
     <string name="library_description_more">… More</string>
     <string name="library_description_less">Less</string>
 
     <string name="memory_editor_bubble">Memory Editor bubble</string>
     <string name="memory_editor">Memory Editor</string>
     <string name="memory_editor_search_hint">Value</string>
-    <string name="memory_editor_next_scan">Next scan</string>
-    <string name="memory_editor_new_search">New search</string>
+    <string name="memory_editor_next_scan">Next Scan</string>
+    <string name="memory_editor_new_search">New Search</string>
     <plurals name="memory_editor_results">
         <item quantity="one">%1$d result</item>
         <item quantity="other">%1$d results</item>
@@ -678,25 +678,25 @@
     <string name="memory_editor_search_tab">Search</string>
     <string name="memory_editor_search_known_values">Search Known Values</string>
     <string name="memory_editor_search_unknown_values">Search Unknown Values</string>
-    <string name="memory_editor_add_to_watch">Add selected to Watch</string>
+    <string name="memory_editor_add_to_watch">Add Selected to Watch</string>
     <string name="memory_editor_no_candidates">No managed candidates found</string>
     <string name="memory_editor_edit">Edit</string>
     <string name="memory_editor_edit_batch">Edit %1$d Values</string>
     <string name="memory_editor_edit_batch_help">Applies the replacement value to selected targets compatible with the chosen data type. Watch and Freeze are unavailable for batch edits.</string>
     <string name="memory_editor_edit_batch_no_common_type">The selected results do not support the chosen data type. Edit compatible results separately.</string>
     <string name="memory_editor_save">Apply</string>
-    <string name="memory_editor_replacement">Replacement value</string>
+    <string name="memory_editor_replacement">Replacement Value</string>
     <string name="memory_editor_freeze">Freeze</string>
     <string name="memory_editor_remove">Remove</string>
-    <string name="memory_editor_select_visible">Select visible</string>
+    <string name="memory_editor_select_visible">Select Visible</string>
     <string name="memory_editor_select">Select</string>
-    <string name="memory_editor_clear_selection">Clear selection</string>
+    <string name="memory_editor_clear_selection">Clear Selection</string>
     <plurals name="memory_editor_selected">
         <item quantity="one">%1$d selected</item>
         <item quantity="other">%1$d selected</item>
     </plurals>
     <string name="memory_editor_close">Close Memory Editor</string>
-    <string name="memory_editor_cancel">Cancel operation</string>
+    <string name="memory_editor_cancel">Cancel Operation</string>
     <string name="memory_editor_searching">Searching memory…</string>
     <string name="memory_editor_working">Applying operation…</string>
     <string name="memory_editor_search_progress">Scanned %1$d of %2$d MiB</string>
@@ -705,7 +705,7 @@
     <string name="memory_editor_candidate_ambiguous">Ambiguous — writes paused</string>
     <string name="memory_editor_candidate_lost">Lost — writes paused</string>
     <string name="memory_editor_apply">Apply</string>
-    <string name="memory_editor_max_value">Maximum value</string>
+    <string name="memory_editor_max_value">Maximum Value</string>
     <string name="memory_editor_unfreeze">Unfreeze</string>
     <string name="memory_editor_cancelled">Operation cancelled.</string>
     <string name="memory_editor_resource_limit">Memory Editor reached a safe resource limit. Try a more specific data type or search value.</string>
@@ -721,16 +721,16 @@
     <string name="memory_editor_predicate_increased_by">Increased by</string>
     <string name="memory_editor_predicate_decreased_by">Decreased by</string>
     <string name="memory_editor_predicate_changed_by">Changed by</string>
-    <string name="memory_editor_predicate_increased_range">Increased by range</string>
-    <string name="memory_editor_predicate_decreased_range">Decreased by range</string>
+    <string name="memory_editor_predicate_increased_range">Increased by Range</string>
+    <string name="memory_editor_predicate_decreased_range">Decreased by Range</string>
     <string name="memory_editor_current_value">Current</string>
     <string name="memory_editor_inspector">Inspector</string>
-    <string name="memory_editor_inspect_memory">Inspect nearby memory</string>
+    <string name="memory_editor_inspect_memory">Inspect Nearby Memory</string>
     <string name="memory_editor_inspector_loading">Verifying candidate and reading a bounded snapshot…</string>
     <string name="memory_editor_inspector_empty">Select a result, then inspect nearby memory to view and edit its bounded snapshot.</string>
-    <string name="memory_editor_refresh_snapshot">Refresh snapshot</string>
-    <string name="memory_editor_select_result_value">Select this result</string>
-    <string name="memory_editor_freeze_after_edit">Freeze after applying</string>
+    <string name="memory_editor_refresh_snapshot">Refresh Snapshot</string>
+    <string name="memory_editor_select_result_value">Select This Result</string>
+    <string name="memory_editor_freeze_after_edit">Freeze After Applying</string>
     <string name="memory_editor_freeze_after_edit_help">Uses the replacement value as a lock and automatically adds the candidates to Watch.</string>
 
     <string name="memory_editor_expression_single_hint">Enter one value, or use ; to search group values together.</string>
@@ -742,8 +742,8 @@
     <string name="memory_editor_peek_underlay_active">Showing the MIDlet below</string>
 
     <plurals name="file_picker_selected_count">
-        <item quantity="one">%1$d Selected</item>
-        <item quantity="other">%1$d Selected</item>
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
     </plurals>
     <plurals name="library_selection_count">
         <item quantity="one">%1$d app</item>
@@ -834,7 +834,7 @@
     <string name="bulk_install_result_failed">Failed</string>
     <string name="bulk_install_installed_version">Installed: %1$s</string>
     <string name="bulk_install_source">Source: %1$s</string>
-    <string name="bulk_install_action_separate_copy">Install As Separate Copy</string>
+    <string name="bulk_install_action_separate_copy">Install as Separate Copy</string>
     <string name="bulk_install_action_jar_only">Install JAR Only</string>
     <string name="bulk_install_status_new">New</string>
     <string name="bulk_install_status_update">Update</string>
@@ -876,9 +876,9 @@
     <string name="config_message_reset_profile_settings">Reset this profile’s settings and virtual controls to their defaults? You can still edit or cancel before saving.</string>
     <string name="config_message_delete_app_data">Permanently delete all saves and data created by this MIDlet? MIDlet settings will not be deleted.</string>
     <string name="config_lock_custom_resolution_ratio">Keep Width/Height Ratio While Editing</string>
-    <string name="config_swap_screen_size">Swap Width And Height</string>
+    <string name="config_swap_screen_size">Swap Width and Height</string>
     <string name="profile_builtin_settings">JL-Mod Defaults</string>
-    <string name="profile_default_badge_short">Default For New MIDlets</string>
+    <string name="profile_default_badge_short">Default for New MIDlets</string>
     <string name="profile_template_summary">Saved MIDlet settings.</string>
     <string name="profile_name_label">Profile Name</string>
     <string name="profile_name_exists">A profile with this name already exists.</string>
@@ -965,7 +965,7 @@
     <string name="preset_builtin_summary">Built-in MIDlet settings and virtual controls.</string>
     <string name="preset_picker_title">Use Profile</string>
     <string name="preset_manage">Manage Profiles</string>
-    <string name="profile_more_actions">More Actions For %1$s</string>
+    <string name="profile_more_actions">More Actions for %1$s</string>
     <string name="profile_create_summary">Save a reusable setup for other MIDlets.</string>
     <string name="preset_application_settings">MIDlet Configuration</string>
     <string name="preset_includes_keyboard_layout">Virtual controls layout included.</string>
@@ -989,27 +989,27 @@
     <string name="preset_discard_changes">Discard</string>
     <string name="preset_name_exists">A profile with this name already exists.</string>
     <string name="preset_invalid_name">Enter a valid profile name.</string>
-    <string name="preset_manager_default_section">Default For New MIDlets</string>
+    <string name="preset_manager_default_section">Default for New MIDlets</string>
     <string name="preset_manager_presets_section">My Profiles</string>
     <string name="preset_manager_keyboard_section">Saved Virtual Controls Layouts</string>
     <string name="saved_keyboard_layout_summary">Saved layout for virtual controls.</string>
     <string name="preset_manager_empty_summary">No saved profiles yet. Save a profile from a MIDlet’s settings.</string>
     <string name="preset_default_policy_summary">Applied when a new MIDlet is installed.</string>
     <string name="preset_keyboard_layout_unavailable">Virtual controls layout is unavailable.</string>
-    <string name="set_as_default_new_applications">Default For New MIDlets</string>
+    <string name="set_as_default_new_applications">Default for New MIDlets</string>
     <string name="edit_preset">Edit Profile</string>
     <string name="preset_edit_title">Edit Profile: %1$s</string>
     <string name="preset_unavailable_section">Unavailable</string>
     <string name="preset_unavailable_summary">This profile could not be loaded. Rename or delete it.</string>
     <string name="preset_change_default">Change</string>
-    <string name="preset_default_picker_title">Default For New MIDlets</string>
+    <string name="preset_default_picker_title">Default for New MIDlets</string>
     <string name="profile_follows_updates">Follows future profile updates.</string>
-    <string name="profile_apply_whole">Entire profile</string>
+    <string name="profile_apply_whole">Entire Profile</string>
     <string name="profile_apply_whole_follows">Replace settings and layout; follow future updates.</string>
     <string name="profile_apply_whole_without_layout">Replace settings, remove the local layout, and follow updates.</string>
-    <string name="profile_apply_settings_only">MIDlet settings only</string>
+    <string name="profile_apply_settings_only">MIDlet Settings Only</string>
     <string name="profile_apply_settings_keeps_layout">Keep this MIDlet’s layout; use a custom configuration.</string>
-    <string name="profile_apply_layout_only">Virtual controls layout only</string>
+    <string name="profile_apply_layout_only">Virtual Controls Layout Only</string>
     <string name="profile_apply_layout_keeps_settings">Keep this MIDlet’s settings; use a custom configuration.</string>
 
     <string name="config_analog_stick">Analog Stick</string>
@@ -1031,12 +1031,12 @@
 
     <string name="library_indexing_progress">Indexing library… %1$d/%2$d</string>
     <string name="library_indexing_current">Scanning %1$s</string>
-    <string name="library_load_error_title">Library unavailable</string>
+    <string name="library_load_error_title">Library Unavailable</string>
     <string name="library_retry">Retry</string>
     <string name="library_reinstall_source_missing">The retained JAR is unavailable for reinstall.</string>
     <string name="library_action_select">Select</string>
-    <string name="library_selection_select_all">Select all</string>
-    <string name="library_selection_unselect_all">Unselect all</string>
+    <string name="library_selection_select_all">Select All</string>
+    <string name="library_selection_unselect_all">Unselect All</string>
 
     <string name="perf_overlay_title">Performance Overlay</string>
     <string name="perf_overlay_help">Shows selected runtime measurements.</string>
@@ -1096,7 +1096,7 @@
     <string name="settings_section_storage">Storage</string>
     <string name="settings_section_profiles">Profiles</string>
     <string name="settings_profiles_summary">Manage profiles you can reuse across MIDlets.</string>
-    <string name="pref_use_display_cutout_title">Use Display Cutout In MIDlet</string>
+    <string name="pref_use_display_cutout_title">Use Display Cutout in MIDlet</string>
     <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the runtime toolbar to use the display-cutout area. It cannot be used with the system status bar.</string>
     <string name="dialog_scroll_hint">Swipe to continue</string>
     <string name="pref_accent_title">Accent Color</string>
@@ -1129,7 +1129,7 @@
     <string name="library_action_licenses_summary">Third-party notices and license terms included with the app.</string>
     <string name="library_action_help_summary">Usage guidance and common controls.</string>
     <string name="library_bulk_delete_apps">Delete</string>
-    <string name="library_bulk_add_collection">Add To Collection</string>
+    <string name="library_bulk_add_collection">Add to Collection</string>
     <string name="library_bulk_share_apps">Share Apps</string>
     <string name="library_bulk_reinstall_apps">Reinstall</string>
     <string name="library_bulk_export_apps">Export Bundle</string>
