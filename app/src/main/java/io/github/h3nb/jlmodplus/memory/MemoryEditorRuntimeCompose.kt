@@ -1740,7 +1740,7 @@ private fun RuntimeInspectorTab(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            stringResource(R.string.memory_editor_inspector_empty),
+                            stringResource(R.string.memory_editor_inspector_no_rows),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }

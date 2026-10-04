@@ -37,6 +37,9 @@
     <string name="enter_new_name">Enter new name</string>
     <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
     <string name="err_missing_app">Application not found.\nCheck whether the storage device %1$sis available, or recreate the shortcut.</string>
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">Application not found.\nCheck whether the storage device “%1$s” is available, or recreate the shortcut.</string>
+    <string name="config_missing_app_storage_generic">Application not found.\nCheck whether the storage device is available, or recreate the shortcut.</string>
     <string name="error">Error</string>
     <string name="runtime_replacement_failed">The running MIDlet could not be stopped. Try opening the new MIDlet again.</string>
     <string name="error_name">Enter a name.</string>
@@ -213,7 +216,7 @@
     <string name="PREF_LAYOUT">Key-Code Layout</string>
     <string name="PREF_LIMIT_FPS">Frame Rate Limit</string>
     <string name="pref_map_keys">Key Mappings</string>
-    <string name="pref_mascot_summary">Show a message when used.</string>
+    <string name="pref_mascot_summary">Show a message when Mascot Capsule 3D is used.</string>
     <string name="pref_mascot_title">Detect Mascot Capsule 3D</string>
     <string name="PREF_ORIENTATION">Screen Orientation</string>
     <string name="pref_orientation_auto">Auto</string>
@@ -445,7 +448,7 @@
     <string name="config_gamepad_diagnosis_samples_not_sent">Input samples are intentionally not sent to the MIDlet.</string>
     <string name="config_destination_system">System</string>
     <string name="config_screen_size">Screen Size</string>
-    <string name="config_select_screen_size">Select screen size</string>
+    <string name="config_select_screen_size">Select Screen Size</string>
     <string name="config_current_screen_size">Current size: %1$s</string>
     <string name="config_custom_resolution">Custom Resolution</string>
     <string name="config_select">Select</string>
@@ -480,7 +483,7 @@
     <string name="pref_vk_type_numbers_arrows">Numbers &amp; Arrows</string>
     <string name="pref_vk_type_phone">Phone Keypad</string>
     <string name="pref_vk_type_phone_arrows">Phone Keypad (Arrows)</string>
-    <string name="pref_wakelock_title">Keep Screen on</string>
+    <string name="pref_wakelock_title">Keep Screen On</string>
     <string name="fps_overlay_label">FPS</string>
     <string name="PREF_WIDTH">Width</string>
     <string name="profiles">Profiles</string>
@@ -645,12 +648,12 @@
     <string name="library_export_progress">Exporting… %1$d/%2$d</string>
     <string name="library_transfer_unavailable">Unable to prepare this app for transfer.</string>
     <string name="library_back">Back to Library</string>
-    <string name="library_sort">App Sort Order</string>
+    <string name="library_sort">Sort Apps</string>
     <string name="library_search_clear">Clear Search</string>
     <string name="library_description_more">… More</string>
     <string name="library_description_less">Less</string>
 
-    <string name="memory_editor_bubble">Memory Editor bubble</string>
+    <string name="memory_editor_bubble">Memory Editor floating button</string>
     <string name="memory_editor">Memory Editor</string>
     <string name="memory_editor_search_hint">Value</string>
     <string name="memory_editor_next_scan">Next Scan</string>
@@ -679,7 +682,7 @@
     <string name="memory_editor_search_known_values">Search Known Values</string>
     <string name="memory_editor_search_unknown_values">Search Unknown Values</string>
     <string name="memory_editor_add_to_watch">Add Selected to Watch</string>
-    <string name="memory_editor_no_candidates">No managed candidates found</string>
+    <string name="memory_editor_no_candidates">No searchable values found</string>
     <string name="memory_editor_edit">Edit</string>
     <string name="memory_editor_edit_batch">Edit %1$d Values</string>
     <string name="memory_editor_edit_batch_help">Applies the replacement value to selected targets compatible with the chosen data type. Watch and Freeze are unavailable for batch edits.</string>
@@ -710,7 +713,7 @@
     <string name="memory_editor_cancelled">Operation cancelled.</string>
     <string name="memory_editor_resource_limit">Memory Editor reached a safe resource limit. Try a more specific data type or search value.</string>
     <string name="memory_editor_identity_unsafe">The selected value or search state could not be verified. Refresh the results or reopen Inspector, then try again.</string>
-    <string name="memory_editor_safety_limit">Too many candidates were selected for this guarded operation.</string>
+    <string name="memory_editor_safety_limit">Too many values are selected for this operation. Select fewer and try again.</string>
     <string name="memory_editor_invalid_request">The value or operation is invalid.</string>
     <string name="memory_editor_freeze_paused">Paused for safety</string>
     <string name="memory_editor_predicate_between">Between</string>
@@ -726,8 +729,9 @@
     <string name="memory_editor_current_value">Current</string>
     <string name="memory_editor_inspector">Inspector</string>
     <string name="memory_editor_inspect_memory">Inspect Nearby Memory</string>
-    <string name="memory_editor_inspector_loading">Verifying candidate and reading a bounded snapshot…</string>
-    <string name="memory_editor_inspector_empty">Select a result, then inspect nearby memory to view and edit its bounded snapshot.</string>
+    <string name="memory_editor_inspector_loading">Verifying the result and reading nearby memory…</string>
+    <string name="memory_editor_inspector_empty">Select a result to inspect nearby memory.</string>
+    <string name="memory_editor_inspector_no_rows">No nearby memory is available to inspect.</string>
     <string name="memory_editor_refresh_snapshot">Refresh Snapshot</string>
     <string name="memory_editor_select_result_value">Select This Result</string>
     <string name="memory_editor_freeze_after_edit">Freeze After Applying</string>

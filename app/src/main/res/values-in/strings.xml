@@ -34,6 +34,8 @@
     <string name="enter_name">Masukkan nama</string>
     <string name="enter_new_name">Masukkan nama baru</string>
     <string name="err_missing_app">Aplikasi tidak ditemukan.\nPeriksa apakah penyimpanan %1$stersedia, atau buat ulang pintasan.</string>
+    <string name="config_missing_app_storage_named">Aplikasi tidak ditemukan.\nPeriksa apakah perangkat penyimpanan “%1$s” tersedia, atau buat ulang pintasan.</string>
+    <string name="config_missing_app_storage_generic">Aplikasi tidak ditemukan.\nPeriksa apakah perangkat penyimpanan tersedia, atau buat ulang pintasan.</string>
     <string name="error">Galat</string>
     <string name="error_name">Masukkan nama.</string>
     <string name="exit">Keluar</string>
@@ -171,7 +173,7 @@
     <string name="PREF_LAYOUT">Tata Letak Kode Tombol</string>
     <string name="PREF_LIMIT_FPS">Batas Frame Rate</string>
     <string name="pref_map_keys">Pemetaan Tombol</string>
-    <string name="pref_mascot_summary">Tampilkan pesan saat digunakan</string>
+    <string name="pref_mascot_summary">Tampilkan pesan saat Mascot Capsule 3D digunakan.</string>
     <string name="pref_mascot_title">Deteksi Mascot Capsule 3D</string>
     <string name="PREF_ORIENTATION">Orientasi Layar</string>
     <string name="pref_orientation_auto">Otomatis</string>
@@ -393,7 +395,7 @@
     <string name="config_gamepad_diagnosis_axis">Sumbu %1$d [%2$s, %3$s] Flat=%4$s Fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(tidak ada pengontrol yang terhubung)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Sampel input sengaja tidak dikirim ke MIDlet.</string>
-    <string name="config_select_screen_size">Pilih ukuran layar</string>
+    <string name="config_select_screen_size">Pilih Ukuran Layar</string>
     <string name="config_current_screen_size">Ukuran saat ini: %1$s</string>
     <string name="config_custom_resolution">Resolusi Kustom</string>
     <string name="config_select">Pilih</string>
@@ -595,13 +597,13 @@
     <string name="library_import_invalid_bundle">Bundle aplikasi yang dipilih tidak valid, rusak, atau tidak didukung. Pilih bundle aplikasi JL-Mod Plus yang valid lalu coba lagi.</string>
     <string name="library_import_restore_existing">Aplikasi ini sudah terpasang. Impor akan mengganti pengaturan dan data simpanan yang terdapat di dalam bundle.</string>
     <string name="library_import_restore_failed">Aplikasi sudah terpasang, tetapi data bundle gagal dipulihkan. Coba pulihkan lagi?</string>
-    <string name="library_play_stats_summary">Jumlah main: %1$d · Total: %2$s</string>
+    <string name="library_play_stats_summary">Dimainkan: %1$d kali · Waktu total: %2$s</string>
     <string name="library_share_chooser_title">Bagikan Aplikasi</string>
     <string name="library_export_chooser_title">Ekspor Bundle Aplikasi</string>
     <string name="library_export_progress">Mengekspor… %1$d/%2$d</string>
     <string name="library_transfer_unavailable">Aplikasi ini tidak dapat disiapkan untuk transfer.</string>
-    <string name="library_back">Kembali</string>
-    <string name="library_sort">Urutkan</string>
+    <string name="library_back">Kembali ke Pustaka</string>
+    <string name="library_sort">Urutkan Aplikasi</string>
     <string name="library_search_clear">Hapus pencarian</string>
     <string name="library_description_more">… Selengkapnya</string>
     <string name="library_description_less">Ringkas</string>
@@ -632,7 +634,7 @@
     <string name="memory_editor_search_known_values">Cari Nilai Yang Diketahui</string>
     <string name="memory_editor_search_unknown_values">Cari Nilai Yang Tidak Diketahui</string>
     <string name="memory_editor_add_to_watch">Tambahkan pilihan ke Pantauan</string>
-    <string name="memory_editor_no_candidates">Kandidat Managed tidak ditemukan</string>
+    <string name="memory_editor_no_candidates">Tidak ada nilai yang dapat dicari</string>
     <string name="memory_editor_edit">Ubah</string>
     <string name="memory_editor_edit_batch">Ubah %1$d Nilai</string>
     <string name="memory_editor_edit_batch_help">Nilai pengganti diterapkan ke target terpilih yang cocok dengan tipe data yang dipilih. Pantauan dan Bekukan tidak tersedia untuk perubahan massal.</string>
@@ -662,7 +664,7 @@
     <string name="memory_editor_cancelled">Operasi dibatalkan.</string>
     <string name="memory_editor_resource_limit">Editor Memori mencapai batas sumber daya aman. Coba tipe data atau nilai pencarian yang lebih spesifik.</string>
     <string name="memory_editor_identity_unsafe">Nilai yang dipilih atau status pencarian tidak dapat diverifikasi. Segarkan hasil atau buka ulang Inspektor, lalu coba lagi.</string>
-    <string name="memory_editor_safety_limit">Terlalu banyak kandidat dipilih untuk operasi aman ini.</string>
+    <string name="memory_editor_safety_limit">Terlalu banyak nilai dipilih untuk operasi ini. Kurangi pilihan lalu coba lagi.</string>
     <string name="memory_editor_invalid_request">Nilai atau operasi tidak valid.</string>
     <string name="memory_editor_freeze_paused">Dijeda demi keamanan</string>
     <string name="memory_editor_predicate_between">Di antara</string>
@@ -678,8 +680,9 @@
     <string name="memory_editor_current_value">Saat ini</string>
     <string name="memory_editor_inspector">Inspektor</string>
     <string name="memory_editor_inspect_memory">Periksa memori sekitar</string>
-    <string name="memory_editor_inspector_loading">Memverifikasi kandidat dan membaca snapshot terbatas…</string>
-    <string name="memory_editor_inspector_empty">Pilih hasil, lalu buka Inspektor untuk melihat dan mengedit snapshot memori terbatas di sekitarnya.</string>
+    <string name="memory_editor_inspector_loading">Memverifikasi hasil dan membaca memori di sekitarnya…</string>
+    <string name="memory_editor_inspector_empty">Pilih hasil untuk memeriksa memori di sekitarnya.</string>
+    <string name="memory_editor_inspector_no_rows">Tidak ada memori di sekitar yang tersedia untuk diperiksa.</string>
     <string name="memory_editor_refresh_snapshot">Segarkan snapshot</string>
     <string name="memory_editor_select_result_value">Pilih hasil ini</string>
     <string name="memory_editor_freeze_after_edit">Bekukan setelah diterapkan</string>
@@ -962,7 +965,7 @@
     <string name="library_metadata_name">Nama</string>
     <string name="library_metadata_vendor">Vendor</string>
     <string name="library_metadata_description">Deskripsi</string>
-    <string name="library_metadata_reset_to_original">Kembalikan ke Asli</string>
+    <string name="library_metadata_reset_to_original">Pulihkan ke Aslinya</string>
     <string name="library_metadata_save">Simpan</string>
 
     <string name="perf_overlay_title">Overlay Performa</string>
@@ -1063,7 +1066,7 @@
     <string name="library_bulk_share_apps">Bagikan Aplikasi</string>
     <string name="library_bulk_reinstall_apps">Instal Ulang</string>
     <string name="library_bulk_export_apps">Ekspor Bundle</string>
-    <string name="library_enhanced_icons_title">Tingkatkan Ikon</string>
+    <string name="library_enhanced_icons_title">Ikon yang Disempurnakan</string>
     <string name="library_enhanced_icons_summary">Perbaiki ikon sumber dengan ukuran dan warna adaptif.</string>
 
     <string name="config_virtual_controls_movement">Kontrol Virtual</string>
@@ -1140,7 +1143,7 @@
     <string name="bulk_install_reason_unsupported_uri_scheme">JAD merujuk ke JAR dengan skema URI yang tidak didukung: %1$s.</string>
     <string name="bulk_install_reason_missing_parent">JAD tidak memiliki direktori induk.</string>
     <string name="bulk_install_reason_jar_not_found">JAR yang dirujuk oleh JAD tidak ditemukan: %1$s.</string>
-    <string name="bulk_install_reason_duplicate_source">Sumber ini duplikat sumber lain dalam pemasangan massal ini.</string>
+    <string name="bulk_install_reason_duplicate_source">Sumber ini merupakan duplikat dari sumber lain dalam pemasangan massal ini.</string>
     <string name="bulk_install_reason_version_conflict">Beberapa varian aplikasi dianggap memiliki versi yang sama.</string>
     <string name="bulk_install_reason_older_candidate">Ada versi aplikasi yang lebih baru dalam pemasangan massal ini.</string>
     <string name="bulk_install_reason_source_error">Sumber ini tidak dapat disiapkan untuk instalasi.</string>
