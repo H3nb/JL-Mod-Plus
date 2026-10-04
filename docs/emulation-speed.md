@@ -31,12 +31,14 @@ The compatibility frame ceiling scales with the selected multiplier. Host
 presentation and UI scheduling use host time. Media playback retains its own
 timebase and is not accelerated by this control.
 
-Canvas owns frame metrics for each attached surface when FPS diagnostics are
-enabled. Metrics are installed before opening the presentation mailbox, under
-the publication buffer lock, so each accepted publication belongs to the new
-surface's diagnostics. Metrics restart together with the mailbox sequence and
-are released on surface teardown. The overlay reads the selected speed from
-the Canvas's timing session and never changes it.
+Canvas owns per-surface frame metrics only when the selected Performance Overlay
+metrics need frame-traffic counters (FPS, RFPS, or COAL). The presentation
+mailbox owns the canonical publication sequence. Optional frame metrics and
+host-time publication diagnostics are installed before opening that mailbox,
+under the publication buffer lock, so each accepted publication belongs to the
+new surface's diagnostic owners. They are released with the surface. The
+overlay reads manual speed from the Canvas's timing session and never changes
+it.
 
 Publication FPS, renderer consumption FPS, and coalesced frames describe buffer
 traffic. They do not measure simulation steps or prove that gameplay achieves

@@ -81,12 +81,38 @@ public class PerformanceOverlaySettingsTest {
 	}
 
 	@Test
+	public void frameMetricsAreRequiredOnlyForFrameTrafficSelections() {
+		assertFalse(PerformanceOverlayOptions.requiresFrameMetrics(0));
+		assertFalse(PerformanceOverlayOptions.requiresFrameMetrics(
+				PerformanceOverlayOptions.CAP
+						| PerformanceOverlayOptions.SPEED
+						| PerformanceOverlayOptions.CPU
+						| PerformanceOverlayOptions.RAM
+						| PerformanceOverlayOptions.FRAME_INTERVAL
+						| PerformanceOverlayOptions.P95_INTERVAL
+						| PerformanceOverlayOptions.MAX_INTERVAL
+						| PerformanceOverlayOptions.PAINT
+						| PerformanceOverlayOptions.COPY
+						| PerformanceOverlayOptions.SUBMIT
+						| PerformanceOverlayOptions.INPUT_QUEUE
+						| PerformanceOverlayOptions.FRAME_QUEUE));
+		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
+				PerformanceOverlayOptions.FPS));
+		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
+				PerformanceOverlayOptions.RENDER_FPS));
+		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
+				PerformanceOverlayOptions.COALESCED));
+	}
+
+	@Test
 	public void rendererMetricsAreRequiredOnlyForRenderConsumptionSelections() {
 		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(0));
 		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(
 				PerformanceOverlayOptions.FPS
 						| PerformanceOverlayOptions.CPU
-						| PerformanceOverlayOptions.RAM));
+						| PerformanceOverlayOptions.RAM
+						| PerformanceOverlayOptions.SUBMIT
+						| PerformanceOverlayOptions.FRAME_QUEUE));
 		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
 				PerformanceOverlayOptions.RENDER_FPS));
 		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(

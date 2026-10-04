@@ -55,13 +55,16 @@ public class PerformanceOverlayTextTest {
 	}
 
 	@Test
-	public void availableSpeedFormatsManualAndAutoMultipliers() {
+	public void availableSpeedFormatsManualMultipliers() {
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
 		v.speedPercent = 50;
 		assertEquals("SPD 0.50x", PerformanceOverlayText.format(SPEED, v)[0][0]);
+		v.speedPercent = 100;
+		assertEquals("SPD 1.00x", PerformanceOverlayText.format(SPEED, v)[0][0]);
 		v.speedPercent = 125;
-		v.autoSpeed = true;
-		assertEquals("SPD AUTO 1.25x", PerformanceOverlayText.format(SPEED, v)[0][0]);
+		assertEquals("SPD 1.25x", PerformanceOverlayText.format(SPEED, v)[0][0]);
+		v.speedPercent = 1600;
+		assertEquals("SPD 16.00x", PerformanceOverlayText.format(SPEED, v)[0][0]);
 	}
 
 	@Test
@@ -93,10 +96,9 @@ public class PerformanceOverlayTextTest {
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
 		v.interval = 33.3;
 		v.speedPercent = 100;
-		v.autoSpeed = true;
 		String text = Arrays.deepToString(PerformanceOverlayText.format(ALL, v));
 		assertTrue(text.contains("FI 33.3 ms"));
-		assertTrue(text.contains("SPD AUTO 1.00x"));
+		assertTrue(text.contains("SPD 1.00x"));
 		assertTrue(text.contains("THRM —"));
 		assertFalse(text.contains("DROP"));
 	}

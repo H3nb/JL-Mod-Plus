@@ -122,15 +122,15 @@ public class FpsCounter extends TimerTask implements Layer {
 		v.displayHz = owner.getPerformanceDisplayHz();
 		PerformanceDiagnostics diagnostics = owner.getPerformanceDiagnostics();
 		if (active && diagnostics != null) {
-			PerformanceDiagnostics.Snapshot timing = diagnostics.snapshot(now);
-			v.interval = timing.intervalMeanMs;
-			v.p95 = timing.intervalP95Ms;
-			v.maximum = timing.intervalMaxMs;
-			v.paint = timing.paintMeanMs;
-			v.copy = timing.copyMeanMs;
-			v.submit = timing.submitMeanMs;
-			v.inputQueue = timing.inputQueueMeanMs;
-			v.frameQueue = timing.frameQueueMeanMs;
+			PerformanceDiagnostics.Snapshot diagnosticSnapshot = diagnostics.snapshot(now);
+			v.interval = diagnosticSnapshot.intervalMeanMs;
+			v.p95 = diagnosticSnapshot.intervalP95Ms;
+			v.maximum = diagnosticSnapshot.intervalMaxMs;
+			v.paint = diagnosticSnapshot.paintMeanMs;
+			v.copy = diagnosticSnapshot.copyMeanMs;
+			v.submit = diagnosticSnapshot.submitMeanMs;
+			v.inputQueue = diagnosticSnapshot.inputQueueMeanMs;
+			v.frameQueue = diagnosticSnapshot.frameQueueMeanMs;
 		}
 		PerformanceResources.Snapshot system = resources.sample(now);
 		v.cpu = active ? system.getCpuPercent() : Double.NaN;

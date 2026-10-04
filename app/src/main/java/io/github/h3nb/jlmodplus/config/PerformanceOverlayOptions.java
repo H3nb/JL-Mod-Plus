@@ -56,6 +56,10 @@ public final class PerformanceOverlayOptions {
 		return metrics & ALL;
 	}
 
+	public static boolean requiresFrameMetrics(int metrics) {
+		return (sanitize(metrics) & (FPS | RENDER_FPS | COALESCED)) != 0;
+	}
+
 	public static boolean requiresRendererMetrics(int metrics) {
 		return (sanitize(metrics) & (RENDER_FPS | COALESCED)) != 0;
 	}

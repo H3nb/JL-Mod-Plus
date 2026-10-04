@@ -27,22 +27,23 @@ is clipped to the safe viewport; reduce the selection or choose another position
 ## Measurement definitions
 
 All rates and durations use host monotonic time, independent of the guest clock
-multiplier. Speed is the applied setting, not achieved original-device speed.
-There is no universal original-device FPS target for Java ME applications.
+multiplier. Speed is the manual `TimingSession` setting, not achieved
+original-device speed. There is no universal original-device FPS target for
+Java ME applications.
 
 | Label | Measurement |
 | --- | --- |
 | FPS | Complete guest buffer publications per real second, including visually unchanged buffers. |
-| CAP | Effective host pacing target after the speed multiplier used by the pacer. It remains independently reportable when SPD is unavailable; an untransformed or incompatible MIDlet uses the normal 100% timing baseline. It is not the game's native target or a guaranteed ceiling for non-blocking callback paths. FPS and CAP combine as `FPS actual/cap`; an unrestricted target is `∞`. |
-| RFPS | New guest sequences consumed by the host renderer per real second; repeated draws of one sequence are excluded. Not physical display presentation. |
-| SPD | Authoritative applied emulation-speed multiplier, with `AUTO` when selected by the governor. If the compatible timing transform/controller is unavailable, SPD is `—` rather than assuming `1.00x`. |
+| CAP | Effective host pacing target after applying the same active `TimingSession` multiplier used by `FramePacer`. It remains independently reportable for an incompatible timing transform because host pacing still has its normal timing baseline. If the timing session has closed, CAP is unavailable. It is not the game's native target or a guaranteed ceiling for non-blocking callback paths. FPS and CAP combine as `FPS actual/cap`; an unrestricted target is `∞`. |
+| RFPS | New guest mailbox sequences consumed by the host renderer per real second; repeated draws of one sequence are excluded. Not physical display presentation. |
+| SPD | Authoritative manual emulation-speed multiplier from a compatible timing transform. An incompatible transform or closed timing session is `—`, never an assumed `1.00x`. |
 | FI / P95 / MAX | Mean, nearest-rank 95th percentile, and maximum gaps between complete guest publications. Not render work or input latency. |
 | PAINT | Mean elapsed time in the guest paint callback; absent for games using only flush APIs. |
 | COPY | Mean elapsed time in buffer copy operations. |
 | SUB | Mean elapsed host renderer submission duration for a newly consumed sequence. Includes host work and waits; not CPU utilization, GPU completion, or display presentation. |
 | INQ | Mean time from input event queue entry to guest callback dispatch. Not physical-touch-to-display latency. |
 | FRQ | Mean time from publication to renderer acquisition of that buffer under the buffer lock, before drawing/uploading it. |
-| COAL | Published sequences replaced before rendering, recorded per real second at consumption; not a percentage or configured frameskip. |
+| COAL | Published mailbox sequences replaced before rendering, recorded per real second at consumption; not a percentage or configured frameskip. |
 | CPU | Process CPU time divided by host elapsed time: 100% equals one occupied core; multiple threads may exceed 100%. Does not indicate CPU frequency or total device utilization. |
 | RAM | Runtime process proportional set size (PSS), in MiB. Not all JL-Mod processes or just the guest's allocations. |
 | JAVA / NATIVE | Used Java heap / allocated native heap in MiB; not additive components of PSS. |
@@ -56,9 +57,15 @@ second. Timing statistics retain up to the newest 4096 samples within five real
 seconds; sufficiently high event rates shorten this bounded window. CPU samples
 update every second; PSS, heap, hardware temperature, and thermal samples update
 every five seconds. Battery temperature follows Android battery broadcasts.
-Only selected optional diagnostics are collected. Publication counts remain
-available when needed by overlay FPS or Auto Speed. Renderer-consumption ownership
-and accounting are enabled only when RFPS or COAL is selected.
+
+Optional work is proportional to the selected metrics. `FrameMetrics` exists only
+when FPS, RFPS, or COAL needs frame-traffic counters. Renderer frame accounting is
+enabled only for RFPS or COAL. Host renderer timing remains independent: selecting
+SUB or FRQ still records `PerformanceDiagnostics` renderer timing without creating
+or invoking `FrameMetrics`. Timing rings are allocated only for selected timing
+metrics, and process/device resource work follows the selected resource metrics.
+When `ShowFps` is true with an explicit zero metric mask, no overlay layer, timer,
+resource sampler, `FrameMetrics`, or `PerformanceDiagnostics` is created.
 
 The temperature fallback discovers `/sys/class/thermal/thermal_zone*/type` once
 per sampler and reads selected sensors' `temp` files on the five-second worker
@@ -77,16 +84,34 @@ game unhealthy merely because its FPS is below the display's Hz or CAP.
 
 ## Lifecycle and sequence ownership
 
-Visibility and surface boundaries reset timing windows and sampler baselines.
+`TimingSession` is the only emulation-speed authority. It owns the manual
+multiplier, guest clock mapping, and timing revision; `FramePacer` reads that same
+session. The overlay never owns or changes speed.
+
+For each Canvas surface lifecycle, `PresentationMailbox` is the only publication
+sequence authority. A successful complete publication returns mailbox sequence N;
+Canvas stores that same N, optional `FrameMetrics` counts the publication, and
+selected `PerformanceDiagnostics` records its host timestamp. Renderers consume
+that same N. `FrameMetrics` does not create a second sequence and never persists
+across replacement surfaces.
+
+All publication-owned diagnostics are constructed and installed under the existing
+publication buffer lock before `PresentationMailbox.begin()` opens the new
+surface lifecycle. Surface teardown first makes presentation effectively unusable,
+closes the mailbox, stops rendering and the overlay sampler, then detaches the
+per-surface diagnostic owners and clears publication state. A stale renderer may
+finish against its old object, but that object is no longer sampled or owned by a
+replacement surface.
+
+Visibility boundaries reset sampler windows and `PerformanceDiagnostics` active
+state. When RFPS or COAL is selected, effective-visible activation serializes
+`FrameMetrics.abandonPendingFrames(currentMailboxSequence)` with renderer
+`recordRender(sequence)`. Publications pending before activation are therefore
+absorbed into the boundary rather than appearing as new-window RFPS/COAL. A stale
+renderer callback either finishes before the boundary and is covered by the new
+sampling baseline, or executes afterward and is rejected because its sequence is
+not newer. No extra epoch or publication counter is required.
+
 Queued input carries its source generation so old events cannot enter a resumed
 window. Publication timestamps and sequences are captured together under the
 buffer lock. Repeated or stale render callbacks cannot contribute new samples.
-
-Mailbox sequences restart with a new presentation surface. Frame counter
-sequences belong to the counter owner and continue independently. When RFPS or
-COAL is selected, renderer paths capture that owner and its sequence with the
-selected buffer. Activation then abandons previously pending sequences under the
-same serialized FrameMetrics boundary without resetting lifetime totals, so an
-old in-flight render cannot inflate the new visible window's COAL or RFPS. When
-renderer-consumption metrics are disabled, no renderer ownership is carried and
-no abandonment is performed solely for those metrics.

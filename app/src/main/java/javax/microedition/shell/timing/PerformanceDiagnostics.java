@@ -18,8 +18,9 @@ import java.util.Arrays;
 import io.github.h3nb.jlmodplus.config.PerformanceOverlayOptions;
 
 /**
- * Optional host-time diagnostics for one Canvas. Hot paths only write primitive samples into
- * bounded, preallocated rings. A snapshot covers the most recent five seconds (up to 4096 samples
+ * Optional host-time diagnostics for one Canvas surface lifecycle and active visibility window.
+ * Hot paths only write primitive samples into bounded, preallocated rings. A snapshot covers the
+ * most recent five seconds (up to 4096 samples
  * per metric); unavailable or disabled metrics are NaN. No guest clock or pacing state is changed.
  */
 public final class PerformanceDiagnostics {
