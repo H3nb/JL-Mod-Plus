@@ -84,7 +84,6 @@ public final class AmbientColorSampler {
         }
         gridSource.set(0, 0, width, height);
         gridCanvas.drawBitmap(bitmap, gridSource, gridDestination, gridPaint);
-        gridBitmap.getPixels(gridPixels, 0, GRID_SIZE, 0, 0, GRID_SIZE, GRID_SIZE);
         return true;
     }
 
@@ -147,12 +146,15 @@ public final class AmbientColorSampler {
         }
     }
 
-    /** Tones the captured full-frame palette into linear RGB for later filtering. */
+    /** Reads the private low-resolution copy and tones it into linear RGB. */
     public void toneCapturedGrid(int baseArgb, float[] outGridLinear) {
-        if (outGridLinear == null
-                || outGridLinear.length < GRID_COLOR_COUNT * AmbientColorField.CHANNEL_COUNT) {
+        if (gridBitmap == null || gridBitmap.isRecycled() || outGridLinear == null
+                || outGridLinear.length < AmbientColorField.GRID_CHANNEL_COUNT) {
             return;
         }
+        // The active guest bitmap is no longer referenced here, so this readback can happen after
+        // its buffer lock has been released.
+        gridBitmap.getPixels(gridPixels, 0, GRID_SIZE, 0, 0, GRID_SIZE, GRID_SIZE);
         float baseR = SRGB_TO_LINEAR[(baseArgb >>> 16) & 0xFF];
         float baseG = SRGB_TO_LINEAR[(baseArgb >>> 8) & 0xFF];
         float baseB = SRGB_TO_LINEAR[baseArgb & 0xFF];
