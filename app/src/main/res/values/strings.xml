@@ -958,7 +958,7 @@
 
     <string name="presets">Profiles</string>
     <string name="preset_use">Use Profile</string>
-    <string name="preset_save_as">Save As Profile</string>
+    <string name="preset_save_as">Save as Profile</string>
     <string name="preset_custom_configuration">Custom Configuration</string>
     <string name="preset_based_on_modified">This MIDlet’s current configuration differs from %1$s.</string>
     <string name="preset_builtin">JL-Mod Defaults</string>
