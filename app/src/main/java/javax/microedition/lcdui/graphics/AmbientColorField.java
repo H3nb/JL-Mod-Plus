@@ -14,16 +14,23 @@ public final class AmbientColorField {
     public static final int GRID_SIZE = 24;
     public static final int GRID_COLOR_COUNT = GRID_SIZE * GRID_SIZE;
     public static final int GRID_CHANNEL_COUNT = GRID_COLOR_COUNT * CHANNEL_COUNT;
+    private static final int BROAD_GRID_SIZE = 6;
+    private static final int BROAD_GRID_CHANNEL_COUNT =
+            BROAD_GRID_SIZE * BROAD_GRID_SIZE * CHANNEL_COUNT;
     /** Matches the host presentation cadence so animated midlets feel live. */
     public static final long SAMPLE_INTERVAL_NS = 33_333_333L;
     public static final long MAX_TRANSITION_NS = 1_000_000_000L;
     public static final long TAU_NS = 140_000_000L;
     private static final float INSET = 0.03f;
     private static final float RADIUS_SQUARED = 0.20f * 0.20f;
-    /** Physical distance, in normalized surface-height units, over which edge color bleeds. */
+    /** Legacy anchor-path falloff retained until that compatibility path can be removed safely. */
     private static final float EDGE_FALLOFF = 0.30f;
-    /** At the surface edge, most sampled light has faded back toward the host theme. */
-    private static final float OUTER_BASE_BLEND = 0.65f;
+    /** Bounded halo radius relative to the shorter physical guest-screen dimension. */
+    private static final float HALO_RADIUS_SCALE = 0.30f;
+    /** Keeps the guest image dominant while avoiding a hard colored seam at its boundary. */
+    private static final float MAX_GLOW_MIX = 0.72f;
+    private static final float EDGE_INSET = 0.025f;
+    private static final float DIFFUSION_INSET = 0.10f;
     private static final float LINEAR_EPSILON = 1.0f / 4096.0f;
     /** Five-tap blur softens neighboring samples without erasing the higher-resolution field. */
     private static final float[] BLUR_KERNEL = {0.0625f, 0.25f, 0.375f, 0.25f, 0.0625f};
@@ -44,11 +51,13 @@ public final class AmbientColorField {
     private final float[] evaluationGrid = new float[GRID_CHANNEL_COUNT];
     private final float[] blurredGridHorizontal = new float[GRID_CHANNEL_COUNT];
     private final float[] blurredGrid = new float[GRID_CHANNEL_COUNT];
+    private final float[] evaluationBroadGrid = new float[BROAD_GRID_CHANNEL_COUNT];
     private final float[] evaluationInner = new float[CHANNEL_COUNT];
     private float[] nodeX = new float[0];
     private float[] nodeY = new float[0];
     private float[] weights = new float[0];
     private float[] fade = new float[0];
+    private float[] glow = new float[0];
     private int nodeCount;
     private float gameLeft;
     private float gameTop;
@@ -233,6 +242,7 @@ public final class AmbientColorField {
             nodeY = new float[0];
             weights = new float[0];
             fade = new float[0];
+            glow = new float[0];
             return;
         }
         nodeCount = Math.min(requestedCount, Math.min(normalizedX.length, normalizedY.length));
@@ -240,6 +250,7 @@ public final class AmbientColorField {
         nodeY = new float[nodeCount];
         weights = new float[nodeCount * ANCHOR_COUNT];
         fade = new float[nodeCount];
+        glow = new float[nodeCount];
         float safeAspect = aspectRatio > 0.0f && Float.isFinite(aspectRatio) ? aspectRatio : 1.0f;
         surfaceAspect = safeAspect;
         float left = clamp01(Math.min(gameLeft, gameRight));
@@ -250,6 +261,10 @@ public final class AmbientColorField {
         this.gameTop = top;
         this.gameRight = right;
         this.gameBottom = bottom;
+        float physicalGameWidth = Math.max((right - left) * safeAspect, 1.0e-6f);
+        float physicalGameHeight = Math.max(bottom - top, 1.0e-6f);
+        float haloRadius = Math.max(
+                Math.min(physicalGameWidth, physicalGameHeight) * HALO_RADIUS_SCALE, 1.0e-6f);
         for (int n = 0; n < nodeCount; n++) {
             float x = clamp01(normalizedX[n]);
             float y = clamp01(normalizedY[n]);
@@ -279,7 +294,15 @@ public final class AmbientColorField {
             float normalizedOutsideX = outsideX / Math.max(gapX, 1.0e-6f);
             float normalizedOutsideY = outsideY / Math.max(gapY, 1.0e-6f);
             float d = clamp01(Math.max(normalizedOutsideX, normalizedOutsideY));
-            fade[n] = d * d * (3.0f - 2.0f * d);
+            fade[n] = smoothStep(d);
+
+            float edgeX = Math.max(this.gameLeft, Math.min(this.gameRight, x));
+            float edgeY = Math.max(this.gameTop, Math.min(this.gameBottom, y));
+            float physicalDx = (x - edgeX) * safeAspect;
+            float physicalDy = y - edgeY;
+            float physicalDistance =
+                    (float) Math.sqrt(physicalDx * physicalDx + physicalDy * physicalDy);
+            glow[n] = 1.0f - smoothStep(clamp01(physicalDistance / haloRadius));
         }
     }
 
@@ -350,14 +373,14 @@ public final class AmbientColorField {
 
     private boolean renderGridNodes(long nowNs, float[] outRgb) {
         boolean active = evaluateGrid(nowNs, evaluationGrid, evaluationBase);
+        buildBroadGrid(evaluationGrid, evaluationBroadGrid);
         for (int n = 0; n < nodeCount; n++) {
-            sampleGridForNode(nodeX[n], nodeY[n], evaluationGrid);
+            sampleGridForNode(nodeX[n], nodeY[n], evaluationGrid, evaluationBroadGrid, glow[n]);
             int output = n * CHANNEL_COUNT;
-            float outside = OUTER_BASE_BLEND * fade[n];
+            float mix = MAX_GLOW_MIX * glow[n];
             for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
-                float value = evaluationEdge[channel];
-                float linear = clamp01(
-                        value + (evaluationBase[channel] - value) * outside);
+                float base = evaluationBase[channel];
+                float linear = clamp01(base + (evaluationEdge[channel] - base) * mix);
                 outRgb[output + channel] = AmbientColorSampler.linearChannelToSrgb(linear);
             }
         }
@@ -366,15 +389,16 @@ public final class AmbientColorField {
 
     private boolean renderGridNodesArgb(long nowNs, int[] outArgb) {
         boolean active = evaluateGrid(nowNs, evaluationGrid, evaluationBase);
+        buildBroadGrid(evaluationGrid, evaluationBroadGrid);
         for (int n = 0; n < nodeCount; n++) {
-            sampleGridForNode(nodeX[n], nodeY[n], evaluationGrid);
-            float outside = OUTER_BASE_BLEND * fade[n];
-            float r = clamp01(evaluationEdge[0]
-                    + (evaluationBase[0] - evaluationEdge[0]) * outside);
-            float g = clamp01(evaluationEdge[1]
-                    + (evaluationBase[1] - evaluationEdge[1]) * outside);
-            float b = clamp01(evaluationEdge[2]
-                    + (evaluationBase[2] - evaluationEdge[2]) * outside);
+            sampleGridForNode(nodeX[n], nodeY[n], evaluationGrid, evaluationBroadGrid, glow[n]);
+            float mix = MAX_GLOW_MIX * glow[n];
+            float r = clamp01(evaluationBase[0]
+                    + (evaluationEdge[0] - evaluationBase[0]) * mix);
+            float g = clamp01(evaluationBase[1]
+                    + (evaluationEdge[1] - evaluationBase[1]) * mix);
+            float b = clamp01(evaluationBase[2]
+                    + (evaluationEdge[2] - evaluationBase[2]) * mix);
             outArgb[n] = 0xFF000000
                     | (AmbientColorSampler.linearChannelToByte(r) << 16)
                     | (AmbientColorSampler.linearChannelToByte(g) << 8)
@@ -481,14 +505,19 @@ public final class AmbientColorField {
         return true;
     }
 
-    /** Samples the source grid at a surface node, spreading interior colors into the blur. */
-    private void sampleGridForNode(float x, float y, float[] grid) {
+    /**
+     * Projects a bounded, diffusive halo from the closest guest edge. Nearby nodes retain local
+     * detail; farther nodes sample a coarse field before the halo fades completely into the theme.
+     */
+    private void sampleGridForNode(float x, float y, float[] fineGrid, float[] broadGrid,
+            float glowStrength) {
         float width = gameRight - gameLeft;
         float height = gameBottom - gameTop;
         if (width <= 0.0f || height <= 0.0f) {
-            sampleGridAt(0.5f, 0.5f, grid, evaluationEdge);
+            sampleGridAt(0.5f, 0.5f, fineGrid, GRID_SIZE, evaluationEdge);
             return;
         }
+
         float relativeX = (x - gameLeft) / width;
         float relativeY = (y - gameTop) / height;
         boolean outside = x < gameLeft || x > gameRight || y < gameTop || y > gameBottom;
@@ -497,40 +526,70 @@ public final class AmbientColorField {
                 || Math.abs(y - gameTop) < 1.0e-5f
                 || Math.abs(y - gameBottom) < 1.0e-5f;
         if (!outside && !boundary) {
-            sampleGridAt(relativeX, relativeY, grid, evaluationEdge);
+            sampleGridAt(relativeX, relativeY, fineGrid, GRID_SIZE, evaluationEdge);
             return;
         }
 
-        float edgeU = clamp01(relativeX);
-        float edgeV = clamp01(relativeY);
-        sampleGridAt(edgeU, edgeV, grid, evaluationEdge);
-        if (!outside) return;
+        float u = clamp01(relativeX);
+        float v = clamp01(relativeY);
+        float diffusion = 1.0f - clamp01(glowStrength);
+        float inward = EDGE_INSET + DIFFUSION_INSET * diffusion;
+        if (x <= gameLeft + 1.0e-5f) {
+            u = inward;
+        } else if (x >= gameRight - 1.0e-5f) {
+            u = 1.0f - inward;
+        }
+        if (y <= gameTop + 1.0e-5f) {
+            v = inward;
+        } else if (y >= gameBottom - 1.0e-5f) {
+            v = 1.0f - inward;
+        }
 
-        float edgeBlend = edgeBlend(x, y);
-        float inward = 0.18f * (1.0f - edgeBlend);
-        float innerU = x < gameLeft ? inward : x > gameRight ? 1.0f - inward : edgeU;
-        float innerV = y < gameTop ? inward : y > gameBottom ? 1.0f - inward : edgeV;
-        sampleGridAt(innerU, innerV, grid, evaluationInner);
-        float spread = 1.0f - edgeBlend;
+        sampleGridAt(u, v, fineGrid, GRID_SIZE, evaluationEdge);
+        sampleGridAt(u, v, broadGrid, BROAD_GRID_SIZE, evaluationInner);
         for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
-            evaluationEdge[channel] += (evaluationInner[channel]
-                    - evaluationEdge[channel]) * spread;
+            evaluationEdge[channel] += (evaluationInner[channel] - evaluationEdge[channel])
+                    * diffusion;
         }
     }
 
-    private static void sampleGridAt(float u, float v, float[] grid, float[] out) {
-        float gridX = clamp01(u) * (GRID_SIZE - 1);
-        float gridY = clamp01(v) * (GRID_SIZE - 1);
+    /** Builds one cheap mip-like field so distant glow widens instead of becoming edge streaks. */
+    private static void buildBroadGrid(float[] source, float[] output) {
+        int block = GRID_SIZE / BROAD_GRID_SIZE;
+        float inverseCount = 1.0f / (block * block);
+        for (int broadY = 0; broadY < BROAD_GRID_SIZE; broadY++) {
+            for (int broadX = 0; broadX < BROAD_GRID_SIZE; broadX++) {
+                int outputOffset = (broadY * BROAD_GRID_SIZE + broadX) * CHANNEL_COUNT;
+                for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
+                    float sum = 0.0f;
+                    int sourceY = broadY * block;
+                    int sourceX = broadX * block;
+                    for (int y = 0; y < block; y++) {
+                        for (int x = 0; x < block; x++) {
+                            int sourceOffset =
+                                    ((sourceY + y) * GRID_SIZE + sourceX + x) * CHANNEL_COUNT;
+                            sum += source[sourceOffset + channel];
+                        }
+                    }
+                    output[outputOffset + channel] = sum * inverseCount;
+                }
+            }
+        }
+    }
+
+    private static void sampleGridAt(float u, float v, float[] grid, int gridSize, float[] out) {
+        float gridX = clamp01(u) * (gridSize - 1);
+        float gridY = clamp01(v) * (gridSize - 1);
         int x0 = (int) gridX;
         int y0 = (int) gridY;
-        int x1 = Math.min(GRID_SIZE - 1, x0 + 1);
-        int y1 = Math.min(GRID_SIZE - 1, y0 + 1);
+        int x1 = Math.min(gridSize - 1, x0 + 1);
+        int y1 = Math.min(gridSize - 1, y0 + 1);
         float xWeight = gridX - x0;
         float yWeight = gridY - y0;
-        int topLeft = (y0 * GRID_SIZE + x0) * CHANNEL_COUNT;
-        int topRight = (y0 * GRID_SIZE + x1) * CHANNEL_COUNT;
-        int bottomLeft = (y1 * GRID_SIZE + x0) * CHANNEL_COUNT;
-        int bottomRight = (y1 * GRID_SIZE + x1) * CHANNEL_COUNT;
+        int topLeft = (y0 * gridSize + x0) * CHANNEL_COUNT;
+        int topRight = (y0 * gridSize + x1) * CHANNEL_COUNT;
+        int bottomLeft = (y1 * gridSize + x0) * CHANNEL_COUNT;
+        int bottomRight = (y1 * gridSize + x1) * CHANNEL_COUNT;
         for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
             float top = grid[topLeft + channel]
                     + (grid[topRight + channel] - grid[topLeft + channel]) * xWeight;
@@ -594,6 +653,11 @@ public final class AmbientColorField {
                         + (anchors[lastOffset + channel] - anchors[middleOffset + channel]) * t;
             }
         }
+    }
+
+    private static float smoothStep(float value) {
+        float t = clamp01(value);
+        return t * t * (3.0f - 2.0f * t);
     }
 
     private static float clamp01(float value) {
