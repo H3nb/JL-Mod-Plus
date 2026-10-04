@@ -205,7 +205,7 @@ public class AmbientColorFieldTest {
 
         float[] output = new float[AmbientColorField.CHANNEL_COUNT];
         field.renderNodes(0L, output);
-        assertTrue(output[0] > output[2]);
+        assertTrue(output[0] > output[2] + 0.10f);
     }
 
     @Test
