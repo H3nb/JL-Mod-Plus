@@ -1613,7 +1613,7 @@ public class MicroActivity extends AppCompatActivity {
 
 			@Override
 			public void onSuccess(@NonNull String s) {
-				toast(getString(R.string.screenshot_saved, s));
+				toast(getString(R.string.screenshot_saved_path, s));
 				MediaScannerConnection.scanFile(MicroActivity.this, new String[]{s}, null, null);
 			}
 

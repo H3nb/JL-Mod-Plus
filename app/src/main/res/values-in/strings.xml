@@ -445,7 +445,7 @@
     <string name="save_log">Simpan Log</string>
     <string name="save_profile">Simpan Profil</string>
     <string name="saved">Tersimpan %1$s</string>
-    <string name="screenshot_saved">Tangkapan layar disimpan di %1$s</string>
+    <string name="screenshot_saved">Tangkapan layar telah disimpan ke</string>
     <string name="search">Cari</string>
     <string name="select_dialog_title">Pilih MIDlet</string>
     <string name="set_as_default">Atur Sebagai Bawaan</string>
@@ -1110,6 +1110,7 @@
     <string name="runtime_replacement_failed">MIDlet yang sedang berjalan tidak dapat dihentikan. Coba buka MIDlet baru lagi.</string>
     <string name="about_version">Versi %1$s</string>
     <string name="screenshot_save_failed">Tangkapan layar tidak dapat disimpan.</string>
+    <string name="screenshot_saved_path">Tangkapan layar disimpan di %1$s</string>
     <string name="log_save_started">Penyimpanan log dimulai.</string>
     <string name="log_save_failed">Penyimpanan log tidak dapat dimulai.</string>
     <string name="runtime_midlet_list_failed">Daftar MIDlet aplikasi ini tidak dapat dibaca.</string>

@@ -495,8 +495,7 @@
     <string name="save_log">Save Log</string>
     <string name="save_profile">Save Profile</string>
     <string name="saved">Saved %1$s</string>
-    <!-- %1$s is the saved screenshot's filesystem path. -->
-    <string name="screenshot_saved">Screenshot saved to %1$s</string>
+    <string name="screenshot_saved">Screenshot has been saved to</string>
     <string name="search">Search</string>
     <string name="select_dialog_title">Select MIDlet</string>
     <string name="set_as_default">Set As Default</string>
@@ -1178,6 +1177,8 @@
     <string name="about_maintainer_name" translatable="false">Hendra Bara\'langi\' (H3NB)</string>
     <string name="about_version">Version %1$s</string>
     <string name="screenshot_save_failed">Could not save the screenshot.</string>
+    <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
+    <string name="screenshot_saved_path">Screenshot saved to %1$s</string>
     <string name="log_save_started">Log saving started.</string>
     <string name="log_save_failed">Could not start saving the log.</string>
     <string name="runtime_midlet_list_failed">Could not read this application’s MIDlet list.</string>
