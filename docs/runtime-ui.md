@@ -86,6 +86,29 @@ non-Canvas Displayables.
 - Host-only recovery, exit/settings, MIDlet selection, and virtual-keyboard
   dialogs are Compose Material 3 surfaces. The current Java host owns loader, orientation, persistence, cleanup, and `MidletThread` callbacks. Preserve those semantics if ownership is refactored.
 
+## Immersive background boundary
+
+Immersive background is host presentation only; it does not modify the guest
+framebuffer, Java ME LCD geometry, input ownership, or MIDP lifecycle. The active
+guest frame is copied at most every 33 ms into a reusable 24×24 linear-light
+field. A blurred 8×8 broad field fills the available host surface, while the
+24×24 field contributes only a short-range edge-continuity boost around the LCD.
+Opaque guest colors are independent of the host theme; the theme remains a
+fallback before the first valid guest sample and for transparent guest pixels.
+
+Canvas and GLES consume the same `AmbientColorField` state and temporal
+transition. Canvas rasterizes that field into its reusable small bitmap; GLES
+interpolates the same field over its ambient mesh. The guest LCD rectangle is
+drawn separately and remains untouched. Ambient host redraws may continue while
+the field is transitioning, but they do not create guest publications or change
+the canonical presentation-mailbox sequence.
+
+Sampling and temporal animation stop at the existing visibility/surface
+boundaries, and geometry is rebuilt from the current host surface and guest LCD
+rectangle after size/orientation changes. Keep future Immersive work renderer
+agnostic unless profiling demonstrates a concrete reason for backend-specific
+behavior.
+
 ## Validation gates
 
 File-video `VideoControl` uses an independent TextureView producer over the
