@@ -96,9 +96,9 @@
     <string name="library_enhanced_icons_summary">Улучшать исходные значки адаптивным размером и цветовой обработкой.</string>
     <string name="pref_audio_title">Аудио</string>
     <string name="PREF_BACKGROUND">Фон</string>
-    <string name="pref_button_shape_oval">Овальные</string>
-    <string name="pref_button_shape_rect">Прямоугольные</string>
-    <string name="pref_button_shape_round">Закруглённые</string>
+    <string name="pref_button_shape_oval">Овал</string>
+    <string name="pref_button_shape_rect">Прямоугольник</string>
+    <string name="pref_button_shape_round">Скруглённый прямоугольник</string>
     <string name="pref_button_shape_title">Форма кнопок</string>
     <string name="pref_category_experimental">Экспериментальные/временные опции</string>
     <string name="pref_emulator_dir">Рабочая папка</string>
@@ -120,19 +120,19 @@
     <string name="pref_graphics_mode_title">Режим графики</string>
     <string name="pref_graphics_software">Программный</string>
     <string name="PREF_HEIGHT">Высота</string>
-    <string name="PREF_IMMEDIATE">Режим неотложной обработки</string>
+    <string name="PREF_IMMEDIATE">Немедленная обработка</string>
     <string name="pref_input_devices_title">Устройства ввода</string>
     <string name="PREF_KEEP_ASPECT_RATIO">Сохранять пропорции</string>
     <string name="PREF_LAYOUT">Раскладка кодов клавиш</string>
     <string name="PREF_LIMIT_FPS">Ограничение частоты кадров</string>
-    <string name="pref_map_keys">Назначение кнопок</string>
+    <string name="pref_map_keys">Назначения клавиш</string>
     <string name="pref_mascot_summary">Показывать сообщение при использовании.</string>
     <string name="pref_mascot_title">Обнаруживать Mascot Capsule 3D</string>
     <string name="PREF_ORIENTATION">Ориентация экрана</string>
     <string name="pref_orientation_auto">Автоматически</string>
     <string name="pref_orientation_default">По умолчанию</string>
-    <string name="pref_orientation_land">Альбом</string>
-    <string name="pref_orientation_port">Портрет</string>
+    <string name="pref_orientation_land">Альбомная</string>
+    <string name="pref_orientation_port">Портретная</string>
     <string name="PREF_SCALE_RATIO">Масштаб (%)</string>
     <string name="pref_screen_gravity">Расположение</string>
     <string name="pref_screen_gravity_bottom">Снизу</string>
@@ -180,8 +180,8 @@
     <string name="pref_vk_type_custom">Пользовательская</string>
     <string name="pref_vk_type_numbers">Цифры</string>
     <string name="pref_vk_type_numbers_arrows">Цифры и стрелки</string>
-    <string name="pref_vk_type_phone">Телефонная</string>
-    <string name="pref_vk_type_phone_arrows">Телефонная (стрелки)</string>
+    <string name="pref_vk_type_phone">Телефонная клавиатура</string>
+    <string name="pref_vk_type_phone_arrows">Телефонная клавиатура (стрелки)</string>
     <string name="pref_wakelock_title">Не выключать экран</string>
     <string name="PREF_WIDTH">Ширина</string>
     <string name="profiles">Профили</string>
@@ -236,7 +236,7 @@
     <string name="crash_report_bundle_failed">Не удалось подготовить диагностический пакет.</string>
     <string name="crash_report_locate_failed">Нет системного файлового менеджера, с помощью которого можно найти диагностический пакет.</string>
     <string name="crash_report_bundle_cleanup_failed">Диагностический отчёт удалён, но JL-Mod Plus не удалось удалить созданный для него пакет.</string>
-    <string name="crash_report_github_unavailable">Нет приложения, способного открыть форму создания issue на GitHub.</string>
+    <string name="crash_report_github_unavailable">Нет приложения, способного открыть форму создания обращения на GitHub.</string>
     <string name="crash_report_delete_failed">Не удалось полностью удалить отчёт.</string>
     <string name="crash_report_unavailable">Этот отчёт больше недоступен.</string>
     <string name="installer_ambiguous">Этому приложению соответствуют несколько установленных приложений. Установить отдельную копию? Существующие приложения и их данные будут сохранены.</string>
@@ -436,7 +436,7 @@
     <string name="pref_app_sort_descending">По убыванию</string>
     <string name="pref_enable_statusbar_summary">Оставлять системную строку состояния видимой. Её нельзя использовать вместе с областью выреза дисплея MIDlet.</string>
     <string name="pref_language">Язык</string>
-    <string name="pref_skip_resume_call">Пропускать callback возобновления MIDlet</string>
+    <string name="pref_skip_resume_call">Пропускать обратный вызов возобновления MIDlet</string>
     <string name="pref_soundbank_title">Банк звуков MIDI</string>
     <string name="config_system_properties_empty">Пользовательских свойств нет</string>
     <string name="config_destination_graphics">Экран</string>
@@ -649,7 +649,7 @@
     <string name="remove_screen_preset">Удалить предустановку разрешения</string>
     <string name="removed">Удалено: %1$s</string>
     <string name="config_color_picker_title">Выберите цвет</string>
-    <string name="config_color_picker_hex">Цвет Hex</string>
+    <string name="config_color_picker_hex">HEX-код цвета</string>
     <string name="config_color_picker_hint">Перетаскивайте поля цвета или введите шестизначное значение RGB.</string>
     <string name="config_color_picker_invalid">Введите ровно шесть шестнадцатеричных цифр.</string>
     <string name="config_color_picker_hue">Оттенок</string>
@@ -682,7 +682,7 @@
     </plurals>
     <string name="crash_report_bundle_preparing">Подготовка диагностического пакета…</string>
     <string name="crash_report_bundle_ready_title">Диагностический пакет готов</string>
-    <string name="crash_report_bundle_ready_message">%1$s\n\nСохранено в Загрузки → JL-Mod Plus Diagnostics.\n\nПеред отправкой отчёта GitHub попросит загрузить этот файл. Диагностический пакет станет общедоступным вместе с вашим issue.</string>
+    <string name="crash_report_bundle_ready_message">%1$s\n\nСохранено в Загрузки → JL-Mod Plus Diagnostics.\n\nПеред отправкой отчёта GitHub попросит загрузить этот файл. Диагностический пакет будет опубликован вместе с вашим обращением.</string>
     <string name="locate_bundle">Найти пакет</string>
     <string name="open_github">Открыть GitHub</string>
     <string name="crash_report_delete_title">Удалить диагностический отчёт?</string>
@@ -807,8 +807,8 @@
     <string name="memory_editor_current_value">Текущее</string>
     <string name="memory_editor_inspector">Инспектор</string>
     <string name="memory_editor_inspector_loading">Проверка кандидата и чтение ограниченного снимка…</string>
-    <string name="memory_editor_inspector_empty">Выберите результат, затем просмотрите память рядом, чтобы увидеть и изменить его ограниченный снимок.</string>
-    <string name="memory_editor_freeze_after_edit_help">Использует новое значение как фиксированное и автоматически добавляет кандидатов в Наблюдение.</string>
+    <string name="memory_editor_inspector_empty">Выберите результат, затем просмотрите память рядом, чтобы увидеть и изменить ограниченный снимок памяти.</string>
+    <string name="memory_editor_freeze_after_edit_help">Фиксирует новое значение и автоматически добавляет кандидатов в Наблюдение.</string>
     <string name="memory_editor_expression_single_hint">Введите одно значение или используйте ; для совместного поиска группы значений.</string>
     <string name="memory_editor_expression_group_needs_type">Выберите конкретный тип данных для группового поиска.</string>
     <string name="memory_editor_expression_group_hint">Групповой поиск · %1$d значений · один владелец Managed Java</string>
@@ -983,7 +983,7 @@
     <string name="config_background_theme">Тема</string>
     <string name="config_background_immersive">Иммерсивный</string>
     <string name="config_background_theme_help">Использует фон темы JL-Mod Plus.</string>
-    <string name="config_background_immersive_help">Заполняет неиспользуемое пространство цветами, выбранными с экрана MIDlet.</string>
+    <string name="config_background_immersive_help">Заполняет неиспользуемое пространство цветами, взятыми с экрана MIDlet.</string>
     <string name="config_background_custom_color">Цвет фона</string>
     <string name="config_help_background_custom_color">Задаёт цвет неиспользуемого пространства вокруг экрана MIDlet.</string>
     <string name="config_help_skin">Показывает дополнительное изображение или рамку вокруг экрана MIDlet.</string>
@@ -1034,7 +1034,7 @@
     <string name="config_help_vk_selected_background">Задаёт цвет кнопки при нажатии.</string>
     <string name="config_help_vk_outline">Задаёт цвет контура кнопок виртуального управления.</string>
     <string name="config_help_reset_layout">Восстанавливает раскладку виртуальных элементов управления, не меняя другие настройки MIDlet.</string>
-    <string name="config_help_skip_resume">Пропускает callback возобновления MIDlet при возврате к нему. Используйте только если MIDlet даёт сбой после возобновления.</string>
+    <string name="config_help_skip_resume">Пропускает обратный вызов возобновления MIDlet при возврате к нему. Используйте только если MIDlet даёт сбой после возобновления.</string>
     <string name="config_help_soundbank">Выбирает банк звуков для воспроизведения MIDI.</string>
     <string name="profile_create_title">Создать профиль</string>
     <string name="profile_rename_title">Переименовать профиль</string>
@@ -1046,7 +1046,7 @@
     <string name="preset_builtin_summary">Встроенные настройки MIDlet и виртуальные элементы управления.</string>
     <string name="preset_picker_title">Использовать профиль</string>
     <string name="preset_manage">Управление профилями</string>
-    <string name="profile_create_summary">Сохраните многоразовую конфигурацию для других MIDlet.</string>
+    <string name="profile_create_summary">Сохраните конфигурацию, которую можно повторно использовать для других MIDlet.</string>
     <string name="preset_application_settings">Конфигурация MIDlet</string>
     <string name="preset_includes_keyboard_layout">Раскладка виртуальных элементов управления включена.</string>
     <string name="preset_virtual_keyboard_on">Виртуальные элементы управления включены</string>
@@ -1086,9 +1086,9 @@
     <string name="profile_apply_settings_keeps_layout">Сохранить раскладку этого MIDlet; использовать пользовательскую конфигурацию.</string>
     <string name="profile_apply_layout_keeps_settings">Сохранить настройки этого MIDlet; использовать пользовательскую конфигурацию.</string>
     <string name="config_analog_stick">Аналоговый стик</string>
-    <string name="config_analog_stick_summary">Выберите, как основной аналоговый стик передаёт движение этому MIDlet. Кнопки геймпада используют Назначения клавиш.</string>
+    <string name="config_analog_stick_summary">Выберите, как основной аналоговый стик передаёт движение этому MIDlet. Кнопки геймпада используют «Назначения клавиш».</string>
     <string name="config_analog_stick_off">Выкл.</string>
-    <string name="config_controller_help_body_compact">Кнопки геймпада используют те же Назначения клавиш, что клавиатура и телефонные клавиши. Параметр «Аналоговый стик» управляет только передачей направлений стика в MIDlet. Кнопка Android «Назад» сохраняет обычное поведение хоста, а любая физическая кнопка, назначенная на M, открывает меню MIDlet среды выполнения.</string>
+    <string name="config_controller_help_body_compact">Кнопки геймпада используют те же «Назначения клавиш», что клавиатура и телефонные клавиши. Параметр «Аналоговый стик» управляет только передачей направлений стика в MIDlet. Кнопка Android «Назад» сохраняет обычное поведение хоста, а любая физическая кнопка, назначенная на M, открывает меню MIDlet среды выполнения.</string>
     <string name="library_metadata_edit_title">Изменить метаданные</string>
     <string name="library_metadata_icon">Значок</string>
     <string name="library_metadata_change_icon">Изменить значок</string>
@@ -1205,7 +1205,7 @@
     <string name="runtime_virtual_controls_analog">Аналоговый стик</string>
     <string name="runtime_virtual_controls_edit">Изменить раскладку</string>
     <string name="runtime_virtual_controls_edit_guide_title">Как редактировать раскладку</string>
-    <string name="runtime_virtual_controls_edit_guide_message">Перетаскивайте элементы управления, чтобы перемещать их. Для кнопок двигайте два пальца по горизонтали или вертикали, чтобы менять ширину или высоту, либо по диагонали, чтобы менять оба размера. Щипком пропорционально изменяйте размер D-pad или аналогового стика. Когда закончите, нажмите «Готово».</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Перетаскивайте элементы управления, чтобы перемещать их. Для кнопок двигайте два пальца по горизонтали или вертикали, чтобы менять ширину или высоту, либо по диагонали, чтобы менять оба размера. Сведите или разведите два пальца, чтобы пропорционально изменить размер D-pad или аналогового стика. Когда закончите, нажмите «Готово».</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Больше не показывать</string>
     <string name="runtime_virtual_controls_edit_started">Режим редактирования виртуальных элементов управления: перетаскивайте их для перемещения и используйте два пальца для изменения размера.</string>
     <string name="runtime_virtual_controls_switch_layout">Выбрать шаблон раскладки</string>
