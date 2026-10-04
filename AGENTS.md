@@ -5,6 +5,7 @@ This file contains guidance every agent needs. Keep task-specific instructions a
 ## Core priorities
 
 - Follow the user's explicit task and constraints first. Carry forward authorization already given; ask only when a missing decision materially affects correctness, compatibility, scope, or authority.
+- Keep enduring repository guidance model- and provider-agnostic. State goals, evidence, constraints, authority, and success criteria; keep transient model names, reasoning settings, and tool-routing choices in task handoffs unless a repository contract genuinely depends on them.
 - Preserve required behavior and emulator compatibility, not accidental implementation structure. Within the requested scope, refactor or replace flawed structure when that produces a simpler, more coherent model while meeting correctness, compatibility, data-safety, and relevant performance requirements.
 - User requirements and explicit project contracts define intended behavior. Applicable specifications define the default compatibility contract except where JL-Mod Plus deliberately preserves verified compatibility behavior. Current source, configuration, workflows, and tests describe the current implementation and provide evidence; they are not requirements merely because they exist. Treat history as context unless the task specifically requires it.
 - Keep changes focused on the problem. Do not mix unrelated cleanup, dependency or toolchain churn, or speculative architecture into a scoped change.

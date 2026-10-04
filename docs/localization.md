@@ -352,22 +352,43 @@ rather than extending the glossary by guesswork.
 
 ## AI-assisted workflow
 
-Neither model is the source of product behavior. Implementation, applicable
-specifications, verified runtime behavior, and explicit project contracts are
-authoritative. A stronger model reviews evidence; it does not override evidence.
-Runtime correctness must not depend on an AI model or API.
+AI assistance is optional and non-authoritative. Implementation, applicable
+specifications, verified runtime behavior, and explicit project contracts remain
+authoritative. Runtime correctness must not depend on a model, provider, API, or
+orchestration mode.
 
-Current execution strategy for later localization work:
+Choose review roles by task requirements rather than model names or capability
+tiers. One capable reviewer may cover multiple roles; split work only when doing
+so creates a clear, bounded handoff.
 
-| Model | Role and bounded use |
+| Role | Responsibility |
 | --- | --- |
-| GPT-6.1 Sol | Primary semantic auditor, architecture reviewer, and final reviewer for ambiguous/high-impact copy. Trace text to backend behavior, resolve conflicting evidence, review state/lifecycle/IPC-sensitive claims, determine semantic-contract changes, approve difficult English/Indonesian rewrites, and review Luna candidates. Use high reasoning by default for substantial semantic audit; escalate only genuinely ambiguous/high-risk cases. |
-| GPT-6 Luna | High-volume assistant for inventory extraction, mechanical classification, repeated terminology, likely missing/stale translations, structured candidate batches, straightforward translations after semantics are established, and deterministic mechanical changes. Never the sole authority for unclear backend behavior; promote ambiguity to Sol instead of guessing. |
+| Semantic reviewer | Resolve ambiguous or high-impact meaning from implementation/specification evidence; trace state/lifecycle/IPC-sensitive claims; decide whether source semantics or parameter contracts change; review difficult canonical-copy decisions. |
+| Bounded batch assistant | Perform deterministic inventory/extraction, mechanical classification, repeated terminology checks, structured candidate batches, and straightforward translations only after the semantic contract is established. Do not guess unresolved backend behavior; return uncertainty to semantic review. |
+| Language reviewer | Judge target-language correctness, naturalness, terminology, and plural/grammar behavior without changing established product meaning. Use `NEEDS_LANGUAGE_REVIEW` when competent language judgment is unavailable. |
 
-Establish the semantic contract and evidence first, prepare bounded candidates,
-then review them against that contract, language quality, role, and presentation.
-Record only concise decisions and supporting evidence. Revisit affected locale
-renderings when the source meaning or parameter contract changes.
+For each scoped review:
+
+1. Start from the task goal, relevant contracts and evidence, constraints,
+   required outputs, and success criteria. Load only context that can change the
+   decision.
+2. Separate semantic judgment from mechanical or batch work. Prefer deterministic
+   tooling for inventory and validation; use review judgment where evidence must
+   be interpreted.
+3. Increase review depth only when ambiguity, compatibility/data risk, or
+   user-visible impact justifies it. Do not require a fixed number of reviewers,
+   passes, or reasoning levels.
+4. When parallel reviewers are useful, give them non-overlapping bounded scopes
+   and one explicit handoff. Final integration reconciles conflicts against
+   evidence rather than by vote or model prestige.
+5. Record concise verdicts and supporting evidence, not hidden reasoning traces.
+   Revisit affected locale renderings whenever source meaning, UI role, resource
+   type, or parameter contract changes.
+
+Execution-specific model, provider, reasoning-effort, or tool choices belong in
+transient task handoffs rather than this repository contract. They may change
+without documentation edits as long as the roles, evidence requirements, and
+acceptance criteria above are preserved.
 
 Proposed review vocabulary for later phases:
 
