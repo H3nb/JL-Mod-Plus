@@ -14,9 +14,11 @@ public final class AmbientColorField {
     public static final int GRID_SIZE = 24;
     public static final int GRID_COLOR_COUNT = GRID_SIZE * GRID_SIZE;
     public static final int GRID_CHANNEL_COUNT = GRID_COLOR_COUNT * CHANNEL_COUNT;
-    private static final int BROAD_GRID_SIZE = 6;
+    private static final int BROAD_GRID_SIZE = 8;
     private static final int BROAD_GRID_CHANNEL_COUNT =
             BROAD_GRID_SIZE * BROAD_GRID_SIZE * CHANNEL_COUNT;
+    /** Compensates a little for chroma lost through blur/downsampling without changing luminance. */
+    private static final float BROAD_CHROMA_GAIN = 1.08f;
     /** Matches the host presentation cadence so animated midlets feel live. */
     public static final long SAMPLE_INTERVAL_NS = 33_333_333L;
     public static final long MAX_TRANSITION_NS = 1_000_000_000L;
@@ -555,26 +557,37 @@ public final class AmbientColorField {
         sampleGridAt(u, v, fineGrid, GRID_SIZE, out);
     }
 
-    /** Builds the coarse full-frame backdrop that fills the entire host surface. */
+    /** Builds the broad full-frame backdrop while preserving a little post-blur chroma. */
     private static void buildBroadGrid(float[] source, float[] output) {
         int block = GRID_SIZE / BROAD_GRID_SIZE;
         float inverseCount = 1.0f / (block * block);
         for (int broadY = 0; broadY < BROAD_GRID_SIZE; broadY++) {
             for (int broadX = 0; broadX < BROAD_GRID_SIZE; broadX++) {
-                int outputOffset = (broadY * BROAD_GRID_SIZE + broadX) * CHANNEL_COUNT;
-                for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
-                    float sum = 0.0f;
-                    int sourceY = broadY * block;
-                    int sourceX = broadX * block;
-                    for (int y = 0; y < block; y++) {
-                        for (int x = 0; x < block; x++) {
-                            int sourceOffset =
-                                    ((sourceY + y) * GRID_SIZE + sourceX + x) * CHANNEL_COUNT;
-                            sum += source[sourceOffset + channel];
-                        }
+                float r = 0.0f;
+                float g = 0.0f;
+                float b = 0.0f;
+                int sourceY = broadY * block;
+                int sourceX = broadX * block;
+                for (int y = 0; y < block; y++) {
+                    for (int x = 0; x < block; x++) {
+                        int sourceOffset =
+                                ((sourceY + y) * GRID_SIZE + sourceX + x) * CHANNEL_COUNT;
+                        r += source[sourceOffset];
+                        g += source[sourceOffset + 1];
+                        b += source[sourceOffset + 2];
                     }
-                    output[outputOffset + channel] = sum * inverseCount;
                 }
+                r *= inverseCount;
+                g *= inverseCount;
+                b *= inverseCount;
+                float luminance = 0.2126f * r + 0.7152f * g + 0.0722f * b;
+                int outputOffset = (broadY * BROAD_GRID_SIZE + broadX) * CHANNEL_COUNT;
+                output[outputOffset] = clamp01(
+                        luminance + (r - luminance) * BROAD_CHROMA_GAIN);
+                output[outputOffset + 1] = clamp01(
+                        luminance + (g - luminance) * BROAD_CHROMA_GAIN);
+                output[outputOffset + 2] = clamp01(
+                        luminance + (b - luminance) * BROAD_CHROMA_GAIN);
             }
         }
     }
