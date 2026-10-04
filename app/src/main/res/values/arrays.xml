@@ -63,11 +63,11 @@
         <item>@string/pref_button_shape_rect</item>
         <item>@string/pref_button_shape_round</item>
     </string-array>
-    <string-array name="PREF_LAYOUT_ENTRIES" translatable="false">
+    <string-array name="PREF_LAYOUT_ENTRIES">
         <item>Nokia/SE</item>
         <item>Siemens</item>
         <item>Motorola</item>
-        <item>Custom</item>
+        <item>@string/profile_custom</item>
     </string-array>
     <string-array name="pref_graphics_mode_entries" tools:ignore="InconsistentArrays">
         <item>@string/pref_graphics_software</item>

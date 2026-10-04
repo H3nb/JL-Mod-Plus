@@ -112,7 +112,7 @@
     <string name="load_profile">Load Profile</string>
     <string name="loading_info">Loading information…</string>
     <string name="log_saved">Log has been saved</string>
-    <string name="mapping_dialog_key_not_specified">Not specified</string>
+    <string name="mapping_dialog_key_not_specified">No inputs assigned.</string>
     <string name="mapping_dialog_message">Press a physical key or button to assign it to this control.</string>
     <string name="mapping_dialog_assigned_inputs">Assigned Inputs</string>
     <string name="mapping_dialog_add_input">You can assign more than one physical input.</string>
@@ -120,7 +120,7 @@
     <string name="mapping_dialog_title">Press A Key</string>
     <string name="message_clear_data">Do you really want to clear app data?</string>
     <string name="message_reset_settings">Reset all configuration settings to their defaults?</string>
-    <string name="message_reset_layout">Reset the button layout to its default?</string>
+    <string name="message_reset_layout">Reset the virtual controls layout to its default?</string>
     <string name="message_delete">Delete this app, its settings, and save data? This also removes its Library entry.</string>
     <string name="midlet_name"><b>Name: </b></string>
     <string name="midlet_size"><b>Size: </b></string>
@@ -185,9 +185,9 @@
     <string name="pref_button_shape_title">Button Shape</string>
     <string name="pref_category_experimental">Experimental/Temporary Options</string>
     <string name="pref_emulator_dir">Working Directory</string>
-    <string name="pref_enable_actionbar_summary">For fullscreen applications</string>
-    <string name="pref_enable_actionbar_title">Enable ActionBar</string>
-    <string name="pref_enable_statusbar_title">Enable Statusbar</string>
+    <string name="pref_enable_actionbar_summary">Keep the runtime toolbar visible on MIDlet Canvas screens.</string>
+    <string name="pref_enable_actionbar_title">Show Runtime Toolbar</string>
+    <string name="pref_enable_statusbar_title">Show System Status Bar</string>
     <string name="pref_enable_statusbar_summary">Keep the system status bar visible. It cannot be used with the MIDlet display cutout.</string>
     <string name="pref_encoding_title">Encoding</string>
     <string name="PREF_FILTER">Image Filter</string>
@@ -208,7 +208,7 @@
     <string name="pref_input_devices_title">Input Devices</string>
     <string name="PREF_KEEP_ASPECT_RATIO">Keep Aspect Ratio</string>
     <string name="pref_language">Language</string>
-    <string name="PREF_LAYOUT">Key Layout</string>
+    <string name="PREF_LAYOUT">Key-Code Layout</string>
     <string name="PREF_LIMIT_FPS">Frame Rate Limit</string>
     <string name="pref_map_keys">Key Mappings</string>
     <string name="pref_mascot_summary">Show a message when used</string>
@@ -412,7 +412,7 @@
     <string name="config_gamepad_calibration_saved">Calibration saved.</string>
     <string name="config_gamepad_calibration_cancelled">Calibration cancelled; the previous profile is unchanged.</string>
     <string name="config_gamepad_calibration_waiting_samples">Calibration is waiting for controller samples.</string>
-    <string name="config_gamepad_diagnosis_header">Non-delivering Diagnosis</string>
+    <string name="config_gamepad_diagnosis_header">Controller Diagnostics</string>
     <string name="config_gamepad_diagnosis_mode">Enabled: %1$s · Source: %2$s</string>
     <string name="config_gamepad_diagnosis_notice">Notice: %1$s</string>
     <string name="config_gamepad_diagnosis_bindings">Effective digital mappings are managed in Key Mapper.</string>
@@ -442,7 +442,6 @@
     <string name="config_gamepad_diagnosis_no_controller">(no connected controller)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Input samples are intentionally not sent to the guest.</string>
     <string name="config_destination_system">System</string>
-    <string name="config_quick_settings">Essential settings</string>
     <string name="config_screen_size">Screen Size</string>
     <string name="config_select_screen_size">Select screen size</string>
     <string name="config_current_screen_size">Current size: %1$s</string>
@@ -882,13 +881,13 @@
     <string name="profile_name_label">Profile Name</string>
     <string name="profile_name_exists">A profile with this name already exists.</string>
     <string name="profile_delete_template_message">Delete profile “%1$s”? MIDlets using it will keep their current settings but won’t receive future updates.</string>
-    <string name="profile_template_operation_failed">Could not update the MIDlet profile.</string>
+    <string name="profile_template_operation_failed">Could not complete the profile operation.</string>
     <string name="config_help_screen_size">Sets the virtual screen resolution exposed to the MIDlet.</string>
     <string name="config_help_orientation">Chooses the screen orientation while the MIDlet runs.</string>
     <string name="config_help_scale_type">Chooses how the MIDlet screen fits the available area. The screen ratio can be preserved or ignored.</string>
     <string name="config_help_scale_ratio">Changes the displayed size without changing the MIDlet’s virtual resolution.</string>
     <string name="config_help_lock_custom_resolution_ratio">Keeps the width-to-height ratio while editing the custom resolution.</string>
-    <string name="config_help_virtual_keyboard">Shows the virtual controls over the MIDlet screen.</string>
+    <string name="config_help_virtual_keyboard">Shows touch controls for this MIDlet.</string>
     <string name="config_help_touch_input">Lets the MIDlet receive touchscreen events.</string>
     <string name="config_help_background">Fills unused space around the MIDlet screen.</string>
     <string name="config_background_mode">Background Mode</string>
@@ -908,7 +907,7 @@
     <string name="config_help_shader">Applies a visual effect to the MIDlet screen.</string>
     <string name="config_help_shader_tuning">Adjusts settings for the selected shader.</string>
     <string name="config_help_parallel_redraw">Redraws the screen in parallel when supported. This may improve performance on some configurations.</string>
-    <string name="config_help_force_fullscreen">Lets the MIDlet use the full available screen.</string>
+    <string name="config_help_force_fullscreen">Start MIDlet Canvas screens in fullscreen mode. The MIDlet can change this mode.</string>
     <string name="config_help_show_fps">Shows the MIDlet’s frame rate and rendering diagnostics.</string>
     <string name="config_help_fps_limit">Caps the frame rate.</string>
     <string name="PREF_EMULATION_SPEED">Emulation Speed</string>
@@ -932,7 +931,7 @@
     <string name="config_system_properties_info">Most MIDlets do not need changes here.</string>
     <string name="config_font_sizes">Font Sizes</string>
     <string name="config_help_font_sizes">Sets the small, medium, and large Java ME font sizes for the MIDlet.</string>
-    <string name="config_help_font_sizes_long">Maps Java ME logical font sizes to pixels. Change them together to keep text balanced.</string>
+    <string name="config_help_font_sizes_long">Sets Java ME font sizes in pixels, or in scaled units when Use Android Font Scale is enabled. Change them together to keep text balanced.</string>
     <string name="config_font_sizes_value">Small %1$s · Medium %2$s · Large %3$s</string>
     <string name="config_help_font_presets">Applies font sizes suited to common J2ME screen resolutions.</string>
     <string name="config_help_font_dimensions">Applies Android’s font scale to Java ME font sizes.</string>
@@ -942,7 +941,7 @@
     <string name="config_help_vk_button_shape">Sets the shape of virtual-control buttons.</string>
     <string name="config_help_vk_feedback">Vibrates when a virtual-control button is pressed.</string>
     <string name="config_help_vk_alpha">Sets the opacity of the virtual controls.</string>
-    <string name="config_help_vk_force_opacity">Makes controls outside the MIDlet screen opaque. Controls over the screen stay transparent.</string>
+    <string name="config_help_vk_force_opacity">Makes controls outside the MIDlet screen opaque. Controls over the screen use the configured opacity.</string>
     <string name="config_help_vk_hide_delay">Hides controls after this delay when they cover the MIDlet screen. Set to 0 to disable auto-hide.</string>
     <string name="config_help_vk_foreground">Sets the label and symbol color on virtual-control buttons.</string>
     <string name="config_help_vk_background">Sets the base color of virtual-control buttons.</string>
@@ -1096,7 +1095,7 @@
     <string name="settings_section_profiles">Profiles</string>
     <string name="settings_profiles_summary">Manage profiles you can reuse across MIDlets.</string>
     <string name="pref_use_display_cutout_title">Use Display Cutout In MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the ActionBar to use the display-cutout area. It cannot be used with the system status bar.</string>
+    <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the runtime toolbar to use the display-cutout area. It cannot be used with the system status bar.</string>
     <string name="dialog_scroll_hint">Swipe to continue</string>
     <string name="pref_accent_title">Accent Color</string>
     <string name="pref_accent_blue">Default Blue</string>
