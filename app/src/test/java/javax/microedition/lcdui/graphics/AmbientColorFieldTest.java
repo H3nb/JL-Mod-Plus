@@ -151,6 +151,20 @@ public class AmbientColorFieldTest {
     }
 
     @Test
+    public void preSampleThemeRetargetsSolidField() {
+        AmbientColorField field = new AmbientColorField();
+        field.configureNodes(new float[]{0.5f}, new float[]{0.5f},
+                0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
+        field.setBaseColor(0xFFFFFFFF, 0L, true);
+
+        float[] output = new float[AmbientColorField.CHANNEL_COUNT];
+        assertFalse(field.renderNodes(0L, output));
+        assertTrue(output[0] > 0.99f);
+        assertTrue(output[1] > 0.99f);
+        assertTrue(output[2] > 0.99f);
+    }
+
+    @Test
     public void guestFieldDoesNotRetargetWhenHostThemeChanges() {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(new float[]{0.15f}, new float[]{0.5f},

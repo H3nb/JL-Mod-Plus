@@ -42,14 +42,6 @@ public final class AmbientColorSampler {
         }
     }
 
-    /** Captures and converts the complete active bitmap into the reusable linear-light field. */
-    public boolean sampleGrid(Bitmap bitmap, int activeWidth, int activeHeight,
-            int baseArgb, float[] outGridLinear) {
-        if (!captureGrid(bitmap, activeWidth, activeHeight)) return false;
-        toneCapturedGrid(baseArgb, outGridLinear);
-        return true;
-    }
-
     /** Copies the complete active bitmap into a private reusable low-resolution bitmap. */
     public boolean captureGrid(Bitmap bitmap, int activeWidth, int activeHeight) {
         if (bitmap == null || activeWidth <= 0 || activeHeight <= 0) return false;
