@@ -595,7 +595,7 @@ public final class AmbientColorField {
         emissionV[index] = clamp01((sampleY - top) / gameHeight);
     }
 
-    /** Builds the broad full-frame backdrop while preserving a little post-blur chroma. */
+    /** Builds the coarse diffusion field while preserving a little post-blur chroma. */
     private static void buildBroadGrid(float[] source, float[] output) {
         int block = GRID_SIZE / BROAD_GRID_SIZE;
         float inverseCount = 1.0f / (block * block);
