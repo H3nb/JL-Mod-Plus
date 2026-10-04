@@ -10,9 +10,10 @@ package javax.microedition.lcdui.graphics;
 /** Full-frame low-resolution color field and single temporal transition used by both backends. */
 public final class AmbientColorField {
     public static final int ANCHOR_COUNT = 8;
-    public static final int GRID_SIZE = 9;
-    public static final int GRID_COLOR_COUNT = GRID_SIZE * GRID_SIZE;
     public static final int CHANNEL_COUNT = 3;
+    public static final int GRID_SIZE = 24;
+    public static final int GRID_COLOR_COUNT = GRID_SIZE * GRID_SIZE;
+    public static final int GRID_CHANNEL_COUNT = GRID_COLOR_COUNT * CHANNEL_COUNT;
     /** Matches the host presentation cadence so animated midlets feel live. */
     public static final long SAMPLE_INTERVAL_NS = 33_333_333L;
     public static final long MAX_TRANSITION_NS = 1_000_000_000L;
@@ -21,8 +22,10 @@ public final class AmbientColorField {
     private static final float RADIUS_SQUARED = 0.20f * 0.20f;
     /** Physical distance, in normalized surface-height units, over which edge color bleeds. */
     private static final float EDGE_FALLOFF = 0.30f;
-    private static final float EPSILON = 1.0f / 255.0f;
-    /** Five-tap blur keeps adjacent palette cells from becoming visible bands. */
+    /** At the surface edge, most sampled light has faded back toward the host theme. */
+    private static final float OUTER_BASE_BLEND = 0.65f;
+    private static final float LINEAR_LINEAR_EPSILON = 1.0f / 4096.0f;
+    /** Five-tap blur softens neighboring samples without erasing the higher-resolution field. */
     private static final float[] BLUR_KERNEL = {0.0625f, 0.25f, 0.375f, 0.25f, 0.0625f};
     private static final float[] ANCHOR_X = {INSET, 0.5f, 1.0f - INSET, 1.0f - INSET,
             1.0f - INSET, 0.5f, INSET, INSET};
@@ -62,9 +65,9 @@ public final class AmbientColorField {
 
     /** Initializes all anchors to the resolved theme color before the first valid sample. */
     public void resetToBase(int baseArgb) {
-        float r = ((baseArgb >>> 16) & 0xFF) / 255.0f;
-        float g = ((baseArgb >>> 8) & 0xFF) / 255.0f;
-        float b = (baseArgb & 0xFF) / 255.0f;
+        float r = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 16) & 0xFF);
+        float g = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 8) & 0xFF);
+        float b = AmbientColorSampler.srgbChannelToLinear(baseArgb & 0xFF);
         for (int i = 0; i < ANCHOR_COUNT; i++) {
             int offset = i * CHANNEL_COUNT;
             start[offset] = target[offset] = r;
@@ -91,30 +94,30 @@ public final class AmbientColorField {
         evaluate(nowNs, evaluationAnchors, evaluationBase);
         gridMode = false;
 
-        float baseR = ((baseArgb >>> 16) & 0xFF) / 255.0f;
-        float baseG = ((baseArgb >>> 8) & 0xFF) / 255.0f;
-        float baseB = (baseArgb & 0xFF) / 255.0f;
+        float baseR = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 16) & 0xFF);
+        float baseG = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 8) & 0xFF);
+        float baseB = AmbientColorSampler.srgbChannelToLinear(baseArgb & 0xFF);
         boolean materiallyDifferent = Math.max(
                 Math.max(Math.abs(targetBase[0] - baseR), Math.abs(targetBase[1] - baseG)),
-                Math.abs(targetBase[2] - baseB)) > EPSILON;
+                Math.abs(targetBase[2] - baseB)) > LINEAR_EPSILON;
         for (int i = 0; i < ANCHOR_COUNT && !materiallyDifferent; i++) {
             int offset = i * CHANNEL_COUNT;
-            float r = ((anchorArgb[i] >>> 16) & 0xFF) / 255.0f;
-            float g = ((anchorArgb[i] >>> 8) & 0xFF) / 255.0f;
-            float b = (anchorArgb[i] & 0xFF) / 255.0f;
-            materiallyDifferent = Math.abs(target[offset] - r) > EPSILON
-                    || Math.abs(target[offset + 1] - g) > EPSILON
-                    || Math.abs(target[offset + 2] - b) > EPSILON;
+            float r = AmbientColorSampler.srgbChannelToLinear((anchorArgb[i] >>> 16) & 0xFF);
+            float g = AmbientColorSampler.srgbChannelToLinear((anchorArgb[i] >>> 8) & 0xFF);
+            float b = AmbientColorSampler.srgbChannelToLinear(anchorArgb[i] & 0xFF);
+            materiallyDifferent = Math.abs(target[offset] - r) > LINEAR_EPSILON
+                    || Math.abs(target[offset + 1] - g) > LINEAR_EPSILON
+                    || Math.abs(target[offset + 2] - b) > LINEAR_EPSILON;
         }
         if (!materiallyDifferent && !instant) return;
         for (int i = 0; i < ANCHOR_COUNT; i++) {
             int offset = i * CHANNEL_COUNT;
-            float r = ((anchorArgb[i] >>> 16) & 0xFF) / 255.0f;
-            float g = ((anchorArgb[i] >>> 8) & 0xFF) / 255.0f;
-            float b = (anchorArgb[i] & 0xFF) / 255.0f;
-            materiallyDifferent |= Math.abs(target[offset] - r) > EPSILON
-                    || Math.abs(target[offset + 1] - g) > EPSILON
-                    || Math.abs(target[offset + 2] - b) > EPSILON;
+            float r = AmbientColorSampler.srgbChannelToLinear((anchorArgb[i] >>> 16) & 0xFF);
+            float g = AmbientColorSampler.srgbChannelToLinear((anchorArgb[i] >>> 8) & 0xFF);
+            float b = AmbientColorSampler.srgbChannelToLinear(anchorArgb[i] & 0xFF);
+            materiallyDifferent |= Math.abs(target[offset] - r) > LINEAR_EPSILON
+                    || Math.abs(target[offset + 1] - g) > LINEAR_EPSILON
+                    || Math.abs(target[offset + 2] - b) > LINEAR_EPSILON;
             start[offset] = instant ? r : evaluationAnchors[offset];
             start[offset + 1] = instant ? g : evaluationAnchors[offset + 1];
             start[offset + 2] = instant ? b : evaluationAnchors[offset + 2];
@@ -139,39 +142,27 @@ public final class AmbientColorField {
         }
     }
 
-    /** Retargets a full low-resolution frame palette while preserving temporal continuity. */
-    public void setTargetGrid(int[] gridArgb, int baseArgb, long nowNs, boolean instant) {
-        if (gridArgb == null || gridArgb.length < GRID_COLOR_COUNT) return;
+    /** Retargets a linear-RGB frame field while preserving temporal continuity. */
+    public void setTargetGrid(float[] gridLinear, int baseArgb, long nowNs, boolean instant) {
+        if (gridLinear == null || gridLinear.length < GRID_CHANNEL_COUNT) return;
         evaluateGrid(nowNs, evaluationGrid, evaluationBase);
 
-        float baseR = ((baseArgb >>> 16) & 0xFF) / 255.0f;
-        float baseG = ((baseArgb >>> 8) & 0xFF) / 255.0f;
-        float baseB = (baseArgb & 0xFF) / 255.0f;
+        float baseR = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 16) & 0xFF);
+        float baseG = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 8) & 0xFF);
+        float baseB = AmbientColorSampler.srgbChannelToLinear(baseArgb & 0xFF);
         boolean materiallyDifferent = Math.max(
                 Math.max(Math.abs(targetBase[0] - baseR), Math.abs(targetBase[1] - baseG)),
-                Math.abs(targetBase[2] - baseB)) > EPSILON;
-        for (int i = 0; i < GRID_COLOR_COUNT && !materiallyDifferent; i++) {
-            int offset = i * CHANNEL_COUNT;
-            float r = ((gridArgb[i] >>> 16) & 0xFF) / 255.0f;
-            float g = ((gridArgb[i] >>> 8) & 0xFF) / 255.0f;
-            float b = (gridArgb[i] & 0xFF) / 255.0f;
-            materiallyDifferent = Math.abs(gridTarget[offset] - r) > EPSILON
-                    || Math.abs(gridTarget[offset + 1] - g) > EPSILON
-                    || Math.abs(gridTarget[offset + 2] - b) > EPSILON;
+                Math.abs(targetBase[2] - baseB)) > LINEAR_EPSILON;
+        for (int i = 0; i < GRID_CHANNEL_COUNT && !materiallyDifferent; i++) {
+            materiallyDifferent = Math.abs(gridTarget[i] - clamp01(gridLinear[i]))
+                    > LINEAR_EPSILON;
         }
         if (!materiallyDifferent && !instant && gridMode) return;
 
-        for (int i = 0; i < GRID_COLOR_COUNT; i++) {
-            int offset = i * CHANNEL_COUNT;
-            float r = ((gridArgb[i] >>> 16) & 0xFF) / 255.0f;
-            float g = ((gridArgb[i] >>> 8) & 0xFF) / 255.0f;
-            float b = (gridArgb[i] & 0xFF) / 255.0f;
-            gridStart[offset] = instant ? r : evaluationGrid[offset];
-            gridStart[offset + 1] = instant ? g : evaluationGrid[offset + 1];
-            gridStart[offset + 2] = instant ? b : evaluationGrid[offset + 2];
-            gridTarget[offset] = r;
-            gridTarget[offset + 1] = g;
-            gridTarget[offset + 2] = b;
+        for (int i = 0; i < GRID_CHANNEL_COUNT; i++) {
+            float value = clamp01(gridLinear[i]);
+            gridStart[i] = instant ? value : evaluationGrid[i];
+            gridTarget[i] = value;
         }
         startBase[0] = instant ? baseR : evaluationBase[0];
         startBase[1] = instant ? baseG : evaluationBase[1];
@@ -198,12 +189,12 @@ public final class AmbientColorField {
         } else {
             evaluate(nowNs, evaluationAnchors, evaluationBase);
         }
-        float r = ((baseArgb >>> 16) & 0xFF) / 255.0f;
-        float g = ((baseArgb >>> 8) & 0xFF) / 255.0f;
-        float b = (baseArgb & 0xFF) / 255.0f;
-        boolean different = Math.abs(targetBase[0] - r) > EPSILON
-                || Math.abs(targetBase[1] - g) > EPSILON
-                || Math.abs(targetBase[2] - b) > EPSILON;
+        float r = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 16) & 0xFF);
+        float g = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 8) & 0xFF);
+        float b = AmbientColorSampler.srgbChannelToLinear(baseArgb & 0xFF);
+        boolean different = Math.abs(targetBase[0] - r) > LINEAR_EPSILON
+                || Math.abs(targetBase[1] - g) > LINEAR_EPSILON
+                || Math.abs(targetBase[2] - b) > LINEAR_EPSILON;
         if (!different && !instant) return;
         startBase[0] = instant ? r : evaluationBase[0];
         startBase[1] = instant ? g : evaluationBase[1];
@@ -314,7 +305,8 @@ public final class AmbientColorField {
                     value += (evaluationEdge[channel] - value) * edgeBlend;
                 }
                 float darkened = value + (evaluationBase[channel] - value) * (0.25f * fade[n]);
-                outRgb[output + channel] = clamp01(darkened);
+                outRgb[output + channel] =
+                        AmbientColorSampler.linearChannelToSrgb(clamp01(darkened));
             }
         }
         return transitioning;
@@ -346,9 +338,9 @@ public final class AmbientColorField {
             g = clamp01(g + (evaluationBase[1] - g) * outside);
             b = clamp01(b + (evaluationBase[2] - b) * outside);
             outArgb[n] = 0xFF000000
-                    | (toByte(r) << 16)
-                    | (toByte(g) << 8)
-                    | toByte(b);
+                    | (AmbientColorSampler.linearChannelToByte(r) << 16)
+                    | (AmbientColorSampler.linearChannelToByte(g) << 8)
+                    | AmbientColorSampler.linearChannelToByte(b);
         }
         return transitioning;
     }
@@ -359,11 +351,12 @@ public final class AmbientColorField {
         for (int n = 0; n < nodeCount; n++) {
             sampleGridForNode(nodeX[n], nodeY[n], blurredGrid);
             int output = n * CHANNEL_COUNT;
-            float outside = 0.25f * fade[n];
+            float outside = OUTER_BASE_BLEND * fade[n];
             for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
                 float value = evaluationEdge[channel];
-                outRgb[output + channel] = clamp01(
+                float linear = clamp01(
                         value + (evaluationBase[channel] - value) * outside);
+                outRgb[output + channel] = AmbientColorSampler.linearChannelToSrgb(linear);
             }
         }
         return active;
@@ -374,7 +367,7 @@ public final class AmbientColorField {
         blurGrid(evaluationGrid, blurredGridHorizontal, blurredGrid);
         for (int n = 0; n < nodeCount; n++) {
             sampleGridForNode(nodeX[n], nodeY[n], blurredGrid);
-            float outside = 0.25f * fade[n];
+            float outside = OUTER_BASE_BLEND * fade[n];
             float r = clamp01(evaluationEdge[0]
                     + (evaluationBase[0] - evaluationEdge[0]) * outside);
             float g = clamp01(evaluationEdge[1]
@@ -382,9 +375,9 @@ public final class AmbientColorField {
             float b = clamp01(evaluationEdge[2]
                     + (evaluationBase[2] - evaluationEdge[2]) * outside);
             outArgb[n] = 0xFF000000
-                    | (toByte(r) << 16)
-                    | (toByte(g) << 8)
-                    | toByte(b);
+                    | (AmbientColorSampler.linearChannelToByte(r) << 16)
+                    | (AmbientColorSampler.linearChannelToByte(g) << 8)
+                    | AmbientColorSampler.linearChannelToByte(b);
         }
         return active;
     }
@@ -599,10 +592,6 @@ public final class AmbientColorField {
                         + (anchors[lastOffset + channel] - anchors[middleOffset + channel]) * t;
             }
         }
-    }
-
-    private static int toByte(float value) {
-        return Math.round(clamp01(value) * 255.0f);
     }
 
     private static float clamp01(float value) {
