@@ -253,6 +253,44 @@ Later tooling must be documented only when it exists. Android's
 and [generated locale configuration](https://developer.android.com/guide/topics/resources/app-languages)
 provide platform context; they do not certify catalog quality.
 
+## Deterministic inventory (Phase 2)
+
+[scripts/localization_audit.py](../scripts/localization_audit.py) inventories
+repository-owned `app/src/main/res/values*/*.xml` declarations without modifying
+resources. It records `<string>`, `<plurals>` with per-quantity placeholders, and
+`<string-array>` reference/literal structure. Structural arrays are separate from
+catalog fragmentation and translation coverage. This is not an inventory of
+every string in the final APK: dependency/generated resources, variant-generated
+`app_name`, other resource roots, and code literals are outside its scope.
+
+The default English key set spans all unqualified `values/` XML files. Coverage
+counts distinct `(resource type, key)` pairs, excludes default declarations marked
+`translatable="false"`, and measures declaration presence, not translation quality.
+Empty locale directories remain visible. Canonical identities retain physical
+directory evidence; language/region and `b+language[+Script][+REGION]` forms are
+recognized, with legacy `in`/`iw`/`ji` aliases. Other qualifiers, such as night/API
+overrides, remain separate and do not inflate base locale coverage. This bounded
+parser does not implement the full Android qualifier grammar.
+
+The schema-versioned JSON records facts and report-only findings: coverage,
+fragmentation, typed extras, duplicates within an exact configuration, type
+differences, default invariants, localized invariant declarations, and ordinary
+string argument mismatches. Indexed argument order may differ; clear comparisons
+use argument index/type families, not width, precision, or occurrence count.
+Unindexed multi-argument messages, unresolved resource references, disabled
+formatting, and unparsed percent text are recorded conservatively rather than
+declared clear mismatches. XML markup is flattened for lexical inspection;
+Android string escaping and resource references are not resolved. This is not
+full Java Formatter validation. Plural categories/signatures are inventoried
+without requiring English category parity or evaluating plural grammar.
+
+See [Build and validation](development.md#localization-inventory) for the actual
+commands and ignored report paths. Findings do not fail the command; unreadable
+input, malformed XML, unsupported locale forms, or execution/usage errors do.
+The tool supplies no semantic/language/dead-resource verdicts, equality judgment,
+AI dependency, resource repairs, or CI enforcement. Those decisions remain in
+their separately evidenced phases under this contract.
+
 ## Initial semantic glossary
 
 Preferred terms are tied to product meaning, not universal dictionary equivalents.
