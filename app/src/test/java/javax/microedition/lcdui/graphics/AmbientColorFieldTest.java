@@ -190,6 +190,24 @@ public class AmbientColorFieldTest {
     }
 
     @Test
+    public void terminalFadeUsesEqualPhysicalWidthOnPortraitSurface() {
+        AmbientColorField field = new AmbientColorField();
+        field.configureNodes(
+                new float[]{0.04f, 0.96f, 0.50f, 0.50f},
+                new float[]{0.50f, 0.50f, 0.02f, 0.98f},
+                0.25f, 0.25f, 0.75f, 0.75f, 0.50f);
+        field.setTargetGrid(solidGrid(1.0f, 0.0f, 0.0f), 0xFF000000, 0L, true);
+
+        float[] output = new float[4 * AmbientColorField.CHANNEL_COUNT];
+        field.renderNodes(0L, output);
+        float expected = output[0];
+        assertTrue(expected > 0.0f && expected < 1.0f);
+        assertEquals(expected, output[3], 0.001f);
+        assertEquals(expected, output[6], 0.001f);
+        assertEquals(expected, output[9], 0.001f);
+    }
+
+    @Test
     public void themeOnlyEntersNearThePhoneBoundary() {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(
