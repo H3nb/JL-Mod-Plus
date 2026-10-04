@@ -7,7 +7,9 @@
  */
 package io.github.h3nb.jlmodplus.installer
 
+import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -63,7 +65,7 @@ class BulkInstallViewModel : ViewModel() {
     fun reviewUnfinished(library: LibraryViewModel) {
         val finished = mutableState.value as? State.Finished ?: return
         if (!library.isReadyGeneration(finished.plan.generation, finished.plan.workdir)) {
-            mutableState.value = State.Error("Library changed. Close this batch and select the sources again.")
+            mutableState.value = State.Error(library.getApplication<Application>().getString(R.string.bulk_install_library_changed))
             return
         }
         val unfinished = finished.results.filter {
@@ -443,7 +445,7 @@ class BulkInstallViewModel : ViewModel() {
             return try {
                 check(bundleImport != null) { "Bundle restore sources are no longer available" }
                 restoreBundlePayload(plan, item, item.restoreAppId, item.restoreStorageKey, library)
-                BulkInstallResult(item.id, item.name, BulkInstallResultKind.Reinstalled)
+                BulkInstallResult(item.id, item.name, BulkInstallResultKind.Restored)
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) {
                 BulkInstallResult(item.id, item.name, BulkInstallResultKind.PartiallyInstalled,
@@ -456,7 +458,7 @@ class BulkInstallViewModel : ViewModel() {
                     item.id,
                     item.name,
                     BulkInstallResultKind.Failed,
-                    "JAR-only fallback is no longer available",
+                    library.getApplication<Application>().getString(R.string.bulk_install_source_unavailable),
                 )
             else -> item.unit.primaryFile
         }
@@ -472,7 +474,7 @@ class BulkInstallViewModel : ViewModel() {
                     item.id,
                     item.name,
                     BulkInstallResultKind.Failed,
-                    "Source changed after review; select the files again",
+                    library.getApplication<Application>().getString(R.string.bulk_install_source_changed),
                 )
             }
             val copiedByOriginalPath = item.unit.sourceFiles
@@ -480,11 +482,11 @@ class BulkInstallViewModel : ViewModel() {
                 .associate { (original, copied) -> original.canonicalPath to copied }
             val activeInstaller = if (item.unit.reinstallAppId != null) {
                 val storageKey = item.unit.reinstallStorageKey
-                    ?: return failed(item, "Reinstall target identity is incomplete")
+                    ?: return failed(item, library.getApplication<Application>().getString(R.string.bulk_install_target_unverified))
                 val current = library.getApp(plan.generation, plan.workdir, item.unit.reinstallAppId)
-                    ?: return failed(item, "Reinstall target is no longer installed")
+                    ?: return failed(item, library.getApplication<Application>().getString(R.string.bulk_install_target_unverified))
                 if (current.storageKey != storageKey) {
-                    return failed(item, "Reinstall target changed after review")
+                    return failed(item, library.getApplication<Application>().getString(R.string.bulk_install_target_unverified))
                 }
                 AppInstaller(
                     item.unit.reinstallAppId,
@@ -495,7 +497,7 @@ class BulkInstallViewModel : ViewModel() {
                 )
             } else {
                 val source = copiedByOriginalPath[requestedSource.canonicalPath]
-                    ?: return failed(item, "Selected installer source is no longer available")
+                    ?: return failed(item, library.getApplication<Application>().getString(R.string.bulk_install_source_unavailable))
                 val resolvedJar = if (item.action == BulkInstallAction.InstallJarOnly) {
                     null
                 } else {
@@ -540,7 +542,7 @@ class BulkInstallViewModel : ViewModel() {
                         item.id,
                         item.name,
                         BulkInstallResultKind.Skipped,
-                        "Already installed after revalidation",
+                        library.getApplication<Application>().getString(R.string.bulk_install_status_same),
                     )
                 }
                 try {
@@ -554,14 +556,15 @@ class BulkInstallViewModel : ViewModel() {
                 return BulkInstallResult(
                     item.id,
                     item.name,
-                    BulkInstallResultKind.Reinstalled,
-                    "Restored app data and settings",
+                    BulkInstallResultKind.Restored,
+                    library.getApplication<Application>().getString(R.string.library_import_done),
                 )
             }
             if (!authorized(item, currentStatus, candidates.size)) {
+                Log.w("BulkInstall", "Library state changed after review (${item.preflightStatus} -> $currentStatus)")
                 return failed(
                     item,
-                    "Library state changed after review (${item.preflightStatus} -> $currentStatus); review again",
+                    library.getApplication<Application>().getString(R.string.bulk_install_library_changed),
                 )
             }
 

@@ -97,7 +97,7 @@
     <string name="library_filter_recently_opened">Baru Dibuka</string>
     <string name="library_filter_recently_added">Baru Ditambahkan</string>
     <string name="library_filter_favorites">Favorit</string>
-    <string name="library_favorite_coming_soon">Favorit (segera hadir)</string>
+    <string name="library_favorite_coming_soon">Favorit tidak tersedia</string>
     <string name="library_remove_favorite_coming_soon">Hapus dari favorit (segera hadir)</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Daftar</string>
@@ -434,8 +434,8 @@
     <string name="pref_soundbank_title">Soundbank MIDI</string>
     <string name="PREF_WIDTH">Lebar</string>
     <string name="profiles">Profil</string>
-    <string name="reinstall">Aplikasi telah dipasang.\n\nApakah ingin dipasang ulang?\nSemua data akan disimpan.</string>
-    <string name="reinstall_newest">Perbarui aplikasi ini ke versi %1$s?\n\nYang kini terpasang: %2$s\nSemua data akan disimpan.</string>
+    <string name="reinstall">Aplikasi ini sudah terpasang. Pasang ulang?</string>
+    <string name="reinstall_newest">Perbarui aplikasi ini ke versi %1$s?\n\nYang kini terpasang: %2$s</string>
     <string name="reinstall_older">Timpa aplikasi ini dengan versi %1$s?\n\nYang kini terpasang: %2$s\nVersi lama mungkin tidak berjalan dengan baik menggunakan data yang tersimpan.</string>
     <string name="reset">Atur ulang</string>
     <string name="RESET_LAYOUT_CMD">Atur Ulang Tata Letak Kontrol</string>
@@ -559,7 +559,7 @@
     <string name="installer_stage_wait">Menunggu operasi lain…</string>
     <string name="installer_stage_save">Menyimpan aplikasi…</string>
     <string name="installer_failed_download">Aplikasi tidak dapat diunduh. Periksa koneksi dan tautan unduhan, lalu coba lagi.</string>
-    <string name="installer_failed_storage">Folder kerja tidak tersedia atau tidak dapat ditulis. Periksa akses penyimpanan dan ruang kosong, lalu coba lagi.</string>
+    <string name="installer_failed_storage">Pemasangan tidak dapat diselesaikan. Coba lagi.</string>
     <string name="installer_failed_conversion">Aplikasi tidak dapat dikonversi. Pastikan file lengkap dan didukung, lalu coba lagi.</string>
     <string name="installer_needs_recovery">File aplikasi telah disimpan, tetapi pembaruan Library belum selesai. Muat ulang Library sebelum mencoba lagi.</string>
     <string name="installer_refresh_library">Muat Ulang Library</string>
@@ -602,7 +602,7 @@
     <string name="library_transfer_unavailable">Aplikasi ini tidak dapat disiapkan untuk transfer.</string>
     <string name="library_back">Kembali</string>
     <string name="library_sort">Urutkan</string>
-    <string name="library_search_clear">Batalkan pencarian</string>
+    <string name="library_search_clear">Hapus pencarian</string>
     <string name="library_description_more">… Selengkapnya</string>
     <string name="library_description_less">Ringkas</string>
 
@@ -712,7 +712,7 @@
         <item quantity="other">%1$d siap</item>
     </plurals>
     <plurals name="bulk_install_skipped_count">
-        <item quantity="other">%1$d dilewati</item>
+        <item quantity="other">Sudah terpasang atau duplikat: %1$d</item>
     </plurals>
     <plurals name="bulk_install_attention_count">
         <item quantity="other">%1$d perlu ditinjau</item>
@@ -742,7 +742,7 @@
         <item quantity="other">%1$d properti</item>
     </plurals>
     <plurals name="library_bulk_delete_confirmation">
-        <item quantity="other">Hapus %1$d aplikasi? Berkas aplikasi dan entri katalog akan dihapus.</item>
+        <item quantity="other">Hapus %1$d aplikasi? Berkas aplikasi, pengaturan, data simpanan, dan entri katalog akan dihapus.</item>
     </plurals>
     <plurals name="library_bulk_delete_result">
         <item quantity="other">%1$d aplikasi dihapus; %2$d gagal.</item>
@@ -756,7 +756,7 @@
     <string name="bulk_install_install_count">Instal %1$d</string>
     <string name="bulk_install_cancel">Batal</string>
     <string name="bulk_install_close">Tutup</string>
-    <string name="bulk_install_running">Menginstal %1$d / %2$d</string>
+    <string name="bulk_install_running">%1$d dari %2$d aplikasi diproses</string>
     <string name="bulk_install_cancel_requested">Berhenti setelah aplikasi saat ini selesai…</string>
     <string name="bulk_install_complete">Instalasi Massal Selesai</string>
     <string name="bulk_install_cancelled">Instalasi Massal Dihentikan</string>
@@ -1120,4 +1120,13 @@
     <string name="diagnostic_reason_unknown">Penyebab tidak diketahui</string>
     <string name="crash_reports_delete_failed">Sebagian laporan diagnostik terpilih tidak dapat dihapus. Laporan lain mungkin sudah dihapus.</string>
     <string name="crash_reports_bundle_cleanup_failed">Laporan diagnostik telah dihapus, tetapi sebagian bundle yang dibuat tidak dapat dihapus.</string>
+    <string name="installer_existing_data_preserved">Pengaturan dan data simpanan yang ada akan tetap disimpan.</string>
+    <string name="bulk_install_library_changed">Library berubah setelah ditinjau. Tutup pemasangan massal ini, lalu pilih sumbernya lagi.</string>
+    <string name="bulk_install_source_unavailable">Berkas sumber yang diperlukan sudah tidak tersedia. Pilih berkasnya lagi.</string>
+    <string name="bulk_install_source_changed">Berkas sumber berubah setelah ditinjau. Pilih berkasnya lagi.</string>
+    <string name="bulk_install_target_unverified">Target pemasangan ulang tidak dapat diverifikasi. Tutup pemasangan massal ini, lalu pilih aplikasinya lagi.</string>
+    <string name="bulk_install_result_restored">Dipulihkan</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="other">%1$d dipulihkan</item>
+    </plurals>
 </resources>

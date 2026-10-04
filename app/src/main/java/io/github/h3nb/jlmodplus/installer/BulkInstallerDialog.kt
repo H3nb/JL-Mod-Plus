@@ -679,6 +679,7 @@ private fun resultLabel(kind: BulkInstallResultKind): String = stringResource(
         BulkInstallResultKind.Installed -> R.string.bulk_install_result_installed
         BulkInstallResultKind.Updated -> R.string.bulk_install_result_updated
         BulkInstallResultKind.Reinstalled -> R.string.bulk_install_result_reinstalled
+        BulkInstallResultKind.Restored -> R.string.bulk_install_result_restored
         BulkInstallResultKind.Skipped -> R.string.bulk_install_result_skipped
         BulkInstallResultKind.Failed -> R.string.bulk_install_result_failed
         BulkInstallResultKind.PartiallyInstalled -> R.string.installer_partial_restore
@@ -720,6 +721,7 @@ private fun ResultCounters(results: List<BulkInstallResult>) {
     val installed = results.count { it.kind == BulkInstallResultKind.Installed }
     val updated = results.count { it.kind == BulkInstallResultKind.Updated }
     val reinstalled = results.count { it.kind == BulkInstallResultKind.Reinstalled }
+    val restored = results.count { it.kind == BulkInstallResultKind.Restored }
     val skipped = results.count { it.kind == BulkInstallResultKind.Skipped }
     val failed = results.count { it.kind == BulkInstallResultKind.Failed ||
         it.kind == BulkInstallResultKind.PartiallyInstalled }
@@ -732,6 +734,7 @@ private fun ResultCounters(results: List<BulkInstallResult>) {
                 reinstalled,
                 reinstalled,
             ),
+            pluralStringResource(R.plurals.bulk_install_restored_count, restored, restored),
             pluralStringResource(
                 R.plurals.bulk_install_skipped_result_count,
                 skipped,

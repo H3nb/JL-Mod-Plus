@@ -243,9 +243,12 @@ Current implementation evidence:
   `strings.xml` catalog for strings and plurals after Phase 3 physical
   consolidation, as do [Russian resources](../app/src/main/res/values-ru/strings.xml)
   and the other base locale catalogs. Structural resources and configuration-specific
-  overrides remain in their own files/configurations. Semantic copy quality,
-  translation completeness, and the known placeholder debt remain pending;
-  physical consolidation does not establish compliance with those contracts.
+  overrides remain in their own files/configurations. English and Indonesian have
+  been reviewed by semantic domain, and Indonesian covers the full translatable
+  source catalog. Retained legacy/dormant resources with unresolved context remain
+  subject to later review. Secondary-locale translation completion and the known
+  mapping-dialog placeholder debt remain pending; catalog coverage alone does not
+  establish semantic quality.
 - [SettingsActivity.buildLanguageOptions](../app/src/main/java/io/github/h3nb/jlmodplus/settings/SettingsActivity.java)
   reads `_generated_res_locale_config`; unavailable/unreadable metadata leaves
   the system-language option. This requires later runtime hardening.

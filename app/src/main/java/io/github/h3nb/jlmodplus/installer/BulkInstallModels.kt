@@ -113,6 +113,8 @@ enum class BulkInstallResultKind {
     Installed,
     Updated,
     Reinstalled,
+    /** Bundle payload restored without converting the already installed application again. */
+    Restored,
     Skipped,
     Failed,
     PartiallyInstalled,

@@ -141,7 +141,7 @@
     <string name="library_filter_recently_opened">Recently opened</string>
     <string name="library_filter_recently_added">Recently added</string>
     <string name="library_filter_favorites">Favorites</string>
-    <string name="library_favorite_coming_soon">Favorite (coming soon)</string>
+    <string name="library_favorite_coming_soon">Favorites unavailable</string>
     <string name="library_remove_favorite_coming_soon">Remove favorite (coming soon)</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">List</string>
@@ -484,8 +484,8 @@
     <string name="fps_overlay_label">FPS</string>
     <string name="PREF_WIDTH">Width</string>
     <string name="profiles">Profiles</string>
-    <string name="reinstall">App already installed.\n\nDo you want to reinstall it?\nAll data will be saved.</string>
-    <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s\nAll data will be saved.</string>
+    <string name="reinstall">This app is already installed. Reinstall it?</string>
+    <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s</string>
     <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nThe older version may not work correctly with the recorded data.</string>
     <string name="reset">Reset</string>
     <string name="RESET_LAYOUT_CMD">Reset Control Layout</string>
@@ -604,7 +604,7 @@
     <string name="installer_stage_wait">Waiting for another operation…</string>
     <string name="installer_stage_save">Saving application…</string>
     <string name="installer_failed_download">The application could not be downloaded. Check the connection and download link, then try again.</string>
-    <string name="installer_failed_storage">The working folder is unavailable or could not be written. Check storage access and free space, then try again.</string>
+    <string name="installer_failed_storage">Installation could not finish. Try again.</string>
     <string name="installer_failed_conversion">The application could not be converted. Check that the file is complete and supported, then try again.</string>
     <string name="installer_needs_recovery">Application files were saved, but the Library could not finish updating. Refresh the Library before trying again.</string>
     <string name="installer_refresh_library">Refresh Library</string>
@@ -767,8 +767,8 @@
         <item quantity="other">%1$d ready</item>
     </plurals>
     <plurals name="bulk_install_skipped_count">
-        <item quantity="one">%1$d skipped</item>
-        <item quantity="other">%1$d skipped</item>
+        <item quantity="one">Already installed or duplicate: %1$d</item>
+        <item quantity="other">Already installed or duplicate: %1$d</item>
     </plurals>
     <plurals name="bulk_install_attention_count">
         <item quantity="one">%1$d needs review</item>
@@ -807,8 +807,8 @@
         <item quantity="other">%1$d properties</item>
     </plurals>
     <plurals name="library_bulk_delete_confirmation">
-        <item quantity="one">Delete %1$d app? App files and catalog entries will be removed.</item>
-        <item quantity="other">Delete %1$d apps? App files and catalog entries will be removed.</item>
+        <item quantity="one">Delete %1$d app? App files, settings, save data, and catalog entries will be removed.</item>
+        <item quantity="other">Delete %1$d apps? App files, settings, save data, and catalog entries will be removed.</item>
     </plurals>
     <plurals name="library_bulk_delete_result">
         <item quantity="one">Deleted %1$d app; %2$d failed.</item>
@@ -823,7 +823,7 @@
     <string name="bulk_install_install_count">Install %1$d</string>
     <string name="bulk_install_cancel">Cancel</string>
     <string name="bulk_install_close">Close</string>
-    <string name="bulk_install_running">Installing %1$d / %2$d</string>
+    <string name="bulk_install_running">Processed %1$d of %2$d apps</string>
     <string name="bulk_install_cancel_requested">Stopping after the current application…</string>
     <string name="bulk_install_complete">Bulk Install Complete</string>
     <string name="bulk_install_cancelled">Bulk Install Stopped</string>
@@ -1188,4 +1188,14 @@
     <string name="diagnostic_reason_unknown">Unknown cause</string>
     <string name="crash_reports_delete_failed">Some selected diagnostic reports could not be deleted. Other reports may have been removed.</string>
     <string name="crash_reports_bundle_cleanup_failed">Diagnostic reports were deleted, but some generated bundles could not be removed.</string>
+    <string name="installer_existing_data_preserved">Existing settings and save data will be kept.</string>
+    <string name="bulk_install_library_changed">The Library changed after review. Close this batch and select the sources again.</string>
+    <string name="bulk_install_source_unavailable">A required source file is no longer available. Select the files again.</string>
+    <string name="bulk_install_source_changed">The source file changed after review. Select the files again.</string>
+    <string name="bulk_install_target_unverified">The reinstall target could not be verified. Close this batch and select the app again.</string>
+    <string name="bulk_install_result_restored">Restored</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">%1$d restored</item>
+        <item quantity="other">%1$d restored</item>
+    </plurals>
 </resources>
