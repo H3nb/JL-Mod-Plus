@@ -253,8 +253,11 @@ Current implementation evidence:
   `NEEDS_CONTEXT` set against current app-owned UI consumers: active copy now has
   an established role or evidence-backed wording, while unreferenced legacy
   declarations remain retained as dormant/dead-resource candidates until a separate
-  secondary-locale-safe cleanup. Secondary-locale translation completion and the
-  known mapping-dialog placeholder debt remain pending; catalog coverage alone does
+  secondary-locale-safe cleanup. English and Indonesian canonical semantics are
+  frozen for secondary-locale completion. Russian now covers the full translatable
+  source catalog and has completed semantic and language review, including
+  locale-appropriate plurals and the current no-argument mapping-dialog contract.
+  The remaining secondary locales are still incomplete; catalog coverage alone does
   not establish semantic quality.
 - [SettingsActivity.buildLanguageOptions](../app/src/main/java/io/github/h3nb/jlmodplus/settings/SettingsActivity.java)
   reads `_generated_res_locale_config`; unavailable/unreadable metadata leaves
