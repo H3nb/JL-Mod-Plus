@@ -165,6 +165,37 @@ public class AmbientColorFieldTest {
     }
 
     @Test
+    public void firstGuestActivationKeepsMatchingThemeTransitionContinuous() {
+        AmbientColorField field = new AmbientColorField();
+        field.configureNodes(new float[]{0.5f}, new float[]{0.5f},
+                0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
+        field.setBaseColor(0xFFFFFFFF, 0L, false);
+
+        float[] before = new float[AmbientColorField.GRID_CHANNEL_COUNT];
+        field.evaluate(AmbientColorField.TAU_NS, before);
+        assertTrue(field.isTransitioning());
+
+        field.setTarget(solidGrid(1.0f, 1.0f, 1.0f), AmbientColorField.TAU_NS, false);
+
+        float[] after = new float[AmbientColorField.GRID_CHANNEL_COUNT];
+        field.evaluate(AmbientColorField.TAU_NS, after);
+        assertTrue(field.isTransitioning());
+        assertEquals(before[0], after[0], 0.0001f);
+        assertEquals(before[1], after[1], 0.0001f);
+        assertEquals(before[2], after[2], 0.0001f);
+
+        // Guest ownership is active now, so later host-theme changes must not retarget the field.
+        field.setBaseColor(0xFF000000, AmbientColorField.TAU_NS, true);
+        field.evaluate(AmbientColorField.TAU_NS, after);
+        assertEquals(before[0], after[0], 0.0001f);
+
+        field.evaluate(AmbientColorField.TAU_NS + AmbientColorField.MAX_TRANSITION_NS, after);
+        assertEquals(1.0f, after[0], 0.01f);
+        assertEquals(1.0f, after[1], 0.01f);
+        assertEquals(1.0f, after[2], 0.01f);
+    }
+
+    @Test
     public void guestFieldDoesNotRetargetWhenHostThemeChanges() {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(new float[]{0.15f}, new float[]{0.5f},

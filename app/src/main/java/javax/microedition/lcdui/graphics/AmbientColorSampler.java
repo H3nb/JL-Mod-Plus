@@ -54,6 +54,10 @@ public final class AmbientColorSampler {
             gridPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
         }
         gridSource.set(0, 0, width, height);
+        // The reusable destination must not retain RGB/alpha from the previous guest frame.
+        // drawBitmap() uses source-over compositing, so a transparent source pixel would
+        // otherwise leave the old destination untouched and bypass the later theme fallback.
+        gridBitmap.eraseColor(0x00000000);
         gridCanvas.drawBitmap(bitmap, gridSource, gridDestination, gridPaint);
         return true;
     }

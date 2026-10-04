@@ -71,6 +71,32 @@ public class AmbientColorSamplerTest {
     }
 
     @Test
+    public void reusedSamplerDoesNotLeakOpaqueFrameIntoTransparentCapture() {
+        Bitmap opaque = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888);
+        opaque.eraseColor(0xFFFF0000);
+        Bitmap transparent = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888);
+        transparent.eraseColor(0x00000000);
+
+        AmbientColorSampler reused = new AmbientColorSampler();
+        assertTrue(reused.captureGrid(opaque, 4, 4));
+        float[] ignored = new float[AmbientColorField.GRID_CHANNEL_COUNT];
+        reused.toneCapturedGrid(0xFF000000, ignored);
+
+        assertTrue(reused.captureGrid(transparent, 4, 4));
+        float[] reusedResult = new float[AmbientColorField.GRID_CHANNEL_COUNT];
+        reused.toneCapturedGrid(0xFFFFFFFF, reusedResult);
+
+        AmbientColorSampler fresh = new AmbientColorSampler();
+        assertTrue(fresh.captureGrid(transparent, 4, 4));
+        float[] freshResult = new float[AmbientColorField.GRID_CHANNEL_COUNT];
+        fresh.toneCapturedGrid(0xFFFFFFFF, freshResult);
+
+        for (int i = 0; i < reusedResult.length; i++) {
+            assertEquals(freshResult[i], reusedResult[i], 0.0001f);
+        }
+    }
+
+    @Test
     public void samplesSpatialColorChangesAcrossTheFullFramePalette() {
         Bitmap bitmap = Bitmap.createBitmap(9, 9, Bitmap.Config.ARGB_8888);
         int[] pixels = new int[81];

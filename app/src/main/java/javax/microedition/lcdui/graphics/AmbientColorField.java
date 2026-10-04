@@ -113,10 +113,14 @@ public final class AmbientColorField {
             materiallyDifferent = Math.abs(fineTarget[i] - clamp01(newFine[i]))
                     > LINEAR_EPSILON;
         }
-        boolean activatingGuest = guestSample && !guestFieldActive;
-        if (!materiallyDifferent && !instant && !activatingGuest) return;
+        if (!materiallyDifferent && !instant) {
+            // Guest ownership is independent from temporal color state. If the first guest
+            // target already equals the existing target, keep any in-flight transition intact.
+            if (guestSample) guestFieldActive = true;
+            return;
+        }
 
-        if (instant || (!materiallyDifferent && activatingGuest)) {
+        if (instant) {
             copyClamped(newFine, fineStart);
             System.arraycopy(fineStart, 0, fineTarget, 0, fineStart.length);
             buildDiffusionFields(fineStart, mediumStart, wideStart);
