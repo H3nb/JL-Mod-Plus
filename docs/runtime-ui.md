@@ -91,10 +91,22 @@ non-Canvas Displayables.
 Immersive background is host presentation only; it does not modify the guest
 framebuffer, Java ME LCD geometry, input ownership, or MIDP lifecycle. The active
 guest frame is copied at most every 33 ms into a reusable 24×24 linear-light
-field. A blurred 8×8 broad field fills the available host surface, while the
-24×24 field contributes only a short-range edge-continuity boost around the LCD.
-Opaque guest colors are independent of the host theme; the theme remains a
-fallback before the first valid guest sample and for transparent guest pixels.
+field, with an 8×8 coarse field used only as distance-dependent diffusion.
+
+The guest LCD acts as a virtual rounded-rectangle light emitter while the actual
+LCD remains rectangular. Each host background node maps to the nearest emitter
+boundary point in physical host coordinates, samples slightly inward from that
+point, and blends from the 24×24 field toward the coarser field as physical
+distance from the LCD increases. This keeps the light extension radial and
+symmetric even when the LCD is not centered, without stretching the full guest
+frame across the host surface.
+
+Opaque guest colors remain independent of the host theme through most of the
+surface. The theme is the terminal light-falloff color only near the outer host
+boundary (and remains the fallback before the first valid guest sample or behind
+transparent guest pixels). The outer fade uses one physical width on all sides,
+so left/right/top/bottom behavior does not depend on the available margin around
+the LCD.
 
 Canvas and GLES use equivalent `AmbientColorField` instances fed from the
 same sampled target and host timestamp. Canvas rasterizes its field into a
