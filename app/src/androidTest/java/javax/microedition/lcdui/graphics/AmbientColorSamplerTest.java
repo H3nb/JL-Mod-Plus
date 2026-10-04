@@ -35,6 +35,24 @@ public class AmbientColorSamplerTest {
     }
 
     @Test
+    public void opaqueGridColorsDoNotFollowHostTheme() {
+        Bitmap bitmap = Bitmap.createBitmap(9, 9, Bitmap.Config.ARGB_8888);
+        bitmap.eraseColor(0xFF40A0E0);
+
+        AmbientColorSampler sampler = new AmbientColorSampler();
+        assertTrue(sampler.captureGrid(bitmap, 9, 9));
+
+        float[] darkTheme = new float[AmbientColorField.GRID_CHANNEL_COUNT];
+        float[] lightTheme = new float[AmbientColorField.GRID_CHANNEL_COUNT];
+        sampler.toneCapturedGrid(0xFF000000, darkTheme);
+        sampler.toneCapturedGrid(0xFFFFFFFF, lightTheme);
+
+        for (int i = 0; i < AmbientColorField.GRID_CHANNEL_COUNT; i++) {
+            assertEquals(darkTheme[i], lightTheme[i], 0.0001f);
+        }
+    }
+
+    @Test
     public void samplesSpatialColorChangesAcrossTheFullFramePalette() {
         Bitmap bitmap = Bitmap.createBitmap(9, 9, Bitmap.Config.ARGB_8888);
         int[] pixels = new int[81];
