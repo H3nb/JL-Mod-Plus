@@ -358,39 +358,29 @@ authoritative. Runtime correctness must not depend on a model, provider, API, or
 orchestration mode.
 
 Choose review roles by task requirements rather than model names or capability
-tiers. One capable reviewer may cover multiple roles; split work only when doing
-so creates a clear, bounded handoff.
+tiers. One capable reviewer may cover multiple roles; split work only when a
+bounded handoff materially improves the task.
 
 | Role | Responsibility |
 | --- | --- |
 | Semantic reviewer | Resolve ambiguous or high-impact meaning from implementation/specification evidence; trace state/lifecycle/IPC-sensitive claims; decide whether source semantics or parameter contracts change; review difficult canonical-copy decisions. |
-| Bounded batch assistant | Perform deterministic inventory/extraction, mechanical classification, repeated terminology checks, structured candidate batches, and straightforward translations only after the semantic contract is established. Do not guess unresolved backend behavior; return uncertainty to semantic review. |
+| Bounded batch assistant | Perform deterministic inventory/extraction, mechanical classification, repeated terminology checks, structured candidate batches, and straightforward translations after the semantic contract is established. Do not guess unresolved backend behavior; return uncertainty to semantic review. |
 | Language reviewer | Judge target-language correctness, naturalness, terminology, and plural/grammar behavior without changing established product meaning. Use `NEEDS_LANGUAGE_REVIEW` when competent language judgment is unavailable. |
 
-For each scoped review:
-
-1. Start from the task goal, relevant contracts and evidence, constraints,
-   required outputs, and success criteria. Load only context that can change the
-   decision.
-2. Separate semantic judgment from mechanical or batch work. Prefer deterministic
-   tooling for inventory and validation; use review judgment where evidence must
-   be interpreted.
-3. Increase review depth only when ambiguity, compatibility/data risk, or
-   user-visible impact justifies it. Do not require a fixed number of reviewers,
-   passes, or reasoning levels.
-4. When parallel reviewers are useful, give them non-overlapping bounded scopes
-   and one explicit handoff. Final integration reconciles conflicts against
-   evidence rather than by vote or model prestige.
-5. Record concise verdicts and supporting evidence, not hidden reasoning traces.
-   Revisit affected locale renderings whenever source meaning, UI role, resource
-   type, or parameter contract changes.
+Establish semantics from relevant evidence before batch work. Prefer deterministic
+tooling for inventory and validation. Increase review depth only for concrete
+ambiguity or risk; do not require a fixed number of reviewers or passes. If work
+is parallelized, keep scopes non-overlapping and define one explicit handoff;
+reconcile conflicts against evidence rather than reviewer identity. Record concise
+verdicts and supporting evidence, and revisit affected locale renderings whenever
+source meaning, UI role, resource type, or parameter contracts change.
 
 Execution-specific model, provider, reasoning-effort, or tool choices belong in
 transient task handoffs rather than this repository contract. They may change
 without documentation edits as long as the roles, evidence requirements, and
 acceptance criteria above are preserved.
 
-Proposed review vocabulary for later phases:
+Review vocabulary:
 
 | Audit | Verdict | Meaning |
 | --- | --- | --- |
@@ -403,7 +393,6 @@ Proposed review vocabulary for later phases:
 | Localization | `SEMANTIC_MISMATCH` | Rendering changes or omits a user-relevant meaning or argument contract. |
 | Localization | `NEEDS_LANGUAGE_REVIEW` | Target-language correctness/naturalness cannot be confidently judged; defer acceptance to a competent language reviewer. |
 
-These are workflow labels, not runtime resource metadata. Subsequent scoped
-phases cover inventory, consolidation, semantic English/Indonesian audit,
-translation completion, locale-runtime hardening, and CI enforcement. Phase 1
-establishes their shared contract without implementing those phases.
+These are workflow labels, not runtime resource metadata. Use them when an
+explicit audit record is useful; they do not require an audit database, fixed
+review sequence, or AI integration.
