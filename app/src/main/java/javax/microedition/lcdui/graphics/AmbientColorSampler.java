@@ -18,7 +18,6 @@ public final class AmbientColorSampler {
     public static final int GRID_SIZE = AmbientColorField.GRID_SIZE;
     public static final int GRID_COLOR_COUNT = AmbientColorField.GRID_COLOR_COUNT;
     private static final float INSET = 0.03f;
-    private static final float GRID_SAMPLE_MIX = 0.90f;
     private static final float GRID_LUMINANCE_CAP = 0.45f;
     private static final float[] SRGB_TO_LINEAR = new float[256];
     private static final float[] LINEAR_TO_SRGB = new float[4097];
@@ -165,9 +164,6 @@ public final class AmbientColorSampler {
             float r = SRGB_TO_LINEAR[(pixel >>> 16) & 0xFF] * alpha + baseR * inverseAlpha;
             float g = SRGB_TO_LINEAR[(pixel >>> 8) & 0xFF] * alpha + baseG * inverseAlpha;
             float b = SRGB_TO_LINEAR[pixel & 0xFF] * alpha + baseB * inverseAlpha;
-            r = r * GRID_SAMPLE_MIX + baseR * (1.0f - GRID_SAMPLE_MIX);
-            g = g * GRID_SAMPLE_MIX + baseG * (1.0f - GRID_SAMPLE_MIX);
-            b = b * GRID_SAMPLE_MIX + baseB * (1.0f - GRID_SAMPLE_MIX);
             float luminance = 0.2126f * r + 0.7152f * g + 0.0722f * b;
             float cap = GRID_LUMINANCE_CAP / Math.max(luminance, 1.0e-6f);
             if (cap < 1.0f) {
