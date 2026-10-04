@@ -11,24 +11,59 @@ import java.io.File
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import io.github.h3nb.jlmodplus.R
 
 class BulkInstallModelsTest {
     @Test
-    fun sharedConflictStatusKeepsDistinctPresentationReasons() {
-        val first = BulkInstallReviewReason.ConflictingJads
-        val second = BulkInstallReviewReason.SameVersionConflict
-        assertEquals(R.string.bulk_install_reason_conflicting_jads, bulkInstallReviewReasonResource(first))
-        assertEquals(R.string.bulk_install_reason_version_conflict, bulkInstallReviewReasonResource(second))
-        assertNotEquals(bulkInstallReviewReasonResource(first), bulkInstallReviewReasonResource(second))
+    fun sharedConflictStatusKeepsDistinctStructuredResultReasons() {
+        val first = BulkInstallResult("item", "Demo", BulkInstallResultKind.Failed,
+            reviewReason = BulkInstallReviewReason.ConflictingJads)
+        val second = first.copy(reviewReason = BulkInstallReviewReason.SameVersionConflict)
+        assertNotEquals(first.reviewReason, second.reviewReason)
+        assertEquals(first.kind, second.kind)
+        assertNull(first.detail)
+        assertNull(second.detail)
     }
 
     @Test
-    fun exactReinstallReviewKeepsItsExistingMissingSourceExplanation() {
-        assertEquals(R.string.bulk_install_reinstall_source_missing,
-            bulkInstallReviewReasonResource(BulkInstallReviewReason.RetainedReinstallSourceMissing))
+    fun exactReinstallReviewRetainsItsReasonWithoutLocalizedDetail() {
+        val result = BulkInstallResult("item", "Demo", BulkInstallResultKind.Failed,
+            reviewReason = BulkInstallReviewReason.RetainedReinstallSourceMissing)
+        assertEquals(BulkInstallReviewReason.RetainedReinstallSourceMissing, result.reviewReason)
+        assertNull(result.detail)
+    }
+
+    @Test
+    fun sourceErrorFallbackUsesSemanticStatusRatherThanDiagnosticEvidence() {
+        val source = File("source.jar")
+        val unit = BulkSourceUnit("item", BulkSourceOrigin.ExplicitSelection, BulkSourceKind.JarOnly,
+            source, listOf(source), jarFile = source)
+        val item = BulkInstallItem("item", unit, "Demo", "Vendor", "1.0",
+            status = BulkInstallStatus.SourceError, action = BulkInstallAction.Skip, selected = false)
+        assertEquals(BulkInstallReviewReason.SourceError, item.effectiveReviewReason)
+        val diagnostic = item.copy(diagnosticDetail = "raw-parser-evidence")
+        val result = BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed,
+            reviewReason = diagnostic.effectiveReviewReason)
+        assertEquals(BulkInstallReviewReason.SourceError, result.reviewReason)
+        assertNull(result.detail)
+        assertEquals("raw-parser-evidence", diagnostic.diagnosticDetail)
+        val specific = BulkInstallReviewReason.ReferencedJarMissing("original/reference.jar")
+        assertSame(specific, diagnostic.copy(reviewReason = specific).effectiveReviewReason)
+        assertNull(diagnostic.copy(status = BulkInstallStatus.Duplicate).effectiveReviewReason)
+    }
+
+    @Test
+    fun ambiguousMatchRetainsExactCountThroughStructuredResults() {
+        listOf(2, 5).forEach { count ->
+            val reason = BulkInstallReviewReason.AmbiguousInstalledMatch(count)
+            val result = BulkInstallResult("item", "Demo", BulkInstallResultKind.Failed, reviewReason = reason)
+            assertSame(reason, result.reviewReason)
+            assertEquals(count, (result.reviewReason as BulkInstallReviewReason.AmbiguousInstalledMatch).matchCount)
+            assertNull(result.detail)
+        }
     }
 
     @Test

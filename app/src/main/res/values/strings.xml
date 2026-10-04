@@ -1199,7 +1199,10 @@
         <item quantity="one">%1$d restored</item>
         <item quantity="other">%1$d restored</item>
     </plurals>
-    <string name="bulk_install_reason_ambiguous_match">%1$d installed apps match this source.</string>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">%1$d installed app matches this source.</item>
+        <item quantity="other">%1$d installed apps match this source.</item>
+    </plurals>
     <string name="bulk_install_reason_jad_jar_mismatch">The JAD and JAR identify different apps.</string>
     <string name="bulk_install_reason_conflicting_jads">JAD files with different attributes reference the same JAR.</string>
     <string name="bulk_install_reason_remote_jar">Bulk Install cannot download remote JAR files.</string>

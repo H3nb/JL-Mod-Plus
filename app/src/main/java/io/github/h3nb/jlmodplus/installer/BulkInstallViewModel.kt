@@ -352,11 +352,8 @@ class BulkInstallViewModel : ViewModel() {
         val selected = plan.items.filter { it.selected && it.action != BulkInstallAction.Skip }
         if (selected.isEmpty()) {
             val failures = plan.items.mapNotNull { item ->
-                val resources = library.getApplication<Application>().resources
-                val explanation = item.reviewReason?.let { bulkInstallReviewReasonText(resources, it) }
-                    ?: item.diagnosticDetail?.let { resources.getString(R.string.bulk_install_reason_source_error) }
-                explanation?.let { detail ->
-                    BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
+                item.effectiveReviewReason?.let { reason ->
+                    BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, reviewReason = reason)
                 }
             }
             mutableState.value = State.Finished(plan, failures, cancelled = false)

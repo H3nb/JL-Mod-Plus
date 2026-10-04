@@ -55,6 +55,7 @@ sealed interface BulkInstallReviewReason {
     data object DuplicateBatchSource : BulkInstallReviewReason
     data object SameVersionConflict : BulkInstallReviewReason
     data object OlderBatchCandidate : BulkInstallReviewReason
+    data object SourceError : BulkInstallReviewReason
     /** Existing exact-identity reinstall review, rather than discovery of a selected source. */
     data object RetainedReinstallSourceMissing : BulkInstallReviewReason
 }
@@ -100,6 +101,12 @@ data class BulkInstallItem(
     val restoreAppId: Long? = null,
     val restoreStorageKey: String? = null,
 ) {
+    /** Specific review semantics take precedence; diagnostics never supply the explanation. */
+    val effectiveReviewReason: BulkInstallReviewReason?
+        get() = reviewReason ?: if (status == BulkInstallStatus.SourceError) {
+            BulkInstallReviewReason.SourceError
+        } else null
+
     val installable: Boolean
         get() = when (status) {
             BulkInstallStatus.New,
@@ -149,4 +156,6 @@ data class BulkInstallResult(
     val detail: String? = null,
     val installedAppId: Long? = null,
     val installedStorageKey: String? = null,
+    /** Review/preflight failures stay structured until app-owned presentation. */
+    val reviewReason: BulkInstallReviewReason? = null,
 )

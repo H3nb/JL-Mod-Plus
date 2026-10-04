@@ -542,11 +542,9 @@ private fun BulkItemRow(item: BulkInstallItem, onToggle: (String) -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            val reviewText = item.reviewReason?.let {
+            val reviewText = item.effectiveReviewReason?.let {
                 bulkInstallReviewReasonText(LocalResources.current, it)
-            } ?: if (item.status == BulkInstallStatus.SourceError) {
-                stringResource(R.string.bulk_install_reason_source_error)
-            } else null
+            }
             reviewText?.let {
                 Text(
                     it,
@@ -666,7 +664,10 @@ private fun FinishedContent(
                         color = if (result.kind == BulkInstallResultKind.Failed ||
                             result.kind == BulkInstallResultKind.PartiallyInstalled)
                             MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
-                    result.detail?.let {
+                    val detail = result.reviewReason?.let {
+                        bulkInstallReviewReasonText(LocalResources.current, it)
+                    } ?: result.detail
+                    detail?.let {
                         Text(it, style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }

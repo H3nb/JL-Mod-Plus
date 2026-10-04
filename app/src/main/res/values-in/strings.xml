@@ -1130,7 +1130,9 @@
     <plurals name="bulk_install_restored_count">
         <item quantity="other">%1$d dipulihkan</item>
     </plurals>
-    <string name="bulk_install_reason_ambiguous_match">%1$d aplikasi terinstal cocok dengan sumber ini.</string>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="other">%1$d aplikasi terinstal cocok dengan sumber ini.</item>
+    </plurals>
     <string name="bulk_install_reason_jad_jar_mismatch">JAD dan JAR mengidentifikasi aplikasi yang berbeda.</string>
     <string name="bulk_install_reason_conflicting_jads">Berkas JAD dengan atribut berbeda merujuk ke JAR yang sama.</string>
     <string name="bulk_install_reason_remote_jar">Pemasangan massal tidak dapat mengunduh berkas JAR dari URL jarak jauh.</string>
