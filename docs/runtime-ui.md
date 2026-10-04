@@ -118,9 +118,10 @@ LCD rectangle is drawn separately and remains untouched. Ambient host redraws ma
 continue while the field is transitioning, but they do not create guest
 publications or change the canonical presentation-mailbox sequence.
 
-Sampling and temporal animation stop at the existing visibility/surface
-boundaries, and active-backend geometry is rebuilt from the current host surface
-and guest LCD rectangle after size/orientation changes. Keep future Immersive work
+Sampling and ambient host-redraw scheduling stop at the existing
+visibility/surface boundaries; temporal field state is evaluated against the
+monotonic host clock when presentation resumes. Active-backend geometry is rebuilt
+from the current host surface and guest LCD rectangle after size/orientation changes. Keep future Immersive work
 renderer agnostic unless profiling demonstrates a concrete reason for
 backend-specific behavior.
 
