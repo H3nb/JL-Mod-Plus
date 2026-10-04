@@ -96,12 +96,12 @@ field. A blurred 8×8 broad field fills the available host surface, while the
 Opaque guest colors are independent of the host theme; the theme remains a
 fallback before the first valid guest sample and for transparent guest pixels.
 
-Canvas and GLES consume the same `AmbientColorField` state and temporal
-transition. Canvas rasterizes that field into its reusable small bitmap; GLES
-interpolates the same field over its ambient mesh. The guest LCD rectangle is
-drawn separately and remains untouched. Ambient host redraws may continue while
-the field is transitioning, but they do not create guest publications or change
-the canonical presentation-mailbox sequence.
+Canvas and GLES use equivalent `AmbientColorField` instances fed from the
+same sampled target and host timestamp. Canvas rasterizes its field into a
+reusable small bitmap; GLES interpolates its field over the ambient mesh. The
+guest LCD rectangle is drawn separately and remains untouched. Ambient host
+redraws may continue while the field is transitioning, but they do not create
+guest publications or change the canonical presentation-mailbox sequence.
 
 Sampling and temporal animation stop at the existing visibility/surface
 boundaries, and geometry is rebuilt from the current host surface and guest LCD
