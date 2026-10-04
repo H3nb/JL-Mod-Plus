@@ -373,7 +373,8 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 		if (state < PREFETCHED) {
 			return TIME_UNKNOWN;
 		} else {
-			return player.getDuration() * 1000L;
+			int duration = player.getDuration();
+			return duration < 0 ? TIME_UNKNOWN : duration * 1000L;
 		}
 	}
 

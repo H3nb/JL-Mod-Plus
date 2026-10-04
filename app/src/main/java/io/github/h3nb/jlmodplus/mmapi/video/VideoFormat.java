@@ -72,13 +72,13 @@ public final class VideoFormat {
                     throw new MediaException("Video container exceeds 16 tracks");
                 int selected = -1;
                 MediaFormat video = null;
-                boolean audio = false;
+                int audioTracks = 0;
                 long duration = 0;
                 for (int i = 0; i < extractor.getTrackCount(); ++i) {
                     MediaFormat format = extractor.getTrackFormat(i);
                     String mime = format.getString(MediaFormat.KEY_MIME);
                     if (mime == null) throw new MediaException("Container track has no MIME");
-                    audio |= mime.startsWith("audio/");
+                    if (mime.startsWith("audio/")) ++audioTracks;
                     if (mime.startsWith("audio/") || mime.startsWith("video/"))
                         duration =
                                 VideoTimeline.duration(
@@ -94,6 +94,8 @@ public final class VideoFormat {
                     }
                 }
                 if (video == null) return null; // Audio-only MP4 remains on the PCM path.
+                if (audioTracks > 1)
+                    throw new MediaException("Multiple audio tracks in video are unsupported");
                 String mime = video.getString(MediaFormat.KEY_MIME);
                 if (!"video/mp4v-es".equals(mime)
                         && !"video/3gpp".equals(mime)
@@ -140,7 +142,7 @@ public final class VideoFormat {
                         decoder,
                         video,
                         selected,
-                        audio,
+                        audioTracks == 1,
                         duration,
                         (brand >>> 8) == 0x336770 ? "video/3gpp" : "video/mp4");
             } finally {

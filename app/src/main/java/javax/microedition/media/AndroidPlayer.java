@@ -61,7 +61,7 @@ public class AndroidPlayer extends MediaPlayer {
 		if (loaded) {
 			return super.getDuration();
 		} else {
-			return 0;
+			return -1;
 		}
 	}
 

@@ -113,9 +113,11 @@ U8 WAV at 16 kHz into an owned empty temporary file; the source publishes that
 file only after complete decoding, resampler drain and successful output close.
 Unsupported/non-ADPCM input or conversion failure retains the original source
 and deletes the unused temporary output. Conversion limits input and output to
-64 MiB, channels to two, and work to ten seconds. The MMMD input cache otherwise
-retains its existing policy. There is no second sampled output or whole-file PCM
-conversion for the retained formats in the shared mixer. Recipe, pins, ABI and
+64 MiB, channels to two, and work to ten seconds. The Java input cache applies
+the same 64 MiB bound to MMMD and every other cached format before conversion.
+Legacy duration is `TIME_UNKNOWN` until Android has loaded the media on start.
+There is no second sampled output or whole-file PCM conversion for the retained
+formats in the shared mixer. Recipe, pins, ABI and
 license details are in
 [the dependency instructions](../tools/audio/README.md).
 
@@ -146,9 +148,10 @@ looping.
 
 Cached ISO-BMFF input with a video track uses `VideoLibrary` subresources under
 the same `AudioPlayer`. MediaExtractor/MediaCodec decode MPEG-4 Part 2, H.263 or
-H.264 when the device supports the actual format. One video track, up to sixteen
-container tracks, 1920x1080 pictures and bounded codec configuration are accepted;
-the existing 64 MiB cache limit still applies. Unsupported video fails explicitly.
+H.264 when the device supports the actual format. One video track, zero or one
+audio track, up to sixteen container tracks, 1920x1080 pictures and bounded codec
+configuration are accepted; the existing 64 MiB cache limit still applies.
+Unsupported video fails explicitly.
 Audio-only MP4 remains sampled audio. Capture, recording, DRM and snapshots are
 outside this file-playback path; `getSnapshot` throws `MediaException` after its
 normal initialization checks.

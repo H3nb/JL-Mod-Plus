@@ -45,23 +45,18 @@ class InternalDataSource extends FileCacheDataSource {
 		try (RandomAccessFile raf = new RandomAccessFile(mediaFile, "rw")) {
 			byte[] buf = new byte[4096];
 			int read;
-            long cached = 0;
-            boolean legacySmaf = false;
-            int prefix = 0, prefixBytes = 0;
+			long cached = 0;
 			while ((read = stream.read(buf)) != -1) {
-                for (int i = 0; i < read && prefixBytes < 4; ++i) {
-                    prefix = (prefix << 8) | (buf[i] & 255); ++prefixBytes;
-                }
-                if (prefixBytes == 4) legacySmaf = prefix == 0x4d4d4d44;
-                if (!legacySmaf && cached + Math.max(1, read) > 64L * 1024 * 1024)
-                    throw new IOException("Audio cache exceeds 64 MiB");
 				if (read == 0) {
 					int single = stream.read();
 					if (single == -1) break;
-					if (prefixBytes < 4) { prefix = (prefix << 8) | single; ++prefixBytes; }
-                    if (prefixBytes == 4) legacySmaf = prefix == 0x4d4d4d44;
-                    raf.write(single); cached++;
-				} else { raf.write(buf, 0, read); cached += read; }
+					buf[0] = (byte) single;
+					read = 1;
+				}
+				if (cached + read > 64L * 1024 * 1024)
+					throw new IOException("Audio cache exceeds 64 MiB");
+				raf.write(buf, 0, read);
+				cached += read;
 			}
 		} catch (IOException | RuntimeException | Error e) {
 			Log.d(TAG, "Media pipe failure: " + e);
