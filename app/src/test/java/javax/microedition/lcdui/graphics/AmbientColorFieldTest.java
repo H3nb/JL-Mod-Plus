@@ -15,12 +15,13 @@ import org.junit.Test;
 
 public class AmbientColorFieldTest {
     @Test
-    public void weightsRemainFiniteForSmallAndDegenerateGeometry() {
+    public void geometryRemainsFiniteForSmallAndDegenerateInputs() {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(
                 new float[]{Float.NaN, 0.5f, 1.0f},
                 new float[]{Float.POSITIVE_INFINITY, 0.5f, -1.0f},
                 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+        field.setTarget(solidGrid(0.2f, 0.4f, 0.8f), 0L, true);
 
         float[] output = new float[9];
         assertEquals(3, field.nodeCount());
@@ -36,49 +37,20 @@ public class AmbientColorFieldTest {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(new float[]{0.5f}, new float[]{0.5f},
                 0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
-        int[] red = new int[AmbientColorField.ANCHOR_COUNT];
-        for (int i = 0; i < red.length; i++) red[i] = 0xFFFF0000;
-        field.setTarget(red, 0xFF000000, 0L, false);
+        field.setTarget(solidGrid(1.0f, 0.0f, 0.0f), 0L, false);
 
-        float[] anchors = new float[AmbientColorField.ANCHOR_COUNT
-                * AmbientColorField.CHANNEL_COUNT];
-        float[] base = new float[AmbientColorField.CHANNEL_COUNT];
-        field.evaluate(AmbientColorField.TAU_NS, anchors, base);
-        assertEquals(1.0 - Math.exp(-1.0), anchors[0], 0.02);
-        assertTrue(anchors[0] > 0.5f);
-        assertTrue(anchors[1] < 0.01f);
+        float[] evaluated = new float[AmbientColorField.GRID_CHANNEL_COUNT];
+        field.evaluate(AmbientColorField.TAU_NS, evaluated);
+        assertEquals(1.0 - Math.exp(-1.0), evaluated[0], 0.02);
+        assertTrue(evaluated[0] > 0.5f);
+        assertTrue(evaluated[1] < 0.01f);
 
-        int[] blue = new int[AmbientColorField.ANCHOR_COUNT];
-        for (int i = 0; i < blue.length; i++) blue[i] = 0xFF0000FF;
-        field.setTarget(blue, 0xFF000000, AmbientColorField.TAU_NS, false);
-        field.evaluate(AmbientColorField.TAU_NS, anchors, base);
-        assertTrue(anchors[0] > 0.5f);
-        field.evaluate(AmbientColorField.TAU_NS + AmbientColorField.MAX_TRANSITION_NS,
-                anchors, base);
-        assertEquals(0.0f, anchors[0], 0.01f);
-        assertEquals(1.0f, anchors[2], 0.01f);
-    }
-
-    @Test
-    public void edgeBleedFollowsGameBoundaryBeforeFadingToSurfaceField() {
-        AmbientColorField field = new AmbientColorField();
-        field.configureNodes(
-                new float[]{0.5f, 0.5f, 0.5f},
-                new float[]{0.25f, 0.34f, 0.50f},
-                0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
-        int[] anchors = new int[AmbientColorField.ANCHOR_COUNT];
-        for (int i = 0; i < anchors.length; i++) anchors[i] = 0xFF0000FF;
-        anchors[0] = anchors[1] = anchors[2] = 0xFFFF0000;
-        field.setTarget(anchors, 0xFF000000, 0L, true);
-
-        float[] output = new float[9];
-        field.renderNodes(0L, output);
-        assertTrue(output[0] > 0.95f);
-        assertTrue(output[3] < output[0]);
-        assertTrue(output[3] > 0.5f);
-        assertTrue(output[6] < output[0]);
-        assertTrue(output[1] < 0.05f);
-        assertTrue(output[2] < 0.05f);
+        field.setTarget(solidGrid(0.0f, 0.0f, 1.0f), AmbientColorField.TAU_NS, false);
+        field.evaluate(AmbientColorField.TAU_NS, evaluated);
+        assertTrue(evaluated[0] > 0.5f);
+        field.evaluate(AmbientColorField.TAU_NS + AmbientColorField.MAX_TRANSITION_NS, evaluated);
+        assertEquals(0.0f, evaluated[0], 0.01f);
+        assertEquals(1.0f, evaluated[2], 0.01f);
     }
 
     @Test
@@ -96,7 +68,7 @@ public class AmbientColorFieldTest {
                 }
             }
         }
-        field.setTargetGrid(grid, 0xFF000000, 0L, true);
+        field.setTarget(grid, 0L, true);
 
         float[] output = new float[2 * AmbientColorField.CHANNEL_COUNT];
         assertFalse(field.renderNodes(0L, output));
@@ -120,7 +92,7 @@ public class AmbientColorFieldTest {
                 }
             }
         }
-        field.setTargetGrid(grid, 0xFF000000, 0L, true);
+        field.setTarget(grid, 0L, true);
 
         float[] output = new float[3 * AmbientColorField.CHANNEL_COUNT];
         assertFalse(field.renderNodes(0L, output));
@@ -135,12 +107,10 @@ public class AmbientColorFieldTest {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(new float[]{0.5f}, new float[]{0.5f},
                 0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
-        float[] white = solidGrid(1.0f, 1.0f, 1.0f);
-        field.setTargetGrid(white, 0xFF000000, 0L, false);
+        field.setTarget(solidGrid(1.0f, 1.0f, 1.0f), 0L, false);
 
         float[] evaluated = new float[AmbientColorField.GRID_CHANNEL_COUNT];
-        float[] base = new float[AmbientColorField.CHANNEL_COUNT];
-        field.evaluateGrid(AmbientColorField.TAU_NS, evaluated, base);
+        field.evaluate(AmbientColorField.TAU_NS, evaluated);
         float expectedLinear = (float) (1.0 - Math.exp(-1.0));
         assertEquals(expectedLinear, evaluated[0], 0.02f);
 
@@ -153,11 +123,39 @@ public class AmbientColorFieldTest {
     }
 
     @Test
-    public void activeGridDoesNotRetargetWhenHostThemeChanges() {
+    public void retargetDuringTransitionPreservesDiffusedOutput() {
+        AmbientColorField field = new AmbientColorField();
+        field.configureNodes(new float[]{0.0f}, new float[]{0.50f},
+                0.30f, 0.30f, 0.70f, 0.70f, 1.0f);
+        float[] split = new float[AmbientColorField.GRID_CHANNEL_COUNT];
+        for (int y = 0; y < AmbientColorField.GRID_SIZE; y++) {
+            for (int x = 0; x < AmbientColorField.GRID_SIZE; x++) {
+                if (y < AmbientColorField.GRID_SIZE / 2) {
+                    setGridColor(split, x, y, 1.0f, 0.0f, 0.0f);
+                } else {
+                    setGridColor(split, x, y, 0.0f, 0.0f, 1.0f);
+                }
+            }
+        }
+        field.setTarget(split, 0L, false);
+
+        float[] before = new float[AmbientColorField.CHANNEL_COUNT];
+        field.renderNodes(AmbientColorField.TAU_NS, before);
+        field.setTarget(solidGrid(0.0f, 1.0f, 0.0f), AmbientColorField.TAU_NS, false);
+        float[] after = new float[AmbientColorField.CHANNEL_COUNT];
+        field.renderNodes(AmbientColorField.TAU_NS, after);
+
+        assertEquals(before[0], after[0], 0.0001f);
+        assertEquals(before[1], after[1], 0.0001f);
+        assertEquals(before[2], after[2], 0.0001f);
+    }
+
+    @Test
+    public void guestFieldDoesNotRetargetWhenHostThemeChanges() {
         AmbientColorField field = new AmbientColorField();
         field.configureNodes(new float[]{0.15f}, new float[]{0.5f},
                 0.25f, 0.25f, 0.75f, 0.75f, 1.0f);
-        field.setTargetGrid(solidGrid(1.0f, 0.0f, 0.0f), 0xFF000000, 0L, true);
+        field.setTarget(solidGrid(1.0f, 0.0f, 0.0f), 0L, true);
 
         float[] before = new float[AmbientColorField.CHANNEL_COUNT];
         field.renderNodes(0L, before);
@@ -174,6 +172,8 @@ public class AmbientColorFieldTest {
     public void guestDerivedExtensionDoesNotFadeToHostThemeAtSurfaceEdge() {
         AmbientColorField darkThemeField = new AmbientColorField();
         AmbientColorField lightThemeField = new AmbientColorField();
+        darkThemeField.resetToBase(0xFF000000);
+        lightThemeField.resetToBase(0xFFFFFFFF);
         float[] nodeX = {0.0f, 1.0f, 0.5f, 0.5f};
         float[] nodeY = {0.5f, 0.5f, 0.0f, 1.0f};
         darkThemeField.configureNodes(nodeX, nodeY,
@@ -181,8 +181,8 @@ public class AmbientColorFieldTest {
         lightThemeField.configureNodes(nodeX, nodeY,
                 0.30f, 0.30f, 0.70f, 0.70f, 1.0f);
         float[] red = solidGrid(1.0f, 0.0f, 0.0f);
-        darkThemeField.setTargetGrid(red, 0xFF000000, 0L, true);
-        lightThemeField.setTargetGrid(red, 0xFFFFFFFF, 0L, true);
+        darkThemeField.setTarget(red, 0L, true);
+        lightThemeField.setTarget(red, 0L, true);
 
         float[] darkOutput = new float[4 * AmbientColorField.CHANNEL_COUNT];
         float[] lightOutput = new float[4 * AmbientColorField.CHANNEL_COUNT];
@@ -211,7 +211,7 @@ public class AmbientColorFieldTest {
                 setGridColor(grid, x, y, 0.0f, 0.0f, 1.0f);
             }
         }
-        field.setTargetGrid(grid, 0xFF000000, 0L, true);
+        field.setTarget(grid, 0L, true);
 
         float[] output = new float[AmbientColorField.CHANNEL_COUNT];
         field.renderNodes(0L, output);
@@ -231,7 +231,7 @@ public class AmbientColorFieldTest {
                 setGridColor(grid, x, y, 0.0f, 0.0f, 1.0f);
             }
         }
-        field.setTargetGrid(grid, 0xFF000000, 0L, true);
+        field.setTarget(grid, 0L, true);
 
         float[] output = new float[2 * AmbientColorField.CHANNEL_COUNT];
         field.renderNodes(0L, output);
@@ -259,7 +259,7 @@ public class AmbientColorFieldTest {
                 }
             }
         }
-        field.setTargetGrid(grid, 0xFF000000, 0L, true);
+        field.setTarget(grid, 0L, true);
 
         float[] output = new float[2 * AmbientColorField.CHANNEL_COUNT];
         field.renderNodes(0L, output);
@@ -283,7 +283,7 @@ public class AmbientColorFieldTest {
                 setGridColor(grid, x, y, r, g, b);
             }
         }
-        field.setTargetGrid(grid, 0xFF000000, 0L, true);
+        field.setTarget(grid, 0L, true);
 
         float[] output = new float[4 * AmbientColorField.CHANNEL_COUNT];
         field.renderNodes(0L, output);
