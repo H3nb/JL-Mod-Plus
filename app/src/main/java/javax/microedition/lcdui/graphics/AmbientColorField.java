@@ -17,7 +17,7 @@ public final class AmbientColorField {
     private static final int BROAD_GRID_SIZE = 8;
     private static final int BROAD_GRID_CHANNEL_COUNT =
             BROAD_GRID_SIZE * BROAD_GRID_SIZE * CHANNEL_COUNT;
-    /** Compensates a little for chroma lost through blur/downsampling without changing luminance. */
+    /** Compensates a little for chroma lost through blur/downsampling around linear luminance. */
     private static final float BROAD_CHROMA_GAIN = 1.08f;
     /** Matches the host presentation cadence so animated midlets feel live. */
     public static final long SAMPLE_INTERVAL_NS = 33_333_333L;
