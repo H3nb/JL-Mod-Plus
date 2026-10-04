@@ -161,9 +161,7 @@ public final class AmbientColorField {
         float baseR = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 16) & 0xFF);
         float baseG = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 8) & 0xFF);
         float baseB = AmbientColorSampler.srgbChannelToLinear(baseArgb & 0xFF);
-        boolean materiallyDifferent = Math.max(
-                Math.max(Math.abs(targetBase[0] - baseR), Math.abs(targetBase[1] - baseG)),
-                Math.abs(targetBase[2] - baseB)) > LINEAR_EPSILON;
+        boolean materiallyDifferent = false;
         for (int i = 0; i < GRID_CHANNEL_COUNT && !materiallyDifferent; i++) {
             materiallyDifferent = Math.abs(gridTarget[i] - clamp01(blurredGrid[i]))
                     > LINEAR_EPSILON;
@@ -195,14 +193,18 @@ public final class AmbientColorField {
 
     /** Retargets only the host base while preserving the sampled game colors. */
     public void setBaseColor(int baseArgb, long nowNs, boolean instant) {
-        if (gridMode) {
-            evaluateGrid(nowNs, evaluationGrid, evaluationBase);
-        } else {
-            evaluate(nowNs, evaluationAnchors, evaluationBase);
-        }
         float r = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 16) & 0xFF);
         float g = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 8) & 0xFF);
         float b = AmbientColorSampler.srgbChannelToLinear(baseArgb & 0xFF);
+        if (gridMode) {
+            // Once a guest-derived field is active, theme changes must not restart or reshape it.
+            // The base remains available for pre-sample/transparent fallback state only.
+            startBase[0] = targetBase[0] = r;
+            startBase[1] = targetBase[1] = g;
+            startBase[2] = targetBase[2] = b;
+            return;
+        }
+        evaluate(nowNs, evaluationAnchors, evaluationBase);
         boolean different = Math.abs(targetBase[0] - r) > LINEAR_EPSILON
                 || Math.abs(targetBase[1] - g) > LINEAR_EPSILON
                 || Math.abs(targetBase[2] - b) > LINEAR_EPSILON;
