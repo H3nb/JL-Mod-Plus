@@ -253,8 +253,8 @@
     <string name="config_gamepad_release_radius">Radius Lepas</string>
     <string name="config_gamepad_angular_hysteresis">Histeresis Sudut</string>
     <string name="config_gamepad_response_exponent">Kurva Respons</string>
-    <string name="config_gamepad_opaque_summary">Profil ini berisi payload pengontrol yang tidak didukung. Payload dipertahankan tanpa perubahan; atur ulang secara eksplisit untuk mengedit pemetaan baru.</string>
-    <string name="config_gamepad_unsupported_summary">Profil ini berisi konfigurasi pengontrol yang tidak didukung. Atur ulang kontrol untuk mengaktifkannya.</string>
+    <string name="config_gamepad_opaque_summary">Konfigurasi ini berisi data pengontrol dalam format yang tidak didukung. Data tersebut dipertahankan tanpa perubahan dan tidak dapat diedit di sini.</string>
+    <string name="config_gamepad_unsupported_summary">Konfigurasi pengontrol ini tidak didukung. Konfigurasi dipertahankan tanpa perubahan dan tidak dapat diedit di sini.</string>
     <string name="config_gamepad_invert_x">Balikkan X</string>
     <string name="config_gamepad_invert_x_summary">Membalik arah kiri dan kanan stik.</string>
     <string name="config_gamepad_invert_y">Balikkan Y</string>
@@ -344,25 +344,25 @@
     <string name="config_gamepad_capture_phase_candidate">Kandidat</string>
     <string name="config_gamepad_capture_phase_waiting_candidate">Menunggu Pelepasan Kandidat</string>
     <string name="config_gamepad_capture_phase_review">Tinjau</string>
-    <string name="config_gamepad_calibration_profile">Profil Pengontrol: %1$s</string>
+    <string name="config_gamepad_calibration_profile">Signature Pengontrol: %1$s</string>
     <string name="config_gamepad_calibration_phase_neutral">Menunggu Netral</string>
     <string name="config_gamepad_calibration_phase_stick_range">Rentang Stik</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Rentang Trigger</string>
     <string name="config_gamepad_calibration_phase_review">Tinjau</string>
     <string name="config_gamepad_calibration_phase_committed">Tersimpan</string>
     <string name="config_gamepad_calibration_phase_cancelled">Dibatalkan</string>
-    <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan rentang analog. Kalibrasi akan dimulai pada sampel gerakan pertama; profil yang ada tidak berubah sampai disimpan.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan stik analog atau trigger yang didukung. Kalibrasi dimulai saat stik digerakkan atau trigger ditekan; kalibrasi yang ada tetap tidak berubah sampai disimpan.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Pengontrol ini tidak melaporkan rentang stik analog atau trigger yang didukung.</string>
     <string name="config_gamepad_calibration_start">Pertahankan semua stik dan trigger pada posisi netral sampai penghitung waktu netral selesai. Lalu gerakkan setiap stik ke rentang penuhnya dan tekan Berikutnya.</string>
-    <string name="config_gamepad_calibration_save_failed">Kalibrasi tidak dapat disimpan. Profil saat ini tetap tidak berubah.</string>
+    <string name="config_gamepad_calibration_save_failed">Kalibrasi tidak dapat disimpan. Kalibrasi yang ada tetap tidak berubah.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Tidak ditemukan rentang analog yang didukung.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasi ditolak: %1$s</string>
     <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik tetap di tengah dan trigger dilepas sampai penghitung waktu netral selesai.</string>
     <string name="config_gamepad_calibration_stick_instructions">Gerakkan setiap stik yang dilaporkan melalui rentang penuhnya, termasuk kedua arah, lalu tekan Berikutnya.</string>
     <string name="config_gamepad_calibration_trigger_instructions">Lepaskan dan tekan penuh setiap trigger yang dilaporkan, lalu tekan Berikutnya untuk meninjau.</string>
-    <string name="config_gamepad_calibration_review_instructions">Siap ditinjau. Simpan hanya mengganti profil kalibrasi pengontrol ini.</string>
+    <string name="config_gamepad_calibration_review_instructions">Siap ditinjau. Menyimpan hanya akan mengganti kalibrasi pengontrol ini.</string>
     <string name="config_gamepad_calibration_saved">Kalibrasi tersimpan.</string>
-    <string name="config_gamepad_calibration_cancelled">Kalibrasi dibatalkan; profil sebelumnya tidak berubah.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrasi dibatalkan. Kalibrasi sebelumnya tidak berubah.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibrasi sedang menunggu sampel pengontrol.</string>
     <string name="config_gamepad_diagnosis_header">Diagnostik Pengontrol</string>
     <string name="config_gamepad_diagnosis_mode">Status: %1$s · Sumber: %2$s</string>
@@ -389,10 +389,10 @@
     <string name="config_gamepad_calibration_phase_unknown">Status tidak tersedia</string>
     <string name="config_gamepad_diagnosis_capabilities">Kapabilitas Pengontrol Terhubung:</string>
     <string name="config_gamepad_diagnosis_descriptor">Deskriptor: %1$s</string>
-    <string name="config_gamepad_diagnosis_signature">Tanda Tangan: %1$s</string>
-    <string name="config_gamepad_diagnosis_axis">Sumbu %1$d [%2$s, %3$s] Datar=%4$s Gangguan=%5$s</string>
+    <string name="config_gamepad_diagnosis_signature">Signature: %1$s</string>
+    <string name="config_gamepad_diagnosis_axis">Sumbu %1$d [%2$s, %3$s] Flat=%4$s Fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(tidak ada pengontrol yang terhubung)</string>
-    <string name="config_gamepad_diagnosis_samples_not_sent">Sampel input sengaja tidak dikirim ke guest.</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Sampel input sengaja tidak dikirim ke MIDlet.</string>
     <string name="config_select_screen_size">Pilih ukuran layar</string>
     <string name="config_current_screen_size">Ukuran saat ini: %1$s</string>
     <string name="config_custom_resolution">Resolusi Kustom</string>
