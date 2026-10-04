@@ -1587,10 +1587,7 @@ private fun RuntimeEditDialog(
                                 modifier = Modifier.weight(1f),
                             )
                             RuntimeSearchField(
-                                label = stringResource(
-                                    if (type == initialType) R.string.memory_editor_current_value
-                                    else R.string.memory_editor_replacement,
-                                ),
+                                label = stringResource(R.string.memory_editor_replacement),
                                 value = replacement,
                                 active = true,
                                 onClick = {},
@@ -1607,10 +1604,7 @@ private fun RuntimeEditDialog(
                             onType = selectType,
                         )
                         RuntimeSearchField(
-                            label = stringResource(
-                                if (type == initialType) R.string.memory_editor_current_value
-                                else R.string.memory_editor_replacement,
-                            ),
+                            label = stringResource(R.string.memory_editor_replacement),
                             value = replacement,
                             active = true,
                             onClick = {},
@@ -1623,7 +1617,7 @@ private fun RuntimeEditDialog(
                     if (!batch) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(checked = freeze, onCheckedChange = { freeze = it })
-                            Text(stringResource(R.string.memory_editor_freeze))
+                            Text(stringResource(R.string.memory_editor_freeze_after_edit))
                         }
                     }
                 },
@@ -1866,8 +1860,7 @@ private fun RuntimeInspectorLogicalEditDialog(
         modifier = Modifier.alpha(if (peekingUnderlay) 0f else 1f),
         title = {
             RuntimeInputDialogTitle(
-                title = (row.label.ifBlank { runtimeTypeShort(row.type) })
-                    .memoryEditorTitleCase(),
+                title = row.label.ifBlank { runtimeTypeShort(row.type) },
                 peeking = peekingUnderlay,
                 onPeekingChanged = {
                     peekingUnderlay = it
@@ -1927,13 +1920,6 @@ private fun RuntimeInspectorLogicalEditDialog(
 }
 
 private fun Int.formatRelativeOffset(): String = if (this >= 0) "+$this" else toString()
-
-private fun String.memoryEditorTitleCase(): String = trim()
-    .split(Regex("\\s+"))
-    .filter(String::isNotEmpty)
-    .joinToString(" ") { word ->
-        word.replaceFirstChar { first -> first.titlecase(Locale.getDefault()) }
-    }
 
 @Composable
 private fun RuntimeSearchField(
@@ -2604,8 +2590,9 @@ private fun runtimePredicateName(predicate: Int): String = when (predicate) {
     else -> "?"
 }
 
+@Composable
 private fun runtimeTypeName(type: Int): String = when (type) {
-    MemoryEngineContract.TYPE_AUTO -> "Auto"
+    MemoryEngineContract.TYPE_AUTO -> stringResource(R.string.memory_editor_type_auto)
     MemoryEngineContract.TYPE_BYTE -> "Int8"
     MemoryEngineContract.TYPE_SHORT -> "Int16"
     MemoryEngineContract.TYPE_CHAR -> "UInt16"
@@ -2616,6 +2603,7 @@ private fun runtimeTypeName(type: Int): String = when (type) {
     else -> "?"
 }
 
+@Composable
 private fun runtimeTypeShort(type: Int): String = runtimeTypeName(type)
 
 @Composable

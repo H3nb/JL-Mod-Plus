@@ -121,6 +121,25 @@ public final class MemoryIpcRuntimeTest {
 	}
 
 	@Test
+	public void missingRuntimeCompletionCarriesStructuredReason() throws Exception {
+		bindEngine();
+		OperationCallback callback = new OperationCallback();
+		service.registerCallback(callback);
+		try {
+			OperationResult result = callback.await(service.startKnownSearch(0L,
+						MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+						"0", null));
+			assertEquals(MemoryEngineContract.RESULT_NO_SESSION, result.resultCode);
+			assertEquals(MemoryEngineContract.REASON_NO_RUNTIME,
+					result.details.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
+			assertTrue("Legacy presentation prose must not cross the callback boundary",
+					!result.details.containsKey("message"));
+		} finally {
+			service.unregisterCallback(callback);
+		}
+	}
+
+	@Test
 	public void canonicalBinderHandshakeSearchRefreshAndReconnect() throws Exception {
 		launchFixture();
 		awaitProcess(FIXTURE_NAME);
@@ -154,7 +173,15 @@ public final class MemoryIpcRuntimeTest {
 			long[] candidateIds = page.getLongArray(MemoryEngineContract.KEY_RESULT_IDS);
 			assertNotNull("A controlled fixture search must return logical candidates", candidateIds);
 			assertTrue("A controlled fixture search must return at least one candidate",
-				candidateIds.length > 0);
+					candidateIds.length > 0);
+
+			service.unregisterCallback(activeCallback);
+			activeCallback = new OperationCallback();
+			service.registerCallback(activeCallback);
+			OperationResult noHistory = activeCallback.await(service.undoSearch(runtimeToken));
+			assertEquals(MemoryEngineContract.RESULT_NO_SESSION, noHistory.resultCode);
+			assertEquals(MemoryEngineContract.REASON_NO_SEARCH_HISTORY,
+					noHistory.details.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
 
 			service.unregisterCallback(activeCallback);
 			activeCallback = new OperationCallback();
@@ -344,6 +371,7 @@ public final class MemoryIpcRuntimeTest {
 		private final CountDownLatch finished = new CountDownLatch(1);
 		private volatile int resultCode = Integer.MIN_VALUE;
 		private volatile long resultCount;
+		private volatile Bundle details;
 
 		@Override
 		public void onOperationProgress(long operationId, long scannedBytes, long totalBytes,
@@ -352,26 +380,29 @@ public final class MemoryIpcRuntimeTest {
 
 		@Override
 		public void onOperationFinished(long operationId, int resultCode, long resultCount,
-				String message, boolean passiveRefresh, boolean searchOperation) {
+				Bundle details, boolean passiveRefresh, boolean searchOperation) {
 			this.resultCode = resultCode;
 			this.resultCount = resultCount;
+			this.details = details;
 			finished.countDown();
 		}
 
 		OperationResult await(long expectedOperationId) throws InterruptedException {
 			assertTrue("Memory operation did not finish: " + expectedOperationId,
 					finished.await(OPERATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
-			return new OperationResult(resultCode, resultCount);
+			return new OperationResult(resultCode, resultCount, details);
 		}
 	}
 
 	private static final class OperationResult {
 		final int resultCode;
 		final long resultCount;
+		final Bundle details;
 
-		OperationResult(int resultCode, long resultCount) {
+		OperationResult(int resultCode, long resultCount, Bundle details) {
 			this.resultCode = resultCode;
 			this.resultCount = resultCount;
+			this.details = details;
 		}
 	}
 }

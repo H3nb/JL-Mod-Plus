@@ -260,7 +260,7 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
 		if (state.message != null && !state.message.isBlank()) {
-			result.putString(MemoryEngineContract.KEY_MESSAGE,
+			result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
 					MemoryEngineContract.truncateMessage(state.message));
 		}
 		return result;
@@ -282,7 +282,7 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putInt(MemoryEngineContract.KEY_SEARCH_MODE, state.mode);
 		result.putInt(MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE, state.requestedType);
 		if (state.message != null && !state.message.isBlank()) {
-			result.putString(MemoryEngineContract.KEY_MESSAGE,
+			result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
 					MemoryEngineContract.truncateMessage(state.message));
 		}
 		return result;
@@ -293,6 +293,11 @@ public final class MemoryTargetBridgeService extends Service {
 		Bundle result = new Bundle();
 		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, state.code);
+		// Target-owned NO_SESSION is emitted only by Undo when search history is empty.
+		if (state.code == MemoryEngineContract.RESULT_NO_SESSION) {
+			result.putInt(MemoryEngineContract.KEY_OPERATION_REASON,
+					MemoryEngineContract.REASON_NO_SEARCH_HISTORY);
+		}
 		result.putLong(MemoryEngineContract.KEY_MANAGED_REVISION, state.revision);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_RESULT_COUNT, state.resultCount);
 		result.putLong(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, state.baselineCount);
@@ -307,7 +312,7 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount);
 		if (state.message != null && !state.message.isBlank()) {
-			result.putString(MemoryEngineContract.KEY_MESSAGE,
+			result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
 					MemoryEngineContract.truncateMessage(state.message));
 		}
 		return result;
@@ -340,7 +345,7 @@ public final class MemoryTargetBridgeService extends Service {
 					MemoryEngineContract.truncateDisplay(state.provenance));
 		}
 		if (state.message != null && !state.message.isBlank()) {
-			result.putString(MemoryEngineContract.KEY_MESSAGE,
+			result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
 					MemoryEngineContract.truncateMessage(state.message));
 		}
 		return result;

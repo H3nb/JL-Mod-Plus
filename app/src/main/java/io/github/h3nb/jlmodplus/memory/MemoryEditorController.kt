@@ -16,6 +16,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Build
+import android.os.Bundle
 import android.os.IBinder
 import android.os.PersistableBundle
 import android.os.RemoteException
@@ -109,7 +110,7 @@ internal class MemoryEditorComposeController(
             operationId: Long,
             resultCode: Int,
             resultCount: Long,
-            message: String?,
+            details: Bundle?,
             passiveRefresh: Boolean,
             searchOperation: Boolean,
         ) {
@@ -160,15 +161,17 @@ internal class MemoryEditorComposeController(
                 pendingEditFollowUp = null
                 pendingInspectorRefresh = null
                 activeOperationId = 0L
-                val engineSuccessMessage = message?.takeIf(String::isNotBlank)
+                val operationFeedbackMessage = operationMessage(resultCode, details)
                 val uiSuccessMessage = if (succeeded && feedback?.kind == OperationFeedbackKind.NEXT_SCAN) {
-                    "${context.getString(R.string.memory_editor_next_scan)}: ${feedback.resultCountBefore} → $resultCount"
+                    context.getString(
+                        R.string.memory_editor_next_scan_result, feedback.resultCountBefore, resultCount,
+                    )
                 } else null
                 val displayMessage = when {
-                    !succeeded -> operationMessage(resultCode, message)
+                    !succeeded -> operationFeedbackMessage
                     uiSuccessMessage != null -> uiSuccessMessage
                     searchOperation -> null
-                    else -> engineSuccessMessage
+                    else -> operationFeedbackMessage
                 }
                 state = state.copy(
                     busy = false,
@@ -362,7 +365,10 @@ internal class MemoryEditorComposeController(
             MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, 0L,
         )
         val token = capabilities.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, 0L)
-        val capabilityMessage = capabilities.getString(MemoryEngineContract.KEY_MESSAGE)
+        val capabilityMessage = operationMessage(
+            capabilities.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, MemoryEngineContract.RESULT_OK),
+            capabilities,
+        )
 
         // The target bridge binds asynchronously. Token 0 is transient/unknown here; runtime
         // teardown has a dedicated lifecycle callback and is the authoritative close signal.
@@ -382,8 +388,7 @@ internal class MemoryEditorComposeController(
                     state = state.copy(
                         connecting = true,
                         connected = true,
-                        message = capabilityMessage?.takeIf(String::isNotBlank)
-                            ?: context.getString(R.string.memory_editor_engine_reconnecting),
+                        message = context.getString(R.string.memory_editor_engine_reconnecting),
                     )
                     composeView.postDelayed({
                         if (!destroyed && state.visible && generation == connectionGeneration &&
@@ -1008,7 +1013,8 @@ internal class MemoryEditorComposeController(
                     state = state.copy(
                         inspectorLoading = false,
                         inspector = null,
-                        message = operationMessage(result, bundle.getString(MemoryEngineContract.KEY_MESSAGE)),
+                        message = operationMessage(result, bundle)
+                            ?: context.getString(R.string.memory_editor_invalid_request),
                         messageIsError = true,
                     )
                 }
@@ -1158,19 +1164,21 @@ internal class MemoryEditorComposeController(
         ).show()
     }
 
-    private fun operationMessage(result: Int, engineMessage: String?): String = when (result) {
-        MemoryEngineContract.RESULT_CANCELLED -> context.getString(R.string.memory_editor_cancelled)
-        MemoryEngineContract.RESULT_RESOURCE_LIMIT -> context.getString(R.string.memory_editor_resource_limit)
-        MemoryEngineContract.RESULT_TARGET_LOST -> context.getString(R.string.memory_editor_engine_reconnecting)
-        MemoryEngineContract.RESULT_NO_SESSION -> engineMessage?.takeIf(String::isNotBlank)
-            ?: context.getString(R.string.memory_editor_invalid_request)
-        MemoryEngineContract.RESULT_IDENTITY_UNSAFE -> context.getString(R.string.memory_editor_identity_unsafe)
-        MemoryEngineContract.RESULT_SAFETY_LIMIT -> context.getString(R.string.memory_editor_safety_limit)
-        MemoryEngineContract.RESULT_UNSUPPORTED -> context.getString(R.string.memory_editor_unsupported)
-        MemoryEngineContract.RESULT_PARTIAL_WRITE -> engineMessage
-            ?: context.getString(R.string.memory_editor_identity_unsafe)
-        else -> engineMessage?.takeIf(String::isNotBlank)
-            ?: context.getString(R.string.memory_editor_invalid_request)
+    private fun operationMessage(result: Int, details: Bundle?): String? {
+        val message = memoryOperationMessage(
+            result,
+            reason = details?.getInt(MemoryEngineContract.KEY_OPERATION_REASON) ?: MemoryEngineContract.REASON_NONE,
+            written = details?.getInt(MemoryEngineContract.KEY_MANAGED_WRITTEN) ?: 0,
+            unconfirmed = details?.getInt(MemoryEngineContract.KEY_MANAGED_UNCONFIRMED) ?: 0,
+            skipped = details?.getInt(MemoryEngineContract.KEY_MANAGED_SKIPPED) ?: 0,
+            notAttempted = details?.getInt(MemoryEngineContract.KEY_MANAGED_NOT_ATTEMPTED) ?: 0,
+            skippedByType = details?.getInt(MemoryEngineContract.KEY_MANAGED_SKIPPED_BY_TYPE) ?: 0,
+        ) ?: return null
+        val arguments = buildList<Any> {
+            message.explanation?.let { add(context.getString(it)) }
+            addAll(message.arguments)
+        }
+        return context.getString(message.resource, *arguments.toTypedArray())
     }
 
     private fun runIpc(block: () -> Unit) {

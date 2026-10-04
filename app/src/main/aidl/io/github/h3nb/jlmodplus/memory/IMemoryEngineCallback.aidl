@@ -8,11 +8,14 @@
 
 package io.github.h3nb.jlmodplus.memory;
 
+import android.os.Bundle;
+
 /** Publishes completion of an asynchronous Memory Editor engine operation. */
 oneway interface IMemoryEngineCallback {
     void onOperationProgress(long operationId, long scannedBytes, long totalBytes,
             boolean searchOperation);
 
-    void onOperationFinished(long operationId, int resultCode, long resultCount, String message,
+    // Details contain stable reasons/write counters; diagnostic text is never presentation copy.
+    void onOperationFinished(long operationId, int resultCode, long resultCount, in Bundle details,
             boolean passiveRefresh, boolean searchOperation);
 }

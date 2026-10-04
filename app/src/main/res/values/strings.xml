@@ -666,9 +666,9 @@
         <item quantity="one">Search finished · %1$d candidate</item>
         <item quantity="other">Search finished · %1$d candidates</item>
     </plurals>
-    <string name="memory_editor_no_results">No results yet</string>
+    <string name="memory_editor_no_results">No results</string>
     <string name="memory_editor_no_watch">Watch is empty</string>
-    <string name="memory_editor_unsupported">Memory Editor is unavailable for this runtime/device.</string>
+    <string name="memory_editor_unsupported">Memory Editor is unavailable for this runtime.</string>
     <string name="memory_editor_engine_unavailable">Memory Editor engine is unavailable.</string>
     <string name="memory_editor_engine_reconnecting">Memory Editor is reconnecting…</string>
     <string name="memory_editor_refresh">Refresh</string>
@@ -681,9 +681,9 @@
     <string name="memory_editor_no_candidates">No managed candidates found</string>
     <string name="memory_editor_edit">Edit</string>
     <string name="memory_editor_edit_batch">Edit %1$d Values</string>
-    <string name="memory_editor_edit_batch_help">One replacement value will be applied to all selected targets. Watch and Freeze options are unavailable for batch edits.</string>
-    <string name="memory_editor_edit_batch_no_common_type">The selected result groups have no common data type. Edit a compatible subset separately.</string>
-    <string name="memory_editor_save">Save</string>
+    <string name="memory_editor_edit_batch_help">Applies the replacement value to selected targets compatible with the chosen data type. Watch and Freeze are unavailable for batch edits.</string>
+    <string name="memory_editor_edit_batch_no_common_type">The selected results do not support the chosen data type. Edit compatible results separately.</string>
+    <string name="memory_editor_save">Apply</string>
     <string name="memory_editor_replacement">Replacement value</string>
     <string name="memory_editor_freeze">Freeze</string>
     <string name="memory_editor_remove">Remove</string>
@@ -707,8 +707,8 @@
     <string name="memory_editor_max_value">Maximum value</string>
     <string name="memory_editor_unfreeze">Unfreeze</string>
     <string name="memory_editor_cancelled">Operation cancelled.</string>
-    <string name="memory_editor_resource_limit">The complete result would exceed the safe resource limit. Choose a narrower type or scope.</string>
-    <string name="memory_editor_identity_unsafe">The value moved or changed before it could be verified. Refresh the results or reopen Inspector, then try again.</string>
+    <string name="memory_editor_resource_limit">Memory Editor reached a safe resource limit. Try a more specific data type or search value.</string>
+    <string name="memory_editor_identity_unsafe">The selected value or search state could not be verified. Refresh the results or reopen Inspector, then try again.</string>
     <string name="memory_editor_safety_limit">Too many candidates were selected for this guarded operation.</string>
     <string name="memory_editor_invalid_request">The value or operation is invalid.</string>
     <string name="memory_editor_freeze_paused">Paused for safety</string>
@@ -1163,4 +1163,14 @@
     <string name="library_collections_unavailable_title">Collections Unavailable</string>
     <string name="library_load_failed_message">The library could not be loaded. Try again.</string>
     <string name="bulk_install_prepare_failed">The selected apps could not be prepared for installation.</string>
+    <string name="memory_editor_no_runtime">No active MIDlet runtime.</string>
+    <string name="memory_editor_no_search_history">No earlier search to restore.</string>
+    <string name="memory_editor_partial_write">The write operation did not fully complete. Check the current values before trying again.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">Writes confirmed: %1$d. Unconfirmed: %2$d. Skipped: %3$d. Not attempted: %4$d. Skipped by type: %5$d.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome">%1$s\nWrites confirmed: %2$d. Unconfirmed: %3$d. Skipped: %4$d. Not attempted: %5$d. Skipped by type: %6$d.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">Next scan results: %1$d → %2$d</string>
+    <string name="memory_editor_type_auto">Auto</string>
 </resources>

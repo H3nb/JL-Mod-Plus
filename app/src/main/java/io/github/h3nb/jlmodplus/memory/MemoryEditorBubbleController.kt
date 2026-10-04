@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.RectF
+import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
 import android.view.MotionEvent
@@ -75,7 +76,7 @@ class MemoryEditorBubbleController(
             operationId: Long,
             resultCode: Int,
             resultCount: Long,
-            message: String?,
+            details: Bundle?,
             passiveRefresh: Boolean,
             searchOperation: Boolean,
         ) {

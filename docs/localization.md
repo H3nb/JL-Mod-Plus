@@ -203,6 +203,12 @@ app-owned UI in secondary processes, including `:midlet` and `:memory_engine`.
 It does not require a new localization layer or imply that current state/IPC
 already follows this model.
 
+Memory Editor operation replies now use the
+[MemoryEngineContract](../app/src/main/java/io/github/h3nb/jlmodplus/memory/MemoryEngineContract.java)
+result codes, bounded reason codes, and independent write-outcome counts.
+The app-owned presentation maps these values to Android resources. Bounded
+backend diagnostic detail remains separate and is not used as UI copy.
+
 ## Locale identity and target architecture
 
 Application locale identity uses canonical BCP-47-style language tags, such as
