@@ -29,6 +29,8 @@
     <string name="enter_name">Введите название</string>
     <string name="enter_new_name">Введите новое название</string>
     <string name="err_missing_app">Приложение не найдено.\nПроверьте, доступно ли хранилище %1$sили создайте ярлык заново.</string>
+    <string name="config_missing_app_storage_named">Приложение не найдено.\nПроверьте, доступен ли накопитель «%1$s», или создайте ярлык заново.</string>
+    <string name="config_missing_app_storage_generic">Приложение не найдено.\nПроверьте, доступен ли накопитель, или создайте ярлык заново.</string>
     <string name="error">Ошибка</string>
     <string name="error_name">Введите название.</string>
     <string name="exit">Выход</string>
@@ -126,7 +128,7 @@
     <string name="PREF_LAYOUT">Раскладка кодов клавиш</string>
     <string name="PREF_LIMIT_FPS">Ограничение частоты кадров</string>
     <string name="pref_map_keys">Назначения клавиш</string>
-    <string name="pref_mascot_summary">Показывать сообщение при использовании.</string>
+    <string name="pref_mascot_summary">Показывать сообщение при использовании Mascot Capsule 3D.</string>
     <string name="pref_mascot_title">Обнаруживать Mascot Capsule 3D</string>
     <string name="PREF_ORIENTATION">Ориентация экрана</string>
     <string name="pref_orientation_auto">Автоматически</string>
@@ -737,7 +739,7 @@
     <string name="library_export_chooser_title">Экспортировать пакет приложения</string>
     <string name="library_export_progress">Экспорт… %1$d/%2$d</string>
     <string name="library_transfer_unavailable">Не удалось подготовить это приложение к передаче.</string>
-    <string name="library_sort">Порядок сортировки приложений</string>
+    <string name="library_sort">Сортировать приложения</string>
     <string name="library_description_more">… Ещё</string>
     <string name="library_description_less">Свернуть</string>
     <string name="memory_editor_bubble">Плавающая кнопка редактора памяти</string>
@@ -770,7 +772,7 @@
     <string name="memory_editor_search_tab">Поиск</string>
     <string name="memory_editor_search_known_values">Поиск известных значений</string>
     <string name="memory_editor_search_unknown_values">Поиск неизвестных значений</string>
-    <string name="memory_editor_no_candidates">Управляемые кандидаты не найдены</string>
+    <string name="memory_editor_no_candidates">Не найдено значений для поиска</string>
     <string name="memory_editor_edit">Изменить</string>
     <string name="memory_editor_edit_batch">Изменить значений: %1$d</string>
     <string name="memory_editor_freeze">Заморозить</string>
@@ -793,7 +795,7 @@
     <string name="memory_editor_apply">Применить</string>
     <string name="memory_editor_unfreeze">Разморозить</string>
     <string name="memory_editor_cancelled">Операция отменена.</string>
-    <string name="memory_editor_safety_limit">Для этой защищённой операции выбрано слишком много кандидатов.</string>
+    <string name="memory_editor_safety_limit">Для этой операции выбрано слишком много значений. Выберите меньше и повторите попытку.</string>
     <string name="memory_editor_invalid_request">Значение или операция недопустимы.</string>
     <string name="memory_editor_freeze_paused">Приостановлено для безопасности</string>
     <string name="memory_editor_predicate_between">Между</string>
@@ -806,8 +808,9 @@
     <string name="memory_editor_predicate_changed_by">Изменилось на</string>
     <string name="memory_editor_current_value">Текущее</string>
     <string name="memory_editor_inspector">Инспектор</string>
-    <string name="memory_editor_inspector_loading">Проверка кандидата и чтение ограниченного снимка…</string>
-    <string name="memory_editor_inspector_empty">Выберите результат, затем просмотрите память рядом, чтобы увидеть и изменить ограниченный снимок памяти.</string>
+    <string name="memory_editor_inspector_loading">Проверка результата и чтение памяти рядом…</string>
+    <string name="memory_editor_inspector_empty">Выберите результат, чтобы просмотреть память рядом.</string>
+    <string name="memory_editor_inspector_no_rows">Рядом с выбранным результатом нет доступной для просмотра памяти.</string>
     <string name="memory_editor_freeze_after_edit_help">Фиксирует новое значение и автоматически добавляет кандидатов в Наблюдение.</string>
     <string name="memory_editor_expression_single_hint">Введите одно значение или используйте ; для совместного поиска группы значений.</string>
     <string name="memory_editor_expression_group_needs_type">Выберите конкретный тип данных для группового поиска.</string>
