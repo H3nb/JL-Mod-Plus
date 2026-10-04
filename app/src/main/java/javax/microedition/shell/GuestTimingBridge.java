@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.locks.LockSupport;
 
-import javax.microedition.shell.timing.AutoSpeedController;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.TimingMode;
 import javax.microedition.shell.timing.TimingSnapshot;
@@ -36,19 +35,12 @@ import javax.microedition.shell.timing.TimingSnapshot;
 public final class GuestTimingBridge {
 	private static final Object LOCK = new Object();
 	private static TimingSession activeSession;
-	private static AutoSpeedController activeSpeedController;
 
 	private GuestTimingBridge() {
 	}
 
 	/** Installs the only active session for the current MIDlet process. */
 	public static void install(TimingSession session) {
-		install(session, null);
-	}
-
-	/** Installs a session and its optional host-owned runtime speed controller. */
-	public static void install(
-			TimingSession session, @Nullable AutoSpeedController speedController) {
 		if (session == null) {
 			throw new NullPointerException("session");
 		}
@@ -57,7 +49,6 @@ public final class GuestTimingBridge {
 				throw new IllegalStateException("A timing session is already active");
 			}
 			activeSession = session;
-			activeSpeedController = speedController;
 		}
 	}
 
@@ -66,23 +57,10 @@ public final class GuestTimingBridge {
 		synchronized (LOCK) {
 			if (activeSession == session) {
 				activeSession = null;
-				AutoSpeedController speedController = activeSpeedController;
-				activeSpeedController = null;
-				if (speedController != null) {
-					speedController.close();
-				}
 				if (session != null) {
 					session.close();
 				}
 			}
-		}
-	}
-
-	/** Returns the controller owned by the active transformed session, if available. */
-	@Nullable
-	public static AutoSpeedController activeSpeedController() {
-		synchronized (LOCK) {
-			return activeSpeedController;
 		}
 	}
 

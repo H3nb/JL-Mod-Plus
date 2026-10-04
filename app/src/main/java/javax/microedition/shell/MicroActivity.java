@@ -451,15 +451,6 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
-					public void onSetAutoEmulationSpeed() {
-						if (microLoader == null || !microLoader.setRuntimeAutoEmulationSpeed()) {
-							toast(R.string.error);
-						} else {
-							updateRuntimeMenuState(current);
-						}
-					}
-
-					@Override
 					public void onResetEmulationSpeed() {
 						onSetEmulationSpeed(EmulationSpeed.NORMAL_PERCENT);
 					}
@@ -613,9 +604,6 @@ public class MicroActivity extends AppCompatActivity {
 		int emulationSpeedPercent = emulationSpeedAvailable
 				? timingSession.speedPercentOr(EmulationSpeed.NORMAL_PERCENT)
 				: EmulationSpeed.NORMAL_PERCENT;
-		boolean emulationSpeedAuto = emulationSpeedAvailable
-				&& microLoader.getAutoSpeedController() != null
-				&& microLoader.getAutoSpeedController().isAutoEnabled();
 		String title = displayable != null ? displayable.getTitle() : null;
 		// RuntimeMenuComposeController exposes a non-null Kotlin String. An incomplete internal
 		// launch intent may omit KEY_MIDLET_NAME, so keep that malformed-input path on a safe
@@ -631,7 +619,6 @@ public class MicroActivity extends AppCompatActivity {
 				orientationLocked,
 				emulationSpeedAvailable,
 				emulationSpeedPercent,
-				emulationSpeedAuto,
 				memoryEditorController != null && memoryEditorController.isBubbleEnabled());
 	}
 
