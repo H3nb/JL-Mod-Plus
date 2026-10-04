@@ -1506,7 +1506,7 @@ public class Render {
 		Environment() {}
 
 		void selectTexture(int index) {
-			if (index < textures.length) {
+			if (index >= 0 && index < textures.length) {
 				textureIdx = index;
 			}
 		}

@@ -16,20 +16,33 @@ package io.github.h3nb.jlmodplus.micro3d;
 
 import static org.junit.Assert.assertEquals;
 
+import com.mascotcapsule.micro3d.v3.Graphics3D;
+
 import org.junit.Test;
 
 public class RenderEnvironmentTest {
 	@Test
-	public void textureIndexSelectionRestoresZeroAndPreservesBounds() {
+	public void commandListTextureSelectionRestoresZero() {
+		Render render = new Render();
+		render.env.textureIdx = 1;
+
+		render.drawCommandList(new int[] {
+				Graphics3D.COMMAND_LIST_VERSION_1_0,
+				Graphics3D.COMMAND_TEXTURE_INDEX | 0,
+				Graphics3D.COMMAND_END
+		});
+
+		assertEquals(0, render.env.textureIdx);
+	}
+
+	@Test
+	public void textureIndexSelectionPreservesLegacyBounds() {
 		Render.Environment env = new Render.Environment();
 
-		env.selectTexture(1);
-		assertEquals(1, env.textureIdx);
-
-		env.selectTexture(0);
-		assertEquals(0, env.textureIdx);
-
 		env.selectTexture(15);
+		assertEquals(15, env.textureIdx);
+
+		env.selectTexture(-1);
 		assertEquals(15, env.textureIdx);
 
 		env.selectTexture(16);
