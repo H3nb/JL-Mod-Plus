@@ -17,7 +17,7 @@ package javax.microedition.shell.timing;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Thread-safe frame ownership metrics for one Canvas lifecycle.
+ * Thread-safe frame ownership metrics for one Canvas surface generation.
  *
  * <p>A game frame is counted only after the complete guest buffer has been copied into the
  * presentation buffer. A render frame is counted only when a renderer consumes a sequence newer
@@ -40,7 +40,7 @@ public final class FrameMetrics {
 			sequence = current == Long.MAX_VALUE ? 1L : current + 1L;
 		} while (!nextSequence.compareAndSet(current, sequence));
 		if (sequence == 1L) {
-			// This is not reachable during a normal Canvas lifetime. Resetting the local sequence is
+			// This is not reachable during a normal surface lifetime. Resetting the local sequence is
 			// safer than allowing a negative value to make every subsequent render look stale.
 			lastRenderedSequence.set(0L);
 		}
