@@ -686,6 +686,7 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	protected void onStop() {
 		if (ContextHolder.getActivity() == this) {
+			io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator.onHostForegroundChanged(false);
 			if (isChangingConfigurations()) {
 				// Physical presentation disappears, but the MIDlet remains logically foreground.
 				Display display = Display.getDisplay(null);
@@ -749,7 +750,8 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void onPause() {
-		if (ContextHolder.getActivity() == this) {
+		if (ContextHolder.getActivity() == this
+				&& (memoryEditorController == null || !memoryEditorController.isEditorOnTop())) {
 			io.github.h3nb.jlmodplus.mmapi.RuntimeAudioCoordinator.onHostForegroundChanged(false);
 		}
 		if (controllerInputRouter != null) {

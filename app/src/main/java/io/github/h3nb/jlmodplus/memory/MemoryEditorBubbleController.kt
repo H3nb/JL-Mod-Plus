@@ -37,6 +37,7 @@ class MemoryEditorBubbleController(
 ) {
     private var enabled = false
     private var hostResumed = true
+    private var editorOnTop = false
     private var destroyed = false
     private var bound = false
     private var service: IMemoryEngineService? = null
@@ -146,8 +147,11 @@ class MemoryEditorBubbleController(
 
     fun isBubbleEnabled(): Boolean = enabled
 
+    fun isEditorOnTop(): Boolean = editorOnTop
+
     fun onHostResumed() {
         hostResumed = true
+        editorOnTop = false
         if (enabled) connectEngine()
         syncVisibility()
     }
@@ -313,9 +317,11 @@ class MemoryEditorBubbleController(
             return
         }
         bubbleView.visibility = View.GONE
+        editorOnTop = true
         try {
             activity.startActivity(MemoryEditorActivity.createIntent(activity, token))
         } catch (_: RuntimeException) {
+            editorOnTop = false
             syncVisibility()
         }
     }

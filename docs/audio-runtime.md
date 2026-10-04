@@ -48,9 +48,11 @@ validation and VM errors still propagate. The bounded native queue rejects
 whole writes and a full queue does not close a healthy Player.
 
 Host suspension preserves guest playback intent and MMAPI state while freezing
-output and media progression. Activity foreground loss and transient focus loss
-(including duck requests) suspend audio. Eligible foreground return or focus
-gain resumes only the same Player request. Guest stop, close, deallocation, or
+output and media progression. Host visibility loss and transient focus loss
+(including duck requests) suspend audio. Opening the translucent Memory Editor
+pauses its host Activity without hiding it, so playback continues underneath;
+stopping the host still suspends it. Eligible foreground return or focus gain
+resumes only the same Player request. Guest stop, close, deallocation, or
 runtime termination invalidate that request. Permanent focus loss revokes prior
 intent; a fresh explicit playback request is required. Focus denial on
 `Player.start` throws a `MediaException` without a `STARTED` event or delayed
