@@ -335,6 +335,9 @@ public class AudioPlayer extends BasePlayer implements VolumeControl, PanControl
                 updateDuration();
                 return mediaTime;
             } catch (Exception error) {
+                // A destructive backend failure must bypass the stale event
+                // generation left by an incomplete seek and close this source.
+                if (error instanceof Library.SourceFailure) fail("Cannot set media time: " + error);
                 if (error instanceof MediaException) throw (MediaException) error;
                 throw new MediaException("Cannot set media time: " + error);
             }

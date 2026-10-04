@@ -24,6 +24,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -403,6 +405,60 @@ public class VideoPlayerTest {
                     }
                 }
             } finally {
+                peer.close();
+            }
+        }
+    }
+
+    @Test
+    public void activeSeekCodecReopenFailureClosesOnlyItsPlayerOnce() throws Exception {
+        try (ActivityScenario<AudioQualificationActivity> host =
+                ActivityScenario.launch(AudioQualificationActivity.class)) {
+            Player video = asset("video/markers.mp4"), peer = asset("audio/effect.mp3");
+            try {
+                video.realize();
+                VideoDisplay control = (VideoDisplay) video.getControl("VideoControl");
+                control.initDisplayMode(0, null);
+                host.onActivity(a -> a.setContentView(control.itemView(a, 2)));
+                CopyOnWriteArrayList<String> terminal = new CopyOnWriteArrayList<>();
+                CountDownLatch closed = new CountDownLatch(1);
+                video.addPlayerListener((p, event, value) -> {
+                    if (PlayerListener.ERROR.equals(event) || PlayerListener.CLOSED.equals(event))
+                        terminal.add(event);
+                    if (PlayerListener.CLOSED.equals(event)) closed.countDown();
+                });
+                video.setLoopCount(-1);
+                peer.setLoopCount(-1);
+                peer.start();
+                video.start();
+                VideoLibrary backend = backend(video);
+                await(() -> backend.diagnostics()[0] > 3, 5000, "No frame before active seek");
+                assertEquals(Player.STARTED, video.getState());
+                Field sourceField = VideoLibrary.class.getDeclaredField("source");
+                sourceField.setAccessible(true);
+                Object source = sourceField.get(backend);
+                Field decoderField = source.getClass().getDeclaredField("decoder");
+                decoderField.setAccessible(true);
+                Field workerField = VideoLibrary.class.getDeclaredField("worker");
+                workerField.setAccessible(true);
+                // Serialize the owned fixture mutation with codec operations.
+                // The current decoder keeps running; only its next open fails.
+                ((ScheduledExecutorService) workerField.get(backend)).submit(() -> {
+                    decoderField.set(source, "jlmod.test.missing.video.decoder");
+                    return null;
+                }).get(2, TimeUnit.SECONDS);
+                long before = UnifiedAudioRuntimeTest.stats(peer)[0];
+                expectThrows(MediaException.class, () -> video.setMediaTime(1500000));
+                assertTrue("Seek failure did not close source", closed.await(3, TimeUnit.SECONDS));
+                assertEquals(Player.CLOSED, video.getState());
+                video.close();
+                await(() -> UnifiedAudioRuntimeTest.stats(peer)[0] > before + 1024,
+                        3000, "Failed video seek stopped peer");
+                SystemClock.sleep(100);
+                assertEquals(java.util.Arrays.asList(PlayerListener.ERROR, PlayerListener.CLOSED),
+                        terminal);
+            } finally {
+                video.close();
                 peer.close();
             }
         }

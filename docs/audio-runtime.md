@@ -180,6 +180,10 @@ untouched, and cancels/fences publication on close. `setMediaTime` returns the
 clamped actual time, including a valid zero-duration end. Requested targets and
 scheduling horizons never establish track end or duration. The decoded bound is
 retained across replay and deallocation.
+If committing a seek invalidates the source and reopening the codec fails, the
+Player reports `MediaException` and closes with one `ERROR` followed by `CLOSED`.
+Healthy peers keep playing. A rejected seek preparation that leaves playback
+untouched does not close the source.
 
 A fixed native segment ring maps bus frames to source media timestamps, fenced
 by source generation and output epoch. Management queries the current Oboe

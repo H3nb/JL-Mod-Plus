@@ -132,7 +132,24 @@ public class AudioPlayerDurationTest {
             backend.seekFailure = true;
             try { player.setMediaTime(1); fail("Backend failure escaped contract"); }
             catch (javax.microedition.media.MediaException expected) { }
+            assertEquals("Ordinary seek rejection must preserve the source", Player.REALIZED, player.getState());
         } finally { backend.probeRelease.countDown(); operations.shutdownNow(); }
+    }
+
+    @Test public void destructiveSeekFailureClosesEvenAfterBackendGenerationChanged() throws Exception {
+        BlockingQueue<String> lifecycle = new LinkedBlockingQueue<>();
+        player.addPlayerListener((p, event, value) -> {
+            if (PlayerListener.ERROR.equals(event) || PlayerListener.CLOSED.equals(event)) lifecycle.add(event);
+        });
+        player.realize();
+        backend.sourceFailure = true;
+        try { player.setMediaTime(1); fail("Destroyed source seek succeeded"); }
+        catch (javax.microedition.media.MediaException expected) { }
+        assertEquals(Player.CLOSED, player.getState());
+        player.close();
+        assertTrue(callbacks().awaitTermination(2, TimeUnit.SECONDS));
+        assertArrayEquals(new String[]{PlayerListener.ERROR, PlayerListener.CLOSED}, lifecycle.toArray(new String[0]));
+        assertEquals(1, backend.closes);
     }
 
     private ExecutorService callbacks() throws Exception {
@@ -152,8 +169,9 @@ public class AudioPlayerDurationTest {
     private static final class Backend implements Library {
         volatile long duration = Player.TIME_UNKNOWN;
         CountDownLatch probeEntered, probeRelease;
-        int seeks;
-        boolean seekFailure;
+        int seeks, closes;
+        long generation;
+        boolean seekFailure, sourceFailure;
         final BlockingQueue<long[]> events = new LinkedBlockingQueue<>();
         public long createPlayer(String locator) { return 1; }
         public void realize(long handle) {}
@@ -161,7 +179,7 @@ public class AudioPlayerDurationTest {
         public void start(long handle) {}
         public void pause(long handle) {}
         public void deallocate(long handle) { duration = Player.TIME_UNKNOWN; }
-        public void close(long handle) {}
+        public void close(long handle) { closes++; }
         public void prepareMediaTime(long handle, long time) {
             if (probeEntered != null) {
                 probeEntered.countDown();
@@ -170,6 +188,10 @@ public class AudioPlayerDurationTest {
             }
         }
         public long setMediaTime(long handle, long time) {
+            if (sourceFailure) {
+                generation++;
+                throw new Library.SourceFailure("Source destroyed during seek", new IllegalStateException("Injected codec failure"));
+            }
             if (seekFailure) throw new IllegalStateException("Injected seek failure");
             seeks++;
             return time;
@@ -178,6 +200,7 @@ public class AudioPlayerDurationTest {
         public void setRepeat(long handle, int count) {}
         public void setVolume(long handle, float left, float right) {}
         public long getDuration(long handle) { return duration; }
+        public long getGeneration(long handle) { return generation; }
         public void setDataSource(long handle, byte[] bytes) {}
         public int writeMIDI(long handle, byte[] bytes, int offset, int length) { return 0; }
         public long[] pollEvent(long handle) { return events.poll(); }

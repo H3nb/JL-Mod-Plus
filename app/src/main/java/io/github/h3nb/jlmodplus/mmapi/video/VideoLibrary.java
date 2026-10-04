@@ -495,7 +495,15 @@ public final class VideoLibrary implements Library, VideoDisplay.SurfaceOwner {
 
     @Override
     public long setMediaTime(long handle, long time) {
-        return call(() -> seek(time));
+        return call(() -> {
+            try {
+                return seek(time);
+            } catch (Exception error) {
+                // Seek already invalidated rendering/clock state. A codec reopen
+                // failure cannot leave the guest claiming healthy playback.
+                throw new Library.SourceFailure("Video source failed during seek", error);
+            }
+        });
     }
 
     private long mediaTime(long now) {

@@ -18,6 +18,11 @@
 package io.github.h3nb.jlmodplus.mmapi.synth;
 
 public interface Library {
+    /** A backend operation invalidated the source; its Player must close it. */
+    final class SourceFailure extends IllegalStateException {
+        public SourceFailure(String message, Throwable cause) { super(message, cause); }
+    }
+
     default boolean requiresAudioFocus() { return true; }
     default javax.microedition.media.control.VideoControl videoControl() { return null; }
     default void setVideoSizeListener(Runnable listener) {}
