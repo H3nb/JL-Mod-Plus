@@ -90,23 +90,24 @@ non-Canvas Displayables.
 
 Immersive background is host presentation only; it does not modify the guest
 framebuffer, Java ME LCD geometry, input ownership, or MIDP lifecycle. The active
-guest frame is copied at most every 33 ms into a reusable 24×24 linear-light
-field, with an 8×8 coarse field used only as distance-dependent diffusion.
+guest frame is copied at most every 33 ms into a reusable 32×32 linear-light
+field. Two successively wider diffusion levels (16×16 and 8×8) are derived from
+that field; they are blur footprints, not stretched background images.
 
-The guest LCD acts as a virtual rounded-rectangle light emitter while the actual
-LCD remains rectangular. Each host background node maps to the nearest emitter
-boundary point in physical host coordinates, samples slightly inward from that
-point, and blends from the 24×24 field toward the coarser field as physical
-distance from the LCD increases. This keeps the light extension radial and
-symmetric even when the LCD is not centered, without stretching the full guest
-frame across the host surface.
+The guest LCD acts as a virtual rounded-rectangle source while the actual LCD
+remains rectangular. Each host background node maps to the nearest source
+boundary point in physical host coordinates and samples a small fixed distance
+inside that same LCD-edge neighborhood. As the node moves farther from the LCD,
+the source coordinate stays edge-anchored while the renderer blends from the
+32×32 field toward the 16×16 and then 8×8 diffusion fields. This makes the
+extension increasingly frosted and destroys readable detail without turning the
+guest frame into a full-surface blurred copy.
 
-Opaque guest colors remain independent of the host theme through most of the
-surface. The theme is the terminal light-falloff color only near the outer host
-boundary (and remains the fallback before the first valid guest sample or behind
-transparent guest pixels). The outer fade uses one physical width on all sides,
-so left/right/top/bottom behavior does not depend on the available margin around
-the LCD.
+Guest-derived Immersive output does not fade toward the host theme. Once a valid
+opaque guest sample exists, the host theme remains only the pre-sample and
+transparent-pixel fallback. Equal physical distances from the LCD use the same
+blur-growth curve in every direction, and the virtual rounded corners keep
+diagonal extension smooth instead of producing sharp corner streaks.
 
 Canvas and GLES use equivalent `AmbientColorField` instances fed from the
 same sampled target and host timestamp. Canvas rasterizes its field into a
