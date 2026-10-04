@@ -26,7 +26,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
-import javax.microedition.shell.timing.AutoSpeedController;
+import javax.microedition.shell.timing.TimingSession;
+import javax.microedition.shell.timing.TimingSnapshot;
 import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.shell.timing.FrameMetricsSnapshot;
 import javax.microedition.shell.timing.PerformanceDiagnostics;
@@ -37,7 +38,7 @@ public class FpsCounter extends TimerTask implements Layer {
 	private final View view;
 	private final Canvas owner;
 	private final FrameMetrics metrics;
-	private final AutoSpeedController speedController;
+	private final TimingSession timingSession;
 	private final PerformanceResources resources;
 	private final int mask, position, contentColor;
 	private final Timer timer;
@@ -54,11 +55,11 @@ public class FpsCounter extends TimerTask implements Layer {
 	private final RectF drawingBounds = new RectF();
 	private final int[] viewLocation = new int[2], rootLocation = new int[2];
 
-	public FpsCounter(View view, FrameMetrics metrics, AutoSpeedController speedController,
+	public FpsCounter(View view, FrameMetrics metrics, TimingSession timingSession,
 			Canvas owner, int mask, int position) {
 		this.view = view;
 		this.metrics = metrics;
-		this.speedController = speedController;
+		this.timingSession = timingSession;
 		this.owner = owner;
 		this.mask = sanitize(mask);
 		this.position = sanitizePosition(position);
@@ -86,21 +87,26 @@ public class FpsCounter extends TimerTask implements Layer {
 		long now = System.nanoTime();
 		long generation = owner.getPerformanceGeneration();
 		boolean active = owner.getPerformanceSourceActive();
-		FrameMetricsSnapshot snapshot = metrics.snapshot();
-		if (!active || generation != previousGeneration || previousSnapshot == null) {
+		FrameMetricsSnapshot snapshot = metrics == null ? null : metrics.snapshot();
+		if (!active || generation != previousGeneration) {
 			previousSnapshot = snapshot;
 			previousSampleNanos = now;
 			previousGeneration = generation;
 			fps = renderFps = coalesced = Double.NaN;
 			resources.resetCpuSample();
-		} else {
-			long elapsed = now - previousSampleNanos;
-			if (elapsed >= 1_000_000_000L) {
-				fps = rate(snapshot.gameFrames(), previousSnapshot.gameFrames(), elapsed);
-				renderFps = rate(snapshot.renderFrames(), previousSnapshot.renderFrames(), elapsed);
-				coalesced = rate(snapshot.coalescedFrames(), previousSnapshot.coalescedFrames(), elapsed);
+		} else if (snapshot != null) {
+			if (previousSnapshot == null) {
 				previousSnapshot = snapshot;
 				previousSampleNanos = now;
+			} else {
+				long elapsed = now - previousSampleNanos;
+				if (elapsed >= 1_000_000_000L) {
+					fps = rate(snapshot.gameFrames(), previousSnapshot.gameFrames(), elapsed);
+					renderFps = rate(snapshot.renderFrames(), previousSnapshot.renderFrames(), elapsed);
+					coalesced = rate(snapshot.coalescedFrames(), previousSnapshot.coalescedFrames(), elapsed);
+					previousSnapshot = snapshot;
+					previousSampleNanos = now;
+				}
 			}
 		}
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
@@ -108,9 +114,9 @@ public class FpsCounter extends TimerTask implements Layer {
 		v.renderFps = renderFps;
 		v.coalesced = coalesced;
 		v.cap = owner.getPerformanceFpsCap();
-		if (speedController != null) {
-			v.speedPercent = speedController.speedPercent();
-			v.autoSpeed = speedController.isAutoEnabled();
+		TimingSnapshot timing = timingSession == null ? null : timingSession.snapshotIfOpen();
+		if (timing != null) {
+			v.speedPercent = timing.speedPercent();
 		}
 		v.renderer = owner.getPerformanceRenderer();
 		v.displayHz = owner.getPerformanceDisplayHz();

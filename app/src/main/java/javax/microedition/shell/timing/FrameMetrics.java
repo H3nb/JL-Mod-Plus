@@ -17,76 +17,50 @@ package javax.microedition.shell.timing;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Thread-safe frame ownership metrics for a timing source, retained across surface lifecycles.
+ * Optional frame-traffic counters for one Canvas surface generation.
  *
- * <p>A game frame is counted only after the complete guest buffer has been copied into the
- * presentation buffer. A render frame is counted only when a renderer consumes a sequence newer
- * than the last sequence it consumed. This keeps host redraw callbacks and repeated display of a
- * static buffer out of the Game FPS value. Renderers must consume the sequence returned by this
- * owner, not a presentation mailbox sequence that can restart on surface replacement.</p>
+ * <p>{@link PresentationMailbox} owns the publication sequence. A game frame is counted only
+ * after a complete guest buffer publication. A render frame is counted only when a renderer
+ * consumes a newer mailbox sequence, so repeated host redraws do not inflate renderer FPS.</p>
  */
 public final class FrameMetrics {
-	private final AtomicLong nextSequence = new AtomicLong();
-	private final AtomicLong lastRenderedSequence = new AtomicLong();
+	private long lastRenderedSequence;
 	private final AtomicLong gameFrames = new AtomicLong();
 	private final AtomicLong renderFrames = new AtomicLong();
 	private final AtomicLong coalescedFrames = new AtomicLong();
 
-	/** Records one complete guest publication and returns its monotonically increasing sequence. */
-	public long recordGameFrame() {
-		long current;
-		long sequence;
-		do {
-			current = nextSequence.get();
-			sequence = current == Long.MAX_VALUE ? 1L : current + 1L;
-		} while (!nextSequence.compareAndSet(current, sequence));
-		if (sequence == 1L) {
-			// This is not reachable during a normal Canvas lifetime. Resetting the local sequence is
-			// safer than allowing a negative value to make every subsequent render look stale.
-			lastRenderedSequence.set(0L);
-		}
+	/** Records one complete guest publication. Sequence ownership remains with the mailbox. */
+	public void recordGameFrame() {
 		incrementSaturated(gameFrames);
-		return sequence;
 	}
 
 	/**
-	 * Records consumption of the newest complete frame. Repeated consumption is ignored. Serialized
-	 * with abandonment so an old in-flight render cannot increment counters after activation.
+	 * Records consumption of a canonical mailbox sequence. Repeated and stale consumption is
+	 * ignored. Serialized with abandonment so a pre-resume callback cannot enter a new window.
 	 */
-	public synchronized void recordRender(long sequence) {
-		if (sequence <= 0L) {
+	public synchronized void recordRender(long mailboxSequence) {
+		if (mailboxSequence <= 0L || mailboxSequence <= lastRenderedSequence) {
 			return;
 		}
-		long previous;
-		do {
-			previous = lastRenderedSequence.get();
-			if (sequence <= previous) {
-				return;
-			}
-		} while (!lastRenderedSequence.compareAndSet(previous, sequence));
-		long skipped = sequence - previous - 1L;
-		if (skipped > 0L && sequence > previous) {
+		long skipped = mailboxSequence - lastRenderedSequence - 1L;
+		lastRenderedSequence = mailboxSequence;
+		if (skipped > 0L) {
 			addSaturated(coalescedFrames, skipped);
 		}
 		incrementSaturated(renderFrames);
 	}
 
 	/**
-	 * Abandons frames pending at a source activation boundary without changing lifetime counters.
-	 * A later renderer callback for an abandoned buffer is stale; the first new publication must
-	 * not report pre-pause frames as coalescing in its new visible window. Publication owners call
-	 * this before reopening their source, under the same lock that protects complete publication.
+	 * Marks every publication up to the supplied canonical mailbox boundary as already accounted
+	 * for without changing lifetime counters.
 	 */
-	public synchronized void abandonPendingFrames() {
-		long boundary = nextSequence.get();
-		long previous;
-		do {
-			previous = lastRenderedSequence.get();
-			if (previous >= boundary) return;
-		} while (!lastRenderedSequence.compareAndSet(previous, boundary));
+	public synchronized void abandonPendingFrames(long mailboxBoundary) {
+		if (mailboxBoundary > lastRenderedSequence) {
+			lastRenderedSequence = mailboxBoundary;
+		}
 	}
 
-	/** Returns lifetime totals without interfering with another diagnostics consumer. */
+	/** Returns lifetime totals for this surface generation. */
 	public FrameMetricsSnapshot snapshot() {
 		return new FrameMetricsSnapshot(
 				gameFrames.get(),

@@ -85,7 +85,8 @@ import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.shell.MidletThread;
 import javax.microedition.shell.GuestTimingBridge;
-import javax.microedition.shell.timing.AutoSpeedController;
+import javax.microedition.shell.timing.TimingSession;
+import javax.microedition.shell.timing.TimingSnapshot;
 import javax.microedition.shell.timing.FramePacer;
 import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.shell.timing.PerformanceDiagnostics;
@@ -180,18 +181,15 @@ public abstract class Canvas extends Displayable {
 	private static Image offscreen;
 	private Image offscreenCopy;
 	private volatile long publishedFrameSequence;
-	/** Metric sequences belong to their counter owner, independently of a surface mailbox epoch. */
-	private long publishedMetricsSequence;
-	private FrameMetrics publishedMetricsOwner;
 	private volatile FrameMetrics frameMetrics;
-	private boolean renderMetricsEnabled;
+	private volatile FrameMetrics rendererFrameMetrics;
 	private volatile PerformanceDiagnostics performanceDiagnostics;
 	private long publishedFrameNanos;
 	private volatile long performanceGeneration;
-	private volatile AutoSpeedController autoSpeedController;
 	private final PresentationMailbox presentationMailbox = new PresentationMailbox();
 	private int onX, onY, onWidth, onHeight;
-	private final FramePacer framePacer = new FramePacer(GuestTimingBridge.activeSession());
+	private final TimingSession timingSession = GuestTimingBridge.activeSession();
+	private final FramePacer framePacer = new FramePacer(timingSession);
 	private volatile int displayMaximumFps;
 	private final Object ambientLock = new Object();
 	private final AmbientColorSampler ambientSampler = new AmbientColorSampler();
@@ -266,10 +264,12 @@ public abstract class Canvas extends Displayable {
 
 	/** Effective pacing target in real-time FPS; zero denotes an unrestricted target. */
 	public double getPerformanceFpsCap() {
+		TimingSnapshot timing = timingSession == null ? null : timingSession.snapshotIfOpen();
+		if (timing == null) {
+			return Double.NaN;
+		}
 		int base = resolveFrameRateLimit(fpsLimit, displayMaximumFps);
-		AutoSpeedController controller = autoSpeedController;
-		int speed = controller == null ? 100 : controller.speedPercent();
-		return base <= 0 ? 0 : base * (speed / 100.0);
+		return base <= 0 ? 0 : base * (timing.speedPercent() / 100.0);
 	}
 
 	/** Active reported display rate, independent of the maximum used by compatibility pacing. */
@@ -707,8 +707,8 @@ public abstract class Canvas extends Displayable {
 	/** Called with visibilityLock held; frame producers never acquire that lock under bufferLock. */
 	private void setEffectiveVisibilityLocked(boolean shown) {
 		synchronized (bufferLock) {
-			FrameMetrics metrics = frameMetrics;
-			if (shown && renderMetricsEnabled && metrics != null) metrics.abandonPendingFrames();
+			FrameMetrics metrics = rendererFrameMetrics;
+			if (shown && metrics != null) metrics.abandonPendingFrames(publishedFrameSequence);
 			PerformanceDiagnostics diagnostics = performanceDiagnostics;
 			if (diagnostics != null) diagnostics.setActive(shown);
 			performanceGeneration++;
@@ -719,10 +719,6 @@ public abstract class Canvas extends Displayable {
 	private void onEffectiveVisibilityChanged(boolean shown) {
 		if (shown) {
 			guestKeyLedger.resetForShow();
-			AutoSpeedController controller = autoSpeedController;
-			if (controller != null) {
-				controller.setFrameSourceActive(true);
-			}
 			Display.postEvent(CanvasEvent.getInstance(this, CanvasEvent.SHOW_NOTIFY));
 			repaintInternal();
 			return;
@@ -730,10 +726,6 @@ public abstract class Canvas extends Displayable {
 		PointerEvent.cancel(this);
 		guestKeyLedger.endVisibility();
 		resetControllerBoundaryState();
-		AutoSpeedController controller = autoSpeedController;
-		if (controller != null) {
-			controller.setFrameSourceActive(false);
-		}
 		cancelAmbientHostTick();
 		Display.postEvent(CanvasEvent.getInstance(this, CanvasEvent.HIDE_NOTIFY));
 	}
@@ -744,8 +736,7 @@ public abstract class Canvas extends Displayable {
 			presentationMailbox.releaseAfterFailure(presentationMailbox.generation());
 			return;
 		}
-		FrameMetrics metrics = null;
-		long metricsSequence = 0L;
+		FrameMetrics metrics = rendererFrameMetrics;
 		PerformanceDiagnostics diagnostics = performanceDiagnostics;
 		long submitStarted = diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.SUBMIT)
 				? System.nanoTime() : 0L;
@@ -766,8 +757,6 @@ public abstract class Canvas extends Displayable {
 			canvas.clipRect(p, p, displayWidth - p, displayHeight - p);
 			synchronized (bufferLock) {
 				frameSequence = publishedFrameSequence;
-				metrics = publishedMetricsOwner;
-				metricsSequence = publishedMetricsSequence;
 				publicationNanos = publishedFrameNanos;
 				if (diagnostics != null && diagnostics.enabled(
 						PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT)) {
@@ -778,7 +767,7 @@ public abstract class Canvas extends Displayable {
 			}
 			presented = true;
 			if (metrics != null) {
-				metrics.recordRender(metricsSequence);
+				metrics.recordRender(frameSequence);
 			}
 			if (diagnostics != null && diagnostics.enabled(
 					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
@@ -1244,13 +1233,8 @@ public abstract class Canvas extends Displayable {
 			diagnostics.recordPublication(sequence, publishedFrameNanos);
 		}
 		FrameMetrics metrics = frameMetrics;
-		long metricsSequence = metrics == null ? 0L : metrics.recordGameFrame();
-		if (renderMetricsEnabled && metrics != null) {
-			publishedMetricsOwner = metrics;
-			publishedMetricsSequence = metricsSequence;
-		} else {
-			publishedMetricsOwner = null;
-			publishedMetricsSequence = 0L;
+		if (metrics != null) {
+			metrics.recordGameFrame();
 		}
 	}
 
@@ -1327,8 +1311,7 @@ public abstract class Canvas extends Displayable {
 
 	@SuppressLint("NewApi")
 	private PresentationResult presentToSurface() {
-		FrameMetrics metrics = null;
-		long metricsSequence = 0L;
+		FrameMetrics metrics = rendererFrameMetrics;
 		PerformanceDiagnostics diagnostics = performanceDiagnostics;
 		long submitStarted = 0L;
 		long publicationNanos = 0L;
@@ -1359,8 +1342,6 @@ public abstract class Canvas extends Displayable {
 				lockedCanvas.clipRect(p, p, displayWidth - p, displayHeight - p);
 				synchronized (bufferLock) {
 					frameSequence = publishedFrameSequence;
-					metrics = publishedMetricsOwner;
-					metricsSequence = publishedMetricsSequence;
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
 							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT)) {
@@ -1377,7 +1358,7 @@ public abstract class Canvas extends Displayable {
 				}
 			}
 			if (metrics != null) {
-				metrics.recordRender(metricsSequence);
+				metrics.recordRender(frameSequence);
 			}
 			if (diagnostics != null && diagnostics.enabled(
 					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
@@ -1581,8 +1562,7 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void onDrawFrame(GL10 gl) {
-			FrameMetrics metrics = null;
-			long metricsSequence = 0L;
+			FrameMetrics metrics = rendererFrameMetrics;
 			PerformanceDiagnostics diagnostics = performanceDiagnostics;
 			long submitStarted = diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.SUBMIT)
 					? System.nanoTime() : 0L;
@@ -1613,8 +1593,6 @@ public abstract class Canvas extends Displayable {
 				synchronized (bufferLock) {
 					Bitmap bitmap = offscreenCopy.getBitmap();
 					frameSequence = publishedFrameSequence;
-					metrics = publishedMetricsOwner;
-					metricsSequence = publishedMetricsSequence;
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
 							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT)) {
@@ -1636,7 +1614,7 @@ public abstract class Canvas extends Displayable {
 				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 				presented = true;
 				if (metrics != null) {
-					metrics.recordRender(metricsSequence);
+					metrics.recordRender(frameSequence);
 				}
 				if (diagnostics != null && diagnostics.enabled(
 						PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
@@ -1885,10 +1863,6 @@ public abstract class Canvas extends Displayable {
 
 		private void releaseSurface() {
 			updateSurfaceUsable(false);
-			if (autoSpeedController != null) {
-				autoSpeedController.setFrameSourceActive(false);
-				autoSpeedController = null;
-			}
 			presentationMailbox.close();
 			if (renderer != null) {
 				renderer.stop();
@@ -1901,17 +1875,16 @@ public abstract class Canvas extends Displayable {
 				overlayView.removeLayer(fpsCounter);
 				fpsCounter = null;
 			}
+			PerformanceDiagnostics diagnostics;
 			synchronized (bufferLock) {
 				frameMetrics = null;
-				renderMetricsEnabled = false;
-				publishedMetricsOwner = null;
-				publishedMetricsSequence = 0L;
+				rendererFrameMetrics = null;
+				diagnostics = performanceDiagnostics;
+				performanceDiagnostics = null;
 				publishedFrameSequence = 0L;
 				publishedFrameNanos = 0L;
 			}
-			PerformanceDiagnostics diagnostics = performanceDiagnostics;
 			if (diagnostics != null) diagnostics.setActive(false);
-			performanceDiagnostics = null;
 			overlayView.removeLayer(softBar);
 			overlayView.removeLayer(controllerJoystickOverlay);
 			controllerOverlayView = null;
@@ -2159,28 +2132,31 @@ public abstract class Canvas extends Displayable {
 			refreshDisplayMaximumFps(mView);
 			int mask = settings.showFps
 					? PerformanceOverlayOptions.sanitize(settings.performanceOverlayMetrics) : 0;
-			synchronized (bufferLock) {
-				renderMetricsEnabled = PerformanceOverlayOptions.requiresRendererMetrics(mask);
-			}
+			FrameMetrics nextFrameMetrics = PerformanceOverlayOptions.requiresFrameMetrics(mask)
+					? new FrameMetrics() : null;
+			FrameMetrics nextRendererFrameMetrics =
+					PerformanceOverlayOptions.requiresRendererMetrics(mask) ? nextFrameMetrics : null;
+			PerformanceDiagnostics nextDiagnostics =
+					(mask & PerformanceDiagnostics.TIMING_MASK) != 0
+							? new PerformanceDiagnostics(mask) : null;
 			surfaceAttached = true;
-			presentationMailbox.begin();
+			synchronized (bufferLock) {
+				frameMetrics = nextFrameMetrics;
+				rendererFrameMetrics = nextRendererFrameMetrics;
+				performanceDiagnostics = nextDiagnostics;
+				publishedFrameSequence = 0L;
+				publishedFrameNanos = 0L;
+				presentationMailbox.begin();
+			}
 			if (renderer != null) {
 				renderer.start();
 			}
 			surface = holder.getSurface();
-			autoSpeedController = GuestTimingBridge.activeSpeedController();
-			if (settings.showFps || autoSpeedController != null) {
-				frameMetrics = autoSpeedController == null
-						? new FrameMetrics() : autoSpeedController.frameMetrics();
-			}
-			if (settings.showFps && mask != 0) {
-				if ((mask & PerformanceDiagnostics.TIMING_MASK) != 0) {
-					performanceDiagnostics = new PerformanceDiagnostics(mask);
-				}
+			if (mask != 0) {
 				fpsCounter = new FpsCounter(
 						overlayView,
-						frameMetrics,
-						timingOverlayEnabled ? autoSpeedController : null,
+						nextFrameMetrics,
+						timingOverlayEnabled ? timingSession : null,
 						Canvas.this,
 						mask,
 						settings.performanceOverlayPosition);

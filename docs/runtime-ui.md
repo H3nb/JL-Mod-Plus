@@ -37,6 +37,7 @@ ordering, or replace `Displayable` views.
 | Keyboard (IME) | Canvas when Android IME exists | Existing toggle semantics, posted after popup dismissal, using the Canvas/GLSurfaceView window token and its explicit `InputConnection` contract |
 | Take Screenshot | Canvas | `takeScreenshot()` and existing asynchronous result handling |
 | Limit FPS | Canvas | Compose Material 3 digits-only dialog and existing `Canvas.setLimitFps()` values (`0` display maximum, `-1` reset) |
+| Emulation Speed | Canvas with compatible timing transform | Manual session-only multiplier from 0.25x to 16x; Reset selects 1x. See [Emulation speed](emulation-speed.md). |
 | Virtual Keyboard options | Canvas when a virtual keyboard exists | Existing layout edit/resize/finish/switch/hide methods |
 
 The finish-layout item is visible only while the virtual keyboard is in an

@@ -69,9 +69,6 @@
     <string name="config_timing_mode_full_guest">Waktu Emulasi</string>
     <string name="config_timing_mode_real_wall">Waktu Nyata</string>
     <string name="config_help_emulation_speed">Mengatur kecepatan waktu dan delay di dalam MIDlet. Audio dan UI Android tetap berjalan normal.</string>
-    <string name="emulation_speed_auto">Auto</string>
-    <string name="emulation_speed_auto_summary">Mencari kecepatan tertinggi yang tetap stabil secara otomatis.</string>
-    <string name="emulation_speed_auto_value">Auto · %1$s</string>
     <string name="config_help_timing_mode">Memilih apakah waktu MIDlet mengikuti waktu emulasi atau waktu nyata. Delay tetap mengikuti kecepatan emulasi.</string>
     <string name="config_help_timing_unavailable">MIDlet ini belum memiliki dukungan timing. Instal ulang atau konversi ulang MIDlet ini untuk mengaktifkan kecepatan emulasi.</string>
     <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dapat dijalankan. Harap tunggu…</string>

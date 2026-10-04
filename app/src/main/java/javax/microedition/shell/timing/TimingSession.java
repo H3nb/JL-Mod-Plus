@@ -610,7 +610,7 @@ public final class TimingSession implements AutoCloseable {
 	 * respect to snapshots and validates the new value before mutating state.
 	 */
 	public void updateSpeedPercent(int speedPercent) {
-		EmulationSpeed.requireRuntimePercent(speedPercent);
+		EmulationSpeed.requireValidPercent(speedPercent);
 		Set<Runnable> listeners;
 		synchronized (lock) {
 			ensureOpen();
