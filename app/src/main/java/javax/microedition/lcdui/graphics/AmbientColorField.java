@@ -7,221 +7,142 @@
  */
 package javax.microedition.lcdui.graphics;
 
-/** Full-frame low-resolution color field and single temporal transition used by both backends. */
+/** Low-resolution linear-light field with one temporal transition per renderer instance. */
 public final class AmbientColorField {
-    public static final int ANCHOR_COUNT = 8;
-    public static final int GRID_SIZE = 9;
-    public static final int GRID_COLOR_COUNT = GRID_SIZE * GRID_SIZE;
     public static final int CHANNEL_COUNT = 3;
+    public static final int GRID_SIZE = 32;
+    public static final int GRID_COLOR_COUNT = GRID_SIZE * GRID_SIZE;
+    public static final int GRID_CHANNEL_COUNT = GRID_COLOR_COUNT * CHANNEL_COUNT;
+    private static final int MEDIUM_GRID_SIZE = 16;
+    private static final int MEDIUM_GRID_CHANNEL_COUNT =
+            MEDIUM_GRID_SIZE * MEDIUM_GRID_SIZE * CHANNEL_COUNT;
+    private static final int WIDE_GRID_SIZE = 8;
+    private static final int WIDE_GRID_CHANNEL_COUNT =
+            WIDE_GRID_SIZE * WIDE_GRID_SIZE * CHANNEL_COUNT;
     /** Matches the host presentation cadence so animated midlets feel live. */
     public static final long SAMPLE_INTERVAL_NS = 33_333_333L;
     public static final long MAX_TRANSITION_NS = 1_000_000_000L;
     public static final long TAU_NS = 140_000_000L;
-    private static final float INSET = 0.03f;
-    private static final float RADIUS_SQUARED = 0.20f * 0.20f;
-    /** Physical distance, in normalized surface-height units, over which edge color bleeds. */
-    private static final float EDGE_FALLOFF = 0.30f;
-    private static final float EPSILON = 1.0f / 255.0f;
-    /** Five-tap blur keeps adjacent palette cells from becoming visible bands. */
+    /** Rounded only for the emitted blur field; the guest LCD itself remains rectangular. */
+    private static final float EMITTER_CORNER_SCALE = 0.10f;
+    /** Even at the LCD edge, retain some blur so text and sharp shapes do not escape intact. */
+    private static final float MIN_MEDIUM_MIX = 0.32f;
+    /** Physical distances that widen the edge blur from fine -> medium -> wide. */
+    private static final float MEDIUM_DISTANCE_SCALE = 0.20f;
+    private static final float WIDE_START_DISTANCE_SCALE = 0.08f;
+    private static final float WIDE_DISTANCE_SCALE = 0.38f;
+    /** Lateral spread makes neighboring edge colors overlap like light in frosted glass. */
+    private static final float TANGENT_SPREAD_NEAR_SCALE = 0.015f;
+    private static final float TANGENT_SPREAD_FAR_SCALE = 0.18f;
+    private static final float TANGENT_DISTANCE_SCALE = 0.45f;
+    /** Fixed inward sample keeps the extension anchored to the same LCD-edge neighborhood. */
+    private static final float SOURCE_INSET_SCALE = 0.04f;
+    private static final float LINEAR_EPSILON = 1.0f / 4096.0f;
+    /** Five-tap blur softens neighboring samples without erasing the higher-resolution field. */
     private static final float[] BLUR_KERNEL = {0.0625f, 0.25f, 0.375f, 0.25f, 0.0625f};
-    private static final float[] ANCHOR_X = {INSET, 0.5f, 1.0f - INSET, 1.0f - INSET,
-            1.0f - INSET, 0.5f, INSET, INSET};
-    private static final float[] ANCHOR_Y = {INSET, INSET, INSET, 0.5f,
-            1.0f - INSET, 1.0f - INSET, 1.0f - INSET, 0.5f};
 
-    private final float[] start = new float[ANCHOR_COUNT * CHANNEL_COUNT];
-    private final float[] target = new float[ANCHOR_COUNT * CHANNEL_COUNT];
-    private final float[] startBase = new float[CHANNEL_COUNT];
-    private final float[] targetBase = new float[CHANNEL_COUNT];
-    private final float[] evaluationAnchors = new float[ANCHOR_COUNT * CHANNEL_COUNT];
-    private final float[] evaluationBase = new float[CHANNEL_COUNT];
-    private final float[] evaluationEdge = new float[CHANNEL_COUNT];
-    private final float[] gridStart = new float[GRID_COLOR_COUNT * CHANNEL_COUNT];
-    private final float[] gridTarget = new float[GRID_COLOR_COUNT * CHANNEL_COUNT];
-    private final float[] evaluationGrid = new float[GRID_COLOR_COUNT * CHANNEL_COUNT];
-    private final float[] blurredGridHorizontal = new float[GRID_COLOR_COUNT * CHANNEL_COUNT];
-    private final float[] blurredGrid = new float[GRID_COLOR_COUNT * CHANNEL_COUNT];
+    private final float[] fineStart = new float[GRID_CHANNEL_COUNT];
+    private final float[] fineTarget = new float[GRID_CHANNEL_COUNT];
+    private final float[] mediumStart = new float[MEDIUM_GRID_CHANNEL_COUNT];
+    private final float[] mediumTarget = new float[MEDIUM_GRID_CHANNEL_COUNT];
+    private final float[] wideStart = new float[WIDE_GRID_CHANNEL_COUNT];
+    private final float[] wideTarget = new float[WIDE_GRID_CHANNEL_COUNT];
+    private final float[] evaluationFine = new float[GRID_CHANNEL_COUNT];
+    private final float[] evaluationMedium = new float[MEDIUM_GRID_CHANNEL_COUNT];
+    private final float[] evaluationWide = new float[WIDE_GRID_CHANNEL_COUNT];
+    private final float[] filteredHorizontal = new float[GRID_CHANNEL_COUNT];
+    private final float[] filteredFine = new float[GRID_CHANNEL_COUNT];
     private final float[] evaluationInner = new float[CHANNEL_COUNT];
-    private float[] nodeX = new float[0];
-    private float[] nodeY = new float[0];
-    private float[] weights = new float[0];
-    private float[] fade = new float[0];
+    private final float[] evaluationMediumColor = new float[CHANNEL_COUNT];
+    private final float[] evaluationWideColor = new float[CHANNEL_COUNT];
+    private final float[] evaluationTap = new float[CHANNEL_COUNT];
+    private float[] emissionU = new float[0];
+    private float[] emissionV = new float[0];
+    private float[] mediumMix = new float[0];
+    private float[] wideMix = new float[0];
+    private float[] tangentU = new float[0];
+    private float[] tangentV = new float[0];
     private int nodeCount;
-    private float gameLeft;
-    private float gameTop;
-    private float gameRight;
-    private float gameBottom;
-    private float surfaceAspect = 1.0f;
     private long transitionStartNs;
     private boolean transitioning;
-    private boolean gridMode;
+    private boolean guestFieldActive;
 
     public AmbientColorField() {
         resetToBase(0xFF000000);
     }
 
-    /** Initializes all anchors to the resolved theme color before the first valid sample. */
+    /** Initializes the pre-sample field from the resolved host theme. */
     public void resetToBase(int baseArgb) {
-        float r = ((baseArgb >>> 16) & 0xFF) / 255.0f;
-        float g = ((baseArgb >>> 8) & 0xFF) / 255.0f;
-        float b = (baseArgb & 0xFF) / 255.0f;
-        for (int i = 0; i < ANCHOR_COUNT; i++) {
-            int offset = i * CHANNEL_COUNT;
-            start[offset] = target[offset] = r;
-            start[offset + 1] = target[offset + 1] = g;
-            start[offset + 2] = target[offset + 2] = b;
-        }
-        for (int i = 0; i < GRID_COLOR_COUNT; i++) {
-            int offset = i * CHANNEL_COUNT;
-            gridStart[offset] = gridTarget[offset] = r;
-            gridStart[offset + 1] = gridTarget[offset + 1] = g;
-            gridStart[offset + 2] = gridTarget[offset + 2] = b;
-        }
-        startBase[0] = targetBase[0] = r;
-        startBase[1] = targetBase[1] = g;
-        startBase[2] = targetBase[2] = b;
+        float r = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 16) & 0xFF);
+        float g = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 8) & 0xFF);
+        float b = AmbientColorSampler.srgbChannelToLinear(baseArgb & 0xFF);
+        fillGrid(fineStart, r, g, b);
+        fillGrid(fineTarget, r, g, b);
+        buildDiffusionFields(fineStart, mediumStart, wideStart);
+        buildDiffusionFields(fineTarget, mediumTarget, wideTarget);
         transitioning = false;
         transitionStartNs = 0L;
-        gridMode = false;
+        guestFieldActive = false;
     }
 
-    /** Retargets the complete field without restarting from the old, unevaluated target. */
-    public void setTarget(int[] anchorArgb, int baseArgb, long nowNs, boolean instant) {
-        if (anchorArgb == null || anchorArgb.length < ANCHOR_COUNT) return;
-        evaluate(nowNs, evaluationAnchors, evaluationBase);
-        gridMode = false;
-
-        float baseR = ((baseArgb >>> 16) & 0xFF) / 255.0f;
-        float baseG = ((baseArgb >>> 8) & 0xFF) / 255.0f;
-        float baseB = (baseArgb & 0xFF) / 255.0f;
-        boolean materiallyDifferent = Math.max(
-                Math.max(Math.abs(targetBase[0] - baseR), Math.abs(targetBase[1] - baseG)),
-                Math.abs(targetBase[2] - baseB)) > EPSILON;
-        for (int i = 0; i < ANCHOR_COUNT && !materiallyDifferent; i++) {
-            int offset = i * CHANNEL_COUNT;
-            float r = ((anchorArgb[i] >>> 16) & 0xFF) / 255.0f;
-            float g = ((anchorArgb[i] >>> 8) & 0xFF) / 255.0f;
-            float b = (anchorArgb[i] & 0xFF) / 255.0f;
-            materiallyDifferent = Math.abs(target[offset] - r) > EPSILON
-                    || Math.abs(target[offset + 1] - g) > EPSILON
-                    || Math.abs(target[offset + 2] - b) > EPSILON;
-        }
-        if (!materiallyDifferent && !instant) return;
-        for (int i = 0; i < ANCHOR_COUNT; i++) {
-            int offset = i * CHANNEL_COUNT;
-            float r = ((anchorArgb[i] >>> 16) & 0xFF) / 255.0f;
-            float g = ((anchorArgb[i] >>> 8) & 0xFF) / 255.0f;
-            float b = (anchorArgb[i] & 0xFF) / 255.0f;
-            materiallyDifferent |= Math.abs(target[offset] - r) > EPSILON
-                    || Math.abs(target[offset + 1] - g) > EPSILON
-                    || Math.abs(target[offset + 2] - b) > EPSILON;
-            start[offset] = instant ? r : evaluationAnchors[offset];
-            start[offset + 1] = instant ? g : evaluationAnchors[offset + 1];
-            start[offset + 2] = instant ? b : evaluationAnchors[offset + 2];
-            target[offset] = r;
-            target[offset + 1] = g;
-            target[offset + 2] = b;
-        }
-        startBase[0] = instant ? baseR : evaluationBase[0];
-        startBase[1] = instant ? baseG : evaluationBase[1];
-        startBase[2] = instant ? baseB : evaluationBase[2];
-        targetBase[0] = baseR;
-        targetBase[1] = baseG;
-        targetBase[2] = baseB;
-        if (instant) {
-            System.arraycopy(target, 0, start, 0, target.length);
-            System.arraycopy(targetBase, 0, startBase, 0, startBase.length);
-            transitioning = false;
-            transitionStartNs = 0L;
-        } else {
-            transitionStartNs = nowNs;
-            transitioning = true;
-        }
+    /** Retargets the filtered guest field while preserving temporal continuity. */
+    public void setTarget(float[] gridLinear, long nowNs, boolean instant) {
+        if (gridLinear == null || gridLinear.length < GRID_CHANNEL_COUNT) return;
+        evaluate(nowNs, evaluationFine);
+        // Blur only when a new sample arrives. Blur is linear, so interpolating filtered
+        // endpoints is equivalent to filtering every temporally interpolated frame.
+        blurGrid(gridLinear, filteredHorizontal, filteredFine);
+        retarget(evaluationFine, filteredFine, nowNs, instant, true);
     }
 
-    /** Retargets a full low-resolution frame palette while preserving temporal continuity. */
-    public void setTargetGrid(int[] gridArgb, int baseArgb, long nowNs, boolean instant) {
-        if (gridArgb == null || gridArgb.length < GRID_COLOR_COUNT) return;
-        evaluateGrid(nowNs, evaluationGrid, evaluationBase);
-
-        float baseR = ((baseArgb >>> 16) & 0xFF) / 255.0f;
-        float baseG = ((baseArgb >>> 8) & 0xFF) / 255.0f;
-        float baseB = (baseArgb & 0xFF) / 255.0f;
-        boolean materiallyDifferent = Math.max(
-                Math.max(Math.abs(targetBase[0] - baseR), Math.abs(targetBase[1] - baseG)),
-                Math.abs(targetBase[2] - baseB)) > EPSILON;
-        for (int i = 0; i < GRID_COLOR_COUNT && !materiallyDifferent; i++) {
-            int offset = i * CHANNEL_COUNT;
-            float r = ((gridArgb[i] >>> 16) & 0xFF) / 255.0f;
-            float g = ((gridArgb[i] >>> 8) & 0xFF) / 255.0f;
-            float b = (gridArgb[i] & 0xFF) / 255.0f;
-            materiallyDifferent = Math.abs(gridTarget[offset] - r) > EPSILON
-                    || Math.abs(gridTarget[offset + 1] - g) > EPSILON
-                    || Math.abs(gridTarget[offset + 2] - b) > EPSILON;
-        }
-        if (!materiallyDifferent && !instant && gridMode) return;
-
-        for (int i = 0; i < GRID_COLOR_COUNT; i++) {
-            int offset = i * CHANNEL_COUNT;
-            float r = ((gridArgb[i] >>> 16) & 0xFF) / 255.0f;
-            float g = ((gridArgb[i] >>> 8) & 0xFF) / 255.0f;
-            float b = (gridArgb[i] & 0xFF) / 255.0f;
-            gridStart[offset] = instant ? r : evaluationGrid[offset];
-            gridStart[offset + 1] = instant ? g : evaluationGrid[offset + 1];
-            gridStart[offset + 2] = instant ? b : evaluationGrid[offset + 2];
-            gridTarget[offset] = r;
-            gridTarget[offset + 1] = g;
-            gridTarget[offset + 2] = b;
-        }
-        startBase[0] = instant ? baseR : evaluationBase[0];
-        startBase[1] = instant ? baseG : evaluationBase[1];
-        startBase[2] = instant ? baseB : evaluationBase[2];
-        targetBase[0] = baseR;
-        targetBase[1] = baseG;
-        targetBase[2] = baseB;
-        gridMode = true;
-        if (instant || !materiallyDifferent) {
-            System.arraycopy(gridTarget, 0, gridStart, 0, gridTarget.length);
-            System.arraycopy(targetBase, 0, startBase, 0, startBase.length);
-            transitioning = false;
-            transitionStartNs = 0L;
-        } else {
-            transitionStartNs = nowNs;
-            transitioning = true;
-        }
-    }
-
-    /** Retargets only the host base while preserving the sampled game colors. */
+    /** Retargets only the pre-sample solid field; active guest output stays theme-independent. */
     public void setBaseColor(int baseArgb, long nowNs, boolean instant) {
-        if (gridMode) {
-            evaluateGrid(nowNs, evaluationGrid, evaluationBase);
-        } else {
-            evaluate(nowNs, evaluationAnchors, evaluationBase);
+        if (guestFieldActive) return;
+        float r = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 16) & 0xFF);
+        float g = AmbientColorSampler.srgbChannelToLinear((baseArgb >>> 8) & 0xFF);
+        float b = AmbientColorSampler.srgbChannelToLinear(baseArgb & 0xFF);
+        evaluate(nowNs, evaluationFine);
+        fillGrid(filteredFine, r, g, b);
+        retarget(evaluationFine, filteredFine, nowNs, instant, false);
+    }
+
+    private void retarget(float[] currentFine, float[] newFine, long nowNs,
+            boolean instant, boolean guestSample) {
+        boolean materiallyDifferent = false;
+        for (int i = 0; i < GRID_CHANNEL_COUNT && !materiallyDifferent; i++) {
+            materiallyDifferent = Math.abs(fineTarget[i] - clamp01(newFine[i]))
+                    > LINEAR_EPSILON;
         }
-        float r = ((baseArgb >>> 16) & 0xFF) / 255.0f;
-        float g = ((baseArgb >>> 8) & 0xFF) / 255.0f;
-        float b = (baseArgb & 0xFF) / 255.0f;
-        boolean different = Math.abs(targetBase[0] - r) > EPSILON
-                || Math.abs(targetBase[1] - g) > EPSILON
-                || Math.abs(targetBase[2] - b) > EPSILON;
-        if (!different && !instant) return;
-        startBase[0] = instant ? r : evaluationBase[0];
-        startBase[1] = instant ? g : evaluationBase[1];
-        startBase[2] = instant ? b : evaluationBase[2];
-        targetBase[0] = r;
-        targetBase[1] = g;
-        targetBase[2] = b;
+        if (!materiallyDifferent && !instant) {
+            // Guest ownership is independent from temporal color state. If the first guest
+            // target already equals the existing target, keep any in-flight transition intact.
+            if (guestSample) guestFieldActive = true;
+            return;
+        }
+
         if (instant) {
-            System.arraycopy(targetBase, 0, startBase, 0, CHANNEL_COUNT);
+            copyClamped(newFine, fineStart);
+            System.arraycopy(fineStart, 0, fineTarget, 0, fineStart.length);
+            buildDiffusionFields(fineStart, mediumStart, wideStart);
+            System.arraycopy(mediumStart, 0, mediumTarget, 0, mediumStart.length);
+            System.arraycopy(wideStart, 0, wideTarget, 0, wideStart.length);
             transitioning = false;
             transitionStartNs = 0L;
         } else {
+            System.arraycopy(currentFine, 0, fineStart, 0, fineStart.length);
+            copyClamped(newFine, fineTarget);
+            // Downsampling is linear. Deriving both pyramid endpoints here makes rendering a
+            // direct temporal interpolation and preserves exact continuity on mid-transition
+            // retargets without rebuilding the pyramid on every host redraw.
+            buildDiffusionFields(fineStart, mediumStart, wideStart);
+            buildDiffusionFields(fineTarget, mediumTarget, wideTarget);
             transitionStartNs = nowNs;
             transitioning = true;
         }
+        if (guestSample) guestFieldActive = true;
     }
 
-    /** Builds inverse-distance weights for the supplied normalized node coordinates. */
+    /** Builds projection and diffusion geometry for the supplied normalized host nodes. */
     public void configureNodes(float[] normalizedX, float[] normalizedY,
             float gameLeft, float gameTop, float gameRight, float gameBottom,
             float aspectRatio) {
@@ -234,162 +155,107 @@ public final class AmbientColorField {
             float gameLeft, float gameTop, float gameRight, float gameBottom,
             float aspectRatio) {
         if (normalizedX == null || normalizedY == null) {
-            nodeCount = 0;
-            nodeX = new float[0];
-            nodeY = new float[0];
-            weights = new float[0];
-            fade = new float[0];
+            clearNodes();
             return;
         }
-        nodeCount = Math.min(requestedCount, Math.min(normalizedX.length, normalizedY.length));
-        nodeX = new float[nodeCount];
-        nodeY = new float[nodeCount];
-        weights = new float[nodeCount * ANCHOR_COUNT];
-        fade = new float[nodeCount];
+        nodeCount = Math.max(0,
+                Math.min(requestedCount, Math.min(normalizedX.length, normalizedY.length)));
+        emissionU = new float[nodeCount];
+        emissionV = new float[nodeCount];
+        mediumMix = new float[nodeCount];
+        wideMix = new float[nodeCount];
+        tangentU = new float[nodeCount];
+        tangentV = new float[nodeCount];
+
         float safeAspect = aspectRatio > 0.0f && Float.isFinite(aspectRatio) ? aspectRatio : 1.0f;
-        surfaceAspect = safeAspect;
         float left = clamp01(Math.min(gameLeft, gameRight));
         float top = clamp01(Math.min(gameTop, gameBottom));
         float right = clamp01(Math.max(gameLeft, gameRight));
         float bottom = clamp01(Math.max(gameTop, gameBottom));
-        this.gameLeft = left;
-        this.gameTop = top;
-        this.gameRight = right;
-        this.gameBottom = bottom;
+        float physicalLeft = left * safeAspect;
+        float physicalRight = right * safeAspect;
+        float physicalGameWidth = Math.max(physicalRight - physicalLeft, 1.0e-6f);
+        float physicalGameHeight = Math.max(bottom - top, 1.0e-6f);
+        float shortGameSide = Math.min(physicalGameWidth, physicalGameHeight);
+        float cornerRadius = Math.min(shortGameSide * EMITTER_CORNER_SCALE,
+                0.5f * shortGameSide);
+        float mediumDistance = Math.max(
+                shortGameSide * MEDIUM_DISTANCE_SCALE, 1.0e-6f);
+        float wideStartDistance = shortGameSide * WIDE_START_DISTANCE_SCALE;
+        float wideDistance = Math.max(
+                shortGameSide * WIDE_DISTANCE_SCALE, 1.0e-6f);
+        float tangentDistance = Math.max(
+                shortGameSide * TANGENT_DISTANCE_SCALE, 1.0e-6f);
+
         for (int n = 0; n < nodeCount; n++) {
             float x = clamp01(normalizedX[n]);
             float y = clamp01(normalizedY[n]);
-            nodeX[n] = x;
-            nodeY[n] = y;
-            float sum = 0.0f;
-            for (int j = 0; j < ANCHOR_COUNT; j++) {
-                float dx = (x - ANCHOR_X[j]) * safeAspect;
-                float dy = y - ANCHOR_Y[j];
-                float denominator = dx * dx + dy * dy + RADIUS_SQUARED;
-                float value = 1.0f / (denominator * denominator);
-                weights[n * ANCHOR_COUNT + j] = value;
-                sum += value;
-            }
-            float inverseSum = sum > 0.0f && Float.isFinite(sum) ? 1.0f / sum : 1.0f / ANCHOR_COUNT;
-            for (int j = 0; j < ANCHOR_COUNT; j++) {
-                weights[n * ANCHOR_COUNT + j] *= inverseSum;
-            }
-            float outsideX = x < this.gameLeft ? this.gameLeft - x
-                    : x > this.gameRight ? x - this.gameRight : 0.0f;
-            float outsideY = y < this.gameTop ? this.gameTop - y
-                    : y > this.gameBottom ? y - this.gameBottom : 0.0f;
-            float gapX = x < this.gameLeft ? this.gameLeft
-                    : x > this.gameRight ? 1.0f - this.gameRight : 1.0f;
-            float gapY = y < this.gameTop ? this.gameTop
-                    : y > this.gameBottom ? 1.0f - this.gameBottom : 1.0f;
-            float normalizedOutsideX = outsideX / Math.max(gapX, 1.0e-6f);
-            float normalizedOutsideY = outsideY / Math.max(gapY, 1.0e-6f);
-            float d = clamp01(Math.max(normalizedOutsideX, normalizedOutsideY));
-            fade[n] = d * d * (3.0f - 2.0f * d);
+            configureEmissionNode(n, x, y, safeAspect, physicalLeft, top, physicalRight, bottom,
+                    physicalGameWidth, physicalGameHeight, shortGameSide, cornerRadius,
+                    mediumDistance, wideStartDistance, wideDistance, tangentDistance);
         }
+    }
+
+    private void clearNodes() {
+        nodeCount = 0;
+        emissionU = new float[0];
+        emissionV = new float[0];
+        mediumMix = new float[0];
+        wideMix = new float[0];
+        tangentU = new float[0];
+        tangentV = new float[0];
     }
 
     public int nodeCount() {
         return nodeCount;
     }
 
-    /** Writes the current sRGB field into an RGB float array, with no allocation. */
+    /** Writes the current linear-light field as sRGB values, with no allocation. */
     public boolean renderNodes(long nowNs, float[] outRgb) {
         if (outRgb == null || outRgb.length < nodeCount * CHANNEL_COUNT) return false;
-        if (gridMode) return renderGridNodes(nowNs, outRgb);
-        evaluate(nowNs, evaluationAnchors, evaluationBase);
+        boolean active = evaluatePyramid(nowNs);
         for (int n = 0; n < nodeCount; n++) {
+            sampleNode(n);
             int output = n * CHANNEL_COUNT;
-            int weightOffset = n * ANCHOR_COUNT;
-            float edgeBlend = edgeBlend(nodeX[n], nodeY[n]);
-            if (edgeBlend > 0.0f) {
-                edgeColor(nodeX[n], nodeY[n], evaluationAnchors, evaluationEdge);
-            }
-            for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
-                float value = 0.0f;
-                for (int j = 0; j < ANCHOR_COUNT; j++) {
-                    value += weights[weightOffset + j] * evaluationAnchors[j * CHANNEL_COUNT + channel];
-                }
-                if (edgeBlend > 0.0f) {
-                    value += (evaluationEdge[channel] - value) * edgeBlend;
-                }
-                float darkened = value + (evaluationBase[channel] - value) * (0.25f * fade[n]);
-                outRgb[output + channel] = clamp01(darkened);
-            }
+            outRgb[output] = AmbientColorSampler.linearChannelToSrgb(evaluationInner[0]);
+            outRgb[output + 1] = AmbientColorSampler.linearChannelToSrgb(evaluationInner[1]);
+            outRgb[output + 2] = AmbientColorSampler.linearChannelToSrgb(evaluationInner[2]);
         }
-        return transitioning;
+        return active;
     }
 
     /** Same field operation as renderNodes, quantized to opaque ARGB for the Canvas bitmap. */
     public boolean renderNodesArgb(long nowNs, int[] outArgb) {
         if (outArgb == null || outArgb.length < nodeCount) return false;
-        if (gridMode) return renderGridNodesArgb(nowNs, outArgb);
-        evaluate(nowNs, evaluationAnchors, evaluationBase);
+        boolean active = evaluatePyramid(nowNs);
         for (int n = 0; n < nodeCount; n++) {
-            int weightOffset = n * ANCHOR_COUNT;
-            float edgeBlend = edgeBlend(nodeX[n], nodeY[n]);
-            float r = 0.0f, g = 0.0f, b = 0.0f;
-            for (int j = 0; j < ANCHOR_COUNT; j++) {
-                float weight = weights[weightOffset + j];
-                r += weight * evaluationAnchors[j * CHANNEL_COUNT];
-                g += weight * evaluationAnchors[j * CHANNEL_COUNT + 1];
-                b += weight * evaluationAnchors[j * CHANNEL_COUNT + 2];
-            }
-            if (edgeBlend > 0.0f) {
-                edgeColor(nodeX[n], nodeY[n], evaluationAnchors, evaluationEdge);
-                r += (evaluationEdge[0] - r) * edgeBlend;
-                g += (evaluationEdge[1] - g) * edgeBlend;
-                b += (evaluationEdge[2] - b) * edgeBlend;
-            }
-            float outside = 0.25f * fade[n];
-            r = clamp01(r + (evaluationBase[0] - r) * outside);
-            g = clamp01(g + (evaluationBase[1] - g) * outside);
-            b = clamp01(b + (evaluationBase[2] - b) * outside);
+            sampleNode(n);
             outArgb[n] = 0xFF000000
-                    | (toByte(r) << 16)
-                    | (toByte(g) << 8)
-                    | toByte(b);
-        }
-        return transitioning;
-    }
-
-    private boolean renderGridNodes(long nowNs, float[] outRgb) {
-        boolean active = evaluateGrid(nowNs, evaluationGrid, evaluationBase);
-        blurGrid(evaluationGrid, blurredGridHorizontal, blurredGrid);
-        for (int n = 0; n < nodeCount; n++) {
-            sampleGridForNode(nodeX[n], nodeY[n], blurredGrid);
-            int output = n * CHANNEL_COUNT;
-            float outside = 0.25f * fade[n];
-            for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
-                float value = evaluationEdge[channel];
-                outRgb[output + channel] = clamp01(
-                        value + (evaluationBase[channel] - value) * outside);
-            }
+                    | (AmbientColorSampler.linearChannelToByte(evaluationInner[0]) << 16)
+                    | (AmbientColorSampler.linearChannelToByte(evaluationInner[1]) << 8)
+                    | AmbientColorSampler.linearChannelToByte(evaluationInner[2]);
         }
         return active;
     }
 
-    private boolean renderGridNodesArgb(long nowNs, int[] outArgb) {
-        boolean active = evaluateGrid(nowNs, evaluationGrid, evaluationBase);
-        blurGrid(evaluationGrid, blurredGridHorizontal, blurredGrid);
-        for (int n = 0; n < nodeCount; n++) {
-            sampleGridForNode(nodeX[n], nodeY[n], blurredGrid);
-            float outside = 0.25f * fade[n];
-            float r = clamp01(evaluationEdge[0]
-                    + (evaluationBase[0] - evaluationEdge[0]) * outside);
-            float g = clamp01(evaluationEdge[1]
-                    + (evaluationBase[1] - evaluationEdge[1]) * outside);
-            float b = clamp01(evaluationEdge[2]
-                    + (evaluationBase[2] - evaluationEdge[2]) * outside);
-            outArgb[n] = 0xFF000000
-                    | (toByte(r) << 16)
-                    | (toByte(g) << 8)
-                    | toByte(b);
+    private void sampleNode(int index) {
+        sampleTangentially(emissionU[index], emissionV[index], tangentU[index], tangentV[index],
+                evaluationFine, GRID_SIZE, evaluationInner);
+        sampleTangentially(emissionU[index], emissionV[index], tangentU[index], tangentV[index],
+                evaluationMedium, MEDIUM_GRID_SIZE, evaluationMediumColor);
+        sampleTangentially(emissionU[index], emissionV[index], tangentU[index], tangentV[index],
+                evaluationWide, WIDE_GRID_SIZE, evaluationWideColor);
+        float medium = mediumMix[index];
+        float wide = wideMix[index];
+        for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
+            float blurred = evaluationInner[channel]
+                    + (evaluationMediumColor[channel] - evaluationInner[channel]) * medium;
+            blurred += (evaluationWideColor[channel] - blurred) * wide;
+            evaluationInner[channel] = clamp01(blurred);
         }
-        return active;
     }
 
-    /** Applies a small separable Gaussian-like blur to the low-resolution frame palette. */
+    /** Applies the fixed separable prefilter to a newly sampled low-resolution source field. */
     private static void blurGrid(float[] source, float[] horizontal, float[] output) {
         for (int y = 0; y < GRID_SIZE; y++) {
             for (int x = 0; x < GRID_SIZE; x++) {
@@ -399,7 +265,8 @@ public final class AmbientColorField {
                     for (int tap = -2; tap <= 2; tap++) {
                         int sampleX = Math.max(0, Math.min(GRID_SIZE - 1, x + tap));
                         int sampleOffset = (y * GRID_SIZE + sampleX) * CHANNEL_COUNT;
-                        value += source[sampleOffset + channel] * BLUR_KERNEL[tap + 2];
+                        value += clamp01(source[sampleOffset + channel])
+                                * BLUR_KERNEL[tap + 2];
                     }
                     horizontal[outputOffset + channel] = value;
                 }
@@ -425,117 +292,203 @@ public final class AmbientColorField {
         return transitioning;
     }
 
-    public boolean evaluate(long nowNs, float[] outAnchors, float[] outBase) {
-        if (outAnchors == null || outAnchors.length < target.length
-                || outBase == null || outBase.length < CHANNEL_COUNT) return false;
+    /** Evaluates the current fine field on the shared monotonic host clock. */
+    public boolean evaluate(long nowNs, float[] outFine) {
+        if (outFine == null || outFine.length < GRID_CHANNEL_COUNT) return false;
         if (!transitioning) {
-            System.arraycopy(target, 0, outAnchors, 0, target.length);
-            System.arraycopy(targetBase, 0, outBase, 0, CHANNEL_COUNT);
+            System.arraycopy(fineTarget, 0, outFine, 0, fineTarget.length);
             return false;
         }
         if (nowNs < transitionStartNs) {
-            System.arraycopy(start, 0, outAnchors, 0, start.length);
-            System.arraycopy(startBase, 0, outBase, 0, CHANNEL_COUNT);
+            System.arraycopy(fineStart, 0, outFine, 0, fineStart.length);
             return true;
         }
         long elapsed = nowNs - transitionStartNs;
         if (elapsed >= MAX_TRANSITION_NS) {
-            System.arraycopy(target, 0, outAnchors, 0, target.length);
-            System.arraycopy(targetBase, 0, outBase, 0, CHANNEL_COUNT);
+            System.arraycopy(fineTarget, 0, outFine, 0, fineTarget.length);
             transitioning = false;
             return false;
         }
-        double blend = 1.0 - Math.exp(-(double) elapsed / TAU_NS);
+        float blend = (float) (1.0 - Math.exp(-(double) elapsed / TAU_NS));
+        interpolate(fineStart, fineTarget, blend, outFine);
+        return true;
+    }
+
+    private boolean evaluatePyramid(long nowNs) {
+        if (!transitioning) {
+            copyTargetsToEvaluation();
+            return false;
+        }
+        if (nowNs < transitionStartNs) {
+            copyStartsToEvaluation();
+            return true;
+        }
+        long elapsed = nowNs - transitionStartNs;
+        if (elapsed >= MAX_TRANSITION_NS) {
+            copyTargetsToEvaluation();
+            transitioning = false;
+            return false;
+        }
+        float blend = (float) (1.0 - Math.exp(-(double) elapsed / TAU_NS));
+        interpolate(fineStart, fineTarget, blend, evaluationFine);
+        interpolate(mediumStart, mediumTarget, blend, evaluationMedium);
+        interpolate(wideStart, wideTarget, blend, evaluationWide);
+        return true;
+    }
+
+    private void copyStartsToEvaluation() {
+        System.arraycopy(fineStart, 0, evaluationFine, 0, fineStart.length);
+        System.arraycopy(mediumStart, 0, evaluationMedium, 0, mediumStart.length);
+        System.arraycopy(wideStart, 0, evaluationWide, 0, wideStart.length);
+    }
+
+    private void copyTargetsToEvaluation() {
+        System.arraycopy(fineTarget, 0, evaluationFine, 0, fineTarget.length);
+        System.arraycopy(mediumTarget, 0, evaluationMedium, 0, mediumTarget.length);
+        System.arraycopy(wideTarget, 0, evaluationWide, 0, wideTarget.length);
+    }
+
+    private static void interpolate(float[] start, float[] target, float blend, float[] out) {
         for (int i = 0; i < target.length; i++) {
-            outAnchors[i] = (float) (start[i] + (target[i] - start[i]) * blend);
+            out[i] = start[i] + (target[i] - start[i]) * blend;
         }
-        for (int i = 0; i < CHANNEL_COUNT; i++) {
-            outBase[i] = (float) (startBase[i] + (targetBase[i] - startBase[i]) * blend);
-        }
-        return true;
     }
 
-    /** Evaluates the current full-frame palette using the same monotonic clock as the field. */
-    public boolean evaluateGrid(long nowNs, float[] outGrid, float[] outBase) {
-        if (outGrid == null || outGrid.length < gridTarget.length
-                || outBase == null || outBase.length < CHANNEL_COUNT) return false;
-        if (!transitioning || !gridMode) {
-            System.arraycopy(gridTarget, 0, outGrid, 0, gridTarget.length);
-            System.arraycopy(targetBase, 0, outBase, 0, CHANNEL_COUNT);
-            return false;
-        }
-        if (nowNs < transitionStartNs) {
-            System.arraycopy(gridStart, 0, outGrid, 0, gridStart.length);
-            System.arraycopy(startBase, 0, outBase, 0, CHANNEL_COUNT);
-            return true;
-        }
-        long elapsed = nowNs - transitionStartNs;
-        if (elapsed >= MAX_TRANSITION_NS) {
-            System.arraycopy(gridTarget, 0, outGrid, 0, gridTarget.length);
-            System.arraycopy(targetBase, 0, outBase, 0, CHANNEL_COUNT);
-            transitioning = false;
-            return false;
-        }
-        double blend = 1.0 - Math.exp(-(double) elapsed / TAU_NS);
-        for (int i = 0; i < gridTarget.length; i++) {
-            outGrid[i] = (float) (gridStart[i] + (gridTarget[i] - gridStart[i]) * blend);
-        }
-        for (int i = 0; i < CHANNEL_COUNT; i++) {
-            outBase[i] = (float) (startBase[i] + (targetBase[i] - startBase[i]) * blend);
-        }
-        return true;
-    }
+    /**
+     * Maps one host node to the nearest point on a rounded LCD emitter. All distances are measured
+     * in physical host units so the light shape stays symmetric regardless of LCD placement.
+     */
+    private void configureEmissionNode(int index, float x, float y, float aspect,
+            float left, float top, float right, float bottom,
+            float gameWidth, float gameHeight, float shortGameSide, float cornerRadius,
+            float mediumDistance, float wideStartDistance, float wideDistance,
+            float tangentDistance) {
+        float px = x * aspect;
+        float py = y;
+        boolean insideRect = px > left + 1.0e-6f && px < right - 1.0e-6f
+                && py > top + 1.0e-6f && py < bottom - 1.0e-6f;
 
-    /** Samples the source grid at a surface node, spreading interior colors into the blur. */
-    private void sampleGridForNode(float x, float y, float[] grid) {
-        float width = gameRight - gameLeft;
-        float height = gameBottom - gameTop;
-        if (width <= 0.0f || height <= 0.0f) {
-            sampleGridAt(0.5f, 0.5f, grid, evaluationEdge);
-            return;
-        }
-        float relativeX = (x - gameLeft) / width;
-        float relativeY = (y - gameTop) / height;
-        boolean outside = x < gameLeft || x > gameRight || y < gameTop || y > gameBottom;
-        boolean boundary = Math.abs(x - gameLeft) < 1.0e-5f
-                || Math.abs(x - gameRight) < 1.0e-5f
-                || Math.abs(y - gameTop) < 1.0e-5f
-                || Math.abs(y - gameBottom) < 1.0e-5f;
-        if (!outside && !boundary) {
-            sampleGridAt(relativeX, relativeY, grid, evaluationEdge);
+        if (insideRect) {
+            emissionU[index] = clamp01((px - left) / gameWidth);
+            emissionV[index] = clamp01((py - top) / gameHeight);
+            mediumMix[index] = MIN_MEDIUM_MIX;
+            wideMix[index] = 0.0f;
+            tangentU[index] = 0.0f;
+            tangentV[index] = 0.0f;
             return;
         }
 
-        float edgeU = clamp01(relativeX);
-        float edgeV = clamp01(relativeY);
-        sampleGridAt(edgeU, edgeV, grid, evaluationEdge);
-        if (!outside) return;
+        float centerX = 0.5f * (left + right);
+        float centerY = 0.5f * (top + bottom);
+        float innerHalfWidth = Math.max(0.0f, 0.5f * gameWidth - cornerRadius);
+        float innerHalfHeight = Math.max(0.0f, 0.5f * gameHeight - cornerRadius);
+        float coreX = clamp(px, centerX - innerHalfWidth, centerX + innerHalfWidth);
+        float coreY = clamp(py, centerY - innerHalfHeight, centerY + innerHalfHeight);
+        float vx = px - coreX;
+        float vy = py - coreY;
+        float length = (float) Math.sqrt(vx * vx + vy * vy);
+        float nx;
+        float ny;
+        if (length > 1.0e-6f) {
+            nx = vx / length;
+            ny = vy / length;
+        } else {
+            float dx = px - centerX;
+            float dy = py - centerY;
+            if (Math.abs(dx) >= Math.abs(dy)) {
+                nx = dx < 0.0f ? -1.0f : 1.0f;
+                ny = 0.0f;
+            } else {
+                nx = 0.0f;
+                ny = dy < 0.0f ? -1.0f : 1.0f;
+            }
+        }
 
-        float edgeBlend = edgeBlend(x, y);
-        float inward = 0.18f * (1.0f - edgeBlend);
-        float innerU = x < gameLeft ? inward : x > gameRight ? 1.0f - inward : edgeU;
-        float innerV = y < gameTop ? inward : y > gameBottom ? 1.0f - inward : edgeV;
-        sampleGridAt(innerU, innerV, grid, evaluationInner);
-        float spread = 1.0f - edgeBlend;
-        for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
-            evaluationEdge[channel] += (evaluationInner[channel]
-                    - evaluationEdge[channel]) * spread;
+        float boundaryX = coreX + nx * cornerRadius;
+        float boundaryY = coreY + ny * cornerRadius;
+        float distance = Math.max(0.0f, length - cornerRadius);
+        float mediumProgress = smoothStep(clamp01(distance / mediumDistance));
+        mediumMix[index] = MIN_MEDIUM_MIX + (1.0f - MIN_MEDIUM_MIX) * mediumProgress;
+        wideMix[index] = smoothStep(
+                clamp01((distance - wideStartDistance) / wideDistance));
+
+        float insetDistance = shortGameSide * SOURCE_INSET_SCALE;
+        float sampleX = boundaryX - nx * insetDistance;
+        float sampleY = boundaryY - ny * insetDistance;
+        emissionU[index] = clamp01((sampleX - left) / gameWidth);
+        emissionV[index] = clamp01((sampleY - top) / gameHeight);
+
+        float tangentProgress = smoothStep(clamp01(distance / tangentDistance));
+        float tangentRadius = shortGameSide * (TANGENT_SPREAD_NEAR_SCALE
+                + (TANGENT_SPREAD_FAR_SCALE - TANGENT_SPREAD_NEAR_SCALE)
+                * tangentProgress);
+        tangentU[index] = (-ny * tangentRadius) / gameWidth;
+        tangentV[index] = (nx * tangentRadius) / gameHeight;
+    }
+
+    /** Builds successively wider diffusion levels while keeping the source position edge-anchored. */
+    private static void buildDiffusionFields(float[] fine, float[] medium, float[] wide) {
+        downsampleGrid(fine, GRID_SIZE, medium, MEDIUM_GRID_SIZE);
+        downsampleGrid(medium, MEDIUM_GRID_SIZE, wide, WIDE_GRID_SIZE);
+    }
+
+    private static void downsampleGrid(float[] source, int sourceSize,
+            float[] output, int outputSize) {
+        int block = sourceSize / outputSize;
+        float inverseCount = 1.0f / (block * block);
+        for (int outputY = 0; outputY < outputSize; outputY++) {
+            for (int outputX = 0; outputX < outputSize; outputX++) {
+                int sourceY = outputY * block;
+                int sourceX = outputX * block;
+                int outputOffset = (outputY * outputSize + outputX) * CHANNEL_COUNT;
+                for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
+                    float sum = 0.0f;
+                    for (int y = 0; y < block; y++) {
+                        for (int x = 0; x < block; x++) {
+                            int sourceOffset =
+                                    ((sourceY + y) * sourceSize + sourceX + x) * CHANNEL_COUNT;
+                            sum += source[sourceOffset + channel];
+                        }
+                    }
+                    output[outputOffset + channel] = sum * inverseCount;
+                }
+            }
         }
     }
 
-    private static void sampleGridAt(float u, float v, float[] grid, float[] out) {
-        float gridX = clamp01(u) * (GRID_SIZE - 1);
-        float gridY = clamp01(v) * (GRID_SIZE - 1);
+    /**
+     * Samples a Gaussian-like footprint along the local edge tangent. The footprint widens in
+     * configureEmissionNode() as the host node moves away from the LCD, so neighboring edge colors
+     * overlap instead of forming long color stripes.
+     */
+    private void sampleTangentially(float u, float v, float du, float dv,
+            float[] grid, int gridSize, float[] out) {
+        out[0] = 0.0f;
+        out[1] = 0.0f;
+        out[2] = 0.0f;
+        for (int tap = -2; tap <= 2; tap++) {
+            float offset = tap * 0.5f;
+            sampleGridAt(u + du * offset, v + dv * offset, grid, gridSize, evaluationTap);
+            float weight = BLUR_KERNEL[tap + 2];
+            out[0] += evaluationTap[0] * weight;
+            out[1] += evaluationTap[1] * weight;
+            out[2] += evaluationTap[2] * weight;
+        }
+    }
+
+    private static void sampleGridAt(float u, float v, float[] grid, int gridSize, float[] out) {
+        float gridX = clamp01(u) * (gridSize - 1);
+        float gridY = clamp01(v) * (gridSize - 1);
         int x0 = (int) gridX;
         int y0 = (int) gridY;
-        int x1 = Math.min(GRID_SIZE - 1, x0 + 1);
-        int y1 = Math.min(GRID_SIZE - 1, y0 + 1);
+        int x1 = Math.min(gridSize - 1, x0 + 1);
+        int y1 = Math.min(gridSize - 1, y0 + 1);
         float xWeight = gridX - x0;
         float yWeight = gridY - y0;
-        int topLeft = (y0 * GRID_SIZE + x0) * CHANNEL_COUNT;
-        int topRight = (y0 * GRID_SIZE + x1) * CHANNEL_COUNT;
-        int bottomLeft = (y1 * GRID_SIZE + x0) * CHANNEL_COUNT;
-        int bottomRight = (y1 * GRID_SIZE + x1) * CHANNEL_COUNT;
+        int topLeft = (y0 * gridSize + x0) * CHANNEL_COUNT;
+        int topRight = (y0 * gridSize + x1) * CHANNEL_COUNT;
+        int bottomLeft = (y1 * gridSize + x0) * CHANNEL_COUNT;
+        int bottomRight = (y1 * gridSize + x1) * CHANNEL_COUNT;
         for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
             float top = grid[topLeft + channel]
                     + (grid[topRight + channel] - grid[topLeft + channel]) * xWeight;
@@ -545,67 +498,30 @@ public final class AmbientColorField {
         }
     }
 
-    /** Returns the strength of the local edge bleed for a surface node. */
-    private float edgeBlend(float x, float y) {
-        boolean outside = x < gameLeft || x > gameRight || y < gameTop || y > gameBottom;
-        boolean boundary = Math.abs(x - gameLeft) < 1.0e-5f
-                || Math.abs(x - gameRight) < 1.0e-5f
-                || Math.abs(y - gameTop) < 1.0e-5f
-                || Math.abs(y - gameBottom) < 1.0e-5f;
-        if (!outside && !boundary || gameRight <= gameLeft || gameBottom <= gameTop) return 0.0f;
-        float edgeX = Math.max(gameLeft, Math.min(gameRight, x));
-        float edgeY = Math.max(gameTop, Math.min(gameBottom, y));
-        float dx = (x - edgeX) * surfaceAspect;
-        float dy = y - edgeY;
-        float distance = (float) Math.sqrt(dx * dx + dy * dy);
-        float t = clamp01(distance / EDGE_FALLOFF);
-        return 1.0f - t * t * (3.0f - 2.0f * t);
-    }
-
-    /** Interpolates the anchor colors along the nearest point on the game rectangle edge. */
-    private void edgeColor(float x, float y, float[] anchors, float[] out) {
-        float edgeX = Math.max(gameLeft, Math.min(gameRight, x));
-        float edgeY = Math.max(gameTop, Math.min(gameBottom, y));
-        if (y <= gameTop + 1.0e-5f) {
-            sampleThreeAnchors(anchors, 0, 1, 2,
-                    (edgeX - gameLeft) / Math.max(gameRight - gameLeft, 1.0e-6f), out);
-        } else if (x >= gameRight - 1.0e-5f) {
-            sampleThreeAnchors(anchors, 2, 3, 4,
-                    (edgeY - gameTop) / Math.max(gameBottom - gameTop, 1.0e-6f), out);
-        } else if (y >= gameBottom - 1.0e-5f) {
-            sampleThreeAnchors(anchors, 4, 5, 6,
-                    (gameRight - edgeX) / Math.max(gameRight - gameLeft, 1.0e-6f), out);
-        } else {
-            sampleThreeAnchors(anchors, 6, 7, 0,
-                    (gameBottom - edgeY) / Math.max(gameBottom - gameTop, 1.0e-6f), out);
+    private static void copyClamped(float[] source, float[] output) {
+        for (int i = 0; i < output.length; i++) {
+            output[i] = clamp01(source[i]);
         }
     }
 
-    private static void sampleThreeAnchors(float[] anchors, int first, int middle, int last,
-            float position, float[] out) {
-        float t = clamp01(position) * 2.0f;
-        int firstOffset = first * CHANNEL_COUNT;
-        int middleOffset = middle * CHANNEL_COUNT;
-        int lastOffset = last * CHANNEL_COUNT;
-        if (t <= 1.0f) {
-            for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
-                out[channel] = anchors[firstOffset + channel]
-                        + (anchors[middleOffset + channel] - anchors[firstOffset + channel]) * t;
-            }
-        } else {
-            t -= 1.0f;
-            for (int channel = 0; channel < CHANNEL_COUNT; channel++) {
-                out[channel] = anchors[middleOffset + channel]
-                        + (anchors[lastOffset + channel] - anchors[middleOffset + channel]) * t;
-            }
+    private static void fillGrid(float[] grid, float r, float g, float b) {
+        for (int i = 0; i < grid.length; i += CHANNEL_COUNT) {
+            grid[i] = r;
+            grid[i + 1] = g;
+            grid[i + 2] = b;
         }
     }
 
-    private static int toByte(float value) {
-        return Math.round(clamp01(value) * 255.0f);
+    private static float smoothStep(float value) {
+        float t = clamp01(value);
+        return t * t * (3.0f - 2.0f * t);
+    }
+
+    private static float clamp(float value, float min, float max) {
+        return Float.isFinite(value) ? Math.max(min, Math.min(max, value)) : min;
     }
 
     private static float clamp01(float value) {
-        return Float.isFinite(value) ? Math.max(0.0f, Math.min(1.0f, value)) : 0.0f;
+        return clamp(value, 0.0f, 1.0f);
     }
 }

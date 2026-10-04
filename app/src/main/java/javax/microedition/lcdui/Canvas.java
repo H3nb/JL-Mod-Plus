@@ -199,12 +199,11 @@ public abstract class Canvas extends Displayable {
 	private final Object ambientLock = new Object();
 	private final AmbientColorSampler ambientSampler = new AmbientColorSampler();
 	private AmbientColorField ambientField;
-	private AmbientColorField ambientGlField;
 	private AmbientCanvasRenderer ambientCanvasRenderer;
-	private final AmbientMesh ambientMesh = new AmbientMesh();
-    private final float[] ambientGlX = new float[AmbientMesh.MAX_VERTEX_COUNT];
-    private final float[] ambientGlY = new float[AmbientMesh.MAX_VERTEX_COUNT];
-    private final int[] ambientTargetArgb = new int[AmbientColorField.GRID_COLOR_COUNT];
+	private AmbientMesh ambientMesh;
+	private float[] ambientGlX;
+	private float[] ambientGlY;
+	private final float[] ambientTargetLinear = new float[AmbientColorField.GRID_CHANNEL_COUNT];
 	private final RectF ambientSurface = new RectF();
 	private final RectF ambientGameRect = new RectF();
 	private volatile int themeBackgroundArgb;
@@ -312,7 +311,6 @@ public abstract class Canvas extends Displayable {
 		synchronized (ambientLock) {
 			ensureAmbientStateLocked();
 			ambientField.setBaseColor(themeBackgroundArgb, now, false);
-			ambientGlField.setBaseColor(themeBackgroundArgb, now, false);
 		}
 		invalidateAmbientHost();
 	}
@@ -338,10 +336,14 @@ public abstract class Canvas extends Displayable {
 	private void ensureAmbientStateLocked() {
 		if (ambientField == null) {
 			ambientField = new AmbientColorField();
-			ambientGlField = new AmbientColorField();
 			ambientField.resetToBase(themeBackgroundArgb);
-			ambientGlField.resetToBase(themeBackgroundArgb);
-			ambientCanvasRenderer = new AmbientCanvasRenderer(ambientField, themeBackgroundArgb);
+			if (settings.graphicsMode == 1) {
+				ambientMesh = new AmbientMesh();
+				ambientGlX = new float[AmbientMesh.MAX_VERTEX_COUNT];
+				ambientGlY = new float[AmbientMesh.MAX_VERTEX_COUNT];
+			} else {
+				ambientCanvasRenderer = new AmbientCanvasRenderer(ambientField, themeBackgroundArgb);
+			}
 		}
 	}
 
@@ -373,16 +375,19 @@ public abstract class Canvas extends Displayable {
 			ambientGeometryDirty = true;
 			if (layoutValid) {
 				ensureAmbientStateLocked();
-				ambientCanvasRenderer.configure(displayWidth, displayHeight, ambientGameRect);
-				ambientMesh.build(displayWidth, displayHeight, ambientGameRect);
-				for (int i = 0; i < ambientMesh.vertexCount(); i++) {
-					ambientGlX[i] = ambientMesh.vertexX(i) / displayWidth;
-					ambientGlY[i] = ambientMesh.vertexY(i) / displayHeight;
+				if (settings.graphicsMode == 1) {
+					ambientMesh.build(displayWidth, displayHeight, ambientGameRect);
+					for (int i = 0; i < ambientMesh.vertexCount(); i++) {
+						ambientGlX[i] = ambientMesh.vertexX(i) / displayWidth;
+						ambientGlY[i] = ambientMesh.vertexY(i) / displayHeight;
+					}
+					ambientField.configureNodes(ambientGlX, ambientGlY, ambientMesh.vertexCount(),
+							ambientGameRect.left / displayWidth, ambientGameRect.top / displayHeight,
+							ambientGameRect.right / displayWidth, ambientGameRect.bottom / displayHeight,
+							displayWidth / (float) displayHeight);
+				} else {
+					ambientCanvasRenderer.configure(displayWidth, displayHeight, ambientGameRect);
 				}
-				ambientGlField.configureNodes(ambientGlX, ambientGlY, ambientMesh.vertexCount(),
-						ambientGameRect.left / displayWidth, ambientGameRect.top / displayHeight,
-						ambientGameRect.right / displayWidth, ambientGameRect.bottom / displayHeight,
-						displayWidth / (float) displayHeight);
 			}
 			ambientLayoutValid = layoutValid;
 		}
@@ -415,11 +420,10 @@ public abstract class Canvas extends Displayable {
 		}
 		nextAmbientSampleNs = nowNs + AmbientColorField.SAMPLE_INTERVAL_NS;
 		if (!sampled) return false;
-		ambientSampler.toneCapturedGrid(themeBackgroundArgb, ambientTargetArgb);
+		ambientSampler.toneCapturedGrid(themeBackgroundArgb, ambientTargetLinear);
 		synchronized (ambientLock) {
 			if (ambientField == null || !ambientLayoutValid || !isImmersiveMode()) return false;
-			ambientField.setTargetGrid(ambientTargetArgb, themeBackgroundArgb, nowNs, false);
-			ambientGlField.setTargetGrid(ambientTargetArgb, themeBackgroundArgb, nowNs, false);
+			ambientField.setTarget(ambientTargetLinear, nowNs, false);
 		}
 		lastAmbientSampleSequence = sampledSequence;
 		ambientGeometryDirty = false;
@@ -1606,7 +1610,7 @@ public abstract class Canvas extends Displayable {
 				if (ambientRenderer != null && ambientLayoutValid) {
 					sampleAmbientIfDue(nowNs);
 					synchronized (ambientLock) {
-						ambientRenderer.draw(ambientGlField, ambientMesh, nowNs,
+						ambientRenderer.draw(ambientField, ambientMesh, nowNs,
 								displayWidth, displayHeight);
 					}
 				}

@@ -86,6 +86,45 @@ non-Canvas Displayables.
 - Host-only recovery, exit/settings, MIDlet selection, and virtual-keyboard
   dialogs are Compose Material 3 surfaces. The current Java host owns loader, orientation, persistence, cleanup, and `MidletThread` callbacks. Preserve those semantics if ownership is refactored.
 
+## Immersive background boundary
+
+Immersive background is host presentation only; it does not modify the guest
+framebuffer, Java ME LCD geometry, input ownership, or MIDP lifecycle. The active
+guest frame is copied at a bounded cadence into a reusable low-resolution
+linear-light source field. Filtering and progressively wider diffusion are
+derived from each new source sample rather than from a stretched background
+copy.
+
+The guest LCD acts as a virtual rounded-rectangle source while the actual LCD
+remains rectangular. Each host background node maps to the nearest source
+boundary point in physical host coordinates and stays anchored to that LCD-edge
+neighborhood. Diffusion widens with physical distance from the LCD, including
+spread along the local edge tangent, so neighboring edge colors increasingly
+overlap while readable guest detail disappears. Equal physical distances use
+the same diffusion progression regardless of LCD placement or aspect ratio.
+
+The host theme initializes the field before the first valid guest sample. When a
+guest sample contains transparent pixels, the sampler composites those pixels
+against the current host-theme snapshot while building the sampled field. Once
+that guest-derived field is active, later theme changes do not retarget it; a
+subsequent guest sample naturally uses the then-current theme snapshot for any
+transparent pixels.
+
+Canvas and GLES share the same sampling, temporal interpolation, projection, and
+diffusion semantics while using backend-specific node geometry. A Canvas owns
+one active `AmbientColorField`: software/Canvas presentation rasterizes it into
+a reusable small bitmap, while GLES evaluates it over the ambient mesh. The guest
+LCD rectangle is drawn separately and remains untouched. Ambient host redraws may
+continue while the field is transitioning, but they do not create guest
+publications or change the canonical presentation-mailbox sequence.
+
+Sampling and ambient host-redraw scheduling stop at the existing
+visibility/surface boundaries; temporal field state is evaluated against the
+monotonic host clock when presentation resumes. Active-backend geometry is
+rebuilt from the current host surface and guest LCD rectangle after
+size/orientation changes. Keep future Immersive work renderer agnostic unless
+profiling demonstrates a concrete reason for backend-specific behavior.
+
 ## Validation gates
 
 File-video `VideoControl` uses an independent TextureView producer over the
