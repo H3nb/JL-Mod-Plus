@@ -116,6 +116,12 @@ public class ProfileModel {
 	@SerializedName("ShowFps")
 	public boolean showFps;
 
+	@SerializedName("PerformanceOverlayMetrics")
+	public int performanceOverlayMetrics = PerformanceOverlayOptions.STANDARD;
+
+	@SerializedName("PerformanceOverlayPosition")
+	public int performanceOverlayPosition = PerformanceOverlayOptions.TOP_LEFT;
+
 	@SerializedName("TimingMode")
 	public int timingMode = TimingMode.FULL_GUEST_TIME;
 

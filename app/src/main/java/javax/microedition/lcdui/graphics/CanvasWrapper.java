@@ -24,6 +24,7 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.RectF;
 import android.graphics.Region;
+import android.graphics.Typeface;
 import android.os.Build;
 
 import androidx.core.content.res.ResourcesCompat;
@@ -38,6 +39,9 @@ public class CanvasWrapper {
 	private final Paint fillPaint = new Paint();
 	private final Paint textPaint = new Paint();
 	private final Paint imgPaint = new Paint();
+	private final Paint diagnosticPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+	private final float diagnosticAscent;
+	private final float diagnosticHeight;
 	private final float textSize;
 	private final float baseTextAscent;
 	private final float baseTextCenterOffset;
@@ -68,6 +72,15 @@ public class CanvasWrapper {
 		textAscent = baseTextAscent;
 		textHeight = baseTextHeight;
 		textCenterOffset = baseTextCenterOffset;
+		diagnosticPaint.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));
+		diagnosticPaint.setTextSize(context.getResources().getDimension(R.dimen.performance_overlay_text_size));
+		diagnosticPaint.setTextAlign(Paint.Align.LEFT);
+		float shadowOffset = context.getResources().getDisplayMetrics().density;
+		diagnosticPaint.setShadowLayer(shadowOffset, shadowOffset, shadowOffset,
+				context.getColor(R.color.fps_overlay_shadow));
+		Paint.FontMetrics diagnosticMetrics = diagnosticPaint.getFontMetrics();
+		diagnosticAscent = diagnosticMetrics.ascent;
+		diagnosticHeight = diagnosticMetrics.descent - diagnosticMetrics.ascent;
 	}
 
 	public void bind(Canvas canvas) {
@@ -187,58 +200,29 @@ public class CanvasWrapper {
 		canvas.drawText(text, width / 2.0f, -textAscent, textPaint);
 	}
 
-	/** Draws a compact, theme-colored pill for app-owned diagnostic overlays. */
-	public void drawPillBackgroundedText(String text, int backgroundColor, int foregroundColor) {
-		drawPillBackgroundedText(text, backgroundColor, foregroundColor, 1f, 0f, 0f);
+	/** Dedicated host text paint leaves guest controls' font, alignment and colors untouched. */
+	public void drawDiagnosticText(String text, int foreground, float left, float top) {
+		float baseline = top - diagnosticAscent;
+		diagnosticPaint.setColor(foreground);
+		canvas.drawText(text, left, baseline, diagnosticPaint);
 	}
 
-	/**
-	 * Draws a compact diagnostic pill with an explicit scale and inset position. The position is
-	 * kept separate from the guest canvas so overlays can stay clear of rounded corners/cutouts.
-	 */
-	public void drawPillBackgroundedText(String text, int backgroundColor, int foregroundColor,
-			float scale, float left, float top) {
-		float previousTextSize = textPaint.getTextSize();
-		int previousTextColor = textPaint.getColor();
-		int previousFillColor = fillPaint.getColor();
-		textPaint.setTextSize(textSize * Math.max(0.5f, scale));
-		Paint.FontMetrics metrics = textPaint.getFontMetrics();
-		float width = textPaint.measureText(text);
-		float measuredHeight = metrics.descent - metrics.ascent;
-		float horizontalPadding = Math.max(4f, textPaint.getTextSize() * 0.34f);
-		float verticalPadding = Math.max(2f, textPaint.getTextSize() * 0.16f);
-		float pillWidth = width + horizontalPadding * 2f;
-		float pillHeight = measuredHeight + verticalPadding * 2f;
-		fillPaint.setColor(backgroundColor);
-		canvas.drawRoundRect(
-				new RectF(left, top, left + pillWidth, top + pillHeight),
-				pillHeight / 2f,
-				pillHeight / 2f,
-				fillPaint);
-		textPaint.setColor(foregroundColor);
-		canvas.drawText(
-				text,
-				left + horizontalPadding + width / 2f,
-				top + verticalPadding - metrics.ascent,
-				textPaint);
-		textPaint.setTextSize(previousTextSize);
-		textPaint.setColor(previousTextColor);
-		fillPaint.setColor(previousFillColor);
+	public float measureDiagnosticText(String text) {
+		return diagnosticPaint.measureText(text);
 	}
 
-	/**
-	 * Returns the height of a diagnostic pill using the same scaled font metrics as the drawing
-	 * helper. Overlay layout code uses this instead of assuming a fixed pixel height, which keeps
-	 * stacked diagnostics separated when density or the user's font scale changes.
-	 */
-	public float getPillHeight(float scale) {
-		float previousTextSize = textPaint.getTextSize();
-		textPaint.setTextSize(textSize * Math.max(0.5f, scale));
-		Paint.FontMetrics metrics = textPaint.getFontMetrics();
-		float verticalPadding = Math.max(2f, textPaint.getTextSize() * 0.16f);
-		float height = metrics.descent - metrics.ascent + verticalPadding * 2f;
-		textPaint.setTextSize(previousTextSize);
-		return height;
+	public float getDiagnosticTextHeight() {
+		return diagnosticHeight;
+	}
+
+	public int clipDiagnostics(RectF bounds) {
+		int save = canvas.save();
+		canvas.clipRect(bounds);
+		return save;
+	}
+
+	public void restoreDiagnostics(int save) {
+		canvas.restoreToCount(save);
 	}
 
 	public float getTextHeight() {

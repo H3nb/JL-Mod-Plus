@@ -45,6 +45,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -56,6 +57,7 @@ import io.github.h3nb.jlmodplus.input.HostCommand
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -912,11 +914,14 @@ private fun ScreenSection(
     }
     ConfigSection(title = stringResource(R.string.config_display_performance)) {
         ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_SHOW_FPS),
-            description = stringResource(R.string.config_help_show_fps),
+            title = stringResource(R.string.perf_overlay_title),
+            description = stringResource(R.string.perf_overlay_help),
             checked = form.showFps,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().showFps(checked).build()) },
         )
+        if (form.showFps) {
+            PerformanceOverlayPreferences(form, onFormChanged)
+        }
         ConfigNumberPreference(
             title = stringResource(R.string.PREF_LIMIT_FPS),
             description = stringResource(R.string.config_help_fps_limit),
@@ -926,6 +931,181 @@ private fun ScreenSection(
             onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
         )
     }
+}
+
+@Composable
+internal fun PerformanceOverlayPreferences(
+    form: ConfigFormState,
+    onFormChanged: (ConfigFormState) -> Unit,
+) {
+    var parametersVisible by rememberSaveable { mutableStateOf(false) }
+    val presetNames = listOf(
+        stringResource(R.string.perf_overlay_minimal),
+        stringResource(R.string.perf_overlay_standard),
+        stringResource(R.string.perf_overlay_debug),
+        stringResource(R.string.perf_overlay_custom),
+    )
+    val presetMasks = listOf(
+        PerformanceOverlayOptions.MINIMAL,
+        PerformanceOverlayOptions.STANDARD,
+        PerformanceOverlayOptions.ALL,
+    )
+    val presetIndex = presetMasks.indexOf(form.performanceOverlayMetrics).let { if (it < 0) 3 else it }
+    ConfigChoicePreference(
+        title = stringResource(R.string.perf_overlay_preset),
+        description = stringResource(R.string.perf_overlay_preset_help),
+        selected = presetNames[presetIndex],
+        options = presetNames,
+        onSelected = { index ->
+            if (index == 3) {
+                parametersVisible = true
+            } else {
+                onFormChanged(form.toBuilder().performanceOverlayMetrics(presetMasks[index]).build())
+            }
+        },
+    )
+    val selectedCount = Integer.bitCount(form.performanceOverlayMetrics)
+    ConfigValuePreference(
+        title = stringResource(R.string.perf_overlay_parameters),
+        description = stringResource(R.string.perf_overlay_parameters_help),
+        value = pluralStringResource(R.plurals.perf_overlay_selected, selectedCount, selectedCount),
+        onClick = { parametersVisible = true },
+    )
+    val positions = listOf(
+        stringResource(R.string.perf_overlay_top_left),
+        stringResource(R.string.perf_overlay_top_right),
+        stringResource(R.string.perf_overlay_bottom_left),
+        stringResource(R.string.perf_overlay_bottom_right),
+    )
+    ConfigChoicePreference(
+        title = stringResource(R.string.perf_overlay_position),
+        description = stringResource(R.string.perf_overlay_position_help),
+        selected = positions[form.performanceOverlayPosition],
+        options = positions,
+        onSelected = { index ->
+            onFormChanged(form.toBuilder().performanceOverlayPosition(index).build())
+        },
+    )
+    if (parametersVisible) {
+        PerformanceOverlayParametersDialog(
+            selectedMetrics = form.performanceOverlayMetrics,
+            onMetricsChanged = { mask ->
+                onFormChanged(form.toBuilder().performanceOverlayMetrics(mask).build())
+            },
+            onDismissRequest = { parametersVisible = false },
+        )
+    }
+}
+
+private data class OverlayParameter(
+    val bit: Int,
+    val title: Int,
+)
+
+private data class OverlayParameterGroup(val title: Int, val parameters: List<OverlayParameter>)
+
+private val overlayParameterGroups = listOf(
+    OverlayParameterGroup(R.string.perf_overlay_group_rate, listOf(
+        OverlayParameter(PerformanceOverlayOptions.FPS, R.string.perf_overlay_fps),
+        OverlayParameter(PerformanceOverlayOptions.CAP, R.string.perf_overlay_cap),
+        OverlayParameter(PerformanceOverlayOptions.RENDER_FPS, R.string.perf_overlay_render_fps),
+        OverlayParameter(PerformanceOverlayOptions.SPEED, R.string.perf_overlay_speed),
+    )),
+    OverlayParameterGroup(R.string.perf_overlay_group_timing, listOf(
+        OverlayParameter(PerformanceOverlayOptions.FRAME_INTERVAL, R.string.perf_overlay_interval),
+        OverlayParameter(PerformanceOverlayOptions.P95_INTERVAL, R.string.perf_overlay_p95),
+        OverlayParameter(PerformanceOverlayOptions.MAX_INTERVAL, R.string.perf_overlay_max),
+        OverlayParameter(PerformanceOverlayOptions.COALESCED, R.string.perf_overlay_coalesced),
+    )),
+    OverlayParameterGroup(R.string.perf_overlay_group_pipeline, listOf(
+        OverlayParameter(PerformanceOverlayOptions.PAINT, R.string.perf_overlay_paint),
+        OverlayParameter(PerformanceOverlayOptions.COPY, R.string.perf_overlay_copy),
+        OverlayParameter(PerformanceOverlayOptions.SUBMIT, R.string.perf_overlay_submit),
+    )),
+    OverlayParameterGroup(R.string.perf_overlay_group_queue, listOf(
+        OverlayParameter(PerformanceOverlayOptions.INPUT_QUEUE, R.string.perf_overlay_input_queue),
+        OverlayParameter(PerformanceOverlayOptions.FRAME_QUEUE, R.string.perf_overlay_frame_queue),
+    )),
+    OverlayParameterGroup(R.string.perf_overlay_group_resources, listOf(
+        OverlayParameter(PerformanceOverlayOptions.CPU, R.string.perf_overlay_cpu),
+        OverlayParameter(PerformanceOverlayOptions.RAM, R.string.perf_overlay_ram),
+        OverlayParameter(PerformanceOverlayOptions.JAVA_HEAP, R.string.perf_overlay_java),
+        OverlayParameter(PerformanceOverlayOptions.NATIVE_HEAP, R.string.perf_overlay_native),
+    )),
+    OverlayParameterGroup(R.string.perf_overlay_group_temperature, listOf(
+        OverlayParameter(PerformanceOverlayOptions.CPU_TEMP, R.string.perf_overlay_cpu_temp),
+        OverlayParameter(PerformanceOverlayOptions.GPU_TEMP, R.string.perf_overlay_gpu_temp),
+        OverlayParameter(PerformanceOverlayOptions.BATTERY_TEMP, R.string.perf_overlay_battery_temp),
+        OverlayParameter(PerformanceOverlayOptions.THERMAL, R.string.perf_overlay_thermal),
+    )),
+    OverlayParameterGroup(R.string.perf_overlay_group_runtime, listOf(
+        OverlayParameter(PerformanceOverlayOptions.RENDERER, R.string.perf_overlay_renderer),
+        OverlayParameter(PerformanceOverlayOptions.DISPLAY, R.string.perf_overlay_display),
+    )),
+)
+
+@Composable
+internal fun PerformanceOverlayParametersDialog(
+    selectedMetrics: Int,
+    onMetricsChanged: (Int) -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    val listState = rememberLazyListState()
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
+    val maxHeight = adaptiveDialogLayout().maxHeight
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        textScrollable = false,
+        title = { Text(stringResource(R.string.perf_overlay_parameters)) },
+        text = {
+            Box(Modifier.fillMaxWidth().heightIn(max = maxHeight)) {
+                LazyColumn(state = listState, modifier = Modifier.fillMaxWidth()) {
+                    overlayParameterGroups.forEach { group ->
+                        item(key = "group_${group.title}") {
+                            Text(
+                                stringResource(group.title),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                            )
+                        }
+                        itemsIndexed(group.parameters, key = { _, parameter -> parameter.bit }) { _, parameter ->
+                            val checked = selectedMetrics and parameter.bit != 0
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                                    .testTag("perf_metric_${parameter.bit}")
+                                    .heightIn(min = 48.dp)
+                                    .toggleable(value = checked, role = Role.Checkbox) { selected ->
+                                        onMetricsChanged(
+                                            if (selected) selectedMetrics or parameter.bit
+                                            else selectedMetrics and parameter.bit.inv(),
+                                        )
+                                    }
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Checkbox(checked = checked, onCheckedChange = null)
+                                Text(
+                                    stringResource(parameter.title),
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                            }
+                        }
+                    }
+                    item(key = "bottom_space") { Spacer(Modifier.height(20.dp)) }
+                }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismissRequest) { Text(stringResource(R.string.perf_overlay_done)) }
+        },
+    )
 }
 
 @Composable
