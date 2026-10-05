@@ -20,7 +20,6 @@
     <string name="layout_edit_finished">সম্পাদনা মোডে কাজ শেষ</string>
     <string name="layout_switch">সুইচ keylayout</string>
     <string name="licenses">লাইসেন্স</string>
-    <string name="mapping_dialog_message">বর্তমান মানচিত্র:\n%1$s</string>
     <string name="mapping_dialog_title">কী চাপুন</string>
     <string name="message_delete">আপনি কি সত্যিই এই অ্যাপটি মুছে ফেলতে চান?</string>
     <string name="more">আরও</string>
