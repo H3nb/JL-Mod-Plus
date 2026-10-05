@@ -134,7 +134,6 @@
     <string name="pref_vk_type_phone_arrows">फ़ोन (तीर)</string>
     <string name="pref_wakelock_title">स्क्रीन चालू रखें</string>
     <string name="PREF_WIDTH">चौड़ाई</string>
-    <string name="profiles">प्रोफाइल</string>
     <string name="reinstall">ऐप्लिकेशन पहले से इंस्टॉल है।\n\nक्या आप इसे फिर से इंस्टॉल करना चाहते हैं?\nसारा डेटा सहेजा जाएगा। </string>
     <string name="reinstall_newest">इस ऐप को संस्करण %1$s में अपडेट करें?\n\nवर्तमान में स्थापित: %2$s\nसभी डेटा सहेजा जाएगा।</string>
     <string name="reinstall_older">इस ऐप को संस्करण %1$s से बदलें?\n\nवर्तमान में स्थापित: %2$s\nपुराना संस्करण रिकॉर्ड किए गए डेटा के साथ ठीक से काम नहीं कर रहा है।</string>

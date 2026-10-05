@@ -124,7 +124,6 @@
     <string name="pref_vk_type_phone_arrows">Điện thoại(mũi tên)</string>
     <string name="pref_wakelock_title">Giữ màn hình mở</string>
     <string name="PREF_WIDTH">Chiều rộng</string>
-    <string name="profiles">Hồ sơ</string>
     <string name="reinstall">Ứng dụng đã cài đặt.\n\nBạn có muốn cài đặt lại không?\nTất cả dữ liệu sẽ được lưu.</string>
     <string name="reinstall_newest">Cập nhật ứng dụng này cho ph. bản %1$s?\n\nHiện đã cài đặt: %2$s\nTất cả dữ liệu sẽ được lưu.</string>
     <string name="reinstall_older">Thay thế ứng dụng này bằng ph. bản %1$s?\n\nHiện đã cài đặt: %2$s\nPh. bản cũ có thể không hoạt động chính xác với dữ liệu được ghi lại.</string>

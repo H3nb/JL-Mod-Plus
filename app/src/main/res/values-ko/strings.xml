@@ -99,7 +99,6 @@
     <string name="pref_vk_type_phone_arrows">휴대폰 (화살표)</string>
     <string name="pref_wakelock_title">스크린을 항상 밝게 유지</string>
     <string name="PREF_WIDTH">넓이</string>
-    <string name="profiles">프로필</string>
     <string name="reset">리셋</string>
     <string name="RESET_LAYOUT_CMD">키 레이아웃 초기화</string>
     <string name="save_log">로그 저장</string>

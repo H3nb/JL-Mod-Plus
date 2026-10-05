@@ -134,7 +134,6 @@
     <string name="pref_vk_type_phone_arrows">手机（带箭头按键）</string>
     <string name="pref_wakelock_title">保持屏幕常亮</string>
     <string name="PREF_WIDTH">宽度</string>
-    <string name="profiles">配置文件</string>
     <string name="reinstall">应用已经安装。\n\n 您想要重新安装吗？\n 所有数据将被保存。</string>
     <string name="reinstall_newest">更新此应用到版本 %1$s？\n\n目前已安装版本： %2$s\n所有数据将被保存。</string>
     <string name="reinstall_older">将此应用替换为旧版本 %1$s 吗？\n\n 目前已安装： %2$s\n 旧版本可能无法正常使用现有的存档数据。</string>

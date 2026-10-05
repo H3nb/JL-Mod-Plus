@@ -64,7 +64,6 @@
     <string name="pref_vk_type_numbers">Сандар</string>
     <string name="pref_vk_type_phone">Телефон</string>
     <string name="pref_vk_type_phone_arrows">Телефон (сызықтар)</string>
-    <string name="profiles">Профильдер</string>
     <string name="reinstall">Қолданба бұрын жүктелген.\n\nОны қайтадан жүктегіңіз келеме?\nБарлық деректер сақталынатын болады.</string>
     <string name="reset">Қалпына келтіру</string>
     <string name="retry">қайталау</string>

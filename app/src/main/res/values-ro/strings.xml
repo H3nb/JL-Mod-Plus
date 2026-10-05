@@ -68,7 +68,6 @@
     <string name="pref_vk_type_phone_arrows">Telefon (D-pad)</string>
     <string name="pref_wakelock_title">Tine ecranul aprins</string>
     <string name="PREF_WIDTH">Lățime</string>
-    <string name="profiles">Șabloane</string>
     <string name="RESET_LAYOUT_CMD">Resetează formatul tastaturii</string>
     <string name="save_log">Salvează jurnal</string>
     <string name="select_dialog_title">Selecteaza MIDlet</string>

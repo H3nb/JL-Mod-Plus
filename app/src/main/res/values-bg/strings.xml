@@ -112,7 +112,6 @@
     <string name="pref_vk_type_phone_arrows">Телефон (стрелки)</string>
     <string name="pref_wakelock_title">Поддържане на включен екран</string>
     <string name="PREF_WIDTH">Широчина</string>
-    <string name="profiles">Профили</string>
     <string name="reset">Нулиране</string>
     <string name="RESET_LAYOUT_CMD">Нулиране на подредбата за клавиатурата</string>
     <string name="retry">опитай отново</string>

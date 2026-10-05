@@ -82,7 +82,6 @@
     <string name="pref_vk_type_phone_arrows">گوشی (جهت ها)</string>
     <string name="pref_wakelock_title">صفحه نمایش روشن بماند</string>
     <string name="PREF_WIDTH">عرض</string>
-    <string name="profiles">قالب ها</string>
     <string name="RESET_LAYOUT_CMD">بازنشانی طرح کلید ها</string>
     <string name="save_log">ذخیره گزارش</string>
     <string name="select_dialog_title">انتخاب میدلت</string>

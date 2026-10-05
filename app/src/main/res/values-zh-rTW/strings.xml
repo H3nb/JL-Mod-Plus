@@ -67,7 +67,6 @@
     <string name="pref_vk_type_phone_arrows">手機(arrows)</string>
     <string name="pref_wakelock_title">保持屏幕常亮</string>
     <string name="PREF_WIDTH">寬度</string>
-    <string name="profiles">設定檔</string>
     <string name="RESET_LAYOUT_CMD">重置按鍵佈挶</string>
     <string name="save_log">儲存紀錄</string>
     <string name="saved">已儲存 %1$s</string>

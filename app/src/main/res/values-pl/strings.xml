@@ -69,7 +69,6 @@
     <string name="pref_vk_type_phone_arrows">Telefon (strzałki)</string>
     <string name="pref_wakelock_title">Pozostaw ekran włączony</string>
     <string name="PREF_WIDTH">Szerokość</string>
-    <string name="profiles">Szablony</string>
     <string name="RESET_LAYOUT_CMD">Zresetuj układ przycisków</string>
     <string name="save_log">Zapisz log</string>
     <string name="saved">Zapisano %1$s</string>

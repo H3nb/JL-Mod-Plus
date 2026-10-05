@@ -323,7 +323,6 @@
     <string name="pref_vk_type_phone">Telefontastatur</string>
     <string name="pref_vk_type_phone_arrows">Telefontastatur (pile)</string>
     <string name="pref_wakelock_title">Hold skærmen tændt</string>
-    <string name="profiles">Profiler</string>
     <string name="reinstall">Denne app er allerede installeret. Geninstaller den?</string>
     <string name="reinstall_newest">Opdatér denne app til version %1$s?\n\nAktuelt installeret: %2$s</string>
     <string name="reinstall_older">Erstat denne app med version %1$s?\n\nAktuelt installeret: %2$s\nDen ældre version fungerer muligvis ikke korrekt med de gemte data.</string>

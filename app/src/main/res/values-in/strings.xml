@@ -276,7 +276,6 @@
     <string name="pref_skip_resume_call">Lewati startApp() saat MIDlet dilanjutkan</string>
     <string name="pref_soundbank_title">Soundbank MIDI</string>
     <string name="PREF_WIDTH">Lebar</string>
-    <string name="profiles">Profil</string>
     <string name="reinstall">Aplikasi ini sudah terpasang. Pasang ulang?</string>
     <string name="reinstall_newest">Perbarui aplikasi ini ke versi %1$s?\n\nYang kini terpasang: %2$s</string>
     <string name="reinstall_older">Timpa aplikasi ini dengan versi %1$s?\n\nYang kini terpasang: %2$s\nVersi lama mungkin tidak berjalan dengan baik menggunakan data yang tersimpan.</string>

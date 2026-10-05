@@ -68,7 +68,6 @@
     <string name="pref_vk_type_phone_arrows">ফোন (তীর)</string>
     <string name="pref_wakelock_title">স্ক্রিন চালু রাখুন</string>
     <string name="PREF_WIDTH">প্রস্থ</string>
-    <string name="profiles">টেমপ্লেট</string>
     <string name="RESET_LAYOUT_CMD">Keylayout রিসেট করুন</string>
     <string name="save_log">লগ সংগ্রহ</string>
     <string name="select_dialog_title">MIDlet নির্বাচন করুন</string>

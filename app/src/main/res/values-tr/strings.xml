@@ -132,7 +132,6 @@
     <string name="pref_vk_type_phone_arrows">Telefon (oklar)</string>
     <string name="pref_wakelock_title">Ekranı açık tut</string>
     <string name="PREF_WIDTH">Genişlik</string>
-    <string name="profiles">Profiller</string>
     <string name="reinstall">Uygulama zaten yüklü.\n\nYeniden yüklemek istiyor musunuz?\nTüm veriler kaydedilecek.</string>
     <string name="reinstall_newest">Bu uygulama %1$s sürümüne güncellensin mi?\n\nŞu anda yüklü: %2$s\nTüm veriler kaydedilecek.</string>
     <string name="reinstall_older">Bu uygulama %1$s sürümüyle değiştirilsin mi?\n\nŞu anda yüklü: %2$s\nEski sürüm, kayıtlı verilerle düzgün çalışmayabilir.</string>

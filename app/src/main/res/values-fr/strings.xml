@@ -131,7 +131,6 @@
     <string name="pref_vk_type_phone_arrows">Téléphone (Flèches)</string>
     <string name="pref_wakelock_title">Garder l\'écran allumé</string>
     <string name="PREF_WIDTH">Largeur</string>
-    <string name="profiles">Profils</string>
     <string name="reinstall">Cette application est déjà installée. La réinstaller ?</string>
     <string name="reinstall_newest">Mettre à jour cette application vers la version %1$s ?\n\nVersion actuellement installée : %2$s</string>
     <string name="reinstall_older">Remplacer cette application par la version %1$s ?\n\nActuellement installé: %2$s\nUne version plus ancienne pourrait ne pas fonctionner correctement avec les données enregistrées.</string>

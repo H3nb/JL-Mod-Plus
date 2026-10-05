@@ -165,7 +165,6 @@
     <string name="pref_vk_type_phone_arrows">Телефонная клавиатура (стрелки)</string>
     <string name="pref_wakelock_title">Не выключать экран</string>
     <string name="PREF_WIDTH">Ширина</string>
-    <string name="profiles">Профили</string>
     <string name="reinstall">Это приложение уже установлено. Переустановить его?</string>
     <string name="reinstall_newest">Обновить это приложение до версии %1$s?\n\nСейчас установлена: %2$s</string>
     <string name="reinstall_older">Заменить это приложение версией %1$s?\n\nСейчас установлена: %2$s\nБолее старая версия может некорректно работать с сохранёнными данными.</string>

@@ -96,7 +96,6 @@
     <string name="pref_vk_type_phone_arrows">Telefone (setas)</string>
     <string name="pref_wakelock_title">Manter o ecrã ligado</string>
     <string name="PREF_WIDTH">Largura</string>
-    <string name="profiles">Perfis</string>
     <string name="RESET_LAYOUT_CMD">Resetar Layout de teclas</string>
     <string name="save_log">Salvar Registro</string>
     <string name="saved">Salvo %1$s</string>

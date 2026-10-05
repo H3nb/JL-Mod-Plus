@@ -45,7 +45,6 @@
     <string name="PREF_VK_SEL_BACK">Painetun painikkeen väri</string>
     <string name="PREF_VK_SEL_FORE">Painetun tunnisteen ja symbolin väri</string>
     <string name="PREF_WIDTH">Leveys</string>
-    <string name="profiles">Profiilit</string>
     <string name="RESET_LAYOUT_CMD">Nollaa ohjausasettelu</string>
     <string name="select_dialog_title">Valitse MIDlet</string>
     <string name="SIZE_PRESETS">Fonttikoon esiasetukset</string>

@@ -87,7 +87,6 @@
     <string name="pref_vk_type_numbers_arrows">数字 &amp; 矢印</string>
     <string name="pref_vk_type_phone">端末</string>
     <string name="PREF_WIDTH">幅</string>
-    <string name="profiles">プロファイル</string>
     <string name="RESET_LAYOUT_CMD">キーロックアウトをリセットする</string>
     <string name="retry">リトライ</string>
     <string name="save">保存</string>

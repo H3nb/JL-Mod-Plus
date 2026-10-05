@@ -262,15 +262,14 @@ Current implementation evidence:
   corrected bounded active-copy terminology, parameter-contract, accessibility,
   and language-quality findings. Active canonical English and Indonesian UI copy
   has been reviewed and frozen. A secondary-locale-safe dead-resource cleanup then
-  removed 189 orphaned string declarations (188 translatable and one invariant)
+  removed 190 orphaned string declarations (189 translatable and one invariant)
   plus five unused drawables from every applicable catalog without changing active
   resource consumers or runtime input implementation. The canonical translatable
-  source catalog now contains 884 resources and 31 invariant text declarations.
-  Russian covers the full translatable source catalog, has completed
-  semantic and language review, and was realigned only for canonical semantics
-  changed by Phase 5A.1. Its locale-appropriate plurals and current no-argument
-  mapping-dialog contract remain intact. The remaining 37 secondary locales are
-  still incomplete; catalog coverage alone does not establish semantic quality.
+  source catalog now contains 883 resources and 31 invariant text declarations.
+  Russian completed its full-catalog Phase 5A semantic and language review and was
+  realigned for canonical semantics changed by Phase 5A.1. Later canonical changes
+  remain subject to the subsequent secondary-locale passes; catalog coverage alone
+  does not establish semantic quality.
 - [SettingsActivity.buildLanguageOptions](../app/src/main/java/io/github/h3nb/jlmodplus/settings/SettingsActivity.java)
   reads `_generated_res_locale_config`; unavailable/unreadable metadata leaves
   the system-language option. This requires later runtime hardening.

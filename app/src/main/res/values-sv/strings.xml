@@ -13,7 +13,6 @@
     <string name="pref_app_sort_name">Namn</string>
     <string name="pref_orientation_default">Standard</string>
     <string name="pref_theme_title">Tema</string>
-    <string name="profiles">Profiler</string>
     <string name="about_maintainer">Underhållare: %1$s</string>
     <string name="about_message">Med den här appen kan du starta J2ME-appar och -spel på Android.</string>
     <string name="about_lineage">JL-Mod Plus är en fork av JL-Mod av woesss (Yury Kharchenko), som i sin tur är en fork och experimentell mod av J2ME-Loader av Nikita Shakarun. Forken underhålls genom löpande design-, utvecklings-, test- och infrastrukturarbete. Erkännanden av upstreamprojekt och licensmeddelanden bevaras i projektet.</string>

@@ -117,7 +117,6 @@
     <string name="pref_vk_type_phone_arrows">Telefon (Pfeile)</string>
     <string name="pref_wakelock_title">Bildschirm anlassen</string>
     <string name="PREF_WIDTH">Breite</string>
-    <string name="profiles">Profile</string>
     <string name="reinstall">Diese App ist bereits installiert. Neu installieren?</string>
     <string name="reinstall_newest">Diese App auf Version %1$s aktualisieren?\n\nDerzeit installiert: %2$s</string>
     <string name="reinstall_older">Diese App durch Version %1$sersetzen?\n\nDerzeit installiert: %2$s\nÄltere Versionen funktionieren gegebenenfalls nicht korrekt.</string>

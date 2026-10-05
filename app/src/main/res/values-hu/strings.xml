@@ -92,7 +92,6 @@
     <string name="pref_vk_type_phone_arrows">Telefon (nyilakkal)</string>
     <string name="pref_wakelock_title">Képernyő bekapcsolva tartása</string>
     <string name="PREF_WIDTH">Szélesség</string>
-    <string name="profiles">Profilok</string>
     <string name="reset">Visszaállítás</string>
     <string name="RESET_LAYOUT_CMD">Gombelrendezés visszaállítása</string>
     <string name="save_log">Napló mentése</string>

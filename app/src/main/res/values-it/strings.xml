@@ -86,7 +86,6 @@
     <string name="pref_vk_type_phone_arrows">Telefono (frecce)</string>
     <string name="pref_wakelock_title">Mantieni schermo attivo</string>
     <string name="PREF_WIDTH">Larghezza</string>
-    <string name="profiles">Profili</string>
     <string name="reset">Reimposta</string>
     <string name="RESET_LAYOUT_CMD">Resetta la disposizione dei tasti</string>
     <string name="save_log">Salva log</string>

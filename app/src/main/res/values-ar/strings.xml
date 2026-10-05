@@ -134,7 +134,6 @@
     <string name="pref_vk_type_phone_arrows">مفاتيح الأسهم في الهاتف</string>
     <string name="pref_wakelock_title">أبقي الشاشة فعالة</string>
     <string name="PREF_WIDTH">العرض</string>
-    <string name="profiles">حقوق المستخدم</string>
     <string name="reinstall">التطبيق مثبت بالفعل.\n\nهل تريد إعادة تثبيته؟\nسيتم حفظ جميع البيانات.</string>
     <string name="reinstall_newest">قم بتحديث هذا التطبيق إلى الإصدار %1$s؟\n\nالمثبت حاليا: %2$s\nسيتم حفظ جميع البيانات.</string>
     <string name="reinstall_older">هل تريد استبدال هذا التطبيق بالإصدار %1$s؟\n\nالمثبت حاليا: %2$s\nالإصدار القديم قد لا يعمل بشكل صحيح مع البيانات المسجلة.</string>

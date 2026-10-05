@@ -326,7 +326,6 @@
     <string name="pref_vk_type_phone_arrows">Phone Keypad (Arrows)</string>
     <string name="pref_wakelock_title">Keep Screen On</string>
     <string name="PREF_WIDTH">Width</string>
-    <string name="profiles">Profiles</string>
     <string name="reinstall">This app is already installed. Reinstall it?</string>
     <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s</string>
     <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nThe older version may not work correctly with the recorded data.</string>

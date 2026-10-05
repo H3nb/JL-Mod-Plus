@@ -130,7 +130,6 @@
     <string name="pref_vk_type_phone_arrows">Telefone (setas)</string>
     <string name="pref_wakelock_title">Manter a tela ligada</string>
     <string name="PREF_WIDTH">Largura</string>
-    <string name="profiles">Perfis</string>
     <string name="reinstall">Este aplicativo já está instalado. Reinstalar?</string>
     <string name="reinstall_newest">Atualizar este aplicativo para a versão %1$s?\n\nInstalado atualmente: %2$s</string>
     <string name="reinstall_older">Substituir este aplicativo pela versão %1$s?\n\nInstalada atualmente: %2$s\nA versão mais antiga pode não funcionar corretamente com os dados registrados.</string>
