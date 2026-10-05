@@ -477,7 +477,10 @@
     <string name="memory_editor_add_to_watch">Føj valgte til overvågning</string>
     <string name="memory_editor_no_candidates">Ingen søgbare værdier fundet</string>
     <string name="memory_editor_edit">Rediger</string>
-    <string name="memory_editor_edit_batch">Rediger %1$d værdier</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Rediger %1$d værdi</item>
+        <item quantity="other">Rediger %1$d værdier</item>
+    </plurals>
     <string name="memory_editor_edit_batch_help">Anvender erstatningsværdien på valgte mål, der er kompatible med den valgte datatype. Overvågning og Frys er ikke tilgængelige ved batchredigering.</string>
     <string name="memory_editor_edit_batch_no_common_type">De valgte resultater understøtter ikke den valgte datatype. Rediger kompatible resultater separat.</string>
     <string name="memory_editor_save">Anvend</string>
@@ -528,7 +531,10 @@
     <string name="memory_editor_freeze_after_edit_help">Bruger erstatningsværdien som lås og føjer automatisk kandidaterne til Overvågning.</string>
     <string name="memory_editor_expression_single_hint">Indtast én værdi, eller brug ; til at søge gruppeværdier sammen.</string>
     <string name="memory_editor_expression_group_needs_type">Vælg en bestemt datatype til Gruppesøgning.</string>
-    <string name="memory_editor_expression_group_hint">Gruppesøgning · %1$d værdier · samme Managed Java-ejer</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Gruppesøgning · %1$d værdi · samme Managed Java-ejer</item>
+        <item quantity="other">Gruppesøgning · %1$d værdier · samme Managed Java-ejer</item>
+    </plurals>
     <string name="memory_editor_expression_query_help">Eksempler: 500 · 500;1000. Gruppesøgning bruger 2–8 værdier fra én Managed Java-ejer.</string>
     <string name="memory_editor_keypad_clear">Ryd</string>
     <string name="memory_editor_peek_underlay">Hold nede for at se MIDlet nedenunder</string>
@@ -613,7 +619,10 @@
     <string name="bulk_install_install_count">Installer %1$d</string>
     <string name="bulk_install_cancel">Annuller</string>
     <string name="bulk_install_close">Luk</string>
-    <string name="bulk_install_running">Behandlet %1$d af %2$d apps</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Behandlet %1$d app af %2$d</item>
+        <item quantity="other">Behandlet %1$d apps af %2$d</item>
+    </plurals>
     <string name="bulk_install_cancel_requested">Stopper efter den aktuelle applikation…</string>
     <string name="bulk_install_complete">Masseinstallation fuldført</string>
     <string name="bulk_install_cancelled">Masseinstallation stoppet</string>
