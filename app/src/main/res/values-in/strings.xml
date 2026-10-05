@@ -469,7 +469,9 @@
     <string name="memory_editor_add_to_watch">Tambahkan pilihan ke Pantauan</string>
     <string name="memory_editor_no_candidates">Tidak ada nilai yang dapat dicari</string>
     <string name="memory_editor_edit">Ubah</string>
-    <string name="memory_editor_edit_batch">Ubah %1$d Nilai</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="other">Ubah %1$d Nilai</item>
+    </plurals>
     <string name="memory_editor_edit_batch_help">Nilai pengganti diterapkan ke target terpilih yang cocok dengan tipe data yang dipilih. Pantauan dan Bekukan tidak tersedia untuk perubahan massal.</string>
     <string name="memory_editor_edit_batch_no_common_type">Hasil yang dipilih tidak mendukung tipe data yang dipilih. Ubah hasil yang kompatibel secara terpisah.</string>
     <string name="memory_editor_save">Terapkan</string>
@@ -520,7 +522,9 @@
 
     <string name="memory_editor_expression_single_hint">Masukkan satu nilai, atau gunakan ; untuk mencari beberapa nilai dalam satu grup.</string>
     <string name="memory_editor_expression_group_needs_type">Pilih jenis data tertentu untuk Pencarian Grup.</string>
-    <string name="memory_editor_expression_group_hint">Pencarian Grup · %1$d nilai · pemilik Java Terkelola yang sama</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="other">Pencarian Grup · %1$d nilai · pemilik Java Terkelola yang sama</item>
+    </plurals>
     <string name="memory_editor_expression_query_help">Contoh: 500 · 500;1000. Pencarian Grup memakai 2–8 nilai dari satu pemilik Java Terkelola.</string>
     <string name="memory_editor_keypad_clear">Hapus</string>
     <string name="memory_editor_peek_underlay">Tekan dan tahan untuk melihat MIDlet di bawah</string>
@@ -589,7 +593,9 @@
     <string name="bulk_install_install_count">Instal %1$d</string>
     <string name="bulk_install_cancel">Batal</string>
     <string name="bulk_install_close">Tutup</string>
-    <string name="bulk_install_running">%1$d dari %2$d aplikasi diproses</string>
+    <plurals name="bulk_install_running">
+        <item quantity="other">%1$d dari %2$d aplikasi diproses</item>
+    </plurals>
     <string name="bulk_install_cancel_requested">Berhenti setelah aplikasi saat ini selesai…</string>
     <string name="bulk_install_complete">Instalasi Massal Selesai</string>
     <string name="bulk_install_cancelled">Instalasi Massal Dihentikan</string>
@@ -804,7 +810,6 @@
     <string name="perf_overlay_parameters">Parameter Overlay</string>
     <string name="perf_overlay_parameters_help">Pilih parameter yang akan ditampilkan.</string>
     <plurals name="perf_overlay_selected">
-        <item quantity="one">%d parameter dipilih</item>
         <item quantity="other">%d parameter dipilih</item>
     </plurals>
     <string name="perf_overlay_position">Posisi Overlay</string>
