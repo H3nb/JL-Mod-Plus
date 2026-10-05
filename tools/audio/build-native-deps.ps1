@@ -61,7 +61,8 @@ foreach($abi in (($Abis -join ',') -split ',')){
   '--enable-parser=mpegaudio,aac,ac3,amr','--enable-decoder=pcm_u8,pcm_s16le,pcm_s24le,pcm_s32le,pcm_f32le,pcm_alaw,pcm_mulaw,gsm_ms,adpcm_ima_wav,adpcm_yamaha,mp3float,aac,libopencore_amrnb,libopencore_amrwb')
  if($profile[3]){$configureArgs+=$profile[3]}
  $quoted=@($configureArgs | ForEach-Object {"'"+$_.Replace("'","'\''")+"'"})
- $scriptLines=@("#!/bin/sh","set -eu",'export PATH=/usr/bin:/bin:$PATH',"cd '$buildRoot'","'$sourceRoot/configure' " + ($quoted -join ' '))
+ $configureCommand="'$sourceRoot/configure' " + ($quoted -join ' ')
+ $scriptLines=@("#!/bin/sh","set -eu",'export PATH=/usr/bin:/bin:$PATH',"cd '$buildRoot'",$configureCommand)
  $script=$scriptLines -join [Environment]::NewLine
  [IO.File]::WriteAllText("$buildRoot/configure.sh",$script+[Environment]::NewLine,[Text.UTF8Encoding]::new($false))
  & $GitBash "$buildRoot/configure.sh" > "$buildRoot/configure.txt" 2>&1
