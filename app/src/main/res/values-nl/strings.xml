@@ -477,7 +477,10 @@
     <string name="memory_editor_add_to_watch">Selectie toevoegen aan volglijst</string>
     <string name="memory_editor_no_candidates">Geen doorzoekbare waarden gevonden</string>
     <string name="memory_editor_edit">Bewerken</string>
-    <string name="memory_editor_edit_batch">%1$d waarden bewerken</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">%1$d waarde bewerken</item>
+        <item quantity="other">%1$d waarden bewerken</item>
+    </plurals>
     <string name="memory_editor_edit_batch_help">Past de vervangingswaarde toe op geselecteerde doelen die compatibel zijn met het gekozen gegevenstype. Volgen en Bevriezen zijn niet beschikbaar voor batchbewerkingen.</string>
     <string name="memory_editor_edit_batch_no_common_type">De geselecteerde resultaten ondersteunen het gekozen gegevenstype niet. Bewerk compatibele resultaten afzonderlijk.</string>
     <string name="memory_editor_save">Toepassen</string>
@@ -528,7 +531,10 @@
     <string name="memory_editor_freeze_after_edit_help">Gebruikt de vervangingswaarde als vergrendeling en voegt kandidaten automatisch toe aan Volgen.</string>
     <string name="memory_editor_expression_single_hint">Voer één waarde in of gebruik ; om groepswaarden samen te zoeken.</string>
     <string name="memory_editor_expression_group_needs_type">Kies een specifiek gegevenstype voor Groepszoeken.</string>
-    <string name="memory_editor_expression_group_hint">Groepszoeken · %1$d waarden · dezelfde Managed Java-eigenaar</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Groepszoeken · %1$d waarde · dezelfde Managed Java-eigenaar</item>
+        <item quantity="other">Groepszoeken · %1$d waarden · dezelfde Managed Java-eigenaar</item>
+    </plurals>
     <string name="memory_editor_expression_query_help">Voorbeelden: 500 · 500;1000. Groepszoeken gebruikt 2–8 waarden van één Managed Java-eigenaar.</string>
     <string name="memory_editor_keypad_clear">Wissen</string>
     <string name="memory_editor_peek_underlay">Ingedrukt houden om de MIDlet eronder te zien</string>
@@ -613,7 +619,10 @@
     <string name="bulk_install_install_count">%1$d installeren</string>
     <string name="bulk_install_cancel">Annuleren</string>
     <string name="bulk_install_close">Sluiten</string>
-    <string name="bulk_install_running">%1$d van %2$d apps verwerkt</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">%1$d app verwerkt van %2$d</item>
+        <item quantity="other">%1$d apps verwerkt van %2$d</item>
+    </plurals>
     <string name="bulk_install_cancel_requested">Stoppen na de huidige applicatie…</string>
     <string name="bulk_install_complete">Batchinstallatie voltooid</string>
     <string name="bulk_install_cancelled">Batchinstallatie gestopt</string>
