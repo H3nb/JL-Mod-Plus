@@ -19,7 +19,6 @@
     <string name="layout_edit_finished">Modul de editare a fost terminat</string>
     <string name="layout_switch">Schimbă formatul tastaturii</string>
     <string name="licenses">Licențe</string>
-    <string name="mapping_dialog_message">Mapari curente:\n%1$s</string>
     <string name="mapping_dialog_title">Apasă o tastă</string>
     <string name="message_delete">Chiar vrei sa ștergi această aplicație?</string>
     <string name="more">Mai multe</string>
