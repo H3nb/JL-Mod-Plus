@@ -102,7 +102,12 @@ jobs:
       - name: Assemble arm64 debug APK
         id: assemble
         if: github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate'
-        run: ./gradlew --daemon --parallel --stacktrace --profile :app:assembleEmulatorDebug
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --daemon --parallel --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorDebug
+          ./gradlew --daemon --parallel --stacktrace --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorDebug | tee configuration-cache-assemble.txt
+          grep -Fq 'Reusing configuration cache.' configuration-cache-assemble.txt
 
       - name: Stage APK for early device testing
         id: stage_apk
@@ -134,11 +139,17 @@ jobs:
       - name: Tests and instrumentation compilation
         id: validation
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' && (github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate') }}
-        run: >-
-          ./gradlew --daemon --parallel --stacktrace --profile --continue
-          :app:testEmulatorDebugUnitTest
-          :dexlib:testDebugUnitTest
-          :app:assembleEmulatorDebugAndroidTest
+        shell: bash
+        run: |
+          set -euo pipefail
+          tasks=(
+            :app:testEmulatorDebugUnitTest
+            :dexlib:testDebugUnitTest
+            :app:assembleEmulatorDebugAndroidTest
+          )
+          ./gradlew --daemon --parallel --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}"
+          ./gradlew --daemon --parallel --stacktrace --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}" | tee configuration-cache-tests.txt
+          grep -Fq 'Reusing configuration cache.' configuration-cache-tests.txt
 
       - name: Generate screenshot candidates on manual request
         id: update_candidates
@@ -229,6 +240,7 @@ jobs:
             build/reports/profile/**
             ci-artifacts/validation.txt
             runtime-logcat.txt
+            configuration-cache-*.txt
           if-no-files-found: warn
           retention-days: 7
 
@@ -312,7 +324,12 @@ jobs:
 
       - name: Validate screenshot references
         id: screenshots
-        run: ./gradlew --daemon --parallel --stacktrace --profile :app:validateEmulatorDebugScreenshotTest
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --daemon --parallel --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:validateEmulatorDebugScreenshotTest
+          ./gradlew --daemon --parallel --stacktrace --configuration-cache --configuration-cache-problems=fail :app:validateEmulatorDebugScreenshotTest | tee configuration-cache-screenshots.txt
+          grep -Fq 'Reusing configuration cache.' configuration-cache-screenshots.txt
 
       - name: Package existing screenshot renders after comparison failure
         id: candidates
@@ -341,6 +358,7 @@ jobs:
             app/build/test-results/validateEmulatorDebugScreenshotTest/**
             build/reports/problems/**
             build/reports/profile/**
+            configuration-cache-screenshots.txt
           if-no-files-found: warn
           retention-days: 7
 
@@ -376,9 +394,12 @@ jobs:
         run: chmod +x gradlew
 
       - name: Lint app and dependencies
-        run: >-
-          ./gradlew --daemon --parallel --stacktrace --profile --continue
-          :app:lintEmulatorDebug
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --daemon --parallel --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug
+          ./gradlew --daemon --parallel --stacktrace --continue --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug | tee configuration-cache-lint.txt
+          grep -Fq 'Reusing configuration cache.' configuration-cache-lint.txt
 
       - name: Upload lint diagnostics
         if: always()
@@ -394,6 +415,7 @@ jobs:
             dexlib/build/reports/lint-results-*.sarif
             build/reports/problems/**
             build/reports/profile/**
+            configuration-cache-lint.txt
           if-no-files-found: warn
           retention-days: 7
 
