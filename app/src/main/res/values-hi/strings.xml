@@ -40,7 +40,6 @@
     <string name="licenses">लाइसेंस</string>
     <string name="loading_info">जानकारी लोड हो रही है…</string>
     <string name="mapping_dialog_key_not_specified">निर्दिष्ट नहीं है</string>
-    <string name="mapping_dialog_message">वर्तमान मानचित्रण:\n%1$s</string>
     <string name="mapping_dialog_title">कोई कि दबाएं</string>
     <string name="message_delete">क्या आप वास्तव में इस ऐप को हटाना चाहते हैं?</string>
     <string name="midlet_name"><b>नाम: </b></string>
