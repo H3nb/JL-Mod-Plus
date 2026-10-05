@@ -1,11 +1,64 @@
+import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.BuildConfigField
+import com.android.build.api.variant.BuiltArtifactsLoader
 import com.android.build.api.variant.ResValue
+import java.io.File
 import java.util.Locale
 import java.util.Properties
 import java.util.jar.Attributes
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+abstract class VerifyNativePackagingTask : DefaultTask() {
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val apkDirectory: DirectoryProperty
+
+    @get:Internal
+    abstract val builtArtifactsLoader: Property<BuiltArtifactsLoader>
+
+    @get:Input
+    abstract val abi: Property<String>
+
+    @TaskAction
+    fun verify() {
+        val checkedAbi = abi.get()
+        val builtArtifacts = builtArtifactsLoader.get().load(apkDirectory.get())
+            ?: error("Cannot load APK artifact metadata")
+        val forbiddenLibraries = listOf(
+            "libjlmem.so", "libjlmem_target.so", "libmmapi_tsf.so", "libmmapi_common.so",
+            "libffmpegkit.so", "libffmpegkit_abidetect.so", "libavdevice.so", "libavfilter.so", "libswscale.so",
+            "libavdevice_neon.so", "libavfilter_neon.so", "libswscale_neon.so"
+        )
+        var checkedApks = 0
+        builtArtifacts.elements.forEach { artifact ->
+            val apk = File(artifact.outputFile)
+            ZipFile(apk).use { archive ->
+                val abiPrefix = "lib/$checkedAbi/"
+                if (archive.entries().asSequence().none { it.name.startsWith(abiPrefix) }) return@use
+                checkedApks++
+                forbiddenLibraries.forEach { library ->
+                    check(archive.getEntry("$abiPrefix$library") == null) {
+                        "${apk.name} still contains retired native library $abiPrefix$library"
+                    }
+                }
+            }
+        }
+        check(checkedApks > 0) {
+            "No APK artifact contains native libraries for $checkedAbi"
+        }
+    }
+}
 
 plugins {
     alias(libs.plugins.android.application)
@@ -229,48 +282,21 @@ androidComponents {
                 variant.makeResValueKey("string", "app_name"),
                 ResValue("JL-Mod Plus Debug", "Debug application name")
             )
-        }
-    }
-}
-
-// Reject retired native modules left by incremental builds in the install artifact.
-val verifyEmulatorDebugNativePackaging = tasks.register("verifyEmulatorDebugNativePackaging") {
-    dependsOn("packageEmulatorDebug")
-    val abi = runtimeTestAbi ?: "arm64-v8a"
-    val apk = layout.buildDirectory.file(
-        "outputs/apk/emulator/debug/app-emulator-$abi-debug.apk",
-    )
-    inputs.property("abi", abi)
-    inputs.file(apk)
-    outputs.upToDateWhen { false }
-    doLast {
-        val checkedAbi = inputs.properties.getValue("abi").toString()
-        val checkedApk = inputs.files.singleFile
-        check(checkedApk.isFile) {
-            "Expected emulator debug APK for $checkedAbi was not produced: ${checkedApk.absolutePath}"
-        }
-        val forbiddenLibraries = listOf(
-            "libjlmem.so", "libjlmem_target.so", "libmmapi_tsf.so", "libmmapi_common.so",
-            "libffmpegkit.so", "libffmpegkit_abidetect.so", "libavdevice.so", "libavfilter.so", "libswscale.so",
-            "libavdevice_neon.so", "libavfilter_neon.so", "libswscale_neon.so"
-        )
-        ZipFile(checkedApk).use { archive ->
-            forbiddenLibraries.forEach { library ->
-                val entry = archive.getEntry("lib/$checkedAbi/$library")
-                check(entry == null) {
-                    "${checkedApk.name} still contains retired native library lib/$checkedAbi/$library"
-                }
+            val verifyNativePackaging = tasks.register<VerifyNativePackagingTask>(
+                "verifyEmulatorDebugNativePackaging"
+            ) {
+                abi.set(runtimeTestAbi ?: "arm64-v8a")
+                builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
             }
+            variant.artifacts.use(verifyNativePackaging).wiredWith {
+                it.apkDirectory
+            }.toListenTo(SingleArtifact.APK)
         }
     }
 }
 
-tasks.configureEach {
-    if (name == "assembleEmulatorDebug") {
-        dependsOn(verifyEmulatorDebugNativePackaging)
-    }
-}
-
+// The verifier above listens to AGP's public APK artifact, so it follows the actual
+// produced outputs without depending on package task names or output-directory conventions.
 fun getMidletManifestProperties(): Attributes {
     val manifestFile = layout.projectDirectory.file("src/midlet/resources/MIDLET-META-INF/MANIFEST.MF")
     val content = providers.fileContents(manifestFile).asText.orElse("").get()
