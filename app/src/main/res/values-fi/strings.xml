@@ -477,7 +477,10 @@
     <string name="memory_editor_add_to_watch">Lisää valitut seurantaan</string>
     <string name="memory_editor_no_candidates">Hakukelpoisia arvoja ei löytynyt</string>
     <string name="memory_editor_edit">Muokkaa</string>
-    <string name="memory_editor_edit_batch">Muokkaa %1$d arvoa</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Muokkaa %1$d arvoa</item>
+        <item quantity="other">Muokkaa %1$d arvoa</item>
+    </plurals>
     <string name="memory_editor_edit_batch_help">Käyttää korvaavaa arvoa valittuihin kohteisiin, jotka ovat yhteensopivia valitun tietotyypin kanssa. Seuranta ja jäädytys eivät ole käytettävissä erämuokkauksissa.</string>
     <string name="memory_editor_edit_batch_no_common_type">Valitut tulokset eivät tue valittua tietotyyppiä. Muokkaa yhteensopivia tuloksia erikseen.</string>
     <string name="memory_editor_save">Käytä</string>
@@ -528,7 +531,10 @@
     <string name="memory_editor_freeze_after_edit_help">Käyttää korvaavaa arvoa lukituksena ja lisää ehdokkaat automaattisesti seurantaan.</string>
     <string name="memory_editor_expression_single_hint">Anna yksi arvo tai käytä merkkiä ; hakeaksesi ryhmäarvoja yhdessä.</string>
     <string name="memory_editor_expression_group_needs_type">Valitse tietty tietotyyppi ryhmähakua varten.</string>
-    <string name="memory_editor_expression_group_hint">Ryhmähaku · %1$d arvoa · sama Managed Java -omistaja</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Ryhmähaku · %1$d arvo · sama Managed Java -omistaja</item>
+        <item quantity="other">Ryhmähaku · %1$d arvoa · sama Managed Java -omistaja</item>
+    </plurals>
     <string name="memory_editor_expression_query_help">Esimerkit: 500 · 500;1000. Ryhmähaku käyttää 2–8 arvoa yhdeltä Managed Java -omistajalta.</string>
     <string name="memory_editor_keypad_clear">Tyhjennä</string>
     <string name="memory_editor_peek_underlay">Pidä painettuna nähdäksesi alla olevan MIDlet-sovelluksen</string>
@@ -613,7 +619,10 @@
     <string name="bulk_install_install_count">Asenna %1$d</string>
     <string name="bulk_install_cancel">Peruuta</string>
     <string name="bulk_install_close">Sulje</string>
-    <string name="bulk_install_running">Käsitelty %1$d / %2$d sovellusta</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Käsitelty %1$d sovellus, yhteensä %2$d</item>
+        <item quantity="other">Käsitelty %1$d sovellusta, yhteensä %2$d</item>
+    </plurals>
     <string name="bulk_install_cancel_requested">Pysäytetään nykyisen sovelluksen jälkeen…</string>
     <string name="bulk_install_complete">Eräasennus valmis</string>
     <string name="bulk_install_cancelled">Eräasennus pysäytetty</string>
