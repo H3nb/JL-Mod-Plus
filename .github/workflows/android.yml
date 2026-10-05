@@ -95,6 +95,10 @@ jobs:
           chmod +x gradlew
           echo "JLMOD_BUILD_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
+      - name: CI helper tests
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        run: python3 -B -m unittest discover -s scripts/tests -p 'test_ci_*.py' -v
+
       - name: Assemble arm64 debug APK
         id: assemble
         if: github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate'
