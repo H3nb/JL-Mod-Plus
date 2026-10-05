@@ -1,0 +1,100 @@
+name: Configuration Cache provenance qualification
+
+on:
+  pull_request:
+    branches:
+      - alpha
+
+permissions:
+  contents: read
+
+concurrency:
+  group: configuration-cache-provenance-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    if: github.event.pull_request.number == 152
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: true
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Set up Android SDK, platform 37, and NDK r30
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+
+      - name: Qualify lazy diagnostic provenance
+        shell: bash
+        env:
+          FIRST_SHA: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          SECOND_SHA: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+
+          JLMOD_BUILD_COMMIT="$FIRST_SHA" ./gradlew --daemon --stacktrace --console=plain \
+            --configuration-cache --configuration-cache-problems=fail \
+            :app:assembleEmulatorDebug | tee qualification-first.txt
+
+          JLMOD_BUILD_COMMIT="$SECOND_SHA" ./gradlew --daemon --stacktrace --console=plain \
+            --configuration-cache --configuration-cache-problems=fail \
+            :app:assembleEmulatorDebug | tee qualification-second.txt
+
+          grep -Fq 'Reusing configuration cache.' qualification-second.txt
+
+          if grep -E '^> Task :[^ ]*compile[^ ]*(Kotlin|JavaWithJavac)$' qualification-second.txt; then
+            echo 'Changing JLMOD_BUILD_COMMIT unexpectedly re-executed Kotlin/Java compilation.' >&2
+            exit 1
+          fi
+
+          APK='app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk'
+          test -f "$APK"
+
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V | tail -n 1)"
+          AAPT2="$ANDROID_HOME/build-tools/$BUILD_TOOLS/aapt2"
+          test -x "$AAPT2"
+          "$AAPT2" dump resources "$APK" > qualification-resources.txt
+          grep -Fq "$SECOND_SHA" qualification-resources.txt
+          if grep -Fq "$FIRST_SHA" qualification-resources.txt; then
+            echo 'Final APK still contains the first qualification SHA.' >&2
+            exit 1
+          fi
+
+          {
+            echo '### Configuration Cache provenance qualification'
+            echo '- Second invocation reused Configuration Cache.'
+            echo '- Kotlin/Java compilation did not re-execute solely because the build SHA changed.'
+            echo '- Final APK resources contain the second SHA and not the first.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: configuration-cache-provenance-qualification
+          path: |
+            qualification-first.txt
+            qualification-second.txt
+            qualification-resources.txt
+            build/reports/problems/**
+          if-no-files-found: warn
+          retention-days: 7
