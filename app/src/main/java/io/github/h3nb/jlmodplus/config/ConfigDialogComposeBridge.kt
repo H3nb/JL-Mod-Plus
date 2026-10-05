@@ -196,7 +196,7 @@ private fun ShaderContent(
     }
 
     DialogSurface(onDismissRequest = null) {
-        Text(stringResource(R.string.shader_tuning), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.shader_tuning), style = MaterialTheme.typography.headlineSmall)
         val listState = androidx.compose.foundation.lazy.rememberLazyListState()
         val canScrollForward = rememberLazyListCanScrollForward(listState)
         Box(

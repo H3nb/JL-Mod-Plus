@@ -255,8 +255,7 @@ internal fun BulkInstallSurface(
                 ) {
                     Text(
                         text = stringResource(R.string.bulk_install_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Medium,
+                        style = MaterialTheme.typography.headlineSmall,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )

@@ -58,7 +58,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
@@ -321,15 +320,12 @@ fun CrashReportsScreen(
                         headlineContent = {
                             Text(
                                 text = record.title,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium,
                                 color = rowContentColor,
                             )
                         },
                         supportingContent = {
                             Text(
                                 text = record.subtitle,
-                                style = MaterialTheme.typography.bodySmall,
                                 color = if (selected) {
                                     MaterialTheme.colorScheme.onSecondaryContainer
                                 } else {

@@ -1155,7 +1155,7 @@ internal fun ScreenPresetDialog(
             ) {
                 Text(
                     text = stringResource(R.string.config_select_screen_size),
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 )
                 Box(

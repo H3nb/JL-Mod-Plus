@@ -56,16 +56,21 @@ work. Do not perform repository-wide casing churn merely for consistency.
 Compose surfaces use the Material 3 type scale instead of arbitrary `sp`
 values. The following mapping is the review baseline:
 
-- Top app bar titles use `titleLarge`/the component default.
-- Screen headings may use `headlineSmall`; popup/dialog titles use `titleLarge`.
-- Popup body text uses `bodyMedium`; supporting metadata may use `bodySmall`
-  with `onSurfaceVariant`. Actions use `labelLarge` or their Material component
-  default. Keep the same role consistent across installer, Library, profiles,
-  config, and app-owned runtime menus.
-- Primary list and card titles use `titleMedium` or `titleSmall`; supporting
-  metadata uses `bodyMedium`/`bodySmall` with `onSurfaceVariant`.
+- Top app bar titles use `titleLarge` or the component default.
+- Standard setting/list headlines use `bodyLarge`; normal explanatory supporting
+  text uses `bodyMedium`. Current values may use an appropriate body or label role
+  for the component. Do not add weight merely to manufacture hierarchy.
+- Section titles generally use `titleMedium`. Screen headings may use
+  `headlineSmall`; alert/dialog headlines use `headlineSmall`.
+- Dialog body text uses `bodyMedium`; actions use `labelLarge` or their Material
+  component default.
+- `bodySmall` is for genuinely compact secondary content such as metadata,
+  timestamps, diagnostics, measurements, telemetry, or minor annotations.
 - Field labels, units, and compact secondary annotations use `labelMedium` or
   `labelSmall`.
+- Where Material 3 components such as `ListItem` already provide a semantic type
+  hierarchy, prefer their defaults over recreating the same hierarchy with
+  explicit type and font-weight overrides.
 - A custom `sp` value needs a component-specific reason and verification of
   relevant font-scale, translation, and width risks. Reuse suitable coverage or
   inspect a targeted render; a custom size alone does not require a new golden.
