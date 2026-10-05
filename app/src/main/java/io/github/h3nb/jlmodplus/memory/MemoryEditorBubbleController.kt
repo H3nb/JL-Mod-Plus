@@ -20,9 +20,12 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.graphics.Insets
+import androidx.core.os.ConfigurationCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import io.github.h3nb.jlmodplus.R
+import java.text.NumberFormat
+import java.util.Locale
 import kotlin.math.abs
 
 /**
@@ -44,6 +47,12 @@ class MemoryEditorBubbleController(
 
     private val touchSlop = ViewConfiguration.get(activity).scaledTouchSlop.toFloat()
     private val edgeMarginPx = 12f * activity.resources.displayMetrics.density
+    private val percentFormat = NumberFormat.getPercentInstance(
+        ConfigurationCompat.getLocales(activity.resources.configuration).get(0) ?: Locale.getDefault(),
+    ).apply {
+        minimumFractionDigits = 0
+        maximumFractionDigits = 0
+    }
     private var pointerId = MotionEvent.INVALID_POINTER_ID
     private var downRawX = 0f
     private var downRawY = 0f
@@ -363,9 +372,10 @@ class MemoryEditorBubbleController(
         } else {
             iconView.visibility = View.GONE
             progressView.visibility = View.VISIBLE
-            progressView.text = "$percent%"
+            val percentText = percentFormat.format(percent / 100.0)
+            progressView.text = percentText
             bubbleView.contentDescription =
-                "${activity.getString(R.string.memory_editor_bubble_content_description)} · $percent%"
+                "${activity.getString(R.string.memory_editor_bubble_content_description)} · $percentText"
         }
     }
 
