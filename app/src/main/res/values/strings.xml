@@ -263,7 +263,7 @@
     <string name="config_gamepad_calibration_cancelled">Calibration cancelled. The previous calibration is unchanged.</string>
     <string name="config_gamepad_calibration_waiting_samples">Calibration is waiting for controller samples.</string>
     <string name="config_gamepad_diagnosis_header">Controller diagnostics</string>
-    <string name="config_gamepad_diagnosis_mode">Enabled: %1$s · Source: %2$s</string>
+    <string name="config_gamepad_diagnosis_mode">Enabled: %1$s · source: %2$s</string>
     <string name="config_gamepad_diagnosis_notice">Notice: %1$s</string>
     <string name="config_gamepad_diagnosis_analog_settings">Analog settings:</string>
     <string name="config_gamepad_diagnosis_left_stick">Left stick</string>
@@ -287,7 +287,7 @@
     <string name="config_gamepad_diagnosis_capabilities">Connected controller capabilities:</string>
     <string name="config_gamepad_diagnosis_descriptor">Descriptor: %1$s</string>
     <string name="config_gamepad_diagnosis_signature">Signature: %1$s</string>
-    <string name="config_gamepad_diagnosis_axis">Axis %1$d [%2$s, %3$s] Flat=%4$s Fuzz=%5$s</string>
+    <string name="config_gamepad_diagnosis_axis">Axis %1$d [%2$s, %3$s] flat=%4$s fuzz=%5$s</string>
     <string name="config_gamepad_diagnosis_no_controller">(no connected controller)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Input samples are intentionally not sent to the MIDlet.</string>
     <string name="config_destination_system">System</string>
@@ -475,7 +475,7 @@
     <string name="library_import_invalid_bundle">The selected app bundle is invalid, damaged, or unsupported. Choose a valid JL-Mod Plus app bundle and try again.</string>
     <string name="library_import_restore_existing">This app is already installed. Importing will replace the settings and save data contained in the bundle.</string>
     <string name="library_import_restore_failed">The app is installed, but its bundle data could not be restored. Retry the restore?</string>
-    <string name="library_play_stats_summary">Play count: %1$d · Total: %2$s</string>
+    <string name="library_play_stats_summary">Play count: %1$d · total: %2$s</string>
     <string name="library_share_chooser_title">Share app</string>
     <string name="library_export_chooser_title">Export app bundle</string>
     <string name="library_export_progress">Exporting… %1$d/%2$d</string>
@@ -778,7 +778,7 @@
     <string name="config_font_sizes">Font sizes</string>
     <string name="config_help_font_sizes">Sets the small, medium, and large Java ME font sizes for the MIDlet.</string>
     <string name="config_help_font_sizes_long">Sets Java ME font sizes in pixels, or in scaled units when Use Android Font Scale is enabled. Change them together to keep text balanced.</string>
-    <string name="config_font_sizes_value">Small %1$s · Medium %2$s · Large %3$s</string>
+    <string name="config_font_sizes_value">Small %1$s · medium %2$s · large %3$s</string>
     <string name="config_help_font_presets">Applies font sizes suited to common J2ME screen resolutions.</string>
     <string name="config_help_font_dimensions">Applies Android’s font scale to Java ME font sizes.</string>
     <string name="config_help_font_aa">Smooths the edges of rendered text.</string>
