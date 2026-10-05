@@ -452,7 +452,10 @@
     <string name="memory_editor_add_to_watch">Ajouter la sélection à la surveillance</string>
     <string name="memory_editor_no_candidates">Aucune valeur interrogeable trouvée</string>
     <string name="memory_editor_edit">Modifier</string>
-    <string name="memory_editor_edit_batch">Modifier %1$d valeurs</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Modifier %1$d valeur</item>
+        <item quantity="other">Modifier %1$d valeurs</item>
+    </plurals>
     <string name="memory_editor_edit_batch_help">Applique la valeur de remplacement aux cibles sélectionnées compatibles avec le type de données choisi. Surveillance et Gel ne sont pas disponibles pour les modifications par lot.</string>
     <string name="memory_editor_edit_batch_no_common_type">Les résultats sélectionnés ne prennent pas en charge le type de données choisi. Modifiez séparément les résultats compatibles.</string>
     <string name="memory_editor_save">Appliquer</string>
@@ -499,7 +502,10 @@
     <string name="memory_editor_freeze_after_edit_help">Utilise la valeur de remplacement comme verrou et ajoute automatiquement les candidats à la surveillance.</string>
     <string name="memory_editor_expression_single_hint">Saisissez une valeur ou utilisez ; pour rechercher ensemble des valeurs groupées.</string>
     <string name="memory_editor_expression_group_needs_type">Choisissez un type de données précis pour la recherche groupée.</string>
-    <string name="memory_editor_expression_group_hint">Recherche groupée · %1$d valeurs · même propriétaire Java géré</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Recherche groupée · %1$d valeur · même propriétaire Java géré</item>
+        <item quantity="other">Recherche groupée · %1$d valeurs · même propriétaire Java géré</item>
+    </plurals>
     <string name="memory_editor_expression_query_help">Exemples : 500 · 500;1000. La recherche groupée utilise 2 à 8 valeurs d’un même propriétaire Java géré.</string>
     <string name="memory_editor_keypad_clear">Effacer</string>
     <string name="memory_editor_peek_underlay">Maintenez appuyé pour voir le MIDlet sous-jacent</string>
@@ -620,7 +626,10 @@
     <string name="bulk_install_install_count">Installer %1$d</string>
     <string name="bulk_install_cancel">Annuler</string>
     <string name="bulk_install_close">Fermer</string>
-    <string name="bulk_install_running">%1$d applications traitées sur %2$d</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">%1$d application traitée sur %2$d</item>
+        <item quantity="other">%1$d applications traitées sur %2$d</item>
+    </plurals>
     <string name="bulk_install_cancel_requested">Arrêt après l’application en cours…</string>
     <string name="bulk_install_complete">Installation groupée terminée</string>
     <string name="bulk_install_cancelled">Installation groupée arrêtée</string>
