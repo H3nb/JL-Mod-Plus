@@ -5,7 +5,7 @@
     <!-- %1$s is the maintainer's exact name and account, preserved as invariant data. -->
     <string name="about_maintainer">Maintainer: %1$s</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
-    <string name="about_message">This app allows you to launch J2ME apps and games on Android.</string>
+    <string name="about_message">JL-Mod Plus runs J2ME apps and games on Android.</string>
     <string name="about_lineage">JL-Mod Plus is a fork of JL-Mod by woesss (Yury Kharchenko), itself a fork and experimental mod of J2ME-Loader by Nikita Shakarun. The fork is maintained through sustained design, engineering, testing, and infrastructure work. Upstream attribution and license notices are preserved in the project.</string>
     <string name="action_context_delete">Delete</string>
     <string name="action_context_rename">Rename</string>
@@ -16,7 +16,7 @@
     <string name="action_reinstall">Reinstall</string>
     <string name="action_settings">Settings</string>
     <string name="alert_map_menu">Menu key (M) is not assigned.\nThis may prevent access to emulator options.</string>
-    <string name="alert_msg_workdir_not_exists">Working directory was not found at:\n%1$s\nDo you want to create it or choose another one?</string>
+    <string name="alert_msg_workdir_not_exists">Working directory was not found at:\n%1$s\nDo you want to create it or choose another directory?</string>
     <string name="CANCEL_CMD">Cancel</string>
     <string name="change">Change</string>
     <string name="choose">Choose</string>
@@ -25,7 +25,7 @@
     <string name="CONFIRMATION_REQUIRED">Confirmation Required</string>
     <string name="converting_wait">Converting JAR…</string>
     <string name="create">Create</string>
-    <string name="create_apps_dir_failed">Could not prepare the working folder at:\n%1$s\nChoose another folder.</string>
+    <string name="create_apps_dir_failed">Could not prepare the working directory at:\n%1$s\nChoose another directory.</string>
     <string name="default_label">%1$s (default)</string>
     <string name="dismiss">Dismiss</string>
     <string name="dismiss_mapping">Dismiss mapping</string>
@@ -40,7 +40,7 @@
     <string name="exit">Exit</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Stop this MIDlet? Unsaved changes may be lost.</string>
     <string name="help">Help</string>
-    <string name="help_message">&#8226; Enabling filtering in some cases can greatly reduce performance. Disable this option if the app is too slow.&lt;BR>&#8226; Immediate processing mode bypasses the normal Java ME event queue. It may improve responsiveness, but can cause unpredictable behavior.</string>
+    <string name="help_message">&#8226; Image filtering can significantly reduce performance on some MIDlets. Disable it if the MIDlet is too slow.&lt;BR>&#8226; Immediate processing bypasses the normal Java ME event queue. It may improve responsiveness, but can make some MIDlets unstable.</string>
     <string name="identity_filter">Fast (No Filter)</string>
     <string name="install">Install</string>
     <string name="install_done">Application installed.</string>
@@ -57,11 +57,11 @@
     <string name="file_picker_sort">Sort</string>
     <string name="file_picker_select_all">Select all files in this folder</string>
     <string name="file_picker_unselect_all">Unselect all files in this folder</string>
-    <string name="file_picker_sort_type">Folders First</string>
+    <string name="file_picker_sort_type">Folders first</string>
     <string name="file_picker_sort_name_ascending">Name A–Z</string>
     <string name="file_picker_sort_name_descending">Name Z–A</string>
-    <string name="file_picker_sort_modified_newest">Modification: Newest</string>
-    <string name="file_picker_sort_modified_oldest">Modification: Oldest</string>
+    <string name="file_picker_sort_modified_newest">Modified: newest</string>
+    <string name="file_picker_sort_modified_oldest">Modified: oldest</string>
     <string name="file_picker_choose">Choose</string>
     <string name="file_picker_current_folder">Current Folder</string>
     <string name="file_picker_parent_folder">Parent Folder</string>
@@ -171,7 +171,7 @@
     <string name="pref_button_shape_rect">Rectangle</string>
     <string name="pref_button_shape_round">Rounded Rectangle</string>
     <string name="pref_button_shape_title">Button Shape</string>
-    <string name="pref_category_experimental">Experimental/Temporary Options</string>
+    <string name="pref_category_experimental">Experimental options</string>
     <string name="pref_emulator_dir">Working Directory</string>
     <string name="pref_enable_actionbar_summary">Keep the runtime toolbar visible on MIDlet Canvas screens.</string>
     <string name="pref_enable_actionbar_title">Show Runtime Toolbar</string>
@@ -185,15 +185,15 @@
     <string name="PREF_FONT_SIZE_IN_SP">Use Android Font Scale</string>
     <string name="PREF_FONT_SMALL">Small</string>
     <string name="PREF_FORCE_FULLSCREEN">Use Fullscreen</string>
-    <string name="pref_graphics_hw_gles">HW Acceleration (OpenGL ES)</string>
-    <string name="pref_graphics_hw_surface">HW Acceleration (Surface)</string>
-    <string name="pref_graphics_hw_view">HW Acceleration (Window)</string>
+    <string name="pref_graphics_hw_gles">Hardware acceleration (OpenGL ES)</string>
+    <string name="pref_graphics_hw_surface">Hardware acceleration (Surface)</string>
+    <string name="pref_graphics_hw_view">Hardware acceleration (Window)</string>
     <string name="pref_graphics_mode_title">Graphics Mode</string>
     <string name="pref_graphics_software">Software</string>
     <string name="PREF_HEIGHT">Height</string>
     <string name="PREF_IMMEDIATE">Immediate Processing</string>
     <string name="pref_language">Language</string>
-    <string name="PREF_LAYOUT">Key-Code Layout</string>
+    <string name="PREF_LAYOUT">Key code layout</string>
     <string name="PREF_LIMIT_FPS">Frame Rate Limit</string>
     <string name="pref_map_keys">Key Mappings</string>
     <string name="pref_mascot_summary">Show a message when Mascot Capsule 3D is used.</string>
@@ -215,7 +215,7 @@
     <string name="pref_screen_scale_type_fill">Fill Window (Ignore Aspect Ratio)</string>
     <string name="pref_screen_scale_type_fit">Fit to Window</string>
     <string name="pref_screen_scale_type_none">Original Size</string>
-    <string name="pref_screenshot_summary">Saves the MIDlet frame at its virtual resolution before scaling, Image Filter, and Screen Shader.</string>
+    <string name="pref_screenshot_summary">Saves the MIDlet frame at its virtual resolution before scaling, image filtering, and the screen shader.</string>
     <string name="pref_screenshot_title">Raw Screenshot</string>
     <string name="PREF_SHADER_FILTER">Screen Shader</string>
     <string name="pref_skin_not_set">Not set</string>
@@ -250,14 +250,14 @@
     <string name="config_gamepad_calibration_phase_committed">Saved</string>
     <string name="config_gamepad_calibration_phase_cancelled">Cancelled</string>
     <string name="config_gamepad_calibration_waiting_controller">Connect a controller with a supported analog stick or trigger. Calibration begins when you first move a stick or press a trigger; the existing calibration remains unchanged until you save.</string>
-    <string name="config_gamepad_calibration_no_analog_ranges">This controller does not report a supported analog stick or trigger range.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">This controller does not provide supported analog-stick or trigger ranges.</string>
     <string name="config_gamepad_calibration_start">Keep every stick and trigger neutral until the neutral timer completes. Then move each stick to its full range and press Next.</string>
     <string name="config_gamepad_calibration_save_failed">The calibration could not be saved. The existing calibration remains unchanged.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">No supported analog ranges were found.</string>
     <string name="config_gamepad_calibration_rejected">Calibration rejected: %1$s</string>
-    <string name="config_gamepad_calibration_neutral_instructions">Keep all reported sticks centered and triggers released until the neutral timer completes.</string>
-    <string name="config_gamepad_calibration_stick_instructions">Move every reported stick through its full range, including both directions, then press Next.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Release and fully press every reported trigger, then press Next to review.</string>
+    <string name="config_gamepad_calibration_neutral_instructions">Keep all detected sticks centered and all detected triggers released until the neutral timer completes.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Move every detected stick through its full range, including both directions, then press Next.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Release and fully press every detected trigger, then press Next to review.</string>
     <string name="config_gamepad_calibration_review_instructions">Ready to review. Saving replaces only this controller’s calibration.</string>
     <string name="config_gamepad_calibration_saved">Calibration saved.</string>
     <string name="config_gamepad_calibration_cancelled">Calibration cancelled. The previous calibration is unchanged.</string>
@@ -296,8 +296,8 @@
     <string name="config_current_screen_size">Current size: %1$s</string>
     <string name="config_custom_resolution">Custom Resolution</string>
     <string name="profile_custom">Custom</string>
-    <string name="pref_theme_auto_battery">Auto, by Battery Saver</string>
-    <string name="pref_theme_auto_time">Auto, by Time of Day</string>
+    <string name="pref_theme_auto_battery">Automatic (Battery Saver)</string>
+    <string name="pref_theme_auto_time">Automatic (time of day)</string>
     <string name="pref_theme_default" translatable="false">light</string>
     <string name="pref_theme_light">Light</string>
     <string name="pref_theme_night">Dark</string>
@@ -306,7 +306,7 @@
     <string name="pref_title_emulation">MIDlet lifecycle</string>
     <string name="PREF_TOUCH_INPUT">Touch Input</string>
     <string name="PREF_UNIT_MS">ms</string>
-    <string name="pref_vibration_title">Enable Vibration</string>
+    <string name="pref_vibration_title">Vibration</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtual Controls</string>
     <string name="PREF_VK_ALPHA">Opacity</string>
     <string name="PREF_VK_BACK">Button Color</string>
@@ -330,7 +330,7 @@
     <string name="PREF_WIDTH">Width</string>
     <string name="reinstall">This app is already installed. Reinstall it?</string>
     <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s</string>
-    <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nThe older version may not work correctly with the recorded data.</string>
+    <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nThe older version may not work correctly with existing data.</string>
     <string name="reset">Reset</string>
     <string name="RESET_LAYOUT_CMD">Reset Control Layout</string>
     <string name="retry">Retry</string>
@@ -411,7 +411,7 @@
     </plurals>
     <string name="crash_report_bundle_preparing">Preparing diagnostic bundle…</string>
     <string name="crash_report_bundle_ready_title">Diagnostic Bundle Ready</string>
-    <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nGitHub will ask you to upload this file before submitting the report. The diagnostic bundle will be public with your issue.</string>
+    <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nUpload this file to the GitHub issue before submitting it. The diagnostic bundle will be public with your issue.</string>
     <string name="locate_bundle">Locate Bundle</string>
     <string name="open_github">Open GitHub</string>
     <string name="crash_report_bundle_failed">Could not prepare the diagnostic bundle.</string>
@@ -447,7 +447,7 @@
     <string name="installer_cancel_pending">Stopping at the next safe point…</string>
     <string name="installer_retry_remaining">Review Unfinished Items</string>
     <string name="installer_not_processed">Not processed</string>
-    <string name="installer_partial_restore">App installed; restoring data or settings failed</string>
+    <string name="installer_partial_restore">App installed; data or settings could not be restored</string>
     <string name="installer_removed_leftovers">App removed; some settings or save data could not be deleted.</string>
     <string name="installer_copy_details">Copy Details</string>
 
@@ -576,10 +576,10 @@
     <string name="memory_editor_expression_single_hint">Enter one value, or use ; to search group values together.</string>
     <string name="memory_editor_expression_group_needs_type">Choose a specific data type for Group Search.</string>
     <plurals name="memory_editor_expression_group_hint">
-        <item quantity="one">Group Search · %1$d value · same Managed Java owner</item>
-        <item quantity="other">Group Search · %1$d values · same Managed Java owner</item>
+        <item quantity="one">Group search · %1$d value · same Java object</item>
+        <item quantity="other">Group search · %1$d values · same Java object</item>
     </plurals>
-    <string name="memory_editor_expression_query_help">Examples: 500 · 500;1000. Group Search uses 2–8 values from one Managed Java owner.</string>
+    <string name="memory_editor_expression_query_help">Examples: 500 or 500;1000. Group search looks for 2–8 values in the same Java object.</string>
     <string name="memory_editor_keypad_clear">Clear</string>
     <string name="memory_editor_peek_underlay">Press and hold to see the MIDlet below</string>
     <string name="memory_editor_peek_underlay_active">Showing the MIDlet below</string>
@@ -661,7 +661,7 @@
     <string name="bulk_install_planning">Checking selected applications…</string>
     <string name="bulk_install_empty">No supported applications were found.</string>
     <string name="bulk_install_recommended">Recommended</string>
-    <string name="bulk_install_clear">Clear</string>
+    <string name="bulk_install_clear">Clear selection</string>
     <string name="bulk_install_install_count">Install %1$d</string>
     <string name="bulk_install_cancel">Cancel</string>
     <string name="bulk_install_close">Close</string>
@@ -686,15 +686,15 @@
     <string name="bulk_install_status_update">Update</string>
     <string name="bulk_install_status_downgrade">Older version</string>
     <string name="bulk_install_status_same">Already installed</string>
-    <string name="bulk_install_status_reinstall">Variant / reinstall</string>
+    <string name="bulk_install_status_reinstall">Variant or reinstall</string>
     <string name="bulk_install_status_ambiguous">Multiple installed matches</string>
     <string name="bulk_install_status_mismatch">JAD/JAR mismatch</string>
     <string name="bulk_install_status_duplicate">Duplicate</string>
-    <string name="bulk_install_status_older_batch">Older batch candidate</string>
+    <string name="bulk_install_status_older_batch">Older version in batch</string>
     <string name="bulk_install_status_conflict">Batch conflict</string>
-    <string name="bulk_install_status_remote">Remote source unsupported</string>
+    <string name="bulk_install_status_remote">Remote source not supported</string>
     <string name="bulk_install_status_error">Invalid source</string>
-    <string name="bulk_install_reinstall_source_missing">Retained JAR is unavailable for reinstall.</string>
+    <string name="bulk_install_reinstall_source_missing">Saved JAR is unavailable for reinstall.</string>
     <plurals name="bulk_install_reinstall_missing_apps">
         <item quantity="one">%1$d selected Library app is no longer available.</item>
         <item quantity="other">%1$d selected Library apps are no longer available.</item>
@@ -721,7 +721,7 @@
     <string name="config_message_reset_settings">Reset this MIDlet’s settings and virtual controls to their defaults? MIDlet data will not be deleted.</string>
     <string name="config_message_reset_profile_settings">Reset this profile’s settings and virtual controls to their defaults? You can still edit or cancel before saving.</string>
     <string name="config_message_delete_app_data">Permanently delete all saves and data created by this MIDlet? MIDlet settings will not be deleted.</string>
-    <string name="config_lock_custom_resolution_ratio">Keep Width/Height Ratio While Editing</string>
+    <string name="config_lock_custom_resolution_ratio">Lock aspect ratio</string>
     <string name="config_swap_screen_size">Swap Width and Height</string>
     <string name="profile_builtin_settings">JL-Mod Defaults</string>
     <string name="profile_default_badge_short">Default for New MIDlets</string>
@@ -731,9 +731,9 @@
     <string name="profile_template_operation_failed">Could not complete the profile operation.</string>
     <string name="config_help_screen_size">Sets the virtual Java ME screen resolution used by the MIDlet.</string>
     <string name="config_help_orientation">Chooses the screen orientation while the MIDlet runs.</string>
-    <string name="config_help_scale_type">Chooses how the MIDlet screen fits the available area. The screen ratio can be preserved or ignored.</string>
+    <string name="config_help_scale_type">Chooses how the MIDlet screen fits the available area, preserving or ignoring its aspect ratio.</string>
     <string name="config_help_scale_ratio">Changes the displayed size without changing the MIDlet’s virtual resolution.</string>
-    <string name="config_help_lock_custom_resolution_ratio">Keeps the width-to-height ratio while editing the custom resolution.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Keeps the aspect ratio while editing the custom resolution.</string>
     <string name="config_help_virtual_keyboard">Shows on-screen controls for this MIDlet.</string>
     <string name="config_help_touch_input">Lets the MIDlet receive pointer input from the touchscreen.</string>
     <string name="config_help_background">Fills unused space around the MIDlet screen.</string>
@@ -741,7 +741,7 @@
     <string name="config_background_custom">Custom</string>
     <string name="config_background_theme">Theme</string>
     <string name="config_background_immersive">Immersive</string>
-    <string name="config_background_theme_help">Uses the JL-Mod Plus theme background.</string>
+    <string name="config_background_theme_help">Uses the JL-Mod Plus theme color around the MIDlet screen.</string>
     <string name="config_background_immersive_help">Fills unused space with colors sampled from the MIDlet screen.</string>
     <string name="config_background_custom_color">Background Color</string>
     <string name="config_help_background_custom_color">Sets the color of unused space around the MIDlet screen.</string>
@@ -764,13 +764,13 @@
     <string name="config_help_emulation_speed">Changes the MIDlet clock speed and supported delays. Android audio and UI stay normal.</string>
     <string name="config_help_timing_mode">Chooses whether the MIDlet uses emulation time or system time. Relative delays remain scaled with emulation speed.</string>
     <string name="config_help_timing_unavailable">Time settings are unavailable for this MIDlet installation. Reinstall or reconvert the MIDlet to enable them.</string>
-    <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start. Please wait…</string>
+    <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start. Converting…</string>
     <string name="reconversion_error">The MIDlet could not be converted automatically.
 
 %1$s</string>
     <string name="config_help_generic_color">Sets the color of this visual element.</string>
     <string name="config_help_action_generic">Opens this configuration tool.</string>
-    <string name="config_help_encoding">Chooses the character encoding reported to the MIDlet.</string>
+    <string name="config_help_encoding">Chooses the character encoding reported as microedition.encoding.</string>
     <string name="config_edit_system_properties">Edit System Properties</string>
     <string name="config_help_system_properties">Sets advanced Java ME properties reported to the MIDlet.</string>
     <string name="config_help_system_properties_long">Edit one property per line as “name: value”. Incorrect values can affect compatibility.</string>
@@ -782,7 +782,7 @@
     <string name="config_help_font_presets">Applies font sizes suited to common J2ME screen resolutions.</string>
     <string name="config_help_font_dimensions">Applies Android’s font scale to Java ME font sizes.</string>
     <string name="config_help_font_aa">Smooths the edges of rendered text.</string>
-    <string name="config_help_key_layout">Chooses the key-code layout used by the MIDlet.</string>
+    <string name="config_help_key_layout">Chooses the key code layout used by the MIDlet.</string>
     <string name="config_help_key_mapping">Maps physical Android keys and buttons to Java ME keypad actions.</string>
     <string name="config_help_vk_button_shape">Sets the shape of virtual-control buttons.</string>
     <string name="config_help_vk_feedback">Vibrates on virtual-control presses when vibration is enabled in Settings.</string>
@@ -854,9 +854,9 @@
     <string name="profile_apply_layout_keeps_settings">Keep this MIDlet’s settings; use a custom configuration.</string>
 
     <string name="config_analog_stick">Analog Stick</string>
-    <string name="config_analog_stick_summary">Choose how the primary analog stick sends movement to this MIDlet. Gamepad buttons use Key Mapping.</string>
+    <string name="config_analog_stick_summary">Choose how the primary analog stick sends movement to this MIDlet. Controller buttons use key mappings.</string>
     <string name="config_analog_stick_off">Off</string>
-    <string name="config_controller_help_body_compact">Gamepad buttons use the same Key Mapping as keyboards and phone keys. The Analog Stick option controls only directional stick output for the MIDlet. Android Back keeps its normal host behavior, and any physical button mapped to M opens the runtime MIDlet menu.</string>
+    <string name="config_controller_help_body_compact">Controller buttons use the same key mappings as keyboards and phone keys. Analog stick affects only directional stick input to the MIDlet. Android Back keeps its normal behavior; any physical button mapped to M opens the runtime MIDlet menu.</string>
 
     <string name="library_metadata_edit_title">Edit Metadata</string>
     <string name="library_metadata_icon">Icon</string>
@@ -874,13 +874,13 @@
     <string name="library_indexing_current">Scanning %1$s</string>
     <string name="library_load_error_title">Library Unavailable</string>
     <string name="library_retry">Retry</string>
-    <string name="library_reinstall_source_missing">The retained JAR is unavailable for reinstall.</string>
+    <string name="library_reinstall_source_missing">The saved JAR is unavailable for reinstall.</string>
     <string name="library_action_select">Select</string>
     <string name="library_selection_select_all">Select All</string>
     <string name="library_selection_unselect_all">Unselect All</string>
 
     <string name="perf_overlay_title">Performance Overlay</string>
-    <string name="perf_overlay_help">Shows selected runtime measurements.</string>
+    <string name="perf_overlay_help">Shows selected performance and diagnostic metrics over the MIDlet screen.</string>
     <string name="perf_overlay_preset">Overlay Preset</string>
     <string name="perf_overlay_preset_help">Apply a preset or customize the selection.</string>
     <string name="perf_overlay_minimal">Minimal</string>
@@ -900,36 +900,36 @@
     <string name="perf_overlay_bottom_left">Bottom Left</string>
     <string name="perf_overlay_bottom_right">Bottom Right</string>
     <string name="perf_overlay_done">Done</string>
-    <string name="perf_overlay_group_rate">Frame Rate</string>
-    <string name="perf_overlay_group_timing">Frame Timing</string>
-    <string name="perf_overlay_group_pipeline">Pipeline Timing</string>
-    <string name="perf_overlay_group_queue">Input and Queue</string>
+    <string name="perf_overlay_group_rate">Frame rate</string>
+    <string name="perf_overlay_group_timing">Frame timing</string>
+    <string name="perf_overlay_group_pipeline">Pipeline timing</string>
+    <string name="perf_overlay_group_queue">Input and queue</string>
     <string name="perf_overlay_group_resources">Resources</string>
     <string name="perf_overlay_group_temperature">Temperature</string>
-    <string name="perf_overlay_group_runtime">Runtime Information</string>
-    <string name="perf_overlay_fps">Frames per Second (FPS)</string>
-    <string name="perf_overlay_cap">FPS Cap (CAP)</string>
-    <string name="perf_overlay_render_fps">Render Frames per Second (RFPS)</string>
-    <string name="perf_overlay_speed">Emulation Speed (SPD)</string>
-    <string name="perf_overlay_interval">Frame Interval (FI)</string>
-    <string name="perf_overlay_p95">95th Percentile Frame Interval (P95)</string>
-    <string name="perf_overlay_max">Maximum Frame Interval (MAX)</string>
-    <string name="perf_overlay_coalesced">Coalesced Frames (COAL)</string>
-    <string name="perf_overlay_paint">Paint Duration (PAINT)</string>
-    <string name="perf_overlay_copy">Buffer Copy Duration (COPY)</string>
-    <string name="perf_overlay_submit">Render Submit Duration (SUB)</string>
-    <string name="perf_overlay_input_queue">Input Queue Time (INQ)</string>
-    <string name="perf_overlay_frame_queue">Frame Queue Time (FRQ)</string>
-    <string name="perf_overlay_cpu">CPU Usage (CPU)</string>
-    <string name="perf_overlay_ram">RAM Usage (RAM)</string>
-    <string name="perf_overlay_java">Java Heap Usage (JAVA)</string>
-    <string name="perf_overlay_native">Native Heap Usage (NATIVE)</string>
-    <string name="perf_overlay_cpu_temp">CPU Temperature (CPUT)</string>
-    <string name="perf_overlay_gpu_temp">GPU Temperature (GPUT)</string>
-    <string name="perf_overlay_battery_temp">Battery Temperature (BAT)</string>
-    <string name="perf_overlay_thermal">Thermal Status (THRM)</string>
+    <string name="perf_overlay_group_runtime">Runtime information</string>
+    <string name="perf_overlay_fps">Frames per second (FPS)</string>
+    <string name="perf_overlay_cap">FPS cap (CAP)</string>
+    <string name="perf_overlay_render_fps">Rendered frames per second (RFPS)</string>
+    <string name="perf_overlay_speed">Emulation speed (SPD)</string>
+    <string name="perf_overlay_interval">Frame interval (FI)</string>
+    <string name="perf_overlay_p95">95th percentile frame interval (P95)</string>
+    <string name="perf_overlay_max">Maximum frame interval (MAX)</string>
+    <string name="perf_overlay_coalesced">Coalesced frames (COAL)</string>
+    <string name="perf_overlay_paint">Paint duration (PAINT)</string>
+    <string name="perf_overlay_copy">Buffer copy duration (COPY)</string>
+    <string name="perf_overlay_submit">Render submission duration (SUB)</string>
+    <string name="perf_overlay_input_queue">Input queue time (INQ)</string>
+    <string name="perf_overlay_frame_queue">Frame queue time (FRQ)</string>
+    <string name="perf_overlay_cpu">CPU usage (CPU)</string>
+    <string name="perf_overlay_ram">RAM usage (RAM)</string>
+    <string name="perf_overlay_java">Java heap usage (JAVA)</string>
+    <string name="perf_overlay_native">Native heap usage (NATIVE)</string>
+    <string name="perf_overlay_cpu_temp">CPU temperature (CPUT)</string>
+    <string name="perf_overlay_gpu_temp">GPU temperature (GPUT)</string>
+    <string name="perf_overlay_battery_temp">Battery temperature (BAT)</string>
+    <string name="perf_overlay_thermal">Thermal status (THRM)</string>
     <string name="perf_overlay_renderer">Renderer (REN)</string>
-    <string name="perf_overlay_display">Display Refresh Rate (DISP)</string>
+    <string name="perf_overlay_display">Display refresh rate (DISP)</string>
 
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_library_appearance">Library Appearance</string>
@@ -954,7 +954,7 @@
     <string name="runtime_invalid_intent">Invalid launch request: the MIDlet path is missing.</string>
     <string name="runtime_storage_in_use">MIDlet storage is already in use by another runtime.</string>
     <string name="runtime_installation_changed">The MIDlet installation could not be prepared for launch.</string>
-    <string name="runtime_storage_unavailable">Unable to reserve MIDlet storage.</string>
+    <string name="runtime_storage_unavailable">MIDlet storage could not be prepared.</string>
     <string name="runtime_no_midlets">No MIDlets were found in this application.</string>
     <string name="midlet_running_notification_title">MIDlet Running</string>
     <string name="midlet_running_notification_text">%1$s is running.</string>
@@ -964,7 +964,7 @@
     <string name="library_selection_unchecked">Not selected</string>
 
     <string name="library_action_settings_summary">Configure global behavior and appearance.</string>
-    <string name="library_action_crash_reports_summary">Review retained diagnostic reports and evidence.</string>
+    <string name="library_action_crash_reports_summary">Review saved diagnostic reports and evidence.</string>
     <string name="library_action_save_log_summary">Save the current application log for troubleshooting.</string>
     <string name="library_action_about_summary">Version, project, and maintainer information.</string>
     <string name="library_action_licenses_summary">Third-party notices and license terms included with the app.</string>
@@ -1042,7 +1042,7 @@
     <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
     <string name="bulk_install_reason_jar_not_found">The JAR referenced by the JAD was not found: %1$s.</string>
     <string name="bulk_install_reason_duplicate_source">This source duplicates another source in this batch.</string>
-    <string name="bulk_install_reason_version_conflict">Multiple app variants compare as the same version.</string>
+    <string name="bulk_install_reason_version_conflict">Multiple app variants are treated as the same version.</string>
     <string name="bulk_install_reason_older_candidate">A newer version of this app is in the same batch.</string>
     <string name="bulk_install_reason_source_error">This source could not be prepared for installation.</string>
 </resources>
