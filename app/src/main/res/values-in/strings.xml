@@ -523,9 +523,9 @@
     <string name="memory_editor_expression_single_hint">Masukkan satu nilai, atau gunakan ; untuk mencari beberapa nilai dalam satu grup.</string>
     <string name="memory_editor_expression_group_needs_type">Pilih jenis data tertentu untuk pencarian grup.</string>
     <plurals name="memory_editor_expression_group_hint">
-        <item quantity="other">Pencarian grup · %1$d nilai · pemilik Java terkelola yang sama</item>
+        <item quantity="other">Pencarian grup · %1$d nilai · objek Java yang sama</item>
     </plurals>
-    <string name="memory_editor_expression_query_help">Contoh: 500 · 500;1000. Pencarian grup memakai 2–8 nilai dari satu pemilik Java terkelola.</string>
+    <string name="memory_editor_expression_query_help">Contoh: 500 atau 500;1000. Pencarian grup memakai 2–8 nilai dari objek Java yang sama.</string>
     <string name="memory_editor_keypad_clear">Hapus</string>
     <string name="memory_editor_peek_underlay">Tekan dan tahan untuk melihat MIDlet di bawah</string>
     <string name="memory_editor_peek_underlay_active">MIDlet di bawah sedang ditampilkan</string>
@@ -617,7 +617,7 @@
     <string name="bulk_install_status_ambiguous">Cocok dengan beberapa aplikasi terpasang</string>
     <string name="bulk_install_status_mismatch">JAD/JAR tidak cocok</string>
     <string name="bulk_install_status_duplicate">Duplikat</string>
-    <string name="bulk_install_status_older_batch">Kandidat batch lebih lama</string>
+    <string name="bulk_install_status_older_batch">Versi lebih lama dalam batch</string>
     <string name="bulk_install_status_conflict">Konflik batch</string>
     <string name="bulk_install_status_remote">Sumber jarak jauh tidak didukung</string>
     <string name="bulk_install_status_error">Sumber tidak valid</string>

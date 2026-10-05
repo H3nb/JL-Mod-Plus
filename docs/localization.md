@@ -258,10 +258,15 @@ Current implementation evidence:
   overrides remain in their own files/configurations. English and Indonesian have
   been reviewed by semantic domain, and Indonesian covers the full translatable
   source catalog. A follow-up canonical-English review rechecked the historical
-  `NEEDS_CONTEXT` set against current app-owned UI consumers. Phase 5A.1 then
-  corrected bounded active-copy terminology, parameter-contract, accessibility,
-  and language-quality findings. Active canonical English and Indonesian UI copy
-  has been reviewed and frozen. A secondary-locale-safe dead-resource cleanup then
+  `NEEDS_CONTEXT` set against current app-owned UI consumers, and active canonical
+  English completed its bounded canonical review. Indonesian later completed a
+  repository-wide semantic, terminology, sentence-case, and language-quality
+  refinement. After the final correction pass, the active Indonesian UI is frozen
+  as the canonical Indonesian baseline. Future Indonesian changes are limited to
+  new or behavior-invalidated copy, verified semantic/typo/grammar/nonstandard-usage
+  defects, or demonstrated accessibility/ambiguity problems. Broad synonym,
+  sentence-case, or terminology re-evaluation requires new evidence.
+  A secondary-locale-safe dead-resource cleanup then
   removed 190 orphaned string declarations (189 translatable and one invariant)
   plus five unused drawables from every applicable catalog without changing active
   resource consumers or runtime input implementation. The canonical translatable
@@ -340,7 +345,7 @@ The table is an initial review baseline, not authorization to rewrite resources.
 | --- | --- | --- | --- | --- |
 | MIDlet | Java ME application executed by the emulator. | MIDlet | JL-Mod Plus itself or its runtime host. | Yes, technical term. |
 | Profile | Named reusable MIDlet configuration, optionally including virtual-control layout. | Profil | Current installed configuration, built-in defaults, linked ownership, Java ME platform profiles, or controller calibration profiles. | No; preserve the supplied profile name. |
-| Preset | Preconfigured option/set, such as controller mappings or font sizes. Named MIDlet presets are presented as Profile/Profil despite internal `preset_*` keys. | Prasetel for generic options; Profil for named MIDlet configuration. | Do not introduce a second visible name for the Profile concept or infer live linkage from the word. | No. |
+| Preset | Preconfigured option/set, such as controller mappings or font sizes. Named MIDlet presets are presented as Profile/Profil despite internal `preset_*` keys. | `preset` for generic options; Profil for named MIDlet configuration. | Do not introduce a second visible name for the Profile concept, infer live linkage from the word, or restore `prasetel` solely as an Indonesianized form. | Yes for generic `preset`; preserve supplied profile names. |
 | Virtual Controls | App-provided touch buttons, D-pad, and analog stick. | Kontrol virtual | Android IME, physical gamepad controls, guest input fields, or guest display. | No. |
 | Layout | Arrangement/geometry of virtual controls when used in that context; qualify as Virtual Controls Layout when needed. | Tata letak; tata letak kontrol virtual when qualified. | Key-code layout is a separate concept; inspect which arrangement a surface controls. | No. |
 | Collection | Named Library grouping whose membership references installed apps. | Koleksi | Filesystem folders, moving/deleting installed files, or Favorites. | No; preserve the supplied collection name. |
