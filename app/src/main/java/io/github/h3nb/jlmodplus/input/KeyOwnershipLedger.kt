@@ -442,7 +442,7 @@ class KeyOwnershipLedger(
             val owners = targetKeys?.get(key)
             owners?.remove(source)
             affected += TargetedOutputKey(binding.target, key)
-            if (owners?.isEmpty() == true) targetKeys?.remove(key)
+            if (owners?.isEmpty() == true) targetKeys.remove(key)
         }
         if (targetKeys?.isEmpty() == true) requestedOwners.remove(binding.target)
     }
