@@ -3842,13 +3842,12 @@ private fun LibraryActionRow(
             Text(
                 text = stringResource(label),
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
                 color = contentColor,
             )
             if (summary != null) {
                 Text(
                     text = stringResource(summary),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = if (destructive) {
                         MaterialTheme.colorScheme.error.copy(alpha = 0.82f)
                     } else {
@@ -4204,8 +4203,6 @@ private fun DialogAction(
             Text(
                 text = stringResource(label),
                 color = contentColor,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
             )
         },
         leadingContent = {

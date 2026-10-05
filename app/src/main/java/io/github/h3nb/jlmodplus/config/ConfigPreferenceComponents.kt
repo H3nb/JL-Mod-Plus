@@ -359,7 +359,6 @@ internal fun ConfigActionPreference(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
                 color = if (destructive) MaterialTheme.colorScheme.error
                 else if (enabled) MaterialTheme.colorScheme.onSurface
                 else MaterialTheme.colorScheme.onSurfaceVariant,
