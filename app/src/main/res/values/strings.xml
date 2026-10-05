@@ -574,7 +574,7 @@
     <string name="memory_editor_freeze_after_edit_help">Uses the replacement value as a lock and automatically adds the candidates to Watch.</string>
 
     <string name="memory_editor_expression_single_hint">Enter one value, or use ; to search group values together.</string>
-    <string name="memory_editor_expression_group_needs_type">Choose a specific data type for Group Search.</string>
+    <string name="memory_editor_expression_group_needs_type">Choose a specific data type for group search.</string>
     <plurals name="memory_editor_expression_group_hint">
         <item quantity="one">Group search · %1$d value · same Java object</item>
         <item quantity="other">Group search · %1$d values · same Java object</item>
@@ -1034,7 +1034,7 @@
     </plurals>
     <string name="bulk_install_reason_jad_jar_mismatch">The JAD and JAR identify different apps.</string>
     <string name="bulk_install_reason_conflicting_jads">JAD files with different attributes reference the same JAR.</string>
-    <string name="bulk_install_reason_remote_jar">Bulk Install cannot download remote JAR files.</string>
+    <string name="bulk_install_reason_remote_jar">Bulk install cannot download remote JAR files.</string>
     <string name="bulk_install_reason_missing_jar_url">The JAD is missing MIDlet-Jar-URL.</string>
     <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
     <string name="bulk_install_reason_unsupported_uri_scheme">The JAD references a JAR using an unsupported URI scheme: %1$s.</string>
