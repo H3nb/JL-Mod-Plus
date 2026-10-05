@@ -105,8 +105,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --parallel --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorDebug
-          ./gradlew --daemon --parallel --stacktrace --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorDebug | tee configuration-cache-assemble.txt
+          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorDebug
+          ./gradlew --daemon --stacktrace --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorDebug | tee configuration-cache-assemble.txt
           grep -Fq 'Reusing configuration cache.' configuration-cache-assemble.txt
 
       - name: Stage APK for early device testing
@@ -147,8 +147,8 @@ jobs:
             :dexlib:testDebugUnitTest
             :app:assembleEmulatorDebugAndroidTest
           )
-          ./gradlew --daemon --parallel --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}"
-          ./gradlew --daemon --parallel --stacktrace --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}" | tee configuration-cache-tests.txt
+          ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}"
+          ./gradlew --daemon --stacktrace --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}" | tee configuration-cache-tests.txt
           grep -Fq 'Reusing configuration cache.' configuration-cache-tests.txt
 
       - name: Generate screenshot candidates on manual request
@@ -327,8 +327,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --parallel --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:validateEmulatorDebugScreenshotTest
-          ./gradlew --daemon --parallel --stacktrace --configuration-cache --configuration-cache-problems=fail :app:validateEmulatorDebugScreenshotTest | tee configuration-cache-screenshots.txt
+          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:validateEmulatorDebugScreenshotTest
+          ./gradlew --daemon --stacktrace --configuration-cache --configuration-cache-problems=fail :app:validateEmulatorDebugScreenshotTest | tee configuration-cache-screenshots.txt
           grep -Fq 'Reusing configuration cache.' configuration-cache-screenshots.txt
 
       - name: Package existing screenshot renders after comparison failure
@@ -397,8 +397,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --parallel --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug
-          ./gradlew --daemon --parallel --stacktrace --continue --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug | tee configuration-cache-lint.txt
+          ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug
+          ./gradlew --daemon --stacktrace --continue --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug | tee configuration-cache-lint.txt
           grep -Fq 'Reusing configuration cache.' configuration-cache-lint.txt
 
       - name: Upload lint diagnostics

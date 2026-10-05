@@ -63,7 +63,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --parallel --stacktrace --configuration-cache --configuration-cache-problems=fail :app:testEmulatorDebugUnitTest --tests io.github.h3nb.jlmodplus.librarydb.LibraryMigrationTest
+          ./gradlew --daemon --stacktrace --configuration-cache --configuration-cache-problems=fail :app:testEmulatorDebugUnitTest --tests io.github.h3nb.jlmodplus.librarydb.LibraryMigrationTest
           git diff --exit-code -- app/schemas
       - name: Diagnose Isolated Projects readiness
         id: isolated
@@ -114,7 +114,7 @@ jobs:
           JLMOD_BUILD_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: |
           chmod +x gradlew
-          ./gradlew --daemon --parallel --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorRelease
+          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorRelease
       - name: Verify release APK matrix and native provenance
         shell: bash
         run: |
