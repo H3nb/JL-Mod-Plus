@@ -9,7 +9,7 @@
     <string name="action_back">Kembali</string>
     <string name="action_keyboard_ime">Papan ketik (IME)</string>
     <string name="action_lock_orientation">Kunci rotasi layar</string>
-    <string name="action_reinstall">Pasang ulang</string>
+    <string name="action_reinstall">Instal ulang</string>
     <string name="action_settings">Pengaturan</string>
     <string name="message_reset_layout">Atur ulang tata letak kontrol virtual ke bawaan?</string>
     <string name="alert_map_menu">Tombol menu (M) belum ditetapkan.\nOpsi emulator mungkin tidak dapat diakses.</string>
@@ -36,11 +36,11 @@
     <string name="help">Bantuan</string>
     <string name="help_message">• Filter dapat sangat menurunkan performa pada sebagian MIDlet. Nonaktifkan jika aplikasi terlalu lambat.&lt;BR&gt;• Pemrosesan langsung melewati antrean event Java ME. Respons dapat meningkat, tetapi sebagian MIDlet mungkin tidak stabil.</string>
     <string name="identity_filter">Cepat (tanpa filter)</string>
-    <string name="install">Pasang</string>
+    <string name="install">Instal</string>
     <string name="install_done">Aplikasi terpasang.</string>
-    <string name="installer_title">Pemasangan MIDlet</string>
-    <string name="installer_error_message">Aplikasi yang dipilih tidak dapat dipasang. Pilih berkas MIDlet yang valid lalu coba lagi.</string>
-    <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD tersebut dan tetap pasang?</string>
+    <string name="installer_title">Instalasi MIDlet</string>
+    <string name="installer_error_message">Aplikasi yang dipilih tidak dapat diinstal. Pilih berkas MIDlet yang valid lalu coba lagi.</string>
+    <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD tersebut dan tetap instal?</string>
     <string name="invalid_resolution_not_saved">Resolusi tidak valid. Perubahan tidak disimpan.</string>
     <string name="layout_edit_finish">Selesai mengedit</string>
     <string name="layout_edit_done">✓ Selesai</string>
@@ -176,10 +176,10 @@
     <string name="PREF_SYS_PROPS">Properti sistem</string>
     <string name="config_gamepad_test">Uji pengontrol</string>
     <string name="config_gamepad_calibrate">Kalibrasi pengontrol</string>
-    <string name="config_gamepad_calibrate_summary">Mengukur posisi netral dan rentang stik serta pemicu pada pengontrol yang terhubung.</string>
+    <string name="config_gamepad_calibrate_summary">Mengukur posisi netral dan rentang stik serta trigger pada pengontrol yang terhubung.</string>
     <string name="config_gamepad_stick_directions">Arah digital</string>
     <string name="config_gamepad_stick_unassigned">Belum ditetapkan</string>
-    <string name="config_gamepad_stick_pointer">Sumber penunjuk</string>
+    <string name="config_gamepad_stick_pointer">Sumber pointer</string>
     <string name="config_gamepad_opaque_summary">Data pengontrol menggunakan format yang tidak didukung. Data dipertahankan, tetapi tidak dapat diedit di sini.</string>
     <string name="config_gamepad_unsupported_summary">Konfigurasi pengontrol ini tidak didukung. Data dipertahankan, tetapi tidak dapat diedit di sini.</string>
     <string name="config_gamepad_keypad_title">Keypad virtual</string>
@@ -193,19 +193,19 @@
     <string name="config_gamepad_calibration_profile">Identitas pengontrol: %1$s</string>
     <string name="config_gamepad_calibration_phase_neutral">Menunggu posisi netral</string>
     <string name="config_gamepad_calibration_phase_stick_range">Rentang stik</string>
-    <string name="config_gamepad_calibration_phase_trigger_range">Rentang pemicu</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Rentang trigger</string>
     <string name="config_gamepad_calibration_phase_review">Tinjau</string>
     <string name="config_gamepad_calibration_phase_committed">Tersimpan</string>
     <string name="config_gamepad_calibration_phase_cancelled">Dibatalkan</string>
-    <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan stik analog atau pemicu yang didukung. Kalibrasi dimulai saat stik digerakkan atau pemicu ditekan; kalibrasi yang ada tetap tidak berubah sampai disimpan.</string>
-    <string name="config_gamepad_calibration_no_analog_ranges">Pengontrol ini tidak melaporkan rentang stik analog atau pemicu yang didukung.</string>
-    <string name="config_gamepad_calibration_start">Pertahankan semua stik dan pemicu pada posisi netral sampai penghitung waktu netral selesai. Lalu gerakkan setiap stik ke rentang penuhnya dan tekan Berikutnya.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan stik analog atau trigger yang didukung. Kalibrasi dimulai saat stik digerakkan atau trigger ditekan; kalibrasi yang ada tetap tidak berubah sampai disimpan.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Pengontrol ini tidak melaporkan rentang stik analog atau trigger yang didukung.</string>
+    <string name="config_gamepad_calibration_start">Pertahankan semua stik dan trigger pada posisi netral sampai penghitung waktu netral selesai. Lalu gerakkan setiap stik ke rentang penuhnya dan tekan Berikutnya.</string>
     <string name="config_gamepad_calibration_save_failed">Kalibrasi tidak dapat disimpan. Kalibrasi yang ada tetap tidak berubah.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Tidak ditemukan rentang analog yang didukung.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasi ditolak: %1$s</string>
-    <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik tetap di tengah dan pemicu dilepas sampai penghitung waktu netral selesai.</string>
+    <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik tetap di tengah dan trigger dilepas sampai penghitung waktu netral selesai.</string>
     <string name="config_gamepad_calibration_stick_instructions">Gerakkan setiap stik yang dilaporkan melalui rentang penuhnya, termasuk kedua arah, lalu tekan Berikutnya.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Lepaskan dan tekan penuh setiap pemicu yang dilaporkan, lalu tekan Berikutnya untuk meninjau.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Lepaskan dan tekan penuh setiap trigger yang dilaporkan, lalu tekan Berikutnya untuk meninjau.</string>
     <string name="config_gamepad_calibration_review_instructions">Siap ditinjau. Menyimpan hanya akan mengganti kalibrasi pengontrol ini.</string>
     <string name="config_gamepad_calibration_saved">Kalibrasi tersimpan.</string>
     <string name="config_gamepad_calibration_cancelled">Kalibrasi dibatalkan. Kalibrasi sebelumnya tidak berubah.</string>
@@ -216,8 +216,8 @@
     <string name="config_gamepad_diagnosis_analog_settings">Pengaturan analog:</string>
     <string name="config_gamepad_diagnosis_left_stick">Stik kiri</string>
     <string name="config_gamepad_diagnosis_right_stick">Stik kanan</string>
-    <string name="config_gamepad_diagnosis_triggers">Pemicu aktif</string>
-    <string name="config_gamepad_diagnosis_pointer">Mode penunjuk</string>
+    <string name="config_gamepad_diagnosis_triggers">Trigger aktif</string>
+    <string name="config_gamepad_diagnosis_pointer">Mode pointer</string>
     <string name="config_gamepad_status_enabled">aktif</string>
     <string name="config_gamepad_status_disabled">nonaktif</string>
     <string name="config_gamepad_diagnosis_source_default">bawaan</string>
@@ -255,7 +255,7 @@
     <string name="PREF_VK_ALPHA">Opasitas</string>
     <string name="PREF_VK_BACK">Warna tombol</string>
     <string name="PREF_VK_FEEDBACK">Umpan balik haptik</string>
-    <string name="PREF_VK_FORCE_OPACITY">Tidak transparan di luar layar MIDlet</string>
+    <string name="PREF_VK_FORCE_OPACITY">Tanpa transparansi di luar layar MIDlet</string>
     <string name="PREF_VK_FORE">Warna label dan simbol</string>
     <string name="PREF_VK_HIDE_DELAY">Jeda sembunyi otomatis</string>
     <string name="pref_vk_hide_hint">Dinonaktifkan</string>
@@ -276,7 +276,7 @@
     <string name="pref_skip_resume_call">Lewati startApp() saat MIDlet dilanjutkan</string>
     <string name="pref_soundbank_title">Soundbank MIDI</string>
     <string name="PREF_WIDTH">Lebar</string>
-    <string name="reinstall">Aplikasi ini sudah terpasang. Pasang ulang?</string>
+    <string name="reinstall">Aplikasi ini sudah terpasang. Instal ulang?</string>
     <string name="reinstall_newest">Perbarui aplikasi ini ke versi %1$s?\n\nYang kini terpasang: %2$s</string>
     <string name="reinstall_older">Timpa aplikasi ini dengan versi %1$s?\n\nYang kini terpasang: %2$s\nVersi lama mungkin tidak berjalan dengan baik menggunakan data yang tersimpan.</string>
     <string name="reset">Atur ulang</string>
@@ -287,14 +287,14 @@
     <string name="saved">Tersimpan %1$s</string>
     <string name="select_dialog_title">Pilih MIDlet</string>
     <string name="shader_tuning">Setelan shader</string>
-    <string name="SIZE_PRESETS">Prasetel ukuran font</string>
+    <string name="SIZE_PRESETS">Preset ukuran font</string>
     <string name="START_CMD">Mulai</string>
     <string name="SWAP_SIZES">Tukar ukuran</string>
     <string name="take_screenshot">Buat tangkapan layar</string>
     <string name="fps_limit_maximum">Maksimum</string>
     <string name="warn_install_from_net">Berkas akan diunduh dari internet.</string>
     <string name="warning">Peringatan</string>
-    <string name="remove_screen_preset">Hapus prasetel resolusi</string>
+    <string name="remove_screen_preset">Hapus preset resolusi</string>
     <string name="removed">Dihapus %1$s</string>
     <string name="file_picker_select_file">Pilih berkas</string>
     <string name="file_picker_select_folder">Pilih folder</string>
@@ -388,16 +388,16 @@
     <string name="select_all_reports">Pilih semua laporan</string>
     <string name="clear_report_selection">Batalkan semua pilihan laporan</string>
 
-    <string name="installer_ambiguous">Beberapa aplikasi terpasang cocok dengan aplikasi ini. Pasang salinan terpisah? Aplikasi yang ada beserta datanya akan tetap disimpan.</string>
-    <string name="installer_separate_copy">Pasang salinan terpisah</string>
+    <string name="installer_ambiguous">Beberapa aplikasi terpasang cocok dengan aplikasi ini. Instal salinan terpisah? Aplikasi yang ada beserta datanya akan tetap disimpan.</string>
+    <string name="installer_separate_copy">Instal salinan terpisah</string>
     <string name="installer_stage_download">Mengunduh aplikasi…</string>
     <string name="installer_stage_wait">Menunggu operasi lain…</string>
     <string name="installer_stage_save">Menyimpan aplikasi…</string>
     <string name="installer_failed_download">Aplikasi tidak dapat diunduh. Periksa koneksi dan tautan unduhan, lalu coba lagi.</string>
-    <string name="installer_failed_storage">Pemasangan tidak dapat diselesaikan. Coba lagi.</string>
+    <string name="installer_failed_storage">Instalasi tidak dapat diselesaikan. Coba lagi.</string>
     <string name="installer_failed_conversion">Aplikasi tidak dapat dikonversi. Pastikan berkas lengkap dan didukung, lalu coba lagi.</string>
-    <string name="installer_needs_recovery">Berkas aplikasi telah disimpan, tetapi pembaruan Pustaka belum selesai. Muat ulang Pustaka sebelum mencoba lagi.</string>
-    <string name="installer_refresh_library">Muat ulang Pustaka</string>
+    <string name="installer_needs_recovery">Berkas aplikasi telah disimpan, tetapi pembaruan pustaka belum selesai. Muat ulang pustaka sebelum mencoba lagi.</string>
+    <string name="installer_refresh_library">Muat ulang pustaka</string>
     <string name="installer_cancel_pending">Menghentikan pada tahap aman berikutnya…</string>
     <string name="installer_retry_remaining">Tinjau item yang belum selesai</string>
     <string name="installer_not_processed">Belum diproses</string>
@@ -434,7 +434,7 @@
     <string name="library_export_chooser_title">Ekspor bundel aplikasi</string>
     <string name="library_export_progress">Mengekspor… %1$d/%2$d</string>
     <string name="library_transfer_unavailable">Aplikasi ini tidak dapat disiapkan untuk transfer.</string>
-    <string name="library_back">Kembali ke Pustaka</string>
+    <string name="library_back">Kembali ke pustaka</string>
     <string name="library_sort">Urutkan aplikasi</string>
     <string name="library_search_clear">Hapus pencarian</string>
     <string name="library_description_more">… Selengkapnya</string>
@@ -561,7 +561,7 @@
         <item quantity="other">%1$d diperbarui</item>
     </plurals>
     <plurals name="bulk_install_reinstalled_count">
-        <item quantity="other">%1$d dipasang ulang</item>
+        <item quantity="other">%1$d diinstal ulang</item>
     </plurals>
     <plurals name="bulk_install_skipped_result_count">
         <item quantity="other">%1$d dilewati</item>
@@ -585,35 +585,35 @@
         <item quantity="other">%1$d aplikasi dihapus; %2$d gagal.</item>
     </plurals>
 
-    <string name="bulk_install_title">Pemasangan massal</string>
+    <string name="bulk_install_title">Instalasi massal</string>
     <string name="bulk_install_planning">Memeriksa aplikasi yang dipilih…</string>
     <string name="bulk_install_empty">Tidak ada aplikasi yang didukung.</string>
     <string name="bulk_install_recommended">Rekomendasi</string>
     <string name="bulk_install_clear">Hapus pilihan</string>
-    <string name="bulk_install_install_count">Pasang %1$d</string>
+    <string name="bulk_install_install_count">Instal %1$d</string>
     <string name="bulk_install_cancel">Batal</string>
     <string name="bulk_install_close">Tutup</string>
     <plurals name="bulk_install_running">
         <item quantity="other">%1$d dari %2$d aplikasi diproses</item>
     </plurals>
     <string name="bulk_install_cancel_requested">Berhenti setelah aplikasi saat ini selesai…</string>
-    <string name="bulk_install_complete">Pemasangan massal selesai</string>
-    <string name="bulk_install_cancelled">Pemasangan massal dihentikan</string>
-    <string name="bulk_install_fatal">Pemasangan massal berhenti. Tinjau item yang belum selesai sebelum mencoba lagi.</string>
+    <string name="bulk_install_complete">Instalasi massal selesai</string>
+    <string name="bulk_install_cancelled">Instalasi massal dihentikan</string>
+    <string name="bulk_install_fatal">Instalasi massal berhenti. Tinjau item yang belum selesai sebelum mencoba lagi.</string>
     <string name="bulk_install_result_installed">Terpasang</string>
     <string name="bulk_install_result_updated">Diperbarui</string>
-    <string name="bulk_install_result_reinstalled">Dipasang ulang</string>
+    <string name="bulk_install_result_reinstalled">Diinstal ulang</string>
     <string name="bulk_install_result_skipped">Dilewati</string>
     <string name="bulk_install_result_failed">Gagal</string>
     <string name="bulk_install_installed_version">Terpasang: %1$s</string>
     <string name="bulk_install_source">Sumber: %1$s</string>
-    <string name="bulk_install_action_separate_copy">Pasang sebagai salinan terpisah</string>
-    <string name="bulk_install_action_jar_only">Pasang JAR saja</string>
+    <string name="bulk_install_action_separate_copy">Instal sebagai salinan terpisah</string>
+    <string name="bulk_install_action_jar_only">Instal JAR saja</string>
     <string name="bulk_install_status_new">Baru</string>
     <string name="bulk_install_status_update">Pembaruan</string>
     <string name="bulk_install_status_downgrade">Versi lebih lama</string>
     <string name="bulk_install_status_same">Sudah terpasang</string>
-    <string name="bulk_install_status_reinstall">Varian / pasang ulang</string>
+    <string name="bulk_install_status_reinstall">Varian / instal ulang</string>
     <string name="bulk_install_status_ambiguous">Beberapa aplikasi terpasang cocok</string>
     <string name="bulk_install_status_mismatch">JAD/JAR tidak cocok</string>
     <string name="bulk_install_status_duplicate">Duplikat</string>
@@ -621,9 +621,9 @@
     <string name="bulk_install_status_conflict">Konflik batch</string>
     <string name="bulk_install_status_remote">Sumber jarak jauh tidak didukung</string>
     <string name="bulk_install_status_error">Sumber tidak valid</string>
-    <string name="bulk_install_reinstall_source_missing">JAR tersimpan tidak tersedia untuk pemasangan ulang.</string>
+    <string name="bulk_install_reinstall_source_missing">JAR tersimpan tidak tersedia untuk instalasi ulang.</string>
     <plurals name="bulk_install_reinstall_missing_apps">
-        <item quantity="other">%1$d aplikasi Pustaka yang dipilih sudah tidak tersedia.</item>
+        <item quantity="other">%1$d aplikasi pustaka yang dipilih sudah tidak tersedia.</item>
     </plurals>
 
     <string name="config_destination_general">Umum</string>
@@ -667,7 +667,7 @@
     <string name="config_help_scale_ratio">Mengubah ukuran tampilan tanpa mengubah resolusi virtual MIDlet.</string>
     <string name="config_help_lock_custom_resolution_ratio">Mempertahankan rasio lebar dan tinggi saat salah satunya diubah.</string>
     <string name="config_help_virtual_keyboard">Menampilkan kontrol sentuh di layar untuk MIDlet ini.</string>
-    <string name="config_help_touch_input">Mengizinkan MIDlet menerima input penunjuk dari layar sentuh.</string>
+    <string name="config_help_touch_input">Mengizinkan MIDlet menerima input dari layar sentuh.</string>
     <string name="config_help_background">Menggunakan warna pilihan di area sekitar layar MIDlet.</string>
     <string name="config_background_mode">Mode latar belakang</string>
     <string name="config_background_custom">Kustom</string>
@@ -688,14 +688,14 @@
     <string name="config_help_shader_tuning">Mengatur parameter shader yang dipilih.</string>
     <string name="config_help_parallel_redraw">Menjadwalkan penyajian frame secara asinkron. Dapat meningkatkan performa pada perangkat tertentu.</string>
     <string name="config_help_force_fullscreen">Memulai Canvas MIDlet dalam mode layar penuh. MIDlet tetap dapat mengubahnya sendiri.</string>
-    <string name="config_help_fps_limit">Menetapkan batas FPS pada kecepatan emulasi 1×. Batas efektif mengikuti kecepatan emulasi; 0 (Maksimum) memakai kecepatan refresh maksimum layar.</string>
+    <string name="config_help_fps_limit">Menetapkan batas FPS pada kecepatan emulasi 1×. Batas efektif mengikuti kecepatan emulasi; 0 (Maksimum) memakai refresh rate maksimum layar.</string>
     <string name="PREF_EMULATION_SPEED">Kecepatan emulasi</string>
     <string name="PREF_TIMING_MODE">Sumber waktu</string>
     <string name="config_timing_mode_full_guest">Waktu emulasi</string>
     <string name="config_timing_mode_real_wall">Waktu sistem</string>
     <string name="config_help_emulation_speed">Mengatur kecepatan waktu dan jeda yang didukung di dalam MIDlet. Audio dan UI Android tetap berjalan normal.</string>
     <string name="config_help_timing_mode">Menentukan sumber tanggal dan waktu yang dilihat MIDlet. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
-    <string name="config_help_timing_unavailable">Pengaturan waktu tidak tersedia untuk pemasangan MIDlet ini. Pasang ulang atau konversi ulang MIDlet untuk mengaktifkannya.</string>
+    <string name="config_help_timing_unavailable">Pengaturan waktu tidak tersedia untuk MIDlet ini. Instal ulang atau konversi ulang untuk mengaktifkannya.</string>
     <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Tunggu…</string>
     <string name="reconversion_error">MIDlet ini tidak dapat dikonversi secara otomatis.
 
@@ -718,8 +718,8 @@
     <string name="config_help_key_mapping">Memetakan tombol fisik Android ke aksi keypad Java ME.</string>
     <string name="config_help_vk_button_shape">Menentukan bentuk tombol kontrol virtual.</string>
     <string name="config_help_vk_feedback">Bergetar saat kontrol virtual ditekan jika getaran diaktifkan di Pengaturan.</string>
-    <string name="config_help_vk_alpha">Mengatur transparansi kontrol virtual: 0 = transparan penuh, 255 = tidak transparan.</string>
-    <string name="config_help_vk_force_opacity">Membuat kontrol di luar layar MIDlet sepenuhnya tidak transparan. Kontrol di atas layar tetap mengikuti nilai opasitas.</string>
+    <string name="config_help_vk_alpha">Mengatur transparansi kontrol virtual: 0 = sepenuhnya transparan, 255 = sepenuhnya tidak transparan.</string>
+    <string name="config_help_vk_force_opacity">Kontrol di luar layar MIDlet ditampilkan tanpa transparansi. Kontrol di atas layar tetap mengikuti nilai opasitas.</string>
     <string name="config_help_vk_hide_delay">Menyembunyikan kontrol setelah jeda ini saat menutupi layar MIDlet. Nilai 0 menonaktifkannya.</string>
     <string name="config_help_vk_foreground">Mengatur warna label dan simbol kontrol virtual.</string>
     <string name="config_help_vk_background">Mengatur warna dasar tombol kontrol virtual.</string>
@@ -768,7 +768,7 @@
     <string name="preset_manager_presets_section">Profil saya</string>
     <string name="preset_manager_keyboard_section">Tata letak kontrol virtual tersimpan</string>
     <string name="saved_keyboard_layout_summary">Tata letak kontrol virtual tersimpan.</string>
-    <string name="preset_default_policy_summary">Diterapkan saat MIDlet baru dipasang.</string>
+    <string name="preset_default_policy_summary">Diterapkan saat MIDlet baru diinstal.</string>
     <string name="preset_keyboard_layout_unavailable">Tata letak kontrol virtual tidak tersedia.</string>
     <string name="edit_preset">Edit profil</string>
     <string name="preset_edit_title">Edit profil: %1$s</string>
@@ -786,9 +786,9 @@
     <string name="profile_apply_layout_keeps_settings">Pertahankan konfigurasi MIDlet ini; gunakan konfigurasi kustom.</string>
 
     <string name="config_analog_stick">Stik analog</string>
-    <string name="config_analog_stick_summary">Menentukan keluaran stik analog utama: 4 arah, 8 arah, atau keypad numerik.</string>
+    <string name="config_analog_stick_summary">Mengatur keluaran stik analog utama: 4 arah, 8 arah, atau keypad numerik. Tombol gamepad tetap mengikuti pemetaan tombol.</string>
     <string name="config_analog_stick_off">Nonaktif</string>
-    <string name="config_controller_help_body_compact">Tombol gamepad mengikuti pemetaan tombol keyboard dan ponsel. Stik analog hanya mengatur keluaran arah stik ke MIDlet. Tombol kembali Android tetap memakai perilaku host; tombol fisik yang dipetakan ke M membuka menu runtime MIDlet.</string>
+    <string name="config_controller_help_body_compact">Tombol gamepad mengikuti pemetaan tombol keyboard dan ponsel. Stik analog hanya mengatur arah stik ke MIDlet. Tombol Kembali Android tetap berfungsi seperti biasa; tombol fisik yang dipetakan ke M membuka menu runtime MIDlet.</string>
 
     <string name="library_metadata_edit_title">Edit metadata</string>
     <string name="library_metadata_icon">Ikon</string>
@@ -801,8 +801,8 @@
 
     <string name="perf_overlay_title">Overlay performa</string>
     <string name="perf_overlay_help">Menampilkan metrik performa dan diagnostik di atas layar MIDlet.</string>
-    <string name="perf_overlay_preset">Prasetel overlay</string>
-    <string name="perf_overlay_preset_help">Terapkan prasetel atau sesuaikan pilihan.</string>
+    <string name="perf_overlay_preset">Preset overlay</string>
+    <string name="perf_overlay_preset_help">Terapkan preset atau sesuaikan pilihan.</string>
     <string name="perf_overlay_minimal">Minimal</string>
     <string name="perf_overlay_standard">Standar</string>
     <string name="perf_overlay_debug">Debug</string>
@@ -819,9 +819,9 @@
     <string name="perf_overlay_bottom_left">Kiri bawah</string>
     <string name="perf_overlay_bottom_right">Kanan bawah</string>
     <string name="perf_overlay_done">Selesai</string>
-    <string name="perf_overlay_group_rate">Kecepatan frame</string>
-    <string name="perf_overlay_group_timing">Timing frame</string>
-    <string name="perf_overlay_group_pipeline">Timing pipeline</string>
+    <string name="perf_overlay_group_rate">Frame rate</string>
+    <string name="perf_overlay_group_timing">Frame timing</string>
+    <string name="perf_overlay_group_pipeline">Pipeline timing</string>
     <string name="perf_overlay_group_queue">Input dan antrean</string>
     <string name="perf_overlay_group_resources">Sumber daya</string>
     <string name="perf_overlay_group_temperature">Suhu</string>
@@ -848,7 +848,7 @@
     <string name="perf_overlay_battery_temp">Suhu baterai (BAT)</string>
     <string name="perf_overlay_thermal">Status termal (THRM)</string>
     <string name="perf_overlay_renderer">Renderer (REN)</string>
-    <string name="perf_overlay_display">Kecepatan refresh layar (DISP)</string>
+    <string name="perf_overlay_display">Refresh rate layar (DISP)</string>
 
     <string name="settings_section_appearance">Tampilan</string>
     <string name="settings_section_library_appearance">Tampilan pustaka</string>
@@ -872,7 +872,7 @@
     <string name="pref_accent_pink">Merah muda</string>
     <string name="runtime_invalid_intent">Permintaan peluncuran tidak valid: jalur MIDlet tidak tersedia.</string>
     <string name="runtime_storage_in_use">Penyimpanan MIDlet sedang digunakan.</string>
-    <string name="runtime_installation_changed">Pemasangan MIDlet tidak dapat disiapkan untuk dijalankan.</string>
+    <string name="runtime_installation_changed">Instalasi MIDlet tidak dapat disiapkan untuk dijalankan.</string>
     <string name="runtime_storage_unavailable">Akses ke penyimpanan MIDlet tidak dapat diperoleh.</string>
     <string name="runtime_no_midlets">Tidak ada MIDlet yang ditemukan dalam aplikasi ini.</string>
     <string name="midlet_running_notification_title">MIDlet berjalan</string>
@@ -894,10 +894,10 @@
     <string name="library_bulk_delete_apps">Hapus</string>
     <string name="library_bulk_add_collection">Tambahkan ke koleksi</string>
     <string name="library_bulk_share_apps">Bagikan aplikasi</string>
-    <string name="library_bulk_reinstall_apps">Pasang ulang</string>
+    <string name="library_bulk_reinstall_apps">Instal ulang</string>
     <string name="library_bulk_export_apps">Ekspor bundel</string>
     <string name="library_enhanced_icons_title">Penyempurnaan ikon</string>
-    <string name="library_enhanced_icons_summary">Menyesuaikan ukuran dan warna ikon agar tampil lebih konsisten di Pustaka.</string>
+    <string name="library_enhanced_icons_summary">Menyesuaikan ukuran dan warna ikon agar lebih konsisten di pustaka.</string>
 
     <string name="runtime_virtual_controls_title">Kontrol virtual</string>
     <string name="runtime_virtual_controls_dpad">D-pad</string>
@@ -915,9 +915,9 @@
     <string name="library_indexing_progress">Mengindeks pustaka… %1$d/%2$d</string>
     <string name="library_indexing_current">Memindai %1$s</string>
     <string name="library_retry">Coba lagi</string>
-    <string name="library_reinstall_source_missing">JAR yang disimpan tidak tersedia untuk pemasangan ulang.</string>
+    <string name="library_reinstall_source_missing">JAR yang disimpan tidak tersedia untuk instalasi ulang.</string>
     <string name="library_load_failed_message">Pustaka tidak dapat dimuat. Coba lagi.</string>
-    <string name="bulk_install_prepare_failed">Aplikasi yang dipilih tidak dapat disiapkan untuk pemasangan.</string>
+    <string name="bulk_install_prepare_failed">Aplikasi yang dipilih tidak dapat disiapkan untuk instalasi.</string>
     <string name="memory_editor_no_runtime">Tidak ada runtime MIDlet yang aktif.</string>
     <string name="memory_editor_no_search_history">Tidak ada pencarian sebelumnya untuk dipulihkan.</string>
     <string name="memory_editor_partial_write">Penulisan belum selesai sepenuhnya. Periksa nilai saat ini sebelum mencoba lagi.</string>
@@ -946,7 +946,7 @@
     <string name="bulk_install_library_changed">Pustaka berubah setelah ditinjau. Tutup pemasangan massal ini, lalu pilih sumbernya lagi.</string>
     <string name="bulk_install_source_unavailable">Berkas sumber yang diperlukan sudah tidak tersedia. Pilih berkasnya lagi.</string>
     <string name="bulk_install_source_changed">Berkas sumber berubah setelah ditinjau. Pilih berkasnya lagi.</string>
-    <string name="bulk_install_target_unverified">Target pemasangan ulang tidak dapat diverifikasi. Tutup pemasangan massal ini, lalu pilih aplikasinya lagi.</string>
+    <string name="bulk_install_target_unverified">Target instalasi ulang tidak dapat diverifikasi. Tutup instalasi massal ini, lalu pilih aplikasinya lagi.</string>
     <string name="bulk_install_result_restored">Dipulihkan</string>
     <plurals name="bulk_install_restored_count">
         <item quantity="other">%1$d dipulihkan</item>
@@ -956,13 +956,13 @@
     </plurals>
     <string name="bulk_install_reason_jad_jar_mismatch">JAD dan JAR mengidentifikasi aplikasi yang berbeda.</string>
     <string name="bulk_install_reason_conflicting_jads">Berkas JAD dengan atribut berbeda merujuk ke JAR yang sama.</string>
-    <string name="bulk_install_reason_remote_jar">Pemasangan massal tidak dapat mengunduh berkas JAR dari URL jarak jauh.</string>
+    <string name="bulk_install_reason_remote_jar">Instalasi massal tidak dapat mengunduh berkas JAR dari URL jarak jauh.</string>
     <string name="bulk_install_reason_missing_jar_url">JAD tidak memiliki MIDlet-Jar-URL.</string>
     <string name="bulk_install_reason_unsupported_uri_scheme">JAD merujuk ke JAR dengan skema URI yang tidak didukung: %1$s.</string>
     <string name="bulk_install_reason_missing_parent">JAD tidak memiliki direktori induk.</string>
     <string name="bulk_install_reason_jar_not_found">JAR yang dirujuk oleh JAD tidak ditemukan: %1$s.</string>
-    <string name="bulk_install_reason_duplicate_source">Sumber ini merupakan duplikat dari sumber lain dalam pemasangan massal ini.</string>
+    <string name="bulk_install_reason_duplicate_source">Sumber ini merupakan duplikat dari sumber lain dalam instalasi massal ini.</string>
     <string name="bulk_install_reason_version_conflict">Beberapa varian aplikasi dianggap memiliki versi yang sama.</string>
-    <string name="bulk_install_reason_older_candidate">Ada versi aplikasi yang lebih baru dalam pemasangan massal ini.</string>
-    <string name="bulk_install_reason_source_error">Sumber ini tidak dapat disiapkan untuk pemasangan.</string>
+    <string name="bulk_install_reason_older_candidate">Ada versi aplikasi yang lebih baru dalam instalasi massal ini.</string>
+    <string name="bulk_install_reason_source_error">Sumber ini tidak dapat disiapkan untuk instalasi.</string>
 </resources>
