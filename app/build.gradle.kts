@@ -9,15 +9,114 @@ import java.util.jar.Attributes
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.LocalState
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import javax.inject.Inject
+
+abstract class PrepareNativeAudioSourcesTask @Inject constructor(
+    private val execOperations: ExecOperations
+) : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val script: RegularFileProperty
+
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val sourceManifest: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val sourcesDirectory: DirectoryProperty
+
+    @TaskAction
+    fun prepare() {
+        execOperations.exec {
+            commandLine(
+                "pwsh", "-NoProfile", "-File", script.get().asFile,
+                "-OutRoot", sourcesDirectory.get().asFile,
+                "-Manifest", sourceManifest.get().asFile
+            )
+        }
+    }
+}
+
+@CacheableTask
+abstract class BuildNativeAudioDependenciesTask @Inject constructor(
+    private val execOperations: ExecOperations
+) : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val script: RegularFileProperty
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val recipeFiles: ConfigurableFileCollection
+
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val ffmpegSource: DirectoryProperty
+
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val openCoreSource: DirectoryProperty
+
+    @get:Input
+    abstract val abi: Property<String>
+
+    @get:Input
+    abstract val ndkVersion: Property<String>
+
+    @get:Input
+    abstract val androidApi: Property<Int>
+
+    @get:Input
+    abstract val hostOs: Property<String>
+
+    @get:Input
+    abstract val hostArch: Property<String>
+
+    @get:Internal
+    abstract val sdkDirectory: DirectoryProperty
+
+    @get:Internal
+    abstract val dependencyRoot: DirectoryProperty
+
+    @get:LocalState
+    abstract val workDirectory: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val installDirectory: DirectoryProperty
+
+    @TaskAction
+    fun build() {
+        execOperations.exec {
+            commandLine(
+                "pwsh", "-NoProfile", "-File", script.get().asFile,
+                "-OutRoot", dependencyRoot.get().asFile,
+                "-WorkRoot", workDirectory.get().asFile,
+                "-SourcesRoot", ffmpegSource.get().asFile.parentFile,
+                "-Sdk", sdkDirectory.get().asFile,
+                "-NdkVersion", ndkVersion.get(),
+                "-AndroidApi", androidApi.get().toString(),
+                "-Abis", abi.get()
+            )
+        }
+    }
+}
 
 abstract class VerifyNativePackagingTask : DefaultTask() {
     @get:InputDirectory
@@ -102,25 +201,43 @@ val compileSdkVersion = libs.versions.androidCompileSdk.get().toInt()
 val minSdkVersion = libs.versions.androidMinSdk.get().toInt()
 val targetSdkVersion = libs.versions.androidTargetSdk.get().toInt()
 val selectedNdkVersion = libs.versions.androidNdk.get()
-val nativeHost = providers.systemProperty("os.name").zip(providers.systemProperty("os.arch")) { os, arch -> "$os/$arch" }
 val audioDependenciesRoot = layout.buildDirectory.dir("audio-deps")
+val audioSourcesRoot = layout.buildDirectory.dir("audio-sources")
+val prepareNativeAudioSources = tasks.register<PrepareNativeAudioSourcesTask>("prepareNativeAudioSources") {
+    script.set(rootDirectory.file("tools/audio/prepare-native-sources.ps1"))
+    sourceManifest.set(rootDirectory.file("tools/audio/native-sources.json"))
+    sourcesDirectory.set(audioSourcesRoot)
+}
+val preparedSources = prepareNativeAudioSources.flatMap { it.sourcesDirectory }
+val nativeRecipeFiles = fileTree(rootDirectory.dir("tools/audio")) {
+    include("*.ps1", "native-sources.json")
+}
 val audioDependencyTasks = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64").associateWith { abi ->
-    tasks.register<Exec>("buildNativeAudio${abi.replace("-", "").replace("_", "")}") {
-        inputs.files(fileTree(rootDirectory.dir("tools/audio")))
-        inputs.property("abi", abi)
-        inputs.property("host", nativeHost)
-        inputs.property("ndk", selectedNdkVersion)
-        outputs.dir(audioDependenciesRoot.map { it.dir("install-$abi") })
-        outputs.cacheIf("Pinned native audio recipe is reusable for the same ABI, host, and NDK") { true }
-        commandLine("pwsh", "-NoProfile", "-File", rootDirectory.file("tools/audio/build-native-deps.ps1").asFile,
-            "-OutRoot", audioDependenciesRoot.get().asFile, "-Sdk",
-            androidComponents.sdkComponents.sdkDirectory.get().asFile,
-            "-NdkVersion", selectedNdkVersion, "-Abis", abi)
+    tasks.register<BuildNativeAudioDependenciesTask>("buildNativeAudio${abi.replace("-", "").replace("_", "")}") {
+        script.set(rootDirectory.file("tools/audio/build-native-deps.ps1"))
+        recipeFiles.from(nativeRecipeFiles)
+        ffmpegSource.set(preparedSources.map { it.dir("ffmpeg") })
+        openCoreSource.set(preparedSources.map { it.dir("opencore-amr") })
+        this.abi.set(abi)
+        ndkVersion.set(selectedNdkVersion)
+        androidApi.set(minSdkVersion)
+        hostOs.set(providers.systemProperty("os.name"))
+        hostArch.set(providers.systemProperty("os.arch"))
+        sdkDirectory.set(androidComponents.sdkComponents.sdkDirectory)
+        dependencyRoot.set(audioDependenciesRoot)
+        workDirectory.set(layout.buildDirectory.dir("audio-work/$abi"))
+        installDirectory.set(audioDependenciesRoot.map { it.dir("install-$abi") })
     }
 }
+
+// AGP exposes public artifact/source APIs, but no public task-provider hook for an
+// ndk-build prebuilt prerequisite. Keep the unavoidable task-name boundary here;
+// never replace it with AGP implementation classes.
 tasks.configureEach {
     if (name.startsWith("configureNdkBuild") || name.startsWith("buildNdkBuild")) {
-        audioDependencyTasks.forEach { (abi, build) -> if (name.endsWith("[$abi]")) dependsOn(build) }
+        audioDependencyTasks.forEach { (abi, build) ->
+            if (name.endsWith("[$abi]")) dependsOn(build)
+        }
     }
 }
 
