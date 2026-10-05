@@ -26,7 +26,6 @@
     <string name="layout_edit_finished">Szerkesztési mód bezárva</string>
     <string name="layout_switch">Elrendezés váltása</string>
     <string name="licenses">Licencek</string>
-    <string name="mapping_dialog_message">Jelenlegi hozzárendelés: %1$s</string>
     <string name="mapping_dialog_title">Nyomjon meg egy billentyűt</string>
     <string name="message_delete">Biztosan törli ezt az alkalmazást?</string>
     <string name="more">Továbbiak</string>
