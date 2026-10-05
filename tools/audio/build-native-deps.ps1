@@ -66,6 +66,9 @@ foreach($abi in (($Abis -join ',') -split ',')){
  [IO.File]::WriteAllText("$buildRoot/configure.sh",$script+[Environment]::NewLine,[Text.UTF8Encoding]::new($false))
  & $GitBash "$buildRoot/configure.sh" > "$buildRoot/configure.txt" 2>&1
  if($LASTEXITCODE){
+  Write-Output "FFmpeg configure command:"
+  Get-Content -LiteralPath "$buildRoot/configure.sh" | Write-Output
+  Write-Output "FFmpeg configure output:"
   Get-Content -LiteralPath "$buildRoot/configure.txt" | Write-Output
   throw "Configure failed: $abi"
  }
