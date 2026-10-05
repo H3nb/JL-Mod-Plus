@@ -19,7 +19,6 @@
     <string name="layout_edit_finished">Tryb edycji został zakończony</string>
     <string name="layout_switch">Zmień układ przycisków</string>
     <string name="licenses">Licencje</string>
-    <string name="mapping_dialog_message">Bieżące mapowanie:\n%1$s</string>
     <string name="mapping_dialog_title">Naciśnij przycisk</string>
     <string name="message_delete">Czy na pewno chcesz usunąć tę aplikację?</string>
     <string name="more">Więcej</string>
