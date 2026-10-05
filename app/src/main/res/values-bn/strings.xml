@@ -7,7 +7,6 @@
     <string name="action_context_shortcut">শর্টকাট যুক্ত করুন</string>
     <string name="action_settings">সেটিংস</string>
     <string name="CANCEL_CMD">বাতিল</string>
-    <string name="CLEAR_DATA_CMD">উপাত্ত সাফ করুন</string>
     <string name="close">বন্ধ</string>
     <string name="CONFIRMATION_REQUIRED">অনুমোদন প্রয়োজন</string>
     <string name="converting_wait">JAR রূপান্তর…</string>
@@ -19,15 +18,10 @@
 করে খেলুন । &lt;BR&gt;,&#8226;, \"Immediate processing mode\" অপশনটি সক্রিয় করে ছবির সমস্যা সংশোধন করা যেতে পারে।.</string>
     <string name="layout_edit_finish">সম্পাদন মোড শেষ করুন</string>
     <string name="layout_edit_finished">সম্পাদনা মোডে কাজ শেষ</string>
-    <string name="layout_edit_mode">Keylayout সম্পাদন মোড</string>
-    <string name="layout_scale_mode">Keylayout পুনঃআকৃতি মোড</string>
     <string name="layout_switch">সুইচ keylayout</string>
     <string name="licenses">লাইসেন্স</string>
-    <string name="load_profile">টেমপ্লেড লোড</string>
-    <string name="log_saved">লগ সংরক্ষণ করা হয়েছে</string>
     <string name="mapping_dialog_message">বর্তমান মানচিত্র:\n%1$s</string>
     <string name="mapping_dialog_title">কী চাপুন</string>
-    <string name="message_clear_data">আপনি কি সত্যিই ক্যাশে মুছে ফেলতে চান?</string>
     <string name="message_delete">আপনি কি সত্যিই এই অ্যাপটি মুছে ফেলতে চান?</string>
     <string name="more">আরও</string>
     <string name="no_data_for_display">কোন তথ্য-উপাত্ত নেই</string>
@@ -35,8 +29,6 @@
     <string name="permission_request_failed">এই অ্যাপ্লিকেশনটি স্টোরেজে লেখার অনুমতি প্রয়োজন ।</string>
     <string name="pref_app_sort_date">তারিখ</string>
     <string name="pref_app_sort_name">নাম</string>
-    <string name="pref_app_sort_title">অ্যাপ সর্ট আর্ডার</string>
-    <string name="PREF_BACKGROUND">ব্যাকগ্রাউন্ড</string>
     <string name="pref_button_shape_title">বাটনের আকৃতি</string>
     <string name="pref_enable_actionbar_summary">পর্দা জুড়ে প্রদর্শন</string>
     <string name="pref_enable_actionbar_title">ActionBar সক্রিয় করুন</string>
@@ -44,12 +36,10 @@
     <string name="PREF_FILTER">ফিল্টার</string>
     <string name="PREF_FONT_LARGE">বড়</string>
     <string name="PREF_FONT_MEDIUM">মাঝারি</string>
-    <string name="PREF_FONT_OPTIONS">ফন্ট সংক্রান্ত অপশন</string>
     <string name="PREF_FONT_SIZE_IN_SP">পিক্সেলের আকার পরিবর্তিত মান হল</string>
     <string name="PREF_FONT_SMALL">ছোট</string>
     <string name="PREF_HEIGHT">উচ্চতা</string>
     <string name="PREF_IMMEDIATE">অবিলম্বে প্রক্রিয়াকরণ মোড</string>
-    <string name="PREF_KEEP_ASPECT_RATIO">দৃশ্যরূপ অনুপাতে রাখুন</string>
     <string name="PREF_LIMIT_FPS">এফপিএস নিদ্রিষ্ট করুণ</string>
     <string name="pref_map_keys">কী মানচিত্রকরণ</string>
     <string name="PREF_ORIENTATION">স্ক্রিন ওরিয়েন্টেশন</string>
@@ -58,8 +48,6 @@
     <string name="pref_orientation_land">অনুভূমিক</string>
     <string name="pref_orientation_port">উলম্ব</string>
     <string name="PREF_SCALE_RATIO">স্কেল(%)</string>
-    <string name="PREF_SCREEN_OPTIONS">স্ক্রীন অপশন</string>
-    <string name="PREF_SHOW_FPS">এফপিএস দেখুন</string>
     <string name="PREF_SYS_PROPS">সিস্টেম বৈশিষ্ট্যগুলো</string>
     <string name="pref_theme_light">উজ্জ্বল</string>
     <string name="pref_theme_night">গাঢ়</string>
@@ -82,15 +70,10 @@
     <string name="PREF_WIDTH">প্রস্থ</string>
     <string name="profiles">টেমপ্লেট</string>
     <string name="RESET_LAYOUT_CMD">Keylayout রিসেট করুন</string>
-    <string name="RESET_SETTINGS_CMD">সেটিংস রিসেট করুন</string>
     <string name="save_log">লগ সংগ্রহ</string>
-    <string name="save_profile">টেমপ্লেট সংগ্রহ</string>
-    <string name="screenshot_saved">স্ক্রিনসর্ট সংরক্ষণ করা হয়েছে</string>
-    <string name="search">অনুসন্ধান</string>
     <string name="select_dialog_title">MIDlet নির্বাচন করুন</string>
     <string name="SIZE_PRESETS">প্রিসেটস</string>
     <string name="START_CMD">শুরু</string>
     <string name="SWAP_SIZES">মাপ অদলবদল</string>
     <string name="take_screenshot">স্ক্রীনশট নিন</string>
-    <string name="version">সংস্করণ: </string>
 </resources>

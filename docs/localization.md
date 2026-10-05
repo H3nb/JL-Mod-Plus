@@ -261,9 +261,12 @@ Current implementation evidence:
   `NEEDS_CONTEXT` set against current app-owned UI consumers. Phase 5A.1 then
   corrected bounded active-copy terminology, parameter-contract, accessibility,
   and language-quality findings. Active canonical English and Indonesian UI copy
-  has been reviewed and frozen; unreferenced legacy declarations remain retained
-  as dormant/dead-resource candidates until a separate secondary-locale-safe
-  cleanup. Russian covers the full translatable source catalog, has completed
+  has been reviewed and frozen. A secondary-locale-safe dead-resource cleanup then
+  removed 189 orphaned string declarations (188 translatable and one invariant)
+  plus five unused drawables from every applicable catalog without changing active
+  resource consumers or runtime input implementation. The canonical translatable
+  source catalog now contains 883 resources and 31 invariant text declarations.
+  Russian covers the full translatable source catalog, has completed
   semantic and language review, and was realigned only for canonical semantics
   changed by Phase 5A.1. Its locale-appropriate plurals and current no-argument
   mapping-dialog contract remain intact. The remaining 37 secondary locales are
