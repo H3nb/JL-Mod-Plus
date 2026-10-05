@@ -28,6 +28,29 @@ import org.gradle.process.ExecOperations
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import javax.inject.Inject
 
+@CacheableTask
+abstract class GenerateBuildIdentityResourceTask : DefaultTask() {
+    @get:Input
+    abstract val buildCommit: Property<String>
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        val valuesDirectory = outputDirectory.get().dir("values").asFile
+        valuesDirectory.mkdirs()
+        valuesDirectory.resolve("jlmod-build-identity.xml").writeText(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <resources>
+                <string name="jlmod_build_commit" translatable="false">${buildCommit.get()}</string>
+            </resources>
+            """.trimIndent() + "\n"
+        )
+    }
+}
+
 abstract class PrepareNativeAudioSourcesTask @Inject constructor(
     private val execOperations: ExecOperations
 ) : DefaultTask() {
@@ -192,10 +215,11 @@ require(appVersionCode > 0) { "jlmod.versionCode must be greater than zero" }
 val diagnosticBuildCommit = providers.gradleProperty("jlmodBuildCommit")
     .orElse(providers.environmentVariable("JLMOD_BUILD_COMMIT"))
     .orElse("unknown")
-    .get()
-    .trim().let { value ->
-    if (value.matches(Regex("[0-9a-fA-F]{7,40}"))) value.lowercase(Locale.ROOT) else "unknown"
-}
+    .map { rawValue ->
+        rawValue.trim().let { value ->
+            if (value.matches(Regex("[0-9a-fA-F]{7,40}"))) value.lowercase(Locale.ROOT) else "unknown"
+        }
+    }
 
 val compileSdkVersion = libs.versions.androidCompileSdk.get().toInt()
 val minSdkVersion = libs.versions.androidMinSdk.get().toInt()
@@ -254,9 +278,9 @@ android {
         versionCode = appVersionCode
         versionName = appVersionName
         resValue("string", "app_name", "JL-Mod Plus")
-        // Keep per-commit provenance out of BuildConfig so it does not invalidate Kotlin/Java
-        // compilation on every CI commit. Packaging builds set JLMOD_BUILD_COMMIT explicitly.
-        resValue("string", "jlmod_build_commit", diagnosticBuildCommit)
+        // Per-commit provenance is generated lazily through the public variant Sources API below.
+        // Keep it out of configuration-time resValue/BuildConfig inputs so Configuration Cache can
+        // survive a JLMOD_BUILD_COMMIT change without invalidating Kotlin/Java compilation.
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild.ndkBuild.arguments += "JLMOD_AUDIO_DEPS=${audioDependenciesRoot.get().asFile.absolutePath.replace('\\', '/')}"
@@ -376,6 +400,16 @@ androidComponents {
     }
 
     onVariants { variant ->
+        val generateBuildIdentityResource = tasks.register<GenerateBuildIdentityResourceTask>(
+            "generate${variant.name.replaceFirstChar { it.uppercaseChar() }}BuildIdentityResource"
+        ) {
+            buildCommit.set(diagnosticBuildCommit)
+        }
+        variant.sources.res?.addGeneratedSourceDirectory(
+            generateBuildIdentityResource,
+            GenerateBuildIdentityResourceTask::outputDirectory
+        )
+
         val fullEmulator = variant.flavorName == "emulator"
         variant.buildConfigFields?.put(
             "FULL_EMULATOR",
