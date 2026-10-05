@@ -109,6 +109,18 @@ jobs:
           done
           universal_count="$(jq -r '[.elements[] | select(((.filters // []) | length) == 0)] | length' "$metadata")"
           [[ "$universal_count" == 1 ]] || { echo "Expected one universal APK, found $universal_count" >&2; exit 1; }
+          universal="$(jq -r '.elements[] | select(((.filters // []) | length) == 0) | .outputFile' "$metadata")"
+          apk="$output/$universal"
+          for library in avformat avcodec avutil swresample; do
+            unzip -Z1 "$apk" | grep -Fxq "lib/armeabi-v7a/lib${library}_neon.so"
+            for abi in arm64-v8a x86 x86_64; do
+              unzip -Z1 "$apk" | grep -Fxq "lib/$abi/lib${library}.so"
+            done
+            if unzip -Z1 "$apk" | grep -Fxq "lib/armeabi-v7a/lib${library}.so"; then
+              echo "Unexpected unsuffixed ARMv7 FFmpeg library: lib${library}.so" >&2
+              exit 1
+            fi
+          done
           test -f app/build/outputs/mapping/emulatorRelease/mapping.txt
       - name: Verify 16 KiB native and APK alignment
         shell: bash
