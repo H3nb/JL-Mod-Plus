@@ -2,6 +2,10 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 [versions]
 agp = "9.4.1"
+androidCompileSdk = "37"
+androidMinSdk = "23"
+androidTargetSdk = "36"
+androidNdk = "30.0.16248370"
 
 androidx-activity = "1.13.0"
 androidx-appcompat = "1.7.1"

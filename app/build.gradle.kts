@@ -5,6 +5,7 @@ import java.util.Properties
 import java.util.jar.Attributes
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
@@ -14,14 +15,18 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-val secret = Properties().also { properties ->
-    rootProject.file("keystore.properties").runCatching { inputStream().use(properties::load) }
-}
+val rootDirectory = layout.projectDirectory.dir("..")
+val keystorePropertiesFile = rootDirectory.file("keystore.properties")
+val secret = providers.fileContents(keystorePropertiesFile).asText.orElse("").map { content ->
+    Properties().apply {
+        if (content.isNotEmpty()) content.reader().use { load(it) }
+    }
+}.get()
 // CI restores this key from ANDROID_DEBUG_KEYSTORE_BASE64. Local setups can set
 // debugStoreFile in keystore.properties to keep the shared debug key outside the checkout.
 val debugKeystorePath = secret.getProperty("debugStoreFile")?.trim()?.takeIf { it.isNotEmpty() }
     ?: "debug.keystore"
-val sharedDebugKeystore = rootProject.file(debugKeystorePath)
+val sharedDebugKeystore = rootDirectory.file(debugKeystorePath).asFile
 val hasSharedDebugKeystore = sharedDebugKeystore.isFile
 val runtimeTestAbi = providers.gradleProperty("jlmodRuntimeTestAbi").orNull
 require(runtimeTestAbi == null || runtimeTestAbi == "arm64-v8a" || runtimeTestAbi == "x86_64") {
@@ -32,27 +37,32 @@ val appVersionCode = providers.gradleProperty("jlmod.versionCode").get().toIntOr
     ?: error("jlmod.versionCode must be an integer")
 require(appVersionName.isNotEmpty()) { "jlmod.versionName must not be empty" }
 require(appVersionCode > 0) { "jlmod.versionCode must be greater than zero" }
-val diagnosticBuildCommit = (
-    providers.gradleProperty("jlmodBuildCommit").orNull
-        ?: System.getenv("JLMOD_BUILD_COMMIT")
-        ?: "unknown"
-).trim().let { value ->
+val diagnosticBuildCommit = providers.gradleProperty("jlmodBuildCommit")
+    .orElse(providers.environmentVariable("JLMOD_BUILD_COMMIT"))
+    .orElse("unknown")
+    .get()
+    .trim().let { value ->
     if (value.matches(Regex("[0-9a-fA-F]{7,40}"))) value.lowercase(Locale.ROOT) else "unknown"
 }
 
+val compileSdkVersion = libs.versions.androidCompileSdk.get().toInt()
+val minSdkVersion = libs.versions.androidMinSdk.get().toInt()
+val targetSdkVersion = libs.versions.androidTargetSdk.get().toInt()
+val selectedNdkVersion = libs.versions.androidNdk.get()
+val nativeHost = providers.systemProperty("os.name").zip(providers.systemProperty("os.arch")) { os, arch -> "$os/$arch" }
 val audioDependenciesRoot = layout.buildDirectory.dir("audio-deps")
 val audioDependencyTasks = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64").associateWith { abi ->
     tasks.register<Exec>("buildNativeAudio${abi.replace("-", "").replace("_", "")}") {
-        inputs.files(rootProject.fileTree("tools/audio"))
+        inputs.files(fileTree(rootDirectory.dir("tools/audio")))
         inputs.property("abi", abi)
-        inputs.property("host", "${System.getProperty("os.name")}/${System.getProperty("os.arch")}")
-        inputs.property("ndk", rootProject.extra["ndkVersion"] as String)
+        inputs.property("host", nativeHost)
+        inputs.property("ndk", selectedNdkVersion)
         outputs.dir(audioDependenciesRoot.map { it.dir("install-$abi") })
         outputs.cacheIf("Pinned native audio recipe is reusable for the same ABI, host, and NDK") { true }
-        commandLine("pwsh", "-NoProfile", "-File", rootProject.file("tools/audio/build-native-deps.ps1"),
+        commandLine("pwsh", "-NoProfile", "-File", rootDirectory.file("tools/audio/build-native-deps.ps1").asFile,
             "-OutRoot", audioDependenciesRoot.get().asFile, "-Sdk",
             androidComponents.sdkComponents.sdkDirectory.get().asFile,
-            "-NdkVersion", rootProject.extra["ndkVersion"] as String, "-Abis", abi)
+            "-NdkVersion", selectedNdkVersion, "-Abis", abi)
     }
 }
 tasks.configureEach {
@@ -63,14 +73,14 @@ tasks.configureEach {
 
 android {
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
-    compileSdk = rootProject.extra["compileSdk"] as Int
-    ndkVersion = rootProject.extra["ndkVersion"] as String
+    compileSdk = compileSdkVersion
+    ndkVersion = selectedNdkVersion
     namespace = "io.github.h3nb.jlmodplus"
 
     defaultConfig {
         applicationId = "io.github.h3nb.jlmodplus"
-        minSdk = rootProject.extra["minSdk"] as Int
-        targetSdk = rootProject.extra["targetSdk"] as Int
+        minSdk = minSdkVersion
+        targetSdk = targetSdkVersion
         versionCode = appVersionCode
         versionName = appVersionName
         resValue("string", "app_name", "JL-Mod Plus")
@@ -106,7 +116,7 @@ android {
         if (secret.isNotEmpty()) {
             keyAlias = secret.getProperty("keyAlias")
             keyPassword = secret.getProperty("keyPassword")
-            storeFile = rootProject.file(secret.getProperty("storeFile"))
+            storeFile = rootDirectory.file(secret.getProperty("storeFile")).asFile
             storePassword = secret.getProperty("storePassword")
         }
     }
@@ -145,7 +155,7 @@ android {
     flavorDimensions += "default"
     productFlavors {
         create("emulator") {
-            versionNameSuffix = System.getenv("VERSION_SUFFIX")
+            versionNameSuffix = providers.environmentVariable("VERSION_SUFFIX").orNull
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -155,7 +165,7 @@ android {
             val props = getMidletManifestProperties()
             val midletName = props.getValue("MIDlet-Name")?.trim() ?: "Demo MIDlet"
             val apkName = midletName.replace("[/\\\\:*?\"<>|]".toRegex(), "").replace(" ", "_")
-            applicationId = "com.example.androidlet.${apkName.lowercase(Locale.getDefault())}"
+            applicationId = "com.example.androidlet.${apkName.lowercase(Locale.ROOT)}"
             versionName = props.getValue("MIDlet-Version") ?: "1.0"
             resValue("string", "app_name", midletName)
             proguardFiles(
@@ -177,6 +187,12 @@ android {
     compileOptions {
         targetCompatibility = JavaVersion.VERSION_17
         sourceCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -255,11 +271,12 @@ tasks.configureEach {
     }
 }
 
-fun getMidletManifestProperties(): Attributes = Manifest().let { mf ->
-    project.file("src/midlet/resources/MIDLET-META-INF/MANIFEST.MF").runCatching {
-        inputStream().use(mf::read)
-    }
-    return mf.mainAttributes
+fun getMidletManifestProperties(): Attributes {
+    val manifestFile = layout.projectDirectory.file("src/midlet/resources/MIDLET-META-INF/MANIFEST.MF")
+    val content = providers.fileContents(manifestFile).asText.orElse("").get()
+    return Manifest().apply {
+        if (content.isNotEmpty()) content.byteInputStream().use { read(it) }
+    }.mainAttributes
 }
 
 dependencies {
