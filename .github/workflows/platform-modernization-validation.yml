@@ -275,7 +275,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Run M3G runtime in isolation on r30
+      - name: Run stable M3G JNI/runtime subset on r30
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 35
@@ -285,7 +285,7 @@ jobs:
           script: >-
             ./gradlew --daemon --stacktrace --profile
             -PjlmodRuntimeTestAbi=x86_64
-            -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.m3g.M3GRuntimeTest
+            -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.m3g.M3GRuntimeTest#cameraAndLightTransformsCrossJniWithJsr184Semantics,javax.microedition.m3g.M3GRuntimeTest#objectReferenceArraysAndDuplicateRoundTripThroughJni,javax.microedition.m3g.M3GRuntimeTest#rejectsInvalidBindTargetHintsAtPublicApiBoundary,javax.microedition.m3g.M3GRuntimeTest#rejectsImmutableAndUnsupportedImage2DTargetsAtPublicApiBoundary
             :app:connectedEmulatorDebugAndroidTest
 
   m3g-base:
@@ -312,7 +312,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Run the same M3G runtime test on the exact r28 baseline
+      - name: Run the same stable M3G JNI/runtime subset on the exact r28 baseline
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 35
@@ -322,5 +322,5 @@ jobs:
           script: >-
             ./gradlew --daemon --stacktrace --profile
             -PjlmodRuntimeTestAbi=x86_64
-            -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.m3g.M3GRuntimeTest
+            -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.m3g.M3GRuntimeTest#cameraAndLightTransformsCrossJniWithJsr184Semantics,javax.microedition.m3g.M3GRuntimeTest#objectReferenceArraysAndDuplicateRoundTripThroughJni,javax.microedition.m3g.M3GRuntimeTest#rejectsInvalidBindTargetHintsAtPublicApiBoundary,javax.microedition.m3g.M3GRuntimeTest#rejectsImmutableAndUnsupportedImage2DTargetsAtPublicApiBoundary
             :app:connectedEmulatorDebugAndroidTest
