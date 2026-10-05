@@ -49,6 +49,9 @@ import org.junit.runner.RunWith
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
+
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
 class InstallerComposeTest {
@@ -88,7 +91,7 @@ class InstallerComposeTest {
     @Test
     fun loadingStateCanRequestCancellation() {
         val actions = RecordingInstallerActions()
-        setState(InstallerUiState.Loading("MIDlet Installer", "Loading info…"), actions)
+        setState(InstallerUiState.Loading(uiString(R.string.installer_title), "Loading info…"), actions)
 
         composeRule.onNodeWithText("Loading info…").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Loading info…").assertIsDisplayed()

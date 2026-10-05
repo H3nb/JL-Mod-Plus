@@ -14,6 +14,7 @@
 
 package io.github.h3nb.jlmodplus.config
 
+import io.github.h3nb.jlmodplus.R
 import android.view.KeyEvent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
@@ -46,6 +47,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
@@ -106,11 +110,11 @@ class PerformanceOverlayOptionsComposeTest {
                 Column { PerformanceOverlayPreferences(form, onFormChanged = { form = it }) }
             }
         }
-        composeRule.onNodeWithText("Overlay Preset").performClick()
+        composeRule.onNodeWithText(uiString(R.string.perf_overlay_preset)).performClick()
         composeRule.onNodeWithText("Debug").performClick()
         composeRule.runOnIdle { assertEquals(PerformanceOverlayOptions.ALL, form.performanceOverlayMetrics) }
 
-        composeRule.onNodeWithText("Overlay Parameters").performClick()
+        composeRule.onNodeWithText(uiString(R.string.perf_overlay_parameters)).performClick()
         composeRule.onNodeWithTag("perf_metric_${PerformanceOverlayOptions.FPS}").assertIsOn()
         val displayTag = "perf_metric_${PerformanceOverlayOptions.DISPLAY}"
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
@@ -125,7 +129,7 @@ class PerformanceOverlayOptionsComposeTest {
             )
         }
 
-        composeRule.onNodeWithText("Overlay Parameters").performClick()
+        composeRule.onNodeWithText(uiString(R.string.perf_overlay_parameters)).performClick()
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
             .performScrollToNode(hasTestTag(displayTag))
         composeRule.onNodeWithTag(displayTag).assertIsOff()

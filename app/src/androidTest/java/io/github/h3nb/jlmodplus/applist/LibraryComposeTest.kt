@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.applist
 
+import io.github.h3nb.jlmodplus.R
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -44,6 +46,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
@@ -401,7 +406,7 @@ class LibraryComposeTest {
         setLibraryContent(actions = actions)
 
         composeRule.onNodeWithText("More").performClick()
-        composeRule.onNodeWithText("Import App Bundle").performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_action_import_bundle)).performClick()
 
         assertEquals(1, actions.importCount)
     }

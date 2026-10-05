@@ -15,6 +15,7 @@
 
 package io.github.h3nb.jlmodplus.crashes
 
+import io.github.h3nb.jlmodplus.R
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -31,6 +32,6 @@ class CrashReportsActivityComposeSmokeTest {
 
     @Test
     fun activityHostsCrashReportsComposeScreen() {
-        composeRule.onNodeWithText("Crash Reports").assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.crash_reports)).assertIsDisplayed()
     }
 }

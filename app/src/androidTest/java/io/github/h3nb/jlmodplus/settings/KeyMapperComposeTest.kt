@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.settings
 
+import io.github.h3nb.jlmodplus.R
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -29,6 +31,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import javax.microedition.lcdui.keyboard.KeyMapper
+
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
 
 @RunWith(AndroidJUnit4::class)
 class KeyMapperComposeTest {
@@ -74,7 +79,7 @@ class KeyMapperComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Press A Key").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.mapping_dialog_title)).assertIsDisplayed()
         composeRule.onNodeWithText("Assigned inputs").assertIsDisplayed()
         composeRule.onNodeWithText("KEYCODE_BACK").assertIsDisplayed()
         composeRule.onNodeWithText("KEYCODE_BUTTON_A").assertIsDisplayed()

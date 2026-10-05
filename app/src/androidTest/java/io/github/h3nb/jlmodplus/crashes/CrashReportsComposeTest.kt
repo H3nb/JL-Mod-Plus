@@ -15,6 +15,8 @@
 
 package io.github.h3nb.jlmodplus.crashes
 
+import io.github.h3nb.jlmodplus.R
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -29,6 +31,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
 
 @RunWith(AndroidJUnit4::class)
 class CrashReportsComposeTest {
@@ -114,7 +119,7 @@ class CrashReportsComposeTest {
         composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
         composeRule.onNodeWithText("1 Selected").assertIsDisplayed()
 
-        composeRule.onNodeWithContentDescription("Copy Selected Reports").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.copy_selected_reports)).performClick()
         assertEquals(listOf("report-1"), actions.copiedIds)
 
         composeRule.onNodeWithText("Other MIDlet").performClick()
@@ -125,8 +130,8 @@ class CrashReportsComposeTest {
             composeRule.onAllNodesWithText("Share selected reports").fetchSemanticsNodes().size,
         )
 
-        composeRule.onNodeWithContentDescription("Delete Selected Reports").performClick()
-        composeRule.onNodeWithText("Delete Selected Reports").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.delete_selected_reports)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.delete_selected_reports)).performClick()
         assertEquals(listOf("report-1", "report-2"), actions.deletedIds)
     }
 
@@ -149,10 +154,10 @@ class CrashReportsComposeTest {
         }
 
         composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
-        composeRule.onNodeWithContentDescription("Select All Reports").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.select_all_reports)).performClick()
         composeRule.onNodeWithText("2 Selected").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Clear Report Selection").performClick()
-        composeRule.onNodeWithText("Diagnostic Reports").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.clear_report_selection)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.crash_reports)).assertIsDisplayed()
     }
 
     @Test
@@ -170,8 +175,8 @@ class CrashReportsComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Diagnostic Bundle Ready").assertIsDisplayed()
-        composeRule.onNodeWithText("Locate Bundle").performClick()
+        composeRule.onNodeWithText(uiString(R.string.crash_report_bundle_ready_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.locate_bundle)).performClick()
         assertEquals(1, actions.locateCount)
         composeRule.onNodeWithText("Open GitHub").performClick()
         assertEquals(1, actions.openGitHubCount)
@@ -189,7 +194,7 @@ class CrashReportsComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Diagnostic Report").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.diagnostic_report)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Copy").performClick()
         assertEquals(1, actions.copyCount)
 
