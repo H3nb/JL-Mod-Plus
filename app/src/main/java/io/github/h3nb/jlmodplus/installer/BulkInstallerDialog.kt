@@ -572,9 +572,11 @@ private fun RunningContent(
     modifier: Modifier = Modifier,
 ) {
     val progress = if (state.total == 0) 0f else state.completed.toFloat() / state.total.toFloat()
-    val progressLabel = stringResource(
-        R.string.bulk_install_running,
-        state.completed.coerceAtMost(state.total),
+    val completedCount = state.completed.coerceAtMost(state.total)
+    val progressLabel = pluralStringResource(
+        R.plurals.bulk_install_running,
+        completedCount,
+        completedCount,
         state.total,
     )
     Column(
