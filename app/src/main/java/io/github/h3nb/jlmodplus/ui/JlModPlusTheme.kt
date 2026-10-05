@@ -23,6 +23,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -39,6 +40,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.preference.PreferenceManager
@@ -316,6 +318,30 @@ internal fun jlModPlusFilterChipColors() = FilterChipDefaults.filterChipColors(
     selectedTrailingIconColor = MaterialTheme.colorScheme.primary,
 )
 
+private val MaterialTypography = Typography()
+
+/**
+ * Keep Material 3's semantic type scale and metrics while asking Android for its default
+ * platform typeface. OEM handling of user-selected system fonts remains platform-dependent.
+ */
+private val AppTypography = Typography(
+    displayLarge = MaterialTypography.displayLarge.copy(fontFamily = FontFamily.Default),
+    displayMedium = MaterialTypography.displayMedium.copy(fontFamily = FontFamily.Default),
+    displaySmall = MaterialTypography.displaySmall.copy(fontFamily = FontFamily.Default),
+    headlineLarge = MaterialTypography.headlineLarge.copy(fontFamily = FontFamily.Default),
+    headlineMedium = MaterialTypography.headlineMedium.copy(fontFamily = FontFamily.Default),
+    headlineSmall = MaterialTypography.headlineSmall.copy(fontFamily = FontFamily.Default),
+    titleLarge = MaterialTypography.titleLarge.copy(fontFamily = FontFamily.Default),
+    titleMedium = MaterialTypography.titleMedium.copy(fontFamily = FontFamily.Default),
+    titleSmall = MaterialTypography.titleSmall.copy(fontFamily = FontFamily.Default),
+    bodyLarge = MaterialTypography.bodyLarge.copy(fontFamily = FontFamily.Default),
+    bodyMedium = MaterialTypography.bodyMedium.copy(fontFamily = FontFamily.Default),
+    bodySmall = MaterialTypography.bodySmall.copy(fontFamily = FontFamily.Default),
+    labelLarge = MaterialTypography.labelLarge.copy(fontFamily = FontFamily.Default),
+    labelMedium = MaterialTypography.labelMedium.copy(fontFamily = FontFamily.Default),
+    labelSmall = MaterialTypography.labelSmall.copy(fontFamily = FontFamily.Default),
+)
+
 /** Shared shape scale keeps fields, cards, menus, and action controls visually related. */
 private val AppShapes = Shapes(
     extraSmall = RoundedCornerShape(4.dp),
@@ -385,6 +411,7 @@ fun JLModPlusTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = AppTypography,
         shapes = AppShapes,
         content = content,
     )
