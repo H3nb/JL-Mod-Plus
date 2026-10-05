@@ -203,14 +203,14 @@ def promote(args):
         patch_file.write(patch)
         patch_file.flush()
         call("git", "apply", "--index", "--binary", patch_file.name, cwd=target)
-    staged = call("git", "diff", "--cached", "--name-only", cwd=target).splitlines()
+    staged = call("git", "-c", "core.quotepath=false", "diff", "--cached", "--name-only", cwd=target).splitlines()
     if staged != paths:
         raise Reject("Binary patch changes files outside the reviewed candidate set.")
     for path, _, after in files:
         current = (target / path).read_bytes()
         if current != after:
             raise Reject(f"Applied golden does not equal the reviewed after image: {path}.")
-    status = call("git", "status", "--porcelain", cwd=target).splitlines()
+    status = call("git", "-c", "core.quotepath=false", "status", "--porcelain", cwd=target).splitlines()
     if any(REFERENCE_PREFIX not in line for line in status):
         raise Reject("Promotion touched files outside screenshot references.")
 
@@ -229,7 +229,7 @@ def promote(args):
     promoted = call("git", "rev-parse", "HEAD", cwd=target)
     if call("git", "rev-parse", "HEAD^", cwd=target) != request["head_sha"]:
         raise Reject("Promotion commit has the wrong parent.")
-    if call("git", "diff-tree", "--no-commit-id", "--name-only", "-r", promoted, cwd=target).splitlines() != paths:
+    if call("git", "-c", "core.quotepath=false", "diff-tree", "--no-commit-id", "--name-only", "-r", promoted, cwd=target).splitlines() != paths:
         raise Reject("Promotion commit contains unexpected files.")
     branch = state["branch"]
     lease = f"refs/heads/{branch}:{request['head_sha']}"
