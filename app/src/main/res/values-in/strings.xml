@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">Tentang</string>
-    <string name="about_message">Aplikasi ini memungkinkan Anda menjalankan aplikasi dan permainan J2ME di Android.</string>
+    <string name="about_message">JL-Mod Plus menjalankan aplikasi dan game J2ME di Android.</string>
     <string name="about_lineage">JL-Mod Plus adalah fork dari JL-Mod oleh woesss (Yury Kharchenko), yang juga merupakan fork dan mod eksperimental dari J2ME-Loader oleh Nikita Shakarun. Fork ini dipelihara melalui pekerjaan desain, rekayasa, pengujian, dan infrastruktur yang berkelanjutan. Atribusi dan pemberitahuan lisensi upstream dipertahankan di dalam proyek.</string>
     <string name="action_context_delete">Hapus</string>
     <string name="action_context_rename">Ubah nama</string>
@@ -12,8 +12,8 @@
     <string name="action_reinstall">Pasang ulang</string>
     <string name="action_settings">Pengaturan</string>
     <string name="message_reset_layout">Atur ulang tata letak kontrol virtual ke bawaan?</string>
-    <string name="alert_map_menu">Tombol menu (M) belum ditetapkan.\nHal ini dapat membuat opsi emulator tidak dapat diakses.</string>
-    <string name="alert_msg_workdir_not_exists">Direktori kerja tidak ditemukan di:\n\'%1$s\'.\nApakah Anda ingin membuatnya atau memilih direktori lain?</string>
+    <string name="alert_map_menu">Tombol menu (M) belum ditetapkan.\nOpsi emulator mungkin tidak dapat diakses.</string>
+    <string name="alert_msg_workdir_not_exists">Direktori kerja tidak ditemukan di:\n\'%1$s\'.\nBuat direktori tersebut atau pilih direktori lain?</string>
     <string name="CANCEL_CMD">Batal</string>
     <string name="change">Ubah</string>
     <string name="choose">Pilih</string>
@@ -34,7 +34,7 @@
     <string name="exit">Keluar</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Hentikan MIDlet ini? Perubahan yang belum disimpan mungkin hilang.</string>
     <string name="help">Bantuan</string>
-    <string name="help_message">&#8226; Mengaktifkan filter dalam beberapa kasus dapat sangat menurunkan kinerja. Nonaktifkan opsi ini jika aplikasi terlalu lambat.&lt;BR&gt;&#8226; Mode pemrosesan langsung melewati antrean event Java ME normal. Mode ini dapat meningkatkan respons, tetapi bisa menyebabkan perilaku yang tidak terduga.</string>
+    <string name="help_message">• Filter dapat sangat menurunkan performa pada sebagian MIDlet. Nonaktifkan jika aplikasi terlalu lambat.&lt;BR&gt;• Pemrosesan langsung melewati antrean event Java ME. Respons dapat meningkat, tetapi sebagian MIDlet mungkin tidak stabil.</string>
     <string name="identity_filter">Cepat (tanpa filter)</string>
     <string name="install">Pasang</string>
     <string name="install_done">Aplikasi terpasang.</string>
@@ -67,7 +67,7 @@
     <string name="mapping_dialog_key_not_specified">Belum ada input yang dipetakan.</string>
     <string name="mapping_dialog_message">Tekan tombol fisik untuk memetakannya ke kontrol ini.</string>
     <string name="mapping_dialog_assigned_inputs">Input yang dipetakan</string>
-    <string name="mapping_dialog_add_input">Anda dapat menetapkan lebih dari satu input fisik.</string>
+    <string name="mapping_dialog_add_input">Beberapa input fisik dapat dipetakan ke kontrol ini.</string>
     <string name="mapping_dialog_remove">Hapus</string>
     <string name="mapping_dialog_title">Tekan tombol</string>
     <string name="message_delete">Hapus aplikasi ini beserta pengaturan dan data simpanannya? Entri aplikasi di pustaka juga akan dihapus.</string>
@@ -114,7 +114,7 @@
     <string name="no_data_for_display">Tidak ada aplikasi untuk ditampilkan</string>
     <string name="not_saved_exists">Sudah ada</string>
     <string name="parallel_screen_redrawing">Pembaruan layar asinkron</string>
-    <string name="permission_request_failed">Aplikasi ini perlu izin untuk menulis berkas.</string>
+    <string name="permission_request_failed">Aplikasi memerlukan izin untuk menulis berkas.</string>
     <string name="pref_app_sort_date">Tanggal</string>
     <string name="pref_app_sort_name">Nama</string>
     <string name="pref_app_sort_vendor">Vendor</string>
@@ -170,7 +170,7 @@
     <string name="pref_screen_scale_type_fill">Isi area tampilan (abaikan rasio aspek)</string>
     <string name="pref_screen_scale_type_fit">Sesuaikan dengan area tampilan</string>
     <string name="pref_screen_scale_type_none">Ukuran asli</string>
-    <string name="pref_screenshot_summary">Menyimpan frame MIDlet pada resolusi virtual sebelum penskalaan, Filter gambar, dan Shader layar.</string>
+    <string name="pref_screenshot_summary">Menyimpan frame MIDlet pada resolusi virtual sebelum penskalaan, filter gambar, dan shader layar.</string>
     <string name="pref_screenshot_title">Tangkapan layar mentah</string>
     <string name="PREF_SHADER_FILTER">Shader layar</string>
     <string name="PREF_SYS_PROPS">Properti sistem</string>
@@ -366,7 +366,7 @@
     </plurals>
     <string name="crash_report_bundle_preparing">Menyiapkan bundel diagnostik…</string>
     <string name="crash_report_bundle_ready_title">Bundel diagnostik siap</string>
-    <string name="crash_report_bundle_ready_message">%1$s\n\nDisimpan di Downloads → JL-Mod Plus Diagnostics.\n\nGitHub akan meminta Anda mengunggah berkas ini sebelum mengirim laporan. Bundel diagnostik akan dipublikasikan bersama issue Anda.</string>
+    <string name="crash_report_bundle_ready_message">%1$s\n\nDisimpan di Downloads → JL-Mod Plus Diagnostics.\n\nUnggah berkas ini di formulir GitHub sebelum mengirim laporan. Bundel diagnostik akan dipublikasikan bersama issue.</string>
     <string name="locate_bundle">Temukan bundel</string>
     <string name="open_github">Buka GitHub</string>
     <string name="crash_report_bundle_failed">Tidak dapat menyiapkan bundel diagnostik.</string>
@@ -472,7 +472,7 @@
     <plurals name="memory_editor_edit_batch">
         <item quantity="other">Ubah %1$d nilai</item>
     </plurals>
-    <string name="memory_editor_edit_batch_help">Nilai pengganti diterapkan ke target terpilih yang cocok dengan tipe data yang dipilih. Pantauan dan Bekukan tidak tersedia untuk perubahan massal.</string>
+    <string name="memory_editor_edit_batch_help">Nilai pengganti diterapkan ke target terpilih yang cocok dengan tipe data yang dipilih. Pantauan dan pembekuan tidak tersedia untuk perubahan massal.</string>
     <string name="memory_editor_edit_batch_no_common_type">Hasil yang dipilih tidak mendukung tipe data yang dipilih. Ubah hasil yang kompatibel secara terpisah.</string>
     <string name="memory_editor_save">Terapkan</string>
     <string name="memory_editor_replacement">Nilai pengganti</string>
@@ -650,7 +650,7 @@
     <string name="config_delete_app_data">Hapus data MIDlet</string>
     <string name="config_delete_app_data_summary">Menghapus permanen data MIDlet, termasuk data simpanan. Pengaturan MIDlet tetap dipertahankan.</string>
     <string name="config_message_reset_settings">Atur ulang pengaturan dan kontrol virtual MIDlet ini ke bawaan? Data MIDlet tidak akan dihapus.</string>
-    <string name="config_message_reset_profile_settings">Atur ulang pengaturan dan kontrol virtual profil ini ke bawaan? Anda masih dapat mengedit atau membatalkan sebelum menyimpan.</string>
+    <string name="config_message_reset_profile_settings">Atur ulang pengaturan dan kontrol virtual profil ini ke bawaan? Perubahan masih dapat diedit atau dibatalkan sebelum disimpan.</string>
     <string name="config_message_delete_app_data">Hapus permanen semua data simpanan dan data lain yang dibuat MIDlet ini? Pengaturan MIDlet tidak akan dihapus.</string>
     <string name="profile_custom">Kustom</string>
     <string name="config_lock_custom_resolution_ratio">Kunci rasio aspek</string>
@@ -696,7 +696,7 @@
     <string name="config_help_emulation_speed">Mengatur kecepatan waktu dan jeda yang didukung di dalam MIDlet. Audio dan UI Android tetap berjalan normal.</string>
     <string name="config_help_timing_mode">Menentukan sumber tanggal dan waktu yang dilihat MIDlet. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
     <string name="config_help_timing_unavailable">Pengaturan waktu tidak tersedia untuk pemasangan MIDlet ini. Pasang ulang atau konversi ulang MIDlet untuk mengaktifkannya.</string>
-    <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dapat dijalankan. Harap tunggu…</string>
+    <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Tunggu…</string>
     <string name="reconversion_error">MIDlet ini tidak dapat dikonversi secara otomatis.
 
 %1$s</string>
@@ -709,7 +709,7 @@
     <string name="config_system_properties_info">Sebagian besar MIDlet tidak memerlukan perubahan di sini.</string>
     <string name="config_font_sizes">Ukuran font</string>
     <string name="config_help_font_sizes">Mengatur ukuran font Java ME kecil, sedang, dan besar.</string>
-    <string name="config_help_font_sizes_long">Mengatur ukuran font Java ME dalam piksel, atau satuan berskala jika Gunakan Skala Font Android diaktifkan. Ubah semuanya bersama-sama agar ukuran teks tetap seimbang.</string>
+    <string name="config_help_font_sizes_long">Mengatur ukuran font Java ME dalam piksel, atau satuan berskala jika skala font Android diaktifkan. Ubah semuanya bersama-sama agar ukuran teks tetap seimbang.</string>
     <string name="config_font_sizes_value">Kecil %1$s · Sedang %2$s · Besar %3$s</string>
     <string name="config_help_font_presets">Menerapkan ukuran font yang sesuai untuk resolusi J2ME umum.</string>
     <string name="config_help_font_dimensions">Menyesuaikan ukuran font Java ME dengan skala font Android.</string>
@@ -717,7 +717,7 @@
     <string name="config_help_key_layout">Menentukan skema kode tombol yang dilaporkan ke MIDlet.</string>
     <string name="config_help_key_mapping">Memetakan tombol fisik Android ke aksi keypad Java ME.</string>
     <string name="config_help_vk_button_shape">Menentukan bentuk tombol kontrol virtual.</string>
-    <string name="config_help_vk_feedback">Menggetarkan perangkat saat kontrol virtual ditekan. Memerlukan Getaran di Pengaturan.</string>
+    <string name="config_help_vk_feedback">Bergetar saat kontrol virtual ditekan jika getaran diaktifkan di Pengaturan.</string>
     <string name="config_help_vk_alpha">Mengatur transparansi kontrol virtual: 0 = transparan penuh, 255 = tidak transparan.</string>
     <string name="config_help_vk_force_opacity">Membuat kontrol di luar layar MIDlet sepenuhnya tidak transparan. Kontrol di atas layar tetap mengikuti nilai opasitas.</string>
     <string name="config_help_vk_hide_delay">Menyembunyikan kontrol setelah jeda ini saat menutupi layar MIDlet. Nilai 0 menonaktifkannya.</string>
@@ -788,7 +788,7 @@
     <string name="config_analog_stick">Stik analog</string>
     <string name="config_analog_stick_summary">Menentukan keluaran stik analog utama: 4 arah, 8 arah, atau keypad numerik.</string>
     <string name="config_analog_stick_off">Nonaktif</string>
-    <string name="config_controller_help_body_compact">Tombol gamepad menggunakan pemetaan tombol yang sama dengan keyboard dan tombol ponsel. Opsi Stik analog hanya mengatur keluaran arah stik untuk MIDlet. Tombol Kembali Android tetap memakai perilaku host normal, dan tombol fisik apa pun yang dipetakan ke M membuka menu runtime MIDlet.</string>
+    <string name="config_controller_help_body_compact">Tombol gamepad mengikuti pemetaan tombol keyboard dan ponsel. Stik analog hanya mengatur keluaran arah stik ke MIDlet. Tombol kembali Android tetap memakai perilaku host; tombol fisik yang dipetakan ke M membuka menu runtime MIDlet.</string>
 
     <string name="library_metadata_edit_title">Edit metadata</string>
     <string name="library_metadata_icon">Ikon</string>
@@ -926,8 +926,8 @@
     <string name="memory_editor_next_scan_result">Hasil pemindaian berikutnya: %1$d → %2$d</string>
     <string name="memory_editor_type_auto">Otomatis</string>
     <string name="about_maintainer">Pengelola: %1$s</string>
-    <string name="midlet_failure_recovery_message">MIDlet berhenti secara tak terduga. Informasi diagnostik disimpan secara lokal. Anda dapat terus menggunakan JL-Mod Plus.</string>
-    <string name="midlet_failure_recovery_message_named">“%1$s” berhenti secara tak terduga. Informasi diagnostik disimpan secara lokal. Anda dapat terus menggunakan JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message">MIDlet berhenti secara tak terduga. Informasi diagnostik disimpan secara lokal. JL-Mod Plus tetap dapat digunakan.</string>
+    <string name="midlet_failure_recovery_message_named">“%1$s” berhenti secara tak terduga. Informasi diagnostik disimpan secara lokal. JL-Mod Plus tetap dapat digunakan.</string>
     <string name="runtime_replacement_failed">MIDlet yang sedang berjalan tidak dapat dihentikan. Coba buka MIDlet baru lagi.</string>
     <string name="about_version">Versi %1$s</string>
     <string name="screenshot_save_failed">Tangkapan layar tidak dapat disimpan.</string>
