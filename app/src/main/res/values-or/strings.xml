@@ -29,7 +29,6 @@
     <string name="invalid_resolution_not_saved">ଅବୈଧ ରିଜୋଲ୍ୟୁସନ୍: ସଞ୍ଚୟ ହୋଇନାହିଁ!</string>
     <string name="licenses">ଲାଇସେନ୍ସ</string>
     <string name="mapping_dialog_key_not_specified">ନିର୍ଦ୍ଧିଷ୍ଟ କରାଯାଇ ନାହିଁ</string>
-    <string name="mapping_dialog_message">ସାମ୍ପ୍ରତିକ ମ୍ୟାପିଙ୍ଗ୍: %1$s</string>
     <string name="mapping_dialog_title">ଏକ ଚାବି ଦବାନ୍ତୁ</string>
     <string name="message_delete">ଆପଣ ପ୍ରକୃତରେ ଏହି ଆପ୍ ଡିଲିଟ୍ କରିବାକୁ ଚାହୁଁଛନ୍ତି କି?</string>
     <string name="midlet_name"><b>ନାମ: </b></string>
