@@ -102,7 +102,7 @@ jobs:
       - name: Assemble arm64 debug APK
         id: assemble
         if: github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate'
-        run: ./gradlew --daemon --configuration-cache --parallel --stacktrace --profile :app:assembleEmulatorDebug
+        run: ./gradlew --daemon --parallel --stacktrace --profile :app:assembleEmulatorDebug
 
       - name: Stage APK for early device testing
         id: stage_apk
@@ -135,7 +135,7 @@ jobs:
         id: validation
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' && (github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate') }}
         run: >-
-          ./gradlew --daemon --configuration-cache --parallel --stacktrace --profile --continue
+          ./gradlew --daemon --parallel --stacktrace --profile --continue
           :app:testEmulatorDebugUnitTest
           :dexlib:testDebugUnitTest
           :app:assembleEmulatorDebugAndroidTest
@@ -330,7 +330,7 @@ jobs:
 
       - name: Lint app and dependencies
         run: >-
-          ./gradlew --daemon --configuration-cache --parallel --stacktrace --profile --continue
+          ./gradlew --daemon --parallel --stacktrace --profile --continue
           :app:lintEmulatorDebug
 
       - name: Upload lint diagnostics
