@@ -40,7 +40,6 @@
     <string name="licenses">التراخيص</string>
     <string name="loading_info">جارٍ تحميل المعلومات…</string>
     <string name="mapping_dialog_key_not_specified">غير محدّد</string>
-    <string name="mapping_dialog_message">التوجيه الحالي:\n%1$s</string>
     <string name="mapping_dialog_title">اضغط على أي مفتاح</string>
     <string name="message_delete">هل تريد حذف هذا التطبيق حقاً؟</string>
     <string name="midlet_name"><b>الاسم: </b></string>
