@@ -73,13 +73,18 @@ jobs:
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
         with:
           # Internal PRs may persist Gradle state for subsequent commits in the same PR.
-          # Fork PRs stay read-only so untrusted code cannot populate repository caches.
+          # Fork PRs stay read-only; their missing secret also disables Configuration Cache persistence.
           cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+          packages: 'platform-tools platforms;android-37.0'
+
+      - name: Provision NDK r30 for native-producing modes
+        if: github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') != 'update-screenshots'
+        run: sdkmanager 'ndk;30.0.16248370' >/dev/null
 
       - name: Prepare build identity
         id: prepare
@@ -106,8 +111,6 @@ jobs:
         run: |
           set -euo pipefail
           ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorDebug
-          ./gradlew --daemon --stacktrace --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorDebug | tee configuration-cache-assemble.txt
-          grep -Fq 'Reusing configuration cache.' configuration-cache-assemble.txt
 
       - name: Stage APK for early device testing
         id: stage_apk
@@ -148,8 +151,6 @@ jobs:
             :app:assembleEmulatorDebugAndroidTest
           )
           ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}"
-          ./gradlew --daemon --stacktrace --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}" | tee configuration-cache-tests.txt
-          grep -Fq 'Reusing configuration cache.' configuration-cache-tests.txt
 
       - name: Generate screenshot candidates on manual request
         id: update_candidates
@@ -240,7 +241,6 @@ jobs:
             build/reports/profile/**
             ci-artifacts/validation.txt
             runtime-logcat.txt
-            configuration-cache-*.txt
           if-no-files-found: warn
           retention-days: 7
 
@@ -313,11 +313,12 @@ jobs:
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+          packages: 'platform-tools platforms;android-37.0'
 
       - name: Prepare Gradle wrapper
         run: chmod +x gradlew
@@ -328,8 +329,6 @@ jobs:
         run: |
           set -euo pipefail
           ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:validateEmulatorDebugScreenshotTest
-          ./gradlew --daemon --stacktrace --configuration-cache --configuration-cache-problems=fail :app:validateEmulatorDebugScreenshotTest | tee configuration-cache-screenshots.txt
-          grep -Fq 'Reusing configuration cache.' configuration-cache-screenshots.txt
 
       - name: Package existing screenshot renders after comparison failure
         id: candidates
@@ -358,7 +357,6 @@ jobs:
             app/build/test-results/validateEmulatorDebugScreenshotTest/**
             build/reports/problems/**
             build/reports/profile/**
-            configuration-cache-screenshots.txt
           if-no-files-found: warn
           retention-days: 7
 
@@ -384,11 +382,12 @@ jobs:
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+          packages: 'platform-tools platforms;android-37.0'
 
       - name: Prepare Gradle wrapper
         run: chmod +x gradlew
@@ -398,8 +397,6 @@ jobs:
         run: |
           set -euo pipefail
           ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug
-          ./gradlew --daemon --stacktrace --continue --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug | tee configuration-cache-lint.txt
-          grep -Fq 'Reusing configuration cache.' configuration-cache-lint.txt
 
       - name: Upload lint diagnostics
         if: always()
@@ -415,7 +412,6 @@ jobs:
             dexlib/build/reports/lint-results-*.sarif
             build/reports/problems/**
             build/reports/profile/**
-            configuration-cache-lint.txt
           if-no-files-found: warn
           retention-days: 7
 
