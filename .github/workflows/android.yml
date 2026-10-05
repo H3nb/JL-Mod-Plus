@@ -102,7 +102,7 @@ jobs:
       - name: Assemble arm64 debug APK
         id: assemble
         if: github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate'
-        run: ./gradlew --daemon --stacktrace --profile :app:assembleEmulatorDebug
+        run: ./gradlew --daemon --parallel --stacktrace --profile :app:assembleEmulatorDebug
 
       - name: Stage APK for early device testing
         id: stage_apk
@@ -131,23 +131,19 @@ jobs:
           retention-days: 7
           compression-level: 0
 
-      - name: Unit tests and instrumentation compilation
-        id: checks
+      - name: Tests, instrumentation compilation, and screenshot validation
+        id: validation
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' && (github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate') }}
         run: >-
-          ./gradlew --daemon --stacktrace --profile --continue
+          ./gradlew --daemon --parallel --stacktrace --profile --continue
           :app:testEmulatorDebugUnitTest
           :dexlib:testDebugUnitTest
           :app:assembleEmulatorDebugAndroidTest
-
-      - name: Validate screenshot references
-        id: screenshots
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && (github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate') }}
-        run: ./gradlew --daemon --stacktrace --profile :app:validateEmulatorDebugScreenshotTest
+          :app:validateEmulatorDebugScreenshotTest
 
       - name: Package existing screenshot renders after comparison failure
         id: candidates
-        if: ${{ !cancelled() && steps.screenshots.outcome == 'failure' }}
+        if: ${{ !cancelled() && steps.validation.outcome == 'failure' }}
         env:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -208,8 +204,7 @@ jobs:
           MODE: ${{ inputs.mode || 'validate' }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           ASSEMBLE_RESULT: ${{ steps.assemble.outcome }}
-          CHECKS_RESULT: ${{ steps.checks.outcome }}
-          SCREENSHOT_RESULT: ${{ steps.screenshots.outcome }}
+          VALIDATION_RESULT: ${{ steps.validation.outcome }}
           CANDIDATE_RESULT: ${{ steps.candidates.outcome }}
           CANDIDATE_COUNT: ${{ steps.candidates.outputs.count || '0' }}
           UPDATE_RESULT: ${{ steps.update_candidates.outcome }}
@@ -222,8 +217,7 @@ jobs:
             echo "PR head commit: ${PR_HEAD_SHA:-not a PR run}"
             echo "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             echo "APK assembly: $ASSEMBLE_RESULT"
-            echo "App/dexlib unit tests, instrumentation compilation: $CHECKS_RESULT"
-            echo "Screenshot validation: $SCREENSHOT_RESULT"
+            echo "Tests, instrumentation compilation, screenshot validation: $VALIDATION_RESULT"
             echo "Automatic screenshot packaging: $CANDIDATE_RESULT ($CANDIDATE_COUNT candidates)"
             echo "Manual screenshot generation: $UPDATE_RESULT"
             echo "Selected runtime tests: $RUNTIME_RESULT"
@@ -279,15 +273,13 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-37.0'
 
-      - name: Prepare build identity
-        run: |
-          chmod +x gradlew
-          echo "JLMOD_BUILD_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Prepare Gradle wrapper
+        run: chmod +x gradlew
 
-      - name: Lint app and dexlib
+      - name: Lint app and dependencies
         run: >-
-          ./gradlew --daemon --stacktrace --profile --continue
-          :app:lintEmulatorDebug :dexlib:lintDebug
+          ./gradlew --daemon --parallel --stacktrace --profile --continue
+          :app:lintEmulatorDebug
 
       - name: Upload lint diagnostics
         if: always()
