@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # PowerShell 7; use the project's selected NDK rather than another compiler.
 param([Parameter(Mandatory)][string]$OutRoot,[string[]]$Abis=@('arm64-v8a'),
- [string]$Sdk=$env:ANDROID_HOME,[string]$NdkVersion='28.2.13676358',
+ [string]$Sdk=$env:ANDROID_HOME,[string]$NdkVersion='30.0.16248370',
  [string]$GitBash)
 $ErrorActionPreference='Stop'
 $OutRoot=[IO.Path]::GetFullPath($OutRoot).Replace('\','/')
