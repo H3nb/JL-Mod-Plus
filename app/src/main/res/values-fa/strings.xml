@@ -26,7 +26,6 @@
     <string name="layout_switch">تعویض طرح کلید</string>
     <string name="licenses">مجوزها</string>
     <string name="loading_info">در حال بارگیری اطلاعات …</string>
-    <string name="mapping_dialog_message">نقشه برداری فعلی:\n%1$s</string>
     <string name="mapping_dialog_title">یک کلید را انتخاب کنید</string>
     <string name="message_delete">آیا واقعا می خواهید این برنامه یا بازی را حذف کنید؟</string>
     <string name="more">بیشتر</string>
