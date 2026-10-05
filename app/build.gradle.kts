@@ -35,7 +35,6 @@ require(appVersionCode > 0) { "jlmod.versionCode must be greater than zero" }
 val diagnosticBuildCommit = (
     providers.gradleProperty("jlmodBuildCommit").orNull
         ?: System.getenv("JLMOD_BUILD_COMMIT")
-        ?: System.getenv("GITHUB_SHA")
         ?: "unknown"
 ).trim().let { value ->
     if (value.matches(Regex("[0-9a-fA-F]{7,40}"))) value.lowercase(Locale.ROOT) else "unknown"
@@ -45,8 +44,11 @@ val audioDependenciesRoot = layout.buildDirectory.dir("audio-deps")
 val audioDependencyTasks = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64").associateWith { abi ->
     tasks.register<Exec>("buildNativeAudio${abi.replace("-", "").replace("_", "")}") {
         inputs.files(rootProject.fileTree("tools/audio"))
+        inputs.property("abi", abi)
+        inputs.property("host", "${System.getProperty("os.name")}/${System.getProperty("os.arch")}")
         inputs.property("ndk", rootProject.extra["ndkVersion"] as String)
         outputs.dir(audioDependenciesRoot.map { it.dir("install-$abi") })
+        outputs.cacheIf("Pinned native audio recipe is reusable for the same ABI, host, and NDK") { true }
         commandLine("pwsh", "-NoProfile", "-File", rootProject.file("tools/audio/build-native-deps.ps1"),
             "-OutRoot", audioDependenciesRoot.get().asFile, "-Sdk",
             androidComponents.sdkComponents.sdkDirectory.get().asFile,
@@ -72,6 +74,9 @@ android {
         versionCode = appVersionCode
         versionName = appVersionName
         resValue("string", "app_name", "JL-Mod Plus")
+        // Keep per-commit provenance out of BuildConfig so it does not invalidate Kotlin/Java
+        // compilation on every CI commit. Packaging builds set JLMOD_BUILD_COMMIT explicitly.
+        resValue("string", "jlmod_build_commit", diagnosticBuildCommit)
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild.ndkBuild.arguments += "JLMOD_AUDIO_DEPS=${audioDependenciesRoot.get().asFile.absolutePath.replace('\\', '/')}"
@@ -129,6 +134,9 @@ android {
     }
 
     lint {
+        // Analyze project dependencies through the app lint graph so library lint can be
+        // scheduled with the app instead of requiring a second top-level lint invocation.
+        checkDependencies = true
         // Missing translations are intentionally deferred to the dedicated localization pass.
         // Keep lint active so all other findings remain visible and fail the CI task on errors.
         disable += "MissingTranslation"
@@ -189,14 +197,6 @@ androidComponents {
                 type = "boolean",
                 value = fullEmulator.toString(),
                 comment = "Whether this is the full emulator flavor"
-            )
-        )
-        variant.buildConfigFields?.put(
-            "JLMOD_BUILD_COMMIT",
-            BuildConfigField(
-                type = "String",
-                value = "\"$diagnosticBuildCommit\"",
-                comment = "Source commit embedded for local diagnostic reproduction"
             )
         )
         variant.buildConfigFields?.put(
