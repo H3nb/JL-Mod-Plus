@@ -441,7 +441,7 @@
     <string name="library_description_less">Ringkas</string>
 
     <string name="memory_editor_bubble">Tombol mengambang editor memori</string>
-    <string name="memory_editor_bubble_content_description">Tombol mengambang editor memori</string>
+    <string name="memory_editor_bubble_content_description">Buka editor memori</string>
     <string name="memory_editor">Editor memori</string>
     <string name="memory_editor_search_hint">Nilai</string>
     <string name="memory_editor_next_scan">Pindai berikutnya</string>
@@ -728,7 +728,7 @@
     <string name="config_help_vk_outline">Mengatur warna garis tepi tombol kontrol virtual.</string>
     <string name="config_help_reset_layout">Mengembalikan tata letak kontrol virtual ke bawaan tanpa mengubah pengaturan MIDlet lainnya.</string>
     <string name="config_help_skip_resume">Setelah startApp() pertama berhasil, lewati pemanggilan berikutnya saat MIDlet dilanjutkan. Gunakan hanya untuk MIDlet yang bermasalah saat dilanjutkan.</string>
-    <string name="config_help_soundbank">Memilih soundbank yang digunakan untuk sintesis MIDI.</string>
+    <string name="config_help_soundbank">Memilih soundbank untuk sintesis MIDI.</string>
     <string name="profile_create_title">Buat profil</string>
     <string name="profile_rename_title">Ganti nama profil</string>
 
