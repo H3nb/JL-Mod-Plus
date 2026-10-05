@@ -1,0 +1,59 @@
+name: Promote reviewed screenshots
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: screenshot-promotion-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: >-
+      github.event.issue.pull_request != null &&
+      github.event.sender.id == github.event.repository.owner.id &&
+      startsWith(github.event.comment.body, '/jlmod-promote-screenshots')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out trusted promotion tooling
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: trusted
+          persist-credentials: false
+
+      - name: Validate reviewed artifact and provenance
+        id: inspect
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          python3 -B trusted/scripts/ci-screenshot-promotion.py inspect
+          --event "$GITHUB_EVENT_PATH"
+          --artifact "$RUNNER_TEMP/screenshot-candidates.zip"
+          --state "$RUNNER_TEMP/screenshot-promotion.json"
+
+      - name: Check out exact reviewed PR head
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ steps.inspect.outputs.head_sha }}
+          path: target
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Promote exact reviewed screenshot renders
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          python3 -B trusted/scripts/ci-screenshot-promotion.py promote
+          --artifact "$RUNNER_TEMP/screenshot-candidates.zip"
+          --state "$RUNNER_TEMP/screenshot-promotion.json"
+          --target target
