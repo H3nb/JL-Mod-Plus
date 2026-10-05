@@ -943,7 +943,7 @@
     <string name="crash_reports_delete_failed">Sebagian laporan diagnostik terpilih tidak dapat dihapus. Laporan lain mungkin sudah dihapus.</string>
     <string name="crash_reports_bundle_cleanup_failed">Laporan diagnostik dihapus, tetapi sebagian bundel terkait tidak dapat dihapus.</string>
     <string name="installer_existing_data_preserved">Pengaturan dan data simpanan yang ada akan tetap disimpan.</string>
-    <string name="bulk_install_library_changed">Pustaka berubah setelah ditinjau. Tutup pemasangan massal ini, lalu pilih sumbernya lagi.</string>
+    <string name="bulk_install_library_changed">Pustaka berubah setelah ditinjau. Tutup instalasi massal ini, lalu pilih sumbernya lagi.</string>
     <string name="bulk_install_source_unavailable">Berkas sumber yang diperlukan sudah tidak tersedia. Pilih berkasnya lagi.</string>
     <string name="bulk_install_source_changed">Berkas sumber berubah setelah ditinjau. Pilih berkasnya lagi.</string>
     <string name="bulk_install_target_unverified">Target instalasi ulang tidak dapat diverifikasi. Tutup instalasi massal ini, lalu pilih aplikasinya lagi.</string>
