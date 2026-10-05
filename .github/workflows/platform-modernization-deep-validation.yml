@@ -33,7 +33,7 @@ jobs:
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0'
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
       - name: Verify Gradle and strict configuration cache
         shell: bash
         run: |
@@ -108,7 +108,7 @@ jobs:
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0'
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
       - name: Build non-publishing minified release
         env:
           JLMOD_BUILD_COMMIT: ${{ github.event.pull_request.head.sha }}
@@ -198,7 +198,7 @@ jobs:
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0'
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
       - name: Enable emulator acceleration
         run: |
           chmod +x gradlew
@@ -238,7 +238,7 @@ jobs:
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0'
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
       - name: Force one comparison failure without changing canonical references
         shell: bash
         env:

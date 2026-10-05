@@ -79,7 +79,7 @@ jobs:
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0'
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
 
       - name: Prepare build identity
         id: prepare
@@ -269,7 +269,7 @@ jobs:
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0'
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
 
       - name: Enable emulator acceleration
         run: |
@@ -317,7 +317,7 @@ jobs:
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0'
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
 
       - name: Prepare Gradle wrapper
         run: chmod +x gradlew
@@ -388,7 +388,7 @@ jobs:
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0'
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
 
       - name: Prepare Gradle wrapper
         run: chmod +x gradlew
