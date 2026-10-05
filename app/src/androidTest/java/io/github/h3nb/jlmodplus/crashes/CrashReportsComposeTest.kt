@@ -107,7 +107,7 @@ class CrashReportsComposeTest {
                             CrashReportListItem(
                                 id = "report-2",
                                 title = "Other MIDlet",
-                                subtitle = "Process exit diagnostic · today",
+                                subtitle = "Process exit report · today",
                             ),
                         ),
                     ),

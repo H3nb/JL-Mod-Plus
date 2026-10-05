@@ -84,7 +84,7 @@
     <string name="library_destination_more">Lainnya</string>
     <string name="library_search_placeholder">Cari aplikasi atau pengembang…</string>
     <string name="library_filter_all">Semua</string>
-    <string name="library_filter_recently_opened">Baru dibuka</string>
+    <string name="library_filter_recently_opened">Baru dimainkan</string>
     <string name="library_filter_recently_added">Baru ditambahkan</string>
     <string name="library_filter_favorites">Favorit</string>
     <string name="library_add_to_favorites_action">Tambahkan ke favorit</string>
@@ -117,7 +117,7 @@
     <string name="not_saved_exists">Sudah ada</string>
     <string name="parallel_screen_redrawing">Pembaruan layar asinkron</string>
     <string name="permission_request_failed">Aplikasi memerlukan izin untuk menulis berkas.</string>
-    <string name="pref_app_sort_date">Tanggal</string>
+    <string name="pref_app_sort_date">Tanggal ditambahkan</string>
     <string name="pref_app_sort_name">Nama</string>
     <string name="pref_app_sort_vendor">Vendor</string>
     <string name="pref_app_sort_ascending">Menaik</string>

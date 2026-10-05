@@ -15,8 +15,8 @@
     <string name="action_lock_orientation">Lock screen rotation</string>
     <string name="action_reinstall">Reinstall</string>
     <string name="action_settings">Settings</string>
-    <string name="alert_map_menu">Menu key (M) is not assigned.\nThis may prevent access to emulator options.</string>
-    <string name="alert_msg_workdir_not_exists">Working directory was not found at:\n%1$s\nDo you want to create it or choose another directory?</string>
+    <string name="alert_map_menu">Menu key (M) is not assigned.\nThis may prevent access to the runtime MIDlet menu.</string>
+    <string name="alert_msg_workdir_not_exists">Working directory not found:\n%1$s\nCreate it or choose another directory?</string>
     <string name="CANCEL_CMD">Cancel</string>
     <string name="change">Change</string>
     <string name="choose">Choose</string>
@@ -28,7 +28,7 @@
     <string name="create_apps_dir_failed">Could not prepare the working directory at:\n%1$s\nChoose another directory.</string>
     <string name="default_label">%1$s (default)</string>
     <string name="dismiss">Dismiss</string>
-    <string name="dismiss_mapping">Dismiss mapping</string>
+    <string name="dismiss_mapping">Close mapping</string>
     <string name="edit">Edit</string>
     <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
     <!-- %1$s is a raw storage-volume description. -->
@@ -121,15 +121,15 @@
     <string name="midlet_version"><b>Version: </b></string>
     <string name="more">More</string>
     <string name="msg_error_loading_shader">Unsupported shader. Using the default shader.</string>
-    <string name="msg_immediate_mode_disabled">Immediate mode disabled because event callbacks nested too deeply.</string>
+    <string name="msg_immediate_mode_disabled">Immediate processing was disabled because event callbacks nested too deeply.</string>
     <string name="msg_mascot_capsule" translatable="false">Mascot Capsule 3D!</string>
     <string name="msg_no_matches">No matches for \"%1$s\"</string>
     <string name="library_destination_apps">Apps</string>
     <string name="library_destination_collections">Collections</string>
     <string name="library_destination_more">More</string>
-    <string name="library_search_placeholder">Search apps or developers…</string>
+    <string name="library_search_placeholder">Search apps…</string>
     <string name="library_filter_all">All</string>
-    <string name="library_filter_recently_opened">Recently opened</string>
+    <string name="library_filter_recently_opened">Recently played</string>
     <string name="library_filter_recently_added">Recently added</string>
     <string name="library_filter_favorites">Favorites</string>
     <string name="library_add_to_favorites_action">Add to favorites</string>
@@ -145,7 +145,7 @@
     <string name="library_icon_shape_round">Rounded</string>
     <string name="library_icon_shape_square">Sharp corners</string>
     <string name="library_grid_spacing_title">Grid spacing</string>
-    <string name="library_grid_spacing_none">None (touching)</string>
+    <string name="library_grid_spacing_none">None (0 dp)</string>
     <string name="library_grid_spacing_compact">Compact (4 dp)</string>
     <string name="library_grid_spacing_standard">Standard (8 dp)</string>
     <string name="library_grid_spacing_spacious">Spacious (12 dp)</string>
@@ -160,7 +160,7 @@
     <string name="not_saved_exists">Already exists</string>
     <string name="parallel_screen_redrawing">Asynchronous screen updates</string>
     <string name="permission_request_failed">This app requires storage write permission.</string>
-    <string name="pref_app_sort_date">Date</string>
+    <string name="pref_app_sort_date">Date added</string>
     <string name="pref_app_sort_name">Name</string>
     <string name="pref_app_sort_vendor">Vendor</string>
     <string name="pref_app_sort_ascending">Ascending</string>
@@ -184,7 +184,7 @@
     <string name="PREF_FONT_MEDIUM">Medium</string>
     <string name="PREF_FONT_SIZE_IN_SP">Use Android font scale</string>
     <string name="PREF_FONT_SMALL">Small</string>
-    <string name="PREF_FORCE_FULLSCREEN">Use fullscreen</string>
+    <string name="PREF_FORCE_FULLSCREEN">Start in fullscreen</string>
     <string name="pref_graphics_hw_gles">Hardware acceleration (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Hardware acceleration (Surface)</string>
     <string name="pref_graphics_hw_view">Hardware acceleration (Window)</string>
@@ -220,7 +220,7 @@
     <string name="PREF_SHADER_FILTER">Screen shader</string>
     <string name="pref_skin_not_set">Not set</string>
     <string name="pref_skin_title">Skin</string>
-    <string name="pref_skip_resume_call">Skip subsequent startApp() calls</string>
+    <string name="pref_skip_resume_call">Skip startApp() on resume</string>
     <string name="pref_soundbank_title">MIDI soundbank</string>
     <string name="PREF_SYS_PROPS">System properties</string>
     <string name="config_destination_graphics">Display</string>
@@ -237,8 +237,8 @@
     <string name="config_gamepad_keypad_title">Virtual keypad</string>
     <string name="config_gamepad_calibration_next">Next</string>
     <string name="config_gamepad_mapping_help_title">Gamepad mapping help</string>
-    <string name="config_gamepad_directions_four">4-Way</string>
-    <string name="config_gamepad_directions_eight">8-Way</string>
+    <string name="config_gamepad_directions_four">4-way</string>
+    <string name="config_gamepad_directions_eight">8-way</string>
     <string name="config_gamepad_pointer_off">Off</string>
     <string name="config_gamepad_pointer_cursor">Proportional cursor</string>
     <string name="config_gamepad_pointer_joystick">Touch joystick</string>
@@ -248,7 +248,7 @@
     <string name="config_gamepad_calibration_phase_trigger_range">Trigger range</string>
     <string name="config_gamepad_calibration_phase_review">Review</string>
     <string name="config_gamepad_calibration_phase_committed">Saved</string>
-    <string name="config_gamepad_calibration_phase_cancelled">Cancelled</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Canceled</string>
     <string name="config_gamepad_calibration_waiting_controller">Connect a controller with a supported analog stick or trigger. Calibration begins when you first move a stick or press a trigger; the existing calibration remains unchanged until you save.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">This controller does not provide supported analog-stick or trigger ranges.</string>
     <string name="config_gamepad_calibration_start">Keep every stick and trigger neutral until the neutral timer completes. Then move each stick to its full range and press Next.</string>
@@ -260,10 +260,10 @@
     <string name="config_gamepad_calibration_trigger_instructions">Release and fully press every detected trigger, then press Next to review.</string>
     <string name="config_gamepad_calibration_review_instructions">Ready to review. Saving replaces only this controller’s calibration.</string>
     <string name="config_gamepad_calibration_saved">Calibration saved.</string>
-    <string name="config_gamepad_calibration_cancelled">Calibration cancelled. The previous calibration is unchanged.</string>
+    <string name="config_gamepad_calibration_cancelled">Calibration canceled. The previous calibration is unchanged.</string>
     <string name="config_gamepad_calibration_waiting_samples">Calibration is waiting for controller samples.</string>
     <string name="config_gamepad_diagnosis_header">Controller diagnostics</string>
-    <string name="config_gamepad_diagnosis_mode">Enabled: %1$s · source: %2$s</string>
+    <string name="config_gamepad_diagnosis_mode">Status: %1$s · Source: %2$s</string>
     <string name="config_gamepad_diagnosis_notice">Notice: %1$s</string>
     <string name="config_gamepad_diagnosis_analog_settings">Analog settings:</string>
     <string name="config_gamepad_diagnosis_left_stick">Left stick</string>
@@ -282,7 +282,7 @@
     <string name="config_gamepad_calibration_issue_insufficient_samples">insufficient samples</string>
     <string name="config_gamepad_calibration_issue_invalid_range">invalid range</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">rest value outside range</string>
-    <string name="config_gamepad_calibration_issue_rest_too_noisy">rest position is too noisy</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">rest position is not stable enough</string>
     <string name="config_gamepad_calibration_phase_unknown">Status unavailable</string>
     <string name="config_gamepad_diagnosis_capabilities">Connected controller capabilities:</string>
     <string name="config_gamepad_diagnosis_descriptor">Descriptor: %1$s</string>
@@ -332,7 +332,7 @@
     <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s</string>
     <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nThe older version may not work correctly with existing data.</string>
     <string name="reset">Reset</string>
-    <string name="RESET_LAYOUT_CMD">Reset control layout</string>
+    <string name="RESET_LAYOUT_CMD">Reset virtual controls layout</string>
     <string name="retry">Retry</string>
     <string name="save">Save</string>
     <string name="save_log">Save log</string>
@@ -393,7 +393,7 @@
     <string name="crash_reports_loading">Loading diagnostic reports</string>
     <string name="crash_report_midlet_failure">MIDlet session failure</string>
     <string name="crash_report_java_report">Java diagnostic report</string>
-    <string name="crash_report_process_exit">Process exit diagnostic</string>
+    <string name="crash_report_process_exit">Process exit report</string>
     <string name="crash_report_list_subtitle">%1$s · %2$s</string>
     <plurals name="crash_reports_selected_count">
         <item quantity="one">%1$d selected</item>
@@ -411,7 +411,7 @@
     </plurals>
     <string name="crash_report_bundle_preparing">Preparing diagnostic bundle…</string>
     <string name="crash_report_bundle_ready_title">Diagnostic bundle ready</string>
-    <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nUpload this file to the GitHub issue before submitting it. The diagnostic bundle will be public with your issue.</string>
+    <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nAttach this file before submitting the GitHub issue. The diagnostic bundle will be public with the issue.</string>
     <string name="locate_bundle">Locate bundle</string>
     <string name="open_github">Open GitHub</string>
     <string name="crash_report_bundle_failed">Could not prepare the diagnostic bundle.</string>
@@ -427,10 +427,10 @@
     <string name="crash_reports_batch_delete_message">This permanently removes the selected diagnostic reports and any bundles generated for them from this device. Files already uploaded elsewhere are not affected.</string>
     <string name="crash_report_delete_failed">Could not delete the complete report.</string>
     <string name="crash_report_unavailable">This report is no longer available.</string>
-    <string name="process_exit_recovery_title">Unexpected process exit detected</string>
-    <string name="process_exit_recovery_message">JL-Mod Plus previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
-    <string name="process_exit_recovery_message_midlet">A MIDlet process previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
-    <string name="process_exit_recovery_message_named">%1$s previously ended unexpectedly (%2$s). Diagnostic details were saved locally.</string>
+    <string name="process_exit_recovery_title">Unexpected process exit</string>
+    <string name="process_exit_recovery_message">JL-Mod Plus stopped unexpectedly in the previous session (%1$s). Diagnostic details were saved locally.</string>
+    <string name="process_exit_recovery_message_midlet">A MIDlet process stopped unexpectedly in the previous session (%1$s). Diagnostic details were saved locally.</string>
+    <string name="process_exit_recovery_message_named">%1$s stopped unexpectedly in the previous session (%2$s). Diagnostic details were saved locally.</string>
     <string name="select_all_reports">Select all reports</string>
     <string name="clear_report_selection">Clear report selection</string>
 
@@ -456,7 +456,7 @@
     <string name="library_collection_add_app">Add to collection</string>
     <string name="library_collection_add_apps">Add apps</string>
     <string name="library_collection_manage_apps">Choose apps</string>
-    <string name="library_collection_manage_apps_summary">Check apps to include them in this collection.</string>
+    <string name="library_collection_manage_apps_summary">Select apps to include in this collection.</string>
     <string name="library_collection_name">Collection name</string>
     <string name="library_collection_members_empty">No apps in this collection.</string>
     <string name="library_collection_select_title">Select a collection</string>
@@ -475,7 +475,7 @@
     <string name="library_import_invalid_bundle">The selected app bundle is invalid, damaged, or unsupported. Choose a valid JL-Mod Plus app bundle and try again.</string>
     <string name="library_import_restore_existing">This app is already installed. Importing will replace the settings and save data contained in the bundle.</string>
     <string name="library_import_restore_failed">The app is installed, but its bundle data could not be restored. Retry the restore?</string>
-    <string name="library_play_stats_summary">Play count: %1$d · total: %2$s</string>
+    <string name="library_play_stats_summary">Plays: %1$d · Total time: %2$s</string>
     <string name="library_share_chooser_title">Share app</string>
     <string name="library_export_chooser_title">Export app bundle</string>
     <string name="library_export_progress">Exporting… %1$d/%2$d</string>
@@ -517,7 +517,7 @@
     <string name="memory_editor_search_tab">Search</string>
     <string name="memory_editor_search_known_values">Search known values</string>
     <string name="memory_editor_search_unknown_values">Search unknown values</string>
-    <string name="memory_editor_add_to_watch">Add selected to Watch</string>
+    <string name="memory_editor_add_to_watch">Add selected values to Watch</string>
     <string name="memory_editor_no_candidates">No searchable values found</string>
     <string name="memory_editor_edit">Edit</string>
     <plurals name="memory_editor_edit_batch">
@@ -547,7 +547,7 @@
     <string name="memory_editor_apply">Apply</string>
     <string name="memory_editor_max_value">Maximum value</string>
     <string name="memory_editor_unfreeze">Unfreeze</string>
-    <string name="memory_editor_cancelled">Operation cancelled.</string>
+    <string name="memory_editor_cancelled">Operation canceled.</string>
     <string name="memory_editor_resource_limit">Memory Editor reached a safe resource limit. Try a more specific data type or search value.</string>
     <string name="memory_editor_identity_unsafe">The selected value or search state could not be verified. Refresh the results or reopen Inspector, then try again.</string>
     <string name="memory_editor_safety_limit">Too many values are selected for this operation. Select fewer and try again.</string>
@@ -561,8 +561,8 @@
     <string name="memory_editor_predicate_increased_by">Increased by</string>
     <string name="memory_editor_predicate_decreased_by">Decreased by</string>
     <string name="memory_editor_predicate_changed_by">Changed by</string>
-    <string name="memory_editor_predicate_increased_range">Increased by range</string>
-    <string name="memory_editor_predicate_decreased_range">Decreased by range</string>
+    <string name="memory_editor_predicate_increased_range">Increase amount in range</string>
+    <string name="memory_editor_predicate_decreased_range">Decrease amount in range</string>
     <string name="memory_editor_inspector">Inspector</string>
     <string name="memory_editor_inspect_memory">Inspect nearby memory</string>
     <string name="memory_editor_inspector_loading">Verifying the result and reading nearby memory…</string>
@@ -571,9 +571,9 @@
     <string name="memory_editor_refresh_snapshot">Refresh snapshot</string>
     <string name="memory_editor_select_result_value">Select this result</string>
     <string name="memory_editor_freeze_after_edit">Freeze after applying</string>
-    <string name="memory_editor_freeze_after_edit_help">Uses the replacement value as a lock and automatically adds the candidates to Watch.</string>
+    <string name="memory_editor_freeze_after_edit_help">Locks the replacement value and automatically adds candidates to Watch.</string>
 
-    <string name="memory_editor_expression_single_hint">Enter one value, or use ; to search group values together.</string>
+    <string name="memory_editor_expression_single_hint">Enter one value, or separate group values with ;.</string>
     <string name="memory_editor_expression_group_needs_type">Choose a specific data type for group search.</string>
     <plurals name="memory_editor_expression_group_hint">
         <item quantity="one">Group search · %1$d value · same Java object</item>
@@ -686,8 +686,8 @@
     <string name="bulk_install_status_update">Update</string>
     <string name="bulk_install_status_downgrade">Older version</string>
     <string name="bulk_install_status_same">Already installed</string>
-    <string name="bulk_install_status_reinstall">Variant or reinstall</string>
-    <string name="bulk_install_status_ambiguous">Multiple installed matches</string>
+    <string name="bulk_install_status_reinstall">Same version, different package</string>
+    <string name="bulk_install_status_ambiguous">Matches multiple installed apps</string>
     <string name="bulk_install_status_mismatch">JAD/JAR mismatch</string>
     <string name="bulk_install_status_duplicate">Duplicate</string>
     <string name="bulk_install_status_older_batch">Older version in batch</string>
@@ -708,9 +708,9 @@
     <string name="config_display_performance">Performance &amp; diagnostics</string>
     <string name="config_display_text">Text &amp; fonts</string>
     <string name="config_system_timing">Timing &amp; compatibility</string>
-    <string name="config_controls_key_input">Key input</string>
+    <string name="config_controls_key_input">Physical input</string>
     <string name="config_controls_virtual_keyboard">Virtual controls</string>
-    <string name="config_controls_virtual_keyboard_colors">Virtual controls appearance</string>
+    <string name="config_controls_virtual_keyboard_colors">Virtual controls colors</string>
     <string name="config_controls_maintenance">Virtual controls layout</string>
     <string name="config_current_value">Current value</string>
     <string name="config_maintenance">Reset &amp; data</string>
@@ -777,12 +777,12 @@
     <string name="config_system_properties_info">Most MIDlets do not need changes here.</string>
     <string name="config_font_sizes">Font sizes</string>
     <string name="config_help_font_sizes">Sets the small, medium, and large Java ME font sizes for the MIDlet.</string>
-    <string name="config_help_font_sizes_long">Sets Java ME font sizes in pixels, or in scaled units when Use Android Font Scale is enabled. Change them together to keep text balanced.</string>
+    <string name="config_help_font_sizes_long">Sets Java ME font sizes in pixels, or scaled units when Android font scaling is enabled. Change them together to keep text balanced.</string>
     <string name="config_font_sizes_value">Small %1$s · medium %2$s · large %3$s</string>
     <string name="config_help_font_presets">Applies font sizes suited to common J2ME screen resolutions.</string>
     <string name="config_help_font_dimensions">Applies Android’s font scale to Java ME font sizes.</string>
     <string name="config_help_font_aa">Smooths the edges of rendered text.</string>
-    <string name="config_help_key_layout">Chooses the key code layout used by the MIDlet.</string>
+    <string name="config_help_key_layout">Chooses the key code layout reported to the MIDlet.</string>
     <string name="config_help_key_mapping">Maps physical Android keys and buttons to Java ME keypad actions.</string>
     <string name="config_help_vk_button_shape">Sets the shape of virtual-control buttons.</string>
     <string name="config_help_vk_feedback">Vibrates on virtual-control presses when vibration is enabled in Settings.</string>
@@ -794,7 +794,7 @@
     <string name="config_help_vk_selected_foreground">Sets the label and symbol color while a virtual-control button is pressed.</string>
     <string name="config_help_vk_selected_background">Sets the button color while it is pressed.</string>
     <string name="config_help_vk_outline">Sets the outline color of virtual-control buttons.</string>
-    <string name="config_help_reset_layout">Restores the virtual-controls layout without changing other MIDlet settings.</string>
+    <string name="config_help_reset_layout">Restores the virtual controls layout without changing other MIDlet settings.</string>
     <string name="config_help_skip_resume">After the first successful startApp(), skip later calls when the MIDlet resumes. Use only for MIDlets that fail when resumed.</string>
     <string name="config_help_soundbank">Chooses the soundbank used for MIDI synthesis.</string>
     <string name="profile_create_title">Create profile</string>
@@ -854,9 +854,9 @@
     <string name="profile_apply_layout_keeps_settings">Keep this MIDlet’s settings; use a custom configuration.</string>
 
     <string name="config_analog_stick">Analog stick</string>
-    <string name="config_analog_stick_summary">Choose how the primary analog stick sends movement to this MIDlet. Controller buttons use key mappings.</string>
+    <string name="config_analog_stick_summary">Choose how the primary analog stick sends directions: 4-way, 8-way, or numeric keypad. Controller buttons use key mappings.</string>
     <string name="config_analog_stick_off">Off</string>
-    <string name="config_controller_help_body_compact">Controller buttons use the same key mappings as keyboards and phone keys. Analog stick affects only directional stick input to the MIDlet. Android Back keeps its normal behavior; any physical button mapped to M opens the runtime MIDlet menu.</string>
+    <string name="config_controller_help_body_compact">Controller buttons use the same key mappings as keyboard and phone keys. The analog stick sends only directional input to the MIDlet. Android Back keeps its normal behavior; any physical button mapped to M opens the runtime MIDlet menu.</string>
 
     <string name="library_metadata_edit_title">Edit metadata</string>
     <string name="library_metadata_icon">Icon</string>
@@ -877,7 +877,7 @@
     <string name="library_reinstall_source_missing">The saved JAR is unavailable for reinstall.</string>
     <string name="library_action_select">Select</string>
     <string name="library_selection_select_all">Select all</string>
-    <string name="library_selection_unselect_all">Unselect all</string>
+    <string name="library_selection_unselect_all">Deselect all</string>
 
     <string name="perf_overlay_title">Performance overlay</string>
     <string name="perf_overlay_help">Shows selected performance and diagnostic metrics over the MIDlet screen.</string>
@@ -914,7 +914,7 @@
     <string name="perf_overlay_interval">Frame interval (FI)</string>
     <string name="perf_overlay_p95">95th percentile frame interval (P95)</string>
     <string name="perf_overlay_max">Maximum frame interval (MAX)</string>
-    <string name="perf_overlay_coalesced">Coalesced frames (COAL)</string>
+    <string name="perf_overlay_coalesced">Frames replaced before render (COAL)</string>
     <string name="perf_overlay_paint">Paint duration (PAINT)</string>
     <string name="perf_overlay_copy">Buffer copy duration (COPY)</string>
     <string name="perf_overlay_submit">Render submission duration (SUB)</string>
@@ -937,7 +937,7 @@
     <string name="settings_section_storage">Storage</string>
     <string name="settings_section_profiles">Profiles</string>
     <string name="settings_profiles_summary">Manage profiles you can reuse across MIDlets.</string>
-    <string name="pref_use_display_cutout_title">Use display cutout in MIDlet</string>
+    <string name="pref_use_display_cutout_title">Use display cutout area</string>
     <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the runtime toolbar to use the display-cutout area. Enabling it hides the system status bar.</string>
     <string name="dialog_scroll_hint">Swipe to continue</string>
     <string name="pref_accent_title">Accent color</string>
@@ -964,7 +964,7 @@
     <string name="library_selection_unchecked">Not selected</string>
 
     <string name="library_action_settings_summary">Configure global behavior and appearance.</string>
-    <string name="library_action_crash_reports_summary">Review saved diagnostic reports and evidence.</string>
+    <string name="library_action_crash_reports_summary">Review saved diagnostic reports.</string>
     <string name="library_action_save_log_summary">Save the current application log for troubleshooting.</string>
     <string name="library_action_about_summary">Version, project, and maintainer information.</string>
     <string name="library_action_licenses_summary">Third-party notices and license terms included with the app.</string>
@@ -989,7 +989,7 @@
     <string name="runtime_virtual_controls_show_controls">Show controls</string>
     <string name="runtime_virtual_controls_template_dpad_standard">Standard D-pad</string>
     <string name="runtime_virtual_controls_template_analog_standard">Standard analog stick</string>
-    <string name="config_gamepad_directions_numeric_v2">Numeric</string>
+    <string name="config_gamepad_directions_numeric_v2">Numeric keypad</string>
     <string name="library_collections_unavailable_title">Collections unavailable</string>
     <string name="library_load_failed_message">The library could not be loaded. Try again.</string>
     <string name="bulk_install_prepare_failed">The selected apps could not be prepared for installation.</string>
@@ -1042,7 +1042,7 @@
     <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
     <string name="bulk_install_reason_jar_not_found">The JAR referenced by the JAD was not found: %1$s.</string>
     <string name="bulk_install_reason_duplicate_source">This source duplicates another source in this batch.</string>
-    <string name="bulk_install_reason_version_conflict">Multiple app variants are treated as the same version.</string>
+    <string name="bulk_install_reason_version_conflict">Multiple app variants have the same version.</string>
     <string name="bulk_install_reason_older_candidate">A newer version of this app is in the same batch.</string>
     <string name="bulk_install_reason_source_error">This source could not be prepared for installation.</string>
 </resources>

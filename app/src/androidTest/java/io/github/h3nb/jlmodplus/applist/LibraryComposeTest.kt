@@ -366,16 +366,16 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("Select").performClick()
 
         composeRule.onNodeWithText("1 app").assertIsDisplayed()
-        composeRule.onAllNodesWithText("Recently opened").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Recently played").assertCountEquals(0)
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription("Favorite (coming soon)").assertCountEquals(0)
         composeRule.onNodeWithContentDescription("Select all").performClick()
         composeRule.onNodeWithText("2 apps").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Unselect all").performClick()
+        composeRule.onNodeWithContentDescription("Deselect all").performClick()
         composeRule.onNodeWithText("0 apps").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("Library back").performClick()
-        composeRule.onNodeWithText("Recently opened").assertIsDisplayed()
+        composeRule.onNodeWithText("Recently played").assertIsDisplayed()
     }
 
     @Test
@@ -434,7 +434,7 @@ class LibraryComposeTest {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onAllNodesWithText("Recently opened").assertCountEquals(1)
+        composeRule.onAllNodesWithText("Recently played").assertCountEquals(1)
         composeRule.onAllNodesWithText("Recently added").assertCountEquals(1)
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(1)
         composeRule.onNodeWithContentDescription("Favorite (coming soon)").assertIsDisplayed()

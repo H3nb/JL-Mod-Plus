@@ -173,9 +173,9 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText(uiString(R.string.config_analog_stick)).performClick()
         composeRule.onNodeWithText("Off").assertExists()
-        composeRule.onNodeWithText("4-Way").assertExists()
-        composeRule.onNodeWithText("8-Way").assertExists()
-        composeRule.onNodeWithText("Numeric").assertExists()
+        composeRule.onNodeWithText("4-way").assertExists()
+        composeRule.onNodeWithText("8-way").assertExists()
+        composeRule.onNodeWithText("Numeric keypad").assertExists()
     }
 
     @Test

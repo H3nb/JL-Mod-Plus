@@ -83,7 +83,7 @@ class KeyMapperComposeTest {
         composeRule.onNodeWithText("Assigned inputs").assertIsDisplayed()
         composeRule.onNodeWithText("KEYCODE_BACK").assertIsDisplayed()
         composeRule.onNodeWithText("KEYCODE_BUTTON_A").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Dismiss mapping")
+        composeRule.onNodeWithContentDescription("Close mapping")
             .performSemanticsAction(SemanticsActions.OnClick)
         assertTrue(dismissed)
     }

@@ -172,12 +172,23 @@ class LibraryListProjectionTest {
         assertEquals(listOf(1L, 3L, 2L), result.map { it.id })
     }
 
-    @Test fun dateSortUsesStableDatabaseIdentityLikeLegacyRowOrdering() {
-        assertEquals(listOf(1L, 2L, 3L), project("", LibraryListProjection.SORT_DATE).map { it.id })
-        assertEquals(
-            listOf(3L, 2L, 1L),
-            project("", LibraryListProjection.SORT_DATE or Int.MIN_VALUE).map { it.id },
+    @Test fun dateAddedSortUsesKnownDatesAndKeepsLegacyRowsLast() {
+        val datedRows = listOf(
+            row(10, "Newest", "Vendor", addedAt = 300L),
+            row(11, "Legacy A", "Vendor", addedAt = null),
+            row(12, "Oldest", "Vendor", addedAt = 100L),
+            row(13, "Middle A", "Vendor", addedAt = 200L),
+            row(14, "Legacy B", "Vendor", addedAt = null),
+            row(15, "Middle B", "Vendor", addedAt = 200L),
         )
+
+        val ascending = LibraryListProjection.project(
+            datedRows, "", LibraryListProjection.SORT_DATE, Locale.US)
+        val descending = LibraryListProjection.project(
+            datedRows, "", LibraryListProjection.SORT_DATE or Int.MIN_VALUE, Locale.US)
+
+        assertEquals(listOf(12L, 13L, 15L, 10L, 11L, 14L), ascending.map { it.id })
+        assertEquals(listOf(10L, 13L, 15L, 12L, 11L, 14L), descending.map { it.id })
     }
 
     @Test fun vendorSortUsesTitleAsSecondaryKey() {
