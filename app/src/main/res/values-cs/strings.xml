@@ -40,7 +40,6 @@
     <string name="licenses">Licence</string>
     <string name="loading_info">načítání informací…</string>
     <string name="mapping_dialog_key_not_specified">nenastaveno</string>
-    <string name="mapping_dialog_message">Stávající mapování:\n%1$s</string>
     <string name="mapping_dialog_title">Stiskněte tlačítko</string>
     <string name="message_delete">Opravdu chcete odstranit tuto aplikaci?</string>
     <string name="midlet_name"><b>Název: </b></string>
