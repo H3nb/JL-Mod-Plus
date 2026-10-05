@@ -34,7 +34,7 @@ jobs:
       - name: Validate reviewed artifact and provenance
         id: inspect
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: >-
           python3 -B trusted/scripts/ci-screenshot-promotion.py inspect
           --event "$GITHUB_EVENT_PATH"
@@ -51,7 +51,7 @@ jobs:
 
       - name: Promote exact reviewed screenshot renders
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: >-
           python3 -B trusted/scripts/ci-screenshot-promotion.py promote
           --artifact "$RUNNER_TEMP/screenshot-candidates.zip"
