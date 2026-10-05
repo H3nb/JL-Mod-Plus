@@ -32,7 +32,6 @@
     <string name="layout_edit_finished">Режим на редактиране е приключен</string>
     <string name="layout_switch">Смяна на подредбата</string>
     <string name="licenses">Лицензи</string>
-    <string name="mapping_dialog_message">Текущи настройки:\n%1$s</string>
     <string name="mapping_dialog_title">Натиснете клавиш</string>
     <string name="message_delete">Наистина ли искате да изтриете това приложение?</string>
     <string name="midlet_name"><b>Име: </b></string>
