@@ -70,14 +70,14 @@
     <string name="mapping_dialog_add_input">Beberapa input fisik dapat dipetakan ke kontrol ini.</string>
     <string name="mapping_dialog_remove">Hapus</string>
     <string name="mapping_dialog_title">Tekan tombol</string>
-    <string name="message_delete">Hapus aplikasi ini beserta pengaturan dan data simpanannya? Entri aplikasi di pustaka juga akan dihapus.</string>
+    <string name="message_delete">Hapus aplikasi beserta pengaturan dan data simpanannya? Entri di pustaka juga akan dihapus.</string>
     <string name="midlet_name"><b>Nama: </b></string>
     <string name="midlet_size"><b>Ukuran: </b></string>
     <string name="midlet_vendor"><b>Vendor: </b></string>
     <string name="midlet_version"><b>Versi: </b></string>
     <string name="more">Lainnya</string>
     <string name="msg_error_loading_shader">Shader tidak didukung. Shader bawaan digunakan.</string>
-    <string name="msg_immediate_mode_disabled">Mode pemrosesan langsung dinonaktifkan karena callback event bertingkat terlalu dalam.</string>
+    <string name="msg_immediate_mode_disabled">Mode pemrosesan langsung dinonaktifkan karena callback event bersarang terlalu dalam.</string>
     <string name="msg_no_matches">Tidak ada hasil untuk \"%1$s\"</string>
     <string name="library_destination_apps">Aplikasi</string>
     <string name="library_destination_collections">Koleksi</string>
@@ -128,7 +128,7 @@
     <string name="pref_button_shape_title">Bentuk tombol</string>
     <string name="pref_category_experimental">Eksperimental</string>
     <string name="pref_emulator_dir">Direktori kerja</string>
-    <string name="pref_enable_actionbar_summary">Menampilkan bilah alat runtime pada layar Canvas MIDlet.</string>
+    <string name="pref_enable_actionbar_summary">Menjaga bilah alat runtime tetap terlihat pada layar Canvas MIDlet.</string>
     <string name="pref_enable_actionbar_title">Tampilkan bilah alat runtime</string>
     <string name="pref_enable_statusbar_title">Tampilkan bilah status sistem</string>
     <string name="pref_enable_statusbar_summary">Menjaga bilah status sistem tetap terlihat. Mengaktifkannya menonaktifkan area potongan layar.</string>
@@ -366,25 +366,25 @@
     </plurals>
     <string name="crash_report_bundle_preparing">Menyiapkan bundel diagnostik…</string>
     <string name="crash_report_bundle_ready_title">Bundel diagnostik siap</string>
-    <string name="crash_report_bundle_ready_message">%1$s\n\nDisimpan di Downloads → JL-Mod Plus Diagnostics.\n\nUnggah berkas ini di formulir GitHub sebelum mengirim laporan. Bundel diagnostik akan dipublikasikan bersama issue.</string>
+    <string name="crash_report_bundle_ready_message">%1$s\n\nDisimpan di Downloads → JL-Mod Plus Diagnostics.\n\nUnggah berkas ini melalui formulir issue GitHub sebelum mengirim laporan. Bundel diagnostik akan dipublikasikan bersama issue tersebut.</string>
     <string name="locate_bundle">Temukan bundel</string>
     <string name="open_github">Buka GitHub</string>
     <string name="crash_report_bundle_failed">Tidak dapat menyiapkan bundel diagnostik.</string>
     <string name="crash_report_locate_failed">Tidak ada pemilih berkas sistem yang tersedia untuk menemukan bundel diagnostik.</string>
-    <string name="crash_report_bundle_cleanup_failed">Laporan diagnostik telah dihapus, tetapi JL-Mod Plus tidak dapat menghapus bundel yang dibuat untuknya.</string>
+    <string name="crash_report_bundle_cleanup_failed">Laporan diagnostik dihapus, tetapi bundel terkait tidak dapat dihapus.</string>
     <string name="crash_report_github_unavailable">Tidak ada aplikasi yang dapat membuka formulir issue GitHub.</string>
     <string name="crash_report_delete_title">Hapus laporan diagnostik?</string>
-    <string name="crash_report_delete_message">Tindakan ini akan menghapus secara permanen laporan diagnostik dan bundel yang dibuat untuknya dari perangkat ini. Berkas yang sudah diunggah ke tempat lain tidak akan terpengaruh.</string>
+    <string name="crash_report_delete_message">Laporan diagnostik dan bundel terkait akan dihapus permanen dari perangkat ini. Berkas yang sudah diunggah tidak akan terpengaruh.</string>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">Hapus %1$d laporan diagnostik?</item>
     </plurals>
-    <string name="crash_reports_batch_delete_message">Tindakan ini akan menghapus secara permanen laporan diagnostik terpilih dan bundel yang dibuat untuknya dari perangkat ini. Berkas yang sudah diunggah ke tempat lain tidak akan terpengaruh.</string>
+    <string name="crash_reports_batch_delete_message">Laporan diagnostik terpilih dan bundel terkait akan dihapus permanen dari perangkat ini. Berkas yang sudah diunggah tidak akan terpengaruh.</string>
     <string name="crash_report_delete_failed">Tidak dapat menghapus laporan secara lengkap.</string>
     <string name="crash_report_unavailable">Laporan ini tidak lagi tersedia.</string>
     <string name="process_exit_recovery_title">Proses berhenti tak terduga</string>
-    <string name="process_exit_recovery_message">JL-Mod Plus sebelumnya berhenti secara tak terduga (%1$s). Detail diagnostik disimpan secara lokal.</string>
-    <string name="process_exit_recovery_message_midlet">Proses MIDlet sebelumnya berhenti secara tak terduga (%1$s). Detail diagnostik disimpan secara lokal.</string>
-    <string name="process_exit_recovery_message_named">%1$s sebelumnya berhenti secara tak terduga (%2$s). Detail diagnostik disimpan secara lokal.</string>
+    <string name="process_exit_recovery_message">JL-Mod Plus berhenti secara tak terduga pada sesi sebelumnya (%1$s). Detail diagnostik disimpan secara lokal.</string>
+    <string name="process_exit_recovery_message_midlet">Proses MIDlet berhenti secara tak terduga pada sesi sebelumnya (%1$s). Detail diagnostik disimpan secara lokal.</string>
+    <string name="process_exit_recovery_message_named">%1$s berhenti secara tak terduga pada sesi sebelumnya (%2$s). Detail diagnostik disimpan secara lokal.</string>
     <string name="select_all_reports">Pilih semua laporan</string>
     <string name="clear_report_selection">Batalkan semua pilihan laporan</string>
 
@@ -406,7 +406,7 @@
     <string name="installer_copy_details">Salin detail</string>
 
     <string name="library_collection_new">Koleksi baru</string>
-    <string name="library_collection_ready_empty_message">Buat koleksi untuk mengelompokkan aplikasi tanpa memindahkan filenya.</string>
+    <string name="library_collection_ready_empty_message">Buat koleksi untuk mengelompokkan aplikasi tanpa memindahkan berkasnya.</string>
     <string name="library_collection_add_app">Tambahkan ke koleksi</string>
     <string name="library_collection_add_apps">Tambah aplikasi</string>
     <string name="library_collection_manage_apps">Pilih aplikasi</string>
@@ -426,8 +426,8 @@
     <string name="library_import_preparing">Membaca bundel aplikasi…</string>
     <string name="library_import_restoring">Memulihkan pengaturan aplikasi dan data simpanan…</string>
     <string name="library_import_done">Bundel aplikasi berhasil diimpor.</string>
-    <string name="library_import_invalid_bundle">Bundel aplikasi yang dipilih tidak valid, rusak, atau tidak didukung. Pilih bundel aplikasi JL-Mod Plus yang valid lalu coba lagi.</string>
-    <string name="library_import_restore_existing">Aplikasi ini sudah terpasang. Impor akan mengganti pengaturan dan data simpanan yang terdapat di dalam bundel.</string>
+    <string name="library_import_invalid_bundle">Bundel yang dipilih tidak valid, rusak, atau tidak didukung. Pilih bundel JL-Mod Plus yang valid lalu coba lagi.</string>
+    <string name="library_import_restore_existing">Aplikasi ini sudah terpasang. Impor akan mengganti pengaturan dan data simpanan dengan isi bundel.</string>
     <string name="library_import_restore_failed">Aplikasi sudah terpasang, tetapi data bundel gagal dipulihkan. Coba pulihkan lagi?</string>
     <string name="library_play_stats_summary">Dimainkan: %1$d kali · Waktu total: %2$s</string>
     <string name="library_share_chooser_title">Bagikan aplikasi</string>
@@ -472,7 +472,7 @@
     <plurals name="memory_editor_edit_batch">
         <item quantity="other">Ubah %1$d nilai</item>
     </plurals>
-    <string name="memory_editor_edit_batch_help">Nilai pengganti diterapkan ke target terpilih yang cocok dengan tipe data yang dipilih. Pantauan dan pembekuan tidak tersedia untuk perubahan massal.</string>
+    <string name="memory_editor_edit_batch_help">Nilai pengganti diterapkan ke target terpilih dengan tipe data yang sesuai. Pantauan dan pembekuan tidak tersedia untuk perubahan massal.</string>
     <string name="memory_editor_edit_batch_no_common_type">Hasil yang dipilih tidak mendukung tipe data yang dipilih. Ubah hasil yang kompatibel secara terpisah.</string>
     <string name="memory_editor_save">Terapkan</string>
     <string name="memory_editor_replacement">Nilai pengganti</string>
@@ -518,7 +518,7 @@
     <string name="memory_editor_refresh_snapshot">Segarkan snapshot</string>
     <string name="memory_editor_select_result_value">Pilih hasil ini</string>
     <string name="memory_editor_freeze_after_edit">Bekukan setelah diterapkan</string>
-    <string name="memory_editor_freeze_after_edit_help">Menggunakan nilai pengganti sebagai nilai tetap dan otomatis menambahkan kandidat ke pantauan.</string>
+    <string name="memory_editor_freeze_after_edit_help">Mengunci nilai pengganti dan otomatis menambahkan kandidat ke pantauan.</string>
 
     <string name="memory_editor_expression_single_hint">Masukkan satu nilai, atau gunakan ; untuk mencari beberapa nilai dalam satu grup.</string>
     <string name="memory_editor_expression_group_needs_type">Pilih jenis data tertentu untuk pencarian grup.</string>
@@ -668,7 +668,7 @@
     <string name="config_help_lock_custom_resolution_ratio">Mempertahankan rasio lebar dan tinggi saat salah satunya diubah.</string>
     <string name="config_help_virtual_keyboard">Menampilkan kontrol sentuh di layar untuk MIDlet ini.</string>
     <string name="config_help_touch_input">Mengizinkan MIDlet menerima input dari layar sentuh.</string>
-    <string name="config_help_background">Menggunakan warna pilihan di area sekitar layar MIDlet.</string>
+    <string name="config_help_background">Mengisi area sekitar layar MIDlet dengan warna pilihan.</string>
     <string name="config_background_mode">Mode latar belakang</string>
     <string name="config_background_custom">Kustom</string>
     <string name="config_background_theme">Tema</string>
@@ -693,7 +693,7 @@
     <string name="PREF_TIMING_MODE">Sumber waktu</string>
     <string name="config_timing_mode_full_guest">Waktu emulasi</string>
     <string name="config_timing_mode_real_wall">Waktu sistem</string>
-    <string name="config_help_emulation_speed">Mengatur kecepatan waktu dan jeda yang didukung di dalam MIDlet. Audio dan UI Android tetap berjalan normal.</string>
+    <string name="config_help_emulation_speed">Mengatur kecepatan clock MIDlet dan jeda yang didukung. Audio dan UI Android tetap berjalan normal.</string>
     <string name="config_help_timing_mode">Menentukan sumber tanggal dan waktu yang dilihat MIDlet. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
     <string name="config_help_timing_unavailable">Pengaturan waktu tidak tersedia untuk MIDlet ini. Instal ulang atau konversi ulang untuk mengaktifkannya.</string>
     <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Tunggu…</string>
@@ -751,13 +751,13 @@
     <string name="preset_apply_failed_summary">Profil tidak dapat diterapkan. Periksa sumbernya lalu coba lagi.</string>
     <string name="preset_choose_parts">Pilih bagian</string>
     <string name="preset_name">Nama</string>
-    <string name="preset_save_help">Simpan pengaturan MIDlet ini dan, jika tersedia, tata letak kontrol virtualnya sebagai profil. MIDlet ini akan menggunakan profil dan menerima pembaruan berikutnya.</string>
+    <string name="preset_save_help">Simpan pengaturan dan, jika tersedia, tata letak kontrol virtual MIDlet ini sebagai profil. MIDlet akan mengikuti pembaruan profil berikutnya.</string>
     <string name="preset_update">Perbarui %1$s</string>
     <string name="preset_update_title">Perbarui %1$s?</string>
     <string name="preset_update_summary">Ganti %1$s dengan pengaturan MIDlet ini dan tata letak kontrol virtualnya jika tersedia. Perubahan ini akan berlaku untuk MIDlet lain yang menggunakan profil ini saat dijalankan lagi.</string>
     <string name="preset_update_confirm">Perbarui</string>
     <string name="preset_saved_unlinked_warning">Profil tersimpan, tetapi MIDlet ini tidak akan menerima pembaruan berikutnya dari profil tersebut.</string>
-    <string name="profile_default_fallback_notice">Profil bawaan “%1$s” tidak dapat digunakan. Profil mungkin tidak tersedia, tidak lengkap, atau tidak dapat dibaca. Bawaan JL-Mod sekarang menjadi bawaan untuk MIDlet baru.</string>
+    <string name="profile_default_fallback_notice">Profil bawaan “%1$s” tidak dapat digunakan karena tidak tersedia, tidak lengkap, atau tidak dapat dibaca. Bawaan JL-Mod akan digunakan untuk MIDlet baru.</string>
     <string name="preset_discard_changes_title">Buang perubahan?</string>
     <string name="preset_discard_changes_summary">Draf profil ini belum disimpan.</string>
     <string name="preset_continue_editing">Lanjut mengedit</string>
@@ -941,7 +941,7 @@
     <string name="diagnostic_reason_signal">Penghentian oleh sinyal</string>
     <string name="diagnostic_reason_unknown">Penyebab tidak diketahui</string>
     <string name="crash_reports_delete_failed">Sebagian laporan diagnostik terpilih tidak dapat dihapus. Laporan lain mungkin sudah dihapus.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Laporan diagnostik telah dihapus, tetapi sebagian bundel yang dibuat tidak dapat dihapus.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Laporan diagnostik dihapus, tetapi sebagian bundel terkait tidak dapat dihapus.</string>
     <string name="installer_existing_data_preserved">Pengaturan dan data simpanan yang ada akan tetap disimpan.</string>
     <string name="bulk_install_library_changed">Pustaka berubah setelah ditinjau. Tutup pemasangan massal ini, lalu pilih sumbernya lagi.</string>
     <string name="bulk_install_source_unavailable">Berkas sumber yang diperlukan sudah tidak tersedia. Pilih berkasnya lagi.</string>
