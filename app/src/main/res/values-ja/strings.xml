@@ -29,7 +29,6 @@
     <string name="licenses">ライセンス</string>
     <string name="loading_info">情報を読み込み中…</string>
     <string name="mapping_dialog_key_not_specified">指定されていません</string>
-    <string name="mapping_dialog_message">現在のマッピング: %1$s</string>
     <string name="mapping_dialog_title">キーを押してください</string>
     <string name="message_delete">本当にこのアプリを削除しますか？</string>
     <string name="midlet_name"><b>名前: </b></string>
