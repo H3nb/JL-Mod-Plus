@@ -56,7 +56,7 @@ foreach($abi in (($Abis -join ',') -split ',')){
   "--extra-cflags=--target=$($profile[0]) --sysroot=$ndkRoot/toolchains/llvm/prebuilt/$hostTag/sysroot -O2 -fPIC -I$amrOut/include",
   "--extra-ldflags=--target=$($profile[0]) --sysroot=$ndkRoot/toolchains/llvm/prebuilt/$hostTag/sysroot -Wl,-z,max-page-size=16384 -L$amrOut/lib",
   '--disable-autodetect','--disable-doc','--disable-programs','--disable-everything','--disable-avdevice','--disable-avfilter','--disable-swscale','--disable-network','--enable-version3','--enable-libopencore-amrnb','--enable-libopencore-amrwb',
-  '--disable-asm','--disable-debug','--enable-small','--enable-pic','--enable-pthreads','--disable-static','--enable-shared','--enable-swresample',
+  '--disable-asm','--disable-x86asm','--disable-debug','--enable-small','--enable-pic','--enable-pthreads','--disable-static','--enable-shared','--enable-swresample',
   '--enable-demuxer=wav,mp3,aac,mov,amr,mmf',
   '--enable-parser=mpegaudio,aac,ac3,amr','--enable-decoder=pcm_u8,pcm_s16le,pcm_s24le,pcm_s32le,pcm_f32le,pcm_alaw,pcm_mulaw,gsm_ms,adpcm_ima_wav,adpcm_yamaha,mp3float,aac,libopencore_amrnb,libopencore_amrwb')
  if($profile[3]){$configureArgs+=$profile[3]}
