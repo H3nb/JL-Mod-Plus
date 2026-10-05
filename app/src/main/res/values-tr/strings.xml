@@ -40,7 +40,6 @@
     <string name="licenses">Lisanslar</string>
     <string name="loading_info">bilgi yükleniyor…</string>
     <string name="mapping_dialog_key_not_specified">belirtilmemiş</string>
-    <string name="mapping_dialog_message">Mevcut atama:\n%1$s</string>
     <string name="mapping_dialog_title">Herhangi bir tuşa bas</string>
     <string name="message_delete">Bu uygulamayı gerçekten silmek istiyor musunuz?</string>
     <string name="midlet_name"><b>İsim: </b></string>
