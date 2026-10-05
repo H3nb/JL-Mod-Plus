@@ -21,7 +21,6 @@
     <string name="install_done">Қолданба сәтті орнатылды!</string>
     <string name="licenses">Лицензиялар</string>
     <string name="loading_info">деректерді жүктеуде…</string>
-    <string name="mapping_dialog_message">Қазіргі маппинг: %1$s</string>
     <string name="mapping_dialog_title">Пернені бас</string>
     <string name="message_delete">Бұл қолданбаны өшіргіңіз келеме?</string>
     <string name="midlet_name"><b>Аты: </b></string>
