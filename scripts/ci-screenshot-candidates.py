@@ -14,7 +14,13 @@ REFERENCES = Path("app/src/screenshotTestEmulatorDebug/reference")
 RESULTS = Path("app/build/outputs/screenshotTest-results/preview/debug/emulator")
 REPORT = Path("app/build/test-results/validateEmulatorDebugScreenshotTest/TEST-preview-screenshot-test-engine.xml")
 OUTPUT = Path("screenshot-candidates")
-COMPARISON_FAILURE = "com.android.tools.screenshot.differ.ImageComparisonAssertionError"
+COMPARISON_FAILURES = {
+    "com.android.tools.screenshot.differ.ImageComparisonAssertionError",
+    "com.android.tools.screenshot.ImageComparisonAssertionError",
+}
+
+def is_comparison_failure(failures):
+    return all(f.get("type") in COMPARISON_FAILURES for f in failures)
 
 
 def git(*args, env=None):
@@ -51,7 +57,7 @@ def main():
         if not failures:
             continue
         name = f"{case.get('classname')}.{case.get('name')}"
-        if any(f.get("type") != COMPARISON_FAILURE for f in failures):
+        if not is_comparison_failure(failures):
             excluded.append(name)
             continue
         props = {p.get("name"): p.get("value") for p in case.findall("properties/property")}
