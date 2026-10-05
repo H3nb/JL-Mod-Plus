@@ -235,7 +235,7 @@ jobs:
 
   memory-ipc-runtime:
     name: Memory IPC runtime
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'runtime-smoke' }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'runtime-smoke') || (github.event_name == 'pull_request' && github.event.pull_request.number == 149) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
