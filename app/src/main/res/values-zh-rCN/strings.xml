@@ -40,7 +40,6 @@
     <string name="licenses">许可</string>
     <string name="loading_info">加载信息中…</string>
     <string name="mapping_dialog_key_not_specified">未指定</string>
-    <string name="mapping_dialog_message">当前映射:\n%1$s</string>
     <string name="mapping_dialog_title">按下一个按键</string>
     <string name="message_delete">确定要删除此应用？</string>
     <string name="midlet_name"><b>名称： </b></string>
