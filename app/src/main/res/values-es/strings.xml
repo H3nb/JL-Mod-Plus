@@ -452,7 +452,10 @@
     <string name="memory_editor_add_to_watch">Añadir selección al seguimiento</string>
     <string name="memory_editor_no_candidates">No se encontraron valores que se puedan buscar</string>
     <string name="memory_editor_edit">Editar</string>
-    <string name="memory_editor_edit_batch">Editar %1$d valores</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Editar %1$d valor</item>
+        <item quantity="other">Editar %1$d valores</item>
+    </plurals>
     <string name="memory_editor_edit_batch_help">Aplica el valor de reemplazo a los objetivos seleccionados compatibles con el tipo de datos elegido. Seguimiento y Congelar no están disponibles para ediciones por lotes.</string>
     <string name="memory_editor_edit_batch_no_common_type">Los resultados seleccionados no admiten el tipo de datos elegido. Edita los resultados compatibles por separado.</string>
     <string name="memory_editor_save">Aplicar</string>
@@ -499,7 +502,10 @@
     <string name="memory_editor_freeze_after_edit_help">Usa el valor de reemplazo como bloqueo y añade automáticamente los candidatos al seguimiento.</string>
     <string name="memory_editor_expression_single_hint">Introduce un valor o usa ; para buscar valores agrupados.</string>
     <string name="memory_editor_expression_group_needs_type">Elige un tipo de datos específico para la búsqueda de grupo.</string>
-    <string name="memory_editor_expression_group_hint">Búsqueda de grupo · %1$d valores · mismo propietario de Java administrado</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Búsqueda de grupo · %1$d valor · mismo propietario de Java administrado</item>
+        <item quantity="other">Búsqueda de grupo · %1$d valores · mismo propietario de Java administrado</item>
+    </plurals>
     <string name="memory_editor_expression_query_help">Ejemplos: 500 · 500;1000. La búsqueda de grupo usa de 2 a 8 valores de un propietario de Java administrado.</string>
     <string name="memory_editor_keypad_clear">Borrar</string>
     <string name="memory_editor_peek_underlay">Mantén pulsado para ver el MIDlet de debajo</string>
@@ -620,7 +626,10 @@
     <string name="bulk_install_install_count">Instalar %1$d</string>
     <string name="bulk_install_cancel">Cancelar</string>
     <string name="bulk_install_close">Cerrar</string>
-    <string name="bulk_install_running">Procesadas %1$d de %2$d aplicaciones</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Procesada %1$d aplicación de %2$d</item>
+        <item quantity="other">Procesadas %1$d aplicaciones de %2$d</item>
+    </plurals>
     <string name="bulk_install_cancel_requested">Deteniendo después de la aplicación actual…</string>
     <string name="bulk_install_complete">Instalación por lotes completada</string>
     <string name="bulk_install_cancelled">Instalación por lotes detenida</string>
