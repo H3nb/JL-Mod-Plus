@@ -265,7 +265,7 @@ Current implementation evidence:
   removed 189 orphaned string declarations (188 translatable and one invariant)
   plus five unused drawables from every applicable catalog without changing active
   resource consumers or runtime input implementation. The canonical translatable
-  source catalog now contains 883 resources and 31 invariant text declarations.
+  source catalog now contains 884 resources and 31 invariant text declarations.
   Russian covers the full translatable source catalog, has completed
   semantic and language review, and was realigned only for canonical semantics
   changed by Phase 5A.1. Its locale-appropriate plurals and current no-argument
