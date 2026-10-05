@@ -1565,7 +1565,11 @@ private fun RuntimeEditDialog(
         title = {
             RuntimeInputDialogTitle(
                 title = if (batch) {
-                    stringResource(R.string.memory_editor_edit_batch, targets.size)
+                    pluralStringResource(
+                        R.plurals.memory_editor_edit_batch,
+                        targets.size,
+                        targets.size,
+                    )
                 } else stringResource(R.string.memory_editor_edit),
                 peeking = peekingUnderlay,
                 onPeekingChanged = {
@@ -2475,8 +2479,9 @@ private fun RuntimeExpressionHint(expression: MemorySearchExpression, type: Int)
         is MemorySearchExpression.Group -> if (type == MemoryEngineContract.TYPE_AUTO) {
             stringResource(R.string.memory_editor_expression_group_needs_type)
         } else {
-            stringResource(
-                R.string.memory_editor_expression_group_hint,
+            pluralStringResource(
+                R.plurals.memory_editor_expression_group_hint,
+                expression.values.size,
                 expression.values.size,
             )
         }
