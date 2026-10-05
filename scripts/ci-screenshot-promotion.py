@@ -9,7 +9,6 @@ import re
 import stat
 import subprocess
 import sys
-import tempfile
 import time
 import zipfile
 
@@ -128,10 +127,7 @@ def safe_bundle(archive_path, request):
             if not before.startswith(PNG) or not after.startswith(PNG) or before == after:
                 raise Reject(f"Invalid reviewed PNG pair for {target}.")
             files.append((target, before, after))
-        patch = archive.read(names["baselines.patch"]) if "baselines.patch" in names else None
-        if not patch:
-            raise Reject("Artifact is missing baselines.patch.")
-        return paths, files, patch
+        return paths, files
 
 
 def event_request(event_path):
@@ -175,7 +171,7 @@ def inspect(args):
     artifact_path.parent.mkdir(parents=True, exist_ok=True)
     with artifact_path.open("wb") as output:
         call("gh", "api", f"repos/{repo}/actions/artifacts/{request['artifact_id']}/zip", binary_stdout=output)
-    paths, _, _ = safe_bundle(artifact_path, request)
+    paths, _ = safe_bundle(artifact_path, request)
     state = {"version": 1, "repo": repo, "pr": pr_number, "branch": head["ref"], "request": request, "paths": paths}
     Path(args.state).write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
     with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
@@ -189,7 +185,7 @@ def promote(args):
     if (pr["state"] != "open" or pr["head"]["sha"] != request["head_sha"] or
             pr["base"]["sha"] != request["base_sha"] or pr["head"]["ref"] != state["branch"]):
         raise Reject("Pull-request state changed before promotion.")
-    paths, files, patch = safe_bundle(Path(args.artifact), request)
+    paths, files = safe_bundle(Path(args.artifact), request)
     if paths != state["paths"]:
         raise Reject("Candidate set changed between inspection and promotion.")
     target = Path(args.target).resolve()
@@ -199,17 +195,16 @@ def promote(args):
         current = (target / path).read_bytes()
         if current != before:
             raise Reject(f"Current golden does not match reviewed before image: {path}.")
-    with tempfile.NamedTemporaryFile() as patch_file:
-        patch_file.write(patch)
-        patch_file.flush()
-        call("git", "apply", "--index", "--binary", patch_file.name, cwd=target)
+    for path, _, after in files:
+        destination = target / path
+        destination.write_bytes(after)
+        call("git", "add", "--", path, cwd=target)
     staged = call("git", "-c", "core.quotepath=false", "diff", "--cached", "--name-only", cwd=target).splitlines()
     if staged != paths:
-        raise Reject("Binary patch changes files outside the reviewed candidate set.")
+        raise Reject("Promotion staged files outside the reviewed candidate set.")
     for path, _, after in files:
-        current = (target / path).read_bytes()
-        if current != after:
-            raise Reject(f"Applied golden does not equal the reviewed after image: {path}.")
+        if (target / path).read_bytes() != after:
+            raise Reject(f"Promoted golden does not equal the reviewed after image: {path}.")
     status = call("git", "-c", "core.quotepath=false", "status", "--porcelain", cwd=target).splitlines()
     if any(REFERENCE_PREFIX not in line for line in status):
         raise Reject("Promotion touched files outside screenshot references.")
@@ -229,7 +224,8 @@ def promote(args):
     promoted = call("git", "rev-parse", "HEAD", cwd=target)
     if call("git", "rev-parse", "HEAD^", cwd=target) != request["head_sha"]:
         raise Reject("Promotion commit has the wrong parent.")
-    if call("git", "-c", "core.quotepath=false", "diff-tree", "--no-commit-id", "--name-only", "-r", promoted, cwd=target).splitlines() != paths:
+    committed_paths = call("git", "-c", "core.quotepath=false", "diff-tree", "--no-commit-id", "--name-only", "-r", promoted, cwd=target).splitlines()
+    if sorted(committed_paths) != paths:
         raise Reject("Promotion commit contains unexpected files.")
     branch = state["branch"]
     lease = f"refs/heads/{branch}:{request['head_sha']}"
