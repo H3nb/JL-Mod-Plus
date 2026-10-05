@@ -220,25 +220,29 @@ androidComponents {
 // Reject retired native modules left by incremental builds in the install artifact.
 val verifyEmulatorDebugNativePackaging = tasks.register("verifyEmulatorDebugNativePackaging") {
     dependsOn("packageEmulatorDebug")
+    val abi = runtimeTestAbi ?: "arm64-v8a"
+    val apk = layout.buildDirectory.file(
+        "outputs/apk/emulator/debug/app-emulator-$abi-debug.apk",
+    )
+    inputs.property("abi", abi)
+    inputs.file(apk)
     outputs.upToDateWhen { false }
     doLast {
-        val abi = runtimeTestAbi ?: "arm64-v8a"
-        val apk = layout.buildDirectory.file(
-            "outputs/apk/emulator/debug/app-emulator-$abi-debug.apk",
-        ).get().asFile
-        check(apk.isFile) {
-            "Expected emulator debug APK for $abi was not produced: ${apk.absolutePath}"
+        val checkedAbi = inputs.properties.getValue("abi").toString()
+        val checkedApk = inputs.files.singleFile
+        check(checkedApk.isFile) {
+            "Expected emulator debug APK for $checkedAbi was not produced: ${checkedApk.absolutePath}"
         }
         val forbiddenLibraries = listOf(
             "libjlmem.so", "libjlmem_target.so", "libmmapi_tsf.so", "libmmapi_common.so",
             "libffmpegkit.so", "libffmpegkit_abidetect.so", "libavdevice.so", "libavfilter.so", "libswscale.so",
             "libavdevice_neon.so", "libavfilter_neon.so", "libswscale_neon.so"
         )
-        ZipFile(apk).use { archive ->
+        ZipFile(checkedApk).use { archive ->
             forbiddenLibraries.forEach { library ->
-                val entry = archive.getEntry("lib/$abi/$library")
+                val entry = archive.getEntry("lib/$checkedAbi/$library")
                 check(entry == null) {
-                    "${apk.name} still contains retired native library lib/$abi/$library"
+                    "${checkedApk.name} still contains retired native library lib/$checkedAbi/$library"
                 }
             }
         }
