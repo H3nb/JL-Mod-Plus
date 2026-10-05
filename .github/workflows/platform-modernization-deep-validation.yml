@@ -248,37 +248,34 @@ jobs:
           set -euo pipefail
           chmod +x gradlew
           python3 -B -m unittest discover -s scripts/tests -p 'test_ci_screenshot_candidates.py' -v
-          readarray -t pair < <(python3 - <<'PY'
+          preview='app/src/screenshotTest/kotlin/io/github/h3nb/jlmodplus/applist/LibraryProfilesScreenshotTest.kt'
+          python3 - "$preview" <<'PY'
           from pathlib import Path
-          import hashlib, struct
-          root = Path("app/src/screenshotTestEmulatorDebug/reference")
-          files = sorted(root.rglob("*.png"))
-          groups = {}
-          for path in files:
-              data = path.read_bytes()
-              if data[:8] != b"\x89PNG\r\n\x1a\n":
-                  continue
-              width, height = struct.unpack(">II", data[16:24])
-              key = (width, height)
-              digest = hashlib.sha256(data).digest()
-              for other, other_digest in groups.get(key, []):
-                  if other_digest != digest:
-                      print(other)
-                      print(path)
-                      raise SystemExit
-              groups.setdefault(key, []).append((path, digest))
-          raise SystemExit("No two distinct same-dimension screenshot references found")
+          import sys
+
+          path = Path(sys.argv[1])
+          text = path.read_text(encoding="utf-8")
+          old = """fun AboutDialogScreenshot() {
+              JLModPlusTheme(darkTheme = false) {
+                  LibraryInformationDialog(
+                      dialog = LibraryInfoDialog.About,
+          """
+          new = """fun AboutDialogScreenshot() {
+              JLModPlusTheme(darkTheme = true) {
+                  LibraryInformationDialog(
+                      dialog = LibraryInfoDialog.About,
+          """
+          if text.count(old) != 1:
+              raise SystemExit("About dialog screenshot fixture changed unexpectedly")
+          path.write_text(text.replace(old, new), encoding="utf-8")
           PY
-          )
-          target="${pair[0]}"
-          source="${pair[1]}"
-          cp "$source" "$target"
+          git diff --exit-code -- app/src/screenshotTestEmulatorDebug/reference
           set +e
           ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:validateEmulatorDebugScreenshotTest
           status=$?
           set -e
           [[ "$status" -ne 0 ]] || { echo 'Expected forced screenshot comparison failure.' >&2; exit 1; }
-          git checkout -- "$target"
+          git checkout -- "$preview"
           git diff --exit-code -- app/src/screenshotTestEmulatorDebug/reference
           export GITHUB_OUTPUT="$RUNNER_TEMP/candidate-output"
           python3 scripts/ci-screenshot-candidates.py | tee candidate-packager.txt

@@ -65,7 +65,10 @@ foreach($abi in (($Abis -join ',') -split ',')){
  $script=$scriptLines -join [Environment]::NewLine
  [IO.File]::WriteAllText("$buildRoot/configure.sh",$script+[Environment]::NewLine,[Text.UTF8Encoding]::new($false))
  & $GitBash "$buildRoot/configure.sh" > "$buildRoot/configure.txt" 2>&1
- if($LASTEXITCODE){throw "Configure failed: $abi"}
+ if($LASTEXITCODE){
+  Get-Content -LiteralPath "$buildRoot/configure.txt" | Write-Output
+  throw "Configure failed: $abi"
+ }
  if($IsWindows){foreach($generated in @('Makefile','ffbuild/config.mak')){
   $path="$buildRoot/$generated";$text=[IO.File]::ReadAllText($path)
   $text=[regex]::Replace($text,'/([a-zA-Z])/',{param($m) "$($m.Groups[1].Value.ToUpper()):/"})
