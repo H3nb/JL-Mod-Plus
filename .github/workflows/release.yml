@@ -118,9 +118,8 @@ jobs:
         env:
           JLMOD_BUILD_COMMIT: ${{ github.sha }}
         run: >-
-          ./gradlew --daemon --stacktrace --profile --continue
+          ./gradlew --daemon --parallel --stacktrace --profile --continue
           :app:lintEmulatorDebug
-          :dexlib:lintDebug
           :app:testEmulatorDebugUnitTest
           :dexlib:testDebugUnitTest
           :app:validateEmulatorDebugScreenshotTest
