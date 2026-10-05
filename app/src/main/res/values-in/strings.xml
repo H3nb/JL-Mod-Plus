@@ -87,6 +87,8 @@
     <string name="library_filter_recently_opened">Baru dibuka</string>
     <string name="library_filter_recently_added">Baru ditambahkan</string>
     <string name="library_filter_favorites">Favorit</string>
+    <string name="library_add_to_favorites_action">Tambahkan ke favorit</string>
+    <string name="library_remove_from_favorites_action">Hapus dari favorit</string>
     <string name="library_favorite_coming_soon">Favorit tidak tersedia</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Daftar</string>
@@ -442,6 +444,8 @@
 
     <string name="memory_editor_bubble">Tombol mengambang editor memori</string>
     <string name="memory_editor_bubble_content_description">Buka editor memori</string>
+    <string name="memory_editor_previous_results_page_action">Halaman hasil sebelumnya</string>
+    <string name="memory_editor_next_results_page_action">Halaman hasil berikutnya</string>
     <string name="memory_editor">Editor memori</string>
     <string name="memory_editor_search_hint">Nilai</string>
     <string name="memory_editor_next_scan">Pindai berikutnya</string>
@@ -871,7 +875,7 @@
     <string name="pref_accent_orange">Oranye</string>
     <string name="pref_accent_pink">Merah muda</string>
     <string name="runtime_invalid_intent">Permintaan peluncuran tidak valid: jalur MIDlet tidak tersedia.</string>
-    <string name="runtime_storage_in_use">Penyimpanan MIDlet sedang digunakan.</string>
+    <string name="runtime_storage_in_use">Penyimpanan MIDlet sedang digunakan oleh runtime lain.</string>
     <string name="runtime_installation_changed">Instalasi MIDlet tidak dapat disiapkan untuk dijalankan.</string>
     <string name="runtime_storage_unavailable">Penyimpanan MIDlet tidak dapat disiapkan.</string>
     <string name="runtime_no_midlets">Tidak ada MIDlet yang ditemukan dalam aplikasi ini.</string>

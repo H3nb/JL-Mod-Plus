@@ -154,6 +154,8 @@
     <string name="library_filter_recently_opened">Äskettäin avatut</string>
     <string name="library_filter_recently_added">Äskettäin lisätyt</string>
     <string name="library_filter_favorites">Suosikit</string>
+    <string name="library_add_to_favorites_action">Lisää suosikkeihin</string>
+    <string name="library_remove_from_favorites_action">Poista suosikeista</string>
     <string name="library_favorite_coming_soon">Suosikit eivät ole käytettävissä</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Luettelo</string>
@@ -190,7 +192,7 @@
     <string name="pref_category_experimental">Kokeelliset/tilapäiset asetukset</string>
     <string name="pref_emulator_dir">Työkansio</string>
     <string name="pref_enable_statusbar_title">Näytä järjestelmän tilapalkki</string>
-    <string name="pref_enable_statusbar_summary">Pidä järjestelmän tilapalkki näkyvissä. Sitä ei voi käyttää MIDlet-sovelluksen näyttöloven kanssa.</string>
+    <string name="pref_enable_statusbar_summary">Pidä järjestelmän tilapalkki näkyvissä. Kun asetus otetaan käyttöön, näyttöloven alue poistetaan käytöstä.</string>
     <string name="pref_encoding_title">Merkistökoodaus</string>
     <string name="PREF_FONT_ANTI_ALIASING">Reunojen pehmennys</string>
     <string name="PREF_FORCE_FULLSCREEN">Käytä koko näyttöä</string>
@@ -447,6 +449,8 @@
     <string name="library_description_less">Vähemmän</string>
     <string name="memory_editor_bubble">Memory Editorin kelluva painike</string>
     <string name="memory_editor_bubble_content_description">Memory Editorin kelluva painike</string>
+    <string name="memory_editor_previous_results_page_action">Edellinen tulossivu</string>
+    <string name="memory_editor_next_results_page_action">Seuraava tulossivu</string>
     <string name="memory_editor">Memory Editor</string>
     <string name="memory_editor_search_hint">Arvo</string>
     <string name="memory_editor_next_scan">Seuraava haku</string>
@@ -735,8 +739,8 @@
     <string name="config_help_key_layout">Valitsee MIDlet-sovelluksen käyttämän näppäinkoodiasettelun.</string>
     <string name="config_help_key_mapping">Määrittää Android-näppäimet ja -painikkeet J2ME-näppäimistötoiminnoille.</string>
     <string name="config_help_vk_button_shape">Asettaa virtuaaliohjainten painikkeiden muodon.</string>
-    <string name="config_help_vk_feedback">Värisee, kun virtuaaliohjaimen painiketta painetaan.</string>
-    <string name="config_help_vk_alpha">Asettaa virtuaaliohjainten peittävyyden.</string>
+    <string name="config_help_vk_feedback">Värisee virtuaaliohjainten painalluksista, kun värinä on käytössä asetuksissa.</string>
+    <string name="config_help_vk_alpha">Asettaa ohjainten peittävyyden: 0 = täysin läpinäkyvä; 255 = täysin peittävä.</string>
     <string name="config_help_vk_force_opacity">Tekee MIDlet-näytön ulkopuolisista ohjaimista peittäviä. Näytön päällä olevat ohjaimet käyttävät määritettyä peittävyyttä.</string>
     <string name="config_help_vk_hide_delay">Piilottaa ohjaimet tämän viiveen jälkeen, kun ne peittävät MIDlet-näytön. Aseta arvoksi 0 poistaaksesi automaattisen piilotuksen käytöstä.</string>
     <string name="config_help_vk_foreground">Asettaa virtuaaliohjainten painikkeiden tunnisteiden ja symbolien värin.</string>
@@ -881,7 +885,7 @@
     <string name="settings_section_profiles">Profiilit</string>
     <string name="settings_profiles_summary">Hallitse profiileja, joita voit käyttää uudelleen eri MIDlet-sovelluksissa.</string>
     <string name="pref_use_display_cutout_title">Käytä näytön lovea MIDlet-sovelluksessa</string>
-    <string name="pref_use_display_cutout_summary">Salli yhteensopivan MIDlet Canvas -sisällön ja runtime-työkalupalkin käyttää näytön loven aluetta. Sitä ei voi käyttää samanaikaisesti järjestelmän tilapalkin kanssa.</string>
+    <string name="pref_use_display_cutout_summary">Salli yhteensopivan MIDlet Canvas -sisällön ja runtime-työkalupalkin käyttää näytön loven aluetta. Kun asetus otetaan käyttöön, järjestelmän tilapalkki piilotetaan.</string>
     <string name="dialog_scroll_hint">Jatka pyyhkäisemällä</string>
     <string name="pref_accent_title">Korostusväri</string>
     <string name="pref_accent_blue">Oletussininen</string>
@@ -895,7 +899,7 @@
     <string name="pref_accent_orange">Oranssi</string>
     <string name="pref_accent_pink">Vaaleanpunainen</string>
     <string name="runtime_invalid_intent">Virheellinen käynnistyspyyntö: MIDlet-polku puuttuu.</string>
-    <string name="runtime_storage_in_use">MIDlet-tallennustila on jo käytössä.</string>
+    <string name="runtime_storage_in_use">MIDlet-tallennustila on jo toisen runtimen käytössä.</string>
     <string name="runtime_installation_changed">MIDlet-asennusta ei voitu valmistella käynnistystä varten.</string>
     <string name="runtime_storage_unavailable">MIDlet-tallennustilaa ei voitu varata.</string>
     <string name="runtime_no_midlets">Tästä sovelluksesta ei löytynyt MIDlet-sovelluksia.</string>

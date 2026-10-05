@@ -158,6 +158,8 @@
     <string name="library_filter_recently_opened">Senest åbnet</string>
     <string name="library_filter_recently_added">Senest tilføjet</string>
     <string name="library_filter_favorites">Favoritter</string>
+    <string name="library_add_to_favorites_action">Føj til favoritter</string>
+    <string name="library_remove_from_favorites_action">Fjern fra favoritter</string>
     <string name="library_favorite_coming_soon">Favoritter ikke tilgængelige</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Liste</string>
@@ -194,7 +196,7 @@
     <string name="pref_category_experimental">Eksperimentelle/midlertidige indstillinger</string>
     <string name="pref_emulator_dir">Arbejdsmappe</string>
     <string name="pref_enable_statusbar_title">Vis systemstatuslinje</string>
-    <string name="pref_enable_statusbar_summary">Hold systemstatuslinjen synlig. Den kan ikke bruges sammen med MIDlet-skærmudskæringen.</string>
+    <string name="pref_enable_statusbar_summary">Hold systemstatuslinjen synlig. Når den aktiveres, deaktiveres området ved skærmudskæringen.</string>
     <string name="pref_encoding_title">Tegnkodning</string>
     <string name="PREF_FONT_ANTI_ALIASING">Kantudjævning</string>
     <string name="PREF_FORCE_FULLSCREEN">Brug fuld skærm</string>
@@ -447,6 +449,8 @@
     <string name="library_description_less">Mindre</string>
     <string name="memory_editor_bubble">Flydende Memory Editor-knap</string>
     <string name="memory_editor_bubble_content_description">Flydende knap til Memory Editor</string>
+    <string name="memory_editor_previous_results_page_action">Forrige resultatside</string>
+    <string name="memory_editor_next_results_page_action">Næste resultatside</string>
     <string name="memory_editor">Memory Editor</string>
     <string name="memory_editor_search_hint">Værdi</string>
     <string name="memory_editor_next_scan">Næste scanning</string>
@@ -735,8 +739,8 @@
     <string name="config_help_key_layout">Vælger det tastekodelayout, som MIDlet bruger.</string>
     <string name="config_help_key_mapping">Tildeler Android-taster og -knapper til J2ME-tastaturhandlinger.</string>
     <string name="config_help_vk_button_shape">Indstiller formen på knapper til virtuelle kontroller.</string>
-    <string name="config_help_vk_feedback">Vibrerer, når en knap i de virtuelle kontroller trykkes.</string>
-    <string name="config_help_vk_alpha">Indstiller gennemsigtigheden for de virtuelle kontroller.</string>
+    <string name="config_help_vk_feedback">Vibrerer ved tryk på virtuelle kontroller, når vibration er aktiveret i Indstillinger.</string>
+    <string name="config_help_vk_alpha">Indstiller de virtuelle kontrollers opacitet: 0 = helt gennemsigtige; 255 = helt uigennemsigtige.</string>
     <string name="config_help_vk_force_opacity">Gør kontroller uden for MIDlet-skærmen ugennemsigtige. Kontroller over skærmen bruger den indstillede gennemsigtighed.</string>
     <string name="config_help_vk_hide_delay">Skjuler kontroller efter denne forsinkelse, når de dækker MIDlet-skærmen. Sæt til 0 for at deaktivere automatisk skjul.</string>
     <string name="config_help_vk_foreground">Indstiller farven på etiketter og symboler på knapper til virtuelle kontroller.</string>
@@ -881,7 +885,7 @@
     <string name="settings_section_profiles">Profiler</string>
     <string name="settings_profiles_summary">Administrer profiler, som du kan genbruge på tværs af MIDlet-programmer.</string>
     <string name="pref_use_display_cutout_title">Brug skærmudskæring i MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Tillad kompatibelt MIDlet Canvas-indhold og runtime-værktøjslinjen at bruge området ved skærmudskæringen. Det kan ikke bruges sammen med systemstatuslinjen.</string>
+    <string name="pref_use_display_cutout_summary">Tillad kompatibelt MIDlet Canvas-indhold og runtime-værktøjslinjen at bruge området ved skærmudskæringen. Når det aktiveres, skjules systemstatuslinjen.</string>
     <string name="dialog_scroll_hint">Stryg for at fortsætte</string>
     <string name="pref_accent_title">Accentfarve</string>
     <string name="pref_accent_blue">Standardblå</string>
@@ -895,7 +899,7 @@
     <string name="pref_accent_orange">Orange</string>
     <string name="pref_accent_pink">Pink</string>
     <string name="runtime_invalid_intent">Ugyldig startanmodning: MIDlet-stien mangler.</string>
-    <string name="runtime_storage_in_use">MIDlet-lageret er allerede i brug.</string>
+    <string name="runtime_storage_in_use">MIDlet-lageret er allerede i brug af en anden runtime.</string>
     <string name="runtime_installation_changed">MIDlet-installationen kunne ikke klargøres til start.</string>
     <string name="runtime_storage_unavailable">MIDlet-lager kunne ikke reserveres.</string>
     <string name="runtime_no_midlets">Ingen MIDlet-programmer blev fundet i denne applikation.</string>

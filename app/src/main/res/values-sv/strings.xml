@@ -129,6 +129,8 @@
     <string name="library_filter_recently_opened">Senast öppnade</string>
     <string name="library_filter_recently_added">Senast tillagda</string>
     <string name="library_filter_favorites">Favoriter</string>
+    <string name="library_add_to_favorites_action">Lägg till i favoriter</string>
+    <string name="library_remove_from_favorites_action">Ta bort från favoriter</string>
     <string name="library_favorite_coming_soon">Favoriter är inte tillgängliga</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Lista</string>
@@ -169,7 +171,7 @@
     <string name="pref_enable_actionbar_summary">Håll runtimeverktygsfältet synligt på MIDlet Canvas-skärmar.</string>
     <string name="pref_enable_actionbar_title">Visa runtimeverktygsfält</string>
     <string name="pref_enable_statusbar_title">Visa systemstatusfält</string>
-    <string name="pref_enable_statusbar_summary">Håll systemstatusfältet synligt. Det kan inte användas tillsammans med MIDlet-skärmens utskärning.</string>
+    <string name="pref_enable_statusbar_summary">Håll systemstatusfältet synligt. När det aktiveras inaktiveras området vid skärmutskärningen.</string>
     <string name="pref_encoding_title">Teckenkodning</string>
     <string name="PREF_FILTER">Bildfilter</string>
     <string name="PREF_FONT_ANTI_ALIASING">Kantutjämning</string>
@@ -447,6 +449,8 @@
     <string name="library_description_less">Mindre</string>
     <string name="memory_editor_bubble">Flytande Memory Editor-knapp</string>
     <string name="memory_editor_bubble_content_description">Flytande knapp för Memory Editor</string>
+    <string name="memory_editor_previous_results_page_action">Föregående resultatsida</string>
+    <string name="memory_editor_next_results_page_action">Nästa resultatsida</string>
     <string name="memory_editor">Memory Editor</string>
     <string name="memory_editor_search_hint">Värde</string>
     <string name="memory_editor_next_scan">Nästa sökning</string>
@@ -735,8 +739,8 @@
     <string name="config_help_key_layout">Väljer den tangentkodslayout som MIDlet-appen använder.</string>
     <string name="config_help_key_mapping">Tilldelar Android-tangenter och -knappar till J2ME-knappsatsåtgärder.</string>
     <string name="config_help_vk_button_shape">Ställer in formen på knappar för virtuella kontroller.</string>
-    <string name="config_help_vk_feedback">Vibrerar när en knapp för virtuella kontroller trycks.</string>
-    <string name="config_help_vk_alpha">Ställer in opaciteten för de virtuella kontrollerna.</string>
+    <string name="config_help_vk_feedback">Vibrerar vid tryck på virtuella kontroller när vibration är aktiverad i Inställningar.</string>
+    <string name="config_help_vk_alpha">Ställer in kontrollernas opacitet: 0 = helt transparenta; 255 = helt ogenomskinliga.</string>
     <string name="config_help_vk_force_opacity">Gör kontroller utanför MIDlet-skärmen ogenomskinliga. Kontroller ovanpå skärmen använder den inställda opaciteten.</string>
     <string name="config_help_vk_hide_delay">Döljer kontroller efter denna fördröjning när de täcker MIDlet-skärmen. Ange 0 för att inaktivera automatisk döljning.</string>
     <string name="config_help_vk_foreground">Ställer in färgen på etiketter och symboler på knappar för virtuella kontroller.</string>
@@ -881,7 +885,7 @@
     <string name="settings_section_profiles">Profiler</string>
     <string name="settings_profiles_summary">Hantera profiler som du kan återanvända mellan MIDlet-appar.</string>
     <string name="pref_use_display_cutout_title">Använd skärmutskärning i MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Tillåt kompatibelt MIDlet Canvas-innehåll och runtimeverktygsfältet att använda skärmutskärningsområdet. Det kan inte användas samtidigt med systemets statusfält.</string>
+    <string name="pref_use_display_cutout_summary">Tillåt kompatibelt MIDlet Canvas-innehåll och runtimeverktygsfältet att använda skärmutskärningsområdet. När det aktiveras döljs systemets statusfält.</string>
     <string name="dialog_scroll_hint">Svep för att fortsätta</string>
     <string name="pref_accent_title">Accentfärg</string>
     <string name="pref_accent_blue">Standardblå</string>
@@ -895,7 +899,7 @@
     <string name="pref_accent_orange">Orange</string>
     <string name="pref_accent_pink">Rosa</string>
     <string name="runtime_invalid_intent">Ogiltig startbegäran: MIDlet-sökvägen saknas.</string>
-    <string name="runtime_storage_in_use">MIDlet-lagringen används redan.</string>
+    <string name="runtime_storage_in_use">MIDlet-lagringen används redan av en annan runtime.</string>
     <string name="runtime_installation_changed">MIDlet-installationen kunde inte förberedas för start.</string>
     <string name="runtime_storage_unavailable">MIDlet-lagring kunde inte reserveras.</string>
     <string name="runtime_no_midlets">Inga MIDlet-appar hittades i den här applikationen.</string>

@@ -219,6 +219,8 @@
     <string name="library_filter_recently_opened">Abiertas recientemente</string>
     <string name="library_filter_recently_added">Añadidas recientemente</string>
     <string name="library_filter_favorites">Favoritas</string>
+    <string name="library_add_to_favorites_action">Añadir a favoritos</string>
+    <string name="library_remove_from_favorites_action">Quitar de favoritos</string>
     <string name="library_favorite_coming_soon">Favoritos no disponibles</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Lista</string>
@@ -246,7 +248,7 @@
     <string name="pref_apps_view">Vista de Biblioteca</string>
     <string name="pref_audio_title">Audio</string>
     <string name="pref_category_experimental">Opciones experimentales/temporales</string>
-    <string name="pref_enable_statusbar_summary">Mantener visible la barra de estado del sistema. No se puede usar junto con el recorte de pantalla del MIDlet.</string>
+    <string name="pref_enable_statusbar_summary">Mantener visible la barra de estado del sistema. Al activarla, se deshabilita el área del recorte de pantalla.</string>
     <string name="pref_graphics_software">Software</string>
     <string name="pref_language">Idioma</string>
     <string name="pref_mascot_summary">Mostrar un mensaje cuando se use Mascot Capsule 3D.</string>
@@ -434,6 +436,8 @@
     <string name="library_description_less">Menos</string>
     <string name="memory_editor_bubble">Botón flotante del Editor de memoria</string>
     <string name="memory_editor_bubble_content_description">Botón flotante del Editor de memoria</string>
+    <string name="memory_editor_previous_results_page_action">Página de resultados anterior</string>
+    <string name="memory_editor_next_results_page_action">Página de resultados siguiente</string>
     <string name="memory_editor">Editor de memoria</string>
     <string name="memory_editor_search_hint">Valor</string>
     <string name="memory_editor_next_scan">Siguiente búsqueda</string>
@@ -742,8 +746,8 @@
     <string name="config_help_key_layout">Elige la distribución de códigos de tecla que usa el MIDlet.</string>
     <string name="config_help_key_mapping">Asigna teclas y botones de Android a acciones del teclado J2ME.</string>
     <string name="config_help_vk_button_shape">Establece la forma de los botones de los controles virtuales.</string>
-    <string name="config_help_vk_feedback">Vibra al pulsar un botón de los controles virtuales.</string>
-    <string name="config_help_vk_alpha">Establece la opacidad de los controles virtuales.</string>
+    <string name="config_help_vk_feedback">Vibra al pulsar los controles virtuales cuando la vibración está activada en Ajustes.</string>
+    <string name="config_help_vk_alpha">Establece la opacidad de los controles: 0 = totalmente transparentes; 255 = totalmente opacos.</string>
     <string name="config_help_vk_force_opacity">Hace opacos los controles fuera de la pantalla del MIDlet. Los controles sobre la pantalla usan la opacidad configurada.</string>
     <string name="config_help_vk_hide_delay">Oculta los controles tras este retraso cuando cubren la pantalla del MIDlet. Establece 0 para desactivar el ocultado automático.</string>
     <string name="config_help_vk_foreground">Establece el color de etiquetas y símbolos de los botones de controles virtuales.</string>
@@ -888,7 +892,7 @@
     <string name="settings_section_profiles">Perfiles</string>
     <string name="settings_profiles_summary">Gestiona perfiles que puedes reutilizar entre MIDlets.</string>
     <string name="pref_use_display_cutout_title">Usar recorte de pantalla en el MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Permite que el contenido Canvas compatible del MIDlet y la barra de ejecución usen el área del recorte de pantalla. No puede usarse junto con la barra de estado del sistema.</string>
+    <string name="pref_use_display_cutout_summary">Permite que el contenido Canvas compatible del MIDlet y la barra de ejecución usen el área del recorte de pantalla. Al activarlo, se oculta la barra de estado del sistema.</string>
     <string name="dialog_scroll_hint">Desliza para continuar</string>
     <string name="pref_accent_title">Color de acento</string>
     <string name="pref_accent_blue">Azul predeterminado</string>
@@ -902,7 +906,7 @@
     <string name="pref_accent_orange">Naranja</string>
     <string name="pref_accent_pink">Rosa</string>
     <string name="runtime_invalid_intent">Solicitud de inicio no válida: falta la ruta del MIDlet.</string>
-    <string name="runtime_storage_in_use">El almacenamiento del MIDlet ya está en uso.</string>
+    <string name="runtime_storage_in_use">El almacenamiento del MIDlet ya está en uso por otro entorno de ejecución.</string>
     <string name="runtime_installation_changed">No se pudo preparar la instalación del MIDlet para iniciarla.</string>
     <string name="runtime_storage_unavailable">No se puede reservar almacenamiento para el MIDlet.</string>
     <string name="runtime_no_midlets">No se encontraron MIDlets en esta aplicación.</string>

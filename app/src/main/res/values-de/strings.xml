@@ -214,6 +214,8 @@
     <string name="library_filter_recently_opened">Kürzlich geöffnet</string>
     <string name="library_filter_recently_added">Kürzlich hinzugefügt</string>
     <string name="library_filter_favorites">Favoriten</string>
+    <string name="library_add_to_favorites_action">Zu Favoriten hinzufügen</string>
+    <string name="library_remove_from_favorites_action">Aus Favoriten entfernen</string>
     <string name="library_favorite_coming_soon">Favoriten nicht verfügbar</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Liste</string>
@@ -242,7 +244,7 @@
     <string name="pref_apps_view">Bibliotheksansicht</string>
     <string name="pref_audio_title">Audio</string>
     <string name="pref_category_experimental">Experimentelle/temporäre Optionen</string>
-    <string name="pref_enable_statusbar_summary">Systemstatusleiste sichtbar halten. Sie kann nicht zusammen mit dem Display-Ausschnitt des MIDlets verwendet werden.</string>
+    <string name="pref_enable_statusbar_summary">Systemstatusleiste sichtbar halten. Bei Aktivierung wird der Bereich des Display-Ausschnitts deaktiviert.</string>
     <string name="pref_graphics_hw_gles">Hardwarebeschleunigung (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Hardwarebeschleunigung (Surface)</string>
     <string name="pref_graphics_hw_view">Hardwarebeschleunigung (Fenster)</string>
@@ -434,6 +436,8 @@
     <string name="library_description_less">Weniger</string>
     <string name="memory_editor_bubble">Schwebende Memory-Editor-Schaltfläche</string>
     <string name="memory_editor_bubble_content_description">Schwebende Schaltfläche für den Memory Editor</string>
+    <string name="memory_editor_previous_results_page_action">Vorherige Ergebnisseite</string>
+    <string name="memory_editor_next_results_page_action">Nächste Ergebnisseite</string>
     <string name="memory_editor">Memory Editor</string>
     <string name="memory_editor_search_hint">Wert</string>
     <string name="memory_editor_next_scan">Nächster Scan</string>
@@ -742,8 +746,8 @@
     <string name="config_help_key_layout">Wählt das vom MIDlet verwendete Tastencode-Layout.</string>
     <string name="config_help_key_mapping">Ordnet Android-Tasten und -Schaltflächen J2ME-Tastenfeldaktionen zu.</string>
     <string name="config_help_vk_button_shape">Legt die Form der Tasten der virtuellen Steuerelemente fest.</string>
-    <string name="config_help_vk_feedback">Vibriert, wenn eine Taste der virtuellen Steuerelemente gedrückt wird.</string>
-    <string name="config_help_vk_alpha">Legt die Deckkraft der virtuellen Steuerelemente fest.</string>
+    <string name="config_help_vk_feedback">Vibriert bei Betätigung virtueller Steuerelemente, wenn Vibration in den Einstellungen aktiviert ist.</string>
+    <string name="config_help_vk_alpha">Legt die Deckkraft der Steuerelemente fest: 0 = vollständig transparent; 255 = vollständig deckend.</string>
     <string name="config_help_vk_force_opacity">Macht Steuerelemente außerhalb des MIDlet-Bildschirms undurchsichtig. Steuerelemente über dem Bildschirm verwenden die konfigurierte Deckkraft.</string>
     <string name="config_help_vk_hide_delay">Blendet Steuerelemente nach dieser Verzögerung aus, wenn sie den MIDlet-Bildschirm überdecken. Auf 0 setzen, um automatisches Ausblenden zu deaktivieren.</string>
     <string name="config_help_vk_foreground">Legt die Farbe von Beschriftungen und Symbolen auf Tasten der virtuellen Steuerelemente fest.</string>
@@ -888,7 +892,7 @@
     <string name="settings_section_profiles">Profile</string>
     <string name="settings_profiles_summary">Profile verwalten, die du für mehrere MIDlets wiederverwenden kannst.</string>
     <string name="pref_use_display_cutout_title">Display-Ausschnitt im MIDlet verwenden</string>
-    <string name="pref_use_display_cutout_summary">Kompatible MIDlet-Canvas-Inhalte und die Runtime-Symbolleiste dürfen den Bereich des Display-Ausschnitts verwenden. Nicht zusammen mit der Systemstatusleiste nutzbar.</string>
+    <string name="pref_use_display_cutout_summary">Kompatible MIDlet-Canvas-Inhalte und die Runtime-Symbolleiste dürfen den Bereich des Display-Ausschnitts verwenden. Bei Aktivierung wird die Systemstatusleiste ausgeblendet.</string>
     <string name="dialog_scroll_hint">Wischen, um fortzufahren</string>
     <string name="pref_accent_title">Akzentfarbe</string>
     <string name="pref_accent_blue">Standardblau</string>
@@ -902,7 +906,7 @@
     <string name="pref_accent_orange">Orange</string>
     <string name="pref_accent_pink">Pink</string>
     <string name="runtime_invalid_intent">Ungültige Startanforderung: MIDlet-Pfad fehlt.</string>
-    <string name="runtime_storage_in_use">MIDlet-Speicher wird bereits verwendet.</string>
+    <string name="runtime_storage_in_use">MIDlet-Speicher wird bereits von einer anderen Runtime verwendet.</string>
     <string name="runtime_installation_changed">Die MIDlet-Installation konnte nicht für den Start vorbereitet werden.</string>
     <string name="runtime_storage_unavailable">MIDlet-Speicher konnte nicht reserviert werden.</string>
     <string name="runtime_no_midlets">In dieser Anwendung wurden keine MIDlets gefunden.</string>

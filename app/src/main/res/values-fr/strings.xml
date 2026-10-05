@@ -225,6 +225,8 @@
     <string name="library_filter_recently_opened">Récemment ouvertes</string>
     <string name="library_filter_recently_added">Ajoutées récemment</string>
     <string name="library_filter_favorites">Favoris</string>
+    <string name="library_add_to_favorites_action">Ajouter aux favoris</string>
+    <string name="library_remove_from_favorites_action">Retirer des favoris</string>
     <string name="library_favorite_coming_soon">Favoris indisponibles</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Liste</string>
@@ -252,7 +254,7 @@
     <string name="pref_apps_view">Affichage de la Bibliothèque</string>
     <string name="pref_audio_title">Audio</string>
     <string name="pref_category_experimental">Options expérimentales/temporaires</string>
-    <string name="pref_enable_statusbar_summary">Garder la barre d’état système visible. Elle ne peut pas être utilisée avec l’encoche d’affichage du MIDlet.</string>
+    <string name="pref_enable_statusbar_summary">Garder la barre d’état système visible. Son activation désactive la zone de l’encoche d’affichage.</string>
     <string name="pref_language">Langue</string>
     <string name="pref_mascot_summary">Afficher un message lorsque Mascot Capsule 3D est utilisé.</string>
     <string name="pref_mascot_title">Détecter Mascot Capsule 3D</string>
@@ -434,6 +436,8 @@
     <string name="library_description_less">Moins</string>
     <string name="memory_editor_bubble">Bouton flottant de l’Éditeur de mémoire</string>
     <string name="memory_editor_bubble_content_description">Bouton flottant de l’Éditeur de mémoire</string>
+    <string name="memory_editor_previous_results_page_action">Page de résultats précédente</string>
+    <string name="memory_editor_next_results_page_action">Page de résultats suivante</string>
     <string name="memory_editor">Éditeur de mémoire</string>
     <string name="memory_editor_search_hint">Valeur</string>
     <string name="memory_editor_next_scan">Recherche suivante</string>
@@ -742,8 +746,8 @@
     <string name="config_help_key_layout">Choisit la disposition des codes de touches utilisée par le MIDlet.</string>
     <string name="config_help_key_mapping">Associe les touches et boutons Android aux actions du pavé J2ME.</string>
     <string name="config_help_vk_button_shape">Définit la forme des boutons des commandes virtuelles.</string>
-    <string name="config_help_vk_feedback">Fait vibrer l’appareil lorsqu’un bouton de commande virtuelle est pressé.</string>
-    <string name="config_help_vk_alpha">Définit l’opacité des commandes virtuelles.</string>
+    <string name="config_help_vk_feedback">Fait vibrer l’appareil lors d’un appui sur les commandes virtuelles si la vibration est activée dans les Paramètres.</string>
+    <string name="config_help_vk_alpha">Définit l’opacité des commandes : 0 = entièrement transparentes ; 255 = entièrement opaques.</string>
     <string name="config_help_vk_force_opacity">Rend opaques les commandes hors de l’écran du MIDlet. Les commandes superposées à l’écran utilisent l’opacité configurée.</string>
     <string name="config_help_vk_hide_delay">Masque les commandes après ce délai lorsqu’elles couvrent l’écran du MIDlet. Réglez sur 0 pour désactiver le masquage automatique.</string>
     <string name="config_help_vk_foreground">Définit la couleur des libellés et symboles sur les boutons des commandes virtuelles.</string>
@@ -888,7 +892,7 @@
     <string name="settings_section_profiles">Profils</string>
     <string name="settings_profiles_summary">Gérez les profils réutilisables entre les MIDlets.</string>
     <string name="pref_use_display_cutout_title">Utiliser l’encoche d’affichage dans le MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Permet au contenu Canvas compatible du MIDlet et à la barre d’outils d’exécution d’utiliser la zone de l’encoche d’affichage. Incompatible avec la barre d’état système.</string>
+    <string name="pref_use_display_cutout_summary">Permet au contenu Canvas compatible du MIDlet et à la barre d’outils d’exécution d’utiliser la zone de l’encoche d’affichage. Son activation masque la barre d’état système.</string>
     <string name="dialog_scroll_hint">Faites glisser pour continuer</string>
     <string name="pref_accent_title">Couleur d’accent</string>
     <string name="pref_accent_blue">Bleu par défaut</string>
@@ -902,7 +906,7 @@
     <string name="pref_accent_orange">Orange</string>
     <string name="pref_accent_pink">Rose</string>
     <string name="runtime_invalid_intent">Demande de lancement invalide : le chemin du MIDlet est absent.</string>
-    <string name="runtime_storage_in_use">Le stockage du MIDlet est déjà utilisé.</string>
+    <string name="runtime_storage_in_use">Le stockage du MIDlet est déjà utilisé par une autre instance d’exécution.</string>
     <string name="runtime_installation_changed">L’installation du MIDlet n’a pas pu être préparée pour le lancement.</string>
     <string name="runtime_storage_unavailable">Impossible de réserver le stockage du MIDlet.</string>
     <string name="runtime_no_midlets">Aucun MIDlet n’a été trouvé dans cette application.</string>
