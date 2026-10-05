@@ -452,7 +452,10 @@
     <string name="memory_editor_add_to_watch">Auswahl zur Beobachtungsliste hinzufügen</string>
     <string name="memory_editor_no_candidates">Keine durchsuchbaren Werte gefunden</string>
     <string name="memory_editor_edit">Bearbeiten</string>
-    <string name="memory_editor_edit_batch">%1$d Werte bearbeiten</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">%1$d Wert bearbeiten</item>
+        <item quantity="other">%1$d Werte bearbeiten</item>
+    </plurals>
     <string name="memory_editor_edit_batch_help">Wendet den Ersatzwert auf ausgewählte Ziele an, die mit dem gewählten Datentyp kompatibel sind. Beobachten und Einfrieren sind bei Stapelbearbeitungen nicht verfügbar.</string>
     <string name="memory_editor_edit_batch_no_common_type">Die ausgewählten Ergebnisse unterstützen den gewählten Datentyp nicht. Bearbeite kompatible Ergebnisse getrennt.</string>
     <string name="memory_editor_save">Anwenden</string>
@@ -499,7 +502,10 @@
     <string name="memory_editor_freeze_after_edit_help">Verwendet den Ersatzwert als Sperre und fügt die Kandidaten automatisch zur Beobachtungsliste hinzu.</string>
     <string name="memory_editor_expression_single_hint">Gib einen Wert ein oder verwende ;, um Gruppenwerte gemeinsam zu suchen.</string>
     <string name="memory_editor_expression_group_needs_type">Wähle einen bestimmten Datentyp für die Gruppensuche.</string>
-    <string name="memory_editor_expression_group_hint">Gruppensuche · %1$d Werte · gleicher Managed-Java-Eigentümer</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Gruppensuche · %1$d Wert · gleicher Managed-Java-Eigentümer</item>
+        <item quantity="other">Gruppensuche · %1$d Werte · gleicher Managed-Java-Eigentümer</item>
+    </plurals>
     <string name="memory_editor_expression_query_help">Beispiele: 500 · 500;1000. Die Gruppensuche verwendet 2–8 Werte eines Managed-Java-Eigentümers.</string>
     <string name="memory_editor_keypad_clear">Löschen</string>
     <string name="memory_editor_peek_underlay">Gedrückt halten, um das darunterliegende MIDlet zu sehen</string>
@@ -620,7 +626,10 @@
     <string name="bulk_install_install_count">%1$d installieren</string>
     <string name="bulk_install_cancel">Abbrechen</string>
     <string name="bulk_install_close">Schließen</string>
-    <string name="bulk_install_running">%1$d von %2$d Apps verarbeitet</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">%1$d App von %2$d verarbeitet</item>
+        <item quantity="other">%1$d Apps von %2$d verarbeitet</item>
+    </plurals>
     <string name="bulk_install_cancel_requested">Stopp nach der aktuellen Anwendung…</string>
     <string name="bulk_install_complete">Stapelinstallation abgeschlossen</string>
     <string name="bulk_install_cancelled">Stapelinstallation gestoppt</string>
