@@ -117,8 +117,8 @@ jobs:
             echo "Built source commit: $JLMOD_BUILD_COMMIT"
             echo "PR head commit: ${PR_HEAD_SHA:-not a PR run}"
             echo "Final results: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-            echo 'The final build check requires both Build and tests and Lint to succeed.'
-            echo 'Inspect JL-Mod-Plus-ci-diagnostics and JL-Mod-Plus-lint-diagnostics for reports.'
+            echo 'The final build check requires Build and tests, Screenshot validation, and Lint to succeed.'
+            echo 'Inspect the CI, screenshot, and lint diagnostic artifacts for reports.'
           } > ci-apk/BUILD-INFO.txt
 
       - name: Upload APK before validation completes
@@ -131,7 +131,7 @@ jobs:
           retention-days: 7
           compression-level: 0
 
-      - name: Tests, instrumentation compilation, and screenshot validation
+      - name: Tests and instrumentation compilation
         id: validation
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' && (github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate') }}
         run: >-
@@ -139,15 +139,6 @@ jobs:
           :app:testEmulatorDebugUnitTest
           :dexlib:testDebugUnitTest
           :app:assembleEmulatorDebugAndroidTest
-          :app:validateEmulatorDebugScreenshotTest
-
-      - name: Package existing screenshot renders after comparison failure
-        id: candidates
-        if: ${{ !cancelled() && steps.validation.outcome == 'failure' }}
-        env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 scripts/ci-screenshot-candidates.py
 
       - name: Generate screenshot candidates on manual request
         id: update_candidates
@@ -165,8 +156,8 @@ jobs:
           git rev-parse HEAD > screenshot-candidates/source-commit.txt
           git diff --stat HEAD -- app/src/screenshotTestEmulatorDebug/reference > screenshot-candidates/changes.txt
 
-      - name: Upload screenshot candidates for review
-        if: ${{ !cancelled() && ((steps.candidates.outcome == 'success' && steps.candidates.outputs.available == 'true') || steps.update_candidates.outcome == 'success') }}
+      - name: Upload manually generated screenshot candidates for review
+        if: ${{ !cancelled() && steps.update_candidates.outcome == 'success' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: JL-Mod-Plus-screenshot-candidates
@@ -205,8 +196,6 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           ASSEMBLE_RESULT: ${{ steps.assemble.outcome }}
           VALIDATION_RESULT: ${{ steps.validation.outcome }}
-          CANDIDATE_RESULT: ${{ steps.candidates.outcome }}
-          CANDIDATE_COUNT: ${{ steps.candidates.outputs.count || '0' }}
           UPDATE_RESULT: ${{ steps.update_candidates.outcome }}
           RUNTIME_RESULT: ${{ steps.runtime.outcome }}
         run: |
@@ -217,11 +206,10 @@ jobs:
             echo "PR head commit: ${PR_HEAD_SHA:-not a PR run}"
             echo "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             echo "APK assembly: $ASSEMBLE_RESULT"
-            echo "Tests, instrumentation compilation, screenshot validation: $VALIDATION_RESULT"
-            echo "Automatic screenshot packaging: $CANDIDATE_RESULT ($CANDIDATE_COUNT candidates)"
+            echo "Tests and instrumentation compilation: $VALIDATION_RESULT"
             echo "Manual screenshot generation: $UPDATE_RESULT"
             echo "Selected runtime tests: $RUNTIME_RESULT"
-            echo 'Lint runs in a separate job. The final build check requires both validation jobs to succeed.'
+            echo 'Screenshot validation and lint run in separate jobs. The final build check requires all validation jobs to succeed.'
             echo 'An APK artifact is not evidence that validation passed. Inspect the task reports.'
           } | tee ci-artifacts/validation.txt >> "$GITHUB_STEP_SUMMARY"
 
@@ -235,13 +223,77 @@ jobs:
             app/build/test-results/**
             dexlib/build/reports/tests/**
             dexlib/build/test-results/**
-            app/build/reports/screenshotTest/**
             app/build/reports/androidTests/**
             app/build/outputs/androidTest-results/**
             build/reports/problems/**
             build/reports/profile/**
             ci-artifacts/validation.txt
             runtime-logcat.txt
+          if-no-files-found: warn
+          retention-days: 7
+
+  screenshots:
+    name: Screenshot validation
+    if: inputs.mode != 'update-screenshots' && inputs.mode != 'runtime-smoke'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+
+      - name: Set up Android SDK and platform 37
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        with:
+          packages: 'platform-tools platforms;android-37.0'
+
+      - name: Prepare Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Validate screenshot references
+        id: screenshots
+        run: ./gradlew --daemon --parallel --stacktrace --profile :app:validateEmulatorDebugScreenshotTest
+
+      - name: Package existing screenshot renders after comparison failure
+        id: candidates
+        if: ${{ !cancelled() && steps.screenshots.outcome == 'failure' }}
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 scripts/ci-screenshot-candidates.py
+
+      - name: Upload screenshot candidates for review
+        if: ${{ !cancelled() && steps.candidates.outcome == 'success' && steps.candidates.outputs.available == 'true' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-screenshot-candidates
+          path: screenshot-candidates/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload screenshot diagnostics
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-screenshot-diagnostics
+          path: |
+            app/build/reports/screenshotTest/**
+            app/build/test-results/validateEmulatorDebugScreenshotTest/**
+            build/reports/problems/**
+            build/reports/profile/**
           if-no-files-found: warn
           retention-days: 7
 
@@ -301,7 +353,7 @@ jobs:
   ci:
     # Preserve the required PR check name; maintenance cannot satisfy it.
     name: ${{ (inputs.mode == 'update-screenshots' || inputs.mode == 'runtime-smoke') && 'maintenance-status' || 'build' }}
-    needs: [build, lint]
+    needs: [build, screenshots, lint]
     if: ${{ always() && inputs.mode != 'update-screenshots' && inputs.mode != 'runtime-smoke' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -310,8 +362,10 @@ jobs:
       - name: Require both validation jobs to succeed
         env:
           BUILD_RESULT: ${{ needs.build.result }}
+          SCREENSHOT_RESULT: ${{ needs.screenshots.result }}
           LINT_RESULT: ${{ needs.lint.result }}
         run: |
           echo "Build and tests: $BUILD_RESULT" >> "$GITHUB_STEP_SUMMARY"
+          echo "Screenshot validation: $SCREENSHOT_RESULT" >> "$GITHUB_STEP_SUMMARY"
           echo "Lint: $LINT_RESULT" >> "$GITHUB_STEP_SUMMARY"
-          [[ "$BUILD_RESULT" == 'success' && "$LINT_RESULT" == 'success' ]]
+          [[ "$BUILD_RESULT" == 'success' && "$SCREENSHOT_RESULT" == 'success' && "$LINT_RESULT" == 'success' ]]
