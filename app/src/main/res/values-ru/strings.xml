@@ -242,7 +242,12 @@
     <string name="memory_editor_refresh_snapshot">Обновить снимок</string>
     <string name="memory_editor_select_result_value">Выбрать этот результат</string>
     <string name="memory_editor_freeze_after_edit">Заморозить после применения</string>
-    <string name="bulk_install_running">Обработано приложений: %1$d из %2$d</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Обработано %1$d приложение из %2$d</item>
+        <item quantity="few">Обработано %1$d приложения из %2$d</item>
+        <item quantity="many">Обработано %1$d приложений из %2$d</item>
+        <item quantity="other">Обработано %1$d приложения из %2$d</item>
+    </plurals>
     <string name="bulk_install_fatal">Массовая установка остановлена. Перед повторной попыткой проверьте незавершённые элементы.</string>
     <string name="bulk_install_action_separate_copy">Установить отдельной копией</string>
     <string name="config_swap_screen_size">Поменять ширину и высоту</string>
@@ -605,7 +610,12 @@
     <string name="memory_editor_search_unknown_values">Поиск неизвестных значений</string>
     <string name="memory_editor_no_candidates">Не найдено значений для поиска</string>
     <string name="memory_editor_edit">Изменить</string>
-    <string name="memory_editor_edit_batch">Изменить значений: %1$d</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Изменить %1$d значение</item>
+        <item quantity="few">Изменить %1$d значения</item>
+        <item quantity="many">Изменить %1$d значений</item>
+        <item quantity="other">Изменить %1$d значения</item>
+    </plurals>
     <string name="memory_editor_freeze">Заморозить</string>
     <string name="memory_editor_remove">Удалить</string>
     <plurals name="memory_editor_selected">
@@ -643,7 +653,12 @@
     <string name="memory_editor_freeze_after_edit_help">Фиксирует новое значение и автоматически добавляет кандидатов в Наблюдение.</string>
     <string name="memory_editor_expression_single_hint">Введите одно значение или используйте ; для совместного поиска группы значений.</string>
     <string name="memory_editor_expression_group_needs_type">Выберите конкретный тип данных для группового поиска.</string>
-    <string name="memory_editor_expression_group_hint">Групповой поиск · %1$d значений · один владелец Managed Java</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Групповой поиск · %1$d значение · один владелец Managed Java</item>
+        <item quantity="few">Групповой поиск · %1$d значения · один владелец Managed Java</item>
+        <item quantity="many">Групповой поиск · %1$d значений · один владелец Managed Java</item>
+        <item quantity="other">Групповой поиск · %1$d значения · один владелец Managed Java</item>
+    </plurals>
     <string name="memory_editor_expression_query_help">Примеры: 500 · 500;1000. Групповой поиск использует 2–8 значений одного владельца Managed Java.</string>
     <string name="memory_editor_keypad_clear">Очистить</string>
     <string name="memory_editor_peek_underlay">Нажмите и удерживайте, чтобы увидеть MIDlet под окном</string>
