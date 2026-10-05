@@ -173,7 +173,7 @@
     <string name="msg_unsupported_soundbank">Unsupported soundbank. Using the default soundbank.</string>
     <string name="no_data_for_display">No apps to show</string>
     <string name="not_saved_exists">Already exists</string>
-    <string name="parallel_screen_redrawing">Parallel Screen Redraw</string>
+    <string name="parallel_screen_redrawing">Asynchronous screen updates</string>
     <string name="permission_request_failed">This app requires storage write permission.</string>
     <string name="pref_app_sort_date">Date</string>
     <string name="pref_app_sort_name">Name</string>
@@ -182,7 +182,7 @@
     <string name="pref_app_sort_ascending">Ascending</string>
     <string name="pref_app_sort_descending">Descending</string>
     <string name="pref_apps_view">Library View</string>
-    <string name="pref_audio_title">Audio</string>
+    <string name="pref_audio_title">MIDI</string>
     <string name="PREF_BACKGROUND">Background</string>
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Rectangle</string>
@@ -217,7 +217,7 @@
     <string name="PREF_LIMIT_FPS">Frame Rate Limit</string>
     <string name="pref_map_keys">Key Mappings</string>
     <string name="pref_mascot_summary">Show a message when Mascot Capsule 3D is used.</string>
-    <string name="pref_mascot_title">Detect Mascot Capsule 3D</string>
+    <string name="pref_mascot_title">Mascot Capsule 3D notification</string>
     <string name="PREF_ORIENTATION">Screen Orientation</string>
     <string name="pref_orientation_auto">Auto</string>
     <string name="pref_orientation_default">Default</string>
@@ -236,13 +236,13 @@
     <string name="pref_screen_scale_type_fill">Fill Window (Ignore Aspect Ratio)</string>
     <string name="pref_screen_scale_type_fit">Fit to Window</string>
     <string name="pref_screen_scale_type_none">Original Size</string>
-    <string name="pref_screenshot_summary">Disable scaling and filtering for screenshots.</string>
+    <string name="pref_screenshot_summary">Saves the MIDlet frame at its virtual resolution before scaling, Image Filter, and Screen Shader.</string>
     <string name="pref_screenshot_title">Raw Screenshot</string>
     <string name="PREF_SHADER_FILTER">Screen Shader</string>
     <string name="PREF_SHOW_FPS">Show Performance Overlay</string>
     <string name="pref_skin_not_set">Not set</string>
     <string name="pref_skin_title">Skin</string>
-    <string name="pref_skip_resume_call">Skip MIDlet Resume Callback</string>
+    <string name="pref_skip_resume_call">Skip subsequent startApp() calls</string>
     <string name="pref_soundbank_title">MIDI Soundbank</string>
     <string name="PREF_SYS_PROPS">System Properties</string>
     <string name="PREF_SYS_PROPS_HINT" translatable="false">microedition.platform: Sony Ericsson C510i\nmicroedition.profiles: MIDP2.0</string>
@@ -261,7 +261,7 @@
     <string name="config_gamepad_test">Test Controller</string>
     <string name="config_gamepad_test_summary">Shows raw controls and analog state without sending input to the MIDlet.</string>
     <string name="config_gamepad_calibrate">Calibrate Controller</string>
-    <string name="config_gamepad_calibrate_summary">Measures stick and trigger ranges for calibration.</string>
+    <string name="config_gamepad_calibrate_summary">Measures the connected controller’s neutral position and the ranges of its sticks and triggers.</string>
     <string name="config_gamepad_help">Mapping Help</string>
     <string name="config_gamepad_help_summary">Learn how controller navigation, digital mapping, keypad, pointer, and calibration work.</string>
     <string name="config_gamepad_reset">Reset Analog Controls</string>
@@ -460,7 +460,7 @@
     <string name="pref_theme_night">Dark</string>
     <string name="pref_theme_system">Follow System Settings</string>
     <string name="pref_theme_title">Theme</string>
-    <string name="pref_title_emulation">Emulation</string>
+    <string name="pref_title_emulation">MIDlet lifecycle</string>
     <string name="PREF_TOUCH_INPUT">Touch Input</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Enable Vibration</string>
@@ -860,7 +860,7 @@
     </plurals>
 
     <string name="config_destination_general">Basic</string>
-    <string name="config_basic_display">Screen &amp; Window</string>
+    <string name="config_basic_display">MIDlet screen</string>
     <string name="config_basic_input">Input</string>
     <string name="config_display_appearance">Appearance</string>
     <string name="config_display_rendering">Rendering</string>
@@ -874,9 +874,9 @@
     <string name="config_current_value">Current Value</string>
     <string name="config_maintenance">Reset &amp; Data</string>
     <string name="config_reset_all_settings">Reset All Settings</string>
-    <string name="config_reset_all_settings_summary">Restore this MIDlet’s settings and virtual controls to their defaults.</string>
+    <string name="config_reset_all_settings_summary">Restore this MIDlet’s settings and virtual controls to their defaults without deleting its data.</string>
     <string name="config_delete_app_data">Delete MIDlet Data</string>
-    <string name="config_delete_app_data_summary">Permanently delete the saves and data for this MIDlet.</string>
+    <string name="config_delete_app_data_summary">Permanently delete this MIDlet’s data, including saves. Its settings will be kept.</string>
     <string name="config_message_reset_settings">Reset this MIDlet’s settings and virtual controls to their defaults? MIDlet data will not be deleted.</string>
     <string name="config_message_reset_profile_settings">Reset this profile’s settings and virtual controls to their defaults? You can still edit or cancel before saving.</string>
     <string name="config_message_delete_app_data">Permanently delete all saves and data created by this MIDlet? MIDlet settings will not be deleted.</string>
@@ -889,13 +889,13 @@
     <string name="profile_name_exists">A profile with this name already exists.</string>
     <string name="profile_delete_template_message">Delete profile “%1$s”? MIDlets using it will keep their current settings but won’t receive future updates.</string>
     <string name="profile_template_operation_failed">Could not complete the profile operation.</string>
-    <string name="config_help_screen_size">Sets the virtual screen resolution exposed to the MIDlet.</string>
+    <string name="config_help_screen_size">Sets the virtual Java ME screen resolution used by the MIDlet.</string>
     <string name="config_help_orientation">Chooses the screen orientation while the MIDlet runs.</string>
     <string name="config_help_scale_type">Chooses how the MIDlet screen fits the available area. The screen ratio can be preserved or ignored.</string>
     <string name="config_help_scale_ratio">Changes the displayed size without changing the MIDlet’s virtual resolution.</string>
     <string name="config_help_lock_custom_resolution_ratio">Keeps the width-to-height ratio while editing the custom resolution.</string>
-    <string name="config_help_virtual_keyboard">Shows touch controls for this MIDlet.</string>
-    <string name="config_help_touch_input">Lets the MIDlet receive touchscreen events.</string>
+    <string name="config_help_virtual_keyboard">Shows on-screen controls for this MIDlet.</string>
+    <string name="config_help_touch_input">Lets the MIDlet receive pointer input from the touchscreen.</string>
     <string name="config_help_background">Fills unused space around the MIDlet screen.</string>
     <string name="config_background_mode">Background Mode</string>
     <string name="config_background_custom">Custom</string>
@@ -908,22 +908,23 @@
     <string name="config_help_skin">Shows an optional image or frame around the MIDlet screen.</string>
     <string name="config_help_screen_gravity">Positions the MIDlet screen when unused space remains.</string>
     <string name="config_help_screen_padding">Adds space between the MIDlet screen and the display area edge.</string>
-    <string name="config_help_filter">Smooths the MIDlet screen when it is enlarged or reduced.</string>
+    <string name="config_help_filter">Uses linear filtering to smooth the MIDlet screen while it is scaled.</string>
+    <string name="config_warning_filter_shader">Linear filtering smooths the input before the screen shader processes it and may reduce output sharpness.</string>
     <string name="config_help_immediate">Processes MIDlet events immediately instead of queuing them. May improve responsiveness but can destabilize some MIDlets.</string>
-    <string name="config_help_graphics_mode">Chooses the rendering mode for the MIDlet screen. Some modes may affect performance and compatibility.</string>
-    <string name="config_help_shader">Applies a visual effect to the MIDlet screen.</string>
+    <string name="config_help_graphics_mode">Chooses the rendering path for the MIDlet screen. Hardware acceleration may improve performance, but compatibility varies by device.</string>
+    <string name="config_help_shader">Applies a shader to the MIDlet frame before it is displayed.</string>
     <string name="config_help_shader_tuning">Adjusts settings for the selected shader.</string>
-    <string name="config_help_parallel_redraw">Redraws the screen in parallel when supported. This may improve performance on some configurations.</string>
+    <string name="config_help_parallel_redraw">Schedules frame presentation asynchronously. This may improve performance on some devices.</string>
     <string name="config_help_force_fullscreen">Start MIDlet Canvas screens in fullscreen mode. The MIDlet can change this mode.</string>
     <string name="config_help_show_fps">Shows the MIDlet’s frame rate and rendering diagnostics.</string>
-    <string name="config_help_fps_limit">Caps the frame rate.</string>
+    <string name="config_help_fps_limit">Sets the FPS limit at 1× emulation speed. The effective limit follows emulation speed; 0 (Maximum) uses the display’s maximum refresh rate.</string>
     <string name="PREF_EMULATION_SPEED">Emulation Speed</string>
-    <string name="PREF_TIMING_MODE">Clock Mode</string>
-    <string name="config_timing_mode_full_guest">Emulated Clock</string>
-    <string name="config_timing_mode_real_wall">Real-World Clock</string>
+    <string name="PREF_TIMING_MODE">Time source</string>
+    <string name="config_timing_mode_full_guest">Emulation time</string>
+    <string name="config_timing_mode_real_wall">System time</string>
     <string name="config_help_emulation_speed">Changes the MIDlet clock speed and supported delays. Android audio and UI stay normal.</string>
-    <string name="config_help_timing_mode">Chooses whether the MIDlet uses emulated or real date and time. Delays still follow emulation speed.</string>
-    <string name="config_help_timing_unavailable">This MIDlet lacks timing support. Reinstall or reconvert it to enable emulation speed.</string>
+    <string name="config_help_timing_mode">Chooses whether the MIDlet uses emulation time or system time. Relative delays remain scaled with emulation speed.</string>
+    <string name="config_help_timing_unavailable">Time settings are unavailable for this MIDlet installation. Reinstall or reconvert the MIDlet to enable them.</string>
     <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start. Please wait…</string>
     <string name="reconversion_error">The MIDlet could not be converted automatically.
 
@@ -944,7 +945,7 @@
     <string name="config_help_font_dimensions">Applies Android’s font scale to Java ME font sizes.</string>
     <string name="config_help_font_aa">Smooths the edges of rendered text.</string>
     <string name="config_help_key_layout">Chooses the key-code layout used by the MIDlet.</string>
-    <string name="config_help_key_mapping">Maps Android keys and buttons to J2ME keypad actions.</string>
+    <string name="config_help_key_mapping">Maps physical Android keys and buttons to Java ME keypad actions.</string>
     <string name="config_help_vk_button_shape">Sets the shape of virtual-control buttons.</string>
     <string name="config_help_vk_feedback">Vibrates when a virtual-control button is pressed.</string>
     <string name="config_help_vk_alpha">Sets the opacity of the virtual controls.</string>
@@ -956,8 +957,8 @@
     <string name="config_help_vk_selected_background">Sets the button color while it is pressed.</string>
     <string name="config_help_vk_outline">Sets the outline color of virtual-control buttons.</string>
     <string name="config_help_reset_layout">Restores the virtual-controls layout without changing other MIDlet settings.</string>
-    <string name="config_help_skip_resume">Skips the MIDlet resume callback when returning to it. Use only if the MIDlet fails after resuming.</string>
-    <string name="config_help_soundbank">Chooses the soundbank used for MIDI playback.</string>
+    <string name="config_help_skip_resume">After the first successful startApp(), skip later calls when the MIDlet resumes. Use only for MIDlets that fail when resumed.</string>
+    <string name="config_help_soundbank">Chooses the soundbank used for MIDI synthesis.</string>
     <string name="profile_create_title">Create Profile</string>
     <string name="profile_rename_title">Rename Profile</string>
 
@@ -1139,7 +1140,7 @@
     <string name="library_bulk_reinstall_apps">Reinstall</string>
     <string name="library_bulk_export_apps">Export Bundle</string>
     <string name="library_enhanced_icons_title">Enhanced Icons</string>
-    <string name="library_enhanced_icons_summary">Improve source icons with adaptive sizing and color treatment.</string>
+    <string name="library_enhanced_icons_summary">Adjusts icon size and color so icons look more consistent in the Library.</string>
 
     <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
     <string name="config_virtual_controls_movement">Virtual Controls</string>

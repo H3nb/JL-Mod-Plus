@@ -110,12 +110,13 @@ such as `An error occurred` when a useful cause is known. Never claim `saved`,
 state. Setting summaries explain observable effects; asynchronous messages
 distinguish requested/pending work from completed work.
 
-Indonesian is a first-class required localization: Bahasa Indonesia baku that
-is natural for modern software UI, concise, and neutral. Avoid unnecessary
-bureaucratic/formal phrasing and mechanically translated imperatives. Retain
-accepted product/technical terminology when translation would reduce clarity.
-Preserve every user-visible semantic distinction of the canonical source while
-allowing natural Indonesian syntax and wording.
+Indonesian is a first-class required localization: use standard, neutral Bahasa
+Indonesia suitable for modern software UI. Prefer natural Indonesian syntax over
+literal English structure, and use sentence case by default for app-owned
+Indonesian UI. Preserve technical terms when translation would reduce clarity.
+Capitalization is language- and presentation-specific; it does not need to mirror
+English. Preserve every user-visible semantic distinction of the canonical
+source even when sentence structure or terminology differs.
 
 > English and Indonesian are two language renderings of one semantic contract,
 > not two independent sources of product meaning and not a literal translation pair.
@@ -332,13 +333,13 @@ The table is an initial review baseline, not authorization to rewrite resources.
 | MIDlet | Java ME application executed by the emulator. | MIDlet | JL-Mod Plus itself or its runtime host. | Yes, technical term. |
 | Profile | Named reusable MIDlet configuration, optionally including virtual-control layout. | Profil | Current installed configuration, built-in defaults, linked ownership, Java ME platform profiles, or controller calibration profiles. | No; preserve the supplied profile name. |
 | Preset | Preconfigured option/set, such as controller mappings or font sizes. Named MIDlet presets are presented as Profile/Profil despite internal `preset_*` keys. | Prasetel for generic options; Profil for named MIDlet configuration. | Do not introduce a second visible name for the Profile concept or infer live linkage from the word. | No. |
-| Virtual Controls | App-provided touch buttons, D-pad, and analog stick. | Kontrol Virtual | Android IME, physical gamepad controls, guest input fields, or guest display. | No. |
-| Layout | Arrangement/geometry of virtual controls when used in that context; qualify as Virtual Controls Layout when needed. | Tata Letak; Tata Letak Kontrol Virtual when qualified. | Key-code layout is a separate concept; inspect which arrangement a surface controls. | No. |
+| Virtual Controls | App-provided touch buttons, D-pad, and analog stick. | Kontrol virtual | Android IME, physical gamepad controls, guest input fields, or guest display. | No. |
+| Layout | Arrangement/geometry of virtual controls when used in that context; qualify as Virtual Controls Layout when needed. | Tata letak; tata letak kontrol virtual when qualified. | Key-code layout is a separate concept; inspect which arrangement a surface controls. | No. |
 | Collection | Named Library grouping whose membership references installed apps. | Koleksi | Filesystem folders, moving/deleting installed files, or Favorites. | No; preserve the supplied collection name. |
 | Diagnostic Report | Retained diagnostic incident/evidence record, including qualifying nonfatal process exits. | Laporan Diagnostik | Derived public bundle, ordinary logs, GitHub issue, or crash-only classification. | No for UI labels; exported evidence follows its format contract. |
 | Memory Editor | App-owned UI for searching, inspecting, modifying, watching, and freezing supported values in the active runtime. | Editor Memori | Configuration/file editing or unrestricted process-wide memory access; actual capabilities constrain available operations. | No. |
 | Runtime | Active MIDlet execution environment/session, including host lifecycle, rendering, and input management. | Runtime | Installed app, persistent profile, host menu, or elapsed running time. | Yes, established technical usage. |
-| Immediate Processing | Compatibility option that processes MIDlet events directly instead of queuing them on the normal Java ME event queue. | Pemrosesan Langsung | Emulation Speed, Clock Mode, or ordinary asynchronous work. | No. |
+| Immediate Processing | Compatibility option that processes MIDlet events directly instead of queuing them on the normal Java ME event queue. | Pemrosesan langsung | Emulation Speed, Clock Mode, or ordinary asynchronous work. | No. |
 
 Meaning is grounded in the [preset/configuration contracts](preset-config-contract.md),
 [Library data contracts](library-data-contract.md), [runtime UI boundaries](runtime-ui.md),

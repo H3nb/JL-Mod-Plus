@@ -53,11 +53,21 @@ private val PreviewSettingsState = SettingsUiState(
             true,
         ),
         SettingsSwitch("pref_wakelock_switch", "Keep Screen On", null, false),
-        SettingsSwitch("pref_screenshot_switch", "Raw Screenshot", "Disable scaling and filtering for screenshots", false),
+        SettingsSwitch(
+            "pref_screenshot_switch",
+            "Raw Screenshot",
+            "Saves the MIDlet frame at its virtual resolution before scaling, Image Filter, and Screen Shader.",
+            false,
+        ),
         SettingsSwitch("pref_vibration_switch", "Enable Vibration", null, true),
     ),
     experimentalSwitches = listOf(
-        SettingsSwitch("micro3d_using_message", "Detect Mascot Capsule 3D", "Show a message when used", false),
+        SettingsSwitch(
+            "micro3d_using_message",
+            "Mascot Capsule 3D notification",
+            "Show a message when used",
+            false,
+        ),
     ),
     showProfiles = true,
     workingDirectory = "/storage/emulated/0/JL-Mod Plus",
@@ -96,7 +106,7 @@ private val PreviewSettingsState = SettingsUiState(
         SettingsSwitch(
             "pref_apps_enhanced_icons",
             "Enhanced Icons",
-            "Improve source icons with adaptive sizing and color treatment.",
+            "Adjusts icon size and color so icons look more consistent in the Library.",
             true,
         ),
         SettingsSwitch(
