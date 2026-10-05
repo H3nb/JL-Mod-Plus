@@ -266,6 +266,12 @@ Current implementation evidence:
   plus five unused drawables from every applicable catalog without changing active
   resource consumers or runtime input implementation. The canonical translatable
   source catalog now contains 883 resources and 31 invariant text declarations.
+  Count-bearing app-owned UI uses Android plural resources when grammar depends on a
+  displayed quantity. Stale localized declarations with obsolete placeholder contracts
+  are removed from incomplete catalogs rather than preserved with incorrect semantics;
+  those locales fall back to the canonical source text until the key is reviewed. UI
+  percentages are formatted with the active resource locale rather than assembled from
+  a hardcoded percent suffix.
   Russian completed its full-catalog Phase 5A semantic and language review and was
   realigned for canonical semantics changed by Phase 5A.1. Later canonical changes
   remain subject to the subsequent secondary-locale passes; catalog coverage alone
