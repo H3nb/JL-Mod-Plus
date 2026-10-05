@@ -40,7 +40,6 @@
     <string name="licenses">Ліцензії</string>
     <string name="loading_info">завантаження інформації…</string>
     <string name="mapping_dialog_key_not_specified">не визначено</string>
-    <string name="mapping_dialog_message">Поточне зіставлення:\n%1$s</string>
     <string name="mapping_dialog_title">Натисніть клавішу</string>
     <string name="message_delete">Ви дійсно хочете видалити данний додаток?</string>
     <string name="midlet_name"><b>Назва: </b></string>
