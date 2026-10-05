@@ -36,7 +36,6 @@
     <string name="licenses">Giấy phép</string>
     <string name="loading_info">thông tin đang tải…</string>
     <string name="mapping_dialog_key_not_specified">không chỉ định</string>
-    <string name="mapping_dialog_message">Ánh xạ dòng:\n%1$s</string>
     <string name="mapping_dialog_title">Bấm một phím</string>
     <string name="message_delete">Bạn thực sự muốn xoá ứng dụng này?</string>
     <string name="midlet_name"><b>Tên: </b></string>
