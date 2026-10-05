@@ -111,8 +111,8 @@ fun InstallerIndonesianActionsScreenshot() {
         InstallerScreen(
             state = InstallerUiState.Confirmation(
                 title = "Demo MIDlet",
-                message = "Nama: Demo MIDlet\nPenerbit: Studio Contoh\nVersi: 1.0\n\nPasang aplikasi ini?",
-                installLabel = "Pasang",
+                message = "Nama: Demo MIDlet\nPenerbit: Studio Contoh\nVersi: 1.0\n\nInstal aplikasi ini?",
+                installLabel = "Instal",
                 closeLabel = "Batal",
                 runLabel = "Mulai",
                 iconPath = null,
