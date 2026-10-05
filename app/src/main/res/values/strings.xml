@@ -516,7 +516,10 @@
     <string name="memory_editor_add_to_watch">Add Selected to Watch</string>
     <string name="memory_editor_no_candidates">No searchable values found</string>
     <string name="memory_editor_edit">Edit</string>
-    <string name="memory_editor_edit_batch">Edit %1$d Values</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Edit %1$d Value</item>
+        <item quantity="other">Edit %1$d Values</item>
+    </plurals>
     <string name="memory_editor_edit_batch_help">Applies the replacement value to selected targets compatible with the chosen data type. Watch and Freeze are unavailable for batch edits.</string>
     <string name="memory_editor_edit_batch_no_common_type">The selected results do not support the chosen data type. Edit compatible results separately.</string>
     <string name="memory_editor_save">Apply</string>
@@ -568,7 +571,10 @@
 
     <string name="memory_editor_expression_single_hint">Enter one value, or use ; to search group values together.</string>
     <string name="memory_editor_expression_group_needs_type">Choose a specific data type for Group Search.</string>
-    <string name="memory_editor_expression_group_hint">Group Search · %1$d values · same Managed Java owner</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Group Search · %1$d value · same Managed Java owner</item>
+        <item quantity="other">Group Search · %1$d values · same Managed Java owner</item>
+    </plurals>
     <string name="memory_editor_expression_query_help">Examples: 500 · 500;1000. Group Search uses 2–8 values from one Managed Java owner.</string>
     <string name="memory_editor_keypad_clear">Clear</string>
     <string name="memory_editor_peek_underlay">Press and hold to see the MIDlet below</string>
@@ -655,7 +661,10 @@
     <string name="bulk_install_install_count">Install %1$d</string>
     <string name="bulk_install_cancel">Cancel</string>
     <string name="bulk_install_close">Close</string>
-    <string name="bulk_install_running">Processed %1$d of %2$d apps</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Processed %1$d app of %2$d</item>
+        <item quantity="other">Processed %1$d apps of %2$d</item>
+    </plurals>
     <string name="bulk_install_cancel_requested">Stopping after the current application…</string>
     <string name="bulk_install_complete">Bulk Install Complete</string>
     <string name="bulk_install_cancelled">Bulk Install Stopped</string>
