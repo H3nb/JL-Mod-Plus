@@ -452,7 +452,10 @@
     <string name="memory_editor_add_to_watch">Adicionar seleção ao monitoramento</string>
     <string name="memory_editor_no_candidates">Nenhum valor pesquisável encontrado</string>
     <string name="memory_editor_edit">Editar</string>
-    <string name="memory_editor_edit_batch">Editar %1$d valores</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Editar %1$d valor</item>
+        <item quantity="other">Editar %1$d valores</item>
+    </plurals>
     <string name="memory_editor_edit_batch_help">Aplica o valor substituto aos alvos selecionados compatíveis com o tipo de dados escolhido. Monitorar e Congelar não estão disponíveis para edições em lote.</string>
     <string name="memory_editor_edit_batch_no_common_type">Os resultados selecionados não aceitam o tipo de dados escolhido. Edite os resultados compatíveis separadamente.</string>
     <string name="memory_editor_save">Aplicar</string>
@@ -499,7 +502,10 @@
     <string name="memory_editor_freeze_after_edit_help">Usa o valor substituto como bloqueio e adiciona automaticamente os candidatos ao monitoramento.</string>
     <string name="memory_editor_expression_single_hint">Digite um valor ou use ; para pesquisar valores agrupados.</string>
     <string name="memory_editor_expression_group_needs_type">Escolha um tipo de dados específico para a Pesquisa em grupo.</string>
-    <string name="memory_editor_expression_group_hint">Pesquisa em grupo · %1$d valores · mesmo proprietário Java gerenciado</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Pesquisa em grupo · %1$d valor · mesmo proprietário Java gerenciado</item>
+        <item quantity="other">Pesquisa em grupo · %1$d valores · mesmo proprietário Java gerenciado</item>
+    </plurals>
     <string name="memory_editor_expression_query_help">Exemplos: 500 · 500;1000. A Pesquisa em grupo usa de 2 a 8 valores de um proprietário Java gerenciado.</string>
     <string name="memory_editor_keypad_clear">Limpar</string>
     <string name="memory_editor_peek_underlay">Pressione e segure para ver o MIDlet abaixo</string>
@@ -620,7 +626,10 @@
     <string name="bulk_install_install_count">Instalar %1$d</string>
     <string name="bulk_install_cancel">Cancelar</string>
     <string name="bulk_install_close">Fechar</string>
-    <string name="bulk_install_running">Processados %1$d de %2$d aplicativos</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Processado %1$d aplicativo de %2$d</item>
+        <item quantity="other">Processados %1$d aplicativos de %2$d</item>
+    </plurals>
     <string name="bulk_install_cancel_requested">Parando após o aplicativo atual…</string>
     <string name="bulk_install_complete">Instalação em lote concluída</string>
     <string name="bulk_install_cancelled">Instalação em lote interrompida</string>
@@ -962,7 +971,7 @@
     <string name="bulk_install_reason_conflicting_jads">Arquivos JAD com atributos diferentes referenciam o mesmo JAR.</string>
     <string name="bulk_install_reason_remote_jar">A instalação em lote não pode baixar arquivos JAR remotos.</string>
     <string name="bulk_install_reason_missing_jar_url">Está faltando MIDlet-Jar-URL no JAD.</string>
-    <string name="bulk_install_reason_unsupported_uri_scheme">O JAD referencia um JAR usando um esquema URI não compatível: %1$s.</string>
+    <string name="bulk_install_reason_unsupported_uri_scheme">O JAD faz referência a um JAR usando um esquema URI não compatível: %1$s.</string>
     <string name="bulk_install_reason_missing_parent">O JAD não tem diretório superior.</string>
     <string name="bulk_install_reason_jar_not_found">O JAR referenciado pelo JAD não foi encontrado: %1$s.</string>
     <string name="bulk_install_reason_duplicate_source">Esta origem duplica outra origem neste lote.</string>
