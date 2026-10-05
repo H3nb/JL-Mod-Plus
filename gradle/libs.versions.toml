@@ -22,8 +22,9 @@ navigation3 = "1.1.7"
 google-gson = "2.14.0"
 google-oboe = "1.10.0"
 junit = "4.13.2"
+kotlin = "2.4.20"
 kotlinx-coroutines = "1.11.0"
-ksp = "2.3.10"
+ksp = "2.3.12"
 pngj = "2.2.3"
 rx-android = "2.1.1"
 zip4j = "2.11.6"
@@ -72,6 +73,6 @@ zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "zip4j" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 androidx-room3 = { id = "androidx.room3", version.ref = "androidx-room3" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.2.10" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 compose-screenshot = { id = "com.android.compose.screenshot", version.ref = "compose-screenshot" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
