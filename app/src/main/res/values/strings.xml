@@ -179,7 +179,7 @@
     <string name="pref_enable_statusbar_summary">Keep the system status bar visible. Enabling it disables the display-cutout area.</string>
     <string name="pref_encoding_title">Encoding</string>
     <string name="PREF_FILTER">Image filter</string>
-    <string name="PREF_FONT_ANTI_ALIASING">Anti-Aliasing</string>
+    <string name="PREF_FONT_ANTI_ALIASING">Anti-aliasing</string>
     <string name="PREF_FONT_LARGE">Large</string>
     <string name="PREF_FONT_MEDIUM">Medium</string>
     <string name="PREF_FONT_SIZE_IN_SP">Use Android font scale</string>
