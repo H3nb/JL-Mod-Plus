@@ -132,6 +132,8 @@
     <string name="library_filter_recently_opened">Recently Opened</string>
     <string name="library_filter_recently_added">Recently Added</string>
     <string name="library_filter_favorites">Favorites</string>
+    <string name="library_add_to_favorites_action">Add to favorites</string>
+    <string name="library_remove_from_favorites_action">Remove from favorites</string>
     <string name="library_favorite_coming_soon">Favorites unavailable</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">List</string>
@@ -174,7 +176,7 @@
     <string name="pref_enable_actionbar_summary">Keep the runtime toolbar visible on MIDlet Canvas screens.</string>
     <string name="pref_enable_actionbar_title">Show Runtime Toolbar</string>
     <string name="pref_enable_statusbar_title">Show System Status Bar</string>
-    <string name="pref_enable_statusbar_summary">Keep the system status bar visible. It cannot be used with the MIDlet display cutout.</string>
+    <string name="pref_enable_statusbar_summary">Keep the system status bar visible. Enabling it disables the display-cutout area.</string>
     <string name="pref_encoding_title">Encoding</string>
     <string name="PREF_FILTER">Image Filter</string>
     <string name="PREF_FONT_ANTI_ALIASING">Anti-Aliasing</string>
@@ -485,7 +487,9 @@
     <string name="library_description_less">Less</string>
 
     <string name="memory_editor_bubble">Memory Editor Floating Button</string>
-    <string name="memory_editor_bubble_content_description">Memory Editor floating button</string>
+    <string name="memory_editor_bubble_content_description">Open Memory Editor</string>
+    <string name="memory_editor_previous_results_page_action">Previous results page</string>
+    <string name="memory_editor_next_results_page_action">Next results page</string>
     <string name="memory_editor">Memory Editor</string>
     <string name="memory_editor_search_hint">Value</string>
     <string name="memory_editor_next_scan">Next Scan</string>
@@ -781,8 +785,8 @@
     <string name="config_help_key_layout">Chooses the key-code layout used by the MIDlet.</string>
     <string name="config_help_key_mapping">Maps physical Android keys and buttons to Java ME keypad actions.</string>
     <string name="config_help_vk_button_shape">Sets the shape of virtual-control buttons.</string>
-    <string name="config_help_vk_feedback">Vibrates when a virtual-control button is pressed.</string>
-    <string name="config_help_vk_alpha">Sets the opacity of the virtual controls.</string>
+    <string name="config_help_vk_feedback">Vibrates on virtual-control presses when vibration is enabled in Settings.</string>
+    <string name="config_help_vk_alpha">Sets control opacity: 0 = fully transparent; 255 = fully opaque.</string>
     <string name="config_help_vk_force_opacity">Makes controls outside the MIDlet screen opaque. Controls over the screen use the configured opacity.</string>
     <string name="config_help_vk_hide_delay">Hides controls after this delay when they cover the MIDlet screen. Set to 0 to disable auto-hide.</string>
     <string name="config_help_vk_foreground">Sets the label and symbol color on virtual-control buttons.</string>
@@ -934,7 +938,7 @@
     <string name="settings_section_profiles">Profiles</string>
     <string name="settings_profiles_summary">Manage profiles you can reuse across MIDlets.</string>
     <string name="pref_use_display_cutout_title">Use Display Cutout in MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the runtime toolbar to use the display-cutout area. It cannot be used with the system status bar.</string>
+    <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the runtime toolbar to use the display-cutout area. Enabling it hides the system status bar.</string>
     <string name="dialog_scroll_hint">Swipe to continue</string>
     <string name="pref_accent_title">Accent Color</string>
     <string name="pref_accent_blue">Default Blue</string>
@@ -948,7 +952,7 @@
     <string name="pref_accent_orange">Orange</string>
     <string name="pref_accent_pink">Pink</string>
     <string name="runtime_invalid_intent">Invalid launch request: the MIDlet path is missing.</string>
-    <string name="runtime_storage_in_use">MIDlet storage is already in use.</string>
+    <string name="runtime_storage_in_use">MIDlet storage is already in use by another runtime.</string>
     <string name="runtime_installation_changed">The MIDlet installation could not be prepared for launch.</string>
     <string name="runtime_storage_unavailable">Unable to reserve MIDlet storage.</string>
     <string name="runtime_no_midlets">No MIDlets were found in this application.</string>

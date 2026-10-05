@@ -607,6 +607,44 @@ class LibraryComposeTest {
         composeRule.onAllNodesWithText("Copyright 2020-2026 Yury Kharchenko").assertCountEquals(0)
     }
 
+
+    @Test
+    fun favoriteButtonAnnouncesStateChangingAction() {
+        val actions = RecordingLibraryActions()
+        val libraryState = mutableStateOf(
+            LibraryUiState(
+                loading = false,
+                databaseControlsReady = true,
+                apps = listOf(
+                    LibraryAppUiItem(
+                        id = 7,
+                        title = "Demo MIDlet",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        favorite = false,
+                    ),
+                ),
+            ),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryScreen(state = libraryState.value, actions = actions)
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Add to favorites").assertIsDisplayed()
+        composeRule.runOnIdle {
+            libraryState.value = libraryState.value.copy(
+                apps = libraryState.value.apps.map { it.copy(favorite = true) },
+            )
+        }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Remove from favorites").assertIsDisplayed()
+        composeRule.onAllNodesWithContentDescription("Add to favorites").assertCountEquals(0)
+    }
+
     private fun setLibraryContent(
         state: LibraryUiState = LibraryUiState(
             loading = false,

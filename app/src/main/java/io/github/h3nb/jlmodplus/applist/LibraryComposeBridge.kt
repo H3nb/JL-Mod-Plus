@@ -2859,6 +2859,10 @@ private fun LibraryFavoriteButton(
     app: LibraryAppUiItem,
     onFavorite: (Int, Boolean) -> Unit,
 ) {
+    val favoriteActionDescription = stringResource(
+        if (app.favorite) R.string.library_remove_from_favorites_action
+        else R.string.library_add_to_favorites_action,
+    )
     IconButton(
         onClick = { onFavorite(app.id, !app.favorite) },
         modifier = Modifier.size(48.dp),
@@ -2873,14 +2877,14 @@ private fun LibraryFavoriteButton(
             if (app.favorite) {
                 Icon(
                     painter = painterResource(R.drawable.ic_star_filled),
-                    contentDescription = stringResource(R.string.library_filter_favorites),
+                    contentDescription = favoriteActionDescription,
                     modifier = Modifier.size(28.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
             } else {
                 Icon(
                     painter = painterResource(R.drawable.ic_star),
-                    contentDescription = stringResource(R.string.library_filter_favorites),
+                    contentDescription = favoriteActionDescription,
                     modifier = Modifier.size(28.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

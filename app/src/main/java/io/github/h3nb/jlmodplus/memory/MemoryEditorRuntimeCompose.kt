@@ -91,6 +91,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
@@ -2495,6 +2496,8 @@ private fun RuntimeExpressionHint(expression: MemorySearchExpression, type: Int)
 @Composable
 private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorActions) {
     if (state.resultCount <= MemoryEditorComposeController.PAGE_SIZE) return
+    val previousPageDescription = stringResource(R.string.memory_editor_previous_results_page_action)
+    val nextPageDescription = stringResource(R.string.memory_editor_next_results_page_action)
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.Center,
@@ -2503,9 +2506,11 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
         TextButton(
             onClick = actions::previousPage,
             enabled = state.pageOffset > 0,
-            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+            modifier = Modifier
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .semantics { contentDescription = previousPageDescription },
         ) {
-            Text("‹")
+            Text("‹", modifier = Modifier.clearAndSetSemantics {})
         }
         Text(
             "${state.pageOffset + 1}–${minOf(state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE, state.resultCount)}",
@@ -2514,9 +2519,11 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
         TextButton(
             onClick = actions::nextPage,
             enabled = state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE < state.resultCount,
-            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+            modifier = Modifier
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .semantics { contentDescription = nextPageDescription },
         ) {
-            Text("›")
+            Text("›", modifier = Modifier.clearAndSetSemantics {})
         }
     }
 }
