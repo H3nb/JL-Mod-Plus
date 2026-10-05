@@ -24,7 +24,6 @@
     <string name="layout_edit_finished">편집 모드 완료됨</string>
     <string name="layout_switch">키 배치 바꾸기</string>
     <string name="licenses">라이센스</string>
-    <string name="mapping_dialog_message">현재 맵핑:\n%1$s</string>
     <string name="mapping_dialog_title">버튼을 누르세요</string>
     <string name="message_delete">이 앱을 삭제하시겠습니까?</string>
     <string name="more">더보기</string>
