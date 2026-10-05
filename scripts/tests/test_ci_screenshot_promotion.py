@@ -46,7 +46,6 @@ class ScreenshotPromotionTest(unittest.TestCase):
             archive.writestr("source-context.json", json.dumps(context))
             archive.writestr(f"before/{relative}", self.before)
             archive.writestr(f"after/{relative}", self.after)
-            archive.writestr("baselines.patch", b"binary patch placeholder")
             for name, data in extra or []:
                 archive.writestr(name, data)
 
@@ -62,10 +61,9 @@ class ScreenshotPromotionTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             archive = Path(directory) / "bundle.zip"
             self.write_bundle(archive)
-            paths, files, patch = promotion.safe_bundle(archive, self.request)
+            paths, files = promotion.safe_bundle(archive, self.request)
             self.assertEqual([self.path], paths)
             self.assertEqual(self.after, files[0][2])
-            self.assertTrue(patch)
 
     def test_safe_bundle_rejects_stale_head(self):
         with tempfile.TemporaryDirectory() as directory:
