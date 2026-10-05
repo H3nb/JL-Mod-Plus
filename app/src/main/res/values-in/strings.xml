@@ -22,7 +22,7 @@
     <string name="CONFIRMATION_REQUIRED">Memerlukan konfirmasi</string>
     <string name="converting_wait">Mengonversi JAR…</string>
     <string name="create">Buat</string>
-    <string name="create_apps_dir_failed">Folder kerja tidak dapat disiapkan di:\n%1$s\nPilih folder lain.</string>
+    <string name="create_apps_dir_failed">Direktori kerja tidak dapat disiapkan di:\n%1$s\nPilih direktori lain.</string>
     <string name="default_label">%1$s (bawaan)</string>
     <string name="dismiss">Abaikan</string>
     <string name="dismiss_mapping">Tutup pemetaan</string>
@@ -40,7 +40,7 @@
     <string name="install_done">Aplikasi terpasang.</string>
     <string name="installer_title">Instalasi MIDlet</string>
     <string name="installer_error_message">Aplikasi yang dipilih tidak dapat diinstal. Pilih berkas MIDlet yang valid lalu coba lagi.</string>
-    <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD tersebut dan tetap instal?</string>
+    <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD dan lanjutkan instalasi?</string>
     <string name="invalid_resolution_not_saved">Resolusi tidak valid. Perubahan tidak disimpan.</string>
     <string name="layout_edit_finish">Selesai mengedit</string>
     <string name="layout_edit_done">✓ Selesai</string>
@@ -197,15 +197,15 @@
     <string name="config_gamepad_calibration_phase_review">Tinjau</string>
     <string name="config_gamepad_calibration_phase_committed">Tersimpan</string>
     <string name="config_gamepad_calibration_phase_cancelled">Dibatalkan</string>
-    <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan stik analog atau trigger yang didukung. Kalibrasi dimulai saat stik digerakkan atau trigger ditekan; kalibrasi yang ada tetap tidak berubah sampai disimpan.</string>
-    <string name="config_gamepad_calibration_no_analog_ranges">Pengontrol ini tidak melaporkan rentang stik analog atau trigger yang didukung.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan stik analog atau trigger yang didukung. Kalibrasi dimulai saat stik digerakkan atau trigger ditekan; kalibrasi sebelumnya tetap digunakan hingga hasil baru disimpan.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Pengontrol ini tidak menyediakan rentang stik analog atau trigger yang didukung.</string>
     <string name="config_gamepad_calibration_start">Pertahankan semua stik dan trigger pada posisi netral sampai penghitung waktu netral selesai. Lalu gerakkan setiap stik ke rentang penuhnya dan tekan Berikutnya.</string>
-    <string name="config_gamepad_calibration_save_failed">Kalibrasi tidak dapat disimpan. Kalibrasi yang ada tetap tidak berubah.</string>
+    <string name="config_gamepad_calibration_save_failed">Kalibrasi tidak dapat disimpan. Kalibrasi sebelumnya tidak berubah.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Tidak ditemukan rentang analog yang didukung.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasi ditolak: %1$s</string>
     <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik tetap di tengah dan trigger dilepas sampai penghitung waktu netral selesai.</string>
-    <string name="config_gamepad_calibration_stick_instructions">Gerakkan setiap stik yang dilaporkan melalui rentang penuhnya, termasuk kedua arah, lalu tekan Berikutnya.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Lepaskan dan tekan penuh setiap trigger yang dilaporkan, lalu tekan Berikutnya untuk meninjau.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Gerakkan setiap stik yang terdeteksi hingga batas penuh ke segala arah, lalu tekan Berikutnya.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Lepaskan lalu tekan penuh setiap trigger yang terdeteksi, kemudian tekan Berikutnya untuk meninjau.</string>
     <string name="config_gamepad_calibration_review_instructions">Siap ditinjau. Menyimpan hanya akan mengganti kalibrasi pengontrol ini.</string>
     <string name="config_gamepad_calibration_saved">Kalibrasi tersimpan.</string>
     <string name="config_gamepad_calibration_cancelled">Kalibrasi dibatalkan. Kalibrasi sebelumnya tidak berubah.</string>
@@ -230,7 +230,7 @@
     <string name="config_gamepad_calibration_issue_insufficient_samples">sampel tidak cukup</string>
     <string name="config_gamepad_calibration_issue_invalid_range">rentang tidak valid</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">nilai posisi netral di luar rentang</string>
-    <string name="config_gamepad_calibration_issue_rest_too_noisy">posisi netral terlalu bising</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">posisi netral tidak cukup stabil</string>
     <string name="config_gamepad_calibration_phase_unknown">Status tidak tersedia</string>
     <string name="config_gamepad_diagnosis_capabilities">Kapabilitas pengontrol terhubung:</string>
     <string name="config_gamepad_diagnosis_descriptor">Deskriptor: %1$s</string>
@@ -614,7 +614,7 @@
     <string name="bulk_install_status_downgrade">Versi lebih lama</string>
     <string name="bulk_install_status_same">Sudah terpasang</string>
     <string name="bulk_install_status_reinstall">Varian / instal ulang</string>
-    <string name="bulk_install_status_ambiguous">Beberapa aplikasi terpasang cocok</string>
+    <string name="bulk_install_status_ambiguous">Cocok dengan beberapa aplikasi terpasang</string>
     <string name="bulk_install_status_mismatch">JAD/JAR tidak cocok</string>
     <string name="bulk_install_status_duplicate">Duplikat</string>
     <string name="bulk_install_status_older_batch">Kandidat batch lebih lama</string>
@@ -873,7 +873,7 @@
     <string name="runtime_invalid_intent">Permintaan peluncuran tidak valid: jalur MIDlet tidak tersedia.</string>
     <string name="runtime_storage_in_use">Penyimpanan MIDlet sedang digunakan.</string>
     <string name="runtime_installation_changed">Instalasi MIDlet tidak dapat disiapkan untuk dijalankan.</string>
-    <string name="runtime_storage_unavailable">Akses ke penyimpanan MIDlet tidak dapat diperoleh.</string>
+    <string name="runtime_storage_unavailable">Penyimpanan MIDlet tidak dapat disiapkan.</string>
     <string name="runtime_no_midlets">Tidak ada MIDlet yang ditemukan dalam aplikasi ini.</string>
     <string name="midlet_running_notification_title">MIDlet berjalan</string>
     <string name="midlet_running_notification_text">%1$s sedang berjalan.</string>
