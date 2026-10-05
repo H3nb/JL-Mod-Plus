@@ -7,7 +7,6 @@
     <string name="action_context_shortcut">เพิ่มทางลัด</string>
     <string name="action_settings">การตั้งค่า</string>
     <string name="CANCEL_CMD">ยกเลิก</string>
-    <string name="CLEAR_DATA_CMD">ล้างข้อมูล</string>
     <string name="CONFIRMATION_REQUIRED">ต้องการยืนยัน</string>
     <string name="converting_wait">กำลังแปลง JAR…</string>
     <string name="error">ผิดพลาด</string>
@@ -17,11 +16,8 @@
     <string name="help_message">&#8226; การเปิดใช้งานการกรองข้อมูลอาจทำให้ลดประสิทธิภาพการทำงาน. ปิดใช้งานนี้ตัวเลือกถ้าเกมจะช้าเกินไป.&lt;BR&gt;&#8226; ภาพริบหรี่ปัญหาสามารถแก้ไขได้ โดยเปิดใช้ตัวเลือก \"โหมดการประมวลผลทันที\".</string>
     <string name="layout_edit_finish">เสร็จสิ้นโหมดแก้ไข</string>
     <string name="layout_edit_finished">เสร็จสิ้นโหมดแก้ไข</string>
-    <string name="layout_edit_mode">แก้ไข keylayout</string>
-    <string name="layout_scale_mode">ปรับขนาด keylayout</string>
     <string name="layout_switch">สลับ keylayout</string>
     <string name="licenses">ใบอนุญาต</string>
-    <string name="load_profile">โหลดแม่แบบ</string>
     <string name="mapping_dialog_title">กดปุ่ม</string>
     <string name="message_delete">ท่านต้องการลบแอปฯนี้หรือไม่?</string>
     <string name="more">อื่น ๆ</string>
@@ -29,19 +25,15 @@
     <string name="permission_request_failed">แอปฯนี้ต้องใช้สิทธิ์ในการเขียนที่เก็บข้อมูล</string>
     <string name="pref_app_sort_date">วันที่</string>
     <string name="pref_app_sort_name">ชื่อ</string>
-    <string name="pref_app_sort_title">ลำดับการจัดเรียง app</string>
-    <string name="PREF_BACKGROUND">พื้นหลัง</string>
     <string name="pref_button_shape_title">รูปร่างปุ่ม</string>
     <string name="pref_enable_actionbar_title">เปิดใช้ ActionBar</string>
     <string name="PREF_FILTER">ฟิลเตอร์</string>
     <string name="PREF_FONT_LARGE">ใหญ่</string>
     <string name="PREF_FONT_MEDIUM">ปานกลาง</string>
-    <string name="PREF_FONT_OPTIONS">ตัวเลือกฟอนต์</string>
     <string name="PREF_FONT_SIZE_IN_SP">ค่าจะปรับตามพิกเซล</string>
     <string name="PREF_FONT_SMALL">เล็ก</string>
     <string name="PREF_HEIGHT">สูง</string>
     <string name="PREF_IMMEDIATE">โหมดการประมวลผลทันที</string>
-    <string name="PREF_KEEP_ASPECT_RATIO">เก็บ ตามอัตราส่วน</string>
     <string name="pref_map_keys">Key mappings</string>
     <string name="PREF_ORIENTATION">การหมุนหน้าจอ</string>
     <string name="pref_orientation_auto">อัตโนมัติ</string>
@@ -49,7 +41,6 @@
     <string name="pref_orientation_land">แนวนอน</string>
     <string name="pref_orientation_port">แนวตั้ง</string>
     <string name="PREF_SCALE_RATIO">ขนาด(%)</string>
-    <string name="PREF_SCREEN_OPTIONS">ตัวเลือกหน้าจอ</string>
     <string name="PREF_SYS_PROPS">คุณสมบัติของระบบ</string>
     <string name="pref_theme_light">สว่าง</string>
     <string name="pref_theme_night">มืด</string>
@@ -63,11 +54,8 @@
     <string name="PREF_VK_SEL_FORE">ป้ายชื่อ (P)</string>
     <string name="PREF_WIDTH">กว้าง</string>
     <string name="RESET_LAYOUT_CMD">รีเซ็ต keylayout</string>
-    <string name="RESET_SETTINGS_CMD">ตั้งค่าใหม่</string>
-    <string name="save_profile">บันทึกแม่แบบ</string>
     <string name="select_dialog_title">เลือก MIDlet</string>
     <string name="SIZE_PRESETS">ค่าที่ตั้งไว้</string>
     <string name="START_CMD">เริ่ม</string>
     <string name="SWAP_SIZES">ขนาด Swap</string>
-    <string name="version">รุ่น: </string>
 </resources>

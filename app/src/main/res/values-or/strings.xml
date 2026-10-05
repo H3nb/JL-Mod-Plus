@@ -7,7 +7,6 @@
     <string name="action_context_shortcut">ସର୍ଟକଟ୍ ଯୋଡ଼ନ୍ତୁ</string>
     <string name="action_reinstall">ପୁନଃସଂସ୍ଥାପନ କରନ୍ତୁ</string>
     <string name="action_settings">ସେଟିଂ</string>
-    <string name="add_profile_description">ନୂତନ ପ୍ରୋଫାଇଲ୍ ସୃଷ୍ଟି କରନ୍ତୁ</string>
     <string name="alert_map_menu">ମେନ୍ୟୁ କୀ (M) ନ୍ୟସ୍ତ ହୋଇନାହିଁ!\nଏହା ଦ୍ୱାରା ଅନୁକରଣକାରୀ ବିକଳ୍ପଗୁଡିକ ଆକସେସ୍ କରିବା ଅସମ୍ଭବ ହୋଇପାରେ</string>
     <string name="alert_msg_workdir_not_exists">ୱାର୍କିଂ ଡିରେକ୍ଟୋରୀ ପଥରେ ବିଦ୍ୟମାନ ନାହିଁ:\n\'%1$s\'।\n ଆପଣ ଏହାକୁ ସୃଷ୍ଟି କରିବାକୁ କିମ୍ବା ଅନ୍ୟଟି ବାଛିବାକୁ ଚାହୁଁଛନ୍ତି କି?</string>
     <string name="change">ପରିବର୍ତ୍ତନ କରନ୍ତୁ</string>
@@ -20,9 +19,6 @@
     <string name="default_label">"%s (ଡିଫଲ୍ଟ)"</string>
     <string name="dismiss">ଖାରଜ କରନ୍ତୁ</string>
     <string name="edit">ସମ୍ପାଦନ କରନ୍ତୁ</string>
-    <string name="enter_name">ନାମ ପ୍ରବେଶ କରନ୍ତୁ</string>
-    <string name="enter_new_name">ନୂତନ ନାମ ପ୍ରବେଶ କରନ୍ତୁ</string>
-    <string name="err_missing_app">ପ୍ରୟୋଗ ମିଳିଲା ନାହିଁ।\n ଦୟାକରି ଷ୍ଟୋରେଜ୍ ଡିଭାଇସ୍ %sଉପଲବ୍ଧତା ଯାଞ୍ଚ କରନ୍ତୁ କିମ୍ବା ସର୍ଟକଟ୍ ପୁନ ନିର୍ମାଣ କରନ୍ତୁ।</string>
     <string name="error_name">ନାମ ପ୍ରବେଶ କରନ୍ତୁ!</string>
     <string name="exit">ପ୍ରସ୍ଥାନ</string>
     <string name="help">ସହାୟତା</string>
@@ -33,7 +29,6 @@
     <string name="invalid_resolution_not_saved">ଅବୈଧ ରିଜୋଲ୍ୟୁସନ୍: ସଞ୍ଚୟ ହୋଇନାହିଁ!</string>
     <string name="licenses">ଲାଇସେନ୍ସ</string>
     <string name="mapping_dialog_key_not_specified">ନିର୍ଦ୍ଧିଷ୍ଟ କରାଯାଇ ନାହିଁ</string>
-    <string name="mapping_dialog_message">ସାମ୍ପ୍ରତିକ ମ୍ୟାପିଙ୍ଗ୍: %1$s</string>
     <string name="mapping_dialog_title">ଏକ ଚାବି ଦବାନ୍ତୁ</string>
     <string name="message_delete">ଆପଣ ପ୍ରକୃତରେ ଏହି ଆପ୍ ଡିଲିଟ୍ କରିବାକୁ ଚାହୁଁଛନ୍ତି କି?</string>
     <string name="midlet_name"><b>ନାମ: </b></string>
@@ -46,7 +41,6 @@
     <string name="permission_request_failed">ଏହି ଆପ୍ ଷ୍ଟୋରେଜ୍ ଲେଖିବା ଅନୁମତି ଆବଶ୍ୟକ କରେ</string>
     <string name="pref_app_sort_date">ତାରିଖ</string>
     <string name="pref_app_sort_name">ନାମ</string>
-    <string name="pref_app_sort_title">ଆପ୍ ସର୍ଟ କ୍ରମ</string>
     <string name="pref_app_sort_vendor">ବିକ୍ରେତା</string>
     <string name="pref_button_shape_oval">ଓଭାଲ୍</string>
     <string name="pref_button_shape_rect">ଆୟତକ୍ଷେତ୍ର</string>
@@ -78,14 +72,10 @@
     <string name="pref_vibration_title">କମ୍ପନ ସକ୍ଷମ କରନ୍ତୁ</string>
     <string name="pref_wakelock_title">ସ୍କ୍ରିନ୍ ଅନ୍ ରଖନ୍ତୁ</string>
     <string name="PREF_WIDTH">ମୋଟେଇ</string>
-    <string name="profiles">ପ୍ରୋଫାଇଲ୍</string>
     <string name="reinstall">ଆପ୍ଲିକେସନ୍ ପୂର୍ବରୁ ସଂସ୍ଥାପିତ ହୋଇଛି।\n\nଆପଣ ଏହାକୁ ପୁନଃସଂସ୍ଥାପନ କରିବାକୁ ଚାହାଁନ୍ତି?\nଡାଟା ସଞ୍ଚୟ ହେବ।</string>
     <string name="retry">ପୁନଃଚେଷ୍ଟା କରନ୍ତୁ</string>
     <string name="save">ସଞ୍ଚୟ କରନ୍ତୁ</string>
     <string name="save_log">ଲଗ୍ ସେଭ୍ କରନ୍ତୁ</string>
-    <string name="search">ସନ୍ଧାନ</string>
-    <string name="set_as_default">ଡିଫଲ୍ଟଭାବେ ସେଟ୍‌ ହୋ‌ଇଛି</string>
-    <string name="version">ସଂସ୍କରଣ: </string>
     <string name="warn_install_from_net">ଫାଇଲ୍ ଇଣ୍ଟର୍ନେଟ୍ ରୁ ଡାଉନଲୋଡ୍ ହେବ</string>
     <string name="warning">ଚେତାବନୀ</string>
 </resources>

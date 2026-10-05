@@ -20,6 +20,7 @@
 package io.github.h3nb.jlmodplus;
 
 import android.app.ActivityManager;
+import android.app.ApplicationExitInfo;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
@@ -541,16 +542,28 @@ public class MainActivity extends AppCompatActivity {
 		if (exit == null || exit.getId().equals(lastRecoveryNoticeId)) return;
 		lastRecoveryNoticeId = exit.getId();
 		String midletName = exit.getMidletName();
+		String reason = localizedProcessExitReason(exit.getReasonCode());
 		String message;
 		if (midletName != null && !midletName.trim().isEmpty()) {
 			message = getString(R.string.process_exit_recovery_message_named,
-					midletName, exit.getReason());
+					midletName, reason);
 		} else if ("midlet".equals(exit.getProcessRole())) {
-			message = getString(R.string.process_exit_recovery_message_midlet, exit.getReason());
+			message = getString(R.string.process_exit_recovery_message_midlet, reason);
 		} else {
-			message = getString(R.string.process_exit_recovery_message, exit.getReason());
+			message = getString(R.string.process_exit_recovery_message, reason);
 		}
 		mainComposeController.showProcessExit(message);
+	}
+
+	private String localizedProcessExitReason(int reasonCode) {
+		int resource = switch (reasonCode) {
+			case ApplicationExitInfo.REASON_CRASH -> R.string.diagnostic_reason_java_crash;
+			case ApplicationExitInfo.REASON_CRASH_NATIVE -> R.string.diagnostic_reason_native_crash;
+			case ApplicationExitInfo.REASON_ANR -> R.string.diagnostic_reason_anr;
+			case ApplicationExitInfo.REASON_SIGNALED -> R.string.diagnostic_reason_signal;
+			default -> R.string.diagnostic_reason_unknown;
+		};
+		return getString(resource);
 	}
 
 	private void scheduleDiagnosticRecoveryRetry() {

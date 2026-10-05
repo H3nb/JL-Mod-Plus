@@ -1,51 +1,52 @@
 # UI copy and presentation style
 
-JL-Mod Plus uses a hierarchy-aware capitalization policy. One casing rule is
-not applied to every piece of UI copy.
+The [Localization contract](localization.md) owns semantic copy quality,
+translation, text ownership, and locale/resource identity. This document retains
+ownership of capitalization, typography, presentation, and copy styling.
 
-This is a product style decision, not a claim that Material 3 requires title
-case everywhere. Current Android guidance recommends sentence case for button
-labels, while Android Auto guidance permits either sentence case or title case
-when the choice is applied consistently. We choose natural English title case for
-titles, labels, options, and compact controls because it matches the product's visual language and
-must remain consistent across the library, profiles, and installer surfaces.
+JL-Mod Plus uses Material 3 typography and component structure to distinguish
+titles, sections, settings, supporting text, values, and actions. Capitalization
+does not create that hierarchy.
+
+App-owned copy follows the natural capitalization conventions of its target
+language. Sentence case is the default product style for new or revised English
+and Indonesian UI copy unless grammar, a proper noun, acronym, technical
+identifier, API name, or established product name requires another form.
+Existing untouched copy may be migrated incrementally during scoped UI/copy
+work. Do not perform repository-wide casing churn merely for consistency.
 
 ## Rules
 
-- Use natural English title case for product/screen/dialog titles, section titles,
-  header titles, option names, and field titles/names: capitalize major words, while
-  ordinary short articles, conjunctions, and prepositions such as `a`, `an`, `the`,
-  `and`, `or`, `of`, `on`, `in`, and `to` normally remain lowercase unless
-  they begin the label/title or grammar or proper-noun conventions require otherwise.
-- Apply the same natural title case to buttons, menu items, toolbar actions, and
-  other compact controls: `Report on GitHub`, `Save to File`, `Open in Browser`,
-  `Terms of Use`, `Delete Report`, and `Diagnostic Bundle Ready`.
+- Use sentence case by default for new or revised English and Indonesian titles,
+  section headings, option names, buttons, menu actions, descriptions, statuses,
+  and helper text. Follow the target language's natural orthography for other
+  locales.
+- Let the component and Material 3 typography role establish visual emphasis;
+  do not capitalize every major word to make a label look more prominent.
 - Keep descriptions, explanations, statuses, hints, and helper text in sentence
-  case. Capitalization follows the text's role, not its length or wording:
+  case. Capitalization follows the target language's natural conventions:
 
   | Context | Example |
   | --- | --- |
-  | Section/header title | `Application Information` |
-  | Field title | `Profile Name` |
+  | Section/header title | `Application information` |
+  | Field title | `Profile name` |
   | Field placeholder | `Enter a profile name` |
-  | Option/checkbox name | `Save Screen Parameters on Exit` |
+  | Option/checkbox name | `Save screen parameters on exit` |
   | Description beneath that option | `Save the current screen parameters when the game closes.` |
   | Progress status while reading a file | `Loading information…` |
-  | Action button | `Save Profile` |
+  | Action button | `Save profile` |
 
-  If a phrase is used as an option name, it uses natural English title case even when
-  it reads like an instruction. A progress status is not a section title merely
-  because it is prominent. Review the actual placement and semantics.
-  For example, `Enter Profile Name` is valid as a dialog title, while
-  `Enter a profile name` is a field hint. Prefer `Profile Name` for the field's
-  persistent label. English labels use natural title case rather than mechanically
-  capitalizing every short function word.
+  A progress status is not a section title merely because it is prominent.
+  Review the actual placement and semantics. Keep a persistent field label when
+  a placeholder disappears during input.
 - Use normal sentence case for body and confirmation messages. Do not use ALL CAPS for ordinary rendered copy.
 - Resource keys such as `START_CMD` and `CANCEL_CMD` are legacy identifiers and do not define rendered capitalization.
 - Write full messages as normal sentences: capitalize the first word, use ordinary punctuation, and start a new sentence after a newline with a capital letter.
 - Preserve proper nouns, product names, and technical abbreviations: `JL-Mod Plus`, `J2ME`, `MIDlet`, `JAR`, `JAD`, `KJX`, `GitHub`, `Android`, `Material 3`, and `H3NB`.
-- Preserve the same semantic role across locales, but follow the natural capitalization rules of each target language rather than mechanically applying English title casing. Retain correct spelling, diacritics, acronyms, and technical notation.
-- Store the intended capitalization in resources; do not title-case arbitrary
+- Preserve the same semantic role across locales, but follow each target
+  language's natural capitalization rather than mirroring English. Retain correct
+  spelling, diacritics, acronyms, and technical notation.
+- Store intended app-owned capitalization in resources; do not transform arbitrary
   content at runtime. Game names, user-created profile/collection names, source
   metadata, and identifiers retain their supplied form.
 - Keep lowercase where it is technically required or grammatically embedded, such as units (`ms`), identifiers, URLs, or a word that intentionally continues a sentence.
@@ -143,10 +144,9 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
 - Maintain readable foreground/background pairs. Do not paint app UI white or
   black merely to match one screenshot. Actual game colors and HSV picker
   gradients are content and retain their intended colors.
-- Use short, concrete titles, clear action verbs, and helpful error messages.
-  State what happened and the next useful action. Distinguish a failed operation
-  from an operation whose files were saved but whose remaining step needs retry.
-  Keep technical diagnostics behind an explicit copy/details action.
+- Follow the [Localization contract](localization.md#ui-roles) for title, action,
+  and error meaning. Keep technical diagnostics behind an explicit copy/details
+  action.
 
 ## Presentation review
 
@@ -159,14 +159,9 @@ For interaction architecture, accessibility behavior, performance, and general U
 
 When adding or changing a string, check the rendered context rather than only the resource value:
 
-1. Is it a title/header/section, option name, field title/name, or compact
-   interactive control? Use natural English title case.
-2. Otherwise, is it a description, explanation, status, or hint? Use sentence
-   case. Sentence-like wording does not override an option or title's role.
-3. Is it a proper noun, acronym, unit, URL, or identifier? Preserve its established form.
-4. Does the same key have a locale-specific translation? Review that locale instead of changing unrelated translations mechanically.
-
-For example, the installer title is `MIDlet Installer`; its actions are
-`Install`, `Start`, and `Cancel`. A multi-word action is `Install Again`, not
-`Install again`. Neither `install` nor `INSTALL` is the default form for that
-action label. The status beneath a progress indicator remains `Installing application…`.
+1. Is the semantic role correct?
+2. Is the appropriate Material 3 typography/component role used?
+3. Is the text naturally capitalized for its locale?
+4. Does supporting text add information rather than repeat the title?
+5. Are proper nouns, acronyms, APIs, units, identifiers, and supplied content preserved?
+6. Is the rendered result usable with narrow width, large text, and longer translations?

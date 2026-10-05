@@ -1162,12 +1162,14 @@ public final class ProcessExitStore {
 		private final String processRole;
 		private final String midletName;
 		private final String reason;
+		private final int reasonCode;
 
 		private PendingExit(Snapshot snapshot, String midletName) {
 			this.id = snapshot.id;
 			this.processRole = snapshot.processRole;
 			this.midletName = midletName;
 			this.reason = reasonLabel(snapshot);
+			this.reasonCode = snapshot.reason;
 		}
 
 		public String getId() {
@@ -1184,6 +1186,10 @@ public final class ProcessExitStore {
 
 		public String getReason() {
 			return reason;
+		}
+
+		public int getReasonCode() {
+			return reasonCode;
 		}
 	}
 

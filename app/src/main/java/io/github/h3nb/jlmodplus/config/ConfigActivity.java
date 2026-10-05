@@ -367,15 +367,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			if (!appDir.isDirectory() || convertedDir == null
 					|| (workDir = convertedDir.getParent()) == null) {
 				needShow = false;
-				String storageName = "";
+				String storageName = null;
 				if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
 					StorageManager sm = (StorageManager) getSystemService(STORAGE_SERVICE);
 					if (sm != null) {
 						StorageVolume storageVolume = sm.getStorageVolume(appDir);
 						if (storageVolume != null) {
 							String desc = storageVolume.getDescription(this);
-							if (desc != null) {
-								storageName = "\"" + desc + "\" ";
+							if (desc != null && !desc.isEmpty()) {
+								storageName = desc;
 							}
 						}
 					}
@@ -383,8 +383,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				ComposeView errorView = new ComposeView(this);
 				EdgeToEdgeCompat.enableForComposeSurface(this);
 				setContentView(errorView);
+				String missingAppMessage = storageName == null
+						? getString(R.string.config_missing_app_storage_generic)
+						: getString(R.string.config_missing_app_storage_named, storageName);
 				ConfigErrorComposeBridge.install(errorView,
-						getString(R.string.err_missing_app, storageName),
+						missingAppMessage,
 						new ConfigErrorActions() {
 							@Override
 							public void onExit() {

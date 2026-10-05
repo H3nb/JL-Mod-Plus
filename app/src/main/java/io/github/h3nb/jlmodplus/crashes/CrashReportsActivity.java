@@ -170,10 +170,12 @@ public class CrashReportsActivity extends AppCompatActivity {
 				updateStoredRecords();
 				if (!finalAllSourcesDeleted) {
 					ThemedToast.show(
-							this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG);
+							this, records.size() > 1 ? R.string.crash_reports_delete_failed
+									: R.string.crash_report_delete_failed, Toast.LENGTH_LONG);
 				} else if (!finalAllBundlesDeleted) {
 					ThemedToast.show(
-							this, R.string.crash_report_bundle_cleanup_failed, Toast.LENGTH_LONG);
+							this, records.size() > 1 ? R.string.crash_reports_bundle_cleanup_failed
+									: R.string.crash_report_bundle_cleanup_failed, Toast.LENGTH_LONG);
 				}
 			});
 		}, "JLP-delete-diagnostics").start();

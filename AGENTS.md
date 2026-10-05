@@ -5,6 +5,7 @@ This file contains guidance every agent needs. Keep task-specific instructions a
 ## Core priorities
 
 - Follow the user's explicit task and constraints first. Carry forward authorization already given; ask only when a missing decision materially affects correctness, compatibility, scope, or authority.
+- Keep enduring repository guidance model- and provider-agnostic. State goals, evidence, constraints, authority, and success criteria; keep transient model names, reasoning settings, and tool-routing choices in task handoffs unless a repository contract genuinely depends on them.
 - Preserve required behavior and emulator compatibility, not accidental implementation structure. Within the requested scope, refactor or replace flawed structure when that produces a simpler, more coherent model while meeting correctness, compatibility, data-safety, and relevant performance requirements.
 - User requirements and explicit project contracts define intended behavior. Applicable specifications define the default compatibility contract except where JL-Mod Plus deliberately preserves verified compatibility behavior. Current source, configuration, workflows, and tests describe the current implementation and provide evidence; they are not requirements merely because they exist. Treat history as context unless the task specifically requires it.
 - Keep changes focused on the problem. Do not mix unrelated cleanup, dependency or toolchain churn, or speculative architecture into a scoped change.
@@ -27,6 +28,7 @@ Ground the solution in current evidence before committing to a production fix. B
 - Before an action needing additional authorization, prepare the concrete, reviewable result. Do not infer permission for destructive operations, publishing, or merging from a request for local edits.
 - Use the current integration branch as the base for unrelated work, develop on a dedicated branch, and integrate through a PR unless the user explicitly requests otherwise. Preserve unrelated work in the checkout.
 - Use validation proportional to the change. When designing or adding tests, follow [Testing strategy](docs/development.md#testing-strategy). Once relevant checks pass, broaden or repeat validation only when new changes, failures, or unresolved risks justify it. Inspect the final diff and report what passed and what remains unverified. Do not run `clean` routinely.
+- If screenshot comparison CI fails, review the exact `before` / `after` / `diff` candidate artifact. If the change is intentional, use the owner-only `/jlmod-promote-screenshots` path with the exact current-HEAD run/artifact provenance; never regenerate or accept screenshots blindly. Promotion must be HEAD-leased, and final Android CI must pass.
 - Preserve inherited rights and attribution notices. Do not make ownership or licensing assumptions.
 - Preserve the surrounding Markdown wrapping style and avoid reflow-only changes.
 - Use only task-relevant repository skills. Project policy and the matching interpretation in `.agents/UPSTREAM.md` override conflicting generic skill recipes; follow [Skill routing](docs/agent-workflow.md#repository-skills).
@@ -39,7 +41,8 @@ Ground the solution in current evidence before committing to a production fix. B
 | Build and test commands | [Build and validation](docs/development.md) |
 | App-owned UI architecture, adaptation, or Navigation 3 | [App-owned UI development](docs/app-ui-development.md) |
 | View/Compose/Java ME ownership boundary or UI migration | [UI ownership](docs/ui-ownership-map.md) |
-| UI copy, localization, typography, color, or popup/dialog presentation | [UI copy and presentation style](docs/ui-copy-style.md) |
+| Localization, semantic UI copy quality, translation, or locale/resource identity | [Localization contract](docs/localization.md) |
+| UI copy styling, capitalization, typography, color, or popup/dialog presentation | [UI copy and presentation style](docs/ui-copy-style.md) |
 | Runtime host UI, Java ME Screen soft keys, or host/LCDUI boundary | [Runtime UI](docs/runtime-ui.md) |
 | Java ME APIs, JSRs, vendor APIs, or guest compatibility | [Java ME compatibility](docs/java-me-compatibility.md) |
 | Preset/config ownership, installed identity, cross-process preset access, or runtime storage identity | [Preset, configuration, and installed-identity contracts](docs/preset-config-contract.md) |

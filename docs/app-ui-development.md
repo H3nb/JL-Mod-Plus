@@ -4,6 +4,7 @@ Use this guidance for app-owned UI architecture, adaptation, and navigation work
 
 ## App-owned UI, adaptation, and navigation
 
+- Use resource-backed localized text for app-owned UI. Follow [Localization contract](localization.md) for text ownership and resolution at the presentation/output boundary; preserve MIDlet, user, and machine content according to that contract.
 - Build new or materially changed app-owned presentation with Jetpack Compose Material 3 and the project theme/shared components. Keep intentional Android View, renderer, input, emulator, and Java ME API boundaries native when they still own platform or compatibility behavior.
 - Preserve application behavior during incremental UI migration. Do not change Java ME API behavior merely to facilitate Compose.
 - Derive layout decisions from the current container constraints, window size, and insets rather than device names or orientation alone. A compact landscape window remains compact; a portrait tablet may already have room for a larger layout.

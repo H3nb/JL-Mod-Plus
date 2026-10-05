@@ -1904,7 +1904,7 @@ internal fun LibraryAppsDestination(
                 }
                 when {
                     state.errorMessage != null -> item(span = { GridItemSpan(maxLineSpan) }) {
-                        LibraryErrorState(state.errorMessage, onRetry)
+                        LibraryErrorState(onRetry)
                     }
                     state.loading -> item(span = { GridItemSpan(maxLineSpan) }) {
                         LibraryLoadingState(state)
@@ -1950,7 +1950,7 @@ internal fun LibraryAppsDestination(
                     }
                 }
                 when {
-                    state.errorMessage != null -> item { LibraryErrorState(state.errorMessage, onRetry) }
+                    state.errorMessage != null -> item { LibraryErrorState(onRetry) }
                     state.loading -> item { LibraryLoadingState(state) }
                     state.apps.isEmpty() -> item { LibraryEmptyState(state.appliedFilter) }
                     else -> items(state.apps, key = { it.databaseId }) { app ->
@@ -2364,7 +2364,7 @@ private fun LibraryLoadingState(state: LibraryUiState) {
 }
 
 @Composable
-private fun LibraryErrorState(message: String, onRetry: () -> Unit) {
+private fun LibraryErrorState(onRetry: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -2380,7 +2380,7 @@ private fun LibraryErrorState(message: String, onRetry: () -> Unit) {
             textAlign = TextAlign.Center,
         )
         Text(
-            text = message,
+            text = stringResource(R.string.library_load_failed_message),
             modifier = Modifier.padding(top = 6.dp),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -2450,7 +2450,7 @@ internal fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
                     tint = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = stringResource(R.string.library_collections_empty_title),
+                    text = stringResource(R.string.library_collections_unavailable_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
@@ -4398,11 +4398,7 @@ private fun LibraryAboutBody(
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = buildString {
-                    append(stringResource(R.string.version))
-                    append(' ')
-                    append(BuildConfig.VERSION_NAME)
-                },
+                text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -4412,7 +4408,10 @@ private fun LibraryAboutBody(
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
-                text = stringResource(R.string.about_maintainer),
+                text = stringResource(
+                    R.string.about_maintainer,
+                    stringResource(R.string.about_maintainer_name),
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

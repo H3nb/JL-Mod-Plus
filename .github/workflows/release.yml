@@ -1,16 +1,10 @@
 name: Release JL-Mod Plus
 
 on:
-  push:
-    branches:
-      - alpha
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
   workflow_dispatch:
     inputs:
       prerelease_suffix:
-        description: 'Optional alpha prerelease suffix (for example: alpha.1); automatic alpha pushes use dev.<run>.<attempt>.<commit>'
+        description: 'Required on alpha (for example: alpha.1); leave empty for stable main releases'
         required: false
         type: string
 
@@ -32,10 +26,6 @@ jobs:
         shell: bash
         env:
           BRANCH: ${{ github.ref_name }}
-          EVENT_NAME: ${{ github.event_name }}
-          RUN_NUMBER: ${{ github.run_number }}
-          RUN_ATTEMPT: ${{ github.run_attempt }}
-          BUILD_COMMIT: ${{ github.sha }}
           INPUT_SUFFIX: ${{ inputs.prerelease_suffix }}
         run: |
           set -euo pipefail
@@ -43,11 +33,8 @@ jobs:
           case "$BRANCH" in
             alpha)
               if [[ -z "$INPUT_SUFFIX" ]]; then
-                if [[ "$EVENT_NAME" != "push" ]]; then
-                  echo 'Manual alpha releases require prerelease_suffix (for example: alpha.1).' >&2
-                  exit 1
-                fi
-                INPUT_SUFFIX="dev.${RUN_NUMBER}.${RUN_ATTEMPT}.${BUILD_COMMIT:0:7}"
+                echo 'Manual alpha releases require prerelease_suffix (for example: alpha.1).' >&2
+                exit 1
               fi
               if [[ ! "$INPUT_SUFFIX" =~ ^[0-9A-Za-z]+([.-][0-9A-Za-z]+)*$ ]]; then
                 echo 'Invalid prerelease_suffix. Use identifiers such as alpha.1, beta.1, or rc.1.' >&2
@@ -131,9 +118,8 @@ jobs:
         env:
           JLMOD_BUILD_COMMIT: ${{ github.sha }}
         run: >-
-          ./gradlew --daemon --stacktrace --profile --continue
+          ./gradlew --daemon --parallel --stacktrace --profile --continue
           :app:lintEmulatorDebug
-          :dexlib:lintDebug
           :app:testEmulatorDebugUnitTest
           :dexlib:testDebugUnitTest
           :app:validateEmulatorDebugScreenshotTest
@@ -165,38 +151,44 @@ jobs:
             exit 1
           fi
 
-          APK_FILE="$(jq -r '
+          mapfile -t VERSION_NAMES < <(jq -r '.elements[].versionName' "$METADATA" | sort -u)
+          mapfile -t VERSION_CODES < <(jq -r '.elements[].versionCode' "$METADATA" | sort -u)
+          if [[ ${#VERSION_NAMES[@]} -ne 1 || -z "${VERSION_NAMES[0]}" || "${VERSION_NAMES[0]}" == 'null' ]]; then
+            echo 'Release APK outputs do not share one valid versionName.' >&2
+            exit 1
+          fi
+          if [[ ${#VERSION_CODES[@]} -ne 1 || ! "${VERSION_CODES[0]}" =~ ^[1-9][0-9]*$ ]]; then
+            echo 'Release APK outputs do not share one valid positive versionCode.' >&2
+            exit 1
+          fi
+          VERSION_NAME="${VERSION_NAMES[0]}"
+          VERSION_CODE="${VERSION_CODES[0]}"
+
+          expected_abis=(arm64-v8a armeabi-v7a x86 x86_64)
+          declare -A apk_by_label=()
+          for abi in "${expected_abis[@]}"; do
+            mapfile -t matches < <(jq -r --arg abi "$abi" '
+              .elements[]
+              | select(any(.filters[]?; .filterType == "ABI" and .value == $abi))
+              | .outputFile
+            ' "$METADATA")
+            if [[ ${#matches[@]} -ne 1 ]]; then
+              echo "Expected exactly one $abi release APK, found ${#matches[@]}." >&2
+              exit 1
+            fi
+            apk_by_label["$abi"]="${matches[0]}"
+          done
+
+          mapfile -t universal_matches < <(jq -r '
             .elements[]
-            | select(any(.filters[]?; .filterType == "ABI" and .value == "arm64-v8a"))
+            | select(((.filters // []) | length) == 0)
             | .outputFile
-          ' "$METADATA" | head -n 1)"
-
-          VERSION_NAME="$(jq -r '
-            .elements[]
-            | select(any(.filters[]?; .filterType == "ABI" and .value == "arm64-v8a"))
-            | .versionName
-          ' "$METADATA" | head -n 1)"
-
-          VERSION_CODE="$(jq -r '
-            .elements[]
-            | select(any(.filters[]?; .filterType == "ABI" and .value == "arm64-v8a"))
-            | .versionCode
-          ' "$METADATA" | head -n 1)"
-
-          if [[ -z "$APK_FILE" || "$APK_FILE" == "null" || -z "$VERSION_NAME" || "$VERSION_NAME" == "null" ]]; then
-            echo 'Could not resolve the arm64-v8a release APK or versionName.' >&2
+          ' "$METADATA")
+          if [[ ${#universal_matches[@]} -ne 1 ]]; then
+            echo "Expected exactly one universal release APK, found ${#universal_matches[@]}." >&2
             exit 1
           fi
-          if [[ ! "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
-            echo "Invalid release versionCode '$VERSION_CODE'. Increment jlmod.versionCode before publishing." >&2
-            exit 1
-          fi
-
-          APK_PATH="$OUTPUT_DIR/$APK_FILE"
-          if [[ ! -f "$APK_PATH" ]]; then
-            echo "Missing release APK: $APK_PATH" >&2
-            exit 1
-          fi
+          apk_by_label[universal]="${universal_matches[0]}"
 
           if [[ "${{ github.ref_name }}" == "alpha" && "$VERSION_NAME" != *-* ]]; then
             echo "alpha must produce a pre-release versionName, got '$VERSION_NAME'." >&2
@@ -214,54 +206,73 @@ jobs:
           fi
 
           mkdir -p dist
-          RELEASE_APK="dist/JL-Mod-Plus-$TAG-arm64-v8a.apk"
+          for label in "${expected_abis[@]}" universal; do
+            source="$OUTPUT_DIR/${apk_by_label[$label]}"
+            target="dist/JL-Mod-Plus-$TAG-$label.apk"
+            if [[ ! -f "$source" ]]; then
+              echo "Missing release APK: $source" >&2
+              exit 1
+            fi
+            cp "$source" "$target"
+          done
+
           RELEASE_MAPPING="dist/JL-Mod-Plus-$TAG-r8-mapping.txt"
-          cp "$APK_PATH" "$RELEASE_APK"
           cp "$MAPPING_SOURCE" "$RELEASE_MAPPING"
 
           (
             cd dist
-            sha256sum "$(basename "$RELEASE_APK")" "$(basename "$RELEASE_MAPPING")" > SHA256SUMS.txt
+            sha256sum JL-Mod-Plus-"$TAG"-*.apk "$(basename "$RELEASE_MAPPING")" > SHA256SUMS.txt
           )
 
           echo "Release version: $VERSION_NAME (versionCode $VERSION_CODE)"
           echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "apk=$RELEASE_APK" >> "$GITHUB_OUTPUT"
           echo "mapping=$RELEASE_MAPPING" >> "$GITHUB_OUTPUT"
 
-      - name: Verify APK signature
+      - name: Verify APK signatures
         shell: bash
-        env:
-          APK_PATH: ${{ steps.artifacts.outputs.apk }}
         run: |
           set -euo pipefail
+          shopt -s nullglob
 
           BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V | tail -n 1)"
           APKSIGNER="$ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner"
+          apks=(dist/JL-Mod-Plus-"${{ steps.artifacts.outputs.tag }}"-*.apk)
 
           if [[ ! -x "$APKSIGNER" ]]; then
             echo "apksigner not found at $APKSIGNER" >&2
             exit 1
           fi
+          if [[ ${#apks[@]} -ne 5 ]]; then
+            echo "Expected five release APKs, found ${#apks[@]}." >&2
+            exit 1
+          fi
 
-          "$APKSIGNER" verify --verbose --print-certs "$APK_PATH"
+          for apk in "${apks[@]}"; do
+            "$APKSIGNER" verify --verbose --print-certs "$apk"
+          done
 
       - name: Create GitHub release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.artifacts.outputs.tag }}
-          APK_PATH: ${{ steps.artifacts.outputs.apk }}
           MAPPING_PATH: ${{ steps.artifacts.outputs.mapping }}
           PRERELEASE: ${{ steps.channel.outputs.prerelease }}
         run: |
           set -euo pipefail
+          shopt -s nullglob
+
+          apks=(dist/JL-Mod-Plus-"$TAG"-*.apk)
+          if [[ ${#apks[@]} -ne 5 ]]; then
+            echo "Expected five release APKs, found ${#apks[@]}." >&2
+            exit 1
+          fi
 
           args=(
             release create "$TAG"
-            "$APK_PATH"
+            "${apks[@]}"
             "$MAPPING_PATH"
             dist/SHA256SUMS.txt
             --repo "$GITHUB_REPOSITORY"

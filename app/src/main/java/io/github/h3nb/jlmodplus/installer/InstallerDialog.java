@@ -404,6 +404,13 @@ public class InstallerDialog extends DialogFragment {
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + status);
 		}
+		if (status == AppInstaller.STATUS_EQUAL || status == AppInstaller.STATUS_SAME ||
+				status == AppInstaller.STATUS_NEWER || status == AppInstaller.STATUS_OLDER) {
+			// Bundle import restores supplied settings/data after conversion; ordinary replacement
+			// changes only the converted payload and preserves the existing settings/save directories.
+			message += "\n\n" + getString(isBundleRequest()
+					? R.string.library_import_restore_existing : R.string.installer_existing_data_preserved);
+		}
 		if (installer.getJar() == null) {
 			message = message + "\n" + getString(R.string.warn_install_from_net);
 		}

@@ -80,6 +80,8 @@ public final class MemoryEngineService extends Service {
 	private volatile int managedWatchCount;
 	private volatile int managedFreezeCount;
 	private volatile String managedLastMessage;
+	/** Keep worker completions separate from concurrent freeze-tick results and capability reads. */
+	private final ThreadLocal<Bundle> managedOperationDetails = new ThreadLocal<>();
 	private final AtomicLong searchClearGeneration = new AtomicLong();
 	private volatile ScheduledFuture<?> freezeTask;
 	/** Serializes only the tiny local Managed-publication boundary. */
@@ -134,7 +136,9 @@ public final class MemoryEngineService extends Service {
 				result.putBoolean(MemoryEngineContract.KEY_SUPPORTED, false);
 				result.putBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED, false);
 				result.putBoolean(MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED, false);
-				result.putString(MemoryEngineContract.KEY_MESSAGE, "MIDlet runtime is not connected");
+				result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, "MIDlet runtime is not connected");
+				result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+						MemoryEngineContract.RESULT_TARGET_LOST);
 				return result;
 			}
 			try {
@@ -177,7 +181,11 @@ public final class MemoryEngineService extends Service {
 						? managedBaselineCount : 0L);
 				result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, token);
 				if (!supported) {
-					result.putString(MemoryEngineContract.KEY_MESSAGE, token == 0L
+					result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, token == 0L
+							? MemoryEngineContract.RESULT_NO_SESSION : MemoryEngineContract.RESULT_UNSUPPORTED);
+					if (token == 0L) result.putInt(MemoryEngineContract.KEY_OPERATION_REASON,
+							MemoryEngineContract.REASON_NO_RUNTIME);
+					result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, token == 0L
 							? "No active MIDlet runtime"
 							: (managed == null ? "Managed Java discovery is unavailable"
 							: "Managed Java memory editing is unavailable"));
@@ -186,7 +194,9 @@ public final class MemoryEngineService extends Service {
 				result.putBoolean(MemoryEngineContract.KEY_SUPPORTED, false);
 				result.putBoolean(MemoryEngineContract.KEY_MANAGED_SUPPORTED, false);
 				result.putBoolean(MemoryEngineContract.KEY_MANAGED_WRITE_SUPPORTED, false);
-				result.putString(MemoryEngineContract.KEY_MESSAGE, "MIDlet runtime connection was lost");
+				result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, "MIDlet runtime connection was lost");
+				result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+						MemoryEngineContract.RESULT_TARGET_LOST);
 			}
 			return result;
 		}
@@ -524,6 +534,7 @@ public final class MemoryEngineService extends Service {
 		long enqueueEpoch = cancelEpoch.get();
 		worker.execute(() -> {
 			int result;
+			managedOperationDetails.remove();
 			String serviceMessage = null;
 			if (enqueueEpoch != cancelEpoch.get()) {
 				result = MemoryEngineContract.RESULT_CANCELLED;
@@ -549,6 +560,7 @@ public final class MemoryEngineService extends Service {
 			}
 			notifyFinished(operationId, token, result, serviceMessage, false,
 					searchOperation);
+			managedOperationDetails.remove();
 		});
 		return operationId;
 	}
@@ -1096,6 +1108,7 @@ public final class MemoryEngineService extends Service {
 
 	private int managedFailure(int code, String message) {
 		managedLastMessage = message;
+		managedOperationDetails.remove();
 		return code;
 	}
 
@@ -1158,8 +1171,11 @@ public final class MemoryEngineService extends Service {
 					MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, managedFreezeCount));
 		}
 		if (acceptSearchMetadata) updateManagedSearchSession(state);
-		if (state.containsKey(MemoryEngineContract.KEY_MESSAGE)) {
-			managedLastMessage = state.getString(MemoryEngineContract.KEY_MESSAGE);
+		if (state.containsKey(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)) {
+			managedLastMessage = state.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL);
+		}
+		if (state.containsKey(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)) {
+			managedOperationDetails.set(operationDetails(state));
 		}
 		reconcileFreezeScheduler();
 	}
@@ -1248,7 +1264,7 @@ public final class MemoryEngineService extends Service {
 		Bundle bundle = new Bundle();
 		bundle.putInt(MemoryEngineContract.KEY_INSPECT_RESULT, result);
 		if (message != null && !message.isBlank()) {
-			bundle.putString(MemoryEngineContract.KEY_MESSAGE, message);
+			bundle.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL, message);
 		}
 		return bundle;
 	}
@@ -1496,12 +1512,21 @@ public final class MemoryEngineService extends Service {
 		boolean managedVisible = configuredToken == token;
 		long count = managedVisible ? managedResultCount : 0L;
 		String message = serviceMessage != null ? serviceMessage : managedLastMessage;
+		Bundle details = managedOperationDetails.get() == null ? new Bundle()
+				: operationDetails(managedOperationDetails.get());
+		if (serviceMessage != null) details = new Bundle();
+		if (result == MemoryEngineContract.RESULT_NO_SESSION && token == 0L) {
+			details.putInt(MemoryEngineContract.KEY_OPERATION_REASON,
+					MemoryEngineContract.REASON_NO_RUNTIME);
+		}
+		if (message != null) details.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
+				MemoryEngineContract.truncateMessage(message));
 		int callbackCount = callbacks.beginBroadcast();
 		try {
 			for (int index = 0; index < callbackCount; index++) {
 				try {
 					callbacks.getBroadcastItem(index)
-							.onOperationFinished(operationId, result, count, message,
+							.onOperationFinished(operationId, result, count, details,
 									passiveRefresh, searchOperation);
 				} catch (RemoteException ignored) {
 					// RemoteCallbackList removes dead clients.
@@ -1510,6 +1535,24 @@ public final class MemoryEngineService extends Service {
 		} finally {
 			callbacks.finishBroadcast();
 		}
+	}
+
+	/** Avoid relaying unrelated target metadata or mutable pages in a completion callback. */
+	private static Bundle operationDetails(Bundle state) {
+		Bundle details = new Bundle();
+		String[] keys = {
+				MemoryEngineContract.KEY_OPERATION_REASON,
+				MemoryEngineContract.KEY_MANAGED_ATTEMPTED,
+				MemoryEngineContract.KEY_MANAGED_WRITTEN,
+				MemoryEngineContract.KEY_MANAGED_SKIPPED,
+				MemoryEngineContract.KEY_MANAGED_UNCONFIRMED,
+				MemoryEngineContract.KEY_MANAGED_NOT_ATTEMPTED,
+				MemoryEngineContract.KEY_MANAGED_SKIPPED_BY_TYPE,
+		};
+		for (String key : keys) {
+			if (state.containsKey(key)) details.putInt(key, state.getInt(key));
+		}
+		return details;
 	}
 
 	private static Bundle emptyResultPage() {

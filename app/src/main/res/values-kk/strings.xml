@@ -5,7 +5,6 @@
     <string name="action_context_rename">Атын өзгерту</string>
     <string name="action_reinstall">Қайта орнату</string>
     <string name="action_settings">Баптаулар</string>
-    <string name="add_profile_description">Жаңа профиль жасау</string>
     <string name="change">Өзгерту</string>
     <string name="choose">Таңдау</string>
     <string name="close">Жабу</string>
@@ -13,8 +12,6 @@
     <string name="create">жасау</string>
     <string name="default_label">"%s (әдепкі)"</string>
     <string name="edit">Өзгерту</string>
-    <string name="enter_name">Атын енгізіңіз</string>
-    <string name="enter_new_name">Жаңа атын еңгізіңіз</string>
     <string name="error">Қате</string>
     <string name="error_name">Атын енгізіңіз!</string>
     <string name="exit">Шығу</string>
@@ -24,9 +21,7 @@
     <string name="install_done">Қолданба сәтті орнатылды!</string>
     <string name="licenses">Лицензиялар</string>
     <string name="loading_info">деректерді жүктеуде…</string>
-    <string name="mapping_dialog_message">Қазіргі маппинг: %1$s</string>
     <string name="mapping_dialog_title">Пернені бас</string>
-    <string name="message_clear_data">Бұл қолданбаның деректерін өшіргіңіз келеме?</string>
     <string name="message_delete">Бұл қолданбаны өшіргіңіз келеме?</string>
     <string name="midlet_name"><b>Аты: </b></string>
     <string name="midlet_size"><b>Өлшемі: </b></string>
@@ -40,7 +35,6 @@
     <string name="pref_emulator_dir">Жұмыс бумасы</string>
     <string name="PREF_FONT_ANTI_ALIASING">Жұмсарту</string>
     <string name="pref_graphics_mode_title">Графикалардың режимі:</string>
-    <string name="pref_input_devices_title">Енгізу құрылғылары</string>
     <string name="pref_mascot_summary">Қолдану үстінде хабарламаларды көрсету</string>
     <string name="pref_mascot_title">Mascot Capsule 3D-ны анықтау</string>
     <string name="PREF_ORIENTATION">Экранның ориентациясы</string>
@@ -69,20 +63,15 @@
     <string name="pref_vk_type_numbers">Сандар</string>
     <string name="pref_vk_type_phone">Телефон</string>
     <string name="pref_vk_type_phone_arrows">Телефон (сызықтар)</string>
-    <string name="profiles">Профильдер</string>
     <string name="reinstall">Қолданба бұрын жүктелген.\n\nОны қайтадан жүктегіңіз келеме?\nБарлық деректер сақталынатын болады.</string>
     <string name="reset">Қалпына келтіру</string>
     <string name="retry">қайталау</string>
     <string name="save">Сақтау</string>
     <string name="save_log">Логты сақтау</string>
-    <string name="search">Іздеу</string>
-    <string name="set_as_default">Әдепкі ретінде орнату</string>
     <string name="shader_tuning">Шейдер баптаулары</string>
     <string name="SIZE_PRESETS">Пресеттер</string>
     <string name="START_CMD">Бастау</string>
     <string name="SWAP_SIZES">Орындарын ауыстыру</string>
-    <string name="unlimited">шексіз</string>
-    <string name="version">Нұсқа: </string>
     <string name="warn_install_from_net">Файл интернеттен жүктелінетін болады</string>
     <string name="warning">Ескерту</string>
 </resources>

@@ -55,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -541,7 +542,10 @@ private fun BulkItemRow(item: BulkInstallItem, onToggle: (String) -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            item.detail?.let {
+            val reviewText = item.effectiveReviewReason?.let {
+                bulkInstallReviewReasonText(LocalResources.current, it)
+            }
+            reviewText?.let {
                 Text(
                     it,
                     style = MaterialTheme.typography.bodySmall,
@@ -568,9 +572,11 @@ private fun RunningContent(
     modifier: Modifier = Modifier,
 ) {
     val progress = if (state.total == 0) 0f else state.completed.toFloat() / state.total.toFloat()
-    val progressLabel = stringResource(
-        R.string.bulk_install_running,
-        state.completed.coerceAtMost(state.total),
+    val completedCount = state.completed.coerceAtMost(state.total)
+    val progressLabel = pluralStringResource(
+        R.plurals.bulk_install_running,
+        completedCount,
+        completedCount,
         state.total,
     )
     Column(
@@ -629,13 +635,15 @@ private fun FinishedContent(
         ) {
             item {
                 Text(
-                    if (state.cancelled) stringResource(R.string.bulk_install_cancelled)
+                    if (state.cancelled || state.fatalError != null) stringResource(R.string.bulk_install_cancelled)
                     else stringResource(R.string.bulk_install_complete),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 state.fatalError?.let {
-                    Text(stringResource(R.string.bulk_install_fatal, it),
+                    Text(stringResource(R.string.bulk_install_fatal),
                         color = MaterialTheme.colorScheme.error)
+                    Text(it, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             item {
@@ -658,7 +666,10 @@ private fun FinishedContent(
                         color = if (result.kind == BulkInstallResultKind.Failed ||
                             result.kind == BulkInstallResultKind.PartiallyInstalled)
                             MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
-                    result.detail?.let {
+                    val detail = result.reviewReason?.let {
+                        bulkInstallReviewReasonText(LocalResources.current, it)
+                    } ?: result.detail
+                    detail?.let {
                         Text(it, style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -677,6 +688,7 @@ private fun resultLabel(kind: BulkInstallResultKind): String = stringResource(
         BulkInstallResultKind.Installed -> R.string.bulk_install_result_installed
         BulkInstallResultKind.Updated -> R.string.bulk_install_result_updated
         BulkInstallResultKind.Reinstalled -> R.string.bulk_install_result_reinstalled
+        BulkInstallResultKind.Restored -> R.string.bulk_install_result_restored
         BulkInstallResultKind.Skipped -> R.string.bulk_install_result_skipped
         BulkInstallResultKind.Failed -> R.string.bulk_install_result_failed
         BulkInstallResultKind.PartiallyInstalled -> R.string.installer_partial_restore
@@ -694,13 +706,16 @@ private fun ErrorContent(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        Text(stringResource(R.string.bulk_install_prepare_failed),
+            color = MaterialTheme.colorScheme.error)
         Text(
             text = message,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f, fill = false)
                 .verticalScroll(rememberScrollState()),
-            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             Button(onClick = onClose) {
@@ -715,6 +730,7 @@ private fun ResultCounters(results: List<BulkInstallResult>) {
     val installed = results.count { it.kind == BulkInstallResultKind.Installed }
     val updated = results.count { it.kind == BulkInstallResultKind.Updated }
     val reinstalled = results.count { it.kind == BulkInstallResultKind.Reinstalled }
+    val restored = results.count { it.kind == BulkInstallResultKind.Restored }
     val skipped = results.count { it.kind == BulkInstallResultKind.Skipped }
     val failed = results.count { it.kind == BulkInstallResultKind.Failed ||
         it.kind == BulkInstallResultKind.PartiallyInstalled }
@@ -727,6 +743,7 @@ private fun ResultCounters(results: List<BulkInstallResult>) {
                 reinstalled,
                 reinstalled,
             ),
+            pluralStringResource(R.plurals.bulk_install_restored_count, restored, restored),
             pluralStringResource(
                 R.plurals.bulk_install_skipped_result_count,
                 skipped,

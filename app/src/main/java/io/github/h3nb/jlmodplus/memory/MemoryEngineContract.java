@@ -64,8 +64,14 @@ public final class MemoryEngineContract {
 	public static final int RESULT_NO_SESSION = 6;
 	public static final int RESULT_IDENTITY_UNSAFE = 7;
 	public static final int RESULT_SAFETY_LIMIT = 8;
-	/** At least one bounded write succeeded and at least one selected write was skipped safely. */
+	/** A write was incomplete or unconfirmed; counters determine whether any write was confirmed. */
 	public static final int RESULT_PARTIAL_WRITE = 12;
+
+	public static final int REASON_NONE = 0;
+	/** RESULT_NO_SESSION: the request has no active MIDlet runtime. */
+	public static final int REASON_NO_RUNTIME = 1;
+	/** RESULT_NO_SESSION: Undo has no preceding committed search to restore. */
+	public static final int REASON_NO_SEARCH_HISTORY = 2;
 
 	public static final int CANDIDATE_STABLE = 0;
 	public static final int CANDIDATE_RELOCATING = 1;
@@ -112,7 +118,9 @@ public final class MemoryEngineContract {
 	public static final String KEY_MANAGED_REJECTED_BEFORE_WRITE = "managedRejectedBeforeWrite";
 	public static final String KEY_MANAGED_SKIPPED_BY_TYPE = "managedSkippedByType";
 	public static final String KEY_RUNTIME_TOKEN = "runtimeToken";
-	public static final String KEY_MESSAGE = "message";
+	public static final String KEY_OPERATION_REASON = "operationReason";
+	/** Bounded canonical diagnostic evidence only; never render this as app-owned UI copy. */
+	public static final String KEY_DIAGNOSTIC_DETAIL = "diagnosticDetail";
 	public static final String KEY_SEARCH_SESSION_STAGE = "searchSessionStage";
 	public static final String KEY_SEARCH_MODE = "searchMode";
 	public static final String KEY_SEARCH_REQUESTED_TYPE = "searchRequestedType";

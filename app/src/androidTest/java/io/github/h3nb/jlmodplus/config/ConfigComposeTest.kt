@@ -92,6 +92,50 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun filterShaderWarningOnlyAppearsForEnabledFilterAndCustomGlesShader() {
+        val base = sampleState()
+        val identity = ShaderInfo("Fast (No Filter)", "JL-Mod Plus")
+        val custom = ShaderInfo("Test shader", "Test")
+        val warning =
+            "Linear filtering smooths the input before the screen shader processes it and may reduce output sharpness."
+
+        fun state(filterEnabled: Boolean, graphicsMode: Int, shader: ShaderInfo?): ConfigUiState =
+            ConfigUiState(
+                base.form.toBuilder()
+                    .screenFilter(filterEnabled)
+                    .graphicsMode(graphicsMode)
+                    .shader(shader)
+                    .build(),
+                base.screenPresets,
+                base.fontPresets,
+                base.skins,
+                base.soundBanks,
+                listOf(identity, custom),
+                base.removableScreenPresets,
+            )
+
+        fun render(state: ConfigUiState) {
+            composeRule.setContent {
+                JLModPlusTheme {
+                    ConfigScreen(state, RecordingConfigEvents(), initialDestination = ConfigDestination.Display)
+                }
+            }
+        }
+
+        render(state(filterEnabled = true, graphicsMode = 1, shader = custom))
+        composeRule.onNodeWithText(warning).assertExists()
+
+        render(state(filterEnabled = false, graphicsMode = 1, shader = custom))
+        composeRule.onNodeWithText(warning).assertDoesNotExist()
+
+        render(state(filterEnabled = true, graphicsMode = 1, shader = identity))
+        composeRule.onNodeWithText(warning).assertDoesNotExist()
+
+        render(state(filterEnabled = true, graphicsMode = 0, shader = custom))
+        composeRule.onNodeWithText(warning).assertDoesNotExist()
+    }
+
+    @Test
     fun analogSelectionRemainsAvailableWithoutController() {
         val base = sampleState()
         val state = ConfigUiState(

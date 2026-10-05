@@ -798,6 +798,9 @@ private fun ScreenSection(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
 ) {
+    val shaderIndex = state.shaders.indexOfFirst { it == form.shader }.coerceAtLeast(0)
+    val selectedShader = state.shaders.getOrNull(shaderIndex)
+    val customShaderSelected = form.graphicsMode == 1 && shaderIndex > 0 && selectedShader != null
     ConfigSection(title = stringResource(R.string.config_display_appearance)) {
         val backgroundModes = listOf(
             stringResource(R.string.config_background_custom),
@@ -861,6 +864,12 @@ private fun ScreenSection(
             title = stringResource(R.string.PREF_FILTER),
             description = stringResource(R.string.config_help_filter),
             checked = form.screenFilter,
+            message = if (form.screenFilter && customShaderSelected) {
+                stringResource(R.string.config_warning_filter_shader)
+            } else {
+                null
+            },
+            messageLevel = ConfigMessageLevel.Warning,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().screenFilter(checked).build()) },
         )
     }
@@ -880,7 +889,6 @@ private fun ScreenSection(
             onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
         )
         if (form.graphicsMode == 1) {
-            val shaderIndex = state.shaders.indexOfFirst { it == form.shader }.coerceAtLeast(0)
             ConfigChoicePreference(
                 title = stringResource(R.string.PREF_SHADER_FILTER),
                 description = stringResource(R.string.config_help_shader),
@@ -892,7 +900,6 @@ private fun ScreenSection(
                     )
                 },
             )
-            val selectedShader = state.shaders.getOrNull(shaderIndex)
             if (selectedShader?.hasTunableSettings() == true) {
                 ConfigActionPreference(
                     title = stringResource(R.string.shader_tuning),

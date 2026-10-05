@@ -248,7 +248,7 @@ fun SettingsScreen(
                     item {
                         SettingsSection(stringResource(R.string.settings_section_profiles)) {
                             SettingsActionRow(
-                                title = stringResource(R.string.profiles),
+                                title = stringResource(R.string.preset_manage),
                                 summary = stringResource(R.string.settings_profiles_summary),
                                 onClick = actions::onOpenProfiles,
                             )
