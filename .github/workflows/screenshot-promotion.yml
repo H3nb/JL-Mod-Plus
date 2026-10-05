@@ -8,7 +8,7 @@ permissions:
   actions: write
   contents: write
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 concurrency:
   group: screenshot-promotion-${{ github.event.issue.number }}
