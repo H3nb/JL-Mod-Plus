@@ -27,6 +27,7 @@ import androidx.annotation.RequiresApi;
 
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.EmulatorApplication;
+import io.github.h3nb.jlmodplus.R;
 
 /**
  * Coordinates local diagnostic evidence without owning interpretation or presentation.
@@ -84,7 +85,8 @@ public final class CrashReporter {
 				null, null, null, null, null);
 
 		CrashContextStore.initialize(
-				application, processRole, BuildConfig.JLMOD_BUILD_COMMIT, BuildConfig.JLMOD_BUILD_VARIANT);
+				application, processRole, application.getString(R.string.jlmod_build_commit),
+				BuildConfig.JLMOD_BUILD_VARIANT);
 		CrashContextStore.update(application, "process.start", "start", AppContextPhase.ACTIVE.id);
 
 		// Android 11+ state and the Java uncaught bridge are published synchronously because the
