@@ -2301,15 +2301,24 @@ private fun LibraryAppsHeader(
                 enabled = interactive,
             )
             Box {
-                IconButton(
+                Surface(
                     onClick = { onSortVisibilityChanged(true) },
                     enabled = interactive,
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(56.dp),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = if (interactive) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    },
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_sort),
-                        contentDescription = stringResource(R.string.library_sort),
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_sort),
+                            contentDescription = stringResource(R.string.library_sort),
+                        )
+                    }
                 }
                 LibrarySortMenu(
                     expanded = sortVisible && interactive,

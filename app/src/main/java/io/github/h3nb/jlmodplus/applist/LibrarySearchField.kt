@@ -17,10 +17,12 @@ package io.github.h3nb.jlmodplus.applist
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -38,13 +40,21 @@ internal fun LibrarySearchField(
 ) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    OutlinedTextField(
+    TextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
         enabled = enabled,
         singleLine = true,
         shape = MaterialTheme.shapes.large,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+        ),
         placeholder = {
             Text(
                 text = stringResource(R.string.library_search_placeholder),
@@ -53,12 +63,13 @@ internal fun LibrarySearchField(
             )
         },
         leadingIcon = {
-            if (query.isEmpty()) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_search),
-                    contentDescription = null,
-                )
-            } else {
+            Icon(
+                painter = painterResource(R.drawable.ic_search),
+                contentDescription = null,
+            )
+        },
+        trailingIcon = if (query.isNotEmpty()) {
+            {
                 IconButton(
                     onClick = {
                         onQueryChange("")
@@ -73,6 +84,8 @@ internal fun LibrarySearchField(
                     )
                 }
             }
+        } else {
+            null
         },
     )
 }
