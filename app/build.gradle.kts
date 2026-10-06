@@ -459,20 +459,22 @@ androidComponents {
             )
         )
 
-        if (nativeBuildEnabled && variant.name == "emulatorDebug") {
+        if (variant.name == "emulatorDebug") {
             variant.resValues.put(
                 variant.makeResValueKey("string", "app_name"),
                 ResValue("JL-Mod Plus Debug", "Debug application name")
             )
-            val verifyNativePackaging = tasks.register<VerifyNativePackagingTask>(
-                "verifyEmulatorDebugNativePackaging"
-            ) {
-                abi.set(runtimeTestAbi ?: "arm64-v8a")
-                builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
+            if (nativeBuildEnabled) {
+                val verifyNativePackaging = tasks.register<VerifyNativePackagingTask>(
+                    "verifyEmulatorDebugNativePackaging"
+                ) {
+                    abi.set(runtimeTestAbi ?: "arm64-v8a")
+                    builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
+                }
+                variant.artifacts.use(verifyNativePackaging).wiredWith {
+                    it.apkDirectory
+                }.toListenTo(SingleArtifact.APK)
             }
-            variant.artifacts.use(verifyNativePackaging).wiredWith {
-                it.apkDirectory
-            }.toListenTo(SingleArtifact.APK)
         }
     }
 }
