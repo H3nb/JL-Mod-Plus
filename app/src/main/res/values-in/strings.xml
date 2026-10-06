@@ -59,7 +59,7 @@
     <string name="runtime_preset_update_failed">Tersimpan untuk MIDlet ini, tetapi %1$s tidak dapat diperbarui.</string>
     <string name="runtime_preset_update_unlinked">%1$s diperbarui, tetapi MIDlet ini tidak akan menerima pembaruan berikutnya dari profil tersebut.</string>
     <string name="virtual_controls_save_failed">Kontrol virtual tidak dapat disimpan. Coba lagi.</string>
-    <string name="layout_switch">Ganti tata letak kontrol</string>
+    <string name="layout_switch">Pilih tata letak kontrol</string>
     <string name="licenses">Lisensi</string>
     <string name="licenses_unavailable">Detail lisensi tidak tersedia.</string>
     <string name="loading_apps">Memuat aplikasi</string>
@@ -136,7 +136,7 @@
     <string name="pref_enable_statusbar_summary">Menjaga bilah status sistem tetap terlihat. Mengaktifkannya menonaktifkan area potongan layar.</string>
     <string name="pref_encoding_title">Pengodean</string>
     <string name="pref_language">Bahasa</string>
-    <string name="PREF_FILTER">Filter gambar</string>
+    <string name="PREF_FILTER">Filter linear</string>
     <string name="PREF_FONT_ANTI_ALIASING">Anti-aliasing teks</string>
     <string name="PREF_FONT_LARGE">Besar</string>
     <string name="PREF_FONT_MEDIUM">Sedang</string>
@@ -157,7 +157,7 @@
     <string name="pref_mascot_title">Pemberitahuan Mascot Capsule 3D</string>
     <string name="PREF_ORIENTATION">Orientasi layar</string>
     <string name="pref_orientation_auto">Otomatis</string>
-    <string name="pref_orientation_default">Bawaan</string>
+    <string name="pref_orientation_default">Bawaan sistem</string>
     <string name="pref_orientation_land">Lanskap</string>
     <string name="pref_orientation_port">Potret</string>
     <string name="PREF_SCALE_RATIO">Skala (%)</string>
@@ -253,7 +253,7 @@
     <string name="PREF_TOUCH_INPUT">Input sentuh</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Getaran</string>
-    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Kontrol virtual</string>
+    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Tampilkan kontrol virtual</string>
     <string name="PREF_VK_ALPHA">Opasitas</string>
     <string name="PREF_VK_BACK">Warna tombol</string>
     <string name="PREF_VK_FEEDBACK">Umpan balik haptik</string>
@@ -915,7 +915,7 @@
     <string name="runtime_virtual_controls_edit_guide_message">Geser kontrol untuk memindahkannya. Untuk tombol, gerakkan dua jari secara horizontal atau vertikal untuk mengubah lebar atau tinggi. Gerakkan kedua jari secara diagonal untuk mengubah lebar dan tinggi sekaligus. Cubit untuk mengubah ukuran D-pad atau stik analog secara proporsional. Ketuk Selesai setelah mengatur kontrol.</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Jangan tampilkan lagi</string>
     <string name="runtime_virtual_controls_switch_layout">Pilih tata letak kontrol</string>
-    <string name="runtime_virtual_controls_show_controls">Tampilkan kontrol</string>
+    <string name="runtime_virtual_controls_show_controls">Pilih kontrol yang ditampilkan</string>
     <string name="runtime_virtual_controls_template_dpad_standard">D-pad standar</string>
     <string name="runtime_virtual_controls_template_analog_standard">Stik analog standar</string>
     <string name="config_gamepad_directions_numeric_v2">Keypad numerik</string>
