@@ -113,6 +113,10 @@ public class AndroidProducerDexTest {
 			assertEquals(1, result.getClassesSkipped());
 			assertEquals(0, result.getDiagnosticsOmitted());
 			assertEquals(1, result.getDiagnostics().size());
+			assertEquals(1, result.getSkippedClassEntries().size());
+			assertEquals("sample/Bad.class", result.getSkippedClassEntries().get(0));
+			assertEquals(0, result.getSkippedClassEntriesOmitted());
+			assertTrue(result.hasCompleteSkippedClassEntries());
 			ConversionDiagnostic diagnostic = result.getDiagnostics().get(0);
 			assertEquals("sample/Bad.class", diagnostic.getEntry());
 			assertEquals(ConversionDiagnostic.Phase.SOURCE_VALIDATION, diagnostic.getPhase());
@@ -188,6 +192,46 @@ public class AndroidProducerDexTest {
 			assertEquals(35, result.getClassesSkipped());
 			assertEquals(32, result.getDiagnostics().size());
 			assertEquals(3, result.getDiagnosticsOmitted());
+			assertEquals(35, result.getSkippedClassEntries().size());
+			assertEquals(0, result.getSkippedClassEntriesOmitted());
+			assertTrue(result.hasCompleteSkippedClassEntries());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
+	public void skippedClassIdentityListIsBoundedAndMarksIncomplete() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-bounded-skipped-classes-");
+		Path archive = root.resolve("many-bad.jar");
+		Path dexFile = root.resolve("many-bad.dex");
+		final int skippedCount = 260;
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Good.class"));
+			output.write(createSimpleClass("sample/Good"));
+			output.closeEntry();
+			for (int i = 0; i < skippedCount; i++) {
+				String name = "sample/Unreadable" + i;
+				output.putNextEntry(new JarEntry(name + ".class"));
+				output.write(removeConstantPoolCount(createSimpleClass(name)));
+				output.closeEntry();
+			}
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertTrue(result.isSuccess());
+			assertEquals(skippedCount, result.getClassesSkipped());
+			assertEquals(256, result.getSkippedClassEntries().size());
+			assertEquals(4, result.getSkippedClassEntriesOmitted());
+			assertFalse(result.hasCompleteSkippedClassEntries());
 		} finally {
 			Files.deleteIfExists(dexFile);
 			Files.deleteIfExists(archive);

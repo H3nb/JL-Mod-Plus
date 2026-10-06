@@ -144,12 +144,15 @@ public class Main {
     /** number of errors during processing */
     private AtomicInteger errors = new AtomicInteger(0);
     private static final int MAX_CONVERSION_DIAGNOSTICS = 32;
+    private static final int MAX_SKIPPED_CLASS_ENTRIES = 256;
+    private static final int MAX_SKIPPED_CLASS_ENTRY_LENGTH = 1024;
     private final AtomicInteger classesDiscovered = new AtomicInteger();
     private final AtomicInteger classesConverted = new AtomicInteger();
     private final AtomicInteger classesSkipped = new AtomicInteger();
     private final AtomicInteger diagnosticCount = new AtomicInteger();
     private final List<ConversionDiagnostic> conversionDiagnostics =
             new ArrayList<ConversionDiagnostic>();
+    private final List<String> skippedClassEntries = new ArrayList<String>();
 
     /** {@code non-null;} parsed command-line arguments */
     private Arguments args;
@@ -237,6 +240,9 @@ public class Main {
         diagnosticCount.set(0);
         synchronized (conversionDiagnostics) {
             conversionDiagnostics.clear();
+        }
+        synchronized (skippedClassEntries) {
+            skippedClassEntries.clear();
         }
 
         args = arguments;
@@ -516,6 +522,7 @@ public class Main {
             switch (ex.getKind()) {
                 case UNREADABLE_SOURCE:
                     classesSkipped.incrementAndGet();
+                    recordSkippedClassEntry(name);
                     recordDiagnostic(new ConversionDiagnostic(
                             name,
                             ConversionDiagnostic.Phase.SOURCE_VALIDATION,
@@ -1374,13 +1381,30 @@ public class Main {
         synchronized (conversionDiagnostics) {
             snapshot = new ArrayList<ConversionDiagnostic>(conversionDiagnostics);
         }
+        List<String> skippedSnapshot;
+        synchronized (skippedClassEntries) {
+            skippedSnapshot = new ArrayList<String>(skippedClassEntries);
+        }
         return new ConversionResult(
                 exitCode,
                 classesDiscovered.get(),
                 classesConverted.get(),
                 classesSkipped.get(),
                 snapshot,
-                Math.max(0, diagnosticCount.get() - snapshot.size()));
+                Math.max(0, diagnosticCount.get() - snapshot.size()),
+                skippedSnapshot,
+                Math.max(0, classesSkipped.get() - skippedSnapshot.size()));
+    }
+
+    private void recordSkippedClassEntry(String entry) {
+        if (entry == null || entry.length() > MAX_SKIPPED_CLASS_ENTRY_LENGTH) {
+            return;
+        }
+        synchronized (skippedClassEntries) {
+            if (skippedClassEntries.size() < MAX_SKIPPED_CLASS_ENTRIES) {
+                skippedClassEntries.add(entry);
+            }
+        }
     }
 
     private void recordDiagnostic(ConversionDiagnostic diagnostic) {

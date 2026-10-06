@@ -60,6 +60,21 @@ public class MidletConversionPolicyTest {
     }
 
     @Test
+    public void incompleteSkippedClassIdentityListFailsClosed() throws Exception {
+        Descriptor descriptor = descriptor(
+                "MIDlet-1: Game, /icon.png, rpg.x\n");
+        try {
+            MidletConversionPolicy.requireRunnableEntryClasses(
+                    Collections.singleton("unused.Credit"), false, descriptor);
+            fail("An incomplete skipped-class list cannot prove MIDlet entry safety");
+        } catch (ConverterException expected) {
+            assertEquals(
+                    "Skipped source class list is incomplete; MIDlet entry classes cannot be verified",
+                    expected.getMessage());
+        }
+    }
+
+    @Test
     public void archiveEntryNameMapsToDescriptorClassName() {
         assertEquals("rpg.z", MidletConversionPolicy.classNameFromEntry("./rpg/z.class"));
         assertEquals("rpg.z", MidletConversionPolicy.classNameFromEntry("rpg\\z.CLASS"));

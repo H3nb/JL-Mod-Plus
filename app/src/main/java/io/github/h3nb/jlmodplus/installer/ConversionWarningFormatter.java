@@ -71,6 +71,8 @@ public final class ConversionWarningFormatter {
         report.append("Classes converted: ").append(result.getClassesConverted()).append('\n');
         report.append("Classes skipped: ").append(result.getClassesSkipped()).append('\n');
         report.append("Diagnostics omitted: ").append(result.getDiagnosticsOmitted()).append('\n');
+        report.append("Skipped class names omitted: ")
+                .append(result.getSkippedClassEntriesOmitted()).append('\n');
         report.append("Source JAR modified: no");
 
         int index = 0;

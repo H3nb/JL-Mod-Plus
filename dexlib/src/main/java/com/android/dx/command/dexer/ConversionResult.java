@@ -17,9 +17,12 @@ public final class ConversionResult {
     private final int classesSkipped;
     private final List<ConversionDiagnostic> diagnostics;
     private final int diagnosticsOmitted;
+    private final List<String> skippedClassEntries;
+    private final int skippedClassEntriesOmitted;
 
     ConversionResult(int exitCode, int classesDiscovered, int classesConverted, int classesSkipped,
-            List<ConversionDiagnostic> diagnostics, int diagnosticsOmitted) {
+            List<ConversionDiagnostic> diagnostics, int diagnosticsOmitted,
+            List<String> skippedClassEntries, int skippedClassEntriesOmitted) {
         this.exitCode = exitCode;
         this.classesDiscovered = classesDiscovered;
         this.classesConverted = classesConverted;
@@ -27,11 +30,15 @@ public final class ConversionResult {
         this.diagnostics = Collections.unmodifiableList(
                 new ArrayList<ConversionDiagnostic>(diagnostics));
         this.diagnosticsOmitted = diagnosticsOmitted;
+        this.skippedClassEntries = Collections.unmodifiableList(
+                new ArrayList<String>(skippedClassEntries));
+        this.skippedClassEntriesOmitted = skippedClassEntriesOmitted;
     }
 
     public static ConversionResult noWorkSuccess() {
         return new ConversionResult(0, 0, 0, 0,
-                Collections.<ConversionDiagnostic>emptyList(), 0);
+                Collections.<ConversionDiagnostic>emptyList(), 0,
+                Collections.<String>emptyList(), 0);
     }
 
     public boolean isSuccess() {
@@ -60,6 +67,18 @@ public final class ConversionResult {
 
     public int getDiagnosticsOmitted() {
         return diagnosticsOmitted;
+    }
+
+    public List<String> getSkippedClassEntries() {
+        return skippedClassEntries;
+    }
+
+    public int getSkippedClassEntriesOmitted() {
+        return skippedClassEntriesOmitted;
+    }
+
+    public boolean hasCompleteSkippedClassEntries() {
+        return skippedClassEntriesOmitted == 0;
     }
 
     public boolean hasWarnings() {

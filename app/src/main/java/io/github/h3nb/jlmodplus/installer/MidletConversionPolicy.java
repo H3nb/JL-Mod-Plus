@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.installer;
 
-import com.android.dx.command.dexer.ConversionDiagnostic;
 import com.android.dx.command.dexer.ConversionResult;
 
 import java.util.HashSet;
@@ -20,21 +19,32 @@ final class MidletConversionPolicy {
         if (result == null || descriptor == null || result.getClassesSkipped() == 0) {
             return;
         }
+        if (!result.hasCompleteSkippedClassEntries()) {
+            throw new ConverterException(
+                    "Skipped source class list is incomplete; MIDlet entry classes cannot be verified");
+        }
         Set<String> skippedClasses = new HashSet<>();
-        for (ConversionDiagnostic diagnostic : result.getDiagnostics()) {
-            if (diagnostic.getAction() != ConversionDiagnostic.Action.SKIPPED) {
-                continue;
-            }
-            String className = classNameFromEntry(diagnostic.getEntry());
+        for (String entry : result.getSkippedClassEntries()) {
+            String className = classNameFromEntry(entry);
             if (className != null) {
                 skippedClasses.add(className);
             }
         }
-        requireRunnableEntryClasses(skippedClasses, descriptor);
+        requireRunnableEntryClasses(skippedClasses, true, descriptor);
     }
 
     static void requireRunnableEntryClasses(Set<String> skippedClasses, Descriptor descriptor)
             throws ConverterException {
+        requireRunnableEntryClasses(skippedClasses, true, descriptor);
+    }
+
+    static void requireRunnableEntryClasses(
+            Set<String> skippedClasses, boolean skippedListComplete, Descriptor descriptor)
+            throws ConverterException {
+        if (!skippedListComplete) {
+            throw new ConverterException(
+                    "Skipped source class list is incomplete; MIDlet entry classes cannot be verified");
+        }
         if (skippedClasses == null || skippedClasses.isEmpty() || descriptor == null) {
             return;
         }
