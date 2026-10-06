@@ -130,7 +130,8 @@ abstract class BuildNativeAudioDependenciesTask @Inject constructor(
                 commandLine(
                     "pwsh", "-NoProfile", "-File", sourcePreparationScript.get().asFile,
                     "-OutRoot", sourcesDirectory.get().asFile,
-                    "-Manifest", sourceManifest.get().asFile
+                    "-Manifest", sourceManifest.get().asFile,
+                    "-ForceExtract"
                 )
             }
         }
@@ -143,7 +144,8 @@ abstract class BuildNativeAudioDependenciesTask @Inject constructor(
                 "-Sdk", sdkDirectory.get().asFile,
                 "-NdkVersion", ndkVersion.get(),
                 "-AndroidApi", androidApi.get().toString(),
-                "-Abis", abi.get()
+                "-Abis", abi.get(),
+                "-SourcesAlreadyPrepared"
             )
         }
     }

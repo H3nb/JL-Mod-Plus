@@ -8,7 +8,8 @@ param(
  [string]$Sdk=$env:ANDROID_HOME,
  [string]$NdkVersion='30.0.16248370',
  [int]$AndroidApi=23,
- [string]$GitBash
+ [string]$GitBash,
+ [switch]$SourcesAlreadyPrepared
 )
 $ErrorActionPreference='Stop'
 $OutRoot=[IO.Path]::GetFullPath($OutRoot).Replace('\\','/')
@@ -23,15 +24,20 @@ $make=if($IsWindows){"$ndkRoot/prebuilt/$hostTag/bin/make.exe"}else{(Get-Command
 if(!$GitBash){$GitBash=if($IsWindows){"$env:ProgramFiles/Git/usr/bin/bash.exe"}else{(Get-Command bash).Source}}
 $shell=if($IsWindows){Join-Path (Split-Path $GitBash) 'sh.exe'}else{(Get-Command sh).Source}
 foreach($required in @($GitBash,$make,"$llvmRoot/clang$exe")){if(!(Test-Path -LiteralPath $required)){throw "Missing native build tool: $required"}}
-$recipeHash=(@('build-native-deps.ps1','build-opencore.ps1','install-public-headers.ps1','prepare-native-sources.ps1','native-sources.json') | ForEach-Object {
- (Get-FileHash -Algorithm SHA256 -LiteralPath "$PSScriptRoot/$_").Hash
-}) -join ':'
 $sourceRoot="$SourcesRoot/ffmpeg"
 $amrRoot="$SourcesRoot/opencore-amr"
-if(!(Test-Path -LiteralPath "$sourceRoot/.jlmod-source-sha256") -or !(Test-Path -LiteralPath "$amrRoot/.jlmod-source-sha256")){
- & "$PSScriptRoot/prepare-native-sources.ps1" -OutRoot $SourcesRoot -Manifest "$PSScriptRoot/native-sources.json"
+if(!$SourcesAlreadyPrepared){
+ & "$PSScriptRoot/prepare-native-sources.ps1" -OutRoot $SourcesRoot -Manifest "$PSScriptRoot/native-sources.json" -ForceExtract
 }
-$sourceSignature=([IO.File]::ReadAllText("$sourceRoot/.jlmod-source-sha256").Trim()+':'+[IO.File]::ReadAllText("$amrRoot/.jlmod-source-sha256").Trim())
+$spec=Get-Content -Raw -LiteralPath "$PSScriptRoot/native-sources.json" | ConvertFrom-Json
+function AssertPinnedSource($root,$expected,$label){
+ $stamp="$root/.jlmod-source-sha256"
+ if(!(Test-Path -LiteralPath $stamp)){throw "Missing pinned $label source stamp: $stamp"}
+ $actual=[IO.File]::ReadAllText($stamp).Trim().ToUpperInvariant()
+ if($actual -ne $expected.ToUpperInvariant()){throw "Pinned $label source stamp mismatch: $actual"}
+}
+AssertPinnedSource $sourceRoot $spec.ffmpeg.sha256 'FFmpeg'
+AssertPinnedSource $amrRoot $spec.opencore.sha256 'OpenCORE-AMR'
 New-Item -ItemType Directory -Force -Path $OutRoot,$WorkRoot | Out-Null
 $profiles=@{
  'arm64-v8a'=@("aarch64-linux-android$AndroidApi",'aarch64','armv8-a','')
@@ -44,10 +50,6 @@ foreach($abi in (($Abis -join ',') -split ',')){
  $buildRoot="$WorkRoot/build-ffmpeg-$abi"
  $installRoot="$OutRoot/install-$abi"
  $amrOut="$WorkRoot/opencore-$abi"
- $stamp="$installRoot/recipe.txt"
- $signature='{0}:{1}:{2}:{3}:{4}:{5}' -f $recipeHash,$sourceSignature,$NdkVersion,$AndroidApi,$abi,$hostTag
- if((Test-Path -LiteralPath $stamp) -and ([IO.File]::ReadAllText($stamp).Trim() -eq $signature) -and
-     (Get-ChildItem "$installRoot/lib" -Filter '*.so').Count -eq 4){Write-Output "Cached native audio dependencies: $abi";continue}
  foreach($path in @($buildRoot,$amrOut,$installRoot)){if(Test-Path -LiteralPath $path){Remove-Item -Recurse -Force -LiteralPath $path}}
  & "$PSScriptRoot/build-opencore.ps1" -Target $profile[0] -DecoderOnly -SourceRoot $amrRoot -OutputRoot $amrOut -LlvmRoot $llvmRoot -ToolSuffix $exe
  New-Item -ItemType Directory -Force -Path $buildRoot,$installRoot | Out-Null
@@ -94,6 +96,5 @@ foreach($abi in (($Abis -join ',') -split ',')){
  }
  if((Get-ChildItem "$installRoot/lib" -Filter '*.so').Count -ne 4){throw "Unexpected native audio library set: $abi"}
  Get-ChildItem "$installRoot/lib" -Filter '*.so' | Sort-Object Name | ForEach-Object {[pscustomobject]@{name=$_.Name;sha256=(Get-FileHash $_.FullName -Algorithm SHA256).Hash}} | ConvertTo-Json | Set-Content "$installRoot/checksums.json"
- Set-Content -NoNewline -LiteralPath $stamp -Value $signature
  Write-Output "PASS build $abi => $installRoot"
 }
