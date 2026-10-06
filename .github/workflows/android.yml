@@ -422,7 +422,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 45
     env:
-      GRADLE_USER_HOME: ${{ runner.temp }}/jlmod-gradle-c2-portability
+      GRADLE_USER_HOME: /tmp/jlmod-gradle-c2-portability
     steps:
       - name: Check out root A
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -518,7 +518,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     env:
-      GRADLE_USER_HOME: ${{ runner.temp }}/jlmod-gradle-c2-all-abi
+      GRADLE_USER_HOME: /tmp/jlmod-gradle-c2-all-abi
     steps:
       - name: Check out sources
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
