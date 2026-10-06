@@ -184,8 +184,24 @@ class ScreenshotCandidatesTest(unittest.TestCase):
                 mock.patch.object(candidates, "report_output") as report_output,
             ):
                 candidates.main()
-        package_candidates.assert_called_once_with(found)
+        package_candidates.assert_called_once_with(found, [])
         report_output.assert_called_once_with(True, 1)
+
+    def test_main_passes_excluded_failures_to_packaging(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "report.xml"
+            report.write_text("<testsuite/>", encoding="utf-8")
+            found = {Path("screen/preview.png"): (Path("reference.png"), Path("actual.png"), None)}
+            excluded = ["PreviewTest.rendererFailure"]
+            with (
+                mock.patch.object(candidates, "REPORT", report),
+                mock.patch.object(candidates, "ensure_references_unchanged"),
+                mock.patch.object(candidates, "collect_candidates", return_value=(found, excluded)),
+                mock.patch.object(candidates, "package_candidates") as package_candidates,
+                mock.patch.object(candidates, "report_output"),
+            ):
+                candidates.main()
+        package_candidates.assert_called_once_with(found, excluded)
 
 
 if __name__ == "__main__":
