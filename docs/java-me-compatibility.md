@@ -28,7 +28,6 @@ video; actual audio-only MP4 remains supported. See
 and [runtime UI ownership](runtime-ui.md#validation-gates).
 
 
-
 ## Malformed source classes during conversion
 
 MIDlet conversion uses an optimistic single-pass fast path. A class that converts normally is not

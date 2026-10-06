@@ -3,7 +3,7 @@
  * Copyright (C) 2008 Bartek Teodorczyk <barteo@barteo.net>
  * Copyright (C) 2017-2018 Nikita Shakarun
  * Copyright (C) 2021-2024 Yury Kharchenko
- * Modified in 2026 for resilient optional patch-asset loading.
+ * Modified for JL-Mod Plus.
  * <p>
  * It is licensed under the following two licenses as alternatives:
  * 1. GNU Lesser General Public License (the "LGPL") version 2.1 or any newer version
