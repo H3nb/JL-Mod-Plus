@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import io.github.h3nb.jlmodplus.R
 
 /**
  * Small, theme-aware affordance shown only when a bounded popup has content below its viewport.
