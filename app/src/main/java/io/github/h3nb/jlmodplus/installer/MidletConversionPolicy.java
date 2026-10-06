@@ -30,6 +30,14 @@ final class MidletConversionPolicy {
                 skippedClasses.add(className);
             }
         }
+        requireRunnableEntryClasses(skippedClasses, descriptor);
+    }
+
+    static void requireRunnableEntryClasses(Set<String> skippedClasses, Descriptor descriptor)
+            throws ConverterException {
+        if (skippedClasses == null || skippedClasses.isEmpty() || descriptor == null) {
+            return;
+        }
         for (String midletClass : descriptor.getMidletClasses()) {
             if (skippedClasses.contains(midletClass)) {
                 throw new ConverterException(

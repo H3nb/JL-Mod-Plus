@@ -59,12 +59,23 @@ public class AndroidProducer {
 					sourceFailure);
 		}
 
+		final String sourceClassName;
+		try {
+			sourceClassName = cr.getClassName();
+		} catch (RuntimeException sourceFailure) {
+			throw new ClassProcessingException(
+					ClassProcessingException.Kind.UNREADABLE_SOURCE,
+					classFileName,
+					"Source class identity cannot be read",
+					sourceFailure);
+		}
+
 		String expectedName = classFileName.substring(0, classFileName.length() - 6);
-		if (!cr.getClassName().equals(expectedName)) {
+		if (!sourceClassName.equals(expectedName)) {
 			throw new ClassProcessingException(
 					ClassProcessingException.Kind.IDENTITY_MISMATCH,
 					classFileName,
-					"Class name does not match path: " + cr.getClassName() + " != " + expectedName,
+					"Class name does not match path: " + sourceClassName + " != " + expectedName,
 					null);
 		}
 
@@ -72,7 +83,7 @@ public class AndroidProducer {
 			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 			// Pass the original guest class token to reflection rewrites. The token carries the
 			// AppClassLoader that owns classes present only in the MIDlet archive.
-			ClassVisitor cv = new AndroidClassVisitor(cw, cr.getClassName());
+			ClassVisitor cv = new AndroidClassVisitor(cw, sourceClassName);
 			cr.accept(cv, ClassReader.SKIP_DEBUG);
 			return cw.toByteArray();
 		} catch (RuntimeException transformFailure) {

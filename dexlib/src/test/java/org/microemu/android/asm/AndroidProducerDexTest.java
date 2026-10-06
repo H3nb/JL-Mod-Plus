@@ -54,7 +54,12 @@ public class AndroidProducerDexTest {
 			};
 			arguments.outName = dexFile.toString();
 			arguments.numThreads = 1;
-			assertEquals(0, Main.run(arguments));
+			ConversionResult result = Main.runWithResult(arguments);
+			assertTrue(result.isSuccess());
+			assertEquals(2, result.getClassesDiscovered());
+			assertEquals(2, result.getClassesConverted());
+			assertEquals(0, result.getClassesSkipped());
+			assertTrue(result.getDiagnostics().isEmpty());
 
 			Dex dex = new Dex(dexFile.toFile());
 			String bridge = "Ljavax/microedition/shell/GuestTimingBridge;";
@@ -146,6 +151,43 @@ public class AndroidProducerDexTest {
 			assertEquals(1, result.getClassesDiscovered());
 			assertEquals(0, result.getClassesConverted());
 			assertEquals(1, result.getClassesSkipped());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
+	public void conversionDiagnosticsAreBoundedWithoutLosingSkipCount() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-bounded-diagnostics-");
+		Path archive = root.resolve("many-bad.jar");
+		Path dexFile = root.resolve("many-bad.dex");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Good.class"));
+			output.write(createSimpleClass("sample/Good"));
+			output.closeEntry();
+			for (int i = 0; i < 35; i++) {
+				String name = "sample/Bad" + i;
+				output.putNextEntry(new JarEntry(name + ".class"));
+				output.write(removeConstantPoolCount(createSimpleClass(name)));
+				output.closeEntry();
+			}
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertTrue(result.isSuccess());
+			assertEquals(36, result.getClassesDiscovered());
+			assertEquals(1, result.getClassesConverted());
+			assertEquals(35, result.getClassesSkipped());
+			assertEquals(32, result.getDiagnostics().size());
+			assertEquals(3, result.getDiagnosticsOmitted());
 		} finally {
 			Files.deleteIfExists(dexFile);
 			Files.deleteIfExists(archive);
