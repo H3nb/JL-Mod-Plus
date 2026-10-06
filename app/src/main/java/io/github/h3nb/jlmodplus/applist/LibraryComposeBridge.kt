@@ -2809,41 +2809,81 @@ internal fun LibraryDescription(descriptionValue: String, appId: Long) {
     val expandDescriptionLabel = stringResource(R.string.library_expand_description)
     val collapseDescriptionLabel = stringResource(R.string.library_collapse_description)
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = description,
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Start,
-            maxLines = if (expanded) Int.MAX_VALUE else 2,
-            overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis,
-            onTextLayout = { result ->
-                if (!expanded) {
+    if (!expanded) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (overflows) {
+                        Modifier
+                            .heightIn(min = 48.dp)
+                            .testTag("library_description_toggle")
+                            .clickable(
+                                onClickLabel = expandDescriptionLabel,
+                                role = Role.Button,
+                                onClick = { expanded = true },
+                            )
+                    } else {
+                        Modifier
+                    },
+                ),
+        ) {
+            Text(
+                text = description,
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Start,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                onTextLayout = { result ->
                     overflows = result.didOverflowHeight || result.didOverflowWidth ||
                         result.hasVisualOverflow ||
                         (result.lineCount > 0 && result.isLineEllipsized(result.lineCount - 1))
-                }
-            },
-        )
-        if (!expanded && overflows) {
-            TextButton(
-                onClick = { expanded = true },
+                },
+            )
+            if (overflows) {
+                Text(
+                    text = stringResource(R.string.library_description_more),
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(start = 6.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontWeight = FontWeight.Medium,
+                    ),
+                )
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("library_description_toggle")
+                .clickable(
+                    onClickLabel = collapseDescriptionLabel,
+                    role = Role.Button,
+                    onClick = { expanded = false },
+                ),
+        ) {
+            Text(
+                text = description,
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Start,
+            )
+            Text(
+                text = stringResource(R.string.library_description_less),
                 modifier = Modifier
                     .align(Alignment.End)
-                    .semantics { contentDescription = expandDescriptionLabel },
-            ) {
-                Text(stringResource(R.string.library_description_more))
-            }
-        } else if (expanded) {
-            TextButton(
-                onClick = { expanded = false },
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .semantics { contentDescription = collapseDescriptionLabel },
-            ) {
-                Text(stringResource(R.string.library_description_less))
-            }
+                    .padding(top = 2.dp),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.Medium,
+                ),
+            )
         }
     }
 }

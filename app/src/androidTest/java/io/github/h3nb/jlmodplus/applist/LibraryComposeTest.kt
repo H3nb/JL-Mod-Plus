@@ -499,12 +499,12 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        composeRule.onAllNodesWithContentDescription("Expand description").assertCountEquals(1)
-        composeRule.onNodeWithContentDescription("Expand description").performClick()
+        composeRule.onAllNodesWithTag("library_description_toggle").assertCountEquals(1)
+        composeRule.onNodeWithTag("library_description_toggle").assertHasClickAction().performClick()
         assertEquals(null, actions.openedId)
-        composeRule.onNodeWithContentDescription("Collapse description").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Collapse description").performClick()
-        composeRule.onNodeWithContentDescription("Expand description").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_description_less)).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_description_toggle").performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_description_more)).assertIsDisplayed()
     }
 
     @Test
