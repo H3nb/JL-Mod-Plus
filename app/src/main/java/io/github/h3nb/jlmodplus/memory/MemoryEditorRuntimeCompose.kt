@@ -16,6 +16,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -332,7 +333,9 @@ private fun RuntimeMemoryTabRail(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+        modifier = modifier
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+            .selectableGroup(),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         RuntimeMemoryRailTab(

@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Button
@@ -502,7 +503,8 @@ private fun DefaultPresetDialog(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = adaptiveDialogLayout().maxHeight),
+                    .heightIn(max = adaptiveDialogLayout().maxHeight)
+                    .selectableGroup(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(choices, key = ::profileSelectionId) { profile ->

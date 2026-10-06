@@ -17,6 +17,7 @@ package io.github.h3nb.jlmodplus.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
@@ -469,7 +470,8 @@ private fun SettingsChoiceDialog(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = maxListHeight),
+                        .heightIn(max = maxListHeight)
+                        .selectableGroup(),
                     state = listState,
                 ) {
                     items(options, key = { it.value }) { option ->
