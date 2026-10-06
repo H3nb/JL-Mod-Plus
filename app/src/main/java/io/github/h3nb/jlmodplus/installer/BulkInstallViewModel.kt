@@ -595,7 +595,7 @@ class BulkInstallViewModel : ViewModel() {
                 item.id,
                 item.name,
                 kind,
-                installerNotices(activeInstaller, library),
+                warning = installerNotices(activeInstaller, library),
             )
         } catch (cancelled: CancellationException) {
             throw cancelled
