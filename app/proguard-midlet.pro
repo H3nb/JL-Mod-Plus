@@ -1,26 +1,13 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in C:\tools\adt-bundle-windows-x86_64-20131030\sdk/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
+# Legacy standalone MIDlet sample R8 rules.
 #
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# The midlet flavor is disabled by default and retained as reference/porting support.
+# Keep the dynamic MicroEmulator and MIDlet contracts below if that flavor is re-enabled.
 
-# Add any project specific keep options here:
-
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
 -keep public class org.microemu.** { public protected *; }
 -keep class io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter { *; }
 # Keep the BuildConfig
 -keep class io.github.h3nb.jlmodplus.BuildConfig { *; }
 
--keep class com.arthenica.mobileffmpeg.** { *; }
 -keep class io.github.h3nb.jlmodplus.crashes.models.* { *; }
 
 # Preserve all public midlets.
