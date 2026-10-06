@@ -164,6 +164,66 @@ If rendering or inspection is unavailable, preserve the references, complete oth
 scoped work, and report the precise gap and next required check. Missing checks
 remain verification gaps; they do not authorize bypassing required merge checks.
 
+### GitHub-only reviewed screenshot promotion
+
+Use the owner-only screenshot promotion path when the expected screenshot change
+has been reviewed but the working environment cannot safely write or commit binary
+PNG references, such as an agent that has GitHub PR/workflow access without a
+local Android checkout. This is a convenience path, not a review bypass: promote
+only renderer output that was already inspected and judged to be the intended
+design.
+
+For a failed normal `validate` run that produced
+`JL-Mod-Plus-screenshot-candidates`:
+
+1. Inspect the candidate artifact. Review `before/`, `after/`, and `diff/`
+   for every candidate and confirm `changes.txt` and `source-context.json`
+   describe the exact PR state being reviewed. Do not promote a candidate merely
+   because screenshot comparison failed.
+2. Collect the immutable provenance from that same reviewed state:
+   - `head_sha`: the PR head SHA and the workflow run's PR head;
+   - `base_sha`: the PR base SHA recorded for that reviewed state;
+   - `build_sha`: `build_commit` from `source-context.json`, which must be
+     the synthetic merge commit whose parents are `base_sha` then `head_sha`;
+   - `run_id`: the Android CI workflow run ID;
+   - `artifact_id`: the ID of the
+     `JL-Mod-Plus-screenshot-candidates` artifact from that run;
+   - `artifact_digest`: that artifact's GitHub SHA-256 digest, including the
+     `sha256:` prefix.
+3. Re-read the PR immediately before promotion. If its head or base moved after
+   review, do not reuse the old request; obtain and review candidates for the new
+   state.
+4. As the repository owner, create one top-level PR Conversation comment with
+   exactly this structure and no additional JSON keys:
+
+```text
+/jlmod-promote-screenshots
+{"head_sha":"<40-hex PR head>","base_sha":"<40-hex PR base>","build_sha":"<40-hex reviewed merge commit>","run_id":123456789,"artifact_id":123456789,"artifact_digest":"sha256:<64-hex digest>"}
+```
+
+The first line must be exactly `/jlmod-promote-screenshots`. The JSON object must
+contain exactly the six fields above. The promotion workflow accepts only an open
+same-repository PR and only a comment authored by the repository owner.
+
+The trusted workflow validates the PR head/base, Android CI run, artifact ID and
+digest, synthetic merge parents, artifact `source-context.json`, candidate list,
+and `before`/current-golden equality. It rejects artifacts containing
+non-comparison screenshot failures. On success it writes only the reviewed
+`after/` PNGs, verifies that no other paths are staged, commits them with the
+provenance recorded in the commit message, pushes with a force-with-lease against
+the exact reviewed HEAD, and explicitly dispatches final normal Android CI
+validation. It does not re-render or synthesize the references during promotion.
+
+If promotion is rejected, keep the guardrails intact. Refresh PR/run/artifact
+state, identify which provenance or candidate assumption changed, review the
+replacement evidence, and submit a fresh request. Do not weaken the workflow,
+edit the artifact, guess missing identifiers, or bypass the final validation to
+make a stale request succeed.
+
+A local checkout may still use the reviewed `baselines.patch` route above. The
+promotion path exists so GitHub-only agents can complete the same reviewed update
+without needing direct filesystem access to binary screenshot references.
+
 ### Runtime smoke checks
 
 Use `runtime-smoke` for relevant UI/rendering/database/IPC/lifecycle changes and
