@@ -38,13 +38,14 @@
 # rather than the entire org.microemu implementation tree.
 -keep,allowoptimization public class org.microemu.cldc.**.Connection { public protected *; }
 
-# Gson 2.14, FFmpegKit, and ACRA ship their own consumer ProGuard/R8 configuration.
-# Keep dependency-specific reflection/JNI rules upstream instead of duplicating broad
+# Gson 2.14 ships its own consumer ProGuard/R8 configuration.
+# Keep dependency-specific reflection rules upstream instead of duplicating broad
 # package-wide keeps here.
 
 # R8 9.4.24 still generates invalid wide-register DEX when optimizing this large
-# Compose method. Keep shrinking and obfuscation enabled, but retain the method's
-# bytecode shape until the upstream optimizer regression is fixed.
+# Compose method. Removing this rule reproduces an immediate java.lang.VerifyError
+# when launching the minified Memory Editor.
+# Keep shrinking and obfuscation enabled, but retain this method's bytecode shape.
 -keepclassmembers,allowshrinking,allowobfuscation class io.github.h3nb.jlmodplus.memory.MemoryEditorRuntimeComposeKt {
     void RuntimeChoiceMenu(...);
 }

@@ -106,11 +106,9 @@ data class LibrarySelectionState(
             },
             restore = { values ->
                 val generation = values.getOrNull(0)
-                    ?.toString()
                     ?.takeIf(String::isNotEmpty)
                     ?.toLongOrNull()
                 val selected = values.getOrNull(1)
-                    ?.toString()
                     ?.split(',')
                     ?.asSequence()
                     ?.mapNotNull(String::toLongOrNull)

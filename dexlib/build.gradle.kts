@@ -5,12 +5,12 @@ plugins {
 }
 
 android {
-    compileSdk = rootProject.extra["compileSdk"] as Int
+    compileSdk = libs.versions.androidCompileSdk.get().toInt()
     namespace = "ru.playsoftware.j2meloader.dexlib"
     enableKotlin = false
 
     defaultConfig {
-        minSdk = rootProject.extra["minSdk"] as Int
+        minSdk = libs.versions.androidMinSdk.get().toInt()
     }
 
     buildFeatures.buildConfig = true
@@ -23,7 +23,7 @@ android {
     }
 
     lint {
-        targetSdk = rootProject.extra["targetSdk"] as Int
+        targetSdk = libs.versions.androidTargetSdk.get().toInt()
     }
 }
 

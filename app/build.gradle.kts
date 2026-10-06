@@ -1,10 +1,196 @@
+import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.BuildConfigField
+import com.android.build.api.variant.BuiltArtifactsLoader
 import com.android.build.api.variant.ResValue
+import java.io.File
 import java.util.Locale
 import java.util.Properties
+import java.util.concurrent.locks.ReentrantLock
 import java.util.jar.Attributes
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
+import kotlin.concurrent.withLock
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.LocalState
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import javax.inject.Inject
+
+@CacheableTask
+abstract class GenerateBuildIdentityResourceTask : DefaultTask() {
+    @get:Input
+    abstract val buildCommit: Property<String>
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        val valuesDirectory = outputDirectory.get().dir("values").asFile
+        valuesDirectory.mkdirs()
+        valuesDirectory.resolve("jlmod-build-identity.xml").writeText(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <resources>
+                <string name="jlmod_build_commit" translatable="false">${buildCommit.get()}</string>
+            </resources>
+            """.trimIndent() + "\n"
+        )
+    }
+}
+
+abstract class NativeAudioSourcePreparationService : BuildService<BuildServiceParameters.None>, AutoCloseable {
+    private val lock = ReentrantLock()
+    private var prepared = false
+
+    fun prepareOnce(action: () -> Unit) {
+        lock.withLock {
+            if (prepared) return
+            action()
+            prepared = true
+        }
+    }
+
+    override fun close() = Unit
+}
+
+@CacheableTask
+abstract class BuildNativeAudioDependenciesTask @Inject constructor(
+    private val execOperations: ExecOperations
+) : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val script: RegularFileProperty
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val recipeFiles: ConfigurableFileCollection
+
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val sourceManifest: RegularFileProperty
+
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val sourcePreparationScript: RegularFileProperty
+
+    @get:Input
+    abstract val abi: Property<String>
+
+    @get:Input
+    abstract val ndkVersion: Property<String>
+
+    @get:Input
+    abstract val androidApi: Property<Int>
+
+    @get:Input
+    abstract val hostOs: Property<String>
+
+    @get:Input
+    abstract val hostArch: Property<String>
+
+    @get:Internal
+    abstract val sdkDirectory: DirectoryProperty
+
+    @get:Internal
+    abstract val dependencyRoot: DirectoryProperty
+
+    @get:Internal
+    abstract val sourcePreparationService: Property<NativeAudioSourcePreparationService>
+
+    @get:Internal
+    abstract val sourcesDirectory: DirectoryProperty
+
+    @get:LocalState
+    abstract val workDirectory: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val installDirectory: DirectoryProperty
+
+    @TaskAction
+    fun build() {
+        sourcePreparationService.get().prepareOnce {
+            execOperations.exec {
+                commandLine(
+                    "pwsh", "-NoProfile", "-File", sourcePreparationScript.get().asFile,
+                    "-OutRoot", sourcesDirectory.get().asFile,
+                    "-Manifest", sourceManifest.get().asFile,
+                    "-ForceExtract"
+                )
+            }
+        }
+        execOperations.exec {
+            commandLine(
+                "pwsh", "-NoProfile", "-File", script.get().asFile,
+                "-OutRoot", dependencyRoot.get().asFile,
+                "-WorkRoot", workDirectory.get().asFile,
+                "-SourcesRoot", sourcesDirectory.get().asFile,
+                "-Sdk", sdkDirectory.get().asFile,
+                "-NdkVersion", ndkVersion.get(),
+                "-AndroidApi", androidApi.get().toString(),
+                "-Abis", abi.get(),
+                "-SourcesAlreadyPrepared"
+            )
+        }
+    }
+}
+
+abstract class VerifyNativePackagingTask : DefaultTask() {
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val apkDirectory: DirectoryProperty
+
+    @get:Internal
+    abstract val builtArtifactsLoader: Property<BuiltArtifactsLoader>
+
+    @get:Input
+    abstract val abi: Property<String>
+
+    @TaskAction
+    fun verify() {
+        val checkedAbi = abi.get()
+        val builtArtifacts = builtArtifactsLoader.get().load(apkDirectory.get())
+            ?: error("Cannot load APK artifact metadata")
+        val forbiddenLibraries = listOf(
+            "libjlmem.so", "libjlmem_target.so", "libmmapi_tsf.so", "libmmapi_common.so",
+            "libffmpegkit.so", "libffmpegkit_abidetect.so", "libavdevice.so", "libavfilter.so", "libswscale.so",
+            "libavdevice_neon.so", "libavfilter_neon.so", "libswscale_neon.so"
+        )
+        var checkedApks = 0
+        builtArtifacts.elements.forEach { artifact ->
+            val apk = File(artifact.outputFile)
+            ZipFile(apk).use { archive ->
+                val abiPrefix = "lib/$checkedAbi/"
+                if (archive.entries().asSequence().none { it.name.startsWith(abiPrefix) }) return@use
+                checkedApks++
+                forbiddenLibraries.forEach { library ->
+                    check(archive.getEntry("$abiPrefix$library") == null) {
+                        "${apk.name} still contains retired native library $abiPrefix$library"
+                    }
+                }
+            }
+        }
+        check(checkedApks > 0) {
+            "No APK artifact contains native libraries for $checkedAbi"
+        }
+    }
+}
 
 plugins {
     alias(libs.plugins.android.application)
@@ -14,14 +200,18 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-val secret = Properties().also { properties ->
-    rootProject.file("keystore.properties").runCatching { inputStream().use(properties::load) }
-}
+val rootDirectory = layout.projectDirectory.dir("..")
+val keystorePropertiesFile = rootDirectory.file("keystore.properties")
+val secret = providers.fileContents(keystorePropertiesFile).asText.orElse("").map { content ->
+    Properties().apply {
+        if (content.isNotEmpty()) content.reader().use { load(it) }
+    }
+}.get()
 // CI restores this key from ANDROID_DEBUG_KEYSTORE_BASE64. Local setups can set
 // debugStoreFile in keystore.properties to keep the shared debug key outside the checkout.
 val debugKeystorePath = secret.getProperty("debugStoreFile")?.trim()?.takeIf { it.isNotEmpty() }
     ?: "debug.keystore"
-val sharedDebugKeystore = rootProject.file(debugKeystorePath)
+val sharedDebugKeystore = rootDirectory.file(debugKeystorePath).asFile
 val hasSharedDebugKeystore = sharedDebugKeystore.isFile
 val runtimeTestAbi = providers.gradleProperty("jlmodRuntimeTestAbi").orNull
 require(runtimeTestAbi == null || runtimeTestAbi == "arm64-v8a" || runtimeTestAbi == "x86_64") {
@@ -32,54 +222,100 @@ val appVersionCode = providers.gradleProperty("jlmod.versionCode").get().toIntOr
     ?: error("jlmod.versionCode must be an integer")
 require(appVersionName.isNotEmpty()) { "jlmod.versionName must not be empty" }
 require(appVersionCode > 0) { "jlmod.versionCode must be greater than zero" }
-val diagnosticBuildCommit = (
-    providers.gradleProperty("jlmodBuildCommit").orNull
-        ?: System.getenv("JLMOD_BUILD_COMMIT")
-        ?: "unknown"
-).trim().let { value ->
-    if (value.matches(Regex("[0-9a-fA-F]{7,40}"))) value.lowercase(Locale.ROOT) else "unknown"
+val diagnosticBuildCommit = providers.gradleProperty("jlmodBuildCommit")
+    .orElse(providers.environmentVariable("JLMOD_BUILD_COMMIT"))
+    .orElse("unknown")
+    .map { rawValue ->
+        rawValue.trim().let { value ->
+            if (value.matches(Regex("[0-9a-fA-F]{7,40}"))) value.lowercase(Locale.ROOT) else "unknown"
+        }
+    }
+// Explicit opt-out for CI modes that never consume native build outputs; normal builds default to true.
+val nativeBuildEnabled = providers.gradleProperty("jlmodNativeBuild")
+    .orElse("true")
+    .map { rawValue ->
+        when (rawValue.trim().lowercase(Locale.ROOT)) {
+            "true" -> true
+            "false" -> false
+            else -> error("jlmodNativeBuild must be true or false")
+        }
+    }
+    .get()
+
+val compileSdkVersion = libs.versions.androidCompileSdk.get().toInt()
+val minSdkVersion = libs.versions.androidMinSdk.get().toInt()
+val targetSdkVersion = libs.versions.androidTargetSdk.get().toInt()
+val selectedNdkVersion = libs.versions.androidNdk.get()
+val audioDependenciesRoot = layout.buildDirectory.dir("audio-deps")
+val audioSourcesRoot = layout.buildDirectory.dir("audio-sources")
+val nativeRecipeFiles = fileTree(rootDirectory.dir("tools/audio")) {
+    include("build-opencore.ps1", "install-public-headers.ps1")
+}
+val audioDependencyTasks = if (nativeBuildEnabled) {
+    val nativeAudioSourcePreparation = gradle.sharedServices.registerIfAbsent(
+        "nativeAudioSourcePreparation",
+        NativeAudioSourcePreparationService::class
+    ) {}
+    listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64").associateWith { abi ->
+        tasks.register<BuildNativeAudioDependenciesTask>("buildNativeAudio${abi.replace("-", "").replace("_", "")}") {
+            script.set(rootDirectory.file("tools/audio/build-native-deps.ps1"))
+            recipeFiles.from(nativeRecipeFiles)
+            sourceManifest.set(rootDirectory.file("tools/audio/native-sources.json"))
+            sourcePreparationScript.set(rootDirectory.file("tools/audio/prepare-native-sources.ps1"))
+            this.abi.set(abi)
+            ndkVersion.set(selectedNdkVersion)
+            androidApi.set(minSdkVersion)
+            hostOs.set(providers.systemProperty("os.name"))
+            hostArch.set(providers.systemProperty("os.arch"))
+            sdkDirectory.set(androidComponents.sdkComponents.sdkDirectory)
+            dependencyRoot.set(audioDependenciesRoot)
+            sourcePreparationService.set(nativeAudioSourcePreparation)
+            usesService(nativeAudioSourcePreparation)
+            sourcesDirectory.set(audioSourcesRoot)
+            workDirectory.set(layout.buildDirectory.dir("audio-work/$abi"))
+            installDirectory.set(audioDependenciesRoot.map { it.dir("install-$abi") })
+        }
+    }
+} else {
+    emptyMap()
 }
 
-val audioDependenciesRoot = layout.buildDirectory.dir("audio-deps")
-val audioDependencyTasks = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64").associateWith { abi ->
-    tasks.register<Exec>("buildNativeAudio${abi.replace("-", "").replace("_", "")}") {
-        inputs.files(rootProject.fileTree("tools/audio"))
-        inputs.property("abi", abi)
-        inputs.property("host", "${System.getProperty("os.name")}/${System.getProperty("os.arch")}")
-        inputs.property("ndk", rootProject.extra["ndkVersion"] as String)
-        outputs.dir(audioDependenciesRoot.map { it.dir("install-$abi") })
-        outputs.cacheIf("Pinned native audio recipe is reusable for the same ABI, host, and NDK") { true }
-        commandLine("pwsh", "-NoProfile", "-File", rootProject.file("tools/audio/build-native-deps.ps1"),
-            "-OutRoot", audioDependenciesRoot.get().asFile, "-Sdk",
-            androidComponents.sdkComponents.sdkDirectory.get().asFile,
-            "-NdkVersion", rootProject.extra["ndkVersion"] as String, "-Abis", abi)
-    }
-}
-tasks.configureEach {
-    if (name.startsWith("configureNdkBuild") || name.startsWith("buildNdkBuild")) {
-        audioDependencyTasks.forEach { (abi, build) -> if (name.endsWith("[$abi]")) dependsOn(build) }
+// AGP exposes public artifact/source APIs, but no public task-provider hook for an
+// ndk-build prebuilt prerequisite. Keep the unavoidable task-name boundary here;
+// never replace it with AGP implementation classes.
+if (nativeBuildEnabled) {
+    tasks.configureEach {
+        if (name.startsWith("configureNdkBuild") || name.startsWith("buildNdkBuild")) {
+            audioDependencyTasks.forEach { (abi, build) ->
+                if (name.endsWith("[$abi]")) dependsOn(build)
+            }
+        }
     }
 }
 
 android {
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
-    compileSdk = rootProject.extra["compileSdk"] as Int
-    ndkVersion = rootProject.extra["ndkVersion"] as String
+    compileSdk = compileSdkVersion
+    if (nativeBuildEnabled) {
+        ndkVersion = selectedNdkVersion
+    }
     namespace = "io.github.h3nb.jlmodplus"
 
     defaultConfig {
         applicationId = "io.github.h3nb.jlmodplus"
-        minSdk = rootProject.extra["minSdk"] as Int
-        targetSdk = rootProject.extra["targetSdk"] as Int
+        minSdk = minSdkVersion
+        targetSdk = targetSdkVersion
         versionCode = appVersionCode
         versionName = appVersionName
         resValue("string", "app_name", "JL-Mod Plus")
-        // Keep per-commit provenance out of BuildConfig so it does not invalidate Kotlin/Java
-        // compilation on every CI commit. Packaging builds set JLMOD_BUILD_COMMIT explicitly.
-        resValue("string", "jlmod_build_commit", diagnosticBuildCommit)
+        // Per-commit provenance is generated lazily through the public variant Sources API below.
+        // Keep it out of configuration-time resValue/BuildConfig inputs so Configuration Cache can
+        // survive a JLMOD_BUILD_COMMIT change without invalidating Kotlin/Java compilation.
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        externalNativeBuild.ndkBuild.arguments += "JLMOD_AUDIO_DEPS=${audioDependenciesRoot.get().asFile.absolutePath.replace('\\', '/')}"
+        if (nativeBuildEnabled) {
+            externalNativeBuild.ndkBuild.arguments += "JLMOD_AUDIO_DEPS=${audioDependenciesRoot.get().asFile.absolutePath.replace('\\', '/')}"
+        }
     }
 
     @Suppress("UnstableApiUsage")
@@ -88,7 +324,7 @@ android {
     buildFeatures {
         aidl = true
         compose = true
-        prefab = true
+        prefab = nativeBuildEnabled
         buildConfig = true
         resValues = true
     }
@@ -106,7 +342,7 @@ android {
         if (secret.isNotEmpty()) {
             keyAlias = secret.getProperty("keyAlias")
             keyPassword = secret.getProperty("keyPassword")
-            storeFile = rootProject.file(secret.getProperty("storeFile"))
+            storeFile = rootDirectory.file(secret.getProperty("storeFile")).asFile
             storePassword = secret.getProperty("storePassword")
         }
     }
@@ -125,7 +361,7 @@ android {
             }
             applicationIdSuffix = ".debug"
             isJniDebuggable = true
-            ndk {
+            if (nativeBuildEnabled) ndk {
                 // Normal debug builds remain arm64-only. Hosted runtime tests opt into x86_64
                 // explicitly so they can run on a Linux x86_64 Android Emulator.
                 abiFilters += runtimeTestAbi ?: "arm64-v8a"
@@ -145,7 +381,7 @@ android {
     flavorDimensions += "default"
     productFlavors {
         create("emulator") {
-            versionNameSuffix = System.getenv("VERSION_SUFFIX")
+            versionNameSuffix = providers.environmentVariable("VERSION_SUFFIX").orNull
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -155,7 +391,7 @@ android {
             val props = getMidletManifestProperties()
             val midletName = props.getValue("MIDlet-Name")?.trim() ?: "Demo MIDlet"
             val apkName = midletName.replace("[/\\\\:*?\"<>|]".toRegex(), "").replace(" ", "_")
-            applicationId = "com.example.androidlet.${apkName.lowercase(Locale.getDefault())}"
+            applicationId = "com.example.androidlet.${apkName.lowercase(Locale.ROOT)}"
             versionName = props.getValue("MIDlet-Version") ?: "1.0"
             resValue("string", "app_name", midletName)
             proguardFiles(
@@ -172,11 +408,19 @@ android {
         isUniversalApk = true
     }
 
-    externalNativeBuild.ndkBuild.path("src/main/cpp/Android.mk")
+    if (nativeBuildEnabled) {
+        externalNativeBuild.ndkBuild.path("src/main/cpp/Android.mk")
+    }
 
     compileOptions {
         targetCompatibility = JavaVersion.VERSION_17
         sourceCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -190,6 +434,16 @@ androidComponents {
     }
 
     onVariants { variant ->
+        val generateBuildIdentityResource = tasks.register<GenerateBuildIdentityResourceTask>(
+            "generate${variant.name.replaceFirstChar { it.uppercaseChar() }}BuildIdentityResource"
+        ) {
+            buildCommit.set(diagnosticBuildCommit)
+        }
+        variant.sources.res?.addGeneratedSourceDirectory(
+            generateBuildIdentityResource,
+            GenerateBuildIdentityResourceTask::outputDirectory
+        )
+
         val fullEmulator = variant.flavorName == "emulator"
         variant.buildConfigFields?.put(
             "FULL_EMULATOR",
@@ -213,57 +467,33 @@ androidComponents {
                 variant.makeResValueKey("string", "app_name"),
                 ResValue("JL-Mod Plus Debug", "Debug application name")
             )
-        }
-    }
-}
-
-// Reject retired native modules left by incremental builds in the install artifact.
-val verifyEmulatorDebugNativePackaging = tasks.register("verifyEmulatorDebugNativePackaging") {
-    dependsOn("packageEmulatorDebug")
-    val abi = runtimeTestAbi ?: "arm64-v8a"
-    val apk = layout.buildDirectory.file(
-        "outputs/apk/emulator/debug/app-emulator-$abi-debug.apk",
-    )
-    inputs.property("abi", abi)
-    inputs.file(apk)
-    outputs.upToDateWhen { false }
-    doLast {
-        val checkedAbi = inputs.properties.getValue("abi").toString()
-        val checkedApk = inputs.files.singleFile
-        check(checkedApk.isFile) {
-            "Expected emulator debug APK for $checkedAbi was not produced: ${checkedApk.absolutePath}"
-        }
-        val forbiddenLibraries = listOf(
-            "libjlmem.so", "libjlmem_target.so", "libmmapi_tsf.so", "libmmapi_common.so",
-            "libffmpegkit.so", "libffmpegkit_abidetect.so", "libavdevice.so", "libavfilter.so", "libswscale.so",
-            "libavdevice_neon.so", "libavfilter_neon.so", "libswscale_neon.so"
-        )
-        ZipFile(checkedApk).use { archive ->
-            forbiddenLibraries.forEach { library ->
-                val entry = archive.getEntry("lib/$checkedAbi/$library")
-                check(entry == null) {
-                    "${checkedApk.name} still contains retired native library lib/$checkedAbi/$library"
+            if (nativeBuildEnabled) {
+                val verifyNativePackaging = tasks.register<VerifyNativePackagingTask>(
+                    "verifyEmulatorDebugNativePackaging"
+                ) {
+                    abi.set(runtimeTestAbi ?: "arm64-v8a")
+                    builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
                 }
+                variant.artifacts.use(verifyNativePackaging).wiredWith {
+                    it.apkDirectory
+                }.toListenTo(SingleArtifact.APK)
             }
         }
     }
 }
 
-tasks.configureEach {
-    if (name == "assembleEmulatorDebug") {
-        dependsOn(verifyEmulatorDebugNativePackaging)
-    }
-}
-
-fun getMidletManifestProperties(): Attributes = Manifest().let { mf ->
-    project.file("src/midlet/resources/MIDLET-META-INF/MANIFEST.MF").runCatching {
-        inputStream().use(mf::read)
-    }
-    return mf.mainAttributes
+// The verifier above listens to AGP's public APK artifact, so it follows the actual
+// produced outputs without depending on package task names or output-directory conventions.
+fun getMidletManifestProperties(): Attributes {
+    val manifestFile = layout.projectDirectory.file("src/midlet/resources/MIDLET-META-INF/MANIFEST.MF")
+    val content = providers.fileContents(manifestFile).asText.orElse("").get()
+    return Manifest().apply {
+        if (content.isNotEmpty()) content.byteInputStream().use { read(it) }
+    }.mainAttributes
 }
 
 dependencies {
-    implementation(projects.dexlib)
+    implementation(project(":dexlib"))
 
     implementation(platform(libs.compose.bom))
     androidTestImplementation(platform(libs.compose.bom))
