@@ -1,0 +1,14 @@
+{
+  "ffmpeg": {
+    "version": "8.1.3",
+    "archive": "ffmpeg-8.1.3.tar.xz",
+    "url": "https://ffmpeg.org/releases/ffmpeg-8.1.3.tar.xz",
+    "sha256": "7138D28C96D9D3E3AF4EE3D8CAD72741F8FFB40DA90C1112235DEA3ECD3178A3"
+  },
+  "opencore": {
+    "version": "0.1.6",
+    "archive": "opencore-amr-7dba8c3.tar.gz",
+    "url": "https://codeload.github.com/arthenica/opencore-amr/tar.gz/7dba8c32238418ce0b316a852b2224df586ca896",
+    "sha256": "FC302CEA3B65072F87D950D77EE5A7014347536039A7DE7668DA2891D386147E"
+  }
+}

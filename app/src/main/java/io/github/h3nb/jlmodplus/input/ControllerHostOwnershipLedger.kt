@@ -256,7 +256,7 @@ class ControllerHostOwnershipLedger(
             val owners = targetOutputs?.get(output)
             owners?.remove(source)
             affected += ControllerHostTargetedOutput(binding.target, output)
-            if (owners?.isEmpty() == true) targetOutputs?.remove(output)
+            if (owners?.isEmpty() == true) targetOutputs.remove(output)
         }
         if (targetOutputs?.isEmpty() == true) requestedOwners.remove(binding.target)
     }

@@ -549,7 +549,6 @@ class ControllerInputRouter(
         }
         val raw = axisValue(event, axis, history)
         val range = motionRange(device, event.source, axis, trigger = true)
-            ?: StickProcessor.MotionRangeLike(0.0f, 1.0f)
         val calibration = config.calibrations[capabilityCache.signature(device)]
         val calibrationChannel = if (side == TriggerSide.LEFT) {
             CalibrationChannel.LEFT_TRIGGER

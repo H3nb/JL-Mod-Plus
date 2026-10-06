@@ -1,3 +1,11 @@
+buildscript {
+    dependencies {
+        // AGP built-in Kotlin uses AGP's runtime KGP unless a higher version is supplied here.
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.20")
+        classpath("com.google.devtools.ksp:symbol-processing-gradle-plugin:2.3.12")
+    }
+}
+
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     alias(libs.plugins.android.application).apply(false)
@@ -12,7 +20,3 @@ tasks.register<Delete>("clean") {
     delete(layout.buildDirectory)
 }
 
-extra.set("compileSdk", 37)
-extra.set("minSdk", 23)
-extra.set("targetSdk", 36)
-extra.set("ndkVersion", "28.2.13676358")
