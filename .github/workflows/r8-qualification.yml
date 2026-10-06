@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  analyzer:
+  without-workaround:
     if: github.event.pull_request.number == 152
     runs-on: ubuntu-26.04
-    timeout-minutes: 30
+    timeout-minutes: 50
 
     steps:
       - name: Check out sources
@@ -42,91 +42,144 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
 
-      - name: Run R8 Configuration Analyzer
+      - name: Run analyzer without Memory Editor workaround
         shell: bash
         run: |
           set -euo pipefail
           chmod +x gradlew
           ./gradlew --no-daemon --stacktrace --console=plain \
             --configuration-cache --configuration-cache-problems=fail \
-            :app:analyzeEmulatorReleaseR8Config | tee r8-analyzer.log
+            :app:analyzeEmulatorReleaseR8Config | tee r8-without-workaround-analyzer.log
 
-          mapfile -t reports < <(find app/build/reports/r8 -maxdepth 1 -type f -name '*.html' -print | sort)
-          if [[ ${#reports[@]} -ne 1 ]]; then
-            printf 'Expected exactly one R8 analyzer HTML report, found %d\n' "${#reports[@]}" >&2
-            printf '%s\n' "${reports[@]}" >&2
-            exit 1
-          fi
-          printf 'R8 analyzer report: %s\n' "${reports[0]}"
-          python3 - "${reports[0]}" <<'PY'
-          import html
-          import re
-          import sys
-          from pathlib import Path
+      - name: Create temporary release signing material
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -genkeypair -noprompt \
+            -keystore qualification-release.jks \
+            -storepass android \
+            -keypass android \
+            -alias qualification \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 2 \
+            -dname 'CN=JL-Mod Plus R8 Qualification,O=CI,C=US'
+          cat > keystore.properties <<'EOF'
+          keyAlias=qualification
+          keyPassword=android
+          storeFile=qualification-release.jks
+          storePassword=android
+          EOF
 
-          raw = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
-          text = html.unescape(re.sub(r"<[^>]+>", "\n", raw))
-          lines = [re.sub(r"\s+", " ", line).strip() for line in text.splitlines()]
-          for line in lines:
-              if line and re.search(r"(shrinking|optimization|obfuscation|score|keep rule)", line, re.I):
-                  print(line)
-          PY
+      - name: Build and inspect minified release
+        shell: bash
+        env:
+          JLMOD_BUILD_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon --stacktrace --console=plain --profile \
+            --configuration-cache --configuration-cache-problems=fail \
+            :app:assembleEmulatorRelease | tee r8-without-workaround-release.log
 
-      - name: Upload R8 analyzer report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: r8-configuration-analyzer
-          path: |
-            app/build/reports/r8/*.html
-            r8-analyzer.log
-          if-no-files-found: error
-          retention-days: 7
+          metadata='app/build/outputs/apk/emulator/release/output-metadata.json'
+          test -f "$metadata"
+          output_file="$(jq -r '
+            .elements[]
+            | select(any(.filters[]?; .filterType == "ABI" and .value == "x86_64"))
+            | .outputFile
+          ' "$metadata" | head -n 1)"
+          test -n "$output_file"
+          apk="app/build/outputs/apk/emulator/release/$output_file"
+          test -f "$apk"
+          printf '%s\n' "$apk" > r8-release-apk.txt
 
-  api23-audio:
-    if: github.event.pull_request.number == 152
-    runs-on: ubuntu-26.04
-    timeout-minutes: 35
+          mapping='app/build/outputs/mapping/emulatorRelease/mapping.txt'
+          test -f "$mapping"
+          grep -F 'io.github.h3nb.jlmodplus.memory.MemoryEditorRuntimeComposeKt ->' "$mapping" \
+            | tee r8-memory-editor-mapping.txt
+          grep -F 'RuntimeChoiceMenu(' "$mapping" \
+            | tee -a r8-memory-editor-mapping.txt
 
-    steps:
-      - name: Check out sources
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          submodules: recursive
+          apksigner_bin="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -perm -111 -print | sort -V | tail -n 1)"
+          dexdump_bin="$(find "$ANDROID_HOME/build-tools" -type f -name dexdump -perm -111 -print | sort -V | tail -n 1)"
+          test -n "$apksigner_bin"
+          test -n "$dexdump_bin"
+          "$apksigner_bin" verify --verbose "$apk"
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-        with:
-          java-version: '21'
-          distribution: temurin
+          mkdir -p r8-dex
+          while IFS= read -r dex; do
+            out="r8-dex/${dex//\//_}"
+            unzip -p "$apk" "$dex" > "$out"
+            "$dexdump_bin" -f "$out" >/dev/null
+          done < <(zipinfo -1 "$apk" | grep -E '^classes([0-9]+)?\.dex$')
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
-        with:
-          cache-read-only: true
-          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-
-      - name: Set up Android SDK, platform 37, and NDK r30
-        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
-        with:
-          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+          test -f app/build/outputs/mapping/emulatorRelease/configanalyzer.html
+          unzip -t "$apk" >/dev/null
 
       - name: Enable emulator acceleration
         run: |
-          chmod +x gradlew
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Run API 23 native audio smoke
+      - name: Run minified Memory Editor release smoke
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: 23
+          api-level: 35
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: >-
-            ./gradlew --daemon --stacktrace --profile
-            -PjlmodRuntimeTestAbi=x86_64
-            -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.media.MediaBoundaryRuntimeTest#generatedSynthesisSampledAndVideoShareOutputAndSeekDrainsVideo
-            :app:connectedEmulatorDebugAndroidTest
+          script: |
+            set -euo pipefail
+            apk="$(cat r8-release-apk.txt)"
+            adb root || true
+            adb wait-for-device
+            adb install -r "$apk"
+            adb logcat -c
+            adb shell am force-stop io.github.h3nb.jlmodplus
+
+            set +e
+            start_output="$(adb shell am start -W \
+              -n io.github.h3nb.jlmodplus/io.github.h3nb.jlmodplus.memory.MemoryEditorActivity \
+              --el ru.playsoftware.j2meloader.memory.extra.RUNTIME_TOKEN 1 2>&1)"
+            start_status=$?
+            set -e
+            printf '%s\n' "$start_output" | tee r8-memory-editor-start.txt
+            if [[ $start_status -ne 0 ]] || grep -Eq 'SecurityException|Error type [0-9]+|Permission Denial' r8-memory-editor-start.txt; then
+              echo 'Could not directly start the minified Memory Editor activity.' >&2
+              exit 1
+            fi
+
+            sleep 8
+            adb logcat -d -v threadtime > r8-memory-editor-logcat.txt
+            adb shell dumpsys activity exit-info io.github.h3nb.jlmodplus > r8-memory-editor-exit-info.txt || true
+
+            if grep -Eiq 'VerifyError|verification failed|rejecting opcode|invalid.*register|wide.*register|FATAL EXCEPTION.*memory_engine' r8-memory-editor-logcat.txt; then
+              echo 'Minified Memory Editor runtime hit a verifier/runtime failure.' >&2
+              grep -Ein 'VerifyError|verification failed|rejecting opcode|invalid.*register|wide.*register|FATAL EXCEPTION' r8-memory-editor-logcat.txt >&2 || true
+              exit 1
+            fi
+            if grep -Eiq 'REASON_CRASH|reason=crash|crash native|crash java' r8-memory-editor-exit-info.txt; then
+              echo 'Minified Memory Editor process recorded a crash exit.' >&2
+              cat r8-memory-editor-exit-info.txt >&2
+              exit 1
+            fi
+
+            echo 'Minified Memory Editor activity started without verifier/runtime crash.'
+
+      - name: Upload R8 workaround qualification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: r8-memory-editor-workaround-qualification
+          path: |
+            app/build/reports/r8/*.html
+            app/build/outputs/mapping/emulatorRelease/configanalyzer.html
+            r8-without-workaround-analyzer.log
+            r8-without-workaround-release.log
+            r8-memory-editor-mapping.txt
+            r8-memory-editor-start.txt
+            r8-memory-editor-logcat.txt
+            r8-memory-editor-exit-info.txt
+          if-no-files-found: warn
+          retention-days: 7
