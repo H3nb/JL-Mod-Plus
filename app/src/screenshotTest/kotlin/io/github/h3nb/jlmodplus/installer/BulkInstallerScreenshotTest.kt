@@ -30,8 +30,8 @@ fun BulkInstallerResultsScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "Batch success warning", widthDp = 360, heightDp = 640, locale = "in", showBackground = true)
-@Preview(name = "Batch success warning short", widthDp = 480, heightDp = 240, fontScale = 2f, locale = "in", showBackground = true)
+@Preview(name = "Batch success warning", widthDp = 360, heightDp = 640, locale = "id", showBackground = true)
+@Preview(name = "Batch success warning short", widthDp = 480, heightDp = 240, fontScale = 2f, locale = "id", showBackground = true)
 @Composable
 fun BulkInstallerSuccessWarningScreenshot() {
     JLModPlusTheme(darkTheme = false) {
