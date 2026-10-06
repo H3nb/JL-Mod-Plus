@@ -31,12 +31,12 @@ jobs:
   build:
     # Maintenance runs must not report the same check name as PR validation.
     name: ${{ inputs.mode == 'update-screenshots' && 'screenshot-candidates' || inputs.mode == 'runtime-smoke' && 'runtime-smoke' || 'Build and tests' }}
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - name: Check out sources
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
@@ -64,26 +64,22 @@ jobs:
           keytool -list -keystore debug.keystore -storepass android -alias androiddebugkey >/dev/null
 
       - name: Set up JDK 21
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           java-version: '21'
           distribution: temurin
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
         with:
-          # Internal PRs may persist supported Gradle User Home / Build Cache state.
-          # Fork PRs stay read-only; cross-run project Configuration Cache persistence is intentionally not enabled.
+          # Internal PRs may persist Gradle state for subsequent commits in the same PR.
+          # Fork PRs stay read-only so untrusted code cannot populate repository caches.
           cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
 
       - name: Set up Android SDK and platform 37
-        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
           packages: 'platform-tools platforms;android-37.0'
-
-      - name: Provision NDK r30 for native-producing modes
-        if: github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') != 'update-screenshots'
-        run: sdkmanager 'ndk;30.0.16248370' >/dev/null
 
       - name: Prepare build identity
         id: prepare
@@ -106,10 +102,7 @@ jobs:
       - name: Assemble arm64 debug APK
         id: assemble
         if: github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate'
-        shell: bash
-        run: |
-          set -euo pipefail
-          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:assembleEmulatorDebug
+        run: ./gradlew --daemon --parallel --stacktrace --profile :app:assembleEmulatorDebug
 
       - name: Stage APK for early device testing
         id: stage_apk
@@ -130,7 +123,7 @@ jobs:
 
       - name: Upload APK before validation completes
         if: ${{ !cancelled() && steps.stage_apk.outcome == 'success' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: JL-Mod-Plus-emulator-debug-arm64-v8a
           path: ci-apk/
@@ -141,15 +134,11 @@ jobs:
       - name: Tests and instrumentation compilation
         id: validation
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' && (github.event_name != 'workflow_dispatch' || (inputs.mode || 'validate') == 'validate') }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          tasks=(
-            :app:testEmulatorDebugUnitTest
-            :dexlib:testDebugUnitTest
-            :app:assembleEmulatorDebugAndroidTest
-          )
-          ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail "${tasks[@]}"
+        run: >-
+          ./gradlew --daemon --parallel --stacktrace --profile --continue
+          :app:testEmulatorDebugUnitTest
+          :dexlib:testDebugUnitTest
+          :app:assembleEmulatorDebugAndroidTest
 
       - name: Generate screenshot candidates on manual request
         id: update_candidates
@@ -159,7 +148,7 @@ jobs:
           set -euo pipefail
           mkdir -p screenshot-candidates
           cp -a app/src/screenshotTestEmulatorDebug/reference screenshot-candidates/before
-          ./gradlew --daemon --stacktrace --profile -PjlmodNativeBuild=false :app:updateEmulatorDebugScreenshotTest
+          ./gradlew --daemon --stacktrace --profile :app:updateEmulatorDebugScreenshotTest
           cp -a app/src/screenshotTestEmulatorDebug/reference screenshot-candidates/after
           # Include newly generated files as well as changed/deleted references.
           git add --intent-to-add -- app/src/screenshotTestEmulatorDebug/reference
@@ -169,7 +158,7 @@ jobs:
 
       - name: Upload manually generated screenshot candidates for review
         if: ${{ !cancelled() && steps.update_candidates.outcome == 'success' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: JL-Mod-Plus-screenshot-candidates
           path: screenshot-candidates/
@@ -196,7 +185,11 @@ jobs:
             bash -c 'trap "adb logcat -d -v threadtime > runtime-logcat.txt 2>&1 || true" EXIT;
             ./gradlew --daemon --stacktrace --profile
             -PjlmodRuntimeTestAbi=x86_64
-            -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.lcdui.graphics.AmbientColorSamplerTest,javax.microedition.media.MediaBoundaryRuntimeTest,io.github.h3nb.jlmodplus.librarydb.LibraryDatabaseAndroidTest,io.github.h3nb.jlmodplus.crashes.CrashReportsComposeTest,io.github.h3nb.jlmodplus.config.PresetAuthorityIpcRuntimeTest#staleRuntimeIdentityCannotModifyReplacementApp,io.github.h3nb.jlmodplus.crashes.CrashRuntimeIsolationTest#repeatedRemoteSessionCrashesKeepMainProcessAndPersistExactReports,io.github.h3nb.jlmodplus.crashes.CrashRuntimeIsolationTest#launchingDifferentMidletReplacesBackgroundRuntimeWithoutCrashOrGuestTeardown,io.github.h3nb.jlmodplus.crashes.CrashRuntimeIsolationTest#hungUserExitReturnsToLibraryAndTerminatesWithoutCrashReport,io.github.h3nb.jlmodplus.crashes.ProcessExitRuntimeTest#abruptRemoteSigkillDoesNotBecomeAFatalReport,io.github.h3nb.jlmodplus.crashes.ProcessExitRuntimeTest#newerNonfatalEvidenceStaysQueryableWithoutHidingFatalNotice,io.github.h3nb.jlmodplus.runtime.EmulatorShutdownOrderTest,io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#cleanupWithoutCommittedOwnershipDoesNotTouchState,io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#earlySetupCleanupRestoresPreferenceAndPreservesUnrelatedRuntime,io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#failedPreferenceRestorationPreservesOwnedFixtureForRetry
+            :app:installEmulatorDebug &&
+            adb shell appops set io.github.h3nb.jlmodplus.debug MANAGE_EXTERNAL_STORAGE allow &&
+            ./gradlew --daemon --stacktrace --profile
+            -PjlmodRuntimeTestAbi=x86_64
+            -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.lcdui.graphics.AmbientColorSamplerTest,javax.microedition.media.MediaBoundaryRuntimeTest,io.github.h3nb.jlmodplus.librarydb.LibraryDatabaseAndroidTest,io.github.h3nb.jlmodplus.crashes.CrashReportsComposeTest,io.github.h3nb.jlmodplus.config.PresetAuthorityIpcRuntimeTest#staleRuntimeIdentityCannotModifyReplacementApp,io.github.h3nb.jlmodplus.memory.MemoryIpcRuntimeTest#missingRuntimeCompletionCarriesStructuredReason,io.github.h3nb.jlmodplus.applist.LibraryComposeTest#compactHeightAppActionsKeepLastActionReachable,io.github.h3nb.jlmodplus.installer.InstallerComposeTest#compactHeightConfirmationScrollsToAllActions,io.github.h3nb.jlmodplus.installer.InstallerComposeTest#recoveryActionsRemainReachableInShortWindowWithLargeText,io.github.h3nb.jlmodplus.installer.InstallerComposeTest#bulkRetryRemainsReachableInShortWindowWithLargeText,io.github.h3nb.jlmodplus.ui.AdaptiveDialogComposeTest#shortLargeTextDialogKeepsActionsVisibleAndBodyScrollable,io.github.h3nb.jlmodplus.ui.AdaptiveDialogComposeTest#largeTextFontFormCanReachItsLastFieldAndConfirm,io.github.h3nb.jlmodplus.settings.SettingsComposeTest#compactHeightLanguageDialogUsesAdaptiveScrollableBounds,javax.microedition.shell.RuntimeMenuComposeTest#compactHeightBackMenuKeepsLastActionReachable,io.github.h3nb.jlmodplus.crashes.CrashRuntimeIsolationTest#repeatedRemoteSessionCrashesKeepMainProcessAndPersistExactReports,io.github.h3nb.jlmodplus.crashes.CrashRuntimeIsolationTest#launchingDifferentMidletReplacesBackgroundRuntimeWithoutCrashOrGuestTeardown,io.github.h3nb.jlmodplus.crashes.CrashRuntimeIsolationTest#hungUserExitReturnsToLibraryAndTerminatesWithoutCrashReport,io.github.h3nb.jlmodplus.crashes.ProcessExitRuntimeTest#abruptRemoteSigkillDoesNotBecomeAFatalReport,io.github.h3nb.jlmodplus.crashes.ProcessExitRuntimeTest#newerNonfatalEvidenceStaysQueryableWithoutHidingFatalNotice,io.github.h3nb.jlmodplus.runtime.EmulatorShutdownOrderTest,io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#cleanupWithoutCommittedOwnershipDoesNotTouchState,io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#earlySetupCleanupRestoresPreferenceAndPreservesUnrelatedRuntime,io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#failedPreferenceRestorationPreservesOwnedFixtureForRetry
             :app:connectedEmulatorDebugAndroidTest'
 
       - name: Record validation results
@@ -226,7 +219,7 @@ jobs:
 
       - name: Upload CI diagnostics
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: JL-Mod-Plus-ci-diagnostics
           path: |
@@ -244,77 +237,32 @@ jobs:
           retention-days: 7
 
 
-  memory-ipc-runtime:
-    name: Memory IPC runtime
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'runtime-smoke' }}
-    runs-on: ubuntu-26.04
-    timeout-minutes: 20
-    steps:
-      - name: Check out sources
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          submodules: recursive
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-        with:
-          java-version: '21'
-          distribution: temurin
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
-
-      - name: Set up Android SDK and platform 37
-        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
-        with:
-          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
-
-      - name: Enable emulator acceleration
-        run: |
-          chmod +x gradlew
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Run structured completion Binder contract
-        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          disable-animations: true
-          script: >-
-            ./gradlew --daemon --stacktrace --profile
-            -PjlmodRuntimeTestAbi=x86_64
-            -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.memory.MemoryIpcRuntimeTest#missingRuntimeCompletionCarriesStructuredReason
-            :app:connectedEmulatorDebugAndroidTest
 
   screenshots:
     name: Screenshot validation
     if: inputs.mode != 'update-screenshots' && inputs.mode != 'runtime-smoke'
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Check out sources
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
 
       - name: Set up JDK 21
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           java-version: '21'
           distribution: temurin
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
 
       - name: Set up Android SDK and platform 37
-        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
           packages: 'platform-tools platforms;android-37.0'
 
@@ -323,10 +271,7 @@ jobs:
 
       - name: Validate screenshot references
         id: screenshots
-        shell: bash
-        run: |
-          set -euo pipefail
-          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:validateEmulatorDebugScreenshotTest
+        run: ./gradlew --daemon --parallel --stacktrace --profile :app:validateEmulatorDebugScreenshotTest
 
       - name: Package existing screenshot renders after comparison failure
         id: candidates
@@ -338,7 +283,7 @@ jobs:
 
       - name: Upload screenshot candidates for review
         if: ${{ !cancelled() && steps.candidates.outcome == 'success' && steps.candidates.outputs.available == 'true' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: JL-Mod-Plus-screenshot-candidates
           path: screenshot-candidates/
@@ -347,7 +292,7 @@ jobs:
 
       - name: Upload screenshot diagnostics
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: JL-Mod-Plus-screenshot-diagnostics
           path: |
@@ -361,43 +306,42 @@ jobs:
   lint:
     name: Lint
     if: inputs.mode != 'update-screenshots' && inputs.mode != 'runtime-smoke'
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Check out sources
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
 
       - name: Set up JDK 21
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           java-version: '21'
           distribution: temurin
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
 
       - name: Set up Android SDK and platform 37
-        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
-          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+          packages: 'platform-tools platforms;android-37.0'
 
       - name: Prepare Gradle wrapper
         run: chmod +x gradlew
 
       - name: Lint app and dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug
+        run: >-
+          ./gradlew --daemon --parallel --stacktrace --profile --continue
+          :app:lintEmulatorDebug
 
       - name: Upload lint diagnostics
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: JL-Mod-Plus-lint-diagnostics
           path: |
@@ -412,18 +356,16 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-
-
   ci:
     # Preserve the required PR check name; maintenance cannot satisfy it.
     name: ${{ (inputs.mode == 'update-screenshots' || inputs.mode == 'runtime-smoke') && 'maintenance-status' || 'build' }}
     needs: [build, screenshots, lint]
     if: ${{ always() && inputs.mode != 'update-screenshots' && inputs.mode != 'runtime-smoke' }}
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
     steps:
-      - name: Require all validation jobs to succeed
+      - name: Require both validation jobs to succeed
         env:
           BUILD_RESULT: ${{ needs.build.result }}
           SCREENSHOT_RESULT: ${{ needs.screenshots.result }}
