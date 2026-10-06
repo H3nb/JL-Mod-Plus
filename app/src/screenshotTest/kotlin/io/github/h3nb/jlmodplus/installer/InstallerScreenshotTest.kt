@@ -190,24 +190,8 @@ fun ReconversionCompatibilityCompactLandscapeLargeTextScreenshot() {
 @Preview(name = "Installer success", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun InstallerSuccessScreenshot() {
-    JLModPlusTheme(darkTheme = false) {
-        InstallerScreen(
-            state = InstallerUiState.Success(
-                title = "Demo MIDlet",
-                status = "Application successfully installed!",
-                startLabel = "Start",
-                closeLabel = "Close",
-                iconPath = null,
-            ),
-            actions = NoOpInstallerActions,
-        )
-    }
-}
-
-@PreviewTest
-@Preview(name = "Installer success warning rose accent", widthDp = 360, heightDp = 640, showBackground = true)
-@Composable
-fun InstallerSuccessWarningScreenshot() {
+    // This higher-risk success state intentionally covers a user-selectable accent so the
+    // compatibility warning cannot regress into looking like an error-colored message.
     JLModPlusTheme(darkTheme = false, accent = AccentPalette.Rose) {
         InstallerScreen(
             state = InstallerUiState.Success(
