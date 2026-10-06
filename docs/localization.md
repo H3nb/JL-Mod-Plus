@@ -5,24 +5,26 @@ JL-Mod Plus. [AGENTS.md](../AGENTS.md) governs project authority and scope;
 [UI copy and presentation style](ui-copy-style.md) owns capitalization,
 typography, color, and presentation. Apply both without duplicating their rules.
 
-Phase 1 establishes this contract only. The rules below govern subsequent copy
-and localization work; they do not assert that existing resources already comply.
-Sections marked **Target** describe architecture to implement in later scoped
-phases, not current runtime behavior.
+This is a durable contract, not a phase checklist. Current-state notes describe
+evidence at the time they are updated; they do not freeze implementation details.
+Sections marked **Target** describe desired properties that still need scoped,
+evidenced implementation where current code does not yet satisfy them.
 
 ## Meaning and evidence
 
 The source of meaning is:
 
-`implementation / specification / verified behavior` → `semantic contract` →
-`canonical English copy` → `locale-specific natural rendering`.
+`explicit product contract + applicable specification + verified behavior` →
+`semantic contract` → `canonical English copy` →
+`locale-specific natural rendering`.
 
 Explicit project contracts define intended behavior; applicable specifications
 define default compatibility except for deliberate, verified project exceptions.
-Implementation and verified behavior establish what actually happens. Existing
-strings are evidence to review, never authoritative proof of backend behavior.
-If implementation conflicts with intended behavior, record the discrepancy;
-do not promise intended behavior that the implementation does not establish.
+Current implementation and verified runtime behavior establish what actually
+happens and provide evidence for gaps. Existing strings are evidence to review,
+never authoritative proof of backend behavior. If intended and actual behavior
+conflict, make the discrepancy explicit; do not make UI copy promise behavior
+the implementation does not establish.
 
 Before auditing wording, inspect enough context to establish:
 
@@ -33,9 +35,12 @@ Before auditing wording, inspect enough context to establish:
 5. The UI role and surface.
 6. The wording that faithfully represents that behavior.
 
-If evidence cannot establish behavior confidently, return `NEEDS_CONTEXT` with
-the missing evidence rather than inventing a rewrite. Record concise conclusions
-and reviewable evidence, such as source paths/symbols, an applicable specification,
+Investigate the relevant accessible source, specifications, tests, and runtime
+evidence before declaring uncertainty. Use `NEEDS_CONTEXT` only when the
+available evidence is exhausted and a missing external fact, product decision,
+or unavailable runtime observation would materially affect the wording. Identify
+that missing evidence rather than guessing. Record concise conclusions and
+reviewable evidence, such as source paths/symbols, an applicable specification,
 or a verified runtime observation; do not require or store private chain-of-thought.
 
 ## Copy quality priority
@@ -99,7 +104,7 @@ Examples, conditional on verified behavior:
 ## Languages and completeness
 
 English is the canonical source language and ultimate Android fallback in the
-unqualified resources. Its **target** physical catalog is
+unqualified resources. Its physical catalog is
 `app/src/main/res/values/strings.xml`. Canonical English expresses the established
 semantic contract; it does not define backend behavior independently.
 
@@ -180,9 +185,10 @@ language: machine identifiers, configuration persistence values, URLs, product
 names, exact technical notation, or keypad symbols/digits where applicable.
 
 Missing translation, technical appearance, or a partly invariant message is not
-enough. **Target:** a phrase combining prose and invariant data uses localized
-prose plus an invariant argument/value. Existing `translatable="false"` resources
-need a separate semantic audit; Phase 1 changes none of them.
+enough. A phrase combining prose and invariant data should use localized prose
+plus an invariant argument/value. Existing `translatable="false"` declarations
+remain subject to semantic review; do not bulk-change them merely because they
+look technical.
 
 ## Text ownership and resolution
 
@@ -229,7 +235,8 @@ compatibility. Treat equivalent legacy/modern codes as a general canonicalizatio
 concern, preserving meaningful script/region distinctions rather than collapsing
 all tags to a base language. Existing `values-in` may remain until a separately
 tested migration proves a directory change safe; it is not the canonical
-application identity. Do not rename locale directories in Phase 1.
+application identity. Do not rename locale directories solely to normalize tag
+spelling; treat a physical-directory migration as separate compatibility work.
 
 **Target architecture:**
 
@@ -241,63 +248,54 @@ application identity. Do not rename locale directories in Phase 1.
 - Android native Resources remain the localization engine. Do not add a
   `TranslationManager`, translation repository, custom runtime language database,
   or parallel framework unless a later concrete requirement proves it necessary.
-- A dedicated runtime phase must establish the in-app supported-locale registry
-  and harden its dependency on generated locale metadata. Catalog presence alone
-  does not establish translation completeness or review quality.
+- The in-app supported-locale registry must come from a stable, tested source.
+  Catalog presence or generated metadata alone does not establish translation
+  completeness or review quality; harden or replace the current mechanism only
+  through scoped work justified by an observed requirement.
 
 Current implementation evidence:
 
 - [resources.properties](../app/src/main/res/resources.properties) declares
   `unqualifiedResLocale=en`; [app Gradle configuration](../app/build.gradle.kts)
   enables `androidResources.generateLocaleConfig` and disables `MissingTranslation`.
-- English [default resources](../app/src/main/res/values/strings.xml) and
-  [Indonesian resources](../app/src/main/res/values-in/strings.xml) each use one
-  `strings.xml` catalog for strings and plurals after Phase 3 physical
-  consolidation, as do [Russian resources](../app/src/main/res/values-ru/strings.xml)
-  and the other base locale catalogs. Structural resources and configuration-specific
-  overrides remain in their own files/configurations. English and Indonesian have
-  been reviewed by semantic domain, and Indonesian covers the full translatable
-  source catalog. A follow-up canonical-English review rechecked the historical
-  `NEEDS_CONTEXT` set against current app-owned UI consumers, and active canonical
-  English completed its bounded canonical review. Indonesian later completed a
-  repository-wide semantic, terminology, sentence-case, and language-quality
-  refinement. After the final correction pass, the active Indonesian UI is frozen
-  as the canonical Indonesian baseline. Future Indonesian changes are limited to
-  new or behavior-invalidated copy, verified semantic/typo/grammar/nonstandard-usage
-  defects, or demonstrated accessibility/ambiguity problems. Broad synonym,
-  sentence-case, or terminology re-evaluation requires new evidence.
-  A secondary-locale-safe dead-resource cleanup then
-  removed 190 orphaned string declarations (189 translatable and one invariant)
-  plus five unused drawables from every applicable catalog without changing active
-  resource consumers or runtime input implementation. The canonical translatable
-  source catalog now contains 892 resources and 31 invariant text declarations.
-  Count-bearing app-owned UI uses Android plural resources when grammar depends on a
-  displayed quantity. Stale localized declarations with obsolete placeholder contracts
-  are removed from incomplete catalogs rather than preserved with incorrect semantics;
-  those locales fall back to the canonical source text until the key is reviewed. UI
-  percentages are formatted with the active resource locale rather than assembled from
-  a hardcoded percent suffix.
-  Russian completed its full-catalog Phase 5A semantic and language review and was
-  realigned for canonical semantics changed by Phase 5A.1. Later canonical changes
-  remain subject to the subsequent secondary-locale passes; catalog coverage alone
-  does not establish semantic quality.
+- English [default resources](../app/src/main/res/values/strings.xml),
+  [Indonesian resources](../app/src/main/res/values-in/strings.xml), Russian
+  [resources](../app/src/main/res/values-ru/strings.xml), and the other base locale
+  catalogs use one `strings.xml` catalog for strings and plurals; structural and
+  configuration-specific resources remain separate. Active canonical English and
+  Indonesian have completed semantic/language review, Indonesian covers the full
+  translatable source catalog, and Russian has completed a full-catalog review
+  against the canonical semantics known at that review point. Other incomplete
+  secondary locales may intentionally fall back to canonical English until their
+  entries are reviewed. Prior review is a stability baseline, not immunity from
+  correction: avoid synonym or casing churn based only on taste, but revise any
+  locale when current evidence establishes a semantic, clarity, grammar,
+  terminology, accessibility, or consistency defect.
+- The canonical source catalog currently contains 892 translatable resources and
+  31 invariant text declarations. Count-bearing app-owned UI uses Android plural
+  resources when grammar depends on a displayed quantity. Localized declarations
+  with obsolete placeholder contracts are removed rather than kept with incorrect
+  semantics, allowing canonical fallback until the key is reviewed. UI percentages
+  use the active resource locale rather than a hardcoded percent suffix.
 - [SettingsActivity.buildLanguageOptions](../app/src/main/java/io/github/h3nb/jlmodplus/settings/SettingsActivity.java)
   reads `_generated_res_locale_config`; unavailable/unreadable metadata leaves
-  the system-language option. This requires later runtime hardening.
+  only the system-language option. Treat this as a current limitation to account
+  for when locale-discovery behavior is in scope, not as a reason to redesign the
+  localization stack during unrelated work.
 - [AndroidManifest.xml](../app/src/main/AndroidManifest.xml) declares `:midlet`
   and `:memory_engine` components alongside default/main-process components.
 
-These facts describe the current mechanisms, not permanent requirements. Phase 1
-does not consolidate/rewrite catalogs, rename keys/directories, change the picker,
-`generateLocaleConfig`, or `MissingTranslation`, add `locale_config.xml` or
-pseudolocales, or refactor runtime state/IPC. It adds no translation platform,
-AI API integration, validator, audit database, build task, or CI enforcement.
-Later tooling must be documented only when it exists. Android's
+These facts describe current mechanisms, not permanent requirements. This
+contract does not itself authorize locale-directory migrations, picker redesign,
+resource-generation changes, runtime-state/IPC refactors, pseudolocales, or a new
+translation platform, validator, audit database, build task, or CI gate. Make
+those changes only when a scoped task and current evidence justify them. Document
+tooling as current behavior only after it exists. Android's
 [localization fallback](https://developer.android.com/guide/topics/resources/localization)
 and [generated locale configuration](https://developer.android.com/guide/topics/resources/app-languages)
 provide platform context; they do not certify catalog quality.
 
-## Deterministic inventory (Phase 2)
+## Deterministic inventory
 
 [scripts/localization_audit.py](../scripts/localization_audit.py) inventories
 repository-owned `app/src/main/res/values*/*.xml` declarations without modifying
@@ -333,7 +331,7 @@ commands and ignored report paths. Findings do not fail the command; unreadable
 input, malformed XML, unsupported locale forms, or execution/usage errors do.
 The tool supplies no semantic/language/dead-resource verdicts, equality judgment,
 AI dependency, resource repairs, or CI enforcement. Those decisions remain in
-their separately evidenced phases under this contract.
+separate semantic and language review under this contract.
 
 ## Initial semantic glossary
 
@@ -371,21 +369,21 @@ specifications, verified runtime behavior, and explicit project contracts remain
 authoritative. Runtime correctness must not depend on a model, provider, API, or
 orchestration mode.
 
-Choose review roles by task requirements rather than model names or capability
-tiers. One capable reviewer may cover multiple roles; split work only when a
-bounded handoff materially improves the task.
+Choose review depth and division by task requirements rather than model names or
+capability tiers. One capable agent may perform all roles; split work only when
+parallel or specialized review materially improves quality or efficiency.
 
 | Role | Responsibility |
 | --- | --- |
-| Semantic reviewer | Resolve ambiguous or high-impact meaning from implementation/specification evidence; trace state/lifecycle/IPC-sensitive claims; decide whether source semantics or parameter contracts change; review difficult canonical-copy decisions. |
-| Bounded batch assistant | Perform deterministic inventory/extraction, mechanical classification, repeated terminology checks, structured candidate batches, and straightforward translations after the semantic contract is established. Do not guess unresolved backend behavior; return uncertainty to semantic review. |
-| Language reviewer | Judge target-language correctness, naturalness, terminology, and plural/grammar behavior without changing established product meaning. Use `NEEDS_LANGUAGE_REVIEW` when competent language judgment is unavailable. |
+| Semantic review | Resolve ambiguous or high-impact meaning from implementation/specification evidence; trace state/lifecycle/IPC-sensitive claims; decide whether source semantics or parameter contracts change; review difficult canonical-copy decisions. |
+| Batch/mechanical review | Perform deterministic inventory/extraction, mechanical classification, repeated terminology checks, structured candidate batches, and straightforward translations after the semantic contract is established. Do not guess unresolved backend behavior; return material uncertainty to semantic review. |
+| Language review | Judge target-language correctness, naturalness, terminology, and plural/grammar behavior without changing established product meaning. Use `NEEDS_LANGUAGE_REVIEW` when competent language judgment is unavailable. |
 
 Establish semantics from relevant evidence before batch work. Prefer deterministic
 tooling for inventory and validation. Increase review depth only for concrete
 ambiguity or risk; do not require a fixed number of reviewers or passes. If work
-is parallelized, keep scopes non-overlapping and define one explicit handoff;
-reconcile conflicts against evidence rather than reviewer identity. Record concise
+is parallelized, give each workstream clear ownership and synthesize the results
+against shared evidence rather than reviewer identity. Record concise
 verdicts and supporting evidence, and revisit affected locale renderings whenever
 source meaning, UI role, resource type, or parameter contracts change.
 
