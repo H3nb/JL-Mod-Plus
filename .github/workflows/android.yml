@@ -682,6 +682,10 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Prepare retained-workaround runtime smoke input
+        shell: bash
+        run: cp final-r8-apk.txt r8-release-apk.txt
+
       - name: Verify retained R8 workaround at runtime
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
@@ -689,32 +693,7 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: |
-            set -euo pipefail
-            apk="$(cat final-r8-apk.txt)"
-            adb root || true
-            adb wait-for-device
-            adb install -r "$apk"
-            adb logcat -c
-            adb shell am force-stop io.github.h3nb.jlmodplus
-            adb shell am start -W \
-              -n io.github.h3nb.jlmodplus/io.github.h3nb.jlmodplus.memory.MemoryEditorActivity \
-              --el ru.playsoftware.j2meloader.memory.extra.RUNTIME_TOKEN 1 \
-              | tee final-r8-memory-start.txt
-            sleep 8
-            adb logcat -d -v threadtime > final-r8-memory-logcat.txt
-            adb shell dumpsys activity exit-info io.github.h3nb.jlmodplus > final-r8-memory-exit-info.txt || true
-            if grep -Eiq 'VerifyError|verification failed|rejecting opcode|invalid.*register|wide.*register|FATAL EXCEPTION.*memory_engine' final-r8-memory-logcat.txt; then
-              echo 'Retained R8 workaround did not protect the minified Memory Editor.' >&2
-              grep -Ein 'VerifyError|verification failed|rejecting opcode|invalid.*register|wide.*register|FATAL EXCEPTION' final-r8-memory-logcat.txt >&2 || true
-              exit 1
-            fi
-            if grep -Eiq 'REASON_CRASH|reason=crash|crash native|crash java' final-r8-memory-exit-info.txt; then
-              echo 'Minified Memory Editor recorded a crash exit.' >&2
-              cat final-r8-memory-exit-info.txt >&2
-              exit 1
-            fi
-            echo 'Retained Memory Editor R8 workaround passed runtime qualification.'
+          script: bash .github/scripts/r8-memory-editor-smoke.sh
 
       - name: Upload release/native diagnostics
         if: always()
@@ -724,9 +703,9 @@ jobs:
           path: |
             native-all-abi.log
             release-build.log
-            final-r8-memory-start.txt
-            final-r8-memory-logcat.txt
-            final-r8-memory-exit-info.txt
+            r8-memory-editor-start.txt
+            r8-memory-editor-logcat.txt
+            r8-memory-editor-exit-info.txt
             build/reports/profile/**
             app/build/outputs/mapping/emulatorRelease/mapping.txt
           if-no-files-found: warn
