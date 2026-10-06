@@ -203,7 +203,7 @@ fun FilePickerScreen(
                             enabled = !state.loading && !state.permissionRequired,
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_add),
+                                painter = painterResource(R.drawable.ic_create_folder),
                                 contentDescription = stringResource(R.string.file_picker_create_folder),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

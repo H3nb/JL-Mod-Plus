@@ -144,19 +144,19 @@ private fun PresetActionRows(
     ) {
         PresetActionRow(
             label = stringResource(R.string.preset_use),
-            icon = R.drawable.ic_profile_use,
+            icon = R.drawable.ic_check_circle,
             emphasized = true,
             onClick = onUsePreset,
         )
         PresetActionRow(
             label = stringResource(R.string.preset_save_as),
-            icon = R.drawable.ic_profile_save_as,
+            icon = R.drawable.ic_save_as,
             onClick = onSavePreset,
         )
         updatePresetName?.let { name ->
             PresetActionRow(
                 label = stringResource(R.string.preset_update_confirm),
-                icon = R.drawable.ic_profile_update,
+                icon = R.drawable.ic_sync,
                 contentDescription = stringResource(R.string.preset_update, name),
                 modifier = Modifier.testTag("preset_update_action"),
                 onClick = { onUpdatePreset(name) },

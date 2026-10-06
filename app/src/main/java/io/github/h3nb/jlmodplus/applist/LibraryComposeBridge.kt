@@ -1059,7 +1059,7 @@ fun LibraryScreen(
                     ) {
                         FloatingActionButton(onClick = actions::onInstall) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_add),
+                                painter = painterResource(R.drawable.ic_install),
                                 contentDescription = stringResource(R.string.install),
                             )
                         }
@@ -1455,14 +1455,14 @@ private fun LibraryNavigationRail(
             destination = LibraryDestination.Collections,
             selected = selected,
             label = R.string.library_destination_collections,
-            icon = R.drawable.ic_folder,
+            icon = R.drawable.ic_collections,
             onSelected = onSelected,
         )
         LibraryNavigationRailItem(
             destination = LibraryDestination.More,
             selected = selected,
             label = R.string.library_destination_more,
-            icon = R.drawable.ic_settings,
+            icon = R.drawable.ic_more,
             onSelected = onSelected,
         )
     }
@@ -1512,14 +1512,14 @@ private fun LibraryNavigationBar(
             destination = LibraryDestination.Collections,
             selected = selected,
             label = R.string.library_destination_collections,
-            icon = R.drawable.ic_folder,
+            icon = R.drawable.ic_collections,
             onSelected = onSelected,
         )
         LibraryNavigationItem(
             destination = LibraryDestination.More,
             selected = selected,
             label = R.string.library_destination_more,
-            icon = R.drawable.ic_settings,
+            icon = R.drawable.ic_more,
             onSelected = onSelected,
         )
     }
@@ -2044,7 +2044,7 @@ private fun LibrarySelectionBottomBar(
                 destructive = true,
             )
             LibrarySelectionAction(
-                icon = R.drawable.ic_folder,
+                icon = R.drawable.ic_add_to_collection,
                 label = stringResource(R.string.library_bulk_add_collection),
                 onClick = onAddToCollection,
                 enabled = enabled,
@@ -2349,7 +2349,7 @@ private fun LibraryAppsHeader(
                 )
                 LibraryQuickFilter(
                     label = R.string.library_filter_recently_added,
-                    icon = R.drawable.ic_add,
+                    icon = R.drawable.ic_recently_added,
                     selected = state.quickView == LibraryQuickView.RecentlyAdded,
                     enabled = interactive && state.databaseControlsReady,
                     onClick = { onQuickView(LibraryQuickView.RecentlyAdded) },
@@ -4013,9 +4013,9 @@ internal fun LibrarySortMenu(
                         Icon(
                             painter = painterResource(
                                 if (ascending) {
-                                    R.drawable.ic_arrow_downward
-                                } else {
                                     R.drawable.ic_arrow_upward
+                                } else {
+                                    R.drawable.ic_arrow_downward
                                 },
                             ),
                             contentDescription = null,
@@ -4104,7 +4104,7 @@ internal fun AppActionsDialog(
             add(
                 DialogActionEntry(
                     label = R.string.action_context_shortcut,
-                    icon = R.drawable.ic_add,
+                    icon = R.drawable.ic_add_shortcut,
                     action = onShortcut,
                 ),
             )
@@ -4113,7 +4113,7 @@ internal fun AppActionsDialog(
             add(
                 DialogActionEntry(
                     label = R.string.library_collection_add_app,
-                    icon = R.drawable.ic_folder,
+                    icon = R.drawable.ic_add_to_collection,
                     action = onAddToCollection,
                 ),
             )
@@ -4122,7 +4122,7 @@ internal fun AppActionsDialog(
             add(
                 DialogActionEntry(
                     label = R.string.library_collection_remove_from_current,
-                    icon = R.drawable.ic_remove_circle,
+                    icon = R.drawable.ic_remove_from_collection,
                     action = onRemoveFromCollection,
                 ),
             )

@@ -272,7 +272,7 @@ data class EncodingPickerRequest(
 )
 
 internal enum class ConfigDestination(val label: Int, val icon: Int) {
-    Basic(R.string.config_destination_general, R.drawable.ic_config_quick),
+    Basic(R.string.config_destination_general, R.drawable.ic_config_general),
     Display(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
     Audio(R.string.config_destination_audio, R.drawable.ic_config_audio),
     Controls(R.string.config_destination_controls, R.drawable.ic_config_controls),
@@ -1185,7 +1185,7 @@ internal fun ScreenPresetDialog(
                                     {
                                         IconButton(onClick = { onRemove(preset) }) {
                                             Icon(
-                                                painter = painterResource(R.drawable.ic_delete_report),
+                                                painter = painterResource(R.drawable.ic_delete),
                                                 contentDescription = stringResource(R.string.remove_screen_preset),
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )

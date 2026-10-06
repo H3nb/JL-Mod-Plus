@@ -496,7 +496,7 @@ private fun LibraryCollectionHeader(
             )
             TextButton(onClick = onManageApps, enabled = interactive) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_add),
+                    painter = painterResource(R.drawable.ic_add_to_collection),
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                 )
@@ -601,7 +601,7 @@ private fun LibraryCollectionListItem(
                 modifier = Modifier.size(48.dp),
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_remove_circle),
+                    painter = painterResource(R.drawable.ic_remove_from_collection),
                     contentDescription = stringResource(R.string.library_collection_remove),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -671,7 +671,7 @@ private fun LibraryCollectionGridItem(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_remove_circle),
+                        painter = painterResource(R.drawable.ic_remove_from_collection),
                         contentDescription = stringResource(R.string.library_collection_remove),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

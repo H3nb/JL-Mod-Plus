@@ -513,7 +513,7 @@ private fun LibraryCollectionsOverview(
                 onClick = { createDialog = true },
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_add),
+                    painter = painterResource(R.drawable.ic_create_folder),
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                 )

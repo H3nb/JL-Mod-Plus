@@ -266,7 +266,7 @@ fun CrashReportsScreen(
                         }
                         IconButton(onClick = { showDeleteConfirmation = true }) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_delete_report),
+                                painter = painterResource(R.drawable.ic_delete),
                                 contentDescription = stringResource(R.string.delete_selected_reports),
                             )
                         }
@@ -423,13 +423,13 @@ fun CrashReportDetailsScreen(
                     }
                     IconButton(onClick = actions::onReportGitHub) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_send),
+                            painter = painterResource(R.drawable.ic_open_external),
                             contentDescription = stringResource(R.string.report_on_github),
                         )
                     }
                     IconButton(onClick = { showDeleteConfirmation = true }) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_delete_report),
+                            painter = painterResource(R.drawable.ic_delete),
                             contentDescription = stringResource(R.string.delete_report),
                         )
                     }
@@ -516,7 +516,7 @@ fun CrashReportDeleteConfirmationDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                painter = painterResource(R.drawable.ic_delete_report),
+                painter = painterResource(R.drawable.ic_delete),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.error,
             )

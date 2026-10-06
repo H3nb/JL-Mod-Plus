@@ -68,7 +68,7 @@ internal fun LibrarySearchField(
                     enabled = enabled,
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
+                        painter = painterResource(R.drawable.ic_close),
                         contentDescription = stringResource(R.string.library_search_clear),
                     )
                 }
