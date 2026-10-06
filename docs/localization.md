@@ -359,8 +359,9 @@ Meaning is grounded in the [preset/configuration contracts](preset-config-contra
 Established vocabulary appears in the English/Indonesian configuration,
 virtual-control, collection, diagnostic, and Memory Editor resources. These
 wordings establish vocabulary only, not proof of behavior. For another use of a
-term whose meaning is unclear, record a narrowly scoped TODO or `NEEDS_CONTEXT`
-rather than extending the glossary by guesswork.
+term whose meaning is unclear, apply the evidence rule above first; if material
+uncertainty remains after available evidence is exhausted, record a narrowly
+scoped TODO or `NEEDS_CONTEXT` rather than extending the glossary by guesswork.
 
 ## AI-assisted workflow
 
@@ -398,7 +399,7 @@ Review vocabulary:
 | --- | --- | --- |
 | Source copy | `KEEP` | Existing wording meets the established semantic and role contract. |
 | Source copy | `REWRITE` | Evidence establishes meaning, but wording needs correction under the quality priority. |
-| Source copy | `NEEDS_CONTEXT` | Behavior, role, or parameter meaning cannot yet be established; identify the missing evidence. |
+| Source copy | `NEEDS_CONTEXT` | Relevant available evidence is exhausted but behavior, role, or parameter meaning still cannot be established; identify the missing evidence. |
 | Source copy | `DEAD` | Current reference/usage evidence establishes that the resource is no longer used; removal remains a separate scoped change. |
 | Localization | `ACCEPT` | Rendering preserves semantics/arguments and meets target-language quality. |
 | Localization | `REVISE` | Semantics remain intact but wording, terminology, or role fit needs refinement. |
