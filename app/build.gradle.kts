@@ -491,7 +491,7 @@ fun getMidletManifestProperties(): Attributes {
 }
 
 dependencies {
-    implementation(projects.dexlib)
+    implementation(project(":dexlib"))
 
     implementation(platform(libs.compose.bom))
     androidTestImplementation(platform(libs.compose.bom))
