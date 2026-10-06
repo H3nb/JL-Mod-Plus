@@ -15,6 +15,8 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 
+import com.android.dx.command.dexer.ConversionResult;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -88,6 +90,7 @@ public final class AutoReconversionDialog extends DialogFragment {
 
                     @Override
                     public void onLaunchInstalled() {
+                        launchMidlet();
                     }
                 },
                 // Reinstall uses this same renderer while converting; only the explanation differs.
@@ -145,21 +148,36 @@ public final class AutoReconversionDialog extends DialogFragment {
         controller.showConverting(appName, getString(R.string.reconverting_wait),
                 getString(R.string.converting_wait));
         disposables.add(Single.fromCallable(() -> {
-            AppReconverter.reconvert(appDir, () -> cancelRequested);
+            ConversionResult result = AppReconverter.reconvert(appDir, () -> cancelRequested);
             if (AppReconverter.needsReconversion(appDir)) {
                 throw new IllegalStateException("Reconversion completed without a compatible marker");
             }
-            return Boolean.TRUE;
+            return result;
         })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(ignored -> {
+                .subscribe(result -> {
                     running = false;
                     if (cancelRequested) {
                         if (isAdded()) dismissAllowingStateLoss();
-                    } else {
-                        launchMidlet();
+                        return;
                     }
+                    if (!isAdded() || controller == null) return;
+                    ConversionWarningFormatter.Presentation warning =
+                            ConversionWarningFormatter.forResult(requireContext(), result);
+                    if (warning == null) {
+                        launchMidlet();
+                        return;
+                    }
+                    controller.showSuccess(
+                            appName,
+                            getString(R.string.reconversion_done),
+                            getString(R.string.START_CMD),
+                            getString(R.string.close),
+                            null,
+                            warning.getSummary(),
+                            warning.getDetails(),
+                            warning.getCopyDetails());
                 }, this::showError));
     }
 

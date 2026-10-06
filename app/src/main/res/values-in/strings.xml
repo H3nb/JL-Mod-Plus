@@ -406,6 +406,15 @@
     <string name="installer_partial_restore">Aplikasi terpasang; pemulihan data atau pengaturan gagal</string>
     <string name="installer_removed_leftovers">Aplikasi dihapus; sebagian pengaturan atau data simpanan tidak dapat dihapus.</string>
     <string name="installer_copy_details">Salin detail</string>
+    <string name="installer_show_details">Selengkapnya</string>
+    <string name="installer_hide_details">Sembunyikan detail</string>
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="other">%1$d berkas class tidak dapat dibaca dan dilewati saat konversi. Aplikasi mungkin tetap berjalan, tetapi fitur yang menggunakan class tersebut mungkin tidak berfungsi.</item>
+    </plurals>
+    <string name="installer_conversion_skipped_entry">%1$s\nTidak dapat dibaca sebagai class Java yang didukung.\nTindakan: Dilewati dari aplikasi hasil konversi.</string>
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="other">%1$d masalah konversi tambahan tidak ditampilkan.</item>
+    </plurals>
 
     <string name="library_collection_new">Koleksi baru</string>
     <string name="library_collection_ready_empty_message">Buat koleksi untuk mengelompokkan aplikasi tanpa memindahkan berkasnya.</string>
@@ -705,6 +714,7 @@
     <string name="config_help_timing_mode">Menentukan sumber tanggal dan waktu yang dilihat MIDlet. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
     <string name="config_help_timing_unavailable">Pengaturan waktu tidak tersedia untuk MIDlet ini. Instal ulang atau konversi ulang untuk mengaktifkannya.</string>
     <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Tunggu…</string>
+    <string name="reconversion_done">Konversi kompatibilitas selesai.</string>
     <string name="reconversion_error">MIDlet ini tidak dapat dikonversi secara otomatis.
 
 %1$s</string>

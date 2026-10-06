@@ -96,6 +96,9 @@ sealed interface InstallerUiState {
         val startLabel: String,
         val closeLabel: String,
         val iconPath: String?,
+        val warningSummary: String? = null,
+        val warningDetails: String? = null,
+        val copyDetails: String? = null,
     ) : InstallerUiState
 
     data class Error(
@@ -160,12 +163,16 @@ class InstallerComposeController internal constructor(
         state = InstallerUiState.Converting(title = title, message = message, status = status)
     }
 
+    @JvmOverloads
     fun showSuccess(
         title: String,
         status: String,
         startLabel: String,
         closeLabel: String,
         iconPath: String?,
+        warningSummary: String? = null,
+        warningDetails: String? = null,
+        copyDetails: String? = null,
     ) {
         state = InstallerUiState.Success(
             title = title,
@@ -173,6 +180,9 @@ class InstallerComposeController internal constructor(
             startLabel = startLabel,
             closeLabel = closeLabel,
             iconPath = iconPath,
+            warningSummary = warningSummary,
+            warningDetails = warningDetails,
+            copyDetails = copyDetails,
         )
     }
 
@@ -218,6 +228,7 @@ fun InstallerScreen(
     val icon = remember(iconPath) {
         iconPath?.let(BitmapFactory::decodeFile)
     }
+    var successDetailsExpanded by remember(state) { mutableStateOf(false) }
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
@@ -323,15 +334,80 @@ fun InstallerScreen(
                             }
 
                             is InstallerUiState.Success -> {
+                                val clipboard = LocalClipboardManager.current
                                 InstallerProgressMessage(state.status)
-                                InstallerButtons(
-                                    closeLabel = state.closeLabel,
-                                    primaryLabel = state.startLabel,
-                                    runLabel = null,
-                                    onClose = actions::onClose,
-                                    onPrimary = actions::onLaunchInstalled,
-                                    onRun = actions::onRunExisting,
-                                )
+                                if (state.warningSummary != null) {
+                                    Text(
+                                        text = state.warningSummary,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("installer-success-warning"),
+                                        color = MaterialTheme.colorScheme.tertiary,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                }
+                                if (successDetailsExpanded && state.warningDetails != null) {
+                                    InstallerMessage(
+                                        message = state.warningDetails,
+                                        modifier = Modifier
+                                            .testTag("installer-success-warning-details")
+                                            .then(
+                                                if (compactHeight) Modifier
+                                                else Modifier.weight(1f, fill = false),
+                                            ),
+                                        scrollable = !compactHeight,
+                                    )
+                                }
+                                if (state.warningSummary == null) {
+                                    InstallerButtons(
+                                        closeLabel = state.closeLabel,
+                                        primaryLabel = state.startLabel,
+                                        runLabel = null,
+                                        onClose = actions::onClose,
+                                        onPrimary = actions::onLaunchInstalled,
+                                        onRun = actions::onRunExisting,
+                                    )
+                                } else {
+                                    FlowRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End,
+                                    ) {
+                                        if (state.warningDetails != null) {
+                                            TextButton(onClick = {
+                                                successDetailsExpanded = !successDetailsExpanded
+                                            }) {
+                                                Text(
+                                                    stringResource(
+                                                        if (successDetailsExpanded) {
+                                                            R.string.installer_hide_details
+                                                        } else {
+                                                            R.string.installer_show_details
+                                                        },
+                                                    ),
+                                                )
+                                            }
+                                        }
+                                        if (successDetailsExpanded && state.copyDetails != null) {
+                                            TextButton(onClick = {
+                                                clipboard.setText(AnnotatedString(state.copyDetails))
+                                            }) {
+                                                Text(stringResource(R.string.installer_copy_details))
+                                            }
+                                        }
+                                        TextButton(onClick = actions::onClose) {
+                                            Text(
+                                                state.closeLabel,
+                                                style = MaterialTheme.typography.labelLarge,
+                                            )
+                                        }
+                                        Button(onClick = actions::onLaunchInstalled) {
+                                            Text(
+                                                state.startLabel,
+                                                style = MaterialTheme.typography.labelLarge,
+                                            )
+                                        }
+                                    }
+                                }
                             }
 
                             is InstallerUiState.Error -> {

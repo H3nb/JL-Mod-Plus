@@ -184,6 +184,48 @@ class InstallerComposeTest {
     }
 
     @Test
+    fun successWarningExpandsDetailsAndKeepsActionsReachable() {
+        val actions = RecordingInstallerActions()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
+            ) {
+                CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
+                    JLModPlusTheme {
+                        InstallerScreen(
+                            state = InstallerUiState.Success(
+                                title = "Demo MIDlet",
+                                status = "Application installed.",
+                                startLabel = "Start",
+                                closeLabel = "Close",
+                                iconPath = null,
+                                warningSummary = "1 class file was skipped during conversion.",
+                                warningDetails = "sample/Bad.class\nSkipped from the converted app.",
+                                copyDetails = "Entry: sample/Bad.class",
+                            ),
+                            actions = actions,
+                        )
+                    }
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("installer-success-warning")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(targetString(R.string.installer_show_details))
+            .performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithTag("installer-success-warning-details")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(targetString(R.string.installer_copy_details))
+            .performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("Start").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("Close").performScrollTo().assertIsDisplayed().performClick()
+
+        assertEquals(1, actions.launchCount)
+        assertEquals(1, actions.closeCount)
+    }
+
+    @Test
     fun errorStateKeepsAVisibleCloseAction() {
         val actions = RecordingInstallerActions()
         setState(
