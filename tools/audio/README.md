@@ -50,12 +50,14 @@ Each `install-<ABI>` contains four shared libraries (`avformat`, `avcodec`,
 including generated configuration headers, and SHA256 checksums. ARMv7 retains the `_neon`
 filenames used by the native integration. All profiles use API 23 and 16 KiB
 ELF alignment. Gradle owns reuse of compiled native dependency outputs through
-its up-to-date checks and Build Cache. When the cacheable native task actually
-executes, pinned source archives are SHA-256 verified and rematerialized before
-a fresh ABI build; downloaded archives may remain local, but extracted source
-trees and compiled outputs are not trusted as a second cache layer. NDK packages
-the libraries once, including the ARMv7 `_neon` names; no `pickFirst` or global
-native-library exclusion hides collisions. The runtime decoder additionally caps streams to sixteen, codec
+its up-to-date checks and Build Cache. When native dependency work executes, the
+shared preparation service verifies the pinned archives and rematerializes the
+canonical FFmpeg/OpenCORE source trees at most once per Gradle invocation before
+ABI compilation. Each executing ABI task then rebuilds its compiled output fresh;
+downloaded archives may remain local, but extracted source trees and compiled
+outputs are not trusted as a second cache layer. NDK packages the libraries once,
+including the ARMv7 `_neon` names; no `pickFirst` or global native-library
+exclusion hides collisions. The runtime decoder additionally caps streams to sixteen, codec
 configuration to 64 KiB and decoded frame staging to 262,144 stereo frames.
 
 Windows GNU make can truncate long header-install commands, so the helper

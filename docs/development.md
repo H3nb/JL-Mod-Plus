@@ -10,7 +10,7 @@ Use the Gradle wrapper from the repository root. For current build, toolchain, d
 
 - Use JDK 21, matching CI. Java source/target compatibility is 17.
 - Configure the Android SDK through `ANDROID_HOME` or an untracked `local.properties` with `sdk.dir`. The project compiles against SDK 37, targets 36, supports API 23+, and selects NDK `30.0.16248370` from the version catalog. CI installs platform 37 and provisions that NDK for native-enabled validation.
-- Native synthesis sources are vendored; no native source submodule initialization is required. Sampled audio dependencies are built from pinned archives by the Gradle native tasks; install PowerShell 7, Git and the POSIX shell/make prerequisites in [the native audio recipe](../tools/audio/README.md). The cache lives under `app/build/audio-deps`.
+- Native synthesis sources are vendored; no native source submodule initialization is required. Sampled audio dependencies are built from pinned archives by the Gradle native tasks; install PowerShell 7, Git and the POSIX shell/make prerequisites in [the native audio recipe](../tools/audio/README.md). Compiled native dependency outputs are staged under `app/build/audio-deps`; pinned source working material is prepared under `app/build/audio-sources`. Gradle up-to-date checks and Build Cache govern compiled-output reuse; these directories are build state, not an independent compiled-output cache.
 - Normal debug builds target `arm64-v8a`. Use `-PjlmodRuntimeTestAbi=x86_64` when testing on an x86_64 emulator; the supported override values are `arm64-v8a` and `x86_64`.
 - Debug builds use `debug.keystore` when present, otherwise the normal local debug signing configuration. Release signing is configured separately; do not copy credentials into documentation.
 
