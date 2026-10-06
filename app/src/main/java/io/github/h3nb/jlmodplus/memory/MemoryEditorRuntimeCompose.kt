@@ -428,7 +428,7 @@ private fun RuntimeMemoryHeader(
         )
         IconButton(onClick = actions::close) {
             Icon(
-                painterResource(R.drawable.ic_memory_editor_close),
+                painterResource(R.drawable.ic_close),
                 contentDescription = stringResource(R.string.memory_editor_close),
             )
         }
@@ -630,7 +630,7 @@ private fun RuntimeSearchResultsTab(
                 },
             )
             RuntimeActionIcon(
-                icon = R.drawable.ic_restart_alt,
+                icon = R.drawable.ic_refresh,
                 description = R.string.memory_editor_refresh,
                 enabled = state.results.isNotEmpty() && !state.busy,
                 onClick = actions::refresh,
@@ -862,20 +862,20 @@ private fun RuntimeWatchTab(
                 }
             }
             RuntimeActionIcon(
-                R.drawable.ic_restart_alt,
+                R.drawable.ic_refresh,
                 R.string.memory_editor_refresh,
                 enabled = state.watches.isNotEmpty() && !state.busy,
                 onClick = actions::refresh,
             )
             when {
                 selectedRows.size == 1 && selectedRows.single().freezeMode >= 0 -> RuntimeActionIcon(
-                    R.drawable.ic_screen_lock_rotation,
+                    R.drawable.ic_unlock,
                     R.string.memory_editor_unfreeze,
                     enabled = !state.busy,
                     onClick = actions::clearFreezeSelected,
                 )
                 selectedRows.size == 1 -> RuntimeActionIcon(
-                    R.drawable.ic_screen_lock_rotation,
+                    R.drawable.ic_lock,
                     R.string.memory_editor_freeze,
                     enabled = selectedWriteSupported && !state.busy,
                 ) {
@@ -998,7 +998,7 @@ private fun RuntimeWatchRow(
                             color = MaterialTheme.colorScheme.error,
                         )
                         row.freezeMode >= 0 -> Icon(
-                            painterResource(R.drawable.ic_screen_lock_rotation),
+                            painterResource(R.drawable.ic_lock),
                             contentDescription = stringResource(R.string.memory_editor_freeze),
                         )
                         else -> RuntimeCandidateStatus(row.state, row.relocations)
@@ -1754,7 +1754,7 @@ private fun RuntimeInspectorTab(
                         )
                     }
                     RuntimeActionIcon(
-                        R.drawable.ic_restart_alt,
+                        R.drawable.ic_refresh,
                         R.string.memory_editor_refresh_snapshot,
                         enabled = !state.busy,
                     ) {
@@ -2296,8 +2296,8 @@ private fun RuntimePeekUnderlayButton(
     ) {
         Icon(
             painterResource(
-                if (peeking) R.drawable.ic_memory_editor_visibility_off
-                else R.drawable.ic_memory_editor_visibility,
+                if (peeking) R.drawable.ic_visibility_off
+                else R.drawable.ic_visibility,
             ),
             contentDescription = null,
         )
@@ -2365,7 +2365,7 @@ private fun RuntimeTypeMenu(
         modifier = modifier,
         enabled = enabled,
         leadingIcon = if (type == MemoryEngineContract.TYPE_AUTO) {
-            R.drawable.ic_auto_awesome
+            R.drawable.ic_auto_mode
         } else null,
         centerContent = true,
         showTrailingIcon = false,

@@ -2056,7 +2056,7 @@ private fun LibrarySelectionBottomBar(
                 enabled = enabled,
             )
             LibrarySelectionAction(
-                icon = R.drawable.ic_restart_alt,
+                icon = R.drawable.ic_reinstall,
                 label = stringResource(R.string.library_bulk_reinstall_apps),
                 onClick = onReinstall,
                 enabled = enabled,
@@ -4138,7 +4138,7 @@ internal fun AppActionsDialog(
             add(
                 DialogActionEntry(
                     label = R.string.action_reinstall,
-                    icon = R.drawable.ic_restart_alt,
+                    icon = R.drawable.ic_reinstall,
                     action = onReinstall,
                 ),
             )

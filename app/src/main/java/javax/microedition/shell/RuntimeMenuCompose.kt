@@ -772,7 +772,7 @@ private fun LazyListScope.runtimeMenuItems(
                 R.string.runtime_virtual_controls_switch_layout,
                 onDismiss,
                 actions::onSwitchVirtualKeyboardLayout,
-                leadingIcon = R.drawable.ic_swap_horiz,
+                leadingIcon = R.drawable.ic_control_layout,
                 focused = switchFocused,
             )
         }
@@ -782,7 +782,7 @@ private fun LazyListScope.runtimeMenuItems(
                 R.string.runtime_virtual_controls_show_controls,
                 onDismiss,
                 actions::onShowControls,
-                leadingIcon = R.drawable.ic_runtime_hide,
+                leadingIcon = R.drawable.ic_visibility,
                 focused = showControlsFocused,
             )
         }
@@ -795,7 +795,7 @@ private fun LazyListScope.runtimeMenuItems(
             R.string.exit,
             onDismiss,
             actions::onExit,
-            leadingIcon = R.drawable.ic_logout,
+            leadingIcon = R.drawable.ic_exit,
             focused = exitFocused,
         )
     }
@@ -891,7 +891,7 @@ private fun LazyListScope.runtimeMenuItems(
             item {
                 RuntimeMenuItem(
                     label = R.string.runtime_virtual_controls_title,
-                    leadingIcon = R.drawable.ic_runtime_virtual_keyboard,
+                    leadingIcon = R.drawable.ic_virtual_controls,
                     focused = vkFocused,
                     onClick = onOpenVirtualKeyboardPage,
                 )
