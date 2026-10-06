@@ -29,7 +29,9 @@ fun BulkInstallerResultsScreenshot() {
     }
 }
 
-@PreviewTest
+// Design previews for the newly exposed success-warning state. Behavioral regression
+// coverage lives in InstallerComposeTest; adding new screenshot references must go through the
+// repository's explicit update-screenshots workflow rather than an implicit missing-reference failure.
 @Preview(name = "Batch success warning", widthDp = 360, heightDp = 640, locale = "id", showBackground = true)
 @Preview(name = "Batch success warning short", widthDp = 480, heightDp = 240, fontScale = 2f, locale = "id", showBackground = true)
 @Composable
