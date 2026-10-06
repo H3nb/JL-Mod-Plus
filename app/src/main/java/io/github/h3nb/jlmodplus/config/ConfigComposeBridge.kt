@@ -1863,21 +1863,6 @@ internal fun ConfigSystemPropertiesPage(
 }
 
 @Composable
-private fun SettingActionRow(
-    title: String,
-    summary: String? = null,
-    destructive: Boolean = false,
-    onClick: () -> Unit,
-) {
-    ConfigActionPreference(
-        title = title,
-        description = summary ?: stringResource(R.string.config_help_action_generic),
-        destructive = destructive,
-        onClick = onClick,
-    )
-}
-
-@Composable
 private fun ConfigActionConfirmationDialog(
     action: ConfigAction,
     isProfile: Boolean,

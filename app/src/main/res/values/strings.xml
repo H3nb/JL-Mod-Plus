@@ -758,7 +758,7 @@
     <string name="config_help_immediate">Processes MIDlet events immediately instead of queuing them. May improve responsiveness but can destabilize some MIDlets.</string>
     <string name="config_help_graphics_mode">Chooses the rendering path for the MIDlet screen. Hardware acceleration may improve performance, but compatibility varies by device.</string>
     <string name="config_help_shader">Applies a shader to the MIDlet frame before it is displayed.</string>
-    <string name="config_help_shader_tuning">Adjusts settings for the selected shader.</string>
+    <string name="config_help_shader_tuning">Available controls depend on the selected shader.</string>
     <string name="config_help_parallel_redraw">Schedules frame presentation asynchronously. This may improve performance on some devices.</string>
     <string name="config_help_force_fullscreen">Starts MIDlet Canvas screens in fullscreen mode. The MIDlet can change this mode.</string>
     <string name="config_help_fps_limit">Sets the FPS limit at 1× emulation speed. The effective limit follows emulation speed; 0 (Maximum) uses the display’s maximum refresh rate.</string>
@@ -774,7 +774,6 @@
 
 %1$s</string>
     <string name="config_help_generic_color">Sets the color of this visual element.</string>
-    <string name="config_help_action_generic">Opens this configuration tool.</string>
     <string name="config_help_encoding">Chooses the character encoding reported as microedition.encoding.</string>
     <string name="config_edit_system_properties">Edit system properties</string>
     <string name="config_help_system_properties">Sets advanced Java ME properties reported to the MIDlet.</string>

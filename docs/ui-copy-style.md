@@ -70,6 +70,9 @@ preserving a poor historical mapping for consistency.
   override. Explicit weight is still appropriate when the component role cannot
   express a required hierarchy or state. Do not remove an existing hierarchy signal
   merely to eliminate a custom weight; inspect the resulting rendered hierarchy first.
+- Disabled settings retain the same semantic type roles while lowering ordinary title,
+  supporting, and value text with the Material 3 disabled emphasis. Do not leave
+  supporting text at active contrast when its control is disabled.
 - Section titles generally use `titleMedium`. Screen headings may use
   `headlineSmall`; alert/dialog headlines use `headlineSmall`.
 - Dialog body text uses `bodyMedium`; actions use `labelLarge` or their Material

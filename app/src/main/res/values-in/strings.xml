@@ -460,7 +460,7 @@
         <item quantity="other">Pencarian selesai · %1$d kandidat</item>
     </plurals>
     <string name="memory_editor_no_results">Tidak ada hasil</string>
-    <string name="memory_editor_no_watch">Belum ada nilai yang dipantau.</string>
+    <string name="memory_editor_no_watch">Belum ada nilai yang dipantau</string>
     <string name="memory_editor_unsupported">Editor memori tidak tersedia untuk runtime ini.</string>
     <string name="memory_editor_engine_unavailable">Mesin editor memori tidak tersedia.</string>
     <string name="memory_editor_engine_reconnecting">Editor memori sedang menyambung ulang…</string>
@@ -693,7 +693,7 @@
     <string name="config_help_immediate">Memproses event MIDlet langsung tanpa antrean. Dapat meningkatkan respons, tetapi dapat membuat sebagian MIDlet tidak stabil.</string>
     <string name="config_help_graphics_mode">Memilih jalur rendering layar MIDlet. Akselerasi hardware dapat meningkatkan performa, tetapi kompatibilitas dapat berbeda antarperangkat.</string>
     <string name="config_help_shader">Menerapkan shader pada frame MIDlet sebelum ditampilkan.</string>
-    <string name="config_help_shader_tuning">Mengatur parameter shader yang dipilih.</string>
+    <string name="config_help_shader_tuning">Kontrol yang tersedia bergantung pada shader yang dipilih.</string>
     <string name="config_help_parallel_redraw">Menjadwalkan penyajian frame secara asinkron. Dapat meningkatkan performa pada perangkat tertentu.</string>
     <string name="config_help_force_fullscreen">Memulai layar Canvas MIDlet dalam mode layar penuh. MIDlet tetap dapat mengubah mode ini.</string>
     <string name="config_help_fps_limit">Menetapkan batas FPS pada kecepatan emulasi 1×. Batas efektif mengikuti kecepatan emulasi; 0 (Maksimum) memakai refresh rate maksimum layar.</string>
@@ -709,7 +709,6 @@
 
 %1$s</string>
     <string name="config_help_generic_color">Mengatur warna bagian tampilan ini.</string>
-    <string name="config_help_action_generic">Membuka pengaturan ini.</string>
     <string name="config_help_encoding">Memilih pengodean karakter yang dilaporkan sebagai microedition.encoding.</string>
     <string name="config_edit_system_properties">Edit properti sistem</string>
     <string name="config_help_system_properties">Mengubah properti sistem Java ME yang dilaporkan ke MIDlet.</string>
