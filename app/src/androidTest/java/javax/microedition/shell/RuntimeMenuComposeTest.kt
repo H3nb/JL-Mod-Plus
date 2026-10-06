@@ -25,8 +25,12 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertWidthIsAtLeast
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -35,6 +39,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.DpSize
@@ -51,6 +56,9 @@ import io.github.h3nb.jlmodplus.ui.ControllerHostCommandHandler
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 @OptIn(ExperimentalTestApi::class)
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
+
 class RuntimeMenuComposeTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -59,7 +67,7 @@ class RuntimeMenuComposeTest {
     fun showControlsGridPreservesOrderAndConvertsVisibleSelectionToHiddenFlags() {
         val events = mutableListOf<String>()
         val selections = mutableListOf<BooleanArray>()
-        val names = listOf("First", "Second", "Third", "Fourth", "Analog Stick")
+        val names = listOf("First", "Second", "Third", "Fourth", uiString(R.string.runtime_virtual_controls_analog))
         composeRule.setContent {
             JLModPlusTheme {
                 RuntimeHostDialogs(
@@ -73,7 +81,7 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Show Controls").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.runtime_virtual_controls_show_controls)).assertIsDisplayed()
         composeRule.onNodeWithText("First").assertIsOn()
         composeRule.onNodeWithText("Second").assertIsOff()
         val first = composeRule.onNodeWithText("First").getUnclippedBoundsInRoot()
@@ -106,7 +114,7 @@ class RuntimeMenuComposeTest {
 
         composeRule.onNodeWithText("M").performClick()
         composeRule.onNodeWithText("D-pad").performClick()
-        composeRule.onNodeWithText("Analog Stick").performClick()
+        composeRule.onNodeWithText(uiString(R.string.runtime_virtual_controls_analog)).performClick()
         composeRule.onNodeWithText("OK").performClick()
 
         val hidden = selections.single()
@@ -163,14 +171,14 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Analog Stick").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.runtime_virtual_controls_analog)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("#").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("OK").assertIsDisplayed()
         composeRule.onNodeWithText("Cancel").assertIsDisplayed()
     }
 
     @Test
-    fun compactHeightBackMenuExposesScrollHint() {
+    fun compactHeightBackMenuKeepsLastActionReachable() {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
@@ -191,7 +199,10 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        val virtualControlsLabel = uiString(R.string.runtime_virtual_controls_title)
+        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
+            .performScrollToNode(hasText(virtualControlsLabel))
+        composeRule.onNodeWithText(virtualControlsLabel).assertIsDisplayed()
     }
 
     @Test
@@ -233,7 +244,7 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Take Screenshot")
+        composeRule.onNodeWithContentDescription(uiString(R.string.take_screenshot))
             .assertWidthIsAtLeast(48.dp)
             .assertHeightIsAtLeast(48.dp)
     }
@@ -252,10 +263,10 @@ class RuntimeMenuComposeTest {
         }
 
         composeRule.onNodeWithText("Exit").assertIsDisplayed()
-        composeRule.onNodeWithText("Save Log").assertIsDisplayed()
-        composeRule.onNodeWithText("Lock Screen Rotation").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.save_log)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.action_lock_orientation)).assertIsDisplayed()
         composeRule.onAllNodesWithText("Limit FPS").assertCountEquals(0)
-        composeRule.onAllNodesWithText("Virtual Controls").assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.runtime_virtual_controls_title)).assertCountEquals(0)
     }
 
     @Test
@@ -293,8 +304,8 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onAllNodesWithText("Gamepad Mapping Help").assertCountEquals(0)
-        composeRule.onAllNodesWithText("Test Controller").assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.config_gamepad_mapping_help_title)).assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.config_gamepad_test)).assertCountEquals(0)
     }
 
     @Test
@@ -318,14 +329,14 @@ class RuntimeMenuComposeTest {
         }
 
         composeRule.onNodeWithText("Keyboard (IME)").assertIsDisplayed()
-        composeRule.onNodeWithText("Take Screenshot").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.take_screenshot)).assertIsDisplayed()
         composeRule.onNodeWithText("Limit FPS").assertIsDisplayed()
-        composeRule.onNodeWithText("Virtual Controls").performScrollTo().performClick()
-        composeRule.onNodeWithText("Finish Editing").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.runtime_virtual_controls_title)).performScrollTo().performClick()
+        composeRule.onNodeWithText(uiString(R.string.layout_edit_finish)).assertIsDisplayed()
         composeRule.onNodeWithText("Layout Templates").assertIsDisplayed()
-        composeRule.onNodeWithText("Show Controls").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.runtime_virtual_controls_show_controls)).assertIsDisplayed()
         composeRule.onAllNodesWithText("D-pad").assertCountEquals(0)
-        composeRule.onAllNodesWithText("Analog Stick").assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.runtime_virtual_controls_analog)).assertCountEquals(0)
         composeRule.onAllNodesWithText("Key Layout Resize Mode").assertCountEquals(0)
         composeRule.onNodeWithContentDescription("Back")
             .assertWidthIsAtLeast(48.dp)
@@ -351,7 +362,7 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Show Controls").performClick()
+        composeRule.onNodeWithText(uiString(R.string.runtime_virtual_controls_show_controls)).performClick()
         assertEquals(listOf("dismiss", "showControls"), events)
     }
 
@@ -370,7 +381,7 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Save Log").performClick()
+        composeRule.onNodeWithText(uiString(R.string.save_log)).performClick()
 
         assertEquals(listOf("dismiss", "saveLog"), events)
     }
@@ -411,7 +422,7 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Lock Screen Rotation").performClick()
+        composeRule.onNodeWithText(uiString(R.string.action_lock_orientation)).performClick()
 
         assertEquals(listOf("dismiss", "orientation"), events)
     }
@@ -620,8 +631,8 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Edit Layout Guide").assertIsDisplayed()
-        composeRule.onNodeWithText("Do Not Show Again").performClick()
+        composeRule.onNodeWithText(uiString(R.string.runtime_virtual_controls_edit_guide_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.runtime_virtual_controls_edit_guide_dont_show_again)).performClick()
         composeRule.onNodeWithText("OK").performClick()
 
         assertEquals(listOf("dismiss", "layout-guide:true"), events)
@@ -647,7 +658,7 @@ class RuntimeMenuComposeTest {
         }
 
         composeRule.onNodeWithText("Discard").assertIsDisplayed()
-        composeRule.onNodeWithText("Continue Editing").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.layout_edit_continue)).assertIsDisplayed()
         composeRule.onNodeWithText("Save").assertIsDisplayed()
         composeRule.onNodeWithText("Only this MIDlet will change.").assertIsDisplayed()
     }
@@ -993,7 +1004,7 @@ class RuntimeMenuComposeTest {
 
         assertEquals(listOf("dismiss"), events)
         composeRule.onAllNodesWithText("Apply Phone?").assertCountEquals(0)
-        composeRule.onAllNodesWithText("Switch Control Layout").assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.layout_switch)).assertCountEquals(0)
     }
 
     @Test
@@ -1131,7 +1142,7 @@ private class RecordingRuntimeMenuActions(
 private fun canonicalShowControlNames() = listOf(
     "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "*", "#",
     "L", "R", "D", "C", "↖", "↑", "↗", "←", "→", "↙", "↓", "↘",
-    "F", "A", "B", "M", "D-pad", "Analog Stick",
+    "F", "A", "B", "M", "D-pad", uiString(R.string.runtime_virtual_controls_analog),
 )
 
 private class RecordingRuntimeHostDialogActions(

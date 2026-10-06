@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.applist
 
+import io.github.h3nb.jlmodplus.R
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -21,15 +23,21 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.performTouchInput
@@ -45,6 +53,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
+
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
 class LibraryComposeTest {
@@ -52,7 +63,7 @@ class LibraryComposeTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun compactHeightAppActionsExposeScrollHint() {
+    fun compactHeightAppActionsKeepLastActionReachable() {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
@@ -76,7 +87,10 @@ class LibraryComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        val deleteLabel = uiString(R.string.action_context_delete)
+        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
+            .performScrollToNode(hasText(deleteLabel))
+        composeRule.onNodeWithText(deleteLabel).assertIsDisplayed()
         composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(0)
     }
 
@@ -361,16 +375,16 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("Select").performClick()
 
         composeRule.onNodeWithText("1 app").assertIsDisplayed()
-        composeRule.onAllNodesWithText("Recently opened").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Recently played").assertCountEquals(0)
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription("Favorite (coming soon)").assertCountEquals(0)
         composeRule.onNodeWithContentDescription("Select all").performClick()
         composeRule.onNodeWithText("2 apps").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Unselect all").performClick()
+        composeRule.onNodeWithContentDescription("Deselect all").performClick()
         composeRule.onNodeWithText("0 apps").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("Library back").performClick()
-        composeRule.onNodeWithText("Recently opened").assertIsDisplayed()
+        composeRule.onNodeWithText("Recently played").assertIsDisplayed()
     }
 
     @Test
@@ -401,7 +415,7 @@ class LibraryComposeTest {
         setLibraryContent(actions = actions)
 
         composeRule.onNodeWithText("More").performClick()
-        composeRule.onNodeWithText("Import App Bundle").performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_action_import_bundle)).performClick()
 
         assertEquals(1, actions.importCount)
     }
@@ -429,7 +443,7 @@ class LibraryComposeTest {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onAllNodesWithText("Recently opened").assertCountEquals(1)
+        composeRule.onAllNodesWithText("Recently played").assertCountEquals(1)
         composeRule.onAllNodesWithText("Recently added").assertCountEquals(1)
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(1)
         composeRule.onNodeWithContentDescription("Favorite (coming soon)").assertIsDisplayed()
@@ -494,12 +508,12 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        composeRule.onAllNodesWithContentDescription("Expand description").assertCountEquals(1)
-        composeRule.onNodeWithContentDescription("Expand description").performClick()
+        composeRule.onAllNodesWithTag("library_description_toggle").assertCountEquals(1)
+        composeRule.onNodeWithTag("library_description_toggle").assertHasClickAction().performClick()
         assertEquals(null, actions.openedId)
-        composeRule.onNodeWithContentDescription("Collapse description").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Collapse description").performClick()
-        composeRule.onNodeWithContentDescription("Expand description").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_description_less)).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_description_toggle").performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_description_more)).assertIsDisplayed()
     }
 
     @Test
@@ -605,6 +619,44 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("JL-Mod Plus").assertIsDisplayed()
         composeRule.onAllNodesWithText("j2me.forever@gmail.com").assertCountEquals(0)
         composeRule.onAllNodesWithText("Copyright 2020-2026 Yury Kharchenko").assertCountEquals(0)
+    }
+
+
+    @Test
+    fun favoriteButtonAnnouncesStateChangingAction() {
+        val actions = RecordingLibraryActions()
+        val libraryState = mutableStateOf(
+            LibraryUiState(
+                loading = false,
+                databaseControlsReady = true,
+                apps = listOf(
+                    LibraryAppUiItem(
+                        id = 7,
+                        title = "Demo MIDlet",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        favorite = false,
+                    ),
+                ),
+            ),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryScreen(state = libraryState.value, actions = actions)
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Add to favorites").assertIsDisplayed()
+        composeRule.runOnIdle {
+            libraryState.value = libraryState.value.copy(
+                apps = libraryState.value.apps.map { it.copy(favorite = true) },
+            )
+        }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Remove from favorites").assertIsDisplayed()
+        composeRule.onAllNodesWithContentDescription("Add to favorites").assertCountEquals(0)
     }
 
     private fun setLibraryContent(

@@ -17,6 +17,7 @@ package io.github.h3nb.jlmodplus.crashes
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +29,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -55,10 +57,11 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
@@ -226,7 +229,7 @@ fun CrashReportsScreen(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.close),
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -321,15 +324,12 @@ fun CrashReportsScreen(
                         headlineContent = {
                             Text(
                                 text = record.title,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium,
                                 color = rowContentColor,
                             )
                         },
                         supportingContent = {
                             Text(
                                 text = record.subtitle,
-                                style = MaterialTheme.typography.bodySmall,
                                 color = if (selected) {
                                     MaterialTheme.colorScheme.onSecondaryContainer
                                 } else {
@@ -341,7 +341,8 @@ fun CrashReportsScreen(
                             {
                                 Checkbox(
                                     checked = selected,
-                                    onCheckedChange = { toggleSelection(record.id) },
+                                    onCheckedChange = null,
+                                    modifier = Modifier.clearAndSetSemantics { },
                                 )
                             }
                         } else {
@@ -349,18 +350,18 @@ fun CrashReportsScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .combinedClickable(
-                                onClick = {
-                                    if (selectionMode) {
-                                        toggleSelection(record.id)
-                                    } else {
-                                        actions.onOpen(record.id)
-                                    }
-                                },
-                                onLongClick = {
-                                    if (!selected) {
-                                        toggleSelection(record.id)
-                                    }
+                            .then(
+                                if (selectionMode) {
+                                    Modifier.toggleable(
+                                        value = selected,
+                                        role = Role.Checkbox,
+                                        onValueChange = { toggleSelection(record.id) },
+                                    )
+                                } else {
+                                    Modifier.combinedClickable(
+                                        onClick = { actions.onOpen(record.id) },
+                                        onLongClick = { toggleSelection(record.id) },
+                                    )
                                 },
                             ),
                     )
@@ -409,7 +410,7 @@ fun CrashReportDetailsScreen(
                     IconButton(onClick = actions::onBack) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.close),
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -550,7 +551,12 @@ fun CrashReportDeleteConfirmationDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            TextButton(
+                onClick = onConfirm,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error,
+                ),
+            ) {
                 Text(
                     stringResource(
                         if (batchSelection) {

@@ -867,7 +867,7 @@ internal class MemoryEditorComposeController(
             }
         }
         if (rows.isEmpty()) return
-        val clip = ClipData.newPlainText("Memory Editor", rows.joinToString("\n"))
+        val clip = ClipData.newPlainText(context.getString(R.string.memory_editor), rows.joinToString("\n"))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             clip.description.extras = PersistableBundle().apply {
                 putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)

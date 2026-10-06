@@ -54,18 +54,26 @@ work. Do not perform repository-wide casing churn merely for consistency.
 ## Typography
 
 Compose surfaces use the Material 3 type scale instead of arbitrary `sp`
-values. The following mapping is the review baseline:
+values. The following mapping is the review baseline, not a freeze on component
+choices. Prefer the semantic defaults of the current Material 3 component; use a
+different role when the actual hierarchy or readability requires it rather than
+preserving a poor historical mapping for consistency.
 
-- Top app bar titles use `titleLarge`/the component default.
-- Screen headings may use `headlineSmall`; popup/dialog titles use `titleLarge`.
-- Popup body text uses `bodyMedium`; supporting metadata may use `bodySmall`
-  with `onSurfaceVariant`. Actions use `labelLarge` or their Material component
-  default. Keep the same role consistent across installer, Library, profiles,
-  config, and app-owned runtime menus.
-- Primary list and card titles use `titleMedium` or `titleSmall`; supporting
-  metadata uses `bodyMedium`/`bodySmall` with `onSurfaceVariant`.
+- Top app bar titles use `titleLarge` or the component default.
+- Standard setting/list headlines use `bodyLarge`; normal explanatory supporting
+  text uses `bodyMedium`. Current values may use an appropriate body or label role
+  for the component. Do not add weight merely to manufacture hierarchy.
+- Section titles generally use `titleMedium`. Screen headings may use
+  `headlineSmall`; alert/dialog headlines use `headlineSmall`.
+- Dialog body text uses `bodyMedium`; actions use `labelLarge` or their Material
+  component default.
+- `bodySmall` is for genuinely compact secondary content such as metadata,
+  timestamps, diagnostics, measurements, telemetry, or minor annotations.
 - Field labels, units, and compact secondary annotations use `labelMedium` or
   `labelSmall`.
+- Where Material 3 components such as `ListItem` already provide a semantic type
+  hierarchy, prefer their defaults over recreating the same hierarchy with
+  explicit type and font-weight overrides.
 - A custom `sp` value needs a component-specific reason and verification of
   relevant font-scale, translation, and width risks. Reuse suitable coverage or
   inspect a targeted render; a custom size alone does not require a new golden.
@@ -112,13 +120,17 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
 - Measure title, body, and actions together. Do not reserve a guessed fixed
   120–200 dp for a title/footer or subtract their space twice. Omit the footer
   entirely when a menu has no footer actions.
-- Prefer `AdaptiveAlertDialog` for short decisions and action menus. Custom
-  platform-hosted Compose dialogs use the same bounds, type scale, and theme.
-  Reuse the shared host rather than adding another dialog-size policy.
-- Keep inner padding modest and consistent: usually 20 dp horizontally and
-  16 dp vertically, with 16 dp horizontal padding in narrow custom hosts and
-  12 dp vertical padding in short windows. Use 8–12 dp between distinct groups.
-  Add larger gaps only when they clarify a real grouping, not to fill space.
+- Use `AdaptiveAlertDialog` for short decisions and action menus when it fits
+  the interaction. Custom platform-hosted Compose dialogs use the same bounds,
+  type scale, and theme. Reuse the shared host when it satisfies the requirement;
+  if a shared primitive is the source of a verified problem, fix the appropriate
+  shared boundary rather than layering a one-off dialog-size policy on top.
+- Keep inner spacing modest and consistent with the shared dialog defaults.
+  Current hosts generally use about 20 dp horizontally and 16 dp vertically,
+  with 16 dp horizontal and 12 dp vertical spacing in constrained custom hosts,
+  plus 8–12 dp between distinct groups. Treat these as implementation defaults,
+  not universal constants; change them when a concrete hierarchy or fit problem
+  justifies it rather than to fill space.
 - Give each body one scroll owner. Simple text/forms can use the shared body's
   scroll container; lazy lists and interactive content may own their scrolling
   within the measured body viewport. Avoid nested scroll containers with

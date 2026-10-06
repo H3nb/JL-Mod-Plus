@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.config
 
+import io.github.h3nb.jlmodplus.R
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
@@ -30,6 +32,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
 
 @RunWith(AndroidJUnit4::class)
 class ProfilesComposeTest {
@@ -56,16 +61,16 @@ class ProfilesComposeTest {
 
         composeRule.onNodeWithText("Playable").performClick()
         assertEquals("Playable", actions.edited)
-        composeRule.onNodeWithText("Edit Profile").assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.edit_preset)).assertDoesNotExist()
 
-        composeRule.onNodeWithContentDescription("More Actions For Playable").assertExists()
-        composeRule.onNodeWithContentDescription("More Actions For Playable").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.profile_more_actions, "Playable")).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.profile_more_actions, "Playable")).performClick()
         composeRule.onNodeWithText("Rename").performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput(" 2")
         composeRule.onNodeWithText("OK").performClick()
         assertEquals("Playable" to "Playable 2", actions.renamed)
 
-        composeRule.onNodeWithContentDescription("More Actions For Empty").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.profile_more_actions, "Empty")).performClick()
         composeRule.onNodeWithText("Delete").performClick()
         composeRule.onNodeWithText("OK").performClick()
         assertEquals("Empty", actions.deleted)
@@ -103,9 +108,9 @@ class ProfilesComposeTest {
 
         composeRule.onNodeWithText("Legacy layout").performClick()
         composeRule.onNode(
-            hasText("Default For New MIDlets") and hasAnyAncestor(isDialog()),
+            hasText(uiString(R.string.preset_default_picker_title)) and hasAnyAncestor(isDialog()),
         ).assertDoesNotExist()
-        composeRule.onNodeWithText("Edit Profile").assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.edit_preset)).assertDoesNotExist()
         composeRule.onNodeWithText("Rename").assertExists()
         composeRule.onNodeWithText("Delete").assertExists()
     }
@@ -161,13 +166,13 @@ class ProfilesComposeTest {
         }
 
         composeRule.onNodeWithText("Unavailable").assertExists()
-        composeRule.onNodeWithText("Saved Virtual Controls Layouts").assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.preset_manager_keyboard_section)).assertDoesNotExist()
         composeRule.onNodeWithText("Broken").performClick()
         composeRule.onNodeWithText("This profile could not be loaded. Rename or delete it.").assertExists()
         composeRule.onNode(
-            hasText("Default For New MIDlets") and hasAnyAncestor(isDialog()),
+            hasText(uiString(R.string.preset_default_picker_title)) and hasAnyAncestor(isDialog()),
         ).assertDoesNotExist()
-        composeRule.onNodeWithText("Edit Profile").assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.edit_preset)).assertDoesNotExist()
     }
 
     private fun setProfilesContent(actions: RecordingProfilesActions) {

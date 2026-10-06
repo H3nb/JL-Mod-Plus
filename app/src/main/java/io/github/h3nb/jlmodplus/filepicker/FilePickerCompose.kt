@@ -16,6 +16,7 @@ package io.github.h3nb.jlmodplus.filepicker
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,6 +64,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -238,7 +240,6 @@ fun FilePickerScreen(
                 Button(
                     onClick = actions::onConfirmSelection,
                     enabled = state.canConfirm,
-                    shape = MaterialTheme.shapes.medium,
                 ) {
                     Text(stringResource(R.string.file_picker_choose))
                 }
@@ -441,13 +442,17 @@ private fun PickerEntryRow(
     ListItem(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .semantics { role = Role.Button }
             .then(
                 if (allowSelection) {
-                    Modifier.testTag("file_picker_selection_checkbox")
-                } else {
                     Modifier
+                        .toggleable(
+                            value = selected,
+                            role = Role.Checkbox,
+                            onValueChange = { onClick() },
+                        )
+                        .testTag("file_picker_selection_checkbox")
+                } else {
+                    Modifier.clickable(role = Role.Button, onClick = onClick)
                 },
             ),
         headlineContent = {
@@ -470,6 +475,7 @@ private fun PickerEntryRow(
                 androidx.compose.material3.Checkbox(
                     checked = selected,
                     onCheckedChange = null,
+                    modifier = Modifier.clearAndSetSemantics { },
                 )
             }
         } else {
@@ -542,7 +548,6 @@ private fun PermissionContent(
         Spacer(Modifier.height(20.dp))
         Button(
             onClick = actions::onGrantPermission,
-            shape = MaterialTheme.shapes.medium,
         ) {
             Text(stringResource(R.string.file_picker_grant_access))
         }
@@ -564,7 +569,6 @@ private fun ErrorContent(
         Spacer(Modifier.height(16.dp))
         Button(
             onClick = actions::onRetry,
-            shape = MaterialTheme.shapes.medium,
         ) {
             Text(stringResource(R.string.file_picker_retry))
         }

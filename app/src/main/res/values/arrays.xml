@@ -64,7 +64,7 @@
         <item>@string/pref_button_shape_round</item>
     </string-array>
     <string-array name="PREF_LAYOUT_ENTRIES">
-        <item>Nokia/SE</item>
+        <item>Nokia / Sony Ericsson</item>
         <item>Siemens</item>
         <item>Motorola</item>
         <item>@string/profile_custom</item>

@@ -237,16 +237,19 @@ def promote(args):
     else:
         raise Reject("Promoted commit did not become pull-request HEAD.")
     gh(f"repos/{repo}/actions/workflows/android.yml/dispatches", "POST", {"ref": branch, "inputs": {"mode": "validate"}})
-    gh(f"repos/{repo}/issues/{pr_number}/comments", "POST", {"body": "\n".join([
-        "<!-- jlmod-screenshot-promotion-result:v1 -->",
-        "Reviewed screenshot references were promoted without re-rendering.",
-        "",
-        f"- Source HEAD: `{request['head_sha']}`",
-        f"- Promoted commit: `{promoted}`",
-        f"- Candidates: {len(paths)}",
-        f"- Artifact: `{request['artifact_id']}`",
-        "- Final Android CI validation was dispatched explicitly.",
-    ])})
+    try:
+        gh(f"repos/{repo}/issues/{pr_number}/comments", "POST", {"body": "\n".join([
+            "<!-- jlmod-screenshot-promotion-result:v1 -->",
+            "Reviewed screenshot references were promoted without re-rendering.",
+            "",
+            f"- Source HEAD: `{request['head_sha']}`",
+            f"- Promoted commit: `{promoted}`",
+            f"- Candidates: {len(paths)}",
+            f"- Artifact: `{request['artifact_id']}`",
+            "- Final Android CI validation was dispatched explicitly.",
+        ])})
+    except Reject as error:
+        print(f"Screenshot promotion warning: result comment failed: {error}", file=sys.stderr)
 
 
 def main():

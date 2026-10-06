@@ -14,20 +14,24 @@
 
 package io.github.h3nb.jlmodplus.settings
 
+import io.github.h3nb.jlmodplus.R
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -36,6 +40,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
@@ -50,20 +57,25 @@ class SettingsComposeTest {
                 SettingsOption("language-$index", "Language option ${index + 1}")
             },
         )
+        val actions = RecordingSettingsActions()
         setSettingsContent(
             state = state,
-            actions = RecordingSettingsActions(),
+            actions = actions,
             windowSize = DpSize(480.dp, 240.dp),
         )
 
-        composeRule.onNodeWithText("Language").performScrollTo().performClick()
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching {
-                composeRule.onNodeWithContentDescription("Swipe to continue")
-                    .fetchSemanticsNode()
-            }.isSuccess
-        }
-        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        val languageSetting = hasText("App language") and hasClickAction()
+        composeRule.onNode(hasScrollAction())
+            .performScrollToNode(languageSetting)
+        composeRule.onNode(languageSetting).performClick()
+
+        val lastLanguage = hasText("Language option 20")
+        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
+            .performScrollToNode(lastLanguage)
+        composeRule.onNode(lastLanguage)
+            .assertIsDisplayed()
+            .performClick()
+        assertEquals(listOf("language-19"), actions.changes)
     }
 
     @Test
@@ -72,13 +84,13 @@ class SettingsComposeTest {
 
         composeRule.onNodeWithText("Theme").assertExists()
         composeRule.onNodeWithText("Dark").assertExists()
-        composeRule.onNodeWithText("Language").assertExists()
-        scrollSettingsToIndex(1)
-        composeRule.onNodeWithText("Keep screen on").performScrollTo().assertIsDisplayed()
+        composeRule.onNode(hasText("App language") and hasClickAction()).assertExists()
         scrollSettingsToIndex(2)
-        composeRule.onNodeWithText("Working Directory").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("/data/jlmod").assertIsDisplayed()
+        composeRule.onNodeWithText("Keep screen on").performScrollTo().assertIsDisplayed()
         scrollSettingsToIndex(3)
+        composeRule.onNodeWithText(uiString(R.string.pref_emulator_dir)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("/data/jlmod").assertIsDisplayed()
+        scrollSettingsToIndex(4)
         composeRule.onNode(hasText("Profiles") and hasClickAction())
             .performScrollTo()
             .assertIsDisplayed()
@@ -91,17 +103,17 @@ class SettingsComposeTest {
 
         composeRule.onNodeWithText("Theme").performClick()
         composeRule.onNodeWithText("Light").performClick()
-        scrollSettingsToIndex(0)
-        composeRule.onNodeWithText("Language").performScrollTo().performClick()
-        composeRule.onNodeWithText("English").performClick()
         scrollSettingsToIndex(1)
+        composeRule.onNode(hasText("App language") and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNodeWithText("English").performClick()
+        scrollSettingsToIndex(2)
         composeRule.onNodeWithText("Keep screen on").performScrollTo().performClick()
-        scrollSettingsToIndex(3)
+        scrollSettingsToIndex(4)
         composeRule.onNode(hasText("Profiles") and hasClickAction())
             .performScrollTo()
             .performClick()
-        scrollSettingsToIndex(2)
-        composeRule.onNodeWithText("Working Directory").performScrollTo().performClick()
+        scrollSettingsToIndex(3)
+        composeRule.onNodeWithText(uiString(R.string.pref_emulator_dir)).performScrollTo().performClick()
 
         assertEquals(listOf("light", "en", "pref_wakelock_switch"), actions.changes)
         assertEquals(1, actions.profileClicks)
@@ -113,7 +125,7 @@ class SettingsComposeTest {
         val actions = RecordingSettingsActions()
         setSettingsContent(actions = actions)
 
-        composeRule.onNodeWithText("Accent Color").performClick()
+        composeRule.onNodeWithText(uiString(R.string.pref_accent_title)).performClick()
         composeRule.onNodeWithText("Teal").performClick()
 
         assertEquals(listOf("teal"), actions.accents)
@@ -126,7 +138,7 @@ class SettingsComposeTest {
             libraryChoices = listOf(
                 SettingsChoice(
                     key = "pref_apps_view",
-                    title = "Library View",
+                    title = uiString(R.string.pref_apps_view),
                     selected = SettingsOption("list", "List"),
                     options = listOf(
                         SettingsOption("list", "List"),
@@ -137,7 +149,7 @@ class SettingsComposeTest {
             librarySwitches = listOf(
                 SettingsSwitch(
                     key = "pref_apps_enhanced_icons",
-                    title = "Enhanced Icons",
+                    title = uiString(R.string.library_enhanced_icons_title),
                     summary = null,
                     checked = true,
                 ),
@@ -145,11 +157,11 @@ class SettingsComposeTest {
         )
         setSettingsContent(state = state, actions = actions)
 
-        scrollSettingsToIndex(1)
-        composeRule.onNodeWithText("Library View").performScrollTo().performClick()
+        scrollSettingsToIndex(2)
+        composeRule.onNodeWithText(uiString(R.string.pref_apps_view)).performScrollTo().performClick()
         composeRule.onNodeWithText("Grid").performClick()
-        scrollSettingsToIndex(1)
-        composeRule.onNodeWithText("Enhanced Icons").performScrollTo().performClick()
+        scrollSettingsToIndex(2)
+        composeRule.onNodeWithText(uiString(R.string.library_enhanced_icons_title)).performScrollTo().performClick()
 
         assertEquals(listOf("pref_apps_view=grid"), actions.libraryChoices)
         assertEquals(listOf("pref_apps_enhanced_icons=false"), actions.toggles)
@@ -161,7 +173,7 @@ class SettingsComposeTest {
             libraryChoices = listOf(
                 SettingsChoice(
                     key = "pref_apps_view",
-                    title = "Library View",
+                    title = uiString(R.string.pref_apps_view),
                     selected = SettingsOption("grid", "Grid"),
                     options = listOf(
                         SettingsOption("list", "List"),
@@ -170,22 +182,22 @@ class SettingsComposeTest {
                 ),
                 SettingsChoice(
                     key = "pref_apps_grid_spacing",
-                    title = "Grid Spacing",
+                    title = uiString(R.string.library_grid_spacing_title),
                     selected = SettingsOption("standard", "Standard (8 dp)"),
                     options = listOf(SettingsOption("standard", "Standard (8 dp)")),
                 ),
             ),
             librarySwitches = listOf(
-                SettingsSwitch("pref_apps_enhanced_icons", "Enhanced Icons", null, true),
-                SettingsSwitch("pref_apps_hide_grid_titles", "Hide MIDlet Titles", null, false),
+                SettingsSwitch("pref_apps_enhanced_icons", uiString(R.string.library_enhanced_icons_title), null, true),
+                SettingsSwitch("pref_apps_hide_grid_titles", uiString(R.string.library_hide_grid_titles), null, false),
             ),
         )
         setSettingsContent(state = gridState, actions = RecordingSettingsActions())
 
-        scrollSettingsToIndex(1)
-        composeRule.onNodeWithText("Grid Spacing").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Hide MIDlet Titles").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Show MIDlet Descriptions").assertDoesNotExist()
+        scrollSettingsToIndex(2)
+        composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_title)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_show_list_description)).assertDoesNotExist()
     }
 
     @Test
@@ -194,7 +206,7 @@ class SettingsComposeTest {
             libraryChoices = listOf(
                 SettingsChoice(
                     key = "pref_apps_view",
-                    title = "Library View",
+                    title = uiString(R.string.pref_apps_view),
                     selected = SettingsOption("list", "List"),
                     options = listOf(
                         SettingsOption("list", "List"),
@@ -203,10 +215,10 @@ class SettingsComposeTest {
                 ),
             ),
             librarySwitches = listOf(
-                SettingsSwitch("pref_apps_enhanced_icons", "Enhanced Icons", null, true),
+                SettingsSwitch("pref_apps_enhanced_icons", uiString(R.string.library_enhanced_icons_title), null, true),
                 SettingsSwitch(
                     "pref_apps_show_list_description",
-                    "Show MIDlet Descriptions",
+                    uiString(R.string.library_show_list_description),
                     null,
                     true,
                 ),
@@ -214,10 +226,10 @@ class SettingsComposeTest {
         )
         setSettingsContent(state = listState, actions = RecordingSettingsActions())
 
-        scrollSettingsToIndex(1)
-        composeRule.onNodeWithText("Show MIDlet Descriptions").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Grid Spacing").assertDoesNotExist()
-        composeRule.onNodeWithText("Hide MIDlet Titles").assertDoesNotExist()
+        scrollSettingsToIndex(2)
+        composeRule.onNodeWithText(uiString(R.string.library_show_list_description)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_title)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).assertDoesNotExist()
     }
 
     private fun sampleState() = SettingsUiState(
@@ -231,9 +243,9 @@ class SettingsComposeTest {
             SettingsOption("", "Follow system settings"),
             SettingsOption("en", "English"),
         ),
-        accent = SettingsOption("blue", "Default Blue"),
+        accent = SettingsOption("blue", uiString(R.string.pref_accent_blue)),
         accents = listOf(
-            SettingsOption("blue", "Default Blue"),
+            SettingsOption("blue", uiString(R.string.pref_accent_blue)),
             SettingsOption("teal", "Teal"),
         ),
         switches = listOf(

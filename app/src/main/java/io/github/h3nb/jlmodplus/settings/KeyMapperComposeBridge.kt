@@ -375,7 +375,7 @@ private fun MappingOverlay(
                     ) {
                         Text(
                             text = paneTitle,
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.headlineSmall,
                         )
                         Text(
                             text = stringResource(R.string.mapping_dialog_message),

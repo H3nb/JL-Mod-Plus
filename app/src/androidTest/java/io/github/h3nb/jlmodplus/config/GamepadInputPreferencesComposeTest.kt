@@ -20,6 +20,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
+
 @RunWith(AndroidJUnit4::class)
 class GamepadInputPreferencesComposeTest {
     @get:Rule
@@ -29,7 +32,7 @@ class GamepadInputPreferencesComposeTest {
     fun analogChoiceDoesNotRequireControllerButCalibrationDoes() {
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigSection(title = "Key Input") {
+                ConfigSection(title = uiString(R.string.config_controls_key_input)) {
                     GamepadInputPreferences(
                         form = ConfigFormState.builder().build(),
                         controllerAvailable = false,
@@ -40,8 +43,8 @@ class GamepadInputPreferencesComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Analog Stick").assertIsEnabled()
-        composeRule.onNodeWithText("Calibrate Controller").assertIsNotEnabled()
+        composeRule.onNodeWithText(uiString(R.string.config_analog_stick)).assertIsEnabled()
+        composeRule.onNodeWithText(uiString(R.string.config_gamepad_calibrate)).assertIsNotEnabled()
     }
 
     @Test
@@ -54,7 +57,7 @@ class GamepadInputPreferencesComposeTest {
         }
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigSection(title = "Key Input") {
+                ConfigSection(title = uiString(R.string.config_controls_key_input)) {
                     GamepadInputPreferences(
                         form = ConfigFormState.builder().build(),
                         controllerAvailable = true,
@@ -65,7 +68,7 @@ class GamepadInputPreferencesComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Calibrate Controller").assertIsEnabled().performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_gamepad_calibrate)).assertIsEnabled().performClick()
         assertEquals(1, calibrationRequests)
     }
 
@@ -79,8 +82,8 @@ class GamepadInputPreferencesComposeTest {
                 "Custom",
                 "Phone",
                 "Phone (Arrows)",
-                "Numbers & Arrows",
-                "Arrows & Numbers",
+                uiString(R.string.pref_vk_type_numbers_arrows),
+                uiString(R.string.pref_vk_type_arrows_numbers),
                 "Numbers",
                 "Arrows",
             ),

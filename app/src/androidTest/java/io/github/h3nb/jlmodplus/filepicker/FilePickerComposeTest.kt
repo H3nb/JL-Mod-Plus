@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.filepicker
 
+import io.github.h3nb.jlmodplus.R
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
@@ -33,6 +35,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
 
 @RunWith(AndroidJUnit4::class)
 class FilePickerComposeTest {
@@ -147,7 +152,7 @@ class FilePickerComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Current Folder").assertExists()
+        composeRule.onNodeWithText(uiString(R.string.file_picker_current_folder)).assertExists()
         composeRule.onNodeWithText("Choose").assertIsEnabled().performClick()
         assertEquals("confirm", events.get())
     }
@@ -226,7 +231,7 @@ class FilePickerComposeTest {
         }
 
         composeRule.onNodeWithText("Choose").assertExists()
-        composeRule.onNodeWithContentDescription("Back to Parent Folder").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.file_picker_navigate_back)).performClick()
         assertEquals("back", events.get())
         composeRule.onNodeWithText("Cancel").performClick()
         assertEquals("exit", events.get())

@@ -50,7 +50,7 @@ fun InstallerLoadingScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         InstallerScreen(
             state = InstallerUiState.Loading(
-                title = "MIDlet Installer",
+                title = "MIDlet installer",
                 status = "Loading info…",
             ),
             actions = NoOpInstallerActions,
@@ -111,8 +111,8 @@ fun InstallerIndonesianActionsScreenshot() {
         InstallerScreen(
             state = InstallerUiState.Confirmation(
                 title = "Demo MIDlet",
-                message = "Nama: Demo MIDlet\nPenerbit: Studio Contoh\nVersi: 1.0\n\nPasang aplikasi ini?",
-                installLabel = "Pasang",
+                message = "Nama: Demo MIDlet\nPenerbit: Studio Contoh\nVersi: 1.0\n\nInstal aplikasi ini?",
+                installLabel = "Instal",
                 closeLabel = "Batal",
                 runLabel = "Mulai",
                 iconPath = null,
@@ -177,7 +177,7 @@ fun ReconversionCompatibilityCompactLandscapeLargeTextScreenshot() {
         InstallerScreen(
             state = InstallerUiState.Converting(
                 title = "Demo MIDlet",
-                message = "This MIDlet needs a one-time compatibility conversion before it can start. Please wait…",
+                message = "This MIDlet needs a one-time compatibility conversion before it can start. Converting…",
                 status = "Converting JAR…",
             ),
             actions = NoOpInstallerActions,

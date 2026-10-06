@@ -312,7 +312,7 @@ internal fun AdaptiveAlertDialog(
                 }
                 if (title != null) {
                     CompositionLocalProvider(LocalContentColor provides titleContentColor) {
-                        ProvideTextStyle(MaterialTheme.typography.titleLarge) { title() }
+                        ProvideTextStyle(MaterialTheme.typography.headlineSmall) { title() }
                     }
                 }
                 if (text != null) {
