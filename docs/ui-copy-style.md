@@ -97,6 +97,68 @@ content (for example, the color-picker preview), for fixed color-space
 gradients (white/black HSV endpoints), or when `Color.Transparent` is needed
 to let a component reveal its already-themed parent surface.
 
+## Iconography
+
+Material Symbols is the canonical icon language for app-owned JL-Mod Plus UI.
+Choose an icon for its meaning first, then verify that its geometry, visual
+weight, optical balance, and state treatment fit the surrounding Material 3
+surface at the actual rendered size.
+
+Use this source priority for new or revised app-owned icons:
+
+1. **Material Symbols** — use an official Google Material Symbol whenever a
+   semantically suitable glyph exists. The normal baseline is outlined, fill 0,
+   weight 400, grade 0, optical size 24. A different fill, weight, family, or
+   optical size is appropriate when component scale, state, or readability
+   requires it; for example, a filled variant may communicate a selected or
+   favorite state.
+2. **Pictogrammers Material Design Icons (MDI)** — preferred secondary source
+   when Material Symbols does not provide a sufficiently accurate glyph.
+   Choose an icon whose silhouette and optical weight remain coherent with the
+   surrounding Material Symbols. Do not treat brand/logo glyphs as ordinary UI
+   icons; review their separate licensing and trademark implications when a
+   product identity genuinely requires one.
+3. **Phosphor Regular** — tertiary source when neither Material Symbols nor MDI
+   expresses the concept well. Use it only when the selected glyph remains
+   visually balanced beside the Material iconography at its actual size.
+4. **Custom Material-style vector** — last resort when the established sources
+   cannot represent the required concept clearly. Keep the geometry compatible
+   with the surrounding icon language and record why an existing source was
+   inadequate.
+
+These are priorities, not quotas. Do not replace a clearer existing icon merely
+to make every asset come from one source, and do not introduce another icon
+family because one glyph looks novel in isolation. Avoid mixing families within
+one tightly related control group unless the semantic improvement outweighs the
+visual difference and the rendered result has been reviewed.
+
+For asset handling and accessibility:
+
+- Vendor only the static vector assets the app actually needs. Do not add a
+  broad runtime icon-pack dependency merely to use a small number of glyphs.
+  Material Symbols should continue to use the developer-time
+  `scripts/material-symbols.py` path where applicable.
+- Preserve upstream rights and attribution. For a newly vendored third-party
+  icon, record its source, variant, applicable license, and pinned revision or
+  equivalent provenance in `THIRD_PARTY_NOTICES.md` when it becomes part of
+  the shipped app.
+- Use the component's normal icon size unless a concrete design requirement
+  calls for another size; 24 dp is the standard baseline for ordinary action
+  and navigation glyphs.
+- Resolve ordinary icon tint from `MaterialTheme.colorScheme` or the owning
+  Material component. Do not bake decorative colors into general-purpose
+  app-owned icons.
+- Give actionable icons an accessible semantic label through the owning
+  component. Decorative or text-redundant icons may remain unannounced rather
+  than duplicating the adjacent label.
+- Mirror only icons whose directional meaning follows layout direction. Do not
+  mirror media controls, universal symbols, or other glyphs whose meaning is
+  independent of reading direction.
+- Existing legacy vectors may remain until touched by scoped UI work. When a
+  legacy icon is revised, prefer the canonical Material Symbols equivalent when
+  it preserves or improves the intended meaning; avoid repository-wide icon
+  churn solely for source uniformity.
+
 ## Popup layout and overflow
 
 ### Text alignment
