@@ -9,7 +9,7 @@ Use the Gradle wrapper from the repository root. For current build, toolchain, d
 ## Local setup
 
 - Use JDK 21, matching CI. Java source/target compatibility is 17.
-- Configure the Android SDK through `ANDROID_HOME` or an untracked `local.properties` with `sdk.dir`. The project compiles against SDK 37, targets 36, supports API 23+, and selects NDK `30.0.16248370` in the root build file. CI installs `platforms;android-37.0`.
+- Configure the Android SDK through `ANDROID_HOME` or an untracked `local.properties` with `sdk.dir`. The project compiles against SDK 37, targets 36, supports API 23+, and selects NDK `30.0.16248370` from the version catalog. CI installs platform 37 and provisions that NDK for native-enabled validation.
 - Native synthesis sources are vendored; no native source submodule initialization is required. Sampled audio dependencies are built from pinned archives by the Gradle native tasks; install PowerShell 7, Git and the POSIX shell/make prerequisites in [the native audio recipe](../tools/audio/README.md). The cache lives under `app/build/audio-deps`.
 - Normal debug builds target `arm64-v8a`. Use `-PjlmodRuntimeTestAbi=x86_64` when testing on an x86_64 emulator; the supported override values are `arm64-v8a` and `x86_64`.
 - Debug builds use `debug.keystore` when present, otherwise the normal local debug signing configuration. Release signing is configured separately; do not copy credentials into documentation.
@@ -127,8 +127,8 @@ branch; do not add a temporary push-triggered updater when dispatch is unavailab
 
 The debug APK artifact is uploaded immediately after successful assembly and
 staging, before validation finishes. Its `BUILD-INFO.txt` records the source commit
-and run URL and labels it unverified. The final `build` check requires both
-`Build and tests` and `Lint` to succeed. `JL-Mod-Plus-ci-diagnostics` contains
+and run URL and labels it unverified. The final `build` check requires `Build and tests`, `Screenshot validation`,
+and `Lint` to succeed. `JL-Mod-Plus-ci-diagnostics` contains
 `ci-artifacts/validation.txt`, app/dexlib test reports, screenshot reports, and
 connected-test reports/logcat when run. `JL-Mod-Plus-lint-diagnostics` contains lint
 reports. The validation file records its own job's step outcomes, not the separate
@@ -195,20 +195,21 @@ of setup/observer failure, cleanup ordering, and preservation of the original er
 
 ### CI performance
 
-CI reuses a Gradle daemon across steps in the same job and preserves the existing
-Gradle build cache. Lint runs independently of assembly and tests to shorten the
-critical path without dropping checks. This duplicates some setup/compilation, so
-compare total runner minutes as well as elapsed time when assessing the split.
+CI reuses a Gradle daemon across steps in the same job and preserves supported
+Gradle User Home and Build Cache state. Configuration Cache is enabled project-wide,
+and CI keeps compatibility strict with `--configuration-cache-problems=fail`.
+Lint runs independently with the normal native-enabled Android model so it validates
+production-equivalent configuration. Screenshot-only validation may use
+`-PjlmodNativeBuild=false` because it does not consume native outputs and can avoid
+NDK provisioning without weakening app lint coverage.
+
 Each invocation writes an HTML timing profile under
 `build/reports/profile/`, included in diagnostic artifacts. Compare equivalent task
 sets and cache conditions before attributing timing differences to an optimization;
 measure time to APK separately from time to completed validation.
 
-Do not run `clean` routinely or discard relevant checks to improve timings.
-Configuration cache is not enabled: the custom native-packaging verification task
-still captures build-script state at execution time and needs compatibility work.
-Use the timing profiles to justify that work before changing the task or enabling
-configuration cache. Do not suppress configuration-cache problems as warnings.
+Do not run `clean` routinely, discard relevant checks to improve timings, or
+suppress Configuration Cache problems as warnings.
 
 ### Release checks
 
