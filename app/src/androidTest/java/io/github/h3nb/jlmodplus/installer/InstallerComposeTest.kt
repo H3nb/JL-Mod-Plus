@@ -322,7 +322,9 @@ class InstallerComposeTest {
             }
         }
         capturePopup("bulk-short.png")
-        composeRule.onNodeWithTag("bulk-results").performScrollToIndex(4)
+        composeRule.onAllNodesWithText(targetString(R.string.bulk_install_cancelled))
+            .assertCountEquals(1)
+        composeRule.onNodeWithTag("bulk-results").performScrollToIndex(5)
         composeRule.onNodeWithText(targetString(R.string.installer_retry_remaining))
             .assertIsDisplayed().performClick()
         composeRule.onNodeWithText(targetString(R.string.bulk_install_close))
