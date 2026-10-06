@@ -676,7 +676,7 @@
     <string name="config_help_lock_custom_resolution_ratio">Mempertahankan rasio lebar dan tinggi saat salah satunya diubah.</string>
     <string name="config_help_virtual_keyboard">Menampilkan kontrol virtual di layar untuk MIDlet ini.</string>
     <string name="config_help_touch_input">Mengizinkan MIDlet menerima input dari layar sentuh.</string>
-    <string name="config_help_background">Mengisi area sekitar layar MIDlet dengan warna pilihan.</string>
+    <string name="config_help_background">Mengisi area kosong di sekitar layar MIDlet.</string>
     <string name="config_background_mode">Mode latar belakang</string>
     <string name="config_background_custom">Kustom</string>
     <string name="config_background_theme">Tema</string>
@@ -685,7 +685,7 @@
     <string name="config_background_immersive_help">Mengisi area di sekitar layar MIDlet dengan warna yang diambil dari layar.</string>
     <string name="config_background_custom_color">Warna latar belakang</string>
     <string name="config_help_background_custom_color">Menentukan warna yang digunakan di area sekitar layar MIDlet.</string>
-    <string name="config_help_skin">Memilih skin atau bingkai opsional di sekitar layar MIDlet.</string>
+    <string name="config_help_skin">Menampilkan skin atau bingkai opsional di sekitar layar MIDlet.</string>
     <string name="config_help_screen_gravity">Menentukan posisi layar MIDlet saat tidak memenuhi area tampilan.</string>
     <string name="config_help_screen_padding">Memberi jarak antara layar MIDlet dan tepi area tampilan.</string>
     <string name="config_help_filter">Menggunakan filter linear saat penskalaan untuk menghaluskan tampilan.</string>
@@ -726,7 +726,7 @@
     <string name="config_help_key_mapping">Memetakan tombol fisik Android ke aksi keypad Java ME.</string>
     <string name="config_help_vk_button_shape">Menentukan bentuk tombol kontrol virtual.</string>
     <string name="config_help_vk_feedback">Bergetar saat kontrol virtual ditekan jika getaran diaktifkan di Pengaturan.</string>
-    <string name="config_help_vk_alpha">Mengatur transparansi kontrol virtual: 0 = sepenuhnya transparan, 255 = sepenuhnya tidak transparan.</string>
+    <string name="config_help_vk_alpha">Mengatur opasitas kontrol virtual: 0 = transparan sepenuhnya; 255 = buram sepenuhnya.</string>
     <string name="config_help_vk_force_opacity">Kontrol di luar layar MIDlet ditampilkan tanpa transparansi. Kontrol di atas layar tetap mengikuti nilai opasitas.</string>
     <string name="config_help_vk_hide_delay">Menyembunyikan kontrol setelah jeda ini saat menutupi layar MIDlet. Nilai 0 menonaktifkannya.</string>
     <string name="config_help_vk_foreground">Mengatur warna label dan simbol kontrol virtual.</string>
@@ -864,7 +864,7 @@
     <string name="settings_section_midlet_runtime">Runtime MIDlet</string>
     <string name="settings_section_storage">Penyimpanan</string>
     <string name="settings_section_profiles">Profil</string>
-    <string name="settings_profiles_summary">Profil dapat digunakan kembali pada beberapa MIDlet.</string>
+    <string name="settings_profiles_summary">Kelola profil yang dapat digunakan kembali di berbagai MIDlet.</string>
     <string name="pref_use_display_cutout_title">Gunakan area potongan layar</string>
     <string name="pref_use_display_cutout_summary">Mengizinkan konten Canvas MIDlet yang kompatibel dan bilah alat runtime menggunakan area potongan layar. Mengaktifkannya menyembunyikan bilah status sistem.</string>
     <string name="pref_accent_title">Warna aksen</string>
