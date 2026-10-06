@@ -93,17 +93,8 @@ jobs:
 
           armv7="$(find "$out" -maxdepth 1 -type f -name '*armeabi-v7a*.apk' -print -quit)"
           arm64="$(find "$out" -maxdepth 1 -type f -name '*arm64-v8a*.apk' -print -quit)"
-          universal="$(python3 - <<'PY'
-import json
-from pathlib import Path
-p=Path('app/build/outputs/apk/emulator/release/output-metadata.json')
-m=json.loads(p.read_text())
-for e in m['elements']:
-    if not e.get('filters'):
-        print(p.parent/e['outputFile'])
-        break
-PY
-          )"
+          universal_file="$(jq -r '.elements[] | select(((.filters // []) | length) == 0) | .outputFile' "$out/output-metadata.json")"
+          universal="$out/$universal_file"
           [[ -f "$armv7" && -f "$arm64" && -f "$universal" ]]
 
           for lib in avformat avcodec avutil swresample; do
@@ -118,29 +109,23 @@ PY
           unzip -q "$universal" 'lib/*/*.so' -d elf-check
           readelf="$ANDROID_HOME/ndk/30.0.16248370/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
           [[ -x "$readelf" ]]
-          READELF="$readelf" python3 - <<'PY'
-import os, pathlib, re, subprocess, sys
-readelf=os.environ['READELF']
-bad=[]
-checked=0
-for so in sorted(pathlib.Path('elf-check/lib').glob('*/*.so')):
-    out=subprocess.check_output([readelf,'-lW',str(so)], text=True)
-    aligns=[]
-    for line in out.splitlines():
-        if line.lstrip().startswith('LOAD '):
-            token=line.split()[-1]
-            aligns.append(int(token,16))
-    if not aligns:
-        bad.append((str(so),'no LOAD segments'))
-        continue
-    checked += 1
-    if min(aligns) < 0x4000:
-        bad.append((str(so),f'min LOAD alignment 0x{min(aligns):x}'))
-if checked == 0 or bad:
-    print('16 KiB ELF alignment failure:', bad, file=sys.stderr)
-    sys.exit(1)
-print(f'PASS 16 KiB ELF LOAD alignment: {checked} shared libraries')
-PY
+          checked=0
+          while IFS= read -r -d '' so; do
+            mapfile -t aligns < <("$readelf" -lW "$so" | awk '$1 == "LOAD" { print $NF }')
+            [[ ${#aligns[@]} -gt 0 ]] || {
+              echo "No ELF LOAD segments found: $so" >&2
+              exit 1
+            }
+            for align in "${aligns[@]}"; do
+              if (( align < 0x4000 )); then
+                echo "ELF LOAD alignment below 16 KiB: $so => $align" >&2
+                exit 1
+              fi
+            done
+            checked=$((checked + 1))
+          done < <(find elf-check/lib -type f -name '*.so' -print0)
+          [[ "$checked" -gt 0 ]]
+          echo "PASS 16 KiB ELF LOAD alignment: $checked shared libraries"
 
           "$ANDROID_HOME/ndk/30.0.16248370/ndk-build" --version >/dev/null
 
