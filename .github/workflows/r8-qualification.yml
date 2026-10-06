@@ -97,8 +97,12 @@ jobs:
           test -f "$mapping"
           grep -F 'io.github.h3nb.jlmodplus.memory.MemoryEditorRuntimeComposeKt ->' "$mapping" \
             | tee r8-memory-editor-mapping.txt
-          grep -F 'RuntimeChoiceMenu(' "$mapping" \
-            | tee -a r8-memory-editor-mapping.txt
+          if grep -F 'RuntimeChoiceMenu(' "$mapping" >> r8-memory-editor-mapping.txt; then
+            echo 'RuntimeChoiceMenu remains directly represented in the mapping.'
+          else
+            echo 'RuntimeChoiceMenu is no longer directly represented after optimization/inlining.' \
+              | tee -a r8-memory-editor-mapping.txt
+          fi
 
           apksigner_bin="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -perm -111 -print | sort -V | tail -n 1)"
           dexdump_bin="$(find "$ANDROID_HOME/build-tools" -type f -name dexdump -perm -111 -print | sort -V | tail -n 1)"
