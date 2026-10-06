@@ -311,14 +311,13 @@ fun ConfigSliderDialogScreenshot() {
 fun ConfigChoiceDialogScreenshot() {
     JLModPlusTheme {
         ConfigChoiceDialog(
-            title = "Screen Orientation",
-            selected = "Automatic",
+            title = "Screen orientation",
+            selected = "System default",
             options = listOf(
-                "Automatic",
-                "Landscape",
-                "Reverse landscape",
+                "System default",
+                "Auto",
                 "Portrait",
-                "Reverse portrait",
+                "Landscape",
             ),
             onDismissRequest = {},
             onSelected = {},
@@ -368,10 +367,10 @@ fun ConfigFontSizesLandscapeLargeFontScreenshot() {
 fun ConfigChoiceDialogLandscapeScreenshot() {
     JLModPlusTheme {
         ConfigChoiceDialog(
-            title = "Screen Orientation",
+            title = "Screen orientation",
             description = "Determines the requested display orientation while the application is running.",
-            selected = "Automatic",
-            options = listOf("Automatic", "Landscape", "Reverse Landscape", "Portrait", "Reverse Portrait"),
+            selected = "System default",
+            options = listOf("System default", "Auto", "Portrait", "Landscape"),
             onDismissRequest = {},
             onSelected = {},
         )

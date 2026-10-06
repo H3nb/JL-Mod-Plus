@@ -58,7 +58,7 @@ class LibraryComposeTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun compactHeightAppActionsExposeScrollHint() {
+    fun compactHeightAppActionsKeepLastActionReachable() {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
@@ -82,7 +82,9 @@ class LibraryComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.action_context_delete))
+            .performScrollTo()
+            .assertIsDisplayed()
         composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(0)
     }
 

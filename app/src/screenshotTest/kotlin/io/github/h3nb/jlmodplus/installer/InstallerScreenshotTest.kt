@@ -50,7 +50,7 @@ fun InstallerLoadingScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         InstallerScreen(
             state = InstallerUiState.Loading(
-                title = "MIDlet Installer",
+                title = "MIDlet installer",
                 status = "Loading info…",
             ),
             actions = NoOpInstallerActions,
@@ -177,7 +177,7 @@ fun ReconversionCompatibilityCompactLandscapeLargeTextScreenshot() {
         InstallerScreen(
             state = InstallerUiState.Converting(
                 title = "Demo MIDlet",
-                message = "This MIDlet needs a one-time compatibility conversion before it can start. Please wait…",
+                message = "This MIDlet needs a one-time compatibility conversion before it can start. Converting…",
                 status = "Converting JAR…",
             ),
             actions = NoOpInstallerActions,

@@ -173,7 +173,7 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun compactHeightBackMenuExposesScrollHint() {
+    fun compactHeightBackMenuKeepsLastActionReachable() {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
@@ -194,7 +194,9 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.runtime_virtual_controls_title))
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test

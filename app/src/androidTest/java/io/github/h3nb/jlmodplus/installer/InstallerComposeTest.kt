@@ -83,7 +83,6 @@ class InstallerComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription(targetString(R.string.dialog_scroll_hint)).assertIsDisplayed()
         composeRule.onNodeWithText("Install").performScrollTo().assertIsDisplayed().performClick()
         assertEquals(1, actions.installCount)
     }
@@ -216,7 +215,6 @@ class InstallerComposeTest {
                 }
             }
         }
-        composeRule.onNodeWithContentDescription(targetString(R.string.dialog_scroll_hint)).assertIsDisplayed()
         capturePopup("recovery-short.png")
         composeRule.onNodeWithText(targetString(R.string.installer_copy_details))
             .performScrollTo().assertIsDisplayed().performClick()
@@ -241,7 +239,6 @@ class InstallerComposeTest {
                 }
             }
         }
-        composeRule.onNodeWithContentDescription(targetString(R.string.dialog_scroll_hint)).assertIsDisplayed()
         capturePopup("bulk-short.png")
         composeRule.onNodeWithTag("bulk-results").performScrollToIndex(1)
         composeRule.onNodeWithText(targetString(R.string.installer_retry_remaining))

@@ -165,7 +165,7 @@ fun RuntimeShowControlsScreenshot() {
                 names = listOf(
                     "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "*", "#",
                     "L", "R", "D", "C", "↖", "↑", "↗", "←", "→", "↙", "↓", "↘",
-                    "F", "A", "B", "M", "D-pad", "Analog Stick",
+                    "F", "A", "B", "M", "D-pad", "Analog stick",
                 ),
                 hidden = BooleanArray(30) { it in 0..8 || it == 29 },
             ),
@@ -185,7 +185,7 @@ fun RuntimeShowControlsWideScreenshot() {
                 names = listOf(
                     "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "*", "#",
                     "L", "R", "D", "C", "↖", "↑", "↗", "←", "→", "↙", "↓", "↘",
-                    "F", "A", "B", "M", "D-pad", "Analog Stick",
+                    "F", "A", "B", "M", "D-pad", "Analog stick",
                 ),
                 hidden = BooleanArray(30) { it in 0..8 || it == 29 },
             ),

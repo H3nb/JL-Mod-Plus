@@ -56,7 +56,7 @@ private val PreviewSettingsState = SettingsUiState(
         SettingsSwitch(
             "pref_screenshot_switch",
             "Raw screenshot",
-            "Saves the MIDlet frame at its virtual resolution before scaling, image filtering, and the screen shader.",
+            "Saves the MIDlet frame at its virtual resolution before scaling, linear filtering, and the screen shader.",
             false,
         ),
         SettingsSwitch("pref_vibration_switch", "Vibration", null, true),
@@ -93,12 +93,12 @@ private val PreviewSettingsState = SettingsUiState(
         SettingsChoice(
             "pref_apps_grid_spacing",
             "Grid spacing",
-            SettingsOption("standard", "Standard"),
+            SettingsOption("standard", "Standard (8 dp)"),
             listOf(
-                SettingsOption("none", "None"),
-                SettingsOption("compact", "Compact"),
-                SettingsOption("standard", "Standard"),
-                SettingsOption("spacious", "Spacious"),
+                SettingsOption("none", "None (0 dp)"),
+                SettingsOption("compact", "Compact (4 dp)"),
+                SettingsOption("standard", "Standard (8 dp)"),
+                SettingsOption("spacious", "Spacious (12 dp)"),
             ),
         ),
     ),

@@ -19,7 +19,6 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -68,7 +67,6 @@ class AdaptiveDialogComposeTest {
                 }
             }
         }
-        rule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
         rule.onNodeWithText("Retry").assertIsDisplayed().performClick()
         rule.onNodeWithText("Close").assertIsDisplayed()
         rule.onNodeWithText("Last instruction").performScrollTo().assertIsDisplayed()
@@ -89,7 +87,6 @@ class AdaptiveDialogComposeTest {
                 }
             }
         }
-        rule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
         rule.onNodeWithText("26").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("OK").assertIsDisplayed().performClick()
         assertEquals(listOf("18", "22", "26"), confirmed)

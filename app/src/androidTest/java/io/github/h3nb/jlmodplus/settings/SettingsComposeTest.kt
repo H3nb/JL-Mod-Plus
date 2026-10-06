@@ -25,7 +25,6 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -55,20 +54,19 @@ class SettingsComposeTest {
                 SettingsOption("language-$index", "Language option ${index + 1}")
             },
         )
+        val actions = RecordingSettingsActions()
         setSettingsContent(
             state = state,
-            actions = RecordingSettingsActions(),
+            actions = actions,
             windowSize = DpSize(480.dp, 240.dp),
         )
 
         composeRule.onNode(hasText("App language") and hasClickAction()).performScrollTo().performClick()
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching {
-                composeRule.onNodeWithContentDescription("Swipe to continue")
-                    .fetchSemanticsNode()
-            }.isSuccess
-        }
-        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        composeRule.onNodeWithText("Language option 20")
+            .performScrollTo()
+            .assertIsDisplayed()
+            .performClick()
+        assertEquals(listOf("language-19"), actions.changes)
     }
 
     @Test
