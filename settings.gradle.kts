@@ -1,5 +1,4 @@
 enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -12,7 +11,14 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven("https://jitpack.io")
+        exclusiveContent {
+            forRepository {
+                maven("https://jitpack.io")
+            }
+            filter {
+                includeGroup("com.github.nikita36078")
+            }
+        }
     }
 }
 rootProject.name = "JL-Mod-Plus"
