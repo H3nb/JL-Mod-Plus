@@ -37,7 +37,10 @@ The remaining programmatic Views are deliberately bounded:
   orientation, and overlay hit geometry intact.
 - `TextBox`, `TextFieldImpl`, `Form`, `List`, `ChoiceGroup`, `DateField`,
   `Gauge`, `CustomItem`, and their list adapters are the Java ME/MIDP API
-  implementation, not app-owned host UI. Changing their presentation technology requires a separate API/JSR compatibility review and evidence that guest behavior is preserved; Compose is not prohibited when those contracts can be satisfied more simply.
+  implementation, not app-owned host UI. Changing their presentation technology
+  requires a separate API/JSR compatibility review and evidence that guest
+  behavior is preserved; Compose is not prohibited when those contracts can be
+  satisfied more simply.
 - `Alert`/`Display` remain native platform-dialog boundaries for the Java ME
   `Alert` contract; their asynchronous dismissal and `Command` dispatch are
   not app-owned host UI.

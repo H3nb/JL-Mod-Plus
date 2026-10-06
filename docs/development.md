@@ -6,7 +6,11 @@ Use the Gradle wrapper from the repository root. For current build, toolchain, d
 [the version catalog](../gradle/libs.versions.toml), and
 [Android CI](../.github/workflows/android.yml).
 
-Commands, versions, workflow names, and artifact layouts below describe the current repository and may evolve. Source configuration and workflows are authoritative for those operational details; the testing and validation principles in this document define how to choose proportionate evidence when implementation changes.
+Commands, versions, workflow names, and artifact layouts below describe the
+current repository and may evolve. Source configuration and workflows are
+authoritative for those operational details; the testing and validation
+principles in this document define how to choose proportionate evidence when
+implementation changes.
 
 ## Local setup
 

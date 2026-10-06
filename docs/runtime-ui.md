@@ -4,7 +4,12 @@ The Android runtime toolbar and options menu are app-owned presentation and
 use Compose Material 3. They are separate from the Java ME LCDUI command system.
 Renderer, input, and MIDP lifecycle behavior remain compatibility-sensitive runtime concerns.
 
-This document defines observable ownership, lifecycle, input, geometry, and Java ME compatibility contracts. Class names, Android UI primitives, renderer algorithms, and host decomposition describe the current implementation unless a rule is explicitly identified as a compatibility requirement. They may be replaced by a simpler design when the same contracts are preserved and the affected boundaries are revalidated.
+This document defines observable ownership, lifecycle, input, geometry, and
+Java ME compatibility contracts. Class names, Android UI primitives, renderer
+algorithms, and host decomposition describe the current implementation unless a
+rule is explicitly identified as a compatibility requirement. They may be
+replaced by a simpler design when the same contracts are preserved and the
+affected boundaries are revalidated.
 
 ## Contract references
 
@@ -25,7 +30,11 @@ under `docs/midp-2.0/`, especially these pages:
 - `javax/microedition/lcdui/Command.html`: a `Command` carries semantic
   information while the implementation decides its device presentation.
 
-App-owned host UI must not directly invoke a MIDP `CommandListener`, synthesize guest Java ME key events, or take ownership of `Displayable` transitions. The current implementation preserves the required event ordering through the runtime/LCDUI boundary; a future implementation may change that mechanism without changing the guest-visible contract.
+App-owned host UI must not directly invoke a MIDP `CommandListener`, synthesize
+guest Java ME key events, or take ownership of `Displayable` transitions. The
+current implementation preserves the required event ordering through the
+runtime/LCDUI boundary; a future implementation may change that mechanism
+without changing the guest-visible contract.
 
 ## Preserved action contract
 
@@ -46,8 +55,15 @@ non-Canvas Displayables.
 
 ## Geometry and lifecycle safeguards
 
-- Host presentation must not silently alter guest LCD/Canvas geometry or overlay hit geometry. The current `RuntimeHostView` structure keeps `displayable_container` and `OverlayView` as direct View boundaries to preserve that contract.
-- Toolbar and menu presentation must preserve the established guest-height behavior: disabling the toolbar contributes zero host-toolbar height to the Canvas, while the enabled compact height remains current compatibility behavior until an intentional product change is separately reviewed and validated.
+- Host presentation must not silently alter guest LCD/Canvas geometry or
+  overlay hit geometry. The current `RuntimeHostView` structure keeps
+  `displayable_container` and `OverlayView` as direct View boundaries to
+  preserve that contract.
+- Toolbar and menu presentation must preserve the established guest-height
+  behavior: disabling the toolbar contributes zero host-toolbar height to the
+  Canvas, while the enabled compact height remains current compatibility
+  behavior until an intentional product change is separately reviewed and
+  validated.
 - Android Back, the toolbar overflow, and the legacy physical/menu-key paths
   all open the same modal host menu. Dialog Back dismisses that menu and
   returns focus to the MIDlet; it never exits the MIDlet. A long press from a
@@ -81,17 +97,43 @@ non-Canvas Displayables.
 
 ## Immersive background boundary
 
-Immersive background is host presentation only. It must not modify the guest framebuffer, Java ME LCD geometry, input ownership, presentation-mailbox sequence, or MIDP lifecycle. Ambient work must remain bounded and lifecycle-aware, and the derived background must remove readable guest detail rather than becoming a second legible game surface.
+Immersive background is host presentation only. It must not modify the guest
+framebuffer, Java ME LCD geometry, input ownership, presentation-mailbox
+sequence, or MIDP lifecycle. Ambient work must remain bounded and
+lifecycle-aware, and the derived background must remove readable guest detail
+rather than becoming a second legible game surface.
 
-The background should remain visually related to the current guest content around the LCD boundary without making output depend on a particular renderer backend. Transparent guest pixels use the host-theme snapshot associated with the sampled guest state. Once guest-derived ambience is active, a later theme change does not retroactively reinterpret that sample; a subsequent guest sample may naturally use the newer host theme.
+The background should remain visually related to the current guest content
+around the LCD boundary without making output depend on a particular renderer
+backend. Transparent guest pixels use the host-theme snapshot associated with
+the sampled guest state. Once guest-derived ambience is active, a later theme
+change does not retroactively reinterpret that sample; a subsequent guest sample
+may naturally use the newer host theme.
 
-Canvas and GLES should produce materially consistent ambient semantics for equivalent guest/host geometry. Sampling stops when the relevant visibility or surface boundary is inactive and resumes without manufacturing guest publications. Geometry changes rebuild the host-side representation from the current host surface and guest LCD rectangle.
+Canvas and GLES should produce materially consistent ambient semantics for
+equivalent guest/host geometry. Sampling stops when the relevant visibility or
+surface boundary is inactive and resumes without manufacturing guest
+publications. Geometry changes rebuild the host-side representation from the
+current host surface and guest LCD rectangle.
 
-The current implementation uses a reusable low-resolution linear-light source field, edge-anchored diffusion, temporal interpolation, a small raster for the software path, and an ambient mesh for GLES. Those mechanisms are implementation evidence, not permanent architecture. A simpler or more efficient algorithm may replace them when it preserves the host-only boundary, bounded cost, transparency semantics, lifecycle behavior, backend consistency, and intended visual loss of guest detail.
+The current implementation uses a reusable low-resolution linear-light source
+field, edge-anchored diffusion, temporal interpolation, a small raster for the
+software path, and an ambient mesh for GLES. Those mechanisms are implementation
+evidence, not permanent architecture. A simpler or more efficient algorithm may
+replace them when it preserves the host-only boundary, bounded cost, transparency
+semantics, lifecycle behavior, backend consistency, and intended visual loss of
+guest detail.
 
 ## Validation gates
 
-File video must remain an independent presentation layer clipped to guest LCD geometry, below host overlays, and outside Canvas key/pointer ownership. In GUI mode it remains an LCDUI Item owned by Form, including Form scrolling and command semantics. Presentation-surface lifetime changes must be coordinated with decoder teardown; hide/show and LCDUI screen changes preserve playback intent, while host/focus suspension freezes the applicable media clock. The current implementation satisfies this with a `TextureView` producer and worker-acknowledged Surface lifetime. See
+File video must remain an independent presentation layer clipped to guest LCD
+geometry, below host overlays, and outside Canvas key/pointer ownership. In GUI
+mode it remains an LCDUI Item owned by Form, including Form scrolling and
+command semantics. Presentation-surface lifetime changes must be coordinated
+with decoder teardown; hide/show and LCDUI screen changes preserve playback
+intent, while host/focus suspension freezes the applicable media clock. The
+current implementation satisfies this with a `TextureView` producer and
+worker-acknowledged Surface lifetime. See
 [file-video timing and qualification](audio-runtime.md#file-video-and-presentation-clock).
 
 - Use the relevant commands in [Build and validation](development.md).

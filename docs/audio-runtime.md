@@ -7,13 +7,25 @@ ownership, stream management, and Android focus policy live outside that core.
 
 ## Contract and implementation authority
 
-Guest-visible MMAPI/JSR semantics, focus and host-lifecycle behavior, media-time rules, supported-format claims, real-time callback safety, bounded resource/failure behavior, and stale-generation isolation are durable contracts. Class ownership, thread topology, queue/ring geometry, mixer sample rate, backend library, retry constants, and other tuning parameters describe the current implementation unless a specification or explicit project compatibility rule depends on them.
+Guest-visible MMAPI/JSR semantics, focus and host-lifecycle behavior, media-time
+rules, supported-format claims, real-time callback safety, bounded
+resource/failure behavior, and stale-generation isolation are durable contracts.
+Class ownership, thread topology, queue/ring geometry, mixer sample rate, backend
+library, retry constants, and other tuning parameters describe the current
+implementation unless a specification or explicit project compatibility rule
+depends on them.
 
-Future work may replace or tune those mechanisms when evidence shows the same contracts are preserved with lower total complexity, better correctness, or meaningful efficiency. Prefer one authoritative path for each responsibility; after compatibility is demonstrated, remove superseded implementations rather than retaining parallel fallbacks without a current requirement.
+Future work may replace or tune those mechanisms when evidence shows the same
+contracts are preserved with lower total complexity, better correctness, or
+meaningful efficiency. Prefer one authoritative path for each responsibility;
+after compatibility is demonstrated, remove superseded implementations rather
+than retaining parallel fallbacks without a current requirement.
 
 ## Ownership and playback policy
 
-The details in this section describe the current architecture used to satisfy the contracts above; they are not a requirement to preserve a particular class or native backend.
+The details in this section describe the current architecture used to satisfy
+the contracts above; they are not a requirement to preserve a particular class
+or native backend.
 
 `AudioPlayer` supplies one MMAPI contract for synthesis, sampled audio and file video. Each
 synthesis source owns its EAS context, sequencer, voices and bank collection;
@@ -144,7 +156,9 @@ Retained synthesis entry points include MIDI files, `device://midi`,
 `device://tone`, `ToneControl`, `Manager.playTone`, OTA, RTTTL, iMelody, and
 delegation from Nokia `Sound`, Samsung `AudioClip`, Motorola `MidiPlayer`,
 KDDI `MediaResource`, Sprint `Clip`, and Vodafone `Sound`. Siemens
-`com.siemens.mp.media.Manager` remains an unimplemented stub and is not advertised as supported. Additional synthesis or codec support beyond the formats documented here is not implied by this contract.
+`com.siemens.mp.media.Manager` remains an unimplemented stub and is not
+advertised as supported. Additional synthesis or codec support beyond the
+formats documented here is not implied by this contract.
 
 The built-in bank and custom SF2/DLS collections use the same context isolation.
 SF2 support is not complete. In particular, the Nokia controller modulator
