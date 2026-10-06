@@ -54,7 +54,10 @@ work. Do not perform repository-wide casing churn merely for consistency.
 ## Typography
 
 Compose surfaces use the Material 3 type scale instead of arbitrary `sp`
-values. The following mapping is the review baseline:
+values. The following mapping is the review baseline, not a freeze on component
+choices. Prefer the semantic defaults of the current Material 3 component; use a
+different role when the actual hierarchy or readability requires it rather than
+preserving a poor historical mapping for consistency.
 
 - Top app bar titles use `titleLarge` or the component default.
 - Standard setting/list headlines use `bodyLarge`; normal explanatory supporting
@@ -117,13 +120,17 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
 - Measure title, body, and actions together. Do not reserve a guessed fixed
   120–200 dp for a title/footer or subtract their space twice. Omit the footer
   entirely when a menu has no footer actions.
-- Prefer `AdaptiveAlertDialog` for short decisions and action menus. Custom
-  platform-hosted Compose dialogs use the same bounds, type scale, and theme.
-  Reuse the shared host rather than adding another dialog-size policy.
-- Keep inner padding modest and consistent: usually 20 dp horizontally and
-  16 dp vertically, with 16 dp horizontal padding in narrow custom hosts and
-  12 dp vertical padding in short windows. Use 8–12 dp between distinct groups.
-  Add larger gaps only when they clarify a real grouping, not to fill space.
+- Use `AdaptiveAlertDialog` for short decisions and action menus when it fits
+  the interaction. Custom platform-hosted Compose dialogs use the same bounds,
+  type scale, and theme. Reuse the shared host when it satisfies the requirement;
+  if a shared primitive is the source of a verified problem, fix the appropriate
+  shared boundary rather than layering a one-off dialog-size policy on top.
+- Keep inner spacing modest and consistent with the shared dialog defaults.
+  Current hosts generally use about 20 dp horizontally and 16 dp vertically,
+  with 16 dp horizontal and 12 dp vertical spacing in constrained custom hosts,
+  plus 8–12 dp between distinct groups. Treat these as implementation defaults,
+  not universal constants; change them when a concrete hierarchy or fit problem
+  justifies it rather than to fill space.
 - Give each body one scroll owner. Simple text/forms can use the shared body's
   scroll container; lazy lists and interactive content may own their scrolling
   within the measured body viewport. Avoid nested scroll containers with
