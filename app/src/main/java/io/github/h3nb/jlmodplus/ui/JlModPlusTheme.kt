@@ -23,6 +23,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -39,6 +40,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.preference.PreferenceManager
@@ -105,7 +107,7 @@ private val DarkColors = darkColorScheme(
     onBackground = Color(0xFFE7EDF0),
     surface = Color(AppBackgroundColors.argb(true)),
     onSurface = Color(0xFFE7EDF0),
-    surfaceVariant = Color(0xFF2D363D),
+    surfaceVariant = Color(0xFF323B42),
     onSurfaceVariant = Color(0xFFBBC6CD),
     surfaceTint = Color(0xFFA9C8E5),
     inverseSurface = Color(0xFFE7EDF0),
@@ -115,15 +117,15 @@ private val DarkColors = darkColorScheme(
     errorContainer = Color(0xFF93000A),
     onErrorContainer = Color(0xFFFFDAD6),
     outline = Color(0xFF89959D),
-    outlineVariant = Color(0xFF3E484F),
+    outlineVariant = Color(0xFF46525B),
     scrim = Color.Black,
     surfaceDim = Color(AppBackgroundColors.argb(true)),
-    surfaceBright = Color(0xFF252B2F),
-    surfaceContainerLowest = Color.Black,
-    surfaceContainerLow = Color(0xFF080B0D),
-    surfaceContainer = Color(0xFF0F1418),
-    surfaceContainerHigh = Color(0xFF171D21),
-    surfaceContainerHighest = Color(0xFF20272C),
+    surfaceBright = Color(0xFF353F47),
+    surfaceContainerLowest = Color(0xFF0A0D0F),
+    surfaceContainerLow = Color(0xFF1A2024),
+    surfaceContainer = Color(0xFF20272C),
+    surfaceContainerHigh = Color(0xFF283138),
+    surfaceContainerHighest = Color(0xFF323C43),
 )
 
 enum class AccentPalette(val key: String) {
@@ -288,8 +290,8 @@ private fun AccentPalette.colorScheme(dark: Boolean): androidx.compose.material3
  */
 @Composable
 internal fun jlModPlusNavigationBarItemColors() = NavigationBarItemDefaults.colors(
-    selectedIconColor = MaterialTheme.colorScheme.primary,
-    selectedTextColor = MaterialTheme.colorScheme.primary,
+    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -297,8 +299,8 @@ internal fun jlModPlusNavigationBarItemColors() = NavigationBarItemDefaults.colo
 
 @Composable
 internal fun jlModPlusNavigationRailItemColors() = NavigationRailItemDefaults.colors(
-    selectedIconColor = MaterialTheme.colorScheme.primary,
-    selectedTextColor = MaterialTheme.colorScheme.primary,
+    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -314,6 +316,30 @@ internal fun jlModPlusFilterChipColors() = FilterChipDefaults.filterChipColors(
     selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
     selectedLeadingIconColor = MaterialTheme.colorScheme.primary,
     selectedTrailingIconColor = MaterialTheme.colorScheme.primary,
+)
+
+private val MaterialTypography = Typography()
+
+/**
+ * Keep Material 3's semantic type scale and metrics while asking Android for its default
+ * platform typeface. OEM handling of user-selected system fonts remains platform-dependent.
+ */
+private val AppTypography = Typography(
+    displayLarge = MaterialTypography.displayLarge.copy(fontFamily = FontFamily.Default),
+    displayMedium = MaterialTypography.displayMedium.copy(fontFamily = FontFamily.Default),
+    displaySmall = MaterialTypography.displaySmall.copy(fontFamily = FontFamily.Default),
+    headlineLarge = MaterialTypography.headlineLarge.copy(fontFamily = FontFamily.Default),
+    headlineMedium = MaterialTypography.headlineMedium.copy(fontFamily = FontFamily.Default),
+    headlineSmall = MaterialTypography.headlineSmall.copy(fontFamily = FontFamily.Default),
+    titleLarge = MaterialTypography.titleLarge.copy(fontFamily = FontFamily.Default),
+    titleMedium = MaterialTypography.titleMedium.copy(fontFamily = FontFamily.Default),
+    titleSmall = MaterialTypography.titleSmall.copy(fontFamily = FontFamily.Default),
+    bodyLarge = MaterialTypography.bodyLarge.copy(fontFamily = FontFamily.Default),
+    bodyMedium = MaterialTypography.bodyMedium.copy(fontFamily = FontFamily.Default),
+    bodySmall = MaterialTypography.bodySmall.copy(fontFamily = FontFamily.Default),
+    labelLarge = MaterialTypography.labelLarge.copy(fontFamily = FontFamily.Default),
+    labelMedium = MaterialTypography.labelMedium.copy(fontFamily = FontFamily.Default),
+    labelSmall = MaterialTypography.labelSmall.copy(fontFamily = FontFamily.Default),
 )
 
 /** Shared shape scale keeps fields, cards, menus, and action controls visually related. */
@@ -385,6 +411,7 @@ fun JLModPlusTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = AppTypography,
         shapes = AppShapes,
         content = content,
     )

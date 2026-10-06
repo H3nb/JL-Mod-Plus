@@ -193,6 +193,8 @@
     <string name="library_filter_recently_opened">Aperte di recente</string>
     <string name="library_filter_recently_added">Aggiunte di recente</string>
     <string name="library_filter_favorites">Preferite</string>
+    <string name="library_add_to_favorites_action">Aggiungi ai preferiti</string>
+    <string name="library_remove_from_favorites_action">Rimuovi dai preferiti</string>
     <string name="library_favorite_coming_soon">Preferiti non disponibili</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Elenco</string>
@@ -221,7 +223,7 @@
     <string name="pref_apps_view">Vista Libreria</string>
     <string name="pref_audio_title">Audio</string>
     <string name="pref_category_experimental">Opzioni sperimentali/temporanee</string>
-    <string name="pref_enable_statusbar_summary">Mantiene visibile la barra di stato di sistema. Non può essere usata insieme al ritaglio del display del MIDlet.</string>
+    <string name="pref_enable_statusbar_summary">Mantiene visibile la barra di stato di sistema. L’attivazione disabilita l’area del ritaglio del display.</string>
     <string name="PREF_FONT_ANTI_ALIASING">Antialiasing</string>
     <string name="pref_graphics_software">Software</string>
     <string name="pref_language">Lingua</string>
@@ -434,6 +436,8 @@
     <string name="library_description_less">Meno</string>
     <string name="memory_editor_bubble">Pulsante mobile Editor memoria</string>
     <string name="memory_editor_bubble_content_description">Pulsante mobile dell’Editor memoria</string>
+    <string name="memory_editor_previous_results_page_action">Pagina dei risultati precedente</string>
+    <string name="memory_editor_next_results_page_action">Pagina dei risultati successiva</string>
     <string name="memory_editor">Editor memoria</string>
     <string name="memory_editor_search_hint">Valore</string>
     <string name="memory_editor_next_scan">Ricerca successiva</string>
@@ -742,8 +746,8 @@
     <string name="config_help_key_layout">Sceglie il layout dei codici tasto usato dal MIDlet.</string>
     <string name="config_help_key_mapping">Mappa tasti e pulsanti Android alle azioni del tastierino J2ME.</string>
     <string name="config_help_vk_button_shape">Imposta la forma dei pulsanti dei controlli virtuali.</string>
-    <string name="config_help_vk_feedback">Vibra quando viene premuto un pulsante dei controlli virtuali.</string>
-    <string name="config_help_vk_alpha">Imposta l’opacità dei controlli virtuali.</string>
+    <string name="config_help_vk_feedback">Vibra alla pressione dei controlli virtuali quando la vibrazione è attivata nelle Impostazioni.</string>
+    <string name="config_help_vk_alpha">Imposta l’opacità dei controlli: 0 = completamente trasparenti; 255 = completamente opachi.</string>
     <string name="config_help_vk_force_opacity">Rende opachi i controlli fuori dallo schermo del MIDlet. I controlli sopra lo schermo usano l’opacità configurata.</string>
     <string name="config_help_vk_hide_delay">Nasconde i controlli dopo questo ritardo quando coprono lo schermo del MIDlet. Imposta 0 per disattivare il nascondimento automatico.</string>
     <string name="config_help_vk_foreground">Imposta il colore di etichette e simboli sui pulsanti dei controlli virtuali.</string>
@@ -888,8 +892,7 @@
     <string name="settings_section_profiles">Profili</string>
     <string name="settings_profiles_summary">Gestisci profili riutilizzabili tra più MIDlet.</string>
     <string name="pref_use_display_cutout_title">Usa ritaglio display nel MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Consente ai contenuti Canvas compatibili del MIDlet e alla barra runtime di usare l’area del ritaglio del display. Non può essere usato insieme alla barra di stato di sistema.</string>
-    <string name="dialog_scroll_hint">Scorri per continuare</string>
+    <string name="pref_use_display_cutout_summary">Consente ai contenuti Canvas compatibili del MIDlet e alla barra runtime di usare l’area del ritaglio del display. Se attivato, nasconde la barra di stato di sistema.</string>
     <string name="pref_accent_title">Colore accento</string>
     <string name="pref_accent_blue">Blu predefinito</string>
     <string name="pref_accent_teal">Verde acqua</string>
@@ -902,7 +905,7 @@
     <string name="pref_accent_orange">Arancione</string>
     <string name="pref_accent_pink">Rosa</string>
     <string name="runtime_invalid_intent">Richiesta di avvio non valida: manca il percorso del MIDlet.</string>
-    <string name="runtime_storage_in_use">L’archiviazione del MIDlet è già in uso.</string>
+    <string name="runtime_storage_in_use">L’archiviazione del MIDlet è già in uso da un altro runtime.</string>
     <string name="runtime_installation_changed">Non è stato possibile preparare l’installazione del MIDlet per l’avvio.</string>
     <string name="runtime_storage_unavailable">Impossibile riservare l’archiviazione del MIDlet.</string>
     <string name="runtime_no_midlets">Nessun MIDlet trovato in questa applicazione.</string>

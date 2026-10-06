@@ -196,6 +196,8 @@
     <string name="library_filter_recently_opened">Recent geopend</string>
     <string name="library_filter_recently_added">Recent toegevoegd</string>
     <string name="library_filter_favorites">Favorieten</string>
+    <string name="library_add_to_favorites_action">Toevoegen aan favorieten</string>
+    <string name="library_remove_from_favorites_action">Verwijderen uit favorieten</string>
     <string name="library_favorite_coming_soon">Favorieten niet beschikbaar</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Lijst</string>
@@ -224,7 +226,7 @@
     <string name="pref_apps_view">Bibliotheekweergave</string>
     <string name="pref_audio_title">Audio</string>
     <string name="pref_category_experimental">Experimentele/tijdelijke opties</string>
-    <string name="pref_enable_statusbar_summary">Houd de systeemstatusbalk zichtbaar. Deze kan niet tegelijk met de schermuitsparing van de MIDlet worden gebruikt.</string>
+    <string name="pref_enable_statusbar_summary">Houd de systeemstatusbalk zichtbaar. Als dit is ingeschakeld, wordt het gebied van de schermuitsparing uitgeschakeld.</string>
     <string name="PREF_FILTER">Afbeeldingsfilter</string>
     <string name="PREF_FONT_MEDIUM">Gemiddeld</string>
     <string name="pref_graphics_software">Software</string>
@@ -447,6 +449,8 @@
     <string name="library_description_less">Minder</string>
     <string name="memory_editor_bubble">Zwevende knop Memory Editor</string>
     <string name="memory_editor_bubble_content_description">Zwevende knop voor Memory Editor</string>
+    <string name="memory_editor_previous_results_page_action">Vorige resultatenpagina</string>
+    <string name="memory_editor_next_results_page_action">Volgende resultatenpagina</string>
     <string name="memory_editor">Memory Editor</string>
     <string name="memory_editor_search_hint">Waarde</string>
     <string name="memory_editor_next_scan">Volgende scan</string>
@@ -735,8 +739,8 @@
     <string name="config_help_key_layout">Kiest de toetscode-indeling die door de MIDlet wordt gebruikt.</string>
     <string name="config_help_key_mapping">Wijst Android-toetsen en -knoppen toe aan J2ME-toetsenblokacties.</string>
     <string name="config_help_vk_button_shape">Stelt de vorm van knoppen voor virtuele bediening in.</string>
-    <string name="config_help_vk_feedback">Trilt wanneer een knop van de virtuele bediening wordt ingedrukt.</string>
-    <string name="config_help_vk_alpha">Stelt de dekking van de virtuele bediening in.</string>
+    <string name="config_help_vk_feedback">Trilt bij het indrukken van virtuele bedieningselementen wanneer trillen is ingeschakeld in Instellingen.</string>
+    <string name="config_help_vk_alpha">Stelt de dekking van de bedieningselementen in: 0 = volledig transparant; 255 = volledig ondoorzichtig.</string>
     <string name="config_help_vk_force_opacity">Maakt bediening buiten het MIDlet-scherm ondoorzichtig. Bediening boven het scherm gebruikt de ingestelde dekking.</string>
     <string name="config_help_vk_hide_delay">Verbergt bediening na deze vertraging wanneer deze het MIDlet-scherm bedekt. Stel in op 0 om automatisch verbergen uit te schakelen.</string>
     <string name="config_help_vk_foreground">Stelt de kleur van labels en symbolen op knoppen van virtuele bediening in.</string>
@@ -881,8 +885,7 @@
     <string name="settings_section_profiles">Profielen</string>
     <string name="settings_profiles_summary">Beheer profielen die je voor meerdere MIDlet-apps kunt hergebruiken.</string>
     <string name="pref_use_display_cutout_title">Schermuitsparing gebruiken in MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Sta compatibele MIDlet Canvas-inhoud en de runtimewerkbalk toe het gebied van de schermuitsparing te gebruiken. Dit kan niet tegelijk met de systeemstatusbalk worden gebruikt.</string>
-    <string name="dialog_scroll_hint">Veeg om door te gaan</string>
+    <string name="pref_use_display_cutout_summary">Sta compatibele MIDlet Canvas-inhoud en de runtimewerkbalk toe het gebied van de schermuitsparing te gebruiken. Als dit is ingeschakeld, wordt de systeemstatusbalk verborgen.</string>
     <string name="pref_accent_title">Accentkleur</string>
     <string name="pref_accent_blue">Standaardblauw</string>
     <string name="pref_accent_teal">Blauwgroen</string>
@@ -895,7 +898,7 @@
     <string name="pref_accent_orange">Oranje</string>
     <string name="pref_accent_pink">Roze</string>
     <string name="runtime_invalid_intent">Ongeldig startverzoek: het MIDlet-pad ontbreekt.</string>
-    <string name="runtime_storage_in_use">MIDlet-opslag is al in gebruik.</string>
+    <string name="runtime_storage_in_use">MIDlet-opslag is al in gebruik door een andere runtime.</string>
     <string name="runtime_installation_changed">De MIDlet-installatie kon niet worden voorbereid voor starten.</string>
     <string name="runtime_storage_unavailable">MIDlet-opslag kon niet worden gereserveerd.</string>
     <string name="runtime_no_midlets">Er zijn geen MIDlet-apps gevonden in deze applicatie.</string>

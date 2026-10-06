@@ -14,6 +14,7 @@
 
 package io.github.h3nb.jlmodplus.settings
 
+import io.github.h3nb.jlmodplus.R
 import android.content.SharedPreferences
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
@@ -68,7 +69,7 @@ class SettingsActivityComposeSmokeTest {
         composeRule.onNodeWithText("Settings").assertIsDisplayed()
         composeRule.onNodeWithText("Theme").assertIsDisplayed()
         composeRule.onNode(hasScrollAction()).performScrollToIndex(3)
-        composeRule.onNodeWithText("Working Directory").assertIsDisplayed()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.pref_emulator_dir)).assertIsDisplayed()
     }
 
     @Test
@@ -78,7 +79,7 @@ class SettingsActivityComposeSmokeTest {
             composeRule.activity.recreate()
         }
         composeRule.waitForIdle()
-        composeRule.onNode(hasText("Keep Screen On") and hasClickAction())
+        composeRule.onNode(hasText(composeRule.activity.getString(R.string.pref_wakelock_title)) and hasClickAction())
             .performScrollTo()
             .performClick()
         assertTrue(preferences.getBoolean("pref_wakelock_switch", false))

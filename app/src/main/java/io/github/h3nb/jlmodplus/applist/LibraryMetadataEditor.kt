@@ -51,7 +51,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -220,7 +219,6 @@ private fun LibraryMetadataIconPanel(
         Text(
             text = stringResource(R.string.library_metadata_icon),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             TextButton(onClick = onPickIcon) {

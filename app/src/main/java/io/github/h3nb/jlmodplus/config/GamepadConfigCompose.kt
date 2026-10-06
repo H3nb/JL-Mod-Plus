@@ -122,7 +122,6 @@ internal fun GamepadHelpDialog(onDismiss: () -> Unit) {
         title = {
             Text(
                 androidx.compose.ui.res.stringResource(R.string.config_gamepad_mapping_help_title),
-                style = MaterialTheme.typography.titleLarge,
             )
         },
         text = {
@@ -150,7 +149,6 @@ internal fun GamepadDiagnosisDialog(
         title = {
             Text(
                 androidx.compose.ui.res.stringResource(R.string.config_gamepad_test),
-                style = MaterialTheme.typography.titleLarge,
             )
         },
         text = {
@@ -185,7 +183,6 @@ internal fun GamepadCalibrationDialog(
         title = {
             Text(
                 androidx.compose.ui.res.stringResource(R.string.config_gamepad_calibrate),
-                style = MaterialTheme.typography.titleLarge,
             )
         },
         text = {

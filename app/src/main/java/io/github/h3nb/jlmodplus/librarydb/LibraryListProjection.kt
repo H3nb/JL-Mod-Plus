@@ -86,8 +86,17 @@ object LibraryListProjection {
         val descending = sortVariant < 0
         val primaryComparator = when (sortIndex) {
             SORT_DATE -> Comparator<LibraryAppRow> { left, right ->
-                val primary = left.id.compareTo(right.id)
-                if (descending) -primary else primary
+                val leftAddedAt = left.addedAt
+                val rightAddedAt = right.addedAt
+                when {
+                    leftAddedAt == null && rightAddedAt == null -> left.id.compareTo(right.id)
+                    leftAddedAt == null -> 1
+                    rightAddedAt == null -> -1
+                    else -> {
+                        val primary = leftAddedAt.compareTo(rightAddedAt)
+                        if (descending) -primary else primary
+                    }
+                }
             }
             SORT_VENDOR -> Comparator { left, right ->
                 val primary = collator.compare(left.vendor, right.vendor)

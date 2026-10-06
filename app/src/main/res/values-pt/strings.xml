@@ -202,6 +202,8 @@
     <string name="library_filter_recently_opened">Abertas recentemente</string>
     <string name="library_filter_recently_added">Adicionadas recentemente</string>
     <string name="library_filter_favorites">Favoritas</string>
+    <string name="library_add_to_favorites_action">Adicionar aos favoritos</string>
+    <string name="library_remove_from_favorites_action">Remover dos favoritos</string>
     <string name="library_favorite_coming_soon">Favoritos indisponíveis</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Lista</string>
@@ -231,7 +233,7 @@
     <string name="pref_audio_title">Áudio</string>
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_category_experimental">Opções experimentais/temporárias</string>
-    <string name="pref_enable_statusbar_summary">Manter a barra de estado do sistema visível. Não pode ser usada com o recorte do ecrã do MIDlet.</string>
+    <string name="pref_enable_statusbar_summary">Manter a barra de estado do sistema visível. Ao ativá-la, a área do recorte do ecrã é desativada.</string>
     <string name="PREF_FONT_ANTI_ALIASING">Antialiasing</string>
     <string name="pref_graphics_software">Software</string>
     <string name="pref_language">Idioma</string>
@@ -434,6 +436,8 @@
     <string name="library_description_less">Menos</string>
     <string name="memory_editor_bubble">Botão flutuante do Editor de memória</string>
     <string name="memory_editor_bubble_content_description">Botão flutuante do Editor de memória</string>
+    <string name="memory_editor_previous_results_page_action">Página de resultados anterior</string>
+    <string name="memory_editor_next_results_page_action">Página de resultados seguinte</string>
     <string name="memory_editor">Editor de memória</string>
     <string name="memory_editor_search_hint">Valor</string>
     <string name="memory_editor_next_scan">Pesquisa seguinte</string>
@@ -742,8 +746,8 @@
     <string name="config_help_key_layout">Escolhe o esquema de códigos de tecla usado pelo MIDlet.</string>
     <string name="config_help_key_mapping">Mapeia teclas e botões Android para ações do teclado J2ME.</string>
     <string name="config_help_vk_button_shape">Define a forma dos botões dos controlos virtuais.</string>
-    <string name="config_help_vk_feedback">Vibra quando é premido um botão dos controlos virtuais.</string>
-    <string name="config_help_vk_alpha">Define a opacidade dos controlos virtuais.</string>
+    <string name="config_help_vk_feedback">Vibra ao premir os controlos virtuais quando a vibração está ativada nas Definições.</string>
+    <string name="config_help_vk_alpha">Define a opacidade dos controlos: 0 = totalmente transparentes; 255 = totalmente opacos.</string>
     <string name="config_help_vk_force_opacity">Torna opacos os controlos fora do ecrã do MIDlet. Os controlos sobre o ecrã usam a opacidade configurada.</string>
     <string name="config_help_vk_hide_delay">Oculta os controlos após este atraso quando cobrem o ecrã do MIDlet. Defina 0 para desativar a ocultação automática.</string>
     <string name="config_help_vk_foreground">Define a cor dos rótulos e símbolos nos botões dos controlos virtuais.</string>
@@ -888,8 +892,7 @@
     <string name="settings_section_profiles">Perfis</string>
     <string name="settings_profiles_summary">Gerir perfis que pode reutilizar entre MIDlets.</string>
     <string name="pref_use_display_cutout_title">Usar recorte do ecrã no MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Permite que o conteúdo Canvas compatível do MIDlet e a barra de execução usem a área do recorte do ecrã. Não pode ser usado com a barra de estado do sistema.</string>
-    <string name="dialog_scroll_hint">Deslize para continuar</string>
+    <string name="pref_use_display_cutout_summary">Permite que o conteúdo Canvas compatível do MIDlet e a barra de execução usem a área do recorte do ecrã. Ao ativá-lo, a barra de estado do sistema é ocultada.</string>
     <string name="pref_accent_title">Cor de destaque</string>
     <string name="pref_accent_blue">Azul predefinido</string>
     <string name="pref_accent_teal">Azul-petróleo</string>
@@ -902,7 +905,7 @@
     <string name="pref_accent_orange">Laranja</string>
     <string name="pref_accent_pink">Rosa</string>
     <string name="runtime_invalid_intent">Pedido de arranque inválido: falta o caminho do MIDlet.</string>
-    <string name="runtime_storage_in_use">O armazenamento do MIDlet já está em uso.</string>
+    <string name="runtime_storage_in_use">O armazenamento do MIDlet já está em uso por outro runtime.</string>
     <string name="runtime_installation_changed">Não foi possível preparar a instalação do MIDlet para o arranque.</string>
     <string name="runtime_storage_unavailable">Não foi possível reservar armazenamento do MIDlet.</string>
     <string name="runtime_no_midlets">Não foram encontrados MIDlets nesta aplicação.</string>

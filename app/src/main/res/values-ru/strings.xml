@@ -268,7 +268,7 @@
     <string name="library_selection_select_all">Выбрать все</string>
     <string name="library_selection_unselect_all">Снять выделение со всех</string>
     <string name="pref_use_display_cutout_title">Использовать вырез дисплея для MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Разрешить совместимому содержимому Canvas MIDlet и панели инструментов среды выполнения использовать область выреза дисплея. Этот режим несовместим с системной строкой состояния.</string>
+    <string name="pref_use_display_cutout_summary">Разрешить совместимому содержимому Canvas MIDlet и панели инструментов среды выполнения использовать область выреза дисплея. При включении системная строка состояния скрывается.</string>
     <string name="runtime_installation_changed">Не удалось подготовить установленный MIDlet к запуску.</string>
     <string name="library_bulk_add_collection">Добавить в коллекцию</string>
     <string name="library_collections_unavailable_title">Коллекции недоступны</string>
@@ -403,11 +403,13 @@
     <string name="library_search_placeholder">Поиск приложений или разработчиков…</string>
     <string name="library_filter_all">Все</string>
     <string name="library_filter_favorites">Избранное</string>
+    <string name="library_add_to_favorites_action">Добавить в избранное</string>
+    <string name="library_remove_from_favorites_action">Удалить из избранного</string>
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_collections_empty_title">Коллекций пока нет</string>
     <string name="pref_app_sort_ascending">По возрастанию</string>
     <string name="pref_app_sort_descending">По убыванию</string>
-    <string name="pref_enable_statusbar_summary">Оставлять системную строку состояния видимой. Её нельзя использовать вместе с областью выреза дисплея MIDlet.</string>
+    <string name="pref_enable_statusbar_summary">Оставлять системную строку состояния видимой. При включении область выреза дисплея отключается.</string>
     <string name="pref_language">Язык</string>
     <string name="pref_skip_resume_call">Пропускать обратный вызов возобновления MIDlet</string>
     <string name="pref_soundbank_title">Банк звуков MIDI</string>
@@ -579,6 +581,8 @@
     <string name="library_description_less">Свернуть</string>
     <string name="memory_editor_bubble">Плавающая кнопка редактора памяти</string>
     <string name="memory_editor_bubble_content_description">Плавающая кнопка редактора памяти</string>
+    <string name="memory_editor_previous_results_page_action">Предыдущая страница результатов</string>
+    <string name="memory_editor_next_results_page_action">Следующая страница результатов</string>
     <string name="memory_editor">Редактор памяти</string>
     <string name="memory_editor_search_hint">Значение</string>
     <plurals name="memory_editor_results">
@@ -869,8 +873,8 @@
     <string name="config_help_key_layout">Выбирает раскладку кодов клавиш, используемую MIDlet.</string>
     <string name="config_help_key_mapping">Сопоставляет клавиши и кнопки Android с действиями клавиатуры J2ME.</string>
     <string name="config_help_vk_button_shape">Задаёт форму кнопок виртуальных элементов управления.</string>
-    <string name="config_help_vk_feedback">Вибрирует при нажатии кнопки виртуального управления.</string>
-    <string name="config_help_vk_alpha">Задаёт непрозрачность виртуальных элементов управления.</string>
+    <string name="config_help_vk_feedback">Вибрирует при нажатии виртуальных элементов управления, если вибрация включена в настройках.</string>
+    <string name="config_help_vk_alpha">Задаёт непрозрачность элементов управления: 0 = полностью прозрачные; 255 = полностью непрозрачные.</string>
     <string name="config_help_vk_hide_delay">Скрывает элементы управления после этой задержки, когда они перекрывают экран MIDlet. Установите 0, чтобы отключить автоскрытие.</string>
     <string name="config_help_vk_foreground">Задаёт цвет подписей и символов на кнопках виртуального управления.</string>
     <string name="config_help_vk_background">Задаёт основной цвет кнопок виртуального управления.</string>
@@ -1003,7 +1007,6 @@
     <string name="settings_section_storage">Хранилище</string>
     <string name="settings_section_profiles">Профили</string>
     <string name="settings_profiles_summary">Управляйте профилями, которые можно повторно использовать для разных MIDlet.</string>
-    <string name="dialog_scroll_hint">Проведите, чтобы продолжить</string>
     <string name="pref_accent_title">Акцентный цвет</string>
     <string name="pref_accent_blue">Синий по умолчанию</string>
     <string name="pref_accent_teal">Бирюзовый</string>
@@ -1016,7 +1019,7 @@
     <string name="pref_accent_orange">Оранжевый</string>
     <string name="pref_accent_pink">Розовый</string>
     <string name="runtime_invalid_intent">Недопустимый запрос запуска: путь к MIDlet отсутствует.</string>
-    <string name="runtime_storage_in_use">Хранилище MIDlet уже используется.</string>
+    <string name="runtime_storage_in_use">Хранилище MIDlet уже используется другой средой выполнения.</string>
     <string name="runtime_storage_unavailable">Не удалось зарезервировать хранилище MIDlet.</string>
     <string name="runtime_no_midlets">В этом приложении не найдено MIDlet.</string>
     <string name="library_selection_checkbox_description">Выбрать %1$s</string>

@@ -246,6 +246,12 @@ public abstract class Canvas extends Displayable {
 		}
 		displayWidth = ContextHolder.getDisplayWidth();
 		displayHeight = ContextHolder.getDisplayHeight();
+		// ExtendedImage can pace before surfaceCreated(), so seed Maximum from the host display.
+		android.view.WindowManager windowManager = (android.view.WindowManager)
+				ContextHolder.getAppContext().getSystemService(android.content.Context.WINDOW_SERVICE);
+		if (windowManager != null) {
+			refreshDisplayMaximumFps(windowManager.getDefaultDisplay());
+		}
 		ensureAmbientState();
 		updateSize();
 	}
@@ -1233,9 +1239,11 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void refreshDisplayMaximumFps(@NonNull SurfaceView view) {
-		android.view.Display display = view.getDisplay();
+		refreshDisplayMaximumFps(view.getDisplay());
+	}
+
+	private void refreshDisplayMaximumFps(android.view.Display display) {
 		if (display == null) {
-			displayMaximumFps = displayMaximumFps > 0 ? displayMaximumFps : 1;
 			return;
 		}
 
@@ -1244,8 +1252,10 @@ public abstract class Canvas extends Displayable {
 		for (int i = 0; i < modeRates.length; i++) {
 			modeRates[i] = modes[i] == null ? Float.NaN : modes[i].getRefreshRate();
 		}
+		int fallbackFps = displayMaximumFps > 0
+				? displayMaximumFps : Math.max(1, Math.round(display.getRefreshRate()));
 		displayMaximumFps = resolveMaximumDisplayFps(
-				display.getSupportedRefreshRates(), modeRates, displayMaximumFps);
+				display.getSupportedRefreshRates(), modeRates, fallbackFps);
 	}
 
 	private void publishFrameLocked() {

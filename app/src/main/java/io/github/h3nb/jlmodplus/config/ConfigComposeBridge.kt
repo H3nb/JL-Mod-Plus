@@ -17,7 +17,6 @@ package io.github.h3nb.jlmodplus.config
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -45,6 +44,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -74,7 +75,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -93,10 +93,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size as ComposeSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
@@ -109,7 +105,6 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -1155,7 +1150,7 @@ internal fun ScreenPresetDialog(
             ) {
                 Text(
                     text = stringResource(R.string.config_select_screen_size),
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 )
                 Box(
@@ -1959,7 +1954,7 @@ private fun CompactTextField(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 36.dp)
+            .heightIn(min = 48.dp)
             .clickable { dialogVisible = true },
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.Center,
@@ -2060,7 +2055,7 @@ private fun SliderField(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 36.dp)
+            .heightIn(min = 48.dp)
             .clickable { dialogVisible = true },
         contentAlignment = Alignment.CenterEnd,
     ) {
@@ -2122,53 +2117,7 @@ internal fun ConfigSliderDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 48.dp),
-                    colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.primary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                        inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
-                    ),
-                    track = { sliderState ->
-                        val primary = MaterialTheme.colorScheme.primary
-                        val inactive = primary.copy(alpha = 0.28f)
-                        Canvas(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(6.dp),
-                        ) {
-                            val range = valueRange.last - valueRange.first
-                            val fraction = if (range <= 0) {
-                                0f
-                            } else {
-                                ((sliderState.value - valueRange.first.toFloat()) / range.toFloat())
-                                    .coerceIn(0f, 1f)
-                            }
-                            val radius = size.height / 2f
-                            drawRoundRect(
-                                color = inactive,
-                                topLeft = Offset.Zero,
-                                size = size,
-                                cornerRadius = CornerRadius(radius, radius),
-                            )
-                            val activeWidth = size.width * fraction
-                            if (activeWidth > 0f) {
-                                drawRoundRect(
-                                    color = primary,
-                                    topLeft = Offset.Zero,
-                                    size = ComposeSize(activeWidth, size.height),
-                                    cornerRadius = CornerRadius(radius, radius),
-                                )
-                            }
-                        }
-                    },
-                    thumb = {
-                        // Keep the target easy to drag without adding endpoint icons.
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .shadow(2.dp, CircleShape)
-                                .background(MaterialTheme.colorScheme.primary, CircleShape),
-                        )
-                    },
+
                 )
                 OutlinedTextField(
                     value = draftText,
@@ -2221,7 +2170,7 @@ private fun ChoiceField(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 36.dp)
+            .heightIn(min = 48.dp)
             .clickable(enabled = enabled) { dialogVisible = true },
         contentAlignment = Alignment.CenterEnd,
     ) {
@@ -2278,7 +2227,9 @@ internal fun ConfigChoiceDialog(
                         .heightIn(max = maxListHeight),
                 ) {
                     LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectableGroup(),
                         state = listState,
                     ) {
                         itemsIndexed(options) { index, option ->
@@ -2299,7 +2250,8 @@ internal fun ConfigChoiceDialog(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable(
+                                    .selectable(
+                                        selected = option == selected,
                                         role = Role.RadioButton,
                                         onClick = { onSelected(index) },
                                     ),

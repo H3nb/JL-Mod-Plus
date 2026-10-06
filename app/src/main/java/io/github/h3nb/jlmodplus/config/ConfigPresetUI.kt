@@ -15,21 +15,18 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
@@ -42,12 +39,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
@@ -81,32 +81,37 @@ internal fun PresetSummary(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(vertical = 14.dp),
         ) {
-            Text(
-                text = presetStatusTitle(state.profileStatus),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            provenanceSummary(state.profileStatus)?.let { provenance -> Text(
-                text = provenance,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            ) }
-            Text(
-                text = setupSummary(state.form),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            PresetActionButtons(
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = presetStatusTitle(state.profileStatus),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                provenanceSummary(state.profileStatus)?.let { provenance ->
+                    Text(
+                        text = provenance,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Text(
+                    text = setupSummary(state.form),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            PresetActionRows(
                 onUsePreset = onUsePreset,
                 onSavePreset = onSavePreset,
                 updatePresetName = state.updatePresetName,
@@ -126,76 +131,93 @@ internal fun PresetSummary(
 }
 
 @Composable
-private fun PresetActionButtons(
+private fun PresetActionRows(
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
     updatePresetName: String?,
     onUpdatePreset: (String) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            val compactActions = maxWidth < 440.dp
-            if (compactActions) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PresetPrimaryButton(onUsePreset, Modifier.fillMaxWidth())
-                    PresetSecondaryButton(onSavePreset, Modifier.fillMaxWidth())
-                }
-            } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    PresetPrimaryButton(onUsePreset, Modifier.weight(1f))
-                    PresetSecondaryButton(onSavePreset, Modifier.weight(1f))
-                }
-            }
-        }
-        updatePresetName?.let { name ->
-            OutlinedButton(
-                onClick = { onUpdatePreset(name) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .testTag("preset_update_action"),
-            ) {
-                PresetActionLabel(R.string.preset_update, name)
-            }
-        }
-    }
-}
-
-@Composable
-private fun PresetPrimaryButton(onClick: () -> Unit, modifier: Modifier) {
-    Button(
-        onClick = onClick,
-        modifier = modifier.heightIn(min = 52.dp),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-        ),
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
     ) {
-        PresetActionLabel(R.string.preset_use)
+        PresetActionRow(
+            label = stringResource(R.string.preset_use),
+            icon = R.drawable.ic_profile_use,
+            emphasized = true,
+            onClick = onUsePreset,
+        )
+        PresetActionRow(
+            label = stringResource(R.string.preset_save_as),
+            icon = R.drawable.ic_profile_save_as,
+            onClick = onSavePreset,
+        )
+        updatePresetName?.let { name ->
+            PresetActionRow(
+                label = stringResource(R.string.preset_update_confirm),
+                icon = R.drawable.ic_profile_update,
+                contentDescription = stringResource(R.string.preset_update, name),
+                modifier = Modifier.testTag("preset_update_action"),
+                onClick = { onUpdatePreset(name) },
+            )
+        }
     }
 }
 
 @Composable
-private fun PresetSecondaryButton(onClick: () -> Unit, modifier: Modifier) {
-    OutlinedButton(
+private fun PresetActionRow(
+    label: String,
+    icon: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    emphasized: Boolean = false,
+    contentDescription: String? = null,
+) {
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                if (contentDescription != null) {
+                    this.contentDescription = contentDescription
+                }
+            },
         onClick = onClick,
-        modifier = modifier.heightIn(min = 52.dp),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-    ) { PresetActionLabel(R.string.preset_save_as) }
+        shape = MaterialTheme.shapes.medium,
+        color = Color.Transparent,
+        contentColor = colors.onSurface,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = if (emphasized) colors.primary else colors.onSurfaceVariant,
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+            )
+            Icon(
+                painter = painterResource(R.drawable.ic_chevron_right),
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = colors.onSurfaceVariant,
+            )
+        }
+    }
 }
 
-@Composable
-private fun PresetActionLabel(label: Int, vararg formatArgs: Any) {
-    Text(
-        text = stringResource(label, *formatArgs),
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.SemiBold,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis,
-        textAlign = TextAlign.Center,
-    )
-}
 
 @Composable
 internal fun PresetDialogs(

@@ -15,6 +15,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -52,7 +54,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,7 +62,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
@@ -91,6 +94,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
@@ -109,7 +114,6 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
-import io.github.h3nb.jlmodplus.ui.jlModPlusFilterChipColors
 import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -329,54 +333,83 @@ private fun RuntimeMemoryTabRail(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+        modifier = modifier
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+            .selectableGroup(),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        FilterChip(
+        RuntimeMemoryRailTab(
             selected = tab == RuntimeMemoryTab.SEARCH_RESULTS,
             onClick = { onTab(RuntimeMemoryTab.SEARCH_RESULTS) },
-            colors = jlModPlusFilterChipColors(),
-            leadingIcon = { Icon(painterResource(R.drawable.ic_memory_editor_search), null) },
-            label = {
-                Text(
-                    if (results > 0L) "${stringResource(R.string.memory_editor_search_tab)} · ${compactCount(results)}"
-                    else stringResource(R.string.memory_editor_search_tab),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            icon = R.drawable.ic_memory_editor_search,
+            label = if (results > 0L) {
+                "${stringResource(R.string.memory_editor_search_tab)} · ${compactCount(results)}"
+            } else {
+                stringResource(R.string.memory_editor_search_tab)
             },
-            modifier = Modifier.fillMaxWidth(),
         )
-        FilterChip(
+        RuntimeMemoryRailTab(
             selected = tab == RuntimeMemoryTab.WATCH,
             onClick = { onTab(RuntimeMemoryTab.WATCH) },
-            colors = jlModPlusFilterChipColors(),
-            leadingIcon = { Icon(painterResource(R.drawable.ic_memory_editor_watch), null) },
-            label = {
-                Text(
-                    if (watches > 0) "${stringResource(R.string.memory_editor_watch)} · $watches"
-                    else stringResource(R.string.memory_editor_watch),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            icon = R.drawable.ic_memory_editor_watch,
+            label = if (watches > 0) {
+                "${stringResource(R.string.memory_editor_watch)} · $watches"
+            } else {
+                stringResource(R.string.memory_editor_watch)
             },
-            modifier = Modifier.fillMaxWidth(),
         )
-        FilterChip(
+        RuntimeMemoryRailTab(
             selected = tab == RuntimeMemoryTab.INSPECTOR,
             onClick = { onTab(RuntimeMemoryTab.INSPECTOR) },
+            icon = R.drawable.ic_memory_editor_inspector,
+            label = stringResource(R.string.memory_editor_inspector),
             enabled = inspectorEnabled,
-            colors = jlModPlusFilterChipColors(),
-            leadingIcon = { Icon(painterResource(R.drawable.ic_memory_editor_inspector), null) },
-            label = {
-                Text(
-                    stringResource(R.string.memory_editor_inspector),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+@Composable
+private fun RuntimeMemoryRailTab(
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: Int,
+    label: String,
+    enabled: Boolean = true,
+) {
+    val contentColor = when {
+        !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+        selected -> MaterialTheme.colorScheme.onPrimaryContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+        contentColor = contentColor,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .selectable(
+                    selected = selected,
+                    enabled = enabled,
+                    role = Role.Tab,
+                    onClick = onClick,
+                )
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+            )
+            Text(
+                text = label,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
@@ -391,7 +424,6 @@ private fun RuntimeMemoryHeader(
         Text(
             stringResource(R.string.memory_editor),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.weight(1f),
         )
         IconButton(onClick = actions::close) {
@@ -411,18 +443,15 @@ private fun RuntimeMemoryTabs(
     inspectorEnabled: Boolean,
     onTab: (RuntimeMemoryTab) -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    SecondaryTabRow(
+        selectedTabIndex = tab.ordinal,
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = Color.Transparent,
     ) {
-        FilterChip(
+        Tab(
             selected = tab == RuntimeMemoryTab.SEARCH_RESULTS,
             onClick = { onTab(RuntimeMemoryTab.SEARCH_RESULTS) },
-            colors = jlModPlusFilterChipColors(),
-            leadingIcon = {
-                Icon(painterResource(R.drawable.ic_memory_editor_search), contentDescription = null)
-            },
-            label = {
+            text = {
                 Text(
                     if (results > 0L) {
                         "${stringResource(R.string.memory_editor_search_tab)} · ${compactCount(results)}"
@@ -433,16 +462,14 @@ private fun RuntimeMemoryTabs(
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+            icon = {
+                Icon(painterResource(R.drawable.ic_memory_editor_search), contentDescription = null)
+            },
         )
-        FilterChip(
+        Tab(
             selected = tab == RuntimeMemoryTab.WATCH,
             onClick = { onTab(RuntimeMemoryTab.WATCH) },
-            colors = jlModPlusFilterChipColors(),
-            leadingIcon = {
-                Icon(painterResource(R.drawable.ic_memory_editor_watch), contentDescription = null)
-            },
-            label = {
+            text = {
                 Text(
                     if (watches > 0) "${stringResource(R.string.memory_editor_watch)} · $watches"
                     else stringResource(R.string.memory_editor_watch),
@@ -450,24 +477,24 @@ private fun RuntimeMemoryTabs(
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+            icon = {
+                Icon(painterResource(R.drawable.ic_memory_editor_watch), contentDescription = null)
+            },
         )
-        FilterChip(
+        Tab(
             selected = tab == RuntimeMemoryTab.INSPECTOR,
             onClick = { onTab(RuntimeMemoryTab.INSPECTOR) },
             enabled = inspectorEnabled,
-            colors = jlModPlusFilterChipColors(),
-            leadingIcon = {
-                Icon(painterResource(R.drawable.ic_memory_editor_inspector), contentDescription = null)
-            },
-            label = {
+            text = {
                 Text(
                     stringResource(R.string.memory_editor_inspector),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+            icon = {
+                Icon(painterResource(R.drawable.ic_memory_editor_inspector), contentDescription = null)
+            },
         )
     }
 }
@@ -1171,7 +1198,7 @@ internal fun RuntimeKnownSearchDialog(
                             modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
                         )
                         RuntimeSearchField(
-                            label = stringResource(R.string.memory_editor_search_hint),
+                            label = stringResource(memorySearchFieldLabel(effectivePredicate, second = false)),
                             value = query,
                             active = activeField == RuntimeInputField.FIRST,
                             onClick = { activeField = RuntimeInputField.FIRST },
@@ -1183,7 +1210,7 @@ internal fun RuntimeKnownSearchDialog(
                     }
                     if (needsSecond) {
                         RuntimeSearchField(
-                            label = stringResource(R.string.memory_editor_max_value),
+                            label = stringResource(memorySearchFieldLabel(effectivePredicate, second = true)),
                             value = second,
                             active = activeField == RuntimeInputField.SECOND,
                             onClick = { activeField = RuntimeInputField.SECOND },
@@ -1396,7 +1423,7 @@ private fun RuntimeUnknownSearchDialog(
                             if (sideDock && needsSecond) {
                                 RuntimeSearchControlRow {
                                     RuntimeSearchField(
-                                        label = stringResource(R.string.memory_editor_search_hint),
+                                        label = stringResource(memorySearchFieldLabel(predicate, second = false)),
                                         value = first,
                                         active = activeField == RuntimeInputField.FIRST,
                                         onClick = { activeField = RuntimeInputField.FIRST },
@@ -1406,7 +1433,7 @@ private fun RuntimeUnknownSearchDialog(
                                         initialFocus = true,
                                     )
                                     RuntimeSearchField(
-                                        label = stringResource(R.string.memory_editor_max_value),
+                                        label = stringResource(memorySearchFieldLabel(predicate, second = true)),
                                         value = second,
                                         active = activeField == RuntimeInputField.SECOND,
                                         onClick = { activeField = RuntimeInputField.SECOND },
@@ -1417,7 +1444,7 @@ private fun RuntimeUnknownSearchDialog(
                                 }
                             } else {
                                 RuntimeSearchField(
-                                    label = stringResource(R.string.memory_editor_search_hint),
+                                    label = stringResource(memorySearchFieldLabel(predicate, second = false)),
                                     value = first,
                                     active = activeField == RuntimeInputField.FIRST,
                                     onClick = { activeField = RuntimeInputField.FIRST },
@@ -1428,7 +1455,7 @@ private fun RuntimeUnknownSearchDialog(
                                 )
                                 if (needsSecond) {
                                     RuntimeSearchField(
-                                        label = stringResource(R.string.memory_editor_max_value),
+                                        label = stringResource(memorySearchFieldLabel(predicate, second = true)),
                                         value = second,
                                         active = activeField == RuntimeInputField.SECOND,
                                         onClick = { activeField = RuntimeInputField.SECOND },
@@ -2495,6 +2522,8 @@ private fun RuntimeExpressionHint(expression: MemorySearchExpression, type: Int)
 @Composable
 private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorActions) {
     if (state.resultCount <= MemoryEditorComposeController.PAGE_SIZE) return
+    val previousPageDescription = stringResource(R.string.memory_editor_previous_results_page_action)
+    val nextPageDescription = stringResource(R.string.memory_editor_next_results_page_action)
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.Center,
@@ -2503,9 +2532,11 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
         TextButton(
             onClick = actions::previousPage,
             enabled = state.pageOffset > 0,
-            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+            modifier = Modifier
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .semantics { contentDescription = previousPageDescription },
         ) {
-            Text("‹")
+            Text("‹", modifier = Modifier.clearAndSetSemantics {})
         }
         Text(
             "${state.pageOffset + 1}–${minOf(state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE, state.resultCount)}",
@@ -2514,9 +2545,11 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
         TextButton(
             onClick = actions::nextPage,
             enabled = state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE < state.resultCount,
-            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+            modifier = Modifier
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .semantics { contentDescription = nextPageDescription },
         ) {
-            Text("›")
+            Text("›", modifier = Modifier.clearAndSetSemantics {})
         }
     }
 }
@@ -2572,6 +2605,26 @@ private fun runtimeMove(value: TextFieldValue, delta: Int): TextFieldValue {
     val current = if (delta < 0) minOf(value.selection.start, value.selection.end)
     else maxOf(value.selection.start, value.selection.end)
     return value.copy(selection = TextRange((current + delta).coerceIn(0, value.text.length)))
+}
+
+private fun memorySearchFieldLabel(predicate: Int, second: Boolean): Int = when (predicate) {
+    MemoryEngineContract.PREDICATE_BETWEEN -> if (second) {
+        R.string.memory_editor_max_value
+    } else {
+        R.string.memory_editor_min_value
+    }
+    MemoryEngineContract.PREDICATE_INCREASED_BY,
+    MemoryEngineContract.PREDICATE_DECREASED_BY,
+    MemoryEngineContract.PREDICATE_CHANGED_BY,
+    -> R.string.memory_editor_change_amount
+    MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE,
+    MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE,
+    -> if (second) {
+        R.string.memory_editor_max_change
+    } else {
+        R.string.memory_editor_min_change
+    }
+    else -> R.string.memory_editor_search_hint
 }
 
 @Composable

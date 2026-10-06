@@ -14,9 +14,10 @@
 
 package io.github.h3nb.jlmodplus.settings
 
-import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
@@ -59,13 +60,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
@@ -106,7 +105,7 @@ data class SettingsUiState(
     val showProfiles: Boolean,
     val workingDirectory: String,
     val directoryError: String? = null,
-    val accent: SettingsOption = SettingsOption("blue", "Default Blue"),
+    val accent: SettingsOption = SettingsOption("blue", "Default blue"),
     val accents: List<SettingsOption> = emptyList(),
     val libraryChoices: List<SettingsChoice> = emptyList(),
     val librarySwitches: List<SettingsSwitch> = emptyList(),
@@ -158,8 +157,6 @@ fun SettingsScreen(
 ) {
     var choiceDialog by remember { mutableStateOf<SettingsDialogChoice?>(null) }
     var libraryChoiceDialog by remember { mutableStateOf<SettingsChoice?>(null) }
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -197,6 +194,10 @@ fun SettingsScreen(
                             showAccentPreview = true,
                             onClick = { choiceDialog = SettingsDialogChoice.Accent },
                         )
+                    }
+                }
+                item {
+                    SettingsSection(stringResource(R.string.settings_section_language)) {
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_language),
                             selected = state.language,
@@ -382,7 +383,6 @@ private fun SettingsSection(
             text = title,
             modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
         )
         Surface(
@@ -417,12 +417,11 @@ private fun SettingsChoiceRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
             )
             Text(
                 text = selected.label,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -471,7 +470,8 @@ private fun SettingsChoiceDialog(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = maxListHeight),
+                        .heightIn(max = maxListHeight)
+                        .selectableGroup(),
                     state = listState,
                 ) {
                     items(options, key = { it.value }) { option ->
@@ -482,7 +482,6 @@ private fun SettingsChoiceDialog(
                                 Text(
                                     text = option.label,
                                     style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = if (selectedOption) FontWeight.Medium else FontWeight.Normal,
                                 )
                             },
                             leadingContent = {
@@ -508,7 +507,8 @@ private fun SettingsChoiceDialog(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(
+                                .selectable(
+                                    selected = selectedOption,
                                     role = Role.RadioButton,
                                     onClick = { onSelected(option.value) },
                                 ),
@@ -553,7 +553,6 @@ private fun SettingsSwitchRow(
             Text(
                 text = setting.title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
                 color = if (setting.enabled) MaterialTheme.colorScheme.onSurface
                 else MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -562,7 +561,7 @@ private fun SettingsSwitchRow(
                     text = summary,
                     color = if (setting.enabled) MaterialTheme.colorScheme.onSurfaceVariant
                     else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.62f),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }
@@ -590,13 +589,12 @@ private fun SettingsActionRow(
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
         )
         summary?.let { value ->
             Text(
                 text = value,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
