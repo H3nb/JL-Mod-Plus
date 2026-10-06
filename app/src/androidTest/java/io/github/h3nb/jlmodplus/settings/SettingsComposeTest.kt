@@ -61,7 +61,7 @@ class SettingsComposeTest {
             windowSize = DpSize(480.dp, 240.dp),
         )
 
-        composeRule.onNode(hasText("Language") and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNode(hasText("App language") and hasClickAction()).performScrollTo().performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
                 composeRule.onNodeWithContentDescription("Swipe to continue")
@@ -77,7 +77,7 @@ class SettingsComposeTest {
 
         composeRule.onNodeWithText("Theme").assertExists()
         composeRule.onNodeWithText("Dark").assertExists()
-        composeRule.onNode(hasText("Language") and hasClickAction()).assertExists()
+        composeRule.onNode(hasText("App language") and hasClickAction()).assertExists()
         scrollSettingsToIndex(2)
         composeRule.onNodeWithText("Keep screen on").performScrollTo().assertIsDisplayed()
         scrollSettingsToIndex(3)
@@ -97,7 +97,7 @@ class SettingsComposeTest {
         composeRule.onNodeWithText("Theme").performClick()
         composeRule.onNodeWithText("Light").performClick()
         scrollSettingsToIndex(1)
-        composeRule.onNode(hasText("Language") and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNode(hasText("App language") and hasClickAction()).performScrollTo().performClick()
         composeRule.onNodeWithText("English").performClick()
         scrollSettingsToIndex(2)
         composeRule.onNodeWithText("Keep screen on").performScrollTo().performClick()

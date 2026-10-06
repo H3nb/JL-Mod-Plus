@@ -200,7 +200,7 @@ fun SettingsScreen(
                     }
                 }
                 item {
-                    SettingsSection(stringResource(R.string.pref_language)) {
+                    SettingsSection(stringResource(R.string.settings_section_language)) {
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_language),
                             selected = state.language,

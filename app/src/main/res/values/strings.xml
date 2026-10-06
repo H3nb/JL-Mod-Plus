@@ -192,7 +192,7 @@
     <string name="pref_graphics_software">Software</string>
     <string name="PREF_HEIGHT">Height</string>
     <string name="PREF_IMMEDIATE">Immediate processing</string>
-    <string name="pref_language">Language</string>
+    <string name="pref_language">App language</string>
     <string name="PREF_LAYOUT">Key code layout</string>
     <string name="PREF_LIMIT_FPS">Frame rate limit</string>
     <string name="pref_map_keys">Key mappings</string>
@@ -690,7 +690,7 @@
     <string name="bulk_install_status_update">Update</string>
     <string name="bulk_install_status_downgrade">Older version</string>
     <string name="bulk_install_status_same">Already installed</string>
-    <string name="bulk_install_status_reinstall">Same version, different files</string>
+    <string name="bulk_install_status_reinstall">Same version, possible variant</string>
     <string name="bulk_install_status_ambiguous">Matches multiple installed apps</string>
     <string name="bulk_install_status_mismatch">JAD/JAR mismatch</string>
     <string name="bulk_install_status_duplicate">Duplicate</string>
@@ -714,7 +714,7 @@
     <string name="config_system_timing">Timing</string>
     <string name="config_controls_key_input">Physical input</string>
     <string name="config_controls_virtual_keyboard">Virtual controls</string>
-    <string name="config_controls_virtual_keyboard_colors">Virtual controls colors</string>
+    <string name="config_controls_virtual_keyboard_colors">Virtual control colors</string>
     <string name="config_controls_maintenance">Virtual controls layout</string>
     <string name="config_current_value">Current value</string>
     <string name="config_maintenance">Reset &amp; data</string>
@@ -735,7 +735,7 @@
     <string name="profile_template_operation_failed">Could not complete the profile operation.</string>
     <string name="config_help_screen_size">Sets the virtual Java ME screen resolution used by the MIDlet.</string>
     <string name="config_help_orientation">Chooses the screen orientation while the MIDlet runs.</string>
-    <string name="config_help_scale_type">Chooses how the MIDlet screen fits the available area, preserving or ignoring its aspect ratio.</string>
+    <string name="config_help_scale_type">Chooses how the MIDlet screen is scaled relative to the available area.</string>
     <string name="config_help_scale_ratio">Changes the displayed size without changing the MIDlet’s virtual resolution.</string>
     <string name="config_help_lock_custom_resolution_ratio">Keeps the aspect ratio while editing the custom resolution.</string>
     <string name="config_help_virtual_keyboard">Shows on-screen controls for this MIDlet.</string>
@@ -936,6 +936,7 @@
     <string name="perf_overlay_display">Display refresh rate (DISP)</string>
 
     <string name="settings_section_appearance">App appearance</string>
+    <string name="settings_section_language">Language</string>
     <string name="settings_section_library_appearance">Library appearance</string>
     <string name="settings_section_midlet_runtime">MIDlet runtime</string>
     <string name="settings_section_storage">Storage</string>
