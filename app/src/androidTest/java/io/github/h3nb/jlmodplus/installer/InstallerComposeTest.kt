@@ -368,7 +368,8 @@ class InstallerComposeTest {
             }
         }
 
-        composeRule.onNodeWithText(targetString(R.string.bulk_install_complete)).assertIsDisplayed()
+        composeRule.onAllNodesWithText(targetString(R.string.bulk_install_complete))
+            .assertCountEquals(1)
         composeRule.onAllNodesWithText(targetString(R.string.warning)).assertCountEquals(1)
         composeRule.onNodeWithText("Unreadable class warning").assertIsDisplayed()
         composeRule.onNodeWithText("Bundle imported.").assertIsDisplayed()
