@@ -29,6 +29,11 @@ public final class ConversionResult {
         this.diagnosticsOmitted = diagnosticsOmitted;
     }
 
+    public static ConversionResult noWorkSuccess() {
+        return new ConversionResult(0, 0, 0, 0,
+                Collections.<ConversionDiagnostic>emptyList(), 0);
+    }
+
     public boolean isSuccess() {
         return exitCode == 0;
     }

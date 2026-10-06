@@ -268,6 +268,12 @@ public class Main {
             outArray = writeDex(outputDex);
 
             if (outArray == null) {
+                recordDiagnostic(new ConversionDiagnostic(
+                        null,
+                        ConversionDiagnostic.Phase.DEX_WRITE,
+                        ConversionDiagnostic.Kind.OUTPUT_FAILURE,
+                        ConversionDiagnostic.Action.ABORTED,
+                        "Unable to write DEX output"));
                 return 2;
             }
         }
@@ -280,6 +286,12 @@ public class Main {
                 outputResources.put(DexFormat.DEX_IN_JAR_NAME, outArray);
             }
             if (!createJar(args.outName)) {
+                recordDiagnostic(new ConversionDiagnostic(
+                        null,
+                        ConversionDiagnostic.Phase.DEX_WRITE,
+                        ConversionDiagnostic.Kind.OUTPUT_FAILURE,
+                        ConversionDiagnostic.Action.ABORTED,
+                        "Unable to create converted archive"));
                 return 3;
             }
         } else if (outArray != null && args.outName != null) {

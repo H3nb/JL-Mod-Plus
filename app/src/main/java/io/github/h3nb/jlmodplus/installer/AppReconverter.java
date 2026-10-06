@@ -3,6 +3,7 @@ package io.github.h3nb.jlmodplus.installer;
 
 import android.util.Log;
 
+import com.android.dx.command.dexer.ConversionResult;
 import com.android.dx.command.dexer.Main;
 
 import net.lingala.zip4j.io.inputstream.ZipInputStream;
@@ -72,8 +73,9 @@ public final class AppReconverter {
      *                     JAR is unavailable
      * @throws ConverterException if DX or payload publication fails
      */
-    public static void reconvert(File requestedAppDir) throws IOException, ConverterException {
-        reconvert(requestedAppDir, () -> false);
+    public static ConversionResult reconvert(File requestedAppDir)
+            throws IOException, ConverterException {
+        return reconvert(requestedAppDir, () -> false);
     }
 
     /**
@@ -83,7 +85,8 @@ public final class AppReconverter {
      * tear down that pool from the UI thread. The signal is checked at every filesystem boundary
      * and, most importantly, immediately before publishing the replacement directory.</p>
      */
-    static void reconvert(File requestedAppDir, InstallerExecutionCoordinator.Cancellation cancellation)
+    static ConversionResult reconvert(File requestedAppDir,
+            InstallerExecutionCoordinator.Cancellation cancellation)
             throws IOException, ConverterException {
         File appDir = requireInstalledAppDirectory(requestedAppDir);
         File workdir = appDir.getParentFile().getParentFile();
@@ -104,7 +107,7 @@ public final class AppReconverter {
             }
             // Another launch or an explicit reinstall may have repaired this app while this
             // request was waiting for the converter permit.
-            if (!needsReconversion(appDir)) return;
+            if (!needsReconversion(appDir)) return ConversionResult.noWorkSuccess();
 
             LibraryInstallRecovery.discardStaging(workdir);
             checkCancelled(cancellation);
@@ -114,6 +117,7 @@ public final class AppReconverter {
             }
 
             File replacementBackup = null;
+            ConversionResult conversionResult = null;
             try {
                 Descriptor descriptor = loadManifest(retainedJar);
                 // The retained JAR manifest is not the installed descriptor. The latter contains
@@ -123,7 +127,7 @@ public final class AppReconverter {
                 mergeInstalledDescriptor(
                         descriptor, fileWithSuffix(appDir, Config.MIDLET_MANIFEST_FILE));
                 try {
-                    Main.main(new String[]{
+                    conversionResult = Main.convert(new String[]{
                             "--no-optimize",
                             "--output=" + staging.getAbsolutePath() + Config.MIDLET_DEX_ARCH,
                             retainedJar.getAbsolutePath(),
@@ -131,12 +135,16 @@ public final class AppReconverter {
                 } catch (Throwable error) {
                     throw new ConverterException("Dexing error during automatic reconversion", error);
                 }
+                if (!conversionResult.isSuccess()) {
+                    throw new ConverterException("Dexing error during automatic reconversion");
+                }
 
                 checkCancelled(cancellation);
                 File generatedPayload = fileWithSuffix(staging, Config.MIDLET_DEX_ARCH);
                 if (!generatedPayload.isFile() || generatedPayload.length() <= 0L) {
                     throw new ConverterException("DX produced no converted MIDlet payload");
                 }
+                MidletConversionPolicy.requireRunnableEntryClasses(conversionResult, descriptor);
                 MidletTransformMetadata.mark(descriptor.getAttrs());
                 FileUtils.copyFileUsingChannel(retainedJar, fileWithSuffix(staging, Config.MIDLET_RES_FILE));
                 File retainedJad = new File(appDir, RETAINED_JAD);
@@ -164,6 +172,7 @@ public final class AppReconverter {
                 // recovery pass instead of turning a successful conversion into a launch error.
                 Log.w(TAG, "Automatic reconversion succeeded but backup cleanup was deferred: " + storageKey);
             }
+            return conversionResult == null ? ConversionResult.noWorkSuccess() : conversionResult;
         }
     }
 
