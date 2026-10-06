@@ -152,9 +152,9 @@ def package_candidates(candidates, references=REFERENCES, output=OUTPUT):
 
 
 def main():
-    report_output(False, 0)
     if not REPORT.is_file():
         print("No screenshot XML report; rendering/compilation failures need diagnosis.")
+        report_output(False, 0)
         return
 
     ensure_references_unchanged()
@@ -162,6 +162,7 @@ def main():
     if excluded:
         print("Excluded non-comparison failures: " + ", ".join(excluded))
     if not candidates:
+        report_output(False, 0)
         return
 
     package_candidates(candidates)

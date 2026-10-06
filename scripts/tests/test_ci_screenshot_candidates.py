@@ -162,5 +162,31 @@ class ScreenshotCandidatesTest(unittest.TestCase):
                 candidates.ensure_references_unchanged(Path("references"))
 
 
+    def test_main_reports_unavailable_once_when_report_is_missing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with (
+                mock.patch.object(candidates, "REPORT", Path(directory) / "missing.xml"),
+                mock.patch.object(candidates, "report_output") as report_output,
+            ):
+                candidates.main()
+        report_output.assert_called_once_with(False, 0)
+
+    def test_main_reports_available_once_after_packaging(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "report.xml"
+            report.write_text("<testsuite/>", encoding="utf-8")
+            found = {Path("screen/preview.png"): (Path("reference.png"), Path("actual.png"), None)}
+            with (
+                mock.patch.object(candidates, "REPORT", report),
+                mock.patch.object(candidates, "ensure_references_unchanged"),
+                mock.patch.object(candidates, "collect_candidates", return_value=(found, [])),
+                mock.patch.object(candidates, "package_candidates") as package_candidates,
+                mock.patch.object(candidates, "report_output") as report_output,
+            ):
+                candidates.main()
+        package_candidates.assert_called_once_with(found)
+        report_output.assert_called_once_with(True, 1)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -64,14 +64,6 @@ try{
 
  $expectedArchives=@($spec.ffmpeg.archive,$spec.opencore.archive)
  Get-ChildItem -LiteralPath $archiveRoot -File | Where-Object {$_.Name -notin $expectedArchives} | Remove-Item -Force
- $context=[ordered]@{
-  manifestSha256=(Get-FileHash -LiteralPath $Manifest -Algorithm SHA256).Hash
-  ffmpegVersion=$spec.ffmpeg.version
-  ffmpegSha256=$spec.ffmpeg.sha256.ToUpperInvariant()
-  openCoreVersion=$spec.opencore.version
-  openCoreSha256=$spec.opencore.sha256.ToUpperInvariant()
- }
- $context | ConvertTo-Json | Set-Content -LiteralPath "$OutRoot/source-context.json"
  Write-Output "PASS prepared pinned native audio sources => $OutRoot"
 }finally{
  if($null -ne $preparationLock){$preparationLock.Dispose()}
