@@ -40,7 +40,7 @@
     <string name="exit">Exit</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Stop this MIDlet? Unsaved changes may be lost.</string>
     <string name="help">Help</string>
-    <string name="help_message">&#8226; Image filtering can significantly reduce performance on some MIDlets. Disable it if the MIDlet is too slow.&lt;BR>&#8226; Immediate processing bypasses the normal Java ME event queue. It may improve responsiveness, but can make some MIDlets unstable.</string>
+    <string name="help_message">&#8226; Linear filtering can significantly reduce performance on some MIDlets. Disable it if the MIDlet is too slow.&lt;BR>&#8226; Immediate processing bypasses the normal Java ME event queue. It may improve responsiveness, but can make some MIDlets unstable.</string>
     <string name="identity_filter">None (fastest)</string>
     <string name="install">Install</string>
     <string name="install_done">Application installed.</string>
@@ -215,7 +215,7 @@
     <string name="pref_screen_scale_type_fill">Fill window (ignore aspect ratio)</string>
     <string name="pref_screen_scale_type_fit">Fit to window</string>
     <string name="pref_screen_scale_type_none">Manual</string>
-    <string name="pref_screenshot_summary">Saves the MIDlet frame at its virtual resolution before scaling, image filtering, and the screen shader.</string>
+    <string name="pref_screenshot_summary">Saves the MIDlet frame at its virtual resolution before scaling, linear filtering, and the screen shader.</string>
     <string name="pref_screenshot_title">Raw screenshot</string>
     <string name="PREF_SHADER_FILTER">Screen shader</string>
     <string name="pref_skin_not_set">None</string>
@@ -509,7 +509,7 @@
     <string name="memory_editor_no_results">No results</string>
     <string name="memory_editor_no_watch">Watch is empty</string>
     <string name="memory_editor_unsupported">Memory Editor is unavailable for this runtime.</string>
-    <string name="memory_editor_engine_unavailable">Memory Editor engine is unavailable.</string>
+    <string name="memory_editor_engine_unavailable">The Memory Editor engine is unavailable.</string>
     <string name="memory_editor_engine_reconnecting">Memory Editor is reconnecting…</string>
     <string name="memory_editor_refresh">Refresh</string>
     <string name="memory_editor_undo">Undo</string>
@@ -577,7 +577,7 @@
     <string name="memory_editor_freeze_after_edit">Freeze after applying</string>
     <string name="memory_editor_freeze_after_edit_help">Locks the replacement value and automatically adds candidates to Watch.</string>
 
-    <string name="memory_editor_expression_single_hint">Enter one value, or use ; between group values.</string>
+    <string name="memory_editor_expression_single_hint">Enter one value, or separate group values with semicolons (;).</string>
     <string name="memory_editor_expression_group_needs_type">Choose a specific data type for group search.</string>
     <plurals name="memory_editor_expression_group_hint">
         <item quantity="one">Group search · %1$d value · same Java object</item>
@@ -662,8 +662,8 @@
     </plurals>
 
     <string name="bulk_install_title">Bulk install</string>
-    <string name="bulk_install_planning">Checking selected applications…</string>
-    <string name="bulk_install_empty">No supported applications were found.</string>
+    <string name="bulk_install_planning">Checking selected apps…</string>
+    <string name="bulk_install_empty">No supported apps were found.</string>
     <string name="bulk_install_recommended">Recommended</string>
     <string name="bulk_install_clear">Clear selection</string>
     <string name="bulk_install_install_count">Install %1$d</string>
@@ -673,7 +673,7 @@
         <item quantity="one">Processed %1$d app of %2$d</item>
         <item quantity="other">Processed %1$d apps of %2$d</item>
     </plurals>
-    <string name="bulk_install_cancel_requested">Stopping after the current application…</string>
+    <string name="bulk_install_cancel_requested">Stopping after the current app…</string>
     <string name="bulk_install_complete">Bulk install complete</string>
     <string name="bulk_install_cancelled">Bulk install stopped</string>
     <string name="bulk_install_fatal">Bulk install stopped. Review the unfinished items before trying again.</string>
@@ -759,13 +759,13 @@
     <string name="config_help_shader">Applies a shader to the MIDlet frame before it is displayed.</string>
     <string name="config_help_shader_tuning">Adjusts settings for the selected shader.</string>
     <string name="config_help_parallel_redraw">Schedules frame presentation asynchronously. This may improve performance on some devices.</string>
-    <string name="config_help_force_fullscreen">Start MIDlet Canvas screens in fullscreen mode. The MIDlet can change this mode.</string>
+    <string name="config_help_force_fullscreen">Starts MIDlet Canvas screens in fullscreen mode. The MIDlet can change this mode.</string>
     <string name="config_help_fps_limit">Sets the FPS limit at 1× emulation speed. The effective limit follows emulation speed; 0 (Maximum) uses the display’s maximum refresh rate.</string>
     <string name="PREF_EMULATION_SPEED">Emulation speed</string>
     <string name="PREF_TIMING_MODE">Time source</string>
     <string name="config_timing_mode_full_guest">Emulation time</string>
     <string name="config_timing_mode_real_wall">System time</string>
-    <string name="config_help_emulation_speed">Changes the MIDlet clock speed and supported delays. Android audio and UI stay normal.</string>
+    <string name="config_help_emulation_speed">Changes the MIDlet clock speed and supported delays. Android audio and UI remain at normal speed.</string>
     <string name="config_help_timing_mode">Chooses whether the MIDlet uses emulation time or system time. Relative delays remain scaled with emulation speed.</string>
     <string name="config_help_timing_unavailable">Time settings are unavailable for this MIDlet installation. Reinstall or reconvert the MIDlet to enable them.</string>
     <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start. Converting…</string>
