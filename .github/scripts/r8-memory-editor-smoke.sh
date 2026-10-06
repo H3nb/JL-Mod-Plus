@@ -3,7 +3,9 @@ set -euo pipefail
 
 apk="$(cat r8-release-apk.txt)"
 test -f "$apk"
+adb root || true
 adb wait-for-device
+adb shell id | tee r8-memory-editor-shell-id.txt
 adb install -r "$apk"
 adb logcat -c
 adb shell am force-stop io.github.h3nb.jlmodplus
