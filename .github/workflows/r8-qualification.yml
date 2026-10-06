@@ -114,7 +114,8 @@ jobs:
             "$dexdump_bin" -f "$out" >/dev/null
           done < <(zipinfo -1 "$apk" | grep -E '^classes([0-9]+)?\.dex$')
 
-          test -f app/build/outputs/mapping/emulatorRelease/configanalyzer.html
+          analyzer_report='app/build/reports/r8/r8-config-analyzer-emulatorRelease.html'
+          test -f "$analyzer_report"
           unzip -t "$apk" >/dev/null
 
       - name: Enable emulator acceleration
@@ -175,7 +176,6 @@ jobs:
           name: r8-memory-editor-workaround-qualification
           path: |
             app/build/reports/r8/*.html
-            app/build/outputs/mapping/emulatorRelease/configanalyzer.html
             r8-without-workaround-analyzer.log
             r8-without-workaround-release.log
             r8-memory-editor-mapping.txt
