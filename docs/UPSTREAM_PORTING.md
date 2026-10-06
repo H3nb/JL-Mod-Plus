@@ -1,5 +1,7 @@
 # Upstream porting notes
 
+This is a historical compatibility record for the completed namespace migration. It does not define preferred architecture for new work. Current source and the repository's durable behavior contracts are authoritative for present implementation; retain compatibility aliases, legacy keys, and other migration machinery only while the corresponding compatibility requirement still exists.
+
 JL-Mod Plus uses the following canonical implementation namespaces. This is a package identity migration only; Android application IDs, guest Java ME APIs, persisted data, and native library names remain unchanged.
 
 | Existing implementation namespace | JL-Mod Plus namespace |

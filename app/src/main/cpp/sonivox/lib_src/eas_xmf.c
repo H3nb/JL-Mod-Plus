@@ -655,7 +655,7 @@ static EAS_RESULT XMF_ReadNode (EAS_HW_DATA_HANDLE hwInstData, S_XMF_DATA *pXMFD
     EAS_U32 remainingInlineBytes;
     EAS_U32 deltaBytes;
     EAS_BOOL zlibPacked = EAS_FALSE;
-    EAS_U32 unpackedSize = 0;
+    EAS_I32 unpackedSize = 0;
 
     /* check the depth of current node*/
     if ( depth > 100 )
@@ -710,7 +710,7 @@ static EAS_RESULT XMF_ReadNode (EAS_HW_DATA_HANDLE hwInstData, S_XMF_DATA *pXMFD
 
     EAS_U32 nodeUnpackerRemaining = length;
     while (nodeUnpackerRemaining != 0) {
-        EAS_U32 temp;
+        EAS_I32 temp;
         result = XMF_ReadVLQ(hwInstData, pXMFData->fileHandle, &nodeUnpackerRemaining, &temp);
         if (result != EAS_SUCCESS)
             return result;
@@ -742,6 +742,8 @@ static EAS_RESULT XMF_ReadNode (EAS_HW_DATA_HANDLE hwInstData, S_XMF_DATA *pXMFD
         result = XMF_ReadVLQ(hwInstData, pXMFData->fileHandle, &nodeUnpackerRemaining, &unpackedSize);
         if (result != EAS_SUCCESS)
             return result;
+        if (unpackedSize < 0)
+            return EAS_ERROR_FILE_FORMAT;
     }
 
     /* get the current location */

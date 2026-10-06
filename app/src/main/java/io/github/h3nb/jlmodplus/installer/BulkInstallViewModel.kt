@@ -727,7 +727,6 @@ class BulkInstallViewModel : ViewModel() {
 
     override fun onCleared() {
         close()
-        super.onCleared()
     }
 
     private class FatalBatchException(cause: Throwable) : RuntimeException(cause)

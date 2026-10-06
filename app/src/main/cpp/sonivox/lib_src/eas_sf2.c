@@ -732,7 +732,7 @@ static EAS_RESULT Decode_SF2smpl(S_SF2_PARSER* pParser, struct S_SF2_SAMPLE* pSh
     EAS_U32 remaining = dataLen;
     EAS_SAMPLE* destination = pParser->pSampleDLS + (writeOffset / sizeof(EAS_SAMPLE));
     while (remaining > 0) {
-        EAS_U32 c = remaining > sizeof(buffer) ? sizeof(buffer) : remaining;
+        EAS_I32 c = remaining > sizeof(buffer) ? (EAS_I32) sizeof(buffer) : (EAS_I32) remaining;
         result = EAS_HWReadFile(pParser->hwInstData, pParser->fileHandle, buffer, c, &c);
         if (result != EAS_SUCCESS) {
             return result;
@@ -744,7 +744,7 @@ static EAS_RESULT Decode_SF2smpl(S_SF2_PARSER* pParser, struct S_SF2_SAMPLE* pSh
             ((EAS_SAMPLE*)destination)[j] = buffer[j * 2 + 1]; // MSB
         }
 #endif
-        remaining -= c;
+        remaining -= (EAS_U32) c;
         destination += c / 2;
     }
 
