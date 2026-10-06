@@ -341,7 +341,7 @@ private fun RuntimeMemoryTabRail(
         RuntimeMemoryRailTab(
             selected = tab == RuntimeMemoryTab.SEARCH_RESULTS,
             onClick = { onTab(RuntimeMemoryTab.SEARCH_RESULTS) },
-            icon = R.drawable.ic_memory_editor_search,
+            icon = R.drawable.ic_search,
             label = if (results > 0L) {
                 "${stringResource(R.string.memory_editor_search_tab)} · ${compactCount(results)}"
             } else {
@@ -463,7 +463,7 @@ private fun RuntimeMemoryTabs(
                 )
             },
             icon = {
-                Icon(painterResource(R.drawable.ic_memory_editor_search), contentDescription = null)
+                Icon(painterResource(R.drawable.ic_search), contentDescription = null)
             },
         )
         Tab(
@@ -601,7 +601,7 @@ private fun RuntimeSearchResultsTab(
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             RuntimeActionIcon(
-                icon = R.drawable.ic_memory_editor_search,
+                icon = R.drawable.ic_search,
                 description = R.string.memory_editor_search_known_values,
                 enabled = !state.busy,
                 onClick = { knownDialog = true },

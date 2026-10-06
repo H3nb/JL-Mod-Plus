@@ -276,7 +276,7 @@ internal enum class ConfigDestination(val label: Int, val icon: Int) {
     Display(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
     Audio(R.string.config_destination_audio, R.drawable.ic_config_audio),
     Controls(R.string.config_destination_controls, R.drawable.ic_config_controls),
-    System(R.string.config_destination_system, R.drawable.ic_config_system),
+    System(R.string.config_destination_system, R.drawable.ic_settings),
 }
 
 internal enum class ConfigAction(val title: Int, val message: Int) {
@@ -1218,7 +1218,7 @@ internal fun ScreenPresetDialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_swap),
+                            painter = painterResource(R.drawable.ic_swap_horiz),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                         )
@@ -1353,7 +1353,7 @@ internal fun CustomResolutionDialog(
                         aspectHeight = oldAspectWidth
                     }) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_swap),
+                            painter = painterResource(R.drawable.ic_swap_horiz),
                             contentDescription = stringResource(R.string.SWAP_SIZES),
                         )
                     }

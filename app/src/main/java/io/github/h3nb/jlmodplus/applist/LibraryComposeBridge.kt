@@ -1455,14 +1455,14 @@ private fun LibraryNavigationRail(
             destination = LibraryDestination.Collections,
             selected = selected,
             label = R.string.library_destination_collections,
-            icon = R.drawable.ic_collections,
+            icon = R.drawable.ic_folder,
             onSelected = onSelected,
         )
         LibraryNavigationRailItem(
             destination = LibraryDestination.More,
             selected = selected,
             label = R.string.library_destination_more,
-            icon = R.drawable.ic_options,
+            icon = R.drawable.ic_settings,
             onSelected = onSelected,
         )
     }
@@ -1512,14 +1512,14 @@ private fun LibraryNavigationBar(
             destination = LibraryDestination.Collections,
             selected = selected,
             label = R.string.library_destination_collections,
-            icon = R.drawable.ic_collections,
+            icon = R.drawable.ic_folder,
             onSelected = onSelected,
         )
         LibraryNavigationItem(
             destination = LibraryDestination.More,
             selected = selected,
             label = R.string.library_destination_more,
-            icon = R.drawable.ic_options,
+            icon = R.drawable.ic_settings,
             onSelected = onSelected,
         )
     }
@@ -2044,7 +2044,7 @@ private fun LibrarySelectionBottomBar(
                 destructive = true,
             )
             LibrarySelectionAction(
-                icon = R.drawable.ic_collections,
+                icon = R.drawable.ic_folder,
                 label = stringResource(R.string.library_bulk_add_collection),
                 onClick = onAddToCollection,
                 enabled = enabled,
@@ -2441,7 +2441,7 @@ internal fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_collections),
+                    painter = painterResource(R.drawable.ic_folder),
                     contentDescription = null,
                     modifier = Modifier.size(56.dp),
                     tint = MaterialTheme.colorScheme.primary,
@@ -4042,7 +4042,7 @@ internal fun AppActionsDialog(
             add(
                 DialogActionEntry(
                     label = R.string.library_collection_add_app,
-                    icon = R.drawable.ic_collections,
+                    icon = R.drawable.ic_folder,
                     action = onAddToCollection,
                 ),
             )

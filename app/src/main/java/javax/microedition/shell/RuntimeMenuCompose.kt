@@ -772,7 +772,7 @@ private fun LazyListScope.runtimeMenuItems(
                 R.string.runtime_virtual_controls_switch_layout,
                 onDismiss,
                 actions::onSwitchVirtualKeyboardLayout,
-                leadingIcon = R.drawable.ic_runtime_switch,
+                leadingIcon = R.drawable.ic_swap_horiz,
                 focused = switchFocused,
             )
         }

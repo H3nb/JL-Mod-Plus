@@ -562,7 +562,7 @@ private fun LibraryCollectionsOverview(
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_collections),
+                                painter = painterResource(R.drawable.ic_folder),
                                 contentDescription = null,
                                 modifier = Modifier.size(52.dp),
                                 tint = MaterialTheme.colorScheme.primary,
@@ -611,7 +611,7 @@ private fun LibraryCollectionsOverview(
                         },
                         leadingContent = {
                             Icon(
-                                painter = painterResource(R.drawable.ic_collections),
+                                painter = painterResource(R.drawable.ic_folder),
                                 contentDescription = null,
                             )
                         },
@@ -729,7 +729,7 @@ private fun LibraryCollectionDetailPlaceholder(scaffoldPadding: PaddingValues) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_collections),
+                painter = painterResource(R.drawable.ic_folder),
                 contentDescription = null,
                 modifier = Modifier.size(52.dp),
                 tint = MaterialTheme.colorScheme.primary,
