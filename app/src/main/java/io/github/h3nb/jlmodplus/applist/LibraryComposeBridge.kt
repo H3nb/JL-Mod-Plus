@@ -2857,10 +2857,6 @@ private fun LibraryListItem(
                 LibraryDescription(app.description, app.databaseId)
             }
         }
-        HorizontalDivider(
-            modifier = Modifier.padding(start = 80.dp, end = 16.dp),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
-        )
     }
 }
 
@@ -2895,7 +2891,7 @@ internal fun LibraryDescription(descriptionValue: String, appId: Long) {
             Text(
                 text = description,
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f),
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Start,
                 maxLines = 2,
@@ -2934,7 +2930,7 @@ internal fun LibraryDescription(descriptionValue: String, appId: Long) {
             Text(
                 text = description,
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f),
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Start,
             )
@@ -2970,21 +2966,21 @@ private fun LibraryFavoriteButton(
         // measure an exiting/entering child at a different size, which makes a long list reflow
         // when the user only intended to toggle the star.
         Box(
-            modifier = Modifier.size(28.dp),
+            modifier = Modifier.size(24.dp),
             contentAlignment = Alignment.Center,
         ) {
             if (app.favorite) {
                 Icon(
                     painter = painterResource(R.drawable.ic_star_filled),
                     contentDescription = favoriteActionDescription,
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
             } else {
                 Icon(
                     painter = painterResource(R.drawable.ic_star),
                     contentDescription = favoriteActionDescription,
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -3002,7 +2998,7 @@ private fun LibraryFavoritePlaceholder(@Suppress("UNUSED_PARAMETER") appId: Int)
         Icon(
             painter = painterResource(R.drawable.ic_star),
             contentDescription = stringResource(R.string.library_favorite_coming_soon),
-            modifier = Modifier.size(28.dp),
+            modifier = Modifier.size(24.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
