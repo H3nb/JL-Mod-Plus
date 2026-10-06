@@ -545,7 +545,11 @@
     <string name="memory_editor_candidate_ambiguous">Ambiguous — writes paused</string>
     <string name="memory_editor_candidate_lost">Lost — writes paused</string>
     <string name="memory_editor_apply">Apply</string>
-    <string name="memory_editor_min_value">Minimum value</string>\n    <string name="memory_editor_max_value">Maximum value</string>\n    <string name="memory_editor_change_amount">Change amount</string>\n    <string name="memory_editor_min_change">Minimum change</string>\n    <string name="memory_editor_max_change">Maximum change</string>
+    <string name="memory_editor_min_value">Minimum value</string>
+    <string name="memory_editor_max_value">Maximum value</string>
+    <string name="memory_editor_change_amount">Change amount</string>
+    <string name="memory_editor_min_change">Minimum change</string>
+    <string name="memory_editor_max_change">Maximum change</string>
     <string name="memory_editor_unfreeze">Unfreeze</string>
     <string name="memory_editor_cancelled">Operation canceled.</string>
     <string name="memory_editor_resource_limit">Memory Editor reached a safe resource limit. Try a more specific data type or search value.</string>
