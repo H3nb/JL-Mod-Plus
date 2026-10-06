@@ -134,6 +134,45 @@ public class AndroidProducerDexTest {
 	}
 
 	@Test
+	public void unsupportedSourceClassVersionRemainsFatal() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-unsupported-source-");
+		Path archive = root.resolve("unsupported.jar");
+		Path dexFile = root.resolve("unsupported.dex");
+		byte[] unsupported = createSimpleClass("sample/Newer");
+		unsupported[6] = 0;
+		unsupported[7] = (byte) (Opcodes.V27 + 1);
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Newer.class"));
+			output.write(unsupported);
+			output.closeEntry();
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertFalse(result.isSuccess());
+			assertEquals(1, result.getClassesDiscovered());
+			assertEquals(0, result.getClassesConverted());
+			assertEquals(0, result.getClassesSkipped());
+			assertEquals(1, result.getDiagnostics().size());
+			assertEquals(
+					ConversionDiagnostic.Kind.UNSUPPORTED_SOURCE_CLASS,
+					result.getDiagnostics().get(0).getKind());
+			assertEquals(
+					ConversionDiagnostic.Action.ABORTED,
+					result.getDiagnostics().get(0).getAction());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
 	public void conversionFailsWhenNoReadableClassRemains() throws Exception {
 		Path root = Files.createTempDirectory("jlmod-dex-no-readable-class-");
 		Path archive = root.resolve("broken.jar");

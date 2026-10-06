@@ -32,6 +32,7 @@ package org.microemu.android.asm;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
@@ -46,6 +47,14 @@ public class AndroidProducer {
 		Integer patch = patches.get((int) crc);
 		if (patch != null) {
 			classData = patchClass(classData, patch);
+		}
+
+		if (hasClassMagic(classData) && classMajorVersion(classData) > Opcodes.V27) {
+			throw new ClassProcessingException(
+					ClassProcessingException.Kind.UNSUPPORTED_SOURCE,
+					classFileName,
+					"Source class version is newer than this converter supports",
+					null);
 		}
 
 		final ClassReader cr;
@@ -106,6 +115,19 @@ public class AndroidProducer {
 					"JL-Mod transform failed for valid source class",
 					transformFailure);
 		}
+	}
+
+	private static boolean hasClassMagic(byte[] classData) {
+		return classData != null
+				&& classData.length >= 8
+				&& (classData[0] & 0xff) == 0xca
+				&& (classData[1] & 0xff) == 0xfe
+				&& (classData[2] & 0xff) == 0xba
+				&& (classData[3] & 0xff) == 0xbe;
+	}
+
+	private static int classMajorVersion(byte[] classData) {
+		return ((classData[6] & 0xff) << 8) | (classData[7] & 0xff);
 	}
 
 	private static byte[] patchClass(byte[] classData, int patch) {

@@ -533,6 +533,14 @@ public class Main {
                         context.err.println("warning: skipping unreadable source class " + name);
                     }
                     return false;
+                case UNSUPPORTED_SOURCE:
+                    recordDiagnostic(new ConversionDiagnostic(
+                            name,
+                            ConversionDiagnostic.Phase.SOURCE_VALIDATION,
+                            ConversionDiagnostic.Kind.UNSUPPORTED_SOURCE_CLASS,
+                            ConversionDiagnostic.Action.ABORTED,
+                            diagnosticDetail(ex)));
+                    break;
                 case IDENTITY_MISMATCH:
                     recordDiagnostic(new ConversionDiagnostic(
                             name,

@@ -9,6 +9,7 @@ package org.microemu.android.asm;
 public final class ClassProcessingException extends RuntimeException {
 	public enum Kind {
 		UNREADABLE_SOURCE,
+		UNSUPPORTED_SOURCE,
 		IDENTITY_MISMATCH,
 		TRANSFORM_FAILURE,
 	}
