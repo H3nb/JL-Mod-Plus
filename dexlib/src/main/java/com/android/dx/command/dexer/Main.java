@@ -1607,7 +1607,17 @@ public class Main {
             try {
                 ClassDefItem clazz = futureClazz.get();
                 if (clazz != null) {
-                    addClassToDex(clazz);
+                    try {
+                        addClassToDex(clazz);
+                    } catch (RuntimeException ex) {
+                        recordDiagnostic(new ConversionDiagnostic(
+                                name,
+                                ConversionDiagnostic.Phase.DEX_ASSEMBLY,
+                                ConversionDiagnostic.Kind.ASSEMBLY_FAILURE,
+                                ConversionDiagnostic.Action.ABORTED,
+                                diagnosticDetail(ex)));
+                        throw ex;
+                    }
                     classesConverted.incrementAndGet();
                     updateStatus(true);
                 }

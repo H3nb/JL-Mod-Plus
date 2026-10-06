@@ -341,6 +341,49 @@ public class AndroidProducerDexTest {
 	}
 
 	@Test
+	public void duplicateClassDuringDexAssemblyProducesStructuredFailure() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-duplicate-class-");
+		Path firstArchive = root.resolve("first.jar");
+		Path secondArchive = root.resolve("second.jar");
+		Path dexFile = root.resolve("duplicate.dex");
+		byte[] duplicateClass = createSimpleClass("sample/Duplicate");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(firstArchive))) {
+			output.putNextEntry(new JarEntry("sample/Duplicate.class"));
+			output.write(duplicateClass);
+			output.closeEntry();
+		}
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(secondArchive))) {
+			output.putNextEntry(new JarEntry("sample/Duplicate.class"));
+			output.write(duplicateClass);
+			output.closeEntry();
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {firstArchive.toString(), secondArchive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertFalse(result.isSuccess());
+			assertEquals(2, result.getClassesDiscovered());
+			assertEquals(1, result.getClassesConverted());
+			assertEquals(0, result.getClassesSkipped());
+			assertEquals(1, result.getDiagnostics().size());
+			ConversionDiagnostic diagnostic = result.getDiagnostics().get(0);
+			assertEquals("sample/Duplicate.class", diagnostic.getEntry());
+			assertEquals(ConversionDiagnostic.Phase.DEX_ASSEMBLY, diagnostic.getPhase());
+			assertEquals(ConversionDiagnostic.Kind.ASSEMBLY_FAILURE, diagnostic.getKind());
+			assertEquals(ConversionDiagnostic.Action.ABORTED, diagnostic.getAction());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(secondArchive);
+			Files.deleteIfExists(firstArchive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
 	public void conversionFailsWhenOneArchiveClassCannotBeTransformed() throws Exception {
 		Path root = Files.createTempDirectory("jlmod-dex-transform-failure-");
 		Path archive = root.resolve("mixed.jar");

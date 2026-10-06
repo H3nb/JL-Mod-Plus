@@ -39,7 +39,7 @@ A source class that is already unreadable before the JL-Mod transform may be omi
 generated DEX and reported as a conversion warning. The retained source JAR is never rewritten.
 A skipped class that is declared as a `MIDlet-n` entry is not recoverable and aborts installation
 or reconversion. Class/path identity mismatches, failures while transforming readable source,
-DX parse/translation failures, and output failures remain fatal.
+DX parse/translation/assembly failures, and output failures remain fatal.
 
 Successful conversion diagnostics are bounded and surfaced to the user instead of being silently
 discarded. Skipped-class identities used to verify declared `MIDlet-n` entry points are tracked

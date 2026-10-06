@@ -16,6 +16,7 @@ public final class ConversionDiagnostic {
         TRANSFORM,
         DEX_PARSE,
         DEX_TRANSLATION,
+        DEX_ASSEMBLY,
         DEX_WRITE,
     }
 
@@ -27,6 +28,7 @@ public final class ConversionDiagnostic {
         TRANSFORM_FAILURE,
         PARSE_FAILURE,
         TRANSLATION_FAILURE,
+        ASSEMBLY_FAILURE,
         OUTPUT_FAILURE,
     }
 
