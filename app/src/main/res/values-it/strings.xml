@@ -893,7 +893,6 @@
     <string name="settings_profiles_summary">Gestisci profili riutilizzabili tra più MIDlet.</string>
     <string name="pref_use_display_cutout_title">Usa ritaglio display nel MIDlet</string>
     <string name="pref_use_display_cutout_summary">Consente ai contenuti Canvas compatibili del MIDlet e alla barra runtime di usare l’area del ritaglio del display. Se attivato, nasconde la barra di stato di sistema.</string>
-    <string name="dialog_scroll_hint">Scorri per continuare</string>
     <string name="pref_accent_title">Colore accento</string>
     <string name="pref_accent_blue">Blu predefinito</string>
     <string name="pref_accent_teal">Verde acqua</string>

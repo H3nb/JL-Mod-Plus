@@ -893,7 +893,6 @@
     <string name="settings_profiles_summary">Profile verwalten, die du für mehrere MIDlets wiederverwenden kannst.</string>
     <string name="pref_use_display_cutout_title">Display-Ausschnitt im MIDlet verwenden</string>
     <string name="pref_use_display_cutout_summary">Kompatible MIDlet-Canvas-Inhalte und die Runtime-Symbolleiste dürfen den Bereich des Display-Ausschnitts verwenden. Bei Aktivierung wird die Systemstatusleiste ausgeblendet.</string>
-    <string name="dialog_scroll_hint">Wischen, um fortzufahren</string>
     <string name="pref_accent_title">Akzentfarbe</string>
     <string name="pref_accent_blue">Standardblau</string>
     <string name="pref_accent_teal">Blaugrün</string>

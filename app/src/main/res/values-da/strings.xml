@@ -886,7 +886,6 @@
     <string name="settings_profiles_summary">Administrer profiler, som du kan genbruge på tværs af MIDlet-programmer.</string>
     <string name="pref_use_display_cutout_title">Brug skærmudskæring i MIDlet</string>
     <string name="pref_use_display_cutout_summary">Tillad kompatibelt MIDlet Canvas-indhold og runtime-værktøjslinjen at bruge området ved skærmudskæringen. Når det aktiveres, skjules systemstatuslinjen.</string>
-    <string name="dialog_scroll_hint">Stryg for at fortsætte</string>
     <string name="pref_accent_title">Accentfarve</string>
     <string name="pref_accent_blue">Standardblå</string>
     <string name="pref_accent_teal">Blågrøn</string>

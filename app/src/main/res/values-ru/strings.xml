@@ -1007,7 +1007,6 @@
     <string name="settings_section_storage">Хранилище</string>
     <string name="settings_section_profiles">Профили</string>
     <string name="settings_profiles_summary">Управляйте профилями, которые можно повторно использовать для разных MIDlet.</string>
-    <string name="dialog_scroll_hint">Проведите, чтобы продолжить</string>
     <string name="pref_accent_title">Акцентный цвет</string>
     <string name="pref_accent_blue">Синий по умолчанию</string>
     <string name="pref_accent_teal">Бирюзовый</string>

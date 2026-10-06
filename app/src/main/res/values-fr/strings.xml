@@ -893,7 +893,6 @@
     <string name="settings_profiles_summary">Gérez les profils réutilisables entre les MIDlets.</string>
     <string name="pref_use_display_cutout_title">Utiliser l’encoche d’affichage dans le MIDlet</string>
     <string name="pref_use_display_cutout_summary">Permet au contenu Canvas compatible du MIDlet et à la barre d’outils d’exécution d’utiliser la zone de l’encoche d’affichage. Son activation masque la barre d’état système.</string>
-    <string name="dialog_scroll_hint">Faites glisser pour continuer</string>
     <string name="pref_accent_title">Couleur d’accent</string>
     <string name="pref_accent_blue">Bleu par défaut</string>
     <string name="pref_accent_teal">Sarcelle</string>

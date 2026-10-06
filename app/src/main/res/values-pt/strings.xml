@@ -893,7 +893,6 @@
     <string name="settings_profiles_summary">Gerir perfis que pode reutilizar entre MIDlets.</string>
     <string name="pref_use_display_cutout_title">Usar recorte do ecrã no MIDlet</string>
     <string name="pref_use_display_cutout_summary">Permite que o conteúdo Canvas compatível do MIDlet e a barra de execução usem a área do recorte do ecrã. Ao ativá-lo, a barra de estado do sistema é ocultada.</string>
-    <string name="dialog_scroll_hint">Deslize para continuar</string>
     <string name="pref_accent_title">Cor de destaque</string>
     <string name="pref_accent_blue">Azul predefinido</string>
     <string name="pref_accent_teal">Azul-petróleo</string>

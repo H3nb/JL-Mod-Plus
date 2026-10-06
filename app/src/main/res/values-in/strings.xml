@@ -867,7 +867,6 @@
     <string name="settings_profiles_summary">Profil dapat digunakan kembali pada beberapa MIDlet.</string>
     <string name="pref_use_display_cutout_title">Gunakan area potongan layar</string>
     <string name="pref_use_display_cutout_summary">Mengizinkan konten Canvas MIDlet yang kompatibel dan bilah alat runtime menggunakan area potongan layar. Mengaktifkannya menyembunyikan bilah status sistem.</string>
-    <string name="dialog_scroll_hint">Geser untuk melanjutkan</string>
     <string name="pref_accent_title">Warna aksen</string>
     <string name="pref_accent_blue">Biru bawaan</string>
     <string name="pref_accent_teal">Teal</string>

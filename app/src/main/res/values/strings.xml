@@ -944,7 +944,6 @@
     <string name="settings_profiles_summary">Manage profiles you can reuse across MIDlets.</string>
     <string name="pref_use_display_cutout_title">Use display cutout area</string>
     <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the runtime toolbar to use the display-cutout area. Enabling it hides the system status bar.</string>
-    <string name="dialog_scroll_hint">Swipe to continue</string>
     <string name="pref_accent_title">Accent color</string>
     <string name="pref_accent_blue">Default blue</string>
     <string name="pref_accent_teal">Teal</string>
