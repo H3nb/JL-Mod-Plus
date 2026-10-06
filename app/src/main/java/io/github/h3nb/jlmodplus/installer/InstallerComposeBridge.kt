@@ -453,7 +453,6 @@ private fun InstallerButtons(
         TextButton(onClick = onClose) { Text(closeLabel, style = labelStyle) }
         Button(
             onClick = onPrimary,
-            shape = MaterialTheme.shapes.medium,
         ) {
             Text(primaryLabel, style = labelStyle)
         }

@@ -32,9 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import io.github.h3nb.jlmodplus.R
 
 /**
  * Small, theme-aware affordance shown only when a bounded popup has content below its viewport.
@@ -60,7 +58,7 @@ internal fun ScrollableContentHint(
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_arrow_downward),
-                contentDescription = stringResource(R.string.dialog_scroll_hint),
+                contentDescription = null,
                 modifier = Modifier
                     .padding(horizontal = 6.dp, vertical = 2.dp)
                     .size(20.dp),

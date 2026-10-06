@@ -2182,8 +2182,7 @@ private fun LibraryAppsHeader(
                     title ?: stringResource(R.string.app_name)
                 },
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.headlineSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -2376,7 +2375,6 @@ private fun LibraryErrorState(onRetry: () -> Unit) {
         Text(
             text = stringResource(R.string.library_load_error_title),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
         )
         Text(
@@ -2429,8 +2427,7 @@ internal fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
     ) {
         Text(
             text = stringResource(R.string.library_destination_collections),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.headlineSmall,
         )
         Box(
             modifier = Modifier
@@ -2452,7 +2449,6 @@ internal fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
                 Text(
                     text = stringResource(R.string.library_collections_unavailable_title),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
                 )
                 Text(
@@ -2503,8 +2499,7 @@ internal fun LibraryMoreDestination(
                     ) {
                         Text(
                             text = stringResource(R.string.library_destination_more),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.headlineSmall,
                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                         )
                         Surface(
@@ -2668,7 +2663,7 @@ private fun LibraryGridItem(
                 Text(
                     text = app.title,
                     modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
+                    style = MaterialTheme.typography.titleSmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
@@ -2703,6 +2698,18 @@ private fun LibraryListItem(
         if (selected) R.string.library_selection_checked
         else R.string.library_selection_unchecked,
     )
+    val interactionModifier = if (selectionMode) {
+        Modifier.toggleable(
+            value = selected,
+            role = Role.Checkbox,
+            onValueChange = { onToggleSelection(app) },
+        )
+    } else {
+        Modifier.combinedClickable(
+            onClick = { onOpenApp(app.id) },
+            onLongClick = { onOpenActions(app) },
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -2724,14 +2731,14 @@ private fun LibraryListItem(
                     Modifier
                 },
             )
-            .combinedClickable(
-                onClick = {
-                    if (selectionMode) onToggleSelection(app) else onOpenApp(app.id)
-                },
-                onLongClick = {
-                    if (selectionMode) onToggleSelection(app) else onOpenActions(app)
-                },
-            ),
+            .then(interactionModifier)
+            .semantics {
+                role = if (selectionMode) Role.Checkbox else Role.Button
+                if (selectionMode) {
+                    contentDescription = selectionDescription
+                    stateDescription = selectionStateDescription
+                }
+            },
     ) {
         Row(
             modifier = Modifier
@@ -2752,7 +2759,6 @@ private fun LibraryListItem(
                 Text(
                     text = app.title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -2772,11 +2778,8 @@ private fun LibraryListItem(
             if (selectionMode) {
                 Checkbox(
                     checked = selected,
-                    onCheckedChange = { onToggleSelection(app) },
-                    modifier = Modifier.semantics {
-                        contentDescription = selectionDescription
-                        stateDescription = selectionStateDescription
-                    },
+                    onCheckedChange = null,
+                    modifier = Modifier.clearAndSetSemantics { },
                 )
             } else if (favoriteEnabled) {
                 LibraryFavoriteButton(app, onFavorite)
@@ -2807,48 +2810,40 @@ internal fun LibraryDescription(descriptionValue: String, appId: Long) {
     val collapseDescriptionLabel = stringResource(R.string.library_collapse_description)
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = description,
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Start,
-                maxLines = if (expanded) Int.MAX_VALUE else 2,
-                overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis,
-                onTextLayout = { result ->
-                    if (!expanded) {
-                        overflows = result.didOverflowHeight || result.didOverflowWidth ||
-                            result.hasVisualOverflow ||
-                            (result.lineCount > 0 && result.isLineEllipsized(result.lineCount - 1))
-                    }
-                },
-            )
-            if (!expanded && overflows) {
-                Text(
-                    text = stringResource(R.string.library_description_more),
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .background(MaterialTheme.colorScheme.background)
-                        .clickable(role = Role.Button) { expanded = true }
-                        .semantics { contentDescription = expandDescriptionLabel }
-                        .padding(start = 6.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                )
-            }
-        }
-        if (expanded) {
-            Text(
-                text = stringResource(R.string.library_description_less),
+        Text(
+            text = description,
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Start,
+            maxLines = if (expanded) Int.MAX_VALUE else 2,
+            overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis,
+            onTextLayout = { result ->
+                if (!expanded) {
+                    overflows = result.didOverflowHeight || result.didOverflowWidth ||
+                        result.hasVisualOverflow ||
+                        (result.lineCount > 0 && result.isLineEllipsized(result.lineCount - 1))
+                }
+            },
+        )
+        if (!expanded && overflows) {
+            TextButton(
+                onClick = { expanded = true },
                 modifier = Modifier
                     .align(Alignment.End)
-                    .clickable(role = Role.Button) { expanded = false }
-                    .semantics { contentDescription = collapseDescriptionLabel }
-                    .padding(top = 2.dp),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-            )
+                    .semantics { contentDescription = expandDescriptionLabel },
+            ) {
+                Text(stringResource(R.string.library_description_more))
+            }
+        } else if (expanded) {
+            TextButton(
+                onClick = { expanded = false },
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .semantics { contentDescription = collapseDescriptionLabel },
+            ) {
+                Text(stringResource(R.string.library_description_less))
+            }
         }
     }
 }
@@ -4396,7 +4391,6 @@ private fun LibraryAboutBody(
             Text(
                 text = stringResource(R.string.about_product_name),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
             )
             Text(
                 text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),

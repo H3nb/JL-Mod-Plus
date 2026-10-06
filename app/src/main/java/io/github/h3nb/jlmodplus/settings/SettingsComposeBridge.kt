@@ -14,9 +14,9 @@
 
 package io.github.h3nb.jlmodplus.settings
 
-import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
@@ -59,13 +59,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
@@ -158,8 +156,6 @@ fun SettingsScreen(
 ) {
     var choiceDialog by remember { mutableStateOf<SettingsDialogChoice?>(null) }
     var libraryChoiceDialog by remember { mutableStateOf<SettingsChoice?>(null) }
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -386,7 +382,6 @@ private fun SettingsSection(
             text = title,
             modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
         )
         Surface(
@@ -485,7 +480,6 @@ private fun SettingsChoiceDialog(
                                 Text(
                                     text = option.label,
                                     style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = if (selectedOption) FontWeight.Medium else FontWeight.Normal,
                                 )
                             },
                             leadingContent = {
@@ -511,7 +505,8 @@ private fun SettingsChoiceDialog(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(
+                                .selectable(
+                                    selected = selectedOption,
                                     role = Role.RadioButton,
                                     onClick = { onSelected(option.value) },
                                 ),

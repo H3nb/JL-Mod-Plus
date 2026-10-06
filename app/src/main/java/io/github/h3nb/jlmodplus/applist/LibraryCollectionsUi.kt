@@ -75,7 +75,6 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -507,8 +506,7 @@ private fun LibraryCollectionsOverview(
             Text(
                 text = stringResource(R.string.library_destination_collections),
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.headlineSmall,
             )
             TextButton(
                 enabled = interactive,
@@ -572,7 +570,6 @@ private fun LibraryCollectionsOverview(
                             Text(
                                 text = stringResource(R.string.library_collections_empty_title),
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Medium,
                                 textAlign = TextAlign.Center,
                             )
                             Text(
@@ -600,7 +597,6 @@ private fun LibraryCollectionsOverview(
                                 text = collection.name,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                fontWeight = FontWeight.Medium,
                             )
                         },
                         supportingContent = {
@@ -741,7 +737,6 @@ private fun LibraryCollectionDetailPlaceholder(scaffoldPadding: PaddingValues) {
             Text(
                 text = stringResource(R.string.library_collection_select_title),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
             )
             Text(

@@ -107,7 +107,7 @@ private val DarkColors = darkColorScheme(
     onBackground = Color(0xFFE7EDF0),
     surface = Color(AppBackgroundColors.argb(true)),
     onSurface = Color(0xFFE7EDF0),
-    surfaceVariant = Color(0xFF2D363D),
+    surfaceVariant = Color(0xFF323B42),
     onSurfaceVariant = Color(0xFFBBC6CD),
     surfaceTint = Color(0xFFA9C8E5),
     inverseSurface = Color(0xFFE7EDF0),
@@ -117,15 +117,15 @@ private val DarkColors = darkColorScheme(
     errorContainer = Color(0xFF93000A),
     onErrorContainer = Color(0xFFFFDAD6),
     outline = Color(0xFF89959D),
-    outlineVariant = Color(0xFF3E484F),
+    outlineVariant = Color(0xFF46525B),
     scrim = Color.Black,
     surfaceDim = Color(AppBackgroundColors.argb(true)),
-    surfaceBright = Color(0xFF252B2F),
-    surfaceContainerLowest = Color.Black,
-    surfaceContainerLow = Color(0xFF080B0D),
-    surfaceContainer = Color(0xFF0F1418),
-    surfaceContainerHigh = Color(0xFF171D21),
-    surfaceContainerHighest = Color(0xFF20272C),
+    surfaceBright = Color(0xFF353F47),
+    surfaceContainerLowest = Color(0xFF0A0D0F),
+    surfaceContainerLow = Color(0xFF1A2024),
+    surfaceContainer = Color(0xFF20272C),
+    surfaceContainerHigh = Color(0xFF283138),
+    surfaceContainerHighest = Color(0xFF323C43),
 )
 
 enum class AccentPalette(val key: String) {
@@ -290,8 +290,8 @@ private fun AccentPalette.colorScheme(dark: Boolean): androidx.compose.material3
  */
 @Composable
 internal fun jlModPlusNavigationBarItemColors() = NavigationBarItemDefaults.colors(
-    selectedIconColor = MaterialTheme.colorScheme.primary,
-    selectedTextColor = MaterialTheme.colorScheme.primary,
+    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -299,8 +299,8 @@ internal fun jlModPlusNavigationBarItemColors() = NavigationBarItemDefaults.colo
 
 @Composable
 internal fun jlModPlusNavigationRailItemColors() = NavigationRailItemDefaults.colors(
-    selectedIconColor = MaterialTheme.colorScheme.primary,
-    selectedTextColor = MaterialTheme.colorScheme.primary,
+    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,

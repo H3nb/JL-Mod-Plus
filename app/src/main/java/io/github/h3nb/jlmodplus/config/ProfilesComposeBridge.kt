@@ -32,6 +32,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -226,13 +227,20 @@ fun ProfilesScreen(
     deleteTarget?.let { profile ->
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
-            title = { Text(stringResource(android.R.string.dialog_alert_title)) },
+            title = { Text(stringResource(R.string.action_context_delete)) },
             text = { Text(stringResource(R.string.profile_delete_template_message, profile.name)) },
             confirmButton = {
-                TextButton(onClick = {
-                    deleteTarget = null
-                    actions.onDelete(profile.name)
-                }) { Text(stringResource(android.R.string.ok)) }
+                TextButton(
+                    onClick = {
+                        deleteTarget = null
+                        actions.onDelete(profile.name)
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text(stringResource(R.string.action_context_delete))
+                }
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) {
@@ -528,7 +536,6 @@ private fun DefaultPresetDialog(
                                 displayName,
                                 modifier = Modifier.padding(start = 8.dp),
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Medium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -570,7 +577,6 @@ private fun ProfileDialogAction(label: Int, onDismiss: () -> Unit, action: () ->
                 .heightIn(min = 48.dp)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
         )
     }
 }
