@@ -419,6 +419,7 @@ jobs:
 
 
 
+  # Temporary PR #152 qualification jobs; remove before platform freeze.
   native-portability:
     if: github.event.pull_request.number == 152
     runs-on: ubuntu-26.04
