@@ -410,6 +410,14 @@ public class Main {
         }
 
         if (!(anyFilesProcessed || args.emptyOk)) {
+            if (classesDiscovered.get() > 0 && classesSkipped.get() == classesDiscovered.get()) {
+                recordDiagnostic(new ConversionDiagnostic(
+                        null,
+                        ConversionDiagnostic.Phase.SOURCE_VALIDATION,
+                        ConversionDiagnostic.Kind.NO_USABLE_CLASSES,
+                        ConversionDiagnostic.Action.ABORTED,
+                        "All discovered source classes were unreadable and skipped"));
+            }
             context.err.println("no classfiles specified");
             return false;
         }

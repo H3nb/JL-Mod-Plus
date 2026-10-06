@@ -22,6 +22,7 @@ public final class ConversionDiagnostic {
     public enum Kind {
         UNREADABLE_SOURCE_CLASS,
         UNSUPPORTED_SOURCE_CLASS,
+        NO_USABLE_CLASSES,
         CLASS_NAME_MISMATCH,
         TRANSFORM_FAILURE,
         PARSE_FAILURE,

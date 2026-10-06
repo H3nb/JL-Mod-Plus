@@ -209,6 +209,11 @@ public class AndroidProducerDexTest {
 			assertEquals(1, result.getClassesDiscovered());
 			assertEquals(0, result.getClassesConverted());
 			assertEquals(1, result.getClassesSkipped());
+			assertEquals(2, result.getDiagnostics().size());
+			ConversionDiagnostic terminal = result.getDiagnostics().get(1);
+			assertEquals(ConversionDiagnostic.Phase.SOURCE_VALIDATION, terminal.getPhase());
+			assertEquals(ConversionDiagnostic.Kind.NO_USABLE_CLASSES, terminal.getKind());
+			assertEquals(ConversionDiagnostic.Action.ABORTED, terminal.getAction());
 		} finally {
 			Files.deleteIfExists(dexFile);
 			Files.deleteIfExists(archive);

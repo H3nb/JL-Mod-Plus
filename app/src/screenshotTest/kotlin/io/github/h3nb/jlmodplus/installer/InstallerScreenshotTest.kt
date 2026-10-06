@@ -212,12 +212,12 @@ fun InstallerSuccessWarningScreenshot() {
         InstallerScreen(
             state = InstallerUiState.Success(
                 title = "Demo MIDlet",
-                status = "Application installed with a warning.",
+                status = "Application installed with warnings.",
                 startLabel = "Start",
                 closeLabel = "Close",
                 iconPath = null,
                 warningSummary = "1 Java class file was skipped because it could not be read. " +
-                    "The app may still run, but features that depend on it may not work.",
+                    "Features that use it may not work.",
                 warningDetails = "sample/Bad.class\n" +
                     "Issue: Java class file could not be read.\n" +
                     "Action: Skipped during conversion.",
