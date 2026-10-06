@@ -14,9 +14,8 @@ concurrency:
 
 jobs:
   build-native:
-    name: build-native-ubuntu-24
     if: github.event.pull_request.number == 152
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 55
 
     steps:
@@ -124,9 +123,9 @@ jobs:
               fi
             done
             checked=$((checked + 1))
-          done < <(find elf-check/lib -type f -name '*.so' -print0)
+          done < <(find elf-check/lib/arm64-v8a elf-check/lib/x86_64 -type f -name '*.so' -print0)
           [[ "$checked" -gt 0 ]]
-          echo "PASS 16 KiB ELF LOAD alignment: $checked shared libraries"
+          echo "PASS 16 KiB ELF LOAD alignment on 64-bit ABIs: $checked shared libraries"
 
           "$ANDROID_HOME/ndk/30.0.16248370/ndk-build" --version >/dev/null
 
