@@ -275,26 +275,60 @@ class InstallerComposeTest {
         assertEquals(1, actions.closeCount)
     }
 
-    @Test fun bulkRetryRemainsReachableInShortWindowWithLargeText() {
+    @Test fun bulkFooterActionsRemainReachableInShortWindowWithLargeText() {
         var retries = 0
+        var closes = 0
         composeRule.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp))) {
                 CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
                     JLModPlusTheme {
-                        BulkInstallSurface(BulkInstallViewModel.State.Finished(
-                            BulkInstallPlan(1, File("/workdir"), emptyList()),
-                            listOf(BulkInstallResult("one", "Game", BulkInstallResultKind.PartiallyInstalled)),
-                            cancelled = true), onToggle = {}, onRecommended = {}, onClear = {},
-                            onInstall = {}, onRetry = { retries++ }, onCancel = {}, onClose = {})
+                        BulkInstallSurface(
+                            BulkInstallViewModel.State.Finished(
+                                BulkInstallPlan(1, File("/workdir"), emptyList()),
+                                listOf(
+                                    BulkInstallResult(
+                                        "one",
+                                        "Game one",
+                                        BulkInstallResultKind.PartiallyInstalled,
+                                    ),
+                                    BulkInstallResult(
+                                        "two",
+                                        "Game two",
+                                        BulkInstallResultKind.NotProcessed,
+                                    ),
+                                    BulkInstallResult(
+                                        "three",
+                                        "Game three",
+                                        BulkInstallResultKind.NotProcessed,
+                                    ),
+                                    BulkInstallResult(
+                                        "four",
+                                        "Game four",
+                                        BulkInstallResultKind.NotProcessed,
+                                    ),
+                                ),
+                                cancelled = true,
+                            ),
+                            onToggle = {},
+                            onRecommended = {},
+                            onClear = {},
+                            onInstall = {},
+                            onRetry = { retries++ },
+                            onCancel = {},
+                            onClose = { closes++ },
+                        )
                     }
                 }
             }
         }
         capturePopup("bulk-short.png")
-        composeRule.onNodeWithTag("bulk-results").performScrollToIndex(1)
+        composeRule.onNodeWithTag("bulk-results").performScrollToIndex(4)
         composeRule.onNodeWithText(targetString(R.string.installer_retry_remaining))
             .assertIsDisplayed().performClick()
+        composeRule.onNodeWithText(targetString(R.string.bulk_install_close))
+            .assertIsDisplayed().performClick()
         assertEquals(1, retries)
+        assertEquals(1, closes)
     }
 
     @Test fun shortPopupWrapsContentInsteadOfFillingMaximumHeight() {
