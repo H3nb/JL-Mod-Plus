@@ -15,16 +15,20 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -38,7 +42,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -78,33 +84,41 @@ internal fun PresetSummary(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+                .padding(vertical = 14.dp),
         ) {
-            Text(
-                text = presetStatusTitle(state.profileStatus),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            provenanceSummary(state.profileStatus)?.let { provenance ->
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Text(
-                    text = provenance,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = presetStatusTitle(state.profileStatus),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                provenanceSummary(state.profileStatus)?.let { provenance ->
+                    Text(
+                        text = provenance,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Text(
+                    text = setupSummary(state.form),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Text(
-                text = setupSummary(state.form),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                color = MaterialTheme.colorScheme.outlineVariant,
             )
-            PresetActionButtons(
+            PresetActionRows(
                 onUsePreset = onUsePreset,
                 onSavePreset = onSavePreset,
                 updatePresetName = state.updatePresetName,
@@ -124,49 +138,119 @@ internal fun PresetSummary(
 }
 
 @Composable
-private fun PresetActionButtons(
+private fun PresetActionRows(
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
     updatePresetName: String?,
     onUpdatePreset: (String) -> Unit,
 ) {
     Column(
-        modifier = Modifier.padding(top = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
     ) {
-        Button(
+        PresetActionRow(
+            label = stringResource(R.string.preset_use),
+            icon = R.drawable.ic_play,
+            emphasized = true,
             onClick = onUsePreset,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp),
-        ) {
-            Text(stringResource(R.string.preset_use))
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(
-                onClick = onSavePreset,
-                modifier = Modifier.heightIn(min = 48.dp),
-            ) {
-                Text(stringResource(R.string.preset_save_as))
-            }
-            updatePresetName?.let { name ->
-                val updateActionDescription = stringResource(R.string.preset_update, name)
-                TextButton(
-                    onClick = { onUpdatePreset(name) },
-                    modifier = Modifier
-                        .heightIn(min = 48.dp)
-                        .testTag("preset_update_action")
-                        .semantics { contentDescription = updateActionDescription },
-                ) {
-                    Text(stringResource(R.string.preset_update_confirm))
-                }
-            }
+        )
+        PresetActionDivider()
+        PresetActionRow(
+            label = stringResource(R.string.preset_save_as),
+            icon = R.drawable.ic_save,
+            onClick = onSavePreset,
+        )
+        updatePresetName?.let { name ->
+            PresetActionDivider()
+            PresetActionRow(
+                label = stringResource(R.string.preset_update_confirm),
+                icon = R.drawable.ic_restart_alt,
+                contentDescription = stringResource(R.string.preset_update, name),
+                modifier = Modifier.testTag("preset_update_action"),
+                onClick = { onUpdatePreset(name) },
+            )
         }
     }
+}
+
+@Composable
+private fun PresetActionRow(
+    label: String,
+    icon: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    emphasized: Boolean = false,
+    contentDescription: String? = null,
+) {
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                if (contentDescription != null) {
+                    this.contentDescription = contentDescription
+                }
+            },
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        color = if (emphasized) colors.surfaceContainer else Color.Transparent,
+        contentColor = colors.onSurface,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = if (emphasized) {
+                    colors.primaryContainer
+                } else {
+                    colors.surfaceContainerHighest
+                },
+                contentColor = if (emphasized) {
+                    colors.onPrimaryContainer
+                } else {
+                    colors.onSurfaceVariant
+                },
+            ) {
+                Box(
+                    modifier = Modifier.size(40.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(icon),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+            )
+            Icon(
+                painter = painterResource(R.drawable.ic_chevron_right),
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = colors.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PresetActionDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 64.dp),
+        color = MaterialTheme.colorScheme.outlineVariant,
+    )
 }
 
 @Composable
