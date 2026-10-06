@@ -108,7 +108,7 @@ def ensure_references_unchanged(references=REFERENCES):
         raise RuntimeError("Reference files must be unchanged before packaging candidates.")
 
 
-def package_candidates(candidates, references=REFERENCES, output=OUTPUT):
+def package_candidates(candidates, excluded, references=REFERENCES, output=OUTPUT):
     output.mkdir(exist_ok=False)
     with tempfile.TemporaryDirectory() as temporary:
         environment = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / "index"))
@@ -144,6 +144,9 @@ def package_candidates(candidates, references=REFERENCES, output=OUTPUT):
             (references / path).as_posix()
             for path in sorted(candidates, key=lambda item: item.as_posix())
         ],
+        # Promotion must fail closed if the same screenshot run also contained renderer,
+        # compilation, or missing-reference failures that were not packaged as comparisons.
+        "excluded_failures": list(excluded),
         "note": "Review candidates before applying. No references were changed; validation still failed.",
     }
     (output / "source-context.json").write_text(
@@ -165,7 +168,7 @@ def main():
         report_output(False, 0)
         return
 
-    package_candidates(candidates)
+    package_candidates(candidates, excluded)
     report_output(True, len(candidates))
 
 
