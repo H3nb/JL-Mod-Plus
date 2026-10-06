@@ -42,6 +42,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -152,11 +154,13 @@ private fun PresetActionButtons(
                 Text(stringResource(R.string.preset_save_as))
             }
             updatePresetName?.let { name ->
+                val updateActionDescription = stringResource(R.string.preset_update, name)
                 TextButton(
                     onClick = { onUpdatePreset(name) },
                     modifier = Modifier
                         .heightIn(min = 48.dp)
-                        .testTag("preset_update_action"),
+                        .testTag("preset_update_action")
+                        .semantics { contentDescription = updateActionDescription },
                 ) {
                     Text(stringResource(R.string.preset_update_confirm))
                 }
