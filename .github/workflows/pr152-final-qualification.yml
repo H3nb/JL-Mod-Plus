@@ -1,0 +1,291 @@
+name: PR 152 final qualification
+
+on:
+  push:
+    branches:
+      - android-platform-modernization
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-152-final-qualification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-r8:
+    name: Final release, R8, and 16 KiB
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    env:
+      GRADLE_USER_HOME: ${{ runner.temp }}/jlmod-pr152-final-release
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle without remote state cache
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-disabled: true
+
+      - name: Set up Android SDK, platform 37, and NDK r30
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+
+      - name: Create temporary release signing material
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -genkeypair -noprompt \
+            -keystore qualification-release.jks \
+            -storepass android \
+            -keypass android \
+            -alias qualification \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 2 \
+            -dname 'CN=JL-Mod Plus PR 152 Qualification,O=CI,C=US'
+          cat > keystore.properties <<'EOF'
+          keyAlias=qualification
+          keyPassword=android
+          storeFile=qualification-release.jks
+          storePassword=android
+          EOF
+
+      - name: Build all native dependency ABIs from cold state
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          rm -rf app/build/audio-sources app/build/audio-deps app/build/audio-work
+          ./gradlew --no-daemon --stacktrace --console=plain --profile --no-build-cache \
+            --configuration-cache --configuration-cache-problems=fail \
+            :app:buildNativeAudioarm64v8a \
+            :app:buildNativeAudioarmeabiv7a \
+            :app:buildNativeAudiox86 \
+            :app:buildNativeAudiox8664 | tee native-all-abi.log
+
+          [[ $(grep -Fc 'PASS prepared pinned native audio sources' native-all-abi.log) -eq 1 ]]
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            safe="${abi//[-_]/}"
+            grep -Fq "> Task :app:buildNativeAudio${safe}" native-all-abi.log
+            grep -Fq "PASS build ${abi}" native-all-abi.log
+            test -f "app/build/audio-deps/install-${abi}/checksums.json"
+            test "$(find "app/build/audio-deps/install-${abi}/lib" -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 4
+          done
+
+      - name: Build minified all-ABI release
+        shell: bash
+        env:
+          JLMOD_BUILD_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon --stacktrace --console=plain --profile --no-build-cache \
+            --configuration-cache --configuration-cache-problems=fail \
+            :app:assembleEmulatorRelease | tee release-build.log
+
+          if grep -Fq 'PASS prepared pinned native audio sources' release-build.log; then
+            echo 'Release packaging repeated native source preparation.' >&2
+            exit 1
+          fi
+
+      - name: Verify release matrix, provenance, schemas, and 16 KiB compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          output='app/build/outputs/apk/emulator/release'
+          metadata="$output/output-metadata.json"
+          test -f "$metadata"
+          test -f app/build/audio-sources/source-context.json
+          jq -e '.ffmpegVersion == "8.1.3" and .openCoreVersion == "0.1.6"' \
+            app/build/audio-sources/source-context.json >/dev/null
+
+          expected_abis=(arm64-v8a armeabi-v7a x86 x86_64)
+          for abi in "${expected_abis[@]}"; do
+            count="$(jq -r --arg abi "$abi" \
+              '[.elements[] | select(any(.filters[]?; .filterType == "ABI" and .value == $abi))] | length' \
+              "$metadata")"
+            [[ "$count" == 1 ]] || { echo "Expected one $abi APK, found $count" >&2; exit 1; }
+            test -f "app/build/audio-deps/install-$abi/checksums.json"
+          done
+
+          universal_count="$(jq -r '[.elements[] | select(((.filters // []) | length) == 0)] | length' "$metadata")"
+          [[ "$universal_count" == 1 ]] || { echo "Expected one universal APK, found $universal_count" >&2; exit 1; }
+          universal="$(jq -r '.elements[] | select(((.filters // []) | length) == 0) | .outputFile' "$metadata")"
+          apk="$output/$universal"
+          test -f "$apk"
+
+          for library in avformat avcodec avutil swresample; do
+            unzip -Z1 "$apk" | grep -Fxq "lib/armeabi-v7a/lib${library}_neon.so"
+            for abi in arm64-v8a x86 x86_64; do
+              unzip -Z1 "$apk" | grep -Fxq "lib/$abi/lib${library}.so"
+            done
+            if unzip -Z1 "$apk" | grep -Fxq "lib/armeabi-v7a/lib${library}.so"; then
+              echo "Unexpected unsuffixed ARMv7 FFmpeg library: lib${library}.so" >&2
+              exit 1
+            fi
+          done
+
+          ndk="$ANDROID_HOME/ndk/30.0.16248370"
+          readelf="$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
+          test -x "$readelf"
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V | tail -n1)"
+          zipalign="$ANDROID_HOME/build-tools/$build_tools/zipalign"
+          test -x "$zipalign"
+          "$zipalign" -c -P 16 -v 4 "$apk"
+
+          rm -rf extracted-apk
+          mkdir extracted-apk
+          unzip -q "$apk" 'lib/*/*.so' -d extracted-apk
+          failures=0
+          while IFS= read -r -d '' so; do
+            while read -r align; do
+              if (( align < 0x4000 )); then
+                echo "ELF LOAD alignment below 16 KiB: $so ($align)" >&2
+                failures=1
+              fi
+            done < <("$readelf" -lW "$so" | awk '$1 == "LOAD" { print $NF }')
+          done < <(find extracted-apk/lib/arm64-v8a extracted-apk/lib/x86_64 -type f -name '*.so' -print0)
+          (( failures == 0 ))
+
+          x86_apk="$(jq -r '
+            .elements[]
+            | select(any(.filters[]?; .filterType == "ABI" and .value == "x86_64"))
+            | .outputFile
+          ' "$metadata" | head -n1)"
+          test -n "$x86_apk"
+          printf '%s\n' "$output/$x86_apk" > final-r8-apk.txt
+          test -f app/build/outputs/mapping/emulatorRelease/mapping.txt
+          git diff --exit-code -- app/schemas
+
+      - name: Enable emulator acceleration
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Verify retained R8 workaround at runtime
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            apk="$(cat final-r8-apk.txt)"
+            adb root || true
+            adb wait-for-device
+            adb install -r "$apk"
+            adb logcat -c
+            adb shell am force-stop io.github.h3nb.jlmodplus
+            adb shell am start -W \
+              -n io.github.h3nb.jlmodplus/io.github.h3nb.jlmodplus.memory.MemoryEditorActivity \
+              --el ru.playsoftware.j2meloader.memory.extra.RUNTIME_TOKEN 1 \
+              | tee final-r8-memory-start.txt
+            sleep 8
+            adb logcat -d -v threadtime > final-r8-memory-logcat.txt
+            adb shell dumpsys activity exit-info io.github.h3nb.jlmodplus > final-r8-memory-exit-info.txt || true
+            if grep -Eiq 'VerifyError|verification failed|rejecting opcode|invalid.*register|wide.*register|FATAL EXCEPTION.*memory_engine' final-r8-memory-logcat.txt; then
+              echo 'Retained R8 workaround did not protect the minified Memory Editor.' >&2
+              grep -Ein 'VerifyError|verification failed|rejecting opcode|invalid.*register|wide.*register|FATAL EXCEPTION' final-r8-memory-logcat.txt >&2 || true
+              exit 1
+            fi
+            if grep -Eiq 'REASON_CRASH|reason=crash|crash native|crash java' final-r8-memory-exit-info.txt; then
+              echo 'Minified Memory Editor recorded a crash exit.' >&2
+              cat final-r8-memory-exit-info.txt >&2
+              exit 1
+            fi
+            echo 'Retained Memory Editor R8 workaround passed runtime qualification.'
+
+      - name: Upload final release qualification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pr152-final-release-qualification
+          path: |
+            native-all-abi.log
+            release-build.log
+            final-r8-memory-start.txt
+            final-r8-memory-logcat.txt
+            final-r8-memory-exit-info.txt
+            build/reports/profile/**
+            app/build/outputs/mapping/emulatorRelease/mapping.txt
+          if-no-files-found: warn
+          retention-days: 7
+
+  api23:
+    name: Final API 23 native-audio smoke
+    runs-on: ubuntu-26.04
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: true
+
+      - name: Set up Android SDK, platform 37, and NDK r30
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+
+      - name: Enable emulator acceleration
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run API 23 native-audio smoke
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 23
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: >-
+            ./gradlew --daemon --stacktrace --profile
+            --configuration-cache --configuration-cache-problems=fail
+            -PjlmodRuntimeTestAbi=x86_64
+            -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.media.MediaBoundaryRuntimeTest#generatedSynthesisSampledAndVideoShareOutputAndSeekDrainsVideo
+            :app:connectedEmulatorDebugAndroidTest
+
+      - name: Upload API 23 qualification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pr152-final-api23-qualification
+          path: |
+            app/build/reports/androidTests/**
+            app/build/outputs/androidTest-results/**
+            build/reports/profile/**
+          if-no-files-found: warn
+          retention-days: 7
