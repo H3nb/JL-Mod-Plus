@@ -46,7 +46,7 @@ public class AndroidProducerDexTest {
 					|| !(name.matches("V\\d+") || name.matches("V1_\\d+"))) {
 				continue;
 			}
-			highestVersion = Math.max(highestVersion, field.getInt(null));
+			highestVersion = Math.max(highestVersion, field.getInt(null) & 0xffff);
 		}
 		assertEquals(highestVersion, AndroidProducer.MAX_SUPPORTED_CLASS_VERSION);
 	}
