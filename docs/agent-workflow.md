@@ -84,9 +84,8 @@ Apply the scope and design priorities in [AGENTS.md](../AGENTS.md).
 - Do not use a bare `#N` unless it intentionally refers to an issue or PR in the current repository and that target has been verified. When repository identity matters, use an explicit repository-qualified reference such as `owner/repository#N`.
 - For objects that are not issues or PRs, use an unambiguous label or direct Markdown link to the intended object. In particular, do not write an Actions run number as bare `#N`; link the run using the repository URL and run ID, or render the number as non-autolink text when no link is intended.
 - Before publishing PR bodies, comments, release notes, documentation, or other GitHub-rendered text, check that generated references cannot silently resolve through fork-network or cross-repository context to an unrelated project.
-- Use `[skip ci]` on intermediate commits when CI would provide little additional value.
-- Do not use `[skip ci]` to hide a known failure or bypass relevant validation.
-- Before merging changes that can affect build, runtime behavior, tests, or CI, validate the final relevant state with CI without a skip instruction. Documentation-only or policy-only changes need only validation relevant to those changes.
+- Use `[skip ci]` for documentation/policy-only commits and intermediate commits whose changes do not alter production code, tests, resources, build/dependency configuration, CI behavior, or another validated input. Judge the new commit, not the size of the whole PR.
+- Do not use `[skip ci]` to hide a failure or bypass validation of a changed executable/testable state. Before merge, ensure the latest relevant code/build/test state has successful CI evidence without a skip instruction; later documentation-only commits do not invalidate that evidence.
 - Do not create empty/no-op commits solely to manipulate CI; use a real follow-up change, rerun, or manual dispatch instead.
 - Prefer Squash Merge when PR history is mostly WIP, experiments, fixups, or reversions. Preserve individual commits only when they are intentionally useful for history, revert, or bisect.
 - Do not carry `[skip ci]` into the final squash commit message.
