@@ -743,9 +743,27 @@ class BulkInstallViewModel : ViewModel() {
 
     private class FatalBatchException(cause: Throwable) : RuntimeException(cause)
 
-    private fun boundedMessage(error: Throwable): String {
-        val detail = error.message?.trim().orEmpty()
-        val text = if (detail.isBlank()) error.javaClass.simpleName else detail
-        return text.take(512)
+    private fun boundedMessage(error: Throwable): String =
+        boundedInstallerFailureMessage(error)
+}
+
+private const val MAX_BULK_ERROR_DETAIL = 512
+
+internal fun boundedInstallerFailureMessage(error: Throwable): String {
+    var cursor: Throwable? = error
+    while (cursor != null) {
+        if (cursor is ConversionFailureException) {
+            val structured = ConversionWarningFormatter
+                .technicalReport(cursor.result, false)
+                .trim()
+            if (structured.isNotEmpty()) {
+                return structured.take(MAX_BULK_ERROR_DETAIL)
+            }
+        }
+        cursor = cursor.cause
     }
+
+    val detail = error.message?.trim().orEmpty()
+    val text = if (detail.isBlank()) error.javaClass.simpleName else detail
+    return text.take(MAX_BULK_ERROR_DETAIL)
 }
