@@ -1,0 +1,158 @@
+name: Platform modernization closing qualification
+
+on:
+  push:
+    branches:
+      - android-platform-modernization
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-modernization-closing-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  closing-qualification:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-disabled: true
+
+      - name: Set up Android SDK, platform 37, and NDK r30
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+
+      - name: Verify Gradle model
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --daemon --stacktrace --configuration-cache --configuration-cache-problems=fail help
+          ./gradlew --daemon --stacktrace build --dry-run >/tmp/build-dry-run.txt
+          tail -n 40 /tmp/build-dry-run.txt
+
+      - name: Qualify native tamper recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf app/build/audio-deps app/build/audio-sources app/build/audio-work
+          ./gradlew --daemon --stacktrace --no-build-cache --rerun-tasks :app:buildNativeAudioarm64v8a
+
+          SOURCE='app/build/audio-sources/ffmpeg/libavutil/adler32.c'
+          INSTALL='app/build/audio-deps/install-arm64-v8a'
+          test -f "$SOURCE"
+          test -f "$INSTALL/checksums.json"
+          cp "$INSTALL/checksums.json" /tmp/native-baseline-checksums.json
+          SOURCE_SHA="$(sha256sum "$SOURCE" | awk '{print $1}')"
+
+          printf '\n/* JLMOD_SOURCE_TAMPER */\n' >> "$SOURCE"
+          ! grep -q '^$' /dev/null
+          grep -q 'JLMOD_SOURCE_TAMPER' "$SOURCE"
+          ./gradlew --daemon --stacktrace --no-build-cache --rerun-tasks :app:buildNativeAudioarm64v8a
+          test "$(sha256sum "$SOURCE" | awk '{print $1}')" = "$SOURCE_SHA"
+          ! grep -q 'JLMOD_SOURCE_TAMPER' "$SOURCE"
+          cmp -s /tmp/native-baseline-checksums.json "$INSTALL/checksums.json"
+
+          LIB="$INSTALL/lib/libavutil.so"
+          test -f "$LIB"
+          printf 'JLMOD_BINARY_TAMPER' >> "$LIB"
+          TAMPERED_SHA="$(sha256sum "$LIB" | awk '{print $1}')"
+          ./gradlew --daemon --stacktrace --no-build-cache --rerun-tasks :app:buildNativeAudioarm64v8a
+          test "$(sha256sum "$LIB" | awk '{print $1}')" != "$TAMPERED_SHA"
+          cmp -s /tmp/native-baseline-checksums.json "$INSTALL/checksums.json"
+          echo 'PASS native source/output tamper recovery'
+
+      - name: Qualify relocated native Build Cache hit
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT_A=/tmp/jlmod-root-a
+          ROOT_B=/tmp/jlmod-root-b
+          PORTABLE_GRADLE_HOME=/tmp/jlmod-portable-gradle
+          rm -rf "$ROOT_A" "$ROOT_B" "$PORTABLE_GRADLE_HOME"
+          mkdir -p "$ROOT_A" "$ROOT_B"
+          git archive HEAD | tar -x -C "$ROOT_A"
+          git archive HEAD | tar -x -C "$ROOT_B"
+          chmod +x "$ROOT_A/gradlew" "$ROOT_B/gradlew"
+
+          (
+            cd "$ROOT_A"
+            GRADLE_USER_HOME="$PORTABLE_GRADLE_HOME" ./gradlew --no-daemon --stacktrace :app:buildNativeAudioarm64v8a
+          )
+          test -f "$ROOT_A/app/build/audio-deps/install-arm64-v8a/checksums.json"
+
+          (
+            cd "$ROOT_B"
+            GRADLE_USER_HOME="$PORTABLE_GRADLE_HOME" ./gradlew --no-daemon --stacktrace :app:buildNativeAudioarm64v8a | tee /tmp/root-b-native.log
+          )
+          grep -q 'buildNativeAudioarm64v8a FROM-CACHE' /tmp/root-b-native.log
+          test ! -d "$ROOT_B/app/build/audio-sources/ffmpeg"
+          cmp -s             "$ROOT_A/app/build/audio-deps/install-arm64-v8a/checksums.json"             "$ROOT_B/app/build/audio-deps/install-arm64-v8a/checksums.json"
+          echo 'PASS relocated native Build Cache hit without source preparation'
+
+      - name: Cold native-enabled lint inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          LINT_ROOT=/tmp/jlmod-lint-root
+          LINT_GRADLE_HOME=/tmp/jlmod-lint-gradle
+          rm -rf "$LINT_ROOT" "$LINT_GRADLE_HOME"
+          mkdir -p "$LINT_ROOT"
+          git archive HEAD | tar -x -C "$LINT_ROOT"
+          chmod +x "$LINT_ROOT/gradlew"
+          (
+            cd "$LINT_ROOT"
+            GRADLE_USER_HOME="$LINT_GRADLE_HOME" ./gradlew --no-daemon --stacktrace --no-build-cache --rerun-tasks               --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug
+          )
+          REPORT="$(find "$LINT_ROOT/app/build/reports" -name 'lint-results-*.xml' -print -quit)"
+          test -n "$REPORT"
+          TOTAL="$(grep -c '<issue' "$REPORT" || true)"
+          MISSING_QUANTITY="$(grep -c 'id="MissingQuantity"' "$REPORT" || true)"
+          echo "Cold lint total issues: $TOTAL"
+          echo "Cold lint MissingQuantity issues: $MISSING_QUANTITY"
+          mkdir -p qualification
+          cp "$REPORT" qualification/lint-results-cold.xml
+          {
+            echo "total=$TOTAL"
+            echo "missing_quantity=$MISSING_QUANTITY"
+          } > qualification/lint-inventory.txt
+
+      - name: Cold all-ABI native rebuild
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf app/build/audio-deps app/build/audio-sources app/build/audio-work
+          ./gradlew --daemon --stacktrace --no-build-cache --rerun-tasks             :app:buildNativeAudioarm64v8a             :app:buildNativeAudioarmeabiv7a             :app:buildNativeAudiox86             :app:buildNativeAudiox8664
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            test -f "app/build/audio-deps/install-$abi/checksums.json"
+            test "$(find "app/build/audio-deps/install-$abi/lib" -maxdepth 1 -name '*.so' | wc -l)" -eq 4
+          done
+          test "$(find app/build/audio-sources -name '.jlmod-source-sha256' | wc -l)" -eq 2
+          echo 'PASS cold all-ABI native rebuild'
+
+      - name: Upload closing qualification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: platform-modernization-closing-evidence
+          path: |
+            qualification/**
+            build/reports/problems/**
+          if-no-files-found: warn
+          retention-days: 7
