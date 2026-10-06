@@ -82,6 +82,9 @@ public final class ConversionDiagnostic {
             else if (Character.isISOControl(c)) result.append('?');
             else result.append(c);
         }
-        return result.toString();
+        String sanitized = result.toString();
+        return sanitized.length() <= maxLength
+                ? sanitized
+                : sanitized.substring(0, maxLength);
     }
 }

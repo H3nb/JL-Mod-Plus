@@ -605,7 +605,8 @@ public class InstallerDialog extends DialogFragment {
 		String details = "Build: " + io.github.h3nb.jlmodplus.BuildConfig.VERSION_NAME + "\nStage: " +
 				(installer == null ? "bundle" : installer.getStage()) + "\n" + InstallerFailure.details(e);
 		if (installer != null && installer.getConversionResult() != null) {
-			details += "\n\n" + ConversionWarningFormatter.technicalReport(installer.getConversionResult());
+			details += "\n\n" + ConversionWarningFormatter.technicalReport(
+					installer.getConversionResult(), false);
 		}
 		composeController.showError(getString(R.string.error), userMessage, getString(R.string.close),
 				getString(published ? R.string.installer_refresh_library : R.string.library_retry),

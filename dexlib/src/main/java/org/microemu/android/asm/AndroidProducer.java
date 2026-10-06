@@ -41,6 +41,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AndroidProducer {
+	// Keep this aligned with the highest class-file version supported by the bundled ASM.
+	// AndroidProducerDexTest intentionally fails when a future ASM adds a newer Vxx constant.
+	static final int MAX_SUPPORTED_CLASS_VERSION = Opcodes.V27;
 	private static final Map<Integer, Integer> patches = initPatchFixes();
 
 	public static byte[] instrument(byte[] classData, String classFileName, long crc) {
@@ -49,7 +52,8 @@ public class AndroidProducer {
 			classData = patchClass(classData, patch);
 		}
 
-		if (hasClassMagic(classData) && classMajorVersion(classData) > Opcodes.V27) {
+		if (hasClassMagic(classData)
+				&& classMajorVersion(classData) > MAX_SUPPORTED_CLASS_VERSION) {
 			throw new ClassProcessingException(
 					ClassProcessingException.Kind.UNSUPPORTED_SOURCE,
 					classFileName,

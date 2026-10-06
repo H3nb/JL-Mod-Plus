@@ -44,8 +44,9 @@ DX parse/translation failures, and output failures remain fatal.
 
 Successful conversion diagnostics are bounded and surfaced to the user instead of being silently
 discarded. Skipped-class identities used to verify declared `MIDlet-n` entry points are tracked
-separately from those presentation diagnostics. If that safety list itself reaches its bound, the
-installer fails closed rather than publish an app whose entry points cannot all be verified.
+separately from those presentation diagnostics. If every skipped identity cannot be retained
+within that safety bound, the installer fails closed rather than publish an app whose entry points
+cannot all be verified.
 
 The transform-version marker therefore means that every executable class emitted into
 the converted payload completed the current JL-Mod transform; it does not claim that every malformed

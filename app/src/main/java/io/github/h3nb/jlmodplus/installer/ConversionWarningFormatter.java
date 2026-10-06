@@ -8,6 +8,7 @@ import com.android.dx.command.dexer.ConversionResult;
 
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.R;
+import javax.microedition.shell.transform.MidletTransformMetadata;
 
 /** Resolves structured conversion evidence into localized installer copy and shareable diagnostics. */
 public final class ConversionWarningFormatter {
@@ -53,11 +54,17 @@ public final class ConversionWarningFormatter {
     }
 
     public static String technicalReport(ConversionResult result) {
+        return technicalReport(result, true);
+    }
+
+    static String technicalReport(ConversionResult result, boolean includeBuild) {
         if (result == null) {
             return "";
         }
         StringBuilder report = new StringBuilder();
-        report.append("Build: ").append(BuildConfig.VERSION_NAME).append('\n');
+        if (includeBuild) {
+            report.append("Build: ").append(BuildConfig.VERSION_NAME).append('\n');
+        }
         report.append("Conversion result: ");
         if (!result.isSuccess()) {
             report.append("FAILED");
@@ -73,6 +80,8 @@ public final class ConversionWarningFormatter {
         report.append("Diagnostics omitted: ").append(result.getDiagnosticsOmitted()).append('\n');
         report.append("Skipped class names omitted: ")
                 .append(result.getSkippedClassEntriesOmitted()).append('\n');
+        report.append("Transform version: ")
+                .append(MidletTransformMetadata.TRANSFORM_VERSION).append('\n');
         report.append("Source JAR modified: no");
 
         int index = 0;

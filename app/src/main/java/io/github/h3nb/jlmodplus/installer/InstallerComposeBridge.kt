@@ -374,6 +374,7 @@ fun InstallerScreen(
                                     FlowRow(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.End,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
                                     ) {
                                         if (state.warningDetails != null) {
                                             TextButton(onClick = {

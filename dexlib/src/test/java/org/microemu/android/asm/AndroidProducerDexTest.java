@@ -30,12 +30,27 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
 public class AndroidProducerDexTest {
+	@Test
+	public void classVersionGuardMatchesBundledAsm() throws Exception {
+		int highestVersion = 0;
+		for (Field field : Opcodes.class.getFields()) {
+			String name = field.getName();
+			if (field.getType() != int.class
+					|| !(name.matches("V\\d+") || name.matches("V1_\\d+"))) {
+				continue;
+			}
+			highestVersion = Math.max(highestVersion, field.getInt(null));
+		}
+		assertEquals(highestVersion, AndroidProducer.MAX_SUPPORTED_CLASS_VERSION);
+	}
+
 	@Test
 	public void transformedGuestCallsitesProduceReadableDex() throws Exception {
 		Path root = Files.createTempDirectory("jlmod-dex-transform-");
