@@ -415,6 +415,185 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+
+  native-cache-portability:
+    name: Native cache portability qualification
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 152
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    env:
+      GRADLE_USER_HOME: ${{ runner.temp }}/jlmod-gradle-c2-portability
+    steps:
+      - name: Check out root A
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+          path: root-a
+
+      - name: Check out root B
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+          path: root-b
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle without remote state cache
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-disabled: true
+
+      - name: Set up Android SDK, platform 37, and NDK r30
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+
+      - name: Build arm64 native dependencies in root A
+        shell: bash
+        working-directory: root-a
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace --console=plain --build-cache \
+            :app:buildNativeAudioarm64v8a | tee ../root-a-native.log
+          grep -Fq '> Task :app:buildNativeAudioarm64v8a' ../root-a-native.log
+          if grep -Fq '> Task :app:buildNativeAudioarm64v8a FROM-CACHE' ../root-a-native.log; then
+            echo 'Root A unexpectedly restored the native task from cache.' >&2
+            exit 1
+          fi
+          [[ $(grep -Fc 'PASS prepared pinned native audio sources' ../root-a-native.log) -eq 1 ]]
+          (
+            cd app/build/audio-deps/install-arm64-v8a/lib
+            sha256sum *.so | sort
+          ) > ../root-a-arm64.sha256
+
+      - name: Restore arm64 native dependencies in root B
+        shell: bash
+        working-directory: root-b
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          rm -rf app/build/audio-sources app/build/audio-deps app/build/audio-work
+          ./gradlew --no-daemon --stacktrace --console=plain --build-cache \
+            :app:buildNativeAudioarm64v8a | tee ../root-b-native.log
+          grep -Fq '> Task :app:buildNativeAudioarm64v8a FROM-CACHE' ../root-b-native.log
+          if grep -Fq 'PASS prepared pinned native audio sources' ../root-b-native.log; then
+            echo 'Native source preparation ran despite a Build Cache hit.' >&2
+            exit 1
+          fi
+          if [[ -e app/build/audio-sources ]]; then
+            echo 'Native source tree exists after a cache-only restore in root B.' >&2
+            exit 1
+          fi
+          (
+            cd app/build/audio-deps/install-arm64-v8a/lib
+            sha256sum *.so | sort
+          ) > ../root-b-arm64.sha256
+          diff -u ../root-a-arm64.sha256 ../root-b-arm64.sha256
+
+      - name: Package debug APK from relocated cached native output
+        shell: bash
+        working-directory: root-b
+        env:
+          JLMOD_BUILD_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon --stacktrace --console=plain --build-cache \
+            :app:assembleEmulatorDebug | tee ../root-b-package.log
+          if grep -Fq 'PASS prepared pinned native audio sources' ../root-b-package.log; then
+            echo 'APK packaging unexpectedly prepared native sources.' >&2
+            exit 1
+          fi
+          test -f app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk
+
+  native-cache-all-abi:
+    name: Native cache all-ABI qualification
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 152
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    env:
+      GRADLE_USER_HOME: ${{ runner.temp }}/jlmod-gradle-c2-all-abi
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle without remote state cache
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-disabled: true
+
+      - name: Set up Android SDK, platform 37, and NDK r30
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+
+      - name: Build all native dependency ABIs from a cold source state
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          rm -rf app/build/audio-sources app/build/audio-deps app/build/audio-work
+          ./gradlew --no-daemon --stacktrace --console=plain --profile --build-cache \
+            :app:buildNativeAudioarm64v8a \
+            :app:buildNativeAudioarmeabiv7a \
+            :app:buildNativeAudiox86 \
+            :app:buildNativeAudiox8664 | tee native-all-abi.log
+          [[ $(grep -Fc 'PASS prepared pinned native audio sources' native-all-abi.log) -eq 1 ]]
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            safe="${abi//[-_]/}"
+            grep -Fq "> Task :app:buildNativeAudio${safe}" native-all-abi.log
+            grep -Fq "PASS build ${abi}" native-all-abi.log
+            test "$(find "app/build/audio-deps/install-${abi}/lib" -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 4
+          done
+          test -f app/build/audio-deps/install-armeabi-v7a/lib/libavcodec_neon.so
+          test -f app/build/audio-deps/install-armeabi-v7a/lib/libavformat_neon.so
+          test -f app/build/audio-deps/install-armeabi-v7a/lib/libavutil_neon.so
+          test -f app/build/audio-deps/install-armeabi-v7a/lib/libswresample_neon.so
+          for abi in arm64-v8a x86 x86_64; do
+            if find "app/build/audio-deps/install-${abi}/lib" -maxdepth 1 -type f -name '*_neon.so' | grep -q .; then
+              echo "Unexpected _neon FFmpeg naming for ${abi}." >&2
+              exit 1
+            fi
+          done
+
+      - name: Package all release ABIs without repeating source preparation
+        shell: bash
+        env:
+          JLMOD_BUILD_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon --stacktrace --console=plain --profile --build-cache \
+            :app:assembleEmulatorRelease | tee release-package.log
+          if grep -Fq 'PASS prepared pinned native audio sources' release-package.log; then
+            echo 'Release packaging repeated native source preparation.' >&2
+            exit 1
+          fi
+          metadata='app/build/outputs/apk/emulator/release/output-metadata.json'
+          test -f "$metadata"
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            jq -e --arg abi "$abi" '
+              [.elements[]
+                | select(any(.filters[]?; .filterType == "ABI" and .value == $abi))]
+              | length == 1
+            ' "$metadata" >/dev/null
+          done
+          jq -e '[.elements[] | select(((.filters // []) | length) == 0)] | length == 1' "$metadata" >/dev/null
+
   ci:
     # Preserve the required PR check name; maintenance cannot satisfy it.
     name: ${{ (inputs.mode == 'update-screenshots' || inputs.mode == 'runtime-smoke') && 'maintenance-status' || 'build' }}
