@@ -168,7 +168,7 @@ internal fun ConfigSwitchPreference(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                color = if (enabled) Color.Unspecified
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
             )
             Text(
