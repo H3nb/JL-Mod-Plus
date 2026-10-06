@@ -154,7 +154,7 @@ private fun PresetActionRows(
             onClick = onSavePreset,
         )
         updatePresetName?.let { name ->
-                PresetActionRow(
+            PresetActionRow(
                 label = stringResource(R.string.preset_update_confirm),
                 icon = R.drawable.ic_profile_update,
                 contentDescription = stringResource(R.string.preset_update, name),
