@@ -455,15 +455,15 @@
     <string name="installer_hide_details">Hide details</string>
     <!-- %1$d is the number of source Java class files skipped during conversion. -->
     <plurals name="installer_conversion_warning_summary">
-        <item quantity="one">%1$d Java class file could not be read and was skipped during conversion. The app may still run, but features that depend on it may not work.</item>
-        <item quantity="other">%1$d Java class files could not be read and were skipped during conversion. The app may still run, but features that depend on them may not work.</item>
+        <item quantity="one">%1$d Java class file was skipped because it could not be read. The app may still run, but features that depend on it may not work.</item>
+        <item quantity="other">%1$d Java class files were skipped because they could not be read. The app may still run, but features that depend on them may not work.</item>
     </plurals>
     <!-- %1$s is the source JAR entry path for the skipped class file. -->
     <string name="installer_conversion_skipped_entry">%1$s\nIssue: Java class file could not be read.\nAction: Skipped during conversion.</string>
     <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
     <plurals name="installer_conversion_omitted_details">
-        <item quantity="one">%1$d additional issue is not shown.</item>
-        <item quantity="other">%1$d additional issues are not shown.</item>
+        <item quantity="one">%1$d additional conversion issue is not shown.</item>
+        <item quantity="other">%1$d additional conversion issues are not shown.</item>
     </plurals>
 
     <string name="library_collection_new">New collection</string>
@@ -785,7 +785,6 @@
     <string name="config_help_timing_mode">Chooses whether the MIDlet uses emulation time or system time. Relative delays remain scaled with emulation speed.</string>
     <string name="config_help_timing_unavailable">Time settings are unavailable for this MIDlet installation. Reinstall or reconvert the MIDlet to enable them.</string>
     <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start. Converting…</string>
-    <string name="reconversion_done">Compatibility conversion completed.</string>
     <string name="reconversion_done_with_warning">Compatibility conversion completed with a warning.</string>
     <string name="reconversion_error">The MIDlet could not be converted automatically.
 

@@ -14,6 +14,7 @@
 
 package io.github.h3nb.jlmodplus.installer
 
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -51,6 +52,10 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 private fun uiString(resId: Int, vararg formatArgs: Any): String =
     InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
+
+private fun uiQuantityString(@PluralsRes resId: Int, quantity: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.resources
+        .getQuantityString(resId, quantity, *formatArgs)
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
@@ -199,7 +204,11 @@ class InstallerComposeTest {
                                 startLabel = "Start",
                                 closeLabel = "Close",
                                 iconPath = null,
-                                warningSummary = "1 class file was skipped during conversion.",
+                                warningSummary = uiQuantityString(
+                                    R.plurals.installer_conversion_warning_summary,
+                                    1,
+                                    1,
+                                ),
                                 warningDetails = "sample/Bad.class\nSkipped from the converted app.",
                                 copyDetails = "Entry: sample/Bad.class",
                             ),

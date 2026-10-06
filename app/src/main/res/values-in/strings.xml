@@ -411,13 +411,13 @@
     <string name="installer_hide_details">Sembunyikan detail</string>
     <!-- %1$d adalah jumlah berkas class Java sumber yang dilewati saat konversi. -->
     <plurals name="installer_conversion_warning_summary">
-        <item quantity="other">%1$d berkas class Java tidak dapat dibaca dan dilewati saat konversi. Aplikasi mungkin tetap berjalan, tetapi fitur yang bergantung pada berkas tersebut mungkin tidak berfungsi.</item>
+        <item quantity="other">%1$d berkas class Java dilewati karena tidak dapat dibaca. Aplikasi mungkin tetap berjalan, tetapi fitur yang bergantung pada berkas tersebut mungkin tidak berfungsi.</item>
     </plurals>
     <!-- %1$s adalah path entri JAR sumber untuk berkas class yang dilewati. -->
     <string name="installer_conversion_skipped_entry">%1$s\nMasalah: Berkas class Java tidak dapat dibaca.\nTindakan: Dilewati saat konversi.</string>
     <!-- %1$d adalah jumlah diagnosis konversi tambahan yang tidak ditampilkan karena batas laporan. -->
     <plurals name="installer_conversion_omitted_details">
-        <item quantity="other">%1$d masalah tambahan tidak ditampilkan.</item>
+        <item quantity="other">%1$d masalah konversi tambahan tidak ditampilkan.</item>
     </plurals>
 
     <string name="library_collection_new">Koleksi baru</string>
@@ -719,7 +719,6 @@
     <string name="config_help_timing_mode">Menentukan sumber tanggal dan waktu yang dilihat MIDlet. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
     <string name="config_help_timing_unavailable">Pengaturan waktu tidak tersedia untuk MIDlet ini. Instal ulang atau konversi ulang untuk mengaktifkannya.</string>
     <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Tunggu…</string>
-    <string name="reconversion_done">Konversi kompatibilitas selesai.</string>
     <string name="reconversion_done_with_warning">Konversi kompatibilitas selesai dengan peringatan.</string>
     <string name="reconversion_error">MIDlet ini tidak dapat dikonversi secara otomatis.
 
