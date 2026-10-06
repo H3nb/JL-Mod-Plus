@@ -1425,13 +1425,23 @@ public class Main {
     }
 
     private void recordDiagnostic(ConversionDiagnostic diagnostic) {
-        int ordinal = diagnosticCount.incrementAndGet();
-        if (ordinal > MAX_CONVERSION_DIAGNOSTICS) {
-            return;
-        }
+        diagnosticCount.incrementAndGet();
         synchronized (conversionDiagnostics) {
             if (conversionDiagnostics.size() < MAX_CONVERSION_DIAGNOSTICS) {
                 conversionDiagnostics.add(diagnostic);
+                return;
+            }
+            if (diagnostic.getAction() == ConversionDiagnostic.Action.ABORTED) {
+                // Recoverable warnings must not crowd the actual fatal cause out of the bounded
+                // report. Replace the newest retained skip and keep the fatal diagnostic last.
+                for (int i = conversionDiagnostics.size() - 1; i >= 0; i--) {
+                    if (conversionDiagnostics.get(i).getAction()
+                            == ConversionDiagnostic.Action.SKIPPED) {
+                        conversionDiagnostics.remove(i);
+                        conversionDiagnostics.add(diagnostic);
+                        return;
+                    }
+                }
             }
         }
     }

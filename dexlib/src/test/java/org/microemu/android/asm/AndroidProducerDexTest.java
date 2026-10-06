@@ -299,6 +299,48 @@ public class AndroidProducerDexTest {
 	}
 
 	@Test
+	public void fatalDiagnosticSurvivesAFullWarningReport() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-fatal-diagnostic-priority-");
+		Path archive = root.resolve("warnings-then-fatal.jar");
+		Path dexFile = root.resolve("warnings-then-fatal.dex");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Good.class"));
+			output.write(createSimpleClass("sample/Good"));
+			output.closeEntry();
+			for (int i = 0; i < 35; i++) {
+				String name = String.format("sample/Bad%02d", i);
+				output.putNextEntry(new JarEntry(name + ".class"));
+				output.write(removeConstantPoolCount(createSimpleClass(name)));
+				output.closeEntry();
+			}
+			output.putNextEntry(new JarEntry("sample/ZFatal.class"));
+			output.write(createSimpleClass("sample/OtherName"));
+			output.closeEntry();
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertFalse(result.isSuccess());
+			assertEquals(35, result.getClassesSkipped());
+			assertEquals(32, result.getDiagnostics().size());
+			assertEquals(4, result.getDiagnosticsOmitted());
+			ConversionDiagnostic fatal =
+					result.getDiagnostics().get(result.getDiagnostics().size() - 1);
+			assertEquals(ConversionDiagnostic.Kind.CLASS_NAME_MISMATCH, fatal.getKind());
+			assertEquals(ConversionDiagnostic.Action.ABORTED, fatal.getAction());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
 	public void conversionFailsWhenOneArchiveClassCannotBeTransformed() throws Exception {
 		Path root = Files.createTempDirectory("jlmod-dex-transform-failure-");
 		Path archive = root.resolve("mixed.jar");
