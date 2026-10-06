@@ -693,7 +693,7 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: cd "$GITHUB_WORKSPACE" && bash .github/scripts/r8-memory-editor-smoke.sh
+          script: bash "$GITHUB_WORKSPACE/.github/scripts/final-r8-memory-editor-smoke.sh"
 
       - name: Upload release/native diagnostics
         if: always()
