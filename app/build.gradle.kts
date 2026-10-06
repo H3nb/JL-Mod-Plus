@@ -228,6 +228,7 @@ val diagnosticBuildCommit = providers.gradleProperty("jlmodBuildCommit")
             if (value.matches(Regex("[0-9a-fA-F]{7,40}"))) value.lowercase(Locale.ROOT) else "unknown"
         }
     }
+// Explicit opt-out for CI modes that never consume native build outputs; normal builds default to true.
 val nativeBuildEnabled = providers.gradleProperty("jlmodNativeBuild")
     .orElse("true")
     .map { rawValue ->
