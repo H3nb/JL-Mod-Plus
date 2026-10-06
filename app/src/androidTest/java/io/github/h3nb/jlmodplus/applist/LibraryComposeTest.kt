@@ -23,7 +23,11 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -33,7 +37,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.performTouchInput
@@ -83,9 +87,10 @@ class LibraryComposeTest {
             }
         }
 
-        composeRule.onNodeWithText(uiString(R.string.action_context_delete))
-            .performScrollTo()
-            .assertIsDisplayed()
+        val deleteLabel = uiString(R.string.action_context_delete)
+        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
+            .performScrollToNode(hasText(deleteLabel))
+        composeRule.onNodeWithText(deleteLabel).assertIsDisplayed()
         composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(0)
     }
 

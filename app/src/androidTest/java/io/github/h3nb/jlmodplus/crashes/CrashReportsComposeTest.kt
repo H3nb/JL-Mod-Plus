@@ -35,6 +35,10 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 private fun uiString(resId: Int, vararg formatArgs: Any): String =
     InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
 
+private fun uiQuantityString(resId: Int, quantity: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.resources
+        .getQuantityString(resId, quantity, *formatArgs)
+
 @RunWith(AndroidJUnit4::class)
 class CrashReportsComposeTest {
     @get:Rule
@@ -50,7 +54,7 @@ class CrashReportsComposeTest {
                 )
             }
         }
-        composeRule.onNodeWithContentDescription("Loading crash reports").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.crash_reports_loading)).assertIsDisplayed()
     }
 
     @Test
@@ -63,7 +67,7 @@ class CrashReportsComposeTest {
                 )
             }
         }
-        composeRule.onNodeWithText("No local crash reports").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.crash_reports_empty)).assertIsDisplayed()
     }
 
     @Test
@@ -117,13 +121,17 @@ class CrashReportsComposeTest {
         }
 
         composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
-        composeRule.onNodeWithText("1 Selected").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            uiQuantityString(R.plurals.crash_reports_selected_count, 1, 1),
+        ).assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription(uiString(R.string.copy_selected_reports)).performClick()
         assertEquals(listOf("report-1"), actions.copiedIds)
 
         composeRule.onNodeWithText("Other MIDlet").performClick()
-        composeRule.onNodeWithText("2 Selected").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            uiQuantityString(R.plurals.crash_reports_selected_count, 2, 2),
+        ).assertIsDisplayed()
 
         assertEquals(
             0,
@@ -155,7 +163,9 @@ class CrashReportsComposeTest {
 
         composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
         composeRule.onNodeWithContentDescription(uiString(R.string.select_all_reports)).performClick()
-        composeRule.onNodeWithText("2 Selected").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            uiQuantityString(R.plurals.crash_reports_selected_count, 2, 2),
+        ).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.clear_report_selection)).performClick()
         composeRule.onNodeWithText(uiString(R.string.crash_reports)).assertIsDisplayed()
     }

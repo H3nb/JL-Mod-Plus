@@ -20,15 +20,18 @@ import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -61,9 +64,15 @@ class SettingsComposeTest {
             windowSize = DpSize(480.dp, 240.dp),
         )
 
-        composeRule.onNode(hasText("App language") and hasClickAction()).performScrollTo().performClick()
-        composeRule.onNodeWithText("Language option 20")
-            .performScrollTo()
+        val languageSetting = hasText("App language") and hasClickAction()
+        composeRule.onNode(hasScrollAction())
+            .performScrollToNode(languageSetting)
+        composeRule.onNode(languageSetting).performClick()
+
+        val lastLanguage = hasText("Language option 20")
+        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
+            .performScrollToNode(lastLanguage)
+        composeRule.onNode(lastLanguage)
             .assertIsDisplayed()
             .performClick()
         assertEquals(listOf("language-19"), actions.changes)
