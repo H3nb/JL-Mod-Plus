@@ -5,6 +5,7 @@
     <!-- %1$s is the maintainer's exact name and account, preserved as invariant data. -->
     <string name="about_maintainer">Maintainer: %1$s</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
+    <string name="app_debug_badge" translatable="false">DEBUG</string>
     <string name="about_message">JL-Mod Plus runs J2ME apps and games on Android.</string>
     <string name="about_lineage">JL-Mod Plus is a fork of JL-Mod by woesss (Yury Kharchenko), itself a fork and experimental mod of J2ME-Loader by Nikita Shakarun. The fork is maintained through sustained design, engineering, testing, and infrastructure work. Upstream attribution and license notices are preserved in the project.</string>
     <string name="action_context_delete">Delete</string>

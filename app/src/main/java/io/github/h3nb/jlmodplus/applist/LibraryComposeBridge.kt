@@ -2112,6 +2112,63 @@ private fun RowScope.LibrarySelectionAction(
     }
 }
 
+@Composable
+private fun JlModPlusWordmark(
+    showDebugMark: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val productName = stringResource(R.string.about_product_name)
+    val appLabel = stringResource(R.string.app_name)
+    val accentStart = productName.lastIndexOf(' ')
+        .takeIf { it >= 0 && it + 1 < productName.length }
+        ?.plus(1)
+        ?: 0
+    val wordmark = buildAnnotatedString {
+        append(productName)
+        addStyle(
+            SpanStyle(
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+            ),
+            start = accentStart,
+            end = productName.length,
+        )
+    }
+
+    Row(
+        modifier = modifier.clearAndSetSemantics {
+            contentDescription = appLabel
+        },
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(
+            text = wordmark,
+            modifier = Modifier.weight(1f, fill = false),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (showDebugMark) {
+            Surface(
+                modifier = Modifier.padding(top = 2.dp),
+                shape = MaterialTheme.shapes.extraSmall,
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ) {
+                Text(
+                    text = stringResource(R.string.app_debug_badge),
+                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LibraryAppsHeader(
@@ -2171,21 +2228,36 @@ private fun LibraryAppsHeader(
                 }
                 Spacer(Modifier.width(4.dp))
             }
-            Text(
-                text = if (selectionState.isActive) {
-                    pluralStringResource(
-                        R.plurals.library_selection_count,
-                        selectionState.selectedCount,
-                        selectionState.selectedCount,
+            when {
+                selectionState.isActive -> {
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.library_selection_count,
+                            selectionState.selectedCount,
+                            selectionState.selectedCount,
+                        ),
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.headlineSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
-                } else {
-                    title ?: stringResource(R.string.app_name)
-                },
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.headlineSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+                }
+                title != null -> {
+                    Text(
+                        text = title,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.headlineSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                else -> {
+                    JlModPlusWordmark(
+                        showDebugMark = BuildConfig.DEBUG,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
             if (selectionState.isActive) {
                 val visibleIds = state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList()
                 val allVisibleSelected = selectionState.isAllVisibleSelected(visibleIds)
