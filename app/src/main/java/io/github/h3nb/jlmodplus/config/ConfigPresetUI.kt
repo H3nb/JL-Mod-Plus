@@ -145,7 +145,6 @@ private fun PresetActionRows(
         PresetActionRow(
             label = stringResource(R.string.preset_use),
             icon = R.drawable.ic_check_circle,
-            emphasized = true,
             onClick = onUsePreset,
         )
         PresetActionRow(
@@ -171,7 +170,6 @@ private fun PresetActionRow(
     icon: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    emphasized: Boolean = false,
     contentDescription: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -199,7 +197,7 @@ private fun PresetActionRow(
                 painter = painterResource(icon),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = if (emphasized) colors.primary else colors.onSurfaceVariant,
+                tint = colors.onSurfaceVariant,
             )
             Text(
                 text = label,
