@@ -659,15 +659,17 @@ private fun FinishedContent(
             ) {
                 state.fatalError?.let { fatalError ->
                     item {
-                        Text(
-                            stringResource(R.string.bulk_install_fatal),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                        Text(
-                            fatalError,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                stringResource(R.string.bulk_install_fatal),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                            Text(
+                                fatalError,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
                 item { ResultCounters(state.results) }
