@@ -2135,16 +2135,15 @@ private fun JlModPlusWordmark(
         )
     }
 
-    Row(
+    FlowRow(
         modifier = modifier.clearAndSetSemantics {
             contentDescription = appLabel
         },
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.Top,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
             text = wordmark,
-            modifier = Modifier.weight(1f, fill = false),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
