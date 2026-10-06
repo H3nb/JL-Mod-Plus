@@ -18,6 +18,7 @@ import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
+import io.github.h3nb.jlmodplus.ui.AccentPalette
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 private val NoOpInstallerActions = object : InstallerActions {
@@ -197,6 +198,30 @@ fun InstallerSuccessScreenshot() {
                 startLabel = "Start",
                 closeLabel = "Close",
                 iconPath = null,
+            ),
+            actions = NoOpInstallerActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Installer success warning rose accent", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun InstallerSuccessWarningScreenshot() {
+    JLModPlusTheme(darkTheme = false, accent = AccentPalette.Rose) {
+        InstallerScreen(
+            state = InstallerUiState.Success(
+                title = "Demo MIDlet",
+                status = "Application installed with a warning.",
+                startLabel = "Start",
+                closeLabel = "Close",
+                iconPath = null,
+                warningSummary = "1 Java class file was skipped because it could not be read. " +
+                    "The app may still run, but features that depend on it may not work.",
+                warningDetails = "sample/Bad.class\n" +
+                    "Issue: Java class file could not be read.\n" +
+                    "Action: Skipped during conversion.",
+                copyDetails = "Entry: sample/Bad.class",
             ),
             actions = NoOpInstallerActions,
         )
