@@ -31,7 +31,7 @@ jobs:
   build:
     # Maintenance runs must not report the same check name as PR validation.
     name: ${{ inputs.mode == 'update-screenshots' && 'screenshot-candidates' || inputs.mode == 'runtime-smoke' && 'runtime-smoke' || 'Build and tests' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
 
     steps:
@@ -248,7 +248,7 @@ jobs:
   memory-ipc-runtime:
     name: Memory IPC runtime
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'runtime-smoke' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:
       - name: Check out sources
@@ -294,7 +294,7 @@ jobs:
   screenshots:
     name: Screenshot validation
     if: inputs.mode != 'update-screenshots' && inputs.mode != 'runtime-smoke'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:
       - name: Check out sources
@@ -363,7 +363,7 @@ jobs:
   lint:
     name: Lint
     if: inputs.mode != 'update-screenshots' && inputs.mode != 'runtime-smoke'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:
       - name: Check out sources
@@ -420,7 +420,7 @@ jobs:
     name: ${{ (inputs.mode == 'update-screenshots' || inputs.mode == 'runtime-smoke') && 'maintenance-status' || 'build' }}
     needs: [build, screenshots, lint]
     if: ${{ always() && inputs.mode != 'update-screenshots' && inputs.mode != 'runtime-smoke' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions: {}
     steps:
