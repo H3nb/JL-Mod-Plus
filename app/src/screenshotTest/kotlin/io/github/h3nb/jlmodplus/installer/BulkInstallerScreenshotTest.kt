@@ -43,7 +43,7 @@ fun BulkInstallerSuccessWarningScreenshot() {
                         "one",
                         "Heroes Lore: Wind of Soltia by EditorKamar",
                         BulkInstallResultKind.Installed,
-                        pluralStringResource(
+                        warning = pluralStringResource(
                             R.plurals.installer_conversion_warning_summary,
                             1,
                             1,
