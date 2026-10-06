@@ -270,7 +270,7 @@ Current implementation evidence:
   removed 190 orphaned string declarations (189 translatable and one invariant)
   plus five unused drawables from every applicable catalog without changing active
   resource consumers or runtime input implementation. The canonical translatable
-  source catalog now contains 883 resources and 31 invariant text declarations.
+  source catalog now contains 892 resources and 31 invariant text declarations.
   Count-bearing app-owned UI uses Android plural resources when grammar depends on a
   displayed quantity. Stale localized declarations with obsolete placeholder contracts
   are removed from incomplete catalogs rather than preserved with incorrect semantics;
