@@ -6,6 +6,8 @@ Use the Gradle wrapper from the repository root. For current build, toolchain, d
 [the version catalog](../gradle/libs.versions.toml), and
 [Android CI](../.github/workflows/android.yml).
 
+Commands, versions, workflow names, and artifact layouts below describe the current repository and may evolve. Source configuration and workflows are authoritative for those operational details; the testing and validation principles in this document define how to choose proportionate evidence when implementation changes.
+
 ## Local setup
 
 - Use JDK 21, matching CI. Java source/target compatibility is 17.
@@ -58,7 +60,7 @@ It reads repository-owned values XML without modifying resources. Missing
 translations, fragmentation, and other findings still return success; unreadable
 input, malformed XML, unsupported locale forms, and execution/usage errors return
 non-zero. It performs no semantic review, repairs, AI calls, or CI enforcement.
-See the [inventory scope and limitations](localization.md#deterministic-inventory-phase-2)
+See the [inventory scope and limitations](localization.md#deterministic-inventory)
 before interpreting coverage or placeholder findings. Android builds are not
 required for changes confined to this tool and its documentation/tests.
 
@@ -71,6 +73,7 @@ The goal is useful regression confidence, not test count or coverage percentage.
 - Avoid repeating the same invariant at the same boundary. Prefer a smaller set of tests with distinct failure modes over large scenario matrices that provide equivalent coverage.
 - Test observable contracts rather than private implementation structure. Reflection, fault injection, or implementation-specific hooks are appropriate when they are the practical way to reproduce otherwise unreachable crash-recovery, persistence, concurrency, lifecycle, or compatibility failures; keep such tests focused on the invariant being protected.
 - Treat broad test rewrites during a behavior-preserving refactor as a coupling signal. If externally relevant contracts did not change, first check whether the tests are tied to replaceable internal structure.
+- When simplification removes an implementation mechanism or failure mode, consolidate or remove tests that only encode that obsolete structure while retaining coverage of the behavior and invariants that still matter.
 - Use coverage as diagnostic evidence for unexercised code, not as a target. Do not add trivial assertions, one-test-per-class symmetry, or redundant cases solely to increase a metric.
 - When a flow changes, review its affected tests even if they still pass: check that fixtures, assertions, and exercised production paths remain relevant. Retain stable contract tests, adapt changed contracts, and consolidate or remove redundant or obsolete tests. This does not require a repository-wide test audit for each edit.
 - Testability changes must justify their production cost. Prefer existing boundaries and focused fixtures; do not add DI frameworks, interface/Default pairs, or production hooks merely to follow a testing recipe.
@@ -171,8 +174,8 @@ commercial assets or custom soundbanks. It uses the
 emulator's default English locale, disables animations, and captures logcat before
 the emulator shuts down. Tests share one fresh installation and run without sharding.
 
-Keep this mode opt-in until successful CI execution, stability, and cost are
-established. Record which selected tests actually ran; the rest of `androidTest`
+Keep this mode opt-in and use it when its selected runtime boundaries are relevant.
+Record which selected tests actually ran; the rest of `androidTest`
 remains unverified unless separately executed. Physical arm64/native behavior and
 other Android versions still require appropriate device or targeted checks.
 

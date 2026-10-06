@@ -271,12 +271,7 @@ Current implementation evidence:
   correction: avoid synonym or casing churn based only on taste, but revise any
   locale when current evidence establishes a semantic, clarity, grammar,
   terminology, accessibility, or consistency defect.
-- The canonical source catalog currently contains 891 translatable resources and
-  31 invariant text declarations. Count-bearing app-owned UI uses Android plural
-  resources when grammar depends on a displayed quantity. Localized declarations
-  with obsolete placeholder contracts are removed rather than kept with incorrect
-  semantics, allowing canonical fallback until the key is reviewed. UI percentages
-  use the active resource locale rather than a hardcoded percent suffix.
+- Current catalog counts, locale coverage, and invariant-declaration totals come from the [deterministic inventory](#deterministic-inventory); do not maintain duplicate numeric inventories in this contract. Count-bearing app-owned UI uses Android plural resources when grammar depends on a displayed quantity. Localized declarations with obsolete placeholder contracts are removed rather than kept with incorrect semantics, allowing canonical fallback until the key is reviewed. UI percentages use the active resource locale rather than a hardcoded percent suffix.
 - [SettingsActivity.buildLanguageOptions](../app/src/main/java/io/github/h3nb/jlmodplus/settings/SettingsActivity.java)
   reads `_generated_res_locale_config`; unavailable/unreadable metadata leaves
   only the system-language option. Treat this as a current limitation to account
