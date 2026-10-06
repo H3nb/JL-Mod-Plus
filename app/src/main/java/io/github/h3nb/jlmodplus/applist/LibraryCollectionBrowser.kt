@@ -45,6 +45,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -519,14 +520,24 @@ private fun LibraryCollectionHeader(
                 enabled = interactive,
             )
             Box {
-                IconButton(
-                    enabled = interactive,
+                Surface(
                     onClick = { onSortVisibilityChanged(true) },
+                    enabled = interactive,
+                    modifier = Modifier.size(56.dp),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = if (interactive) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    },
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_sort),
-                        contentDescription = stringResource(R.string.library_sort),
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_sort),
+                            contentDescription = stringResource(R.string.library_sort),
+                        )
+                    }
                 }
                 LibrarySortMenu(
                     expanded = sortVisible && interactive,
