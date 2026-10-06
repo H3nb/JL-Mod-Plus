@@ -171,7 +171,7 @@ public final class AutoReconversionDialog extends DialogFragment {
                     }
                     controller.showSuccess(
                             appName,
-                            getString(R.string.reconversion_done),
+                            getString(R.string.reconversion_done_with_warning),
                             getString(R.string.START_CMD),
                             getString(R.string.close),
                             null,

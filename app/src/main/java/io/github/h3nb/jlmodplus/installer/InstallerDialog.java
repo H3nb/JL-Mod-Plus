@@ -476,9 +476,17 @@ public class InstallerDialog extends DialogFragment {
 		if (composeController == null || installer == null || !isAdded()) return;
 		ConversionWarningFormatter.Presentation warning =
 				ConversionWarningFormatter.forResult(requireContext(), installer.getConversionResult());
+		int statusRes = messageRes;
+		if (warning != null) {
+			if (messageRes == R.string.install_done) {
+				statusRes = R.string.install_done_with_warning;
+			} else if (messageRes == R.string.library_import_done) {
+				statusRes = R.string.library_import_done_with_warning;
+			}
+		}
 		composeController.showSuccess(
 				currentTitle,
-				successMessage(messageRes),
+				successMessage(statusRes),
 				getString(R.string.START_CMD),
 				getString(R.string.close),
 				installer.getIconPath(),

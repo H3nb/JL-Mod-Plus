@@ -195,7 +195,7 @@ class InstallerComposeTest {
                         InstallerScreen(
                             state = InstallerUiState.Success(
                                 title = "Demo MIDlet",
-                                status = "Application installed.",
+                                status = "Application installed with a warning.",
                                 startLabel = "Start",
                                 closeLabel = "Close",
                                 iconPath = null,
