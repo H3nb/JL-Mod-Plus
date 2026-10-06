@@ -342,7 +342,10 @@ fun InstallerScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .testTag("installer-success-warning"),
-                                        color = MaterialTheme.colorScheme.tertiary,
+                                        // Tertiary is an accent palette, not a semantic warning color.
+                                        // It can become red/purple with user-selectable accent themes and
+                                        // make a successful installation look like an error.
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         style = MaterialTheme.typography.bodyMedium,
                                     )
                                 }
