@@ -77,7 +77,7 @@ class ConfigComposeTest {
         composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
 
         composeRule.onNodeWithContentDescription("Display").performClick()
-        composeRule.onNodeWithText("Screen Appearance").assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_display_appearance)).assertExists()
         composeRule.onNodeWithText("Text Rendering").assertExists()
         composeRule.onNodeWithText(uiString(R.string.config_screen_size)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.PREF_ORIENTATION)).assertDoesNotExist()
@@ -200,14 +200,14 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Screen & Window Basics").assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_basic_display)).assertExists()
         composeRule.onRoot().performTouchInput { swipeLeft() }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Screen Appearance").assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_display_appearance)).assertExists()
 
         composeRule.onRoot().performTouchInput { swipeRight() }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Screen & Window Basics").assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_basic_display)).assertExists()
     }
 
     @Test
