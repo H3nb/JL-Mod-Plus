@@ -42,24 +42,59 @@ import java.util.Map;
 public class AndroidProducer {
 	private static final Map<Integer, Integer> patches = initPatchFixes();
 
-	public static byte[] instrument(byte[] classData, String classFileName, long crc)
-			throws IllegalArgumentException {
+	public static byte[] instrument(byte[] classData, String classFileName, long crc) {
 		Integer patch = patches.get((int) crc);
 		if (patch != null) {
 			classData = patchClass(classData, patch);
 		}
-		ClassReader cr = new ClassReader(classData);
-		if (!cr.getClassName().equals(classFileName.substring(0, classFileName.length() - 6))) {
-			throw new IllegalArgumentException("Class name does not match path");
+
+		final ClassReader cr;
+		try {
+			cr = new ClassReader(classData);
+		} catch (RuntimeException sourceFailure) {
+			throw new ClassProcessingException(
+					ClassProcessingException.Kind.UNREADABLE_SOURCE,
+					classFileName,
+					"Source class cannot be read",
+					sourceFailure);
 		}
 
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-		// Pass the original guest class token to reflection rewrites. The token carries the
-		// AppClassLoader that owns classes present only in the MIDlet archive.
-		ClassVisitor cv = new AndroidClassVisitor(cw, cr.getClassName());
-		cr.accept(cv, ClassReader.SKIP_DEBUG);
+		String expectedName = classFileName.substring(0, classFileName.length() - 6);
+		if (!cr.getClassName().equals(expectedName)) {
+			throw new ClassProcessingException(
+					ClassProcessingException.Kind.IDENTITY_MISMATCH,
+					classFileName,
+					"Class name does not match path: " + cr.getClassName() + " != " + expectedName,
+					null);
+		}
 
-		return cw.toByteArray();
+		try {
+			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+			// Pass the original guest class token to reflection rewrites. The token carries the
+			// AppClassLoader that owns classes present only in the MIDlet archive.
+			ClassVisitor cv = new AndroidClassVisitor(cw, cr.getClassName());
+			cr.accept(cv, ClassReader.SKIP_DEBUG);
+			return cw.toByteArray();
+		} catch (RuntimeException transformFailure) {
+			try {
+				// The normal fast path never performs this pass. It is used only after a transform
+				// anomaly to distinguish malformed source input from a failure introduced by JL-Mod.
+				cr.accept(new ClassWriter(0), ClassReader.SKIP_DEBUG);
+			} catch (RuntimeException sourceFailure) {
+				ClassProcessingException unreadable = new ClassProcessingException(
+						ClassProcessingException.Kind.UNREADABLE_SOURCE,
+						classFileName,
+						"Source class is malformed during full traversal",
+						sourceFailure);
+				unreadable.addSuppressed(transformFailure);
+				throw unreadable;
+			}
+			throw new ClassProcessingException(
+					ClassProcessingException.Kind.TRANSFORM_FAILURE,
+					classFileName,
+					"JL-Mod transform failed for valid source class",
+					transformFailure);
+		}
 	}
 
 	private static byte[] patchClass(byte[] classData, int patch) {

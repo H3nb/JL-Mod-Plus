@@ -40,6 +40,7 @@ import com.android.dx.rop.cst.CstNat;
 import com.android.dx.rop.cst.CstString;
 
 import org.microemu.android.asm.AndroidProducer;
+import org.microemu.android.asm.ClassProcessingException;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -142,6 +143,13 @@ public class Main {
 
     /** number of errors during processing */
     private AtomicInteger errors = new AtomicInteger(0);
+    private static final int MAX_CONVERSION_DIAGNOSTICS = 32;
+    private final AtomicInteger classesDiscovered = new AtomicInteger();
+    private final AtomicInteger classesConverted = new AtomicInteger();
+    private final AtomicInteger classesSkipped = new AtomicInteger();
+    private final AtomicInteger diagnosticCount = new AtomicInteger();
+    private final List<ConversionDiagnostic> conversionDiagnostics =
+            new ArrayList<ConversionDiagnostic>();
 
     /** {@code non-null;} parsed command-line arguments */
     private Arguments args;
@@ -185,15 +193,22 @@ public class Main {
      * @param argArray the command line arguments
      */
     public static void main(String[] argArray) throws IOException {
+        ConversionResult result = convert(argArray);
+        if (!result.isSuccess()) {
+            throw new IOException("DX conversion failed with exit code " + result.getExitCode());
+        }
+    }
+
+    /**
+     * Runs one command-line conversion and returns structured conversion diagnostics.
+     */
+    public static ConversionResult convert(String[] argArray) throws IOException {
         DxContext context = new DxContext();
         Arguments arguments = new Arguments(context);
         arguments.parse(argArray);
-
-        int result = new Main(context).runDx(arguments);
-
-        if (result != 0) {
-            throw new IOException();
-        }
+        Main main = new Main(context);
+        int exitCode = main.runDx(arguments);
+        return main.buildConversionResult(exitCode);
     }
 
     /**
@@ -205,10 +220,24 @@ public class Main {
         return new Main(new DxContext()).runDx(arguments);
     }
 
+    /** Runs one programmatic conversion and returns its structured result. */
+    public static ConversionResult runWithResult(Arguments arguments) throws IOException {
+        Main main = new Main(new DxContext());
+        int exitCode = main.runDx(arguments);
+        return main.buildConversionResult(exitCode);
+    }
+
     public int runDx(Arguments arguments) throws IOException {
 
-        // Reset the error count to start fresh.
+        // Reset per-run state to start fresh.
         errors.set(0);
+        classesDiscovered.set(0);
+        classesConverted.set(0);
+        classesSkipped.set(0);
+        diagnosticCount.set(0);
+        synchronized (conversionDiagnostics) {
+            conversionDiagnostics.clear();
+        }
 
         args = arguments;
         args.makeOptionsObjects();
@@ -431,6 +460,7 @@ public class Main {
         String fixedName = fixPath(name);
 
         if (isClass) {
+            classesDiscovered.incrementAndGet();
 
             if (keepResources && args.keepClassesInJar) {
                 synchronized (outputResources) {
@@ -464,22 +494,73 @@ public class Main {
         }
 
         try {
-            // modify byte-code with ASM-java
+            // Modify guest byte-code with the JL-Mod transform. AndroidProducer distinguishes
+            // unreadable source input from failures introduced while transforming valid input.
             bytes = AndroidProducer.instrument(bytes, name, crc);
 
             new DirectClassFileConsumer(name, bytes, null).call(
                     new ClassParserTask(name, bytes).call());
+        } catch (ClassProcessingException ex) {
+            switch (ex.getKind()) {
+                case UNREADABLE_SOURCE -> {
+                    classesSkipped.incrementAndGet();
+                    recordDiagnostic(new ConversionDiagnostic(
+                            name,
+                            ConversionDiagnostic.Phase.SOURCE_VALIDATION,
+                            ConversionDiagnostic.Kind.UNREADABLE_SOURCE_CLASS,
+                            ConversionDiagnostic.Action.SKIPPED,
+                            diagnosticDetail(ex)));
+                    if (args.warnings) {
+                        context.err.println("warning: skipping unreadable source class " + name);
+                    }
+                    return false;
+                }
+                case IDENTITY_MISMATCH -> recordDiagnostic(new ConversionDiagnostic(
+                        name,
+                        ConversionDiagnostic.Phase.SOURCE_IDENTITY,
+                        ConversionDiagnostic.Kind.CLASS_NAME_MISMATCH,
+                        ConversionDiagnostic.Action.ABORTED,
+                        diagnosticDetail(ex)));
+                case TRANSFORM_FAILURE -> recordDiagnostic(new ConversionDiagnostic(
+                        name,
+                        ConversionDiagnostic.Phase.TRANSFORM,
+                        ConversionDiagnostic.Kind.TRANSFORM_FAILURE,
+                        ConversionDiagnostic.Action.ABORTED,
+                        diagnosticDetail(ex)));
+            }
+            if (args.debug) ex.printStackTrace(context.err);
+            else context.err.println(ex.getMessage());
+            errors.incrementAndGet();
+            return false;
         } catch (ParseException ex) {
+            recordDiagnostic(new ConversionDiagnostic(
+                    name,
+                    ConversionDiagnostic.Phase.DEX_PARSE,
+                    ConversionDiagnostic.Kind.PARSE_FAILURE,
+                    ConversionDiagnostic.Action.ABORTED,
+                    diagnosticDetail(ex)));
             // handled in FileBytesConsumer
             throw ex;
         } catch(IllegalArgumentException e) {
-            // A failed ASM transform must invalidate the whole conversion. Swallowing this
-            // exception can produce a readable but incomplete DEX, after which the installer
-            // would incorrectly mark the archive as timing-compatible.
-            e.printStackTrace(context.err);
+            // Unknown ASM/transform IllegalArgumentException remains fail-closed. Only an explicitly
+            // classified unreadable source class is recoverable.
+            recordDiagnostic(new ConversionDiagnostic(
+                    name,
+                    ConversionDiagnostic.Phase.TRANSFORM,
+                    ConversionDiagnostic.Kind.TRANSFORM_FAILURE,
+                    ConversionDiagnostic.Action.ABORTED,
+                    diagnosticDetail(e)));
+            if (args.debug) e.printStackTrace(context.err);
+            else context.err.println(e.toString());
             errors.incrementAndGet();
             return false;
         } catch(Exception ex) {
+            recordDiagnostic(new ConversionDiagnostic(
+                    name,
+                    ConversionDiagnostic.Phase.DEX_PARSE,
+                    ConversionDiagnostic.Kind.PARSE_FAILURE,
+                    ConversionDiagnostic.Action.ABORTED,
+                    diagnosticDetail(ex)));
             throw new RuntimeException("Exception parsing classes", ex);
         }
 
@@ -496,12 +577,18 @@ public class Main {
         return cf;
     }
 
-    private ClassDefItem translateClass(byte[] bytes, DirectClassFile cf) {
+    private ClassDefItem translateClass(String name, byte[] bytes, DirectClassFile cf) {
         try {
             return CfTranslator.translate(context, cf, bytes, args.cfOptions,
                     args.dexOptions, outputDex);
         } catch (ParseException ex) {
-            context.err.println("\ntrouble processing:");
+            recordDiagnostic(new ConversionDiagnostic(
+                    name,
+                    ConversionDiagnostic.Phase.DEX_TRANSLATION,
+                    ConversionDiagnostic.Kind.TRANSLATION_FAILURE,
+                    ConversionDiagnostic.Action.ABORTED,
+                    diagnosticDetail(ex)));
+            context.err.println("\ntrouble processing " + name + ":");
             if (args.debug) {
                 ex.printStackTrace(context.err);
             } else {
@@ -1267,6 +1354,40 @@ public class Main {
         }
     }
 
+    private ConversionResult buildConversionResult(int exitCode) {
+        List<ConversionDiagnostic> snapshot;
+        synchronized (conversionDiagnostics) {
+            snapshot = new ArrayList<ConversionDiagnostic>(conversionDiagnostics);
+        }
+        return new ConversionResult(
+                exitCode,
+                classesDiscovered.get(),
+                classesConverted.get(),
+                classesSkipped.get(),
+                snapshot,
+                Math.max(0, diagnosticCount.get() - snapshot.size()));
+    }
+
+    private void recordDiagnostic(ConversionDiagnostic diagnostic) {
+        int ordinal = diagnosticCount.incrementAndGet();
+        if (ordinal > MAX_CONVERSION_DIAGNOSTICS) {
+            return;
+        }
+        synchronized (conversionDiagnostics) {
+            if (conversionDiagnostics.size() < MAX_CONVERSION_DIAGNOSTICS) {
+                conversionDiagnostics.add(diagnostic);
+            }
+        }
+    }
+
+    private static String diagnosticDetail(Throwable error) {
+        Throwable detail = error.getCause() == null ? error : error.getCause();
+        String message = detail.getMessage();
+        return message == null || message.trim().isEmpty()
+                ? detail.getClass().getName()
+                : detail.getClass().getName() + ": " + message;
+    }
+
     /**
      * Callback class for processing input file bytes, produced by the
      * ClassPathOpener.
@@ -1367,7 +1488,7 @@ public class Main {
 
             // Submit class to translation phase.
             Future<ClassDefItem> cdif = classTranslatorPool.submit(
-                    new ClassTranslatorTask(bytes, cf));
+                    new ClassTranslatorTask(name, bytes, cf));
             Future<Boolean> res = classDefItemConsumer.submit(new ClassDefItemConsumer(
                     name, cdif));
             addToDexFutures.add(res);
@@ -1380,18 +1501,20 @@ public class Main {
     /** Callable helper class to translate classes in parallel  */
     private class ClassTranslatorTask implements Callable<ClassDefItem> {
 
+        String name;
         byte[] bytes;
         DirectClassFile classFile;
 
-        private ClassTranslatorTask(byte[] bytes,
+        private ClassTranslatorTask(String name, byte[] bytes,
                                     DirectClassFile classFile) {
+            this.name = name;
             this.bytes = bytes;
             this.classFile = classFile;
         }
 
         @Override
         public ClassDefItem call() {
-            ClassDefItem clazz = translateClass(bytes, classFile);
+            ClassDefItem clazz = translateClass(name, bytes, classFile);
             return clazz;
         }
     }
@@ -1405,9 +1528,11 @@ public class Main {
      */
     private class ClassDefItemConsumer implements Callable<Boolean> {
 
+        String name;
         Future<ClassDefItem> futureClazz;
 
         private ClassDefItemConsumer(String name, Future<ClassDefItem> futureClazz) {
+            this.name = name;
             this.futureClazz = futureClazz;
         }
 
@@ -1417,6 +1542,7 @@ public class Main {
                 ClassDefItem clazz = futureClazz.get();
                 if (clazz != null) {
                     addClassToDex(clazz);
+                    classesConverted.incrementAndGet();
                     updateStatus(true);
                 }
                 return true;
@@ -1425,6 +1551,12 @@ public class Main {
                 // These, as well as any exceptions from addClassToDex,
                 // are handled and reported in processAllFiles().
                 Throwable t = ex.getCause();
+                recordDiagnostic(new ConversionDiagnostic(
+                        name,
+                        ConversionDiagnostic.Phase.DEX_TRANSLATION,
+                        ConversionDiagnostic.Kind.TRANSLATION_FAILURE,
+                        ConversionDiagnostic.Action.ABORTED,
+                        diagnosticDetail(t)));
                 throw (t instanceof Exception) ? (Exception) t : ex;
             }
         }

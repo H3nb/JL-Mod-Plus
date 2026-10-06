@@ -15,10 +15,13 @@
 package org.microemu.android.asm;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.android.dex.Dex;
 import com.android.dex.MethodId;
+import com.android.dx.command.dexer.ConversionDiagnostic;
+import com.android.dx.command.dexer.ConversionResult;
 import com.android.dx.command.dexer.Main;
 
 import org.junit.Test;
@@ -79,6 +82,78 @@ public class AndroidProducerDexTest {
 	}
 
 	@Test
+	public void conversionSkipsUnreadableSourceClassAndReportsWarning() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-unreadable-source-");
+		Path archive = root.resolve("mixed.jar");
+		Path dexFile = root.resolve("mixed.dex");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Good.class"));
+			output.write(createSimpleClass("sample/Good"));
+			output.closeEntry();
+			output.putNextEntry(new JarEntry("sample/Bad.class"));
+			output.write(removeConstantPoolCount(createSimpleClass("sample/Bad")));
+			output.closeEntry();
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertTrue(result.isSuccess());
+			assertEquals(2, result.getClassesDiscovered());
+			assertEquals(1, result.getClassesConverted());
+			assertEquals(1, result.getClassesSkipped());
+			assertEquals(0, result.getDiagnosticsOmitted());
+			assertEquals(1, result.getDiagnostics().size());
+			ConversionDiagnostic diagnostic = result.getDiagnostics().get(0);
+			assertEquals("sample/Bad.class", diagnostic.getEntry());
+			assertEquals(ConversionDiagnostic.Phase.SOURCE_VALIDATION, diagnostic.getPhase());
+			assertEquals(ConversionDiagnostic.Kind.UNREADABLE_SOURCE_CLASS, diagnostic.getKind());
+			assertEquals(ConversionDiagnostic.Action.SKIPPED, diagnostic.getAction());
+
+			Dex dex = new Dex(dexFile.toFile());
+			assertTrue(dex.typeNames().contains("Lsample/Good;"));
+			assertFalse(dex.typeNames().contains("Lsample/Bad;"));
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
+	public void conversionFailsWhenNoReadableClassRemains() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-no-readable-class-");
+		Path archive = root.resolve("broken.jar");
+		Path dexFile = root.resolve("broken.dex");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Bad.class"));
+			output.write(removeConstantPoolCount(createSimpleClass("sample/Bad")));
+			output.closeEntry();
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertFalse(result.isSuccess());
+			assertEquals(1, result.getClassesDiscovered());
+			assertEquals(0, result.getClassesConverted());
+			assertEquals(1, result.getClassesSkipped());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
 	public void conversionFailsWhenOneArchiveClassCannotBeTransformed() throws Exception {
 		Path root = Files.createTempDirectory("jlmod-dex-transform-failure-");
 		Path archive = root.resolve("mixed.jar");
@@ -98,7 +173,13 @@ public class AndroidProducerDexTest {
 			arguments.fileNames = new String[] {archive.toString()};
 			arguments.outName = dexFile.toString();
 			arguments.numThreads = 1;
-			assertTrue(Main.run(arguments) != 0);
+			ConversionResult result = Main.runWithResult(arguments);
+			assertFalse(result.isSuccess());
+			assertEquals(1, result.getDiagnostics().size());
+			assertEquals(ConversionDiagnostic.Phase.SOURCE_IDENTITY,
+					result.getDiagnostics().get(0).getPhase());
+			assertEquals(ConversionDiagnostic.Kind.CLASS_NAME_MISMATCH,
+					result.getDiagnostics().get(0).getKind());
 		} finally {
 			Files.deleteIfExists(dexFile);
 			Files.deleteIfExists(archive);
@@ -148,6 +229,13 @@ public class AndroidProducerDexTest {
 		method.visitInsn(Opcodes.RETURN);
 		method.visitMaxs(1, 0);
 		method.visitEnd();
+	}
+
+	private static byte[] removeConstantPoolCount(byte[] classData) {
+		byte[] malformed = new byte[classData.length - 2];
+		System.arraycopy(classData, 0, malformed, 0, 8);
+		System.arraycopy(classData, 10, malformed, 8, classData.length - 10);
+		return malformed;
 	}
 
 	private static byte[] createSimpleClass(String name) {
