@@ -335,6 +335,45 @@ class InstallerComposeTest {
         assertEquals(1, closes)
     }
 
+    @Test fun bulkSuccessLabelsOnlyExplicitWarnings() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                BulkInstallSurface(
+                    state = BulkInstallViewModel.State.Finished(
+                        BulkInstallPlan(1, File("/workdir"), emptyList()),
+                        listOf(
+                            BulkInstallResult(
+                                "one",
+                                "Installed game",
+                                BulkInstallResultKind.Installed,
+                                warning = "Unreadable class warning",
+                            ),
+                            BulkInstallResult(
+                                "two",
+                                "Restored game",
+                                BulkInstallResultKind.Restored,
+                                detail = "Bundle imported.",
+                            ),
+                        ),
+                        cancelled = false,
+                    ),
+                    onToggle = {},
+                    onRecommended = {},
+                    onClear = {},
+                    onInstall = {},
+                    onRetry = {},
+                    onCancel = {},
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(targetString(R.string.bulk_install_complete)).assertIsDisplayed()
+        composeRule.onAllNodesWithText(targetString(R.string.warning)).assertCountEquals(1)
+        composeRule.onNodeWithText("Unreadable class warning").assertIsDisplayed()
+        composeRule.onNodeWithText("Bundle imported.").assertIsDisplayed()
+    }
+
     @Test fun shortPopupWrapsContentInsteadOfFillingMaximumHeight() {
         composeRule.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp))) {
