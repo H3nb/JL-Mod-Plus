@@ -2816,7 +2816,6 @@ internal fun LibraryDescription(descriptionValue: String, appId: Long) {
                 .then(
                     if (overflows) {
                         Modifier
-                            .heightIn(min = 48.dp)
                             .testTag("library_description_toggle")
                             .clickable(
                                 onClickLabel = expandDescriptionLabel,
