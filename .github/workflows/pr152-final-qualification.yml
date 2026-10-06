@@ -17,8 +17,6 @@ jobs:
     name: Final release, R8, and 16 KiB
     runs-on: ubuntu-26.04
     timeout-minutes: 60
-    env:
-      GRADLE_USER_HOME: ${{ runner.temp }}/jlmod-pr152-final-release
 
     steps:
       - name: Check out sources
