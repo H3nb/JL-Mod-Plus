@@ -328,9 +328,9 @@ class InstallerComposeTest {
         composeRule.onNodeWithText("Game four").assertIsDisplayed()
         composeRule.onNodeWithTag("bulk-results").performScrollToIndex(5)
         composeRule.onNodeWithText(targetString(R.string.installer_retry_remaining))
-            .assertIsDisplayed().performClick()
+            .performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNodeWithText(targetString(R.string.bulk_install_close))
-            .assertIsDisplayed().performClick()
+            .performScrollTo().assertIsDisplayed().performClick()
         assertEquals(1, retries)
         assertEquals(1, closes)
     }
