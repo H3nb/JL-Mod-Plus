@@ -253,14 +253,15 @@ internal fun BulkInstallSurface(
                         ),
                     verticalArrangement = Arrangement.spacedBy(if (compactHeader) 8.dp else 12.dp),
                 ) {
-                    val titleRes = if (
-                        state is BulkInstallViewModel.State.Finished &&
-                        !state.cancelled &&
-                        state.fatalError == null
-                    ) {
-                        R.string.bulk_install_complete
-                    } else {
-                        R.string.bulk_install_title
+                    val titleRes = when (state) {
+                        is BulkInstallViewModel.State.Finished -> {
+                            if (state.cancelled || state.fatalError != null) {
+                                R.string.bulk_install_cancelled
+                            } else {
+                                R.string.bulk_install_complete
+                            }
+                        }
+                        else -> R.string.bulk_install_title
                     }
                     Text(
                         text = stringResource(titleRes),
@@ -287,10 +288,11 @@ internal fun BulkInstallSurface(
                             modifier = Modifier.weight(1f, fill = false),
                         )
                         is BulkInstallViewModel.State.Finished -> FinishedContent(
-                            state,
-                            onClose,
-                            onRetry,
-                            Modifier.weight(1f, fill = false),
+                            state = state,
+                            onClose = onClose,
+                            onRetry = onRetry,
+                            compactHeight = compactHeight,
+                            modifier = Modifier.weight(1f, fill = false),
                         )
                         is BulkInstallViewModel.State.Error -> ErrorContent(
                             message = state.message,
@@ -631,6 +633,7 @@ private fun FinishedContent(
     state: BulkInstallViewModel.State.Finished,
     onClose: () -> Unit,
     onRetry: () -> Unit,
+    compactHeight: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -654,23 +657,17 @@ private fun FinishedContent(
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (state.cancelled || state.fatalError != null) {
+                state.fatalError?.let { fatalError ->
                     item {
                         Text(
-                            stringResource(R.string.bulk_install_cancelled),
-                            style = MaterialTheme.typography.titleMedium,
+                            stringResource(R.string.bulk_install_fatal),
+                            color = MaterialTheme.colorScheme.error,
                         )
-                        state.fatalError?.let {
-                            Text(
-                                stringResource(R.string.bulk_install_fatal),
-                                color = MaterialTheme.colorScheme.error,
-                            )
-                            Text(
-                                it,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                        Text(
+                            fatalError,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
                 item { ResultCounters(state.results) }
@@ -715,26 +712,50 @@ private fun FinishedContent(
                     }
                     HorizontalDivider()
                 }
+                if (compactHeight) {
+                    item {
+                        FinishedActions(
+                            hasRetryableResults = hasRetryableResults,
+                            onRetry = onRetry,
+                            onClose = onClose,
+                        )
+                    }
+                }
             }
             ScrollableContentHint(
                 visible = canScrollForward,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
-        HorizontalDivider()
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            if (hasRetryableResults) {
-                TextButton(onClick = onRetry) {
-                    Text(stringResource(R.string.installer_retry_remaining))
-                }
+        if (!compactHeight) {
+            HorizontalDivider()
+            FinishedActions(
+                hasRetryableResults = hasRetryableResults,
+                onRetry = onRetry,
+                onClose = onClose,
+            )
+        }
+    }
+}
+
+@Composable
+private fun FinishedActions(
+    hasRetryableResults: Boolean,
+    onRetry: () -> Unit,
+    onClose: () -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        if (hasRetryableResults) {
+            TextButton(onClick = onRetry) {
+                Text(stringResource(R.string.installer_retry_remaining))
             }
-            Button(onClick = onClose) {
-                Text(stringResource(R.string.bulk_install_close))
-            }
+        }
+        Button(onClick = onClose) {
+            Text(stringResource(R.string.bulk_install_close))
         }
     }
 }
