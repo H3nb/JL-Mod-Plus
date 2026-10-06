@@ -368,7 +368,7 @@ private fun ProfileRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
-            .heightIn(min = 76.dp),
+            .heightIn(min = 72.dp),
         shape = MaterialTheme.shapes.large,
         color = if (profile.isDefault) colors.secondaryContainer else colors.surfaceContainerLow,
         contentColor = if (profile.isDefault) colors.onSecondaryContainer else colors.onSurface,

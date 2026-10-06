@@ -535,7 +535,7 @@ private fun ConfigDestinationContent(
     onSavePreset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (destination) {
             ConfigDestination.Basic -> GeneralDestination(
                 state = state,

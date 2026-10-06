@@ -81,7 +81,7 @@ internal fun PresetSummary(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 14.dp),
+                .padding(vertical = 12.dp),
         ) {
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -189,8 +189,8 @@ private fun PresetActionRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .heightIn(min = 48.dp)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
