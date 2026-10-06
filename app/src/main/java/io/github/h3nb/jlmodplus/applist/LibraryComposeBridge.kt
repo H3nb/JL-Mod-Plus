@@ -2151,7 +2151,7 @@ private fun JlModPlusWordmark(
         )
         if (showDebugMark) {
             Surface(
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier.align(Alignment.CenterVertically),
                 shape = MaterialTheme.shapes.extraSmall,
                 color = MaterialTheme.colorScheme.surfaceContainerHighest,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
