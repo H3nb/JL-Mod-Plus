@@ -514,7 +514,7 @@ public class Main {
                     new ClassParserTask(name, bytes).call());
         } catch (ClassProcessingException ex) {
             switch (ex.getKind()) {
-                case UNREADABLE_SOURCE -> {
+                case UNREADABLE_SOURCE:
                     classesSkipped.incrementAndGet();
                     recordDiagnostic(new ConversionDiagnostic(
                             name,
@@ -526,19 +526,22 @@ public class Main {
                         context.err.println("warning: skipping unreadable source class " + name);
                     }
                     return false;
-                }
-                case IDENTITY_MISMATCH -> recordDiagnostic(new ConversionDiagnostic(
-                        name,
-                        ConversionDiagnostic.Phase.SOURCE_IDENTITY,
-                        ConversionDiagnostic.Kind.CLASS_NAME_MISMATCH,
-                        ConversionDiagnostic.Action.ABORTED,
-                        diagnosticDetail(ex)));
-                case TRANSFORM_FAILURE -> recordDiagnostic(new ConversionDiagnostic(
-                        name,
-                        ConversionDiagnostic.Phase.TRANSFORM,
-                        ConversionDiagnostic.Kind.TRANSFORM_FAILURE,
-                        ConversionDiagnostic.Action.ABORTED,
-                        diagnosticDetail(ex)));
+                case IDENTITY_MISMATCH:
+                    recordDiagnostic(new ConversionDiagnostic(
+                            name,
+                            ConversionDiagnostic.Phase.SOURCE_IDENTITY,
+                            ConversionDiagnostic.Kind.CLASS_NAME_MISMATCH,
+                            ConversionDiagnostic.Action.ABORTED,
+                            diagnosticDetail(ex)));
+                    break;
+                case TRANSFORM_FAILURE:
+                    recordDiagnostic(new ConversionDiagnostic(
+                            name,
+                            ConversionDiagnostic.Phase.TRANSFORM,
+                            ConversionDiagnostic.Kind.TRANSFORM_FAILURE,
+                            ConversionDiagnostic.Action.ABORTED,
+                            diagnosticDetail(ex)));
+                    break;
             }
             if (args.debug) ex.printStackTrace(context.err);
             else context.err.println(ex.getMessage());
