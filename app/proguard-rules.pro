@@ -38,8 +38,8 @@
 # rather than the entire org.microemu implementation tree.
 -keep,allowoptimization public class org.microemu.cldc.**.Connection { public protected *; }
 
-# Gson 2.14, FFmpegKit, and ACRA ship their own consumer ProGuard/R8 configuration.
-# Keep dependency-specific reflection/JNI rules upstream instead of duplicating broad
+# Gson 2.14 ships its own consumer ProGuard/R8 configuration.
+# Keep dependency-specific reflection rules upstream instead of duplicating broad
 # package-wide keeps here.
 
 # R8 9.4.24 still generates invalid wide-register DEX when optimizing this large
