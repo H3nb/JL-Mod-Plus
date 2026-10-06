@@ -250,7 +250,7 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Basic", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_general), useUnmergedTree = true).assertExists()
         composeRule.onNodeWithText(uiString(R.string.config_screen_size)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.PREF_TOUCH_INPUT)).assertExists()
         composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
@@ -280,9 +280,9 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Filter").performClick()
+        composeRule.onNodeWithText(uiString(R.string.PREF_FILTER)).performClick()
         composeRule.onNodeWithContentDescription("Controls").performClick()
-        composeRule.onNodeWithContentDescription("Basic").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_general)).performClick()
         composeRule.onNodeWithText(uiString(R.string.PREF_TOUCH_INPUT)).performScrollTo().performClick()
 
         assertTrue(events.lastForm?.screenFilter == true)
@@ -857,7 +857,7 @@ class ConfigComposeTest {
             form,
             listOf(Size(240, 320), Size(360, 640)),
             listOf(ConfigUiState.FontPreset("240 x 320", 18, 22, 26)),
-            listOf("Not set"),
+            listOf("None"),
             listOf("Android (default)"),
             emptyList(),
             listOf(Size(360, 640)),

@@ -197,6 +197,10 @@ fun SettingsScreen(
                             showAccentPreview = true,
                             onClick = { choiceDialog = SettingsDialogChoice.Accent },
                         )
+                    }
+                }
+                item {
+                    SettingsSection(stringResource(R.string.pref_language)) {
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_language),
                             selected = state.language,

@@ -518,7 +518,7 @@ private fun BulkItemRow(item: BulkInstallItem, onToggle: (String) -> Unit) {
                 contentColor = statusColor,
             ) {
                 Text(
-                    text = statusLabel(item.status),
+                    text = statusLabel(item),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                     style = MaterialTheme.typography.labelMedium,
                 )
@@ -755,13 +755,17 @@ private fun ResultCounters(results: List<BulkInstallResult>) {
 }
 
 @Composable
-private fun statusLabel(status: BulkInstallStatus): String = stringResource(
-    when (status) {
+private fun statusLabel(item: BulkInstallItem): String = stringResource(
+    when (item.status) {
         BulkInstallStatus.New -> R.string.bulk_install_status_new
         BulkInstallStatus.Update -> R.string.bulk_install_status_update
         BulkInstallStatus.Downgrade -> R.string.bulk_install_status_downgrade
         BulkInstallStatus.AlreadyInstalled -> R.string.bulk_install_status_same
-        BulkInstallStatus.ReinstallOrVariant -> R.string.bulk_install_status_reinstall
+        BulkInstallStatus.ReinstallOrVariant -> if (item.unit.reinstallAppId != null) {
+            R.string.action_reinstall
+        } else {
+            R.string.bulk_install_status_reinstall
+        }
         BulkInstallStatus.AmbiguousInstalledMatch -> R.string.bulk_install_status_ambiguous
         BulkInstallStatus.JadJarMismatch -> R.string.bulk_install_status_mismatch
         BulkInstallStatus.Duplicate -> R.string.bulk_install_status_duplicate

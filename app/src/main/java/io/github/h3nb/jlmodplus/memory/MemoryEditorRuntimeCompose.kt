@@ -1172,7 +1172,7 @@ internal fun RuntimeKnownSearchDialog(
                             modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
                         )
                         RuntimeSearchField(
-                            label = stringResource(R.string.memory_editor_search_hint),
+                            label = stringResource(memorySearchFieldLabel(effectivePredicate, second = false)),
                             value = query,
                             active = activeField == RuntimeInputField.FIRST,
                             onClick = { activeField = RuntimeInputField.FIRST },
@@ -1184,7 +1184,7 @@ internal fun RuntimeKnownSearchDialog(
                     }
                     if (needsSecond) {
                         RuntimeSearchField(
-                            label = stringResource(R.string.memory_editor_max_value),
+                            label = stringResource(memorySearchFieldLabel(effectivePredicate, second = true)),
                             value = second,
                             active = activeField == RuntimeInputField.SECOND,
                             onClick = { activeField = RuntimeInputField.SECOND },
@@ -1397,7 +1397,7 @@ private fun RuntimeUnknownSearchDialog(
                             if (sideDock && needsSecond) {
                                 RuntimeSearchControlRow {
                                     RuntimeSearchField(
-                                        label = stringResource(R.string.memory_editor_search_hint),
+                                        label = stringResource(memorySearchFieldLabel(predicate, second = false)),
                                         value = first,
                                         active = activeField == RuntimeInputField.FIRST,
                                         onClick = { activeField = RuntimeInputField.FIRST },
@@ -1407,7 +1407,7 @@ private fun RuntimeUnknownSearchDialog(
                                         initialFocus = true,
                                     )
                                     RuntimeSearchField(
-                                        label = stringResource(R.string.memory_editor_max_value),
+                                        label = stringResource(memorySearchFieldLabel(predicate, second = true)),
                                         value = second,
                                         active = activeField == RuntimeInputField.SECOND,
                                         onClick = { activeField = RuntimeInputField.SECOND },
@@ -1418,7 +1418,7 @@ private fun RuntimeUnknownSearchDialog(
                                 }
                             } else {
                                 RuntimeSearchField(
-                                    label = stringResource(R.string.memory_editor_search_hint),
+                                    label = stringResource(memorySearchFieldLabel(predicate, second = false)),
                                     value = first,
                                     active = activeField == RuntimeInputField.FIRST,
                                     onClick = { activeField = RuntimeInputField.FIRST },
@@ -1429,7 +1429,7 @@ private fun RuntimeUnknownSearchDialog(
                                 )
                                 if (needsSecond) {
                                     RuntimeSearchField(
-                                        label = stringResource(R.string.memory_editor_max_value),
+                                        label = stringResource(memorySearchFieldLabel(predicate, second = true)),
                                         value = second,
                                         active = activeField == RuntimeInputField.SECOND,
                                         onClick = { activeField = RuntimeInputField.SECOND },
@@ -2579,6 +2579,26 @@ private fun runtimeMove(value: TextFieldValue, delta: Int): TextFieldValue {
     val current = if (delta < 0) minOf(value.selection.start, value.selection.end)
     else maxOf(value.selection.start, value.selection.end)
     return value.copy(selection = TextRange((current + delta).coerceIn(0, value.text.length)))
+}
+
+private fun memorySearchFieldLabel(predicate: Int, second: Boolean): Int = when (predicate) {
+    MemoryEngineContract.PREDICATE_BETWEEN -> if (second) {
+        R.string.memory_editor_max_value
+    } else {
+        R.string.memory_editor_min_value
+    }
+    MemoryEngineContract.PREDICATE_INCREASED_BY,
+    MemoryEngineContract.PREDICATE_DECREASED_BY,
+    MemoryEngineContract.PREDICATE_CHANGED_BY,
+    -> R.string.memory_editor_change_amount
+    MemoryEngineContract.PREDICATE_INCREASED_BY_RANGE,
+    MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE,
+    -> if (second) {
+        R.string.memory_editor_max_change
+    } else {
+        R.string.memory_editor_min_change
+    }
+    else -> R.string.memory_editor_search_hint
 }
 
 @Composable

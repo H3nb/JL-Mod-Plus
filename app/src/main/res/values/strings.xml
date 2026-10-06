@@ -41,7 +41,7 @@
     <string name="FORCE_CLOSE_CONFIRMATION">Stop this MIDlet? Unsaved changes may be lost.</string>
     <string name="help">Help</string>
     <string name="help_message">&#8226; Image filtering can significantly reduce performance on some MIDlets. Disable it if the MIDlet is too slow.&lt;BR>&#8226; Immediate processing bypasses the normal Java ME event queue. It may improve responsiveness, but can make some MIDlets unstable.</string>
-    <string name="identity_filter">Fast (no filter)</string>
+    <string name="identity_filter">None (fastest)</string>
     <string name="install">Install</string>
     <string name="install_done">Application installed.</string>
     <string name="installer_title">MIDlet installer</string>
@@ -56,12 +56,12 @@
     <string name="file_picker_search">Search</string>
     <string name="file_picker_sort">Sort</string>
     <string name="file_picker_select_all">Select all files in this folder</string>
-    <string name="file_picker_unselect_all">Unselect all files in this folder</string>
+    <string name="file_picker_unselect_all">Deselect all files in this folder</string>
     <string name="file_picker_sort_type">Folders first</string>
     <string name="file_picker_sort_name_ascending">Name A–Z</string>
     <string name="file_picker_sort_name_descending">Name Z–A</string>
-    <string name="file_picker_sort_modified_newest">Modified: newest</string>
-    <string name="file_picker_sort_modified_oldest">Modified: oldest</string>
+    <string name="file_picker_sort_modified_newest">Date modified: newest</string>
+    <string name="file_picker_sort_modified_oldest">Date modified: oldest</string>
     <string name="file_picker_choose">Choose</string>
     <string name="file_picker_current_folder">Current folder</string>
     <string name="file_picker_parent_folder">Parent folder</string>
@@ -102,7 +102,7 @@
     <string name="runtime_apply">Apply</string>
     <string name="runtime_preset_update_failed">Saved for this MIDlet, but %1$s could not be updated.</string>
     <string name="runtime_preset_update_unlinked">%1$s was updated, but this MIDlet won’t receive future updates from it.</string>
-    <string name="layout_switch">Switch control layout</string>
+    <string name="layout_switch">Choose control layout</string>
     <string name="licenses">Licenses</string>
     <string name="licenses_unavailable">License details are unavailable.</string>
     <string name="loading_apps">Loading apps</string>
@@ -112,7 +112,7 @@
     <string name="mapping_dialog_assigned_inputs">Assigned inputs</string>
     <string name="mapping_dialog_add_input">You can assign more than one physical input.</string>
     <string name="mapping_dialog_remove">Remove</string>
-    <string name="mapping_dialog_title">Press a key</string>
+    <string name="mapping_dialog_title">Press a key or button</string>
     <string name="message_reset_layout">Reset the virtual controls layout to its default?</string>
     <string name="message_delete">Delete this app, its settings, and save data? This also removes its Library entry.</string>
     <string name="midlet_name"><b>Name: </b></string>
@@ -138,11 +138,11 @@
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">List</string>
     <string name="library_view_grid">Grid</string>
-    <string name="library_icon_ratio_title">Icon ratio</string>
+    <string name="library_icon_ratio_title">Icon aspect ratio</string>
     <string name="library_icon_ratio_square">1:1</string>
     <string name="library_icon_ratio_portrait">3:4</string>
     <string name="library_icon_shape_title">Icon shape</string>
-    <string name="library_icon_shape_round">Rounded</string>
+    <string name="library_icon_shape_round">Rounded corners</string>
     <string name="library_icon_shape_square">Sharp corners</string>
     <string name="library_grid_spacing_title">Grid spacing</string>
     <string name="library_grid_spacing_none">None (0 dp)</string>
@@ -152,7 +152,7 @@
     <string name="library_hide_grid_titles">Hide MIDlet titles</string>
     <string name="library_show_list_description">Show MIDlet descriptions</string>
     <string name="library_collections_empty_title">No collections yet</string>
-    <string name="library_collections_empty_message">Collections are unavailable until the library is loaded.</string>
+    <string name="library_collections_empty_message">Collections are unavailable until the Library is loaded.</string>
     <string name="library_expand_description">Expand description</string>
     <string name="library_collapse_description">Collapse description</string>
     <string name="msg_press_again_to_close">Press again to close</string>
@@ -165,20 +165,20 @@
     <string name="pref_app_sort_vendor">Vendor</string>
     <string name="pref_app_sort_ascending">Ascending</string>
     <string name="pref_app_sort_descending">Descending</string>
-    <string name="pref_apps_view">Library view</string>
+    <string name="pref_apps_view">Layout</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Rectangle</string>
     <string name="pref_button_shape_round">Rounded rectangle</string>
     <string name="pref_button_shape_title">Button shape</string>
-    <string name="pref_category_experimental">Experimental options</string>
+    <string name="pref_category_experimental">Experimental</string>
     <string name="pref_emulator_dir">Working directory</string>
     <string name="pref_enable_actionbar_summary">Keep the runtime toolbar visible on MIDlet Canvas screens.</string>
     <string name="pref_enable_actionbar_title">Show runtime toolbar</string>
     <string name="pref_enable_statusbar_title">Show system status bar</string>
     <string name="pref_enable_statusbar_summary">Keep the system status bar visible. Enabling it disables the display-cutout area.</string>
     <string name="pref_encoding_title">Encoding</string>
-    <string name="PREF_FILTER">Image filter</string>
+    <string name="PREF_FILTER">Linear filtering</string>
     <string name="PREF_FONT_ANTI_ALIASING">Anti-aliasing</string>
     <string name="PREF_FONT_LARGE">Large</string>
     <string name="PREF_FONT_MEDIUM">Medium</string>
@@ -200,7 +200,7 @@
     <string name="pref_mascot_title">Mascot Capsule 3D notification</string>
     <string name="PREF_ORIENTATION">Screen orientation</string>
     <string name="pref_orientation_auto">Auto</string>
-    <string name="pref_orientation_default">Default</string>
+    <string name="pref_orientation_default">System default</string>
     <string name="pref_orientation_land">Landscape</string>
     <string name="pref_orientation_port">Portrait</string>
     <string name="PREF_SCALE_RATIO">Scale (%)</string>
@@ -211,14 +211,14 @@
     <string name="pref_screen_gravity_right">Right</string>
     <string name="pref_screen_gravity_top">Top</string>
     <string name="pref_screen_padding_title">Screen padding</string>
-    <string name="pref_screen_scale_type">Scale type</string>
+    <string name="pref_screen_scale_type">Scaling mode</string>
     <string name="pref_screen_scale_type_fill">Fill window (ignore aspect ratio)</string>
     <string name="pref_screen_scale_type_fit">Fit to window</string>
-    <string name="pref_screen_scale_type_none">Original size</string>
+    <string name="pref_screen_scale_type_none">Manual</string>
     <string name="pref_screenshot_summary">Saves the MIDlet frame at its virtual resolution before scaling, image filtering, and the screen shader.</string>
     <string name="pref_screenshot_title">Raw screenshot</string>
     <string name="PREF_SHADER_FILTER">Screen shader</string>
-    <string name="pref_skin_not_set">Not set</string>
+    <string name="pref_skin_not_set">None</string>
     <string name="pref_skin_title">Skin</string>
     <string name="pref_skip_resume_call">Skip startApp() on resume</string>
     <string name="pref_soundbank_title">MIDI soundbank</string>
@@ -236,7 +236,7 @@
     <string name="config_gamepad_unsupported_summary">This controller configuration is unsupported. It is preserved unchanged and cannot be edited here.</string>
     <string name="config_gamepad_keypad_title">Virtual keypad</string>
     <string name="config_gamepad_calibration_next">Next</string>
-    <string name="config_gamepad_mapping_help_title">Gamepad mapping help</string>
+    <string name="config_gamepad_mapping_help_title">Controller mapping help</string>
     <string name="config_gamepad_directions_four">4-way</string>
     <string name="config_gamepad_directions_eight">8-way</string>
     <string name="config_gamepad_pointer_off">Off</string>
@@ -250,8 +250,8 @@
     <string name="config_gamepad_calibration_phase_committed">Saved</string>
     <string name="config_gamepad_calibration_phase_cancelled">Canceled</string>
     <string name="config_gamepad_calibration_waiting_controller">Connect a controller with a supported analog stick or trigger. Calibration begins when you first move a stick or press a trigger; the existing calibration remains unchanged until you save.</string>
-    <string name="config_gamepad_calibration_no_analog_ranges">This controller does not provide supported analog-stick or trigger ranges.</string>
-    <string name="config_gamepad_calibration_start">Keep every stick and trigger neutral until the neutral timer completes. Then move each stick to its full range and press Next.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">This controller does not provide supported analog stick or trigger ranges.</string>
+    <string name="config_gamepad_calibration_start">Keep every stick centered and every trigger released until the neutral timer completes.</string>
     <string name="config_gamepad_calibration_save_failed">The calibration could not be saved. The existing calibration remains unchanged.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">No supported analog ranges were found.</string>
     <string name="config_gamepad_calibration_rejected">Calibration rejected: %1$s</string>
@@ -307,7 +307,7 @@
     <string name="PREF_TOUCH_INPUT">Touch input</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Vibration</string>
-    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Virtual controls</string>
+    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Show virtual controls</string>
     <string name="PREF_VK_ALPHA">Opacity</string>
     <string name="PREF_VK_BACK">Button color</string>
     <string name="PREF_VK_FEEDBACK">Haptic feedback</string>
@@ -411,7 +411,7 @@
     </plurals>
     <string name="crash_report_bundle_preparing">Preparing diagnostic bundle…</string>
     <string name="crash_report_bundle_ready_title">Diagnostic bundle ready</string>
-    <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nAttach this file before submitting the GitHub issue. The diagnostic bundle will be public with the issue.</string>
+    <string name="crash_report_bundle_ready_message">%1$s\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nAttach this file before submitting the GitHub issue. The diagnostic bundle will be public once attached to the issue.</string>
     <string name="locate_bundle">Locate bundle</string>
     <string name="open_github">Open GitHub</string>
     <string name="crash_report_bundle_failed">Could not prepare the diagnostic bundle.</string>
@@ -425,7 +425,7 @@
         <item quantity="other">Delete %1$d diagnostic reports?</item>
     </plurals>
     <string name="crash_reports_batch_delete_message">This permanently removes the selected diagnostic reports and any bundles generated for them from this device. Files already uploaded elsewhere are not affected.</string>
-    <string name="crash_report_delete_failed">Could not delete the complete report.</string>
+    <string name="crash_report_delete_failed">Could not fully delete the report.</string>
     <string name="crash_report_unavailable">This report is no longer available.</string>
     <string name="process_exit_recovery_title">Unexpected process exit</string>
     <string name="process_exit_recovery_message">JL-Mod Plus stopped unexpectedly in the previous session (%1$s). Diagnostic details were saved locally.</string>
@@ -440,7 +440,7 @@
     <string name="installer_stage_wait">Waiting for another operation…</string>
     <string name="installer_stage_save">Saving application…</string>
     <string name="installer_failed_download">The application could not be downloaded. Check the connection and download link, then try again.</string>
-    <string name="installer_failed_storage">Installation could not finish. Try again.</string>
+    <string name="installer_failed_storage">Installation could not be completed. Try again.</string>
     <string name="installer_failed_conversion">The application could not be converted. Check that the file is complete and supported, then try again.</string>
     <string name="installer_needs_recovery">Application files were saved, but the Library could not finish updating. Refresh the Library before trying again.</string>
     <string name="installer_refresh_library">Refresh Library</string>
@@ -545,7 +545,7 @@
     <string name="memory_editor_candidate_ambiguous">Ambiguous — writes paused</string>
     <string name="memory_editor_candidate_lost">Lost — writes paused</string>
     <string name="memory_editor_apply">Apply</string>
-    <string name="memory_editor_max_value">Maximum value</string>
+    <string name="memory_editor_min_value">Minimum value</string>\n    <string name="memory_editor_max_value">Maximum value</string>\n    <string name="memory_editor_change_amount">Change amount</string>\n    <string name="memory_editor_min_change">Minimum change</string>\n    <string name="memory_editor_max_change">Maximum change</string>
     <string name="memory_editor_unfreeze">Unfreeze</string>
     <string name="memory_editor_cancelled">Operation canceled.</string>
     <string name="memory_editor_resource_limit">Memory Editor reached a safe resource limit. Try a more specific data type or search value.</string>
@@ -573,7 +573,7 @@
     <string name="memory_editor_freeze_after_edit">Freeze after applying</string>
     <string name="memory_editor_freeze_after_edit_help">Locks the replacement value and automatically adds candidates to Watch.</string>
 
-    <string name="memory_editor_expression_single_hint">Enter one value, or separate group values with ;.</string>
+    <string name="memory_editor_expression_single_hint">Enter one value, or use ; between group values.</string>
     <string name="memory_editor_expression_group_needs_type">Choose a specific data type for group search.</string>
     <plurals name="memory_editor_expression_group_hint">
         <item quantity="one">Group search · %1$d value · same Java object</item>
@@ -686,7 +686,7 @@
     <string name="bulk_install_status_update">Update</string>
     <string name="bulk_install_status_downgrade">Older version</string>
     <string name="bulk_install_status_same">Already installed</string>
-    <string name="bulk_install_status_reinstall">Same version, different package</string>
+    <string name="bulk_install_status_reinstall">Same version, different files</string>
     <string name="bulk_install_status_ambiguous">Matches multiple installed apps</string>
     <string name="bulk_install_status_mismatch">JAD/JAR mismatch</string>
     <string name="bulk_install_status_duplicate">Duplicate</string>
@@ -700,14 +700,14 @@
         <item quantity="other">%1$d selected Library apps are no longer available.</item>
     </plurals>
 
-    <string name="config_destination_general">Basic</string>
+    <string name="config_destination_general">General</string>
     <string name="config_basic_display">MIDlet screen</string>
     <string name="config_basic_input">Input</string>
-    <string name="config_display_appearance">Appearance</string>
+    <string name="config_display_appearance">Screen appearance</string>
     <string name="config_display_rendering">Rendering</string>
     <string name="config_display_performance">Performance &amp; diagnostics</string>
     <string name="config_display_text">Text &amp; fonts</string>
-    <string name="config_system_timing">Timing &amp; compatibility</string>
+    <string name="config_system_timing">Timing</string>
     <string name="config_controls_key_input">Physical input</string>
     <string name="config_controls_virtual_keyboard">Virtual controls</string>
     <string name="config_controls_virtual_keyboard_colors">Virtual controls colors</string>
@@ -811,13 +811,13 @@
     <string name="preset_manage">Manage profiles</string>
     <string name="profile_more_actions">More actions for %1$s</string>
     <string name="profile_create_summary">Save a reusable setup for other MIDlets.</string>
-    <string name="preset_application_settings">MIDlet configuration</string>
+    <string name="preset_application_settings">MIDlet settings</string>
     <string name="preset_includes_keyboard_layout">Virtual controls layout included.</string>
     <string name="preset_virtual_keyboard_on">Virtual controls enabled</string>
     <string name="preset_virtual_keyboard_off">Virtual controls disabled</string>
     <string name="preset_apply">Apply</string>
     <string name="preset_apply_failed_summary">Could not apply this profile. Check the source and try again.</string>
-    <string name="preset_choose_parts">Choose parts</string>
+    <string name="preset_choose_parts">Choose what to apply</string>
     <string name="preset_name">Name</string>
     <string name="preset_save_help">Save this MIDlet’s settings and, when available, its virtual controls layout as a profile. This MIDlet will use the profile and receive its future updates.</string>
     <string name="preset_update">Update %1$s</string>
@@ -835,7 +835,7 @@
     <string name="preset_manager_default_section">Default for new MIDlets</string>
     <string name="preset_manager_presets_section">My profiles</string>
     <string name="preset_manager_keyboard_section">Saved virtual controls layouts</string>
-    <string name="saved_keyboard_layout_summary">Saved layout for virtual controls.</string>
+    <string name="saved_keyboard_layout_summary">Saved virtual controls layout.</string>
     <string name="preset_default_policy_summary">Applied when a new MIDlet is installed.</string>
     <string name="preset_keyboard_layout_unavailable">Virtual controls layout is unavailable.</string>
     <string name="edit_preset">Edit profile</string>
@@ -854,7 +854,7 @@
     <string name="profile_apply_layout_keeps_settings">Keep this MIDlet’s settings; use a custom configuration.</string>
 
     <string name="config_analog_stick">Analog stick</string>
-    <string name="config_analog_stick_summary">Choose how the primary analog stick sends directions: 4-way, 8-way, or numeric keypad. Controller buttons use key mappings.</string>
+    <string name="config_analog_stick_summary">Choose Off, 4-way, 8-way, or numeric keypad for the primary analog stick. Controller buttons use key mappings.</string>
     <string name="config_analog_stick_off">Off</string>
     <string name="config_controller_help_body_compact">Controller buttons use the same key mappings as keyboard and phone keys. The analog stick sends only directional input to the MIDlet. Android Back keeps its normal behavior; any physical button mapped to M opens the runtime MIDlet menu.</string>
 
@@ -870,7 +870,7 @@
     <string name="library_hide_grid_titles_summary">Show only MIDlet icons in grid view.</string>
     <string name="library_show_list_description_summary">Show each MIDlet description below its title and version.</string>
 
-    <string name="library_indexing_progress">Indexing library… %1$d/%2$d</string>
+    <string name="library_indexing_progress">Indexing the Library… %1$d/%2$d</string>
     <string name="library_indexing_current">Scanning %1$s</string>
     <string name="library_load_error_title">Library unavailable</string>
     <string name="library_retry">Retry</string>
@@ -931,7 +931,7 @@
     <string name="perf_overlay_renderer">Renderer (REN)</string>
     <string name="perf_overlay_display">Display refresh rate (DISP)</string>
 
-    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_appearance">App appearance</string>
     <string name="settings_section_library_appearance">Library appearance</string>
     <string name="settings_section_midlet_runtime">MIDlet runtime</string>
     <string name="settings_section_storage">Storage</string>
@@ -965,7 +965,7 @@
 
     <string name="library_action_settings_summary">Configure global behavior and appearance.</string>
     <string name="library_action_crash_reports_summary">Review saved diagnostic reports.</string>
-    <string name="library_action_save_log_summary">Save the current application log for troubleshooting.</string>
+    <string name="library_action_save_log_summary">Save recent JL-Mod Plus logs for troubleshooting.</string>
     <string name="library_action_about_summary">Version, project, and maintainer information.</string>
     <string name="library_action_licenses_summary">Third-party notices and license terms included with the app.</string>
     <string name="library_action_help_summary">Usage guidance and common controls.</string>
@@ -982,16 +982,16 @@
     <string name="runtime_virtual_controls_dpad">D-pad</string>
     <string name="runtime_virtual_controls_analog">Analog stick</string>
     <string name="runtime_virtual_controls_edit">Edit layout</string>
-    <string name="runtime_virtual_controls_edit_guide_title">Edit layout guide</string>
+    <string name="runtime_virtual_controls_edit_guide_title">Layout editing guide</string>
     <string name="runtime_virtual_controls_edit_guide_message">Drag controls to move them. For buttons, move two fingers horizontally or vertically to change width or height, or diagonally to change both. Pinch to resize the D-pad or analog stick proportionally. Tap Done when finished.</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Do not show again</string>
-    <string name="runtime_virtual_controls_switch_layout">Choose layout template</string>
-    <string name="runtime_virtual_controls_show_controls">Show controls</string>
+    <string name="runtime_virtual_controls_switch_layout">Choose control layout</string>
+    <string name="runtime_virtual_controls_show_controls">Choose visible controls</string>
     <string name="runtime_virtual_controls_template_dpad_standard">Standard D-pad</string>
     <string name="runtime_virtual_controls_template_analog_standard">Standard analog stick</string>
     <string name="config_gamepad_directions_numeric_v2">Numeric keypad</string>
     <string name="library_collections_unavailable_title">Collections unavailable</string>
-    <string name="library_load_failed_message">The library could not be loaded. Try again.</string>
+    <string name="library_load_failed_message">The Library could not be loaded. Try again.</string>
     <string name="bulk_install_prepare_failed">The selected apps could not be prepared for installation.</string>
     <string name="memory_editor_no_runtime">No active MIDlet runtime.</string>
     <string name="memory_editor_no_search_history">No earlier search to restore.</string>

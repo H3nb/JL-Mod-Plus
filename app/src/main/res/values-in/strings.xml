@@ -35,7 +35,7 @@
     <string name="FORCE_CLOSE_CONFIRMATION">Hentikan MIDlet ini? Perubahan yang belum disimpan mungkin hilang.</string>
     <string name="help">Bantuan</string>
     <string name="help_message">• Filter dapat sangat menurunkan performa pada sebagian MIDlet. Nonaktifkan jika aplikasi terlalu lambat.&lt;BR&gt;• Pemrosesan langsung melewati antrean event Java ME. Respons dapat meningkat, tetapi sebagian MIDlet mungkin tidak stabil.</string>
-    <string name="identity_filter">Cepat (tanpa filter)</string>
+    <string name="identity_filter">Tidak ada (paling cepat)</string>
     <string name="install">Instal</string>
     <string name="install_done">Aplikasi terpasang.</string>
     <string name="installer_title">Instalasi MIDlet</string>
@@ -171,7 +171,7 @@
     <string name="pref_screen_scale_type">Penskalaan</string>
     <string name="pref_screen_scale_type_fill">Isi area tampilan (abaikan rasio aspek)</string>
     <string name="pref_screen_scale_type_fit">Sesuaikan dengan area tampilan</string>
-    <string name="pref_screen_scale_type_none">Ukuran asli</string>
+    <string name="pref_screen_scale_type_none">Manual</string>
     <string name="pref_screenshot_summary">Menyimpan frame MIDlet pada resolusi virtual sebelum penskalaan, filter gambar, dan shader layar.</string>
     <string name="pref_screenshot_title">Tangkapan layar mentah</string>
     <string name="PREF_SHADER_FILTER">Shader layar</string>
@@ -201,7 +201,7 @@
     <string name="config_gamepad_calibration_phase_cancelled">Dibatalkan</string>
     <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan stik analog atau trigger yang didukung. Kalibrasi dimulai saat stik digerakkan atau trigger ditekan; kalibrasi sebelumnya tetap digunakan hingga hasil baru disimpan.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Pengontrol ini tidak menyediakan rentang stik analog atau trigger yang didukung.</string>
-    <string name="config_gamepad_calibration_start">Pertahankan semua stik dan trigger pada posisi netral sampai penghitung waktu netral selesai. Lalu gerakkan setiap stik ke rentang penuhnya dan tekan Berikutnya.</string>
+    <string name="config_gamepad_calibration_start">Pastikan semua stik tetap di tengah dan semua trigger dilepas sampai penghitung waktu netral selesai.</string>
     <string name="config_gamepad_calibration_save_failed">Kalibrasi tidak dapat disimpan. Kalibrasi sebelumnya tidak berubah.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Tidak ditemukan rentang analog yang didukung.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasi ditolak: %1$s</string>
@@ -273,7 +273,7 @@
     <string name="pref_vk_type_phone">Keypad ponsel</string>
     <string name="pref_vk_type_phone_arrows">Keypad ponsel (panah)</string>
     <string name="pref_wakelock_title">Layar tetap menyala</string>
-    <string name="pref_skin_not_set">Belum diatur</string>
+    <string name="pref_skin_not_set">Tidak ada</string>
     <string name="pref_skin_title">Skin</string>
     <string name="pref_skip_resume_call">Lewati startApp() saat MIDlet dilanjutkan</string>
     <string name="pref_soundbank_title">Soundbank MIDI</string>
@@ -496,7 +496,7 @@
     <string name="memory_editor_candidate_ambiguous">Ambigu — penulisan dijeda</string>
     <string name="memory_editor_candidate_lost">Hilang — penulisan dijeda</string>
     <string name="memory_editor_apply">Terapkan</string>
-    <string name="memory_editor_max_value">Nilai maksimum</string>
+    <string name="memory_editor_min_value">Nilai minimum</string>\n    <string name="memory_editor_max_value">Nilai maksimum</string>\n    <string name="memory_editor_change_amount">Besar perubahan</string>\n    <string name="memory_editor_min_change">Perubahan minimum</string>\n    <string name="memory_editor_max_change">Perubahan maksimum</string>
     <string name="memory_editor_unfreeze">Lepas pembekuan</string>
     <string name="memory_editor_cancelled">Operasi dibatalkan.</string>
     <string name="memory_editor_resource_limit">Editor memori mencapai batas sumber daya aman. Coba tipe data atau nilai pencarian yang lebih spesifik.</string>
@@ -617,7 +617,7 @@
     <string name="bulk_install_status_update">Pembaruan</string>
     <string name="bulk_install_status_downgrade">Versi lebih lama</string>
     <string name="bulk_install_status_same">Sudah terpasang</string>
-    <string name="bulk_install_status_reinstall">Varian / instal ulang</string>
+    <string name="bulk_install_status_reinstall">Versi sama, berkas berbeda</string>
     <string name="bulk_install_status_ambiguous">Cocok dengan beberapa aplikasi terpasang</string>
     <string name="bulk_install_status_mismatch">JAD/JAR tidak cocok</string>
     <string name="bulk_install_status_duplicate">Duplikat</string>
@@ -790,7 +790,7 @@
     <string name="profile_apply_layout_keeps_settings">Pertahankan konfigurasi MIDlet ini; gunakan konfigurasi kustom.</string>
 
     <string name="config_analog_stick">Stik analog</string>
-    <string name="config_analog_stick_summary">Mengatur keluaran stik analog utama: 4 arah, 8 arah, atau keypad numerik. Tombol gamepad tetap mengikuti pemetaan tombol.</string>
+    <string name="config_analog_stick_summary">Pilih Nonaktif, 4 arah, 8 arah, atau keypad numerik untuk stik analog utama. Tombol gamepad menggunakan pemetaan tombol.</string>
     <string name="config_analog_stick_off">Nonaktif</string>
     <string name="config_controller_help_body_compact">Tombol gamepad mengikuti pemetaan tombol keyboard dan ponsel. Stik analog hanya mengatur arah stik ke MIDlet. Tombol Kembali Android tetap berfungsi seperti biasa; tombol fisik yang dipetakan ke M membuka menu runtime MIDlet.</string>
 
@@ -910,7 +910,7 @@
     <string name="runtime_virtual_controls_edit_guide_title">Panduan edit tata letak</string>
     <string name="runtime_virtual_controls_edit_guide_message">Geser kontrol untuk memindahkannya. Untuk tombol, gerakkan dua jari secara horizontal atau vertikal untuk mengubah lebar atau tinggi. Gerakkan kedua jari secara diagonal untuk mengubah lebar dan tinggi sekaligus. Cubit untuk mengubah ukuran D-pad atau stik analog secara proporsional. Ketuk Selesai setelah mengatur kontrol.</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Jangan tampilkan lagi</string>
-    <string name="runtime_virtual_controls_switch_layout">Pilih templat tata letak</string>
+    <string name="runtime_virtual_controls_switch_layout">Pilih tata letak kontrol</string>
     <string name="runtime_virtual_controls_show_controls">Tampilkan kontrol</string>
     <string name="runtime_virtual_controls_template_dpad_standard">D-pad standar</string>
     <string name="runtime_virtual_controls_template_analog_standard">Stik analog standar</string>

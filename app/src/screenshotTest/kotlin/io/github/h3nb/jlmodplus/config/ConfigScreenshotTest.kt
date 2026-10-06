@@ -93,7 +93,7 @@ private val PreviewConfigState = ConfigUiState(
         .build(),
     listOf(Size(240, 320), Size(360, 640)),
     listOf(ConfigUiState.FontPreset("240 x 320", 18, 22, 26)),
-    listOf("Not set", "Default skin"),
+    listOf("None", "Default skin"),
     listOf("Android (default)", "custom.sf2"),
     emptyList(),
     emptyList(),

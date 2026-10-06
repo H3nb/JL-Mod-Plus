@@ -61,7 +61,7 @@ class SettingsComposeTest {
             windowSize = DpSize(480.dp, 240.dp),
         )
 
-        composeRule.onNodeWithText("Language").performScrollTo().performClick()
+        composeRule.onNode(hasText("Language") and hasClickAction()).performScrollTo().performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
                 composeRule.onNodeWithContentDescription("Swipe to continue")
@@ -77,13 +77,13 @@ class SettingsComposeTest {
 
         composeRule.onNodeWithText("Theme").assertExists()
         composeRule.onNodeWithText("Dark").assertExists()
-        composeRule.onNodeWithText("Language").assertExists()
-        scrollSettingsToIndex(1)
-        composeRule.onNodeWithText("Keep screen on").performScrollTo().assertIsDisplayed()
+        composeRule.onNode(hasText("Language") and hasClickAction()).assertExists()
         scrollSettingsToIndex(2)
+        composeRule.onNodeWithText("Keep screen on").performScrollTo().assertIsDisplayed()
+        scrollSettingsToIndex(3)
         composeRule.onNodeWithText(uiString(R.string.pref_emulator_dir)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("/data/jlmod").assertIsDisplayed()
-        scrollSettingsToIndex(3)
+        scrollSettingsToIndex(4)
         composeRule.onNode(hasText("Profiles") and hasClickAction())
             .performScrollTo()
             .assertIsDisplayed()
@@ -96,16 +96,16 @@ class SettingsComposeTest {
 
         composeRule.onNodeWithText("Theme").performClick()
         composeRule.onNodeWithText("Light").performClick()
-        scrollSettingsToIndex(0)
-        composeRule.onNodeWithText("Language").performScrollTo().performClick()
-        composeRule.onNodeWithText("English").performClick()
         scrollSettingsToIndex(1)
+        composeRule.onNode(hasText("Language") and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNodeWithText("English").performClick()
+        scrollSettingsToIndex(2)
         composeRule.onNodeWithText("Keep screen on").performScrollTo().performClick()
-        scrollSettingsToIndex(3)
+        scrollSettingsToIndex(4)
         composeRule.onNode(hasText("Profiles") and hasClickAction())
             .performScrollTo()
             .performClick()
-        scrollSettingsToIndex(2)
+        scrollSettingsToIndex(3)
         composeRule.onNodeWithText(uiString(R.string.pref_emulator_dir)).performScrollTo().performClick()
 
         assertEquals(listOf("light", "en", "pref_wakelock_switch"), actions.changes)
@@ -150,10 +150,10 @@ class SettingsComposeTest {
         )
         setSettingsContent(state = state, actions = actions)
 
-        scrollSettingsToIndex(1)
+        scrollSettingsToIndex(2)
         composeRule.onNodeWithText(uiString(R.string.pref_apps_view)).performScrollTo().performClick()
         composeRule.onNodeWithText("Grid").performClick()
-        scrollSettingsToIndex(1)
+        scrollSettingsToIndex(2)
         composeRule.onNodeWithText(uiString(R.string.library_enhanced_icons_title)).performScrollTo().performClick()
 
         assertEquals(listOf("pref_apps_view=grid"), actions.libraryChoices)
@@ -187,7 +187,7 @@ class SettingsComposeTest {
         )
         setSettingsContent(state = gridState, actions = RecordingSettingsActions())
 
-        scrollSettingsToIndex(1)
+        scrollSettingsToIndex(2)
         composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_title)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_show_list_description)).assertDoesNotExist()
@@ -219,7 +219,7 @@ class SettingsComposeTest {
         )
         setSettingsContent(state = listState, actions = RecordingSettingsActions())
 
-        scrollSettingsToIndex(1)
+        scrollSettingsToIndex(2)
         composeRule.onNodeWithText(uiString(R.string.library_show_list_description)).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_title)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).assertDoesNotExist()
