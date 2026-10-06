@@ -61,8 +61,15 @@ preserving a poor historical mapping for consistency.
 
 - Top app bar titles use `titleLarge` or the component default.
 - Standard setting/list headlines use `bodyLarge`; normal explanatory supporting
-  text uses `bodyMedium`. Current values may use an appropriate body or label role
-  for the component. Do not add weight merely to manufacture hierarchy.
+  text uses `bodyMedium`. When a setting renders a current value as a separate line
+  beneath supporting text, keep those roles visually distinguishable; `labelLarge`
+  with `onSurface` is the default baseline for the value while the description stays
+  `bodyMedium` with `onSurfaceVariant`. Do not collapse semantically different
+  adjacent text into the same type role, color, and emphasis.
+- Prefer a semantic Material 3 typography role before adding an explicit font-weight
+  override. Explicit weight is still appropriate when the component role cannot
+  express a required hierarchy or state. Do not remove an existing hierarchy signal
+  merely to eliminate a custom weight; inspect the resulting rendered hierarchy first.
 - Section titles generally use `titleMedium`. Screen headings may use
   `headlineSmall`; alert/dialog headlines use `headlineSmall`.
 - Dialog body text uses `bodyMedium`; actions use `labelLarge` or their Material
