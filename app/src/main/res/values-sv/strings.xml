@@ -723,7 +723,6 @@
     <string name="reconverting_wait">Den här MIDlet-appen behöver en engångskonvertering för kompatibilitet innan den kan starta. Vänta…</string>
     <string name="reconversion_error">MIDlet-appen kunde inte konverteras automatiskt. %1$s</string>
     <string name="config_help_generic_color">Ställer in färgen på det här visuella elementet.</string>
-    <string name="config_help_action_generic">Öppnar det här konfigurationsverktyget.</string>
     <string name="config_help_encoding">Väljer den teckenkodning som rapporteras till MIDlet-appen.</string>
     <string name="config_edit_system_properties">Redigera systemegenskaper</string>
     <string name="config_help_system_properties">Ställer in avancerade Java ME-egenskaper som rapporteras till MIDlet-appen.</string>

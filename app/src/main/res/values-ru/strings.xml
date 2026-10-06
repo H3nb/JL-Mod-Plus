@@ -858,7 +858,6 @@
 
 %1$s</string>
     <string name="config_help_generic_color">Задаёт цвет этого визуального элемента.</string>
-    <string name="config_help_action_generic">Открывает этот инструмент настройки.</string>
     <string name="config_help_encoding">Выбирает кодировку символов, сообщаемую MIDlet.</string>
     <string name="config_edit_system_properties">Изменить системные свойства</string>
     <string name="config_help_system_properties">Задаёт расширенные свойства Java ME, сообщаемые MIDlet.</string>

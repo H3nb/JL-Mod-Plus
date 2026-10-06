@@ -723,7 +723,6 @@
     <string name="reconverting_wait">Deze MIDlet heeft vóór de start een eenmalige compatibiliteitsconversie nodig. Even geduld…</string>
     <string name="reconversion_error">De MIDlet kon niet automatisch worden geconverteerd. %1$s</string>
     <string name="config_help_generic_color">Stelt de kleur van dit visuele element in.</string>
-    <string name="config_help_action_generic">Opent dit configuratiehulpmiddel.</string>
     <string name="config_help_encoding">Kiest de tekencodering die aan de MIDlet wordt gemeld.</string>
     <string name="config_edit_system_properties">Systeemeigenschappen bewerken</string>
     <string name="config_help_system_properties">Stelt geavanceerde Java ME-eigenschappen in die aan de MIDlet worden gemeld.</string>

@@ -730,7 +730,6 @@
     <string name="reconverting_wait">Este MIDlet necesita una conversión de compatibilidad única antes de iniciarse. Espera…</string>
     <string name="reconversion_error">No se pudo convertir el MIDlet automáticamente.\n\n%1$s</string>
     <string name="config_help_generic_color">Establece el color de este elemento visual.</string>
-    <string name="config_help_action_generic">Abre esta herramienta de configuración.</string>
     <string name="config_help_encoding">Elige la codificación de caracteres que se informa al MIDlet.</string>
     <string name="config_edit_system_properties">Editar propiedades del sistema</string>
     <string name="config_help_system_properties">Establece propiedades avanzadas de Java ME que se informan al MIDlet.</string>
