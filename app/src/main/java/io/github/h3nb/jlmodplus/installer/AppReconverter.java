@@ -136,7 +136,8 @@ public final class AppReconverter {
                     throw new ConverterException("Dexing error during automatic reconversion", error);
                 }
                 if (!conversionResult.isSuccess()) {
-                    throw new ConverterException("Dexing error during automatic reconversion");
+                    throw new ConversionFailureException(
+                            "Dexing error during automatic reconversion", conversionResult);
                 }
 
                 checkCancelled(cancellation);

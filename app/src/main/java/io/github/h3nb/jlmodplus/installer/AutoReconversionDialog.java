@@ -199,15 +199,19 @@ public final class AutoReconversionDialog extends DialogFragment {
         }
         Log.e(TAG, "Automatic MIDlet reconversion failed", error);
         if (!isAdded() || controller == null) return;
-        String detail = error.getMessage();
-        if (detail == null || detail.trim().isEmpty()) {
-            detail = error.getClass().getSimpleName();
+        String details;
+        if (error instanceof ConversionFailureException) {
+            details = ConversionWarningFormatter.technicalReport(
+                    ((ConversionFailureException) error).getResult());
+        } else {
+            details = InstallerFailure.details(error);
         }
-        controller.showConfirmation(
+        controller.showError(
                 appName,
-                getString(R.string.reconversion_error, detail),
+                getString(R.string.reconversion_error_summary),
+                getString(R.string.close),
                 getString(R.string.library_retry),
-                getString(R.string.close), null, null);
+                details);
     }
 
     private void requestClose() {

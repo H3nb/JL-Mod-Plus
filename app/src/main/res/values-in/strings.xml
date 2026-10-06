@@ -723,6 +723,7 @@
     <string name="reconversion_error">MIDlet ini tidak dapat dikonversi secara otomatis.
 
 %1$s</string>
+    <string name="reconversion_error_summary">MIDlet ini tidak dapat dikonversi secara otomatis.</string>
     <string name="config_help_generic_color">Mengatur warna bagian tampilan ini.</string>
     <string name="config_help_action_generic">Membuka pengaturan ini.</string>
     <string name="config_help_encoding">Memilih pengodean karakter yang dilaporkan sebagai microedition.encoding.</string>

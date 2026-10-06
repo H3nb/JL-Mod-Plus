@@ -469,7 +469,7 @@ public class AppInstaller {
                 throw new ConverterException("Dexing error", e);
             }
             if (!conversionResult.isSuccess()) {
-                throw new ConverterException("Dexing error");
+                throw new ConversionFailureException("Dexing error", conversionResult);
             }
             File payload = child(tmpDir, Config.MIDLET_DEX_ARCH);
             if (!payload.isFile() || payload.length() == 0L) {

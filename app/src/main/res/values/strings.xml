@@ -789,6 +789,7 @@
     <string name="reconversion_error">The MIDlet could not be converted automatically.
 
 %1$s</string>
+    <string name="reconversion_error_summary">The MIDlet could not be converted automatically.</string>
     <string name="config_help_generic_color">Sets the color of this visual element.</string>
     <string name="config_help_action_generic">Opens this configuration tool.</string>
     <string name="config_help_encoding">Chooses the character encoding reported as microedition.encoding.</string>
