@@ -160,7 +160,7 @@ jobs:
           set -euo pipefail
           mkdir -p screenshot-candidates
           cp -a app/src/screenshotTestEmulatorDebug/reference screenshot-candidates/before
-          ./gradlew --daemon --stacktrace --profile :app:updateEmulatorDebugScreenshotTest
+          ./gradlew --daemon --stacktrace --profile -PjlmodNativeBuild=false :app:updateEmulatorDebugScreenshotTest
           cp -a app/src/screenshotTestEmulatorDebug/reference screenshot-candidates/after
           # Include newly generated files as well as changed/deleted references.
           git add --intent-to-add -- app/src/screenshotTestEmulatorDebug/reference
@@ -328,7 +328,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail :app:validateEmulatorDebugScreenshotTest
+          ./gradlew --daemon --stacktrace --profile --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:validateEmulatorDebugScreenshotTest
 
       - name: Package existing screenshot renders after comparison failure
         id: candidates
@@ -396,7 +396,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail :app:lintEmulatorDebug
+          ./gradlew --daemon --stacktrace --profile --continue --configuration-cache --configuration-cache-problems=fail -PjlmodNativeBuild=false :app:lintEmulatorDebug
 
       - name: Upload lint diagnostics
         if: always()
