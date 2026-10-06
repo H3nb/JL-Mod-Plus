@@ -454,11 +454,11 @@
     <string name="installer_hide_details">Hide details</string>
     <!-- %1$d is the number of source Java class files skipped during conversion. -->
     <plurals name="installer_conversion_warning_summary">
-        <item quantity="one">%1$d Java class file was unreadable and skipped during conversion. The app may still run, but some features may not work.</item>
-        <item quantity="other">%1$d Java class files were unreadable and skipped during conversion. The app may still run, but some features may not work.</item>
+        <item quantity="one">%1$d Java class file could not be read and was skipped during conversion. The app may still run, but some features may not work.</item>
+        <item quantity="other">%1$d Java class files could not be read and were skipped during conversion. The app may still run, but some features may not work.</item>
     </plurals>
     <!-- %1$s is the source JAR entry path for the skipped class file. -->
-    <string name="installer_conversion_skipped_entry">%1$s\nProblem: Could not be read as a supported Java class.\nAction: Excluded from the converted app.</string>
+    <string name="installer_conversion_skipped_entry">%1$s\nProblem: This Java class could not be read.\nAction: Skipped during conversion.</string>
     <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
     <plurals name="installer_conversion_omitted_details">
         <item quantity="one">%1$d additional conversion issue is not shown.</item>
