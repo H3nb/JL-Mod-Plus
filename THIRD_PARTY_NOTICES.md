@@ -37,9 +37,11 @@ Gradle and CI do not access the network to obtain them.
 
 ## Phosphor Icons assets
 
-`app/src/main/res/drawable/ic_memory_editor_search.xml` and `ic_memory_editor_close.xml` are
-VectorDrawable conversions of Phosphor Icons' regular `MagnifyingGlass` and `X` SVGs, pinned at
-revision `3370cb1bc0a31ef3610367f3bd985462c2e201ea`. Only these required static assets are vendored.
+`app/src/main/res/drawable/ic_memory_editor_search.xml`, `ic_memory_editor_close.xml`,
+`ic_profile_use.xml`, `ic_profile_save_as.xml`, and `ic_profile_update.xml` are VectorDrawable
+conversions of Phosphor Icons' regular `MagnifyingGlass`, `X`, `CheckCircle`, `FilePlus`, and
+`ArrowsClockwise` SVGs, pinned at revision `3370cb1bc0a31ef3610367f3bd985462c2e201ea`.
+Only these required static assets are vendored.
 
 MIT License
 

@@ -15,7 +15,6 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,8 +25,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -114,10 +111,6 @@ internal fun PresetSummary(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            HorizontalDivider(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                color = MaterialTheme.colorScheme.outlineVariant,
-            )
             PresetActionRows(
                 onUsePreset = onUsePreset,
                 onSavePreset = onSavePreset,
@@ -151,21 +144,19 @@ private fun PresetActionRows(
     ) {
         PresetActionRow(
             label = stringResource(R.string.preset_use),
-            icon = R.drawable.ic_play,
+            icon = R.drawable.ic_profile_use,
             emphasized = true,
             onClick = onUsePreset,
         )
-        PresetActionDivider()
         PresetActionRow(
             label = stringResource(R.string.preset_save_as),
-            icon = R.drawable.ic_save,
+            icon = R.drawable.ic_profile_save_as,
             onClick = onSavePreset,
         )
         updatePresetName?.let { name ->
-            PresetActionDivider()
-            PresetActionRow(
+                PresetActionRow(
                 label = stringResource(R.string.preset_update_confirm),
-                icon = R.drawable.ic_restart_alt,
+                icon = R.drawable.ic_profile_update,
                 contentDescription = stringResource(R.string.preset_update, name),
                 modifier = Modifier.testTag("preset_update_action"),
                 onClick = { onUpdatePreset(name) },
@@ -194,7 +185,7 @@ private fun PresetActionRow(
             },
         onClick = onClick,
         shape = MaterialTheme.shapes.medium,
-        color = if (emphasized) colors.surfaceContainer else Color.Transparent,
+        color = Color.Transparent,
         contentColor = colors.onSurface,
     ) {
         Row(
@@ -204,30 +195,12 @@ private fun PresetActionRow(
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                shape = CircleShape,
-                color = if (emphasized) {
-                    colors.primaryContainer
-                } else {
-                    colors.surfaceContainerHighest
-                },
-                contentColor = if (emphasized) {
-                    colors.onPrimaryContainer
-                } else {
-                    colors.onSurfaceVariant
-                },
-            ) {
-                Box(
-                    modifier = Modifier.size(40.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(icon),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
-            }
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = if (emphasized) colors.primary else colors.onSurfaceVariant,
+            )
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
@@ -245,13 +218,6 @@ private fun PresetActionRow(
     }
 }
 
-@Composable
-private fun PresetActionDivider() {
-    HorizontalDivider(
-        modifier = Modifier.padding(start = 64.dp),
-        color = MaterialTheme.colorScheme.outlineVariant,
-    )
-}
 
 @Composable
 internal fun PresetDialogs(
