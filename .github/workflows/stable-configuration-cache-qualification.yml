@@ -13,8 +13,99 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build-identity:
+    if: github.event.pull_request.number == 152
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: true
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Set up Android SDK, platform 37, and NDK r30
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
+
+      - name: Qualify lazy build identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+
+          first_commit='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+          second_commit='bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+          apk='app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk'
+
+          JLMOD_BUILD_COMMIT="$first_commit" ./gradlew --daemon --stacktrace --console=plain \
+            --configuration-cache --configuration-cache-problems=fail \
+            :app:assembleEmulatorDebug | tee build-identity-first.log
+
+          mapfile -t identity_files < <(find app/build -type f -name jlmod-build-identity.xml -print)
+          if [[ ${#identity_files[@]} -ne 1 ]]; then
+            printf 'Expected exactly one generated build identity resource, found %d\n' "${#identity_files[@]}" >&2
+            printf '%s\n' "${identity_files[@]}" >&2
+            exit 1
+          fi
+          grep -Fq ">$first_commit<" "${identity_files[0]}"
+
+          aapt2_bin="$(find "$ANDROID_HOME/build-tools" -type f -name aapt2 -perm -111 -print | sort -V | tail -n 1)"
+          [[ -n "$aapt2_bin" ]] || { echo 'aapt2 not found.' >&2; exit 1; }
+          [[ -f "$apk" ]] || { echo "Missing APK: $apk" >&2; exit 1; }
+          "$aapt2_bin" dump resources "$apk" > build-identity-first-aapt2.txt
+          grep -Fq 'jlmod_build_commit' build-identity-first-aapt2.txt
+          grep -Fq "$first_commit" build-identity-first-aapt2.txt
+
+          JLMOD_BUILD_COMMIT="$second_commit" ./gradlew --daemon --stacktrace --console=plain \
+            --configuration-cache --configuration-cache-problems=fail \
+            :app:assembleEmulatorDebug | tee build-identity-second.log
+
+          grep -Fq 'Reusing configuration cache.' build-identity-second.log
+          for task in ':app:compileEmulatorDebugKotlin' ':app:compileEmulatorDebugJavaWithJavac'; do
+            if ! grep -Eq "^> Task ${task} (UP-TO-DATE|FROM-CACHE|NO-SOURCE|SKIPPED)$" build-identity-second.log; then
+              echo "Compilation was unexpectedly invalidated or status could not be proven for ${task}." >&2
+              grep -F "${task}" build-identity-second.log >&2 || true
+              exit 1
+            fi
+          done
+
+          mapfile -t identity_files < <(find app/build -type f -name jlmod-build-identity.xml -print)
+          [[ ${#identity_files[@]} -eq 1 ]]
+          grep -Fq ">$second_commit<" "${identity_files[0]}"
+
+          "$aapt2_bin" dump resources "$apk" > build-identity-second-aapt2.txt
+          grep -Fq 'jlmod_build_commit' build-identity-second-aapt2.txt
+          grep -Fq "$second_commit" build-identity-second-aapt2.txt
+          if grep -Fq "$first_commit" build-identity-second-aapt2.txt; then
+            echo 'APK still contains the first diagnostic identity after the second build.' >&2
+            exit 1
+          fi
+
+          {
+            echo 'Build identity qualification passed.'
+            echo 'Second invocation reused Configuration Cache.'
+            echo 'Kotlin/Java compilation stayed cached/up-to-date.'
+            echo 'Generated resource and APK contain the second diagnostic identity.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   release-config:
     if: github.event.pull_request.number == 152
+    needs: build-identity
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
