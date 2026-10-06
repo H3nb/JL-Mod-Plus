@@ -426,7 +426,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 45
     env:
-      GRADLE_USER_HOME: ${{ runner.temp }}/jlmod-gradle-portability
+      GRADLE_USER_HOME: ${{ github.workspace }}/.gradle-portability
 
     steps:
       - name: Check out root A
@@ -524,7 +524,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     env:
-      GRADLE_USER_HOME: ${{ runner.temp }}/jlmod-gradle-release-native
+      GRADLE_USER_HOME: ${{ github.workspace }}/.gradle-release-native
 
     steps:
       - name: Check out sources
