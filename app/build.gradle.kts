@@ -228,6 +228,16 @@ val diagnosticBuildCommit = providers.gradleProperty("jlmodBuildCommit")
             if (value.matches(Regex("[0-9a-fA-F]{7,40}"))) value.lowercase(Locale.ROOT) else "unknown"
         }
     }
+val nativeBuildEnabled = providers.gradleProperty("jlmodNativeBuild")
+    .orElse("true")
+    .map { rawValue ->
+        when (rawValue.trim().lowercase(Locale.ROOT)) {
+            "true" -> true
+            "false" -> false
+            else -> error("jlmodNativeBuild must be true or false")
+        }
+    }
+    .get()
 
 val compileSdkVersion = libs.versions.androidCompileSdk.get().toInt()
 val minSdkVersion = libs.versions.androidMinSdk.get().toInt()
@@ -238,38 +248,44 @@ val audioSourcesRoot = layout.buildDirectory.dir("audio-sources")
 val nativeRecipeFiles = fileTree(rootDirectory.dir("tools/audio")) {
     include("build-opencore.ps1", "install-public-headers.ps1")
 }
-val nativeAudioSourcePreparation = gradle.sharedServices.registerIfAbsent(
-    "nativeAudioSourcePreparation",
-    NativeAudioSourcePreparationService::class
-) {}
-val audioDependencyTasks = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64").associateWith { abi ->
-    tasks.register<BuildNativeAudioDependenciesTask>("buildNativeAudio${abi.replace("-", "").replace("_", "")}") {
-        script.set(rootDirectory.file("tools/audio/build-native-deps.ps1"))
-        recipeFiles.from(nativeRecipeFiles)
-        sourceManifest.set(rootDirectory.file("tools/audio/native-sources.json"))
-        sourcePreparationScript.set(rootDirectory.file("tools/audio/prepare-native-sources.ps1"))
-        this.abi.set(abi)
-        ndkVersion.set(selectedNdkVersion)
-        androidApi.set(minSdkVersion)
-        hostOs.set(providers.systemProperty("os.name"))
-        hostArch.set(providers.systemProperty("os.arch"))
-        sdkDirectory.set(androidComponents.sdkComponents.sdkDirectory)
-        dependencyRoot.set(audioDependenciesRoot)
-        sourcePreparationService.set(nativeAudioSourcePreparation)
-        usesService(nativeAudioSourcePreparation)
-        sourcesDirectory.set(audioSourcesRoot)
-        workDirectory.set(layout.buildDirectory.dir("audio-work/$abi"))
-        installDirectory.set(audioDependenciesRoot.map { it.dir("install-$abi") })
+val audioDependencyTasks = if (nativeBuildEnabled) {
+    val nativeAudioSourcePreparation = gradle.sharedServices.registerIfAbsent(
+        "nativeAudioSourcePreparation",
+        NativeAudioSourcePreparationService::class
+    ) {}
+    listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64").associateWith { abi ->
+        tasks.register<BuildNativeAudioDependenciesTask>("buildNativeAudio${abi.replace("-", "").replace("_", "")}") {
+            script.set(rootDirectory.file("tools/audio/build-native-deps.ps1"))
+            recipeFiles.from(nativeRecipeFiles)
+            sourceManifest.set(rootDirectory.file("tools/audio/native-sources.json"))
+            sourcePreparationScript.set(rootDirectory.file("tools/audio/prepare-native-sources.ps1"))
+            this.abi.set(abi)
+            ndkVersion.set(selectedNdkVersion)
+            androidApi.set(minSdkVersion)
+            hostOs.set(providers.systemProperty("os.name"))
+            hostArch.set(providers.systemProperty("os.arch"))
+            sdkDirectory.set(androidComponents.sdkComponents.sdkDirectory)
+            dependencyRoot.set(audioDependenciesRoot)
+            sourcePreparationService.set(nativeAudioSourcePreparation)
+            usesService(nativeAudioSourcePreparation)
+            sourcesDirectory.set(audioSourcesRoot)
+            workDirectory.set(layout.buildDirectory.dir("audio-work/$abi"))
+            installDirectory.set(audioDependenciesRoot.map { it.dir("install-$abi") })
+        }
     }
+} else {
+    emptyMap()
 }
 
 // AGP exposes public artifact/source APIs, but no public task-provider hook for an
 // ndk-build prebuilt prerequisite. Keep the unavoidable task-name boundary here;
 // never replace it with AGP implementation classes.
-tasks.configureEach {
-    if (name.startsWith("configureNdkBuild") || name.startsWith("buildNdkBuild")) {
-        audioDependencyTasks.forEach { (abi, build) ->
-            if (name.endsWith("[$abi]")) dependsOn(build)
+if (nativeBuildEnabled) {
+    tasks.configureEach {
+        if (name.startsWith("configureNdkBuild") || name.startsWith("buildNdkBuild")) {
+            audioDependencyTasks.forEach { (abi, build) ->
+                if (name.endsWith("[$abi]")) dependsOn(build)
+            }
         }
     }
 }
@@ -277,7 +293,9 @@ tasks.configureEach {
 android {
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
     compileSdk = compileSdkVersion
-    ndkVersion = selectedNdkVersion
+    if (nativeBuildEnabled) {
+        ndkVersion = selectedNdkVersion
+    }
     namespace = "io.github.h3nb.jlmodplus"
 
     defaultConfig {
@@ -292,7 +310,9 @@ android {
         // survive a JLMOD_BUILD_COMMIT change without invalidating Kotlin/Java compilation.
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        externalNativeBuild.ndkBuild.arguments += "JLMOD_AUDIO_DEPS=${audioDependenciesRoot.get().asFile.absolutePath.replace('\\', '/')}"
+        if (nativeBuildEnabled) {
+            externalNativeBuild.ndkBuild.arguments += "JLMOD_AUDIO_DEPS=${audioDependenciesRoot.get().asFile.absolutePath.replace('\\', '/')}"
+        }
     }
 
     @Suppress("UnstableApiUsage")
@@ -301,7 +321,7 @@ android {
     buildFeatures {
         aidl = true
         compose = true
-        prefab = true
+        prefab = nativeBuildEnabled
         buildConfig = true
         resValues = true
     }
@@ -338,7 +358,7 @@ android {
             }
             applicationIdSuffix = ".debug"
             isJniDebuggable = true
-            ndk {
+            if (nativeBuildEnabled) ndk {
                 // Normal debug builds remain arm64-only. Hosted runtime tests opt into x86_64
                 // explicitly so they can run on a Linux x86_64 Android Emulator.
                 abiFilters += runtimeTestAbi ?: "arm64-v8a"
@@ -385,7 +405,9 @@ android {
         isUniversalApk = true
     }
 
-    externalNativeBuild.ndkBuild.path("src/main/cpp/Android.mk")
+    if (nativeBuildEnabled) {
+        externalNativeBuild.ndkBuild.path("src/main/cpp/Android.mk")
+    }
 
     compileOptions {
         targetCompatibility = JavaVersion.VERSION_17
@@ -437,7 +459,7 @@ androidComponents {
             )
         )
 
-        if (variant.name == "emulatorDebug") {
+        if (nativeBuildEnabled && variant.name == "emulatorDebug") {
             variant.resValues.put(
                 variant.makeResValueKey("string", "app_name"),
                 ResValue("JL-Mod Plus Debug", "Debug application name")
