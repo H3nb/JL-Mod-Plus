@@ -324,6 +324,8 @@ class InstallerComposeTest {
         capturePopup("bulk-short.png")
         composeRule.onAllNodesWithText(targetString(R.string.bulk_install_cancelled))
             .assertCountEquals(1)
+        composeRule.onNodeWithTag("bulk-results").performScrollToIndex(4)
+        composeRule.onNodeWithText("Game four").assertIsDisplayed()
         composeRule.onNodeWithTag("bulk-results").performScrollToIndex(5)
         composeRule.onNodeWithText(targetString(R.string.installer_retry_remaining))
             .assertIsDisplayed().performClick()
