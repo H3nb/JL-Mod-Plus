@@ -688,23 +688,23 @@ private fun FinishedContent(
                                 MaterialTheme.colorScheme.primary
                             },
                         )
+                        result.warning?.let {
+                            Text(
+                                stringResource(R.string.warning),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                         val detail = result.reviewReason?.let {
                             bulkInstallReviewReasonText(LocalResources.current, it)
                         } ?: result.detail
                         detail?.let {
-                            val isSuccessNotice =
-                                result.kind == BulkInstallResultKind.Installed ||
-                                    result.kind == BulkInstallResultKind.Updated ||
-                                    result.kind == BulkInstallResultKind.Reinstalled ||
-                                    result.kind == BulkInstallResultKind.Restored
-                            if (isSuccessNotice) {
-                                Text(
-                                    stringResource(R.string.warning),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
                             Text(
                                 it,
                                 style = MaterialTheme.typography.bodySmall,
