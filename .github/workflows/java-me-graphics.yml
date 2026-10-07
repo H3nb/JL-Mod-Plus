@@ -7,6 +7,7 @@ on:
       - 'app/src/main/java/javax/microedition/lcdui/Graphics.java'
       - 'app/src/main/java/com/nokia/mid/ui/DirectGraphics*.java'
       - 'app/src/androidTest/java/com/nokia/mid/ui/DirectGraphicsRenderingTest.java'
+      - 'app/src/androidTest/java/com/nokia/mid/ui/DirectGraphicsTestSuite.java'
       - 'app/src/androidTest/java/javax/microedition/lcdui/Graphics*.java'
       - '.github/workflows/java-me-graphics.yml'
   workflow_dispatch:
@@ -61,7 +62,7 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=com.nokia.mid.ui.DirectGraphicsRenderingTest,javax.microedition.lcdui.GraphicsCanvasStateTest,javax.microedition.lcdui.GraphicsBitmapRebindTest :app:connectedEmulatorDebugAndroidTest
+          script: ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=com.nokia.mid.ui.DirectGraphicsTestSuite :app:connectedEmulatorDebugAndroidTest
 
       - name: Upload rendering test reports
         if: always()

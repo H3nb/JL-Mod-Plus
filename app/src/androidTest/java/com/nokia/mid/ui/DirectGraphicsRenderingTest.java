@@ -2,7 +2,7 @@
 package com.nokia.mid.ui;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -192,10 +192,18 @@ public class DirectGraphicsRenderingTest {
 		Graphics g = image.getGraphics();
 		DirectGraphics dg = DirectUtils.getDirectGraphics(g);
 		dg.setARGBColor(0x80224466);
-		assertThrows(ArrayIndexOutOfBoundsException.class, () -> dg.fillPolygon(
-				new int[]{2, 7}, 0, new int[]{2, 2}, 0, 3, WATER));
-		assertThrows(NullPointerException.class, () -> dg.drawPolygon(
-				null, 0, new int[]{2, 2, 7}, 0, 3, WATER));
+		try {
+			dg.fillPolygon(new int[]{2, 7}, 0, new int[]{2, 2}, 0, 3, WATER);
+			fail("Expected invalid coordinate range to fail");
+		} catch (ArrayIndexOutOfBoundsException expected) {
+			// No drawing or shared color changes may precede validation.
+		}
+		try {
+			dg.drawPolygon(null, 0, new int[]{2, 2, 7}, 0, 3, WATER);
+			fail("Expected null coordinates to fail");
+		} catch (NullPointerException expected) {
+			// No drawing or shared color changes may precede validation.
+		}
 		assertEquals(0x80224466, g.getColor());
 		assertEquals(128, dg.getAlphaComponent());
 		assertEquals(BACKGROUND, pixel(image, 4, 4));
