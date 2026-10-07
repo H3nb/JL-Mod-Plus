@@ -165,11 +165,17 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText(selectionCount(1)).assertIsDisplayed()
 
         val opensBeforeGesture = host.openedCollectionIds.size
-        composeRule.onNodeWithTag("library-pager").performTouchInput {
-            val start = Offset(width * 0.85f, center.y)
-            val acrossSnapPoint = Offset(width * 0.1f, center.y)
+        val pager = composeRule.onNodeWithTag("library-pager")
+        var start = Offset.Zero
+        pager.performTouchInput {
+            start = Offset(width * 0.85f, center.y)
             down(start)
-            moveTo(acrossSnapPoint, delayMillis = 300L)
+            moveTo(Offset(width * 0.1f, center.y), delayMillis = 300L)
+        }
+        // Keep the pointer down across an idle boundary so recomposition and destination effects
+        // observe the transient currentPage. A cancelled drag must still not commit navigation.
+        composeRule.waitForIdle()
+        pager.performTouchInput {
             moveTo(start, delayMillis = 300L)
             up()
         }
