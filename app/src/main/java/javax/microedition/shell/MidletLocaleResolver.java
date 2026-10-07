@@ -1,6 +1,4 @@
 /*
- * Copyright 2026 JL-Mod Plus contributors
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -129,17 +127,9 @@ final class MidletLocaleResolver {
 			return null;
 		}
 		String country = locale.getCountry().toUpperCase(Locale.ROOT);
-		if (!isTwoAsciiLetters(country)) {
-			return null;
-		}
-		try {
-			if (locale.getISO3Country().isEmpty()) {
-				return null;
-			}
-		} catch (MissingResourceException error) {
-			return null;
-		}
-		return country;
+		// Preserve a real two-letter region supplied by the platform. A Java ME-era
+		// ISO-3166 identifier can be absent from the host's current ISO database.
+		return isTwoAsciiLetters(country) ? country : null;
 	}
 
 	private static boolean isTwoAsciiLetters(String value) {

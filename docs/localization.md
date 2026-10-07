@@ -239,11 +239,9 @@ application identity. Do not rename locale directories solely to normalize tag
 spelling; treat a physical-directory migration as separate compatibility work.
 
 Android application locale and the Java ME device locale are separate contracts.
-The app locale selects JL-Mod Plus resources; the MIDlet runtime derives its device locale from
-the effective app locale plus compatible region information that is actually present in the
-system locale list, then serializes it to the MIDP format. Never invent a country merely to make a
-language-only locale look more specific, and never inspect MIDlet resources to choose the device
-locale.
+The app locale selects JL-Mod Plus resources. The authoritative guest-locale resolution contract
+is [MIDlet locale identity](java-me-compatibility.md#midlet-locale-identity); localization code must
+not inspect MIDlet resources to choose the Java ME device locale.
 
 **Target architecture:**
 
