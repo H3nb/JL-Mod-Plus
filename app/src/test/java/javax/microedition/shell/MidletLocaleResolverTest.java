@@ -56,6 +56,7 @@ public class MidletLocaleResolverTest {
 	}
 
 	@Test
+	@SuppressWarnings("deprecation")
 	public void legacyLanguageCodeCanonicalizesThroughLanguageTag() {
 		assertEquals("he-IL", MidletLocaleResolver.resolve(
 				new Locale("iw", "IL"),

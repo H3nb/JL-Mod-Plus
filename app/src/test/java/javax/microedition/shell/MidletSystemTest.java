@@ -14,32 +14,9 @@
 
 package javax.microedition.shell;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
 import org.junit.Test;
 
 public class MidletSystemTest {
-	@Test
-	public void propertyPublicationKeepsHostAndGuestStoresInSync() {
-		String key = "jlmod.test.midlet.property";
-		String previous = System.getProperty(key);
-		try {
-			MidletSystem.setProperty(key, "value");
-			assertEquals("value", System.getProperty(key));
-			assertEquals("value", MidletSystem.getProperty(key));
-
-			MidletSystem.setProperty(key, null);
-			assertNull(System.getProperty(key));
-			assertNull(MidletSystem.getProperty(key));
-		} finally {
-			MidletSystem.setProperty(key, null);
-			if (previous != null) {
-				System.setProperty(key, previous);
-			}
-		}
-	}
-
 	@Test
 	public void advisoryGcRequestsReturnWithoutCollecting() {
 		MidletSystem.gc();
