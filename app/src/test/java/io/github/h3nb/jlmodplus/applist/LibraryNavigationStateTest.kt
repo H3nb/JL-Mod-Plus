@@ -105,6 +105,29 @@ class LibraryNavigationStateTest {
     }
 
     @Test
+    fun appAnchorNeverCrossesLibraryScopeWhenGenerationAndIdAreReused() {
+        val state = LibraryNavigationState().saveAnchor(
+            LibraryNavigationSurface.AppsList,
+            LibraryScrollAnchor(
+                generation = 1L,
+                stableItemId = 1L,
+                offsetPx = 12,
+                fallbackIndex = 0,
+                libraryScope = "/work/library-a",
+            ),
+        )
+
+        assertNull(
+            state.resolveAnchor(
+                LibraryNavigationSurface.AppsList,
+                activeGeneration = 1L,
+                availableIds = listOf(1L),
+                libraryScope = "/work/library-b",
+            ),
+        )
+    }
+
+    @Test
     fun capturedReturnAnchorCanResolveAfterGenerationChanges() {
         val captured = LibraryScrollAnchor(
             generation = 3L,
