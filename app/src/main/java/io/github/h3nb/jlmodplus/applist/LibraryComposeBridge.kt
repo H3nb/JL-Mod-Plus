@@ -939,8 +939,12 @@ fun LibraryScreen(
         navigationState.selectedCollectionId,
         selectionState.isActive,
         selectionState.collectionId,
+        navigationState.collectionManageApps,
     ) {
-        if (selectionState.isActive && !selectionMatchesDestination) {
+        if (
+            selectionState.isActive &&
+            (!selectionMatchesDestination || collectionManageAppsActive)
+        ) {
             selectionState = selectionState.clear()
         }
     }
