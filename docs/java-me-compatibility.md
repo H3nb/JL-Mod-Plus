@@ -12,6 +12,30 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 - Do not silently "correct" known-compatible behavior just because Android or desktop Java behaves differently.
 - If documentation is incomplete or ambiguous, prefer preserving known behavior and add a focused characterization/regression test instead of guessing.
 
+## Nokia polygon rendering
+
+Nokia `DirectGraphics` polygon/triangle methods use their explicit ARGB argument
+without replacing the shared `Graphics` color. `getAlphaComponent()` reads that
+shared context, including changes made through another wrapper or MIDP setters.
+The [Nokia UI API reference](https://nikita36078.github.io/J2ME_Docs/docs/Nokia_UI_API_1_1/com/nokia/mid/ui/DirectGraphics.html)
+defines closed polygons, even-odd interior coverage, and Source Over compositing.
+
+Filled Nokia polygons include their one-pixel outline. Opaque interior and
+outline are combined before applying a translucent call's ARGB, so one call
+cannot darken its own boundary through repeated alpha blending. Separate calls
+still composite independently. The bounded temporary layer is used only for
+translucent polygons; opaque polygons draw directly. MIDP fill primitives retain
+their existing coverage and paint state.
+
+This boundary treatment is supported by reconstruction of integer-separated
+water regions from Bounce Tales: fill-only rendering leaves a source-background
+column at each right edge. The observed columns move with the camera and match
+both the positions and unblended colors in the reported captures. This is
+compatibility evidence, not a claim that the reference specifies every boundary
+rounding case or that whole-game/device validation has completed. The
+`DirectGraphicsRenderingTest` instrumentation protects the general API behavior
+without shipping game assets or selecting behavior by MIDlet identity.
+
 ## Foreground ownership boundary
 
 JL-Mod keeps Android task foreground, emulator/AMS foreground selection, MIDlet lifecycle, and LCDUI display foreground as separate facts. In particular, MIDP `Display.setCurrent(null)` retains the current `Displayable` and is treated as a request to yield emulator foreground to the Library; it never means Android Home. A live runtime may therefore coexist with Library foreground. Non-null `setCurrent()` calls update guest display state but do not directly foreground Android Activities. The runtime storage lease remains liveness evidence only; emulator foreground selection is persisted separately and generation-fenced.

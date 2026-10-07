@@ -29,6 +29,8 @@ import android.graphics.DashPathEffect;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
@@ -61,6 +63,8 @@ public class Graphics implements
 
 	private final Paint drawPaint = new Paint();
 	private final Paint fillPaint = new Paint();
+	private final Paint polygonPaint = new Paint();
+	private final Paint polygonLayerPaint = new Paint();
 
 	private int translateX;
 	private int translateY;
@@ -134,8 +138,54 @@ public class Graphics implements
 		}
 	}
 
+	/** Nokia polygons include their boundary and use even-odd interior coverage. */
+	public void fillPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset,
+			int nPoints, int argbColor) {
+		if (nPoints > 0) {
+			Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
+			path.setFillType(Path.FillType.EVEN_ODD);
+			polygonPaint.set(fillPaint);
+			polygonPaint.setColor(argbColor | 0xFF000000);
+			polygonPaint.setStrokeWidth(1);
+			int alpha = argbColor >>> 24;
+			if (alpha == 0) return;
+			int saveCount = 0;
+			if (alpha != 255) {
+				path.computeBounds(rectF, true);
+				// Default miter limit is 4: a one-pixel stroke extends at most two pixels.
+				rectF.inset(-2, -2);
+				PorterDuffColorFilter filter = (PorterDuffColorFilter) polygonLayerPaint.getColorFilter();
+				if (filter == null || filter.getColor() != argbColor) {
+					polygonLayerPaint.setColorFilter(new PorterDuffColorFilter(argbColor, PorterDuff.Mode.SRC_IN));
+				}
+				saveCount = canvas.saveLayer(rectF, polygonLayerPaint);
+			}
+			try {
+				// FILL_AND_STROKE can replace even-odd with winding coverage in Skia.
+				// Opaque fill + outline form a union; the layer applies alpha only once.
+				canvas.drawPath(path, polygonPaint);
+				polygonPaint.setStyle(Paint.Style.STROKE);
+				canvas.drawPath(path, polygonPaint);
+			} finally {
+				if (saveCount != 0) canvas.restoreToCount(saveCount);
+			}
+		}
+	}
+
+	/** Uses the call's ARGB without changing the shared Graphics color. */
+	public void drawPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset,
+			int nPoints, int argbColor) {
+		if (nPoints > 0) {
+			Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
+			polygonPaint.set(drawPaint);
+			polygonPaint.setColor(argbColor);
+			canvas.drawPath(path, polygonPaint);
+		}
+	}
+
 	private Path computePath(int[] xPoints, int xOffset, int[] yPoints, int yOffset, int nPoints) {
 		path.reset();
+		path.setFillType(Path.FillType.WINDING);
 		path.moveTo((float) xPoints[xOffset], (float) yPoints[yOffset]);
 		for (int i = 1; i < nPoints; i++) {
 			path.lineTo((float) xPoints[xOffset + i], (float) yPoints[yOffset + i]);
