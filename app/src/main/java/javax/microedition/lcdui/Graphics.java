@@ -366,7 +366,54 @@ public class Graphics implements
 	}
 
 	public void fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3) {
-		fillPolygon(new int[]{x1, x2, x3}, 0, new int[]{y1, y2, y3}, 0, 3);
+		int argbColor = fillPaint.getColor();
+		int alpha = argbColor >>> 24;
+		if (alpha == 0) return;
+		path.reset();
+		path.setFillType(Path.FillType.WINDING);
+		path.moveTo(x1, y1);
+		path.lineTo(x2, y2);
+		path.lineTo(x3, y3);
+		path.close();
+		polygonPaint.set(fillPaint);
+		polygonPaint.setStyle(Paint.Style.STROKE);
+		polygonPaint.setStrokeWidth(1);
+		polygonPaint.setStrokeJoin(Paint.Join.BEVEL);
+		// MIDP includes the connecting lines, with a solid pen below/right of
+		// integer coordinates. Center that one-pixel pen within the pixel cells.
+		polygonOutline.set(path);
+		polygonOutline.offset(0.5f, 0.5f);
+		boolean hasOutline = polygonPaint.getFillPath(polygonOutline, polygonFillPath);
+		polygonOutline.reset();
+		polygonOutline.setFillType(Path.FillType.WINDING);
+		// Explicit endpoint cells also cover thin, collinear and point triangles.
+		polygonOutline.addRect(x1, y1, (float) x1 + 1, (float) y1 + 1, Path.Direction.CW);
+		polygonOutline.addRect(x2, y2, (float) x2 + 1, (float) y2 + 1, Path.Direction.CW);
+		polygonOutline.addRect(x3, y3, (float) x3 + 1, (float) y3 + 1, Path.Direction.CW);
+		polygonPaint.setStyle(Paint.Style.FILL);
+		if (hasOutline && polygonFillPath.op(polygonOutline, Path.Op.UNION)
+				&& polygonFillPath.op(path, Path.Op.UNION)) {
+			canvas.drawPath(polygonFillPath, polygonPaint);
+			return;
+		}
+		// Keep all coverage even if native path operations cannot form the union.
+		int saveCount = 0;
+		if (alpha != 255) {
+			path.computeBounds(rectF, true);
+			rectF.inset(-1, -1);
+			saveCount = canvas.saveLayerAlpha(rectF, alpha);
+		}
+		polygonPaint.setColor(argbColor | 0xFF000000);
+		try {
+			canvas.drawPath(path, polygonPaint);
+			canvas.drawPath(polygonOutline, polygonPaint);
+			polygonOutline.set(path);
+			polygonOutline.offset(0.5f, 0.5f);
+			polygonPaint.setStyle(Paint.Style.STROKE);
+			canvas.drawPath(polygonOutline, polygonPaint);
+		} finally {
+			if (saveCount != 0) canvas.restoreToCount(saveCount);
+		}
 	}
 
 	public void drawChar(char character, int x, int y, int anchor) {

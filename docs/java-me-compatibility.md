@@ -38,6 +38,22 @@ rounding case or that whole-game/device validation has completed. The
 `DirectGraphicsRenderingTest` instrumentation protects the general API behavior
 without shipping game assets or selecting behavior by MIDlet identity.
 
+## MIDP filled triangles
+
+MIDP `Graphics.fillTriangle` includes the lines connecting all three vertices.
+It retains the existing filled interior and adds solid boundary coverage below
+and to the right of integer coordinates. Bevel joins prevent acute corners from
+extending beyond the vertex bounds; explicit endpoint cells cover thin,
+collinear and point triangles. The coverage is combined before one normal ARGB
+draw, irrespective of the current dotted stroke style. Separate translucent
+triangle calls still composite independently. A bounded coverage layer handles
+native path-operation failure with the same channel-rounding caveat as above.
+
+This closes the remaining horizontal seam between a shallow terrain edge and
+an adjacent water region. `GraphicsTriangleRenderingTest` protects its generic
+integer geometry, vertex ordering, degenerate cases, alpha and clipping. The
+half-open rectangle convention and Nokia polygon implementation are unchanged.
+
 ## Foreground ownership boundary
 
 JL-Mod keeps Android task foreground, emulator/AMS foreground selection, MIDlet lifecycle, and LCDUI display foreground as separate facts. In particular, MIDP `Display.setCurrent(null)` retains the current `Displayable` and is treated as a request to yield emulator foreground to the Library; it never means Android Home. A live runtime may therefore coexist with Library foreground. Non-null `setCurrent()` calls update guest display state but do not directly foreground Android Activities. The runtime storage lease remains liveness evidence only; emulator foreground selection is persisted separately and generation-fenced.
