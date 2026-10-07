@@ -5,7 +5,9 @@ on:
     branches: [alpha, main]
     paths:
       - 'app/src/main/java/javax/microedition/lcdui/Graphics.java'
+      - 'app/src/main/java/javax/microedition/lcdui/Image.java'
       - 'app/src/main/java/com/nokia/mid/ui/DirectGraphics*.java'
+      - 'app/src/main/java/com/nokia/mid/ui/DirectUtils.java'
       - 'app/src/androidTest/java/com/nokia/mid/ui/DirectGraphicsRenderingTest.java'
       - 'app/src/androidTest/java/com/nokia/mid/ui/DirectGraphicsTestSuite.java'
       - 'app/src/androidTest/java/javax/microedition/lcdui/Graphics*.java'
