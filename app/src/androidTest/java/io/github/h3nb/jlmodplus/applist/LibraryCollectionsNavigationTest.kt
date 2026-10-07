@@ -357,6 +357,12 @@ class LibraryCollectionsNavigationTest {
             store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
         }
         val active = mutableStateOf(true)
+        val navigationState = mutableStateOf(
+            LibraryNavigationState(
+                destination = LibraryDestinationKey.Collections,
+                selectedCollectionId = COLLECTION_ID,
+            ),
+        )
         val navigationVisibilityEvents = mutableListOf<Boolean>()
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -367,10 +373,8 @@ class LibraryCollectionsNavigationTest {
                         host = host,
                         libraryState = sampleLibraryState(),
                         scaffoldPadding = PaddingValues(),
-                        navigationState = LibraryNavigationState(
-                            destination = LibraryDestinationKey.Collections,
-                            selectedCollectionId = COLLECTION_ID,
-                        ),
+                        navigationState = navigationState.value,
+                        onNavigationStateChanged = { navigationState.value = it },
                         onOpenActions = { _, _ -> },
                         onNavigationVisibilityChanged = { visible ->
                             navigationVisibilityEvents += visible
