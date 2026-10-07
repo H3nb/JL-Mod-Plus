@@ -18,6 +18,7 @@ import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
+import io.github.h3nb.jlmodplus.ui.AccentPalette
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 private val NoOpInstallerActions = object : InstallerActions {
@@ -189,14 +190,22 @@ fun ReconversionCompatibilityCompactLandscapeLargeTextScreenshot() {
 @Preview(name = "Installer success", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun InstallerSuccessScreenshot() {
-    JLModPlusTheme(darkTheme = false) {
+    // This higher-risk success state intentionally covers a user-selectable accent so the
+    // compatibility warning cannot regress into looking like an error-colored message.
+    JLModPlusTheme(darkTheme = false, accent = AccentPalette.Rose) {
         InstallerScreen(
             state = InstallerUiState.Success(
                 title = "Demo MIDlet",
-                status = "Application successfully installed!",
+                status = "Application installed with warnings.",
                 startLabel = "Start",
                 closeLabel = "Close",
                 iconPath = null,
+                warningSummary = "1 Java class file was skipped because it could not be read. " +
+                    "Features that use it may not work.",
+                warningDetails = "sample/Bad.class\n" +
+                    "Issue: Java class file could not be read.\n" +
+                    "Action: Skipped during conversion.",
+                copyDetails = "Entry: sample/Bad.class",
             ),
             actions = NoOpInstallerActions,
         )

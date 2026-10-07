@@ -27,7 +27,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.github.h3nb.jlmodplus.R;
@@ -231,6 +233,21 @@ public class Descriptor {
 
 	public String getVendor() {
 		return attributes.get(MIDLET_VENDOR);
+	}
+
+	public List<String> getMidletClasses() {
+		List<String> classes = new ArrayList<>();
+		for (int i = 1; ; i++) {
+			String value = attributes.get(MIDLET_N + i);
+			if (value == null) {
+				break;
+			}
+			String className = value.substring(value.lastIndexOf(',') + 1).trim();
+			if (!className.isEmpty()) {
+				classes.add(className);
+			}
+		}
+		return classes;
 	}
 
 	public String getIcon() {

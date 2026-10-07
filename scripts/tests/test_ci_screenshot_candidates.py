@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -184,8 +185,35 @@ class ScreenshotCandidatesTest(unittest.TestCase):
                 mock.patch.object(candidates, "report_output") as report_output,
             ):
                 candidates.main()
-        package_candidates.assert_called_once_with(found)
+        package_candidates.assert_called_once_with(found, [])
         report_output.assert_called_once_with(True, 1)
+
+    def test_packaged_context_preserves_excluded_failures(self):
+        temporary, references, _, _, reference, actual, diff = self.fixture()
+        with temporary:
+            root = Path(temporary.name)
+            output = root / "candidates"
+            found = {Path("screen/preview.png"): (reference, actual, diff)}
+
+            def fake_git(*args, env=None):
+                if args[:2] == ("hash-object", "-w"):
+                    return b"blobsha\n"
+                if args[:2] == ("diff", "--cached"):
+                    return b""
+                if args[:2] == ("rev-parse", "HEAD"):
+                    return b"commitsha\n"
+                return b""
+
+            with mock.patch.object(candidates, "git", side_effect=fake_git):
+                candidates.package_candidates(
+                    found,
+                    ["PreviewTest.rendererFailure"],
+                    references=references,
+                    output=output,
+                )
+
+            context = json.loads((output / "source-context.json").read_text(encoding="utf-8"))
+            self.assertEqual(["PreviewTest.rendererFailure"], context["excluded_failures"])
 
 
 if __name__ == "__main__":

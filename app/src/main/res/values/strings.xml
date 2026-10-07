@@ -44,6 +44,7 @@
     <string name="identity_filter">None (fastest)</string>
     <string name="install">Install</string>
     <string name="install_done">Application installed.</string>
+    <string name="install_done_with_warning">Application installed with warnings.</string>
     <string name="installer_title">MIDlet installer</string>
     <string name="installer_error_message">The selected application could not be installed. Choose a valid MIDlet file and try again.</string>
     <string name="install_jar_non_matched_jad">This app differs from the one described in the JAD.\nIgnore the JAD and install anyway?</string>
@@ -450,6 +451,20 @@
     <string name="installer_partial_restore">App installed; data or settings could not be restored</string>
     <string name="installer_removed_leftovers">App removed; some settings or save data could not be deleted.</string>
     <string name="installer_copy_details">Copy details</string>
+    <string name="installer_show_details">Show details</string>
+    <string name="installer_hide_details">Hide details</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">%1$d Java class file was skipped because it could not be read. Features that use it may not work.</item>
+        <item quantity="other">%1$d Java class files were skipped because they could not be read. Features that use them may not work.</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry">%1$s\nIssue: Java class file could not be read.\nAction: Skipped during conversion.</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">%1$d additional conversion issue is not shown.</item>
+        <item quantity="other">%1$d additional conversion issues are not shown.</item>
+    </plurals>
 
     <string name="library_collection_new">New collection</string>
     <string name="library_collection_ready_empty_message">Create collections to organize apps without moving their files.</string>
@@ -472,6 +487,7 @@
     <string name="library_import_preparing">Reading app bundle…</string>
     <string name="library_import_restoring">Restoring app settings and save data…</string>
     <string name="library_import_done">App bundle imported.</string>
+    <string name="library_import_done_with_warning">App bundle imported with warnings.</string>
     <string name="library_import_invalid_bundle">The selected app bundle is invalid, damaged, or unsupported. Choose a valid JL-Mod Plus app bundle and try again.</string>
     <string name="library_import_restore_existing">This app is already installed. Importing will replace the settings and save data contained in the bundle.</string>
     <string name="library_import_restore_failed">The app is installed, but its bundle data could not be restored. Retry the restore?</string>
@@ -769,9 +785,11 @@
     <string name="config_help_timing_mode">Chooses whether the MIDlet uses emulation time or system time. Relative delays remain scaled with emulation speed.</string>
     <string name="config_help_timing_unavailable">Time settings are unavailable for this MIDlet installation. Reinstall or reconvert the MIDlet to enable them.</string>
     <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start. Converting…</string>
+    <string name="reconversion_done_with_warning">Compatibility conversion completed with warnings.</string>
     <string name="reconversion_error">The MIDlet could not be converted automatically.
 
 %1$s</string>
+    <string name="reconversion_error_summary">The MIDlet could not be converted automatically.</string>
     <string name="config_help_generic_color">Sets the color of this visual element.</string>
     <string name="config_help_action_generic">Opens this configuration tool.</string>
     <string name="config_help_encoding">Chooses the character encoding reported as microedition.encoding.</string>

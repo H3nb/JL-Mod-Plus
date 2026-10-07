@@ -253,8 +253,18 @@ internal fun BulkInstallSurface(
                         ),
                     verticalArrangement = Arrangement.spacedBy(if (compactHeader) 8.dp else 12.dp),
                 ) {
+                    val titleRes = when (state) {
+                        is BulkInstallViewModel.State.Finished -> {
+                            if (state.cancelled || state.fatalError != null) {
+                                R.string.bulk_install_cancelled
+                            } else {
+                                R.string.bulk_install_complete
+                            }
+                        }
+                        else -> R.string.bulk_install_title
+                    }
                     Text(
-                        text = stringResource(R.string.bulk_install_title),
+                        text = stringResource(titleRes),
                         style = MaterialTheme.typography.headlineSmall,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -278,10 +288,11 @@ internal fun BulkInstallSurface(
                             modifier = Modifier.weight(1f, fill = false),
                         )
                         is BulkInstallViewModel.State.Finished -> FinishedContent(
-                            state,
-                            onClose,
-                            onRetry,
-                            Modifier.weight(1f, fill = false),
+                            state = state,
+                            onClose = onClose,
+                            onRetry = onRetry,
+                            compactHeight = compactHeight,
+                            modifier = Modifier.weight(1f, fill = false),
                         )
                         is BulkInstallViewModel.State.Error -> ErrorContent(
                             message = state.message,
@@ -622,62 +633,132 @@ private fun FinishedContent(
     state: BulkInstallViewModel.State.Finished,
     onClose: () -> Unit,
     onRetry: () -> Unit,
+    compactHeight: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
     val canScrollForward = rememberLazyListCanScrollForward(listState)
-    Box(modifier.fillMaxWidth()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth().testTag("bulk-results"),
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+    val hasRetryableResults = state.results.any {
+        it.kind == BulkInstallResultKind.Failed ||
+            it.kind == BulkInstallResultKind.PartiallyInstalled ||
+            it.kind == BulkInstallResultKind.NotProcessed
+    }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false),
         ) {
-            item {
-                Text(
-                    if (state.cancelled || state.fatalError != null) stringResource(R.string.bulk_install_cancelled)
-                    else stringResource(R.string.bulk_install_complete),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                state.fatalError?.let {
-                    Text(stringResource(R.string.bulk_install_fatal),
-                        color = MaterialTheme.colorScheme.error)
-                    Text(it, style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            item {
-                FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    if (state.results.any { it.kind == BulkInstallResultKind.Failed ||
-                            it.kind == BulkInstallResultKind.PartiallyInstalled ||
-                            it.kind == BulkInstallResultKind.NotProcessed }) {
-                        TextButton(onClick = onRetry) {
-                            Text(stringResource(R.string.installer_retry_remaining))
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().testTag("bulk-results"),
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                state.fatalError?.let { fatalError ->
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                stringResource(R.string.bulk_install_fatal),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                            Text(
+                                fatalError,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
-                    Button(onClick = onClose) { Text(stringResource(R.string.bulk_install_close)) }
                 }
-            }
-            item { ResultCounters(state.results) }
-            items(state.results, key = { it.itemId }) { result ->
-                Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    Text(result.name, style = MaterialTheme.typography.titleSmall)
-                    Text(resultLabel(result.kind), style = MaterialTheme.typography.labelMedium,
-                        color = if (result.kind == BulkInstallResultKind.Failed ||
-                            result.kind == BulkInstallResultKind.PartiallyInstalled)
-                            MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
-                    val detail = result.reviewReason?.let {
-                        bulkInstallReviewReasonText(LocalResources.current, it)
-                    } ?: result.detail
-                    detail?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                item { ResultCounters(state.results) }
+                items(state.results, key = { it.itemId }) { result ->
+                    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        Text(result.name, style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            resultLabel(result.kind),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (
+                                result.kind == BulkInstallResultKind.Failed ||
+                                result.kind == BulkInstallResultKind.PartiallyInstalled
+                            ) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
+                        )
+                        result.warning?.let {
+                            Text(
+                                stringResource(R.string.warning),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        val detail = result.reviewReason?.let {
+                            bulkInstallReviewReasonText(LocalResources.current, it)
+                        } ?: result.detail
+                        detail?.let {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    HorizontalDivider()
+                }
+                if (compactHeight) {
+                    item {
+                        FinishedActions(
+                            hasRetryableResults = hasRetryableResults,
+                            onRetry = onRetry,
+                            onClose = onClose,
+                        )
                     }
                 }
-                HorizontalDivider()
+            }
+            ScrollableContentHint(
+                visible = canScrollForward,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+        if (!compactHeight) {
+            HorizontalDivider()
+            FinishedActions(
+                hasRetryableResults = hasRetryableResults,
+                onRetry = onRetry,
+                onClose = onClose,
+            )
+        }
+    }
+}
+
+@Composable
+private fun FinishedActions(
+    hasRetryableResults: Boolean,
+    onRetry: () -> Unit,
+    onClose: () -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        if (hasRetryableResults) {
+            TextButton(onClick = onRetry) {
+                Text(stringResource(R.string.installer_retry_remaining))
             }
         }
-        ScrollableContentHint(visible = canScrollForward,
-            modifier = Modifier.align(Alignment.BottomCenter))
+        Button(onClick = onClose) {
+            Text(stringResource(R.string.bulk_install_close))
+        }
     }
 }
 
@@ -731,27 +812,44 @@ private fun ResultCounters(results: List<BulkInstallResult>) {
     val reinstalled = results.count { it.kind == BulkInstallResultKind.Reinstalled }
     val restored = results.count { it.kind == BulkInstallResultKind.Restored }
     val skipped = results.count { it.kind == BulkInstallResultKind.Skipped }
-    val failed = results.count { it.kind == BulkInstallResultKind.Failed ||
-        it.kind == BulkInstallResultKind.PartiallyInstalled }
-    Text(
-        listOf(
-            pluralStringResource(R.plurals.bulk_install_installed_count, installed, installed),
-            pluralStringResource(R.plurals.bulk_install_updated_count, updated, updated),
-            pluralStringResource(
-                R.plurals.bulk_install_reinstalled_count,
-                reinstalled,
-                reinstalled,
-            ),
-            pluralStringResource(R.plurals.bulk_install_restored_count, restored, restored),
-            pluralStringResource(
-                R.plurals.bulk_install_skipped_result_count,
-                skipped,
-                skipped,
-            ),
-            pluralStringResource(R.plurals.bulk_install_failed_count, failed, failed),
-        ).joinToString(" · "),
-        style = MaterialTheme.typography.bodySmall,
-    )
+    val failed = results.count {
+        it.kind == BulkInstallResultKind.Failed ||
+            it.kind == BulkInstallResultKind.PartiallyInstalled
+    }
+    val parts = mutableListOf<String>()
+    if (installed > 0) {
+        parts += pluralStringResource(R.plurals.bulk_install_installed_count, installed, installed)
+    }
+    if (updated > 0) {
+        parts += pluralStringResource(R.plurals.bulk_install_updated_count, updated, updated)
+    }
+    if (reinstalled > 0) {
+        parts += pluralStringResource(
+            R.plurals.bulk_install_reinstalled_count,
+            reinstalled,
+            reinstalled,
+        )
+    }
+    if (restored > 0) {
+        parts += pluralStringResource(R.plurals.bulk_install_restored_count, restored, restored)
+    }
+    if (skipped > 0) {
+        parts += pluralStringResource(
+            R.plurals.bulk_install_skipped_result_count,
+            skipped,
+            skipped,
+        )
+    }
+    if (failed > 0) {
+        parts += pluralStringResource(R.plurals.bulk_install_failed_count, failed, failed)
+    }
+    if (parts.isNotEmpty()) {
+        Text(
+            parts.joinToString(" · "),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 @Composable

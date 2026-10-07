@@ -24,6 +24,7 @@ import android.util.Log;
 
 import androidx.preference.PreferenceManager;
 
+import com.android.dx.command.dexer.ConversionResult;
 import com.android.dx.command.dexer.Main;
 
 import net.lingala.zip4j.io.inputstream.ZipInputStream;
@@ -105,6 +106,7 @@ public class AppInstaller {
     private String installedTitle;
     private String installedPath;
     private String defaultProfileFallbackName;
+    private ConversionResult conversionResult;
     private int loadedStatus = NO_STATUS;
     private String matchedIdentity = "";
     private String loadedIdentity = "";
@@ -396,6 +398,7 @@ public class AppInstaller {
     void install(SingleEmitter<Integer> emitter) throws ConverterException, IOException {
         checkCancelled();
         defaultProfileFallbackName = null;
+        conversionResult = null;
         // Source preparation owns only request scratch and must not block other filesystem operations.
         if (srcJar == null) {
             srcJar = scratch.file("download.jar");
@@ -457,10 +460,16 @@ public class AppInstaller {
             }
             stage(Stage.CONVERTING);
             try {
-                Main.main(new String[]{"--no-optimize", "--output=" + tmpDir + Config.MIDLET_DEX_ARCH,
-                        srcJar.getAbsolutePath()});
+                conversionResult = Main.convert(new String[]{
+                        "--no-optimize",
+                        "--output=" + tmpDir + Config.MIDLET_DEX_ARCH,
+                        srcJar.getAbsolutePath(),
+                });
             } catch (Throwable e) {
                 throw new ConverterException("Dexing error", e);
+            }
+            if (!conversionResult.isSuccess()) {
+                throw new ConversionFailureException("Dexing error", conversionResult);
             }
             File payload = child(tmpDir, Config.MIDLET_DEX_ARCH);
             if (!payload.isFile() || payload.length() == 0L) {
@@ -470,6 +479,7 @@ public class AppInstaller {
                 manifest.merge(newDesc);
                 newDesc = manifest;
             }
+            MidletConversionPolicy.requireRunnableEntryClasses(conversionResult, newDesc);
             MidletTransformMetadata.mark(newDesc.getAttrs());
 
             File resJar = child(tmpDir, Config.MIDLET_RES_FILE);
@@ -833,6 +843,10 @@ public class AppInstaller {
 
     String getDefaultProfileFallbackName() {
         return defaultProfileFallbackName;
+    }
+
+    ConversionResult getConversionResult() {
+        return conversionResult;
     }
 
     private File appsDir() {
