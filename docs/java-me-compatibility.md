@@ -26,8 +26,8 @@ cannot darken its own boundary through repeated alpha blending. Separate calls
 still composite independently. If native path operations cannot form that union,
 opaque interior/outline coverage is combined in a bounded temporary layer before
 applying alpha; opaque fallback calls draw directly. This fallback can differ in
-channel rounding from a direct draw. MIDP fill primitives retain their existing
-coverage and paint state.
+channel rounding from a direct draw. MIDP rectangle coverage and shared paint
+state are preserved.
 
 This boundary treatment is supported by reconstruction of integer-separated
 water regions from Bounce Tales: fill-only rendering leaves a source-background
