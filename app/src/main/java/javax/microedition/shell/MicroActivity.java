@@ -616,6 +616,8 @@ public class MicroActivity extends AppCompatActivity {
 				title == null ? fallbackTitle : title,
 				chrome.canvas,
 				chrome.toolbarVisible,
+				chrome.statusBarVisible,
+				chrome.navigationBarVisible,
 				inputMethodManager != null,
 				vk != null,
 				vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF,
@@ -1070,32 +1072,11 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void applySystemUi(GuestWindowPolicy.Chrome chrome, @Nullable Displayable displayable) {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-			if (chrome.navigationBarVisible) {
-				getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-				return;
-			}
-			int flags = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-			if (!chrome.statusBarVisible) {
-				flags |= View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-						| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_FULLSCREEN;
-			}
-			getWindow().getDecorView().setSystemUiVisibility(flags);
-			return;
+		RuntimeSystemBarController.apply(
+				getWindow(), chrome.statusBarVisible, chrome.navigationBarVisible);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+			applyGuestInsets(displayable);
 		}
-		WindowInsetsControllerCompat controller = getInsetsController();
-		controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-		if (chrome.navigationBarVisible) {
-			controller.show(WindowInsetsCompat.Type.navigationBars());
-		} else {
-			controller.hide(WindowInsetsCompat.Type.navigationBars());
-		}
-		if (chrome.statusBarVisible) {
-			controller.show(WindowInsetsCompat.Type.statusBars());
-		} else {
-			controller.hide(WindowInsetsCompat.Type.statusBars());
-		}
-		applyGuestInsets(displayable);
 	}
 
 	private WindowInsetsControllerCompat getInsetsController() {
@@ -1295,27 +1276,12 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void openOptionsMenu() {
-		if (!runtimeToolbarEnabled && current instanceof Canvas) {
-			showSystemUiForMenu();
-		}
 		if (runtimeMenuController != null) {
 			runtimeMenuController.openMenu();
 			if (controllerInputRouter != null) controllerInputRouter.onHostModalChanged(true);
 		} else {
 			super.openOptionsMenu();
 		}
-	}
-
-	/** Temporarily reveals both bars while the runtime menu is open on an immersive Canvas. */
-	private void showSystemUiForMenu() {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-			getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-			return;
-		}
-		WindowInsetsControllerCompat controller = getInsetsController();
-		controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-		controller.show(WindowInsetsCompat.Type.systemBars());
-		applyGuestInsets(current);
 	}
 
 	@Override
@@ -1325,20 +1291,6 @@ public class MicroActivity extends AppCompatActivity {
 			if (controllerInputRouter != null) controllerInputRouter.onHostModalChanged(false);
 		} else {
 			super.closeOptionsMenu();
-		}
-		// The runtime menu temporarily reveals system bars for immersive Canvas screens. Restore
-		// the configured chrome after dismissal so toolbar/status-bar/cutout policy stays coherent.
-		if (!runtimeToolbarEnabled && current instanceof Canvas) {
-			View host = binding == null ? null : binding.displayableContainer;
-			if (host != null) {
-				host.post(() -> {
-					if (!isFinishing() && !isDestroyed() && current instanceof Canvas) {
-						applySystemUi(getRuntimeChrome(current), current);
-					}
-				});
-			} else {
-				applySystemUi(getRuntimeChrome(current), current);
-			}
 		}
 	}
 

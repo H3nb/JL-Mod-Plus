@@ -730,7 +730,6 @@
     <string name="reconverting_wait">Ce MIDlet nécessite une conversion de compatibilité unique avant de démarrer. Veuillez patienter…</string>
     <string name="reconversion_error">Le MIDlet n’a pas pu être converti automatiquement.\n\n%1$s</string>
     <string name="config_help_generic_color">Définit la couleur de cet élément visuel.</string>
-    <string name="config_help_action_generic">Ouvre cet outil de configuration.</string>
     <string name="config_help_encoding">Choisit l’encodage de caractères signalé au MIDlet.</string>
     <string name="config_edit_system_properties">Modifier les propriétés système</string>
     <string name="config_help_system_properties">Définit les propriétés Java ME avancées signalées au MIDlet.</string>
@@ -921,7 +920,7 @@
     <string name="library_action_about_summary">Informations sur la version, le projet et le mainteneur.</string>
     <string name="library_action_licenses_summary">Mentions de tiers et conditions de licence incluses avec l’application.</string>
     <string name="library_action_help_summary">Conseils d’utilisation et commandes courantes.</string>
-    <string name="library_bulk_delete_apps">Supprimer</string>
+    <string name="library_bulk_delete_apps">Supprimer les applications</string>
     <string name="library_bulk_add_collection">Ajouter à une collection</string>
     <string name="library_bulk_share_apps">Partager les applications</string>
     <string name="library_bulk_reinstall_apps">Réinstaller</string>

@@ -291,7 +291,7 @@ private fun ExitConfirmationDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                painter = painterResource(R.drawable.ic_logout),
+                painter = painterResource(R.drawable.ic_exit),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.error,
             )

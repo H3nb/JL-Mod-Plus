@@ -69,7 +69,9 @@ import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.ControllerDialogInputScope
 import io.github.h3nb.jlmodplus.ui.ControllerHostCommandHandler
+import io.github.h3nb.jlmodplus.ui.DialogWindowPolicy
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.ProvideDialogWindowPolicy
 import android.view.KeyEvent
 import android.view.MotionEvent
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
@@ -85,6 +87,8 @@ internal data class RuntimeMenuUiState(
     val title: String = "",
     val isCanvas: Boolean = false,
     val toolbarVisible: Boolean = true,
+    val statusBarVisible: Boolean = true,
+    val navigationBarVisible: Boolean = true,
     val imeAvailable: Boolean = false,
     val virtualKeyboardAvailable: Boolean = false,
     val virtualKeyboardEditing: Boolean = false,
@@ -166,76 +170,90 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
         )
         composeView.setContent {
-            JLModPlusTheme {
-                RuntimeMenuHost(
-                    state = state,
-                    menuVisible = menuVisible,
-                    virtualKeyboardPage = virtualKeyboardPage,
-                    controllerFocusIndex = controllerFocusIndex.takeIf { controllerFocusVisible } ?: -1,
-                    actions = menuActions,
-                    onDismissMenu = ::closeMenu,
-                    onOpenVirtualKeyboardPage = {
-                        virtualKeyboardPage = true
-                        controllerFocusIndex = 0
-                    },
-                    onCloseVirtualKeyboardPage = {
-                        virtualKeyboardPage = false
-                        controllerFocusIndex = 0
-                    },
-                    onNavigationFocusChanged = { controllerFocusVisible = it },
-                )
-                if (limitFpsVisible) {
-                    ControllerDialogInputScope(
-                        onControllerKeyEvent = dialogKeyDispatcher,
-                        onControllerMotionEvent = dialogMotionDispatcher,
-                        onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
-                    ) {
-                        RuntimeLimitFpsDialog(
-                            onDismiss = { changeControllerSurface { limitFpsVisible = false } },
-                            onConfirm = { value ->
-                                changeControllerSurface { limitFpsVisible = false }
-                                actions.onSetFpsLimit(value)
-                            },
-                            onReset = {
-                                changeControllerSurface { limitFpsVisible = false }
-                                actions.onResetFpsLimit()
-                            },
-                        )
+            val statusBarVisible = state.statusBarVisible
+            val navigationBarVisible = state.navigationBarVisible
+            val dialogWindowPolicy = remember(statusBarVisible, navigationBarVisible) {
+                DialogWindowPolicy { window ->
+                    RuntimeSystemBarController.apply(
+                        window,
+                        statusBarVisible,
+                        navigationBarVisible,
+                    )
+                }
+            }
+            ProvideDialogWindowPolicy(dialogWindowPolicy) {
+                JLModPlusTheme {
+                    RuntimeMenuHost(
+                        state = state,
+                        menuVisible = menuVisible,
+                        virtualKeyboardPage = virtualKeyboardPage,
+                        controllerFocusIndex = controllerFocusIndex.takeIf { controllerFocusVisible } ?: -1,
+                        actions = menuActions,
+                        onDismissMenu = ::closeMenu,
+                        onOpenVirtualKeyboardPage = {
+                            virtualKeyboardPage = true
+                            controllerFocusIndex = 0
+                        },
+                        onCloseVirtualKeyboardPage = {
+                            virtualKeyboardPage = false
+                            controllerFocusIndex = 0
+                        },
+                        onNavigationFocusChanged = { controllerFocusVisible = it },
+                    )
+                    if (limitFpsVisible) {
+                        ControllerDialogInputScope(
+                            onControllerKeyEvent = dialogKeyDispatcher,
+                            onControllerMotionEvent = dialogMotionDispatcher,
+                            onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
+                        ) {
+                            RuntimeLimitFpsDialog(
+                                onDismiss = { changeControllerSurface { limitFpsVisible = false } },
+                                onConfirm = { value ->
+                                    changeControllerSurface { limitFpsVisible = false }
+                                    actions.onSetFpsLimit(value)
+                                },
+                                onReset = {
+                                    changeControllerSurface { limitFpsVisible = false }
+                                    actions.onResetFpsLimit()
+                                },
+                            )
+                        }
+                    }
+                    if (emulationSpeedVisible) {
+                        ControllerDialogInputScope(
+                            onControllerKeyEvent = dialogKeyDispatcher,
+                            onControllerMotionEvent = dialogMotionDispatcher,
+                            onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
+                        ) {
+                            RuntimeEmulationSpeedDialog(
+                                currentPercent = state.emulationSpeedPercent,
+                                onDismiss = { changeControllerSurface { emulationSpeedVisible = false } },
+                                onConfirm = { value ->
+                                    changeControllerSurface { emulationSpeedVisible = false }
+                                    actions.onSetEmulationSpeed(value)
+                                },
+                                onReset = {
+                                    changeControllerSurface { emulationSpeedVisible = false }
+                                    actions.onResetEmulationSpeed()
+                                },
+                            )
+                        }
+                    }
+                    if (hostDialogActions != null) {
+                        ControllerDialogInputScope(
+                            onControllerKeyEvent = dialogKeyDispatcher,
+                            onControllerMotionEvent = dialogMotionDispatcher,
+                            onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
+                        ) {
+                            RuntimeHostDialogs(
+                                state = hostDialogState,
+                                actions = hostDialogActions,
+                                onDismiss = { changeControllerSurface { hostDialogState = null } },
+                            )
+                        }
                     }
                 }
-                if (emulationSpeedVisible) {
-                    ControllerDialogInputScope(
-                        onControllerKeyEvent = dialogKeyDispatcher,
-                        onControllerMotionEvent = dialogMotionDispatcher,
-                        onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
-                    ) {
-                        RuntimeEmulationSpeedDialog(
-                            currentPercent = state.emulationSpeedPercent,
-                            onDismiss = { changeControllerSurface { emulationSpeedVisible = false } },
-                            onConfirm = { value ->
-                                changeControllerSurface { emulationSpeedVisible = false }
-                                actions.onSetEmulationSpeed(value)
-                            },
-                            onReset = {
-                                changeControllerSurface { emulationSpeedVisible = false }
-                                actions.onResetEmulationSpeed()
-                            },
-                        )
-                    }
-                }
-                if (hostDialogActions != null) {
-                    ControllerDialogInputScope(
-                        onControllerKeyEvent = dialogKeyDispatcher,
-                        onControllerMotionEvent = dialogMotionDispatcher,
-                        onControllerHostCommandHandlerChanged = { dialogHostCommandHandler = it },
-                    ) {
-                        RuntimeHostDialogs(
-                            state = hostDialogState,
-                            actions = hostDialogActions,
-                            onDismiss = { changeControllerSurface { hostDialogState = null } },
-                        )
-                    }
-                }
+
             }
         }
     }
@@ -244,6 +262,8 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         title: String,
         isCanvas: Boolean,
         toolbarVisible: Boolean,
+        statusBarVisible: Boolean,
+        navigationBarVisible: Boolean,
         imeAvailable: Boolean,
         virtualKeyboardAvailable: Boolean,
         virtualKeyboardEditing: Boolean,
@@ -256,6 +276,8 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             title = title,
             isCanvas = isCanvas,
             toolbarVisible = toolbarVisible,
+            statusBarVisible = statusBarVisible,
+            navigationBarVisible = navigationBarVisible,
             imeAvailable = imeAvailable,
             virtualKeyboardAvailable = virtualKeyboardAvailable,
             virtualKeyboardEditing = virtualKeyboardEditing,
@@ -772,7 +794,7 @@ private fun LazyListScope.runtimeMenuItems(
                 R.string.runtime_virtual_controls_switch_layout,
                 onDismiss,
                 actions::onSwitchVirtualKeyboardLayout,
-                leadingIcon = R.drawable.ic_runtime_switch,
+                leadingIcon = R.drawable.ic_control_layout,
                 focused = switchFocused,
             )
         }
@@ -782,7 +804,7 @@ private fun LazyListScope.runtimeMenuItems(
                 R.string.runtime_virtual_controls_show_controls,
                 onDismiss,
                 actions::onShowControls,
-                leadingIcon = R.drawable.ic_runtime_hide,
+                leadingIcon = R.drawable.ic_visibility,
                 focused = showControlsFocused,
             )
         }
@@ -795,7 +817,7 @@ private fun LazyListScope.runtimeMenuItems(
             R.string.exit,
             onDismiss,
             actions::onExit,
-            leadingIcon = R.drawable.ic_logout,
+            leadingIcon = R.drawable.ic_exit,
             focused = exitFocused,
         )
     }
@@ -891,7 +913,7 @@ private fun LazyListScope.runtimeMenuItems(
             item {
                 RuntimeMenuItem(
                     label = R.string.runtime_virtual_controls_title,
-                    leadingIcon = R.drawable.ic_runtime_virtual_keyboard,
+                    leadingIcon = R.drawable.ic_virtual_controls,
                     focused = vkFocused,
                     onClick = onOpenVirtualKeyboardPage,
                 )

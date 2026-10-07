@@ -203,7 +203,7 @@ fun FilePickerScreen(
                             enabled = !state.loading && !state.permissionRequired,
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_add),
+                                painter = painterResource(R.drawable.ic_create_folder),
                                 contentDescription = stringResource(R.string.file_picker_create_folder),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -488,7 +488,7 @@ private fun PickerEntryRow(
 private fun PickerEntryIcon(kind: FilePickerEntryKind) {
     val icon = when (kind) {
         FilePickerEntryKind.FILE -> R.drawable.ic_file_picker_file
-        FilePickerEntryKind.DIRECTORY -> R.drawable.ic_file_picker_folder
+        FilePickerEntryKind.DIRECTORY -> R.drawable.ic_folder
         FilePickerEntryKind.VOLUME -> R.drawable.ic_file_picker_storage
     }
     Icon(

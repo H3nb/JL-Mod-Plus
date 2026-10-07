@@ -723,7 +723,6 @@
     <string name="reconverting_wait">Tämä MIDlet tarvitsee kertaluonteisen yhteensopivuusmuunnoksen ennen käynnistystä. Odota…</string>
     <string name="reconversion_error">MIDlet-sovellusta ei voitu muuntaa automaattisesti. %1$s</string>
     <string name="config_help_generic_color">Asettaa tämän visuaalisen elementin värin.</string>
-    <string name="config_help_action_generic">Avaa tämän määritystyökalun.</string>
     <string name="config_help_encoding">Valitsee MIDlet-sovellukselle ilmoitettavan merkistökoodauksen.</string>
     <string name="config_edit_system_properties">Muokkaa järjestelmäominaisuuksia</string>
     <string name="config_help_system_properties">Asettaa MIDlet-sovellukselle ilmoitettavat Java ME -lisäominaisuudet.</string>
@@ -914,7 +913,7 @@
     <string name="library_action_about_summary">Tiedot versiosta, projektista ja ylläpitäjästä.</string>
     <string name="library_action_licenses_summary">Sovellukseen sisältyvät kolmansien osapuolten ilmoitukset ja lisenssiehdot.</string>
     <string name="library_action_help_summary">Käyttöohjeet ja yleiset ohjaimet.</string>
-    <string name="library_bulk_delete_apps">Poista</string>
+    <string name="library_bulk_delete_apps">Poista sovellukset</string>
     <string name="library_bulk_add_collection">Lisää kokoelmaan</string>
     <string name="library_bulk_share_apps">Jaa sovelluksia</string>
     <string name="library_bulk_reinstall_apps">Asenna uudelleen</string>

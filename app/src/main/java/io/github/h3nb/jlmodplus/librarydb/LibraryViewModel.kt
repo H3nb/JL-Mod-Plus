@@ -18,6 +18,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.PreferenceManager
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import io.github.h3nb.jlmodplus.installer.InstallerExecutionCoordinator
 import kotlin.concurrent.withLock
@@ -74,6 +75,9 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             val bootstrapFailures: List<LibraryScanner.Failure>,
             val legacyImportFailure: String?,
             val reconciliationFailures: List<LibraryScanner.Failure>,
+            val availableAppIds: Set<Long> = apps.mapTo(LinkedHashSet()) { it.id },
+            /** Changes only when the authoritative Room-backed repository snapshot changes. */
+            val sourceRevision: Long = 0L,
         ) : DisplayState
         data class Error(val emulatorDir: File, val message: String) : DisplayState
     }
@@ -86,8 +90,16 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         fun complete(value: T?, error: Throwable?)
     }
 
+    private data class VersionedRepositoryState(
+        val revision: Long,
+        val state: LibraryRepository.State,
+        val availableAppIds: Set<Long>,
+    )
+
     private data class DisplayInputs(
         val repositoryState: LibraryRepository.State,
+        val sourceRevision: Long,
+        val availableAppIds: Set<Long>,
         val filter: String,
         val sortVariant: Int,
         val quickView: LibraryQuickView,
@@ -109,6 +121,21 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private val sortVariant = MutableStateFlow(readSortPreference(preferences))
     private val quickView = MutableStateFlow(LibraryQuickView.All)
     private val playStatRefreshMutex = Mutex()
+    private val repositoryRevision = AtomicLong()
+    private val versionedRepositoryState = repository.state.mapLatest { state ->
+        val availableAppIds = if (state is LibraryRepository.State.Ready) {
+            withContext(Dispatchers.Default) {
+                state.apps.mapTo(LinkedHashSet(state.apps.size)) { it.id }
+            }
+        } else {
+            emptySet()
+        }
+        VersionedRepositoryState(
+            revision = repositoryRevision.incrementAndGet(),
+            state = state,
+            availableAppIds = availableAppIds,
+        )
+    }
 
     private val playStatReadyWorker = scope.launch {
         repository.state
@@ -119,12 +146,19 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     val displayState: StateFlow<DisplayState> = combine(
-        repository.state,
+        versionedRepositoryState,
         filter,
         sortVariant,
         quickView,
-    ) { repositoryState, activeFilter, activeSort, activeQuickView ->
-        DisplayInputs(repositoryState, activeFilter, activeSort, activeQuickView)
+    ) { repositorySnapshot, activeFilter, activeSort, activeQuickView ->
+        DisplayInputs(
+            repositoryState = repositorySnapshot.state,
+            sourceRevision = repositorySnapshot.revision,
+            availableAppIds = repositorySnapshot.availableAppIds,
+            filter = activeFilter,
+            sortVariant = activeSort,
+            quickView = activeQuickView,
+        )
     }.mapLatest { input ->
         when (val repositoryState = input.repositoryState) {
             LibraryRepository.State.Idle -> DisplayState.Idle
@@ -159,6 +193,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                     bootstrapFailures = repositoryState.bootstrapFailures,
                     legacyImportFailure = repositoryState.legacyImportFailure,
                     reconciliationFailures = repositoryState.reconciliationFailures,
+                    availableAppIds = input.availableAppIds,
+                    sourceRevision = input.sourceRevision,
                 )
             }
         }
@@ -772,6 +808,19 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         collectionId: Long,
         appIds: Set<Long>,
         callback: MutationCallback<Unit>,
+    ) = setAppsCollectionMembership(collectionId, appIds, true, callback)
+
+    fun removeAppsFromCollection(
+        collectionId: Long,
+        appIds: Set<Long>,
+        callback: MutationCallback<Unit>,
+    ) = setAppsCollectionMembership(collectionId, appIds, false, callback)
+
+    private fun setAppsCollectionMembership(
+        collectionId: Long,
+        appIds: Set<Long>,
+        included: Boolean,
+        callback: MutationCallback<Unit>,
     ) {
         val generation = readyGeneration()
         val plan = try {
@@ -799,7 +848,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 expected = generation,
                 collectionId = collection.id,
                 appIds = plan.apps.map(LibraryAppRow::id),
-                included = true,
+                included = included,
                 addedAt = System.currentTimeMillis(),
             )
         }

@@ -6,6 +6,7 @@
  */
 package io.github.h3nb.jlmodplus.applist
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,17 +44,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
+import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
+import androidx.compose.material3.adaptive.layout.ThreePaneScaffoldValue
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
-import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -78,9 +83,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.navigation3.runtime.NavEntry
-import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -152,9 +154,10 @@ class LibraryCollectionsUiStore {
         )
     }
 
-    fun activeCollectionId(): Long? = mutableState.value.members?.collectionId
+    fun displayedMembersCollectionId(): Long? = mutableState.value.members?.collectionId
 
-    fun hasAllAppsSnapshot(): Boolean = mutableState.value.allAppsPrepared
+    fun containsCollection(collectionId: Long): Boolean =
+        mutableState.value.collections.any { it.id == collectionId }
 
     fun dismissMembers() {
         mutableState.value = mutableState.value.copy(
@@ -196,6 +199,10 @@ interface LibraryBulkActions {
     fun onExportSelectedBundle(appIds: Set<Long>) = Unit
 }
 
+fun interface CollectionMembershipResultCallback {
+    fun onResult(success: Boolean)
+}
+
 /** Extra capabilities implemented only by the production Library host. */
 interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun collectionsStore(): LibraryCollectionsUiStore
@@ -208,12 +215,16 @@ interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun onRequestAddToCollection(appId: Int)
     fun onDismissAddToCollection()
     fun onAddAppToCollection(appId: Int, collectionId: Long)
+    fun onSetCollectionMembership(
+        appId: Int,
+        collectionId: Long,
+        included: Boolean,
+        callback: CollectionMembershipResultCallback,
+    )
     fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long)
+    fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long)
     fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
 }
-
-private data object CollectionsOverviewRoute : NavKey
-private data class CollectionMembersRoute(val collectionId: Long) : NavKey
 
 /** READY Collections destination. Collections overview and member browsing share Library scroll chrome. */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -225,6 +236,8 @@ internal fun LibraryCollectionsDestination(
     navigationState: LibraryNavigationState = LibraryNavigationState(),
     onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     onOpenActions: (LibraryAppUiItem, Long) -> Unit,
+    selectionState: LibrarySelectionState = LibrarySelectionState(),
+    onSelectionStateChanged: (LibrarySelectionState) -> Unit = {},
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
     active: Boolean = true,
 ) {
@@ -234,20 +247,70 @@ internal fun LibraryCollectionsDestination(
         return
     }
 
-    val selectedCollectionId = navigationState.selectedCollectionId
+    val persistedCollectionId = navigationState.selectedCollectionId
+    val collectionScopeMatches = persistedCollectionId == null ||
+        libraryState.libraryScope.isEmpty() ||
+        navigationState.selectedCollectionScope == libraryState.libraryScope
+    val selectedCollectionId = persistedCollectionId.takeIf { collectionScopeMatches }
     val selectedCollection = selectedCollectionId?.let { collectionId ->
         state.collections.firstOrNull { it.id == collectionId }
     }
-    val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
+    LaunchedEffect(
+        selectionState,
+        selectedCollectionId,
+        state.members?.collectionId,
+        state.members?.members,
+        libraryState.generation,
+    ) {
+        val members = state.members
+        if (
+            !selectionState.isActive ||
+            selectedCollectionId == null ||
+            selectionState.collectionId != selectedCollectionId ||
+            members?.collectionId != selectedCollectionId
+        ) {
+            return@LaunchedEffect
+        }
+        val retained = selectionState.retainAvailable(
+            libraryState.generation,
+            members.members.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+            collectionId = selectedCollectionId,
+        )
+        if (retained != selectionState) onSelectionStateChanged(retained)
+    }
 
-    LaunchedEffect(selectedCollectionId, state.collections, state.members?.collectionId) {
+    LaunchedEffect(
+        persistedCollectionId,
+        selectedCollectionId,
+        state.collections,
+        state.members?.collectionId,
+        libraryState.libraryScope,
+    ) {
         when {
+            persistedCollectionId != null && !collectionScopeMatches -> {
+                onSelectionStateChanged(selectionState.clear())
+                onNavigationStateChanged(
+                    navigationState.copy(
+                        selectedCollectionId = null,
+                        selectedCollectionScope = null,
+                        collectionManageApps = false,
+                        anchors = navigationState.anchors -
+                            LibraryNavigationSurface.CollectionAppsList -
+                            LibraryNavigationSurface.CollectionAppsGrid,
+                    ),
+                )
+                host.onDismissCollectionMembers()
+            }
             selectedCollectionId == null && state.members != null -> {
                 host.onDismissCollectionMembers()
             }
             selectedCollectionId != null && selectedCollection == null -> {
                 onNavigationStateChanged(
-                    currentNavigationState.copy(selectedCollectionId = null),
+                    navigationState.copy(
+                        selectedCollectionId = null,
+                        selectedCollectionScope = null,
+                        collectionManageApps = false,
+                    ),
                 )
                 host.onDismissCollectionMembers()
             }
@@ -257,99 +320,147 @@ internal fun LibraryCollectionsDestination(
         }
     }
 
-    val closeCollection = {
-        onNavigationVisibilityChanged(true)
-        onNavigationStateChanged(currentNavigationState.copy(selectedCollectionId = null))
-        host.onDismissCollectionMembers()
-    }
-    val backStack = remember(active, selectedCollectionId) {
-        buildList<NavKey> {
-            add(CollectionsOverviewRoute)
-            if (active && selectedCollectionId != null) {
-                add(CollectionMembersRoute(selectedCollectionId))
+    val currentActive by rememberUpdatedState(active)
+    val currentOnNavigationVisibilityChanged by rememberUpdatedState(
+        onNavigationVisibilityChanged,
+    )
+    val activeNavigationVisibilityChanged: (Boolean) -> Unit = remember {
+        { visible ->
+            if (currentActive) {
+                currentOnNavigationVisibilityChanged(visible)
             }
         }
+    }
+    val closeCollection = {
+        onSelectionStateChanged(selectionState.clear())
+        activeNavigationVisibilityChanged(true)
+        onNavigationStateChanged(
+            navigationState.copy(
+                selectedCollectionId = null,
+                selectedCollectionScope = null,
+                collectionManageApps = false,
+            ),
+        )
+        host.onDismissCollectionMembers()
     }
     val adaptiveInfo = currentWindowAdaptiveInfoV2()
     val directive = remember(adaptiveInfo) {
         calculatePaneScaffoldDirective(adaptiveInfo).copy(horizontalPartitionSpacerSize = 0.dp)
     }
-    val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
     val showDetailBack = directive.maxHorizontalPartitions == 1
+    // Keep neighbouring pager pages on their last visual state. "active" owns interaction,
+    // not which Collection is rendered, so returning to this tab cannot flash the overview.
+    val displayedCollectionId = selectedCollectionId
+    val scaffoldValue = remember(
+        directive.maxHorizontalPartitions,
+        displayedCollectionId != null,
+    ) {
+        val multiPane = directive.maxHorizontalPartitions > 1
+        ThreePaneScaffoldValue(
+            // ListDetailPaneScaffold maps Detail -> primary and List -> secondary.
+            primary = if (multiPane || displayedCollectionId != null) {
+                PaneAdaptedValue.Expanded
+            } else {
+                PaneAdaptedValue.Hidden
+            },
+            secondary = if (multiPane || displayedCollectionId == null) {
+                PaneAdaptedValue.Expanded
+            } else {
+                PaneAdaptedValue.Hidden
+            },
+            tertiary = PaneAdaptedValue.Hidden,
+        )
+    }
 
-    NavDisplay(
-        backStack = backStack,
-        onBack = closeCollection,
+    BackHandler(enabled = active && selectedCollectionId != null) {
+        closeCollection()
+    }
+
+    ListDetailPaneScaffold(
+        directive = directive,
+        value = scaffoldValue,
         modifier = Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
-        sceneStrategies = listOf(listDetailStrategy),
-        entryProvider = { key ->
-            when (key) {
-                CollectionsOverviewRoute -> NavEntry(
-                    key = key,
-                    metadata = ListDetailSceneStrategy.listPane(
-                        detailPlaceholder = {
-                            LibraryCollectionDetailPlaceholder(scaffoldPadding)
-                        },
-                    ),
-                ) {
-                    LibraryCollectionsOverview(
-                        host = host,
-                        state = state,
-                        libraryState = libraryState,
-                        scaffoldPadding = scaffoldPadding,
-                        navigationState = navigationState,
-                        onNavigationStateChanged = onNavigationStateChanged,
-                        selectedCollectionId = selectedCollectionId,
-                        onOpenCollection = { collectionId ->
-                            onNavigationStateChanged(
-                                currentNavigationState.copy(selectedCollectionId = collectionId),
-                            )
-                        },
-                        onNavigationVisibilityChanged = onNavigationVisibilityChanged,
-                    )
-                }
-                is CollectionMembersRoute -> NavEntry(
-                    key = key,
-                    metadata = ListDetailSceneStrategy.detailPane(),
-                ) {
-                    val collection = state.collections.firstOrNull { it.id == key.collectionId }
-                    val members = state.members?.takeIf { it.collectionId == key.collectionId }
+        listPane = {
+            AnimatedPane {
+                LibraryCollectionsOverview(
+                    host = host,
+                    state = state,
+                    libraryState = libraryState,
+                    scaffoldPadding = scaffoldPadding,
+                    navigationState = navigationState,
+                    onNavigationStateChanged = onNavigationStateChanged,
+                    selectedCollectionId = selectedCollectionId,
+                    onOpenCollection = { collectionId ->
+                        onNavigationStateChanged(
+                            navigationState.copy(
+                                selectedCollectionId = collectionId,
+                                selectedCollectionScope =
+                                    libraryState.libraryScope.takeIf(String::isNotEmpty),
+                                collectionManageApps = false,
+                            ),
+                        )
+                    },
+                    onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
+                )
+            }
+        },
+        detailPane = {
+            AnimatedPane {
+                val collectionId = displayedCollectionId
+                if (collectionId == null) {
+                    LibraryCollectionDetailPlaceholder(scaffoldPadding)
+                } else {
+                    val collection = state.collections.firstOrNull { it.id == collectionId }
+                    val members = state.members?.takeIf { it.collectionId == collectionId }
                     if (collection == null || members == null) {
                         LibraryCollectionDetailLoading(
                             name = collection?.name,
                             scaffoldPadding = scaffoldPadding,
                         )
                     } else {
-                        LibraryCollectionBrowser(
-                            collection = collection,
-                            members = members.members,
-                            allApps = state.allApps,
-                            libraryState = libraryState,
-                            scaffoldPadding = scaffoldPadding,
-                            navigationState = navigationState,
-                            onNavigationStateChanged = onNavigationStateChanged,
-                            onBack = closeCollection,
-                            onOpenApp = host::onOpenApp,
-                            onOpenActions = { app -> onOpenActions(app, collection.id) },
-                            onRemove = { appId -> host.onRemoveAppFromCollection(appId, collection.id) },
-                            onSetMembership = { appId, included ->
-                                if (included) {
-                                    host.onAddAppToCollection(appId, collection.id)
-                                } else {
-                                    host.onRemoveAppFromCollection(appId, collection.id)
-                                }
-                            },
-                            onPrepareAppPicker = host::onPrepareCollectionAppPicker,
-                            onSort = host::onSort,
-                            onNavigationVisibilityChanged = onNavigationVisibilityChanged,
-                            showBackButton = showDetailBack,
-                            handleSystemBack = false,
-                        )
+                        key(collection.id) {
+                            LibraryCollectionBrowser(
+                                collection = collection,
+                                members = members.members,
+                                allApps = state.allApps,
+                                allAppsPrepared = state.allAppsPrepared,
+                                libraryState = libraryState,
+                                scaffoldPadding = scaffoldPadding,
+                                navigationState = navigationState,
+                                onNavigationStateChanged = onNavigationStateChanged,
+                                onBack = {
+                                    if (active) closeCollection()
+                                },
+                                onOpenApp = host::onOpenApp,
+                                onOpenActions = { app -> onOpenActions(app, collection.id) },
+                                selectionState = selectionState,
+                                onSelectionStateChanged = onSelectionStateChanged,
+                                manageApps = navigationState.collectionManageApps,
+                                onManageAppsChanged = { visible ->
+                                    onNavigationStateChanged(
+                                        navigationState.copy(collectionManageApps = visible),
+                                    )
+                                },
+                                onSetMembership = { appId, included, callback ->
+                                    host.onSetCollectionMembership(
+                                        appId,
+                                        collection.id,
+                                        included,
+                                        callback,
+                                    )
+                                },
+                                onPrepareAppPicker = host::onPrepareCollectionAppPicker,
+                                onSort = host::onSort,
+                                onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
+                                showBackButton = showDetailBack,
+                                handleSystemBack = false,
+                                interactionActive = active,
+                            )
+                        }
                     }
                 }
-                else -> error("Unsupported Collections route: $key")
             }
         },
     )
@@ -385,12 +496,17 @@ private fun LibraryCollectionsOverview(
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
     }
 
-    LaunchedEffect(state.collections, libraryState.generation) {
+    LaunchedEffect(
+        state.collections,
+        libraryState.generation,
+        libraryState.libraryScope,
+    ) {
         val availableIds = state.collections.map { it.id }
         val anchor = navigationState.resolveAnchor(
             LibraryNavigationSurface.CollectionsList,
             libraryState.generation,
             availableIds,
+            libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
         ) ?: return@LaunchedEffect
         val targetIndex = anchor.index + 1
         if (listState.firstVisibleItemIndex != targetIndex ||
@@ -400,7 +516,11 @@ private fun LibraryCollectionsOverview(
         }
     }
 
-    LaunchedEffect(state.collections, libraryState.generation) {
+    LaunchedEffect(
+        state.collections,
+        libraryState.generation,
+        libraryState.libraryScope,
+    ) {
         snapshotFlow {
             val firstCollection = listState.layoutInfo.visibleItemsInfo
                 .firstOrNull { it.index > 0 }
@@ -410,6 +530,7 @@ private fun LibraryCollectionsOverview(
                 stableItemId = state.collections.getOrNull(fallbackIndex)?.id,
                 offsetPx = firstCollection?.offset ?: 0,
                 fallbackIndex = fallbackIndex.coerceAtLeast(0),
+                libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
             )
         }.collectLatest { anchor ->
             delay(120)
@@ -513,7 +634,7 @@ private fun LibraryCollectionsOverview(
                 onClick = { createDialog = true },
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_add),
+                    painter = painterResource(R.drawable.ic_create_folder),
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                 )
@@ -562,7 +683,7 @@ private fun LibraryCollectionsOverview(
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_collections),
+                                painter = painterResource(R.drawable.ic_folder),
                                 contentDescription = null,
                                 modifier = Modifier.size(52.dp),
                                 tint = MaterialTheme.colorScheme.primary,
@@ -611,7 +732,7 @@ private fun LibraryCollectionsOverview(
                         },
                         leadingContent = {
                             Icon(
-                                painter = painterResource(R.drawable.ic_collections),
+                                painter = painterResource(R.drawable.ic_folder),
                                 contentDescription = null,
                             )
                         },
@@ -729,7 +850,7 @@ private fun LibraryCollectionDetailPlaceholder(scaffoldPadding: PaddingValues) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_collections),
+                painter = painterResource(R.drawable.ic_folder),
                 contentDescription = null,
                 modifier = Modifier.size(52.dp),
                 tint = MaterialTheme.colorScheme.primary,

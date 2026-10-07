@@ -81,7 +81,7 @@ internal fun PresetSummary(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 14.dp),
+                .padding(vertical = 12.dp),
         ) {
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -144,19 +144,18 @@ private fun PresetActionRows(
     ) {
         PresetActionRow(
             label = stringResource(R.string.preset_use),
-            icon = R.drawable.ic_profile_use,
-            emphasized = true,
+            icon = R.drawable.ic_check_circle,
             onClick = onUsePreset,
         )
         PresetActionRow(
             label = stringResource(R.string.preset_save_as),
-            icon = R.drawable.ic_profile_save_as,
+            icon = R.drawable.ic_save_as,
             onClick = onSavePreset,
         )
         updatePresetName?.let { name ->
             PresetActionRow(
                 label = stringResource(R.string.preset_update_confirm),
-                icon = R.drawable.ic_profile_update,
+                icon = R.drawable.ic_sync,
                 contentDescription = stringResource(R.string.preset_update, name),
                 modifier = Modifier.testTag("preset_update_action"),
                 onClick = { onUpdatePreset(name) },
@@ -171,7 +170,6 @@ private fun PresetActionRow(
     icon: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    emphasized: Boolean = false,
     contentDescription: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -191,15 +189,15 @@ private fun PresetActionRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .heightIn(min = 48.dp)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painter = painterResource(icon),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = if (emphasized) colors.primary else colors.onSurfaceVariant,
+                tint = colors.onSurfaceVariant,
             )
             Text(
                 text = label,

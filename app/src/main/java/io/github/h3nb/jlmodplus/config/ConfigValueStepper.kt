@@ -59,7 +59,7 @@ internal fun ConfigValueStepper(
             modifier = Modifier.size(48.dp),
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_remove_circle),
+                painter = painterResource(R.drawable.ic_remove),
                 contentDescription = stringResource(R.string.config_decrease_value),
             )
         }

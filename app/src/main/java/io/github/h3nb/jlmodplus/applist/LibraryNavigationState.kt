@@ -39,6 +39,10 @@ data class LibraryScrollAnchor(
     val stableItemId: Long?,
     val offsetPx: Int,
     val fallbackIndex: Int,
+    /** Optional database-local owner, currently used for Collection detail anchors. */
+    val scopeId: Long? = null,
+    /** Stable workdir identity for database-local anchors across process recreation. */
+    val libraryScope: String? = null,
 )
 
 data class LibraryNavigationState(
@@ -50,6 +54,10 @@ data class LibraryNavigationState(
     val sortVariant: Int = 0,
     val selectedCollectionId: Long? = null,
     val anchors: Map<LibraryNavigationSurface, LibraryScrollAnchor> = emptyMap(),
+    /** Stable workdir identity for [selectedCollectionId]; Room ids are local to one Library DB. */
+    val selectedCollectionScope: String? = null,
+    /** Full-screen Collection membership editor state; belongs to the selected Collection route. */
+    val collectionManageApps: Boolean = false,
 ) {
     companion object {
         /**
@@ -72,8 +80,12 @@ data class LibraryNavigationState(
                             anchor.stableItemId ?: Long.MIN_VALUE,
                             anchor.offsetPx,
                             anchor.fallbackIndex,
+                            anchor.scopeId ?: Long.MIN_VALUE,
+                            anchor.libraryScope.orEmpty(),
                         )
                     },
+                    state.selectedCollectionScope.orEmpty(),
+                    state.collectionManageApps,
                 )
             },
             restore = { saved ->
@@ -105,6 +117,16 @@ data class LibraryNavigationState(
                 } else {
                     saved.getOrNull(6) as? List<*> ?: emptyList<Any?>()
                 }
+                val selectedCollectionScope = if (legacyAnchors.isNotEmpty()) {
+                    null
+                } else {
+                    (saved.getOrNull(7) as? String)?.takeIf(String::isNotEmpty)
+                }
+                val collectionManageApps = if (legacyAnchors.isNotEmpty()) {
+                    false
+                } else {
+                    saved.getOrNull(8) as? Boolean ?: false
+                }
                 val anchors = anchorValues.mapNotNull { value ->
                     val entry = value as? List<*> ?: return@mapNotNull null
                     val surface = entry.getOrNull(0)?.toString()?.let {
@@ -115,7 +137,18 @@ data class LibraryNavigationState(
                         ?.takeUnless { it == Long.MIN_VALUE }
                     val offset = (entry.getOrNull(3) as? Number)?.toInt() ?: return@mapNotNull null
                     val fallbackIndex = (entry.getOrNull(4) as? Number)?.toInt() ?: return@mapNotNull null
-                    surface to LibraryScrollAnchor(generation, stableId, offset, fallbackIndex)
+                    val scopeId = (entry.getOrNull(5) as? Number)?.toLong()
+                        ?.takeUnless { it == Long.MIN_VALUE }
+                    val libraryScope = (entry.getOrNull(6) as? String)
+                        ?.takeIf(String::isNotEmpty)
+                    surface to LibraryScrollAnchor(
+                        generation,
+                        stableId,
+                        offset,
+                        fallbackIndex,
+                        scopeId,
+                        libraryScope,
+                    )
                 }.toMap()
                 LibraryNavigationState(
                     destination = destination,
@@ -125,6 +158,8 @@ data class LibraryNavigationState(
                     sortVariant = sortVariant,
                     selectedCollectionId = selectedCollectionId,
                     anchors = anchors,
+                    selectedCollectionScope = selectedCollectionScope,
+                    collectionManageApps = collectionManageApps && selectedCollectionId != null,
                 )
             },
         )
@@ -138,14 +173,27 @@ data class LibraryNavigationState(
     fun anchorFor(
         surface: LibraryNavigationSurface,
         activeGeneration: Long,
-    ): LibraryScrollAnchor? = anchors[surface]?.takeIf { it.generation == activeGeneration }
+        scopeId: Long? = null,
+        libraryScope: String? = null,
+    ): LibraryScrollAnchor? = anchors[surface]?.takeIf {
+        it.generation == activeGeneration &&
+            it.scopeId == scopeId &&
+            it.libraryScope == libraryScope
+    }
 
     fun resolveAnchor(
         surface: LibraryNavigationSurface,
         activeGeneration: Long,
         availableIds: List<Long>,
+        scopeId: Long? = null,
+        libraryScope: String? = null,
     ): ResolvedLibraryScrollAnchor? {
-        val anchor = anchorFor(surface, activeGeneration) ?: return null
+        val anchor = anchorFor(
+            surface,
+            activeGeneration,
+            scopeId,
+            libraryScope,
+        ) ?: return null
         return resolveAnchor(anchor, availableIds)
     }
 
