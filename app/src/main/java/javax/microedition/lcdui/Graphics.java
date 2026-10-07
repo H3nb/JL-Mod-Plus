@@ -3,7 +3,7 @@
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2019-2023 Yury Kharchenko
  *
- * Modified for JL-Mod Plus to stabilize LCDUI Canvas state management.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ public class Graphics implements
 
 	private final Paint drawPaint = new Paint();
 	private final Paint fillPaint = new Paint();
+	private final Paint polygonPaint = new Paint();
 
 	private int translateX;
 	private int translateY;
@@ -69,6 +70,11 @@ public class Graphics implements
 	private final Rect rect = new Rect();
 	private final RectF rectF = new RectF();
 	private final Path path = new Path();
+	private final Path polygonOutline = new Path();
+	private final Path polygonFillPath = new Path();
+	private final Region coverageClip = new Region();
+	private final Region closedCoverage = new Region();
+	private final Region outlineCoverage = new Region();
 
 	private final DashPathEffect dashPathEffect = new DashPathEffect(new float[]{5, 5}, 0);
 	private int stroke = SOLID;
@@ -134,8 +140,68 @@ public class Graphics implements
 		}
 	}
 
+	/** Nokia polygons include their boundary and use even-odd interior coverage. */
+	public void fillPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset,
+			int nPoints, int argbColor) {
+		if (nPoints > 0) {
+			computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
+			path.setFillType(Path.FillType.EVEN_ODD);
+			int alpha = argbColor >>> 24;
+			if (alpha == 0 || clip.isEmpty()) return;
+			polygonPaint.set(fillPaint);
+			polygonPaint.setColor(argbColor);
+			polygonPaint.setStrokeWidth(1);
+			if (alpha == 0xFF) {
+				drawOpaqueClosedCoverage(path, path, false, polygonPaint);
+			} else {
+				unionClosedCoverage(path, path, Paint.Style.STROKE);
+				drawClosedCoverage(polygonPaint);
+			}
+		}
+	}
+
+	private void drawOpaqueClosedCoverage(Path fillPath, Path outlinePath,
+			boolean fillOutline, Paint paint) {
+		paint.setStyle(Paint.Style.FILL);
+		canvas.drawPath(fillPath, paint);
+		if (fillOutline) canvas.drawPath(outlinePath, paint);
+		paint.setStyle(Paint.Style.STROKE);
+		canvas.drawPath(outlinePath, paint);
+	}
+
+	private void unionClosedCoverage(Path fillPath, Path outlinePath, Paint.Style outlineStyle) {
+		coverageClip.set(clip);
+		closedCoverage.setPath(fillPath, coverageClip);
+		polygonPaint.setStyle(outlineStyle);
+		polygonPaint.getFillPath(outlinePath, polygonFillPath);
+		outlineCoverage.setPath(polygonFillPath, coverageClip);
+		// Union raster coverage, not float contours: Path.op can move edges
+		// across pixel centers, remove interior pixels, or add edge fragments.
+		closedCoverage.op(outlineCoverage, Region.Op.UNION);
+	}
+
+	private void drawClosedCoverage(Paint paint) {
+		polygonFillPath.reset();
+		closedCoverage.getBoundaryPath(polygonFillPath);
+		paint.setStyle(Paint.Style.FILL);
+		// Integer boundaries retain exact coverage and normal ARGB rounding.
+		canvas.drawPath(polygonFillPath, paint);
+	}
+
+	/** Uses the call's ARGB without changing the shared Graphics color. */
+	public void drawPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset,
+			int nPoints, int argbColor) {
+		if (nPoints > 0) {
+			Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
+			polygonPaint.set(drawPaint);
+			polygonPaint.setColor(argbColor);
+			canvas.drawPath(path, polygonPaint);
+		}
+	}
+
 	private Path computePath(int[] xPoints, int xOffset, int[] yPoints, int yOffset, int nPoints) {
 		path.reset();
+		path.setFillType(Path.FillType.WINDING);
 		path.moveTo((float) xPoints[xOffset], (float) yPoints[yOffset]);
 		for (int i = 1; i < nPoints; i++) {
 			path.lineTo((float) xPoints[xOffset + i], (float) yPoints[yOffset + i]);
@@ -183,11 +249,16 @@ public class Graphics implements
 	}
 
 	public int getColor() {
+		return drawPaint.getColor() & 0x00FFFFFF;
+	}
+
+	/** Internal bridge for vendor APIs that share the full ARGB graphics state. */
+	public int getColorAlpha() {
 		return drawPaint.getColor();
 	}
 
 	public int getDisplayColor(int color) {
-		return color;
+		return color & 0x00FFFFFF;
 	}
 
 	public void setStrokeStyle(int stroke) {
@@ -309,7 +380,52 @@ public class Graphics implements
 	}
 
 	public void fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3) {
-		fillPolygon(new int[]{x1, x2, x3}, 0, new int[]{y1, y2, y3}, 0, 3);
+		int alpha = fillPaint.getColor() >>> 24;
+		if (alpha == 0 || clip.isEmpty()) return;
+		path.reset();
+		path.setFillType(Path.FillType.WINDING);
+		path.moveTo(x1, y1);
+		path.lineTo(x2, y2);
+		path.lineTo(x3, y3);
+		path.close();
+		polygonPaint.set(fillPaint);
+		polygonPaint.setStyle(Paint.Style.STROKE);
+		polygonPaint.setStrokeWidth(1);
+		polygonPaint.setStrokeJoin(Paint.Join.BEVEL);
+		// MIDP includes solid connecting lines below/right of integer points.
+		polygonOutline.set(path);
+		polygonOutline.offset(0.5f, 0.5f);
+		// The shifted outline can be separated from the original interior on
+		// diagonal edges. Include its interior so their coverage cannot leave
+		// periodic gaps or detached boundary pixels. Opaque Source Over is
+		// idempotent, so direct constituent draws preserve the same union without
+		// Region reconstruction. Translucent coverage must still composite once.
+		if (alpha == 0xFF) {
+			drawOpaqueClosedCoverage(path, polygonOutline, true, polygonPaint);
+			drawOpaqueTriangleEndpoint(x1, y1);
+			drawOpaqueTriangleEndpoint(x2, y2);
+			drawOpaqueTriangleEndpoint(x3, y3);
+		} else {
+			unionClosedCoverage(path, polygonOutline, Paint.Style.FILL_AND_STROKE);
+			includeTriangleEndpoint(x1, y1);
+			includeTriangleEndpoint(x2, y2);
+			includeTriangleEndpoint(x3, y3);
+			drawClosedCoverage(fillPaint);
+		}
+	}
+
+	private void drawOpaqueTriangleEndpoint(int x, int y) {
+		if (clip.contains(x, y)) {
+			polygonPaint.setStyle(Paint.Style.FILL);
+			canvas.drawRect(x, y, (float) x + 1, (float) y + 1, polygonPaint);
+		}
+	}
+
+	private void includeTriangleEndpoint(int x, int y) {
+		// Clipping first also guarantees that the exclusive endpoints fit int.
+		if (clip.contains(x, y)) {
+			closedCoverage.op(x, y, x + 1, y + 1, Region.Op.UNION);
+		}
 	}
 
 	public void drawChar(char character, int x, int y, int anchor) {
