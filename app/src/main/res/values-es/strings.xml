@@ -920,7 +920,7 @@
     <string name="library_action_about_summary">Información de versión, proyecto y mantenedor.</string>
     <string name="library_action_licenses_summary">Avisos de terceros y términos de licencia incluidos con la aplicación.</string>
     <string name="library_action_help_summary">Guía de uso y controles habituales.</string>
-    <string name="library_bulk_delete_apps">Eliminar</string>
+    <string name="library_bulk_delete_apps">Eliminar aplicaciones</string>
     <string name="library_bulk_add_collection">Añadir a colección</string>
     <string name="library_bulk_share_apps">Compartir aplicaciones</string>
     <string name="library_bulk_reinstall_apps">Reinstalar</string>
