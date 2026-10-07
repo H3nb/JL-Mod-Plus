@@ -671,6 +671,13 @@ fun LibraryScreen(
         if (selectionState.generation != null && selectionState.generation != state.generation) {
             selectionState = selectionState.clear()
         }
+        if (
+            collectionSelectionState.generation != null &&
+            collectionSelectionState.generation != state.generation
+        ) {
+            collectionSelectionState = collectionSelectionState.clear()
+            collectionSelectionId = null
+        }
     }
     LaunchedEffect(state.generation, state.apps) {
         if (!state.databaseControlsReady) return@LaunchedEffect
