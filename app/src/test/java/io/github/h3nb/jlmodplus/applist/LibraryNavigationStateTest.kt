@@ -178,6 +178,41 @@ class LibraryNavigationStateTest {
     }
 
     @Test
+    fun saverRestoresCollectionManageAppsOnlyWithSelectedCollection() {
+        val restored = LibraryNavigationState.Saver.restore(
+            listOf(
+                "Collections",
+                "List",
+                "",
+                "All",
+                0,
+                42L,
+                emptyList<Any>(),
+                "/work/library-a",
+                true,
+            ),
+        )
+
+        assertEquals(42L, restored?.selectedCollectionId)
+        assertEquals(true, restored?.collectionManageApps)
+
+        val invalid = LibraryNavigationState.Saver.restore(
+            listOf(
+                "Collections",
+                "List",
+                "",
+                "All",
+                0,
+                Long.MIN_VALUE,
+                emptyList<Any>(),
+                "/work/library-a",
+                true,
+            ),
+        )
+        assertEquals(false, invalid?.collectionManageApps)
+    }
+
+    @Test
     fun saverAcceptsLegacyAnchorOnlyState() {
         val restored = LibraryNavigationState.Saver.restore(
             listOf(listOf("AppsList", 4L, 12L, 3, 1)),
