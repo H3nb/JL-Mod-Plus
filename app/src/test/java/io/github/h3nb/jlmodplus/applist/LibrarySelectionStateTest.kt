@@ -47,6 +47,21 @@ class LibrarySelectionStateTest {
     }
 
     @Test
+    fun changingSurfaceScopeStartsASeparatedSelectionSession() {
+        val collection = LibrarySelectionState().enter(7L, 42L, collectionId = 5L)
+        assertEquals(5L, collection.collectionId)
+        assertEquals(setOf(42L), collection.selectedAppIds)
+
+        val apps = collection.toggle(7L, 99L)
+        assertNull(apps.collectionId)
+        assertEquals(setOf(99L), apps.selectedAppIds)
+
+        val otherCollection = apps.enter(7L, 77L, collectionId = 6L)
+        assertEquals(6L, otherCollection.collectionId)
+        assertEquals(setOf(77L), otherCollection.selectedAppIds)
+    }
+
+    @Test
     fun generationChangesDiscardPreviousSelection() {
         val state = LibrarySelectionState(7L, setOf(42L))
         val entered = state.enter(8L, 99L)
@@ -57,23 +72,39 @@ class LibrarySelectionStateTest {
 
     @Test
     fun saverRestoresPrimitiveValuesWithoutMutableCollectionState() {
-        val state = LibrarySelectionState(9L, linkedSetOf(3L, 8L))
-        val restored = LibrarySelectionState.Saver.restore(listOf("9", "3,8"))
+        val state = LibrarySelectionState(9L, linkedSetOf(3L, 8L), collectionId = 5L)
+        val restored = LibrarySelectionState.Saver.restore(listOf("9", "3,8", "5"))
         assertEquals(state, restored)
-        assertNull(LibrarySelectionState.Saver.restore(listOf("", ""))?.generation)
+        assertEquals(
+            LibrarySelectionState(9L, linkedSetOf(3L, 8L)),
+            LibrarySelectionState.Saver.restore(listOf("9", "3,8")),
+        )
+        assertNull(LibrarySelectionState.Saver.restore(listOf("", "", ""))?.generation)
     }
 
     @Test
     fun retainAvailableKeepsOnlyFailedRowsForRetry() {
-        val state = LibrarySelectionState(9L, setOf(10L, 20L, 30L))
-        val retained = state.retainAvailable(9L, listOf(10L, 30L))
+        val state = LibrarySelectionState(
+            generation = 9L,
+            selectedAppIds = setOf(10L, 20L, 30L),
+            collectionId = 4L,
+        )
+        val retained = state.retainAvailable(
+            9L,
+            listOf(10L, 30L),
+            collectionId = 4L,
+        )
         assertEquals(setOf(10L, 30L), retained.selectedAppIds)
+        assertEquals(4L, retained.collectionId)
         assertTrue(retained.isActive)
     }
 
     @Test
     fun retainAvailableClearsModeWhenEverySelectedRowWasRemoved() {
-        val state = LibrarySelectionState(9L, setOf(10L))
-        assertEquals(LibrarySelectionState(), state.retainAvailable(9L, emptyList()))
+        val state = LibrarySelectionState(9L, setOf(10L), collectionId = 4L)
+        assertEquals(
+            LibrarySelectionState(),
+            state.retainAvailable(9L, emptyList(), collectionId = 4L),
+        )
     }
 }

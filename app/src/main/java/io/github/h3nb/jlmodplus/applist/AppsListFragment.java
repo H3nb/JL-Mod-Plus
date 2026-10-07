@@ -924,7 +924,12 @@ public class AppsListFragment extends Fragment {
         LibraryComposeController controller = composeController;
         if (controller != null) {
             controller.updateSort(state.getSortVariant());
-            controller.updateApps(uiItems, state.getFilter(), state.getQuickView(), generation);
+            controller.updateApps(
+                    uiItems,
+                    state.getFilter(),
+                    state.getQuickView(),
+                    generation,
+                    state.getAvailableAppIds());
         }
     }
 

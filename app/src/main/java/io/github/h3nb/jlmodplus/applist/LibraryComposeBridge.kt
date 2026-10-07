@@ -313,6 +313,7 @@ private data class ConsumedReturnAnchor(
 data class LibraryUiState(
     val loading: Boolean = true,
     val apps: List<LibraryAppUiItem> = emptyList(),
+    val availableAppIds: Set<Long> = apps.mapTo(LinkedHashSet()) { it.databaseId },
     val appliedFilter: String = "",
     val layout: LibraryLayout = LibraryLayout.List,
     val iconRatio: LibraryIconRatio = LibraryIconRatio.Square,
@@ -434,10 +435,12 @@ class LibraryComposeController(
         appliedFilter: String,
         quickView: LibraryQuickView,
         generation: Long,
+        availableAppIds: Set<Long>,
     ) {
         state = state.copy(
             loading = false,
             apps = items,
+            availableAppIds = availableAppIds,
             appliedFilter = appliedFilter,
             quickView = quickView,
             databaseControlsReady = true,
@@ -614,10 +617,6 @@ fun LibraryScreen(
     var selectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
         mutableStateOf(initialSelectionState)
     }
-    // null means the Apps destination; a non-null id scopes the same selection state to that
-    // Collection. Keep one selection owner so list/grid indicators, headers, and bulk actions
-    // cannot disagree about whether selection mode is active.
-    var selectionCollectionId by rememberSaveable { mutableStateOf<Long?>(null) }
     var controllerFocusVisible by rememberSaveable { mutableStateOf(false) }
     var controllerFocusedAppId by rememberSaveable { mutableStateOf<Long?>(null) }
     var controllerFocusedAppIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -663,19 +662,30 @@ fun LibraryScreen(
         )
     }
 
-    LaunchedEffect(state.generation) {
+    LaunchedEffect(state.generation, state.databaseControlsReady) {
         if (!state.databaseControlsReady) return@LaunchedEffect
-        if (selectionState.generation != null && selectionState.generation != state.generation) {
-            selectionState = selectionState.clear()
-            selectionCollectionId = null
-        }
+        val retained = selectionState.retainGeneration(state.generation)
+        if (retained != selectionState) selectionState = retained
     }
-    LaunchedEffect(state.generation, state.apps, selectionCollectionId) {
-        if (!state.databaseControlsReady || selectionCollectionId != null) return@LaunchedEffect
-        selectionState = selectionState.retainAvailable(
+    LaunchedEffect(
+        state.generation,
+        state.availableAppIds,
+        state.databaseControlsReady,
+        selectionState.isActive,
+        selectionState.collectionId,
+    ) {
+        if (
+            !state.databaseControlsReady ||
+            !selectionState.isActive ||
+            selectionState.collectionId != null
+        ) {
+            return@LaunchedEffect
+        }
+        val retained = selectionState.retainAvailable(
             state.generation,
-            state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+            state.availableAppIds,
         )
+        if (retained != selectionState) selectionState = retained
     }
 
     LaunchedEffect(
@@ -735,9 +745,8 @@ fun LibraryScreen(
         }
     }
 
-    BackHandler(enabled = selectionState.isActive && selectionCollectionId == null) {
+    BackHandler(enabled = selectionState.isActive && selectionState.collectionId == null) {
         selectionState = selectionState.clear()
-        selectionCollectionId = null
     }
 
     val metadataApp = metadataTarget?.let { target ->
@@ -883,10 +892,7 @@ fun LibraryScreen(
                     currentControllerDeleteTarget != null -> deleteTarget = null
                     currentControllerBulkDeleteIds != null -> pendingBulkDeleteIds = null
                     currentControllerInfoDialog != null -> infoDialog = null
-                    currentControllerSelectionActive -> {
-                        selectionState = selectionState.clear()
-                        selectionCollectionId = null
-                    }
+                    currentControllerSelectionActive -> selectionState = selectionState.clear()
                     else -> Unit
                 }
                 LibraryControllerCommand.NextTab,
@@ -912,22 +918,21 @@ fun LibraryScreen(
             appActionsCollectionId = null
         }
     }
-    LaunchedEffect(destination, navigationState.selectedCollectionId, selectionCollectionId) {
-        if (!selectionState.isActive) {
-            selectionCollectionId = null
-            return@LaunchedEffect
-        }
+    LaunchedEffect(
+        destination,
+        navigationState.selectedCollectionId,
+        selectionState.isActive,
+        selectionState.collectionId,
+    ) {
+        if (!selectionState.isActive) return@LaunchedEffect
+        val collectionId = selectionState.collectionId
         val scopeMatchesDestination = when (destination) {
-            LibraryDestination.Apps -> selectionCollectionId == null
+            LibraryDestination.Apps -> collectionId == null
             LibraryDestination.Collections ->
-                selectionCollectionId != null &&
-                    navigationState.selectedCollectionId == selectionCollectionId
+                collectionId != null && navigationState.selectedCollectionId == collectionId
             LibraryDestination.More -> false
         }
-        if (!scopeMatchesDestination) {
-            selectionState = selectionState.clear()
-            selectionCollectionId = null
-        }
+        if (!scopeMatchesDestination) selectionState = selectionState.clear()
     }
 
     LaunchedEffect(metadataViewportLocked, metadataTarget, isImeVisible, metadataRestoreRequest) {
@@ -977,7 +982,7 @@ fun LibraryScreen(
             contentWindowInsets = scaffoldInsets,
             snackbarHost = noticeHost,
             bottomBar = {
-                val collectionId = selectionCollectionId
+                val collectionId = selectionState.collectionId
                 val selectionMatchesDestination = when (destination) {
                     LibraryDestination.Apps -> collectionId == null
                     LibraryDestination.Collections ->
@@ -1013,8 +1018,6 @@ fun LibraryScreen(
                                     selectionState.selectedAppIds,
                                     collectionId,
                                 )
-                                selectionState = selectionState.clear()
-                                selectionCollectionId = null
                             } else {
                                 bulkActions.onAddSelectedToCollection(selectionState.selectedAppIds)
                             }
@@ -1160,7 +1163,7 @@ fun LibraryScreen(
                             freezeViewport = metadataViewportLocked,
                             preserveImePaddingWhileFrozen = metadataImeWasVisible,
                             onNavigationStateChanged = { navigationState = it },
-                            selectionState = if (selectionCollectionId == null) {
+                            selectionState = if (selectionState.collectionId == null) {
                                 selectionState
                             } else {
                                 LibrarySelectionState()
@@ -1180,7 +1183,6 @@ fun LibraryScreen(
                             },
                             onExitSelection = {
                                 selectionState = selectionState.clear()
-                                selectionCollectionId = null
                             },
                             onSelectAll = {
                                 selectionState = selectionState.selectVisible(
@@ -1213,17 +1215,14 @@ fun LibraryScreen(
                                     appActionsCollectionId = collectionId
                                 },
                                 selectionState = if (
-                                    selectionCollectionId != null &&
-                                    selectionCollectionId == navigationState.selectedCollectionId
+                                    selectionState.collectionId != null &&
+                                    selectionState.collectionId == navigationState.selectedCollectionId
                                 ) {
                                     selectionState
                                 } else {
                                     LibrarySelectionState()
                                 },
-                                onSelectionStateChanged = { next ->
-                                    selectionState = next
-                                    if (!next.isActive) selectionCollectionId = null
-                                },
+                                onSelectionStateChanged = { next -> selectionState = next },
                                 onNavigationVisibilityChanged = { visible ->
                                     if (!useNavigationRail) showNavigationBar = visible
                                 },
@@ -1356,8 +1355,11 @@ fun LibraryScreen(
                 null
             },
             onSelect = {
-                selectionCollectionId = collectionId
-                selectionState = selectionState.enter(state.generation, app.databaseId)
+                selectionState = selectionState.enter(
+                    state.generation,
+                    app.databaseId,
+                    collectionId = collectionId,
+                )
             },
         )
     }

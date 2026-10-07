@@ -74,6 +74,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             val bootstrapFailures: List<LibraryScanner.Failure>,
             val legacyImportFailure: String?,
             val reconciliationFailures: List<LibraryScanner.Failure>,
+            val availableAppIds: Set<Long> = apps.mapTo(LinkedHashSet()) { it.id },
         ) : DisplayState
         data class Error(val emulatorDir: File, val message: String) : DisplayState
     }
@@ -140,13 +141,15 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 repositoryState.message,
             )
             is LibraryRepository.State.Ready -> {
-                val projected = withContext(Dispatchers.Default) {
+                val (projected, availableAppIds) = withContext(Dispatchers.Default) {
                     LibraryListProjection.project(
                         rows = repositoryState.apps,
                         filter = input.filter,
                         sortVariant = input.sortVariant,
                         quickView = input.quickView,
-                    )
+                    ) to repositoryState.apps.mapTo(
+                        LinkedHashSet(repositoryState.apps.size),
+                    ) { it.id }
                 }
                 DisplayState.Ready(
                     generation = repositoryState.generation,
@@ -159,6 +162,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                     bootstrapFailures = repositoryState.bootstrapFailures,
                     legacyImportFailure = repositoryState.legacyImportFailure,
                     reconciliationFailures = repositoryState.reconciliationFailures,
+                    availableAppIds = availableAppIds,
                 )
             }
         }

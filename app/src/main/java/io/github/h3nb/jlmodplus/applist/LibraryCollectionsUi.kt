@@ -250,6 +250,7 @@ internal fun LibraryCollectionsDestination(
         if (
             !selectionState.isActive ||
             selectedCollectionId == null ||
+            selectionState.collectionId != selectedCollectionId ||
             members?.collectionId != selectedCollectionId
         ) {
             return@LaunchedEffect
@@ -257,6 +258,7 @@ internal fun LibraryCollectionsDestination(
         val retained = selectionState.retainAvailable(
             libraryState.generation,
             members.members.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+            collectionId = selectedCollectionId,
         )
         if (retained != selectionState) onSelectionStateChanged(retained)
     }
@@ -371,6 +373,7 @@ internal fun LibraryCollectionsDestination(
                             collection = collection,
                             members = members.members,
                             allApps = state.allApps,
+                            allAppsPrepared = state.allAppsPrepared,
                             libraryState = libraryState,
                             scaffoldPadding = scaffoldPadding,
                             navigationState = navigationState,

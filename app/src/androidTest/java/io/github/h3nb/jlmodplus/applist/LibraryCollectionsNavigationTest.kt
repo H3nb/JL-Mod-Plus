@@ -25,7 +25,7 @@ import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -50,6 +50,9 @@ private fun selectionCount(count: Int): String =
         count,
         count,
     )
+
+private fun uiString(resId: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
@@ -172,8 +175,9 @@ class LibraryCollectionsNavigationTest {
 
         composeRule.onNodeWithText(selectionCount(1)).assertIsDisplayed()
         composeRule.onNodeWithText("Select all").assertIsDisplayed()
-        composeRule.onNodeWithTag("collection-selection-checkbox-${SAMPLE_MEMBER.databaseId}")
-            .assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_selection_checkbox_description, SAMPLE_MEMBER.title),
+        ).assertIsDisplayed()
         composeRule.onNodeWithText("Remove from collection").assertIsDisplayed()
 
         pressBack()
@@ -215,8 +219,9 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText("Select").performClick()
 
         composeRule.onNodeWithText(selectionCount(1)).assertIsDisplayed()
-        composeRule.onNodeWithTag("collection-selection-checkbox-${SAMPLE_MEMBER.databaseId}")
-            .assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_selection_checkbox_description, SAMPLE_MEMBER.title),
+        ).assertIsDisplayed()
         composeRule.onNodeWithText("Select all").assertIsDisplayed()
         composeRule.onNodeWithText("Delete apps").assertIsDisplayed()
         composeRule.onNodeWithText("Remove from collection").assertIsDisplayed()
@@ -228,8 +233,9 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText("Select all").performClick()
         composeRule.onNodeWithText(selectionCount(2)).assertIsDisplayed()
         composeRule.onNodeWithText("Deselect all").assertIsDisplayed()
-        composeRule.onNodeWithTag("collection-selection-checkbox-${SAMPLE_MEMBER_2.databaseId}")
-            .assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_selection_checkbox_description, SAMPLE_MEMBER_2.title),
+        ).assertIsDisplayed()
 
         composeRule.onNodeWithText("Deselect all").performClick()
         composeRule.onNodeWithText(selectionCount(0)).assertIsDisplayed()
@@ -256,12 +262,26 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText(COLLECTION_NAME).performClick()
         composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
         composeRule.onNodeWithText("Select").performClick()
-        composeRule.onNodeWithText("Remove from collection").performClick()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_remove_from_current),
+        ).performClick()
         composeRule.waitForIdle()
 
         assertEquals(listOf(setOf(SAMPLE_MEMBER.databaseId) to COLLECTION_ID), host.bulkRemovals)
-        composeRule.onAllNodesWithText(selectionCount(1)).assertCountEquals(0)
+        // A mutation request is not a committed membership change. Keep the selection so a
+        // failed mutation remains retryable.
+        composeRule.onNodeWithText(selectionCount(1)).assertIsDisplayed()
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+
+        composeRule.runOnIdle {
+            host.store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER_2))
+        }
+        composeRule.waitForIdle()
+
+        // Once the authoritative member projection confirms removal, reconciliation exits
+        // selection because every selected row has actually left the Collection.
+        composeRule.onAllNodesWithText(selectionCount(1)).assertCountEquals(0)
+        composeRule.onNodeWithText(SAMPLE_MEMBER_2.title).assertIsDisplayed()
     }
 
     @Test
@@ -288,6 +308,60 @@ class LibraryCollectionsNavigationTest {
 
         assertEquals(listOf(SAMPLE_MEMBER.id to COLLECTION_ID), host.singleRemovals)
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+    }
+
+    @Test
+    fun collectionManageAppsReassertsNavigationChromeAfterPagerReturn() {
+        val host = RecordingCollectionsHost().apply {
+            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
+        }
+        val active = mutableStateOf(true)
+        val navigationVisibilityEvents = mutableListOf<Boolean>()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryCollectionsDestination(
+                        host = host,
+                        libraryState = sampleLibraryState(),
+                        scaffoldPadding = PaddingValues(),
+                        navigationState = LibraryNavigationState(
+                            destination = LibraryDestinationKey.Collections,
+                            selectedCollectionId = COLLECTION_ID,
+                        ),
+                        onOpenActions = { _, _ -> },
+                        onNavigationVisibilityChanged = { visible ->
+                            navigationVisibilityEvents += visible
+                        },
+                        active = active.value,
+                    )
+                }
+            }
+        }
+
+        composeRule.waitForIdle()
+        composeRule.runOnIdle { navigationVisibilityEvents.clear() }
+        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
+            .assertIsDisplayed()
+        assertEquals(false, navigationVisibilityEvents.last())
+
+        composeRule.runOnIdle {
+            navigationVisibilityEvents.clear()
+            active.value = false
+        }
+        composeRule.waitForIdle()
+        assertEquals(emptyList<Boolean>(), navigationVisibilityEvents)
+
+        composeRule.runOnIdle { active.value = true }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
+            .assertIsDisplayed()
+        assertEquals(false, navigationVisibilityEvents.last())
     }
 
     @Test

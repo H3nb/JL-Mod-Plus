@@ -388,6 +388,68 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun selectionSurvivesFilteredProjectionUntilAppLeavesLibrary() {
+        val actions = RecordingLibraryActions()
+        val first = LibraryAppUiItem(
+            id = 7,
+            title = "Demo MIDlet",
+            author = "Example Vendor",
+            version = "1.0",
+            iconPath = null,
+            canReinstall = true,
+            databaseId = 70L,
+        )
+        val second = LibraryAppUiItem(
+            id = 8,
+            title = "Second MIDlet",
+            author = "Example Vendor",
+            version = "1.0",
+            iconPath = null,
+            canReinstall = true,
+            databaseId = 80L,
+        )
+        val libraryState = mutableStateOf(
+            LibraryUiState(
+                loading = false,
+                generation = 11L,
+                databaseControlsReady = true,
+                apps = listOf(first, second),
+                availableAppIds = setOf(first.databaseId, second.databaseId),
+            ),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryScreen(state = libraryState.value, actions = actions)
+            }
+        }
+
+        composeRule.onNodeWithText(first.title).performTouchInput { longClick() }
+        composeRule.onNodeWithText("Select").performClick()
+        composeRule.onNodeWithText("1 app").assertIsDisplayed()
+
+        composeRule.runOnIdle {
+            libraryState.value = libraryState.value.copy(
+                apps = listOf(second),
+                appliedFilter = second.title,
+            )
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithText(first.title).assertCountEquals(0)
+        composeRule.onNodeWithText("1 app").assertIsDisplayed()
+
+        composeRule.runOnIdle {
+            libraryState.value = libraryState.value.copy(
+                availableAppIds = setOf(second.databaseId),
+            )
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithText("1 app").assertCountEquals(0)
+        composeRule.onNodeWithText("Recently played").assertIsDisplayed()
+    }
+
+    @Test
     fun viewAndSortActionsRemainExplicitCallbacks() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)

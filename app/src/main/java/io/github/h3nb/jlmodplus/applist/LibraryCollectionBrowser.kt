@@ -69,7 +69,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
@@ -103,6 +102,7 @@ internal fun LibraryCollectionBrowser(
     collection: LibraryCollectionUiItem,
     members: List<LibraryAppUiItem>,
     allApps: List<LibraryAppUiItem>,
+    allAppsPrepared: Boolean = true,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
     navigationState: LibraryNavigationState = LibraryNavigationState(),
@@ -125,15 +125,14 @@ internal fun LibraryCollectionBrowser(
         enabled = interactionActive && (manageApps || selectionState.isActive || handleSystemBack),
     ) {
         when {
-            manageApps -> {
-                manageApps = false
-                onNavigationVisibilityChanged(true)
-            }
+            manageApps -> manageApps = false
             selectionState.isActive -> onSelectionStateChanged(selectionState.clear())
             else -> onBack()
         }
     }
-    LaunchedEffect(manageApps) {
+    LaunchedEffect(manageApps, interactionActive, allAppsPrepared) {
+        if (!interactionActive) return@LaunchedEffect
+        if (manageApps && !allAppsPrepared) onPrepareAppPicker()
         onNavigationVisibilityChanged(!manageApps)
     }
 
@@ -340,6 +339,7 @@ internal fun LibraryCollectionBrowser(
                     selectionState.selectVisible(
                         libraryState.generation,
                         projected.map(LibraryAppUiItem::databaseId),
+                        collectionId = collection.id,
                     ),
                 )
             },
@@ -348,6 +348,7 @@ internal fun LibraryCollectionBrowser(
                     selectionState.unselectVisible(
                         libraryState.generation,
                         projected.map(LibraryAppUiItem::databaseId),
+                        collectionId = collection.id,
                     ),
                 )
             },
@@ -407,7 +408,11 @@ internal fun LibraryCollectionBrowser(
                             selected = app.databaseId in selectionState.selectedAppIds,
                             onToggleSelection = {
                                 onSelectionStateChanged(
-                                    selectionState.toggle(libraryState.generation, it.databaseId),
+                                    selectionState.toggle(
+                                        libraryState.generation,
+                                        it.databaseId,
+                                        collectionId = collection.id,
+                                    ),
                                 )
                             },
                         )
@@ -445,7 +450,11 @@ internal fun LibraryCollectionBrowser(
                             selected = app.databaseId in selectionState.selectedAppIds,
                             onToggleSelection = {
                                 onSelectionStateChanged(
-                                    selectionState.toggle(libraryState.generation, it.databaseId),
+                                    selectionState.toggle(
+                                        libraryState.generation,
+                                        it.databaseId,
+                                        collectionId = collection.id,
+                                    ),
                                 )
                             },
                         )
@@ -702,9 +711,7 @@ private fun LibraryCollectionListItem(
                 Checkbox(
                     checked = selected,
                     onCheckedChange = null,
-                    modifier = Modifier
-                        .testTag("collection-selection-checkbox-${app.databaseId}")
-                        .clearAndSetSemantics { },
+                    modifier = Modifier.clearAndSetSemantics { },
                 )
             }
         }
@@ -782,7 +789,6 @@ private fun LibraryCollectionGridItem(
                     onCheckedChange = null,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .testTag("collection-selection-checkbox-${app.databaseId}")
                         .clearAndSetSemantics { },
                 )
             }
@@ -822,10 +828,6 @@ internal fun LibraryCollectionAppPicker(
     onSetMembership: (Int, Boolean) -> Unit,
 ) {
     var query by rememberSaveable(collection.id, "picker") { mutableStateOf("") }
-    var selectedIds by remember(collection.id) { mutableStateOf(memberIds.toSet()) }
-    LaunchedEffect(memberIds) {
-        selectedIds = memberIds.toSet()
-    }
     val visibleApps by produceState(
         initialValue = allApps,
         allApps,
@@ -886,17 +888,14 @@ internal fun LibraryCollectionAppPicker(
         )
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(visibleApps, key = { it.id }) { app ->
-                val checked = app.id in selectedIds
+                val checked = app.id in memberIds
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .toggleable(
                             value = checked,
                             role = Role.Checkbox,
-                            onValueChange = { next ->
-                                selectedIds = if (next) selectedIds + app.id else selectedIds - app.id
-                                onSetMembership(app.id, next)
-                            },
+                            onValueChange = { next -> onSetMembership(app.id, next) },
                         )
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
