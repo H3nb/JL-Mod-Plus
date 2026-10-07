@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Locale;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Display;
@@ -27,6 +28,9 @@ import javax.microedition.lcdui.TextField;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.shell.MidletSystem;
+import javax.microedition.util.ContextHolder;
+
+import androidx.core.os.ConfigurationCompat;
 
 /** Debug-only display fixture used by Android platform compatibility validation. */
 public final class PlatformCompatMidlet extends MIDlet {
@@ -46,6 +50,10 @@ public final class PlatformCompatMidlet extends MIDlet {
 	@Override
 	public void startApp() {
 		markerPath = getAppProperty(MARKER_PROPERTY);
+		Locale hostLocale = ConfigurationCompat.getLocales(
+				ContextHolder.getActivity().getResources().getConfiguration()).get(0);
+		writeMarker(markerPath, "host-locale="
+				+ (hostLocale == null ? "" : hostLocale.getLanguage()) + "\n");
 		writeMarker(markerPath, "locale=" + MidletSystem.getProperty("microedition.locale") + "\n");
 		display = Display.getDisplay(this);
 		transitionMode = DISPLAY_TRANSITION.equals(getAppProperty(DISPLAY_PROPERTY));

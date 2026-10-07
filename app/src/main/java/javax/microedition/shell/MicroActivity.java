@@ -56,6 +56,7 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.graphics.Insets;
+import androidx.core.os.ConfigurationCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -68,6 +69,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Display;
@@ -282,7 +284,13 @@ public class MicroActivity extends AppCompatActivity {
 			}
 			expectedAppId = prepared.appId();
 			intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
-			microLoader = new MicroLoader(appPath, expectedAppId, prepared.builtInThemeLinked());
+			Locale runtimeLocale = ConfigurationCompat.getLocales(
+					getResources().getConfiguration()).get(0);
+			if (runtimeLocale == null) {
+				runtimeLocale = Locale.getDefault();
+			}
+			microLoader = new MicroLoader(
+					appPath, expectedAppId, prepared.builtInThemeLinked(), runtimeLocale);
 			if (!microLoader.init()) {
 				finish();
 				return;

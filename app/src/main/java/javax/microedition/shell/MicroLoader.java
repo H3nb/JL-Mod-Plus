@@ -29,9 +29,7 @@ import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.KeyEvent;
 
-import androidx.core.app.LocaleManagerCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.os.LocaleListCompat;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -103,6 +101,7 @@ public class MicroLoader {
 	private final String appDirName;
 	private final long expectedAppId;
 	private final boolean builtInThemeLinked;
+	private final Locale guestLocale;
 	private String midletName;
 	private String midletVendor;
 	private String midletVersion;
@@ -117,10 +116,11 @@ public class MicroLoader {
 	/** Set only after the MIDlet thread has successfully received the timing session. */
 	private boolean timingSessionTransferred;
 
-	MicroLoader(String appPath, long expectedAppId, boolean builtInThemeLinked) {
+	MicroLoader(String appPath, long expectedAppId, boolean builtInThemeLinked, Locale guestLocale) {
 		this.appDir = new File(appPath);
 		this.expectedAppId = expectedAppId;
 		this.builtInThemeLinked = builtInThemeLinked;
+		this.guestLocale = guestLocale;
 		File converted = appDir.getParentFile();
 		if (converted == null)
 			throw new NullPointerException("Can't access to parent of " + appPath);
@@ -422,7 +422,6 @@ public class MicroLoader {
 	}
 
 	private void setProperties() {
-		final Locale guestLocale = resolveGuestLocale();
 		final String country = guestLocale.getCountry();
 		System.setProperty("microedition.locale", guestLocale.getLanguage()
 				+ (country.length() == 2 ? "-" + country : ""));
@@ -434,17 +433,6 @@ public class MicroLoader {
 		System.setProperty("fileconn.dir.private", dataUri + "/private");
 		System.setProperty("fileconn.dir.music", musicUri);
 		System.setProperty("user.home", primaryStoragePath);
-	}
-
-	private static Locale resolveGuestLocale() {
-		final LocaleListCompat applicationLocales = LocaleManagerCompat.getApplicationLocales(
-				ContextHolder.getAppContext());
-		Locale locale = applicationLocales.get(0);
-		if (locale != null) {
-			return locale;
-		}
-		locale = LocaleManagerCompat.getSystemLocales(ContextHolder.getAppContext()).get(0);
-		return locale != null ? locale : Locale.getDefault();
 	}
 
 	static String fileConnectionDataUri(

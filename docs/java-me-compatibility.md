@@ -19,9 +19,10 @@ An explicitly selected JL-Mod Plus language is exposed to the guest; when the ap
 system language, the current system locale is exposed instead. Profile system properties remain
 the final override, including an explicit `microedition.locale` value.
 
-Resolve this through the Android per-app locale APIs rather than `Locale.getDefault()`, because
-the process default may intentionally represent the system locale even while the app has a
-language override. Preserve the established Java ME property format of language plus an optional
+Resolve this from the runtime Activity's effective Android `Configuration` after AppCompat has
+applied the app language. Do not use `Locale.getDefault()` or locale-storage APIs as the guest
+language source: neither is the presentation configuration that the MIDlet host is actually
+running under. Preserve the established Java ME property format of language plus an optional
 two-letter country subtag.
 
 ## Foreground ownership boundary

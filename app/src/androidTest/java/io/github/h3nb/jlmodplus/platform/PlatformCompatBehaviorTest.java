@@ -124,8 +124,11 @@ public class PlatformCompatBehaviorTest {
 			assertEquals("Application locale must be committed before the MIDlet process starts",
 					"id", LocaleManagerCompat.getApplicationLocales(context).toLanguageTags());
 			launchFixture(context, appDir);
+			awaitMarker(marker, "host-locale=");
 			awaitMarker(marker, "locale=");
-			assertEquals("MIDlet locale must follow the emulator application locale",
+			assertEquals("Runtime Activity configuration must apply the emulator application locale",
+					"host-locale=id", lastMarkerValue(marker, "host-locale="));
+			assertEquals("MIDlet locale must follow the runtime Activity configuration",
 					"locale=id", lastMarkerValue(marker, "locale="));
 		} finally {
 			killFixtureProcess();
