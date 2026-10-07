@@ -70,6 +70,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
@@ -963,6 +964,7 @@ internal fun LibraryCollectionAppPicker(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .testTag("collection-membership-${app.id}")
                         .toggleable(
                             value = checked,
                             enabled = enabled,
