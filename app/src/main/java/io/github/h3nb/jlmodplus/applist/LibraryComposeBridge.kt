@@ -647,11 +647,12 @@ fun LibraryScreen(
                 navigationState.selectedCollectionId == selectionState.collectionId
         LibraryDestination.More -> false
     }
-    val selectionActiveHere = selectionState.isActive && selectionMatchesDestination
     val collectionManageAppsActive =
         destination == LibraryDestination.Collections &&
             selectedCollectionMatchesLibrary &&
             navigationState.collectionManageApps
+    val selectionActiveHere =
+        selectionState.isActive && selectionMatchesDestination && !collectionManageAppsActive
     val currentNavigationState by rememberUpdatedState(navigationState)
     val currentControllerState by rememberUpdatedState(state)
     val currentControllerDestination by rememberUpdatedState(destination)
