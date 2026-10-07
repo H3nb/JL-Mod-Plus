@@ -118,9 +118,12 @@ internal fun LibraryCollectionBrowser(
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
     showBackButton: Boolean = true,
     handleSystemBack: Boolean = true,
+    interactionActive: Boolean = true,
 ) {
     var manageApps by rememberSaveable(collection.id) { mutableStateOf(false) }
-    BackHandler(enabled = manageApps || selectionState.isActive || handleSystemBack) {
+    BackHandler(
+        enabled = interactionActive && (manageApps || selectionState.isActive || handleSystemBack),
+    ) {
         when {
             manageApps -> {
                 manageApps = false
