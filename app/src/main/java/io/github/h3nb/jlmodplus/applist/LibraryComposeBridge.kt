@@ -1270,6 +1270,9 @@ fun LibraryScreen(
     }
 
     appActions?.let { app ->
+        // Capture the collection context before AppActionsDialog dismisses itself. Dialog actions
+        // call onDismiss() before their action callback, and onDismiss clears appActionsCollectionId.
+        val collectionId = appActionsCollectionId
         AppActionsDialog(
             app = app,
             controllerEvents = controllerEvents,
@@ -1293,12 +1296,12 @@ fun LibraryScreen(
                 null
             },
             onRemoveFromCollection = if (
-                state.databaseControlsReady && collectionsHost != null && appActionsCollectionId != null
+                state.databaseControlsReady && collectionsHost != null && collectionId != null
             ) {
                 {
                     collectionsHost.onRemoveAppFromCollection(
                         app.id,
-                        requireNotNull(appActionsCollectionId),
+                        collectionId,
                     )
                 }
             } else {
@@ -1337,7 +1340,6 @@ fun LibraryScreen(
                 null
             },
             onSelect = {
-                val collectionId = appActionsCollectionId
                 if (collectionId == null) {
                     collectionSelectionState = collectionSelectionState.clear()
                     collectionSelectionId = null
