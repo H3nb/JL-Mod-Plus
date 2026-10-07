@@ -6,7 +6,6 @@ import static org.junit.Assert.assertEquals;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Region;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -183,16 +182,8 @@ public class GraphicsTriangleRenderingTest {
 				expected.getBitmap().getPixels(mask, 0, 240, 0, 0, 240, 320);
 				actual.getBitmap().getPixels(pixels, 0, 240, 0, 0, 240, 320);
 				for (int i = 0; i < pixels.length; i++) {
-					int expectedPixel = mask[i] == TERRAIN ? blended : BACKGROUND;
-					if (expectedPixel != pixels[i]) {
-						Path raw = new Path();
-						raw.moveTo(points[order[0] * 2], points[order[0] * 2 + 1]);
-						raw.lineTo(points[order[1] * 2], points[order[1] * 2 + 1]);
-						raw.lineTo(points[order[2] * 2], points[order[2] * 2 + 1]);
-						raw.close();
-						assertEquals("coverage pixel=" + i % 240 + "," + i / 240
-								+ describeRasterPixel(raw, true, i % 240, i / 240), expectedPixel, pixels[i]);
-					}
+					assertEquals("coverage pixel=" + i % 240 + "," + i / 240,
+							mask[i] == TERRAIN ? blended : BACKGROUND, pixels[i]);
 				}
 			}
 		}
@@ -231,6 +222,7 @@ public class GraphicsTriangleRenderingTest {
 		Image image = Image.createImage(240, 320, BACKGROUND);
 		Canvas canvas = new Canvas(image.getBitmap());
 		Paint paint = new Paint();
+		paint.setAntiAlias(false);
 		paint.setColor(TERRAIN);
 		Path path = new Path();
 		path.moveTo(points[order[0] * 2], points[order[0] * 2 + 1]);
@@ -252,41 +244,6 @@ public class GraphicsTriangleRenderingTest {
 			canvas.drawRect(x, y, (float) x + 1, (float) y + 1, paint);
 		}
 		return image;
-	}
-
-	public static String describeRasterPixel(Path raw, boolean midp, int x, int y) {
-		Paint paint = new Paint();
-		paint.setColor(TERRAIN);
-		Image direct = Image.createImage(240, 320, BACKGROUND);
-		new Canvas(direct.getBitmap()).drawPath(raw, paint);
-		Region clip = new Region(0, 0, 240, 320);
-		Region region = new Region();
-		region.setPath(raw, clip);
-		Path boundary = region.getBoundaryPath();
-		Image regionFill = Image.createImage(240, 320, BACKGROUND);
-		new Canvas(regionFill.getBitmap()).drawPath(boundary, paint);
-		Path outline = new Path(raw);
-		if (midp) outline.offset(0.5f, 0.5f);
-		paint.setStyle(Paint.Style.STROKE);
-		paint.setStrokeWidth(1);
-		if (midp) paint.setStrokeJoin(Paint.Join.BEVEL);
-		Image stroke = Image.createImage(240, 320, BACKGROUND);
-		new Canvas(stroke.getBitmap()).drawPath(outline, paint);
-		Path expanded = new Path();
-		paint.getFillPath(outline, expanded);
-		paint.setStyle(Paint.Style.FILL);
-		Image fill = Image.createImage(240, 320, BACKGROUND);
-		new Canvas(fill.getBitmap()).drawPath(expanded, paint);
-		region.setPath(expanded, clip);
-		boundary.reset();
-		region.getBoundaryPath(boundary);
-		Image regionOutline = Image.createImage(240, 320, BACKGROUND);
-		new Canvas(regionOutline.getBitmap()).drawPath(boundary, paint);
-		return " rawFill=" + Integer.toHexString(pixel(direct, x, y))
-				+ " regionFill=" + Integer.toHexString(pixel(regionFill, x, y))
-				+ " directStroke=" + Integer.toHexString(pixel(stroke, x, y))
-				+ " expandedFill=" + Integer.toHexString(pixel(fill, x, y))
-				+ " regionOutline=" + Integer.toHexString(pixel(regionOutline, x, y));
 	}
 
 	private static Image triangle(int[] points, int[] order, int color) {

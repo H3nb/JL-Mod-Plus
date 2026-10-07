@@ -14,7 +14,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.GraphicsTriangleRenderingTest;
 import javax.microedition.lcdui.Image;
 
 @RunWith(AndroidJUnit4.class)
@@ -35,6 +34,7 @@ public class DirectGraphicsRenderingTest {
 			path.lineTo(points[4], points[5]);
 			path.close();
 			Paint paint = new Paint();
+			paint.setAntiAlias(false);
 			paint.setColor(0xFF1111EE);
 			canvas.drawPath(path, paint);
 			paint.setStyle(Paint.Style.STROKE);
@@ -50,12 +50,8 @@ public class DirectGraphicsRenderingTest {
 			reference.getBitmap().getPixels(mask, 0, 240, 0, 0, 240, 320);
 			actual.getBitmap().getPixels(pixels, 0, 240, 0, 0, 240, 320);
 			for (int i = 0; i < pixels.length; i++) {
-				int expected = mask[i] == BACKGROUND ? BACKGROUND : expectedColor;
-				if (expected != pixels[i]) {
-					assertEquals("polygon pixel=" + i % 240 + "," + i / 240
-							+ GraphicsTriangleRenderingTest.describeRasterPixel(path, false, i % 240, i / 240),
-							expected, pixels[i]);
-				}
+				assertEquals("polygon pixel=" + i % 240 + "," + i / 240,
+						mask[i] == BACKGROUND ? BACKGROUND : expectedColor, pixels[i]);
 			}
 		}
 	}
