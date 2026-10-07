@@ -93,11 +93,13 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private data class VersionedRepositoryState(
         val revision: Long,
         val state: LibraryRepository.State,
+        val availableAppIds: Set<Long>,
     )
 
     private data class DisplayInputs(
         val repositoryState: LibraryRepository.State,
         val sourceRevision: Long,
+        val availableAppIds: Set<Long>,
         val filter: String,
         val sortVariant: Int,
         val quickView: LibraryQuickView,
@@ -121,7 +123,14 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private val playStatRefreshMutex = Mutex()
     private val repositoryRevision = AtomicLong()
     private val versionedRepositoryState = repository.state.map { state ->
-        VersionedRepositoryState(repositoryRevision.incrementAndGet(), state)
+        val availableAppIds = (state as? LibraryRepository.State.Ready)?.apps
+            ?.mapTo(LinkedHashSet(state.apps.size)) { it.id }
+            ?: emptySet()
+        VersionedRepositoryState(
+            revision = repositoryRevision.incrementAndGet(),
+            state = state,
+            availableAppIds = availableAppIds,
+        )
     }
 
     private val playStatReadyWorker = scope.launch {
@@ -141,6 +150,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         DisplayInputs(
             repositoryState = repositorySnapshot.state,
             sourceRevision = repositorySnapshot.revision,
+            availableAppIds = repositorySnapshot.availableAppIds,
             filter = activeFilter,
             sortVariant = activeSort,
             quickView = activeQuickView,
@@ -160,15 +170,13 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 repositoryState.message,
             )
             is LibraryRepository.State.Ready -> {
-                val (projected, availableAppIds) = withContext(Dispatchers.Default) {
+                val projected = withContext(Dispatchers.Default) {
                     LibraryListProjection.project(
                         rows = repositoryState.apps,
                         filter = input.filter,
                         sortVariant = input.sortVariant,
                         quickView = input.quickView,
-                    ) to repositoryState.apps.mapTo(
-                        LinkedHashSet(repositoryState.apps.size),
-                    ) { it.id }
+                    )
                 }
                 DisplayState.Ready(
                     generation = repositoryState.generation,
@@ -181,7 +189,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                     bootstrapFailures = repositoryState.bootstrapFailures,
                     legacyImportFailure = repositoryState.legacyImportFailure,
                     reconciliationFailures = repositoryState.reconciliationFailures,
-                    availableAppIds = availableAppIds,
+                    availableAppIds = input.availableAppIds,
                     sourceRevision = input.sourceRevision,
                 )
             }
