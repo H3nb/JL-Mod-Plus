@@ -26,6 +26,8 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.pressBack
@@ -88,6 +90,74 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun collectionSelectionBackExitsSelectionBeforeLeavingCollection() {
+        val host = RecordingCollectionsHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(
+                        state = sampleLibraryState(),
+                        actions = host,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Collections").performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
+        composeRule.onNodeWithText("Select").performClick()
+
+        composeRule.onNodeWithText("1 selected").assertIsDisplayed()
+        composeRule.onNodeWithText("Deselect all").assertIsDisplayed()
+        composeRule.onNodeWithText("Remove from collection").assertIsDisplayed()
+
+        pressBack()
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithText("1 selected").assertCountEquals(0)
+        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+        assertEquals(COLLECTION_ID, host.store.activeCollectionId())
+
+        pressBack()
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
+        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        assertNull(host.store.activeCollectionId())
+    }
+
+    @Test
+    fun collectionSelectionBulkRemoveUsesCurrentCollection() {
+        val host = RecordingCollectionsHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(
+                        state = sampleLibraryState(),
+                        actions = host,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Collections").performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
+        composeRule.onNodeWithText("Select").performClick()
+        composeRule.onNodeWithText("Remove from collection").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(listOf(setOf(SAMPLE_MEMBER.databaseId) to COLLECTION_ID), host.bulkRemovals)
+        composeRule.onAllNodesWithText("1 selected").assertCountEquals(0)
+        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+    }
+
+    @Test
     fun expandedWindowShowsListAndDetailWithoutDetailBack() {
         val host = RecordingCollectionsHost().apply {
             store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
@@ -132,6 +202,7 @@ class LibraryCollectionsNavigationTest {
             publishAllApps(listOf(SAMPLE_MEMBER))
         }
         val openedCollectionIds = mutableListOf<Long>()
+        val bulkRemovals = mutableListOf<Pair<Set<Long>, Long>>()
         var loadMembersOnOpen = true
 
         override fun collectionsStore(): LibraryCollectionsUiStore = store
@@ -152,6 +223,9 @@ class LibraryCollectionsNavigationTest {
         override fun onDismissAddToCollection() = Unit
         override fun onAddAppToCollection(appId: Int, collectionId: Long) = Unit
         override fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long) = Unit
+        override fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long) {
+            bulkRemovals += appIds to collectionId
+        }
         override fun onRemoveAppFromCollection(appId: Int, collectionId: Long) = Unit
         override fun onSearch(query: String) = Unit
         override fun onLayoutChange(layout: LibraryLayout) = Unit

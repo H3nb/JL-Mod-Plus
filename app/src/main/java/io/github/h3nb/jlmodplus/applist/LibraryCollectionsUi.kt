@@ -209,7 +209,7 @@ interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun onDismissAddToCollection()
     fun onAddAppToCollection(appId: Int, collectionId: Long)
     fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long)
-    fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long)
+    fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long) = Unit
     fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
 }
 

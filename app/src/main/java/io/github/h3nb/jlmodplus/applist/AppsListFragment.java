@@ -696,6 +696,21 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onRemoveAppsFromCollection(@NonNull Set<Long> appIds, long collectionId) {
+                libraryViewModel.removeAppsFromCollection(
+                        collectionId,
+                        appIds,
+                        (ignored, error) -> {
+                            if (error != null) {
+                                showError(error);
+                                loadCollectionMembers(collectionId);
+                                return;
+                            }
+                            loadCollectionMembers(collectionId);
+                        });
+            }
+
+            @Override
             public void onAddSelectedToCollection(@NonNull Set<Long> appIds) {
                 collectionsUiStore.showBulkAddTarget(appIds);
             }
