@@ -625,6 +625,31 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onSetCollectionMembership(
+                    int appId,
+                    long collectionId,
+                    boolean included,
+                    @NonNull CollectionMembershipResultCallback callback) {
+                LibraryAppRow app = findRow(appId);
+                if (app == null) {
+                    callback.onResult(false);
+                    return;
+                }
+                libraryViewModel.setCollectionMembership(
+                        collectionId,
+                        app.getId(),
+                        included,
+                        (ignored, error) -> {
+                            if (error != null) {
+                                showError(error);
+                                callback.onResult(false);
+                                return;
+                            }
+                            callback.onResult(true);
+                        });
+            }
+
+            @Override
             public void onReinstall(int appId) {
                 LibraryAppRow app = findRow(appId);
                 File workdir = activeWorkdir;
