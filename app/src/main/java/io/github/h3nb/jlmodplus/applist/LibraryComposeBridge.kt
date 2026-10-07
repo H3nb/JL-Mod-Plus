@@ -641,6 +641,8 @@ fun LibraryScreen(
         LibraryDestination.More -> false
     }
     val selectionActiveHere = selectionState.isActive && selectionMatchesDestination
+    val collectionManageAppsActive =
+        destination == LibraryDestination.Collections && navigationState.collectionManageApps
     val currentNavigationState by rememberUpdatedState(navigationState)
     val currentControllerState by rememberUpdatedState(state)
     val currentControllerDestination by rememberUpdatedState(destination)
@@ -1033,7 +1035,7 @@ fun LibraryScreen(
                     !selectionActiveHere
                 ) {
                     AnimatedVisibility(
-                        visible = showNavigationBar,
+                        visible = showNavigationBar && !collectionManageAppsActive,
                         enter = fadeIn(
                             animationSpec = tween(
                                 durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
