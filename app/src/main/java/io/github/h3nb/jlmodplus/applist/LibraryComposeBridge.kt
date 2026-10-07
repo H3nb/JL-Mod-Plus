@@ -633,20 +633,25 @@ fun LibraryScreen(
         .only(WindowInsetsSides.Bottom)
     val collectionsHost = actions as? LibraryCollectionsHost
     val bulkActions = actions as? LibraryBulkActions
+    val selectedCollectionMatchesLibrary =
+        navigationState.selectedCollectionId != null &&
+            (
+                state.libraryScope.isEmpty() ||
+                    navigationState.selectedCollectionScope == state.libraryScope
+                )
     val selectionMatchesDestination = when (destination) {
         LibraryDestination.Apps -> selectionState.collectionId == null
         LibraryDestination.Collections ->
-            selectionState.collectionId != null &&
-                navigationState.selectedCollectionId == selectionState.collectionId &&
-                (
-                    state.libraryScope.isEmpty() ||
-                        navigationState.selectedCollectionScope == state.libraryScope
-                    )
+            selectedCollectionMatchesLibrary &&
+                selectionState.collectionId != null &&
+                navigationState.selectedCollectionId == selectionState.collectionId
         LibraryDestination.More -> false
     }
     val selectionActiveHere = selectionState.isActive && selectionMatchesDestination
     val collectionManageAppsActive =
-        destination == LibraryDestination.Collections && navigationState.collectionManageApps
+        destination == LibraryDestination.Collections &&
+            selectedCollectionMatchesLibrary &&
+            navigationState.collectionManageApps
     val currentNavigationState by rememberUpdatedState(navigationState)
     val currentControllerState by rememberUpdatedState(state)
     val currentControllerDestination by rememberUpdatedState(destination)
