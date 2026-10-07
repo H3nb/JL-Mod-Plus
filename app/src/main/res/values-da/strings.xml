@@ -913,7 +913,7 @@
     <string name="library_action_about_summary">Oplysninger om version, projekt og vedligeholder.</string>
     <string name="library_action_licenses_summary">Tredjepartsmeddelelser og licensvilkår, der følger med appen.</string>
     <string name="library_action_help_summary">Brugsvejledning og almindelige kontroller.</string>
-    <string name="library_bulk_delete_apps">Slet</string>
+    <string name="library_bulk_delete_apps">Slet apps</string>
     <string name="library_bulk_add_collection">Føj til samling</string>
     <string name="library_bulk_share_apps">Del apps</string>
     <string name="library_bulk_reinstall_apps">Geninstaller</string>
