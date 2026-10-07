@@ -123,6 +123,11 @@ class LibraryViewportNavigationTest {
         composeRule.waitForIdle()
         val appsNavigation = uiString(R.string.library_destination_apps)
         composeRule.onAllNodesWithContentDescription(appsNavigation).assertCountEquals(0)
+        // Hiding the footer expands this viewport and legitimately changes its end clamp.
+        // Establish the final end position before capturing the pager-return contract.
+        activeList(APP_PREFIX).performScrollToNode(hasText(rowTitle(APP_PREFIX, 79)))
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithContentDescription(appsNavigation).assertCountEquals(0)
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79)).assertIsDisplayed()
         val apps = visibleRow(APP_PREFIX)
 
@@ -245,7 +250,8 @@ class LibraryViewportNavigationTest {
             .filter { node ->
                 val top = node.positionInRoot.y
                 val bottom = top + node.size.height
-                node.size.width > 0 && node.size.height > 0 &&
+                node.boundsInRoot.width > 0 && node.boundsInRoot.height > 0 &&
+                    node.size.width > 0 && node.size.height > 0 &&
                     top >= viewport.top && bottom <= viewport.bottom
             }
         val first = checkNotNull(nodes.minByOrNull { it.positionInRoot.y }) {

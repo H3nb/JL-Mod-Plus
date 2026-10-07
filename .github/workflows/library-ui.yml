@@ -56,7 +56,30 @@ jobs:
           arch: x86_64
           # The reversed-drag contract needs a real in-progress pager gesture.
           disable-animations: false
-          script: ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.applist.LibraryViewportNavigationTest,io.github.h3nb.jlmodplus.applist.LibraryIconRefreshTest,io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest,io.github.h3nb.jlmodplus.applist.LibraryComposeTest :app:connectedEmulatorDebugAndroidTest
+          script: ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.applist.LibraryUiContractSuite :app:connectedEmulatorDebugAndroidTest
+
+      - name: Verify every UI contract class executed
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          expected = {
+              f"io.github.h3nb.jlmodplus.applist.{name}"
+              for name in ("LibraryViewportNavigationTest", "LibraryIconRefreshTest",
+                           "LibraryCollectionsNavigationTest", "LibraryComposeTest")
+          }
+          reports = list(Path("app/build/outputs/androidTest-results").rglob("TEST-*.xml"))
+          if not reports:
+              raise SystemExit("No UI contract XML reports were produced")
+          executed = {case.get("classname") for report in reports
+                      for case in ET.parse(report).iter("testcase")
+                      if case.find("skipped") is None}
+          missing = expected - executed
+          if missing:
+              raise SystemExit(f"UI contract classes did not execute: {sorted(missing)}")
+          print(f"Verified all {len(expected)} UI contract classes executed")
+          PY
 
       - name: Upload UI contract reports
         if: always()

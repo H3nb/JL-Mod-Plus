@@ -66,6 +66,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -205,6 +206,22 @@ internal fun LibraryCollectionBrowser(
     }
     val listState = viewportState.listState
     val gridState = viewportState.gridState
+    // TEMPORARY: distinguish native scroll changes from clipped approach-pass semantics in CI.
+    val currentGridActive by rememberUpdatedState(interactionActive)
+    val gridMeasurementLogs = remember(viewportState) { arrayOf("", "") }
+    LaunchedEffect(viewportState, gridState, libraryState.layout) {
+        if (libraryState.layout != LibraryLayout.Grid) return@LaunchedEffect
+        snapshotFlow {
+            val info = gridState.layoutInfo
+            "holder=${System.identityHashCode(viewportState)} state=${System.identityHashCode(gridState)} " +
+                "active=$currentGridActive first=${gridState.firstVisibleItemIndex}:" +
+                "${gridState.firstVisibleItemScrollOffset} viewport=${info.viewportSize} " +
+                "range=${info.viewportStartOffset}:${info.viewportEndOffset} count=${info.totalItemsCount} " +
+                "items=" + info.visibleItemsInfo.joinToString { item ->
+                    "${item.index}/${item.key}@${item.row},${item.column}:${item.offset}:${item.size}"
+                }
+        }.collectLatest { android.util.Log.d("UILibraryGrid", "state $it") }
+    }
     val headerHeightPx = remember { mutableIntStateOf(0) }
     val headerOffsetPx = viewportState.headerOffsetPx
     val density = LocalDensity.current
@@ -358,7 +375,28 @@ internal fun LibraryCollectionBrowser(
         } else if (libraryState.layout == LibraryLayout.Grid) {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 88.dp),
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize()
+                    .layout { measurable, constraints ->
+                        val before = androidx.compose.runtime.snapshots.Snapshot.withoutReadObservation {
+                            "${gridState.firstVisibleItemIndex}:${gridState.firstVisibleItemScrollOffset}"
+                        }
+                        val placeable = measurable.measure(constraints)
+                        val after = androidx.compose.runtime.snapshots.Snapshot.withoutReadObservation {
+                            "${gridState.firstVisibleItemIndex}:${gridState.firstVisibleItemScrollOffset}"
+                        }
+                        val phase = if (isLookingAhead) 1 else 0
+                        val message = "phase=$phase holder=${System.identityHashCode(viewportState)} " +
+                            "state=${System.identityHashCode(gridState)} constraints=$constraints " +
+                            "size=${placeable.width}x${placeable.height} before=$before after=$after"
+                        if (gridMeasurementLogs[phase] != message) {
+                            gridMeasurementLogs[phase] = message
+                            android.util.Log.d("UILibraryGrid", "measure $message")
+                        }
+                        layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
+                    }
+                    .onSizeChanged { size ->
+                        android.util.Log.d("UILibraryGrid", "placed holder=${System.identityHashCode(viewportState)} size=$size")
+                    },
                 state = gridState,
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
