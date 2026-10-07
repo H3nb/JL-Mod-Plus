@@ -33,13 +33,22 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.librarydb.LibraryCollectionRow
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+
+private fun selectionCount(count: Int): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.resources.getQuantityString(
+        R.plurals.library_selection_count,
+        count,
+        count,
+    )
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
@@ -111,7 +120,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
         composeRule.onNodeWithText("Select").performClick()
 
-        composeRule.onNodeWithText("1 selected").assertIsDisplayed()
+        composeRule.onNodeWithText(selectionCount(1)).assertIsDisplayed()
         composeRule.onNodeWithText("Select all").assertIsDisplayed()
         composeRule.onNodeWithTag("collection-selection-checkbox-${SAMPLE_MEMBER.databaseId}")
             .assertIsDisplayed()
@@ -120,7 +129,7 @@ class LibraryCollectionsNavigationTest {
         pressBack()
         composeRule.waitForIdle()
 
-        composeRule.onAllNodesWithText("1 selected").assertCountEquals(0)
+        composeRule.onAllNodesWithText(selectionCount(1)).assertCountEquals(0)
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
         assertEquals(COLLECTION_ID, host.store.activeCollectionId())
 
@@ -150,10 +159,12 @@ class LibraryCollectionsNavigationTest {
 
         composeRule.onNodeWithText("Collections").performClick()
         composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        // Enter selection after CollectionMembersRoute has already rendered. This guards the
+        // cached NavEntry boundary that device testing exposed.
         composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
         composeRule.onNodeWithText("Select").performClick()
 
-        composeRule.onNodeWithText("1 selected").assertIsDisplayed()
+        composeRule.onNodeWithText(selectionCount(1)).assertIsDisplayed()
         composeRule.onNodeWithTag("collection-selection-checkbox-${SAMPLE_MEMBER.databaseId}")
             .assertIsDisplayed()
         composeRule.onNodeWithText("Select all").assertIsDisplayed()
@@ -165,13 +176,13 @@ class LibraryCollectionsNavigationTest {
         composeRule.onAllNodesWithText("Add to collection").assertCountEquals(0)
 
         composeRule.onNodeWithText("Select all").performClick()
-        composeRule.onNodeWithText("2 selected").assertIsDisplayed()
+        composeRule.onNodeWithText(selectionCount(2)).assertIsDisplayed()
         composeRule.onNodeWithText("Deselect all").assertIsDisplayed()
         composeRule.onNodeWithTag("collection-selection-checkbox-${SAMPLE_MEMBER_2.databaseId}")
             .assertIsDisplayed()
 
         composeRule.onNodeWithText("Deselect all").performClick()
-        composeRule.onNodeWithText("0 selected").assertIsDisplayed()
+        composeRule.onNodeWithText(selectionCount(0)).assertIsDisplayed()
         composeRule.onNodeWithText("Select all").assertIsDisplayed()
     }
 
@@ -199,7 +210,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         assertEquals(listOf(setOf(SAMPLE_MEMBER.databaseId) to COLLECTION_ID), host.bulkRemovals)
-        composeRule.onAllNodesWithText("1 selected").assertCountEquals(0)
+        composeRule.onAllNodesWithText(selectionCount(1)).assertCountEquals(0)
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
     }
 
