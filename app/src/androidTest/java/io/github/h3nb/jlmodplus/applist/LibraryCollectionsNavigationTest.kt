@@ -24,13 +24,12 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -534,8 +533,8 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText(COLLECTION_NAME).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
 
-        val target = composeRule.onNode(
-            hasText(SAMPLE_MEMBER_2.title) and isToggleable(),
+        val target = composeRule.onNodeWithTag(
+            "collection-membership-${SAMPLE_MEMBER_2.id}",
         )
         target.performClick()
         composeRule.waitForIdle()
