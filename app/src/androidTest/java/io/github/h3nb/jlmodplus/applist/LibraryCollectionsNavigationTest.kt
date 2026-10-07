@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.applist
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
@@ -97,6 +98,53 @@ class LibraryCollectionsNavigationTest {
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
         assertNull(host.store.activeCollectionId())
+    }
+
+    @Test
+    fun inactiveCollectionPagePreservesSelectedDetailForPagerReturn() {
+        val host = RecordingCollectionsHost().apply {
+            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
+        }
+        val active = mutableStateOf(true)
+        val navigationVisibilityEvents = mutableListOf<Boolean>()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryCollectionsDestination(
+                        host = host,
+                        libraryState = sampleLibraryState(),
+                        scaffoldPadding = PaddingValues(),
+                        navigationState = LibraryNavigationState(
+                            destination = LibraryDestinationKey.Collections,
+                            selectedCollectionId = COLLECTION_ID,
+                        ),
+                        onOpenActions = { _, _ -> },
+                        onNavigationVisibilityChanged = navigationVisibilityEvents::add,
+                        active = active.value,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+        composeRule.runOnIdle {
+            navigationVisibilityEvents.clear()
+            active.value = false
+        }
+        composeRule.waitForIdle()
+
+        // HorizontalPager keeps neighbouring pages composed. Losing active ownership must not
+        // replace the selected Collection with the overview while the page is off-screen.
+        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+        composeRule.runOnIdle {
+            assertEquals(emptyList<Boolean>(), navigationVisibilityEvents)
+            active.value = true
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
     }
 
     @Test
