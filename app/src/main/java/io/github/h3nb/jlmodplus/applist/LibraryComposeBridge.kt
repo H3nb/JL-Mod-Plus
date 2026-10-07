@@ -637,7 +637,11 @@ fun LibraryScreen(
         LibraryDestination.Apps -> selectionState.collectionId == null
         LibraryDestination.Collections ->
             selectionState.collectionId != null &&
-                navigationState.selectedCollectionId == selectionState.collectionId
+                navigationState.selectedCollectionId == selectionState.collectionId &&
+                (
+                    state.libraryScope.isEmpty() ||
+                        navigationState.selectedCollectionScope == state.libraryScope
+                    )
         LibraryDestination.More -> false
     }
     val selectionActiveHere = selectionState.isActive && selectionMatchesDestination
