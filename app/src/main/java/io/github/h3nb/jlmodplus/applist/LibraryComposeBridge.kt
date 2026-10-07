@@ -1162,11 +1162,11 @@ fun LibraryScreen(
                 }
             },
         ) { padding ->
-            // A page's viewport must not be resized by another page's footer during a swipe.
-            // Keep each surface's own chrome padding, even while the shared footer animates.
-            fun viewportPadding(chromeVisible: Boolean): PaddingValues {
+            // Navigation overlays a stable viewport. Keep its trailing content inset even when
+            // hidden: the last row stays reachable on return, without resizing lazy containers.
+            fun viewportPadding(reserveNavigation: Boolean = true): PaddingValues {
                 if (imeHidesLibraryChrome) return padding
-                val bottom = if (chromeVisible && !useNavigationRail) {
+                val bottom = if (reserveNavigation && !useNavigationRail) {
                     if (navigationBarHeightPx > 0) with(density) { navigationBarHeightPx.toDp() }
                     else padding.calculateBottomPadding()
                 } else {
@@ -1198,7 +1198,7 @@ fun LibraryScreen(
                             scaffoldPadding = if (selectionActiveHere && destination == LibraryDestination.Apps) {
                                 padding
                             } else {
-                                viewportPadding(appsViewport.chromeVisible)
+                                viewportPadding()
                             },
                             viewportState = appsViewport,
                             returnAnchor = metadataRestoreRequest?.anchor,
@@ -1252,11 +1252,11 @@ fun LibraryScreen(
                                 host = collectionsHost,
                                 libraryState = state,
                                 scaffoldPadding = padding,
-                                overviewScaffoldPadding = viewportPadding(collectionsViewport.chromeVisible),
+                                overviewScaffoldPadding = viewportPadding(),
                                 collectionScaffoldPadding = if (selectionActiveHere && destination == LibraryDestination.Collections) {
                                     padding
                                 } else {
-                                    viewportPadding(collectionViewport.chromeVisible && !navigationState.collectionManageApps)
+                                    viewportPadding(reserveNavigation = !navigationState.collectionManageApps)
                                 },
                                 navigationState = navigationState,
                                 overviewViewport = collectionsViewport,
@@ -1283,7 +1283,7 @@ fun LibraryScreen(
                             LibraryCollectionsDestination(padding)
                         }
                         LibraryDestination.More -> LibraryMoreDestination(
-                            scaffoldPadding = viewportPadding(true),
+                            scaffoldPadding = viewportPadding(),
                             onImportAppBundle = actions::onImportAppBundle,
                             onAbout = { infoDialog = LibraryInfoDialog.About },
                             onLicenses = { infoDialog = LibraryInfoDialog.Licenses },

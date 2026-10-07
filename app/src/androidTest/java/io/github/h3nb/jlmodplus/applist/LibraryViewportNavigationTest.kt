@@ -132,19 +132,19 @@ class LibraryViewportNavigationTest {
         composeRule.waitForIdle()
         val appsNavigation = uiString(R.string.library_destination_apps)
         composeRule.onAllNodes(navigationMatcher(appsNavigation)).assertCountEquals(0)
-        // Hiding the footer expands this viewport and legitimately changes its end clamp.
-        // Establish the final end position before capturing the pager-return contract.
+        // Finish at the last app with navigation hidden; its trailing inset remains reserved.
         activeList(APP_PREFIX).performScrollToNode(hasText(rowTitle(APP_PREFIX, 79)))
         composeRule.waitForIdle()
         composeRule.onAllNodes(navigationMatcher(appsNavigation)).assertCountEquals(0)
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true).assertIsDisplayed()
+        val hiddenApps = visibleRow(APP_PREFIX)
         swipeToNextPage()
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
         composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
-        // Programmatic scrolling keeps this page's footer visible, unlike the Apps gesture.
+        // Accessibility scrolling also counts as user input. Return once to reveal navigation,
+        // then establish the end-position baseline with the visible footer.
         activeList(FOLDER_PREFIX).performScrollToNode(hasText(rowTitle(FOLDER_PREFIX, 79)))
         composeRule.waitForIdle()
-        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
         val folders = visibleRow(FOLDER_PREFIX)
         swipeToNextPage()
         composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
@@ -153,13 +153,14 @@ class LibraryViewportNavigationTest {
         composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
         swipeToPreviousPage()
 
-        // Returning deliberately reveals navigation. At the end, its inset can clamp the first
-        // row; the final app must remain visible, with no replay of an obsolete hidden-bar anchor.
+        // Returning reveals navigation over the same viewport. The final app remains reachable
+        // above it, without replaying an obsolete hidden-bar anchor.
         composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
         val lastApp = composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true)
         lastApp.assertIsDisplayed()
         val navigationTop = composeRule.onNode(navigationMatcher(appsNavigation)).fetchSemanticsNode().boundsInRoot.top
         assertTrue("Returning navigation covered the final app", lastApp.fetchSemanticsNode().boundsInRoot.bottom <= navigationTop)
+        assertViewport(hiddenApps, APP_PREFIX)
         val apps = visibleRow(APP_PREFIX)
 
         restoration.emulateSavedInstanceStateRestore()

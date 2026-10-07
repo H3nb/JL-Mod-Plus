@@ -14,9 +14,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.collectLatest
+
+private class LibraryScrollIntent {
+    var userInitiated = false
+}
 
 /** One scroll policy for Apps, collection members and the collection overview. */
 @Composable
@@ -36,35 +39,68 @@ internal fun rememberLibraryScrollChrome(
     val hysteresis = remember(viewport, hideDistance, revealDistance) {
         LibraryChromeScrollHysteresis(hideDistance, revealDistance, viewport.chromeVisible)
     }
+    val intent = remember(viewport, layout) { LibraryScrollIntent() }
     // A settled tab return reveals navigation without changing the content or header position.
     LaunchedEffect(viewport.chromeVisible) {
         if (viewport.chromeVisible) hysteresis.reset()
     }
-    LaunchedEffect(viewport, layout) {
+    // Collect only scroll lifecycle/top transitions. This owns settling and cancels its animation
+    // when another drag, search focus, metadata overlay, or inactive page takes over.
+    LaunchedEffect(viewport, layout, enabled) {
+        if (!enabled) intent.userInitiated = false
         snapshotFlow {
             if (layout == LibraryLayout.List) {
-                viewport.listState.firstVisibleItemIndex == 0 &&
-                    viewport.listState.firstVisibleItemScrollOffset == 0
+                (viewport.listState.firstVisibleItemIndex == 0 &&
+                    viewport.listState.firstVisibleItemScrollOffset == 0) to
+                    viewport.listState.isScrollInProgress
             } else {
-                viewport.gridState.firstVisibleItemIndex == 0 &&
-                    viewport.gridState.firstVisibleItemScrollOffset == 0
+                (viewport.gridState.firstVisibleItemIndex == 0 &&
+                    viewport.gridState.firstVisibleItemScrollOffset == 0) to
+                    viewport.gridState.isScrollInProgress
             }
-        }.collectLatest { atTop ->
+        }.collectLatest { (atTop, scrolling) ->
+            if (!scrolling) intent.userInitiated = false
+            if (!enabled) return@collectLatest
             if (atTop) {
                 viewport.headerOffsetPx.floatValue = 0f
                 hysteresis.reset()
                 currentVisibilityChanged(true)
+            } else if (!scrolling) {
+                val height = headerHeightPx.intValue.toFloat()
+                val offset = viewport.headerOffsetPx.floatValue
+                // A partial header is never a resting state. Expand it rather than hiding more
+                // than the content actually scrolled, which would leave an empty header spacer.
+                if (offset < -0.5f && offset > -height + 0.5f) {
+                    currentVisibilityChanged(true)
+                    hysteresis.reset()
+                    animate(offset, 0f, animationSpec = tween(180)) { value, _ ->
+                        viewport.headerOffsetPx.floatValue = value
+                    }
+                }
             }
         }
     }
-    return remember(viewport, layout, hysteresis, minimumRoom) {
+    return remember(viewport, layout, hysteresis, minimumRoom, intent) {
         object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (currentEnabled && source == NestedScrollSource.UserInput && available.y != 0f) {
+                    intent.userInitiated = true
+                }
+                return Offset.Zero
+            }
+
             override fun onPostScroll(
                 consumed: Offset,
                 available: Offset,
                 source: NestedScrollSource,
             ): Offset {
                 if (!currentEnabled) return Offset.Zero
+                if (source == NestedScrollSource.UserInput && consumed.y != 0f) {
+                    intent.userInitiated = true
+                }
+                // SideEffect includes both flings and programmatic/semantics scrolling. Only
+                // continue user input (including accessibility) and its subsequent fling.
+                if (!intent.userInitiated) return Offset.Zero
                 val height = headerHeightPx.intValue.toFloat()
                 if (height <= 0f) return Offset.Zero
                 // Ignore unconsumed forward fling distance: short content must stay expanded.
@@ -91,22 +127,6 @@ internal fun rememberLibraryScrollChrome(
                         currentVisibilityChanged(true)
                 }
                 return Offset.Zero
-            }
-
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                if (!currentEnabled) return Velocity.Zero
-                val height = headerHeightPx.intValue.toFloat()
-                val offset = viewport.headerOffsetPx.floatValue
-                // A partial header is never a resting state. Expand it rather than hiding more
-                // than the content actually scrolled, which would leave an empty header spacer.
-                if (offset < -0.5f && offset > -height + 0.5f) {
-                    currentVisibilityChanged(true)
-                    hysteresis.reset()
-                    animate(offset, 0f, animationSpec = tween(180)) { value, _ ->
-                        viewport.headerOffsetPx.floatValue = value
-                    }
-                }
-                return Velocity.Zero
             }
         }
     }

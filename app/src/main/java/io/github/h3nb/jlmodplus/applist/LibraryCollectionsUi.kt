@@ -529,7 +529,6 @@ private fun LibraryCollectionsOverview(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(scaffoldPadding)
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
             .clipToBounds()
             .nestedScroll(scrollConnection),
@@ -537,6 +536,7 @@ private fun LibraryCollectionsOverview(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             state = listState,
+            contentPadding = scaffoldPadding,
         ) {
             item {
                 if (headerHeightPx.intValue == 0) {

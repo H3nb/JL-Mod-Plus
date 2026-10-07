@@ -274,12 +274,11 @@ internal fun LibraryCollectionBrowser(
             .fillMaxSize()
             .imePadding()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-            .padding(scaffoldPadding)
             .clipToBounds()
             .nestedScroll(scrollConnection),
     ) {
         if (projected == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize().padding(scaffoldPadding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         } else if (libraryState.layout == LibraryLayout.Grid) {
@@ -287,6 +286,7 @@ internal fun LibraryCollectionBrowser(
                 columns = GridCells.Adaptive(minSize = 88.dp),
                 modifier = Modifier.fillMaxSize(),
                 state = gridState,
+                contentPadding = scaffoldPadding,
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     if (headerHeightPx.intValue == 0) {
@@ -332,6 +332,7 @@ internal fun LibraryCollectionBrowser(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 state = listState,
+                contentPadding = scaffoldPadding,
             ) {
                 item {
                     if (headerHeightPx.intValue == 0) {
