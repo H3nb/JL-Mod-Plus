@@ -91,9 +91,8 @@ run_selector_batch() {
   local selector_arg
   local instrumentation_log="ci-artifacts/runtime-smoke/${batch_name}.txt"
 
-  IFS=,
+  local IFS=,
   selector_arg="${batch[*]}"
-  unset IFS
 
   echo "Running ${#batch[@]} Android runtime contracts in batch: $batch_name."
   if ! adb shell am instrument -w -r -e class "$selector_arg" "$runner" > "$instrumentation_log" 2>&1; then

@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 
 import java.util.Locale;
 
-/** Canonical BCP-47 identity for app-language picker values. */
+/** Normalizes app-language picker values through the platform BCP-47 mapping. */
 final class AppLocaleTags {
 	private AppLocaleTags() {
 	}

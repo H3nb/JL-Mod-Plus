@@ -285,10 +285,11 @@ Current implementation evidence:
   is reviewed. UI percentages use the active resource locale rather than a
   hardcoded percent suffix.
 - [SettingsActivity.buildLanguageOptions](../app/src/main/java/io/github/h3nb/jlmodplus/settings/SettingsActivity.java)
-  reads `_generated_res_locale_config`; unavailable/unreadable metadata leaves
-  only the system-language option. Treat this as a current limitation to account
-  for when locale-discovery behavior is in scope, not as a reason to redesign the
-  localization stack during unrelated work.
+  reads `_generated_res_locale_config` and canonicalizes language tags through
+  the platform BCP-47 mapping before using them as picker identity; unavailable/
+  unreadable metadata leaves only the system-language option. Treat this as a
+  current limitation to account for when locale-discovery behavior is in scope,
+  not as a reason to redesign the localization stack during unrelated work.
 - [AndroidManifest.xml](../app/src/main/AndroidManifest.xml) declares `:midlet`
   and `:memory_engine` components alongside default/main-process components.
 
