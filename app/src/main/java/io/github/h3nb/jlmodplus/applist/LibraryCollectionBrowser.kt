@@ -41,6 +41,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -130,25 +131,36 @@ internal fun LibraryCollectionBrowser(
             else -> onBack()
         }
     }
-    LaunchedEffect(manageApps, interactionActive, allAppsPrepared) {
+    LaunchedEffect(manageApps, interactionActive) {
         if (!interactionActive) return@LaunchedEffect
-        if (manageApps && !allAppsPrepared) onPrepareAppPicker()
+        if (manageApps) onPrepareAppPicker()
         onNavigationVisibilityChanged(!manageApps)
     }
 
     if (manageApps) {
-        LibraryCollectionAppPicker(
-            collection = collection,
-            allApps = allApps,
-            memberIds = members.mapTo(LinkedHashSet()) { it.id },
-            sortVariant = libraryState.sortVariant,
-            iconRatio = libraryState.iconRatio,
-            iconShape = libraryState.iconShape,
-            enhancedIcons = libraryState.enhancedIcons,
-            scaffoldPadding = scaffoldPadding,
-            onBack = { manageApps = false },
-            onSetMembership = onSetMembership,
-        )
+        if (!allAppsPrepared) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(scaffoldPadding),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LibraryCollectionAppPicker(
+                collection = collection,
+                allApps = allApps,
+                memberIds = members.mapTo(LinkedHashSet()) { it.id },
+                sortVariant = libraryState.sortVariant,
+                iconRatio = libraryState.iconRatio,
+                iconShape = libraryState.iconShape,
+                enhancedIcons = libraryState.enhancedIcons,
+                scaffoldPadding = scaffoldPadding,
+                onBack = { manageApps = false },
+                onSetMembership = onSetMembership,
+            )
+        }
         return
     }
 
@@ -355,10 +367,7 @@ internal fun LibraryCollectionBrowser(
             onQueryChange = { query = it },
             onSortVisibilityChanged = { sortVisible = it },
             onSort = onSort,
-            onManageApps = {
-                onPrepareAppPicker()
-                manageApps = true
-            },
+            onManageApps = { manageApps = true },
             interactive = interactive,
             showBackButton = showBackButton,
         )
