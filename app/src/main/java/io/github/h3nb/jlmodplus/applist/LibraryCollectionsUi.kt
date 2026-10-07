@@ -159,8 +159,6 @@ class LibraryCollectionsUiStore {
     fun containsCollection(collectionId: Long): Boolean =
         mutableState.value.collections.any { it.id == collectionId }
 
-    fun hasAllAppsSnapshot(): Boolean = mutableState.value.allAppsPrepared
-
     fun dismissMembers() {
         mutableState.value = mutableState.value.copy(
             members = null,
@@ -201,6 +199,10 @@ interface LibraryBulkActions {
     fun onExportSelectedBundle(appIds: Set<Long>) = Unit
 }
 
+fun interface CollectionMembershipResultCallback {
+    fun onResult(success: Boolean)
+}
+
 /** Extra capabilities implemented only by the production Library host. */
 interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun collectionsStore(): LibraryCollectionsUiStore
@@ -213,6 +215,12 @@ interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun onRequestAddToCollection(appId: Int)
     fun onDismissAddToCollection()
     fun onAddAppToCollection(appId: Int, collectionId: Long)
+    fun onSetCollectionMembership(
+        appId: Int,
+        collectionId: Long,
+        included: Boolean,
+        callback: CollectionMembershipResultCallback,
+    )
     fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long)
     fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long)
     fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
@@ -285,6 +293,7 @@ internal fun LibraryCollectionsDestination(
                     navigationState.copy(
                         selectedCollectionId = null,
                         selectedCollectionScope = null,
+                        collectionManageApps = false,
                     ),
                 )
                 host.onDismissCollectionMembers()
@@ -297,6 +306,7 @@ internal fun LibraryCollectionsDestination(
                     navigationState.copy(
                         selectedCollectionId = null,
                         selectedCollectionScope = null,
+                        collectionManageApps = false,
                     ),
                 )
                 host.onDismissCollectionMembers()
@@ -325,6 +335,7 @@ internal fun LibraryCollectionsDestination(
             navigationState.copy(
                 selectedCollectionId = null,
                 selectedCollectionScope = null,
+                collectionManageApps = false,
             ),
         )
         host.onDismissCollectionMembers()
@@ -384,6 +395,7 @@ internal fun LibraryCollectionsDestination(
                                 selectedCollectionId = collectionId,
                                 selectedCollectionScope =
                                     libraryState.libraryScope.takeIf(String::isNotEmpty),
+                                collectionManageApps = false,
                             ),
                         )
                     },
@@ -422,12 +434,19 @@ internal fun LibraryCollectionsDestination(
                                 onOpenActions = { app -> onOpenActions(app, collection.id) },
                                 selectionState = selectionState,
                                 onSelectionStateChanged = onSelectionStateChanged,
-                                onSetMembership = { appId, included ->
-                                    if (included) {
-                                        host.onAddAppToCollection(appId, collection.id)
-                                    } else {
-                                        host.onRemoveAppFromCollection(appId, collection.id)
-                                    }
+                                manageApps = navigationState.collectionManageApps,
+                                onManageAppsChanged = { visible ->
+                                    onNavigationStateChanged(
+                                        navigationState.copy(collectionManageApps = visible),
+                                    )
+                                },
+                                onSetMembership = { appId, included, callback ->
+                                    host.onSetCollectionMembership(
+                                        appId,
+                                        collection.id,
+                                        included,
+                                        callback,
+                                    )
                                 },
                                 onPrepareAppPicker = host::onPrepareCollectionAppPicker,
                                 onSort = host::onSort,
