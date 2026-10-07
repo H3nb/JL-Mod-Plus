@@ -479,7 +479,9 @@ class LibraryCollectionsNavigationTest {
         )
         target.assertIsOn().assertIsNotEnabled()
 
-        host.completeMembership(success = false)
+        composeRule.runOnIdle {
+            host.completeMembership(success = false)
+        }
         composeRule.waitForIdle()
 
         target.assertIsEnabled()
