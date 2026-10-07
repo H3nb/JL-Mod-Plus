@@ -18,8 +18,10 @@ public final class MidletSystem {
 
     static void setProperty(String key, String value) {
         if (value == null) {
+            System.clearProperty(key);
             PROPERTY.remove(key);
         } else {
+            System.setProperty(key, value);
             PROPERTY.put(key, value);
         }
     }

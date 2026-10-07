@@ -422,24 +422,15 @@ public class MicroLoader {
 	}
 
 	private void setProperties() {
-		setGuestSystemProperty("microedition.locale", guestLocale);
+		MidletSystem.setProperty("microedition.locale", guestLocale);
 		final String primaryStoragePath = Environment.getExternalStorageDirectory().getPath();
 		String dataUri = fileConnectionDataUri(workDir, appDirName, primaryStoragePath);
 		String musicUri = "file:///c:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
 				.getPath().substring(primaryStoragePath.length());
-		setGuestSystemProperty("fileconn.dir.cache", dataUri + "/cache");
-		setGuestSystemProperty("fileconn.dir.private", dataUri + "/private");
-		setGuestSystemProperty("fileconn.dir.music", musicUri);
-		setGuestSystemProperty("user.home", primaryStoragePath);
-	}
-
-	static void setGuestSystemProperty(String key, String value) {
-		if (value == null) {
-			System.clearProperty(key);
-		} else {
-			System.setProperty(key, value);
-		}
-		MidletSystem.setProperty(key, value);
+		MidletSystem.setProperty("fileconn.dir.cache", dataUri + "/cache");
+		MidletSystem.setProperty("fileconn.dir.private", dataUri + "/private");
+		MidletSystem.setProperty("fileconn.dir.music", musicUri);
+		MidletSystem.setProperty("user.home", primaryStoragePath);
 	}
 
 	static String fileConnectionDataUri(
@@ -472,13 +463,13 @@ public class MicroLoader {
 			for (String line : propLines) {
 				String[] prop = line.split(": *", 2);
 				if (prop.length == 2) {
-					setGuestSystemProperty(prop[0], prop[1]);
+					MidletSystem.setProperty(prop[0], prop[1]);
 				}
 			}
 			try {
 				Charset.forName(System.getProperty("microedition.encoding"));
 			} catch (Exception e) {
-				setGuestSystemProperty("microedition.encoding", "ISO-8859-1");
+				MidletSystem.setProperty("microedition.encoding", "ISO-8859-1");
 			}
 
 			Displayable.setVirtualSize(params.screenWidth, params.screenHeight);

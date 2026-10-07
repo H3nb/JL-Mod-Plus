@@ -31,10 +31,10 @@ longer maps to an ISO3 code. Do not invent a Java ME locale for a host language 
 represented by the language contract; `microedition.locale` may be absent.
 
 Do not derive guest locale identity from the MIDlet JAR, generated Android locale metadata, or
-`Locale.getDefault()`. Emulator-owned guest properties must update both the host system-property
-backing store and the transformed MIDlet property delegate so stale process state cannot override
-the current device locale. Profile system properties are applied afterward and remain the final
-authority, including an explicit `microedition.locale` override.
+`Locale.getDefault()`. `MidletSystem` owns emulator-visible property publication and updates
+both the host system-property backing store and the transformed MIDlet property delegate so stale
+process state cannot override the current device locale. Profile system properties are applied
+afterward and remain the final authority, including an explicit `microedition.locale` override.
 
 ## Foreground ownership boundary
 

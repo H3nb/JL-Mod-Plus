@@ -28,7 +28,7 @@ public final class MidletLocaleProbeActivity extends Activity {
         Locale hostLocale = ConfigurationCompat.getLocales(
                 getResources().getConfiguration()).get(0);
         String guestLocale = MidletLocaleResolver.resolve(this);
-        MicroLoader.setGuestSystemProperty("microedition.locale", guestLocale);
+        MidletSystem.setProperty("microedition.locale", guestLocale);
         String systemProperty = System.getProperty("microedition.locale");
         String midletProperty = MidletSystem.getProperty("microedition.locale");
         try (FileOutputStream output = new FileOutputStream(new File(markerPath), false)) {
