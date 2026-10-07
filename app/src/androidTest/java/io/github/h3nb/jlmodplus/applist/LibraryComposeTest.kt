@@ -319,7 +319,7 @@ class LibraryComposeTest {
         assertEquals("Visible app moved after a non-navigation update", before.second, after.second, 1f)
     }
 
-    @Test
+    @Test(timeout = 60_000)
     fun controllerNavigationStillScrollsFocusedAppIntoView() {
         val actions = RecordingLibraryActions()
         val controllerEvents = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 32)
@@ -348,15 +348,21 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
 
+        android.util.Log.i("UILibraryController", "initial layout ready")
         appViewport().performScrollToNode(hasText("Demo MIDlet 20"))
+        android.util.Log.i("UILibraryController", "away from focus")
         appViewport().performTouchInput {
             swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.5f), 300)
         }
+        android.util.Log.i("UILibraryController", "touch released")
         controllerEvents.tryEmit(LibraryControllerEvent(1L, LibraryControllerCommand.MoveUp))
+        android.util.Log.i("UILibraryController", "MoveUp emitted")
         composeRule.waitForIdle()
+        android.util.Log.i("UILibraryController", "MoveUp settled")
         composeRule.onNodeWithText("Demo MIDlet 0").assertIsDisplayed()
         // Start expanded to verify focus is below the opaque header, not merely inside the window.
         appViewport().performScrollToIndex(0)
+        android.util.Log.i("UILibraryController", "top requested")
         composeRule.waitForIdle()
         repeat(12) { index ->
             controllerEvents.tryEmit(
@@ -366,6 +372,7 @@ class LibraryComposeTest {
                 ),
             )
             composeRule.waitForIdle()
+            android.util.Log.i("UILibraryController", "MoveDown ${index + 1} settled")
         }
 
         composeRule.onNodeWithText("Demo MIDlet 12").assertIsDisplayed()
