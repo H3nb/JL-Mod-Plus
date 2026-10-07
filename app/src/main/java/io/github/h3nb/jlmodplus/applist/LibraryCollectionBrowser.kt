@@ -667,7 +667,7 @@ private fun LibraryCollectionListItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 6.dp),
+                .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             LibraryIconSlot(
@@ -682,8 +682,7 @@ private fun LibraryCollectionListItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = app.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -711,10 +710,6 @@ private fun LibraryCollectionListItem(
                 LibraryDescription(app.description, app.databaseId)
             }
         }
-        HorizontalDivider(
-            modifier = Modifier.padding(start = 80.dp, end = 16.dp),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
-        )
     }
 }
 
