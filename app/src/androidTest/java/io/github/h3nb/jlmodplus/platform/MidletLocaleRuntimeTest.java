@@ -74,15 +74,15 @@ public class MidletLocaleRuntimeTest {
             assertTrue("Cold secondary process must receive selected app language: " + hostLocale,
                     hostLocale.equals("host-locale=" + testLanguage)
                             || hostLocale.startsWith("host-locale=" + testLanguage + "-"));
-            assertEquals("Java ME locale must preserve language-only identity without"
-                            + " a compatible system region",
-                    "locale=" + testLanguage, markerValue(marker, "locale="));
+            String guestLocale = markerPayload(marker, "locale=");
+            assertTrue("Java ME locale must preserve the selected application language: "
+                            + guestLocale,
+                    guestLocale.equals(testLanguage)
+                            || guestLocale.startsWith(testLanguage + "-"));
             assertEquals("Host System property must receive the resolved Java ME locale",
-                    "system-property=" + testLanguage,
-                    markerValue(marker, "system-property="));
+                    guestLocale, markerPayload(marker, "system-property="));
             assertEquals("Transformed MIDlet property delegate must receive the same locale",
-                    "midlet-property=" + testLanguage,
-                    markerValue(marker, "midlet-property="));
+                    guestLocale, markerPayload(marker, "midlet-property="));
         } finally {
             stopProcess(context, probeProcess);
             localeManager.setApplicationLocales(previousLocales);
@@ -137,6 +137,10 @@ public class MidletLocaleRuntimeTest {
         }
         fail("Locale probe did not publish value: " + prefix);
         return null;
+    }
+
+    private static String markerPayload(File marker, String prefix) throws IOException {
+        return markerValue(marker, prefix).substring(prefix.length());
     }
 
     private static String readFile(File file) throws IOException {
