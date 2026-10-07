@@ -51,7 +51,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -203,7 +202,7 @@ internal fun LibraryCollectionBrowser(
     }
     val listState = viewportState.listState
     val gridState = viewportState.gridState
-    val headerHeightPx = remember { mutableIntStateOf(0) }
+    val headerHeightPx = viewportState.headerHeightPx
     val headerOffsetPx = viewportState.headerOffsetPx
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }

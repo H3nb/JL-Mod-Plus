@@ -1871,7 +1871,7 @@ internal fun LibraryAppsDestination(
             activeNavigationVisibilityChanged(visible)
         },
     )
-    val headerHidden by remember { derivedStateOf {
+    val headerHidden by remember(headerHeightPx, headerOffsetPx) { derivedStateOf {
         headerHeightPx.intValue > 0 && headerOffsetPx.floatValue <= -headerHeightPx.intValue + 0.5f
     } }
     Box(

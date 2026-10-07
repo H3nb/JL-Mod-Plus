@@ -264,6 +264,8 @@ class LibraryViewportNavigationTest {
         composeRule.runOnIdle { state.value = state.value.copy(libraryScope = "/test/library-b") }
         composeRule.waitForIdle()
         assertEquals(rowTitle(APP_PREFIX, 0), visibleRow(APP_PREFIX).title)
+        composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
     }
 
     private fun scrollAwayFromTop(prefix: String) {

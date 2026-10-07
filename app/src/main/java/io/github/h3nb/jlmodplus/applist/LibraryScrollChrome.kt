@@ -49,7 +49,7 @@ internal fun rememberLibraryScrollChrome(
     LaunchedEffect(viewport, layout, enabled) {
         if (!enabled) intent.userInitiated = false
         snapshotFlow {
-            if (layout == LibraryLayout.List) {
+            val (atTop, scrolling) = if (layout == LibraryLayout.List) {
                 (viewport.listState.firstVisibleItemIndex == 0 &&
                     viewport.listState.firstVisibleItemScrollOffset == 0) to
                     viewport.listState.isScrollInProgress
@@ -58,7 +58,8 @@ internal fun rememberLibraryScrollChrome(
                     viewport.gridState.firstVisibleItemScrollOffset == 0) to
                     viewport.gridState.isScrollInProgress
             }
-        }.collectLatest { (atTop, scrolling) ->
+            Triple(atTop, scrolling, headerHeightPx.intValue)
+        }.collectLatest { (atTop, scrolling, measuredHeight) ->
             if (!scrolling) intent.userInitiated = false
             if (!enabled) return@collectLatest
             if (atTop) {
@@ -66,7 +67,7 @@ internal fun rememberLibraryScrollChrome(
                 hysteresis.reset()
                 currentVisibilityChanged(true)
             } else if (!scrolling) {
-                val height = headerHeightPx.intValue.toFloat()
+                val height = measuredHeight.toFloat()
                 val offset = viewport.headerOffsetPx.floatValue
                 // A partial header is never a resting state. Expand it rather than hiding more
                 // than the content actually scrolled, which would leave an empty header spacer.
