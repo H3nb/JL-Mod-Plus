@@ -349,7 +349,8 @@ class LibraryComposeTest {
         composeRule.waitForIdle()
 
         android.util.Log.i("UILibraryController", "initial layout ready")
-        appViewport().performScrollToNode(hasText("Demo MIDlet 20"))
+        // The fixture owns these indices; avoid the test helper's repeated text-search scrolls.
+        appViewport().performScrollToIndex(21)
         android.util.Log.i("UILibraryController", "away from focus")
         appViewport().performTouchInput {
             swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.5f), 300)
