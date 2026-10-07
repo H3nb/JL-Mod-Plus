@@ -31,6 +31,8 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.MutatePriority
+import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -178,6 +180,9 @@ import androidx.core.graphics.get
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.Flow
@@ -774,6 +779,12 @@ fun LibraryScreen(
         )
         controllerFocusedAppIndex = nextIndex
         controllerFocusedAppId = apps[nextIndex].databaseId
+        // A controller command takes over from the preceding touch gesture or fling.
+        if (currentState.layout == LibraryLayout.List) {
+            appsListState.stopScroll(MutatePriority.UserInput)
+        } else {
+            appsGridState.stopScroll(MutatePriority.UserInput)
+        }
         val headerHeight = appsViewport.headerHeightPx.intValue
         // Partial headers settle expanded. Reserve that final height so focus stays unobscured.
         val focusOffset = if (appsViewport.headerOffsetPx.floatValue <= -headerHeight + 0.5f) {
@@ -887,66 +898,72 @@ fun LibraryScreen(
             if (currentControllerOtherModalVisible && event.command != LibraryControllerCommand.Back) {
                 return@collect
             }
-            when (event.command) {
-                LibraryControllerCommand.MoveUp,
-                LibraryControllerCommand.MoveDown,
-                LibraryControllerCommand.MoveLeft,
-                LibraryControllerCommand.MoveRight,
-                -> moveControllerFocus(event.command)
-                LibraryControllerCommand.Activate -> {
-                    val currentState = currentControllerState
-                    if (currentControllerDestination != LibraryDestination.Apps ||
-                        currentState.apps.isEmpty()
-                    ) return@collect
-                    val focus = reconcileLibraryControllerFocus(
-                        currentState.apps,
-                        controllerFocusedAppId,
-                        controllerFocusedAppIndex,
-                    )
-                    controllerFocusedAppIndex = focus.index
-                    controllerFocusedAppId = focus.databaseId
-                    val app = currentState.apps[focus.index]
-                    if (currentControllerSelectionActive) {
-                        selectionState = selectionState.toggle(currentState.generation, app.databaseId)
-                    } else {
-                        actions.onOpenApp(app.id)
+            try {
+                when (event.command) {
+                    LibraryControllerCommand.MoveUp,
+                    LibraryControllerCommand.MoveDown,
+                    LibraryControllerCommand.MoveLeft,
+                    LibraryControllerCommand.MoveRight,
+                    -> moveControllerFocus(event.command)
+                    LibraryControllerCommand.Activate -> {
+                        val currentState = currentControllerState
+                        if (currentControllerDestination != LibraryDestination.Apps ||
+                            currentState.apps.isEmpty()
+                        ) return@collect
+                        val focus = reconcileLibraryControllerFocus(
+                            currentState.apps,
+                            controllerFocusedAppId,
+                            controllerFocusedAppIndex,
+                        )
+                        controllerFocusedAppIndex = focus.index
+                        controllerFocusedAppId = focus.databaseId
+                        val app = currentState.apps[focus.index]
+                        if (currentControllerSelectionActive) {
+                            selectionState = selectionState.toggle(currentState.generation, app.databaseId)
+                        } else {
+                            actions.onOpenApp(app.id)
+                        }
+                    }
+                    LibraryControllerCommand.OpenActions -> {
+                        val currentState = currentControllerState
+                        if (currentControllerDestination != LibraryDestination.Apps ||
+                            currentState.apps.isEmpty() || currentControllerSelectionActive
+                        ) return@collect
+                        val focus = reconcileLibraryControllerFocus(
+                            currentState.apps,
+                            controllerFocusedAppId,
+                            controllerFocusedAppIndex,
+                        )
+                        controllerFocusedAppIndex = focus.index
+                        controllerFocusedAppId = focus.databaseId
+                        appActions = currentState.apps[focus.index]
+                        appActionsCollectionId = null
+                    }
+                    LibraryControllerCommand.Back -> when {
+                        currentControllerRenameTarget != null -> renameTarget = null
+                        currentControllerMetadataTarget != null -> closeMetadataEditor()
+                        currentControllerDeleteTarget != null -> deleteTarget = null
+                        currentControllerBulkDeleteIds != null -> pendingBulkDeleteIds = null
+                        currentControllerInfoDialog != null -> infoDialog = null
+                        currentControllerSelectionActive -> selectionState = selectionState.clear()
+                        else -> Unit
+                    }
+                    LibraryControllerCommand.NextTab,
+                    LibraryControllerCommand.PreviousTab,
+                    -> {
+                        val delta = if (event.command == LibraryControllerCommand.NextTab) 1 else -1
+                        pagerState.animateScrollToPage(
+                            (pagerState.currentPage + delta).coerceIn(
+                                0,
+                                LibraryDestination.entries.lastIndex,
+                            ),
+                        )
                     }
                 }
-                LibraryControllerCommand.OpenActions -> {
-                    val currentState = currentControllerState
-                    if (currentControllerDestination != LibraryDestination.Apps ||
-                        currentState.apps.isEmpty() || currentControllerSelectionActive
-                    ) return@collect
-                    val focus = reconcileLibraryControllerFocus(
-                        currentState.apps,
-                        controllerFocusedAppId,
-                        controllerFocusedAppIndex,
-                    )
-                    controllerFocusedAppIndex = focus.index
-                    controllerFocusedAppId = focus.databaseId
-                    appActions = currentState.apps[focus.index]
-                    appActionsCollectionId = null
-                }
-                LibraryControllerCommand.Back -> when {
-                    currentControllerRenameTarget != null -> renameTarget = null
-                    currentControllerMetadataTarget != null -> closeMetadataEditor()
-                    currentControllerDeleteTarget != null -> deleteTarget = null
-                    currentControllerBulkDeleteIds != null -> pendingBulkDeleteIds = null
-                    currentControllerInfoDialog != null -> infoDialog = null
-                    currentControllerSelectionActive -> selectionState = selectionState.clear()
-                    else -> Unit
-                }
-                LibraryControllerCommand.NextTab,
-                LibraryControllerCommand.PreviousTab,
-                -> {
-                    val delta = if (event.command == LibraryControllerCommand.NextTab) 1 else -1
-                    pagerState.animateScrollToPage(
-                        (pagerState.currentPage + delta).coerceIn(
-                            0,
-                            LibraryDestination.entries.lastIndex,
-                        ),
-                    )
-                }
+            } catch (interrupted: CancellationException) {
+                // Touch may interrupt a scroll without cancelling the controller subscription.
+                // Preserve cancellation when the screen or workdir itself was disposed.
+                currentCoroutineContext().ensureActive()
             }
         }
     }
