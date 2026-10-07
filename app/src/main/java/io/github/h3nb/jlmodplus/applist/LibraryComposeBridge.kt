@@ -629,6 +629,14 @@ fun LibraryScreen(
         .only(WindowInsetsSides.Bottom)
     val collectionsHost = actions as? LibraryCollectionsHost
     val bulkActions = actions as? LibraryBulkActions
+    val selectionMatchesDestination = when (destination) {
+        LibraryDestination.Apps -> selectionState.collectionId == null
+        LibraryDestination.Collections ->
+            selectionState.collectionId != null &&
+                navigationState.selectedCollectionId == selectionState.collectionId
+        LibraryDestination.More -> false
+    }
+    val selectionActiveHere = selectionState.isActive && selectionMatchesDestination
     val currentNavigationState by rememberUpdatedState(navigationState)
     val currentControllerState by rememberUpdatedState(state)
     val currentControllerDestination by rememberUpdatedState(destination)
@@ -638,7 +646,7 @@ fun LibraryScreen(
     val currentControllerDeleteTarget by rememberUpdatedState(deleteTarget)
     val currentControllerInfoDialog by rememberUpdatedState(infoDialog)
     val currentControllerBulkDeleteIds by rememberUpdatedState(pendingBulkDeleteIds)
-    val currentControllerSelectionActive by rememberUpdatedState(selectionState.isActive)
+    val currentControllerSelectionActive by rememberUpdatedState(selectionActiveHere)
     val currentControllerOtherModalVisible by rememberUpdatedState(
         renameTarget != null || metadataTarget != null || deleteTarget != null ||
             infoDialog != null || pendingBulkDeleteIds != null,
@@ -708,7 +716,7 @@ fun LibraryScreen(
     suspend fun moveControllerFocus(command: LibraryControllerCommand) {
         val currentState = currentControllerState
         if (currentControllerDestination != LibraryDestination.Apps ||
-            currentState.apps.isEmpty() || selectionState.isActive
+            currentState.apps.isEmpty() || currentControllerSelectionActive
         ) return
         val apps = currentState.apps
         val currentFocus = reconcileLibraryControllerFocus(
@@ -745,7 +753,9 @@ fun LibraryScreen(
         }
     }
 
-    BackHandler(enabled = selectionState.isActive && selectionState.collectionId == null) {
+    BackHandler(
+        enabled = destination == LibraryDestination.Apps && selectionActiveHere,
+    ) {
         selectionState = selectionState.clear()
     }
 
@@ -865,7 +875,7 @@ fun LibraryScreen(
                     controllerFocusedAppIndex = focus.index
                     controllerFocusedAppId = focus.databaseId
                     val app = currentState.apps[focus.index]
-                    if (selectionState.isActive) {
+                    if (currentControllerSelectionActive) {
                         selectionState = selectionState.toggle(currentState.generation, app.databaseId)
                     } else {
                         actions.onOpenApp(app.id)
@@ -874,7 +884,7 @@ fun LibraryScreen(
                 LibraryControllerCommand.OpenActions -> {
                     val currentState = currentControllerState
                     if (currentControllerDestination != LibraryDestination.Apps ||
-                        currentState.apps.isEmpty() || selectionState.isActive
+                        currentState.apps.isEmpty() || currentControllerSelectionActive
                     ) return@collect
                     val focus = reconcileLibraryControllerFocus(
                         currentState.apps,
@@ -924,15 +934,9 @@ fun LibraryScreen(
         selectionState.isActive,
         selectionState.collectionId,
     ) {
-        if (!selectionState.isActive) return@LaunchedEffect
-        val collectionId = selectionState.collectionId
-        val scopeMatchesDestination = when (destination) {
-            LibraryDestination.Apps -> collectionId == null
-            LibraryDestination.Collections ->
-                collectionId != null && navigationState.selectedCollectionId == collectionId
-            LibraryDestination.More -> false
+        if (selectionState.isActive && !selectionMatchesDestination) {
+            selectionState = selectionState.clear()
         }
-        if (!scopeMatchesDestination) selectionState = selectionState.clear()
     }
 
     LaunchedEffect(metadataViewportLocked, metadataTarget, isImeVisible, metadataRestoreRequest) {
@@ -950,8 +954,8 @@ fun LibraryScreen(
     val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
     val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
-    LaunchedEffect(libraryOverlayVisible, selectionState.isActive) {
-        onControllerBackAvailabilityChanged(libraryOverlayVisible || selectionState.isActive)
+    LaunchedEffect(libraryOverlayVisible, selectionActiveHere) {
+        onControllerBackAvailabilityChanged(libraryOverlayVisible || selectionActiveHere)
     }
     val libraryContentModifier = if (!libraryOverlayVisible) {
         Modifier
@@ -983,15 +987,8 @@ fun LibraryScreen(
             snackbarHost = noticeHost,
             bottomBar = {
                 val collectionId = selectionState.collectionId
-                val selectionMatchesDestination = when (destination) {
-                    LibraryDestination.Apps -> collectionId == null
-                    LibraryDestination.Collections ->
-                        collectionId != null && navigationState.selectedCollectionId == collectionId
-                    LibraryDestination.More -> false
-                }
                 if (
-                    selectionState.isActive &&
-                    selectionMatchesDestination &&
+                    selectionActiveHere &&
                     !imeHidesLibraryChrome &&
                     bulkActions != null
                 ) {
@@ -1029,7 +1026,7 @@ fun LibraryScreen(
                 } else if (
                     !useNavigationRail &&
                     !imeHidesLibraryChrome &&
-                    !selectionState.isActive
+                    !selectionActiveHere
                 ) {
                     AnimatedVisibility(
                         visible = showNavigationBar,
@@ -1080,7 +1077,11 @@ fun LibraryScreen(
                 }
             },
             floatingActionButton = {
-                if (!imeHidesLibraryChrome && destination == LibraryDestination.Apps && !selectionState.isActive) {
+                if (
+                    !imeHidesLibraryChrome &&
+                    destination == LibraryDestination.Apps &&
+                    !selectionActiveHere
+                ) {
                     AnimatedVisibility(
                         modifier = Modifier.windowInsetsPadding(
                             WindowInsets.safeDrawing
