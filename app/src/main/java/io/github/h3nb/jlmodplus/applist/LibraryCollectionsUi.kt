@@ -209,6 +209,7 @@ interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun onDismissAddToCollection()
     fun onAddAppToCollection(appId: Int, collectionId: Long)
     fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long)
+    fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long)
     fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
 }
 
@@ -225,6 +226,8 @@ internal fun LibraryCollectionsDestination(
     navigationState: LibraryNavigationState = LibraryNavigationState(),
     onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     onOpenActions: (LibraryAppUiItem, Long) -> Unit,
+    selectionState: LibrarySelectionState = LibrarySelectionState(),
+    onSelectionStateChanged: (LibrarySelectionState) -> Unit = {},
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
     active: Boolean = true,
 ) {
@@ -258,6 +261,7 @@ internal fun LibraryCollectionsDestination(
     }
 
     val closeCollection = {
+        onSelectionStateChanged(selectionState.clear())
         onNavigationVisibilityChanged(true)
         onNavigationStateChanged(currentNavigationState.copy(selectedCollectionId = null))
         host.onDismissCollectionMembers()
@@ -333,7 +337,8 @@ internal fun LibraryCollectionsDestination(
                             onBack = closeCollection,
                             onOpenApp = host::onOpenApp,
                             onOpenActions = { app -> onOpenActions(app, collection.id) },
-                            onRemove = { appId -> host.onRemoveAppFromCollection(appId, collection.id) },
+                            selectionState = selectionState,
+                            onSelectionStateChanged = onSelectionStateChanged,
                             onSetMembership = { appId, included ->
                                 if (included) {
                                     host.onAddAppToCollection(appId, collection.id)

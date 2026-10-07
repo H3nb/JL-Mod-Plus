@@ -772,6 +772,19 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         collectionId: Long,
         appIds: Set<Long>,
         callback: MutationCallback<Unit>,
+    ) = setAppsCollectionMembership(collectionId, appIds, true, callback)
+
+    fun removeAppsFromCollection(
+        collectionId: Long,
+        appIds: Set<Long>,
+        callback: MutationCallback<Unit>,
+    ) = setAppsCollectionMembership(collectionId, appIds, false, callback)
+
+    private fun setAppsCollectionMembership(
+        collectionId: Long,
+        appIds: Set<Long>,
+        included: Boolean,
+        callback: MutationCallback<Unit>,
     ) {
         val generation = readyGeneration()
         val plan = try {
@@ -799,7 +812,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 expected = generation,
                 collectionId = collection.id,
                 appIds = plan.apps.map(LibraryAppRow::id),
-                included = true,
+                included = included,
                 addedAt = System.currentTimeMillis(),
             )
         }
