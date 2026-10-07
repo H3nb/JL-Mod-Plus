@@ -12,6 +12,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
+import android.app.LocaleConfig;
 import android.app.LocaleManager;
 import android.content.Context;
 import android.content.Intent;
@@ -57,8 +58,8 @@ public class MidletLocaleRuntimeTest {
         }
 
         LocaleList previousLocales = localeManager.getApplicationLocales();
-        String testLanguage = chooseApplicationLanguageAbsentFromSystemLocales(
-                localeManager.getSystemLocales());
+        String testLanguage = chooseLanguageOnlySupportedLocaleAbsentFromSystemLocales(
+                context, localeManager.getSystemLocales());
         try {
             localeManager.setApplicationLocales(LocaleList.forLanguageTags(testLanguage));
             assertEquals("Framework per-app locale must be committed before cold process start",
@@ -89,20 +90,35 @@ public class MidletLocaleRuntimeTest {
         }
     }
 
-    private static String chooseApplicationLanguageAbsentFromSystemLocales(LocaleList systemLocales) {
-        String[] candidates = {"fr", "de", "es", "it"};
-        for (String candidate : candidates) {
-            boolean present = false;
-            for (int i = 0; i < systemLocales.size(); i++) {
-                Locale locale = systemLocales.get(i);
-                if (candidate.equals(locale.getLanguage())) {
-                    present = true;
-                    break;
-                }
+    private static String chooseLanguageOnlySupportedLocaleAbsentFromSystemLocales(
+            Context context, LocaleList systemLocales) {
+        LocaleConfig localeConfig = new LocaleConfig(context);
+        assertEquals("Generated app LocaleConfig must be readable",
+                LocaleConfig.STATUS_SUCCESS, localeConfig.getStatus());
+        LocaleList supportedLocales = localeConfig.getSupportedLocales();
+        assertTrue("Generated app LocaleConfig must declare supported locales",
+                supportedLocales != null && !supportedLocales.isEmpty());
+
+        for (int i = 0; i < supportedLocales.size(); i++) {
+            Locale candidate = supportedLocales.get(i);
+            String language = candidate.getLanguage();
+            if (language.length() != 2
+                    || !candidate.getCountry().isEmpty()
+                    || !candidate.getScript().isEmpty()
+                    || systemContainsLanguage(systemLocales, language)) {
+                continue;
             }
-            if (!present) return candidate;
+            return candidate.toLanguageTag();
         }
-        throw new AssertionError("Locale probe needs one supported language absent from system locales");
+        throw new AssertionError("Locale probe needs a supported language-only locale"
+                + " absent from the system locale list");
+    }
+
+    private static boolean systemContainsLanguage(LocaleList systemLocales, String language) {
+        for (int i = 0; i < systemLocales.size(); i++) {
+            if (language.equals(systemLocales.get(i).getLanguage())) return true;
+        }
+        return false;
     }
 
     private static void awaitMarker(File marker) throws IOException {

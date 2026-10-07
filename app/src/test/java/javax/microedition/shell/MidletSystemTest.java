@@ -28,5 +28,3 @@ public class MidletSystemTest {
 		MidletSystem.gc((Runtime) null);
 	}
 }
-
-}
