@@ -19,25 +19,25 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
+import android.app.LocaleManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.LocaleList;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.accessibilityservice.AccessibilityService;
 import android.graphics.Rect;
 import android.view.accessibility.AccessibilityNodeInfo;
 
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.app.LocaleManagerCompat;
-import androidx.core.os.LocaleListCompat;
 import androidx.preference.PreferenceManager;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
+import org.junit.Assume;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -51,6 +51,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Locale;
 
 import javax.microedition.shell.MicroActivity;
 
@@ -116,16 +117,18 @@ public class PlatformCompatBehaviorTest {
 
 	@Test
 	public void midletLocaleFollowsDistinctApplicationLanguageAcrossColdStart() throws Exception {
-		LocaleListCompat previousLocales = LocaleManagerCompat.getApplicationLocales(context);
+		Assume.assumeTrue("Per-app locale runtime fixture requires Android 13+",
+				android.os.Build.VERSION.SDK_INT >= 33);
+		LocaleManager localeManager = context.getSystemService(LocaleManager.class);
+		assertTrue("LocaleManager must be available on Android 13+", localeManager != null);
+		LocaleList previousLocales = localeManager.getApplicationLocales();
 		String testLanguage = chooseApplicationLanguageAbsentFromSystemLocales(
-				LocaleManagerCompat.getSystemLocales(context));
+				localeManager.getSystemLocales());
 		try {
-			InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
-					AppCompatDelegate.setApplicationLocales(
-							LocaleListCompat.forLanguageTags(testLanguage)));
+			LocaleList requestedLocales = LocaleList.forLanguageTags(testLanguage);
+			localeManager.setApplicationLocales(requestedLocales);
 			assertEquals("Application locale must be committed before the MIDlet process starts",
-					testLanguage,
-					LocaleManagerCompat.getApplicationLocales(context).toLanguageTags());
+					testLanguage, localeManager.getApplicationLocales().toLanguageTags());
 			launchFixture(context, appDir);
 			awaitMarker(marker, "host-locale=");
 			awaitMarker(marker, "locale=");
@@ -138,19 +141,17 @@ public class PlatformCompatBehaviorTest {
 					"locale=" + testLanguage, lastMarkerValue(marker, "locale="));
 		} finally {
 			killFixtureProcess();
-			InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
-					AppCompatDelegate.setApplicationLocales(previousLocales));
+			localeManager.setApplicationLocales(previousLocales);
 		}
 	}
 
-	private static String chooseApplicationLanguageAbsentFromSystemLocales(
-			LocaleListCompat systemLocales) {
+	private static String chooseApplicationLanguageAbsentFromSystemLocales(LocaleList systemLocales) {
 		String[] candidates = {"fr", "de", "es", "it"};
 		for (String candidate : candidates) {
 			boolean present = false;
 			for (int i = 0; i < systemLocales.size(); i++) {
-				java.util.Locale locale = systemLocales.get(i);
-				if (locale != null && candidate.equals(locale.getLanguage())) {
+				Locale locale = systemLocales.get(i);
+				if (candidate.equals(locale.getLanguage())) {
 					present = true;
 					break;
 				}
