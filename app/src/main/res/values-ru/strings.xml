@@ -1030,7 +1030,7 @@
     <string name="library_action_about_summary">Версия, сведения о проекте и сопровождающем.</string>
     <string name="library_action_licenses_summary">Уведомления сторонних компонентов и условия лицензий, включённые в приложение.</string>
     <string name="library_action_help_summary">Руководство по использованию и основным элементам управления.</string>
-    <string name="library_bulk_delete_apps">Удалить</string>
+    <string name="library_bulk_delete_apps">Удалить приложения</string>
     <string name="library_bulk_share_apps">Поделиться приложениями</string>
     <string name="library_bulk_reinstall_apps">Переустановить</string>
     <string name="library_bulk_export_apps">Экспортировать пакет</string>
