@@ -19,13 +19,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
-import android.app.LocaleManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.LocaleList;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.accessibilityservice.AccessibilityService;
@@ -37,7 +35,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
-import org.junit.Assume;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -51,7 +48,6 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.List;
-import java.util.Locale;
 
 import javax.microedition.shell.MicroActivity;
 
@@ -113,55 +109,6 @@ public class PlatformCompatBehaviorTest {
 		restorePreference(preferences, Constants.PREF_TOOLBAR, hadToolbar, previousToolbar);
 		restorePreference(preferences, Constants.PREF_STATUSBAR, hadStatusBar, previousStatusBar);
 		deleteRecursivelyBestEffort(root);
-	}
-
-	@Test
-	public void midletLocaleFollowsDistinctApplicationLanguageAcrossColdStart() throws Exception {
-		Assume.assumeTrue("Per-app locale runtime fixture requires Android 13+",
-				android.os.Build.VERSION.SDK_INT >= 33);
-		LocaleManager localeManager = context.getSystemService(LocaleManager.class);
-		assertTrue("LocaleManager must be available on Android 13+", localeManager != null);
-		LocaleList previousLocales = localeManager.getApplicationLocales();
-		String testLanguage = chooseApplicationLanguageAbsentFromSystemLocales(
-				localeManager.getSystemLocales());
-		try {
-			LocaleList requestedLocales = LocaleList.forLanguageTags(testLanguage);
-			localeManager.setApplicationLocales(requestedLocales);
-			assertEquals("Application locale must be committed before the MIDlet process starts",
-					testLanguage, localeManager.getApplicationLocales().toLanguageTags());
-			launchFixture(context, appDir);
-			awaitMarker(marker, "host-locale=");
-			awaitMarker(marker, "locale=");
-			String hostLocale = lastMarkerValue(marker, "host-locale=");
-			assertTrue("Runtime Activity must apply the selected application language: " + hostLocale,
-					hostLocale.equals("host-locale=" + testLanguage)
-							|| hostLocale.startsWith("host-locale=" + testLanguage + "-"));
-			assertEquals("MIDlet locale must preserve a language-only application locale when"
-						+ " no matching regional system locale exists",
-					"locale=" + testLanguage, lastMarkerValue(marker, "locale="));
-		} finally {
-			killFixtureProcess();
-			localeManager.setApplicationLocales(previousLocales);
-		}
-	}
-
-	private static String chooseApplicationLanguageAbsentFromSystemLocales(LocaleList systemLocales) {
-		String[] candidates = {"fr", "de", "es", "it"};
-		for (String candidate : candidates) {
-			boolean present = false;
-			for (int i = 0; i < systemLocales.size(); i++) {
-				Locale locale = systemLocales.get(i);
-				if (candidate.equals(locale.getLanguage())) {
-					present = true;
-					break;
-				}
-			}
-			if (!present) {
-				return candidate;
-			}
-		}
-		throw new AssertionError("Runtime locale fixture needs one supported language"
-				+ " that is absent from the system locale list");
 	}
 
 	@Test

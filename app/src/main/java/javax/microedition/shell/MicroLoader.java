@@ -433,7 +433,7 @@ public class MicroLoader {
 		setGuestSystemProperty("user.home", primaryStoragePath);
 	}
 
-	private static void setGuestSystemProperty(String key, String value) {
+	static void setGuestSystemProperty(String key, String value) {
 		if (value == null) {
 			System.clearProperty(key);
 		} else {
