@@ -20,11 +20,10 @@ import android.os.LocaleList;
 import android.os.Process;
 import android.os.SystemClock;
 
-import androidx.annotation.RequiresApi;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,11 +42,8 @@ public class MidletLocaleRuntimeTest {
     private static final String MARKER_NAME = "midlet-locale-runtime.marker";
 
     @Test
-    @RequiresApi(33)
+    @SdkSuppress(minSdkVersion = 33)
     public void coldSecondaryProcessReceivesApplicationLocaleAndJavaMeIdentity() throws Exception {
-        Assume.assumeTrue("Per-app locale runtime fixture requires Android 13+",
-                android.os.Build.VERSION.SDK_INT >= 33);
-
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LocaleManager localeManager = context.getSystemService(LocaleManager.class);
         assertTrue("LocaleManager must be available on Android 13+", localeManager != null);
