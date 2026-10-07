@@ -12,6 +12,8 @@ selectors=(
   'io.github.h3nb.jlmodplus.config.PresetAuthorityIpcRuntimeTest#staleRuntimeIdentityCannotModifyReplacementApp'
   'io.github.h3nb.jlmodplus.memory.MemoryIpcRuntimeTest#missingRuntimeCompletionCarriesStructuredReason'
   'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#compactHeightAppActionsKeepLastActionReachable'
+  'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#selectedCollectionRestoresAndBackReturnsToOverview'
+  'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#expandedWindowShowsListAndDetailWithoutDetailBack'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionSelectionBackExitsSelectionBeforeLeavingCollection'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionSelectionShowsCheckboxesSelectAllAndContextualBulkActions'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionSelectionBulkRemoveUsesCurrentCollection'
