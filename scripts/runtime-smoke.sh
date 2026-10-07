@@ -20,7 +20,7 @@ selectors=(
   'io.github.h3nb.jlmodplus.ui.AdaptiveDialogComposeTest#largeTextFontFormCanReachItsLastFieldAndConfirm'
   'io.github.h3nb.jlmodplus.settings.SettingsComposeTest#compactHeightLanguageDialogUsesAdaptiveScrollableBounds'
   'javax.microedition.shell.RuntimeMenuComposeTest#compactHeightBackMenuKeepsLastActionReachable'
-  'io.github.h3nb.jlmodplus.platform.PlatformCompatBehaviorTest#midletLocaleRecoversMatchingSystemRegionAcrossColdStart'
+  'io.github.h3nb.jlmodplus.platform.PlatformCompatBehaviorTest#midletLocaleFollowsDistinctApplicationLanguageAcrossColdStart'
   'io.github.h3nb.jlmodplus.crashes.CrashRuntimeIsolationTest#repeatedRemoteSessionCrashesKeepMainProcessAndPersistExactReports'
   'io.github.h3nb.jlmodplus.crashes.CrashRuntimeIsolationTest#launchingDifferentMidletReplacesBackgroundRuntimeWithoutCrashOrGuestTeardown'
   'io.github.h3nb.jlmodplus.crashes.CrashRuntimeIsolationTest#hungUserExitReturnsToLibraryAndTerminatesWithoutCrashReport'

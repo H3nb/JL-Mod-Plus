@@ -115,27 +115,52 @@ public class PlatformCompatBehaviorTest {
 	}
 
 	@Test
-	public void midletLocaleRecoversMatchingSystemRegionAcrossColdStart() throws Exception {
+	public void midletLocaleFollowsDistinctApplicationLanguageAcrossColdStart() throws Exception {
 		LocaleListCompat previousLocales = LocaleManagerCompat.getApplicationLocales(context);
+		String testLanguage = chooseApplicationLanguageAbsentFromSystemLocales(
+				LocaleManagerCompat.getSystemLocales(context));
 		try {
 			InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
 					AppCompatDelegate.setApplicationLocales(
-							LocaleListCompat.forLanguageTags("en")));
+							LocaleListCompat.forLanguageTags(testLanguage)));
 			assertEquals("Application locale must be committed before the MIDlet process starts",
-					"en", LocaleManagerCompat.getApplicationLocales(context).toLanguageTags());
+					testLanguage,
+					LocaleManagerCompat.getApplicationLocales(context).toLanguageTags());
 			launchFixture(context, appDir);
 			awaitMarker(marker, "host-locale=");
 			awaitMarker(marker, "locale=");
 			String hostLocale = lastMarkerValue(marker, "host-locale=");
 			assertTrue("Runtime Activity must apply the selected application language: " + hostLocale,
-					hostLocale.equals("host-locale=en") || hostLocale.startsWith("host-locale=en-"));
-			assertEquals("MIDlet locale must recover the matching system region",
-					"locale=en-US", lastMarkerValue(marker, "locale="));
+					hostLocale.equals("host-locale=" + testLanguage)
+							|| hostLocale.startsWith("host-locale=" + testLanguage + "-"));
+			assertEquals("MIDlet locale must preserve a language-only application locale when"
+						+ " no matching regional system locale exists",
+					"locale=" + testLanguage, lastMarkerValue(marker, "locale="));
 		} finally {
 			killFixtureProcess();
 			InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
 					AppCompatDelegate.setApplicationLocales(previousLocales));
 		}
+	}
+
+	private static String chooseApplicationLanguageAbsentFromSystemLocales(
+			LocaleListCompat systemLocales) {
+		String[] candidates = {"fr", "de", "es", "it"};
+		for (String candidate : candidates) {
+			boolean present = false;
+			for (int i = 0; i < systemLocales.size(); i++) {
+				java.util.Locale locale = systemLocales.get(i);
+				if (locale != null && candidate.equals(locale.getLanguage())) {
+					present = true;
+					break;
+				}
+			}
+			if (!present) {
+				return candidate;
+			}
+		}
+		throw new AssertionError("Runtime locale fixture needs one supported language"
+				+ " that is absent from the system locale list");
 	}
 
 	@Test
