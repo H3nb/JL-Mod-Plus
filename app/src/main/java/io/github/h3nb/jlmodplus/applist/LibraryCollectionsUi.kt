@@ -6,6 +6,7 @@
  */
 package io.github.h3nb.jlmodplus.applist
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,9 +44,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
+import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
+import androidx.compose.material3.adaptive.layout.ThreePaneScaffoldValue
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
-import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -79,9 +82,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.navigation3.runtime.NavEntry
-import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -214,9 +214,6 @@ interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
 }
 
-private data object CollectionsOverviewRoute : NavKey
-private data class CollectionMembersRoute(val collectionId: Long) : NavKey
-
 /** READY Collections destination. Collections overview and member browsing share Library scroll chrome. */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -242,20 +239,6 @@ internal fun LibraryCollectionsDestination(
     val selectedCollection = selectedCollectionId?.let { collectionId ->
         state.collections.firstOrNull { it.id == collectionId }
     }
-    // Navigation 3 remembers NavEntry instances for an unchanged back stack. Values captured
-    // directly by an entry's content lambda can therefore become stale while the route stays open.
-    // Bridge every changing input used inside the entries through snapshot State so the cached
-    // entry content observes the latest Collection/UI state without turning UI state into route keys.
-    val currentCollectionsState by rememberUpdatedState(state)
-    val currentLibraryState by rememberUpdatedState(libraryState)
-    val currentScaffoldPadding by rememberUpdatedState(scaffoldPadding)
-    val currentNavigationState by rememberUpdatedState(navigationState)
-    val currentOnNavigationStateChanged by rememberUpdatedState(onNavigationStateChanged)
-    val currentOnOpenActions by rememberUpdatedState(onOpenActions)
-    val currentSelectionState by rememberUpdatedState(selectionState)
-    val currentOnSelectionStateChanged by rememberUpdatedState(onSelectionStateChanged)
-    val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
-
     LaunchedEffect(
         selectionState,
         selectedCollectionId,
@@ -285,7 +268,7 @@ internal fun LibraryCollectionsDestination(
             }
             selectedCollectionId != null && selectedCollection == null -> {
                 onNavigationStateChanged(
-                    currentNavigationState.copy(selectedCollectionId = null),
+                    navigationState.copy(selectedCollectionId = null),
                 )
                 host.onDismissCollectionMembers()
             }
@@ -296,89 +279,94 @@ internal fun LibraryCollectionsDestination(
     }
 
     val closeCollection = {
-        currentOnSelectionStateChanged(currentSelectionState.clear())
-        currentOnNavigationVisibilityChanged(true)
-        currentOnNavigationStateChanged(
-            currentNavigationState.copy(selectedCollectionId = null),
-        )
+        onSelectionStateChanged(selectionState.clear())
+        onNavigationVisibilityChanged(true)
+        onNavigationStateChanged(navigationState.copy(selectedCollectionId = null))
         host.onDismissCollectionMembers()
-    }
-    val backStack = remember(active, selectedCollectionId) {
-        buildList<NavKey> {
-            add(CollectionsOverviewRoute)
-            if (active && selectedCollectionId != null) {
-                add(CollectionMembersRoute(selectedCollectionId))
-            }
-        }
     }
     val adaptiveInfo = currentWindowAdaptiveInfoV2()
     val directive = remember(adaptiveInfo) {
         calculatePaneScaffoldDirective(adaptiveInfo).copy(horizontalPartitionSpacerSize = 0.dp)
     }
-    val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
     val showDetailBack = directive.maxHorizontalPartitions == 1
-    val currentShowDetailBack by rememberUpdatedState(showDetailBack)
+    val displayedCollectionId = selectedCollectionId.takeIf { active }
+    val scaffoldValue = remember(
+        directive.maxHorizontalPartitions,
+        displayedCollectionId != null,
+    ) {
+        val multiPane = directive.maxHorizontalPartitions > 1
+        ThreePaneScaffoldValue(
+            // ListDetailPaneScaffold maps Detail -> primary and List -> secondary.
+            primary = if (multiPane || displayedCollectionId != null) {
+                PaneAdaptedValue.Expanded
+            } else {
+                PaneAdaptedValue.Hidden
+            },
+            secondary = if (multiPane || displayedCollectionId == null) {
+                PaneAdaptedValue.Expanded
+            } else {
+                PaneAdaptedValue.Hidden
+            },
+            tertiary = PaneAdaptedValue.Hidden,
+        )
+    }
 
-    NavDisplay(
-        backStack = backStack,
-        onBack = closeCollection,
+    BackHandler(enabled = active && selectedCollectionId != null) {
+        closeCollection()
+    }
+
+    ListDetailPaneScaffold(
+        directive = directive,
+        value = scaffoldValue,
         modifier = Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
-        sceneStrategies = listOf(listDetailStrategy),
-        entryProvider = { key ->
-            when (key) {
-                CollectionsOverviewRoute -> NavEntry(
-                    key = key,
-                    metadata = ListDetailSceneStrategy.listPane(
-                        detailPlaceholder = {
-                            LibraryCollectionDetailPlaceholder(currentScaffoldPadding)
-                        },
-                    ),
-                ) {
-                    val latestNavigationState = currentNavigationState
-                    LibraryCollectionsOverview(
-                        host = host,
-                        state = currentCollectionsState,
-                        libraryState = currentLibraryState,
-                        scaffoldPadding = currentScaffoldPadding,
-                        navigationState = latestNavigationState,
-                        onNavigationStateChanged = currentOnNavigationStateChanged,
-                        selectedCollectionId = latestNavigationState.selectedCollectionId,
-                        onOpenCollection = { collectionId ->
-                            currentOnNavigationStateChanged(
-                                currentNavigationState.copy(selectedCollectionId = collectionId),
-                            )
-                        },
-                        onNavigationVisibilityChanged = currentOnNavigationVisibilityChanged,
-                    )
-                }
-                is CollectionMembersRoute -> NavEntry(
-                    key = key,
-                    metadata = ListDetailSceneStrategy.detailPane(),
-                ) {
-                    val latestState = currentCollectionsState
-                    val collection = latestState.collections.firstOrNull { it.id == key.collectionId }
-                    val members = latestState.members?.takeIf { it.collectionId == key.collectionId }
+        listPane = {
+            AnimatedPane {
+                LibraryCollectionsOverview(
+                    host = host,
+                    state = state,
+                    libraryState = libraryState,
+                    scaffoldPadding = scaffoldPadding,
+                    navigationState = navigationState,
+                    onNavigationStateChanged = onNavigationStateChanged,
+                    selectedCollectionId = selectedCollectionId,
+                    onOpenCollection = { collectionId ->
+                        onNavigationStateChanged(
+                            navigationState.copy(selectedCollectionId = collectionId),
+                        )
+                    },
+                    onNavigationVisibilityChanged = onNavigationVisibilityChanged,
+                )
+            }
+        },
+        detailPane = {
+            AnimatedPane {
+                val collectionId = displayedCollectionId
+                if (collectionId == null) {
+                    LibraryCollectionDetailPlaceholder(scaffoldPadding)
+                } else {
+                    val collection = state.collections.firstOrNull { it.id == collectionId }
+                    val members = state.members?.takeIf { it.collectionId == collectionId }
                     if (collection == null || members == null) {
                         LibraryCollectionDetailLoading(
                             name = collection?.name,
-                            scaffoldPadding = currentScaffoldPadding,
+                            scaffoldPadding = scaffoldPadding,
                         )
                     } else {
                         LibraryCollectionBrowser(
                             collection = collection,
                             members = members.members,
-                            allApps = latestState.allApps,
-                            libraryState = currentLibraryState,
-                            scaffoldPadding = currentScaffoldPadding,
-                            navigationState = currentNavigationState,
-                            onNavigationStateChanged = currentOnNavigationStateChanged,
+                            allApps = state.allApps,
+                            libraryState = libraryState,
+                            scaffoldPadding = scaffoldPadding,
+                            navigationState = navigationState,
+                            onNavigationStateChanged = onNavigationStateChanged,
                             onBack = closeCollection,
                             onOpenApp = host::onOpenApp,
-                            onOpenActions = { app -> currentOnOpenActions(app, collection.id) },
-                            selectionState = currentSelectionState,
-                            onSelectionStateChanged = currentOnSelectionStateChanged,
+                            onOpenActions = { app -> onOpenActions(app, collection.id) },
+                            selectionState = selectionState,
+                            onSelectionStateChanged = onSelectionStateChanged,
                             onSetMembership = { appId, included ->
                                 if (included) {
                                     host.onAddAppToCollection(appId, collection.id)
@@ -388,13 +376,12 @@ internal fun LibraryCollectionsDestination(
                             },
                             onPrepareAppPicker = host::onPrepareCollectionAppPicker,
                             onSort = host::onSort,
-                            onNavigationVisibilityChanged = currentOnNavigationVisibilityChanged,
-                            showBackButton = currentShowDetailBack,
+                            onNavigationVisibilityChanged = onNavigationVisibilityChanged,
+                            showBackButton = showDetailBack,
                             handleSystemBack = false,
                         )
                     }
                 }
-                else -> error("Unsupported Collections route: $key")
             }
         },
     )

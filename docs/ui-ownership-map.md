@@ -76,13 +76,13 @@ CI debug job compiles/assembles the host and Android-test artifacts and runs
 lint/unit tests; it does not execute connected instrumentation tests. See
 [Build and validation](development.md). When a change affects these platform or runtime behaviors, use a connected emulator or device for the relevant smoke cases across exported JAR/JAD/KJX intents, raw-path/file-picker results, permission recovery, install/overwrite/cancel/error cleanup, guest launch, hardware key/touch dispatch, rotation, and IME behavior. Use the coverage scope in [runtime validation](runtime-ui.md#validation-gates); report unavailable checks as described in [Validation through CI](development.md#validation-through-ci).
 
-Navigation 3 is deliberately limited to the Collections overview-to-members flow,
-where distinct destinations and an adaptive Material 3 list-detail scene provide a
-concrete benefit on wider windows. `LibraryNavigationState.selectedCollectionId`
-remains the single route owner, while the collection members payload stays in the UI
-store. File Picker navigation remains controller-owned because a second back stack
-would only mirror its current directory; the Activity still owns results and root
-exit policy. Adaptive UI is active where it has a concrete presentation benefit:
-Library and Config choose bottom navigation or a rail from the available container
-width, and Library, Collections, and File Picker use adaptive grids. Multiple back
-stacks remain unnecessary until a verified independent-history requirement exists.
+Collections overview-to-members uses Material 3 Adaptive list-detail layout without a
+separate navigation back stack. `LibraryNavigationState.selectedCollectionId` is the
+single route owner; the pane layout is derived from that state and the current window
+directive, while the collection members payload stays in the UI store. File Picker
+navigation likewise remains controller-owned because a second back stack would only
+mirror its current directory; the Activity still owns results and root exit policy.
+Adaptive UI is active where it has a concrete presentation benefit: Library and Config
+choose bottom navigation or a rail from the available container width, and Library,
+Collections, and File Picker use adaptive layouts or grids. Multiple back stacks remain
+unnecessary until a verified independent-history requirement exists.

@@ -22,8 +22,6 @@ asm = "9.10.1"
 compose-bom = "2026.09.00"
 compose-screenshot = "0.0.1-alpha16"
 material3-adaptive = "1.3.0"
-# Navigation 3 1.2.0 requires minSdk 24; JL-Mod Plus still supports API 23.
-navigation3 = "1.1.7"
 google-gson = "2.14.0"
 google-oboe = "1.11.0"
 junit = "4.13.2"
@@ -60,11 +58,9 @@ androidx-compose-ui = { module = "androidx.compose.ui:ui" }
 androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
-androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
-androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
 androidx-material3-adaptive = { module = "androidx.compose.material3.adaptive:adaptive", version.ref = "material3-adaptive" }
+androidx-material3-adaptive-layout = { module = "androidx.compose.material3.adaptive:adaptive-layout", version.ref = "material3-adaptive" }
 androidx-material3-adaptive-navigation = { module = "androidx.compose.material3.adaptive:adaptive-navigation", version.ref = "material3-adaptive" }
-androidx-material3-adaptive-navigation3 = { module = "androidx.compose.material3.adaptive:adaptive-navigation3", version.ref = "material3-adaptive" }
 screenshot-validation-api = { module = "com.android.tools.screenshot:screenshot-validation-api", version.ref = "compose-screenshot" }
 google-gson = { module = "com.google.code.gson:gson", version.ref = "google-gson" }
 google-oboe = { module = "com.google.oboe:oboe", version.ref = "google-oboe" }

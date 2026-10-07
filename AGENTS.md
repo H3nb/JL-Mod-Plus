@@ -44,7 +44,7 @@ Ground the solution in current evidence before committing to a production fix. B
 | --- | --- |
 | Repository history or provenance investigation; source-language choice; performance-sensitive code; licensing; Git, PR, CI, or versioning | Read only the matching section of [Agent development workflow](docs/agent-workflow.md) |
 | Build and test commands | [Build and validation](docs/development.md) |
-| App-owned UI architecture, adaptation, or Navigation 3 | [App-owned UI development](docs/app-ui-development.md) |
+| App-owned UI architecture, adaptation, or navigation | [App-owned UI development](docs/app-ui-development.md) |
 | View/Compose/Java ME ownership boundary or UI migration | [UI ownership](docs/ui-ownership-map.md) |
 | Localization, semantic UI copy quality, translation, or locale/resource identity | [Localization contract](docs/localization.md) |
 | UI copy styling, capitalization, typography, color, iconography, or popup/dialog presentation | [UI copy and presentation style](docs/ui-copy-style.md) |

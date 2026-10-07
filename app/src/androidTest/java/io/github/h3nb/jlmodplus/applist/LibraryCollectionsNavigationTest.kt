@@ -159,8 +159,8 @@ class LibraryCollectionsNavigationTest {
 
         composeRule.onNodeWithText("Collections").performClick()
         composeRule.onNodeWithText(COLLECTION_NAME).performClick()
-        // Enter selection after CollectionMembersRoute has already rendered. This guards the
-        // cached NavEntry boundary that device testing exposed.
+        // Enter selection after the Collection detail has already rendered. This verifies that
+        // changing UI state reaches the visible detail without becoming navigation/layout state.
         composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
         composeRule.onNodeWithText("Select").performClick()
 
