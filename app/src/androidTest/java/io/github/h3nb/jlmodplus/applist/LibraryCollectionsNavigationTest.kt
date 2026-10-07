@@ -21,6 +21,11 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -440,6 +445,50 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun collectionManageAppsShowsPendingDesiredStateAndSerializesRowMutation() {
+        val host = RecordingCollectionsHost().apply {
+            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
+            deferMembershipResult = true
+        }
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(
+                        state = sampleLibraryState(),
+                        actions = host,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Collections").performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
+
+        val target = composeRule.onNode(
+            hasText(SAMPLE_MEMBER_2.title) and isToggleable(),
+        )
+        target.performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(
+            listOf(Triple(SAMPLE_MEMBER_2.id, COLLECTION_ID, true)),
+            host.membershipRequests,
+        )
+        target.assertIsOn().assertIsNotEnabled()
+
+        host.completeMembership(success = false)
+        composeRule.waitForIdle()
+
+        target.assertIsEnabled()
+        target.performClick()
+        composeRule.waitForIdle()
+        assertEquals(2, host.membershipRequests.size)
+    }
+
+    @Test
     fun expandedWindowShowsListAndDetailWithoutDetailBack() {
         val host = RecordingCollectionsHost().apply {
             store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
@@ -486,6 +535,9 @@ class LibraryCollectionsNavigationTest {
         val openedCollectionIds = mutableListOf<Long>()
         val bulkRemovals = mutableListOf<Pair<Set<Long>, Long>>()
         val singleRemovals = mutableListOf<Pair<Int, Long>>()
+        val membershipRequests = mutableListOf<Triple<Int, Long, Boolean>>()
+        var deferMembershipResult = false
+        private var pendingMembershipResult: CollectionMembershipResultCallback? = null
         var loadMembersOnOpen = true
 
         override fun collectionsStore(): LibraryCollectionsUiStore = store
@@ -505,6 +557,19 @@ class LibraryCollectionsNavigationTest {
         override fun onRequestAddToCollection(appId: Int) = Unit
         override fun onDismissAddToCollection() = Unit
         override fun onAddAppToCollection(appId: Int, collectionId: Long) = Unit
+        override fun onSetCollectionMembership(
+            appId: Int,
+            collectionId: Long,
+            included: Boolean,
+            callback: CollectionMembershipResultCallback,
+        ) {
+            membershipRequests += Triple(appId, collectionId, included)
+            if (deferMembershipResult) {
+                pendingMembershipResult = callback
+            } else {
+                callback.onResult(true)
+            }
+        }
         override fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long) = Unit
         override fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long) {
             bulkRemovals += appIds to collectionId
@@ -527,6 +592,12 @@ class LibraryCollectionsNavigationTest {
         override fun onOpenCrashReports() = Unit
         override fun onSaveLog() = Unit
         override fun onRetryLibrary() = Unit
+
+        fun completeMembership(success: Boolean) {
+            val callback = checkNotNull(pendingMembershipResult)
+            pendingMembershipResult = null
+            callback.onResult(success)
+        }
     }
 
     private companion object {
