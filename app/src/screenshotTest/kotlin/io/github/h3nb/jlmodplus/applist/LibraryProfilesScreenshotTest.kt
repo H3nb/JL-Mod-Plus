@@ -352,7 +352,7 @@ fun LibraryCollectionAppPickerScreenshot() {
             iconShape = LibraryIconShape.Round,
             scaffoldPadding = PaddingValues(),
             onBack = {},
-            onSetMembership = { _, _, _ -> },
+            onSetMembership = { _, _ -> },
         )
     }
 }
