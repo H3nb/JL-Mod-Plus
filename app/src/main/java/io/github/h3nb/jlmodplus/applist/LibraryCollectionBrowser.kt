@@ -166,6 +166,9 @@ internal fun LibraryCollectionBrowser(
             projectCollectionApps(members, query, libraryState.sortVariant)
         }
     }
+    val projectedIds = remember(projected) {
+        projected.map(LibraryAppUiItem::databaseId)
+    }
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
     val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
@@ -180,17 +183,23 @@ internal fun LibraryCollectionBrowser(
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
     }
 
-    LaunchedEffect(libraryState.layout, libraryState.generation, collection.id, projected) {
+    LaunchedEffect(
+        libraryState.layout,
+        libraryState.generation,
+        collection.id,
+        projected,
+        query,
+    ) {
         val surface = if (libraryState.layout == LibraryLayout.List) {
             LibraryNavigationSurface.CollectionAppsList
         } else {
             LibraryNavigationSurface.CollectionAppsGrid
         }
-        if (query.isNotEmpty()) return@LaunchedEffect
+        if (query.isNotBlank()) return@LaunchedEffect
         val anchor = navigationState.resolveAnchor(
             surface,
             libraryState.generation,
-            projected.map(LibraryAppUiItem::databaseId),
+            projectedIds,
             scopeId = collection.id,
         ) ?: return@LaunchedEffect
         val targetIndex = anchor.index + 1
@@ -207,7 +216,14 @@ internal fun LibraryCollectionBrowser(
         }
     }
 
-    LaunchedEffect(libraryState.layout, libraryState.generation, collection.id, projected) {
+    LaunchedEffect(
+        libraryState.layout,
+        libraryState.generation,
+        collection.id,
+        projected,
+        query,
+    ) {
+        if (query.isNotBlank()) return@LaunchedEffect
         val surface = if (libraryState.layout == LibraryLayout.List) {
             LibraryNavigationSurface.CollectionAppsList
         } else {
@@ -336,14 +352,14 @@ internal fun LibraryCollectionBrowser(
             sortVariant = libraryState.sortVariant,
             sortVisible = sortVisible,
             selectionState = selectionState,
-            visibleAppIds = projected.map(LibraryAppUiItem::databaseId),
+            visibleAppIds = projectedIds,
             onBack = onBack,
             onExitSelection = { onSelectionStateChanged(selectionState.clear()) },
             onSelectAll = {
                 onSelectionStateChanged(
                     selectionState.selectVisible(
                         libraryState.generation,
-                        projected.map(LibraryAppUiItem::databaseId),
+                        projectedIds,
                         collectionId = collection.id,
                     ),
                 )
@@ -352,7 +368,7 @@ internal fun LibraryCollectionBrowser(
                 onSelectionStateChanged(
                     selectionState.unselectVisible(
                         libraryState.generation,
-                        projected.map(LibraryAppUiItem::databaseId),
+                        projectedIds,
                         collectionId = collection.id,
                     ),
                 )

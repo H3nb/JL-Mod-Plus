@@ -2297,6 +2297,9 @@ private fun LibraryAppsHeader(
     interactive: Boolean = true,
 ) {
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
+    val visibleAppIds = remember(state.apps) {
+        state.apps.map(LibraryAppUiItem::databaseId)
+    }
     val selectedSort = state.sortVariant and Int.MAX_VALUE
     val ascending = state.sortVariant >= 0
     val quickControlsPagerBoundary = remember {
@@ -2366,8 +2369,7 @@ private fun LibraryAppsHeader(
                 }
             }
             if (selectionState.isActive) {
-                val visibleIds = state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList()
-                val allVisibleSelected = selectionState.isAllVisibleSelected(visibleIds)
+                val allVisibleSelected = selectionState.isAllVisibleSelected(visibleAppIds)
                 val selectionToggleLabel = stringResource(
                     if (allVisibleSelected) {
                         R.string.library_selection_unselect_all
@@ -2377,7 +2379,7 @@ private fun LibraryAppsHeader(
                 )
                 IconButton(
                     onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
-                    enabled = visibleIds.isNotEmpty() && interactive,
+                    enabled = visibleAppIds.isNotEmpty() && interactive,
                     modifier = Modifier.semantics {
                         contentDescription = selectionToggleLabel
                     },

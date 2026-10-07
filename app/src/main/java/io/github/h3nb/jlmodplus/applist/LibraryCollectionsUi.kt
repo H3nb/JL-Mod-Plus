@@ -408,32 +408,32 @@ internal fun LibraryCollectionsDestination(
                         key(collection.id) {
                             LibraryCollectionBrowser(
                                 collection = collection,
-                            members = members.members,
-                            allApps = state.allApps,
-                            allAppsPrepared = state.allAppsPrepared,
-                            libraryState = libraryState,
-                            scaffoldPadding = scaffoldPadding,
-                            navigationState = navigationState,
-                            onNavigationStateChanged = onNavigationStateChanged,
-                            onBack = {
-                                if (active) closeCollection()
-                            },
-                            onOpenApp = host::onOpenApp,
-                            onOpenActions = { app -> onOpenActions(app, collection.id) },
-                            selectionState = selectionState,
-                            onSelectionStateChanged = onSelectionStateChanged,
-                            onSetMembership = { appId, included ->
-                                if (included) {
-                                    host.onAddAppToCollection(appId, collection.id)
-                                } else {
-                                    host.onRemoveAppFromCollection(appId, collection.id)
-                                }
-                            },
-                            onPrepareAppPicker = host::onPrepareCollectionAppPicker,
-                            onSort = host::onSort,
-                            onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
-                            showBackButton = showDetailBack,
-                            handleSystemBack = false,
+                                members = members.members,
+                                allApps = state.allApps,
+                                allAppsPrepared = state.allAppsPrepared,
+                                libraryState = libraryState,
+                                scaffoldPadding = scaffoldPadding,
+                                navigationState = navigationState,
+                                onNavigationStateChanged = onNavigationStateChanged,
+                                onBack = {
+                                    if (active) closeCollection()
+                                },
+                                onOpenApp = host::onOpenApp,
+                                onOpenActions = { app -> onOpenActions(app, collection.id) },
+                                selectionState = selectionState,
+                                onSelectionStateChanged = onSelectionStateChanged,
+                                onSetMembership = { appId, included ->
+                                    if (included) {
+                                        host.onAddAppToCollection(appId, collection.id)
+                                    } else {
+                                        host.onRemoveAppFromCollection(appId, collection.id)
+                                    }
+                                },
+                                onPrepareAppPicker = host::onPrepareCollectionAppPicker,
+                                onSort = host::onSort,
+                                onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
+                                showBackButton = showDetailBack,
+                                handleSystemBack = false,
                                 interactionActive = active,
                             )
                         }

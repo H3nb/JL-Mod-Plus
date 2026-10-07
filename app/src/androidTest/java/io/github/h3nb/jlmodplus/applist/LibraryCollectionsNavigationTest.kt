@@ -423,7 +423,9 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
             .assertIsDisplayed()
         composeRule.waitForIdle()
-        composeRule.onAllNodesWithText("Apps").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(
+            uiString(R.string.library_destination_apps),
+        ).assertCountEquals(0)
 
         composeRule.runOnIdle {
             libraryState.value = libraryState.value.copy(layout = LibraryLayout.Grid)
@@ -432,7 +434,9 @@ class LibraryCollectionsNavigationTest {
 
         composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
             .assertIsDisplayed()
-        composeRule.onAllNodesWithText("Apps").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(
+            uiString(R.string.library_destination_apps),
+        ).assertCountEquals(0)
     }
 
     @Test
