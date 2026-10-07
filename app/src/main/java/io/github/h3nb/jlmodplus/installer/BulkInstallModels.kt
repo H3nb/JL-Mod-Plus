@@ -158,4 +158,6 @@ data class BulkInstallResult(
     val installedStorageKey: String? = null,
     /** Review/preflight failures stay structured until app-owned presentation. */
     val reviewReason: BulkInstallReviewReason? = null,
+    /** Non-fatal notices that should remain visually distinct from ordinary success detail. */
+    val warning: String? = null,
 )

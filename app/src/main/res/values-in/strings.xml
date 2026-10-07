@@ -38,6 +38,7 @@
     <string name="identity_filter">Tidak ada (paling cepat)</string>
     <string name="install">Instal</string>
     <string name="install_done">Aplikasi terpasang.</string>
+    <string name="install_done_with_warning">Aplikasi terpasang dengan peringatan.</string>
     <string name="installer_title">Instalasi MIDlet</string>
     <string name="installer_error_message">Aplikasi yang dipilih tidak dapat diinstal. Pilih berkas MIDlet yang valid lalu coba lagi.</string>
     <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD dan lanjutkan instalasi?</string>
@@ -406,6 +407,18 @@
     <string name="installer_partial_restore">Aplikasi terpasang; pemulihan data atau pengaturan gagal</string>
     <string name="installer_removed_leftovers">Aplikasi dihapus; sebagian pengaturan atau data simpanan tidak dapat dihapus.</string>
     <string name="installer_copy_details">Salin detail</string>
+    <string name="installer_show_details">Tampilkan detail</string>
+    <string name="installer_hide_details">Sembunyikan detail</string>
+    <!-- %1$d adalah jumlah berkas class Java sumber yang dilewati saat konversi. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="other">%1$d berkas class Java dilewati karena tidak dapat dibaca. Fitur yang menggunakannya mungkin tidak berfungsi.</item>
+    </plurals>
+    <!-- %1$s adalah path entri JAR sumber untuk berkas class yang dilewati. -->
+    <string name="installer_conversion_skipped_entry">%1$s\nMasalah: Berkas class Java tidak dapat dibaca.\nTindakan: Dilewati saat konversi.</string>
+    <!-- %1$d adalah jumlah diagnosis konversi tambahan yang tidak ditampilkan karena batas laporan. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="other">%1$d masalah konversi tambahan tidak ditampilkan.</item>
+    </plurals>
 
     <string name="library_collection_new">Koleksi baru</string>
     <string name="library_collection_ready_empty_message">Buat koleksi untuk mengelompokkan aplikasi tanpa memindahkan berkasnya.</string>
@@ -428,6 +441,7 @@
     <string name="library_import_preparing">Membaca bundel aplikasi…</string>
     <string name="library_import_restoring">Memulihkan pengaturan aplikasi dan data simpanan…</string>
     <string name="library_import_done">Bundel aplikasi berhasil diimpor.</string>
+    <string name="library_import_done_with_warning">Bundel aplikasi diimpor dengan peringatan.</string>
     <string name="library_import_invalid_bundle">Bundel yang dipilih tidak valid, rusak, atau tidak didukung. Pilih bundel JL-Mod Plus yang valid lalu coba lagi.</string>
     <string name="library_import_restore_existing">Aplikasi ini sudah terpasang. Impor akan mengganti pengaturan dan data simpanan dengan isi bundel.</string>
     <string name="library_import_restore_failed">Aplikasi sudah terpasang, tetapi data bundel gagal dipulihkan. Coba pulihkan lagi?</string>
@@ -705,9 +719,11 @@
     <string name="config_help_timing_mode">Menentukan sumber tanggal dan waktu yang dilihat MIDlet. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
     <string name="config_help_timing_unavailable">Pengaturan waktu tidak tersedia untuk MIDlet ini. Instal ulang atau konversi ulang untuk mengaktifkannya.</string>
     <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dijalankan. Tunggu…</string>
+    <string name="reconversion_done_with_warning">Konversi kompatibilitas selesai dengan peringatan.</string>
     <string name="reconversion_error">MIDlet ini tidak dapat dikonversi secara otomatis.
 
 %1$s</string>
+    <string name="reconversion_error_summary">MIDlet ini tidak dapat dikonversi secara otomatis.</string>
     <string name="config_help_generic_color">Mengatur warna bagian tampilan ini.</string>
     <string name="config_help_encoding">Memilih pengodean karakter yang dilaporkan sebagai microedition.encoding.</string>
     <string name="config_edit_system_properties">Edit properti sistem</string>

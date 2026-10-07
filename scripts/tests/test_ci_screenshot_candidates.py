@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -187,21 +188,32 @@ class ScreenshotCandidatesTest(unittest.TestCase):
         package_candidates.assert_called_once_with(found, [])
         report_output.assert_called_once_with(True, 1)
 
-    def test_main_passes_excluded_failures_to_packaging(self):
-        with tempfile.TemporaryDirectory() as directory:
-            report = Path(directory) / "report.xml"
-            report.write_text("<testsuite/>", encoding="utf-8")
-            found = {Path("screen/preview.png"): (Path("reference.png"), Path("actual.png"), None)}
-            excluded = ["PreviewTest.rendererFailure"]
-            with (
-                mock.patch.object(candidates, "REPORT", report),
-                mock.patch.object(candidates, "ensure_references_unchanged"),
-                mock.patch.object(candidates, "collect_candidates", return_value=(found, excluded)),
-                mock.patch.object(candidates, "package_candidates") as package_candidates,
-                mock.patch.object(candidates, "report_output"),
-            ):
-                candidates.main()
-        package_candidates.assert_called_once_with(found, excluded)
+    def test_packaged_context_preserves_excluded_failures(self):
+        temporary, references, _, _, reference, actual, diff = self.fixture()
+        with temporary:
+            root = Path(temporary.name)
+            output = root / "candidates"
+            found = {Path("screen/preview.png"): (reference, actual, diff)}
+
+            def fake_git(*args, env=None):
+                if args[:2] == ("hash-object", "-w"):
+                    return b"blobsha\n"
+                if args[:2] == ("diff", "--cached"):
+                    return b""
+                if args[:2] == ("rev-parse", "HEAD"):
+                    return b"commitsha\n"
+                return b""
+
+            with mock.patch.object(candidates, "git", side_effect=fake_git):
+                candidates.package_candidates(
+                    found,
+                    ["PreviewTest.rendererFailure"],
+                    references=references,
+                    output=output,
+                )
+
+            context = json.loads((output / "source-context.json").read_text(encoding="utf-8"))
+            self.assertEqual(["PreviewTest.rendererFailure"], context["excluded_failures"])
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@
 
 package io.github.h3nb.jlmodplus.installer
 
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -51,6 +52,10 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 private fun uiString(resId: Int, vararg formatArgs: Any): String =
     InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
+
+private fun uiQuantityString(@PluralsRes resId: Int, quantity: Int, vararg formatArgs: Any): String =
+    InstrumentationRegistry.getInstrumentation().targetContext.resources
+        .getQuantityString(resId, quantity, *formatArgs)
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
@@ -184,6 +189,52 @@ class InstallerComposeTest {
     }
 
     @Test
+    fun successWarningExpandsDetailsAndKeepsActionsReachable() {
+        val actions = RecordingInstallerActions()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
+            ) {
+                CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
+                    JLModPlusTheme {
+                        InstallerScreen(
+                            state = InstallerUiState.Success(
+                                title = "Demo MIDlet",
+                                status = "Application installed with a warning.",
+                                startLabel = "Start",
+                                closeLabel = "Close",
+                                iconPath = null,
+                                warningSummary = uiQuantityString(
+                                    R.plurals.installer_conversion_warning_summary,
+                                    1,
+                                    1,
+                                ),
+                                warningDetails = "sample/Bad.class\nSkipped from the converted app.",
+                                copyDetails = "Entry: sample/Bad.class",
+                            ),
+                            actions = actions,
+                        )
+                    }
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("installer-success-warning")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(targetString(R.string.installer_show_details))
+            .performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithTag("installer-success-warning-details")
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(targetString(R.string.installer_copy_details))
+            .performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("Start").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("Close").performScrollTo().assertIsDisplayed().performClick()
+
+        assertEquals(1, actions.launchCount)
+        assertEquals(1, actions.closeCount)
+    }
+
+    @Test
     fun errorStateKeepsAVisibleCloseAction() {
         val actions = RecordingInstallerActions()
         setState(
@@ -224,26 +275,106 @@ class InstallerComposeTest {
         assertEquals(1, actions.closeCount)
     }
 
-    @Test fun bulkRetryRemainsReachableInShortWindowWithLargeText() {
+    @Test fun bulkFooterActionsRemainReachableInShortWindowWithLargeText() {
         var retries = 0
+        var closes = 0
         composeRule.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp))) {
                 CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
                     JLModPlusTheme {
-                        BulkInstallSurface(BulkInstallViewModel.State.Finished(
-                            BulkInstallPlan(1, File("/workdir"), emptyList()),
-                            listOf(BulkInstallResult("one", "Game", BulkInstallResultKind.PartiallyInstalled)),
-                            cancelled = true), onToggle = {}, onRecommended = {}, onClear = {},
-                            onInstall = {}, onRetry = { retries++ }, onCancel = {}, onClose = {})
+                        BulkInstallSurface(
+                            BulkInstallViewModel.State.Finished(
+                                BulkInstallPlan(1, File("/workdir"), emptyList()),
+                                listOf(
+                                    BulkInstallResult(
+                                        "one",
+                                        "Game one",
+                                        BulkInstallResultKind.PartiallyInstalled,
+                                    ),
+                                    BulkInstallResult(
+                                        "two",
+                                        "Game two",
+                                        BulkInstallResultKind.NotProcessed,
+                                    ),
+                                    BulkInstallResult(
+                                        "three",
+                                        "Game three",
+                                        BulkInstallResultKind.NotProcessed,
+                                    ),
+                                    BulkInstallResult(
+                                        "four",
+                                        "Game four",
+                                        BulkInstallResultKind.NotProcessed,
+                                    ),
+                                ),
+                                cancelled = true,
+                            ),
+                            onToggle = {},
+                            onRecommended = {},
+                            onClear = {},
+                            onInstall = {},
+                            onRetry = { retries++ },
+                            onCancel = {},
+                            onClose = { closes++ },
+                        )
                     }
                 }
             }
         }
         capturePopup("bulk-short.png")
-        composeRule.onNodeWithTag("bulk-results").performScrollToIndex(1)
+        composeRule.onAllNodesWithText(targetString(R.string.bulk_install_cancelled))
+            .assertCountEquals(1)
+        composeRule.onNodeWithTag("bulk-results").performScrollToIndex(4)
+        composeRule.onNodeWithText("Game four").assertIsDisplayed()
+        composeRule.onNodeWithTag("bulk-results").performScrollToIndex(5)
         composeRule.onNodeWithText(targetString(R.string.installer_retry_remaining))
-            .assertIsDisplayed().performClick()
+            .performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText(targetString(R.string.bulk_install_close))
+            .performScrollTo().assertIsDisplayed().performClick()
         assertEquals(1, retries)
+        assertEquals(1, closes)
+    }
+
+    @Test fun bulkSuccessLabelsOnlyExplicitWarnings() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                BulkInstallSurface(
+                    state = BulkInstallViewModel.State.Finished(
+                        BulkInstallPlan(1, File("/workdir"), emptyList()),
+                        listOf(
+                            BulkInstallResult(
+                                "one",
+                                "Installed game",
+                                BulkInstallResultKind.Installed,
+                                warning = "Unreadable class warning",
+                            ),
+                            BulkInstallResult(
+                                "two",
+                                "Restored game",
+                                BulkInstallResultKind.Restored,
+                                detail = "Bundle imported.",
+                            ),
+                        ),
+                        cancelled = false,
+                    ),
+                    onToggle = {},
+                    onRecommended = {},
+                    onClear = {},
+                    onInstall = {},
+                    onRetry = {},
+                    onCancel = {},
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithText(targetString(R.string.bulk_install_complete))
+            .assertCountEquals(1)
+        composeRule.onAllNodesWithText(targetString(R.string.bulk_install_title))
+            .assertCountEquals(0)
+        composeRule.onAllNodesWithText(targetString(R.string.warning)).assertCountEquals(1)
+        composeRule.onNodeWithText("Unreadable class warning").assertIsDisplayed()
+        composeRule.onNodeWithText("Bundle imported.").assertIsDisplayed()
     }
 
     @Test fun shortPopupWrapsContentInsteadOfFillingMaximumHeight() {

@@ -340,12 +340,7 @@ public class InstallerDialog extends DialogFragment {
 			// The filesystem + Room commit is the durable consumption point. A process death while the
 			// success screen is visible must not replay the same external install request.
 			acknowledgeExternalRequest();
-			composeController.showSuccess(
-					currentTitle,
-					successMessage(R.string.install_done),
-					getString(R.string.START_CMD),
-					getString(R.string.close),
-					installer.getIconPath());
+			showSuccessfulInstall(R.string.install_done);
 			return;
 		}
 
@@ -473,13 +468,31 @@ public class InstallerDialog extends DialogFragment {
 			cleanupBundleImport();
 			if (!isAdded() || composeController == null) return;
 			acknowledgeExternalRequest();
-			composeController.showSuccess(
-					currentTitle,
-					successMessage(R.string.library_import_done),
-					getString(R.string.START_CMD),
-					getString(R.string.close),
-					installer.getIconPath());
+			showSuccessfulInstall(R.string.library_import_done);
 		});
+	}
+
+	private void showSuccessfulInstall(int messageRes) {
+		if (composeController == null || installer == null || !isAdded()) return;
+		ConversionWarningFormatter.Presentation warning =
+				ConversionWarningFormatter.forResult(requireContext(), installer.getConversionResult());
+		int statusRes = messageRes;
+		if (warning != null) {
+			if (messageRes == R.string.install_done) {
+				statusRes = R.string.install_done_with_warning;
+			} else if (messageRes == R.string.library_import_done) {
+				statusRes = R.string.library_import_done_with_warning;
+			}
+		}
+		composeController.showSuccess(
+				currentTitle,
+				successMessage(statusRes),
+				getString(R.string.START_CMD),
+				getString(R.string.close),
+				installer.getIconPath(),
+				warning == null ? null : warning.getSummary(),
+				warning == null ? null : warning.getDetails(),
+				warning == null ? null : warning.getCopyDetails());
 	}
 
 	private String successMessage(int messageRes) {
@@ -589,10 +602,15 @@ public class InstallerDialog extends DialogFragment {
 			libraryViewModel.retry();
 			closeInstaller();
 		} : this::retryRequest;
+		String details = "Build: " + io.github.h3nb.jlmodplus.BuildConfig.VERSION_NAME + "\nStage: " +
+				(installer == null ? "bundle" : installer.getStage()) + "\n" + InstallerFailure.details(e);
+		if (installer != null && installer.getConversionResult() != null) {
+			details += "\n\n" + ConversionWarningFormatter.technicalReport(
+					installer.getConversionResult(), false);
+		}
 		composeController.showError(getString(R.string.error), userMessage, getString(R.string.close),
 				getString(published ? R.string.installer_refresh_library : R.string.library_retry),
-				"Build: " + io.github.h3nb.jlmodplus.BuildConfig.VERSION_NAME + "\nStage: " +
-						(installer == null ? "bundle" : installer.getStage()) + "\n" + InstallerFailure.details(e));
+				details);
 	}
 
 	private void retryRequest() {

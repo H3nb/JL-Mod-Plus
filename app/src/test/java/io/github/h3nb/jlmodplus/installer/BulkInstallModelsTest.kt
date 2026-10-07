@@ -7,6 +7,7 @@
  */
 package io.github.h3nb.jlmodplus.installer
 
+import com.android.dx.command.dexer.Main
 import java.io.File
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
@@ -17,6 +18,27 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BulkInstallModelsTest {
+    @Test
+    fun conversionFailureRetainsStructuredEvidenceThroughWrapper() {
+        val arguments = Main.Arguments().apply {
+            fileNames = emptyArray()
+            numThreads = 1
+        }
+        val result = Main.runWithResult(arguments)
+        assertFalse(result.isSuccess)
+        val error = RuntimeException(
+            "Default profile fallback\n\nDexing error",
+            ConversionFailureException("Dexing error", result),
+        )
+
+        val detail = boundedInstallerFailureMessage(error)
+
+        assertTrue(detail.startsWith("Conversion result: FAILED"))
+        assertTrue(detail.contains("Classes discovered: 0"))
+        assertFalse(detail.contains("Default profile fallback"))
+        assertNotEquals("Dexing error", detail)
+    }
+
     @Test
     fun sharedConflictStatusKeepsDistinctStructuredResultReasons() {
         val first = BulkInstallResult("item", "Demo", BulkInstallResultKind.Failed,

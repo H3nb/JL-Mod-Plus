@@ -15,10 +15,13 @@
 package org.microemu.android.asm;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.android.dex.Dex;
 import com.android.dex.MethodId;
+import com.android.dx.command.dexer.ConversionDiagnostic;
+import com.android.dx.command.dexer.ConversionResult;
 import com.android.dx.command.dexer.Main;
 
 import org.junit.Test;
@@ -27,12 +30,27 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
 public class AndroidProducerDexTest {
+	@Test
+	public void classVersionGuardMatchesBundledAsm() throws Exception {
+		int highestVersion = 0;
+		for (Field field : Opcodes.class.getFields()) {
+			String name = field.getName();
+			if (field.getType() != int.class
+					|| !(name.matches("V\\d+") || name.matches("V1_\\d+"))) {
+				continue;
+			}
+			highestVersion = Math.max(highestVersion, field.getInt(null) & 0xffff);
+		}
+		assertEquals(highestVersion, AndroidProducer.MAX_SUPPORTED_CLASS_VERSION);
+	}
+
 	@Test
 	public void transformedGuestCallsitesProduceReadableDex() throws Exception {
 		Path root = Files.createTempDirectory("jlmod-dex-transform-");
@@ -51,7 +69,12 @@ public class AndroidProducerDexTest {
 			};
 			arguments.outName = dexFile.toString();
 			arguments.numThreads = 1;
-			assertEquals(0, Main.run(arguments));
+			ConversionResult result = Main.runWithResult(arguments);
+			assertTrue(result.isSuccess());
+			assertEquals(2, result.getClassesDiscovered());
+			assertEquals(2, result.getClassesConverted());
+			assertEquals(0, result.getClassesSkipped());
+			assertTrue(result.getDiagnostics().isEmpty());
 
 			Dex dex = new Dex(dexFile.toFile());
 			String bridge = "Ljavax/microedition/shell/GuestTimingBridge;";
@@ -79,6 +102,288 @@ public class AndroidProducerDexTest {
 	}
 
 	@Test
+	public void conversionSkipsUnreadableSourceClassAndReportsWarning() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-unreadable-source-");
+		Path archive = root.resolve("mixed.jar");
+		Path dexFile = root.resolve("mixed.dex");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Good.class"));
+			output.write(createSimpleClass("sample/Good"));
+			output.closeEntry();
+			output.putNextEntry(new JarEntry("sample/Bad.class"));
+			output.write(removeConstantPoolCount(createSimpleClass("sample/Bad")));
+			output.closeEntry();
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertTrue(result.isSuccess());
+			assertEquals(2, result.getClassesDiscovered());
+			assertEquals(1, result.getClassesConverted());
+			assertEquals(1, result.getClassesSkipped());
+			assertEquals(0, result.getDiagnosticsOmitted());
+			assertEquals(1, result.getDiagnostics().size());
+			assertEquals(1, result.getSkippedClassEntries().size());
+			assertEquals("sample/Bad.class", result.getSkippedClassEntries().get(0));
+			assertEquals(0, result.getSkippedClassEntriesOmitted());
+			assertTrue(result.hasCompleteSkippedClassEntries());
+			ConversionDiagnostic diagnostic = result.getDiagnostics().get(0);
+			assertEquals("sample/Bad.class", diagnostic.getEntry());
+			assertEquals(ConversionDiagnostic.Phase.SOURCE_VALIDATION, diagnostic.getPhase());
+			assertEquals(ConversionDiagnostic.Kind.UNREADABLE_SOURCE_CLASS, diagnostic.getKind());
+			assertEquals(ConversionDiagnostic.Action.SKIPPED, diagnostic.getAction());
+
+			Dex dex = new Dex(dexFile.toFile());
+			assertTrue(dex.typeNames().contains("Lsample/Good;"));
+			assertFalse(dex.typeNames().contains("Lsample/Bad;"));
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
+	public void unsupportedSourceClassVersionRemainsFatal() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-unsupported-source-");
+		Path archive = root.resolve("unsupported.jar");
+		Path dexFile = root.resolve("unsupported.dex");
+		byte[] unsupported = createSimpleClass("sample/Newer");
+		unsupported[6] = 0;
+		unsupported[7] = (byte) (Opcodes.V27 + 1);
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Newer.class"));
+			output.write(unsupported);
+			output.closeEntry();
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertFalse(result.isSuccess());
+			assertEquals(1, result.getClassesDiscovered());
+			assertEquals(0, result.getClassesConverted());
+			assertEquals(0, result.getClassesSkipped());
+			assertEquals(1, result.getDiagnostics().size());
+			assertEquals(
+					ConversionDiagnostic.Kind.UNSUPPORTED_SOURCE_CLASS,
+					result.getDiagnostics().get(0).getKind());
+			assertEquals(
+					ConversionDiagnostic.Action.ABORTED,
+					result.getDiagnostics().get(0).getAction());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
+	public void conversionFailsWhenNoReadableClassRemains() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-no-readable-class-");
+		Path archive = root.resolve("broken.jar");
+		Path dexFile = root.resolve("broken.dex");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Bad.class"));
+			output.write(removeConstantPoolCount(createSimpleClass("sample/Bad")));
+			output.closeEntry();
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertFalse(result.isSuccess());
+			assertEquals(1, result.getClassesDiscovered());
+			assertEquals(0, result.getClassesConverted());
+			assertEquals(1, result.getClassesSkipped());
+			assertEquals(2, result.getDiagnostics().size());
+			ConversionDiagnostic terminal = result.getDiagnostics().get(1);
+			assertEquals(ConversionDiagnostic.Phase.SOURCE_VALIDATION, terminal.getPhase());
+			assertEquals(ConversionDiagnostic.Kind.NO_USABLE_CLASSES, terminal.getKind());
+			assertEquals(ConversionDiagnostic.Action.ABORTED, terminal.getAction());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
+	public void conversionDiagnosticsAreBoundedWithoutLosingSkipCount() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-bounded-diagnostics-");
+		Path archive = root.resolve("many-bad.jar");
+		Path dexFile = root.resolve("many-bad.dex");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Good.class"));
+			output.write(createSimpleClass("sample/Good"));
+			output.closeEntry();
+			for (int i = 0; i < 35; i++) {
+				String name = "sample/Bad" + i;
+				output.putNextEntry(new JarEntry(name + ".class"));
+				output.write(removeConstantPoolCount(createSimpleClass(name)));
+				output.closeEntry();
+			}
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertTrue(result.isSuccess());
+			assertEquals(36, result.getClassesDiscovered());
+			assertEquals(1, result.getClassesConverted());
+			assertEquals(35, result.getClassesSkipped());
+			assertEquals(32, result.getDiagnostics().size());
+			assertEquals(3, result.getDiagnosticsOmitted());
+			assertEquals(35, result.getSkippedClassEntries().size());
+			assertEquals(0, result.getSkippedClassEntriesOmitted());
+			assertTrue(result.hasCompleteSkippedClassEntries());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
+	public void skippedClassIdentityListIsBoundedAndMarksIncomplete() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-bounded-skipped-classes-");
+		Path archive = root.resolve("many-bad.jar");
+		Path dexFile = root.resolve("many-bad.dex");
+		final int skippedCount = 260;
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Good.class"));
+			output.write(createSimpleClass("sample/Good"));
+			output.closeEntry();
+			for (int i = 0; i < skippedCount; i++) {
+				String name = "sample/Unreadable" + i;
+				output.putNextEntry(new JarEntry(name + ".class"));
+				output.write(removeConstantPoolCount(createSimpleClass(name)));
+				output.closeEntry();
+			}
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertTrue(result.isSuccess());
+			assertEquals(skippedCount, result.getClassesSkipped());
+			assertEquals(256, result.getSkippedClassEntries().size());
+			assertEquals(4, result.getSkippedClassEntriesOmitted());
+			assertFalse(result.hasCompleteSkippedClassEntries());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
+	public void fatalDiagnosticSurvivesAFullWarningReport() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-fatal-diagnostic-priority-");
+		Path archive = root.resolve("warnings-then-fatal.jar");
+		Path dexFile = root.resolve("warnings-then-fatal.dex");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Good.class"));
+			output.write(createSimpleClass("sample/Good"));
+			output.closeEntry();
+			for (int i = 0; i < 35; i++) {
+				String name = String.format("sample/Bad%02d", i);
+				output.putNextEntry(new JarEntry(name + ".class"));
+				output.write(removeConstantPoolCount(createSimpleClass(name)));
+				output.closeEntry();
+			}
+			output.putNextEntry(new JarEntry("sample/ZFatal.class"));
+			output.write(createSimpleClass("sample/OtherName"));
+			output.closeEntry();
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertFalse(result.isSuccess());
+			assertEquals(35, result.getClassesSkipped());
+			assertEquals(32, result.getDiagnostics().size());
+			assertEquals(4, result.getDiagnosticsOmitted());
+			ConversionDiagnostic fatal =
+					result.getDiagnostics().get(result.getDiagnostics().size() - 1);
+			assertEquals(ConversionDiagnostic.Kind.CLASS_NAME_MISMATCH, fatal.getKind());
+			assertEquals(ConversionDiagnostic.Action.ABORTED, fatal.getAction());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
+	public void duplicateClassDuringDexAssemblyProducesStructuredFailure() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-duplicate-class-");
+		Path firstArchive = root.resolve("first.jar");
+		Path secondArchive = root.resolve("second.jar");
+		Path dexFile = root.resolve("duplicate.dex");
+		byte[] duplicateClass = createSimpleClass("sample/Duplicate");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(firstArchive))) {
+			output.putNextEntry(new JarEntry("sample/Duplicate.class"));
+			output.write(duplicateClass);
+			output.closeEntry();
+		}
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(secondArchive))) {
+			output.putNextEntry(new JarEntry("sample/Duplicate.class"));
+			output.write(duplicateClass);
+			output.closeEntry();
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {firstArchive.toString(), secondArchive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			ConversionResult result = Main.runWithResult(arguments);
+
+			assertFalse(result.isSuccess());
+			assertEquals(2, result.getClassesDiscovered());
+			assertEquals(1, result.getClassesConverted());
+			assertEquals(0, result.getClassesSkipped());
+			assertEquals(1, result.getDiagnostics().size());
+			ConversionDiagnostic diagnostic = result.getDiagnostics().get(0);
+			assertEquals("sample/Duplicate.class", diagnostic.getEntry());
+			assertEquals(ConversionDiagnostic.Phase.DEX_ASSEMBLY, diagnostic.getPhase());
+			assertEquals(ConversionDiagnostic.Kind.ASSEMBLY_FAILURE, diagnostic.getKind());
+			assertEquals(ConversionDiagnostic.Action.ABORTED, diagnostic.getAction());
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(secondArchive);
+			Files.deleteIfExists(firstArchive);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
 	public void conversionFailsWhenOneArchiveClassCannotBeTransformed() throws Exception {
 		Path root = Files.createTempDirectory("jlmod-dex-transform-failure-");
 		Path archive = root.resolve("mixed.jar");
@@ -98,7 +403,13 @@ public class AndroidProducerDexTest {
 			arguments.fileNames = new String[] {archive.toString()};
 			arguments.outName = dexFile.toString();
 			arguments.numThreads = 1;
-			assertTrue(Main.run(arguments) != 0);
+			ConversionResult result = Main.runWithResult(arguments);
+			assertFalse(result.isSuccess());
+			assertEquals(1, result.getDiagnostics().size());
+			assertEquals(ConversionDiagnostic.Phase.SOURCE_IDENTITY,
+					result.getDiagnostics().get(0).getPhase());
+			assertEquals(ConversionDiagnostic.Kind.CLASS_NAME_MISMATCH,
+					result.getDiagnostics().get(0).getKind());
 		} finally {
 			Files.deleteIfExists(dexFile);
 			Files.deleteIfExists(archive);
@@ -148,6 +459,13 @@ public class AndroidProducerDexTest {
 		method.visitInsn(Opcodes.RETURN);
 		method.visitMaxs(1, 0);
 		method.visitEnd();
+	}
+
+	private static byte[] removeConstantPoolCount(byte[] classData) {
+		byte[] malformed = new byte[classData.length - 2];
+		System.arraycopy(classData, 0, malformed, 0, 8);
+		System.arraycopy(classData, 10, malformed, 8, classData.length - 10);
+		return malformed;
 	}
 
 	private static byte[] createSimpleClass(String name) {
