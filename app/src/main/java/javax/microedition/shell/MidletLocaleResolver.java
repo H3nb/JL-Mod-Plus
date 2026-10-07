@@ -30,11 +30,9 @@ import androidx.core.os.LocaleListCompat;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.MissingResourceException;
 
 /**
  * Resolves the Java ME device locale independently from MIDlet content.
@@ -46,11 +44,6 @@ import java.util.Set;
  */
 final class MidletLocaleResolver {
 	private static final String TAG = "MidletLocaleResolver";
-	private static final Set<String> ISO_LANGUAGES =
-			new HashSet<>(Arrays.asList(Locale.getISOLanguages()));
-	private static final Set<String> ISO_COUNTRIES =
-			new HashSet<>(Arrays.asList(Locale.getISOCountries()));
-
 	private MidletLocaleResolver() {
 	}
 
@@ -151,8 +144,18 @@ final class MidletLocaleResolver {
 		if (locale == null) {
 			return null;
 		}
-		String language = locale.getLanguage().toLowerCase(Locale.ROOT);
-		if (language.length() != 2 || !ISO_LANGUAGES.contains(language)) {
+		String tag = locale.toLanguageTag();
+		int separator = tag.indexOf('-');
+		String language = (separator < 0 ? tag : tag.substring(0, separator))
+				.toLowerCase(Locale.ROOT);
+		if (!isTwoAsciiLetters(language)) {
+			return null;
+		}
+		try {
+			if (locale.getISO3Language().isEmpty()) {
+				return null;
+			}
+		} catch (MissingResourceException error) {
 			return null;
 		}
 		return language;
@@ -164,10 +167,25 @@ final class MidletLocaleResolver {
 			return null;
 		}
 		String country = locale.getCountry().toUpperCase(Locale.ROOT);
-		if (country.length() != 2 || !ISO_COUNTRIES.contains(country)) {
+		if (!isTwoAsciiLetters(country)) {
+			return null;
+		}
+		try {
+			if (locale.getISO3Country().isEmpty()) {
+				return null;
+			}
+		} catch (MissingResourceException error) {
 			return null;
 		}
 		return country;
+	}
+
+	private static boolean isTwoAsciiLetters(String value) {
+		return value.length() == 2
+				&& value.charAt(0) >= 'A' && value.charAt(0) <= 'z'
+				&& Character.isLetter(value.charAt(0))
+				&& value.charAt(1) >= 'A' && value.charAt(1) <= 'z'
+				&& Character.isLetter(value.charAt(1));
 	}
 
 	private static String serialize(String language, @Nullable String country, String variant) {
