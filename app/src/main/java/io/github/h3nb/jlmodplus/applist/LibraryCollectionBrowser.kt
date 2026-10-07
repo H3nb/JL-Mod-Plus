@@ -138,29 +138,19 @@ internal fun LibraryCollectionBrowser(
     }
 
     if (manageApps) {
-        if (!allAppsPrepared) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(scaffoldPadding),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            LibraryCollectionAppPicker(
-                collection = collection,
-                allApps = allApps,
-                memberIds = members.mapTo(LinkedHashSet()) { it.id },
-                sortVariant = libraryState.sortVariant,
-                iconRatio = libraryState.iconRatio,
-                iconShape = libraryState.iconShape,
-                enhancedIcons = libraryState.enhancedIcons,
-                scaffoldPadding = scaffoldPadding,
-                onBack = { manageApps = false },
-                onSetMembership = onSetMembership,
-            )
-        }
+        LibraryCollectionAppPicker(
+            collection = collection,
+            allApps = allApps,
+            memberIds = members.mapTo(LinkedHashSet()) { it.id },
+            sortVariant = libraryState.sortVariant,
+            iconRatio = libraryState.iconRatio,
+            iconShape = libraryState.iconShape,
+            enhancedIcons = libraryState.enhancedIcons,
+            scaffoldPadding = scaffoldPadding,
+            loading = !allAppsPrepared,
+            onBack = { manageApps = false },
+            onSetMembership = onSetMembership,
+        )
         return
     }
 
@@ -833,6 +823,7 @@ internal fun LibraryCollectionAppPicker(
     iconShape: LibraryIconShape,
     enhancedIcons: Boolean = true,
     scaffoldPadding: PaddingValues,
+    loading: Boolean = false,
     onBack: () -> Unit,
     onSetMembership: (Int, Boolean) -> Unit,
 ) {
@@ -888,6 +879,17 @@ internal fun LibraryCollectionAppPicker(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall,
         )
+        if (loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+            return@Column
+        }
         LibrarySearchField(
             query = query,
             onQueryChange = { query = it },
