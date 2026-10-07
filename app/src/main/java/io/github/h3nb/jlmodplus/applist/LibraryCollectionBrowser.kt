@@ -69,6 +69,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
@@ -699,7 +700,9 @@ private fun LibraryCollectionListItem(
                 Checkbox(
                     checked = selected,
                     onCheckedChange = null,
-                    modifier = Modifier.clearAndSetSemantics { },
+                    modifier = Modifier
+                        .testTag("collection-selection-checkbox-${app.databaseId}")
+                        .clearAndSetSemantics { },
                 )
             }
         }
@@ -781,6 +784,7 @@ private fun LibraryCollectionGridItem(
                     onCheckedChange = null,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
+                        .testTag("collection-selection-checkbox-${app.databaseId}")
                         .clearAndSetSemantics { },
                 )
             }
