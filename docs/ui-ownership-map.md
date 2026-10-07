@@ -81,7 +81,9 @@ separate navigation back stack. `LibraryNavigationState.selectedCollectionId` ow
 selected Collection route, and `collectionManageApps` owns that route's full-screen
 membership-editor submode. Pane and parent-navigation visibility are derived from those
 states and the current window directive instead of being reconstructed by delayed child
-effects; the Collection member payload remains a Room-backed projection in the UI store.
+effects. Saved Room-backed scroll anchors carry the active Library workdir identity; Collection
+detail anchors additionally carry the Collection id. The Collection member payload remains a
+Room-backed projection in the UI store.
 File Picker navigation likewise remains controller-owned because a second back stack
 would only mirror its current directory; the Activity still owns results and root exit policy.
 Adaptive UI is active where it has a concrete presentation benefit: Library and Config
