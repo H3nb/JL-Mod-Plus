@@ -41,18 +41,28 @@ without shipping game assets or selecting behavior by MIDlet identity.
 ## MIDP filled triangles
 
 MIDP `Graphics.fillTriangle` includes the lines connecting all three vertices.
-It retains the existing filled interior and adds solid boundary coverage below
-and to the right of integer coordinates. Bevel joins prevent acute corners from
-extending beyond the vertex bounds; explicit endpoint cells cover thin,
-collinear and point triangles. The coverage is combined before one normal ARGB
-draw, irrespective of the current dotted stroke style. Separate translucent
-triangle calls still composite independently. A bounded coverage layer handles
-native path-operation failure with the same channel-rounding caveat as above.
+It retains the existing non-antialiased interior pixels and adds solid boundary
+coverage below and to the right of integer coordinates. Bevel joins prevent
+acute corners from extending beyond the vertex bounds; endpoint cells cover
+thin, collinear and point triangles. Interior and outline paths are rasterized
+within the current clip into reusable Android `Region` objects, then united as
+integer pixel coverage. The resulting boundary is drawn once with the original
+ARGB paint, irrespective of dotted stroke style. Separate translucent triangle
+calls still composite independently; no alpha layer or float path union is used.
 
-This closes the remaining horizontal seam between a shallow terrain edge and
-an adjacent water region. `GraphicsTriangleRenderingTest` protects its generic
-integer geometry, vertex ordering, degenerate cases, alpha and clipping. The
-half-open rectangle convention and Nokia polygon implementation are unchanged.
+Geometric `Path.op` union can change raster coverage while rebuilding float
+contours, even when it reports success. On adjacent triangles this exposed
+isolated background pixels and irregular edge fragments. A reconstructed
+terrain triangle `(-282,221), (-283,417), (162,236)` loses interior pixel `(57,278)`
+with that model, matching the reported camera position and capture. Raster union
+preserves all interior pixels while keeping the closed boundary that eliminates
+the earlier horizontal seam. The [Android Region reference](https://developer.android.com/reference/android/graphics/Region#setPath(android.graphics.Path,%20android.graphics.Region))
+guarantees coverage identical to a non-antialiased path through its clip.
+
+`GraphicsTriangleRenderingTest` protects the seam, interior preservation and
+exact raster union for offscreen/acute triangles, joined mesh coverage, vertex
+ordering, degenerate cases, alpha, clipping and translation. The half-open
+rectangle convention and Nokia polygon implementation are unchanged.
 
 ## Foreground ownership boundary
 

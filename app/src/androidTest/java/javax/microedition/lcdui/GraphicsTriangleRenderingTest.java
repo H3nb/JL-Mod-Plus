@@ -3,6 +3,10 @@ package javax.microedition.lcdui;
 
 import static org.junit.Assert.assertEquals;
 
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.nokia.mid.ui.DirectGraphics;
@@ -149,6 +153,96 @@ public class GraphicsTriangleRenderingTest {
 		g.fillRect(22, 22, 1, 1);
 		assertEquals(TERRAIN, pixel(image, 22, 22));
 		assertEquals(BACKGROUND, pixel(image, 23, 22));
+	}
+
+	@Test
+	public void rasterUnionPreservesInteriorAndHasNoContourFragments() {
+		int[][] triangles = {
+				{-282, 221, -283, 417, 162, 236},
+				{65, 54, 102, -51, -63, -4},
+				{35, 168, 133, 267, 170, 57},
+				{74, 110, 32, 174, 131, 178},
+				{-400, 100, 700, 103, 120, 310}
+		};
+		int[][] orders = {{0, 1, 2}, {0, 2, 1}, {1, 0, 2},
+				{1, 2, 0}, {2, 0, 1}, {2, 1, 0}};
+		int source = 0x801111EE;
+		int blended = blendedPixel(BACKGROUND, source, 1);
+		for (int[] points : triangles) {
+			for (int[] order : orders) {
+				Image expected = rasterCoverage(points, order);
+				Image actual = Image.createImage(240, 320, BACKGROUND);
+				Graphics g = actual.getGraphics();
+				DirectUtils.getDirectGraphics(g).setARGBColor(source);
+				g.fillTriangle(points[order[0] * 2], points[order[0] * 2 + 1],
+						points[order[1] * 2], points[order[1] * 2 + 1],
+						points[order[2] * 2], points[order[2] * 2 + 1]);
+				int[] mask = new int[240 * 320];
+				int[] pixels = new int[240 * 320];
+				expected.getBitmap().getPixels(mask, 0, 240, 0, 0, 240, 320);
+				actual.getBitmap().getPixels(pixels, 0, 240, 0, 0, 240, 320);
+				for (int i = 0; i < pixels.length; i++) {
+					assertEquals("coverage pixel=" + i % 240 + "," + i / 240,
+							mask[i] == TERRAIN ? blended : BACKGROUND, pixels[i]);
+				}
+			}
+		}
+		Image reported = Image.createImage(240, 320, BACKGROUND);
+		Graphics g = reported.getGraphics();
+		g.setColor(TERRAIN);
+		g.fillTriangle(-282, 221, -283, 417, 162, 236);
+		assertEquals("reported interior hole", TERRAIN, pixel(reported, 57, 278));
+	}
+
+	@Test
+	public void adjacentTrianglesHaveNoInteriorHolesOrStaleCoverage() {
+		Image image = Image.createImage(240, 320, BACKGROUND);
+		Graphics g = image.getGraphics();
+		g.setColor(TERRAIN);
+		// Four triangles meet at an interior vertex, with offscreen outer edges.
+		g.fillTriangle(-100, -50, 300, -50, 71, 177);
+		g.fillTriangle(300, -50, 300, 400, 71, 177);
+		g.fillTriangle(300, 400, -100, 400, 71, 177);
+		g.fillTriangle(-100, 400, -100, -50, 71, 177);
+		for (int y = 0; y < 320; y++) {
+			for (int x = 0; x < 240; x++) assertEquals(TERRAIN, pixel(image, x, y));
+		}
+		g.setColor(0xFFFFFF);
+		g.fillTriangle(-100, -100, -20, -100, -20, -20);
+		g.setClip(0, 0, 0, 0);
+		g.fillTriangle(0, 0, 200, 0, 0, 200);
+		g.setClip(0, 0, 240, 320);
+		assertEquals("empty calls leave destination intact", TERRAIN, pixel(image, 71, 177));
+		g.fillTriangle(5, 5, 5, 5, 5, 5);
+		assertEquals(0xFFFFFFFF, pixel(image, 5, 5));
+		assertEquals("previous coverage is not reused", TERRAIN, pixel(image, 71, 177));
+	}
+
+	private static Image rasterCoverage(int[] points, int[] order) {
+		Image image = Image.createImage(240, 320, BACKGROUND);
+		Canvas canvas = new Canvas(image.getBitmap());
+		Paint paint = new Paint();
+		paint.setColor(TERRAIN);
+		Path path = new Path();
+		path.moveTo(points[order[0] * 2], points[order[0] * 2 + 1]);
+		path.lineTo(points[order[1] * 2], points[order[1] * 2 + 1]);
+		path.lineTo(points[order[2] * 2], points[order[2] * 2 + 1]);
+		path.close();
+		// Separate opaque platform draws give an independent pixel union,
+		// without production Region or float boolean operations as oracle.
+		canvas.drawPath(path, paint);
+		path.offset(0.5f, 0.5f);
+		paint.setStyle(Paint.Style.STROKE);
+		paint.setStrokeWidth(1);
+		paint.setStrokeJoin(Paint.Join.BEVEL);
+		canvas.drawPath(path, paint);
+		paint.setStyle(Paint.Style.FILL);
+		for (int v = 0; v < 3; v++) {
+			int x = points[v * 2];
+			int y = points[v * 2 + 1];
+			canvas.drawRect(x, y, (float) x + 1, (float) y + 1, paint);
+		}
+		return image;
 	}
 
 	private static Image triangle(int[] points, int[] order, int color) {

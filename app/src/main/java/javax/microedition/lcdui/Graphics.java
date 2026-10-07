@@ -3,7 +3,7 @@
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2019-2023 Yury Kharchenko
  *
- * Modified for JL-Mod Plus to stabilize LCDUI Canvas state management.
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,9 @@ public class Graphics implements
 	private final Path path = new Path();
 	private final Path polygonOutline = new Path();
 	private final Path polygonFillPath = new Path();
+	private final Region triangleClip = new Region();
+	private final Region triangleCoverage = new Region();
+	private final Region triangleOutline = new Region();
 
 	private final DashPathEffect dashPathEffect = new DashPathEffect(new float[]{5, 5}, 0);
 	private int stroke = SOLID;
@@ -366,53 +369,40 @@ public class Graphics implements
 	}
 
 	public void fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3) {
-		int argbColor = fillPaint.getColor();
-		int alpha = argbColor >>> 24;
-		if (alpha == 0) return;
+		if ((fillPaint.getColor() >>> 24) == 0 || clip.isEmpty()) return;
 		path.reset();
 		path.setFillType(Path.FillType.WINDING);
 		path.moveTo(x1, y1);
 		path.lineTo(x2, y2);
 		path.lineTo(x3, y3);
 		path.close();
+		triangleClip.set(clip);
+		triangleCoverage.setPath(path, triangleClip);
 		polygonPaint.set(fillPaint);
 		polygonPaint.setStyle(Paint.Style.STROKE);
 		polygonPaint.setStrokeWidth(1);
 		polygonPaint.setStrokeJoin(Paint.Join.BEVEL);
-		// MIDP includes the connecting lines, with a solid pen below/right of
-		// integer coordinates. Center that one-pixel pen within the pixel cells.
+		// MIDP includes solid connecting lines below/right of integer points.
 		polygonOutline.set(path);
 		polygonOutline.offset(0.5f, 0.5f);
-		boolean hasOutline = polygonPaint.getFillPath(polygonOutline, polygonFillPath);
-		polygonOutline.reset();
-		polygonOutline.setFillType(Path.FillType.WINDING);
-		// Explicit endpoint cells also cover thin, collinear and point triangles.
-		polygonOutline.addRect(x1, y1, (float) x1 + 1, (float) y1 + 1, Path.Direction.CW);
-		polygonOutline.addRect(x2, y2, (float) x2 + 1, (float) y2 + 1, Path.Direction.CW);
-		polygonOutline.addRect(x3, y3, (float) x3 + 1, (float) y3 + 1, Path.Direction.CW);
-		polygonPaint.setStyle(Paint.Style.FILL);
-		if (hasOutline && polygonFillPath.op(polygonOutline, Path.Op.UNION)
-				&& polygonFillPath.op(path, Path.Op.UNION)) {
-			canvas.drawPath(polygonFillPath, polygonPaint);
-			return;
-		}
-		// Keep all coverage even if native path operations cannot form the union.
-		int saveCount = 0;
-		if (alpha != 255) {
-			path.computeBounds(rectF, true);
-			rectF.inset(-1, -1);
-			saveCount = canvas.saveLayerAlpha(rectF, alpha);
-		}
-		polygonPaint.setColor(argbColor | 0xFF000000);
-		try {
-			canvas.drawPath(path, polygonPaint);
-			canvas.drawPath(polygonOutline, polygonPaint);
-			polygonOutline.set(path);
-			polygonOutline.offset(0.5f, 0.5f);
-			polygonPaint.setStyle(Paint.Style.STROKE);
-			canvas.drawPath(polygonOutline, polygonPaint);
-		} finally {
-			if (saveCount != 0) canvas.restoreToCount(saveCount);
+		polygonPaint.getFillPath(polygonOutline, polygonFillPath);
+		triangleOutline.setPath(polygonFillPath, triangleClip);
+		// Union raster coverage, not float contours: Path.op can move edges
+		// across pixel centers and remove interior pixels from a triangle mesh.
+		triangleCoverage.op(triangleOutline, Region.Op.UNION);
+		includeTriangleEndpoint(x1, y1);
+		includeTriangleEndpoint(x2, y2);
+		includeTriangleEndpoint(x3, y3);
+		polygonFillPath.reset();
+		triangleCoverage.getBoundaryPath(polygonFillPath);
+		// Integer boundaries retain exact coverage and normal ARGB rounding.
+		canvas.drawPath(polygonFillPath, fillPaint);
+	}
+
+	private void includeTriangleEndpoint(int x, int y) {
+		// Clipping first also guarantees that the exclusive endpoints fit int.
+		if (clip.contains(x, y)) {
+			triangleCoverage.op(x, y, x + 1, y + 1, Region.Op.UNION);
 		}
 	}
 
