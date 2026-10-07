@@ -14,6 +14,7 @@ selectors=(
   'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#compactHeightAppActionsKeepLastActionReachable'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionSelectionBackExitsSelectionBeforeLeavingCollection'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionSelectionBulkRemoveUsesCurrentCollection'
+  'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionLongPressRemoveKeepsCurrentCollectionContextAfterDialogDismiss'
   'io.github.h3nb.jlmodplus.installer.InstallerComposeTest#compactHeightConfirmationScrollsToAllActions'
   'io.github.h3nb.jlmodplus.installer.InstallerComposeTest#recoveryActionsRemainReachableInShortWindowWithLargeText'
   'io.github.h3nb.jlmodplus.installer.InstallerComposeTest#successWarningExpandsDetailsAndKeepsActionsReachable'
