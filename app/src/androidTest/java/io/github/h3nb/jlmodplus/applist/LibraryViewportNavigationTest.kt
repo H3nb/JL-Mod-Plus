@@ -31,6 +31,7 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
@@ -132,8 +133,9 @@ class LibraryViewportNavigationTest {
         composeRule.waitForIdle()
         val appsNavigation = uiString(R.string.library_destination_apps)
         composeRule.onAllNodes(navigationMatcher(appsNavigation)).assertCountEquals(0)
-        // Finish at the last app with navigation hidden; its trailing inset remains reserved.
-        activeList(APP_PREFIX).performScrollToNode(hasText(rowTitle(APP_PREFIX, 79)))
+        // Reach the actual end, including its trailing inset. Scroll-to-node only makes the row
+        // visible and can stop with part of it inside the area revealed by hidden navigation.
+        activeList(APP_PREFIX).performScrollToIndex(80)
         composeRule.waitForIdle()
         composeRule.onAllNodes(navigationMatcher(appsNavigation)).assertCountEquals(0)
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true).assertIsDisplayed()
@@ -141,9 +143,7 @@ class LibraryViewportNavigationTest {
         swipeToNextPage()
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
         composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
-        // Accessibility scrolling also counts as user input. Return once to reveal navigation,
-        // then establish the end-position baseline with the visible footer.
-        activeList(FOLDER_PREFIX).performScrollToNode(hasText(rowTitle(FOLDER_PREFIX, 79)))
+        activeList(FOLDER_PREFIX).performScrollToIndex(80)
         composeRule.waitForIdle()
         val folders = visibleRow(FOLDER_PREFIX)
         swipeToNextPage()

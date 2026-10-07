@@ -24,6 +24,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -39,6 +40,8 @@ internal class LibraryViewportState(
 ) {
     var chromeVisible by navigationVisibility
     var query by queryState
+    // Measured geometry is transient, but shared with controller navigation at the screen owner.
+    val headerHeightPx = mutableIntStateOf(0)
 
     // Retain the last completed projection while its page is offscreen. Native list state must
     // never be measured against a temporary unfiltered or empty startup projection.

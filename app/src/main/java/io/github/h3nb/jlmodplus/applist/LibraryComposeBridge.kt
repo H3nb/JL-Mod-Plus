@@ -774,11 +774,17 @@ fun LibraryScreen(
         )
         controllerFocusedAppIndex = nextIndex
         controllerFocusedAppId = apps[nextIndex].databaseId
-        if (nextIndex == currentIndex) return
-        if (currentState.layout == LibraryLayout.List) {
-            appsListState.animateScrollToItem(nextIndex + 1)
+        val headerHeight = appsViewport.headerHeightPx.intValue
+        // Partial headers settle expanded. Reserve that final height so focus stays unobscured.
+        val focusOffset = if (appsViewport.headerOffsetPx.floatValue <= -headerHeight + 0.5f) {
+            0
         } else {
-            appsGridState.animateScrollToItem(nextIndex + 1)
+            -headerHeight
+        }
+        if (currentState.layout == LibraryLayout.List) {
+            appsListState.animateScrollToItem(nextIndex + 1, focusOffset)
+        } else {
+            appsGridState.animateScrollToItem(nextIndex + 1, focusOffset)
         }
     }
 
@@ -874,7 +880,7 @@ fun LibraryScreen(
         metadataTarget = null
     }
 
-    LaunchedEffect(controllerEvents) {
+    LaunchedEffect(controllerEvents, appsViewport) {
         controllerEvents?.collect { event ->
             if (currentControllerAppActions != null) return@collect
             controllerFocusVisible = true
@@ -1727,7 +1733,7 @@ internal fun LibraryAppsDestination(
     val listState = viewportState.listState
     val gridState = viewportState.gridState
     var sortVisible by remember { mutableStateOf(false) }
-    val headerHeightPx = remember { mutableIntStateOf(0) }
+    val headerHeightPx = viewportState.headerHeightPx
     val headerOffsetPx = viewportState.headerOffsetPx
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }

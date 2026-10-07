@@ -46,6 +46,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
@@ -347,10 +348,20 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
 
+        appViewport().performScrollToNode(hasText("Demo MIDlet 20"))
+        appViewport().performTouchInput {
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.5f), 300)
+        }
+        controllerEvents.tryEmit(LibraryControllerEvent(1L, LibraryControllerCommand.MoveUp))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Demo MIDlet 0").assertIsDisplayed()
+        // Start expanded to verify focus is below the opaque header, not merely inside the window.
+        appViewport().performScrollToIndex(0)
+        composeRule.waitForIdle()
         repeat(12) { index ->
             controllerEvents.tryEmit(
                 LibraryControllerEvent(
-                    sequence = index.toLong() + 1L,
+                    sequence = index.toLong() + 2L,
                     command = LibraryControllerCommand.MoveDown,
                 ),
             )
@@ -358,6 +369,11 @@ class LibraryComposeTest {
         }
 
         composeRule.onNodeWithText("Demo MIDlet 12").assertIsDisplayed()
+        val headerBottom = composeRule.onNodeWithText(uiString(R.string.library_filter_all))
+            .fetchSemanticsNode().boundsInRoot.bottom
+        val focusedTop = composeRule.onNodeWithText("Demo MIDlet 12")
+            .fetchSemanticsNode().boundsInRoot.top
+        assertTrue("Controller focus is covered by the header", focusedTop >= headerBottom)
         composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(1)
     }
 
