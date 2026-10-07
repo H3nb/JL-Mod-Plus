@@ -14,16 +14,24 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 
 ## MIDlet locale identity
 
-At MIDlet launch, `microedition.locale` follows the emulator's effective application locale.
-An explicitly selected JL-Mod Plus language is exposed to the guest; when the app follows the
-system language, the current system locale is exposed instead. Profile system properties remain
-the final override, including an explicit `microedition.locale` value.
+MIDP 2.0 defines `microedition.locale` as the current locale of the emulated device, not as an
+Android resource-directory name and not as a MIDlet-specific resource choice. Resolve one Java ME
+device locale independently of guest content and expose that same value to every MIDlet launched
+under the same emulator locale state.
 
-Resolve this from the runtime Activity's effective Android `Configuration` after AppCompat has
-applied the app language. Do not use `Locale.getDefault()` or locale-storage APIs as the guest
-language source: neither is the presentation configuration that the MIDlet host is actually
-running under. Preserve the established Java ME property format of language plus an optional
-two-letter country subtag.
+The runtime Activity's effective Android locale supplies the language, script intent and any
+explicit region. If the region is absent, first prefer a same-language system locale whose script
+is compatible; otherwise use ICU/CLDR likely-subtags to complete the locale. Canonicalize legacy
+Android language aliases through BCP-47 before serializing back to the MIDP 2.0
+`language[-COUNTRY[-variant]]` shape. MIDP requires a lower-case two-letter ISO-639 language and,
+when present, an upper-case two-letter ISO-3166 country. Do not invent a Java ME locale for a host
+language that cannot be represented by that contract; `microedition.locale` may be absent.
+
+Do not derive guest locale identity from the MIDlet JAR, generated Android locale metadata, or
+`Locale.getDefault()`. Emulator-owned guest properties must update both the host system-property
+backing store and the transformed MIDlet property delegate so stale process state cannot override
+the current device locale. Profile system properties are applied afterward and remain the final
+authority, including an explicit `microedition.locale` override.
 
 ## Foreground ownership boundary
 

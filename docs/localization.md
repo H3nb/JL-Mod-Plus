@@ -238,6 +238,12 @@ tested migration proves a directory change safe; it is not the canonical
 application identity. Do not rename locale directories solely to normalize tag
 spelling; treat a physical-directory migration as separate compatibility work.
 
+Android application locale and the Java ME device locale are separate contracts.
+The app locale selects JL-Mod Plus resources; the MIDlet runtime derives its device locale from
+the effective app locale plus compatible regional context and CLDR data, then serializes it to
+the MIDP format. A language-only Android locale therefore does not imply that the guest property
+must also be language-only. Never inspect MIDlet resources to choose that device locale.
+
 **Target architecture:**
 
 - One human-language `strings.xml` catalog per locale, containing both `<string>`
