@@ -72,9 +72,9 @@ public class Graphics implements
 	private final Path path = new Path();
 	private final Path polygonOutline = new Path();
 	private final Path polygonFillPath = new Path();
-	private final Region triangleClip = new Region();
-	private final Region triangleCoverage = new Region();
-	private final Region triangleOutline = new Region();
+	private final Region coverageClip = new Region();
+	private final Region closedCoverage = new Region();
+	private final Region outlineCoverage = new Region();
 
 	private final DashPathEffect dashPathEffect = new DashPathEffect(new float[]{5, 5}, 0);
 	private int stroke = SOLID;
@@ -144,42 +144,34 @@ public class Graphics implements
 	public void fillPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset,
 			int nPoints, int argbColor) {
 		if (nPoints > 0) {
-			Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
+			computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
 			path.setFillType(Path.FillType.EVEN_ODD);
+			if ((argbColor >>> 24) == 0 || clip.isEmpty()) return;
 			polygonPaint.set(fillPaint);
 			polygonPaint.setColor(argbColor);
 			polygonPaint.setStrokeWidth(1);
-			int alpha = argbColor >>> 24;
-			if (alpha == 0) return;
-			polygonPaint.setStyle(Paint.Style.STROKE);
-			// A geometric union keeps even-odd holes and uses one normal ARGB draw.
-			// FILL_AND_STROKE can replace the even-odd interior with winding coverage.
-			if (polygonPaint.getFillPath(path, polygonOutline)
-					&& polygonFillPath.op(path, polygonOutline, Path.Op.UNION)) {
-				polygonPaint.setStyle(Paint.Style.FILL);
-				canvas.drawPath(polygonFillPath, polygonPaint);
-				return;
-			}
-			// If native path operations cannot form the union, combine coverage in
-			// a bounded layer instead of losing the polygon or blending edges twice.
-			polygonPaint.setStyle(Paint.Style.FILL);
-			polygonPaint.setColor(argbColor | 0xFF000000);
-			int saveCount = 0;
-			if (alpha != 255) {
-				path.computeBounds(rectF, true);
-				// Default miter limit is 4: a one-pixel stroke extends at most two pixels.
-				rectF.inset(-2, -2);
-				saveCount = canvas.saveLayerAlpha(rectF, alpha);
-			}
-			try {
-				// Opaque fill + outline form a union; the layer applies alpha only once.
-				canvas.drawPath(path, polygonPaint);
-				polygonPaint.setStyle(Paint.Style.STROKE);
-				canvas.drawPath(path, polygonPaint);
-			} finally {
-				if (saveCount != 0) canvas.restoreToCount(saveCount);
-			}
+			unionClosedCoverage(path);
+			drawClosedCoverage(polygonPaint);
 		}
+	}
+
+	private void unionClosedCoverage(Path outlinePath) {
+		coverageClip.set(clip);
+		closedCoverage.setPath(path, coverageClip);
+		polygonPaint.setStyle(Paint.Style.STROKE);
+		polygonPaint.getFillPath(outlinePath, polygonFillPath);
+		outlineCoverage.setPath(polygonFillPath, coverageClip);
+		// Union raster coverage, not float contours: Path.op can move edges
+		// across pixel centers, remove interior pixels, or add edge fragments.
+		closedCoverage.op(outlineCoverage, Region.Op.UNION);
+	}
+
+	private void drawClosedCoverage(Paint paint) {
+		polygonFillPath.reset();
+		closedCoverage.getBoundaryPath(polygonFillPath);
+		paint.setStyle(Paint.Style.FILL);
+		// Integer boundaries retain exact coverage and normal ARGB rounding.
+		canvas.drawPath(polygonFillPath, paint);
 	}
 
 	/** Uses the call's ARGB without changing the shared Graphics color. */
@@ -376,8 +368,6 @@ public class Graphics implements
 		path.lineTo(x2, y2);
 		path.lineTo(x3, y3);
 		path.close();
-		triangleClip.set(clip);
-		triangleCoverage.setPath(path, triangleClip);
 		polygonPaint.set(fillPaint);
 		polygonPaint.setStyle(Paint.Style.STROKE);
 		polygonPaint.setStrokeWidth(1);
@@ -385,24 +375,17 @@ public class Graphics implements
 		// MIDP includes solid connecting lines below/right of integer points.
 		polygonOutline.set(path);
 		polygonOutline.offset(0.5f, 0.5f);
-		polygonPaint.getFillPath(polygonOutline, polygonFillPath);
-		triangleOutline.setPath(polygonFillPath, triangleClip);
-		// Union raster coverage, not float contours: Path.op can move edges
-		// across pixel centers and remove interior pixels from a triangle mesh.
-		triangleCoverage.op(triangleOutline, Region.Op.UNION);
+		unionClosedCoverage(polygonOutline);
 		includeTriangleEndpoint(x1, y1);
 		includeTriangleEndpoint(x2, y2);
 		includeTriangleEndpoint(x3, y3);
-		polygonFillPath.reset();
-		triangleCoverage.getBoundaryPath(polygonFillPath);
-		// Integer boundaries retain exact coverage and normal ARGB rounding.
-		canvas.drawPath(polygonFillPath, fillPaint);
+		drawClosedCoverage(fillPaint);
 	}
 
 	private void includeTriangleEndpoint(int x, int y) {
 		// Clipping first also guarantees that the exclusive endpoints fit int.
 		if (clip.contains(x, y)) {
-			triangleCoverage.op(x, y, x + 1, y + 1, Region.Op.UNION);
+			closedCoverage.op(x, y, x + 1, y + 1, Region.Op.UNION);
 		}
 	}
 

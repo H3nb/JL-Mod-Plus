@@ -20,13 +20,12 @@ shared context, including changes made through another wrapper or MIDP setters.
 The [Nokia UI API reference](https://nikita36078.github.io/J2ME_Docs/docs/Nokia_UI_API_1_1/com/nokia/mid/ui/DirectGraphics.html)
 defines closed polygons, even-odd interior coverage, and Source Over compositing.
 
-Filled Nokia polygons include their one-pixel outline. The outline geometry is
-combined with the even-odd interior before one normal ARGB draw, so one call
-cannot darken its own boundary through repeated alpha blending. Separate calls
-still composite independently. If native path operations cannot form that union,
-opaque interior/outline coverage is combined in a bounded temporary layer before
-applying alpha; opaque fallback calls draw directly. This fallback can differ in
-channel rounding from a direct draw. MIDP rectangle coverage and shared paint
+Filled Nokia polygons include their one-pixel outline. The even-odd interior
+and unshifted outline retain their own raster coverage, united using the same
+clipped integer-region backend as MIDP triangles. One normal ARGB draw applies
+the color, so a call cannot darken its boundary through repeated alpha blending.
+Separate calls still composite independently. This avoids geometric union
+artifacts and alpha-layer rounding. MIDP rectangle coverage and shared paint
 state are preserved.
 
 This boundary treatment is supported by reconstruction of integer-separated
@@ -62,7 +61,8 @@ guarantees coverage identical to a non-antialiased path through its clip.
 `GraphicsTriangleRenderingTest` protects the seam, interior preservation and
 exact raster union for offscreen/acute triangles, joined mesh coverage, vertex
 ordering, degenerate cases, alpha, clipping and translation. The half-open
-rectangle convention and Nokia polygon implementation are unchanged.
+rectangle convention, Nokia even-odd rule and its outline positioning remain
+unchanged.
 
 ## Foreground ownership boundary
 

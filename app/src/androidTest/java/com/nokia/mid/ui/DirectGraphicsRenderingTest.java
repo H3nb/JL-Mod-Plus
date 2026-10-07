@@ -4,6 +4,10 @@ package com.nokia.mid.ui;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
@@ -14,6 +18,43 @@ import javax.microedition.lcdui.Image;
 
 @RunWith(AndroidJUnit4.class)
 public class DirectGraphicsRenderingTest {
+	@Test
+	public void acutePolygonRetainsRasterInteriorAndOutlineWithoutFragments() {
+		int[][] shapes = {
+				{64, 262, 57, 250, 10, 196},
+				{-282, 221, -283, 417, 162, 236}
+		};
+		for (int[] points : shapes) {
+			Image reference = Image.createImage(240, 320, BACKGROUND);
+			Canvas canvas = new Canvas(reference.getBitmap());
+			Path path = new Path();
+			path.setFillType(Path.FillType.EVEN_ODD);
+			path.moveTo(points[0], points[1]);
+			path.lineTo(points[2], points[3]);
+			path.lineTo(points[4], points[5]);
+			path.close();
+			Paint paint = new Paint();
+			paint.setColor(0xFF1111EE);
+			canvas.drawPath(path, paint);
+			paint.setStyle(Paint.Style.STROKE);
+			paint.setStrokeWidth(1);
+			canvas.drawPath(path, paint);
+			Image actual = Image.createImage(240, 320, BACKGROUND);
+			DirectUtils.getDirectGraphics(actual.getGraphics()).fillPolygon(
+					new int[]{points[0], points[2], points[4]}, 0,
+					new int[]{points[1], points[3], points[5]}, 0, 3, WATER);
+			int expectedColor = blendedPixel(BACKGROUND, WATER, 1);
+			int[] mask = new int[240 * 320];
+			int[] pixels = new int[240 * 320];
+			reference.getBitmap().getPixels(mask, 0, 240, 0, 0, 240, 320);
+			actual.getBitmap().getPixels(pixels, 0, 240, 0, 0, 240, 320);
+			for (int i = 0; i < pixels.length; i++) {
+				assertEquals("polygon pixel=" + i % 240 + "," + i / 240,
+						mask[i] == BACKGROUND ? BACKGROUND : expectedColor, pixels[i]);
+			}
+		}
+	}
+
 	private static final int BACKGROUND = 0xFF6DCEFC;
 	private static final int WATER = 0x441111EE;
 
