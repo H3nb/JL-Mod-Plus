@@ -22,12 +22,10 @@ import android.util.LruCache
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -147,6 +145,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -302,12 +301,6 @@ internal data class LibraryViewportSnapshot(
     val layout: LibraryLayout,
     val firstVisibleItemIndex: Int,
     val firstVisibleItemOffsetPx: Int,
-)
-
-private data class ConsumedReturnAnchor(
-    val key: Any?,
-    val layout: LibraryLayout,
-    val generation: Long,
 )
 
 data class LibraryUiState(
@@ -599,9 +592,9 @@ fun LibraryScreen(
         pageCount = { LibraryDestination.entries.size },
     )
     val coroutineScope = rememberCoroutineScope()
-    val destination = LibraryDestination.entries[pagerState.currentPage]
-    var showInstallFab by rememberSaveable { mutableStateOf(true) }
-    var showNavigationBar by rememberSaveable { mutableStateOf(true) }
+    // Indicators may follow the gesture; state-changing navigation commits only after settling.
+    val destination = LibraryDestination.entries[pagerState.settledPage]
+    val indicatedDestination = LibraryDestination.entries[pagerState.currentPage]
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
@@ -624,13 +617,30 @@ fun LibraryScreen(
     var controllerFocusVisible by rememberSaveable { mutableStateOf(false) }
     var controllerFocusedAppId by rememberSaveable { mutableStateOf<Long?>(null) }
     var controllerFocusedAppIndex by rememberSaveable { mutableIntStateOf(0) }
-    val appsListState = rememberLazyListState()
-    val appsGridState = rememberLazyGridState()
+    val appsViewport = rememberLibraryViewportState(state.libraryScope, initialQuery = state.appliedFilter)
+    val collectionsViewport = rememberLibraryViewportState(state.libraryScope)
+    val collectionViewport = rememberLibraryViewportState(state.libraryScope, navigationState.selectedCollectionId)
+    val collectionPickerViewport = rememberLibraryViewportState(state.libraryScope, navigationState.selectedCollectionId)
+    val appsListState = appsViewport.listState
+    val appsGridState = appsViewport.gridState
+    val showInstallFab = appsViewport.chromeVisible
+    val showNavigationBar = when (destination) {
+        LibraryDestination.Apps -> appsViewport.chromeVisible
+        LibraryDestination.Collections -> if (navigationState.selectedCollectionId == null) {
+            collectionsViewport.chromeVisible
+        } else {
+            collectionViewport.chromeVisible
+        }
+        LibraryDestination.More -> true
+    }
     val isImeVisible = WindowInsets.isImeVisible
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val scaffoldInsets = WindowInsets.safeDrawing
         .exclude(WindowInsets.ime)
         .only(WindowInsetsSides.Bottom)
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+    var navigationBarHeightPx by remember { mutableIntStateOf(0) }
     val collectionsHost = actions as? LibraryCollectionsHost
     val bulkActions = actions as? LibraryBulkActions
     val selectedCollectionMatchesLibrary =
@@ -669,7 +679,7 @@ fun LibraryScreen(
     )
 
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.currentPage }
+        snapshotFlow { pagerState.settledPage }
             .collectLatest { page ->
                 val key = LibraryDestinationKey.valueOf(LibraryDestination.entries[page].name)
                 if (currentNavigationState.destination != key) {
@@ -791,11 +801,6 @@ fun LibraryScreen(
     } ?: false
 
     fun captureAppsAnchor(excludedDatabaseId: Long? = null): LibraryScrollAnchor? {
-        val surface = if (state.layout == LibraryLayout.List) {
-            LibraryNavigationSurface.AppsList
-        } else {
-            LibraryNavigationSurface.AppsGrid
-        }
         val visible: Pair<Int, Int>? = if (state.layout == LibraryLayout.List) {
             val items = appsListState.layoutInfo.visibleItemsInfo.filter { it.index > 0 }
             (items.firstOrNull { item ->
@@ -809,18 +814,12 @@ fun LibraryScreen(
                 state.apps.getOrNull(fallbackIndex)?.databaseId != excludedDatabaseId
             } ?: items.firstOrNull())?.let { it.index to it.offset.y }
         }
-        if (visible == null) {
-            return navigationState.anchorFor(
-                surface,
-                state.generation,
-                libraryScope = state.libraryScope.takeIf(String::isNotEmpty),
-            )
-        }
+        if (visible == null) return null
         val fallbackIndex = (visible.first - 1).coerceAtLeast(0)
         return LibraryScrollAnchor(
             generation = state.generation,
             stableItemId = state.apps.getOrNull(fallbackIndex)?.databaseId,
-            offsetPx = visible.second,
+            offsetPx = -visible.second,
             fallbackIndex = fallbackIndex,
             libraryScope = state.libraryScope.takeIf(String::isNotEmpty),
         )
@@ -944,8 +943,6 @@ fun LibraryScreen(
     }
 
     LaunchedEffect(destination) {
-        showInstallFab = true
-        showNavigationBar = true
         if (destination != LibraryDestination.Apps) {
             appActions = null
             appActionsCollectionId = null
@@ -999,7 +996,7 @@ fun LibraryScreen(
         Row(modifier = libraryContentModifier.fillMaxSize()) {
         if (useNavigationRail) {
             LibraryNavigationRail(
-                selected = destination,
+                selected = indicatedDestination,
                 onSelected = { section ->
                     coroutineScope.launch { pagerState.animateScrollToPage(section.ordinal) }
                 },
@@ -1062,12 +1059,6 @@ fun LibraryScreen(
                                 durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
                                 easing = FastOutSlowInEasing,
                             ),
-                        ) + expandVertically(
-                            animationSpec = tween(
-                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                                easing = FastOutSlowInEasing,
-                            ),
-                            expandFrom = Alignment.Bottom,
                         ) + slideInVertically(
                             animationSpec = tween(
                                 durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
@@ -1080,12 +1071,6 @@ fun LibraryScreen(
                                 durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
                                 easing = FastOutSlowInEasing,
                             ),
-                        ) + shrinkVertically(
-                            animationSpec = tween(
-                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                                easing = FastOutSlowInEasing,
-                            ),
-                            shrinkTowards = Alignment.Bottom,
                         ) + slideOutVertically(
                             animationSpec = tween(
                                 durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
@@ -1094,12 +1079,14 @@ fun LibraryScreen(
                             targetOffsetY = { it / 2 },
                         ),
                     ) {
-                        LibraryNavigationBar(
-                            selected = destination,
-                            onSelected = { section ->
-                                coroutineScope.launch { pagerState.animateScrollToPage(section.ordinal) }
-                            },
-                        )
+                        Box(Modifier.onSizeChanged { navigationBarHeightPx = it.height }) {
+                            LibraryNavigationBar(
+                                selected = indicatedDestination,
+                                onSelected = { section ->
+                                    coroutineScope.launch { pagerState.animateScrollToPage(section.ordinal) }
+                                },
+                            )
+                        }
                     }
                 }
             },
@@ -1163,6 +1150,23 @@ fun LibraryScreen(
                 }
             },
         ) { padding ->
+            // A page's viewport must not be resized by another page's footer during a swipe.
+            // Keep each surface's own chrome padding, even while the shared footer animates.
+            fun viewportPadding(chromeVisible: Boolean): PaddingValues {
+                if (imeHidesLibraryChrome) return padding
+                val bottom = if (chromeVisible && !useNavigationRail) {
+                    if (navigationBarHeightPx > 0) with(density) { navigationBarHeightPx.toDp() }
+                    else padding.calculateBottomPadding()
+                } else {
+                    with(density) { scaffoldInsets.getBottom(density).toDp() }
+                }
+                return PaddingValues.Absolute(
+                    left = padding.calculateLeftPadding(layoutDirection),
+                    top = padding.calculateTopPadding(),
+                    right = padding.calculateRightPadding(layoutDirection),
+                    bottom = bottom,
+                )
+            }
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
@@ -1171,18 +1175,20 @@ fun LibraryScreen(
                 val pageModifier = if (page == pagerState.currentPage) {
                     Modifier
                 } else {
-                    // HorizontalPager keeps neighbouring pages composed for smooth swipes. Their
-                    // semantics must not leak into the active page's accessibility tree.
+                    // Pages can overlap during a swipe. Only the indicated page owns semantics;
+                    // viewport state lives outside the pager and survives page disposal.
                     Modifier.clearAndSetSemantics { }
                 }
                 Box(modifier = pageModifier.fillMaxSize()) {
                     when (LibraryDestination.entries[page]) {
                         LibraryDestination.Apps -> LibraryAppsDestination(
                             state = state,
-                            scaffoldPadding = padding,
-                            listState = appsListState,
-                            gridState = appsGridState,
-                            navigationState = navigationState,
+                            scaffoldPadding = if (selectionActiveHere && destination == LibraryDestination.Apps) {
+                                padding
+                            } else {
+                                viewportPadding(appsViewport.chromeVisible)
+                            },
+                            viewportState = appsViewport,
                             returnAnchor = metadataRestoreRequest?.anchor,
                             returnViewport = metadataRestoreRequest?.viewport,
                             returnAnchorKey = metadataRestoreAnchorKey,
@@ -1190,7 +1196,6 @@ fun LibraryScreen(
                             onReturnAnchorConsumed = { metadataRestoreRequest = null },
                             freezeViewport = metadataViewportLocked,
                             preserveImePaddingWhileFrozen = metadataImeWasVisible,
-                            onNavigationStateChanged = { navigationState = it },
                             selectionState = if (selectionState.collectionId == null) {
                                 selectionState
                             } else {
@@ -1226,10 +1231,8 @@ fun LibraryScreen(
                             },
                             onSort = actions::onSort,
                             onRetry = actions::onRetryLibrary,
-                            onFabVisibilityChanged = { showInstallFab = it },
-                            onNavigationVisibilityChanged = { visible ->
-                                if (!useNavigationRail) showNavigationBar = visible
-                            },
+                            onFabVisibilityChanged = {},
+                            onNavigationVisibilityChanged = {},
                             active = destination == LibraryDestination.Apps,
                         )
                         LibraryDestination.Collections -> if (collectionsHost != null) {
@@ -1237,7 +1240,16 @@ fun LibraryScreen(
                                 host = collectionsHost,
                                 libraryState = state,
                                 scaffoldPadding = padding,
+                                overviewScaffoldPadding = viewportPadding(collectionsViewport.chromeVisible),
+                                collectionScaffoldPadding = if (selectionActiveHere && destination == LibraryDestination.Collections) {
+                                    padding
+                                } else {
+                                    viewportPadding(collectionViewport.chromeVisible && !navigationState.collectionManageApps)
+                                },
                                 navigationState = navigationState,
+                                overviewViewport = collectionsViewport,
+                                collectionViewport = collectionViewport,
+                                pickerViewport = collectionPickerViewport,
                                 onNavigationStateChanged = { navigationState = it },
                                 onOpenActions = { app, collectionId ->
                                     appActions = app
@@ -1252,16 +1264,14 @@ fun LibraryScreen(
                                     LibrarySelectionState()
                                 },
                                 onSelectionStateChanged = { next -> selectionState = next },
-                                onNavigationVisibilityChanged = { visible ->
-                                    if (!useNavigationRail) showNavigationBar = visible
-                                },
+                                onNavigationVisibilityChanged = {},
                                 active = destination == LibraryDestination.Collections,
                             )
                         } else {
                             LibraryCollectionsDestination(padding)
                         }
                         LibraryDestination.More -> LibraryMoreDestination(
-                            scaffoldPadding = padding,
+                            scaffoldPadding = viewportPadding(true),
                             onImportAppBundle = actions::onImportAppBundle,
                             onAbout = { infoDialog = LibraryInfoDialog.About },
                             onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
@@ -1504,13 +1514,14 @@ private val LibraryGridMaxArtworkSize = 72.dp
 internal class LibraryChromeScrollHysteresis(
     hideDistancePx: Float,
     revealDistancePx: Float,
+    initiallyVisible: Boolean = true,
 ) {
     private val hideThreshold = hideDistancePx.coerceAtLeast(1f)
     private val revealThreshold = revealDistancePx.coerceAtLeast(1f)
     private var forwardDistance = 0f
     private var reverseDistance = 0f
 
-    var chromeVisible: Boolean = true
+    var chromeVisible: Boolean = initiallyVisible
         private set
 
     fun reset(): Boolean? {
@@ -1672,15 +1683,12 @@ private fun RowScope.LibraryNavigationItem(
 internal fun LibraryAppsDestination(
     state: LibraryUiState,
     scaffoldPadding: PaddingValues,
-    listState: LazyListState = rememberLazyListState(),
-    gridState: LazyGridState = rememberLazyGridState(),
-    navigationState: LibraryNavigationState = LibraryNavigationState(),
+    viewportState: LibraryViewportState = rememberLibraryViewportState(initialQuery = state.appliedFilter),
     returnAnchor: LibraryScrollAnchor? = null,
     returnViewport: LibraryViewportSnapshot? = null,
     returnAnchorKey: Any? = Unit,
     returnAnchorReady: Boolean = true,
     onReturnAnchorConsumed: () -> Unit = {},
-    onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     selectionState: LibrarySelectionState = LibrarySelectionState(),
     controllerFocusedDatabaseId: Long? = null,
     onOpenApp: (Int) -> Unit,
@@ -1699,47 +1707,45 @@ internal fun LibraryAppsDestination(
     title: String? = null,
     onBack: (() -> Unit)? = null,
     showQuickViews: Boolean = true,
-    queryStateKey: Any? = Unit,
     freezeViewport: Boolean = false,
     preserveImePaddingWhileFrozen: Boolean = false,
     active: Boolean = true,
 ) {
-    var query by rememberSaveable(queryStateKey) { mutableStateOf(state.appliedFilter) }
+    var query by viewportState.queryState
+    val listState = viewportState.listState
+    val gridState = viewportState.gridState
     var sortVisible by remember { mutableStateOf(false) }
     val headerHeightPx = remember { mutableIntStateOf(0) }
-    val headerOffsetPx = remember { mutableFloatStateOf(0f) }
+    val headerOffsetPx = viewportState.headerOffsetPx
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
     val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
     val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
     val revealDistancePx = with(density) { LIBRARY_CHROME_REVEAL_DISTANCE_DP.dp.toPx() }
-    val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
-        LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
+    val chromeHysteresis = remember(viewportState, hideDistancePx, revealDistancePx) {
+        LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx, viewportState.chromeVisible)
     }
-    val currentApps by rememberUpdatedState(state.apps)
-    val currentLayout by rememberUpdatedState(state.layout)
-    val currentNavigationState by rememberUpdatedState(navigationState)
-    val currentOnNavigationStateChanged by rememberUpdatedState(onNavigationStateChanged)
     val currentActive by rememberUpdatedState(active)
     val currentOnFabVisibilityChanged by rememberUpdatedState(onFabVisibilityChanged)
     val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
-    val activeFabVisibilityChanged: (Boolean) -> Unit = remember {
-        { visible -> if (currentActive) currentOnFabVisibilityChanged(visible) }
+    val activeFabVisibilityChanged: (Boolean) -> Unit = remember(viewportState) {
+        { visible ->
+            viewportState.chromeVisible = visible
+            if (currentActive) currentOnFabVisibilityChanged(visible)
+        }
     }
-    val activeNavigationVisibilityChanged: (Boolean) -> Unit = remember {
-        { visible -> if (currentActive) currentOnNavigationVisibilityChanged(visible) }
+    val activeNavigationVisibilityChanged: (Boolean) -> Unit = remember(viewportState) {
+        { visible ->
+            viewportState.chromeVisible = visible
+            if (currentActive) currentOnNavigationVisibilityChanged(visible)
+        }
     }
-    var consumedReturnAnchor by remember { mutableStateOf<ConsumedReturnAnchor?>(null) }
 
     LaunchedEffect(query) {
         onSearch(query)
     }
 
-    LaunchedEffect(state.layout, active) {
-        headerOffsetPx.floatValue = 0f
-        chromeHysteresis.reset()
-        activeFabVisibilityChanged(true)
-        activeNavigationVisibilityChanged(true)
+    LaunchedEffect(viewportState, state.layout) {
         snapshotFlow {
             if (state.layout == LibraryLayout.List) {
                 Triple(
@@ -1775,44 +1781,22 @@ internal fun LibraryAppsDestination(
         returnAnchorKey,
         returnAnchorReady,
     ) {
-        if (
-            returnAnchor == null &&
-            consumedReturnAnchor?.key == returnAnchorKey &&
-            consumedReturnAnchor?.layout == state.layout &&
-            consumedReturnAnchor?.generation == state.generation
-        ) {
-            return@LaunchedEffect
-        }
-        if (returnAnchor != null && !returnAnchorReady) return@LaunchedEffect
-        if (returnAnchor != null) {
-            // Room projection readiness does not imply that the changed row has completed its
-            // final measure. Wait for two bounded frames before taking the viewport snapshot.
-            repeat(LIBRARY_RETURN_ANCHOR_SETTLE_FRAMES) { withFrameNanos { } }
-        }
-        val surface = if (state.layout == LibraryLayout.List) {
-            LibraryNavigationSurface.AppsList
-        } else {
-            LibraryNavigationSurface.AppsGrid
-        }
+        if (returnAnchor == null || !returnAnchorReady) return@LaunchedEffect
+        // Room projection readiness does not imply that the changed row has completed its
+        // final measure. Wait for two bounded frames before taking the viewport snapshot.
+        repeat(LIBRARY_RETURN_ANCHOR_SETTLE_FRAMES) { withFrameNanos { } }
         val availableIds = state.apps.map(LibraryAppUiItem::databaseId)
-        val anchor = returnAnchor?.let { navigationState.resolveAnchor(it, availableIds) }
-            ?: navigationState.resolveAnchor(
-                surface,
-                state.generation,
-                availableIds,
-                libraryScope = state.libraryScope.takeIf(String::isNotEmpty),
-            )
-            ?: return@LaunchedEffect
+        val anchor = resolveLibraryScrollAnchor(returnAnchor, availableIds)
         // A raw viewport snapshot is the exact visual contract for returning from an overlay.
         // Prefer it over the stable-id resolution because a Room projection can remeasure or
         // reorder rows after the editor closes, before the stable anchor has been consumed.
-        val targetIndex = if (returnAnchor != null && returnViewport?.layout == state.layout) {
+        val targetIndex = if (returnViewport?.layout == state.layout) {
             val maxIndex = state.apps.size.coerceAtLeast(0)
             returnViewport.firstVisibleItemIndex.coerceIn(0, maxIndex)
         } else {
             anchor.index + 1 // the header occupies item index zero
         }
-        val targetOffset = if (returnAnchor != null && returnViewport?.layout == state.layout) {
+        val targetOffset = if (returnViewport?.layout == state.layout) {
             returnViewport.firstVisibleItemOffsetPx
         } else {
             anchor.offsetPx
@@ -1841,45 +1825,7 @@ internal fun LibraryAppsDestination(
                 gridState.scrollToItem(targetIndex, targetOffset)
             }
         }
-        if (returnAnchor != null) {
-            consumedReturnAnchor = ConsumedReturnAnchor(
-                key = returnAnchorKey,
-                layout = state.layout,
-                generation = state.generation,
-            )
-            onReturnAnchorConsumed()
-        }
-    }
-
-    LaunchedEffect(state.layout, state.generation, state.libraryScope) {
-        val surface = if (currentLayout == LibraryLayout.List) {
-            LibraryNavigationSurface.AppsList
-        } else {
-            LibraryNavigationSurface.AppsGrid
-        }
-        snapshotFlow {
-            val firstApp: Pair<Int, Int>? = if (currentLayout == LibraryLayout.List) {
-                listState.layoutInfo.visibleItemsInfo
-                    .firstOrNull { it.index > 0 }
-                    ?.let { item -> item.index to item.offset }
-            } else {
-                gridState.layoutInfo.visibleItemsInfo
-                    .firstOrNull { it.index > 0 }
-                    ?.let { item -> item.index to item.offset.y }
-            }
-            val fallbackIndex = (firstApp?.first ?: 1) - 1
-            val stableItemId = currentApps.getOrNull(fallbackIndex)?.databaseId
-            LibraryScrollAnchor(
-                generation = state.generation,
-                stableItemId = stableItemId,
-                offsetPx = firstApp?.second ?: 0,
-                fallbackIndex = fallbackIndex.coerceAtLeast(0),
-                libraryScope = state.libraryScope.takeIf(String::isNotEmpty),
-            )
-        }.collectLatest { anchor ->
-            delay(120)
-            currentOnNavigationStateChanged(currentNavigationState.saveAnchor(surface, anchor))
-        }
+        onReturnAnchorConsumed()
     }
 
     val listModifier = Modifier
@@ -2028,7 +1974,7 @@ internal fun LibraryAppsDestination(
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = LibraryGridMinCellSize),
                 modifier = Modifier.fillMaxSize(),
-                state = gridState,
+                state = if (state.loading || state.errorMessage != null) rememberLazyGridState() else gridState,
                 contentPadding = scaffoldPadding,
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
@@ -2075,7 +2021,7 @@ internal fun LibraryAppsDestination(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                state = listState,
+                state = if (state.loading || state.errorMessage != null) rememberLazyListState() else listState,
                 contentPadding = scaffoldPadding,
             ) {
                 item {
@@ -2132,7 +2078,8 @@ internal fun LibraryAppsDestination(
         ) {
             renderHeader(Modifier, true)
         }
-        GlassSystemBarScrim(visible = headerOffsetPx.floatValue < -1f)
+        val scrimVisible by remember(headerOffsetPx) { derivedStateOf { headerOffsetPx.floatValue < -1f } }
+        GlassSystemBarScrim(visible = scrimVisible)
     }
 }
 
@@ -3916,24 +3863,28 @@ private fun rememberLibraryIcon(
             enhancedIcons,
         )
     }
-    val cached = remember(cacheKey) { LibraryIconCache.get(cacheKey) }
-    return produceState<LibraryNormalizedIcon?>(initialValue = cached, cacheKey) {
-        if (value != null) return@produceState
-        val path = app.iconPath?.takeIf(String::isNotBlank) ?: return@produceState
-        val normalized = LibraryIconWorkSemaphore.withPermit {
-            val bitmap = withContext(Dispatchers.IO) {
-                decodeLibraryBitmap(path, contentSizePx)
-            } ?: return@withPermit null
-            withContext(Dispatchers.Default) {
-                normalizeLibraryIcon(
-                    fileSource = bitmap,
-                    enhanceIcon = enhancedIcons,
-                )
-            }
-        } ?: return@produceState
-        LibraryIconCache.put(cacheKey, normalized)
-        value = normalized
-    }.value
+    // produceState restarts its producer for new keys but retains the previous value. Give each
+    // source/presentation its own state so an already-loaded icon cannot suppress a later load.
+    return androidx.compose.runtime.key(cacheKey) {
+        val cached = remember { LibraryIconCache.get(cacheKey) }
+        produceState<LibraryNormalizedIcon?>(initialValue = cached, cacheKey) {
+            if (value != null) return@produceState
+            val path = app.iconPath?.takeIf(String::isNotBlank) ?: return@produceState
+            val normalized = LibraryIconWorkSemaphore.withPermit {
+                val bitmap = withContext(Dispatchers.IO) {
+                    decodeLibraryBitmap(path, contentSizePx)
+                } ?: return@withPermit null
+                withContext(Dispatchers.Default) {
+                    normalizeLibraryIcon(
+                        fileSource = bitmap,
+                        enhanceIcon = enhancedIcons,
+                    )
+                }
+            } ?: return@produceState
+            LibraryIconCache.put(cacheKey, normalized)
+            value = normalized
+        }.value
+    }
 }
 
 private fun libraryIconCacheKey(

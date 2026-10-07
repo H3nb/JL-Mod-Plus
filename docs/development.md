@@ -99,10 +99,15 @@ The goal is useful regression confidence, not test count or coverage percentage.
 - `app/src/screenshotTest/`: Compose Preview Screenshot Testing cases. Committed references are under `app/src/screenshotTestEmulatorDebug/reference/`; inspect rendered images before accepting reference changes.
 
 The default Android CI mode runs lint, app and dexlib JVM unit tests, screenshot
-validation, and app/instrumentation assembly. Connected instrumentation runs only
+validation, and app/instrumentation assembly. The broader connected runtime suite runs
 in the separate manual `runtime-smoke` mode described below. See the workflow for
 current tasks rather than assuming all source sets execute.
 Automatic PR runs exclude PRs whose entire diff consists of Markdown and `docs/**`.
+A scoped [Library UI workflow](../.github/workflows/library-ui.yml) executes pager,
+viewport recreation/workdir isolation, Collection interaction, and icon-refresh
+contracts on API 35 when the corresponding UI or tests change. It keeps animations
+enabled and uses `jlmodNativeBuild=false`; these checks exercise host UI behavior,
+not native game execution or physical-device frame pacing.
 A separate [Java ME graphics workflow](../.github/workflows/java-me-graphics.yml)
 runs Nokia polygon, MIDP triangle and core Graphics color, primitive, clip,
 lifecycle and bitmap-rebind instrumentation on API 23 and 36 when the

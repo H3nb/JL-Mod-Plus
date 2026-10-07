@@ -54,7 +54,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -83,7 +82,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -233,7 +231,12 @@ internal fun LibraryCollectionsDestination(
     host: LibraryCollectionsHost,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
+    overviewScaffoldPadding: PaddingValues = scaffoldPadding,
+    collectionScaffoldPadding: PaddingValues = scaffoldPadding,
     navigationState: LibraryNavigationState = LibraryNavigationState(),
+    overviewViewport: LibraryViewportState = rememberLibraryViewportState(libraryState.libraryScope),
+    collectionViewport: LibraryViewportState = rememberLibraryViewportState(libraryState.libraryScope, navigationState.selectedCollectionId),
+    pickerViewport: LibraryViewportState = rememberLibraryViewportState(libraryState.libraryScope, navigationState.selectedCollectionId),
     onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     onOpenActions: (LibraryAppUiItem, Long) -> Unit,
     selectionState: LibrarySelectionState = LibrarySelectionState(),
@@ -294,9 +297,6 @@ internal fun LibraryCollectionsDestination(
                         selectedCollectionId = null,
                         selectedCollectionScope = null,
                         collectionManageApps = false,
-                        anchors = navigationState.anchors -
-                            LibraryNavigationSurface.CollectionAppsList -
-                            LibraryNavigationSurface.CollectionAppsGrid,
                     ),
                 )
                 host.onDismissCollectionMembers()
@@ -388,9 +388,8 @@ internal fun LibraryCollectionsDestination(
                     host = host,
                     state = state,
                     libraryState = libraryState,
-                    scaffoldPadding = scaffoldPadding,
-                    navigationState = navigationState,
-                    onNavigationStateChanged = onNavigationStateChanged,
+                    scaffoldPadding = overviewScaffoldPadding,
+                    viewportState = overviewViewport,
                     selectedCollectionId = selectedCollectionId,
                     onOpenCollection = { collectionId ->
                         onNavigationStateChanged(
@@ -427,9 +426,9 @@ internal fun LibraryCollectionsDestination(
                                 allApps = state.allApps,
                                 allAppsPrepared = state.allAppsPrepared,
                                 libraryState = libraryState,
-                                scaffoldPadding = scaffoldPadding,
-                                navigationState = navigationState,
-                                onNavigationStateChanged = onNavigationStateChanged,
+                                scaffoldPadding = collectionScaffoldPadding,
+                                viewportState = collectionViewport,
+                                pickerViewport = pickerViewport,
                                 onBack = {
                                     if (active) closeCollection()
                                 },
@@ -472,81 +471,36 @@ private fun LibraryCollectionsOverview(
     state: LibraryCollectionsUiState,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
-    navigationState: LibraryNavigationState,
-    onNavigationStateChanged: (LibraryNavigationState) -> Unit,
+    viewportState: LibraryViewportState,
     selectedCollectionId: Long?,
     onOpenCollection: (Long) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit,
 ) {
+    val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
+    val publishNavigationVisibility: (Boolean) -> Unit = remember(viewportState) {
+        { visible ->
+            viewportState.chromeVisible = visible
+            currentOnNavigationVisibilityChanged(visible)
+        }
+    }
 
     var createDialog by rememberSaveable { mutableStateOf(false) }
     var actionsTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
-    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
+    val listState = viewportState.listState
     val headerHeightPx = remember { mutableIntStateOf(0) }
-    val headerOffsetPx = remember { mutableFloatStateOf(0f) }
+    val headerOffsetPx = viewportState.headerOffsetPx
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
     val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
     val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
     val revealDistancePx = with(density) { 18.dp.toPx() }
-    val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
-        LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
+    val chromeHysteresis = remember(viewportState, hideDistancePx, revealDistancePx) {
+        LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx, viewportState.chromeVisible)
     }
 
-    LaunchedEffect(
-        state.collections,
-        libraryState.generation,
-        libraryState.libraryScope,
-    ) {
-        val availableIds = state.collections.map { it.id }
-        val anchor = navigationState.resolveAnchor(
-            LibraryNavigationSurface.CollectionsList,
-            libraryState.generation,
-            availableIds,
-            libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
-        ) ?: return@LaunchedEffect
-        val targetIndex = anchor.index + 1
-        if (listState.firstVisibleItemIndex != targetIndex ||
-            listState.firstVisibleItemScrollOffset != anchor.offsetPx
-        ) {
-            listState.scrollToItem(targetIndex, anchor.offsetPx)
-        }
-    }
-
-    LaunchedEffect(
-        state.collections,
-        libraryState.generation,
-        libraryState.libraryScope,
-    ) {
-        snapshotFlow {
-            val firstCollection = listState.layoutInfo.visibleItemsInfo
-                .firstOrNull { it.index > 0 }
-            val fallbackIndex = (firstCollection?.index ?: 1) - 1
-            LibraryScrollAnchor(
-                generation = libraryState.generation,
-                stableItemId = state.collections.getOrNull(fallbackIndex)?.id,
-                offsetPx = firstCollection?.offset ?: 0,
-                fallbackIndex = fallbackIndex.coerceAtLeast(0),
-                libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
-            )
-        }.collectLatest { anchor ->
-            delay(120)
-            onNavigationStateChanged(
-                currentNavigationState.saveAnchor(
-                    LibraryNavigationSurface.CollectionsList,
-                    anchor,
-                ),
-            )
-        }
-    }
-
-    LaunchedEffect(state.collections) {
-        headerOffsetPx.floatValue = 0f
-        chromeHysteresis.reset()
-        onNavigationVisibilityChanged(true)
+    LaunchedEffect(viewportState) {
         snapshotFlow {
             Triple(
                 listState.firstVisibleItemIndex,
@@ -557,7 +511,7 @@ private fun LibraryCollectionsOverview(
             if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.floatValue >= -0.5f) {
                 headerOffsetPx.floatValue = 0f
                 chromeHysteresis.reset()
-                onNavigationVisibilityChanged(true)
+                publishNavigationVisibility(true)
             }
         }
     }
@@ -565,7 +519,7 @@ private fun LibraryCollectionsOverview(
     val scrollConnection = remember(
         chromeHysteresis,
         minScrollRoomPx,
-        onNavigationVisibilityChanged,
+        publishNavigationVisibility,
     ) {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -580,11 +534,11 @@ private fun LibraryCollectionsOverview(
                     if (headerOffsetPx.floatValue < -0.5f && (consumed.y > 0f || available.y > 0f)) {
                         headerOffsetPx.floatValue = 0f
                         if (chromeHysteresis.revealNow() != null) {
-                            onNavigationVisibilityChanged(true)
+                            publishNavigationVisibility(true)
                         }
                     } else if (headerOffsetPx.floatValue == 0f && !chromeHysteresis.chromeVisible) {
                         chromeHysteresis.reset()
-                        onNavigationVisibilityChanged(true)
+                        publishNavigationVisibility(true)
                     }
                     return Offset.Zero
                 }
@@ -610,7 +564,7 @@ private fun LibraryCollectionsOverview(
                 if (delta > 0f && headerOffsetPx.floatValue >= -0.5f && !chromeHysteresis.chromeVisible) {
                     visibilityChange = chromeHysteresis.revealNow()
                 }
-                visibilityChange?.let(onNavigationVisibilityChanged)
+                visibilityChange?.let(publishNavigationVisibility)
                 return Offset.Zero
             }
         }
