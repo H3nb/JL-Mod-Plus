@@ -808,13 +808,20 @@ fun LibraryScreen(
                 state.apps.getOrNull(fallbackIndex)?.databaseId != excludedDatabaseId
             } ?: items.firstOrNull())?.let { it.index to it.offset.y }
         }
-        if (visible == null) return navigationState.anchorFor(surface, state.generation)
+        if (visible == null) {
+            return navigationState.anchorFor(
+                surface,
+                state.generation,
+                libraryScope = state.libraryScope.takeIf(String::isNotEmpty),
+            )
+        }
         val fallbackIndex = (visible.first - 1).coerceAtLeast(0)
         return LibraryScrollAnchor(
             generation = state.generation,
             stableItemId = state.apps.getOrNull(fallbackIndex)?.databaseId,
             offsetPx = visible.second,
             fallbackIndex = fallbackIndex,
+            libraryScope = state.libraryScope.takeIf(String::isNotEmpty),
         )
     }
 
@@ -1760,7 +1767,13 @@ internal fun LibraryAppsDestination(
     // held until the projection contains the submitted metadata, while a plain back leaves the
     // existing LazyListState/LazyGridState untouched. This prevents a second scrollToItem from
     // nudging the content after a row has been remeasured.
-    LaunchedEffect(state.layout, state.generation, returnAnchorKey, returnAnchorReady) {
+    LaunchedEffect(
+        state.layout,
+        state.generation,
+        state.libraryScope,
+        returnAnchorKey,
+        returnAnchorReady,
+    ) {
         if (
             returnAnchor == null &&
             consumedReturnAnchor?.key == returnAnchorKey &&
@@ -1782,7 +1795,12 @@ internal fun LibraryAppsDestination(
         }
         val availableIds = state.apps.map(LibraryAppUiItem::databaseId)
         val anchor = returnAnchor?.let { navigationState.resolveAnchor(it, availableIds) }
-            ?: navigationState.resolveAnchor(surface, state.generation, availableIds)
+            ?: navigationState.resolveAnchor(
+                surface,
+                state.generation,
+                availableIds,
+                libraryScope = state.libraryScope.takeIf(String::isNotEmpty),
+            )
             ?: return@LaunchedEffect
         // A raw viewport snapshot is the exact visual contract for returning from an overlay.
         // Prefer it over the stable-id resolution because a Room projection can remeasure or
@@ -1832,7 +1850,7 @@ internal fun LibraryAppsDestination(
         }
     }
 
-    LaunchedEffect(state.layout, state.generation) {
+    LaunchedEffect(state.layout, state.generation, state.libraryScope) {
         val surface = if (currentLayout == LibraryLayout.List) {
             LibraryNavigationSurface.AppsList
         } else {
@@ -1855,6 +1873,7 @@ internal fun LibraryAppsDestination(
                 stableItemId = stableItemId,
                 offsetPx = firstApp?.second ?: 0,
                 fallbackIndex = fallbackIndex.coerceAtLeast(0),
+                libraryScope = state.libraryScope.takeIf(String::isNotEmpty),
             )
         }.collectLatest { anchor ->
             delay(120)
