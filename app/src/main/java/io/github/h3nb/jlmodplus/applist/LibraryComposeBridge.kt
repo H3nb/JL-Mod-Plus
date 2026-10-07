@@ -592,7 +592,11 @@ fun LibraryScreen(
         pageCount = { LibraryDestination.entries.size },
     )
     val coroutineScope = rememberCoroutineScope()
-    val destination = LibraryDestination.entries[pagerState.currentPage]
+    // currentPage follows the page nearest the snap position while a drag is still in progress.
+    // Keep that transient state visual-only; destination-owned lifecycle and persistence must wait
+    // until the pager settles so a cancelled swipe cannot mutate app navigation state.
+    val visualDestination = LibraryDestination.entries[pagerState.currentPage]
+    val committedDestination = LibraryDestination.entries[pagerState.settledPage]
     var showInstallFab by rememberSaveable { mutableStateOf(true) }
     var showNavigationBar by rememberSaveable { mutableStateOf(true) }
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
@@ -632,7 +636,7 @@ fun LibraryScreen(
     val bulkActions = actions as? LibraryBulkActions
     val currentNavigationState by rememberUpdatedState(navigationState)
     val currentControllerState by rememberUpdatedState(state)
-    val currentControllerDestination by rememberUpdatedState(destination)
+    val currentControllerDestination by rememberUpdatedState(committedDestination)
     val currentControllerAppActions by rememberUpdatedState(appActions)
     val currentControllerRenameTarget by rememberUpdatedState(renameTarget)
     val currentControllerMetadataTarget by rememberUpdatedState(metadataTarget)
@@ -646,7 +650,7 @@ fun LibraryScreen(
     )
 
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.currentPage }
+        snapshotFlow { pagerState.settledPage }
             .collectLatest { page ->
                 val key = LibraryDestinationKey.valueOf(LibraryDestination.entries[page].name)
                 if (currentNavigationState.destination != key) {
@@ -904,20 +908,24 @@ fun LibraryScreen(
         }
     }
 
-    LaunchedEffect(destination) {
+    LaunchedEffect(committedDestination) {
         showInstallFab = true
         showNavigationBar = true
-        if (destination != LibraryDestination.Apps) {
+        if (committedDestination != LibraryDestination.Apps) {
             appActions = null
             appActionsCollectionId = null
         }
     }
-    LaunchedEffect(destination, navigationState.selectedCollectionId, selectionCollectionId) {
+    LaunchedEffect(
+        committedDestination,
+        navigationState.selectedCollectionId,
+        selectionCollectionId,
+    ) {
         if (!selectionState.isActive) {
             selectionCollectionId = null
             return@LaunchedEffect
         }
-        val scopeMatchesDestination = when (destination) {
+        val scopeMatchesDestination = when (committedDestination) {
             LibraryDestination.Apps -> selectionCollectionId == null
             LibraryDestination.Collections ->
                 selectionCollectionId != null &&
@@ -963,7 +971,7 @@ fun LibraryScreen(
         Row(modifier = libraryContentModifier.fillMaxSize()) {
         if (useNavigationRail) {
             LibraryNavigationRail(
-                selected = destination,
+                selected = visualDestination,
                 onSelected = { section ->
                     coroutineScope.launch { pagerState.animateScrollToPage(section.ordinal) }
                 },
@@ -978,7 +986,7 @@ fun LibraryScreen(
             snackbarHost = noticeHost,
             bottomBar = {
                 val collectionId = selectionCollectionId
-                val selectionMatchesDestination = when (destination) {
+                val selectionMatchesDestination = when (committedDestination) {
                     LibraryDestination.Apps -> collectionId == null
                     LibraryDestination.Collections ->
                         collectionId != null && navigationState.selectedCollectionId == collectionId
@@ -1068,7 +1076,7 @@ fun LibraryScreen(
                         ),
                     ) {
                         LibraryNavigationBar(
-                            selected = destination,
+                            selected = visualDestination,
                             onSelected = { section ->
                                 coroutineScope.launch { pagerState.animateScrollToPage(section.ordinal) }
                             },
@@ -1077,7 +1085,7 @@ fun LibraryScreen(
                 }
             },
             floatingActionButton = {
-                if (!imeHidesLibraryChrome && destination == LibraryDestination.Apps && !selectionState.isActive) {
+                if (!imeHidesLibraryChrome && visualDestination == LibraryDestination.Apps && !selectionState.isActive) {
                     AnimatedVisibility(
                         modifier = Modifier.windowInsetsPadding(
                             WindowInsets.safeDrawing
@@ -1134,7 +1142,9 @@ fun LibraryScreen(
         ) { padding ->
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("library-pager"),
                 verticalAlignment = Alignment.Top,
             ) { page ->
                 val pageModifier = if (page == pagerState.currentPage) {
@@ -1227,7 +1237,7 @@ fun LibraryScreen(
                                 onNavigationVisibilityChanged = { visible ->
                                     if (!useNavigationRail) showNavigationBar = visible
                                 },
-                                active = destination == LibraryDestination.Collections,
+                                active = committedDestination == LibraryDestination.Collections,
                             )
                         } else {
                             LibraryCollectionsDestination(padding)
@@ -1340,12 +1350,12 @@ fun LibraryScreen(
                     metadataRestoreRequest = null
                     metadataViewportLocked = true
                     metadataImeWasVisible = isImeVisible
-                    metadataCapturedAnchor = if (destination == LibraryDestination.Apps) {
+                    metadataCapturedAnchor = if (committedDestination == LibraryDestination.Apps) {
                         captureAppsAnchor(app.databaseId)
                     } else {
                         null
                     }
-                    metadataCapturedViewport = if (destination == LibraryDestination.Apps) {
+                    metadataCapturedViewport = if (committedDestination == LibraryDestination.Apps) {
                         captureAppsViewport()
                     } else {
                         null

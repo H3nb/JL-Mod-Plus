@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.applist
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
@@ -139,6 +140,47 @@ class LibraryCollectionsNavigationTest {
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
         assertNull(host.store.activeCollectionId())
+    }
+
+    @Test
+    fun cancelledPagerSwipeKeepsCollectionSelectionAndDetailState() {
+        val host = RecordingCollectionsHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(
+                        state = sampleLibraryState(),
+                        actions = host,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Collections").performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
+        composeRule.onNodeWithText("Select").performClick()
+        composeRule.onNodeWithText(selectionCount(1)).assertIsDisplayed()
+
+        val opensBeforeGesture = host.openedCollectionIds.size
+        composeRule.onNodeWithTag("library-pager").performTouchInput {
+            val start = Offset(width * 0.85f, center.y)
+            val acrossSnapPoint = Offset(width * 0.1f, center.y)
+            down(start)
+            moveTo(acrossSnapPoint, delayMillis = 300L)
+            moveTo(start, delayMillis = 300L)
+            up()
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(selectionCount(1)).assertIsDisplayed()
+        composeRule.onNodeWithTag("collection-selection-checkbox-${SAMPLE_MEMBER.databaseId}")
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+        assertEquals(COLLECTION_ID, host.store.activeCollectionId())
+        assertEquals(opensBeforeGesture, host.openedCollectionIds.size)
     }
 
     @Test
