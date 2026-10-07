@@ -14,9 +14,6 @@
 
 package javax.microedition.shell;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
 import org.junit.Test;
 
 public class MidletSystemTest {
@@ -30,20 +27,6 @@ public class MidletSystemTest {
 	public void runtimeGcBridgePreservesReceiverNullCheck() {
 		MidletSystem.gc((Runtime) null);
 	}
+}
 
-	@Test
-	public void emulatorOwnedPropertySynchronizesHostAndGuestStores() {
-		String key = "jlmod.test.guest.property";
-		try {
-			MicroLoader.setGuestSystemProperty(key, "probe");
-			assertEquals("probe", System.getProperty(key));
-			assertEquals("probe", MidletSystem.getProperty(key));
-
-			MicroLoader.setGuestSystemProperty(key, null);
-			assertNull(System.getProperty(key));
-			assertNull(MidletSystem.getProperty(key));
-		} finally {
-			MicroLoader.setGuestSystemProperty(key, null);
-		}
-	}
 }

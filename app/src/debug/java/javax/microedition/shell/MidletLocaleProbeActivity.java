@@ -28,10 +28,15 @@ public final class MidletLocaleProbeActivity extends Activity {
         Locale hostLocale = ConfigurationCompat.getLocales(
                 getResources().getConfiguration()).get(0);
         String guestLocale = MidletLocaleResolver.resolve(this);
+        MicroLoader.setGuestSystemProperty("microedition.locale", guestLocale);
+        String systemProperty = System.getProperty("microedition.locale");
+        String midletProperty = MidletSystem.getProperty("microedition.locale");
         try (FileOutputStream output = new FileOutputStream(new File(markerPath), false)) {
             String evidence = "host-locale="
                     + (hostLocale == null ? "" : hostLocale.toLanguageTag())
-                    + "\nlocale=" + (guestLocale == null ? "" : guestLocale) + "\n";
+                    + "\nlocale=" + (guestLocale == null ? "" : guestLocale)
+                    + "\nsystem-property=" + (systemProperty == null ? "" : systemProperty)
+                    + "\nmidlet-property=" + (midletProperty == null ? "" : midletProperty) + "\n";
             output.write(evidence.getBytes(StandardCharsets.UTF_8));
             output.flush();
         } catch (IOException ignored) {

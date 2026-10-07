@@ -76,6 +76,12 @@ public class MidletLocaleRuntimeTest {
             assertEquals("Java ME locale must preserve language-only identity without"
                             + " a compatible system region",
                     "locale=" + testLanguage, markerValue(marker, "locale="));
+            assertEquals("Host System property must receive the resolved Java ME locale",
+                    "system-property=" + testLanguage,
+                    markerValue(marker, "system-property="));
+            assertEquals("Transformed MIDlet property delegate must receive the same locale",
+                    "midlet-property=" + testLanguage,
+                    markerValue(marker, "midlet-property="));
         } finally {
             stopProcess(context, probeProcess);
             localeManager.setApplicationLocales(previousLocales);
