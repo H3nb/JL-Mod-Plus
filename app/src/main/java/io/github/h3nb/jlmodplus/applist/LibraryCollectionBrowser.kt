@@ -113,7 +113,9 @@ internal fun LibraryCollectionBrowser(
     onOpenActions: (LibraryAppUiItem) -> Unit,
     selectionState: LibrarySelectionState = LibrarySelectionState(),
     onSelectionStateChanged: (LibrarySelectionState) -> Unit = {},
-    onSetMembership: (Int, Boolean) -> Unit,
+    manageApps: Boolean = false,
+    onManageAppsChanged: (Boolean) -> Unit = {},
+    onSetMembership: (Int, Boolean, CollectionMembershipResultCallback) -> Unit,
     onPrepareAppPicker: () -> Unit,
     onSort: (Int) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
@@ -121,35 +123,71 @@ internal fun LibraryCollectionBrowser(
     handleSystemBack: Boolean = true,
     interactionActive: Boolean = true,
 ) {
-    var manageApps by rememberSaveable(collection.id) { mutableStateOf(false) }
+    var pendingMemberships by remember(collection.id) {
+        mutableStateOf<Map<Int, Boolean>>(emptyMap())
+    }
+    val committedMemberIds = remember(members) {
+        members.mapTo(LinkedHashSet()) { it.id }
+    }
+    LaunchedEffect(committedMemberIds) {
+        val unresolved = pendingMemberships.filter { (appId, desiredIncluded) ->
+            (appId in committedMemberIds) != desiredIncluded
+        }
+        if (unresolved != pendingMemberships) pendingMemberships = unresolved
+    }
+    fun setManageApps(visible: Boolean) {
+        if (manageApps == visible) return
+        onManageAppsChanged(visible)
+        if (interactionActive) {
+            onNavigationVisibilityChanged(!visible)
+        }
+    }
     BackHandler(
         enabled = interactionActive && (manageApps || selectionState.isActive || handleSystemBack),
     ) {
         when {
-            manageApps -> manageApps = false
+            manageApps -> setManageApps(false)
             selectionState.isActive -> onSelectionStateChanged(selectionState.clear())
             else -> onBack()
         }
     }
     LaunchedEffect(manageApps, interactionActive) {
         if (!interactionActive) return@LaunchedEffect
-        if (manageApps) onPrepareAppPicker()
-        onNavigationVisibilityChanged(!manageApps)
+        if (manageApps) {
+            onPrepareAppPicker()
+            // Reassert for direct/preview hosts; LibraryScreen also derives suppression from
+            // navigationState.collectionManageApps, so pager return never depends on this effect.
+            onNavigationVisibilityChanged(false)
+        }
     }
 
     if (manageApps) {
         LibraryCollectionAppPicker(
             collection = collection,
             allApps = allApps,
-            memberIds = members.mapTo(LinkedHashSet()) { it.id },
+            memberIds = committedMemberIds,
+            pendingMemberships = pendingMemberships,
             sortVariant = libraryState.sortVariant,
             iconRatio = libraryState.iconRatio,
             iconShape = libraryState.iconShape,
             enhancedIcons = libraryState.enhancedIcons,
             scaffoldPadding = scaffoldPadding,
             loading = !allAppsPrepared,
-            onBack = { manageApps = false },
-            onSetMembership = onSetMembership,
+            onBack = { setManageApps(false) },
+            onSetMembership = { appId, included ->
+                if (appId !in pendingMemberships) {
+                    pendingMemberships = pendingMemberships + (appId to included)
+                    onSetMembership(
+                        appId,
+                        included,
+                        CollectionMembershipResultCallback { success ->
+                            if (!success && pendingMemberships[appId] == included) {
+                                pendingMemberships = pendingMemberships - appId
+                            }
+                        },
+                    )
+                }
+            },
         )
         return
     }
@@ -376,7 +414,7 @@ internal fun LibraryCollectionBrowser(
             onQueryChange = { query = it },
             onSortVisibilityChanged = { sortVisible = it },
             onSort = onSort,
-            onManageApps = { manageApps = true },
+            onManageApps = { setManageApps(true) },
             interactive = interactive,
             showBackButton = showBackButton,
         )
@@ -837,6 +875,7 @@ internal fun LibraryCollectionAppPicker(
     collection: LibraryCollectionUiItem,
     allApps: List<LibraryAppUiItem>,
     memberIds: Set<Int>,
+    pendingMemberships: Map<Int, Boolean> = emptyMap(),
     sortVariant: Int,
     iconRatio: LibraryIconRatio,
     iconShape: LibraryIconShape,
@@ -918,12 +957,15 @@ internal fun LibraryCollectionAppPicker(
         )
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(visibleApps, key = { it.id }) { app ->
-                val checked = app.id in memberIds
+                val pending = pendingMemberships[app.id]
+                val checked = pending ?: (app.id in memberIds)
+                val enabled = pending == null
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .toggleable(
                             value = checked,
+                            enabled = enabled,
                             role = Role.Checkbox,
                             onValueChange = { next -> onSetMembership(app.id, next) },
                         )
@@ -958,6 +1000,7 @@ internal fun LibraryCollectionAppPicker(
                     Checkbox(
                         checked = checked,
                         onCheckedChange = null,
+                        enabled = enabled,
                     )
                 }
                 HorizontalDivider(
