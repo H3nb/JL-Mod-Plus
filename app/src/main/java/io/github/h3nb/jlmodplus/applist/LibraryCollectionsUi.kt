@@ -294,6 +294,9 @@ internal fun LibraryCollectionsDestination(
                         selectedCollectionId = null,
                         selectedCollectionScope = null,
                         collectionManageApps = false,
+                        anchors = navigationState.anchors -
+                            LibraryNavigationSurface.CollectionAppsList -
+                            LibraryNavigationSurface.CollectionAppsGrid,
                     ),
                 )
                 host.onDismissCollectionMembers()
