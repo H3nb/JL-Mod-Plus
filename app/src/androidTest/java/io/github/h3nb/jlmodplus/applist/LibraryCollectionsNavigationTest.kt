@@ -121,7 +121,9 @@ class LibraryCollectionsNavigationTest {
                             selectedCollectionId = COLLECTION_ID,
                         ),
                         onOpenActions = { _, _ -> },
-                        onNavigationVisibilityChanged = navigationVisibilityEvents::add,
+                        onNavigationVisibilityChanged = { visible ->
+                            navigationVisibilityEvents += visible
+                        },
                         active = active.value,
                     )
                 }
