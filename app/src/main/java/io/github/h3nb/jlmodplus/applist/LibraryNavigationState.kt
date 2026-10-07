@@ -41,6 +41,8 @@ data class LibraryScrollAnchor(
     val fallbackIndex: Int,
     /** Optional database-local owner, currently used for Collection detail anchors. */
     val scopeId: Long? = null,
+    /** Stable workdir identity for database-local anchors across process recreation. */
+    val libraryScope: String? = null,
 )
 
 data class LibraryNavigationState(
@@ -79,6 +81,7 @@ data class LibraryNavigationState(
                             anchor.offsetPx,
                             anchor.fallbackIndex,
                             anchor.scopeId ?: Long.MIN_VALUE,
+                            anchor.libraryScope.orEmpty(),
                         )
                     },
                     state.selectedCollectionScope.orEmpty(),
@@ -136,12 +139,15 @@ data class LibraryNavigationState(
                     val fallbackIndex = (entry.getOrNull(4) as? Number)?.toInt() ?: return@mapNotNull null
                     val scopeId = (entry.getOrNull(5) as? Number)?.toLong()
                         ?.takeUnless { it == Long.MIN_VALUE }
+                    val libraryScope = (entry.getOrNull(6) as? String)
+                        ?.takeIf(String::isNotEmpty)
                     surface to LibraryScrollAnchor(
                         generation,
                         stableId,
                         offset,
                         fallbackIndex,
                         scopeId,
+                        libraryScope,
                     )
                 }.toMap()
                 LibraryNavigationState(
@@ -168,8 +174,11 @@ data class LibraryNavigationState(
         surface: LibraryNavigationSurface,
         activeGeneration: Long,
         scopeId: Long? = null,
+        libraryScope: String? = null,
     ): LibraryScrollAnchor? = anchors[surface]?.takeIf {
-        it.generation == activeGeneration && it.scopeId == scopeId
+        it.generation == activeGeneration &&
+            it.scopeId == scopeId &&
+            it.libraryScope == libraryScope
     }
 
     fun resolveAnchor(
@@ -177,8 +186,14 @@ data class LibraryNavigationState(
         activeGeneration: Long,
         availableIds: List<Long>,
         scopeId: Long? = null,
+        libraryScope: String? = null,
     ): ResolvedLibraryScrollAnchor? {
-        val anchor = anchorFor(surface, activeGeneration, scopeId) ?: return null
+        val anchor = anchorFor(
+            surface,
+            activeGeneration,
+            scopeId,
+            libraryScope,
+        ) ?: return null
         return resolveAnchor(anchor, availableIds)
     }
 
