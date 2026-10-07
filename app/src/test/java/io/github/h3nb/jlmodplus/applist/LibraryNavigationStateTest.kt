@@ -61,7 +61,7 @@ class LibraryNavigationStateTest {
     }
 
     @Test
-    fun collectionAnchorNeverCrossesCollectionScope() {
+    fun collectionAnchorNeverCrossesCollectionOrLibraryScope() {
         val state = LibraryNavigationState().saveAnchor(
             LibraryNavigationSurface.CollectionAppsList,
             LibraryScrollAnchor(
@@ -70,6 +70,7 @@ class LibraryNavigationStateTest {
                 offsetPx = 18,
                 fallbackIndex = 1,
                 scopeId = 7L,
+                libraryScope = "/work/library-a",
             ),
         )
 
@@ -80,6 +81,7 @@ class LibraryNavigationStateTest {
                 activeGeneration = 3L,
                 availableIds = listOf(10L, 20L, 30L),
                 scopeId = 7L,
+                libraryScope = "/work/library-a",
             ),
         )
         assertNull(
@@ -88,6 +90,16 @@ class LibraryNavigationStateTest {
                 activeGeneration = 3L,
                 availableIds = listOf(10L, 20L, 30L),
                 scopeId = 8L,
+                libraryScope = "/work/library-a",
+            ),
+        )
+        assertNull(
+            state.resolveAnchor(
+                LibraryNavigationSurface.CollectionAppsList,
+                activeGeneration = 3L,
+                availableIds = listOf(10L, 20L, 30L),
+                scopeId = 7L,
+                libraryScope = "/work/library-b",
             ),
         )
     }
@@ -165,7 +177,17 @@ class LibraryNavigationStateTest {
                 "All",
                 0,
                 42L,
-                listOf(listOf("CollectionAppsList", 9L, 100L, 7, 2, 42L)),
+                listOf(
+                    listOf(
+                        "CollectionAppsList",
+                        9L,
+                        100L,
+                        7,
+                        2,
+                        42L,
+                        "/work/library-a",
+                    ),
+                ),
                 "/work/library-a",
             ),
         )
@@ -174,6 +196,10 @@ class LibraryNavigationStateTest {
         assertEquals(
             42L,
             restored?.anchors?.get(LibraryNavigationSurface.CollectionAppsList)?.scopeId,
+        )
+        assertEquals(
+            "/work/library-a",
+            restored?.anchors?.get(LibraryNavigationSurface.CollectionAppsList)?.libraryScope,
         )
     }
 
