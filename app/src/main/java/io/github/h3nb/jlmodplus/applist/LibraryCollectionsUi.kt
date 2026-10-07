@@ -54,6 +54,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -241,7 +242,19 @@ internal fun LibraryCollectionsDestination(
     val selectedCollection = selectedCollectionId?.let { collectionId ->
         state.collections.firstOrNull { it.id == collectionId }
     }
-    val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
+    // Navigation 3 remembers NavEntry instances for an unchanged back stack. Values captured
+    // directly by an entry's content lambda can therefore become stale while the route stays open.
+    // Bridge every changing input used inside the entries through snapshot State so the cached
+    // entry content observes the latest Collection/UI state without turning UI state into route keys.
+    val currentCollectionsState by rememberUpdatedState(state)
+    val currentLibraryState by rememberUpdatedState(libraryState)
+    val currentScaffoldPadding by rememberUpdatedState(scaffoldPadding)
+    val currentNavigationState by rememberUpdatedState(navigationState)
+    val currentOnNavigationStateChanged by rememberUpdatedState(onNavigationStateChanged)
+    val currentOnOpenActions by rememberUpdatedState(onOpenActions)
+    val currentSelectionState by rememberUpdatedState(selectionState)
+    val currentOnSelectionStateChanged by rememberUpdatedState(onSelectionStateChanged)
+    val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
 
     LaunchedEffect(
         selectionState,
@@ -283,9 +296,11 @@ internal fun LibraryCollectionsDestination(
     }
 
     val closeCollection = {
-        onSelectionStateChanged(selectionState.clear())
-        onNavigationVisibilityChanged(true)
-        onNavigationStateChanged(currentNavigationState.copy(selectedCollectionId = null))
+        currentOnSelectionStateChanged(currentSelectionState.clear())
+        currentOnNavigationVisibilityChanged(true)
+        currentOnNavigationStateChanged(
+            currentNavigationState.copy(selectedCollectionId = null),
+        )
         host.onDismissCollectionMembers()
     }
     val backStack = remember(active, selectedCollectionId) {
@@ -302,6 +317,7 @@ internal fun LibraryCollectionsDestination(
     }
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
     val showDetailBack = directive.maxHorizontalPartitions == 1
+    val currentShowDetailBack by rememberUpdatedState(showDetailBack)
 
     NavDisplay(
         backStack = backStack,
@@ -320,47 +336,49 @@ internal fun LibraryCollectionsDestination(
                         },
                     ),
                 ) {
+                    val latestNavigationState = currentNavigationState
                     LibraryCollectionsOverview(
                         host = host,
-                        state = state,
-                        libraryState = libraryState,
-                        scaffoldPadding = scaffoldPadding,
-                        navigationState = navigationState,
-                        onNavigationStateChanged = onNavigationStateChanged,
-                        selectedCollectionId = selectedCollectionId,
+                        state = currentCollectionsState,
+                        libraryState = currentLibraryState,
+                        scaffoldPadding = currentScaffoldPadding,
+                        navigationState = latestNavigationState,
+                        onNavigationStateChanged = currentOnNavigationStateChanged,
+                        selectedCollectionId = latestNavigationState.selectedCollectionId,
                         onOpenCollection = { collectionId ->
-                            onNavigationStateChanged(
+                            currentOnNavigationStateChanged(
                                 currentNavigationState.copy(selectedCollectionId = collectionId),
                             )
                         },
-                        onNavigationVisibilityChanged = onNavigationVisibilityChanged,
+                        onNavigationVisibilityChanged = currentOnNavigationVisibilityChanged,
                     )
                 }
                 is CollectionMembersRoute -> NavEntry(
                     key = key,
                     metadata = ListDetailSceneStrategy.detailPane(),
                 ) {
-                    val collection = state.collections.firstOrNull { it.id == key.collectionId }
-                    val members = state.members?.takeIf { it.collectionId == key.collectionId }
+                    val latestState = currentCollectionsState
+                    val collection = latestState.collections.firstOrNull { it.id == key.collectionId }
+                    val members = latestState.members?.takeIf { it.collectionId == key.collectionId }
                     if (collection == null || members == null) {
                         LibraryCollectionDetailLoading(
                             name = collection?.name,
-                            scaffoldPadding = scaffoldPadding,
+                            scaffoldPadding = currentScaffoldPadding,
                         )
                     } else {
                         LibraryCollectionBrowser(
                             collection = collection,
                             members = members.members,
-                            allApps = state.allApps,
-                            libraryState = libraryState,
-                            scaffoldPadding = scaffoldPadding,
-                            navigationState = navigationState,
-                            onNavigationStateChanged = onNavigationStateChanged,
+                            allApps = latestState.allApps,
+                            libraryState = currentLibraryState,
+                            scaffoldPadding = currentScaffoldPadding,
+                            navigationState = currentNavigationState,
+                            onNavigationStateChanged = currentOnNavigationStateChanged,
                             onBack = closeCollection,
                             onOpenApp = host::onOpenApp,
-                            onOpenActions = { app -> onOpenActions(app, collection.id) },
-                            selectionState = selectionState,
-                            onSelectionStateChanged = onSelectionStateChanged,
+                            onOpenActions = { app -> currentOnOpenActions(app, collection.id) },
+                            selectionState = currentSelectionState,
+                            onSelectionStateChanged = currentOnSelectionStateChanged,
                             onSetMembership = { appId, included ->
                                 if (included) {
                                     host.onAddAppToCollection(appId, collection.id)
@@ -370,8 +388,8 @@ internal fun LibraryCollectionsDestination(
                             },
                             onPrepareAppPicker = host::onPrepareCollectionAppPicker,
                             onSort = host::onSort,
-                            onNavigationVisibilityChanged = onNavigationVisibilityChanged,
-                            showBackButton = showDetailBack,
+                            onNavigationVisibilityChanged = currentOnNavigationVisibilityChanged,
+                            showBackButton = currentShowDetailBack,
                             handleSystemBack = false,
                         )
                     }
