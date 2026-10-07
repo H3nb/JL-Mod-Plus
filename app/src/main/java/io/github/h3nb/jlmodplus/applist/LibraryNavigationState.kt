@@ -54,6 +54,8 @@ data class LibraryNavigationState(
     val anchors: Map<LibraryNavigationSurface, LibraryScrollAnchor> = emptyMap(),
     /** Stable workdir identity for [selectedCollectionId]; Room ids are local to one Library DB. */
     val selectedCollectionScope: String? = null,
+    /** Full-screen Collection membership editor state; belongs to the selected Collection route. */
+    val collectionManageApps: Boolean = false,
 ) {
     companion object {
         /**
@@ -80,6 +82,7 @@ data class LibraryNavigationState(
                         )
                     },
                     state.selectedCollectionScope.orEmpty(),
+                    state.collectionManageApps,
                 )
             },
             restore = { saved ->
@@ -116,6 +119,11 @@ data class LibraryNavigationState(
                 } else {
                     (saved.getOrNull(7) as? String)?.takeIf(String::isNotEmpty)
                 }
+                val collectionManageApps = if (legacyAnchors.isNotEmpty()) {
+                    false
+                } else {
+                    saved.getOrNull(8) as? Boolean ?: false
+                }
                 val anchors = anchorValues.mapNotNull { value ->
                     val entry = value as? List<*> ?: return@mapNotNull null
                     val surface = entry.getOrNull(0)?.toString()?.let {
@@ -145,6 +153,7 @@ data class LibraryNavigationState(
                     selectedCollectionId = selectedCollectionId,
                     anchors = anchors,
                     selectedCollectionScope = selectedCollectionScope,
+                    collectionManageApps = collectionManageApps && selectedCollectionId != null,
                 )
             },
         )
