@@ -115,22 +115,22 @@ public class PlatformCompatBehaviorTest {
 	}
 
 	@Test
-	public void midletLocaleUsesJavaMeDeviceLocaleAcrossColdStart() throws Exception {
+	public void midletLocaleRecoversMatchingSystemRegionAcrossColdStart() throws Exception {
 		LocaleListCompat previousLocales = LocaleManagerCompat.getApplicationLocales(context);
 		try {
 			InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
 					AppCompatDelegate.setApplicationLocales(
-							LocaleListCompat.forLanguageTags("id")));
+							LocaleListCompat.forLanguageTags("en")));
 			assertEquals("Application locale must be committed before the MIDlet process starts",
-					"id", LocaleManagerCompat.getApplicationLocales(context).toLanguageTags());
+					"en", LocaleManagerCompat.getApplicationLocales(context).toLanguageTags());
 			launchFixture(context, appDir);
 			awaitMarker(marker, "host-locale=");
 			awaitMarker(marker, "locale=");
 			String hostLocale = lastMarkerValue(marker, "host-locale=");
 			assertTrue("Runtime Activity must apply the selected application language: " + hostLocale,
-					hostLocale.equals("host-locale=id") || hostLocale.startsWith("host-locale=id-"));
-			assertEquals("MIDlet locale must expose a complete Java ME device locale",
-					"locale=id-ID", lastMarkerValue(marker, "locale="));
+					hostLocale.equals("host-locale=en") || hostLocale.startsWith("host-locale=en-"));
+			assertEquals("MIDlet locale must recover the matching system region",
+					"locale=en-US", lastMarkerValue(marker, "locale="));
 		} finally {
 			killFixtureProcess();
 			InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->

@@ -24,7 +24,7 @@ import java.util.Locale;
 
 public class MidletLocaleResolverTest {
 	@Test
-	public void explicitRegionWinsOverSystemAndLikelySubtags() {
+	public void explicitRegionWinsOverSystemRegion() {
 		assertEquals("fr-CA", MidletLocaleResolver.resolve(
 				Locale.forLanguageTag("fr-CA"),
 				List.of(Locale.forLanguageTag("fr-FR")),
@@ -84,6 +84,6 @@ public class MidletLocaleResolverTest {
 		assertEquals("en-US-POSIX", MidletLocaleResolver.resolve(
 				Locale.forLanguageTag("en-US-POSIX"),
 				List.of(),
-				locale -> locale));
+				(requested, candidate) -> true));
 	}
 }

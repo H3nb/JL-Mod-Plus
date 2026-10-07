@@ -144,10 +144,12 @@ final class MidletLocaleResolver {
 
 	private static boolean isTwoAsciiLetters(String value) {
 		return value.length() == 2
-				&& value.charAt(0) >= 'A' && value.charAt(0) <= 'z'
-				&& Character.isLetter(value.charAt(0))
-				&& value.charAt(1) >= 'A' && value.charAt(1) <= 'z'
-				&& Character.isLetter(value.charAt(1));
+				&& isAsciiLetter(value.charAt(0))
+				&& isAsciiLetter(value.charAt(1));
+	}
+
+	private static boolean isAsciiLetter(char value) {
+		return (value >= 'A' && value <= 'Z') || (value >= 'a' && value <= 'z');
 	}
 
 	private static String serialize(String language, @Nullable String country, String variant) {

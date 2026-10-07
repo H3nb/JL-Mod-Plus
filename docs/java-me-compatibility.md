@@ -20,9 +20,10 @@ device locale independently of guest content and expose that same value to every
 under the same emulator locale state.
 
 The runtime Activity's effective Android locale supplies the language, script intent and any
-explicit region. If the region is absent, first prefer a same-language system locale whose script
-is compatible; otherwise use ICU/CLDR likely-subtags to complete the locale. Canonicalize legacy
-Android language aliases through BCP-47 before serializing back to the MIDP 2.0
+explicit region. If the region is absent, it may be borrowed only from a same-language system
+locale whose language and script are compatible. If no such real regional locale exists, preserve
+the language-only device locale instead of inventing a country. Canonicalize legacy Android
+language aliases through BCP-47 before serializing back to the MIDP 2.0
 `language[-COUNTRY[-variant]]` shape. MIDP requires a lower-case two-letter ISO-639 language and,
 when present, an upper-case two-letter ISO-3166 country. Do not invent a Java ME locale for a host
 language that cannot be represented by that contract; `microedition.locale` may be absent.

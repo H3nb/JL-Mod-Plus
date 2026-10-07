@@ -240,9 +240,10 @@ spelling; treat a physical-directory migration as separate compatibility work.
 
 Android application locale and the Java ME device locale are separate contracts.
 The app locale selects JL-Mod Plus resources; the MIDlet runtime derives its device locale from
-the effective app locale plus compatible regional context and CLDR data, then serializes it to
-the MIDP format. A language-only Android locale therefore does not imply that the guest property
-must also be language-only. Never inspect MIDlet resources to choose that device locale.
+the effective app locale plus compatible region information that is actually present in the
+system locale list, then serializes it to the MIDP format. Never invent a country merely to make a
+language-only locale look more specific, and never inspect MIDlet resources to choose the device
+locale.
 
 **Target architecture:**
 
