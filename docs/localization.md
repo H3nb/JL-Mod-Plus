@@ -238,6 +238,13 @@ tested migration proves a directory change safe; it is not the canonical
 application identity. Do not rename locale directories solely to normalize tag
 spelling; treat a physical-directory migration as separate compatibility work.
 
+Android application locale and the Java ME device locale are separate
+contracts. The app locale selects JL-Mod Plus resources. The authoritative
+guest-locale resolution contract is
+[MIDlet locale identity](java-me-compatibility.md#midlet-locale-identity);
+localization code must not inspect MIDlet resources to choose the Java ME device
+locale.
+
 **Target architecture:**
 
 - One human-language `strings.xml` catalog per locale, containing both `<string>`
@@ -280,10 +287,11 @@ Current implementation evidence:
   is reviewed. UI percentages use the active resource locale rather than a
   hardcoded percent suffix.
 - [SettingsActivity.buildLanguageOptions](../app/src/main/java/io/github/h3nb/jlmodplus/settings/SettingsActivity.java)
-  reads `_generated_res_locale_config`; unavailable/unreadable metadata leaves
-  only the system-language option. Treat this as a current limitation to account
-  for when locale-discovery behavior is in scope, not as a reason to redesign the
-  localization stack during unrelated work.
+  reads `_generated_res_locale_config` and canonicalizes language tags through
+  the platform BCP-47 mapping before using them as picker identity. Unavailable
+  or unreadable metadata leaves only the system-language option. Treat this as a
+  current limitation to account for when locale-discovery behavior is in scope,
+  not as a reason to redesign the localization stack during unrelated work.
 - [AndroidManifest.xml](../app/src/main/AndroidManifest.xml) declares `:midlet`
   and `:memory_engine` components alongside default/main-process components.
 
