@@ -44,8 +44,11 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -66,11 +69,18 @@ class RuntimeMenuComposeTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun runtimeDialogAppliesInheritedWindowPolicy() {
-        var policyApplied = false
+    fun runtimeDialogPreservesInheritedHiddenSystemBars() {
+        var dialogWindow: android.view.Window? = null
         composeRule.setContent {
             ProvideDialogWindowPolicy(
-                policy = DialogWindowPolicy { policyApplied = true },
+                policy = DialogWindowPolicy { window ->
+                    dialogWindow = window
+                    RuntimeSystemBarController.apply(
+                        window,
+                        false,
+                        false,
+                    )
+                },
             ) {
                 JLModPlusTheme {
                     RuntimeLimitFpsDialog(
@@ -83,8 +93,28 @@ class RuntimeMenuComposeTest {
         }
 
         composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).assertIsDisplayed()
+        composeRule.waitUntil(timeoutMillis = 5_000L) {
+            val window = dialogWindow ?: return@waitUntil false
+            val insets = ViewCompat.getRootWindowInsets(window.decorView)
+                ?: return@waitUntil false
+            !insets.isVisible(WindowInsetsCompat.Type.statusBars()) &&
+                !insets.isVisible(WindowInsetsCompat.Type.navigationBars())
+        }
         composeRule.runOnIdle {
-            assertTrue("Runtime dialog did not expose its Compose dialog Window", policyApplied)
+            val window = checkNotNull(dialogWindow) {
+                "Runtime dialog did not expose its Compose dialog Window"
+            }
+            val insets = checkNotNull(ViewCompat.getRootWindowInsets(window.decorView)) {
+                "Runtime dialog Window did not expose root insets"
+            }
+            assertFalse(
+                "Runtime dialog unexpectedly showed the status bar",
+                insets.isVisible(WindowInsetsCompat.Type.statusBars()),
+            )
+            assertFalse(
+                "Runtime dialog unexpectedly showed the navigation bar",
+                insets.isVisible(WindowInsetsCompat.Type.navigationBars()),
+            )
         }
     }
 
