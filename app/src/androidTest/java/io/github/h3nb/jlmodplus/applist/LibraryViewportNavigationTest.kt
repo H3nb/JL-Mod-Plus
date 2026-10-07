@@ -11,12 +11,16 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -80,10 +84,10 @@ class LibraryViewportNavigationTest {
         composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
 
         swipeToPreviousPage()
-        composeRule.onNodeWithContentDescription(uiString(R.string.library_destination_apps)).assertIsDisplayed()
+        composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps))).assertIsDisplayed()
         assertViewport(members, MEMBER_PREFIX)
         swipeToPreviousPage()
-        composeRule.onNodeWithContentDescription(uiString(R.string.library_destination_apps)).assertIsDisplayed()
+        composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps))).assertIsDisplayed()
         assertViewport(apps, APP_PREFIX)
     }
 
@@ -127,40 +131,43 @@ class LibraryViewportNavigationTest {
         }
         composeRule.waitForIdle()
         val appsNavigation = uiString(R.string.library_destination_apps)
-        composeRule.onAllNodesWithContentDescription(appsNavigation).assertCountEquals(0)
+        composeRule.onAllNodes(navigationMatcher(appsNavigation)).assertCountEquals(0)
         // Hiding the footer expands this viewport and legitimately changes its end clamp.
         // Establish the final end position before capturing the pager-return contract.
         activeList(APP_PREFIX).performScrollToNode(hasText(rowTitle(APP_PREFIX, 79)))
         composeRule.waitForIdle()
-        composeRule.onAllNodesWithContentDescription(appsNavigation).assertCountEquals(0)
+        composeRule.onAllNodes(navigationMatcher(appsNavigation)).assertCountEquals(0)
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true).assertIsDisplayed()
         swipeToNextPage()
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
+        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
         // Programmatic scrolling keeps this page's footer visible, unlike the Apps gesture.
         activeList(FOLDER_PREFIX).performScrollToNode(hasText(rowTitle(FOLDER_PREFIX, 79)))
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
+        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
         val folders = visibleRow(FOLDER_PREFIX)
         swipeToNextPage()
         composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
         swipeToPreviousPage()
         assertViewport(folders, FOLDER_PREFIX)
-        composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
+        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
         swipeToPreviousPage()
 
         // Returning deliberately reveals navigation. At the end, its inset can clamp the first
         // row; the final app must remain visible, with no replay of an obsolete hidden-bar anchor.
-        composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
-        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
+        val lastApp = composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true)
+        lastApp.assertIsDisplayed()
+        val navigationTop = composeRule.onNode(navigationMatcher(appsNavigation)).fetchSemanticsNode().boundsInRoot.top
+        assertTrue("Returning navigation covered the final app", lastApp.fetchSemanticsNode().boundsInRoot.bottom <= navigationTop)
         val apps = visibleRow(APP_PREFIX)
 
         restoration.emulateSavedInstanceStateRestore()
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
+        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
         assertViewport(apps, APP_PREFIX)
         swipeToNextPage()
-        composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
+        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
         assertViewport(folders, FOLDER_PREFIX)
     }
 
@@ -186,10 +193,18 @@ class LibraryViewportNavigationTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).assertIsFocused()
         val searchBottom = composeRule.onNode(hasSetTextAction()).fetchSemanticsNode().boundsInRoot.bottom
         val resultTop = composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot.top
         assertTrue("Search left a large empty gap above results", resultTop - searchBottom < 100f)
+        // Settled tab navigation closes search focus/IME so another surface remains usable.
+        swipeToNextPage()
+        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps))).isDisplayed()
+        }
+        composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps))).assertIsDisplayed()
     }
 
     @Test
@@ -271,6 +286,9 @@ class LibraryViewportNavigationTest {
         }
     }
 
+    private fun navigationMatcher(label: String) =
+        hasClickAction() and (hasText(label) or hasContentDescription(label))
+
     private fun rowMatcher(prefix: String) = SemanticsMatcher("row title starts with $prefix") { node ->
         SemanticsProperties.Text in node.config &&
             node.config[SemanticsProperties.Text].any { it.text.startsWith(prefix) }
@@ -294,7 +312,11 @@ class LibraryViewportNavigationTest {
             val bounds = node.boundsInRoot
             // Clipped nodes touch a viewport edge; only interior rendered title bounds qualify.
             bounds.width > 0 && bounds.height > 0 &&
-                bounds.top > viewport.top && bounds.bottom < viewport.bottom
+                bounds.top > viewport.top && bounds.bottom < viewport.bottom &&
+                composeRule.onNode(
+                    SemanticsMatcher("placed row ${node.id}") { it.id == node.id },
+                    useUnmergedTree = true,
+                ).isDisplayed()
         }
         val first = checkNotNull(nodes.minWithOrNull(
             compareBy({ it.boundsInRoot.top }, { it.boundsInRoot.left }),

@@ -144,6 +144,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -156,6 +157,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.platform.testTag
@@ -592,6 +594,7 @@ fun LibraryScreen(
         pageCount = { LibraryDestination.entries.size },
     )
     val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
     // Indicators may follow the gesture; state-changing navigation commits only after settling.
     val destination = LibraryDestination.entries[pagerState.settledPage]
     val indicatedDestination = LibraryDestination.entries[pagerState.currentPage]
@@ -943,6 +946,7 @@ fun LibraryScreen(
     }
 
     LaunchedEffect(destination, state.libraryScope) {
+        focusManager.clearFocus()
         when (destination) {
             LibraryDestination.Apps -> appsViewport.chromeVisible = true
             LibraryDestination.Collections -> {
@@ -4315,6 +4319,7 @@ private fun DialogAction(
         },
         modifier = Modifier
             .fillMaxWidth()
+            .semantics { this.selected = selected }
             .clickable(
                 role = Role.Button,
                 onClick = {

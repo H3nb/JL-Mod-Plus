@@ -28,7 +28,12 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -43,9 +48,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -123,17 +130,19 @@ class LibraryComposeTest {
         }
 
         composeRule.waitForIdle()
-        composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(0)
+        composeRule.onAllNodes(isSelected() and hasAnyAncestor(isDialog())).assertCountEquals(0)
         composeRule.waitUntil(timeoutMillis = 5_000) { controllerEvents.subscriptionCount.value > 0 }
         assertTrue(controllerEvents.tryEmit(
             LibraryControllerEvent(1L, LibraryControllerCommand.MoveDown),
         ))
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("library-controller-focus-indicator")
+            composeRule.onAllNodes(isSelected() and hasAnyAncestor(isDialog()))
                 .fetchSemanticsNodes().size == 1
         }
 
-        composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(1)
+        composeRule.onAllNodes(isSelected() and hasAnyAncestor(isDialog())).assertCountEquals(1)
+        composeRule.onNode(hasText(uiString(R.string.library_metadata_edit_title)) and isSelected())
+            .assertIsDisplayed()
     }
 
     @Test
@@ -286,7 +295,10 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
 
-        appViewport().performTouchInput { swipeUp(durationMillis = 600) }
+        appViewport().performTouchInput {
+            // Start above the navigation overlay; the full Lazy viewport includes its inset.
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.15f), 600)
+        }
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Demo MIDlet 0", useUnmergedTree = true).assertIsNotDisplayed()
         val before = visibleAppAnchor()
@@ -395,7 +407,7 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("0 apps").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription(uiString(R.string.library_back)).performClick()
-        composeRule.onNodeWithText("Recently played").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
     }
 
     @Test
@@ -603,14 +615,19 @@ class LibraryComposeTest {
         )
 
         composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
-        appViewport().performTouchInput { swipeUp(durationMillis = 600) }
+        appViewport().performTouchInput {
+            // Start above the navigation overlay; the full Lazy viewport includes its inset.
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.15f), 600)
+        }
         composeRule.waitForIdle()
         composeRule.onAllNodesWithContentDescription(uiString(R.string.install)).assertCountEquals(0)
         composeRule.onAllNodesWithText(uiString(R.string.library_destination_apps)).assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription(uiString(R.string.app_name)).assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription(uiString(R.string.library_sort)).assertCountEquals(0)
 
-        appViewport().performTouchInput { swipeDown(durationMillis = 600) }
+        appViewport().performTouchInput {
+            swipe(Offset(width * 0.5f, height * 0.25f), Offset(width * 0.5f, height * 0.75f), 600)
+        }
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).assertIsDisplayed()
@@ -631,7 +648,10 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        appViewport().performTouchInput { swipeUp(durationMillis = 600) }
+        appViewport().performTouchInput {
+            // Start above the navigation overlay; the full Lazy viewport includes its inset.
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.15f), 600)
+        }
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).assertIsDisplayed()
@@ -663,7 +683,10 @@ class LibraryComposeTest {
         // an entire header's height or leave it resting halfway collapsed after the gesture.
         val initialWordmark = composeRule.onNodeWithContentDescription(uiString(R.string.app_name))
             .fetchSemanticsNode().boundsInRoot
-        appViewport().performTouchInput { swipeUp(durationMillis = 600) }
+        appViewport().performTouchInput {
+            // Start above the navigation overlay; the full Lazy viewport includes its inset.
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.15f), 600)
+        }
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
         val settledWordmark = composeRule.onNodeWithContentDescription(uiString(R.string.app_name))
@@ -675,9 +698,9 @@ class LibraryComposeTest {
         composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(uiString(R.string.library_destination_apps)).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(uiString(R.string.library_destination_collections)).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(uiString(R.string.library_destination_more)).assertIsDisplayed()
+        navigationItem(R.string.library_destination_apps).assertIsDisplayed()
+        navigationItem(R.string.library_destination_collections).assertIsDisplayed()
+        navigationItem(R.string.library_destination_more).assertIsDisplayed()
     }
 
     @Test
@@ -775,6 +798,10 @@ class LibraryComposeTest {
         composeRule.onAllNodesWithContentDescription("Add to favorites").assertCountEquals(0)
     }
 
+    private fun navigationItem(labelRes: Int) = composeRule.onNode(
+        hasClickAction() and (hasText(uiString(labelRes)) or hasContentDescription(uiString(labelRes))),
+    )
+
     private fun appViewport() = composeRule.onAllNodes(
         hasScrollAction() and hasAnyDescendant(hasText("Demo MIDlet", substring = true)),
         useUnmergedTree = true,
@@ -787,7 +814,11 @@ class LibraryComposeTest {
         ).fetchSemanticsNodes().filter { node ->
             val bounds = node.boundsInRoot
             bounds.width > 0 && bounds.height > 0 &&
-                bounds.top > viewport.top && bounds.bottom < viewport.bottom
+                bounds.top > viewport.top && bounds.bottom < viewport.bottom &&
+                composeRule.onNode(
+                    SemanticsMatcher("placed row ${node.id}") { it.id == node.id },
+                    useUnmergedTree = true,
+                ).isDisplayed()
         }.minByOrNull { it.boundsInRoot.top })
         return first.config[SemanticsProperties.Text].first { it.text.startsWith("Demo MIDlet") }.text to
             first.boundsInRoot.top

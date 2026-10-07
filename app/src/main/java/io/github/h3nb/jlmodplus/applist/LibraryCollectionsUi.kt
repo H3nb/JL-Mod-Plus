@@ -386,6 +386,7 @@ internal fun LibraryCollectionsDestination(
                     scaffoldPadding = overviewScaffoldPadding,
                     viewportState = overviewViewport,
                     selectedCollectionId = selectedCollectionId,
+                    active = active,
                     onOpenCollection = { collectionId ->
                         onNavigationStateChanged(
                             navigationState.copy(
@@ -468,6 +469,7 @@ private fun LibraryCollectionsOverview(
     scaffoldPadding: PaddingValues,
     viewportState: LibraryViewportState,
     selectedCollectionId: Long?,
+    active: Boolean,
     onOpenCollection: (Long) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit,
 ) {
@@ -492,6 +494,7 @@ private fun LibraryCollectionsOverview(
         viewport = viewportState,
         layout = LibraryLayout.List,
         headerHeightPx = headerHeightPx,
+        enabled = active,
         onVisibilityChanged = publishNavigationVisibility,
     )
 
