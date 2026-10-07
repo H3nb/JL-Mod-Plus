@@ -272,11 +272,11 @@ data class EncodingPickerRequest(
 )
 
 internal enum class ConfigDestination(val label: Int, val icon: Int) {
-    Basic(R.string.config_destination_general, R.drawable.ic_config_quick),
+    Basic(R.string.config_destination_general, R.drawable.ic_config_general),
     Display(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
     Audio(R.string.config_destination_audio, R.drawable.ic_config_audio),
     Controls(R.string.config_destination_controls, R.drawable.ic_config_controls),
-    System(R.string.config_destination_system, R.drawable.ic_config_system),
+    System(R.string.config_destination_system, R.drawable.ic_settings),
 }
 
 internal enum class ConfigAction(val title: Int, val message: Int) {
@@ -535,7 +535,7 @@ private fun ConfigDestinationContent(
     onSavePreset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (destination) {
             ConfigDestination.Basic -> GeneralDestination(
                 state = state,
@@ -1185,7 +1185,7 @@ internal fun ScreenPresetDialog(
                                     {
                                         IconButton(onClick = { onRemove(preset) }) {
                                             Icon(
-                                                painter = painterResource(R.drawable.ic_delete_report),
+                                                painter = painterResource(R.drawable.ic_delete),
                                                 contentDescription = stringResource(R.string.remove_screen_preset),
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
@@ -1218,7 +1218,7 @@ internal fun ScreenPresetDialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_swap),
+                            painter = painterResource(R.drawable.ic_swap_horiz),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                         )
@@ -1353,7 +1353,7 @@ internal fun CustomResolutionDialog(
                         aspectHeight = oldAspectWidth
                     }) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_swap),
+                            painter = painterResource(R.drawable.ic_swap_horiz),
                             contentDescription = stringResource(R.string.SWAP_SIZES),
                         )
                     }
@@ -1860,21 +1860,6 @@ internal fun ConfigSystemPropertiesPage(
             )
         }
     }
-}
-
-@Composable
-private fun SettingActionRow(
-    title: String,
-    summary: String? = null,
-    destructive: Boolean = false,
-    onClick: () -> Unit,
-) {
-    ConfigActionPreference(
-        title = title,
-        description = summary ?: stringResource(R.string.config_help_action_generic),
-        destructive = destructive,
-        onClick = onClick,
-    )
 }
 
 @Composable

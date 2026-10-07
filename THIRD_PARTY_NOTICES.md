@@ -25,46 +25,32 @@ Gradle and CI do not access the network to obtain them.
 
 | Local resources | Source | Variant | Revision / SHA-256 | License |
 | --- | --- | --- | --- | --- |
-| `ic_arrow_back.xml`, `ic_check.xml`, `ic_content_copy.xml`, `ic_send.xml`, `ic_share.xml`, `ic_delete_report.xml`, `ic_file_picker_folder.xml`, `ic_file_picker_file.xml`, `ic_file_picker_storage.xml`, `ic_arrow_downward.xml`, `ic_arrow_upward.xml`, `ic_palette.xml`, `ic_file_download.xml`, `ic_file_upload.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | All assets are pinned to their recorded source revisions; check SHA-256 `b38c518aa15e88cb9f2eda91aa5617427530ae9359a1b2c8ab96f7d16bffabe7`, arrow downward `eac1ec84bb5251dfd1dec10a3db387363594eb20247bacaddf1c033ff954094d`, arrow upward `b398faf24ea12a63b2c4f708d8be24c8ae3714d277ea82da8f405cd066873d0a`, palette `77da392d239862f1c1a4f736d698debcffe9477eacb49947b41210360af23b92`, file download `0b928b12f6297196976a480ef6d6e10377df6fe8bdce4afb30e7ad2d99437008`, and file upload `5fdca5e4b9e758f9940254494ac614bc1cd66fa364a954319fa120fea9fc9bff`, send `44fc4e67b392577b6c059c4bd4f851fed079b321133dbcfbccad89d92b0c3853`, all revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_arrow_back.xml`, `ic_check.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_folder.xml`, `ic_file_picker_file.xml`, `ic_file_picker_storage.xml`, `ic_arrow_downward.xml`, `ic_arrow_upward.xml`, `ic_file_download.xml`, `ic_file_upload.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | Pinned to revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e`; existing local hash records were retained historically but the revision is the canonical source pin | Apache-2.0 |
 | `ic_chevron_right.xml` (source symbol: `chevron_right`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | Local asset SHA-256 `df1140e89ec16b6e4f6649929d427faaaafafac230d27f5eacdaa88fed80699e`; source `symbols/android/chevron_right/materialsymbolsoutlined/chevron_right_24px.xml` at revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` uses the same path data | Apache-2.0 |
 | `ic_bug_report.xml` (source symbol: `bug_report`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | Local asset SHA-256 `51e1b97c5d3d2684dc2560a043b7d1cac26f843d26af71c978fe46861df464de`; source `symbols/android/bug_report/materialsymbolsoutlined/bug_report_24px.xml` at revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` has SHA-256 `517479a5c927e84029edf4dd8b8ddba6220554b3545b9d33778719887c2270ce` | Apache-2.0 |
 | `ic_action_keyboard.xml` (`keyboard`), `ic_action_screenshot.xml` (`screenshot_frame`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `2cf8f86d6ec092fcd93085a464fe0d27e6aa2bd5a914071cd73874247c8d92fc` and `1c84fad2e6a07601cadc47b860e10f3c1f34af93e207d91e4131291fb9790008`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
-| `ic_apps.xml`, `ic_collections.xml`, `ic_options.xml`, `ic_star.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `6d16e921a41841590351fef37fb40fcba3b92a8846699ec6ab52d23e74e33fb3`, `527c6a7dd741753f91cd8f33894aa2cfac375138c852b1ebfc2b43195ebaa313`, `7f350bff4766520d4011185658a0c05e517aa2729e7b8113b8b28d2a8a5d45fb`, and `49d8cf2a439f18bcafc0c9e765ac04cf52edc7105f82c637c50b4e8890fd00b2`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_apps.xml`, `ic_star.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `6d16e921a41841590351fef37fb40fcba3b92a8846699ec6ab52d23e74e33fb3` and `49d8cf2a439f18bcafc0c9e765ac04cf52edc7105f82c637c50b4e8890fd00b2`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_star_filled.xml` | `https://github.com/google/material-design-icons` | rounded, fill 1, weight 500, grade 0, optical size 24 | SHA-256 `cd856fbefa8393b8b9d7dcf84ddbe37f506eadf282637d3fa3469e0a7049eed1`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_default_midlet.xml` (source symbol: `widgets`) | `https://github.com/google/material-design-icons` | rounded, fill 0, weight 500, grade 0, optical size 48 | SHA-256 `fba03b38b04bc32237fc12237df02795971b2d5cec1261cdc6dc18f32cf81f13`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
-| `ic_config_quick.xml` (`bolt`), `ic_config_graphics.xml` (`display_settings`), `ic_config_audio.xml` (`volume_up`), `ic_config_media.xml` (`image`), `ic_config_controls.xml` (`gamepad`), `ic_config_system.xml` (`settings`), `ic_play.xml` (`play_arrow`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `143ab3540dd135c4d7637bd2220bcb04ff76a4b0858de2851c91678161cfbfae`, `cafcc7daff418ee18f900dd683e3ff3f1c5dbfb8215ce609ab7a9201c693028c`, `cf6148478dc7965dad942a5f35ab1a613450f56f991e7e75129c2049f687a4d4`, `17313b4cd878f62bd13e21e2c96cc6d1023f23295349a3d33d94e67ecb862254`, `4ece323d53aee9d233ffd0a067353d8580ccfcee0b9a7d499584a0493de5812d`, `7f350bff4766520d4011185658a0c05e517aa2729e7b8113b8b28d2a8a5d45fb`, and `4cfe5685d7c22230c1263f85efd46dee0e06103b01402a9863c7f15ab0ea32c`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
-| `ic_runtime_fps.xml` (`timer`), `ic_speed.xml` (`speed`), `ic_runtime_memory.xml` (`memory`), `ic_runtime_virtual_keyboard.xml` (`dialpad`), `ic_runtime_resize.xml` (`resize`), `ic_runtime_done.xml` (`done`), `ic_runtime_switch.xml` (`swap_horiz`), `ic_runtime_hide.xml` (`visibility_off`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `4b2f36391129b187279128189ab02431588dee6111ebf3fbd3c7046fdbdfc0b6`, `3fa39ed5e53ecec86bf64c32b60632473878138cc342c97568c40ed4b38c6396`, `fb24f19cb38db3dc7ecab82eaa9faff129227190f202dbfeea125b8128ec68f5`, `8921c282acae7546e37207388395a8ff245510003d4f24f7d0b98608dc0aa2d6`, `1406ecc94e884acc4a9eb2d0837c1cd20040bd34b0460e060ad24a8b13d8f44d`, `b38c518aa15e88cb9f2eda91aa5617427530ae9359a1b2c8ab96f7d16bffabe7`, `1f07c145dc40e901ae12557005471f7c3bcae8196e0e123ab53dc8ab863d25b9`, and `24c67489b46f0bae2062ef24e0334ae3252f5d45fadff1ecfaedec43777730b7`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_config_graphics.xml` (`display_settings`), `ic_config_audio.xml` (`volume_up`), `ic_config_controls.xml` (`gamepad`), `ic_play.xml` (`play_arrow`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_runtime_fps.xml` (`timer`), `ic_speed.xml` (`speed`), `ic_runtime_memory.xml` (`memory`), `ic_runtime_done.xml` (`done`), `ic_swap_horiz.xml` (`swap_horiz`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_license.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `04c5ae7ae82289583a80181c11cff9e06e27e686813a202f9d069cb9df8108e2`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_settings.xml` (`settings`), `ic_search.xml` (`search`), `ic_history.xml` (`history`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | matching official Android vectors at revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_add.xml` (`add`), `ic_delete.xml` (`delete`), `ic_deselect.xml` (`deselect`), `ic_edit.xml` (`edit`), `ic_help.xml` (`help`), `ic_info.xml` (`info`), `ic_keyboard_arrow_down.xml` (`keyboard_arrow_down`), `ic_keyboard_arrow_up.xml` (`keyboard_arrow_up`), `ic_memory_editor_inspector.xml` (`data_object`), `ic_memory_editor_watch.xml` (`bookmark`), `ic_memory_editor_watch_add.xml` (`bookmark_add`), `ic_more_vert.xml` (`more_vert`), `ic_save.xml` (`save`), `ic_screen_lock_rotation.xml` (`screen_lock_rotation`), `ic_select_all.xml` (`select_all`), `ic_sort.xml` (`sort`), `ic_warning.xml` (`warning`) | `https://github.com/google/material-design-icons` | outlined Material Symbols / equivalent Android vectors | Existing local vectors retain their current geometry; explicit source comments and/or geometry trace them to the named Google Material Symbols. New and revised assets use the repository pin `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e`. | Apache-2.0 |
+| `ic_install.xml` (`install_mobile`), `ic_recently_added.xml` (`calendar_add_on`), `ic_add_shortcut.xml` (`add_to_home_screen`), `ic_create_folder.xml` (`create_new_folder`), `ic_add_to_collection.xml` (`playlist_add`), `ic_remove_from_collection.xml` (`playlist_remove`), `ic_collections.xml` (`folder_copy`), `ic_more.xml` (`more_horiz`), `ic_remove.xml` (`remove`), `ic_open_external.xml` (`open_in_new`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_config_general.xml` (`tune`), `ic_check_circle.xml` (`check_circle`), `ic_save_as.xml` (`save_as`), `ic_sync.xml` (`sync`), `ic_refresh.xml` (`refresh`), `ic_reinstall.xml` (`restart_alt`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_lock.xml` (`lock`), `ic_unlock.xml` (`lock_open`), `ic_close.xml` (`close`), `ic_exit.xml` (`exit_to_app`), `ic_virtual_controls.xml` (`joystick`), `ic_control_layout.xml` (`dashboard_customize`), `ic_auto_mode.xml` (`auto_mode`), `ic_visibility.xml` (`visibility`), `ic_visibility_off.xml` (`visibility_off`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 
-## Phosphor Icons assets
 
-`app/src/main/res/drawable/ic_memory_editor_search.xml`, `ic_memory_editor_close.xml`,
-`ic_profile_use.xml`, `ic_profile_save_as.xml`, and `ic_profile_update.xml` are VectorDrawable
-conversions of Phosphor Icons' regular `MagnifyingGlass`, `X`, `CheckCircle`, `FilePlus`, and
-`ArrowsClockwise` SVGs, pinned at revision `3370cb1bc0a31ef3610367f3bd985462c2e201ea`.
-Only these required static assets are vendored.
+### Custom Material-style icon
 
-MIT License
-
-Copyright (c) 2023 Phosphor Icons
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+`ic_memory_editor_search_unknown.xml` is a local composite used for the
+Memory Editor's **Search unknown values** action. It combines the Material
+Symbols search silhouette with a question-mark treatment so the unknown-value
+search remains visually distinct from ordinary known-value search. The
+Material-derived geometry is covered by Google's Apache-2.0 licensing; the
+combined VectorDrawable is maintained locally because no canonical glyph
+expresses this action as clearly.
 
 ### `third_party/` audit
 
@@ -76,7 +62,7 @@ The table below covers direct runtime dependencies and license-significant trans
 
 | Runtime component / coordinates | Origin | License / notice |
 | --- | --- | --- |
-| `androidx.*` (Activity, Core, AppCompat, Compose, Fragment, Lifecycle, Navigation, Room, Preference, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
+| `androidx.*` (Activity, Core, AppCompat, Compose, Fragment, Lifecycle, Room, Preference, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
 | Kotlin stdlib and `kotlinx-coroutines-*`, plus `org.jetbrains:annotations` | JetBrains Kotlin projects | Apache-2.0 |
 | `com.google.code.gson:gson` | Google Gson | Apache-2.0 |
 | `com.google.oboe:oboe` | Google Oboe | Apache-2.0 |

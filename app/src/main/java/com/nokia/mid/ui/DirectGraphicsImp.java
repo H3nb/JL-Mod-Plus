@@ -48,8 +48,6 @@ public class DirectGraphicsImp implements DirectGraphics {
 			{Sprite.TRANS_ROT180       , Sprite.TRANS_ROT90        , Sprite.TRANS_NONE         , Sprite.TRANS_ROT270       }, // flip both
 	};
 
-	private int alphaComponent;
-
 	public DirectGraphicsImp(Graphics g) {
 		graphics = g;
 	}
@@ -284,8 +282,7 @@ public class DirectGraphicsImp implements DirectGraphics {
 							int yOffset,
 							int nPoints,
 							int argbColor) {
-		setARGBColor(argbColor);
-		graphics.drawPolygon(xPoints, xOffset, yPoints, yOffset, nPoints);
+		graphics.drawPolygon(xPoints, xOffset, yPoints, yOffset, nPoints, argbColor);
 	}
 
 	@Override
@@ -300,8 +297,7 @@ public class DirectGraphicsImp implements DirectGraphics {
 							int yOffset,
 							int nPoints,
 							int argbColor) {
-		setARGBColor(argbColor);
-		graphics.fillPolygon(xPoints, xOffset, yPoints, yOffset, nPoints);
+		graphics.fillPolygon(xPoints, xOffset, yPoints, yOffset, nPoints, argbColor);
 	}
 
 	@Override
@@ -311,7 +307,7 @@ public class DirectGraphicsImp implements DirectGraphics {
 
 	@Override
 	public int getAlphaComponent() {
-		return alphaComponent;
+		return graphics.getColorAlpha() >>> 24;
 	}
 
 	@Override
@@ -488,7 +484,6 @@ public class DirectGraphicsImp implements DirectGraphics {
 
 	@Override
 	public void setARGBColor(int argb) {
-		alphaComponent = (argb >> 24 & 0xff);
 		graphics.setColorAlpha(argb);
 	}
 

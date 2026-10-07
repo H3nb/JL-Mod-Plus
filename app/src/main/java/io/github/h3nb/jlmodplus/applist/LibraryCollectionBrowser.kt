@@ -41,6 +41,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -69,7 +70,9 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -77,6 +80,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -92,14 +96,15 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
 
 /**
- * Collection-specific browser. It mirrors Library List/Grid chrome while membership controls replace
- * Favorites and quick views.
+ * Collection-specific browser. It mirrors Library List/Grid chrome while collection management and
+ * selection actions replace Favorites and quick views.
  */
 @Composable
 internal fun LibraryCollectionBrowser(
     collection: LibraryCollectionUiItem,
     members: List<LibraryAppUiItem>,
     allApps: List<LibraryAppUiItem>,
+    allAppsPrepared: Boolean = true,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
     navigationState: LibraryNavigationState = LibraryNavigationState(),
@@ -107,39 +112,83 @@ internal fun LibraryCollectionBrowser(
     onBack: () -> Unit,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
-    onRemove: (Int) -> Unit,
-    onSetMembership: (Int, Boolean) -> Unit,
+    selectionState: LibrarySelectionState = LibrarySelectionState(),
+    onSelectionStateChanged: (LibrarySelectionState) -> Unit = {},
+    manageApps: Boolean,
+    onManageAppsChanged: (Boolean) -> Unit,
+    onSetMembership: (Int, Boolean, CollectionMembershipResultCallback) -> Unit,
     onPrepareAppPicker: () -> Unit,
     onSort: (Int) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
     showBackButton: Boolean = true,
     handleSystemBack: Boolean = true,
+    interactionActive: Boolean = true,
 ) {
-    var manageApps by rememberSaveable(collection.id) { mutableStateOf(false) }
-    BackHandler(enabled = manageApps || handleSystemBack) {
-        if (manageApps) {
-            manageApps = false
-            onNavigationVisibilityChanged(true)
-        } else {
-            onBack()
+    var pendingMemberships by remember(collection.id) {
+        mutableStateOf<Map<Int, Boolean>>(emptyMap())
+    }
+    val committedMemberIds = remember(members) {
+        members.mapTo(LinkedHashSet()) { it.id }
+    }
+    LaunchedEffect(committedMemberIds) {
+        val unresolved = pendingMemberships.filter { (appId, desiredIncluded) ->
+            (appId in committedMemberIds) != desiredIncluded
+        }
+        if (unresolved != pendingMemberships) pendingMemberships = unresolved
+    }
+    fun setManageApps(visible: Boolean) {
+        if (manageApps == visible) return
+        onManageAppsChanged(visible)
+        if (interactionActive) {
+            onNavigationVisibilityChanged(!visible)
         }
     }
-    LaunchedEffect(manageApps) {
-        onNavigationVisibilityChanged(!manageApps)
+    BackHandler(
+        enabled = interactionActive && (manageApps || selectionState.isActive || handleSystemBack),
+    ) {
+        when {
+            manageApps -> setManageApps(false)
+            selectionState.isActive -> onSelectionStateChanged(selectionState.clear())
+            else -> onBack()
+        }
+    }
+    LaunchedEffect(manageApps, interactionActive) {
+        if (!interactionActive) return@LaunchedEffect
+        if (manageApps) {
+            onPrepareAppPicker()
+            // Reassert for direct/preview hosts; LibraryScreen also derives suppression from
+            // navigationState.collectionManageApps, so pager return never depends on this effect.
+            onNavigationVisibilityChanged(false)
+        }
     }
 
     if (manageApps) {
         LibraryCollectionAppPicker(
             collection = collection,
             allApps = allApps,
-            memberIds = members.mapTo(LinkedHashSet()) { it.id },
+            memberIds = committedMemberIds,
+            pendingMemberships = pendingMemberships,
             sortVariant = libraryState.sortVariant,
             iconRatio = libraryState.iconRatio,
             iconShape = libraryState.iconShape,
             enhancedIcons = libraryState.enhancedIcons,
             scaffoldPadding = scaffoldPadding,
-            onBack = { manageApps = false },
-            onSetMembership = onSetMembership,
+            loading = !allAppsPrepared,
+            onBack = { setManageApps(false) },
+            onSetMembership = { appId, included ->
+                if (appId !in pendingMemberships) {
+                    pendingMemberships = pendingMemberships + (appId to included)
+                    onSetMembership(
+                        appId,
+                        included,
+                        CollectionMembershipResultCallback { success ->
+                            if (!success && pendingMemberships[appId] == included) {
+                                pendingMemberships = pendingMemberships - appId
+                            }
+                        },
+                    )
+                }
+            },
         )
         return
     }
@@ -156,6 +205,9 @@ internal fun LibraryCollectionBrowser(
             projectCollectionApps(members, query, libraryState.sortVariant)
         }
     }
+    val projectedIds = remember(projected) {
+        projected.map(LibraryAppUiItem::databaseId)
+    }
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
     val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
@@ -170,16 +222,26 @@ internal fun LibraryCollectionBrowser(
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
     }
 
-    LaunchedEffect(libraryState.layout, libraryState.generation, collection.id, projected) {
+    LaunchedEffect(
+        libraryState.layout,
+        libraryState.generation,
+        libraryState.libraryScope,
+        collection.id,
+        projected,
+        query,
+    ) {
         val surface = if (libraryState.layout == LibraryLayout.List) {
             LibraryNavigationSurface.CollectionAppsList
         } else {
             LibraryNavigationSurface.CollectionAppsGrid
         }
+        if (query.isNotBlank()) return@LaunchedEffect
         val anchor = navigationState.resolveAnchor(
             surface,
             libraryState.generation,
-            projected.map(LibraryAppUiItem::databaseId),
+            projectedIds,
+            scopeId = collection.id,
+            libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
         ) ?: return@LaunchedEffect
         val targetIndex = anchor.index + 1
         if (libraryState.layout == LibraryLayout.List) {
@@ -195,7 +257,15 @@ internal fun LibraryCollectionBrowser(
         }
     }
 
-    LaunchedEffect(libraryState.layout, libraryState.generation, collection.id, projected) {
+    LaunchedEffect(
+        libraryState.layout,
+        libraryState.generation,
+        libraryState.libraryScope,
+        collection.id,
+        projected,
+        query,
+    ) {
+        if (query.isNotBlank()) return@LaunchedEffect
         val surface = if (libraryState.layout == LibraryLayout.List) {
             LibraryNavigationSurface.CollectionAppsList
         } else {
@@ -217,6 +287,8 @@ internal fun LibraryCollectionBrowser(
                 stableItemId = projected.getOrNull(fallbackIndex)?.databaseId,
                 offsetPx = firstApp?.second ?: 0,
                 fallbackIndex = fallbackIndex.coerceAtLeast(0),
+                scopeId = collection.id,
+                libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
             )
         }.collectLatest { anchor ->
             delay(120)
@@ -322,14 +394,32 @@ internal fun LibraryCollectionBrowser(
             query = query,
             sortVariant = libraryState.sortVariant,
             sortVisible = sortVisible,
+            selectionState = selectionState,
+            visibleAppIds = projectedIds,
             onBack = onBack,
+            onExitSelection = { onSelectionStateChanged(selectionState.clear()) },
+            onSelectAll = {
+                onSelectionStateChanged(
+                    selectionState.selectVisible(
+                        libraryState.generation,
+                        projectedIds,
+                        collectionId = collection.id,
+                    ),
+                )
+            },
+            onUnselectAll = {
+                onSelectionStateChanged(
+                    selectionState.unselectVisible(
+                        libraryState.generation,
+                        projectedIds,
+                        collectionId = collection.id,
+                    ),
+                )
+            },
             onQueryChange = { query = it },
             onSortVisibilityChanged = { sortVisible = it },
             onSort = onSort,
-            onManageApps = {
-                onPrepareAppPicker()
-                manageApps = true
-            },
+            onManageApps = { setManageApps(true) },
             interactive = interactive,
             showBackButton = showBackButton,
         )
@@ -375,7 +465,17 @@ internal fun LibraryCollectionBrowser(
                             gridSpacing = libraryState.gridSpacing.value,
                             onOpenApp = onOpenApp,
                             onOpenActions = onOpenActions,
-                            onRemove = onRemove,
+                            selectionMode = selectionState.isActive,
+                            selected = app.databaseId in selectionState.selectedAppIds,
+                            onToggleSelection = {
+                                onSelectionStateChanged(
+                                    selectionState.toggle(
+                                        libraryState.generation,
+                                        it.databaseId,
+                                        collectionId = collection.id,
+                                    ),
+                                )
+                            },
                         )
                     }
                 }
@@ -407,7 +507,17 @@ internal fun LibraryCollectionBrowser(
                             showDescription = libraryState.showListDescription,
                             onOpenApp = onOpenApp,
                             onOpenActions = onOpenActions,
-                            onRemove = onRemove,
+                            selectionMode = selectionState.isActive,
+                            selected = app.databaseId in selectionState.selectedAppIds,
+                            onToggleSelection = {
+                                onSelectionStateChanged(
+                                    selectionState.toggle(
+                                        libraryState.generation,
+                                        it.databaseId,
+                                        collectionId = collection.id,
+                                    ),
+                                )
+                            },
                         )
                     }
                 }
@@ -456,7 +566,12 @@ private fun LibraryCollectionHeader(
     query: String,
     sortVariant: Int,
     sortVisible: Boolean,
+    selectionState: LibrarySelectionState,
+    visibleAppIds: List<Long>,
     onBack: () -> Unit,
+    onExitSelection: () -> Unit,
+    onSelectAll: () -> Unit,
+    onUnselectAll: () -> Unit,
     onQueryChange: (String) -> Unit,
     onSortVisibilityChanged: (Boolean) -> Unit,
     onSort: (Int) -> Unit,
@@ -467,6 +582,8 @@ private fun LibraryCollectionHeader(
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
     val selectedSort = sortVariant and Int.MAX_VALUE
     val ascending = sortVariant >= 0
+    val selectionMode = selectionState.isActive
+    val allVisibleSelected = selectionState.isAllVisibleSelected(visibleAppIds)
 
     Column(
         modifier = modifier
@@ -478,8 +595,11 @@ private fun LibraryCollectionHeader(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (showBackButton) {
-                IconButton(onClick = onBack, enabled = interactive) {
+            if (selectionMode || showBackButton) {
+                IconButton(
+                    onClick = if (selectionMode) onExitSelection else onBack,
+                    enabled = interactive,
+                ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_arrow_back),
                         contentDescription = stringResource(R.string.library_back),
@@ -487,21 +607,54 @@ private fun LibraryCollectionHeader(
                 }
             }
             Text(
-                text = title,
+                text = if (selectionMode) {
+                    pluralStringResource(
+                        R.plurals.library_selection_count,
+                        selectionState.selectedCount,
+                        selectionState.selectedCount,
+                    )
+                } else {
+                    title
+                },
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            TextButton(onClick = onManageApps, enabled = interactive) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_add),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
+            if (selectionMode) {
+                val toggleLabel = stringResource(
+                    if (allVisibleSelected) {
+                        R.string.library_selection_unselect_all
+                    } else {
+                        R.string.library_selection_select_all
+                    },
                 )
-                Spacer(Modifier.width(4.dp))
-                Text(stringResource(R.string.library_collection_add_apps))
+                TextButton(
+                    onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
+                    enabled = visibleAppIds.isNotEmpty() && interactive,
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (allVisibleSelected) R.drawable.ic_deselect
+                            else R.drawable.ic_select_all,
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(toggleLabel)
+                }
+            } else {
+                TextButton(onClick = onManageApps, enabled = interactive) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_add_to_collection),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.library_collection_add_apps))
+                }
             }
         }
         Row(
@@ -514,20 +667,14 @@ private fun LibraryCollectionHeader(
             LibrarySearchField(
                 query = query,
                 onQueryChange = onQueryChange,
-                modifier = Modifier
-                    .weight(1f),
+                modifier = Modifier.weight(1f),
                 enabled = interactive,
             )
             Box {
-                IconButton(
-                    enabled = interactive,
+                LibrarySortButton(
                     onClick = { onSortVisibilityChanged(true) },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_sort),
-                        contentDescription = stringResource(R.string.library_sort),
-                    )
-                }
+                    enabled = interactive,
+                )
                 LibrarySortMenu(
                     expanded = sortVisible && interactive,
                     entries = sortEntries,
@@ -554,20 +701,46 @@ private fun LibraryCollectionListItem(
     showDescription: Boolean,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
-    onRemove: (Int) -> Unit,
+    selectionMode: Boolean,
+    selected: Boolean,
+    onToggleSelection: (LibraryAppUiItem) -> Unit,
 ) {
+    val selectionDescription = stringResource(
+        R.string.library_selection_checkbox_description,
+        app.title,
+    )
+    val selectionStateDescription = stringResource(
+        if (selected) R.string.library_selection_checked
+        else R.string.library_selection_unchecked,
+    )
+    val interactionModifier = if (selectionMode) {
+        Modifier.toggleable(
+            value = selected,
+            role = Role.Checkbox,
+            onValueChange = { onToggleSelection(app) },
+        )
+    } else {
+        Modifier.combinedClickable(
+            onClick = { onOpenApp(app.id) },
+            onLongClick = { onOpenActions(app) },
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(
-                onClick = { onOpenApp(app.id) },
-                onLongClick = { onOpenActions(app) },
-            ),
+            .then(interactionModifier)
+            .semantics {
+                role = if (selectionMode) Role.Checkbox else Role.Button
+                if (selectionMode) {
+                    contentDescription = selectionDescription
+                    stateDescription = selectionStateDescription
+                }
+            },
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 6.dp),
+                .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             LibraryIconSlot(
@@ -582,8 +755,7 @@ private fun LibraryCollectionListItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = app.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -595,15 +767,12 @@ private fun LibraryCollectionListItem(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Spacer(Modifier.width(6.dp))
-            IconButton(
-                onClick = { onRemove(app.id) },
-                modifier = Modifier.size(48.dp),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_remove_circle),
-                    contentDescription = stringResource(R.string.library_collection_remove),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            if (selectionMode) {
+                Spacer(Modifier.width(6.dp))
+                Checkbox(
+                    checked = selected,
+                    onCheckedChange = null,
+                    modifier = Modifier.clearAndSetSemantics { },
                 )
             }
         }
@@ -612,10 +781,6 @@ private fun LibraryCollectionListItem(
                 LibraryDescription(app.description, app.databaseId)
             }
         }
-        HorizontalDivider(
-            modifier = Modifier.padding(start = 80.dp, end = 16.dp),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
-        )
     }
 }
 
@@ -630,19 +795,43 @@ private fun LibraryCollectionGridItem(
     gridSpacing: Dp,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
-    onRemove: (Int) -> Unit,
+    selectionMode: Boolean,
+    selected: Boolean,
+    onToggleSelection: (LibraryAppUiItem) -> Unit,
 ) {
+    val selectionDescription = stringResource(
+        R.string.library_selection_checkbox_description,
+        app.title,
+    )
+    val selectionStateDescription = stringResource(
+        if (selected) R.string.library_selection_checked
+        else R.string.library_selection_unchecked,
+    )
+    val interactionModifier = if (selectionMode) {
+        Modifier.toggleable(
+            value = selected,
+            role = Role.Checkbox,
+            onValueChange = { onToggleSelection(app) },
+        )
+    } else {
+        Modifier.combinedClickable(
+            onClick = { onOpenApp(app.id) },
+            onLongClick = { onOpenActions(app) },
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(gridSpacing / 2)
-            .combinedClickable(
-                onClick = { onOpenApp(app.id) },
-                onLongClick = { onOpenActions(app) },
-            )
+            .then(interactionModifier)
             .semantics {
-                role = Role.Button
-                if (hideTitle) contentDescription = app.title
+                role = if (selectionMode) Role.Checkbox else Role.Button
+                if (selectionMode) {
+                    contentDescription = selectionDescription
+                    stateDescription = selectionStateDescription
+                } else if (hideTitle) {
+                    contentDescription = app.title
+                }
             },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -655,27 +844,14 @@ private fun LibraryCollectionGridItem(
                 iconShape = iconShape,
                 enhancedIcons = enhancedIcons,
             )
-            IconButton(
-                onClick = { onRemove(app.id) },
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(48.dp),
-            ) {
-                Box(
+            if (selectionMode) {
+                Checkbox(
+                    checked = selected,
+                    onCheckedChange = null,
                     modifier = Modifier
-                        .size(36.dp)
-                        .background(
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
-                        shape = MaterialTheme.shapes.extraLarge,
-                    ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_remove_circle),
-                        contentDescription = stringResource(R.string.library_collection_remove),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                        .align(Alignment.TopEnd)
+                        .clearAndSetSemantics { },
+                )
             }
         }
         if (!hideTitle) {
@@ -704,19 +880,17 @@ internal fun LibraryCollectionAppPicker(
     collection: LibraryCollectionUiItem,
     allApps: List<LibraryAppUiItem>,
     memberIds: Set<Int>,
+    pendingMemberships: Map<Int, Boolean> = emptyMap(),
     sortVariant: Int,
     iconRatio: LibraryIconRatio,
     iconShape: LibraryIconShape,
     enhancedIcons: Boolean = true,
     scaffoldPadding: PaddingValues,
+    loading: Boolean = false,
     onBack: () -> Unit,
     onSetMembership: (Int, Boolean) -> Unit,
 ) {
     var query by rememberSaveable(collection.id, "picker") { mutableStateOf("") }
-    var selectedIds by remember(collection.id) { mutableStateOf(memberIds.toSet()) }
-    LaunchedEffect(memberIds) {
-        selectedIds = memberIds.toSet()
-    }
     val visibleApps by produceState(
         initialValue = allApps,
         allApps,
@@ -768,6 +942,17 @@ internal fun LibraryCollectionAppPicker(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall,
         )
+        if (loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+            return@Column
+        }
         LibrarySearchField(
             query = query,
             onQueryChange = { query = it },
@@ -777,17 +962,18 @@ internal fun LibraryCollectionAppPicker(
         )
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(visibleApps, key = { it.id }) { app ->
-                val checked = app.id in selectedIds
+                val pending = pendingMemberships[app.id]
+                val checked = pending ?: (app.id in memberIds)
+                val enabled = pending == null
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .testTag("collection-membership-${app.id}")
                         .toggleable(
                             value = checked,
+                            enabled = enabled,
                             role = Role.Checkbox,
-                            onValueChange = { next ->
-                                selectedIds = if (next) selectedIds + app.id else selectedIds - app.id
-                                onSetMembership(app.id, next)
-                            },
+                            onValueChange = { next -> onSetMembership(app.id, next) },
                         )
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -820,6 +1006,7 @@ internal fun LibraryCollectionAppPicker(
                     Checkbox(
                         checked = checked,
                         onCheckedChange = null,
+                        enabled = enabled,
                     )
                 }
                 HorizontalDivider(
