@@ -6,6 +6,7 @@ import static org.junit.Assert.assertEquals;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Region;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -107,7 +108,7 @@ public class GraphicsTriangleRenderingTest {
 				assertEquals(expected, pixel(image, 10, 2));
 				assertEquals(expected, pixel(image, 2, 10));
 				assertEquals(background, pixel(image, 11, 2));
-				assertEquals(color, g.getColor());
+				assertEquals(color & 0x00FFFFFF, g.getColor());
 				assertEquals(Graphics.DOTTED, g.getStrokeStyle());
 				g.fillTriangle(2, 2, 10, 2, 2, 10);
 				assertEquals(blendedPixel(background, color, 2), pixel(image, 6, 6));
@@ -220,6 +221,30 @@ public class GraphicsTriangleRenderingTest {
 								expected, pixel(image, x, y));
 					}
 				}
+			}
+		}
+	}
+
+	@Test
+	public void regionBoundaryPathRoundTripPreservesIntegerCoverage() {
+		Region region = new Region();
+		region.op(2, 2, 15, 6, Region.Op.UNION);
+		region.op(2, 6, 6, 15, Region.Op.UNION);
+		region.op(10, 10, 20, 18, Region.Op.UNION);
+		region.op(13, 12, 17, 16, Region.Op.DIFFERENCE);
+
+		Path boundary = new Path();
+		region.getBoundaryPath(boundary);
+		Image image = Image.createImage(24, 22, BACKGROUND);
+		Paint paint = new Paint();
+		paint.setAntiAlias(false);
+		paint.setColor(TERRAIN);
+		new Canvas(image.getBitmap()).drawPath(boundary, paint);
+
+		for (int y = 0; y < 22; y++) {
+			for (int x = 0; x < 24; x++) {
+				assertEquals("region round-trip=" + x + "," + y,
+						region.contains(x, y) ? TERRAIN : BACKGROUND, pixel(image, x, y));
 			}
 		}
 	}

@@ -229,6 +229,19 @@ public class DirectGraphicsRenderingTest {
 	}
 
 	@Test
+	public void midpColorQueriesHideSharedAlphaButNokiaStillSeesIt() {
+		Graphics g = Image.createImage(4, 4).getGraphics();
+		DirectGraphics dg = DirectUtils.getDirectGraphics(g);
+		dg.setARGBColor(0x80224466);
+		assertEquals(0x00224466, g.getColor());
+		assertEquals(128, dg.getAlphaComponent());
+		assertEquals(0x00123456, g.getDisplayColor(0xAA123456));
+		g.setColor(0xAA345678);
+		assertEquals(0x00345678, g.getColor());
+		assertEquals(255, dg.getAlphaComponent());
+	}
+
+	@Test
 	public void invalidCoordinateArraysDoNotChangeTheColorOrPixels() {
 		Image image = Image.createImage(12, 12, BACKGROUND);
 		Graphics g = image.getGraphics();
@@ -246,7 +259,7 @@ public class DirectGraphicsRenderingTest {
 		} catch (NullPointerException expected) {
 			// No drawing or shared color changes may precede validation.
 		}
-		assertEquals(0x80224466, g.getColor());
+		assertEquals(0x00224466, g.getColor());
 		assertEquals(128, dg.getAlphaComponent());
 		assertEquals(BACKGROUND, pixel(image, 4, 4));
 	}
@@ -266,7 +279,7 @@ public class DirectGraphicsRenderingTest {
 	}
 
 	private static void assertSharedState(Graphics g, DirectGraphics dg) {
-		assertEquals(0x80224466, g.getColor());
+		assertEquals(0x00224466, g.getColor());
 		assertEquals(128, dg.getAlphaComponent());
 		assertEquals(Graphics.DOTTED, g.getStrokeStyle());
 	}

@@ -150,14 +150,14 @@ public class Graphics implements
 			polygonPaint.set(fillPaint);
 			polygonPaint.setColor(argbColor);
 			polygonPaint.setStrokeWidth(1);
-			unionClosedCoverage(path, Paint.Style.STROKE);
+			unionClosedCoverage(path, path, Paint.Style.STROKE);
 			drawClosedCoverage(polygonPaint);
 		}
 	}
 
-	private void unionClosedCoverage(Path outlinePath, Paint.Style outlineStyle) {
+	private void unionClosedCoverage(Path fillPath, Path outlinePath, Paint.Style outlineStyle) {
 		coverageClip.set(clip);
-		closedCoverage.setPath(path, coverageClip);
+		closedCoverage.setPath(fillPath, coverageClip);
 		polygonPaint.setStyle(outlineStyle);
 		polygonPaint.getFillPath(outlinePath, polygonFillPath);
 		outlineCoverage.setPath(polygonFillPath, coverageClip);
@@ -235,11 +235,16 @@ public class Graphics implements
 	}
 
 	public int getColor() {
+		return drawPaint.getColor() & 0x00FFFFFF;
+	}
+
+	/** Internal bridge for vendor APIs that share the full ARGB graphics state. */
+	public int getColorAlpha() {
 		return drawPaint.getColor();
 	}
 
 	public int getDisplayColor(int color) {
-		return color;
+		return color & 0x00FFFFFF;
 	}
 
 	public void setStrokeStyle(int stroke) {
@@ -378,7 +383,7 @@ public class Graphics implements
 		// The shifted outline can be separated from the original interior on
 		// diagonal edges. Include its interior so their coverage cannot leave
 		// periodic gaps or detached boundary pixels.
-		unionClosedCoverage(polygonOutline, Paint.Style.FILL_AND_STROKE);
+		unionClosedCoverage(path, polygonOutline, Paint.Style.FILL_AND_STROKE);
 		includeTriangleEndpoint(x1, y1);
 		includeTriangleEndpoint(x2, y2);
 		includeTriangleEndpoint(x3, y3);

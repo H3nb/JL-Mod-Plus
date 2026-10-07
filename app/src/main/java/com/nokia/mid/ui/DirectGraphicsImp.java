@@ -307,7 +307,7 @@ public class DirectGraphicsImp implements DirectGraphics {
 
 	@Override
 	public int getAlphaComponent() {
-		return graphics.getColor() >>> 24;
+		return graphics.getColorAlpha() >>> 24;
 	}
 
 	@Override

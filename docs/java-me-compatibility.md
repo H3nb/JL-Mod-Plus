@@ -14,9 +14,14 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 
 ## Nokia polygon rendering
 
-Nokia `DirectGraphics` polygon/triangle methods use their explicit ARGB argument
-without replacing the shared `Graphics` color. `getAlphaComponent()` reads that
-shared context, including changes made through another wrapper or MIDP setters.
+Nokia `DirectGraphics` and MIDP `Graphics` share one current ARGB drawing state.
+MIDP color-query methods expose only `0x00RRGGBB`: `Graphics.getColor()` hides
+the shared alpha byte and `getDisplayColor(int)` ignores the argument's high
+byte. Nokia `getAlphaComponent()` reads the same shared state's alpha, including
+changes made through another wrapper or MIDP setters.
+
+Nokia polygon/triangle methods with an explicit ARGB argument use that call-local
+color without replacing the shared `Graphics` color.
 The [Nokia UI API reference](https://nikita36078.github.io/J2ME_Docs/docs/Nokia_UI_API_1_1/com/nokia/mid/ui/DirectGraphics.html)
 defines closed polygons, even-odd interior coverage, and Source Over compositing.
 
@@ -33,17 +38,20 @@ water regions from Bounce Tales: fill-only rendering leaves a source-background
 column at each right edge. The observed columns move with the camera and match
 both the positions and unblended colors in the reported captures. This is
 compatibility evidence, not a claim that the reference specifies every boundary
-rounding case or that whole-game/device validation has completed. The
-`DirectGraphicsRenderingTest` instrumentation protects the general API behavior
+rounding case. Device verification confirmed that the reported Bounce Tales
+visual artifacts are resolved. The `DirectGraphicsRenderingTest` instrumentation
+protects the general API behavior
 without shipping game assets or selecting behavior by MIDlet identity.
 
 ## MIDP filled triangles
 
 MIDP `Graphics.fillTriangle` includes the lines connecting all three vertices.
-It retains the existing non-antialiased interior pixels and adds solid boundary
-coverage below and to the right of integer coordinates. Bevel joins prevent
-acute corners from extending beyond the vertex bounds; endpoint cells cover
-thin, collinear and point triangles. Interior and outline paths are rasterized
+MIDP's solid one-pixel line model places coverage immediately below and to the
+right of integer coordinates; exact diagonal rasterization remains
+implementation-dependent. JL-Mod retains the existing non-antialiased interior
+and unions it with compatible solid boundary coverage. Bevel joins prevent acute
+corners from extending beyond the vertex bounds; endpoint cells cover thin,
+collinear and point triangles. Interior and outline paths are rasterized
 within the current clip into reusable Android `Region` objects, then united as
 integer pixel coverage. The shifted outline also includes its interior: on
 diagonal edges a half-pixel shift can separate a one-pixel stroke from the
