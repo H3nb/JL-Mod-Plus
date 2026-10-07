@@ -69,6 +69,9 @@ non-Canvas Displayables.
   returns focus to the MIDlet; it never exits the MIDlet. A long press from a
   legacy hardware key follows the same safe menu path and is not an exit
   shortcut.
+- Runtime host menus and dialogs preserve the configured system-bar visibility.
+  Presenting or dismissing a host modal is not a runtime-chrome transition;
+  transient system bars remain controlled by the user's system gesture.
 - The explicit Exit item remains the only host-menu exit path and continues to
   use `showExitConfirmation()`. A MIDlet-owned Exit command and system-level
   task removal/force-stop remain independent termination paths.

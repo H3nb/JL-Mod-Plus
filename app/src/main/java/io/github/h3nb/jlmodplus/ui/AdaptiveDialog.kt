@@ -62,16 +62,33 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import io.github.h3nb.jlmodplus.input.HostCommand
 import android.view.KeyEvent as AndroidKeyEvent
 import android.view.MotionEvent as AndroidMotionEvent
 import android.view.View
+import android.view.Window
 
 private val DialogMaximumWidth = 720.dp
 private val DialogHorizontalMargin = 24.dp
 private val DialogCompactHorizontalMargin = 16.dp
 
 internal typealias ControllerHostCommandHandler = (HostCommand, Boolean) -> Boolean
+
+internal fun interface DialogWindowPolicy {
+    fun apply(window: Window)
+}
+
+private val LocalDialogWindowPolicy =
+    compositionLocalOf<DialogWindowPolicy?> { null }
+
+@Composable
+internal fun ProvideDialogWindowPolicy(
+    policy: DialogWindowPolicy?,
+    content: @Composable () -> Unit,
+) {
+    CompositionLocalProvider(LocalDialogWindowPolicy provides policy, content = content)
+}
 
 private val LocalControllerDialogKeyEvent =
     compositionLocalOf<((android.view.KeyEvent) -> Boolean)?> { null }
@@ -188,6 +205,14 @@ internal fun AdaptiveAlertDialog(
     ) {
         val focusManager = LocalFocusManager.current
         val dialogView = LocalView.current
+        val dialogWindowPolicy = LocalDialogWindowPolicy.current
+        val dialogWindow = (dialogView.parent as? DialogWindowProvider)?.window
+        DisposableEffect(dialogWindow, dialogWindowPolicy) {
+            if (dialogWindow != null && dialogWindowPolicy != null) {
+                dialogWindowPolicy.apply(dialogWindow)
+            }
+            onDispose {}
+        }
         val controllerFocusRequester = if (effectiveControllerKeyEvent != null) {
             remember { FocusRequester() }
         } else {

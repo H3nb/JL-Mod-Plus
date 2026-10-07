@@ -53,7 +53,9 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.ControllerDialogInputScope
 import io.github.h3nb.jlmodplus.ui.ControllerHostCommandHandler
+import io.github.h3nb.jlmodplus.ui.DialogWindowPolicy
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.ProvideDialogWindowPolicy
 
 @OptIn(ExperimentalTestApi::class)
 private fun uiString(resId: Int, vararg formatArgs: Any): String =
@@ -62,6 +64,29 @@ private fun uiString(resId: Int, vararg formatArgs: Any): String =
 class RuntimeMenuComposeTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun runtimeDialogAppliesInheritedWindowPolicy() {
+        var policyApplied = false
+        composeRule.setContent {
+            ProvideDialogWindowPolicy(
+                policy = DialogWindowPolicy { policyApplied = true },
+            ) {
+                JLModPlusTheme {
+                    RuntimeLimitFpsDialog(
+                        onDismiss = {},
+                        onConfirm = {},
+                        onReset = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).assertIsDisplayed()
+        composeRule.runOnIdle {
+            assertTrue("Runtime dialog did not expose its Compose dialog Window", policyApplied)
+        }
+    }
 
     @Test
     fun showControlsGridPreservesOrderAndConvertsVisibleSelectionToHiddenFlags() {
