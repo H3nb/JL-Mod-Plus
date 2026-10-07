@@ -41,6 +41,8 @@ import androidx.test.espresso.Espresso.pressBack
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
@@ -191,6 +193,67 @@ class LibraryCollectionsNavigationTest {
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
         assertNull(host.store.displayedMembersCollectionId())
+    }
+
+    @Test
+    fun collectionScopeMismatchDropsOnlyCollectionDetailAnchors() {
+        val host = RecordingCollectionsHost()
+        val navigationState = mutableStateOf(
+            LibraryNavigationState(
+                destination = LibraryDestinationKey.Collections,
+                selectedCollectionId = COLLECTION_ID,
+                selectedCollectionScope = "/work/library-a",
+                collectionManageApps = true,
+                anchors = mapOf(
+                    LibraryNavigationSurface.CollectionAppsList to LibraryScrollAnchor(
+                        generation = 0L,
+                        stableItemId = 1L,
+                        offsetPx = 4,
+                        fallbackIndex = 0,
+                        scopeId = COLLECTION_ID,
+                    ),
+                    LibraryNavigationSurface.CollectionAppsGrid to LibraryScrollAnchor(
+                        generation = 0L,
+                        stableItemId = 1L,
+                        offsetPx = 5,
+                        fallbackIndex = 0,
+                        scopeId = COLLECTION_ID,
+                    ),
+                    LibraryNavigationSurface.AppsList to LibraryScrollAnchor(
+                        generation = 0L,
+                        stableItemId = 1L,
+                        offsetPx = 6,
+                        fallbackIndex = 0,
+                    ),
+                ),
+            ),
+        )
+
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryCollectionsDestination(
+                        host = host,
+                        libraryState = sampleLibraryState().copy(libraryScope = "/work/library-b"),
+                        scaffoldPadding = PaddingValues(),
+                        navigationState = navigationState.value,
+                        onNavigationStateChanged = { navigationState.value = it },
+                        onOpenActions = { _, _ -> },
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        val restored = navigationState.value
+        assertNull(restored.selectedCollectionId)
+        assertNull(restored.selectedCollectionScope)
+        assertFalse(restored.collectionManageApps)
+        assertNull(restored.anchors[LibraryNavigationSurface.CollectionAppsList])
+        assertNull(restored.anchors[LibraryNavigationSurface.CollectionAppsGrid])
+        assertNotNull(restored.anchors[LibraryNavigationSurface.AppsList])
     }
 
     @Test
