@@ -913,7 +913,7 @@
     <string name="library_action_about_summary">Informatie over versie, project en onderhouder.</string>
     <string name="library_action_licenses_summary">Meldingen van derden en licentievoorwaarden die bij de app zijn inbegrepen.</string>
     <string name="library_action_help_summary">Gebruiksinstructies en veelgebruikte bediening.</string>
-    <string name="library_bulk_delete_apps">Verwijderen</string>
+    <string name="library_bulk_delete_apps">Apps verwijderen</string>
     <string name="library_bulk_add_collection">Toevoegen aan collectie</string>
     <string name="library_bulk_share_apps">Apps delen</string>
     <string name="library_bulk_reinstall_apps">Opnieuw installeren</string>
