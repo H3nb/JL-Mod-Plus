@@ -94,8 +94,8 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
 
 /**
- * Collection-specific browser. It mirrors Library List/Grid chrome while membership controls replace
- * Favorites and quick views.
+ * Collection-specific browser. It mirrors Library List/Grid chrome while collection management and
+ * selection actions replace Favorites and quick views.
  */
 @Composable
 internal fun LibraryCollectionBrowser(

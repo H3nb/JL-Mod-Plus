@@ -947,7 +947,11 @@ fun LibraryScreen(
     val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
     val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
-    LaunchedEffect(libraryOverlayVisible, selectionState.isActive) {
+    LaunchedEffect(
+        libraryOverlayVisible,
+        selectionState.isActive,
+        collectionSelectionState.isActive,
+    ) {
         onControllerBackAvailabilityChanged(
             libraryOverlayVisible || selectionState.isActive || collectionSelectionState.isActive,
         )
