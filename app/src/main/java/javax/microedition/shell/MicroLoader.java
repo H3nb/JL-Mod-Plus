@@ -427,10 +427,10 @@ public class MicroLoader {
 		String dataUri = fileConnectionDataUri(workDir, appDirName, primaryStoragePath);
 		String musicUri = "file:///c:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
 				.getPath().substring(primaryStoragePath.length());
-		System.setProperty("fileconn.dir.cache", dataUri + "/cache");
-		System.setProperty("fileconn.dir.private", dataUri + "/private");
-		System.setProperty("fileconn.dir.music", musicUri);
-		System.setProperty("user.home", primaryStoragePath);
+		setGuestSystemProperty("fileconn.dir.cache", dataUri + "/cache");
+		setGuestSystemProperty("fileconn.dir.private", dataUri + "/private");
+		setGuestSystemProperty("fileconn.dir.music", musicUri);
+		setGuestSystemProperty("user.home", primaryStoragePath);
 	}
 
 	private static void setGuestSystemProperty(String key, String value) {
