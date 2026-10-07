@@ -492,6 +492,14 @@ class LibraryCollectionsNavigationTest {
         target.performClick()
         composeRule.waitForIdle()
         assertEquals(2, host.membershipRequests.size)
+
+        composeRule.runOnIdle {
+            host.completeMembership(success = true)
+            host.store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
+        }
+        composeRule.waitForIdle()
+
+        target.assertIsOn().assertIsEnabled()
     }
 
     @Test
