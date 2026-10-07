@@ -25,7 +25,8 @@ public final class MidletLocaleProbeActivity extends Activity {
         MidletSystem.setProperty("microedition.locale", guestLocale);
         String systemProperty = System.getProperty("microedition.locale");
         String midletProperty = MidletSystem.getProperty("microedition.locale");
-        try (FileOutputStream output = new FileOutputStream(new File(getFilesDir(), MARKER_NAME), false)) {
+        File marker = new File(getFilesDir(), MARKER_NAME);
+        try (FileOutputStream output = new FileOutputStream(marker, false)) {
             String evidence = "host-locale="
                     + (hostLocale == null ? "" : hostLocale.toLanguageTag())
                     + "\nlocale=" + (guestLocale == null ? "" : guestLocale)

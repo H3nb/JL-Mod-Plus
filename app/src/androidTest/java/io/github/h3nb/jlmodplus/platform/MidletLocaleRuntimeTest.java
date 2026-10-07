@@ -39,6 +39,7 @@ import javax.microedition.shell.MidletLocaleProbeActivity;
 @RunWith(AndroidJUnit4.class)
 public class MidletLocaleRuntimeTest {
     private static final long TIMEOUT_MILLIS = 20_000L;
+
     @Test
     @SdkSuppress(minSdkVersion = 33)
     public void coldSecondaryProcessReceivesApplicationLocaleAndJavaMeIdentity() throws Exception {
