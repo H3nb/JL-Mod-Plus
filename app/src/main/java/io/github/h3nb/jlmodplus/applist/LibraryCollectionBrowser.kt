@@ -814,7 +814,7 @@ internal fun LibraryCollectionAppPicker(
     onSetMembership: (Int, Boolean) -> Unit,
 ) {
     var query by viewportState.queryState
-    val visibleApps = rememberCollectionAppsProjection(viewportState, allApps, sortVariant)
+    val visibleApps = rememberCollectionAppsProjection(viewportState, allApps, sortVariant, ready = !loading)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -937,9 +937,11 @@ private fun rememberCollectionAppsProjection(
     viewportState: LibraryViewportState,
     source: List<LibraryAppUiItem>,
     sortVariant: Int,
+    ready: Boolean = true,
 ): List<LibraryAppUiItem>? {
     val query = viewportState.query
-    LaunchedEffect(viewportState, source, query, sortVariant) {
+    LaunchedEffect(viewportState, source, query, sortVariant, ready) {
+        if (!ready) return@LaunchedEffect
         if (viewportState.collectionProjection?.matches(source, query, sortVariant) == true) {
             return@LaunchedEffect
         }

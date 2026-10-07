@@ -640,7 +640,7 @@ fun LibraryScreen(
         .only(WindowInsetsSides.Bottom)
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
-    var navigationBarHeightPx by remember { mutableIntStateOf(0) }
+    var navigationBarHeightPx by rememberSaveable { mutableIntStateOf(0) }
     val collectionsHost = actions as? LibraryCollectionsHost
     val bulkActions = actions as? LibraryBulkActions
     val selectedCollectionMatchesLibrary =

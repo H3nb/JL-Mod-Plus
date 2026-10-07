@@ -104,7 +104,8 @@ class LibraryViewportNavigationTest {
     @Test
     fun endOfLibraryViewportSurvivesDifferentFooterPagerRoundTrip() {
         val host = ViewportHost()
-        composeRule.setContent {
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
             ) {
@@ -115,7 +116,7 @@ class LibraryViewportNavigationTest {
         composeRule.waitForIdle()
         activeList(APP_PREFIX).performTouchInput {
             down(Offset(width * 0.5f, height * 0.7f))
-            moveTo(Offset(width * 0.5f, height * 0.7f - width * 0.4f), durationMillis = 600)
+            moveTo(Offset(width * 0.5f, height * 0.7f - width * 0.4f), delayMillis = 600)
             advanceEventTime(150)
             up()
         }
@@ -128,15 +129,31 @@ class LibraryViewportNavigationTest {
         swipeToNextPage()
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
+        // Programmatic scrolling keeps this page's footer visible, unlike the Apps gesture.
+        activeList(FOLDER_PREFIX).performScrollToNode(hasText(rowTitle(FOLDER_PREFIX, 79)))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
+        val folders = visibleRow(FOLDER_PREFIX)
         swipeToNextPage()
         composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
         swipeToPreviousPage()
-        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        assertViewport(folders, FOLDER_PREFIX)
+        composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
         swipeToPreviousPage()
 
         composeRule.onAllNodesWithContentDescription(appsNavigation).assertCountEquals(0)
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79)).assertIsDisplayed()
         assertViewport(apps, APP_PREFIX)
+
+        // Restore while the navigation bar is absent. The retained measured footer height must
+        // already be available when the end-of-list Collections page is composed again.
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithContentDescription(appsNavigation).assertCountEquals(0)
+        assertViewport(apps, APP_PREFIX)
+        swipeToNextPage()
+        composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
+        assertViewport(folders, FOLDER_PREFIX)
     }
 
     @Test
@@ -159,13 +176,13 @@ class LibraryViewportNavigationTest {
         // Returning before release leaves settledPage unchanged and must retain selection.
         composeRule.onRoot().performTouchInput {
             down(Offset(width * 0.85f, height * 0.55f))
-            moveTo(Offset(width * 0.15f, height * 0.55f), durationMillis = 400)
+            moveTo(Offset(width * 0.15f, height * 0.55f), delayMillis = 400)
         }
         composeRule.waitForIdle()
         // Offscreen pages clear their semantics, so this proves the indicated page changed.
         composeRule.onNodeWithText(COLLECTION_NAME).assertExists()
         composeRule.onRoot().performTouchInput {
-            moveTo(Offset(width * 0.85f, height * 0.55f), durationMillis = 400)
+            moveTo(Offset(width * 0.85f, height * 0.55f), delayMillis = 400)
             advanceEventTime(150)
             up()
         }
@@ -202,7 +219,7 @@ class LibraryViewportNavigationTest {
         composeRule.waitForIdle()
         activeList(prefix).performTouchInput {
             down(Offset(width * 0.5f, height * 0.55f))
-            moveTo(Offset(width * 0.5f, height * 0.55f - 37f), durationMillis = 250)
+            moveTo(Offset(width * 0.5f, height * 0.55f - 37f), delayMillis = 250)
             advanceEventTime(150)
             up()
         }
