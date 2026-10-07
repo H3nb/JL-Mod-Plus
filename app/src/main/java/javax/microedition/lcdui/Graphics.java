@@ -146,13 +146,27 @@ public class Graphics implements
 		if (nPoints > 0) {
 			computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
 			path.setFillType(Path.FillType.EVEN_ODD);
-			if ((argbColor >>> 24) == 0 || clip.isEmpty()) return;
+			int alpha = argbColor >>> 24;
+			if (alpha == 0 || clip.isEmpty()) return;
 			polygonPaint.set(fillPaint);
 			polygonPaint.setColor(argbColor);
 			polygonPaint.setStrokeWidth(1);
-			unionClosedCoverage(path, path, Paint.Style.STROKE);
-			drawClosedCoverage(polygonPaint);
+			if (alpha == 0xFF) {
+				drawOpaqueClosedCoverage(path, path, false, polygonPaint);
+			} else {
+				unionClosedCoverage(path, path, Paint.Style.STROKE);
+				drawClosedCoverage(polygonPaint);
+			}
 		}
+	}
+
+	private void drawOpaqueClosedCoverage(Path fillPath, Path outlinePath,
+			boolean fillOutline, Paint paint) {
+		paint.setStyle(Paint.Style.FILL);
+		canvas.drawPath(fillPath, paint);
+		if (fillOutline) canvas.drawPath(outlinePath, paint);
+		paint.setStyle(Paint.Style.STROKE);
+		canvas.drawPath(outlinePath, paint);
 	}
 
 	private void unionClosedCoverage(Path fillPath, Path outlinePath, Paint.Style outlineStyle) {
@@ -366,7 +380,8 @@ public class Graphics implements
 	}
 
 	public void fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3) {
-		if ((fillPaint.getColor() >>> 24) == 0 || clip.isEmpty()) return;
+		int alpha = fillPaint.getColor() >>> 24;
+		if (alpha == 0 || clip.isEmpty()) return;
 		path.reset();
 		path.setFillType(Path.FillType.WINDING);
 		path.moveTo(x1, y1);
@@ -382,12 +397,28 @@ public class Graphics implements
 		polygonOutline.offset(0.5f, 0.5f);
 		// The shifted outline can be separated from the original interior on
 		// diagonal edges. Include its interior so their coverage cannot leave
-		// periodic gaps or detached boundary pixels.
-		unionClosedCoverage(path, polygonOutline, Paint.Style.FILL_AND_STROKE);
-		includeTriangleEndpoint(x1, y1);
-		includeTriangleEndpoint(x2, y2);
-		includeTriangleEndpoint(x3, y3);
-		drawClosedCoverage(fillPaint);
+		// periodic gaps or detached boundary pixels. Opaque Source Over is
+		// idempotent, so direct constituent draws preserve the same union without
+		// Region reconstruction. Translucent coverage must still composite once.
+		if (alpha == 0xFF) {
+			drawOpaqueClosedCoverage(path, polygonOutline, true, polygonPaint);
+			drawOpaqueTriangleEndpoint(x1, y1);
+			drawOpaqueTriangleEndpoint(x2, y2);
+			drawOpaqueTriangleEndpoint(x3, y3);
+		} else {
+			unionClosedCoverage(path, polygonOutline, Paint.Style.FILL_AND_STROKE);
+			includeTriangleEndpoint(x1, y1);
+			includeTriangleEndpoint(x2, y2);
+			includeTriangleEndpoint(x3, y3);
+			drawClosedCoverage(fillPaint);
+		}
+	}
+
+	private void drawOpaqueTriangleEndpoint(int x, int y) {
+		if (clip.contains(x, y)) {
+			polygonPaint.setStyle(Paint.Style.FILL);
+			canvas.drawRect(x, y, (float) x + 1, (float) y + 1, polygonPaint);
+		}
 	}
 
 	private void includeTriangleEndpoint(int x, int y) {

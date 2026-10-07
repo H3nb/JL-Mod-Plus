@@ -104,8 +104,9 @@ in the separate manual `runtime-smoke` mode described below. See the workflow fo
 current tasks rather than assuming all source sets execute.
 Automatic PR runs exclude PRs whose entire diff consists of Markdown and `docs/**`.
 A separate [Java ME graphics workflow](../.github/workflows/java-me-graphics.yml)
-runs Nokia polygon, MIDP triangle and Graphics clip/bitmap-rebind instrumentation on
-API 23 and 36 when the corresponding renderer, tests, or workflow change. It
+runs Nokia polygon, MIDP triangle and core Graphics color, primitive, clip,
+lifecycle and bitmap-rebind instrumentation on API 23 and 36 when the
+corresponding renderer, Image/DirectUtils bridge, tests, or workflow change. It
 uses `jlmodNativeBuild=false`: these bitmap contracts do not exercise native
 audio, game execution, or the final OpenGL presentation stage.
 A documentation-only commit on a PR that also changes code can still trigger CI

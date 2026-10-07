@@ -122,6 +122,33 @@ public class DirectGraphicsRenderingTest {
 	}
 
 	@Test
+	public void opaqueAndTranslucentPolygonsUseIdenticalCoverage() {
+		int[][] xShapes = {
+				{64, 57, 10},
+				{2, 14, 14, 2, 2, 14, 14, 2}
+		};
+		int[][] yShapes = {
+				{262, 250, 196},
+				{2, 2, 14, 14, 2, 2, 14, 14}
+		};
+		for (int shape = 0; shape < xShapes.length; shape++) {
+			Image opaque = Image.createImage(240, 320, BACKGROUND);
+			Image translucent = Image.createImage(240, 320, BACKGROUND);
+			DirectUtils.getDirectGraphics(opaque.getGraphics()).fillPolygon(
+					xShapes[shape], 0, yShapes[shape], 0, xShapes[shape].length, 0xFF1111EE);
+			DirectUtils.getDirectGraphics(translucent.getGraphics()).fillPolygon(
+					xShapes[shape], 0, yShapes[shape], 0, xShapes[shape].length, WATER);
+			for (int y = 0; y < 320; y++) {
+				for (int x = 0; x < 240; x++) {
+					assertEquals("coverage shape=" + shape + " pixel=" + x + "," + y,
+							pixel(opaque, x, y) != BACKGROUND,
+							pixel(translucent, x, y) != BACKGROUND);
+				}
+			}
+		}
+	}
+
+	@Test
 	public void concavePolygonKeepsItsNotchEmpty() {
 		Image image = Image.createImage(18, 18, BACKGROUND);
 		DirectGraphics dg = DirectUtils.getDirectGraphics(image.getGraphics());

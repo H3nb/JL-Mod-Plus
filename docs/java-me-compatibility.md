@@ -26,12 +26,14 @@ The [Nokia UI API reference](https://nikita36078.github.io/J2ME_Docs/docs/Nokia_
 defines closed polygons, even-odd interior coverage, and Source Over compositing.
 
 Filled Nokia polygons include their one-pixel outline. The even-odd interior
-and unshifted outline retain their own raster coverage, united using the same
-clipped integer-region backend as MIDP triangles. One normal ARGB draw applies
-the color, so a call cannot darken its boundary through repeated alpha blending.
-Separate calls still composite independently. This avoids geometric union
-artifacts and alpha-layer rounding. MIDP rectangle coverage and shared paint
-state are preserved.
+and unshifted outline retain the same raster coverage for opaque and translucent
+colors. Opaque Source Over is idempotent, so opaque calls draw those constituent
+coverages directly. Translucent calls unite them in clipped integer `Region`
+coverage and perform one ARGB draw, preventing the boundary from darkening
+through repeated alpha blending. Separate calls still composite independently.
+This avoids geometric union artifacts and alpha-layer rounding while keeping the
+common opaque path lightweight. MIDP rectangle coverage and shared paint state
+are preserved.
 
 This boundary treatment is supported by reconstruction of integer-separated
 water regions from Bounce Tales: fill-only rendering leaves a source-background
@@ -51,14 +53,18 @@ right of integer coordinates; exact diagonal rasterization remains
 implementation-dependent. JL-Mod retains the existing non-antialiased interior
 and unions it with compatible solid boundary coverage. Bevel joins prevent acute
 corners from extending beyond the vertex bounds; endpoint cells cover thin,
-collinear and point triangles. Interior and outline paths are rasterized
-within the current clip into reusable Android `Region` objects, then united as
-integer pixel coverage. The shifted outline also includes its interior: on
-diagonal edges a half-pixel shift can separate a one-pixel stroke from the
+collinear and point triangles. The shifted outline also includes its interior:
+on diagonal edges a half-pixel shift can separate a one-pixel stroke from the
 original interior, producing periodic gaps and detached edge pixels. Filling
 the shifted interior connects the boundary without discarding original pixels.
-The resulting boundary is drawn once with the original
-ARGB paint, irrespective of dotted stroke style. Separate translucent triangle
+
+For opaque current colors, JL-Mod draws the same interior, shifted interior,
+solid outline and endpoint coverage directly; overlapping opaque Source Over
+draws are idempotent. For translucent current colors, those constituents are
+rasterized within the current clip into reusable Android `Region` objects,
+united as integer pixel coverage, and drawn once so overlap cannot apply alpha
+more than once. Both paths are regression-tested for identical coverage.
+Dotted stroke style does not affect either path. Separate translucent triangle
 calls still composite independently; no alpha layer or float path union is used.
 
 Geometric `Path.op` union can change raster coverage while rebuilding float
