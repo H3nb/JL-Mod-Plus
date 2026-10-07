@@ -60,14 +60,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -82,7 +78,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -493,82 +488,12 @@ private fun LibraryCollectionsOverview(
     val headerOffsetPx = viewportState.headerOffsetPx
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
-    val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
-    val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
-    val revealDistancePx = with(density) { 18.dp.toPx() }
-    val chromeHysteresis = remember(viewportState, hideDistancePx, revealDistancePx) {
-        LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx, viewportState.chromeVisible)
-    }
-
-    LaunchedEffect(viewportState) {
-        snapshotFlow {
-            Triple(
-                listState.firstVisibleItemIndex,
-                listState.firstVisibleItemScrollOffset,
-                listState.canScrollForward || listState.canScrollBackward,
-            )
-        }.collectLatest { (index, offset, canScroll) ->
-            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.floatValue >= -0.5f) {
-                headerOffsetPx.floatValue = 0f
-                chromeHysteresis.reset()
-                publishNavigationVisibility(true)
-            }
-        }
-    }
-
-    val scrollConnection = remember(
-        chromeHysteresis,
-        minScrollRoomPx,
-        publishNavigationVisibility,
-    ) {
-        object : NestedScrollConnection {
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset {
-                val height = headerHeightPx.intValue
-                if (height <= 0) return Offset.Zero
-                val canScroll = listState.canScrollForward || listState.canScrollBackward
-                if (!canScroll) {
-                    if (headerOffsetPx.floatValue < -0.5f && (consumed.y > 0f || available.y > 0f)) {
-                        headerOffsetPx.floatValue = 0f
-                        if (chromeHysteresis.revealNow() != null) {
-                            publishNavigationVisibility(true)
-                        }
-                    } else if (headerOffsetPx.floatValue == 0f && !chromeHysteresis.chromeVisible) {
-                        chromeHysteresis.reset()
-                        publishNavigationVisibility(true)
-                    }
-                    return Offset.Zero
-                }
-                // Base hide/reveal progress on the distance the LazyColumn actually consumed.
-                // Unconsumed fling distance can exceed a short collection's range and otherwise
-                // causes a footer hide/show loop when the viewport changes.
-                val delta = when {
-                    consumed.y != 0f -> consumed.y
-                    available.y > 0f -> available.y
-                    else -> return Offset.Zero
-                }
-                if (delta < 0f && !listState.hasLibraryChromeScrollRoom(minScrollRoomPx)) {
-                    return Offset.Zero
-                }
-                val fullyHidden = headerOffsetPx.floatValue <= -height.toFloat() + 0.5f
-                var visibilityChange = chromeHysteresis.onScrollDelta(delta)
-                val shouldMoveHeader =
-                    delta < 0f || !fullyHidden || chromeHysteresis.chromeVisible || visibilityChange == true
-                if (shouldMoveHeader) {
-                    headerOffsetPx.floatValue =
-                        (headerOffsetPx.floatValue + delta).coerceIn(-height.toFloat(), 0f)
-                }
-                if (delta > 0f && headerOffsetPx.floatValue >= -0.5f && !chromeHysteresis.chromeVisible) {
-                    visibilityChange = chromeHysteresis.revealNow()
-                }
-                visibilityChange?.let(publishNavigationVisibility)
-                return Offset.Zero
-            }
-        }
-    }
+    val scrollConnection = rememberLibraryScrollChrome(
+        viewport = viewportState,
+        layout = LibraryLayout.List,
+        headerHeightPx = headerHeightPx,
+        onVisibilityChanged = publishNavigationVisibility,
+    )
 
     val renderHeader: @Composable (Modifier, Boolean) -> Unit = { modifier, interactive ->
         Row(

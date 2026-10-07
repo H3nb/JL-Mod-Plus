@@ -942,7 +942,15 @@ fun LibraryScreen(
         }
     }
 
-    LaunchedEffect(destination) {
+    LaunchedEffect(destination, state.libraryScope) {
+        when (destination) {
+            LibraryDestination.Apps -> appsViewport.chromeVisible = true
+            LibraryDestination.Collections -> {
+                collectionsViewport.chromeVisible = true
+                collectionViewport.chromeVisible = true
+            }
+            LibraryDestination.More -> Unit
+        }
         if (destination != LibraryDestination.Apps) {
             appActions = null
             appActionsCollectionId = null
@@ -1505,7 +1513,6 @@ internal const val LIBRARY_CHROME_HIDE_DISTANCE_DP = 80f
 // remaining content before hiding chrome so the viewport resize cannot immediately make the
 // list non-scrollable and start a hide/show loop.
 internal const val LIBRARY_CHROME_MIN_SCROLL_ROOM_DP = 160f
-private const val LIBRARY_CHROME_REVEAL_DISTANCE_DP = 18f
 private const val LIBRARY_RETURN_ANCHOR_SETTLE_FRAMES = 2
 private val LibraryGridMinCellSize = 88.dp
 private const val LIBRARY_GRID_ARTWORK_FRACTION = 0.78f
@@ -1712,6 +1719,7 @@ internal fun LibraryAppsDestination(
     active: Boolean = true,
 ) {
     var query by viewportState.queryState
+    var searchFocused by remember { mutableStateOf(false) }
     val listState = viewportState.listState
     val gridState = viewportState.gridState
     var sortVisible by remember { mutableStateOf(false) }
@@ -1719,12 +1727,6 @@ internal fun LibraryAppsDestination(
     val headerOffsetPx = viewportState.headerOffsetPx
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
-    val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
-    val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
-    val revealDistancePx = with(density) { LIBRARY_CHROME_REVEAL_DISTANCE_DP.dp.toPx() }
-    val chromeHysteresis = remember(viewportState, hideDistancePx, revealDistancePx) {
-        LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx, viewportState.chromeVisible)
-    }
     val currentActive by rememberUpdatedState(active)
     val currentOnFabVisibilityChanged by rememberUpdatedState(onFabVisibilityChanged)
     val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
@@ -1743,31 +1745,6 @@ internal fun LibraryAppsDestination(
 
     LaunchedEffect(query) {
         onSearch(query)
-    }
-
-    LaunchedEffect(viewportState, state.layout) {
-        snapshotFlow {
-            if (state.layout == LibraryLayout.List) {
-                Triple(
-                    listState.firstVisibleItemIndex,
-                    listState.firstVisibleItemScrollOffset,
-                    listState.canScrollForward || listState.canScrollBackward,
-                )
-            } else {
-                Triple(
-                    gridState.firstVisibleItemIndex,
-                    gridState.firstVisibleItemScrollOffset,
-                    gridState.canScrollForward || gridState.canScrollBackward,
-                )
-            }
-        }.collectLatest { (index, offset, canScroll) ->
-            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.floatValue >= -0.5f) {
-                headerOffsetPx.floatValue = 0f
-                chromeHysteresis.reset()
-                activeFabVisibilityChanged(true)
-                activeNavigationVisibilityChanged(true)
-            }
-        }
     }
 
     // The list/grid stays mounted while metadata and other overlays are open. A save request is
@@ -1838,11 +1815,27 @@ internal fun LibraryAppsDestination(
             },
         )
         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+    val searchScope = rememberCoroutineScope()
+    fun revealSearchResults() {
+        viewportState.headerOffsetPx.floatValue = 0f
+        viewportState.chromeVisible = true
+        searchScope.launch {
+            if (state.layout == LibraryLayout.List) listState.scrollToItem(0)
+            else gridState.scrollToItem(0)
+        }
+    }
+    LaunchedEffect(searchFocused) {
+        if (searchFocused) revealSearchResults()
+    }
     val renderHeader: @Composable (Modifier, Boolean) -> Unit = { headerModifier, interactive ->
         LibraryAppsHeader(
             modifier = headerModifier,
             query = query,
-            onQueryChange = { query = it },
+            onQueryChange = {
+                query = it
+                revealSearchResults()
+            },
+            onSearchFocusChanged = { searchFocused = it },
             state = state,
             sortVisible = sortVisible,
             onSortVisibilityChanged = { sortVisible = it },
@@ -1858,113 +1851,19 @@ internal fun LibraryAppsDestination(
             interactive = interactive,
         )
     }
-    val headerScrollConnection = remember(
-        chromeHysteresis,
-        state.layout,
-        minScrollRoomPx,
-        freezeViewport,
-        activeFabVisibilityChanged,
-        activeNavigationVisibilityChanged,
-    ) {
-        object : NestedScrollConnection {
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset {
-                if (freezeViewport) return Offset.Zero
-                val height = headerHeightPx.intValue
-                if (height <= 0) return Offset.Zero
-
-                val canScroll = if (state.layout == LibraryLayout.List) {
-                    listState.canScrollForward || listState.canScrollBackward
-                } else {
-                    gridState.canScrollForward || gridState.canScrollBackward
-                }
-                val hasScrolledFromTop = if (state.layout == LibraryLayout.List) {
-                    listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
-                } else {
-                    gridState.firstVisibleItemIndex > 0 || gridState.firstVisibleItemScrollOffset > 0
-                }
-                if (!canScroll) {
-                    if (
-                        !hasScrolledFromTop &&
-                        headerOffsetPx.floatValue < -0.5f &&
-                        (consumed.y > 0f || available.y > 0f)
-                    ) {
-                        headerOffsetPx.floatValue = 0f
-                        if (chromeHysteresis.revealNow() != null) {
-                            activeFabVisibilityChanged(true)
-                            activeNavigationVisibilityChanged(true)
-                        }
-                    } else if (
-                        !hasScrolledFromTop &&
-                        headerOffsetPx.floatValue == 0f &&
-                        !chromeHysteresis.chromeVisible
-                    ) {
-                        chromeHysteresis.reset()
-                        activeFabVisibilityChanged(true)
-                        activeNavigationVisibilityChanged(true)
-                    }
-                    if (!hasScrolledFromTop) return Offset.Zero
-                }
-
-                // Base hide/reveal progress on the distance the child actually consumed. A
-                // fling's unconsumed delta can be much larger than a short list's real scroll
-                // range; counting it here would hide the chrome and immediately make the list
-                // non-scrollable when the footer is reclaimed, causing a visible flicker.
-                val delta = when {
-                    consumed.y != 0f -> consumed.y
-                    // A gesture can begin on a clickable row and report its first movement as
-                    // unconsumed even though the list has scroll room. Preserve that movement
-                    // for chrome hysteresis; the scroll-room guard below rejects short lists.
-                    available.y != 0f -> available.y
-                    else -> return Offset.Zero
-                }
-                val hasScrollRoom = if (state.layout == LibraryLayout.List) {
-                    listState.hasLibraryChromeScrollRoom(minScrollRoomPx)
-                } else {
-                    gridState.hasLibraryChromeScrollRoom(minScrollRoomPx)
-                }
-                val hasScrolledBack = if (state.layout == LibraryLayout.List) {
-                    listState.canScrollBackward
-                } else {
-                    gridState.canScrollBackward
-                }
-                // A single fling can consume the remaining content before this post-scroll
-                // callback runs. Once the list has moved, still allow the hide transition; a
-                // genuinely short list has neither scroll room nor a backward position.
-                if (delta < 0f && !hasScrollRoom && !hasScrolledBack && !hasScrolledFromTop) {
-                    return Offset.Zero
-                }
-                val fullyHidden = headerOffsetPx.floatValue <= -height.toFloat() + 0.5f
-                var visibilityChange = chromeHysteresis.onScrollDelta(delta)
-                val shouldMoveHeader =
-                    delta < 0f ||
-                        !fullyHidden ||
-                        chromeHysteresis.chromeVisible ||
-                        visibilityChange == true
-                if (shouldMoveHeader) {
-                    headerOffsetPx.floatValue =
-                        (headerOffsetPx.floatValue + delta).coerceIn(-height.toFloat(), 0f)
-                }
-
-                if (
-                    delta > 0f &&
-                    headerOffsetPx.floatValue >= -0.5f &&
-                    !chromeHysteresis.chromeVisible
-                ) {
-                    visibilityChange = chromeHysteresis.revealNow()
-                }
-                visibilityChange?.let { visible ->
-                    activeFabVisibilityChanged(visible)
-                    activeNavigationVisibilityChanged(visible)
-                }
-
-                return Offset.Zero
-            }
-        }
-    }
+    val headerScrollConnection = rememberLibraryScrollChrome(
+        viewport = viewportState,
+        layout = state.layout,
+        headerHeightPx = headerHeightPx,
+        enabled = active && !freezeViewport && !searchFocused,
+        onVisibilityChanged = { visible ->
+            activeFabVisibilityChanged(visible)
+            activeNavigationVisibilityChanged(visible)
+        },
+    )
+    val headerHidden by remember { derivedStateOf {
+        headerHeightPx.intValue > 0 && headerOffsetPx.floatValue <= -headerHeightPx.intValue + 0.5f
+    } }
     Box(
         modifier = listModifier
             .clipToBounds()
@@ -2068,7 +1967,7 @@ internal fun LibraryAppsDestination(
                 .graphicsLayer { translationY = headerOffsetPx.floatValue }
                 .background(MaterialTheme.colorScheme.background)
                 .then(
-                    if (chromeHysteresis.chromeVisible) {
+                    if (!headerHidden) {
                         Modifier
                     } else {
                         Modifier.clearAndSetSemantics { }
@@ -2088,7 +1987,8 @@ internal fun LazyListState.hasLibraryChromeScrollRoom(minScrollRoomPx: Float): B
     val layout = layoutInfo
     val lastVisible = layout.visibleItemsInfo.lastOrNull() ?: return false
     val remaining = lastVisible.offset + lastVisible.size - layout.viewportEndOffset
-    return lastVisible.index < layout.totalItemsCount - 1 || remaining > minScrollRoomPx
+    val unmeasuredRows = layout.totalItemsCount - lastVisible.index - 1
+    return remaining + unmeasuredRows * lastVisible.size > minScrollRoomPx
 }
 
 internal fun LazyGridState.hasLibraryChromeScrollRoom(minScrollRoomPx: Float): Boolean {
@@ -2096,7 +1996,10 @@ internal fun LazyGridState.hasLibraryChromeScrollRoom(minScrollRoomPx: Float): B
     val layout = layoutInfo
     val lastVisible = layout.visibleItemsInfo.lastOrNull() ?: return false
     val remaining = lastVisible.offset.y + lastVisible.size.height - layout.viewportEndOffset
-    return lastVisible.index < layout.totalItemsCount - 1 || remaining > minScrollRoomPx
+    val columns = layout.visibleItemsInfo.maxOfOrNull { it.column + 1 }?.coerceAtLeast(1) ?: 1
+    val unmeasuredItems = layout.totalItemsCount - lastVisible.index - 1
+    val unmeasuredRows = (unmeasuredItems + columns - 1) / columns
+    return remaining + unmeasuredRows * lastVisible.size.height > minScrollRoomPx
 }
 
 @Composable
@@ -2264,6 +2167,7 @@ private fun LibraryAppsHeader(
     modifier: Modifier = Modifier,
     query: String,
     onQueryChange: (String) -> Unit,
+    onSearchFocusChanged: (Boolean) -> Unit = {},
     state: LibraryUiState,
     sortVisible: Boolean,
     onSortVisibilityChanged: (Boolean) -> Unit,
@@ -2391,6 +2295,7 @@ private fun LibraryAppsHeader(
                 onQueryChange = onQueryChange,
                 modifier = Modifier.weight(1f),
                 enabled = interactive,
+                onFocusChanged = onSearchFocusChanged,
             )
             Box {
                 LibrarySortButton(
@@ -4270,6 +4175,7 @@ internal fun AppActionsDialog(
                 -> {
                     val current = currentEntries
                     if (current.isNotEmpty()) {
+                        controllerFocusVisible = true
                         val delta = when (event.command) {
                             LibraryControllerCommand.MoveUp,
                             LibraryControllerCommand.MoveLeft,

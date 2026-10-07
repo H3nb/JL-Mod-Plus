@@ -54,19 +54,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -87,7 +83,7 @@ import androidx.compose.ui.unit.dp
 import java.text.Collator
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
@@ -199,6 +195,7 @@ internal fun LibraryCollectionBrowser(
     }
 
     var query by viewportState.queryState
+    var searchFocused by remember { mutableStateOf(false) }
     var sortVisible by remember { mutableStateOf(false) }
     val projected = rememberCollectionAppsProjection(viewportState, members, libraryState.sortVariant)
     val projectedIds = remember(projected) {
@@ -206,121 +203,30 @@ internal fun LibraryCollectionBrowser(
     }
     val listState = viewportState.listState
     val gridState = viewportState.gridState
-    // TEMPORARY: distinguish native scroll changes from clipped approach-pass semantics in CI.
-    val currentGridActive by rememberUpdatedState(interactionActive)
-    val gridMeasurementLogs = remember(viewportState) { arrayOf("", "") }
-    LaunchedEffect(viewportState, gridState, libraryState.layout) {
-        if (libraryState.layout != LibraryLayout.Grid) return@LaunchedEffect
-        snapshotFlow {
-            val info = gridState.layoutInfo
-            "holder=${System.identityHashCode(viewportState)} state=${System.identityHashCode(gridState)} " +
-                "active=$currentGridActive first=${gridState.firstVisibleItemIndex}:" +
-                "${gridState.firstVisibleItemScrollOffset} viewport=${info.viewportSize} " +
-                "range=${info.viewportStartOffset}:${info.viewportEndOffset} count=${info.totalItemsCount} " +
-                "items=" + info.visibleItemsInfo.joinToString { item ->
-                    "${item.index}/${item.key}@${item.row},${item.column}:${item.offset}:${item.size}"
-                }
-        }.collectLatest { android.util.Log.d("UILibraryGrid", "state $it") }
-    }
     val headerHeightPx = remember { mutableIntStateOf(0) }
     val headerOffsetPx = viewportState.headerOffsetPx
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
-    val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
-    val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
-    val revealDistancePx = with(density) { 18.dp.toPx() }
-    val chromeHysteresis = remember(viewportState, hideDistancePx, revealDistancePx) {
-        LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx, viewportState.chromeVisible)
-    }
+    val scrollConnection = rememberLibraryScrollChrome(
+        viewport = viewportState,
+        layout = libraryState.layout,
+        headerHeightPx = headerHeightPx,
+        enabled = interactionActive && !searchFocused,
+        onVisibilityChanged = publishNavigationVisibility,
+    )
 
-    LaunchedEffect(viewportState, libraryState.layout) {
-        snapshotFlow {
-            if (libraryState.layout == LibraryLayout.List) {
-                Triple(
-                    listState.firstVisibleItemIndex,
-                    listState.firstVisibleItemScrollOffset,
-                    listState.canScrollForward || listState.canScrollBackward,
-                )
-            } else {
-                Triple(
-                    gridState.firstVisibleItemIndex,
-                    gridState.firstVisibleItemScrollOffset,
-                    gridState.canScrollForward || gridState.canScrollBackward,
-                )
-            }
-        }.collectLatest { (index, offset, canScroll) ->
-            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.floatValue >= -0.5f) {
-                headerOffsetPx.floatValue = 0f
-                chromeHysteresis.reset()
-                publishNavigationVisibility(true)
-            }
+    val searchScope = rememberCoroutineScope()
+    fun revealSearchResults() {
+        viewportState.headerOffsetPx.floatValue = 0f
+        viewportState.chromeVisible = true
+        searchScope.launch {
+            if (libraryState.layout == LibraryLayout.List) listState.scrollToItem(0)
+            else gridState.scrollToItem(0)
         }
     }
-
-    val scrollConnection = remember(
-        chromeHysteresis,
-        libraryState.layout,
-        minScrollRoomPx,
-        publishNavigationVisibility,
-    ) {
-        object : NestedScrollConnection {
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset {
-                val height = headerHeightPx.intValue
-                if (height <= 0) return Offset.Zero
-
-                val canScroll = if (libraryState.layout == LibraryLayout.List) {
-                    listState.canScrollForward || listState.canScrollBackward
-                } else {
-                    gridState.canScrollForward || gridState.canScrollBackward
-                }
-                if (!canScroll) {
-                    if (headerOffsetPx.floatValue < -0.5f && (consumed.y > 0f || available.y > 0f)) {
-                        headerOffsetPx.floatValue = 0f
-                        if (chromeHysteresis.revealNow() != null) {
-                            publishNavigationVisibility(true)
-                        }
-                    } else if (headerOffsetPx.floatValue == 0f && !chromeHysteresis.chromeVisible) {
-                        chromeHysteresis.reset()
-                        publishNavigationVisibility(true)
-                    }
-                    return Offset.Zero
-                }
-
-                // Count only child-consumed distance for hiding. A fling can report a large
-                // unconsumed delta even when one or two rows are the entire scroll range; using
-                // it would hide the chrome and then immediately re-show it after remeasurement.
-                val delta = when {
-                    consumed.y != 0f -> consumed.y
-                    available.y > 0f -> available.y
-                    else -> return Offset.Zero
-                }
-                val hasScrollRoom = if (libraryState.layout == LibraryLayout.List) {
-                    listState.hasLibraryChromeScrollRoom(minScrollRoomPx)
-                } else {
-                    gridState.hasLibraryChromeScrollRoom(minScrollRoomPx)
-                }
-                if (delta < 0f && !hasScrollRoom) return Offset.Zero
-                val fullyHidden = headerOffsetPx.floatValue <= -height.toFloat() + 0.5f
-                var visibilityChange = chromeHysteresis.onScrollDelta(delta)
-                val shouldMoveHeader =
-                    delta < 0f || !fullyHidden || chromeHysteresis.chromeVisible || visibilityChange == true
-                if (shouldMoveHeader) {
-                    headerOffsetPx.floatValue =
-                        (headerOffsetPx.floatValue + delta).coerceIn(-height.toFloat(), 0f)
-                }
-                if (delta > 0f && headerOffsetPx.floatValue >= -0.5f && !chromeHysteresis.chromeVisible) {
-                    visibilityChange = chromeHysteresis.revealNow()
-                }
-                visibilityChange?.let(publishNavigationVisibility)
-                return Offset.Zero
-            }
-        }
+    LaunchedEffect(searchFocused) {
+        if (searchFocused) revealSearchResults()
     }
-
     val renderHeader: @Composable (Modifier, Boolean) -> Unit = { modifier, interactive ->
         LibraryCollectionHeader(
             modifier = modifier,
@@ -350,7 +256,11 @@ internal fun LibraryCollectionBrowser(
                     ),
                 )
             },
-            onQueryChange = { query = it },
+            onQueryChange = {
+                query = it
+                revealSearchResults()
+            },
+            onSearchFocusChanged = { searchFocused = it },
             onSortVisibilityChanged = { sortVisible = it },
             onSort = onSort,
             onManageApps = { setManageApps(true) },
@@ -375,28 +285,7 @@ internal fun LibraryCollectionBrowser(
         } else if (libraryState.layout == LibraryLayout.Grid) {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 88.dp),
-                modifier = Modifier.fillMaxSize()
-                    .layout { measurable, constraints ->
-                        val before = androidx.compose.runtime.snapshots.Snapshot.withoutReadObservation {
-                            "${gridState.firstVisibleItemIndex}:${gridState.firstVisibleItemScrollOffset}"
-                        }
-                        val placeable = measurable.measure(constraints)
-                        val after = androidx.compose.runtime.snapshots.Snapshot.withoutReadObservation {
-                            "${gridState.firstVisibleItemIndex}:${gridState.firstVisibleItemScrollOffset}"
-                        }
-                        val phase = if (isLookingAhead) 1 else 0
-                        val message = "phase=$phase holder=${System.identityHashCode(viewportState)} " +
-                            "state=${System.identityHashCode(gridState)} constraints=$constraints " +
-                            "size=${placeable.width}x${placeable.height} before=$before after=$after"
-                        if (gridMeasurementLogs[phase] != message) {
-                            gridMeasurementLogs[phase] = message
-                            android.util.Log.d("UILibraryGrid", "measure $message")
-                        }
-                        layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
-                    }
-                    .onSizeChanged { size ->
-                        android.util.Log.d("UILibraryGrid", "placed holder=${System.identityHashCode(viewportState)} size=$size")
-                    },
+                modifier = Modifier.fillMaxSize(),
                 state = gridState,
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
@@ -533,6 +422,7 @@ private fun LibraryCollectionHeader(
     onSelectAll: () -> Unit,
     onUnselectAll: () -> Unit,
     onQueryChange: (String) -> Unit,
+    onSearchFocusChanged: (Boolean) -> Unit = {},
     onSortVisibilityChanged: (Boolean) -> Unit,
     onSort: (Int) -> Unit,
     onManageApps: () -> Unit,
@@ -629,6 +519,7 @@ private fun LibraryCollectionHeader(
                 onQueryChange = onQueryChange,
                 modifier = Modifier.weight(1f),
                 enabled = interactive,
+                onFocusChanged = onSearchFocusChanged,
             )
             Box {
                 LibrarySortButton(

@@ -8,12 +8,14 @@ import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -25,6 +27,7 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
@@ -77,8 +80,10 @@ class LibraryViewportNavigationTest {
         composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
 
         swipeToPreviousPage()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_destination_apps)).assertIsDisplayed()
         assertViewport(members, MEMBER_PREFIX)
         swipeToPreviousPage()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_destination_apps)).assertIsDisplayed()
         assertViewport(apps, APP_PREFIX)
     }
 
@@ -112,11 +117,11 @@ class LibraryViewportNavigationTest {
                 JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
             }
         }
-        activeList(APP_PREFIX).performScrollToNode(hasText(rowTitle(APP_PREFIX, 79)))
+        activeList(APP_PREFIX).performScrollToNode(hasText(rowTitle(APP_PREFIX, 70)))
         composeRule.waitForIdle()
         activeList(APP_PREFIX).performTouchInput {
-            down(Offset(width * 0.5f, height * 0.7f))
-            moveTo(Offset(width * 0.5f, height * 0.7f - width * 0.4f), delayMillis = 600)
+            down(Offset(width * 0.5f, height * 0.85f))
+            moveSmoothlyTo(Offset(width * 0.5f, height * 0.15f), durationMillis = 600)
             advanceEventTime(150)
             up()
         }
@@ -128,9 +133,7 @@ class LibraryViewportNavigationTest {
         activeList(APP_PREFIX).performScrollToNode(hasText(rowTitle(APP_PREFIX, 79)))
         composeRule.waitForIdle()
         composeRule.onAllNodesWithContentDescription(appsNavigation).assertCountEquals(0)
-        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79)).assertIsDisplayed()
-        val apps = visibleRow(APP_PREFIX)
-
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true).assertIsDisplayed()
         swipeToNextPage()
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
@@ -146,19 +149,47 @@ class LibraryViewportNavigationTest {
         composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
         swipeToPreviousPage()
 
-        composeRule.onAllNodesWithContentDescription(appsNavigation).assertCountEquals(0)
-        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79)).assertIsDisplayed()
-        assertViewport(apps, APP_PREFIX)
+        // Returning deliberately reveals navigation. At the end, its inset can clamp the first
+        // row; the final app must remain visible, with no replay of an obsolete hidden-bar anchor.
+        composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true).assertIsDisplayed()
+        val apps = visibleRow(APP_PREFIX)
 
-        // Restore while the navigation bar is absent. The retained measured footer height must
-        // already be available when the end-of-list Collections page is composed again.
         restoration.emulateSavedInstanceStateRestore()
         composeRule.waitForIdle()
-        composeRule.onAllNodesWithContentDescription(appsNavigation).assertCountEquals(0)
+        composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
         assertViewport(apps, APP_PREFIX)
         swipeToNextPage()
         composeRule.onNodeWithContentDescription(appsNavigation).assertIsDisplayed()
         assertViewport(folders, FOLDER_PREFIX)
+    }
+
+    @Test
+    fun searchRevealsCompleteHeaderAndStartsResultsAtTop() {
+        val host = ViewportHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
+            }
+        }
+        scrollAwayFromTop(APP_PREFIX)
+        activeList(APP_PREFIX).performTouchInput {
+            down(Offset(width * 0.5f, height * 0.25f))
+            moveSmoothlyTo(Offset(width * 0.5f, height * 0.8f), durationMillis = 500)
+            advanceEventTime(150)
+            up()
+        }
+        composeRule.waitForIdle()
+        composeRule.onNode(hasSetTextAction()).performClick().performTextInput("Library")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
+        val searchBottom = composeRule.onNode(hasSetTextAction()).fetchSemanticsNode().boundsInRoot.bottom
+        val resultTop = composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.top
+        assertTrue("Search left a large empty gap above results", resultTop - searchBottom < 100f)
     }
 
     @Test
@@ -181,13 +212,13 @@ class LibraryViewportNavigationTest {
         // Returning before release leaves settledPage unchanged and must retain selection.
         composeRule.onRoot().performTouchInput {
             down(Offset(width * 0.85f, height * 0.55f))
-            moveTo(Offset(width * 0.15f, height * 0.55f), delayMillis = 400)
+            moveSmoothlyTo(Offset(width * 0.15f, height * 0.55f), durationMillis = 400)
         }
         composeRule.waitForIdle()
         // Offscreen pages clear their semantics, so this proves the indicated page changed.
         composeRule.onNodeWithText(COLLECTION_NAME).assertExists()
         composeRule.onRoot().performTouchInput {
-            moveTo(Offset(width * 0.85f, height * 0.55f), delayMillis = 400)
+            moveSmoothlyTo(Offset(width * 0.85f, height * 0.55f), durationMillis = 400)
             advanceEventTime(150)
             up()
         }
@@ -224,12 +255,20 @@ class LibraryViewportNavigationTest {
         composeRule.waitForIdle()
         activeList(prefix).performTouchInput {
             down(Offset(width * 0.5f, height * 0.55f))
-            moveTo(Offset(width * 0.5f, height * 0.55f - 37f), delayMillis = 250)
+            moveSmoothlyTo(Offset(width * 0.5f, height * 0.15f), durationMillis = 250)
             advanceEventTime(150)
             up()
         }
         composeRule.waitForIdle()
         assertTrue(visibleRow(prefix).title != rowTitle(prefix, 0))
+    }
+
+    private fun TouchInjectionScope.moveSmoothlyTo(end: Offset, durationMillis: Long) {
+        val start = checkNotNull(currentPosition())
+        // Multiple timed MOVE events cross touch slop and produce a continuous drag.
+        for (step in 1..25) {
+            moveTo(start + (end - start) * (step / 25f), delayMillis = durationMillis / 25)
+        }
     }
 
     private fun rowMatcher(prefix: String) = SemanticsMatcher("row title starts with $prefix") { node ->
@@ -239,26 +278,32 @@ class LibraryViewportNavigationTest {
 
     private fun activeList(prefix: String): SemanticsNodeInteraction =
         // Pager and Lazy content can both expose ScrollBy; the innermost matching node is last.
-        composeRule.onAllNodes(hasScrollAction() and hasAnyDescendant(rowMatcher(prefix))).onLast()
+        composeRule.onAllNodes(
+            hasScrollAction() and hasAnyDescendant(rowMatcher(prefix)),
+            useUnmergedTree = true,
+        ).onLast()
 
     private data class VisibleRow(val title: String, val top: Float)
 
     private fun visibleRow(prefix: String): VisibleRow {
         composeRule.waitForIdle()
         val viewport = activeList(prefix).fetchSemanticsNode().boundsInRoot
-        val nodes = composeRule.onAllNodes(rowMatcher(prefix)).fetchSemanticsNodes()
-            .filter { node ->
-                val top = node.positionInRoot.y
-                val bottom = top + node.size.height
-                node.boundsInRoot.width > 0 && node.boundsInRoot.height > 0 &&
-                    node.size.width > 0 && node.size.height > 0 &&
-                    top >= viewport.top && bottom <= viewport.bottom
-            }
-        val first = checkNotNull(nodes.minByOrNull { it.positionInRoot.y }) {
+        val candidates = composeRule.onAllNodes(rowMatcher(prefix), useUnmergedTree = true)
+            .fetchSemanticsNodes()
+        val nodes = candidates.filter { node ->
+            val bounds = node.boundsInRoot
+            // Clipped nodes touch a viewport edge; only interior rendered title bounds qualify.
+            bounds.width > 0 && bounds.height > 0 &&
+                bounds.top > viewport.top && bounds.bottom < viewport.bottom
+        }
+        val first = checkNotNull(nodes.minWithOrNull(
+            compareBy({ it.boundsInRoot.top }, { it.boundsInRoot.left }),
+        )) {
             "No fully visible $prefix row in active viewport $viewport"
         }
         val title = first.config[SemanticsProperties.Text].first { it.text.startsWith(prefix) }.text
-        return VisibleRow(title, first.positionInRoot.y)
+        val visible = VisibleRow(title, first.boundsInRoot.top)
+        return visible
     }
 
     private fun assertViewport(expected: VisibleRow, prefix: String) {
