@@ -122,10 +122,14 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private val quickView = MutableStateFlow(LibraryQuickView.All)
     private val playStatRefreshMutex = Mutex()
     private val repositoryRevision = AtomicLong()
-    private val versionedRepositoryState = repository.state.map { state ->
-        val availableAppIds = (state as? LibraryRepository.State.Ready)?.apps
-            ?.mapTo(LinkedHashSet(state.apps.size)) { it.id }
-            ?: emptySet()
+    private val versionedRepositoryState = repository.state.mapLatest { state ->
+        val availableAppIds = if (state is LibraryRepository.State.Ready) {
+            withContext(Dispatchers.Default) {
+                state.apps.mapTo(LinkedHashSet(state.apps.size)) { it.id }
+            }
+        } else {
+            emptySet()
+        }
         VersionedRepositoryState(
             revision = repositoryRevision.incrementAndGet(),
             state = state,
