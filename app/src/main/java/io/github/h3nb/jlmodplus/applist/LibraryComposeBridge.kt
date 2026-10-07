@@ -987,6 +987,7 @@ fun LibraryScreen(
             bottomBar = {
                 if (
                     collectionSelectionState.isActive &&
+                    !imeHidesLibraryChrome &&
                     destination == LibraryDestination.Collections &&
                     collectionsHost != null &&
                     collectionSelectionId != null
