@@ -496,12 +496,17 @@ private fun LibraryCollectionsOverview(
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
     }
 
-    LaunchedEffect(state.collections, libraryState.generation) {
+    LaunchedEffect(
+        state.collections,
+        libraryState.generation,
+        libraryState.libraryScope,
+    ) {
         val availableIds = state.collections.map { it.id }
         val anchor = navigationState.resolveAnchor(
             LibraryNavigationSurface.CollectionsList,
             libraryState.generation,
             availableIds,
+            libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
         ) ?: return@LaunchedEffect
         val targetIndex = anchor.index + 1
         if (listState.firstVisibleItemIndex != targetIndex ||
@@ -511,7 +516,11 @@ private fun LibraryCollectionsOverview(
         }
     }
 
-    LaunchedEffect(state.collections, libraryState.generation) {
+    LaunchedEffect(
+        state.collections,
+        libraryState.generation,
+        libraryState.libraryScope,
+    ) {
         snapshotFlow {
             val firstCollection = listState.layoutInfo.visibleItemsInfo
                 .firstOrNull { it.index > 0 }
@@ -521,6 +530,7 @@ private fun LibraryCollectionsOverview(
                 stableItemId = state.collections.getOrNull(fallbackIndex)?.id,
                 offsetPx = firstCollection?.offset ?: 0,
                 fallbackIndex = fallbackIndex.coerceAtLeast(0),
+                libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
             )
         }.collectLatest { anchor ->
             delay(120)
