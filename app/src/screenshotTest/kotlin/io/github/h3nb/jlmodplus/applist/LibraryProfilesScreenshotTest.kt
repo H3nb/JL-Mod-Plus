@@ -330,7 +330,7 @@ fun LibraryCollectionBrowserScreenshot() {
             onBack = {},
             onOpenApp = {},
             onOpenActions = {},
-            onSetMembership = { _, _ -> },
+            onSetMembership = { _, _, _ -> },
             onPrepareAppPicker = {},
             onSort = {},
         )
@@ -352,7 +352,7 @@ fun LibraryCollectionAppPickerScreenshot() {
             iconShape = LibraryIconShape.Round,
             scaffoldPadding = PaddingValues(),
             onBack = {},
-            onSetMembership = { _, _ -> },
+            onSetMembership = { _, _, _ -> },
         )
     }
 }
@@ -692,6 +692,12 @@ private class PreviewCollectionsHost : LibraryCollectionsHost, LibraryActions by
     override fun onRequestAddToCollection(appId: Int) = Unit
     override fun onDismissAddToCollection() = Unit
     override fun onAddAppToCollection(appId: Int, collectionId: Long) = Unit
+    override fun onSetCollectionMembership(
+        appId: Int,
+        collectionId: Long,
+        included: Boolean,
+        callback: CollectionMembershipResultCallback,
+    ) = callback.onResult(true)
     override fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long) = Unit
     override fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long) = Unit
     override fun onRemoveAppFromCollection(appId: Int, collectionId: Long) = Unit
