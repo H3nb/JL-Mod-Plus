@@ -289,7 +289,9 @@ internal fun LibraryCollectionsDestination(
         calculatePaneScaffoldDirective(adaptiveInfo).copy(horizontalPartitionSpacerSize = 0.dp)
     }
     val showDetailBack = directive.maxHorizontalPartitions == 1
-    val displayedCollectionId = selectedCollectionId.takeIf { active }
+    // Keep neighbouring pager pages on their last visual state. "active" owns interaction,
+    // not which Collection is rendered, so returning to this tab cannot flash the overview.
+    val displayedCollectionId = selectedCollectionId
     val scaffoldValue = remember(
         directive.maxHorizontalPartitions,
         displayedCollectionId != null,
