@@ -53,7 +53,7 @@ public final class PlatformCompatMidlet extends MIDlet {
 		Locale hostLocale = ConfigurationCompat.getLocales(
 				ContextHolder.getActivity().getResources().getConfiguration()).get(0);
 		writeMarker(markerPath, "host-locale="
-				+ (hostLocale == null ? "" : hostLocale.getLanguage()) + "\n");
+				+ (hostLocale == null ? "" : hostLocale.toLanguageTag()) + "\n");
 		writeMarker(markerPath, "locale=" + MidletSystem.getProperty("microedition.locale") + "\n");
 		display = Display.getDisplay(this);
 		transitionMode = DISPLAY_TRANSITION.equals(getAppProperty(DISPLAY_PROPERTY));

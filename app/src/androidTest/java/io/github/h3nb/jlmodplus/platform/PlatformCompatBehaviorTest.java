@@ -115,7 +115,7 @@ public class PlatformCompatBehaviorTest {
 	}
 
 	@Test
-	public void midletLocaleFollowsApplicationLocaleAcrossColdStart() throws Exception {
+	public void midletLocaleUsesJavaMeDeviceLocaleAcrossColdStart() throws Exception {
 		LocaleListCompat previousLocales = LocaleManagerCompat.getApplicationLocales(context);
 		try {
 			InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
@@ -126,10 +126,11 @@ public class PlatformCompatBehaviorTest {
 			launchFixture(context, appDir);
 			awaitMarker(marker, "host-locale=");
 			awaitMarker(marker, "locale=");
-			assertEquals("Runtime Activity configuration must apply the emulator application locale",
-					"host-locale=id", lastMarkerValue(marker, "host-locale="));
-			assertEquals("MIDlet locale must follow the runtime Activity configuration",
-					"locale=id", lastMarkerValue(marker, "locale="));
+			String hostLocale = lastMarkerValue(marker, "host-locale=");
+			assertTrue("Runtime Activity must apply the selected application language: " + hostLocale,
+					hostLocale.equals("host-locale=id") || hostLocale.startsWith("host-locale=id-"));
+			assertEquals("MIDlet locale must expose a complete Java ME device locale",
+					"locale=id-ID", lastMarkerValue(marker, "locale="));
 		} finally {
 			killFixtureProcess();
 			InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
