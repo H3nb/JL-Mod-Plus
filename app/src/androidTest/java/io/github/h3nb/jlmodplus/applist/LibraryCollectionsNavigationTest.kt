@@ -24,7 +24,7 @@ import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -113,7 +113,8 @@ class LibraryCollectionsNavigationTest {
 
         composeRule.onNodeWithText("1 selected").assertIsDisplayed()
         composeRule.onNodeWithText("Deselect all").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Select $MEMBER_TITLE").assertIsDisplayed()
+        composeRule.onNodeWithTag("collection-selection-checkbox-${SAMPLE_MEMBER.databaseId}")
+            .assertIsDisplayed()
         composeRule.onNodeWithText("Remove from collection").assertIsDisplayed()
 
         pressBack()
@@ -156,6 +157,32 @@ class LibraryCollectionsNavigationTest {
 
         assertEquals(listOf(setOf(SAMPLE_MEMBER.databaseId) to COLLECTION_ID), host.bulkRemovals)
         composeRule.onAllNodesWithText("1 selected").assertCountEquals(0)
+        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+    }
+
+    @Test
+    fun collectionLongPressRemoveKeepsCurrentCollectionContextAfterDialogDismiss() {
+        val host = RecordingCollectionsHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(
+                        state = sampleLibraryState(),
+                        actions = host,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Collections").performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
+        composeRule.onNodeWithText("Remove from collection").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(listOf(SAMPLE_MEMBER.id to COLLECTION_ID), host.singleRemovals)
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
     }
 
@@ -205,6 +232,7 @@ class LibraryCollectionsNavigationTest {
         }
         val openedCollectionIds = mutableListOf<Long>()
         val bulkRemovals = mutableListOf<Pair<Set<Long>, Long>>()
+        val singleRemovals = mutableListOf<Pair<Int, Long>>()
         var loadMembersOnOpen = true
 
         override fun collectionsStore(): LibraryCollectionsUiStore = store
@@ -228,7 +256,9 @@ class LibraryCollectionsNavigationTest {
         override fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long) {
             bulkRemovals += appIds to collectionId
         }
-        override fun onRemoveAppFromCollection(appId: Int, collectionId: Long) = Unit
+        override fun onRemoveAppFromCollection(appId: Int, collectionId: Long) {
+            singleRemovals += appId to collectionId
+        }
         override fun onSearch(query: String) = Unit
         override fun onLayoutChange(layout: LibraryLayout) = Unit
         override fun onSort(sortIndex: Int) = Unit
