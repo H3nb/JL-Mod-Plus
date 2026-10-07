@@ -330,6 +330,8 @@ fun LibraryCollectionBrowserScreenshot() {
             onBack = {},
             onOpenApp = {},
             onOpenActions = {},
+            manageApps = false,
+            onManageAppsChanged = {},
             onSetMembership = { _, _, _ -> },
             onPrepareAppPicker = {},
             onSort = {},
