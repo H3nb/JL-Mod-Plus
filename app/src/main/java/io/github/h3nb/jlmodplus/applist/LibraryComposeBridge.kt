@@ -614,10 +614,10 @@ fun LibraryScreen(
     var selectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
         mutableStateOf(initialSelectionState)
     }
-    var collectionSelectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
-        mutableStateOf(LibrarySelectionState())
-    }
-    var collectionSelectionId by rememberSaveable { mutableStateOf<Long?>(null) }
+    // null means the Apps destination; a non-null id scopes the same selection state to that
+    // Collection. Keep one selection owner so list/grid indicators, headers, and bulk actions
+    // cannot disagree about whether selection mode is active.
+    var selectionCollectionId by rememberSaveable { mutableStateOf<Long?>(null) }
     var controllerFocusVisible by rememberSaveable { mutableStateOf(false) }
     var controllerFocusedAppId by rememberSaveable { mutableStateOf<Long?>(null) }
     var controllerFocusedAppIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -640,9 +640,6 @@ fun LibraryScreen(
     val currentControllerInfoDialog by rememberUpdatedState(infoDialog)
     val currentControllerBulkDeleteIds by rememberUpdatedState(pendingBulkDeleteIds)
     val currentControllerSelectionActive by rememberUpdatedState(selectionState.isActive)
-    val currentControllerCollectionSelectionActive by rememberUpdatedState(
-        collectionSelectionState.isActive,
-    )
     val currentControllerOtherModalVisible by rememberUpdatedState(
         renameTarget != null || metadataTarget != null || deleteTarget != null ||
             infoDialog != null || pendingBulkDeleteIds != null,
@@ -670,17 +667,11 @@ fun LibraryScreen(
         if (!state.databaseControlsReady) return@LaunchedEffect
         if (selectionState.generation != null && selectionState.generation != state.generation) {
             selectionState = selectionState.clear()
-        }
-        if (
-            collectionSelectionState.generation != null &&
-            collectionSelectionState.generation != state.generation
-        ) {
-            collectionSelectionState = collectionSelectionState.clear()
-            collectionSelectionId = null
+            selectionCollectionId = null
         }
     }
-    LaunchedEffect(state.generation, state.apps) {
-        if (!state.databaseControlsReady) return@LaunchedEffect
+    LaunchedEffect(state.generation, state.apps, selectionCollectionId) {
+        if (!state.databaseControlsReady || selectionCollectionId != null) return@LaunchedEffect
         selectionState = selectionState.retainAvailable(
             state.generation,
             state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
@@ -744,8 +735,9 @@ fun LibraryScreen(
         }
     }
 
-    BackHandler(enabled = selectionState.isActive) {
+    BackHandler(enabled = selectionState.isActive && selectionCollectionId == null) {
         selectionState = selectionState.clear()
+        selectionCollectionId = null
     }
 
     val metadataApp = metadataTarget?.let { target ->
@@ -891,11 +883,10 @@ fun LibraryScreen(
                     currentControllerDeleteTarget != null -> deleteTarget = null
                     currentControllerBulkDeleteIds != null -> pendingBulkDeleteIds = null
                     currentControllerInfoDialog != null -> infoDialog = null
-                    currentControllerCollectionSelectionActive -> {
-                        collectionSelectionState = collectionSelectionState.clear()
-                        collectionSelectionId = null
+                    currentControllerSelectionActive -> {
+                        selectionState = selectionState.clear()
+                        selectionCollectionId = null
                     }
-                    currentControllerSelectionActive -> selectionState = selectionState.clear()
                     else -> Unit
                 }
                 LibraryControllerCommand.NextTab,
@@ -921,14 +912,21 @@ fun LibraryScreen(
             appActionsCollectionId = null
         }
     }
-    LaunchedEffect(destination, navigationState.selectedCollectionId, collectionSelectionId) {
-        if (
-            collectionSelectionState.isActive &&
-            (destination != LibraryDestination.Collections ||
-                navigationState.selectedCollectionId != collectionSelectionId)
-        ) {
-            collectionSelectionState = collectionSelectionState.clear()
-            collectionSelectionId = null
+    LaunchedEffect(destination, navigationState.selectedCollectionId, selectionCollectionId) {
+        if (!selectionState.isActive) {
+            selectionCollectionId = null
+            return@LaunchedEffect
+        }
+        val scopeMatchesDestination = when (destination) {
+            LibraryDestination.Apps -> selectionCollectionId == null
+            LibraryDestination.Collections ->
+                selectionCollectionId != null &&
+                    navigationState.selectedCollectionId == selectionCollectionId
+            LibraryDestination.More -> false
+        }
+        if (!scopeMatchesDestination) {
+            selectionState = selectionState.clear()
+            selectionCollectionId = null
         }
     }
 
@@ -947,14 +945,8 @@ fun LibraryScreen(
     val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
     val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
-    LaunchedEffect(
-        libraryOverlayVisible,
-        selectionState.isActive,
-        collectionSelectionState.isActive,
-    ) {
-        onControllerBackAvailabilityChanged(
-            libraryOverlayVisible || selectionState.isActive || collectionSelectionState.isActive,
-        )
+    LaunchedEffect(libraryOverlayVisible, selectionState.isActive) {
+        onControllerBackAvailabilityChanged(libraryOverlayVisible || selectionState.isActive)
     }
     val libraryContentModifier = if (!libraryOverlayVisible) {
         Modifier
@@ -985,30 +977,47 @@ fun LibraryScreen(
             contentWindowInsets = scaffoldInsets,
             snackbarHost = noticeHost,
             bottomBar = {
+                val collectionId = selectionCollectionId
+                val selectionMatchesDestination = when (destination) {
+                    LibraryDestination.Apps -> collectionId == null
+                    LibraryDestination.Collections ->
+                        collectionId != null && navigationState.selectedCollectionId == collectionId
+                    LibraryDestination.More -> false
+                }
                 if (
-                    collectionSelectionState.isActive &&
+                    selectionState.isActive &&
+                    selectionMatchesDestination &&
                     !imeHidesLibraryChrome &&
-                    destination == LibraryDestination.Collections &&
-                    collectionsHost != null &&
-                    collectionSelectionId != null
+                    bulkActions != null
                 ) {
-                    LibraryCollectionSelectionBottomBar(
-                        enabled = collectionSelectionState.selectedAppIds.isNotEmpty(),
-                        onRemove = {
-                            collectionsHost.onRemoveAppsFromCollection(
-                                collectionSelectionState.selectedAppIds,
-                                requireNotNull(collectionSelectionId),
-                            )
-                            collectionSelectionState = collectionSelectionState.clear()
-                            collectionSelectionId = null
-                        },
-                    )
-                } else if (selectionState.isActive && !imeHidesLibraryChrome && bulkActions != null) {
+                    val collectionHost = collectionsHost
+                    val inCollection = collectionId != null && collectionHost != null
                     LibrarySelectionBottomBar(
                         enabled = selectionState.selectedAppIds.isNotEmpty(),
                         onDelete = { pendingBulkDeleteIds = selectionState.selectedAppIds },
-                        onAddToCollection = {
-                            bulkActions.onAddSelectedToCollection(selectionState.selectedAppIds)
+                        contextActionIcon = if (inCollection) {
+                            R.drawable.ic_remove_from_collection
+                        } else {
+                            R.drawable.ic_add_to_collection
+                        },
+                        contextActionLabel = stringResource(
+                            if (inCollection) {
+                                R.string.library_collection_remove_from_current
+                            } else {
+                                R.string.library_bulk_add_collection
+                            },
+                        ),
+                        onContextAction = {
+                            if (collectionId != null && collectionHost != null) {
+                                collectionHost.onRemoveAppsFromCollection(
+                                    selectionState.selectedAppIds,
+                                    collectionId,
+                                )
+                                selectionState = selectionState.clear()
+                                selectionCollectionId = null
+                            } else {
+                                bulkActions.onAddSelectedToCollection(selectionState.selectedAppIds)
+                            }
                         },
                         onShare = { bulkActions.onShareSelected(selectionState.selectedAppIds) },
                         onReinstall = { bulkActions.onReinstallSelected(selectionState.selectedAppIds) },
@@ -1017,8 +1026,7 @@ fun LibraryScreen(
                 } else if (
                     !useNavigationRail &&
                     !imeHidesLibraryChrome &&
-                    !selectionState.isActive &&
-                    !collectionSelectionState.isActive
+                    !selectionState.isActive
                 ) {
                     AnimatedVisibility(
                         visible = showNavigationBar,
@@ -1152,7 +1160,11 @@ fun LibraryScreen(
                             freezeViewport = metadataViewportLocked,
                             preserveImePaddingWhileFrozen = metadataImeWasVisible,
                             onNavigationStateChanged = { navigationState = it },
-                            selectionState = selectionState,
+                            selectionState = if (selectionCollectionId == null) {
+                                selectionState
+                            } else {
+                                LibrarySelectionState()
+                            },
                             controllerFocusedDatabaseId = controllerFocusedAppId
                                 .takeIf { controllerFocusVisible },
                             onOpenApp = actions::onOpenApp,
@@ -1166,7 +1178,10 @@ fun LibraryScreen(
                             onToggleSelection = { app ->
                                 selectionState = selectionState.toggle(state.generation, app.databaseId)
                             },
-                            onExitSelection = { selectionState = selectionState.clear() },
+                            onExitSelection = {
+                                selectionState = selectionState.clear()
+                                selectionCollectionId = null
+                            },
                             onSelectAll = {
                                 selectionState = selectionState.selectVisible(
                                     state.generation,
@@ -1198,15 +1213,16 @@ fun LibraryScreen(
                                     appActionsCollectionId = collectionId
                                 },
                                 selectionState = if (
-                                    collectionSelectionId == navigationState.selectedCollectionId
+                                    selectionCollectionId != null &&
+                                    selectionCollectionId == navigationState.selectedCollectionId
                                 ) {
-                                    collectionSelectionState
+                                    selectionState
                                 } else {
                                     LibrarySelectionState()
                                 },
                                 onSelectionStateChanged = { next ->
-                                    collectionSelectionState = next
-                                    if (!next.isActive) collectionSelectionId = null
+                                    selectionState = next
+                                    if (!next.isActive) selectionCollectionId = null
                                 },
                                 onNavigationVisibilityChanged = { visible ->
                                     if (!useNavigationRail) showNavigationBar = visible
@@ -1340,21 +1356,8 @@ fun LibraryScreen(
                 null
             },
             onSelect = {
-                if (collectionId == null) {
-                    collectionSelectionState = collectionSelectionState.clear()
-                    collectionSelectionId = null
-                    selectionState = selectionState.enter(state.generation, app.databaseId)
-                } else {
-                    selectionState = selectionState.clear()
-                    if (collectionSelectionId != collectionId) {
-                        collectionSelectionState = LibrarySelectionState()
-                    }
-                    collectionSelectionId = collectionId
-                    collectionSelectionState = collectionSelectionState.enter(
-                        state.generation,
-                        app.databaseId,
-                    )
-                }
+                selectionCollectionId = collectionId
+                selectionState = selectionState.enter(state.generation, app.databaseId)
             },
         )
     }
@@ -2097,39 +2100,12 @@ internal fun LazyGridState.hasLibraryChromeScrollRoom(minScrollRoomPx: Float): B
 }
 
 @Composable
-private fun LibraryCollectionSelectionBottomBar(
-    enabled: Boolean,
-    onRemove: () -> Unit,
-) {
-    NavigationBar(
-        modifier = Modifier.fillMaxWidth(),
-        windowInsets = NavigationBarDefaults.windowInsets,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 3.dp,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 80.dp)
-                .padding(horizontal = 4.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.Top,
-        ) {
-            LibrarySelectionAction(
-                icon = R.drawable.ic_remove_from_collection,
-                label = stringResource(R.string.library_collection_remove_from_current),
-                onClick = onRemove,
-                enabled = enabled,
-            )
-        }
-    }
-}
-
-@Composable
 private fun LibrarySelectionBottomBar(
     enabled: Boolean,
     onDelete: () -> Unit,
-    onAddToCollection: () -> Unit,
+    contextActionIcon: Int,
+    contextActionLabel: String,
+    onContextAction: () -> Unit,
     onShare: () -> Unit,
     onReinstall: () -> Unit,
     onExport: () -> Unit,
@@ -2158,9 +2134,9 @@ private fun LibrarySelectionBottomBar(
                 destructive = true,
             )
             LibrarySelectionAction(
-                icon = R.drawable.ic_add_to_collection,
-                label = stringResource(R.string.library_bulk_add_collection),
-                onClick = onAddToCollection,
+                icon = contextActionIcon,
+                label = contextActionLabel,
+                onClick = onContextAction,
                 enabled = enabled,
             )
             LibrarySelectionAction(

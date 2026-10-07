@@ -18,7 +18,7 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 
 /**
- * Immutable, generation-scoped selection state for the Apps destination.
+ * Immutable, generation-scoped selection state shared by Library app surfaces.
  *
  * Selection uses the Room app id rather than the transient UI id assigned by
  * [AppsListFragment]. A non-null generation means that selection mode is

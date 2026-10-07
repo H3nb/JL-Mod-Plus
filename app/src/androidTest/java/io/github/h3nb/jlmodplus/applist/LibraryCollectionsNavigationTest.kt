@@ -112,7 +112,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText("Select").performClick()
 
         composeRule.onNodeWithText("1 selected").assertIsDisplayed()
-        composeRule.onNodeWithText("Deselect all").assertIsDisplayed()
+        composeRule.onNodeWithText("Select all").assertIsDisplayed()
         composeRule.onNodeWithTag("collection-selection-checkbox-${SAMPLE_MEMBER.databaseId}")
             .assertIsDisplayed()
         composeRule.onNodeWithText("Remove from collection").assertIsDisplayed()
@@ -130,6 +130,49 @@ class LibraryCollectionsNavigationTest {
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
         assertNull(host.store.activeCollectionId())
+    }
+
+    @Test
+    fun collectionSelectionShowsCheckboxesSelectAllAndContextualBulkActions() {
+        val host = RecordingCollectionsHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(
+                        state = sampleLibraryState(),
+                        actions = host,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Collections").performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
+        composeRule.onNodeWithText("Select").performClick()
+
+        composeRule.onNodeWithText("1 selected").assertIsDisplayed()
+        composeRule.onNodeWithTag("collection-selection-checkbox-${SAMPLE_MEMBER.databaseId}")
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("Select all").assertIsDisplayed()
+        composeRule.onNodeWithText("Delete apps").assertIsDisplayed()
+        composeRule.onNodeWithText("Remove from collection").assertIsDisplayed()
+        composeRule.onNodeWithText("Share apps").assertIsDisplayed()
+        composeRule.onNodeWithText("Reinstall").assertIsDisplayed()
+        composeRule.onNodeWithText("Export bundle").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Add to collection").assertCountEquals(0)
+
+        composeRule.onNodeWithText("Select all").performClick()
+        composeRule.onNodeWithText("2 selected").assertIsDisplayed()
+        composeRule.onNodeWithText("Deselect all").assertIsDisplayed()
+        composeRule.onNodeWithTag("collection-selection-checkbox-${SAMPLE_MEMBER_2.databaseId}")
+            .assertIsDisplayed()
+
+        composeRule.onNodeWithText("Deselect all").performClick()
+        composeRule.onNodeWithText("0 selected").assertIsDisplayed()
+        composeRule.onNodeWithText("Select all").assertIsDisplayed()
     }
 
     @Test
@@ -224,11 +267,11 @@ class LibraryCollectionsNavigationTest {
                         name = COLLECTION_NAME,
                         sortOrder = 0,
                         createdAt = 1L,
-                        appCount = 1,
+                        appCount = 2,
                     ),
                 ),
             )
-            publishAllApps(listOf(SAMPLE_MEMBER))
+            publishAllApps(listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
         }
         val openedCollectionIds = mutableListOf<Long>()
         val bulkRemovals = mutableListOf<Pair<Set<Long>, Long>>()
@@ -240,7 +283,7 @@ class LibraryCollectionsNavigationTest {
         override fun onOpenCollection(collectionId: Long) {
             openedCollectionIds += collectionId
             if (loadMembersOnOpen) {
-                store.showMembers(collectionId, listOf(SAMPLE_MEMBER))
+                store.showMembers(collectionId, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
             }
         }
 
@@ -286,6 +329,15 @@ class LibraryCollectionsNavigationTest {
             title = MEMBER_TITLE,
             author = "Example Vendor",
             version = "1.0",
+            iconPath = null,
+            canReinstall = true,
+        )
+
+        val SAMPLE_MEMBER_2 = LibraryAppUiItem(
+            id = 8,
+            title = "Second MIDlet",
+            author = "Example Vendor",
+            version = "1.1",
             iconPath = null,
             canReinstall = true,
         )

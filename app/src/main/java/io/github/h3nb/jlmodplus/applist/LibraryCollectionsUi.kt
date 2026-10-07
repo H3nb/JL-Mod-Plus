@@ -243,6 +243,28 @@ internal fun LibraryCollectionsDestination(
     }
     val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
 
+    LaunchedEffect(
+        selectionState,
+        selectedCollectionId,
+        state.members?.collectionId,
+        state.members?.members,
+        libraryState.generation,
+    ) {
+        val members = state.members
+        if (
+            !selectionState.isActive ||
+            selectedCollectionId == null ||
+            members?.collectionId != selectedCollectionId
+        ) {
+            return@LaunchedEffect
+        }
+        val retained = selectionState.retainAvailable(
+            libraryState.generation,
+            members.members.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+        )
+        if (retained != selectionState) onSelectionStateChanged(retained)
+    }
+
     LaunchedEffect(selectedCollectionId, state.collections, state.members?.collectionId) {
         when {
             selectedCollectionId == null && state.members != null -> {
