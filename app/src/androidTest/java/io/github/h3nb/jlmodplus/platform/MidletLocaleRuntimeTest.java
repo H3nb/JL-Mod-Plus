@@ -84,9 +84,15 @@ public class MidletLocaleRuntimeTest {
             assertEquals("Transformed MIDlet property delegate must receive the same locale",
                     guestLocale, markerPayload(marker, "midlet-property="));
         } finally {
-            stopProcess(context, probeProcess);
-            localeManager.setApplicationLocales(previousLocales);
-            if (marker.exists()) marker.delete();
+            try {
+                stopProcess(context, probeProcess);
+            } finally {
+                try {
+                    localeManager.setApplicationLocales(previousLocales);
+                } finally {
+                    if (marker.exists()) marker.delete();
+                }
+            }
         }
     }
 
