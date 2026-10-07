@@ -513,7 +513,6 @@ class LibraryCollectionsNavigationTest {
     @Test
     fun collectionManageAppsShowsPendingDesiredStateAndSerializesRowMutation() {
         val host = RecordingCollectionsHost().apply {
-            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
             deferMembershipResult = true
         }
         composeRule.setContent {
@@ -531,6 +530,10 @@ class LibraryCollectionsNavigationTest {
 
         composeRule.onNodeWithText("Collections").performClick()
         composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.runOnIdle {
+            host.store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
+        }
+        composeRule.waitForIdle()
         composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
 
         val target = composeRule.onNodeWithTag(
