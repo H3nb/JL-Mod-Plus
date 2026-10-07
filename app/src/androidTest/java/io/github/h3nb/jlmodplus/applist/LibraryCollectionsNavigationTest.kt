@@ -112,6 +112,7 @@ class LibraryCollectionsNavigationTest {
 
         composeRule.onNodeWithText("1 selected").assertIsDisplayed()
         composeRule.onNodeWithText("Deselect all").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Select $MEMBER_TITLE").assertIsDisplayed()
         composeRule.onNodeWithText("Remove from collection").assertIsDisplayed()
 
         pressBack()
