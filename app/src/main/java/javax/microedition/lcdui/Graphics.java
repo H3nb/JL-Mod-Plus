@@ -65,6 +65,7 @@ public class Graphics implements
 	private final Paint fillPaint = new Paint();
 	private final Paint polygonPaint = new Paint();
 	private final Paint polygonLayerPaint = new Paint();
+	private int polygonLayerColor;
 
 	private int translateX;
 	private int translateY;
@@ -154,9 +155,9 @@ public class Graphics implements
 				path.computeBounds(rectF, true);
 				// Default miter limit is 4: a one-pixel stroke extends at most two pixels.
 				rectF.inset(-2, -2);
-				PorterDuffColorFilter filter = (PorterDuffColorFilter) polygonLayerPaint.getColorFilter();
-				if (filter == null || filter.getColor() != argbColor) {
+				if (polygonLayerPaint.getColorFilter() == null || polygonLayerColor != argbColor) {
 					polygonLayerPaint.setColorFilter(new PorterDuffColorFilter(argbColor, PorterDuff.Mode.SRC_IN));
+					polygonLayerColor = argbColor;
 				}
 				saveCount = canvas.saveLayer(rectF, polygonLayerPaint);
 			}
