@@ -64,6 +64,14 @@ public class MidletLocaleResolverTest {
 	}
 
 	@Test
+	public void historicalTwoLetterCountryFromDeviceLocaleIsPreserved() {
+		assertEquals("sr-YU", MidletLocaleResolver.resolve(
+				Locale.forLanguageTag("sr-YU"),
+				List.of(),
+				(requested, candidate) -> true));
+	}
+
+	@Test
 	public void unsupportedThreeLetterLanguageIsNotInventedAsMidpLocale() {
 		assertNull(MidletLocaleResolver.resolve(
 				Locale.forLanguageTag("sat-IN"),

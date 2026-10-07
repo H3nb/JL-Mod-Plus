@@ -129,17 +129,9 @@ final class MidletLocaleResolver {
 			return null;
 		}
 		String country = locale.getCountry().toUpperCase(Locale.ROOT);
-		if (!isTwoAsciiLetters(country)) {
-			return null;
-		}
-		try {
-			if (locale.getISO3Country().isEmpty()) {
-				return null;
-			}
-		} catch (MissingResourceException error) {
-			return null;
-		}
-		return country;
+		// Preserve a real two-letter region supplied by the platform. Java ME-era locale packs
+		// can contain historical ISO-3166 identifiers that modern Java no longer maps to ISO3.
+		return isTwoAsciiLetters(country) ? country : null;
 	}
 
 	private static boolean isTwoAsciiLetters(String value) {
