@@ -24,7 +24,6 @@ import androidx.core.os.LocaleListCompat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.MissingResourceException;
 
 /**
  * Resolves the Java ME device locale independently from MIDlet content.
@@ -108,17 +107,7 @@ final class MidletLocaleResolver {
 		int separator = tag.indexOf('-');
 		String language = (separator < 0 ? tag : tag.substring(0, separator))
 				.toLowerCase(Locale.ROOT);
-		if (!isTwoAsciiLetters(language)) {
-			return null;
-		}
-		try {
-			if (locale.getISO3Language().isEmpty()) {
-				return null;
-			}
-		} catch (MissingResourceException error) {
-			return null;
-		}
-		return language;
+		return isTwoAsciiLetters(language) ? language : null;
 	}
 
 	@Nullable

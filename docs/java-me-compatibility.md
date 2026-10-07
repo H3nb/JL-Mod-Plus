@@ -25,11 +25,11 @@ locale whose language and script are compatible. If no such real regional locale
 the language-only device locale instead of inventing a country. Canonicalize legacy Android
 language aliases through BCP-47 before serializing back to the MIDP 2.0
 `language[-COUNTRY[-variant]]` shape. MIDP requires a lower-case two-letter ISO-639 language and,
-when present, an upper-case two-letter ISO-3166 country. Preserve a two-letter region actually
-supplied by the platform instead of revalidating it against the host's current ISO database:
-Java ME-era identifiers can become historical while remaining relevant to old MIDlets. Do not
-invent a Java ME locale for a host language that cannot be represented by the language contract;
-`microedition.locale` may be absent.
+when present, an upper-case two-letter ISO-3166 country. Preserve two-letter language and region
+identifiers actually supplied by the platform instead of revalidating them against the host's
+current ISO database: Java ME-era identifiers can become historical while remaining relevant to
+old MIDlets. A host language that cannot fit MIDP's required two-letter language shape leaves
+`microedition.locale` absent.
 
 Do not derive guest locale identity from the MIDlet JAR, generated Android locale metadata, or
 `Locale.getDefault()`. `MidletSystem` owns emulator-visible property publication and updates
