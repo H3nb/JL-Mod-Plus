@@ -29,7 +29,6 @@ import android.graphics.DashPathEffect;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
@@ -152,7 +151,7 @@ public class Graphics implements
 				path.computeBounds(rectF, true);
 				// Default miter limit is 4: a one-pixel stroke extends at most two pixels.
 				rectF.inset(-2, -2);
-				saveCount = canvas.saveLayer(rectF, null);
+				saveCount = canvas.saveLayerAlpha(rectF, alpha);
 			}
 			try {
 				// FILL_AND_STROKE can replace even-odd with winding coverage in Skia.
@@ -160,11 +159,6 @@ public class Graphics implements
 				canvas.drawPath(path, polygonPaint);
 				polygonPaint.setStyle(Paint.Style.STROKE);
 				canvas.drawPath(path, polygonPaint);
-				if (saveCount != 0) {
-					// Use Canvas color compositing rather than a color filter: filters
-					// round premultiplied channels differently from normal primitives.
-					canvas.drawColor(argbColor, PorterDuff.Mode.SRC_IN);
-				}
 			} finally {
 				if (saveCount != 0) canvas.restoreToCount(saveCount);
 			}
