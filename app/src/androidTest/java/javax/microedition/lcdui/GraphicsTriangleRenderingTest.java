@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Region;
+import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -271,6 +272,69 @@ public class GraphicsTriangleRenderingTest {
 		g.fillTriangle(5, 5, 5, 5, 5, 5);
 		assertEquals(0xFFFFFFFF, pixel(image, 5, 5));
 		assertEquals("previous coverage is not reused", TERRAIN, pixel(image, 71, 177));
+	}
+
+	@Test
+	public void characterizeOpaqueTriangleRegionCost() {
+		final int iterations = 2000;
+		int[][] triangles = {
+				{2, 2, 22, 3, 3, 22},
+				{4, 4, 220, 9, 10, 300}
+		};
+		for (int[] p : triangles) {
+			Image regionImage = Image.createImage(240, 320, BACKGROUND);
+			Graphics g = regionImage.getGraphics();
+			g.setColor(TERRAIN);
+			for (int i = 0; i < 200; i++) {
+				g.fillTriangle(p[0], p[1], p[2], p[3], p[4], p[5]);
+			}
+			long regionStart = System.nanoTime();
+			for (int i = 0; i < iterations; i++) {
+				g.fillTriangle(p[0], p[1], p[2], p[3], p[4], p[5]);
+			}
+			long regionNs = System.nanoTime() - regionStart;
+
+			Image directImage = Image.createImage(240, 320, BACKGROUND);
+			Canvas canvas = new Canvas(directImage.getBitmap());
+			Paint paint = new Paint();
+			paint.setAntiAlias(false);
+			paint.setColor(TERRAIN);
+			paint.setStrokeWidth(1);
+			paint.setStrokeJoin(Paint.Join.BEVEL);
+			Path direct = new Path();
+			for (int i = 0; i < 200; i++) {
+				drawOpaqueTriangleDirect(canvas, paint, direct, p);
+			}
+			long directStart = System.nanoTime();
+			for (int i = 0; i < iterations; i++) {
+				drawOpaqueTriangleDirect(canvas, paint, direct, p);
+			}
+			long directNs = System.nanoTime() - directStart;
+
+			Log.i("JLModGraphicsPerf", "triangle="
+					+ (p[2] - p[0]) + "x" + (p[5] - p[1])
+					+ " regionNs=" + regionNs
+					+ " directNs=" + directNs
+					+ " ratio=" + ((double) regionNs / Math.max(1L, directNs)));
+		}
+	}
+
+	private static void drawOpaqueTriangleDirect(Canvas canvas, Paint paint, Path path, int[] p) {
+		path.reset();
+		path.moveTo(p[0], p[1]);
+		path.lineTo(p[2], p[3]);
+		path.lineTo(p[4], p[5]);
+		path.close();
+		paint.setStyle(Paint.Style.FILL);
+		canvas.drawPath(path, paint);
+		path.offset(0.5f, 0.5f);
+		canvas.drawPath(path, paint);
+		paint.setStyle(Paint.Style.STROKE);
+		canvas.drawPath(path, paint);
+		paint.setStyle(Paint.Style.FILL);
+		canvas.drawRect(p[0], p[1], (float) p[0] + 1, (float) p[1] + 1, paint);
+		canvas.drawRect(p[2], p[3], (float) p[2] + 1, (float) p[3] + 1, paint);
+		canvas.drawRect(p[4], p[5], (float) p[4] + 1, (float) p[5] + 1, paint);
 	}
 
 	private static Image rasterCoverage(int[] points, int[] order) {
