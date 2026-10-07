@@ -20,8 +20,8 @@ import android.os.LocaleList;
 import android.os.Process;
 import android.os.SystemClock;
 
-import androidx.test.filters.SdkSuppress;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
@@ -39,8 +39,6 @@ import javax.microedition.shell.MidletLocaleProbeActivity;
 @RunWith(AndroidJUnit4.class)
 public class MidletLocaleRuntimeTest {
     private static final long TIMEOUT_MILLIS = 20_000L;
-    private static final String MARKER_NAME = "midlet-locale-runtime.marker";
-
     @Test
     @SdkSuppress(minSdkVersion = 33)
     public void coldSecondaryProcessReceivesApplicationLocaleAndJavaMeIdentity() throws Exception {
@@ -50,7 +48,7 @@ public class MidletLocaleRuntimeTest {
 
         String probeProcess = context.getPackageName() + ":locale_probe";
         stopProcess(context, probeProcess);
-        File marker = new File(context.getFilesDir(), MARKER_NAME);
+        File marker = new File(context.getFilesDir(), MidletLocaleProbeActivity.MARKER_NAME);
         if (marker.exists() && !marker.delete()) {
             fail("Unable to clear locale probe marker");
         }
@@ -64,7 +62,6 @@ public class MidletLocaleRuntimeTest {
                     testLanguage, localeManager.getApplicationLocales().toLanguageTags());
 
             context.startActivity(new Intent(context, MidletLocaleProbeActivity.class)
-                    .putExtra(MidletLocaleProbeActivity.EXTRA_MARKER_PATH, marker.getAbsolutePath())
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             awaitMarker(marker);
 

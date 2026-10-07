@@ -14,24 +14,18 @@ import java.util.Locale;
 
 /** Debug-only secondary-process probe for the Java ME device-locale boundary. */
 public final class MidletLocaleProbeActivity extends Activity {
-    public static final String EXTRA_MARKER_PATH = "jlmod.localeProbe.marker";
+    public static final String MARKER_NAME = "midlet-locale-runtime.marker";
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        String markerPath = getIntent().getStringExtra(EXTRA_MARKER_PATH);
-        if (markerPath == null || markerPath.isEmpty()) {
-            finish();
-            return;
-        }
-
         Locale hostLocale = ConfigurationCompat.getLocales(
                 getResources().getConfiguration()).get(0);
         String guestLocale = MidletLocaleResolver.resolve(this);
         MidletSystem.setProperty("microedition.locale", guestLocale);
         String systemProperty = System.getProperty("microedition.locale");
         String midletProperty = MidletSystem.getProperty("microedition.locale");
-        try (FileOutputStream output = new FileOutputStream(new File(markerPath), false)) {
+        try (FileOutputStream output = new FileOutputStream(new File(getFilesDir(), MARKER_NAME), false)) {
             String evidence = "host-locale="
                     + (hostLocale == null ? "" : hostLocale.toLanguageTag())
                     + "\nlocale=" + (guestLocale == null ? "" : guestLocale)
