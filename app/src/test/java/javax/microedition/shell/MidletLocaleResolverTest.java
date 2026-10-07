@@ -28,7 +28,7 @@ public class MidletLocaleResolverTest {
 		assertEquals("fr-CA", MidletLocaleResolver.resolve(
 				Locale.forLanguageTag("fr-CA"),
 				List.of(Locale.forLanguageTag("fr-FR")),
-				ignored -> Locale.forLanguageTag("fr-Latn-FR")));
+				(requested, candidate) -> true));
 	}
 
 	@Test
@@ -36,28 +36,23 @@ public class MidletLocaleResolverTest {
 		assertEquals("id-ID", MidletLocaleResolver.resolve(
 				Locale.forLanguageTag("id"),
 				List.of(Locale.forLanguageTag("en-US"), Locale.forLanguageTag("id-ID")),
-				locale -> locale));
+				(requested, candidate) -> true));
 	}
 
 	@Test
-	public void likelySubtagsCompleteLanguageWhenSystemHasNoMatchingLanguage() {
-		assertEquals("de-DE", MidletLocaleResolver.resolve(
+	public void unrelatedSystemLocaleDoesNotInventCountry() {
+		assertEquals("de", MidletLocaleResolver.resolve(
 				Locale.forLanguageTag("de"),
 				List.of(Locale.forLanguageTag("en-US")),
-				ignored -> Locale.forLanguageTag("de-Latn-DE")));
+				(requested, candidate) -> false));
 	}
 
 	@Test
-	public void explicitScriptRejectsIncompatibleSameLanguageSystemRegion() {
+	public void scriptMatcherSkipsIncompatibleSameLanguageRegion() {
 		assertEquals("zh-TW", MidletLocaleResolver.resolve(
 				Locale.forLanguageTag("zh-Hant"),
-				List.of(Locale.forLanguageTag("zh-CN")),
-				locale -> {
-					if ("CN".equals(locale.getCountry())) {
-						return Locale.forLanguageTag("zh-Hans-CN");
-					}
-					return Locale.forLanguageTag("zh-Hant-TW");
-				}));
+				List.of(Locale.forLanguageTag("zh-CN"), Locale.forLanguageTag("zh-TW")),
+				(requested, candidate) -> "TW".equals(candidate.getCountry())));
 	}
 
 	@Test
@@ -65,7 +60,7 @@ public class MidletLocaleResolverTest {
 		assertEquals("he-IL", MidletLocaleResolver.resolve(
 				new Locale("iw", "IL"),
 				List.of(),
-				locale -> locale));
+				(requested, candidate) -> true));
 	}
 
 	@Test
@@ -73,7 +68,7 @@ public class MidletLocaleResolverTest {
 		assertNull(MidletLocaleResolver.resolve(
 				Locale.forLanguageTag("sat-IN"),
 				List.of(),
-				locale -> locale));
+				(requested, candidate) -> true));
 	}
 
 	@Test
@@ -81,7 +76,7 @@ public class MidletLocaleResolverTest {
 		assertEquals("eo", MidletLocaleResolver.resolve(
 				Locale.forLanguageTag("eo"),
 				List.of(),
-				locale -> locale));
+				(requested, candidate) -> true));
 	}
 
 	@Test
