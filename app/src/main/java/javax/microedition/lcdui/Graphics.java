@@ -70,6 +70,8 @@ public class Graphics implements
 	private final Rect rect = new Rect();
 	private final RectF rectF = new RectF();
 	private final Path path = new Path();
+	private final Path polygonOutline = new Path();
+	private final Path polygonFillPath = new Path();
 
 	private final DashPathEffect dashPathEffect = new DashPathEffect(new float[]{5, 5}, 0);
 	private int stroke = SOLID;
@@ -142,10 +144,23 @@ public class Graphics implements
 			Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
 			path.setFillType(Path.FillType.EVEN_ODD);
 			polygonPaint.set(fillPaint);
-			polygonPaint.setColor(argbColor | 0xFF000000);
+			polygonPaint.setColor(argbColor);
 			polygonPaint.setStrokeWidth(1);
 			int alpha = argbColor >>> 24;
 			if (alpha == 0) return;
+			polygonPaint.setStyle(Paint.Style.STROKE);
+			// A geometric union keeps even-odd holes and uses one normal ARGB draw.
+			// FILL_AND_STROKE can replace the even-odd interior with winding coverage.
+			if (polygonPaint.getFillPath(path, polygonOutline)
+					&& polygonFillPath.op(path, polygonOutline, Path.Op.UNION)) {
+				polygonPaint.setStyle(Paint.Style.FILL);
+				canvas.drawPath(polygonFillPath, polygonPaint);
+				return;
+			}
+			// If native path operations cannot form the union, combine coverage in
+			// a bounded layer instead of losing the polygon or blending edges twice.
+			polygonPaint.setStyle(Paint.Style.FILL);
+			polygonPaint.setColor(argbColor | 0xFF000000);
 			int saveCount = 0;
 			if (alpha != 255) {
 				path.computeBounds(rectF, true);
@@ -154,7 +169,6 @@ public class Graphics implements
 				saveCount = canvas.saveLayerAlpha(rectF, alpha);
 			}
 			try {
-				// FILL_AND_STROKE can replace even-odd with winding coverage in Skia.
 				// Opaque fill + outline form a union; the layer applies alpha only once.
 				canvas.drawPath(path, polygonPaint);
 				polygonPaint.setStyle(Paint.Style.STROKE);

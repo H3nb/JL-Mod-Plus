@@ -20,12 +20,14 @@ shared context, including changes made through another wrapper or MIDP setters.
 The [Nokia UI API reference](https://nikita36078.github.io/J2ME_Docs/docs/Nokia_UI_API_1_1/com/nokia/mid/ui/DirectGraphics.html)
 defines closed polygons, even-odd interior coverage, and Source Over compositing.
 
-Filled Nokia polygons include their one-pixel outline. Opaque interior and
-outline are combined before applying a translucent call's ARGB, so one call
+Filled Nokia polygons include their one-pixel outline. The outline geometry is
+combined with the even-odd interior before one normal ARGB draw, so one call
 cannot darken its own boundary through repeated alpha blending. Separate calls
-still composite independently. The bounded temporary layer is used only for
-translucent polygons; opaque polygons draw directly. MIDP fill primitives retain
-their existing coverage and paint state.
+still composite independently. If native path operations cannot form that union,
+opaque interior/outline coverage is combined in a bounded temporary layer before
+applying alpha; opaque fallback calls draw directly. This fallback can differ in
+channel rounding from a direct draw. MIDP fill primitives retain their existing
+coverage and paint state.
 
 This boundary treatment is supported by reconstruction of integer-separated
 water regions from Bounce Tales: fill-only rendering leaves a source-background
