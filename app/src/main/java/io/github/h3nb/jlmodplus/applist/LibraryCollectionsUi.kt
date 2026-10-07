@@ -51,6 +51,7 @@ import androidx.compose.material3.adaptive.layout.ThreePaneScaffoldValue
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -153,7 +154,10 @@ class LibraryCollectionsUiStore {
         )
     }
 
-    fun activeCollectionId(): Long? = mutableState.value.members?.collectionId
+    fun displayedMembersCollectionId(): Long? = mutableState.value.members?.collectionId
+
+    fun containsCollection(collectionId: Long): Boolean =
+        mutableState.value.collections.any { it.id == collectionId }
 
     fun hasAllAppsSnapshot(): Boolean = mutableState.value.allAppsPrepared
 
@@ -235,7 +239,11 @@ internal fun LibraryCollectionsDestination(
         return
     }
 
-    val selectedCollectionId = navigationState.selectedCollectionId
+    val persistedCollectionId = navigationState.selectedCollectionId
+    val collectionScopeMatches = persistedCollectionId == null ||
+        libraryState.libraryScope.isEmpty() ||
+        navigationState.selectedCollectionScope == libraryState.libraryScope
+    val selectedCollectionId = persistedCollectionId.takeIf { collectionScopeMatches }
     val selectedCollection = selectedCollectionId?.let { collectionId ->
         state.collections.firstOrNull { it.id == collectionId }
     }
@@ -263,14 +271,33 @@ internal fun LibraryCollectionsDestination(
         if (retained != selectionState) onSelectionStateChanged(retained)
     }
 
-    LaunchedEffect(selectedCollectionId, state.collections, state.members?.collectionId) {
+    LaunchedEffect(
+        persistedCollectionId,
+        selectedCollectionId,
+        state.collections,
+        state.members?.collectionId,
+        libraryState.libraryScope,
+    ) {
         when {
+            persistedCollectionId != null && !collectionScopeMatches -> {
+                onSelectionStateChanged(selectionState.clear())
+                onNavigationStateChanged(
+                    navigationState.copy(
+                        selectedCollectionId = null,
+                        selectedCollectionScope = null,
+                    ),
+                )
+                host.onDismissCollectionMembers()
+            }
             selectedCollectionId == null && state.members != null -> {
                 host.onDismissCollectionMembers()
             }
             selectedCollectionId != null && selectedCollection == null -> {
                 onNavigationStateChanged(
-                    navigationState.copy(selectedCollectionId = null),
+                    navigationState.copy(
+                        selectedCollectionId = null,
+                        selectedCollectionScope = null,
+                    ),
                 )
                 host.onDismissCollectionMembers()
             }
@@ -294,7 +321,12 @@ internal fun LibraryCollectionsDestination(
     val closeCollection = {
         onSelectionStateChanged(selectionState.clear())
         activeNavigationVisibilityChanged(true)
-        onNavigationStateChanged(navigationState.copy(selectedCollectionId = null))
+        onNavigationStateChanged(
+            navigationState.copy(
+                selectedCollectionId = null,
+                selectedCollectionScope = null,
+            ),
+        )
         host.onDismissCollectionMembers()
     }
     val adaptiveInfo = currentWindowAdaptiveInfoV2()
@@ -348,7 +380,11 @@ internal fun LibraryCollectionsDestination(
                     selectedCollectionId = selectedCollectionId,
                     onOpenCollection = { collectionId ->
                         onNavigationStateChanged(
-                            navigationState.copy(selectedCollectionId = collectionId),
+                            navigationState.copy(
+                                selectedCollectionId = collectionId,
+                                selectedCollectionScope =
+                                    libraryState.libraryScope.takeIf(String::isNotEmpty),
+                            ),
                         )
                     },
                     onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
@@ -369,8 +405,9 @@ internal fun LibraryCollectionsDestination(
                             scaffoldPadding = scaffoldPadding,
                         )
                     } else {
-                        LibraryCollectionBrowser(
-                            collection = collection,
+                        key(collection.id) {
+                            LibraryCollectionBrowser(
+                                collection = collection,
                             members = members.members,
                             allApps = state.allApps,
                             allAppsPrepared = state.allAppsPrepared,
@@ -397,8 +434,9 @@ internal fun LibraryCollectionsDestination(
                             onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
                             showBackButton = showDetailBack,
                             handleSystemBack = false,
-                            interactionActive = active,
-                        )
+                                interactionActive = active,
+                            )
+                        }
                     }
                 }
             }

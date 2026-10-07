@@ -15,6 +15,8 @@ selectors=(
   'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#selectionSurvivesFilteredProjectionUntilAppLeavesLibrary'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#selectedCollectionRestoresAndBackReturnsToOverview'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#inactiveCollectionPagePreservesSelectedDetailForPagerReturn'
+  'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionRouteDoesNotCrossLibraryWorkdirWithReusedDatabaseId'
+  'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#offscreenAppsLayoutChangeCannotRevealCollectionNavigationChrome'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#expandedWindowShowsListAndDetailWithoutDetailBack'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionSelectionBackExitsSelectionBeforeLeavingCollection'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionSelectionShowsCheckboxesSelectAllAndContextualBulkActions'

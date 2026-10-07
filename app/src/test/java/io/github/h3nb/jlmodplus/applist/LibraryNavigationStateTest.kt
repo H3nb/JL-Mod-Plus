@@ -61,6 +61,38 @@ class LibraryNavigationStateTest {
     }
 
     @Test
+    fun collectionAnchorNeverCrossesCollectionScope() {
+        val state = LibraryNavigationState().saveAnchor(
+            LibraryNavigationSurface.CollectionAppsList,
+            LibraryScrollAnchor(
+                generation = 3L,
+                stableItemId = 20L,
+                offsetPx = 18,
+                fallbackIndex = 1,
+                scopeId = 7L,
+            ),
+        )
+
+        assertEquals(
+            ResolvedLibraryScrollAnchor(index = 1, offsetPx = 18),
+            state.resolveAnchor(
+                LibraryNavigationSurface.CollectionAppsList,
+                activeGeneration = 3L,
+                availableIds = listOf(10L, 20L, 30L),
+                scopeId = 7L,
+            ),
+        )
+        assertNull(
+            state.resolveAnchor(
+                LibraryNavigationSurface.CollectionAppsList,
+                activeGeneration = 3L,
+                availableIds = listOf(10L, 20L, 30L),
+                scopeId = 8L,
+            ),
+        )
+    }
+
+    @Test
     fun capturedReturnAnchorCanResolveAfterGenerationChanges() {
         val captured = LibraryScrollAnchor(
             generation = 3L,
@@ -116,10 +148,33 @@ class LibraryNavigationStateTest {
                 "RecentlyPlayed",
                 -3,
                 42L,
-                listOf(listOf("CollectionsList", 9L, 100L, 7, 2)),
+                listOf(listOf("CollectionsList", 9L, 100L, 7, 2, Long.MIN_VALUE)),
+                "",
             ),
         )
         assertEquals(state, restored)
+    }
+
+    @Test
+    fun saverRestoresCollectionWorkdirAndAnchorScope() {
+        val restored = LibraryNavigationState.Saver.restore(
+            listOf(
+                "Collections",
+                "List",
+                "",
+                "All",
+                0,
+                42L,
+                listOf(listOf("CollectionAppsList", 9L, 100L, 7, 2, 42L)),
+                "/work/library-a",
+            ),
+        )
+
+        assertEquals("/work/library-a", restored?.selectedCollectionScope)
+        assertEquals(
+            42L,
+            restored?.anchors?.get(LibraryNavigationSurface.CollectionAppsList)?.scopeId,
+        )
     }
 
     @Test

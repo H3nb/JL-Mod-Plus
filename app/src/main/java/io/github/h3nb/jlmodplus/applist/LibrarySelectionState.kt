@@ -88,8 +88,12 @@ data class LibrarySelectionState(
     }
 
     fun isAllVisibleSelected(visibleAppIds: Iterable<Long>): Boolean {
-        val visible = visibleAppIds.toSet()
-        return visible.isNotEmpty() && visible.all(selectedAppIds::contains)
+        var hasVisibleApp = false
+        for (appId in visibleAppIds) {
+            hasVisibleApp = true
+            if (appId !in selectedAppIds) return false
+        }
+        return hasVisibleApp
     }
 
     /**

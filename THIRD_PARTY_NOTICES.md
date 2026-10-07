@@ -62,7 +62,7 @@ The table below covers direct runtime dependencies and license-significant trans
 
 | Runtime component / coordinates | Origin | License / notice |
 | --- | --- | --- |
-| `androidx.*` (Activity, Core, AppCompat, Compose, Fragment, Lifecycle, Navigation, Room, Preference, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
+| `androidx.*` (Activity, Core, AppCompat, Compose, Fragment, Lifecycle, Room, Preference, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
 | Kotlin stdlib and `kotlinx-coroutines-*`, plus `org.jetbrains:annotations` | JetBrains Kotlin projects | Apache-2.0 |
 | `com.google.code.gson:gson` | Google Gson | Apache-2.0 |
 | `com.google.oboe:oboe` | Google Oboe | Apache-2.0 |

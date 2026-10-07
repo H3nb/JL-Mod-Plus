@@ -100,7 +100,7 @@ class LibraryCollectionsNavigationTest {
 
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
-        assertNull(host.store.activeCollectionId())
+        assertNull(host.store.displayedMembersCollectionId())
     }
 
     @Test
@@ -153,6 +153,42 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun collectionRouteDoesNotCrossLibraryWorkdirWithReusedDatabaseId() {
+        val host = RecordingCollectionsHost()
+        val libraryState = mutableStateOf(
+            sampleLibraryState().copy(libraryScope = "/work/library-a"),
+        )
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(
+                        state = libraryState.value,
+                        actions = host,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Collections").performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+
+        composeRule.runOnIdle {
+            libraryState.value = libraryState.value.copy(
+                libraryScope = "/work/library-b",
+                generation = libraryState.value.generation + 1L,
+            )
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
+        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        assertNull(host.store.displayedMembersCollectionId())
+    }
+
+    @Test
     fun collectionSelectionBackExitsSelectionBeforeLeavingCollection() {
         val host = RecordingCollectionsHost()
         composeRule.setContent {
@@ -185,14 +221,14 @@ class LibraryCollectionsNavigationTest {
 
         composeRule.onAllNodesWithText(selectionCount(1)).assertCountEquals(0)
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
-        assertEquals(COLLECTION_ID, host.store.activeCollectionId())
+        assertEquals(COLLECTION_ID, host.store.displayedMembersCollectionId())
 
         pressBack()
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
-        assertNull(host.store.activeCollectionId())
+        assertNull(host.store.displayedMembersCollectionId())
     }
 
     @Test
@@ -362,6 +398,41 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
             .assertIsDisplayed()
         assertEquals(false, navigationVisibilityEvents.last())
+    }
+
+    @Test
+    fun offscreenAppsLayoutChangeCannotRevealCollectionNavigationChrome() {
+        val host = RecordingCollectionsHost()
+        val libraryState = mutableStateOf(sampleLibraryState())
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(
+                        state = libraryState.value,
+                        actions = host,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Collections").performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
+            .assertIsDisplayed()
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithText("Apps").assertCountEquals(0)
+
+        composeRule.runOnIdle {
+            libraryState.value = libraryState.value.copy(layout = LibraryLayout.Grid)
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
+            .assertIsDisplayed()
+        composeRule.onAllNodesWithText("Apps").assertCountEquals(0)
     }
 
     @Test

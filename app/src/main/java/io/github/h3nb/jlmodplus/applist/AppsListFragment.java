@@ -120,9 +120,13 @@ public class AppsListFragment extends Fragment {
     private final Map<Long, LibraryAppRow> cachedRowsByDatabaseId = new HashMap<>();
     private final Map<Long, LibraryAppUiItem> cachedUiItemsByDatabaseId = new HashMap<>();
     private final LibraryCollectionsUiStore collectionsUiStore = new LibraryCollectionsUiStore();
+    private final CollectionMembersRequestGate collectionMembersRequests =
+            new CollectionMembersRequestGate();
     private List<LibraryAppRow> cachedAllReadyRows;
     private int nextUiId = 1;
     private long activeGeneration = NO_GENERATION;
+    private long activeSourceRevision = NO_GENERATION;
+    private long lastCollectionMembersRefreshRevision = NO_GENERATION;
     private File activeWorkdir;
     private SharedPreferences preferences;
     private LibraryViewModel libraryViewModel;
@@ -552,7 +556,10 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onDeleteCollection(long collectionId) {
-                collectionsUiStore.dismissMembers();
+                if (collectionMembersRequests.targets(collectionId)) {
+                    collectionMembersRequests.invalidate();
+                    collectionsUiStore.dismissMembers();
+                }
                 libraryViewModel.deleteCollection(collectionId, (ignored, error) -> {
                     if (error != null) showError(error);
                 });
@@ -570,6 +577,7 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onDismissCollectionMembers() {
+                collectionMembersRequests.invalidate();
                 collectionsUiStore.dismissMembers();
             }
 
@@ -593,12 +601,10 @@ public class AppsListFragment extends Fragment {
                         app.getId(),
                         true,
                         (ignored, error) -> {
-                            if (error != null) {
-                                showError(error);
-                                loadCollectionMembers(collectionId);
-                                return;
-                            }
-                            loadCollectionMembers(collectionId);
+                            if (error != null) showError(error);
+                            // Successful Room mutations publish a new source revision. The active
+                            // Collection refreshes once from publishReady(), avoiding a duplicate
+                            // query here while still keeping non-visible Collections untouched.
                         });
             }
 
@@ -611,12 +617,10 @@ public class AppsListFragment extends Fragment {
                         app.getId(),
                         false,
                         (ignored, error) -> {
-                            if (error != null) {
-                                showError(error);
-                                loadCollectionMembers(collectionId);
-                                return;
-                            }
-                            loadCollectionMembers(collectionId);
+                            if (error != null) showError(error);
+                            // Successful Room mutations publish a new source revision. The active
+                            // Collection refreshes once from publishReady(), avoiding a duplicate
+                            // query here while still keeping non-visible Collections untouched.
                         });
             }
 
@@ -686,12 +690,10 @@ public class AppsListFragment extends Fragment {
                         collectionId,
                         appIds,
                         (ignored, error) -> {
-                            if (error != null) {
-                                showError(error);
-                                loadCollectionMembers(collectionId);
-                                return;
-                            }
-                            loadCollectionMembers(collectionId);
+                            if (error != null) showError(error);
+                            // Successful Room mutations publish a new source revision. The active
+                            // Collection refreshes once from publishReady(), avoiding a duplicate
+                            // query here while still keeping non-visible Collections untouched.
                         });
             }
 
@@ -701,12 +703,10 @@ public class AppsListFragment extends Fragment {
                         collectionId,
                         appIds,
                         (ignored, error) -> {
-                            if (error != null) {
-                                showError(error);
-                                loadCollectionMembers(collectionId);
-                                return;
-                            }
-                            loadCollectionMembers(collectionId);
+                            if (error != null) showError(error);
+                            // Successful Room mutations publish a new source revision. The active
+                            // Collection refreshes once from publishReady(), avoiding a duplicate
+                            // query here while still keeping non-visible Collections untouched.
                         });
             }
 
@@ -839,13 +839,28 @@ public class AppsListFragment extends Fragment {
     }
 
     private void loadCollectionMembers(long collectionId) {
+        LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+        File workdir = activeWorkdir;
+        if (generation == null || workdir == null ||
+                activeGeneration != generation.getGeneration() ||
+                !workdir.equals(generation.getEmulatorDir()) ||
+                !collectionsUiStore.containsCollection(collectionId)) {
+            return;
+        }
+
+        CollectionMembersRequestGate.Request request =
+                collectionMembersRequests.begin(collectionId, generation.getGeneration());
+        lastCollectionMembersRefreshRevision = activeSourceRevision;
         libraryViewModel.getCollectionAppIds(collectionId, (appIds, error) -> {
+            if (!collectionMembersRequests.accepts(request, activeGeneration)) return;
             if (error != null) {
                 showError(error);
                 return;
             }
             if (!isAdded() || appIds == null) return;
+
             List<LibraryAppRow> rows = libraryViewModel.getApps(appIds);
+            if (!collectionMembersRequests.accepts(request, activeGeneration)) return;
             List<LibraryAppUiItem> members = new ArrayList<>(rows.size());
             for (LibraryAppRow row : rows) {
                 members.add(toLibraryUiItem(row));
@@ -896,6 +911,8 @@ public class AppsListFragment extends Fragment {
         boolean generationChanged = activeGeneration != generation || activeWorkdir == null ||
                 !activeWorkdir.equals(workdir);
         if (generationChanged) {
+            collectionMembersRequests.invalidate();
+            lastCollectionMembersRefreshRevision = NO_GENERATION;
             activeGeneration = generation;
             activeWorkdir = workdir;
             rowsByUiId.clear();
@@ -907,14 +924,23 @@ public class AppsListFragment extends Fragment {
             cachedAllReadyRows = null;
         }
 
+        activeSourceRevision = state.getSourceRevision();
         collectionsUiStore.publishCollections(state.getCollections());
         // Keep the complete READY snapshot truly lazy. Normal list/filter/favorite/stat emissions only
         // map the already-projected rows below; the O(N) full-library walk happens solely when the user
         // explicitly opens Collection -> Add apps.
         cachedAllReadyRows = null;
-        Long activeCollectionId = collectionsUiStore.activeCollectionId();
-        if (activeCollectionId != null) {
-            loadCollectionMembers(activeCollectionId);
+
+        Long requestedCollectionId = collectionMembersRequests.targetCollectionId();
+        if (requestedCollectionId != null) {
+            if (!collectionsUiStore.containsCollection(requestedCollectionId)) {
+                collectionMembersRequests.invalidate();
+                collectionsUiStore.dismissMembers();
+            } else if (lastCollectionMembersRefreshRevision != activeSourceRevision) {
+                // Filter/sort/quick-view changes reuse the same Room source revision and therefore
+                // do not requery Collection membership. Actual database changes refresh once.
+                loadCollectionMembers(requestedCollectionId);
+            }
         }
 
         List<LibraryAppUiItem> uiItems = new ArrayList<>(state.getApps().size());
@@ -929,7 +955,8 @@ public class AppsListFragment extends Fragment {
                     state.getFilter(),
                     state.getQuickView(),
                     generation,
-                    state.getAvailableAppIds());
+                    state.getAvailableAppIds(),
+                    workdir.getAbsolutePath());
         }
     }
 
@@ -1038,6 +1065,9 @@ public class AppsListFragment extends Fragment {
         cachedUiItemsByDatabaseId.clear();
         nextUiId = 1;
         cachedAllReadyRows = null;
+        activeSourceRevision = NO_GENERATION;
+        lastCollectionMembersRefreshRevision = NO_GENERATION;
+        collectionMembersRequests.invalidate();
         collectionsUiStore.clear();
     }
 

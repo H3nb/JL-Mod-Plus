@@ -331,6 +331,8 @@ data class LibraryUiState(
     val errorMessage: String? = null,
     val generation: Long = 0L,
     val availableAppIds: Set<Long> = apps.mapTo(LinkedHashSet()) { it.databaseId },
+    /** Stable identity of the active Library workdir; database ids are only meaningful inside it. */
+    val libraryScope: String = "",
 )
 
 interface LibraryActions {
@@ -436,6 +438,7 @@ class LibraryComposeController(
         quickView: LibraryQuickView,
         generation: Long,
         availableAppIds: Set<Long>,
+        libraryScope: String = state.libraryScope,
     ) {
         state = state.copy(
             loading = false,
@@ -449,6 +452,7 @@ class LibraryComposeController(
             loadingStorageKey = "",
             errorMessage = null,
             generation = generation,
+            libraryScope = libraryScope,
         )
     }
 
@@ -1203,6 +1207,7 @@ fun LibraryScreen(
                             onNavigationVisibilityChanged = { visible ->
                                 if (!useNavigationRail) showNavigationBar = visible
                             },
+                            active = destination == LibraryDestination.Apps,
                         )
                         LibraryDestination.Collections -> if (collectionsHost != null) {
                             LibraryCollectionsDestination(
@@ -1674,6 +1679,7 @@ internal fun LibraryAppsDestination(
     queryStateKey: Any? = Unit,
     freezeViewport: Boolean = false,
     preserveImePaddingWhileFrozen: Boolean = false,
+    active: Boolean = true,
 ) {
     var query by rememberSaveable(queryStateKey) { mutableStateOf(state.appliedFilter) }
     var sortVisible by remember { mutableStateOf(false) }
@@ -1691,17 +1697,26 @@ internal fun LibraryAppsDestination(
     val currentLayout by rememberUpdatedState(state.layout)
     val currentNavigationState by rememberUpdatedState(navigationState)
     val currentOnNavigationStateChanged by rememberUpdatedState(onNavigationStateChanged)
+    val currentActive by rememberUpdatedState(active)
+    val currentOnFabVisibilityChanged by rememberUpdatedState(onFabVisibilityChanged)
+    val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
+    val activeFabVisibilityChanged: (Boolean) -> Unit = remember {
+        { visible -> if (currentActive) currentOnFabVisibilityChanged(visible) }
+    }
+    val activeNavigationVisibilityChanged: (Boolean) -> Unit = remember {
+        { visible -> if (currentActive) currentOnNavigationVisibilityChanged(visible) }
+    }
     var consumedReturnAnchor by remember { mutableStateOf<ConsumedReturnAnchor?>(null) }
 
     LaunchedEffect(query) {
         onSearch(query)
     }
 
-    LaunchedEffect(state.layout) {
+    LaunchedEffect(state.layout, active) {
         headerOffsetPx.floatValue = 0f
         chromeHysteresis.reset()
-        onFabVisibilityChanged(true)
-        onNavigationVisibilityChanged(true)
+        activeFabVisibilityChanged(true)
+        activeNavigationVisibilityChanged(true)
         snapshotFlow {
             if (state.layout == LibraryLayout.List) {
                 Triple(
@@ -1720,8 +1735,8 @@ internal fun LibraryAppsDestination(
             if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.floatValue >= -0.5f) {
                 headerOffsetPx.floatValue = 0f
                 chromeHysteresis.reset()
-                onFabVisibilityChanged(true)
-                onNavigationVisibilityChanged(true)
+                activeFabVisibilityChanged(true)
+                activeNavigationVisibilityChanged(true)
             }
         }
     }
@@ -1867,8 +1882,8 @@ internal fun LibraryAppsDestination(
         state.layout,
         minScrollRoomPx,
         freezeViewport,
-        onFabVisibilityChanged,
-        onNavigationVisibilityChanged,
+        activeFabVisibilityChanged,
+        activeNavigationVisibilityChanged,
     ) {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -1898,8 +1913,8 @@ internal fun LibraryAppsDestination(
                     ) {
                         headerOffsetPx.floatValue = 0f
                         if (chromeHysteresis.revealNow() != null) {
-                            onFabVisibilityChanged(true)
-                            onNavigationVisibilityChanged(true)
+                            activeFabVisibilityChanged(true)
+                            activeNavigationVisibilityChanged(true)
                         }
                     } else if (
                         !hasScrolledFromTop &&
@@ -1907,8 +1922,8 @@ internal fun LibraryAppsDestination(
                         !chromeHysteresis.chromeVisible
                     ) {
                         chromeHysteresis.reset()
-                        onFabVisibilityChanged(true)
-                        onNavigationVisibilityChanged(true)
+                        activeFabVisibilityChanged(true)
+                        activeNavigationVisibilityChanged(true)
                     }
                     if (!hasScrolledFromTop) return Offset.Zero
                 }
@@ -1961,8 +1976,8 @@ internal fun LibraryAppsDestination(
                     visibilityChange = chromeHysteresis.revealNow()
                 }
                 visibilityChange?.let { visible ->
-                    onFabVisibilityChanged(visible)
-                    onNavigationVisibilityChanged(visible)
+                    activeFabVisibilityChanged(visible)
+                    activeNavigationVisibilityChanged(visible)
                 }
 
                 return Offset.Zero

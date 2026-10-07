@@ -186,10 +186,12 @@ internal fun LibraryCollectionBrowser(
         } else {
             LibraryNavigationSurface.CollectionAppsGrid
         }
+        if (query.isNotEmpty()) return@LaunchedEffect
         val anchor = navigationState.resolveAnchor(
             surface,
             libraryState.generation,
             projected.map(LibraryAppUiItem::databaseId),
+            scopeId = collection.id,
         ) ?: return@LaunchedEffect
         val targetIndex = anchor.index + 1
         if (libraryState.layout == LibraryLayout.List) {
@@ -227,6 +229,7 @@ internal fun LibraryCollectionBrowser(
                 stableItemId = projected.getOrNull(fallbackIndex)?.databaseId,
                 offsetPx = firstApp?.second ?: 0,
                 fallbackIndex = fallbackIndex.coerceAtLeast(0),
+                scopeId = collection.id,
             )
         }.collectLatest { anchor ->
             delay(120)

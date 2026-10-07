@@ -18,6 +18,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.PreferenceManager
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import io.github.h3nb.jlmodplus.installer.InstallerExecutionCoordinator
 import kotlin.concurrent.withLock
@@ -75,6 +76,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             val legacyImportFailure: String?,
             val reconciliationFailures: List<LibraryScanner.Failure>,
             val availableAppIds: Set<Long> = apps.mapTo(LinkedHashSet()) { it.id },
+            /** Changes only when the authoritative Room-backed repository snapshot changes. */
+            val sourceRevision: Long = 0L,
         ) : DisplayState
         data class Error(val emulatorDir: File, val message: String) : DisplayState
     }
@@ -87,8 +90,14 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         fun complete(value: T?, error: Throwable?)
     }
 
+    private data class VersionedRepositoryState(
+        val revision: Long,
+        val state: LibraryRepository.State,
+    )
+
     private data class DisplayInputs(
         val repositoryState: LibraryRepository.State,
+        val sourceRevision: Long,
         val filter: String,
         val sortVariant: Int,
         val quickView: LibraryQuickView,
@@ -110,6 +119,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private val sortVariant = MutableStateFlow(readSortPreference(preferences))
     private val quickView = MutableStateFlow(LibraryQuickView.All)
     private val playStatRefreshMutex = Mutex()
+    private val repositoryRevision = AtomicLong()
+    private val versionedRepositoryState = repository.state.map { state ->
+        VersionedRepositoryState(repositoryRevision.incrementAndGet(), state)
+    }
 
     private val playStatReadyWorker = scope.launch {
         repository.state
@@ -120,12 +133,18 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     val displayState: StateFlow<DisplayState> = combine(
-        repository.state,
+        versionedRepositoryState,
         filter,
         sortVariant,
         quickView,
-    ) { repositoryState, activeFilter, activeSort, activeQuickView ->
-        DisplayInputs(repositoryState, activeFilter, activeSort, activeQuickView)
+    ) { repositorySnapshot, activeFilter, activeSort, activeQuickView ->
+        DisplayInputs(
+            repositoryState = repositorySnapshot.state,
+            sourceRevision = repositorySnapshot.revision,
+            filter = activeFilter,
+            sortVariant = activeSort,
+            quickView = activeQuickView,
+        )
     }.mapLatest { input ->
         when (val repositoryState = input.repositoryState) {
             LibraryRepository.State.Idle -> DisplayState.Idle
@@ -163,6 +182,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                     legacyImportFailure = repositoryState.legacyImportFailure,
                     reconciliationFailures = repositoryState.reconciliationFailures,
                     availableAppIds = availableAppIds,
+                    sourceRevision = input.sourceRevision,
                 )
             }
         }
