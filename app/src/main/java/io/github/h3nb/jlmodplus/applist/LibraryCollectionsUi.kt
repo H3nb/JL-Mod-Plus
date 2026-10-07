@@ -278,9 +278,20 @@ internal fun LibraryCollectionsDestination(
         }
     }
 
+    val currentActive by rememberUpdatedState(active)
+    val currentOnNavigationVisibilityChanged by rememberUpdatedState(
+        onNavigationVisibilityChanged,
+    )
+    val activeNavigationVisibilityChanged: (Boolean) -> Unit = remember {
+        { visible ->
+            if (currentActive) {
+                currentOnNavigationVisibilityChanged(visible)
+            }
+        }
+    }
     val closeCollection = {
         onSelectionStateChanged(selectionState.clear())
-        onNavigationVisibilityChanged(true)
+        activeNavigationVisibilityChanged(true)
         onNavigationStateChanged(navigationState.copy(selectedCollectionId = null))
         host.onDismissCollectionMembers()
     }
@@ -338,7 +349,7 @@ internal fun LibraryCollectionsDestination(
                             navigationState.copy(selectedCollectionId = collectionId),
                         )
                     },
-                    onNavigationVisibilityChanged = onNavigationVisibilityChanged,
+                    onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
                 )
             }
         },
@@ -364,7 +375,9 @@ internal fun LibraryCollectionsDestination(
                             scaffoldPadding = scaffoldPadding,
                             navigationState = navigationState,
                             onNavigationStateChanged = onNavigationStateChanged,
-                            onBack = closeCollection,
+                            onBack = {
+                                if (active) closeCollection()
+                            },
                             onOpenApp = host::onOpenApp,
                             onOpenActions = { app -> onOpenActions(app, collection.id) },
                             selectionState = selectionState,
@@ -378,9 +391,10 @@ internal fun LibraryCollectionsDestination(
                             },
                             onPrepareAppPicker = host::onPrepareCollectionAppPicker,
                             onSort = host::onSort,
-                            onNavigationVisibilityChanged = onNavigationVisibilityChanged,
+                            onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
                             showBackButton = showDetailBack,
                             handleSystemBack = false,
+                            interactionActive = active,
                         )
                     }
                 }
