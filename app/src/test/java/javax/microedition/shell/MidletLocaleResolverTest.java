@@ -64,10 +64,18 @@ public class MidletLocaleResolverTest {
 	}
 
 	@Test
-	public void historicalTwoLetterCountryFromDeviceLocaleIsPreserved() {
-		assertEquals("sr-YU", MidletLocaleResolver.resolve(
-				Locale.forLanguageTag("sr-YU"),
+	public void nonIsoEffectiveRegionIsOmitted() {
+		assertEquals("en", MidletLocaleResolver.resolve(
+				Locale.forLanguageTag("en-XA"),
 				List.of(),
+				(requested, candidate) -> true));
+	}
+
+	@Test
+	public void nonIsoSystemRegionIsNotBorrowed() {
+		assertEquals("en", MidletLocaleResolver.resolve(
+				Locale.forLanguageTag("en"),
+				List.of(Locale.forLanguageTag("en-XA")),
 				(requested, candidate) -> true));
 	}
 
