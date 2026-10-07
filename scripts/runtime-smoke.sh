@@ -23,6 +23,7 @@ selectors=(
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionSelectionBulkRemoveUsesCurrentCollection'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionLongPressRemoveKeepsCurrentCollectionContextAfterDialogDismiss'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionManageAppsReassertsNavigationChromeAfterPagerReturn'
+  'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionManageAppsShowsPendingDesiredStateAndSerializesRowMutation'
   'io.github.h3nb.jlmodplus.installer.InstallerComposeTest#compactHeightConfirmationScrollsToAllActions'
   'io.github.h3nb.jlmodplus.installer.InstallerComposeTest#recoveryActionsRemainReachableInShortWindowWithLargeText'
   'io.github.h3nb.jlmodplus.installer.InstallerComposeTest#successWarningExpandsDetailsAndKeepsActionsReachable'
