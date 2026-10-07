@@ -332,7 +332,7 @@ internal fun LibraryCollectionsDestination(
                     key = key,
                     metadata = ListDetailSceneStrategy.listPane(
                         detailPlaceholder = {
-                            LibraryCollectionDetailPlaceholder(scaffoldPadding)
+                            LibraryCollectionDetailPlaceholder(currentScaffoldPadding)
                         },
                     ),
                 ) {
