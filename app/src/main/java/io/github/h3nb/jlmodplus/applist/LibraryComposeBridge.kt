@@ -313,7 +313,6 @@ private data class ConsumedReturnAnchor(
 data class LibraryUiState(
     val loading: Boolean = true,
     val apps: List<LibraryAppUiItem> = emptyList(),
-    val availableAppIds: Set<Long> = apps.mapTo(LinkedHashSet()) { it.databaseId },
     val appliedFilter: String = "",
     val layout: LibraryLayout = LibraryLayout.List,
     val iconRatio: LibraryIconRatio = LibraryIconRatio.Square,
@@ -331,6 +330,7 @@ data class LibraryUiState(
     val loadingStorageKey: String = "",
     val errorMessage: String? = null,
     val generation: Long = 0L,
+    val availableAppIds: Set<Long> = apps.mapTo(LinkedHashSet()) { it.databaseId },
 )
 
 interface LibraryActions {
