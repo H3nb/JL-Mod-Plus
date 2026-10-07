@@ -629,7 +629,9 @@ class LibraryCollectionsNavigationTest {
         override fun onCreateCollection(name: String) = Unit
         override fun onRenameCollection(collectionId: Long, name: String) = Unit
         override fun onDeleteCollection(collectionId: Long) = Unit
-        override fun onPrepareCollectionAppPicker() = Unit
+        override fun onPrepareCollectionAppPicker() {
+            store.publishAllApps(listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
+        }
         override fun onRequestAddToCollection(appId: Int) = Unit
         override fun onDismissAddToCollection() = Unit
         override fun onAddAppToCollection(appId: Int, collectionId: Long) = Unit
