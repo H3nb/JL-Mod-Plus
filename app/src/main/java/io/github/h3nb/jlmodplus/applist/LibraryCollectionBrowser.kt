@@ -225,6 +225,7 @@ internal fun LibraryCollectionBrowser(
     LaunchedEffect(
         libraryState.layout,
         libraryState.generation,
+        libraryState.libraryScope,
         collection.id,
         projected,
         query,
@@ -240,6 +241,7 @@ internal fun LibraryCollectionBrowser(
             libraryState.generation,
             projectedIds,
             scopeId = collection.id,
+            libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
         ) ?: return@LaunchedEffect
         val targetIndex = anchor.index + 1
         if (libraryState.layout == LibraryLayout.List) {
@@ -258,6 +260,7 @@ internal fun LibraryCollectionBrowser(
     LaunchedEffect(
         libraryState.layout,
         libraryState.generation,
+        libraryState.libraryScope,
         collection.id,
         projected,
         query,
@@ -285,6 +288,7 @@ internal fun LibraryCollectionBrowser(
                 offsetPx = firstApp?.second ?: 0,
                 fallbackIndex = fallbackIndex.coerceAtLeast(0),
                 scopeId = collection.id,
+                libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
             )
         }.collectLatest { anchor ->
             delay(120)
