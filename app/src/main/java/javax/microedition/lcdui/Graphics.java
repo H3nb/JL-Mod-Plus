@@ -150,15 +150,15 @@ public class Graphics implements
 			polygonPaint.set(fillPaint);
 			polygonPaint.setColor(argbColor);
 			polygonPaint.setStrokeWidth(1);
-			unionClosedCoverage(path);
+			unionClosedCoverage(path, Paint.Style.STROKE);
 			drawClosedCoverage(polygonPaint);
 		}
 	}
 
-	private void unionClosedCoverage(Path outlinePath) {
+	private void unionClosedCoverage(Path outlinePath, Paint.Style outlineStyle) {
 		coverageClip.set(clip);
 		closedCoverage.setPath(path, coverageClip);
-		polygonPaint.setStyle(Paint.Style.STROKE);
+		polygonPaint.setStyle(outlineStyle);
 		polygonPaint.getFillPath(outlinePath, polygonFillPath);
 		outlineCoverage.setPath(polygonFillPath, coverageClip);
 		// Union raster coverage, not float contours: Path.op can move edges
@@ -375,7 +375,10 @@ public class Graphics implements
 		// MIDP includes solid connecting lines below/right of integer points.
 		polygonOutline.set(path);
 		polygonOutline.offset(0.5f, 0.5f);
-		unionClosedCoverage(polygonOutline);
+		// The shifted outline can be separated from the original interior on
+		// diagonal edges. Include its interior so their coverage cannot leave
+		// periodic gaps or detached boundary pixels.
+		unionClosedCoverage(polygonOutline, Paint.Style.FILL_AND_STROKE);
 		includeTriangleEndpoint(x1, y1);
 		includeTriangleEndpoint(x2, y2);
 		includeTriangleEndpoint(x3, y3);

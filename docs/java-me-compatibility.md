@@ -45,7 +45,11 @@ coverage below and to the right of integer coordinates. Bevel joins prevent
 acute corners from extending beyond the vertex bounds; endpoint cells cover
 thin, collinear and point triangles. Interior and outline paths are rasterized
 within the current clip into reusable Android `Region` objects, then united as
-integer pixel coverage. The resulting boundary is drawn once with the original
+integer pixel coverage. The shifted outline also includes its interior: on
+diagonal edges a half-pixel shift can separate a one-pixel stroke from the
+original interior, producing periodic gaps and detached edge pixels. Filling
+the shifted interior connects the boundary without discarding original pixels.
+The resulting boundary is drawn once with the original
 ARGB paint, irrespective of dotted stroke style. Separate translucent triangle
 calls still composite independently; no alpha layer or float path union is used.
 
@@ -62,7 +66,8 @@ guarantees coverage identical to a non-antialiased path through its clip.
 exact raster union for offscreen/acute triangles, joined mesh coverage, vertex
 ordering, degenerate cases, alpha, clipping and translation. The half-open
 rectangle convention, Nokia even-odd rule and its outline positioning remain
-unchanged.
+unchanged. Connected horizontal slices of convex triangles protect against
+gaps between the interior and the shifted outline.
 
 ## Foreground ownership boundary
 

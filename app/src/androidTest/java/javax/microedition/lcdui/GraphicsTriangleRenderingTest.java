@@ -195,6 +195,36 @@ public class GraphicsTriangleRenderingTest {
 	}
 
 	@Test
+	public void diagonalBoundaryStaysConnectedToItsInterior() {
+		int[][] triangles = {{2, 10, 20, 2, 2, 2}, {2, 14, 20, 2, 2, 2}};
+		int[][] orders = {{0, 1, 2}, {0, 2, 1}, {1, 0, 2},
+				{1, 2, 0}, {2, 0, 1}, {2, 1, 0}};
+		int source = 0x801111EE;
+		int expected = blendedPixel(BACKGROUND, source, 1);
+		for (int[] points : triangles) {
+			for (int[] order : orders) {
+				Image image = Image.createImage(24, 18, BACKGROUND);
+				Graphics g = image.getGraphics();
+				DirectUtils.getDirectGraphics(g).setARGBColor(source);
+				g.fillTriangle(points[order[0] * 2], points[order[0] * 2 + 1],
+						points[order[1] * 2], points[order[1] * 2 + 1],
+						points[order[2] * 2], points[order[2] * 2 + 1]);
+				// Every horizontal slice of this convex triangle must be one
+				// connected run, including its solid boundary. A displaced stroke
+				// alone leaves periodic one-pixel gaps before its outer pixels.
+				for (int y = 2; y <= points[1]; y++) {
+					int right = 20;
+					while (right > 2 && pixel(image, right, y) == BACKGROUND) right--;
+					for (int x = 2; x <= right; x++) {
+						assertEquals("connected slice=" + x + "," + y,
+								expected, pixel(image, x, y));
+					}
+				}
+			}
+		}
+	}
+
+	@Test
 	public void adjacentTrianglesHaveNoInteriorHolesOrStaleCoverage() {
 		Image image = Image.createImage(240, 320, BACKGROUND);
 		Graphics g = image.getGraphics();
@@ -233,6 +263,7 @@ public class GraphicsTriangleRenderingTest {
 		// without production Region or float boolean operations as oracle.
 		canvas.drawPath(path, paint);
 		path.offset(0.5f, 0.5f);
+		canvas.drawPath(path, paint);
 		paint.setStyle(Paint.Style.STROKE);
 		paint.setStrokeWidth(1);
 		paint.setStrokeJoin(Paint.Join.BEVEL);
