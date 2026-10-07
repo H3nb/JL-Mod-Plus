@@ -446,7 +446,7 @@ class LibraryComposeTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText("1 app").assertCountEquals(0)
-        composeRule.onNodeWithText("Recently played").assertIsDisplayed()
+        composeRule.onAllNodesWithContentDescription("Library back").assertCountEquals(0)
     }
 
     @Test
