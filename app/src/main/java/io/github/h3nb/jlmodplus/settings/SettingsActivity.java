@@ -211,11 +211,14 @@ public class SettingsActivity extends AppCompatActivity {
 
 		List<SettingsOption> languages = buildLanguageOptions();
 		Locale locale = AppCompatDelegate.getApplicationLocales().get(0);
-		String languageValue = locale == null ? "" : locale.toLanguageTag();
+		String languageValue = locale == null
+				? ""
+				: AppLocaleTags.canonicalize(locale.toLanguageTag());
 		SettingsOption selectedLanguage = findOption(languages, languageValue, null);
 		if (selectedLanguage == null && locale != null) {
 			// Keep compatibility with older entries that stored only the language subtag.
-			selectedLanguage = findOption(languages, locale.getLanguage(), null);
+			selectedLanguage = findOption(
+					languages, AppLocaleTags.canonicalize(locale.getLanguage()), null);
 		}
 		if (selectedLanguage == null) {
 			selectedLanguage = languages.get(0);
@@ -434,7 +437,10 @@ public class SettingsActivity extends AppCompatActivity {
 				while (XmlUtils.nextElement(parser, "locale")) {
 					String tag = parser.getAttributeValue(0);
 					if (tag != null && !tag.isEmpty()) {
-						tags.add(tag);
+						String canonicalTag = AppLocaleTags.canonicalize(tag);
+						if (!canonicalTag.isEmpty() && !tags.contains(canonicalTag)) {
+							tags.add(canonicalTag);
+						}
 					}
 				}
 			} catch (Exception ignored) {

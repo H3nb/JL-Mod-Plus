@@ -282,7 +282,9 @@ public class MicroActivity extends AppCompatActivity {
 			}
 			expectedAppId = prepared.appId();
 			intent.putExtra(KEY_LIBRARY_APP_ID, expectedAppId);
-			microLoader = new MicroLoader(appPath, expectedAppId, prepared.builtInThemeLinked());
+			String guestLocale = MidletLocaleResolver.resolve(this);
+			microLoader = new MicroLoader(
+					appPath, expectedAppId, prepared.builtInThemeLinked(), guestLocale);
 			if (!microLoader.init()) {
 				finish();
 				return;

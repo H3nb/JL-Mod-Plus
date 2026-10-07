@@ -12,6 +12,31 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 - Do not silently "correct" known-compatible behavior just because Android or desktop Java behaves differently.
 - If documentation is incomplete or ambiguous, prefer preserving known behavior and add a focused characterization/regression test instead of guessing.
 
+## MIDlet locale identity
+
+MIDP 2.0 defines `microedition.locale` as the current locale of the emulated device, not as an
+Android resource-directory name and not as a MIDlet-specific resource choice. Resolve one Java ME
+device locale independently of guest content and expose that same value to every MIDlet launched
+under the same emulator locale state.
+
+The runtime Activity's effective Android locale supplies the language, script intent and any
+explicit region. If the region is absent, it may be borrowed only from a same-language system
+locale whose language and script are compatible. If no such real regional locale exists, preserve
+the language-only device locale instead of inventing a country. Canonicalize legacy Android
+language aliases through BCP-47 before serializing back to the MIDP 2.0
+`language[-COUNTRY[-variant]]` shape. MIDP requires a lower-case two-letter ISO-639 language and,
+when present, an upper-case two-letter ISO-3166 country. Preserve two-letter language and region
+identifiers actually supplied by the platform instead of revalidating them against the host's
+current ISO database: Java ME-era identifiers can become historical while remaining relevant to
+old MIDlets. A host language that cannot fit MIDP's required two-letter language shape leaves
+`microedition.locale` absent.
+
+Do not derive guest locale identity from the MIDlet JAR, generated Android locale metadata, or
+`Locale.getDefault()`. `MidletSystem` owns emulator-visible property publication and updates
+both the host system-property backing store and the transformed MIDlet property delegate so stale
+process state cannot override the current device locale. Profile system properties are applied
+afterward and remain the final authority, including an explicit `microedition.locale` override.
+
 ## Nokia polygon rendering
 
 Nokia `DirectGraphics` and MIDP `Graphics` share one current ARGB drawing state.

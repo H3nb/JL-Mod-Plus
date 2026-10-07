@@ -17,7 +17,13 @@ public final class MidletSystem {
     private static final Map<String, String> PROPERTY = new HashMap<>();
 
     static void setProperty(String key, String value) {
-        PROPERTY.put(key, value);
+        if (value == null) {
+            System.clearProperty(key);
+            PROPERTY.remove(key);
+        } else {
+            System.setProperty(key, value);
+            PROPERTY.put(key, value);
+        }
     }
 
 

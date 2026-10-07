@@ -45,6 +45,12 @@ selectors=(
   'io.github.h3nb.jlmodplus.crashes.RuntimeShutdownFixtureTest#failedPreferenceRestorationPreservesOwnedFixtureForRetry'
 )
 
+# Tests that mutate process-global/application-global state run in their own instrumentation
+# session so their lifecycle side effects cannot contaminate unrelated runtime contracts.
+isolated_selectors=(
+  'io.github.h3nb.jlmodplus.platform.MidletLocaleRuntimeTest#coldSecondaryProcessReceivesApplicationLocaleAndJavaMeIdentity'
+)
+
 ./gradlew --daemon --stacktrace --profile \
   -PjlmodRuntimeTestAbi=x86_64 \
   :app:installEmulatorDebug \
@@ -74,51 +80,61 @@ if (( ${#runners[@]} != 1 )); then
 fi
 runner="${runners[0]}"
 
-IFS=,
-selector_arg="${selectors[*]}"
-unset IFS
-
 mkdir -p ci-artifacts/runtime-smoke
-instrumentation_log="ci-artifacts/runtime-smoke/instrumentation.txt"
 verified_selectors="ci-artifacts/runtime-smoke/selectors.txt"
 : > "$verified_selectors"
 
-echo "Running ${#selectors[@]} selected Android runtime contracts."
-if ! adb shell am instrument -w -r -e class "$selector_arg" "$runner" > "$instrumentation_log" 2>&1; then
+run_selector_batch() {
+  local batch_name="$1"
+  shift
+  local batch=("$@")
+  local selector_arg
+  local instrumentation_log="ci-artifacts/runtime-smoke/${batch_name}.txt"
+
+  local IFS=,
+  selector_arg="${batch[*]}"
+
+  echo "Running ${#batch[@]} Android runtime contracts in batch: $batch_name."
+  if ! adb shell am instrument -w -r -e class "$selector_arg" "$runner" > "$instrumentation_log" 2>&1; then
+    cat "$instrumentation_log"
+    echo "Instrumentation batch failed: $batch_name." >&2
+    exit 1
+  fi
   cat "$instrumentation_log"
-  echo "Instrumentation command failed." >&2
-  exit 1
-fi
-cat "$instrumentation_log"
 
-if grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|INSTRUMENTATION_ABORTED|Process crashed|No tests found' "$instrumentation_log"; then
-  echo "Instrumentation reported a runtime-smoke failure." >&2
-  exit 1
-fi
-if ! grep -Fq 'INSTRUMENTATION_CODE: -1' "$instrumentation_log"; then
-  echo "Instrumentation did not report successful completion." >&2
-  exit 1
-fi
-
-for selector in "${selectors[@]}"; do
-  class_name="${selector%%#*}"
-  if ! grep -Fq "INSTRUMENTATION_STATUS: class=$class_name" "$instrumentation_log"; then
-    echo "Selected class did not execute: $selector" >&2
+  if grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|INSTRUMENTATION_ABORTED|Process crashed|No tests found' "$instrumentation_log"; then
+    echo "Instrumentation reported a runtime-smoke failure in batch: $batch_name." >&2
+    exit 1
+  fi
+  if ! grep -Fq 'INSTRUMENTATION_CODE: -1' "$instrumentation_log"; then
+    echo "Instrumentation batch did not report successful completion: $batch_name." >&2
     exit 1
   fi
 
-  if [[ "$selector" == *'#'* ]]; then
-    method_name="${selector#*#}"
-    if ! grep -Fq "INSTRUMENTATION_STATUS: test=$method_name" "$instrumentation_log"; then
-      echo "Selected method did not execute: $selector" >&2
+  for selector in "${batch[@]}"; do
+    local class_name="${selector%%#*}"
+    if ! grep -Fq "INSTRUMENTATION_STATUS: class=$class_name" "$instrumentation_log"; then
+      echo "Selected class did not execute: $selector" >&2
       exit 1
     fi
-  fi
 
-  printf 'PASS\t%s\n' "$selector" >> "$verified_selectors"
-done
+    if [[ "$selector" == *'#'* ]]; then
+      local method_name="${selector#*#}"
+      if ! grep -Fq "INSTRUMENTATION_STATUS: test=$method_name" "$instrumentation_log"; then
+        echo "Selected method did not execute: $selector" >&2
+        exit 1
+      fi
+    fi
 
-if (( $(wc -l < "$verified_selectors") != ${#selectors[@]} )); then
+    printf 'PASS\t%s\n' "$selector" >> "$verified_selectors"
+  done
+}
+
+run_selector_batch main "${selectors[@]}"
+run_selector_batch locale-isolated "${isolated_selectors[@]}"
+
+expected_selector_count=$((${#selectors[@]} + ${#isolated_selectors[@]}))
+if (( $(wc -l < "$verified_selectors") != expected_selector_count )); then
   echo "Runtime-smoke selector evidence is incomplete." >&2
   exit 1
 fi

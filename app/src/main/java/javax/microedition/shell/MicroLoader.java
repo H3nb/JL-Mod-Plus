@@ -101,6 +101,7 @@ public class MicroLoader {
 	private final String appDirName;
 	private final long expectedAppId;
 	private final boolean builtInThemeLinked;
+	private final String guestLocale;
 	private String midletName;
 	private String midletVendor;
 	private String midletVersion;
@@ -115,10 +116,11 @@ public class MicroLoader {
 	/** Set only after the MIDlet thread has successfully received the timing session. */
 	private boolean timingSessionTransferred;
 
-	MicroLoader(String appPath, long expectedAppId, boolean builtInThemeLinked) {
+	MicroLoader(String appPath, long expectedAppId, boolean builtInThemeLinked, String guestLocale) {
 		this.appDir = new File(appPath);
 		this.expectedAppId = expectedAppId;
 		this.builtInThemeLinked = builtInThemeLinked;
+		this.guestLocale = guestLocale;
 		File converted = appDir.getParentFile();
 		if (converted == null)
 			throw new NullPointerException("Can't access to parent of " + appPath);
@@ -420,18 +422,15 @@ public class MicroLoader {
 	}
 
 	private void setProperties() {
-		final Locale defaultLocale = Locale.getDefault();
-		final String country = defaultLocale.getCountry();
-		System.setProperty("microedition.locale", defaultLocale.getLanguage()
-				+ (country.length() == 2 ? "-" + country : ""));
+		MidletSystem.setProperty("microedition.locale", guestLocale);
 		final String primaryStoragePath = Environment.getExternalStorageDirectory().getPath();
 		String dataUri = fileConnectionDataUri(workDir, appDirName, primaryStoragePath);
 		String musicUri = "file:///c:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
 				.getPath().substring(primaryStoragePath.length());
-		System.setProperty("fileconn.dir.cache", dataUri + "/cache");
-		System.setProperty("fileconn.dir.private", dataUri + "/private");
-		System.setProperty("fileconn.dir.music", musicUri);
-		System.setProperty("user.home", primaryStoragePath);
+		MidletSystem.setProperty("fileconn.dir.cache", dataUri + "/cache");
+		MidletSystem.setProperty("fileconn.dir.private", dataUri + "/private");
+		MidletSystem.setProperty("fileconn.dir.music", musicUri);
+		MidletSystem.setProperty("user.home", primaryStoragePath);
 	}
 
 	static String fileConnectionDataUri(
@@ -464,14 +463,12 @@ public class MicroLoader {
 			for (String line : propLines) {
 				String[] prop = line.split(": *", 2);
 				if (prop.length == 2) {
-					System.setProperty(prop[0], prop[1]);
 					MidletSystem.setProperty(prop[0], prop[1]);
 				}
 			}
 			try {
 				Charset.forName(System.getProperty("microedition.encoding"));
 			} catch (Exception e) {
-				System.setProperty("microedition.encoding", "ISO-8859-1");
 				MidletSystem.setProperty("microedition.encoding", "ISO-8859-1");
 			}
 
