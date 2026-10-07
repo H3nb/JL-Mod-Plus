@@ -12,6 +12,18 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 - Do not silently "correct" known-compatible behavior just because Android or desktop Java behaves differently.
 - If documentation is incomplete or ambiguous, prefer preserving known behavior and add a focused characterization/regression test instead of guessing.
 
+## MIDlet locale identity
+
+At MIDlet launch, `microedition.locale` follows the emulator's effective application locale.
+An explicitly selected JL-Mod Plus language is exposed to the guest; when the app follows the
+system language, the current system locale is exposed instead. Profile system properties remain
+the final override, including an explicit `microedition.locale` value.
+
+Resolve this through the Android per-app locale APIs rather than `Locale.getDefault()`, because
+the process default may intentionally represent the system locale even while the app has a
+language override. Preserve the established Java ME property format of language plus an optional
+two-letter country subtag.
+
 ## Foreground ownership boundary
 
 JL-Mod keeps Android task foreground, emulator/AMS foreground selection, MIDlet lifecycle, and LCDUI display foreground as separate facts. In particular, MIDP `Display.setCurrent(null)` retains the current `Displayable` and is treated as a request to yield emulator foreground to the Library; it never means Android Home. A live runtime may therefore coexist with Library foreground. Non-null `setCurrent()` calls update guest display state but do not directly foreground Android Activities. The runtime storage lease remains liveness evidence only; emulator foreground selection is persisted separately and generation-fenced.

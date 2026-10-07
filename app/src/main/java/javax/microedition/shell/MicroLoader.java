@@ -29,7 +29,9 @@ import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.KeyEvent;
 
+import androidx.core.app.LocaleManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.os.LocaleListCompat;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -420,9 +422,9 @@ public class MicroLoader {
 	}
 
 	private void setProperties() {
-		final Locale defaultLocale = Locale.getDefault();
-		final String country = defaultLocale.getCountry();
-		System.setProperty("microedition.locale", defaultLocale.getLanguage()
+		final Locale guestLocale = resolveGuestLocale();
+		final String country = guestLocale.getCountry();
+		System.setProperty("microedition.locale", guestLocale.getLanguage()
 				+ (country.length() == 2 ? "-" + country : ""));
 		final String primaryStoragePath = Environment.getExternalStorageDirectory().getPath();
 		String dataUri = fileConnectionDataUri(workDir, appDirName, primaryStoragePath);
@@ -432,6 +434,17 @@ public class MicroLoader {
 		System.setProperty("fileconn.dir.private", dataUri + "/private");
 		System.setProperty("fileconn.dir.music", musicUri);
 		System.setProperty("user.home", primaryStoragePath);
+	}
+
+	private static Locale resolveGuestLocale() {
+		final LocaleListCompat applicationLocales = LocaleManagerCompat.getApplicationLocales(
+				ContextHolder.getAppContext());
+		Locale locale = applicationLocales.get(0);
+		if (locale != null) {
+			return locale;
+		}
+		locale = LocaleManagerCompat.getSystemLocales(ContextHolder.getAppContext()).get(0);
+		return locale != null ? locale : Locale.getDefault();
 	}
 
 	static String fileConnectionDataUri(

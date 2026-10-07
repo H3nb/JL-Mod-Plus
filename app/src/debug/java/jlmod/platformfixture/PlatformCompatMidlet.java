@@ -26,6 +26,7 @@ import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.TextField;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
+import javax.microedition.shell.MidletSystem;
 
 /** Debug-only display fixture used by Android platform compatibility validation. */
 public final class PlatformCompatMidlet extends MIDlet {
@@ -45,6 +46,7 @@ public final class PlatformCompatMidlet extends MIDlet {
 	@Override
 	public void startApp() {
 		markerPath = getAppProperty(MARKER_PROPERTY);
+		writeMarker(markerPath, "locale=" + MidletSystem.getProperty("microedition.locale") + "\n");
 		display = Display.getDisplay(this);
 		transitionMode = DISPLAY_TRANSITION.equals(getAppProperty(DISPLAY_PROPERTY));
 		canvas = new ProbeCanvas(markerPath);

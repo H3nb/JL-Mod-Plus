@@ -30,6 +30,9 @@ import android.accessibilityservice.AccessibilityService;
 import android.graphics.Rect;
 import android.view.accessibility.AccessibilityNodeInfo;
 
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.app.LocaleManagerCompat;
+import androidx.core.os.LocaleListCompat;
 import androidx.preference.PreferenceManager;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -109,6 +112,26 @@ public class PlatformCompatBehaviorTest {
 		restorePreference(preferences, Constants.PREF_TOOLBAR, hadToolbar, previousToolbar);
 		restorePreference(preferences, Constants.PREF_STATUSBAR, hadStatusBar, previousStatusBar);
 		deleteRecursivelyBestEffort(root);
+	}
+
+	@Test
+	public void midletLocaleFollowsApplicationLocaleAcrossColdStart() throws Exception {
+		LocaleListCompat previousLocales = LocaleManagerCompat.getApplicationLocales(context);
+		try {
+			InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
+					AppCompatDelegate.setApplicationLocales(
+							LocaleListCompat.forLanguageTags("id")));
+			assertEquals("Application locale must be committed before the MIDlet process starts",
+					"id", LocaleManagerCompat.getApplicationLocales(context).toLanguageTags());
+			launchFixture(context, appDir);
+			awaitMarker(marker, "locale=");
+			assertEquals("MIDlet locale must follow the emulator application locale",
+					"locale=id", lastMarkerValue(marker, "locale="));
+		} finally {
+			killFixtureProcess();
+			InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
+					AppCompatDelegate.setApplicationLocales(previousLocales));
+		}
 	}
 
 	@Test
