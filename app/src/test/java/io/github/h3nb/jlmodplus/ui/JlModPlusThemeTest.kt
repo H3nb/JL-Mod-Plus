@@ -49,8 +49,8 @@ class JlModPlusThemeTest {
         for (palette in AccentPalette.entries) {
             val light = palette.colorScheme(false)
             val dark = palette.colorScheme(true)
-            assertEquals(Color(0xFFF7F8F9), light.background)
-            assertEquals(Color(0xFF101416), dark.background)
+            assertEquals(Color(0xFFF7F9FA), light.background)
+            assertEquals(Color(0xFF111518), dark.background)
             assertEquals(palette.previewColor(false), light.primary)
             assertEquals(palette.previewColor(true), dark.primary)
             assertEquals(light.primaryFixed, dark.primaryFixed)
@@ -94,6 +94,50 @@ class JlModPlusThemeTest {
                     )
                 }
                 assertTrue(contrastRatio(scheme.outline, scheme.surfaceContainerHigh) >= 3f)
+            }
+        }
+    }
+
+
+    @Test
+    fun neutralSurfaceLevelsStayOrderedAndReadableForEveryAccent() {
+        for (palette in AccentPalette.entries) {
+            for (dark in listOf(false, true)) {
+                val scheme = palette.colorScheme(dark)
+                val surfaces = listOf(
+                    scheme.surfaceContainerLowest,
+                    scheme.background,
+                    scheme.surfaceContainerLow,
+                    scheme.surfaceContainer,
+                    scheme.surfaceContainerHigh,
+                    scheme.surfaceContainerHighest,
+                    scheme.surfaceVariant,
+                )
+                for (surface in surfaces) {
+                    assertTrue(
+                        "Unreadable main text on ${palette.key} ${if (dark) "dark" else "light"}",
+                        contrastRatio(scheme.onSurface, surface) >= 4.5f,
+                    )
+                    assertTrue(
+                        "Unreadable supporting text on ${palette.key} ${if (dark) "dark" else "light"}",
+                        contrastRatio(scheme.onSurfaceVariant, surface) >= 4.5f,
+                    )
+                }
+                val containers = listOf(
+                    scheme.surfaceContainerLow,
+                    scheme.surfaceContainer,
+                    scheme.surfaceContainerHigh,
+                    scheme.surfaceContainerHighest,
+                )
+                for ((previous, next) in containers.zipWithNext()) {
+                    assertTrue(
+                        "Surface hierarchy reversed for ${palette.key}",
+                        if (dark) next.luminance() > previous.luminance()
+                        else next.luminance() < previous.luminance(),
+                    )
+                }
+                assertTrue(contrastRatio(scheme.outline, scheme.surfaceContainerHighest) >= 3f)
+                assertTrue(contrastRatio(scheme.inverseOnSurface, scheme.inverseSurface) >= 4.5f)
             }
         }
     }
