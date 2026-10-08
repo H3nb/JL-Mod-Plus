@@ -12,6 +12,7 @@ import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsOn
@@ -41,6 +42,7 @@ import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.espresso.Espresso.pressBack
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.librarydb.LibraryCollectionRow
@@ -307,10 +309,20 @@ class LibraryViewportNavigationTest {
                 .fetchSemanticsNode().boundsInRoot.top,
             1f,
         )
-        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true)
+        val firstFiltered = composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true)
             .assertIsDisplayed()
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
             .assertDoesNotExist()
+        // The visible header bottom and first result must remain adjacent even when
+        // filtered data cannot scroll enough to consume the original header spacer.
+        val filterBottom = composeRule.onNodeWithText(favorites)
+            .fetchSemanticsNode().boundsInRoot.bottom
+        val gap = firstFiltered.fetchSemanticsNode().boundsInRoot.top - filterBottom
+        val maxGapDp = if (layout == LibraryLayout.List) 100.dp else 180.dp
+        assertTrue(
+            "Quick filter left an oversized header-to-results gap: $gap px",
+            gap in 0f..with(composeRule.density) { maxGapDp.toPx() },
+        )
 
         // The same chrome position survives switching back to the larger projection.
         composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
@@ -325,6 +337,9 @@ class LibraryViewportNavigationTest {
 
         // A single filtered MIDlet can no longer consume backward scroll. Explicitly
         // pulling down must still recover the hidden search rather than trapping the user.
+        // Before the second filter switch, drive the unfiltered list deeper so
+        // the next result projection must begin at its first item rather than
+        // keeping the previous MIDlet scroll anchor.
         composeRule.onNodeWithText(favorites).performClick()
         composeRule.waitForIdle()
         activeList(APP_PREFIX).performTouchInput {
@@ -338,6 +353,24 @@ class LibraryViewportNavigationTest {
         }
         composeRule.waitForIdle()
         composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+    }
+
+    @Test
+    fun backDismissesFocusedLibrarySearchBeforeLeavingScreen() {
+        val host = ViewportHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
+            }
+        }
+        composeRule.onNode(hasSetTextAction()).performClick()
+        composeRule.onNode(hasSetTextAction()).assertIsFocused()
+        pressBack()
+        composeRule.waitForIdle()
+        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
