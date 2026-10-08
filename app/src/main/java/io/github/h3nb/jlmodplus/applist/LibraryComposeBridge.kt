@@ -1574,7 +1574,8 @@ internal const val LIBRARY_CHROME_HIDE_DISTANCE_DP = 80f
 internal const val LIBRARY_CHROME_MIN_SCROLL_ROOM_DP = 160f
 private const val LIBRARY_CHROME_ANIMATION_MILLIS = 220
 private const val LIBRARY_RETURN_ANCHOR_SETTLE_FRAMES = 2
-private val LibraryGridMinCellSize = 88.dp
+internal val LibraryGridMinCellSize = 88.dp
+internal val LibraryGridHorizontalPadding = 12.dp
 private const val LIBRARY_GRID_ARTWORK_FRACTION = 0.78f
 private val LibraryGridMaxArtworkSize = 72.dp
 
@@ -1975,21 +1976,26 @@ internal fun LibraryAppsDestination(
             .nestedScroll(headerScrollConnection),
     ) {
         if (state.layout == LibraryLayout.Grid) {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = LibraryGridMinCellSize),
-                modifier = Modifier.fillMaxSize(),
-                state = if (state.loading || state.errorMessage != null) rememberLazyGridState() else gridState,
-                contentPadding = scaffoldPadding,
-            ) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    if (headerHeightPx.intValue == 0) {
-                        renderHeader(
-                            Modifier
-                                .alpha(0f)
-                                .clearAndSetSemantics { },
-                            false,
-                        )
-                    } else {
+            // Keep the original adaptive column count when adding the outer gutter.
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed((maxWidth / LibraryGridMinCellSize).toInt().coerceAtLeast(1)),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = LibraryGridHorizontalPadding),
+                    state = if (state.loading || state.errorMessage != null) rememberLazyGridState() else gridState,
+                    contentPadding = scaffoldPadding,
+                ) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        if (headerHeightPx.intValue == 0) {
+                            renderHeader(
+                                Modifier
+                                    .alpha(0f)
+                                    .clearAndSetSemantics { },
+                                false,
+                            )
+                            }
+        } else {
                         LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
                     }
                 }

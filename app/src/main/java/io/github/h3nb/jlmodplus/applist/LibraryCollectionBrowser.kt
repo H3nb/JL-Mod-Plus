@@ -14,6 +14,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -323,19 +324,24 @@ internal fun LibraryCollectionBrowser(
                 CircularProgressIndicator()
             }
         } else if (libraryState.layout == LibraryLayout.Grid) {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 88.dp),
-                modifier = Modifier.fillMaxSize(),
-                state = gridState,
-                contentPadding = scaffoldPadding,
-            ) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    if (headerHeightPx.intValue == 0) {
-                        renderHeader(
-                            Modifier.alpha(0f).clearAndSetSemantics { },
-                            false,
-                        )
-                    } else {
+            // Keep the original adaptive column count when adding the outer gutter.
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed((maxWidth / LibraryGridMinCellSize).toInt().coerceAtLeast(1)),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = LibraryGridHorizontalPadding),
+                    state = gridState,
+                    contentPadding = scaffoldPadding,
+                ) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        if (headerHeightPx.intValue == 0) {
+                            renderHeader(
+                                Modifier.alpha(0f).clearAndSetSemantics { },
+                                false,
+                            )
+                            }
+        } else {
                         LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
                     }
                 }
