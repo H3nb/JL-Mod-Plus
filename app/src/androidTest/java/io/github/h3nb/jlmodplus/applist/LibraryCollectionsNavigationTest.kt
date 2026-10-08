@@ -27,7 +27,9 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performScrollToIndex
@@ -582,8 +584,9 @@ class LibraryCollectionsNavigationTest {
             composeRule.onAllNodesWithTag("collection-membership-1000")
                 .fetchSemanticsNodes().isNotEmpty()
         }
+        // The pager is scrollable too; select the picker LazyColumn by its visible row.
         composeRule.onAllNodes(
-            hasScrollAction(),
+            hasScrollAction() and hasAnyDescendant(hasText("Picker app 00")),
             useUnmergedTree = true,
         ).onLast().performScrollToIndex(65)
         composeRule.waitForIdle()
