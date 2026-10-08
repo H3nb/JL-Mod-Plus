@@ -13,6 +13,7 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollAction
@@ -198,6 +199,41 @@ class LibraryViewportNavigationTest {
         swipeToNextPage()
         composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
         assertViewport(folders, FOLDER_PREFIX)
+    }
+
+    @Test
+    fun partiallyCollapsedLibraryKeepsQuickFilterInteractiveAfterSearchIsObscured() {
+        val host = ViewportHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = libraryState(LibraryLayout.List), actions = host)
+                }
+            }
+        }
+        // Scroll by less than the full header height. The search row crosses the status
+        // bar, but the lower quick filters are still entirely inside the touch-safe area.
+        activeList(APP_PREFIX).performTouchInput {
+            val start = Offset(width * 0.5f, height * 0.7f)
+            down(start)
+            moveSmoothlyTo(
+                Offset(start.x, start.y - height * 0.155f),
+                durationMillis = 800,
+            )
+            advanceEventTime(250)
+            up()
+        }
+        composeRule.waitForIdle()
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all))
+            .assertIsDisplayed()
+            .assertIsEnabled()
+
+        // A settled partial header must not snap back to full height.
+        composeRule.waitForIdle()
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
     }
 
     @Test
