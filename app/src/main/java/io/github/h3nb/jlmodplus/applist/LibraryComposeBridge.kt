@@ -1863,12 +1863,9 @@ internal fun LibraryAppsDestination(
             state = state,
             sortVisible = sortVisible,
             onSortVisibilityChanged = { sortVisible = it },
-            // A quick-filter switch changes the result set: show its beginning rather than
-            // retaining a deep viewport that belonged to a different filter.
-            onQuickView = { selected ->
-                onQuickView(selected)
-                revealSearchResults()
-            },
+            // Switching quick views updates the projected apps in place. Search focus,
+            // chrome offset, and the current list/grid viewport must not be reset.
+            onQuickView = onQuickView,
             onSort = onSort,
             selectionState = selectionState,
             onExitSelection = onExitSelection,
