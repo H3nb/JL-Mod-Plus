@@ -64,6 +64,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -196,6 +198,13 @@ internal fun LibraryCollectionBrowser(
 
     var query by viewportState.queryState
     var searchFocused by remember { mutableStateOf(false) }
+    val searchFocusManager = LocalFocusManager.current
+    val searchKeyboard = LocalSoftwareKeyboardController.current
+    BackHandler(enabled = interactionActive && searchFocused) {
+        searchKeyboard?.hide()
+        searchFocusManager.clearFocus(force = true)
+        searchFocused = false
+    }
     var sortVisible by remember { mutableStateOf(false) }
     val projected = rememberCollectionAppsProjection(viewportState, members, libraryState.sortVariant)
     val projectedIds = remember(projected) {
