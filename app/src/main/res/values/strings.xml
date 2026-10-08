@@ -910,7 +910,7 @@
     <string name="perf_overlay_debug">Debug</string>
     <string name="perf_overlay_custom">Custom</string>
     <string name="perf_overlay_parameters">Overlay parameters</string>
-    <string name="perf_overlay_parameters_help">Choose performance metrics. FPS counts new renderer frames; GFPS counts guest output.</string>
+    <string name="perf_overlay_parameters_help">Choose metrics. FPS counts frames consumed by the renderer; GFPS counts all guest frame publications.</string>
     <plurals name="perf_overlay_selected">
         <item quantity="one">%d parameter selected</item>
         <item quantity="other">%d parameters selected</item>

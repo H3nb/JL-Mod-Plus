@@ -4,7 +4,12 @@ The profile's Performance Overlay switch retains the persisted `ShowFps` key.
 `PerformanceOverlayMetrics` stores independent metric bits; missing fields in old
 profiles use Standard, while an explicitly empty selection remains empty. The
 released legacy `ShowFps` key is preserved. Metric bits are not renumbered;
-existing development profiles may retain custom selections. The three retired
+existing development profiles may retain custom selections. Because this multi-metric
+feature has not been released, the existing pre-release bit positions 0 and 2 now
+identify renderer-consumption FPS and guest-publication GFPS respectively; custom
+selections created with earlier development builds are interpreted under these new
+semantics rather than migrated through an otherwise unnecessary released-profile
+schema. The legacy `ShowFps` switch remains compatible. The three retired
 sensor-temperature bit positions (17–19) are never repurposed, and sanitization
 clears those bits without shifting surviving options.
 `PerformanceOverlayPosition` selects one of four corners. Presets derive from

@@ -1017,9 +1017,9 @@ private val overlayParameterGroups = listOf(
         OverlayParameter(PerformanceOverlayOptions.FRAME_INTERVAL, R.string.perf_overlay_interval),
         OverlayParameter(PerformanceOverlayOptions.P95_INTERVAL, R.string.perf_overlay_p95),
         OverlayParameter(PerformanceOverlayOptions.MAX_INTERVAL, R.string.perf_overlay_max),
-		OverlayParameter(PerformanceOverlayOptions.RENDER_INTERVAL, R.string.perf_overlay_render_interval),
-		OverlayParameter(PerformanceOverlayOptions.RENDER_P95_INTERVAL, R.string.perf_overlay_render_p95),
-		OverlayParameter(PerformanceOverlayOptions.RENDER_MAX_INTERVAL, R.string.perf_overlay_render_max),
+        OverlayParameter(PerformanceOverlayOptions.RENDER_INTERVAL, R.string.perf_overlay_render_interval),
+        OverlayParameter(PerformanceOverlayOptions.RENDER_P95_INTERVAL, R.string.perf_overlay_render_p95),
+        OverlayParameter(PerformanceOverlayOptions.RENDER_MAX_INTERVAL, R.string.perf_overlay_render_max),
         OverlayParameter(PerformanceOverlayOptions.COALESCED, R.string.perf_overlay_coalesced),
     )),
     OverlayParameterGroup(R.string.perf_overlay_group_pipeline, listOf(
