@@ -21,12 +21,23 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -84,7 +95,7 @@ class LibraryCollectionsNavigationTest {
         }
 
         composeRule.onNodeWithText("Collections").performClick()
-        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        openCollection()
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
 
         host.loadMembersOnOpen = false
@@ -99,6 +110,7 @@ class LibraryCollectionsNavigationTest {
             host.openedCollectionIds.size > opensBeforeRestore
         }
         assertEquals(COLLECTION_ID, host.openedCollectionIds.last())
+        waitForMember()
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
 
         pressBack()
@@ -107,6 +119,88 @@ class LibraryCollectionsNavigationTest {
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
         assertNull(host.store.displayedMembersCollectionId())
+    }
+
+    @Test
+    fun inactiveCollectionOverviewDismissesWindowsAndRejectsActions() {
+        val host = RecordingCollectionsHost()
+        val active = mutableStateOf(true)
+        val navigationChanges = mutableListOf<LibraryNavigationState>()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryCollectionsDestination(
+                        host = host,
+                        libraryState = sampleLibraryState(),
+                        scaffoldPadding = PaddingValues(),
+                        onNavigationStateChanged = { navigationChanges += it },
+                        onOpenActions = { _, _ -> },
+                        active = active.value,
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.library_collection_new)).performClick()
+        composeRule.onNode(isDialog()).assertExists()
+        composeRule.runOnIdle { active.value = false }
+        composeRule.onAllNodes(isDialog()).assertCountEquals(0)
+
+        // Test the action boundary directly while the retained page still has its visual tree.
+        composeRule.onNodeWithText(uiString(R.string.library_collection_new)).performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.onAllNodes(isDialog()).assertCountEquals(0)
+        assertEquals(emptyList<LibraryNavigationState>(), navigationChanges)
+        assertEquals(emptyList<Long>(), host.openedCollectionIds)
+
+        composeRule.runOnIdle { active.value = true }
+        composeRule.onAllNodes(isDialog()).assertCountEquals(0)
+        composeRule.onNodeWithText(uiString(R.string.library_collection_new)).performClick()
+        composeRule.onNode(isDialog()).assertExists()
+    }
+
+    @Test
+    fun inactiveRetainedCollectionStillReconcilesDeletedRoute() {
+        val host = RecordingCollectionsHost().apply {
+            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
+        }
+        val active = mutableStateOf(true)
+        val navigationState = mutableStateOf(
+            LibraryNavigationState(
+                destination = LibraryDestinationKey.Collections,
+                selectedCollectionId = COLLECTION_ID,
+            ),
+        )
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryCollectionsDestination(
+                        host = host,
+                        libraryState = sampleLibraryState(),
+                        scaffoldPadding = PaddingValues(),
+                        navigationState = navigationState.value,
+                        onNavigationStateChanged = { navigationState.value = it },
+                        onOpenActions = { _, _ -> },
+                        active = active.value,
+                    )
+                }
+            }
+        }
+        waitForMember()
+        composeRule.runOnIdle {
+            active.value = false
+            host.store.publishCollections(emptyList())
+        }
+        composeRule.waitForIdle()
+        assertNull(navigationState.value.selectedCollectionId)
+        assertNull(host.store.displayedMembersCollectionId())
+        composeRule.runOnIdle { active.value = true }
+        composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
+        composeRule.onNodeWithText(uiString(R.string.library_collections_empty_title))
+            .assertIsDisplayed()
     }
 
     @Test
@@ -139,6 +233,7 @@ class LibraryCollectionsNavigationTest {
             }
         }
 
+        waitForMember()
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
         composeRule.runOnIdle {
             navigationVisibilityEvents.clear()
@@ -149,6 +244,7 @@ class LibraryCollectionsNavigationTest {
         // HorizontalPager keeps neighbouring pages composed. Losing active ownership must not
         // replace the selected Collection with the overview while the page is off-screen.
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).performClick().assertIsNotFocused()
         composeRule.runOnIdle {
             assertEquals(emptyList<Boolean>(), navigationVisibilityEvents)
             active.value = true
@@ -178,7 +274,7 @@ class LibraryCollectionsNavigationTest {
         }
 
         composeRule.onNodeWithText("Collections").performClick()
-        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        openCollection()
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
 
         composeRule.runOnIdle {
@@ -195,7 +291,7 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
-    fun collectionScopeMismatchDropsOnlyCollectionDetailAnchors() {
+    fun collectionScopeMismatchClearsManagementRoute() {
         val host = RecordingCollectionsHost()
         val navigationState = mutableStateOf(
             LibraryNavigationState(
@@ -203,28 +299,6 @@ class LibraryCollectionsNavigationTest {
                 selectedCollectionId = COLLECTION_ID,
                 selectedCollectionScope = "/work/library-a",
                 collectionManageApps = true,
-                anchors = mapOf(
-                    LibraryNavigationSurface.CollectionAppsList to LibraryScrollAnchor(
-                        generation = 0L,
-                        stableItemId = 1L,
-                        offsetPx = 4,
-                        fallbackIndex = 0,
-                        scopeId = COLLECTION_ID,
-                    ),
-                    LibraryNavigationSurface.CollectionAppsGrid to LibraryScrollAnchor(
-                        generation = 0L,
-                        stableItemId = 1L,
-                        offsetPx = 5,
-                        fallbackIndex = 0,
-                        scopeId = COLLECTION_ID,
-                    ),
-                    LibraryNavigationSurface.AppsList to LibraryScrollAnchor(
-                        generation = 0L,
-                        stableItemId = 1L,
-                        offsetPx = 6,
-                        fallbackIndex = 0,
-                    ),
-                ),
             ),
         )
 
@@ -250,9 +324,6 @@ class LibraryCollectionsNavigationTest {
         assertNull(restored.selectedCollectionId)
         assertNull(restored.selectedCollectionScope)
         assertFalse(restored.collectionManageApps)
-        assertNull(restored.anchors[LibraryNavigationSurface.CollectionAppsList])
-        assertNull(restored.anchors[LibraryNavigationSurface.CollectionAppsGrid])
-        assertNotNull(restored.anchors[LibraryNavigationSurface.AppsList])
     }
 
     @Test
@@ -272,7 +343,7 @@ class LibraryCollectionsNavigationTest {
         }
 
         composeRule.onNodeWithText("Collections").performClick()
-        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        openCollection()
         composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
         composeRule.onNodeWithText("Select").performClick()
 
@@ -315,7 +386,7 @@ class LibraryCollectionsNavigationTest {
         }
 
         composeRule.onNodeWithText("Collections").performClick()
-        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        openCollection()
         // Enter selection after the Collection detail has already rendered. This verifies that
         // changing UI state reaches the visible detail without becoming navigation/layout state.
         composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
@@ -362,7 +433,7 @@ class LibraryCollectionsNavigationTest {
         }
 
         composeRule.onNodeWithText("Collections").performClick()
-        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        openCollection()
         composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
         composeRule.onNodeWithText("Select").performClick()
         composeRule.onNodeWithContentDescription(
@@ -404,7 +475,7 @@ class LibraryCollectionsNavigationTest {
         }
 
         composeRule.onNodeWithText("Collections").performClick()
-        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        openCollection()
         composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
         composeRule.onNodeWithText("Remove from collection").performClick()
         composeRule.waitForIdle()
@@ -489,7 +560,7 @@ class LibraryCollectionsNavigationTest {
         }
 
         composeRule.onNodeWithText("Collections").performClick()
-        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        openCollection()
         composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
             .assertIsDisplayed()
@@ -529,7 +600,7 @@ class LibraryCollectionsNavigationTest {
         }
 
         composeRule.onNodeWithText("Collections").performClick()
-        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        openCollection()
         composeRule.runOnIdle {
             host.store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
         }
@@ -539,6 +610,10 @@ class LibraryCollectionsNavigationTest {
         val target = composeRule.onNodeWithTag(
             "collection-membership-${SAMPLE_MEMBER_2.id}",
         )
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("collection-membership-${SAMPLE_MEMBER_2.id}")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
         target.performClick()
         composeRule.waitForIdle()
 
@@ -568,6 +643,49 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun collectionPickerSearchReturnsToFirstResultAfterDeepScroll() {
+        val host = RecordingCollectionsHost().apply {
+            pickerApps = List(80) { index ->
+                SAMPLE_MEMBER.copy(
+                    id = 1_000 + index,
+                    databaseId = 10_000L + index,
+                    title = "Picker app " + index.toString().padStart(2, '0'),
+                )
+            }
+        }
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+        composeRule.onNodeWithText("Collections").performClick()
+        openCollection()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("collection-membership-1000")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        // The pager is scrollable too; select the picker LazyColumn by its visible row.
+        composeRule.onAllNodes(
+            hasScrollAction() and hasAnyDescendant(hasText("Picker app 00")),
+            useUnmergedTree = true,
+        ).onLast().performScrollToIndex(65)
+        composeRule.waitForIdle()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Picker app 00")
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("collection-membership-1000")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        // InputText contains the query too; assert the unique result row, not matching text.
+        composeRule.onNodeWithTag("collection-membership-1000").assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).assertIsFocused()
+    }
+
+    @Test
     fun expandedWindowShowsListAndDetailWithoutDetailBack() {
         val host = RecordingCollectionsHost().apply {
             store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
@@ -592,8 +710,21 @@ class LibraryCollectionsNavigationTest {
         }
 
         composeRule.onNodeWithText("Collections").assertIsDisplayed()
+        waitForMember()
         composeRule.onNodeWithText(MEMBER_TITLE).assertExists()
         composeRule.onAllNodesWithContentDescription("Back").assertCountEquals(0)
+    }
+
+    private fun openCollection() {
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        waitForMember()
+    }
+
+    private fun waitForMember() {
+        // Projection runs on Default; Compose idleness alone does not mean its rows are ready.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(MEMBER_TITLE).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     private class RecordingCollectionsHost : LibraryCollectionsHost {
@@ -616,6 +747,7 @@ class LibraryCollectionsNavigationTest {
         val singleRemovals = mutableListOf<Pair<Int, Long>>()
         val membershipRequests = mutableListOf<Triple<Int, Long, Boolean>>()
         var deferMembershipResult = false
+        var pickerApps: List<LibraryAppUiItem> = listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2)
         private var pendingMembershipResult: CollectionMembershipResultCallback? = null
         var loadMembersOnOpen = true
 
@@ -633,7 +765,7 @@ class LibraryCollectionsNavigationTest {
         override fun onRenameCollection(collectionId: Long, name: String) = Unit
         override fun onDeleteCollection(collectionId: Long) = Unit
         override fun onPrepareCollectionAppPicker() {
-            store.publishAllApps(listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
+            store.publishAllApps(pickerApps)
         }
         override fun onRequestAddToCollection(appId: Int) = Unit
         override fun onDismissAddToCollection() = Unit

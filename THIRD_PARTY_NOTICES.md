@@ -100,8 +100,6 @@ The Gradle runtime graph and native packaging are the authority for what resolve
 
 `app/src/main/cpp/sonivox/lib_src/minimp3.h` is retained from the pinned upstream snapshot under its CC0 notice. Its optional decoder is disabled in the Android build and is not shipped as active runtime code.
 
-`.agents/skills/**` contains selected Android Skills reference material used for development/agent guidance, not application runtime code. Its provenance is pinned in [.agents/UPSTREAM.md](.agents/UPSTREAM.md), with the corresponding Apache-2.0 terms in `.agents/LICENSE.txt`. It is intentionally excluded from the app-facing Licenses screen because it is not shipped as emulator runtime content.
-
 ## Audit corrections from the legacy in-app notice
 
 The previous `licenses.html` mixed historical and current components. This audit makes the following corrections:

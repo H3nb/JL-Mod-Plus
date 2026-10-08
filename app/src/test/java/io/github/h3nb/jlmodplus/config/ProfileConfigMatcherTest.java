@@ -29,10 +29,34 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collections;
+import java.math.BigInteger;
 
 import javax.microedition.shell.timing.TimingMode;
 
 public class ProfileConfigMatcherTest {
+	@Test
+	public void comparisonSnapshotPreservesCanonicalOpaqueNumbersAndNormalizedProperties() {
+		ProfileModel left = new ProfileModel();
+		ProfileModel right = new ProfileModel();
+		JsonObject leftController = new JsonObject();
+		JsonObject rightController = new JsonObject();
+		leftController.addProperty("futureValue", new BigInteger("9007199254740992"));
+		rightController.addProperty("futureValue", new BigInteger("9007199254740993"));
+		left.controller = leftController;
+		right.controller = rightController;
+		left.systemProperties = null;
+		right.systemProperties = "";
+		left.dir = new File("left");
+		right.dir = new File("right");
+
+		// The existing serializer round trip canonicalizes opaque JSON numbers before equality.
+		assertEquals(ProfileConfigMatcher.comparisonSnapshot(left),
+				ProfileConfigMatcher.comparisonSnapshot(right));
+		assertTrue(ProfileConfigMatcher.sameConfig(left, right));
+		assertEquals(null, left.systemProperties);
+		assertEquals(new BigInteger("9007199254740992"),
+				left.controller.getAsJsonObject().get("futureValue").getAsBigInteger());
+	}
 	@Test
 	public void effectiveDraftAppliesFormButPreservesUnexposedFields() {
 		ProfileModel current = new ProfileModel();

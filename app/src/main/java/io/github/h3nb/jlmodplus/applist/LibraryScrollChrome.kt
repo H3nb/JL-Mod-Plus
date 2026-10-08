@@ -1,0 +1,206 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+package io.github.h3nb.jlmodplus.applist
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.layout.Layout
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.collectLatest
+import kotlin.math.abs
+import kotlin.math.roundToInt
+
+/**
+ * Separately gate touch, keyboard and accessibility for a header action group when its top
+ * edge enters the system-bar area. The transform does not change Compose layout coordinates;
+ * subtract it from the rendered position so only inset/geometry changes update the baseline.
+ * Derived state invalidates the controls only when their eligibility actually changes.
+ */
+internal class LibraryHeaderActionGate(
+    val positionModifier: Modifier,
+    val enabled: State<Boolean>,
+)
+
+@Composable
+internal fun rememberLibraryHeaderActionGate(
+    headerOffsetPx: MutableFloatState,
+): LibraryHeaderActionGate {
+    val safeTopPx = WindowInsets.safeDrawing.getTop(LocalDensity.current).toFloat()
+    val topWithoutTranslation = remember { mutableFloatStateOf(Float.POSITIVE_INFINITY) }
+    val enabled = remember(headerOffsetPx, safeTopPx) {
+        derivedStateOf {
+            topWithoutTranslation.floatValue + headerOffsetPx.floatValue >= safeTopPx - 0.5f
+        }
+    }
+    val positionModifier = remember(headerOffsetPx) {
+        Modifier.onGloballyPositioned { coordinates ->
+            val top = coordinates.positionInRoot().y - headerOffsetPx.floatValue
+            if (abs(top - topWithoutTranslation.floatValue) >= 1f) {
+                topWithoutTranslation.floatValue = top
+            }
+        }
+    }
+    return remember(positionModifier, enabled) { LibraryHeaderActionGate(positionModifier, enabled) }
+}
+
+/**
+ * The Lazy header placeholder follows the *visible* chrome height, not its full measured
+ * height. Read offset during measurement (not composition) to avoid recomposing thousands
+ * of MIDlets each frame. This keeps short filtered lists flush with the still-visible chips.
+ *
+ * When deep rows own scrolling, the header mirrors their consumed delta in post-scroll
+ * in either direction. When the leading placeholder enters the viewport, its height and
+ * header offset move together in pre-scroll so the rows never receive the delta twice.
+ */
+@Composable
+internal fun LibraryChromeSpacer(
+    headerHeightPx: MutableIntState,
+    headerOffsetPx: MutableFloatState,
+) {
+    Layout(modifier = Modifier.fillMaxWidth(), content = {}) { _, constraints ->
+        val remaining = (headerHeightPx.intValue + headerOffsetPx.floatValue)
+            .roundToInt().coerceAtLeast(0)
+        layout(constraints.maxWidth, remaining) {}
+    }
+}
+
+private class LibraryScrollIntent {
+    var userInitiated = false
+}
+
+/** One scroll policy for Apps, collection members and the collection overview. */
+@Composable
+internal fun rememberLibraryScrollChrome(
+    viewport: LibraryViewportState,
+    layout: LibraryLayout,
+    headerHeightPx: MutableIntState,
+    enabled: Boolean = true,
+    onVisibilityChanged: (Boolean) -> Unit,
+): NestedScrollConnection {
+    val currentEnabled by rememberUpdatedState(enabled)
+    val currentVisibilityChanged by rememberUpdatedState(onVisibilityChanged)
+    val density = LocalDensity.current
+    val hideDistance = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
+    val revealDistance = with(density) { 18.dp.toPx() }
+    val minimumRoom = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
+    val hysteresis = remember(viewport, hideDistance, revealDistance) {
+        LibraryChromeScrollHysteresis(hideDistance, revealDistance, viewport.chromeVisible)
+    }
+    val intent = remember(viewport, layout) { LibraryScrollIntent() }
+    // A settled tab return reveals navigation without changing the content or header position.
+    LaunchedEffect(viewport.chromeVisible) {
+        if (viewport.chromeVisible) hysteresis.reset()
+    }
+    // Only observe the end of a scroll gesture. Chrome is moved by consumed user scroll
+    // and top-edge pull-down, not by a data projection changing the Lazy viewport's index.
+    // Explicit search actions own their own reveal and scroll-to-start behavior.
+    LaunchedEffect(viewport, layout, enabled) {
+        if (!enabled) intent.userInitiated = false
+        snapshotFlow {
+            if (layout == LibraryLayout.List) viewport.listState.isScrollInProgress
+            else viewport.gridState.isScrollInProgress
+        }.collectLatest { scrolling ->
+            if (!scrolling) intent.userInitiated = false
+        }
+    }
+    return remember(viewport, layout, hysteresis, minimumRoom, intent) {
+        object : NestedScrollConnection {
+            private fun headerItemVisible(): Boolean = if (layout == LibraryLayout.List) {
+                viewport.listState.firstVisibleItemIndex == 0
+            } else {
+                viewport.gridState.firstVisibleItemIndex == 0
+            }
+
+            private fun canCollapse(): Boolean {
+                val room = maxOf(headerHeightPx.intValue.toFloat(), minimumRoom)
+                return if (layout == LibraryLayout.List) {
+                    viewport.listState.hasLibraryChromeScrollRoom(room) ||
+                        viewport.listState.firstVisibleItemIndex > 1
+                } else {
+                    viewport.gridState.hasLibraryChromeScrollRoom(room) ||
+                        viewport.gridState.firstVisibleItemIndex > 1
+                }
+            }
+
+            private fun moveHeader(delta: Float): Float {
+                val height = headerHeightPx.intValue.toFloat()
+                if (height <= 0f) return 0f
+                val previous = viewport.headerOffsetPx.floatValue
+                val next = (previous + delta).coerceIn(-height, 0f)
+                val headerDelta = next - previous
+                if (headerDelta == 0f) return 0f
+                viewport.headerOffsetPx.floatValue = next
+                val visibilityChange = hysteresis.onScrollDelta(headerDelta)
+                when {
+                    next <= -height + 0.5f -> currentVisibilityChanged(false)
+                    visibilityChange == true || next >= -0.5f -> currentVisibilityChanged(true)
+                }
+                return headerDelta
+            }
+
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (!currentEnabled) return Offset.Zero
+                if (source == NestedScrollSource.UserInput && available.y != 0f) {
+                    intent.userInitiated = true
+                }
+                // Never derive chrome movement from a programmatic Lazy layout correction.
+                if (!intent.userInitiated || available.y == 0f) return Offset.Zero
+                if (!headerItemVisible()) {
+                    // A deep list/grid owns the scroll delta in either direction.
+                    // Mirror its actual displacement in onPostScroll so reversing direction
+                    // cannot leave the MIDlets stationary while the header moves alone.
+                    return Offset.Zero
+                }
+                if (available.y < 0f && viewport.headerOffsetPx.floatValue >= -0.5f &&
+                    !canCollapse()
+                ) return Offset.Zero
+
+                // The leading placeholder is now in the viewport. Resizing it consumes the
+                // same drag delta as the translated header and moves the first row with it.
+                return Offset(0f, moveHeader(available.y))
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
+                if (!currentEnabled || !intent.userInitiated) return Offset.Zero
+                val delta = consumed.y + available.y
+                if (delta == 0f) return Offset.Zero
+                if (delta < 0f && viewport.headerOffsetPx.floatValue >= -0.5f &&
+                    !canCollapse()
+                ) return Offset.Zero
+
+                // Follow Lazy in BOTH directions while its leading placeholder is offscreen.
+                // Child-consumed distance already moved the MIDlets; return only the portion
+                // of any unconsumed distance that was actually used by the header.
+                val moved = moveHeader(delta)
+                val remaining = moved - consumed.y
+                return Offset(
+                    0f,
+                    if (available.y >= 0f) remaining.coerceIn(0f, available.y)
+                    else remaining.coerceIn(available.y, 0f),
+                )
+            }
+        }
+    }
+}

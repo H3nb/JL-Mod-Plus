@@ -18,17 +18,21 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.PreferenceManager
 import java.io.File
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicLong
+import java.util.Locale
 import java.util.concurrent.locks.ReentrantLock
 import io.github.h3nb.jlmodplus.installer.InstallerExecutionCoordinator
 import kotlin.concurrent.withLock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +41,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -90,21 +96,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         fun complete(value: T?, error: Throwable?)
     }
 
-    private data class VersionedRepositoryState(
-        val revision: Long,
-        val state: LibraryRepository.State,
-        val availableAppIds: Set<Long>,
-    )
-
-    private data class DisplayInputs(
-        val repositoryState: LibraryRepository.State,
-        val sourceRevision: Long,
-        val availableAppIds: Set<Long>,
-        val filter: String,
-        val sortVariant: Int,
-        val quickView: LibraryQuickView,
-    )
-
     private data class ImportRestoreOutcome(
         val iconRevision: Long?,
         val sourceMetadata: LibraryAppBundleImporter.SourceMetadata?,
@@ -120,22 +111,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private val filter = MutableStateFlow("")
     private val sortVariant = MutableStateFlow(readSortPreference(preferences))
     private val quickView = MutableStateFlow(LibraryQuickView.All)
+    private val sortLocale = MutableStateFlow(Locale.getDefault())
     private val playStatRefreshMutex = Mutex()
-    private val repositoryRevision = AtomicLong()
-    private val versionedRepositoryState = repository.state.mapLatest { state ->
-        val availableAppIds = if (state is LibraryRepository.State.Ready) {
-            withContext(Dispatchers.Default) {
-                state.apps.mapTo(LinkedHashSet(state.apps.size)) { it.id }
-            }
-        } else {
-            emptySet()
-        }
-        VersionedRepositoryState(
-            revision = repositoryRevision.incrementAndGet(),
-            state = state,
-            availableAppIds = availableAppIds,
-        )
-    }
 
     private val playStatReadyWorker = scope.launch {
         repository.state
@@ -145,60 +122,9 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             .collectLatest { generation -> reconcilePlayStats(generation) }
     }
 
-    val displayState: StateFlow<DisplayState> = combine(
-        versionedRepositoryState,
-        filter,
-        sortVariant,
-        quickView,
-    ) { repositorySnapshot, activeFilter, activeSort, activeQuickView ->
-        DisplayInputs(
-            repositoryState = repositorySnapshot.state,
-            sourceRevision = repositorySnapshot.revision,
-            availableAppIds = repositorySnapshot.availableAppIds,
-            filter = activeFilter,
-            sortVariant = activeSort,
-            quickView = activeQuickView,
-        )
-    }.mapLatest { input ->
-        when (val repositoryState = input.repositoryState) {
-            LibraryRepository.State.Idle -> DisplayState.Idle
-            is LibraryRepository.State.Opening -> DisplayState.Loading(repositoryState.emulatorDir)
-            is LibraryRepository.State.Indexing -> DisplayState.Indexing(
-                emulatorDir = repositoryState.emulatorDir,
-                completed = repositoryState.completed,
-                total = repositoryState.total,
-                storageKey = repositoryState.storageKey,
-            )
-            is LibraryRepository.State.Error -> DisplayState.Error(
-                repositoryState.emulatorDir,
-                repositoryState.message,
-            )
-            is LibraryRepository.State.Ready -> {
-                val projected = withContext(Dispatchers.Default) {
-                    LibraryListProjection.project(
-                        rows = repositoryState.apps,
-                        filter = input.filter,
-                        sortVariant = input.sortVariant,
-                        quickView = input.quickView,
-                    )
-                }
-                DisplayState.Ready(
-                    generation = repositoryState.generation,
-                    emulatorDir = repositoryState.emulatorDir,
-                    apps = projected,
-                    collections = repositoryState.collections,
-                    filter = input.filter,
-                    sortVariant = input.sortVariant,
-                    quickView = input.quickView,
-                    bootstrapFailures = repositoryState.bootstrapFailures,
-                    legacyImportFailure = repositoryState.legacyImportFailure,
-                    reconciliationFailures = repositoryState.reconciliationFailures,
-                    availableAppIds = input.availableAppIds,
-                    sourceRevision = input.sourceRevision,
-                )
-            }
-        }
-    }.stateIn(scope, SharingStarted.Eagerly, DisplayState.Idle)
+    val displayState: StateFlow<DisplayState> = libraryDisplayStates(
+        repository.state, filter, sortVariant, quickView, sortLocale,
+    ).stateIn(scope, SharingStarted.Eagerly, DisplayState.Idle)
 
     init {
         preferences.registerOnSharedPreferenceChangeListener(this)
@@ -235,11 +161,17 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun observe(owner: LifecycleOwner, observer: StateObserver) {
+        refreshSortLocale()
         owner.lifecycleScope.launch {
             owner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 displayState.collect(observer::onState)
             }
         }
+    }
+
+    /** Locale recreation can retain this Activity-scoped ViewModel. */
+    fun refreshSortLocale() {
+        sortLocale.value = Locale.getDefault()
     }
 
     fun readyGeneration(): LibraryGenerationToken? = repository.currentReadyToken()
@@ -1037,4 +969,93 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         sharedPreferences.edit { putInt(PREF_APP_SORT, migrated) }
         migrated
     }
+}
+
+private data class LibraryDisplayInputs(
+    val repositoryState: LibraryRepository.State,
+    val sourceRevision: Long,
+    val filter: String,
+    val sortVariant: Int,
+    val quickView: LibraryQuickView,
+    val locale: Locale,
+)
+
+private data class LibraryOrderedSource(
+    val repositoryState: LibraryRepository.State.Ready,
+    val ordered: LibraryListProjection.OrderedRows,
+) {
+    fun matches(input: LibraryDisplayInputs): Boolean {
+        val ready = input.repositoryState as? LibraryRepository.State.Ready ?: return false
+        return repositoryState.generation == ready.generation &&
+            repositoryState.emulatorDir == ready.emulatorDir &&
+            ordered.matchesOrdering(input.sortVariant, input.locale, input.quickView) &&
+            (repositoryState === ready || ordered.matchesSource(ready.apps))
+    }
+}
+
+/** The facade's single latest-only projection pipeline, independently of Android observation. */
+@OptIn(ExperimentalCoroutinesApi::class)
+internal fun libraryDisplayStates(
+    repositoryStates: Flow<LibraryRepository.State>,
+    filters: Flow<String>,
+    sorts: Flow<Int>,
+    quickViews: Flow<LibraryQuickView>,
+    locales: Flow<Locale>,
+    workerDispatcher: CoroutineDispatcher = Dispatchers.Default,
+): Flow<LibraryViewModel.DisplayState> = flow {
+    var revision = 0L
+    var prepared: LibraryOrderedSource? = null
+    val snapshots = repositoryStates.map { state -> (++revision) to state }
+    emitAll(combine(snapshots, filters, sorts, quickViews, locales) {
+            snapshot, query, sort, quickView, locale ->
+        LibraryDisplayInputs(snapshot.second, snapshot.first, query, sort, quickView, locale)
+    }.mapLatest { input ->
+        when (val state = input.repositoryState) {
+            LibraryRepository.State.Idle -> {
+                prepared = null
+                LibraryViewModel.DisplayState.Idle
+            }
+            is LibraryRepository.State.Opening -> {
+                prepared = null
+                LibraryViewModel.DisplayState.Loading(state.emulatorDir)
+            }
+            is LibraryRepository.State.Indexing -> {
+                prepared = null
+                LibraryViewModel.DisplayState.Indexing(
+                    state.emulatorDir, state.completed, state.total, state.storageKey)
+            }
+            is LibraryRepository.State.Error -> {
+                prepared = null
+                LibraryViewModel.DisplayState.Error(state.emulatorDir, state.message)
+            }
+            is LibraryRepository.State.Ready -> {
+                val previous = prepared
+                val (source, projected) = withContext(workerDispatcher) {
+                    val context = currentCoroutineContext()
+                    val ordered = if (previous != null && previous.matches(input)) previous.ordered
+                    else LibraryListProjection.prepare(state.apps, input.sortVariant,
+                        input.locale, input.quickView) { context.ensureActive() }
+                    val projected = LibraryListProjection.project(ordered, input.filter,
+                        input.quickView) { context.ensureActive() }
+                    LibraryOrderedSource(state, ordered) to projected
+                }
+                // Only completed, still-current work becomes the one retained ordering.
+                prepared = source
+                LibraryViewModel.DisplayState.Ready(
+                    generation = state.generation,
+                    emulatorDir = state.emulatorDir,
+                    apps = projected,
+                    collections = state.collections,
+                    filter = input.filter,
+                    sortVariant = input.sortVariant,
+                    quickView = input.quickView,
+                    bootstrapFailures = state.bootstrapFailures,
+                    legacyImportFailure = state.legacyImportFailure,
+                    reconciliationFailures = state.reconciliationFailures,
+                    availableAppIds = source.ordered.availableAppIds,
+                    sourceRevision = input.sourceRevision,
+                )
+            }
+        }
+    })
 }

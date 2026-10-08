@@ -14,260 +14,129 @@
 
 package io.github.h3nb.jlmodplus.applist
 
+import androidx.compose.runtime.saveable.SaverScope
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotNull
 import org.junit.Test
-import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
 
 class LibraryNavigationStateTest {
     @Test
-    fun stableAnchorWinsOverOldIndexAfterRefresh() {
-        val state = LibraryNavigationState().saveAnchor(
-            LibraryNavigationSurface.AppsList,
-            LibraryScrollAnchor(3L, stableItemId = 20L, offsetPx = 18, fallbackIndex = 4),
-        )
-
-        val resolved = state.resolveAnchor(
-            LibraryNavigationSurface.AppsList,
-            activeGeneration = 3L,
-            availableIds = listOf(10L, 20L, 30L),
-        )
-
-        assertEquals(ResolvedLibraryScrollAnchor(index = 1, offsetPx = 18), resolved)
-    }
-
-    @Test
-    fun deletedAnchorUsesNearestSafeFallbackAndStaleGenerationIsIgnored() {
-        val state = LibraryNavigationState().saveAnchor(
-            LibraryNavigationSurface.AppsGrid,
-            LibraryScrollAnchor(3L, stableItemId = 20L, offsetPx = 5, fallbackIndex = 9),
-        )
-
-        assertEquals(
-            ResolvedLibraryScrollAnchor(index = 2, offsetPx = 5),
-            state.resolveAnchor(
-                LibraryNavigationSurface.AppsGrid,
-                activeGeneration = 3L,
-                availableIds = listOf(10L, 11L, 12L),
-            ),
-        )
-        assertNull(
-            state.resolveAnchor(
-                LibraryNavigationSurface.AppsGrid,
-                activeGeneration = 4L,
-                availableIds = listOf(10L, 11L, 12L),
-            ),
-        )
-    }
-
-    @Test
-    fun collectionAnchorNeverCrossesCollectionOrLibraryScope() {
-        val state = LibraryNavigationState().saveAnchor(
-            LibraryNavigationSurface.CollectionAppsList,
-            LibraryScrollAnchor(
-                generation = 3L,
-                stableItemId = 20L,
-                offsetPx = 18,
-                fallbackIndex = 1,
-                scopeId = 7L,
-                libraryScope = "/work/library-a",
-            ),
-        )
+    fun editorReturnFollowsStableIdAfterReordering() {
+        val anchor = LibraryScrollAnchor(3L, stableItemId = 20L, offsetPx = 18, fallbackIndex = 4)
 
         assertEquals(
             ResolvedLibraryScrollAnchor(index = 1, offsetPx = 18),
-            state.resolveAnchor(
-                LibraryNavigationSurface.CollectionAppsList,
-                activeGeneration = 3L,
-                availableIds = listOf(10L, 20L, 30L),
-                scopeId = 7L,
-                libraryScope = "/work/library-a",
-            ),
-        )
-        assertNull(
-            state.resolveAnchor(
-                LibraryNavigationSurface.CollectionAppsList,
-                activeGeneration = 3L,
-                availableIds = listOf(10L, 20L, 30L),
-                scopeId = 8L,
-                libraryScope = "/work/library-a",
-            ),
-        )
-        assertNull(
-            state.resolveAnchor(
-                LibraryNavigationSurface.CollectionAppsList,
-                activeGeneration = 3L,
-                availableIds = listOf(10L, 20L, 30L),
-                scopeId = 7L,
-                libraryScope = "/work/library-b",
-            ),
+            resolveLibraryScrollAnchor(anchor, listOf(10L, 20L, 30L)),
         )
     }
 
     @Test
-    fun appAnchorNeverCrossesLibraryScopeWhenGenerationAndIdAreReused() {
-        val state = LibraryNavigationState().saveAnchor(
-            LibraryNavigationSurface.AppsList,
-            LibraryScrollAnchor(
-                generation = 1L,
-                stableItemId = 1L,
-                offsetPx = 12,
-                fallbackIndex = 0,
-                libraryScope = "/work/library-a",
-            ),
-        )
-
-        assertNull(
-            state.resolveAnchor(
-                LibraryNavigationSurface.AppsList,
-                activeGeneration = 1L,
-                availableIds = listOf(1L),
-                libraryScope = "/work/library-b",
-            ),
-        )
-    }
-
-    @Test
-    fun capturedReturnAnchorCanResolveAfterGenerationChanges() {
-        val captured = LibraryScrollAnchor(
-            generation = 3L,
-            stableItemId = 20L,
-            offsetPx = 24,
-            fallbackIndex = 1,
-        )
+    fun removedEditorReturnItemUsesBoundedFallback() {
+        val anchor = LibraryScrollAnchor(3L, stableItemId = 20L, offsetPx = -24, fallbackIndex = 9)
 
         assertEquals(
-            ResolvedLibraryScrollAnchor(index = 1, offsetPx = 24),
-            LibraryNavigationState().resolveAnchor(
-                captured,
-                availableIds = listOf(10L, 20L, 30L),
-            ),
+            ResolvedLibraryScrollAnchor(index = 2, offsetPx = -24),
+            resolveLibraryScrollAnchor(anchor, listOf(10L, 11L, 12L)),
+        )
+        assertEquals(
+            ResolvedLibraryScrollAnchor(index = 0, offsetPx = -24),
+            resolveLibraryScrollAnchor(anchor.copy(fallbackIndex = -1), listOf(10L, 11L, 12L)),
+        )
+        assertEquals(
+            ResolvedLibraryScrollAnchor(index = 0, offsetPx = -24),
+            resolveLibraryScrollAnchor(anchor, emptyList()),
         )
     }
 
     @Test
-    fun listAndGridAnchorsRemainIndependent() {
-        val state = LibraryNavigationState()
-            .saveAnchor(
-                LibraryNavigationSurface.AppsList,
-                LibraryScrollAnchor(1L, 10L, offsetPx = 1, fallbackIndex = 0),
-            )
-            .saveAnchor(
-                LibraryNavigationSurface.AppsGrid,
-                LibraryScrollAnchor(1L, 30L, offsetPx = 2, fallbackIndex = 2),
-            )
+    fun editorReturnWithoutStableIdPreservesIndexAndSignedOffset() {
+        val anchor = LibraryScrollAnchor(3L, stableItemId = null, offsetPx = -36, fallbackIndex = 1)
 
-        assertEquals(10L, state.anchors[LibraryNavigationSurface.AppsList]?.stableItemId)
-        assertEquals(30L, state.anchors[LibraryNavigationSurface.AppsGrid]?.stableItemId)
+        assertEquals(
+            ResolvedLibraryScrollAnchor(index = 1, offsetPx = -36),
+            resolveLibraryScrollAnchor(anchor, listOf(10L, 20L, 30L)),
+        )
     }
 
     @Test
-    fun saverRestoresDestinationAndViewStateAlongsideAnchors() {
+    fun saverRoundTripPreservesOnlyRouteAndCollectionScope() {
         val state = LibraryNavigationState(
             destination = LibraryDestinationKey.Collections,
-            layout = LibraryLayout.Grid,
-            query = "demo",
-            quickView = LibraryQuickView.RecentlyPlayed,
-            sortVariant = -3,
             selectedCollectionId = 42L,
-        ).saveAnchor(
-            LibraryNavigationSurface.CollectionsList,
-            LibraryScrollAnchor(9L, 100L, offsetPx = 7, fallbackIndex = 2),
+            selectedCollectionScope = "/work/library-a",
+            collectionManageApps = true,
         )
+        val scope = object : SaverScope {
+            override fun canBeSaved(value: Any): Boolean = true
+        }
+        val saved = with(LibraryNavigationState.Saver) { scope.save(state) }
 
+        assertNotNull(saved)
+        assertEquals(state, LibraryNavigationState.Saver.restore(saved!!))
+        assertEquals(
+            listOf("Collections", 42L, "/work/library-a", true),
+            saved,
+        )
+    }
+
+    @Test
+    fun saverIgnoresLegacyPresentationAndAnchorsWhileRetainingRoute() {
         val restored = LibraryNavigationState.Saver.restore(
             listOf(
-                "Collections",
-                "Grid",
-                "demo",
-                "RecentlyPlayed",
-                -3,
-                42L,
+                "Collections", "Grid", "demo", "RecentlyPlayed", -3, 42L,
+                listOf(listOf("CollectionAppsList", 9L, 100L, 7, 2, 42L, "/work/library-a")),
+                "/work/library-a", true,
+            ),
+        )
+
+        assertEquals(
+            LibraryNavigationState(
+                destination = LibraryDestinationKey.Collections,
+                selectedCollectionId = 42L,
+                selectedCollectionScope = "/work/library-a",
+                collectionManageApps = true,
+            ),
+            restored,
+        )
+    }
+
+    @Test
+    fun saverAcceptsOlderRouteWithoutCollectionScopeOrManageState() {
+        val restored = LibraryNavigationState.Saver.restore(
+            listOf(
+                "Collections", "List", "", "All", 0, 42L,
                 listOf(listOf("CollectionsList", 9L, 100L, 7, 2, Long.MIN_VALUE)),
-                "",
-            ),
-        )
-        assertEquals(state, restored)
-    }
-
-    @Test
-    fun saverRestoresCollectionWorkdirAndAnchorScope() {
-        val restored = LibraryNavigationState.Saver.restore(
-            listOf(
-                "Collections",
-                "List",
-                "",
-                "All",
-                0,
-                42L,
-                listOf(
-                    listOf(
-                        "CollectionAppsList",
-                        9L,
-                        100L,
-                        7,
-                        2,
-                        42L,
-                        "/work/library-a",
-                    ),
-                ),
-                "/work/library-a",
             ),
         )
 
-        assertEquals("/work/library-a", restored?.selectedCollectionScope)
         assertEquals(
-            42L,
-            restored?.anchors?.get(LibraryNavigationSurface.CollectionAppsList)?.scopeId,
+            LibraryNavigationState(
+                destination = LibraryDestinationKey.Collections,
+                selectedCollectionId = 42L,
+            ),
+            restored,
         )
+    }
+
+    @Test
+    fun saverRestoresManageAppsOnlyWithSelectedCollection() {
+        val restored = LibraryNavigationState.Saver.restore(
+            listOf(
+                "Collections", "List", "", "All", 0, Long.MIN_VALUE,
+                emptyList<Any>(), "/work/library-a", true,
+            ),
+        )
+
+        assertEquals(false, restored?.collectionManageApps)
+    }
+
+    @Test
+    fun saverDiscardsLegacyAnchorOnlyState() {
         assertEquals(
-            "/work/library-a",
-            restored?.anchors?.get(LibraryNavigationSurface.CollectionAppsList)?.libraryScope,
+            LibraryNavigationState(),
+            LibraryNavigationState.Saver.restore(listOf(listOf("AppsList", 4L, 12L, 3, 1))),
         )
-    }
-
-    @Test
-    fun saverRestoresCollectionManageAppsOnlyWithSelectedCollection() {
-        val restored = LibraryNavigationState.Saver.restore(
-            listOf(
-                "Collections",
-                "List",
-                "",
-                "All",
-                0,
-                42L,
-                emptyList<Any>(),
-                "/work/library-a",
-                true,
-            ),
-        )
-
-        assertEquals(42L, restored?.selectedCollectionId)
-        assertEquals(true, restored?.collectionManageApps)
-
-        val invalid = LibraryNavigationState.Saver.restore(
-            listOf(
-                "Collections",
-                "List",
-                "",
-                "All",
-                0,
-                Long.MIN_VALUE,
-                emptyList<Any>(),
-                "/work/library-a",
-                true,
-            ),
-        )
-        assertEquals(false, invalid?.collectionManageApps)
-    }
-
-    @Test
-    fun saverAcceptsLegacyAnchorOnlyState() {
-        val restored = LibraryNavigationState.Saver.restore(
-            listOf(listOf("AppsList", 4L, 12L, 3, 1)),
-        )
-        assertEquals(12L, restored?.anchors?.get(LibraryNavigationSurface.AppsList)?.stableItemId)
-        assertEquals(LibraryDestinationKey.Apps, restored?.destination)
+        assertEquals(LibraryNavigationState(), LibraryNavigationState.Saver.restore(emptyList<Any>()))
     }
 
     @Test

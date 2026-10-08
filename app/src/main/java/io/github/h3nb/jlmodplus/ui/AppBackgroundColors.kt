@@ -9,8 +9,8 @@ package io.github.h3nb.jlmodplus.ui
 
 /** App-owned background tokens shared by Compose and the MIDlet host. */
 object AppBackgroundColors {
-    const val LIGHT_RGB: Int = 0xFAFBFC
-    const val DARK_RGB: Int = 0x0F1316
+    const val LIGHT_RGB: Int = 0xF7F9FA
+    const val DARK_RGB: Int = 0x111518
 
     @JvmStatic
     fun rgb(dark: Boolean): Int = if (dark) DARK_RGB else LIGHT_RGB

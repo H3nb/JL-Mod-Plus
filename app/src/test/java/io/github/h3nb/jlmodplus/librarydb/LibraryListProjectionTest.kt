@@ -7,7 +7,10 @@
 package io.github.h3nb.jlmodplus.librarydb
 
 import java.util.Locale
+import java.text.Collator
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LibraryListProjectionTest {
@@ -24,11 +27,11 @@ class LibraryListProjectionTest {
 
     @Test fun smartSearchRanksTitleBeforeVendorVersionAndDescription() {
         val searchable = listOf(
-            row(10, "Quest", "Vendor", version = "1.0", description = "plain"),
-            row(11, "Quest Deluxe", "Vendor", version = "1.0", description = "plain"),
-            row(12, "My Quest", "Vendor", version = "1.0", description = "plain"),
-            row(13, "Ordinary", "Quest Studios", version = "1.0", description = "plain"),
-            row(14, "Ordinary", "Vendor", version = "Quest build", description = "plain"),
+            row(10, "Quest", "Quest Studios", version = "Quest build", description = "quest mode"),
+            row(11, "Quest Deluxe", "Quest Studios", version = "Quest build", description = "quest mode"),
+            row(12, "My Quest", "Quest Studios", version = "Quest build", description = "quest mode"),
+            row(13, "Ordinary", "Quest Studios", version = "Quest build", description = "quest mode"),
+            row(14, "Ordinary", "Vendor", version = "Quest build", description = "quest mode"),
             row(15, "Ordinary", "Vendor", version = "1.0", description = "Includes quest mode"),
         )
 
@@ -40,6 +43,24 @@ class LibraryListProjectionTest {
         )
 
         assertEquals(listOf(10L, 11L, 12L, 13L, 14L, 15L), result.map { it.id })
+    }
+
+    @Test fun searchTrimsQueryAndUsesRootCaseMappingForUnicodeTitleAndDescription() {
+        val searchable = listOf(
+            row(10, "İSTANBUL", "Vendor"),
+            row(11, "Ordinary", "Vendor", description = "Visit İSTANBUL today"),
+            row(12, "Istanbul", "Vendor"),
+        )
+
+        val result = LibraryListProjection.project(
+            rows = searchable,
+            filter = "  İSTANBUL  ",
+            sortVariant = LibraryListProjection.SORT_TITLE,
+            locale = Locale.forLanguageTag("tr-TR"),
+        )
+
+        // ROOT preserves the dotted-I expansion; the selected sort locale must not alter search.
+        assertEquals(listOf(10L, 11L), result.map { it.id })
     }
 
     @Test fun searchRankUsesSelectedSortOnlyAsTieBreakerWithinSameRank() {
@@ -204,6 +225,103 @@ class LibraryListProjectionTest {
         val result = LibraryListProjection.project(input, "game", 0, Locale.US)
         assertEquals(5_000, result.size)
         assertEquals(snapshot, input)
+    }
+
+    @Test fun stableBucketsMatchRankThenSortWithLocaleTiesAndQuickViews() {
+        val input = listOf(
+            row(10, "Quest", "Same", true, 100, 300),
+            row(11, "QUEST", "same", false, 100, 300),
+            row(12, "Quest Deluxe", "Å Vendor", true, 300, null),
+            row(13, "My Quest", "Zulu", false, null, 100),
+            row(14, "Ångström", "Quest", true, 200, 200),
+            row(15, "Zebra", "Quest", false, null, null),
+            row(16, "Alpha", "Ordinary", true, 200, 300, "quest build"),
+            row(17, "alpha", "ordinary", false, 200, 300, description = "quest mode"),
+            row(18, "İSTANBUL", "Éclair", true, null, 100),
+            row(19, "Istanbul", "éclair", false, 300, null),
+            row(20, "100% Fun", "Under_score", true, 300, 200),
+        )
+        for (locale in listOf(Locale.US, Locale.forLanguageTag("sv-SE"), Locale.forLanguageTag("tr-TR"))) {
+            for (sort in listOf(0, 1, 2, Int.MIN_VALUE, Int.MIN_VALUE or 1, Int.MIN_VALUE or 2)) {
+                for (view in LibraryQuickView.entries) {
+                    val ordered = LibraryListProjection.prepare(input, sort, locale, view)
+                    for (query in listOf("", " quest ", "a", "İSTANBUL", "%", "_", "absent")) {
+                        assertEquals("$locale/$sort/$view/$query",
+                            legacyProject(input, query, sort, locale, view).map { it.id },
+                            LibraryListProjection.project(ordered, query, view).map { it.id })
+                    }
+                }
+            }
+        }
+    }
+
+    @Test fun preparationOwnsItsRowsAndUsesFullSourceForInvalidationAndAvailableIds() {
+        val input = mutableListOf(row(10, "Zulu", "Vendor", favorite = true),
+            row(11, "Alpha", "Vendor"))
+        val ordered = LibraryListProjection.prepare(input, 0, Locale.US, LibraryQuickView.Favorites)
+        input.clear()
+        assertEquals(listOf(11L, 10L), ordered.rows.map { it.id })
+        assertEquals(setOf(10L, 11L), ordered.availableAppIds)
+        assertEquals(listOf(10L), LibraryListProjection.project(ordered, "", LibraryQuickView.Favorites).map { it.id })
+        assertTrue(ordered.matchesOrdering(0, Locale.US, LibraryQuickView.All))
+        assertFalse(ordered.matchesOrdering(0, Locale.forLanguageTag("sv-SE"), LibraryQuickView.All))
+        assertFalse(ordered.matchesSource(input))
+    }
+
+    // Characterization of the previous filter/rank/sort algorithm, independent of bucketing.
+    private fun legacyProject(
+        rows: List<LibraryAppRow>, query: String, sort: Int, locale: Locale, view: LibraryQuickView,
+    ): List<LibraryAppRow> {
+        val needle = query.trim().lowercase(Locale.ROOT)
+        val ranked = rows.filter { row -> when (view) {
+            LibraryQuickView.All -> true
+            LibraryQuickView.Favorites -> row.favorite
+            LibraryQuickView.RecentlyAdded -> row.addedAt != null
+            LibraryQuickView.RecentlyPlayed -> row.lastPlayedAt != null
+        } }.mapNotNull { row ->
+            val title = row.title.lowercase(Locale.ROOT)
+            val rank = when {
+                needle.isEmpty() || title == needle -> 0
+                title.startsWith(needle) -> 1
+                title.contains(needle) -> 2
+                row.vendor.lowercase(Locale.ROOT).contains(needle) -> 3
+                row.version.lowercase(Locale.ROOT).contains(needle) -> 4
+                row.description.lowercase(Locale.ROOT).contains(needle) -> 5
+                else -> return@mapNotNull null
+            }
+            row to rank
+        }
+        val collator = Collator.getInstance(locale).apply { strength = Collator.SECONDARY }
+        return ranked.sortedWith { left, right ->
+            val rank = left.second.compareTo(right.second)
+            if (rank != 0) rank else {
+                val a = left.first
+                val b = right.first
+                if (view == LibraryQuickView.RecentlyAdded || view == LibraryQuickView.RecentlyPlayed) {
+                    val first = if (view == LibraryQuickView.RecentlyAdded) a.addedAt else a.lastPlayedAt
+                    val second = if (view == LibraryQuickView.RecentlyAdded) b.addedAt else b.lastPlayedAt
+                    val time = requireNotNull(second).compareTo(requireNotNull(first))
+                    if (time != 0) time else b.id.compareTo(a.id)
+                } else {
+                    val primary = when (sort and Int.MAX_VALUE) {
+                        1 -> when {
+                            a.addedAt == null && b.addedAt == null -> 0
+                            a.addedAt == null -> 1
+                            b.addedAt == null -> -1
+                            else -> a.addedAt.compareTo(b.addedAt).let { if (sort < 0) -it else it }
+                        }
+                        2 -> collator.compare(a.vendor, b.vendor).let { if (sort < 0) -it else it }
+                        else -> collator.compare(a.title, b.title).let { if (sort < 0) -it else it }
+                    }
+                    val secondary = if (primary != 0) primary else when (sort and Int.MAX_VALUE) {
+                        1 -> 0
+                        2 -> collator.compare(a.title, b.title)
+                        else -> collator.compare(a.vendor, b.vendor)
+                    }
+                    if (secondary != 0) secondary else a.id.compareTo(b.id)
+                }
+            }
+        }.map { it.first }
     }
 
     private fun project(filter: String, sort: Int) =

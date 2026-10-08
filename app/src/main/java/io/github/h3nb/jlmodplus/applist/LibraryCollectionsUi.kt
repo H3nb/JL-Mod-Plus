@@ -9,6 +9,7 @@ package io.github.h3nb.jlmodplus.applist
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -50,28 +50,23 @@ import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
 import androidx.compose.material3.adaptive.layout.ThreePaneScaffoldValue
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
@@ -83,8 +78,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -233,7 +226,12 @@ internal fun LibraryCollectionsDestination(
     host: LibraryCollectionsHost,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
+    overviewScaffoldPadding: PaddingValues = scaffoldPadding,
+    collectionScaffoldPadding: PaddingValues = scaffoldPadding,
     navigationState: LibraryNavigationState = LibraryNavigationState(),
+    overviewViewport: LibraryViewportState = rememberLibraryViewportState(libraryState.libraryScope),
+    collectionViewport: LibraryViewportState = rememberLibraryViewportState(libraryState.libraryScope, navigationState.selectedCollectionId),
+    pickerViewport: LibraryViewportState = rememberLibraryViewportState(libraryState.libraryScope, navigationState.selectedCollectionId),
     onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     onOpenActions: (LibraryAppUiItem, Long) -> Unit,
     selectionState: LibrarySelectionState = LibrarySelectionState(),
@@ -294,9 +292,6 @@ internal fun LibraryCollectionsDestination(
                         selectedCollectionId = null,
                         selectedCollectionScope = null,
                         collectionManageApps = false,
-                        anchors = navigationState.anchors -
-                            LibraryNavigationSurface.CollectionAppsList -
-                            LibraryNavigationSurface.CollectionAppsGrid,
                     ),
                 )
                 host.onDismissCollectionMembers()
@@ -381,6 +376,10 @@ internal fun LibraryCollectionsDestination(
         value = scaffoldValue,
         modifier = Modifier
             .fillMaxSize()
+            .focusProperties {
+                onEnter = { if (!currentActive) cancelFocusChange() }
+            }
+            .focusGroup()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
         listPane = {
             AnimatedPane {
@@ -388,19 +387,21 @@ internal fun LibraryCollectionsDestination(
                     host = host,
                     state = state,
                     libraryState = libraryState,
-                    scaffoldPadding = scaffoldPadding,
-                    navigationState = navigationState,
-                    onNavigationStateChanged = onNavigationStateChanged,
+                    scaffoldPadding = overviewScaffoldPadding,
+                    viewportState = overviewViewport,
                     selectedCollectionId = selectedCollectionId,
+                    active = active,
                     onOpenCollection = { collectionId ->
-                        onNavigationStateChanged(
-                            navigationState.copy(
-                                selectedCollectionId = collectionId,
-                                selectedCollectionScope =
-                                    libraryState.libraryScope.takeIf(String::isNotEmpty),
-                                collectionManageApps = false,
-                            ),
-                        )
+                        if (currentActive) {
+                            onNavigationStateChanged(
+                                navigationState.copy(
+                                    selectedCollectionId = collectionId,
+                                    selectedCollectionScope =
+                                        libraryState.libraryScope.takeIf(String::isNotEmpty),
+                                    collectionManageApps = false,
+                                ),
+                            )
+                        }
                     },
                     onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
                 )
@@ -427,9 +428,9 @@ internal fun LibraryCollectionsDestination(
                                 allApps = state.allApps,
                                 allAppsPrepared = state.allAppsPrepared,
                                 libraryState = libraryState,
-                                scaffoldPadding = scaffoldPadding,
-                                navigationState = navigationState,
-                                onNavigationStateChanged = onNavigationStateChanged,
+                                scaffoldPadding = collectionScaffoldPadding,
+                                viewportState = collectionViewport,
+                                pickerViewport = pickerViewport,
                                 onBack = {
                                     if (active) closeCollection()
                                 },
@@ -472,156 +473,61 @@ private fun LibraryCollectionsOverview(
     state: LibraryCollectionsUiState,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
-    navigationState: LibraryNavigationState,
-    onNavigationStateChanged: (LibraryNavigationState) -> Unit,
+    viewportState: LibraryViewportState,
     selectedCollectionId: Long?,
+    active: Boolean,
     onOpenCollection: (Long) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit,
 ) {
+    val currentActive by rememberUpdatedState(active)
+    val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
+    val publishNavigationVisibility: (Boolean) -> Unit = remember(viewportState) {
+        { visible ->
+            viewportState.chromeVisible = visible
+            currentOnNavigationVisibilityChanged(visible)
+        }
+    }
 
     var createDialog by rememberSaveable { mutableStateOf(false) }
     var actionsTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
-    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
-    val headerHeightPx = remember { mutableIntStateOf(0) }
-    val headerOffsetPx = remember { mutableFloatStateOf(0f) }
-    val density = LocalDensity.current
-    val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
-    val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
-    val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
-    val revealDistancePx = with(density) { 18.dp.toPx() }
-    val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
-        LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
-    }
-
-    LaunchedEffect(
-        state.collections,
-        libraryState.generation,
-        libraryState.libraryScope,
-    ) {
-        val availableIds = state.collections.map { it.id }
-        val anchor = navigationState.resolveAnchor(
-            LibraryNavigationSurface.CollectionsList,
-            libraryState.generation,
-            availableIds,
-            libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
-        ) ?: return@LaunchedEffect
-        val targetIndex = anchor.index + 1
-        if (listState.firstVisibleItemIndex != targetIndex ||
-            listState.firstVisibleItemScrollOffset != anchor.offsetPx
-        ) {
-            listState.scrollToItem(targetIndex, anchor.offsetPx)
+    // These windows are presentation owned by the settled route, not retained viewport data.
+    LaunchedEffect(active) {
+        if (!active) {
+            createDialog = false
+            actionsTarget = null
+            renameTarget = null
+            deleteTarget = null
         }
     }
-
-    LaunchedEffect(
-        state.collections,
-        libraryState.generation,
-        libraryState.libraryScope,
-    ) {
-        snapshotFlow {
-            val firstCollection = listState.layoutInfo.visibleItemsInfo
-                .firstOrNull { it.index > 0 }
-            val fallbackIndex = (firstCollection?.index ?: 1) - 1
-            LibraryScrollAnchor(
-                generation = libraryState.generation,
-                stableItemId = state.collections.getOrNull(fallbackIndex)?.id,
-                offsetPx = firstCollection?.offset ?: 0,
-                fallbackIndex = fallbackIndex.coerceAtLeast(0),
-                libraryScope = libraryState.libraryScope.takeIf(String::isNotEmpty),
-            )
-        }.collectLatest { anchor ->
-            delay(120)
-            onNavigationStateChanged(
-                currentNavigationState.saveAnchor(
-                    LibraryNavigationSurface.CollectionsList,
-                    anchor,
-                ),
-            )
+    val listState = viewportState.listState
+    val headerHeightPx = viewportState.headerHeightPx
+    val headerOffsetPx = viewportState.headerOffsetPx
+    val headerHidden by remember(headerHeightPx, headerOffsetPx) {
+        derivedStateOf {
+            headerHeightPx.intValue > 0 &&
+                headerOffsetPx.floatValue <= -headerHeightPx.intValue + 0.5f
         }
     }
-
-    LaunchedEffect(state.collections) {
-        headerOffsetPx.floatValue = 0f
-        chromeHysteresis.reset()
-        onNavigationVisibilityChanged(true)
-        snapshotFlow {
-            Triple(
-                listState.firstVisibleItemIndex,
-                listState.firstVisibleItemScrollOffset,
-                listState.canScrollForward || listState.canScrollBackward,
-            )
-        }.collectLatest { (index, offset, canScroll) ->
-            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.floatValue >= -0.5f) {
-                headerOffsetPx.floatValue = 0f
-                chromeHysteresis.reset()
-                onNavigationVisibilityChanged(true)
-            }
-        }
-    }
-
-    val scrollConnection = remember(
-        chromeHysteresis,
-        minScrollRoomPx,
-        onNavigationVisibilityChanged,
-    ) {
-        object : NestedScrollConnection {
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset {
-                val height = headerHeightPx.intValue
-                if (height <= 0) return Offset.Zero
-                val canScroll = listState.canScrollForward || listState.canScrollBackward
-                if (!canScroll) {
-                    if (headerOffsetPx.floatValue < -0.5f && (consumed.y > 0f || available.y > 0f)) {
-                        headerOffsetPx.floatValue = 0f
-                        if (chromeHysteresis.revealNow() != null) {
-                            onNavigationVisibilityChanged(true)
-                        }
-                    } else if (headerOffsetPx.floatValue == 0f && !chromeHysteresis.chromeVisible) {
-                        chromeHysteresis.reset()
-                        onNavigationVisibilityChanged(true)
-                    }
-                    return Offset.Zero
-                }
-                // Base hide/reveal progress on the distance the LazyColumn actually consumed.
-                // Unconsumed fling distance can exceed a short collection's range and otherwise
-                // causes a footer hide/show loop when the viewport changes.
-                val delta = when {
-                    consumed.y != 0f -> consumed.y
-                    available.y > 0f -> available.y
-                    else -> return Offset.Zero
-                }
-                if (delta < 0f && !listState.hasLibraryChromeScrollRoom(minScrollRoomPx)) {
-                    return Offset.Zero
-                }
-                val fullyHidden = headerOffsetPx.floatValue <= -height.toFloat() + 0.5f
-                var visibilityChange = chromeHysteresis.onScrollDelta(delta)
-                val shouldMoveHeader =
-                    delta < 0f || !fullyHidden || chromeHysteresis.chromeVisible || visibilityChange == true
-                if (shouldMoveHeader) {
-                    headerOffsetPx.floatValue =
-                        (headerOffsetPx.floatValue + delta).coerceIn(-height.toFloat(), 0f)
-                }
-                if (delta > 0f && headerOffsetPx.floatValue >= -0.5f && !chromeHysteresis.chromeVisible) {
-                    visibilityChange = chromeHysteresis.revealNow()
-                }
-                visibilityChange?.let(onNavigationVisibilityChanged)
-                return Offset.Zero
-            }
-        }
-    }
+    val scrollConnection = rememberLibraryScrollChrome(
+        viewport = viewportState,
+        layout = LibraryLayout.List,
+        headerHeightPx = headerHeightPx,
+        enabled = active,
+        onVisibilityChanged = publishNavigationVisibility,
+    )
 
     val renderHeader: @Composable (Modifier, Boolean) -> Unit = { modifier, interactive ->
+        val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
+        val titleActionsEnabled = interactive && titleGate.enabled.value
         Row(
             modifier = modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .then(titleGate.positionModifier)
+                .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics { }),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -630,8 +536,8 @@ private fun LibraryCollectionsOverview(
                 style = MaterialTheme.typography.headlineSmall,
             )
             TextButton(
-                enabled = interactive,
-                onClick = { createDialog = true },
+                enabled = titleActionsEnabled,
+                onClick = { if (currentActive) createDialog = true },
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_create_folder),
@@ -647,7 +553,6 @@ private fun LibraryCollectionsOverview(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(scaffoldPadding)
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
             .clipToBounds()
             .nestedScroll(scrollConnection),
@@ -655,6 +560,7 @@ private fun LibraryCollectionsOverview(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             state = listState,
+            contentPadding = scaffoldPadding,
         ) {
             item {
                 if (headerHeightPx.intValue == 0) {
@@ -665,7 +571,7 @@ private fun LibraryCollectionsOverview(
                         false,
                     )
                 } else {
-                    Spacer(Modifier.height(headerSpacerHeight))
+                    LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
                 }
             }
 
@@ -737,7 +643,7 @@ private fun LibraryCollectionsOverview(
                             )
                         },
                         trailingContent = {
-                            IconButton(onClick = { actionsTarget = collection }) {
+                            IconButton(onClick = { if (currentActive) actionsTarget = collection }) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_edit),
                                     contentDescription = stringResource(R.string.edit),
@@ -746,7 +652,7 @@ private fun LibraryCollectionsOverview(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onOpenCollection(collection.id) }
+                            .clickable { if (currentActive) onOpenCollection(collection.id) }
                             .semantics { this.selected = selected },
                     )
                     HorizontalDivider(
@@ -763,13 +669,14 @@ private fun LibraryCollectionsOverview(
                 .fillMaxWidth()
                 .graphicsLayer { translationY = headerOffsetPx.floatValue }
                 .background(MaterialTheme.colorScheme.background)
+                .then(if (headerHidden) Modifier.clearAndSetSemantics { } else Modifier)
                 .onSizeChanged { headerHeightPx.intValue = it.height },
         ) {
             renderHeader(Modifier, true)
         }
     }
 
-    if (createDialog) {
+    if (active && createDialog) {
         CollectionNameDialog(
             title = stringResource(R.string.library_collection_new),
             initialName = "",
@@ -777,12 +684,12 @@ private fun LibraryCollectionsOverview(
             onDismiss = { createDialog = false },
             onConfirm = { name ->
                 createDialog = false
-                host.onCreateCollection(name)
+                if (currentActive) host.onCreateCollection(name)
             },
         )
     }
 
-    actionsTarget?.let { collection ->
+    actionsTarget?.takeIf { active }?.let { collection ->
         CollectionActionsDialog(
             collection = collection,
             onDismiss = { actionsTarget = null },
@@ -797,7 +704,7 @@ private fun LibraryCollectionsOverview(
         )
     }
 
-    renameTarget?.let { collection ->
+    renameTarget?.takeIf { active }?.let { collection ->
         CollectionNameDialog(
             title = stringResource(R.string.action_context_rename),
             initialName = collection.name,
@@ -805,12 +712,12 @@ private fun LibraryCollectionsOverview(
             onDismiss = { renameTarget = null },
             onConfirm = { name ->
                 renameTarget = null
-                host.onRenameCollection(collection.id, name)
+                if (currentActive) host.onRenameCollection(collection.id, name)
             },
         )
     }
 
-    deleteTarget?.let { collection ->
+    deleteTarget?.takeIf { active }?.let { collection ->
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
             title = { Text(stringResource(R.string.action_context_delete)) },
@@ -818,7 +725,7 @@ private fun LibraryCollectionsOverview(
             confirmButton = {
                 TextButton(onClick = {
                     deleteTarget = null
-                    host.onDeleteCollection(collection.id)
+                    if (currentActive) host.onDeleteCollection(collection.id)
                 }) {
                     Text(
                         text = stringResource(R.string.action_context_delete),

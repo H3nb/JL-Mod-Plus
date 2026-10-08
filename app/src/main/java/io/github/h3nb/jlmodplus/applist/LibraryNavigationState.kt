@@ -16,203 +16,75 @@ package io.github.h3nb.jlmodplus.applist
 
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
-import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
 
-/** Stable surfaces whose scroll anchors must survive destination replacement. */
-enum class LibraryNavigationSurface {
-    AppsList,
-    AppsGrid,
-    CollectionsList,
-    CollectionAppsList,
-    CollectionAppsGrid,
-}
-
-/**
- * A return anchor independent from a Compose list/grid instance.
- *
- * [stableItemId] is preferred. [fallbackIndex] is used only when the item was
- * deleted or is filtered out, and [offsetPx] keeps the practical visual
- * position instead of forcing a return to the top.
- */
+/** Explicit metadata-editor return position, independent of a Compose list/grid instance. */
 data class LibraryScrollAnchor(
     val generation: Long,
     val stableItemId: Long?,
+    /** scrollToItem offset: positive moves the item upward; negative places it below the origin. */
     val offsetPx: Int,
     val fallbackIndex: Int,
-    /** Optional database-local owner, currently used for Collection detail anchors. */
-    val scopeId: Long? = null,
-    /** Stable workdir identity for database-local anchors across process recreation. */
+    /** Workdir identity for database-local item ids. */
     val libraryScope: String? = null,
 )
 
+/** Only routing belongs here. App filter/sort/layout are owned by LibraryUiState. */
 data class LibraryNavigationState(
     val destination: LibraryDestinationKey = LibraryDestinationKey.Apps,
-    val layout: LibraryLayout = LibraryLayout.List,
-    val query: String = "",
-    val quickView: LibraryQuickView =
-        LibraryQuickView.All,
-    val sortVariant: Int = 0,
     val selectedCollectionId: Long? = null,
-    val anchors: Map<LibraryNavigationSurface, LibraryScrollAnchor> = emptyMap(),
     /** Stable workdir identity for [selectedCollectionId]; Room ids are local to one Library DB. */
     val selectedCollectionScope: String? = null,
-    /** Full-screen Collection membership editor state; belongs to the selected Collection route. */
+    /** Full-screen membership editor belongs to the selected Collection route. */
     val collectionManageApps: Boolean = false,
 ) {
     companion object {
-        /**
-         * Keeps return anchors across activity recreation without asking Android to parcel
-         * Compose implementation details such as LazyListState.
-         */
+        /** Accept the previous nine-slot saved state without retaining duplicated presentation state. */
         val Saver: Saver<LibraryNavigationState, Any> = listSaver(
             save = { state ->
                 listOf(
                     state.destination.name,
-                    state.layout.name,
-                    state.query,
-                    state.quickView.name,
-                    state.sortVariant,
                     state.selectedCollectionId ?: Long.MIN_VALUE,
-                    state.anchors.entries.map { (surface, anchor) ->
-                        listOf(
-                            surface.name,
-                            anchor.generation,
-                            anchor.stableItemId ?: Long.MIN_VALUE,
-                            anchor.offsetPx,
-                            anchor.fallbackIndex,
-                            anchor.scopeId ?: Long.MIN_VALUE,
-                            anchor.libraryScope.orEmpty(),
-                        )
-                    },
                     state.selectedCollectionScope.orEmpty(),
                     state.collectionManageApps,
                 )
             },
             restore = { saved ->
-                // The first released saver stored anchors directly. Keep accepting that shape so
-                // an activity restored from an older process does not lose its return position.
-                val legacyAnchors = saved.takeIf { values ->
-                    values.isEmpty() || values.firstOrNull() !is String
-                } ?: emptyList()
-                val destination = saved.getOrNull(0)?.toString()?.let { value ->
-                    // The third destination was previously called Options. Keep restored
-                    // activity state on the same page after the visible tab is renamed More.
-                    val compatibleValue = if (value == "Options") "More" else value
-                    runCatching { LibraryDestinationKey.valueOf(compatibleValue) }.getOrNull()
+                val destination = (saved.firstOrNull() as? String)?.let { value ->
+                    val compatible = if (value == "Options") "More" else value
+                    runCatching { LibraryDestinationKey.valueOf(compatible) }.getOrNull()
                 } ?: LibraryDestinationKey.Apps
-                val layout = saved.getOrNull(1)?.toString()?.let {
-                    runCatching { LibraryLayout.valueOf(it) }.getOrNull()
-                } ?: LibraryLayout.List
-                val query = saved.getOrNull(2) as? String ?: ""
-                val quickView = saved.getOrNull(3)?.toString()?.let {
-                    runCatching {
-                        LibraryQuickView.valueOf(it)
-                    }.getOrNull()
-                } ?: LibraryQuickView.All
-                val sortVariant = (saved.getOrNull(4) as? Number)?.toInt() ?: 0
-                val selectedCollectionId = (saved.getOrNull(5) as? Number)?.toLong()
+                // The previous format placed Layout.name in slot 1; newer state places an id.
+                // Older anchor-only state is neither format and restores the default route.
+                val legacyRoute = saved.getOrNull(1) is String
+                val idSlot = if (legacyRoute) 5 else 1
+                val scopeSlot = if (legacyRoute) 7 else 2
+                val manageSlot = if (legacyRoute) 8 else 3
+                val collectionId = (saved.getOrNull(idSlot) as? Number)?.toLong()
                     ?.takeUnless { it == Long.MIN_VALUE }
-                val anchorValues = if (legacyAnchors.isNotEmpty() || saved.isEmpty()) {
-                    saved
-                } else {
-                    saved.getOrNull(6) as? List<*> ?: emptyList<Any?>()
-                }
-                val selectedCollectionScope = if (legacyAnchors.isNotEmpty()) {
-                    null
-                } else {
-                    (saved.getOrNull(7) as? String)?.takeIf(String::isNotEmpty)
-                }
-                val collectionManageApps = if (legacyAnchors.isNotEmpty()) {
-                    false
-                } else {
-                    saved.getOrNull(8) as? Boolean ?: false
-                }
-                val anchors = anchorValues.mapNotNull { value ->
-                    val entry = value as? List<*> ?: return@mapNotNull null
-                    val surface = entry.getOrNull(0)?.toString()?.let {
-                        runCatching { LibraryNavigationSurface.valueOf(it) }.getOrNull()
-                    } ?: return@mapNotNull null
-                    val generation = (entry.getOrNull(1) as? Number)?.toLong() ?: return@mapNotNull null
-                    val stableId = (entry.getOrNull(2) as? Number)?.toLong()
-                        ?.takeUnless { it == Long.MIN_VALUE }
-                    val offset = (entry.getOrNull(3) as? Number)?.toInt() ?: return@mapNotNull null
-                    val fallbackIndex = (entry.getOrNull(4) as? Number)?.toInt() ?: return@mapNotNull null
-                    val scopeId = (entry.getOrNull(5) as? Number)?.toLong()
-                        ?.takeUnless { it == Long.MIN_VALUE }
-                    val libraryScope = (entry.getOrNull(6) as? String)
-                        ?.takeIf(String::isNotEmpty)
-                    surface to LibraryScrollAnchor(
-                        generation,
-                        stableId,
-                        offset,
-                        fallbackIndex,
-                        scopeId,
-                        libraryScope,
-                    )
-                }.toMap()
                 LibraryNavigationState(
                     destination = destination,
-                    layout = layout,
-                    query = query,
-                    quickView = quickView,
-                    sortVariant = sortVariant,
-                    selectedCollectionId = selectedCollectionId,
-                    anchors = anchors,
-                    selectedCollectionScope = selectedCollectionScope,
-                    collectionManageApps = collectionManageApps && selectedCollectionId != null,
+                    selectedCollectionId = collectionId,
+                    selectedCollectionScope = (saved.getOrNull(scopeSlot) as? String)
+                        ?.takeIf(String::isNotEmpty),
+                    collectionManageApps = saved.getOrNull(manageSlot) == true &&
+                        collectionId != null,
                 )
             },
         )
     }
+}
 
-    fun saveAnchor(
-        surface: LibraryNavigationSurface,
-        anchor: LibraryScrollAnchor,
-    ): LibraryNavigationState = copy(anchors = anchors + (surface to anchor))
-
-    fun anchorFor(
-        surface: LibraryNavigationSurface,
-        activeGeneration: Long,
-        scopeId: Long? = null,
-        libraryScope: String? = null,
-    ): LibraryScrollAnchor? = anchors[surface]?.takeIf {
-        it.generation == activeGeneration &&
-            it.scopeId == scopeId &&
-            it.libraryScope == libraryScope
-    }
-
-    fun resolveAnchor(
-        surface: LibraryNavigationSurface,
-        activeGeneration: Long,
-        availableIds: List<Long>,
-        scopeId: Long? = null,
-        libraryScope: String? = null,
-    ): ResolvedLibraryScrollAnchor? {
-        val anchor = anchorFor(
-            surface,
-            activeGeneration,
-            scopeId,
-            libraryScope,
-        ) ?: return null
-        return resolveAnchor(anchor, availableIds)
-    }
-
-    /**
-     * Resolves a captured return anchor even when the catalog generation changed while a
-     * full-screen editor was open. The stable database id still keeps the visual position
-     * meaningful; ordinary destination restoration remains generation-scoped above.
-     */
-    fun resolveAnchor(
-        anchor: LibraryScrollAnchor,
-        availableIds: List<Long>,
-    ): ResolvedLibraryScrollAnchor {
-        val anchoredIndex = anchor.stableItemId?.let(availableIds::indexOf)?.takeIf { it >= 0 }
-        val index = (anchoredIndex ?: anchor.fallbackIndex).coerceIn(
-            0,
-            (availableIds.size - 1).coerceAtLeast(0),
-        )
-        return ResolvedLibraryScrollAnchor(index, anchor.offsetPx)
-    }
+/** Resolve an explicit editor-return anchor by item id, with a bounded fallback after removal. */
+fun resolveLibraryScrollAnchor(
+    anchor: LibraryScrollAnchor,
+    availableIds: List<Long>,
+): ResolvedLibraryScrollAnchor {
+    val anchoredIndex = anchor.stableItemId?.let(availableIds::indexOf)?.takeIf { it >= 0 }
+    val index = (anchoredIndex ?: anchor.fallbackIndex).coerceIn(
+        0,
+        (availableIds.size - 1).coerceAtLeast(0),
+    )
+    return ResolvedLibraryScrollAnchor(index, anchor.offsetPx)
 }
 
 data class ResolvedLibraryScrollAnchor(

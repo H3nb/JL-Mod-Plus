@@ -35,6 +35,24 @@ private val NoOpConfigEvents = object : ConfigFormEvents {
 }
 
 @PreviewTest
+@Preview(name = "Config controls Indonesian", locale = "in", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+fun ConfigControlsIndonesianScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Controls)
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config controls large font", fontScale = 1.8f, widthDp = 400, heightDp = 900, showBackground = true)
+@Composable
+fun ConfigControlsLargeFontScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Controls)
+    }
+}
+
+@PreviewTest
 @Preview(name = "Performance parameters narrow", widthDp = 320, heightDp = 640, showBackground = true)
 @Composable
 fun PerformanceOverlayParametersNarrowScreenshot() {

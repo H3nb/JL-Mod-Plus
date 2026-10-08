@@ -71,6 +71,7 @@ import java.util.Locale;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.AccentPalette;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfilesActivity;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -206,7 +207,7 @@ public class SettingsActivity extends AppCompatActivity {
 		String themeValue = preferences.getString(PREF_THEME, getString(R.string.pref_theme_default));
 		SettingsOption selectedTheme = findOption(themes, themeValue, themes.get(0));
 		List<SettingsOption> accents = buildAccentOptions();
-		String accentValue = preferences.getString(PREF_ACCENT, "blue");
+		String accentValue = AccentPalette.readPreference(preferences).getKey();
 		SettingsOption selectedAccent = findOption(accents, accentValue, accents.get(0));
 
 		List<SettingsOption> languages = buildLanguageOptions();

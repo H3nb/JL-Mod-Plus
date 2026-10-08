@@ -16,8 +16,6 @@ package io.github.h3nb.jlmodplus.config
 
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.clickable
@@ -47,17 +45,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
-import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 import io.github.h3nb.jlmodplus.input.HostCommand
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -70,13 +63,11 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -92,7 +83,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
@@ -116,8 +106,9 @@ import io.github.h3nb.jlmodplus.config.model.Size
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
-import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationBarItemColors
+import io.github.h3nb.jlmodplus.ui.navigateToTab
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
+import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationBarItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import kotlin.math.roundToInt
 
@@ -344,8 +335,8 @@ internal fun ConfigScreen(
     val selectedDestination = destinations.getOrElse(pagerState.currentPage) { destinations.first() }
     val selectDestination: (ConfigDestination) -> Unit = { destination ->
         val index = destinations.indexOf(destination)
-        if (index >= 0 && index != pagerState.currentPage) {
-            pagerScope.launch { pagerState.animateScrollToPage(index) }
+        if (index >= 0) {
+            pagerScope.launch { pagerState.navigateToTab(index) }
         }
     }
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
@@ -688,7 +679,6 @@ private fun ConfigNavigationBar(
     NavigationBar(
         modifier = Modifier.testTag(CONFIG_NAVIGATION_BAR_TAG),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 0.dp,
     ) {
         destinations.forEach { destination ->
             val label = stringResource(destination.label)
@@ -705,7 +695,6 @@ private fun ConfigNavigationBar(
                 label = {
                     Text(label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
                 },
-                alwaysShowLabel = false,
             )
         }
     }

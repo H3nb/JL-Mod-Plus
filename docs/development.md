@@ -99,10 +99,23 @@ The goal is useful regression confidence, not test count or coverage percentage.
 - `app/src/screenshotTest/`: Compose Preview Screenshot Testing cases. Committed references are under `app/src/screenshotTestEmulatorDebug/reference/`; inspect rendered images before accepting reference changes.
 
 The default Android CI mode runs lint, app and dexlib JVM unit tests, screenshot
-validation, and app/instrumentation assembly. Connected instrumentation runs only
+validation, and app/instrumentation assembly. The broader connected runtime suite runs
 in the separate manual `runtime-smoke` mode described below. See the workflow for
 current tasks rather than assuming all source sets execute.
 Automatic PR runs exclude PRs whose entire diff consists of Markdown and `docs/**`.
+The `LibraryUiContractSuite` remains a **targeted, opt-in** Android instrumentation
+suite for pager gestures, viewport/workdir isolation, Collection actions and icon
+refresh. Its former PR-triggered emulator workflow has been removed to avoid
+recurring emulator builds. When these boundaries change, run the suite on a
+disposable API 35 x86_64 emulator with animations enabled:
+
+```sh
+./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.applist.LibraryUiContractSuite :app:connectedEmulatorDebugAndroidTest
+```
+
+Review the executed test reports; compilation by default Android CI does not
+substitute for the connected run. This suite validates host UI behavior, not
+native game execution or physical-device frame pacing.
 A separate [Java ME graphics workflow](../.github/workflows/java-me-graphics.yml)
 runs Nokia polygon, MIDP triangle and core Graphics color, primitive, clip,
 lifecycle and bitmap-rebind instrumentation on API 23 and 36 when the
@@ -149,6 +162,26 @@ lint result; consult the final `build` check for overall status. The early APK
 artifact is not rewritten. Artifact availability does not mean validation passed.
 Inspect the individual reports when a combined step fails.
 
+### Historical Library performance evidence
+
+The PR-specific Library profiler workflow, its five diagnostic scripts, and two
+profiling-only instrumentation probes were retired after qualification. They are
+not active tests or supported utilities in the current repository. The separate
+Library UI contract suite remains available for opt-in interaction testing.
+
+The [interaction performance trials](interaction-performance-trials-2026-10-08.md)
+and [app UI performance investigation](app-ui-performance-2026-10-08.md)
+preserve measured results, methodology and limitations. The former emulator A/B
+workload compared fixed baseline `925d9b29e14c05013b86d9bec810bdc738440fbc`
+to its then-current candidate on an isolated API 35 emulator. Historical runs
+are not evidence of current HEAD performance or a release FPS guarantee.
+
+For a future profiling investigation, independently choose and record relevant
+baseline/candidate revisions, equal isolated fixtures, device and tool versions,
+and trace/source identity. Use official Android/Perfetto tooling rather than
+assuming the removed PR-specific harness still exists. Profiling is an
+investigation activity, not a routine merge check.
+
 ### Screenshot updates without a local Android toolchain
 
 1. Diagnose the mismatch from the `validate` run's screenshot report and authorized UI change.
@@ -171,6 +204,8 @@ scoped work, and report the precise gap and next required check. Missing checks
 remain verification gaps; they do not authorize bypassing required merge checks.
 
 ### GitHub-only reviewed screenshot promotion
+
+For agents limited to a GitHub connector, this is the supported path for updating binary screenshot references. Inspect the actual renderer-produced candidate images, diff and provenance, then use the existing owner-gated PR comment mechanism below; GitHub connector access alone is not proof of owner authorization. A Git tree edit, screenshot-test failure, or green CI badge is not permission to generate or replace expected PNGs without review.
 
 Use the owner-only screenshot promotion path when the expected screenshot change
 has been reviewed but the working environment cannot safely write or commit binary

@@ -19,14 +19,21 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -34,23 +41,31 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.rules.RuleChain
+import org.junit.rules.Timeout
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 private fun uiString(resId: Int, vararg formatArgs: Any): String =
@@ -59,8 +74,10 @@ private fun uiString(resId: Int, vararg formatArgs: Any): String =
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
 class LibraryComposeTest {
-    @get:Rule
     val composeRule = createComposeRule()
+    // Enclose the Compose rule as well as the method so both use the same test thread.
+    @get:Rule
+    val boundedUiRule: RuleChain = RuleChain.outerRule(Timeout.seconds(60)).around(composeRule)
 
     @Test
     fun compactHeightAppActionsKeepLastActionReachable() {
@@ -118,14 +135,19 @@ class LibraryComposeTest {
         }
 
         composeRule.waitForIdle()
-        composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(0)
-
-        controllerEvents.tryEmit(
+        composeRule.onAllNodes(isSelected() and hasAnyAncestor(isDialog())).assertCountEquals(0)
+        composeRule.waitUntil(timeoutMillis = 5_000) { controllerEvents.subscriptionCount.value > 0 }
+        assertTrue(controllerEvents.tryEmit(
             LibraryControllerEvent(1L, LibraryControllerCommand.MoveDown),
-        )
-        composeRule.waitForIdle()
+        ))
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodes(isSelected() and hasAnyAncestor(isDialog()))
+                .fetchSemanticsNodes().size == 1
+        }
 
-        composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(1)
+        composeRule.onAllNodes(isSelected() and hasAnyAncestor(isDialog())).assertCountEquals(1)
+        composeRule.onNode(hasText(uiString(R.string.library_metadata_edit_title)) and isSelected())
+            .assertIsDisplayed()
     }
 
     @Test
@@ -164,8 +186,8 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        composeRule.onNodeWithText("Indexing library… 12/100").assertIsDisplayed()
-        composeRule.onNodeWithText("Scanning Bounce_Tales").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_indexing_progress, 12, 100)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_indexing_current, "Bounce_Tales")).assertIsDisplayed()
     }
 
     @Test
@@ -179,9 +201,9 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        composeRule.onNodeWithText("Library unavailable").assertIsDisplayed()
-        composeRule.onNodeWithText("Storage unavailable").assertIsDisplayed()
-        composeRule.onNodeWithText("Retry").performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_load_error_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_load_failed_message)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_retry)).performClick()
         assertEquals(1, actions.retryCount)
     }
 
@@ -278,11 +300,13 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("Demo MIDlet 0").performTouchInput { swipeUp() }
+        appViewport().performTouchInput {
+            // Start above the navigation overlay; the full Lazy viewport includes its inset.
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.15f), 600)
+        }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Demo MIDlet 1").performTouchInput { swipeUp() }
-        composeRule.waitForIdle()
-        composeRule.onAllNodesWithText("Demo MIDlet 0").assertCountEquals(0)
+        composeRule.onNodeWithText("Demo MIDlet 0", useUnmergedTree = true).assertIsNotDisplayed()
+        val before = visibleAppAnchor()
 
         composeRule.runOnIdle {
             libraryState.value = libraryState.value.copy(
@@ -293,7 +317,10 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
 
-        composeRule.onAllNodesWithText("Demo MIDlet 0").assertCountEquals(0)
+        composeRule.onNodeWithText("Demo MIDlet 0", useUnmergedTree = true).assertIsNotDisplayed()
+        val after = visibleAppAnchor()
+        assertEquals("Visible app changed after a non-navigation update", before.first, after.first)
+        assertEquals("Visible app moved after a non-navigation update", before.second, after.second, 1f)
     }
 
     @Test
@@ -325,10 +352,24 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
 
+        // The fixture owns these indices; avoid the test helper's repeated text-search scrolls.
+        appViewport().performScrollToIndex(21)
+        appViewport().performTouchInput {
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.5f), 300)
+        }
+        // Finish the touch gesture before exercising controller navigation. Mixing synthetic
+        // fling input with Espresso's idle synchronization can strand the test's idle waiter.
+        composeRule.waitForIdle()
+        controllerEvents.tryEmit(LibraryControllerEvent(1L, LibraryControllerCommand.MoveUp))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Demo MIDlet 0").assertIsDisplayed()
+        // Programmatic list repositioning does not reopen a partially hidden header.
+        appViewport().performScrollToIndex(0)
+        composeRule.waitForIdle()
         repeat(12) { index ->
             controllerEvents.tryEmit(
                 LibraryControllerEvent(
-                    sequence = index.toLong() + 1L,
+                    sequence = index.toLong() + 2L,
                     command = LibraryControllerCommand.MoveDown,
                 ),
             )
@@ -336,6 +377,20 @@ class LibraryComposeTest {
         }
 
         composeRule.onNodeWithText("Demo MIDlet 12").assertIsDisplayed()
+        val focusedTop = composeRule.onNodeWithText("Demo MIDlet 12")
+            .fetchSemanticsNode().boundsInRoot.top
+        // The quick-filter group may already be obscured when a controller command
+        // begins; it must not be forced open just to satisfy an obsolete test assumption.
+        val filter = composeRule.onNodeWithText(
+            uiString(R.string.library_filter_all),
+            useUnmergedTree = true,
+        )
+        if (filter.isDisplayed()) {
+            val headerBottom = filter.fetchSemanticsNode().boundsInRoot.bottom
+            assertTrue("Controller focus is covered by the visible header", focusedTop >= headerBottom)
+        } else {
+            assertTrue("Controller focus lies above the visible viewport", focusedTop >= 0f)
+        }
         composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(1)
     }
 
@@ -377,14 +432,15 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("1 app").assertIsDisplayed()
         composeRule.onAllNodesWithText("Recently played").assertCountEquals(0)
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(0)
-        composeRule.onAllNodesWithContentDescription("Favorite (coming soon)").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.library_favorite_coming_soon))
+            .assertCountEquals(0)
         composeRule.onNodeWithContentDescription("Select all").performClick()
         composeRule.onNodeWithText("2 apps").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Deselect all").performClick()
         composeRule.onNodeWithText("0 apps").assertIsDisplayed()
 
-        composeRule.onNodeWithContentDescription("Library back").performClick()
-        composeRule.onNodeWithText("Recently played").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_back)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
     }
 
     @Test
@@ -446,7 +502,7 @@ class LibraryComposeTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText("1 app").assertCountEquals(0)
-        composeRule.onAllNodesWithContentDescription("Library back").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.library_back)).assertCountEquals(0)
     }
 
     @Test
@@ -454,8 +510,8 @@ class LibraryComposeTest {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onNodeWithContentDescription("App Sort Order").performClick()
-        composeRule.onNodeWithText("Vendor").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.pref_app_sort_vendor)).performClick()
         assertEquals(2, actions.sortIndex)
     }
 
@@ -505,15 +561,16 @@ class LibraryComposeTest {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onAllNodesWithText("Recently played").assertCountEquals(1)
-        composeRule.onAllNodesWithText("Recently added").assertCountEquals(1)
-        composeRule.onAllNodesWithText("Favorites").assertCountEquals(1)
-        composeRule.onNodeWithContentDescription("Favorite (coming soon)").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Favorite (coming soon)").assertIsNotEnabled()
-        composeRule.onAllNodesWithContentDescription("Remove favorite (coming soon)").assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.library_filter_recently_opened)).assertCountEquals(1)
+        composeRule.onAllNodesWithText(uiString(R.string.library_filter_recently_added)).assertCountEquals(1)
+        composeRule.onAllNodesWithText(uiString(R.string.library_filter_favorites)).assertCountEquals(1)
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_favorite_coming_soon))
+            .assertIsDisplayed().assertIsNotEnabled()
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.library_remove_from_favorites_action))
+            .assertCountEquals(0)
 
         composeRule.onNodeWithText("Collections").performClick()
-        composeRule.onNodeWithText("Collections and folders will be available in a future update.")
+        composeRule.onNodeWithText(uiString(R.string.library_collections_empty_message))
             .assertIsDisplayed()
         composeRule.onNodeWithText("More").performClick()
         composeRule.onNodeWithText("Settings").assertIsDisplayed()
@@ -536,7 +593,8 @@ class LibraryComposeTest {
 
         composeRule.onNodeWithText("Demo MIDlet").assertIsDisplayed()
         composeRule.onNodeWithText("Second MIDlet").assertIsDisplayed()
-        composeRule.onAllNodesWithContentDescription("Favorite (coming soon)").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.library_favorite_coming_soon))
+            .assertCountEquals(0)
     }
 
     @Test
@@ -589,20 +647,25 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        composeRule.onNodeWithContentDescription("Install").assertIsDisplayed()
-        composeRule.onNodeWithText("Demo MIDlet 0").performTouchInput { swipeUp() }
+        composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
+        appViewport().performTouchInput {
+            // Start above the navigation overlay; the full Lazy viewport includes its inset.
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.15f), 600)
+        }
         composeRule.waitForIdle()
-        composeRule.onAllNodesWithContentDescription("Install").assertCountEquals(0)
-        composeRule.onAllNodesWithText("Apps").assertCountEquals(0)
-        composeRule.onAllNodesWithText("JL-Mod Plus Debug").assertCountEquals(0)
-        composeRule.onAllNodesWithContentDescription("App Sort Order").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.install)).assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.library_destination_apps)).assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.app_name)).assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.library_sort)).assertCountEquals(0)
 
-        composeRule.onNodeWithText("Demo MIDlet 1").performTouchInput { swipeDown() }
+        appViewport().performTouchInput {
+            swipe(Offset(width * 0.5f, height * 0.25f), Offset(width * 0.5f, height * 0.75f), 600)
+        }
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Install").assertIsDisplayed()
-        composeRule.onNodeWithText("Apps").assertIsDisplayed()
-        composeRule.onNodeWithText("JL-Mod Plus Debug").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("App Sort Order").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).assertIsDisplayed()
     }
 
     @Test
@@ -618,12 +681,59 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { swipeUp() }
+        appViewport().performTouchInput {
+            // Start above the navigation overlay; the full Lazy viewport includes its inset.
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.15f), 600)
+        }
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Install").assertIsDisplayed()
-        composeRule.onNodeWithText("Apps").assertIsDisplayed()
-        composeRule.onNodeWithText("JL-Mod Plus Debug").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("App Sort Order").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+    }
+
+    @Test
+    fun nearFittingLibraryKeepsFullChromeAfterUpwardGesture() {
+        val actions = RecordingLibraryActions()
+        val state = LibraryUiState(
+            loading = false,
+            databaseControlsReady = true,
+            apps = (0..4).map { index ->
+                LibraryAppUiItem(index, "Demo MIDlet $index", "Example Vendor", "1.0", null, true)
+            },
+        )
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = state, actions = actions) }
+            }
+        }
+
+        // Five rows nearly fill this compact viewport. Their small overflow must not consume
+        // an entire header's height or leave it resting halfway collapsed after the gesture.
+        val initialWordmark = composeRule.onNodeWithContentDescription(uiString(R.string.app_name))
+            .fetchSemanticsNode().boundsInRoot
+        appViewport().performTouchInput {
+            // Start above the navigation overlay; the full Lazy viewport includes its inset.
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.15f), 600)
+        }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
+        val settledWordmark = composeRule.onNodeWithContentDescription(uiString(R.string.app_name))
+            .fetchSemanticsNode().boundsInRoot
+        assertEquals("Short overflow moved the wordmark", initialWordmark.top, settledWordmark.top, 1f)
+        assertEquals("Short overflow clipped the wordmark", initialWordmark.bottom, settledWordmark.bottom, 1f)
+        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
+        navigationItem(R.string.library_destination_apps).assertIsDisplayed()
+        navigationItem(R.string.library_destination_collections).assertIsDisplayed()
+        navigationItem(R.string.library_destination_more).assertIsDisplayed()
     }
 
     @Test
@@ -638,9 +748,9 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        composeRule.onNodeWithContentDescription("App Sort Order").performClick()
-        composeRule.onNodeWithText("Descending").assertIsDisplayed()
-        composeRule.onNodeWithText("Name").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.pref_app_sort_descending)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.pref_app_sort_name)).performClick()
         assertEquals(0, actions.sortIndex)
     }
 
@@ -719,6 +829,32 @@ class LibraryComposeTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("Remove from favorites").assertIsDisplayed()
         composeRule.onAllNodesWithContentDescription("Add to favorites").assertCountEquals(0)
+    }
+
+    private fun navigationItem(labelRes: Int) = composeRule.onNode(
+        hasClickAction() and (hasText(uiString(labelRes)) or hasContentDescription(uiString(labelRes))),
+    )
+
+    private fun appViewport() = composeRule.onAllNodes(
+        hasScrollAction() and hasAnyDescendant(hasText("Demo MIDlet", substring = true)),
+        useUnmergedTree = true,
+    ).onLast()
+
+    private fun visibleAppAnchor(): Pair<String, Float> {
+        val viewport = appViewport().fetchSemanticsNode().boundsInRoot
+        val first = checkNotNull(composeRule.onAllNodes(
+            hasText("Demo MIDlet", substring = true), useUnmergedTree = true,
+        ).fetchSemanticsNodes().filter { node ->
+            val bounds = node.boundsInRoot
+            bounds.width > 0 && bounds.height > 0 &&
+                bounds.top > viewport.top && bounds.bottom < viewport.bottom &&
+                composeRule.onNode(
+                    SemanticsMatcher("placed row ${node.id}") { it.id == node.id },
+                    useUnmergedTree = true,
+                ).isDisplayed()
+        }.minByOrNull { it.boundsInRoot.top })
+        return first.config[SemanticsProperties.Text].first { it.text.startsWith("Demo MIDlet") }.text to
+            first.boundsInRoot.top
     }
 
     private fun setLibraryContent(

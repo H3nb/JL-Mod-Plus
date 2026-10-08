@@ -42,13 +42,15 @@ internal class ProfileConfigMatcher private constructor() {
 
         @JvmStatic
         fun sameConfig(left: ProfileModel, right: ProfileModel): Boolean {
-            val leftCopy = copy(left)
-            val rightCopy = copy(right)
-            leftCopy.systemProperties = ConfigFormState.normalizeSystemProperties(leftCopy.systemProperties)
-            rightCopy.systemProperties = ConfigFormState.normalizeSystemProperties(rightCopy.systemProperties)
-            val leftJson: JsonElement = GSON.toJsonTree(leftCopy)
-            val rightJson: JsonElement = GSON.toJsonTree(rightCopy)
-            return leftJson == rightJson
+            return comparisonSnapshot(left) == comparisonSnapshot(right)
+        }
+
+        /** Keeps the serializer's numeric/adapter canonicalization without retaining a cache. */
+        @JvmStatic
+        fun comparisonSnapshot(source: ProfileModel): JsonElement {
+            val normalized = copy(source)
+            normalized.systemProperties = ConfigFormState.normalizeSystemProperties(normalized.systemProperties)
+            return GSON.toJsonTree(normalized)
         }
 
         private fun copy(source: ProfileModel): ProfileModel {
