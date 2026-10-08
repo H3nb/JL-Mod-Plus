@@ -92,7 +92,12 @@ def capture(out, name, action, seconds=20):
                 if process.poll() is not None or time.monotonic() > deadline:
                     raise RuntimeError("Recorder did not start: " + log.read_text())
                 time.sleep(0.1)
+            # The CLI starts before every data source acknowledges readiness.
+            # Leave that setup interval ahead of the action and retain trace-side markers.
+            time.sleep(0.5)
+            adb("shell", "log", "-p", "i", "-t", "LibraryPerformanceProbe", "BEGIN/" + name)
             action()
+            adb("shell", "log", "-p", "i", "-t", "LibraryPerformanceProbe", "END/" + name)
             if process.wait(timeout=40) != 0:
                 raise RuntimeError("Recorder failed: " + log.read_text())
         finally:
@@ -116,7 +121,9 @@ def main():
     adb("install", args.apk)
     adb("install", args.test_apk)
     adb("shell", "appops", "set", PACKAGE, "MANAGE_EXTERNAL_STORAGE", "allow")
-    adb("shell", "cmd", "package", "compile", "-m", "speed", "-f", PACKAGE)
+    compilation_result = adb("shell", "cmd", "package", "compile", "-m", "speed", "-f", PACKAGE)
+    (out / "compilation.txt").write_text(
+        compilation_result + adb("shell", "dumpsys", "package", PACKAGE))
     result = adb("shell", "am", "instrument", "-w", "-r", "-e", "class", PROBE,
                  "-e", "libraryPerformanceProbe", "true", RUNNER)
     (out / "instrumentation.txt").write_text(result)
@@ -128,7 +135,8 @@ def main():
         "sourceCommit": args.commit, "label": args.label, "variant": "emulatorDebug",
         "nativeBuild": False, "rows": 1000, "collectionRows": 500,
         "buildFingerprint": adb("shell", "getprop", "ro.build.fingerprint").strip(),
-        "compilation": "speed", "scope": "debug emulator diagnostic; not physical-device FPS",
+        "compilationRequested": "speed", "compilationResult": compilation_result.strip(),
+        "scope": "debug emulator diagnostic; not physical-device FPS",
     }, indent=2))
     (out / "trace-config.pftxt").write_text('''buffers { size_kb: 65536 fill_policy: RING_BUFFER }
 duration_ms: 20000
@@ -148,6 +156,11 @@ data_sources { config { name: "android.surfaceflinger.frametimeline" } }
 data_sources { config { name: "linux.process_stats" process_stats_config {
   scan_all_processes_on_start: true
   proc_stats_poll_ms: 1000
+} } }
+data_sources { config { name: "android.log" android_log_config {
+  log_ids: LID_DEFAULT
+  min_prio: PRIO_INFO
+  filter_tags: "LibraryPerformanceProbe"
 } } }
 ''')
     for iteration in range(3):

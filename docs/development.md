@@ -169,7 +169,8 @@ transitions, raw Perfetto frame/scheduling traces, and per-thread CPU samples fo
 search projections at 1,000/5,000 rows after 100 warm-up calls per case. It does not
 measure first indexing or cold filesystem caches. APKs use
 `emulatorDebug`, native compilation is disabled, animations remain enabled,
-and ART compilation uses `speed` in both installations. This is diagnostic
+and both installations request ART `speed` compilation (the command result and
+package dump are retained; debug code may still use JIT). This is diagnostic
 comparison rather than a release/device benchmark; do not interpret shared
 emulator frame timings as physical-device FPS. `am start -W` measures initial
 display, not fully populated Library readiness. Hierarchy checks verify content
@@ -177,6 +178,7 @@ outside each recording window without claiming a time-to-full-display metric.
 
 `JL-Mod-Plus-library-performance` retains the exact source identities, workload,
 CPU samples, raw traces, SQL summaries, and pinned official Perfetto processor.
+Trace-side action markers distinguish recording setup from the actual workload.
 Timing thresholds do not gate CI; fixture and recording failures do. Use these
 results to identify repeated work, then qualify release frame pacing/startup
 separately on a physical device. Change the explicit comparison revision when
