@@ -505,11 +505,15 @@ private fun LibraryCollectionsOverview(
     )
 
     val renderHeader: @Composable (Modifier, Boolean) -> Unit = { modifier, interactive ->
+        val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
+        val titleActionsEnabled = interactive && titleGate.enabled.value
         Row(
             modifier = modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .then(titleGate.positionModifier)
+                .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics { }),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -518,7 +522,7 @@ private fun LibraryCollectionsOverview(
                 style = MaterialTheme.typography.headlineSmall,
             )
             TextButton(
-                enabled = interactive,
+                enabled = titleActionsEnabled,
                 onClick = { createDialog = true },
             ) {
                 Icon(
