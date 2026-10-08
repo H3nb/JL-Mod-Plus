@@ -112,7 +112,7 @@ class PerformanceOverlayOptionsComposeTest {
         }
         composeRule.onNodeWithText(uiString(R.string.perf_overlay_preset)).performClick()
         composeRule.onNodeWithText("Debug").performClick()
-        composeRule.runOnIdle { assertEquals(PerformanceOverlayOptions.ALL, form.performanceOverlayMetrics) }
+        composeRule.runOnIdle { assertEquals(PerformanceOverlayOptions.DEBUG, form.performanceOverlayMetrics) }
 
         composeRule.onNodeWithText(uiString(R.string.perf_overlay_parameters)).performClick()
         composeRule.onNodeWithTag("perf_metric_${PerformanceOverlayOptions.FPS}").assertIsOn()
@@ -124,7 +124,7 @@ class PerformanceOverlayOptionsComposeTest {
         composeRule.onNodeWithText("Custom").assertExists()
         composeRule.runOnIdle {
             assertEquals(
-                PerformanceOverlayOptions.ALL and PerformanceOverlayOptions.DISPLAY.inv(),
+                PerformanceOverlayOptions.DEBUG and PerformanceOverlayOptions.DISPLAY.inv(),
                 form.performanceOverlayMetrics,
             )
         }

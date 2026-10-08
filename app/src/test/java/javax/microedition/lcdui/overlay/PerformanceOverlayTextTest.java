@@ -56,7 +56,7 @@ public class PerformanceOverlayTextTest {
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
 		v.fps = 47;
 		v.cap = 60;
-		assertArrayEquals(new String[]{"FPS 47/60", "SPD —"},
+		assertArrayEquals(new String[]{"FPS 47", "CAP 60", "SPD —"},
 				PerformanceOverlayText.format(FPS | CAP | SPEED, v)[0]);
 		assertFalse(Arrays.deepToString(PerformanceOverlayText.format(SPEED, v))
 				.contains("1.00x"));

@@ -95,7 +95,10 @@ public class PerformanceOverlaySettingsTest {
 						| PerformanceOverlayOptions.COPY
 						| PerformanceOverlayOptions.SUBMIT
 						| PerformanceOverlayOptions.INPUT_QUEUE
-						| PerformanceOverlayOptions.FRAME_QUEUE));
+						| PerformanceOverlayOptions.FRAME_QUEUE
+						| PerformanceOverlayOptions.RENDER_INTERVAL
+						| PerformanceOverlayOptions.RENDER_P95_INTERVAL
+						| PerformanceOverlayOptions.RENDER_MAX_INTERVAL));
 		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
 				PerformanceOverlayOptions.FPS));
 		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
@@ -119,6 +122,17 @@ public class PerformanceOverlaySettingsTest {
 				PerformanceOverlayOptions.COALESCED));
 		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
 				PerformanceOverlayOptions.FPS | PerformanceOverlayOptions.COALESCED));
+	}
+
+	@Test
+	public void debugIsCuratedAndCustomCanStillSelectAll() {
+		assertTrue((PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.FPS) != 0);
+		assertTrue((PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.DISPLAY) != 0);
+		assertTrue(PerformanceOverlayOptions.DEBUG != PerformanceOverlayOptions.ALL);
+		assertFalse(PerformanceOverlayOptions.requiresFrameMetrics(
+				PerformanceOverlayOptions.RENDER_INTERVAL));
+		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(
+				PerformanceOverlayOptions.RENDER_INTERVAL));
 	}
 
 	@Test

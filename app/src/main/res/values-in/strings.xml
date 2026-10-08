@@ -831,7 +831,8 @@
     <string name="perf_overlay_debug">Debug</string>
     <string name="perf_overlay_custom">Kustom</string>
     <string name="perf_overlay_parameters">Parameter overlay</string>
-    <string name="perf_overlay_parameters_help">Pilih parameter yang akan ditampilkan.</string>
+    <string name="perf_overlay_parameters_help">Pilih metrik yang ditampilkan saat bermain.</string>
+    <string name="perf_overlay_measurement_help">FPS menghitung frame baru yang diproses renderer; GFPS menghitung publikasi frame guest. SPD adalah kecepatan yang dipilih, bukan performa aktual. CPU menggunakan satuan core (1.00c = pemakaian penuh satu core).</string>
     <plurals name="perf_overlay_selected">
         <item quantity="other">%d parameter dipilih</item>
     </plurals>
@@ -849,23 +850,23 @@
     <string name="perf_overlay_group_resources">Sumber daya</string>
     <string name="perf_overlay_group_temperature">Suhu</string>
     <string name="perf_overlay_group_runtime">Informasi runtime</string>
-    <string name="perf_overlay_fps">Frame per detik (FPS)</string>
+    <string name="perf_overlay_fps">Frame renderer per detik (FPS)</string>
     <string name="perf_overlay_cap">Batas FPS (CAP)</string>
     <string name="perf_overlay_guest_fps">Publikasi frame guest per detik (GFPS)</string>
-    <string name="perf_overlay_speed">Kecepatan emulasi (SPD)</string>
-    <string name="perf_overlay_interval">Interval frame (FI)</string>
-    <string name="perf_overlay_p95">Persentil ke-95 interval frame (P95)</string>
+    <string name="perf_overlay_speed">Pengaturan kecepatan emulasi (SPD)</string>
+    <string name="perf_overlay_interval">Interval frame guest (GFI)</string>
+    <string name="perf_overlay_p95">Persentil ke-95 interval guest (GP95)</string>
     <string name="perf_overlay_render_interval">Interval frame renderer (RFI)</string>
     <string name="perf_overlay_render_p95">Persentil ke-95 interval renderer (RP95)</string>
     <string name="perf_overlay_render_max">Interval renderer maksimum (RMAX)</string>
-    <string name="perf_overlay_max">Interval frame maksimum (MAX)</string>
+    <string name="perf_overlay_max">Interval guest maksimum (GMAX)</string>
     <string name="perf_overlay_coalesced">Frame yang digantikan sebelum render (COAL)</string>
     <string name="perf_overlay_paint">Durasi paint (PAINT)</string>
     <string name="perf_overlay_copy">Durasi salin buffer (COPY)</string>
     <string name="perf_overlay_submit">Durasi submit render (SUB)</string>
     <string name="perf_overlay_input_queue">Waktu antrean input (INQ)</string>
     <string name="perf_overlay_frame_queue">Waktu antrean frame (FRQ)</string>
-    <string name="perf_overlay_cpu">Penggunaan CPU (CPU)</string>
+    <string name="perf_overlay_cpu">Penggunaan CPU proses (CPU, satuan core)</string>
     <string name="perf_overlay_ram">Penggunaan RAM (RAM)</string>
     <string name="perf_overlay_java">Penggunaan heap Java (JAVA)</string>
     <string name="perf_overlay_native">Penggunaan heap native (NATIVE)</string>

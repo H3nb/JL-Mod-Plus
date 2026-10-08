@@ -137,8 +137,15 @@ public class FpsCounter extends TimerTask implements Layer {
 			v.inputQueue = diagnosticSnapshot.inputQueueMeanMs;
 			v.frameQueue = diagnosticSnapshot.frameQueueMeanMs;
 		}
+		if (!active) {
+			if (groups.length != 0) {
+				groups = new String[0][];
+				view.postInvalidate();
+			}
+			return;
+		}
 		PerformanceResources.Snapshot system = resources.sample(now);
-		v.cpu = active ? system.getCpuPercent() : Double.NaN;
+		v.cpu = system.getCpuPercent();
 		v.ram = system.getRamMiB();
 		v.javaHeap = system.getJavaHeapMiB();
 		v.nativeHeap = system.getNativeHeapMiB();
@@ -146,8 +153,11 @@ public class FpsCounter extends TimerTask implements Layer {
 		v.gpuTemp = system.getGpuTempC();
 		v.batteryTemp = system.getBatteryTempC();
 		v.thermal = system.getThermalStatus();
-		groups = PerformanceOverlayText.format(mask, v);
-		view.postInvalidate();
+		String[][] nextGroups = PerformanceOverlayText.format(mask, v);
+		if (!Arrays.deepEquals(groups, nextGroups)) {
+			groups = nextGroups;
+			view.postInvalidate();
+		}
 	}
 
 	private static double rate(long current, long previous, long elapsedNanos) {

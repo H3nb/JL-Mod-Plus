@@ -45,7 +45,10 @@ public final class PerformanceOverlayOptions {
 	public static final int RENDER_MAX_INTERVAL = 1 << 25;
 	public static final int ALL = (1 << 26) - 1;
 	public static final int MINIMAL = FPS | CAP | SPEED;
-	public static final int STANDARD = MINIMAL | GUEST_FPS | FRAME_INTERVAL | CPU | RAM | DISPLAY;
+	public static final int STANDARD = MINIMAL | GUEST_FPS | FRAME_INTERVAL
+			| RENDER_INTERVAL | RENDER_P95_INTERVAL;
+	public static final int DEBUG = STANDARD | P95_INTERVAL | PAINT | COPY | SUBMIT
+			| FRAME_QUEUE | COALESCED | CPU | RAM | DISPLAY;
 
 	public static final int TOP_LEFT = 0;
 	public static final int TOP_RIGHT = 1;

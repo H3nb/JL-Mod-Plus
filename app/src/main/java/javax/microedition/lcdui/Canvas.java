@@ -1267,10 +1267,8 @@ public abstract class Canvas extends Displayable {
 		}
 		publishedFrameSequence = sequence;
 		PerformanceDiagnostics diagnostics = performanceDiagnostics;
-		if (diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.FRAME_INTERVAL
-				| PerformanceDiagnostics.RENDER_CADENCE
-				| PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE
-						| PerformanceDiagnostics.RENDER_CADENCE)) {
+		if (diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.FRAME_INTERVAL | PerformanceDiagnostics.RENDER_CADENCE
+				| PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
 			publishedFrameNanos = System.nanoTime();
 			diagnostics.recordPublication(sequence, publishedFrameNanos);
 		}
