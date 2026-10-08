@@ -40,7 +40,10 @@ public final class PerformanceOverlayOptions {
 	public static final int THERMAL = 1 << 20;
 	public static final int RENDERER = 1 << 21;
 	public static final int DISPLAY = 1 << 22;
-	public static final int ALL = (1 << 23) - 1;
+	public static final int RENDER_INTERVAL = 1 << 23;
+	public static final int RENDER_P95_INTERVAL = 1 << 24;
+	public static final int RENDER_MAX_INTERVAL = 1 << 25;
+	public static final int ALL = (1 << 26) - 1;
 	public static final int MINIMAL = FPS | CAP | SPEED;
 	public static final int STANDARD = MINIMAL | GUEST_FPS | FRAME_INTERVAL | CPU | RAM | DISPLAY;
 

@@ -851,10 +851,13 @@
     <string name="perf_overlay_group_runtime">Informasi runtime</string>
     <string name="perf_overlay_fps">Frame per detik (FPS)</string>
     <string name="perf_overlay_cap">Batas FPS (CAP)</string>
-    <string name="perf_overlay_render_fps">Frame yang dirender per detik (RFPS)</string>
+    <string name="perf_overlay_guest_fps">Publikasi frame guest per detik (GFPS)</string>
     <string name="perf_overlay_speed">Kecepatan emulasi (SPD)</string>
     <string name="perf_overlay_interval">Interval frame (FI)</string>
     <string name="perf_overlay_p95">Persentil ke-95 interval frame (P95)</string>
+    <string name="perf_overlay_render_interval">Interval frame renderer (RFI)</string>
+    <string name="perf_overlay_render_p95">Persentil ke-95 interval renderer (RP95)</string>
+    <string name="perf_overlay_render_max">Interval renderer maksimum (RMAX)</string>
     <string name="perf_overlay_max">Interval frame maksimum (MAX)</string>
     <string name="perf_overlay_coalesced">Frame yang digantikan sebelum render (COAL)</string>
     <string name="perf_overlay_paint">Durasi paint (PAINT)</string>

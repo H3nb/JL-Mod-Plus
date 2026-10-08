@@ -17,11 +17,17 @@ public class PerformanceOverlayTextTest {
 		v.renderer = "GLES";
 		v.displayHz = 120;
 		v.thermal = 0;
+		v.renderInterval = 13.1;
+		v.renderP95 = 16.7;
+		v.renderMaximum = 25.0;
 		String[][] groups = PerformanceOverlayText.format(
-				FRAME_INTERVAL | P95_INTERVAL | MAX_INTERVAL | RENDERER | DISPLAY | THERMAL, v);
+				FRAME_INTERVAL | P95_INTERVAL | MAX_INTERVAL | RENDER_INTERVAL
+				| RENDER_P95_INTERVAL | RENDER_MAX_INTERVAL | RENDERER | DISPLAY | THERMAL, v);
 		assertArrayEquals(new String[]{"GFI 33.3 ms", "GP95 34.0 ms", "GMAX 40.1 ms"}, groups[0]);
-		assertArrayEquals(new String[]{"REN GLES", "DISP 120 Hz", "THRM NONE"}, groups[1]);
+		assertArrayEquals(new String[]{"RFI 13.1 ms", "RP95 16.7 ms", "RMAX 25.0 ms"}, groups[1]);
+		assertArrayEquals(new String[]{"REN GLES", "DISP 120 Hz", "THRM NONE"}, groups[2]);
 		assertArrayEquals(new String[]{"GFI 33.3 ms | GP95 34.0 ms | GMAX 40.1 ms",
+				"RFI 13.1 ms | RP95 16.7 ms | RMAX 25.0 ms",
 				"REN GLES | DISP 120 Hz | THRM NONE"},
 				PerformanceOverlayText.wrap(groups, 1000, String::length));
 	}

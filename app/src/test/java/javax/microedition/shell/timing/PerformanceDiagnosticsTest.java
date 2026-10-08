@@ -83,6 +83,31 @@ public class PerformanceDiagnosticsTest {
 	}
 
 	@Test
+	public void renderCadenceOnlyTracksNewSequencesAndExpiresAcrossVisibility() {
+		PerformanceDiagnostics diagnostics = new PerformanceDiagnostics(
+				PerformanceDiagnostics.RENDER_CADENCE);
+		diagnostics.setActive(true, 0L);
+		diagnostics.recordRender(1L, 10 * MS, 11 * MS, 11 * MS, 12 * MS);
+		diagnostics.recordRender(1L, 10 * MS, 11 * MS, 11 * MS, 13 * MS);
+		diagnostics.recordRender(2L, 20 * MS, 21 * MS, 21 * MS, 32 * MS);
+		diagnostics.recordRender(3L, 35 * MS, 36 * MS, 36 * MS, 47 * MS);
+		PerformanceDiagnostics.Snapshot snapshot = diagnostics.snapshot(47 * MS);
+		assertEquals(17.5, snapshot.renderIntervalMeanMs, 0.0001);
+		assertEquals(20, snapshot.renderIntervalP95Ms, 0.0001);
+		assertEquals(20, snapshot.renderIntervalMaxMs, 0.0001);
+		assertTrue(Double.isNaN(snapshot.intervalMeanMs));
+		assertTrue(Double.isNaN(diagnostics.snapshot(5050 * MS).renderIntervalMeanMs));
+		diagnostics.setActive(false, 5100 * MS);
+		diagnostics.setActive(true, 5200 * MS);
+		diagnostics.recordRender(4L, 10 * MS, 5210 * MS, 5210 * MS, 5215 * MS);
+		assertTrue(Double.isNaN(diagnostics.snapshot(5220 * MS).renderIntervalMeanMs));
+		diagnostics.recordRender(5L, 5230 * MS, 5231 * MS, 5231 * MS, 5240 * MS);
+		assertTrue(Double.isNaN(diagnostics.snapshot(5240 * MS).renderIntervalMeanMs));
+		diagnostics.recordRender(6L, 5250 * MS, 5251 * MS, 5251 * MS, 5260 * MS);
+		assertEquals(20, diagnostics.snapshot(5260 * MS).renderIntervalMeanMs, 0.0001);
+	}
+
+	@Test
 	public void durationsAreIndependentAndDisabledMetricsRemainUnavailable() {
 		PerformanceDiagnostics diagnostics = new PerformanceDiagnostics(PerformanceDiagnostics.PAINT);
 		diagnostics.setActive(true, 0);

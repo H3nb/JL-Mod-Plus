@@ -128,6 +128,9 @@ public class FpsCounter extends TimerTask implements Layer {
 			v.interval = diagnosticSnapshot.intervalMeanMs;
 			v.p95 = diagnosticSnapshot.intervalP95Ms;
 			v.maximum = diagnosticSnapshot.intervalMaxMs;
+			v.renderInterval = diagnosticSnapshot.renderIntervalMeanMs;
+			v.renderP95 = diagnosticSnapshot.renderIntervalP95Ms;
+			v.renderMaximum = diagnosticSnapshot.renderIntervalMaxMs;
 			v.paint = diagnosticSnapshot.paintMeanMs;
 			v.copy = diagnosticSnapshot.copyMeanMs;
 			v.submit = diagnosticSnapshot.submitMeanMs;

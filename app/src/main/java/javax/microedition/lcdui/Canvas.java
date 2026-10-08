@@ -775,7 +775,8 @@ public abstract class Canvas extends Displayable {
 				frameSequence = publishedFrameSequence;
 				publicationNanos = publishedFrameNanos;
 				if (diagnostics != null && diagnostics.enabled(
-						PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT)) {
+						PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT
+						| PerformanceDiagnostics.RENDER_CADENCE)) {
 					consumptionNanos = System.nanoTime();
 				}
 				offscreenCopy.getBitmap().prepareToDraw();
@@ -786,7 +787,8 @@ public abstract class Canvas extends Displayable {
 				metrics.recordRender(frameSequence);
 			}
 			if (diagnostics != null && diagnostics.enabled(
-					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
+					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE
+						| PerformanceDiagnostics.RENDER_CADENCE)) {
 				diagnostics.recordRender(frameSequence, publicationNanos, consumptionNanos,
 						submitStarted, System.nanoTime());
 			}
@@ -1266,7 +1268,9 @@ public abstract class Canvas extends Displayable {
 		publishedFrameSequence = sequence;
 		PerformanceDiagnostics diagnostics = performanceDiagnostics;
 		if (diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.FRAME_INTERVAL
-				| PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
+				| PerformanceDiagnostics.RENDER_CADENCE
+				| PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE
+						| PerformanceDiagnostics.RENDER_CADENCE)) {
 			publishedFrameNanos = System.nanoTime();
 			diagnostics.recordPublication(sequence, publishedFrameNanos);
 		}
@@ -1382,7 +1386,8 @@ public abstract class Canvas extends Displayable {
 					frameSequence = publishedFrameSequence;
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
-							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT)) {
+							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT
+						| PerformanceDiagnostics.RENDER_CADENCE)) {
 						consumptionNanos = System.nanoTime();
 					}
 					g.drawImage(offscreenCopy, virtualScreen);
@@ -1399,7 +1404,8 @@ public abstract class Canvas extends Displayable {
 				metrics.recordRender(frameSequence);
 			}
 			if (diagnostics != null && diagnostics.enabled(
-					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
+					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE
+						| PerformanceDiagnostics.RENDER_CADENCE)) {
 				diagnostics.recordRender(frameSequence, publicationNanos, consumptionNanos,
 						submitStarted, System.nanoTime());
 			}
@@ -1633,7 +1639,8 @@ public abstract class Canvas extends Displayable {
 					frameSequence = publishedFrameSequence;
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
-							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT)) {
+							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT
+						| PerformanceDiagnostics.RENDER_CADENCE)) {
 						consumptionNanos = System.nanoTime();
 					}
 					if (!textureValid || frameSequence != lastUploadedSequence
@@ -1655,7 +1662,8 @@ public abstract class Canvas extends Displayable {
 					metrics.recordRender(frameSequence);
 				}
 				if (diagnostics != null && diagnostics.enabled(
-						PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
+						PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE
+						| PerformanceDiagnostics.RENDER_CADENCE)) {
 					diagnostics.recordRender(frameSequence, publicationNanos, consumptionNanos,
 							submitStarted, System.nanoTime());
 				}

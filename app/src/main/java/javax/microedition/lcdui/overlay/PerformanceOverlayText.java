@@ -30,6 +30,7 @@ final class PerformanceOverlayText {
 		double cap = Double.NaN;
 		double speedPercent = Double.NaN;
 		double interval = Double.NaN, p95 = Double.NaN, maximum = Double.NaN;
+		double renderInterval = Double.NaN, renderP95 = Double.NaN, renderMaximum = Double.NaN;
 		double paint = Double.NaN, copy = Double.NaN, submit = Double.NaN;
 		double inputQueue = Double.NaN, frameQueue = Double.NaN;
 		double cpu = Double.NaN, ram = Double.NaN, javaHeap = Double.NaN;
@@ -60,6 +61,10 @@ final class PerformanceOverlayText {
 		add(row, mask, FRAME_INTERVAL, "GFI", v.interval, 1, " ms");
 		add(row, mask, P95_INTERVAL, "GP95", v.p95, 1, " ms");
 		add(row, mask, MAX_INTERVAL, "GMAX", v.maximum, 1, " ms");
+		finish(groups, row);
+		add(row, mask, RENDER_INTERVAL, "RFI", v.renderInterval, 1, " ms");
+		add(row, mask, RENDER_P95_INTERVAL, "RP95", v.renderP95, 1, " ms");
+		add(row, mask, RENDER_MAX_INTERVAL, "RMAX", v.renderMaximum, 1, " ms");
 		finish(groups, row);
 		add(row, mask, PAINT, "PAINT", v.paint, 1, " ms");
 		add(row, mask, COPY, "COPY", v.copy, 1, " ms");

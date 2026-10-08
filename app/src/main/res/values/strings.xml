@@ -931,10 +931,13 @@
     <string name="perf_overlay_group_runtime">Runtime information</string>
     <string name="perf_overlay_fps">Frames per second (FPS)</string>
     <string name="perf_overlay_cap">FPS cap (CAP)</string>
-    <string name="perf_overlay_render_fps">Rendered frames per second (RFPS)</string>
+    <string name="perf_overlay_guest_fps">Guest frame publications per second (GFPS)</string>
     <string name="perf_overlay_speed">Emulation speed (SPD)</string>
     <string name="perf_overlay_interval">Frame interval (FI)</string>
     <string name="perf_overlay_p95">95th percentile frame interval (P95)</string>
+    <string name="perf_overlay_render_interval">Renderer frame interval (RFI)</string>
+    <string name="perf_overlay_render_p95">95th percentile renderer interval (RP95)</string>
+    <string name="perf_overlay_render_max">Maximum renderer interval (RMAX)</string>
     <string name="perf_overlay_max">Maximum frame interval (MAX)</string>
     <string name="perf_overlay_coalesced">Frames replaced before render (COAL)</string>
     <string name="perf_overlay_paint">Paint duration (PAINT)</string>
