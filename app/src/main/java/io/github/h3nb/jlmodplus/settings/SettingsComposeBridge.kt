@@ -20,10 +20,10 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.verticalScroll
@@ -46,7 +47,6 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -58,6 +58,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -65,6 +66,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -160,6 +162,7 @@ fun SettingsScreen(
     var libraryChoiceDialog by remember { mutableStateOf<SettingsChoice?>(null) }
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        contentColor = MaterialTheme.colorScheme.onSurface,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.action_settings)) },
@@ -182,13 +185,20 @@ fun SettingsScreen(
                     .widthIn(max = 720.dp),
                 contentPadding = padding,
             ) {
-                item {
-                    SettingsSection(stringResource(R.string.settings_section_appearance)) {
+                settingsSection(
+                    key = "appearance",
+                    title = R.string.settings_section_appearance,
+                    rowCount = 2,
+                    rowKey = { if (it == 0) "theme" else "accent" },
+                    rowType = { SettingsItemType.Choice },
+                ) { index ->
+                    if (index == 0) {
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_theme_title),
                             selected = state.theme,
                             onClick = { choiceDialog = SettingsDialogChoice.Theme },
                         )
+                    } else {
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_accent_title),
                             selected = state.accent,
@@ -197,39 +207,42 @@ fun SettingsScreen(
                         )
                     }
                 }
-                item {
-                    SettingsSection(stringResource(R.string.settings_section_language)) {
-                        SettingsChoiceRow(
-                            title = stringResource(R.string.pref_language),
-                            selected = state.language,
-                            onClick = { choiceDialog = SettingsDialogChoice.Language },
-                        )
-                    }
+                settingsSection(
+                    key = "language",
+                    title = R.string.settings_section_language,
+                    rowCount = 1,
+                    rowKey = { "language" },
+                    rowType = { SettingsItemType.Choice },
+                ) {
+                    SettingsChoiceRow(
+                        title = stringResource(R.string.pref_language),
+                        selected = state.language,
+                        onClick = { choiceDialog = SettingsDialogChoice.Language },
+                    )
                 }
                 if (state.libraryChoices.isNotEmpty() || state.librarySwitches.isNotEmpty()) {
-                    item {
-                        SettingsSection(stringResource(R.string.settings_section_library_appearance)) {
-                            state.libraryChoices.forEach { choice ->
-                                SettingsChoiceRow(
-                                    title = choice.title,
-                                    selected = choice.selected,
-                                    onClick = { libraryChoiceDialog = choice },
-                                )
-                            }
-                            state.librarySwitches.forEach { setting ->
-                                SettingsSwitchRow(
-                                    setting = setting,
-                                    onCheckedChange = { checked ->
-                                        actions.onToggle(setting.key, checked)
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
-                item {
-                    SettingsSection(stringResource(R.string.settings_section_midlet_runtime)) {
-                        state.switches.forEach { setting ->
+                    val choiceCount = state.libraryChoices.size
+                    settingsSection(
+                        key = "library",
+                        title = R.string.settings_section_library_appearance,
+                        rowCount = choiceCount + state.librarySwitches.size,
+                        rowKey = { index ->
+                            if (index < choiceCount) "choice:${state.libraryChoices[index].key}"
+                            else "switch:${state.librarySwitches[index - choiceCount].key}"
+                        },
+                        rowType = { index ->
+                            if (index < choiceCount) SettingsItemType.Choice else SettingsItemType.Switch
+                        },
+                    ) { index ->
+                        if (index < choiceCount) {
+                            val choice = state.libraryChoices[index]
+                            SettingsChoiceRow(
+                                title = choice.title,
+                                selected = choice.selected,
+                                onClick = { libraryChoiceDialog = choice },
+                            )
+                        } else {
+                            val setting = state.librarySwitches[index - choiceCount]
                             SettingsSwitchRow(
                                 setting = setting,
                                 onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
@@ -237,36 +250,60 @@ fun SettingsScreen(
                         }
                     }
                 }
-                item {
-                    SettingsSection(stringResource(R.string.settings_section_storage)) {
+                settingsSection(
+                    key = "runtime",
+                    title = R.string.settings_section_midlet_runtime,
+                    rowCount = state.switches.size,
+                    rowKey = { state.switches[it].key },
+                    rowType = { SettingsItemType.Switch },
+                ) { index ->
+                    val setting = state.switches[index]
+                    SettingsSwitchRow(
+                        setting = setting,
+                        onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
+                    )
+                }
+                settingsSection(
+                    key = "storage",
+                    title = R.string.settings_section_storage,
+                    rowCount = 1,
+                    rowKey = { "directory" },
+                    rowType = { SettingsItemType.Action },
+                ) {
+                    SettingsActionRow(
+                        title = stringResource(R.string.pref_emulator_dir),
+                        summary = state.workingDirectory,
+                        onClick = actions::onChooseDirectory,
+                    )
+                }
+                if (state.showProfiles) {
+                    settingsSection(
+                        key = "profiles",
+                        title = R.string.settings_section_profiles,
+                        rowCount = 1,
+                        rowKey = { "manage" },
+                        rowType = { SettingsItemType.Action },
+                    ) {
                         SettingsActionRow(
-                            title = stringResource(R.string.pref_emulator_dir),
-                            summary = state.workingDirectory,
-                            onClick = actions::onChooseDirectory,
+                            title = stringResource(R.string.preset_manage),
+                            summary = stringResource(R.string.settings_profiles_summary),
+                            onClick = actions::onOpenProfiles,
                         )
                     }
                 }
-                if (state.showProfiles) {
-                    item {
-                        SettingsSection(stringResource(R.string.settings_section_profiles)) {
-                            SettingsActionRow(
-                                title = stringResource(R.string.preset_manage),
-                                summary = stringResource(R.string.settings_profiles_summary),
-                                onClick = actions::onOpenProfiles,
-                            )
-                        }
-                    }
-                }
                 if (state.experimentalSwitches.isNotEmpty()) {
-                    item {
-                        SettingsSection(stringResource(R.string.pref_category_experimental)) {
-                            state.experimentalSwitches.forEach { setting ->
-                                SettingsSwitchRow(
-                                    setting = setting,
-                                    onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
-                                )
-                            }
-                        }
+                    settingsSection(
+                        key = "experimental",
+                        title = R.string.pref_category_experimental,
+                        rowCount = state.experimentalSwitches.size,
+                        rowKey = { state.experimentalSwitches[it].key },
+                        rowType = { SettingsItemType.Switch },
+                    ) { index ->
+                        val setting = state.experimentalSwitches[index]
+                        SettingsSwitchRow(
+                            setting = setting,
+                            onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
+                        )
                     }
                 }
             }
@@ -369,33 +406,60 @@ fun SettingsScreen(
     }
 }
 
-@Composable
-private fun SettingsSection(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit,
+private enum class SettingsItemType { Heading, Choice, Switch, Action }
+
+private fun LazyListScope.settingsSection(
+    key: String,
+    title: Int,
+    rowCount: Int,
+    rowKey: (Int) -> String,
+    rowType: (Int) -> SettingsItemType,
+    content: @Composable (Int) -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    item(key = "$key:heading", contentType = SettingsItemType.Heading) {
         Text(
-            text = title,
+            text = stringResource(title),
             modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
+                .padding(top = 8.dp, bottom = if (rowCount == 0) 16.dp else 8.dp)
                 .semantics { heading() }
                 .padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
         )
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
-            Column(content = content)
+    }
+    items(
+        count = rowCount,
+        key = { "$key:${rowKey(it)}" },
+        contentType = rowType,
+    ) { index ->
+        SettingsSectionRow(first = index == 0, last = index == rowCount - 1) {
+            content(index)
         }
     }
+}
+
+@Composable
+private fun SettingsSectionRow(first: Boolean, last: Boolean, content: @Composable () -> Unit) {
+    val shape = MaterialTheme.shapes.large
+    val squareCorner = CornerSize(0.dp)
+    val rowShape = shape.copy(
+        topStart = if (first) shape.topStart else squareCorner,
+        topEnd = if (first) shape.topEnd else squareCorner,
+        bottomStart = if (last) shape.bottomStart else squareCorner,
+        bottomEnd = if (last) shape.bottomEnd else squareCorner,
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .padding(bottom = if (last) 8.dp else 0.dp)
+            .clip(rowShape)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .semantics { isTraversalGroup = true },
+        propagateMinConstraints = true,
+    ) { content() }
 }
 
 @Composable

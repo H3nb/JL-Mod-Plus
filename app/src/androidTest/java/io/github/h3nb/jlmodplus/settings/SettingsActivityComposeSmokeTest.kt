@@ -22,8 +22,7 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performClick
 import androidx.preference.PreferenceManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -68,8 +67,9 @@ class SettingsActivityComposeSmokeTest {
     fun activityHostsSettingsComposeScreen() {
         composeRule.onNodeWithText("Settings").assertIsDisplayed()
         composeRule.onNodeWithText("Theme").assertIsDisplayed()
-        composeRule.onNode(hasScrollAction()).performScrollToIndex(3)
-        composeRule.onNodeWithText(composeRule.activity.getString(R.string.pref_emulator_dir)).assertIsDisplayed()
+        val directorySetting = hasText(composeRule.activity.getString(R.string.pref_emulator_dir)) and hasClickAction()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(directorySetting)
+        composeRule.onNode(directorySetting).assertIsDisplayed()
     }
 
     @Test
@@ -79,9 +79,9 @@ class SettingsActivityComposeSmokeTest {
             composeRule.activity.recreate()
         }
         composeRule.waitForIdle()
-        composeRule.onNode(hasText(composeRule.activity.getString(R.string.pref_wakelock_title)) and hasClickAction())
-            .performScrollTo()
-            .performClick()
+        val keepScreenSetting = hasText(composeRule.activity.getString(R.string.pref_wakelock_title)) and hasClickAction()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(keepScreenSetting)
+        composeRule.onNode(keepScreenSetting).performClick()
         assertTrue(preferences.getBoolean("pref_wakelock_switch", false))
     }
 }

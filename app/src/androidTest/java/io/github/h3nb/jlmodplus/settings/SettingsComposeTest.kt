@@ -22,6 +22,7 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -29,9 +30,10 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -82,17 +84,19 @@ class SettingsComposeTest {
     fun settingsExposePersistedSummariesAndSwitches() {
         setSettingsContent(actions = RecordingSettingsActions())
 
-        composeRule.onNodeWithText("Theme").assertExists()
-        composeRule.onNodeWithText("Dark").assertExists()
-        composeRule.onNode(hasText("App language") and hasClickAction()).assertExists()
-        scrollSettingsToIndex(2)
-        composeRule.onNodeWithText("Keep screen on").performScrollTo().assertIsDisplayed()
-        scrollSettingsToIndex(3)
-        composeRule.onNodeWithText(uiString(R.string.pref_emulator_dir)).performScrollTo().assertIsDisplayed()
+        scrollSettingsTo("Theme")
+        composeRule.onNodeWithText("Theme").assertIsDisplayed()
+        composeRule.onNodeWithText("Dark").assertIsDisplayed()
+        scrollSettingsTo("App language")
+        composeRule.onNode(hasText("App language") and hasClickAction()).assertIsDisplayed()
+        composeRule.onNodeWithText("Follow system settings").assertIsDisplayed()
+        scrollSettingsTo("Keep screen on")
+        composeRule.onNodeWithText("Keep screen on").assertIsDisplayed()
+        scrollSettingsTo(uiString(R.string.pref_emulator_dir))
+        composeRule.onNodeWithText(uiString(R.string.pref_emulator_dir)).assertIsDisplayed()
         composeRule.onNodeWithText("/data/jlmod").assertIsDisplayed()
-        scrollSettingsToIndex(4)
-        composeRule.onNode(hasText("Profiles") and hasClickAction())
-            .performScrollTo()
+        scrollSettingsTo(uiString(R.string.preset_manage))
+        composeRule.onNode(hasText(uiString(R.string.preset_manage)) and hasClickAction())
             .assertIsDisplayed()
     }
 
@@ -101,19 +105,19 @@ class SettingsComposeTest {
         val actions = RecordingSettingsActions()
         setSettingsContent(actions = actions)
 
+        scrollSettingsTo("Theme")
         composeRule.onNodeWithText("Theme").performClick()
         composeRule.onNodeWithText("Light").performClick()
-        scrollSettingsToIndex(1)
-        composeRule.onNode(hasText("App language") and hasClickAction()).performScrollTo().performClick()
+        scrollSettingsTo("App language")
+        composeRule.onNode(hasText("App language") and hasClickAction()).performClick()
         composeRule.onNodeWithText("English").performClick()
-        scrollSettingsToIndex(2)
-        composeRule.onNodeWithText("Keep screen on").performScrollTo().performClick()
-        scrollSettingsToIndex(4)
-        composeRule.onNode(hasText("Profiles") and hasClickAction())
-            .performScrollTo()
+        scrollSettingsTo("Keep screen on")
+        composeRule.onNodeWithText("Keep screen on").performClick()
+        scrollSettingsTo(uiString(R.string.preset_manage))
+        composeRule.onNode(hasText(uiString(R.string.preset_manage)) and hasClickAction())
             .performClick()
-        scrollSettingsToIndex(3)
-        composeRule.onNodeWithText(uiString(R.string.pref_emulator_dir)).performScrollTo().performClick()
+        scrollSettingsTo(uiString(R.string.pref_emulator_dir))
+        composeRule.onNodeWithText(uiString(R.string.pref_emulator_dir)).performClick()
 
         assertEquals(listOf("light", "en", "pref_wakelock_switch"), actions.changes)
         assertEquals(1, actions.profileClicks)
@@ -125,6 +129,7 @@ class SettingsComposeTest {
         val actions = RecordingSettingsActions()
         setSettingsContent(actions = actions)
 
+        scrollSettingsTo(uiString(R.string.pref_accent_title))
         composeRule.onNodeWithText(uiString(R.string.pref_accent_title)).performClick()
         composeRule.onNodeWithText("Teal").performClick()
 
@@ -157,11 +162,11 @@ class SettingsComposeTest {
         )
         setSettingsContent(state = state, actions = actions)
 
-        scrollSettingsToIndex(2)
-        composeRule.onNodeWithText(uiString(R.string.pref_apps_view)).performScrollTo().performClick()
+        scrollSettingsTo(uiString(R.string.pref_apps_view))
+        composeRule.onNodeWithText(uiString(R.string.pref_apps_view)).performClick()
         composeRule.onNodeWithText("Grid").performClick()
-        scrollSettingsToIndex(2)
-        composeRule.onNodeWithText(uiString(R.string.library_enhanced_icons_title)).performScrollTo().performClick()
+        scrollSettingsTo(uiString(R.string.library_enhanced_icons_title))
+        composeRule.onNodeWithText(uiString(R.string.library_enhanced_icons_title)).performClick()
 
         assertEquals(listOf("pref_apps_view=grid"), actions.libraryChoices)
         assertEquals(listOf("pref_apps_enhanced_icons=false"), actions.toggles)
@@ -194,9 +199,10 @@ class SettingsComposeTest {
         )
         setSettingsContent(state = gridState, actions = RecordingSettingsActions())
 
-        scrollSettingsToIndex(2)
-        composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_title)).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).performScrollTo().assertIsDisplayed()
+        scrollSettingsTo(uiString(R.string.library_grid_spacing_title))
+        composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_title)).assertIsDisplayed()
+        scrollSettingsTo(uiString(R.string.library_hide_grid_titles))
+        composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_show_list_description)).assertDoesNotExist()
     }
 
@@ -226,10 +232,84 @@ class SettingsComposeTest {
         )
         setSettingsContent(state = listState, actions = RecordingSettingsActions())
 
-        scrollSettingsToIndex(2)
-        composeRule.onNodeWithText(uiString(R.string.library_show_list_description)).performScrollTo().assertIsDisplayed()
+        scrollSettingsTo(uiString(R.string.library_show_list_description))
+        composeRule.onNodeWithText(uiString(R.string.library_show_list_description)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_title)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).assertDoesNotExist()
+    }
+
+    @Test
+    fun conditionalLibraryRowsKeepTheVisibleStorageRowAnchored() {
+        val viewChoice = SettingsChoice(
+            key = "pref_apps_view",
+            title = uiString(R.string.pref_apps_view),
+            selected = SettingsOption("list", "List"),
+            options = listOf(
+                SettingsOption("list", "List"),
+                SettingsOption("grid", "Grid"),
+            ),
+        )
+        val state = mutableStateOf(
+            sampleState().copy(
+                libraryChoices = listOf(viewChoice),
+                librarySwitches = listOf(
+                    SettingsSwitch(
+                        "pref_apps_show_list_description",
+                        uiString(R.string.library_show_list_description),
+                        null,
+                        true,
+                    ),
+                ),
+                // Keep enough content below Storage to scroll that row to the leading edge.
+                experimentalSwitches = List(20) { index ->
+                    SettingsSwitch("experimental-$index", "Experimental option $index", null, false)
+                },
+            ),
+        )
+        val actions = RecordingSettingsActions()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
+            ) {
+                JLModPlusTheme {
+                    SettingsScreen(state = state.value, actions = actions)
+                }
+            }
+        }
+
+        val storageTitle = uiString(R.string.pref_emulator_dir)
+        scrollSettingsTo(storageTitle)
+        val storageRow = composeRule.onNode(hasText(storageTitle) and hasClickAction())
+        storageRow.assertIsDisplayed()
+        val originalTop = storageRow.fetchSemanticsNode().boundsInRoot.top
+
+        composeRule.runOnIdle {
+            state.value = state.value.copy(
+                libraryChoices = listOf(
+                    viewChoice.copy(selected = SettingsOption("grid", "Grid")),
+                    SettingsChoice(
+                        key = "pref_apps_grid_spacing",
+                        title = uiString(R.string.library_grid_spacing_title),
+                        selected = SettingsOption("standard", "Standard (8 dp)"),
+                        options = listOf(SettingsOption("standard", "Standard (8 dp)")),
+                    ),
+                ),
+                librarySwitches = listOf(
+                    SettingsSwitch(
+                        "pref_apps_hide_grid_titles",
+                        uiString(R.string.library_hide_grid_titles),
+                        null,
+                        false,
+                    ),
+                ),
+            )
+        }
+
+        storageRow.assertIsDisplayed()
+        // Lazy scroll offsets are rounded to whole pixels when preceding rows change.
+        assertEquals(originalTop, storageRow.fetchSemanticsNode().boundsInRoot.top, 1f)
+        storageRow.performClick()
+        assertEquals(1, actions.directoryClicks)
     }
 
     private fun sampleState() = SettingsUiState(
@@ -261,10 +341,21 @@ class SettingsComposeTest {
         workingDirectory = "/data/jlmod",
     )
 
-    private fun scrollSettingsToIndex(index: Int) {
-        composeRule
-            .onNode(hasScrollAction())
-            .performScrollToIndex(index)
+    private fun scrollSettingsTo(title: String) {
+        val rowMatcher = hasText(title) and hasClickAction()
+        val list = composeRule.onNode(hasScrollAction())
+        list.performScrollToNode(rowMatcher)
+        // Lazy scroll semantics include the area drawn underneath the pinned app bar.
+        // Keep touch targets below its Back button instead of clicking an obscured row.
+        val backBounds = composeRule.onNode(hasContentDescription(uiString(R.string.action_back)))
+            .fetchSemanticsNode().boundsInRoot
+        val safeTop = backBounds.bottom + backBounds.height / 2f
+        val rowTop = composeRule.onNode(rowMatcher).fetchSemanticsNode().boundsInRoot.top
+        if (rowTop < safeTop) {
+            list.performSemanticsAction(SemanticsActions.ScrollBy) {
+                it(0f, rowTop - safeTop)
+            }
+        }
         composeRule.waitForIdle()
     }
 
