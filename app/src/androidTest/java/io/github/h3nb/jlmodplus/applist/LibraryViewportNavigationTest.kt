@@ -435,7 +435,19 @@ class LibraryViewportNavigationTest {
         activeList(APP_PREFIX).performScrollToNode(hasText(rowTitle(APP_PREFIX, 45)))
         composeRule.waitForIdle()
         assertTrue("Deep scroll was not reached", visibleRow(APP_PREFIX).title != rowTitle(APP_PREFIX, 0))
+        // A deep semantics scroll may leave the header hidden. Pull the chip back into
+        // reach before tapping it, while preserving a deep MIDlet viewport.
+        activeList(APP_PREFIX).performTouchInput {
+            val start = Offset(width * 0.5f, height * 0.35f)
+            down(start)
+            moveSmoothlyTo(Offset(start.x, start.y + height * 0.18f), durationMillis = 750)
+            advanceEventTime(350)
+            up()
+        }
+        composeRule.waitForIdle()
         val favorites = composeRule.onNodeWithText(uiString(R.string.library_filter_favorites))
+            .assertIsDisplayed()
+            .assertIsEnabled()
         val chipTop = favorites.fetchSemanticsNode().boundsInRoot.top
 
         favorites.performClick()

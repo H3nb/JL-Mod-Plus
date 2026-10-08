@@ -66,8 +66,9 @@ internal fun rememberLibraryHeaderActionGate(
  * height. Read offset during measurement (not composition) to avoid recomposing thousands
  * of MIDlets each frame. This keeps short filtered lists flush with the still-visible chips.
  *
- * The nested-scroll connection must consume matching header motion in onPreScroll, so that
- * content and placeholder cannot each move independently for the same gesture delta.
+ * Collapse consumes motion before Lazy. On reverse scrolling, Lazy first moves deep rows
+ * and the header follows in post-scroll. Once the spacer itself enters the viewport, grow
+ * it in pre-scroll instead so one drag never moves the rows twice.
  */
 @Composable
 internal fun LibraryChromeSpacer(
