@@ -570,7 +570,10 @@ class LibraryViewportNavigationTest {
         val searchBottom = composeRule.onNode(hasSetTextAction()).fetchSemanticsNode().boundsInRoot.bottom
         val resultTop = composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot.top
-        assertTrue("Search left a large empty gap above results", resultTop - searchBottom < 100f)
+        val gapPx = resultTop - searchBottom
+        val maximumGapPx = with(composeRule.density) { 100.dp.toPx() }
+        assertTrue("Search gap $gapPx px must be within 0..$maximumGapPx px",
+            gapPx in 0f..maximumGapPx)
         // Settled tab navigation closes search focus/IME so another surface remains usable.
         swipeToNextPage()
         composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()

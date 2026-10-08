@@ -3454,10 +3454,12 @@ private fun Bitmap.findDominantVisibleColor(): LibraryDominantColorSample? {
     if (width <= 0 || height <= 0) return null
     val step = maxOf(1, maxOf(width, height) / 64)
     val bins = IntArray(4096)
+    val row = IntArray(width)
     var visibleSamples = 0
     for (y in 0 until height step step) {
+        getPixels(row, 0, width, 0, y, width, 1)
         for (x in 0 until width step step) {
-            val pixel = this[x, y]
+            val pixel = row[x]
             if (((pixel ushr 24) and 0xff) < MIN_VISIBLE_ALPHA) continue
             bins[quantizeLibraryColor(pixel)]++
             visibleSamples++
@@ -3480,8 +3482,9 @@ private fun Bitmap.findDominantVisibleColor(): LibraryDominantColorSample? {
     var blue = 0L
     var matched = 0
     for (y in 0 until height step step) {
+        getPixels(row, 0, width, 0, y, width, 1)
         for (x in 0 until width step step) {
-            val pixel = this[x, y]
+            val pixel = row[x]
             if (((pixel ushr 24) and 0xff) < MIN_VISIBLE_ALPHA) continue
             if (quantizeLibraryColor(pixel) != dominantBin) continue
             red += AndroidColor.red(pixel)
