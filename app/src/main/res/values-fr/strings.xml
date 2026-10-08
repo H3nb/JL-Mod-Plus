@@ -859,7 +859,6 @@
     <string name="perf_overlay_group_pipeline">Temps du pipeline</string>
     <string name="perf_overlay_group_queue">Entrée et file d’attente</string>
     <string name="perf_overlay_group_resources">Ressources</string>
-    <string name="perf_overlay_group_temperature">Température</string>
     <string name="perf_overlay_group_runtime">Informations d’exécution</string>
     <string name="perf_overlay_fps">Images par seconde (FPS)</string>
     <string name="perf_overlay_cap">Limite FPS (CAP)</string>
@@ -877,9 +876,6 @@
     <string name="perf_overlay_ram">Utilisation RAM (RAM)</string>
     <string name="perf_overlay_java">Utilisation du tas Java (JAVA)</string>
     <string name="perf_overlay_native">Utilisation du tas natif (NATIVE)</string>
-    <string name="perf_overlay_cpu_temp">Température CPU (CPUT)</string>
-    <string name="perf_overlay_gpu_temp">Température GPU (GPUT)</string>
-    <string name="perf_overlay_battery_temp">Température de la batterie (BAT)</string>
     <string name="perf_overlay_thermal">État thermique (THRM)</string>
     <string name="perf_overlay_renderer">Moteur de rendu (REN)</string>
     <string name="perf_overlay_display">Fréquence de rafraîchissement de l’écran (DISP)</string>
