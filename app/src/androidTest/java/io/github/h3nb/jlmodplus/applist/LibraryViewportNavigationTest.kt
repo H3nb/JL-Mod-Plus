@@ -43,6 +43,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.librarydb.LibraryCollectionRow
+import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -202,19 +203,36 @@ class LibraryViewportNavigationTest {
     }
 
     @Test
-    fun partiallyCollapsedLibraryKeepsQuickFilterInteractiveAfterSearchIsObscured() {
-        val host = ViewportHost()
+    fun quickFilterPreservesPartialLibraryHeaderInList() =
+        verifyQuickFilterPreservesPartialHeader(LibraryLayout.List)
+
+    @Test
+    fun quickFilterPreservesPartialLibraryHeaderInGrid() =
+        verifyQuickFilterPreservesPartialHeader(LibraryLayout.Grid)
+
+    private fun verifyQuickFilterPreservesPartialHeader(layout: LibraryLayout) {
+        val initial = libraryState(layout)
+        val visibleState = mutableStateOf(initial)
+        val host = ViewportHost().apply {
+            onQuickViewChanged = { quickView ->
+                visibleState.value = visibleState.value.copy(
+                    quickView = quickView,
+                    // A single filtered result forces the Lazy viewport to clamp at the top.
+                    // That data-driven transition must not reopen the search/header.
+                    apps = if (quickView == LibraryQuickView.Favorites) initial.apps.takeLast(1)
+                        else initial.apps,
+                )
+            }
+        }
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
             ) {
-                JLModPlusTheme {
-                    LibraryScreen(state = libraryState(LibraryLayout.List), actions = host)
-                }
+                JLModPlusTheme { LibraryScreen(state = visibleState.value, actions = host) }
             }
         }
-        // Scroll by less than the full header height. The search row crosses the status
-        // bar, but the lower quick filters are still entirely inside the touch-safe area.
+
+        // The search row is obscured, while the lower quick-filter row is still in the safe area.
         activeList(APP_PREFIX).performTouchInput {
             val start = Offset(width * 0.5f, height * 0.7f)
             down(start)
@@ -227,20 +245,39 @@ class LibraryViewportNavigationTest {
         }
         composeRule.waitForIdle()
         composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all))
+        val favorites = uiString(R.string.library_filter_favorites)
+        val filterTop = composeRule.onNodeWithText(favorites)
             .assertIsDisplayed()
             .assertIsEnabled()
+            .fetchSemanticsNode().boundsInRoot.top
 
-        // A settled partial header must not snap open on its own.
+        composeRule.onNodeWithText(favorites).performClick()
         composeRule.waitForIdle()
+        assertEquals(LibraryQuickView.Favorites, visibleState.value.quickView)
         composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
+        assertEquals(
+            "Quick filter changed the collapsed header position",
+            filterTop,
+            composeRule.onNodeWithText(favorites)
+                .assertIsDisplayed()
+                .fetchSemanticsNode().boundsInRoot.top,
+            1f,
+        )
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true)
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
+            .assertDoesNotExist()
 
-        // Selecting an accessible quick filter begins the result set at the top,
-        // unlike returning to another pager tab (which retains its viewport).
+        // The same chrome position survives switching back to the larger projection.
         composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
         composeRule.waitForIdle()
-        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
-        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
+        assertEquals(LibraryQuickView.All, visibleState.value.quickView)
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
+        assertEquals(
+            filterTop,
+            composeRule.onNodeWithText(favorites).fetchSemanticsNode().boundsInRoot.top,
+            1f,
+        )
     }
 
     @Test
@@ -420,6 +457,8 @@ class LibraryViewportNavigationTest {
 
     private class ViewportHost : LibraryCollectionsHost {
         private val members = rows(MEMBER_PREFIX, 1)
+        var onQuickViewChanged: (LibraryQuickView) -> Unit = {}
+        override fun onQuickView(quickView: LibraryQuickView) = onQuickViewChanged(quickView)
         private val store = LibraryCollectionsUiStore().apply {
             publishCollections(List(80) { index ->
                 LibraryCollectionRow(
