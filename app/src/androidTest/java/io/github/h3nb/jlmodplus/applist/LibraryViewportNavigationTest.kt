@@ -231,9 +231,16 @@ class LibraryViewportNavigationTest {
             .assertIsDisplayed()
             .assertIsEnabled()
 
-        // A settled partial header must not snap back to full height.
+        // A settled partial header must not snap open on its own.
         composeRule.waitForIdle()
         composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
+
+        // Selecting an accessible quick filter begins the result set at the top,
+        // unlike returning to another pager tab (which retains its viewport).
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
