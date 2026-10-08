@@ -82,8 +82,8 @@ update every second; PSS, heap, hardware temperature, and thermal samples update
 every five seconds. Battery temperature follows Android battery broadcasts.
 
 Optional work is proportional to the selected metrics. `FrameMetrics` exists only
-when FPS, RFPS, or COAL needs frame-traffic counters. Renderer frame accounting is
-enabled only for RFPS or COAL. Host renderer timing remains independent: selecting
+when FPS, GFPS, or COAL needs frame-traffic counters. Renderer frame accounting is
+enabled only for FPS or COAL. Host renderer timing remains independent: selecting
 SUB or FRQ still records `PerformanceDiagnostics` renderer timing without creating
 or invoking `FrameMetrics`. Timing rings are allocated only for selected timing
 metrics, and process/device resource work follows the selected resource metrics.

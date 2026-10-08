@@ -111,6 +111,13 @@ public class FpsCounter extends TimerTask implements Layer {
 				}
 			}
 		}
+		if (!active) {
+			if (groups.length != 0) {
+				groups = new String[0][];
+				view.postInvalidate();
+			}
+			return;
+		}
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
 		v.fps = fps;
 		v.guestFps = guestFps;
@@ -123,7 +130,7 @@ public class FpsCounter extends TimerTask implements Layer {
 		v.renderer = owner.getPerformanceRenderer();
 		v.displayHz = owner.getPerformanceDisplayHz();
 		PerformanceDiagnostics diagnostics = owner.getPerformanceDiagnostics();
-		if (active && diagnostics != null) {
+		if (diagnostics != null) {
 			PerformanceDiagnostics.Snapshot diagnosticSnapshot = diagnostics.snapshot(now);
 			v.interval = diagnosticSnapshot.intervalMeanMs;
 			v.p95 = diagnosticSnapshot.intervalP95Ms;
@@ -136,13 +143,6 @@ public class FpsCounter extends TimerTask implements Layer {
 			v.submit = diagnosticSnapshot.submitMeanMs;
 			v.inputQueue = diagnosticSnapshot.inputQueueMeanMs;
 			v.frameQueue = diagnosticSnapshot.frameQueueMeanMs;
-		}
-		if (!active) {
-			if (groups.length != 0) {
-				groups = new String[0][];
-				view.postInvalidate();
-			}
-			return;
 		}
 		PerformanceResources.Snapshot system = resources.sample(now);
 		v.cpu = system.getCpuPercent();

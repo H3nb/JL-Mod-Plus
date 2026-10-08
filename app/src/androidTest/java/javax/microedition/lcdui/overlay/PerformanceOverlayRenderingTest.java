@@ -76,7 +76,7 @@ public class PerformanceOverlayRenderingTest {
 	@Test
 	public void diagnosticFontIsRegularWithOnlyAnOffsetShadow() {
 		CanvasWrapper graphics = new CanvasWrapper(false);
-		String text = "FPS 30/60 | RFPS 30";
+		String text = "FPS 30 | GFPS 30 | CAP 60";
 		Bitmap actual = Bitmap.createBitmap(600, 120, Bitmap.Config.ARGB_8888);
 		Bitmap expected = Bitmap.createBitmap(600, 120, Bitmap.Config.ARGB_8888);
 		graphics.bind(new android.graphics.Canvas(actual));
@@ -107,9 +107,9 @@ public class PerformanceOverlayRenderingTest {
 		graphics.bind(new android.graphics.Canvas(actual));
 		expectedGraphics.bind(new android.graphics.Canvas(expected));
 
-		graphics.measureDiagnosticText("FPS 30/60 | RFPS 30 | SPD 1.00x");
+		graphics.measureDiagnosticText("FPS 30 | GFPS 30 | CAP 60 | SPD 1.00x");
 		graphics.getDiagnosticTextHeight();
-		graphics.drawDiagnosticText("FPS 30/60", Color.WHITE, 10, 10);
+		graphics.drawDiagnosticText("FPS 30 | CAP 60", Color.WHITE, 10, 10);
 		assertEquals(width, graphics.measureStringWidth("Ordinary controls"), 0.01f);
 		assertEquals(height, graphics.getTextHeight(), 0.01f);
 		graphics.clear(Color.TRANSPARENT);
@@ -129,15 +129,16 @@ public class PerformanceOverlayRenderingTest {
 		String[][] groups = PerformanceOverlayText.format(ALL, exampleValues());
 		List<String> originalCells = new ArrayList<>();
 		for (String[] group : groups) originalCells.addAll(Arrays.asList(group));
-		assertEquals(23, Integer.bitCount(ALL));
-		// FPS and CAP share one cell; all 23 selected metrics therefore occupy 22 cells.
-		assertEquals(22, originalCells.size());
-		assertEquals("FPS 46/60", originalCells.get(0));
+		assertEquals(26, Integer.bitCount(ALL));
+		// FPS, GFPS and CAP are independent measurement cells.
+		assertEquals(26, originalCells.size());
+		assertEquals("FPS 46", originalCells.get(0));
 		List<String> labels = new ArrayList<>();
 		for (String cell : originalCells) labels.add(cell.substring(0, cell.indexOf(' ')));
-		assertEquals(Arrays.asList("FPS", "RFPS", "SPD", "FI", "P95", "MAX",
-				"PAINT", "COPY", "SUB", "INQ", "FRQ", "COAL", "CPU", "RAM", "JAVA",
-				"NATIVE", "CPUT", "GPUT", "BAT", "REN", "DISP", "THRM"), labels);
+		assertEquals(Arrays.asList("FPS", "GFPS", "CAP", "SPD", "GFI", "GP95", "GMAX",
+				"RFI", "RP95", "RMAX", "PAINT", "COPY", "SUB", "INQ", "FRQ",
+				"COAL", "CPU", "RAM", "JAVA", "NATIVE", "CPUT", "GPUT", "BAT",
+				"REN", "DISP", "THRM"), labels);
 
 		float margin = 12 * density();
 		int panelWidth = (int) Math.ceil(360 * density());
@@ -214,7 +215,10 @@ public class PerformanceOverlayRenderingTest {
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
 		v.fps = 46;
 		v.cap = 60;
-		v.renderFps = 45;
+		v.guestFps = 45;
+		v.renderInterval = 22.1;
+		v.renderP95 = 32.3;
+		v.renderMaximum = 72.0;
 		v.speedPercent = 100;
 		v.interval = 21.7;
 		v.p95 = 30.2;
