@@ -1182,7 +1182,7 @@ fun LibraryScreen(
                     ) {
                         FloatingActionButton(onClick = actions::onInstall) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_install),
+                                painter = painterResource(R.drawable.ic_add),
                                 contentDescription = stringResource(R.string.install),
                             )
                         }
