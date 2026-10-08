@@ -93,7 +93,7 @@ class LibraryViewportNavigationTest {
     }
 
     @Test
-    fun collectionViewportSurvivesHostIdReassignmentWithStableDatabaseIds() {
+    fun collectionViewportSurvivesHostIdReassignmentAndPrepend() {
         val host = ViewportHost()
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -391,9 +391,22 @@ class LibraryViewportNavigationTest {
         override fun collectionsStore() = store
         override fun onOpenCollection(collectionId: Long) = store.showMembers(collectionId, members)
         fun reassignMemberHostIds() {
+            val inserted = LibraryAppUiItem(
+                id = 9_999,
+                title = "Collection app -1",
+                author = "Vendor",
+                version = "1.0",
+                iconPath = null,
+                canReinstall = true,
+                databaseId = 9_999L,
+            )
+            // The new first row shifts every retained item by one index. Correct restoration
+            // needs the stable database key, not the old list index or transient host ID.
             store.showMembers(
                 COLLECTION_ID,
-                members.mapIndexed { index, app -> app.copy(id = 1_001 + index) },
+                listOf(inserted) + members.mapIndexed { index, app ->
+                    app.copy(id = 1_001 + index)
+                },
             )
         }
         override fun onDismissCollectionMembers() = store.dismissMembers()
