@@ -26,28 +26,32 @@ import io.github.h3nb.jlmodplus.config.PerformanceOverlayOptions;
 public final class PerformanceDiagnostics {
 	public static final int FRAME_INTERVAL = PerformanceOverlayOptions.FRAME_INTERVAL
 			| PerformanceOverlayOptions.P95_INTERVAL | PerformanceOverlayOptions.MAX_INTERVAL;
+	public static final int RENDER_CADENCE = PerformanceOverlayOptions.RENDER_INTERVAL
+			| PerformanceOverlayOptions.RENDER_P95_INTERVAL
+			| PerformanceOverlayOptions.RENDER_MAX_INTERVAL;
 	public static final int PAINT = PerformanceOverlayOptions.PAINT;
 	public static final int COPY = PerformanceOverlayOptions.COPY;
 	public static final int SUBMIT = PerformanceOverlayOptions.SUBMIT;
 	public static final int INPUT_QUEUE = PerformanceOverlayOptions.INPUT_QUEUE;
 	public static final int FRAME_QUEUE = PerformanceOverlayOptions.FRAME_QUEUE;
-	public static final int TIMING_MASK = FRAME_INTERVAL | PAINT | COPY | SUBMIT
+	public static final int TIMING_MASK = FRAME_INTERVAL | RENDER_CADENCE | PAINT | COPY | SUBMIT
 			| INPUT_QUEUE | FRAME_QUEUE;
 	private static final long WINDOW_NANOS = 5_000_000_000L;
 	private static final int CAPACITY = 4096;
 
 	private final int mask;
-	private final Samples interval, paint, copy, submit, inputQueue, frameQueue;
+	private final Samples interval, renderInterval, paint, copy, submit, inputQueue, frameQueue;
 	private volatile boolean active;
 	private long activeSinceNanos;
 	private long generation;
-	private boolean hasPublication;
-	private long previousPublicationNanos;
+	private boolean hasPublication, hasRender;
+	private long previousPublicationNanos, previousRenderNanos;
 	private long lastRenderedSequence;
 
 	public PerformanceDiagnostics(int mask) {
 		this.mask = mask;
 		interval = samples(FRAME_INTERVAL);
+		renderInterval = samples(RENDER_CADENCE);
 		paint = samples(PAINT);
 		copy = samples(COPY);
 		submit = samples(SUBMIT);
@@ -73,8 +77,10 @@ public final class PerformanceDiagnostics {
 		activeSinceNanos = nowNanos;
 		generation++;
 		hasPublication = false;
+		hasRender = false;
 		lastRenderedSequence = 0L;
 		clear(interval);
+		clear(renderInterval);
 		clear(paint);
 		clear(copy);
 		clear(submit);
@@ -112,6 +118,11 @@ public final class PerformanceDiagnostics {
 				|| publicationNanos < activeSinceNanos || consumptionNanos < publicationNanos
 				|| nowNanos < consumptionNanos) return;
 		lastRenderedSequence = sequence;
+		if (renderInterval != null && hasRender && nowNanos >= previousRenderNanos) {
+			renderInterval.add(nowNanos, nowNanos - previousRenderNanos);
+		}
+		hasRender = true;
+		previousRenderNanos = nowNanos;
 		if (frameQueue != null) frameQueue.add(nowNanos, consumptionNanos - publicationNanos);
 		if (submit != null && submitStartedNanos >= activeSinceNanos
 				&& nowNanos >= submitStartedNanos) {
@@ -132,9 +143,10 @@ public final class PerformanceDiagnostics {
 
 	public Snapshot snapshot(long nowNanos) {
 		long cutoff = nowNanos - WINDOW_NANOS;
-		long[] percentileValues = null;
-		int percentileCount = 0;
-		double intervalMean, intervalMax, paintMean, copyMean, submitMean, inputMean, frameMean;
+		long[] percentileValues = null, renderPercentileValues = null;
+		int percentileCount = 0, renderPercentileCount = 0;
+		double intervalMean, intervalMax, renderIntervalMean, renderIntervalMax;
+		double paintMean, copyMean, submitMean, inputMean, frameMean;
 		synchronized (this) {
 			if (interval != null && (mask & PerformanceOverlayOptions.P95_INTERVAL) != 0) {
 				percentileValues = new long[interval.count];
@@ -144,6 +156,14 @@ public final class PerformanceDiagnostics {
 					? mean(interval, cutoff) : Double.NaN;
 			intervalMax = (mask & PerformanceOverlayOptions.MAX_INTERVAL) != 0
 					? maximum(interval, cutoff) : Double.NaN;
+			if (renderInterval != null && (mask & PerformanceOverlayOptions.RENDER_P95_INTERVAL) != 0) {
+				renderPercentileValues = new long[renderInterval.count];
+				renderPercentileCount = renderInterval.copyCurrent(cutoff, renderPercentileValues);
+			}
+			renderIntervalMean = (mask & PerformanceOverlayOptions.RENDER_INTERVAL) != 0
+					? mean(renderInterval, cutoff) : Double.NaN;
+			renderIntervalMax = (mask & PerformanceOverlayOptions.RENDER_MAX_INTERVAL) != 0
+					? maximum(renderInterval, cutoff) : Double.NaN;
 			paintMean = mean(paint, cutoff);
 			copyMean = mean(copy, cutoff);
 			submitMean = mean(submit, cutoff);
@@ -156,8 +176,15 @@ public final class PerformanceDiagnostics {
 			Arrays.sort(percentileValues, 0, percentileCount);
 			p95 = percentileValues[(int) Math.ceil(percentileCount * 0.95) - 1] / 1_000_000.0;
 		}
-		return new Snapshot(intervalMean, p95, intervalMax, paintMean, copyMean, submitMean,
-				inputMean, frameMean);
+		double renderP95 = Double.NaN;
+		if (renderPercentileCount != 0) {
+			Arrays.sort(renderPercentileValues, 0, renderPercentileCount);
+			renderP95 = renderPercentileValues[(int) Math.ceil(renderPercentileCount * 0.95) - 1]
+					/ 1_000_000.0;
+		}
+		return new Snapshot(intervalMean, p95, intervalMax,
+				renderIntervalMean, renderP95, renderIntervalMax,
+				paintMean, copyMean, submitMean, inputMean, frameMean);
 	}
 
 	private static double mean(Samples samples, long cutoff) {
@@ -170,15 +197,20 @@ public final class PerformanceDiagnostics {
 
 	public static final class Snapshot {
 		public final double intervalMeanMs, intervalP95Ms, intervalMaxMs;
+		public final double renderIntervalMeanMs, renderIntervalP95Ms, renderIntervalMaxMs;
 		public final double paintMeanMs, copyMeanMs, submitMeanMs;
 		public final double inputQueueMeanMs, frameQueueMeanMs;
 
 		private Snapshot(double intervalMeanMs, double intervalP95Ms, double intervalMaxMs,
+				double renderIntervalMeanMs, double renderIntervalP95Ms, double renderIntervalMaxMs,
 				double paintMeanMs, double copyMeanMs, double submitMeanMs,
 				double inputQueueMeanMs, double frameQueueMeanMs) {
 			this.intervalMeanMs = intervalMeanMs;
 			this.intervalP95Ms = intervalP95Ms;
 			this.intervalMaxMs = intervalMaxMs;
+			this.renderIntervalMeanMs = renderIntervalMeanMs;
+			this.renderIntervalP95Ms = renderIntervalP95Ms;
+			this.renderIntervalMaxMs = renderIntervalMaxMs;
 			this.paintMeanMs = paintMeanMs;
 			this.copyMeanMs = copyMeanMs;
 			this.submitMeanMs = submitMeanMs;

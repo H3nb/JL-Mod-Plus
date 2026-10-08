@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsDisplayed
@@ -37,7 +38,10 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -79,31 +83,35 @@ class PerformanceOverlayOptionsComposeTest {
                 }
             }
         }
-        val displayTag = "perf_metric_${PerformanceOverlayOptions.DISPLAY}"
+        val thermalTag = "perf_metric_${PerformanceOverlayOptions.THERMAL}"
         composeRule.onNodeWithText("Done").assertIsDisplayed()
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToNode(hasTestTag(displayTag))
-        composeRule.onNodeWithTag(displayTag).assertIsOn().performClick().assertIsOff()
+            .performScrollToNode(hasTestTag(thermalTag))
+        // ScrollToNode composes the distant row; ScrollTo fully exposes its hit target.
+        // Tap the checkbox side, clear of the centered scroll-more affordance.
+        composeRule.onNodeWithTag(thermalTag).performScrollTo().assertIsDisplayed()
+            .assertIsOn().performTouchInput { click(Offset(24f, center.y)) }
+        composeRule.onNodeWithTag(thermalTag).assertIsOff()
         // Exercise native Back dismissal for the dialog.
         InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.onNodeWithText("Done").assertDoesNotExist()
 
         composeRule.onNodeWithText("Open Parameters").performClick()
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToNode(hasTestTag(displayTag))
-        composeRule.onNodeWithTag(displayTag).assertIsOff()
+            .performScrollToNode(hasTestTag(thermalTag))
+        composeRule.onNodeWithTag(thermalTag).assertIsOff()
         composeRule.onNodeWithText("Done").assertIsDisplayed().performClick()
         composeRule.onNodeWithText("Done").assertDoesNotExist()
         composeRule.runOnIdle {
             assertEquals(
-                PerformanceOverlayOptions.ALL and PerformanceOverlayOptions.DISPLAY.inv(),
+                PerformanceOverlayOptions.ALL and PerformanceOverlayOptions.THERMAL.inv(),
                 metrics,
             )
         }
     }
 
     @Test
-    fun presetAndLastCheckboxRemainReachableAndCustomSelectionPersists() {
+    fun presetAndCustomCheckboxRemainReachableAndCustomSelectionPersists() {
         var form by mutableStateOf(ConfigFormState.builder().showFps(true).build())
         composeRule.setContent {
             JLModPlusTheme {
@@ -112,27 +120,32 @@ class PerformanceOverlayOptionsComposeTest {
         }
         composeRule.onNodeWithText(uiString(R.string.perf_overlay_preset)).performClick()
         composeRule.onNodeWithText("Debug").performClick()
-        composeRule.runOnIdle { assertEquals(PerformanceOverlayOptions.ALL, form.performanceOverlayMetrics) }
+        composeRule.runOnIdle { assertEquals(PerformanceOverlayOptions.DEBUG, form.performanceOverlayMetrics) }
 
         composeRule.onNodeWithText(uiString(R.string.perf_overlay_parameters)).performClick()
-        composeRule.onNodeWithTag("perf_metric_${PerformanceOverlayOptions.FPS}").assertIsOn()
-        val displayTag = "perf_metric_${PerformanceOverlayOptions.DISPLAY}"
+        val fpsTag = "perf_metric_${PerformanceOverlayOptions.FPS}"
+        // A fully visible row must respond to its center, not just its checkbox.
+        composeRule.onNodeWithTag(fpsTag).assertIsOn().performClick().assertIsOff()
+            .performClick().assertIsOn()
+        val inputTag = "perf_metric_${PerformanceOverlayOptions.INPUT_QUEUE}"
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToNode(hasTestTag(displayTag))
-        composeRule.onNodeWithTag(displayTag).assertIsOn().performClick().assertIsOff()
+            .performScrollToNode(hasTestTag(inputTag))
+        composeRule.onNodeWithTag(inputTag).performScrollTo().assertIsDisplayed()
+            .assertIsOn().performTouchInput { click(Offset(24f, center.y)) }
+        composeRule.onNodeWithTag(inputTag).assertIsOff()
         composeRule.onNodeWithText("Done").performClick()
         composeRule.onNodeWithText("Custom").assertExists()
         composeRule.runOnIdle {
             assertEquals(
-                PerformanceOverlayOptions.ALL and PerformanceOverlayOptions.DISPLAY.inv(),
+                PerformanceOverlayOptions.DEBUG and PerformanceOverlayOptions.INPUT_QUEUE.inv(),
                 form.performanceOverlayMetrics,
             )
         }
 
         composeRule.onNodeWithText(uiString(R.string.perf_overlay_parameters)).performClick()
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToNode(hasTestTag(displayTag))
-        composeRule.onNodeWithTag(displayTag).assertIsOff()
+            .performScrollToNode(hasTestTag(inputTag))
+        composeRule.onNodeWithTag(inputTag).assertIsOff()
         composeRule.onNodeWithText("Done").performClick()
     }
 }

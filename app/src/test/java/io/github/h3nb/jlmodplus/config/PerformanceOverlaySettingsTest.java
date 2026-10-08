@@ -45,7 +45,7 @@ public class PerformanceOverlaySettingsTest {
 		profile.dir = Files.createTempDirectory("jlmod-perf-overlay").toFile();
 		profile.dir.deleteOnExit();
 		profile.version = ProfileModel.VERSION;
-		int custom = PerformanceOverlayOptions.CPU | PerformanceOverlayOptions.BATTERY_TEMP;
+		int custom = PerformanceOverlayOptions.CPU | PerformanceOverlayOptions.NATIVE_HEAP;
 		ConfigFormState draft = ConfigFormState.fromProfile(profile, "")
 				.toBuilder().performanceOverlayMetrics(custom)
 				.performanceOverlayPosition(PerformanceOverlayOptions.BOTTOM_RIGHT)
@@ -95,11 +95,14 @@ public class PerformanceOverlaySettingsTest {
 						| PerformanceOverlayOptions.COPY
 						| PerformanceOverlayOptions.SUBMIT
 						| PerformanceOverlayOptions.INPUT_QUEUE
-						| PerformanceOverlayOptions.FRAME_QUEUE));
+						| PerformanceOverlayOptions.FRAME_QUEUE
+						| PerformanceOverlayOptions.RENDER_INTERVAL
+						| PerformanceOverlayOptions.RENDER_P95_INTERVAL
+						| PerformanceOverlayOptions.RENDER_MAX_INTERVAL));
 		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
 				PerformanceOverlayOptions.FPS));
 		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
-				PerformanceOverlayOptions.RENDER_FPS));
+				PerformanceOverlayOptions.GUEST_FPS));
 		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
 				PerformanceOverlayOptions.COALESCED));
 	}
@@ -108,17 +111,43 @@ public class PerformanceOverlaySettingsTest {
 	public void rendererMetricsAreRequiredOnlyForRenderConsumptionSelections() {
 		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(0));
 		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(
-				PerformanceOverlayOptions.FPS
+				PerformanceOverlayOptions.GUEST_FPS
 						| PerformanceOverlayOptions.CPU
 						| PerformanceOverlayOptions.RAM
 						| PerformanceOverlayOptions.SUBMIT
 						| PerformanceOverlayOptions.FRAME_QUEUE));
 		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
-				PerformanceOverlayOptions.RENDER_FPS));
+				PerformanceOverlayOptions.FPS));
 		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
 				PerformanceOverlayOptions.COALESCED));
 		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
 				PerformanceOverlayOptions.FPS | PerformanceOverlayOptions.COALESCED));
+	}
+
+	@Test
+	public void debugIsCuratedAndCustomCanStillSelectAll() {
+		assertTrue((PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.FPS) != 0);
+		assertTrue((PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.INPUT_QUEUE) != 0);
+		assertEquals(0, PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.DISPLAY);
+		assertTrue(PerformanceOverlayOptions.DEBUG != PerformanceOverlayOptions.ALL);
+		assertFalse(PerformanceOverlayOptions.requiresFrameMetrics(
+				PerformanceOverlayOptions.RENDER_INTERVAL));
+		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(
+				PerformanceOverlayOptions.RENDER_INTERVAL));
+	}
+
+	@Test
+	public void retiredTemperatureBitsAreClearedWithoutRenumberingActiveMetrics() {
+		int retired = (1 << 17) | (1 << 18) | (1 << 19);
+		assertEquals(23, Integer.bitCount(PerformanceOverlayOptions.ALL));
+		assertEquals(0, PerformanceOverlayOptions.sanitize(retired));
+		int expected = PerformanceOverlayOptions.THERMAL
+				| PerformanceOverlayOptions.RENDER_MAX_INTERVAL;
+		assertEquals(expected, PerformanceOverlayOptions.sanitize(retired | expected));
+		ProfileModel oldCustomProfile = new ProfileModel();
+		oldCustomProfile.performanceOverlayMetrics = retired | expected;
+		assertEquals(expected,
+				ConfigFormState.fromProfile(oldCustomProfile, "").performanceOverlayMetrics);
 	}
 
 	@Test

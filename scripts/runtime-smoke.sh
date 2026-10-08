@@ -6,6 +6,8 @@ trap 'adb logcat -d -v threadtime > runtime-logcat.txt 2>&1 || true' EXIT
 
 selectors=(
   'javax.microedition.lcdui.graphics.AmbientColorSamplerTest'
+  'javax.microedition.lcdui.overlay.PerformanceOverlayRenderingTest'
+  'io.github.h3nb.jlmodplus.config.PerformanceOverlayOptionsComposeTest'
   'javax.microedition.media.MediaBoundaryRuntimeTest'
   'io.github.h3nb.jlmodplus.librarydb.LibraryDatabaseAndroidTest'
   'io.github.h3nb.jlmodplus.crashes.CrashReportsComposeTest'

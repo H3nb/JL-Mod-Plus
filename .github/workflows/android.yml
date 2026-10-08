@@ -79,6 +79,8 @@ jobs:
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
+          # Ubuntu 26.04 has cmdline-tools 20.0 preinstalled; avoid fetching 22.0.
+          cmdline-tools-version: '14742923'
           packages: 'platform-tools platforms;android-37.0'
 
       - name: Provision NDK r30 for native-producing modes
@@ -270,6 +272,8 @@ jobs:
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
+          # Ubuntu 26.04 has cmdline-tools 20.0 preinstalled; avoid fetching 22.0.
+          cmdline-tools-version: '14742923'
           packages: 'platform-tools platforms;android-37.0'
 
       - name: Prepare Gradle wrapper
@@ -338,6 +342,8 @@ jobs:
       - name: Set up Android SDK and platform 37
         uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
+          # Ubuntu 26.04 has cmdline-tools 20.0 preinstalled; avoid fetching 22.0.
+          cmdline-tools-version: '14742923'
           packages: 'platform-tools platforms;android-37.0 ndk;30.0.16248370'
 
       - name: Prepare Gradle wrapper

@@ -2,7 +2,16 @@
 
 The profile's Performance Overlay switch retains the persisted `ShowFps` key.
 `PerformanceOverlayMetrics` stores independent metric bits; missing fields in old
-profiles use Standard, while an explicitly empty selection remains empty.
+profiles use Standard, while an explicitly empty selection remains empty. The
+released legacy `ShowFps` key is preserved. Metric bits are not renumbered;
+existing development profiles may retain custom selections. Because this multi-metric
+feature has not been released, the existing pre-release bit positions 0 and 2 now
+identify renderer-consumption FPS and guest-publication GFPS respectively; custom
+selections created with earlier development builds are interpreted under these new
+semantics rather than migrated through an otherwise unnecessary released-profile
+schema. The legacy `ShowFps` switch remains compatible. The three retired
+sensor-temperature bit positions (17–19) are never repurposed, and sanitization
+clears those bits without shifting surviving options.
 `PerformanceOverlayPosition` selects one of four corners. Presets derive from
 the selected bits, so there is no separate preset state to become inconsistent.
 
@@ -26,57 +35,79 @@ is clipped to the safe viewport; reduce the selection or choose another position
 
 ## Measurement definitions
 
-All rates and durations use host monotonic time, independent of the guest clock
-multiplier. Speed is the manual `TimingSession` setting, not achieved
-original-device speed. There is no universal original-device FPS target for
-Java ME applications.
+All observed rates and intervals use a host monotonic clock and the active
+Canvas surface lifecycle. Guest/publication, host renderer-consumption, and
+physical display presentation are distinct events. This overlay currently
+measures the first two, **not** actual physical display presentation. Guest
+publications can contain identical pixels, and an Android renderer callback
+is not a guarantee of a completed display scanout.
+
+Java ME MIDlets have no universal native frame-rate target. Speed is the
+configured guest-clock multiplier, not measured achieved original-device
+speed. A low FPS in a static or deliberately low-rate MIDlet is not by itself
+a performance failure. No automatically inferred achieved-speed, dropped-frame
+alarm, or GPU utilization is included.
 
 | Label | Measurement |
 | --- | --- |
-| FPS | Complete guest buffer publications per real second, including visually unchanged buffers. |
-| CAP | Effective host pacing target after applying the same active `TimingSession` multiplier used by `FramePacer`. It remains independently reportable for an incompatible timing transform because host pacing still has its normal timing baseline. If the timing session has closed, CAP is unavailable. It is not the game's native target or a guaranteed ceiling for non-blocking callback paths. FPS and CAP combine as `FPS actual/cap`; an unrestricted target is `∞`. |
-| RFPS | New guest mailbox sequences consumed by the host renderer per real second; repeated draws of one sequence are excluded. Not physical display presentation. |
-| SPD | Authoritative manual emulation-speed multiplier from a compatible timing transform. An incompatible transform or closed timing session is `—`, never an assumed `1.00x`. |
-| FI / P95 / MAX | Mean, nearest-rank 95th percentile, and maximum gaps between complete guest publications. Not render work or input latency. |
-| PAINT | Mean elapsed time in the guest paint callback; absent for games using only flush APIs. |
-| COPY | Mean elapsed time in buffer copy operations. |
-| SUB | Mean elapsed host renderer submission duration for a newly consumed sequence. Includes host work and waits; not CPU utilization, GPU completion, or display presentation. |
-| INQ | Mean time from input event queue entry to guest callback dispatch. Not physical-touch-to-display latency. |
-| FRQ | Mean time from publication to renderer acquisition of that buffer under the buffer lock, before drawing/uploading it. |
-| COAL | Published mailbox sequences replaced before rendering, recorded per real second at consumption; not a percentage or configured frameskip. |
-| CPU | Process CPU time divided by host elapsed time: 100% equals one occupied core; multiple threads may exceed 100%. Does not indicate CPU frequency or total device utilization. |
-| RAM | Runtime process proportional set size (PSS), in MiB. Not all JL-Mod processes or just the guest's allocations. |
-| JAVA / NATIVE | Used Java heap / allocated native heap in MiB; not additive components of PSS. |
-| CPUT / GPUT | Hottest valid current CPU/GPU sensor reading from Android's hardware properties service, falling back to readable thermal zones with explicit component labels. Restricted or missing sensors produce `—`; battery readings are never substituted. |
-| BAT | Android's reported battery temperature. |
-| THRM | Android thermal severity, when supported. |
-| REN / DISP | Host rendering backend / active display refresh rate reported by Android. Neither is the maximum supported display rate used by compatibility pacing. |
+| FPS | Distinct guest mailbox sequences consumed by the host rendering path per real second. Repeated host redraws of the same sequence do not count; not confirmed display presentation. |
+| GFPS | Complete guest buffer publications per real second, including visually unchanged buffers. |
+| CAP | Effective host pacing target from the configured FPS limit or maximum supported display refresh rate, scaled by the manual speed multiplier. With no TimingSession, CAP and FramePacer use 100% speed. A closed session or a nonpositive effective pacing input disables FramePacer and reports `OFF`; missing data reports `—`. The configured value 0 means display maximum, **not** unlimited. Internal `setLimitFps(-1)` restores the profile limit before pacing is resolved. CAP is neither native target FPS nor a guaranteed bound for non-blocking callbacks. |
+| SPD | Configured TimingSession guest-clock multiplier, exposed only for a runtime with the required universal timing transform. Not achieved emulation speed; if unavailable, display —, never assume 1.00x. CAP can remain available when SPD is unavailable. |
+| GFI / GP95 / GMAX | Mean, nearest-rank 95th percentile, and maximum host-time intervals between complete guest publications. |
+| RFI / RP95 / RMAX | Mean, nearest-rank 95th percentile, and maximum host-time intervals between distinct successful renderer frame-consumption observations. Not hardware presentation intervals. |
+| PAINT | Mean elapsed time in guest paint callbacks; absent for games that only use flush APIs. |
+| COPY | Mean elapsed time in buffer-copy operations; not necessarily one copy per frame. |
+| SUB | Mean elapsed host renderer submission duration for newly consumed sequences. Includes host work and waits, not measured GPU execution or display scanout. |
+| INQ | Mean time from input event queue entry to guest callback dispatch; not touch-to-photon latency. |
+| FRQ | Mean time from guest publication to host renderer acquisition under the presentation buffer lock. |
+| COAL | Published mailbox sequences replaced before rendering, recorded at consumption per real second; not necessarily a defect or intentional frameskip. |
+| CPU | Process CPU time per wall time, displayed in core equivalents: 1.00c equals 100% of one core. Includes all runtime-process threads and can exceed 1.00c. Not device-wide utilization. |
+| RAM | Runtime process proportional set size (PSS), MiB; not just guest allocations or all processes of the application. |
+| JAVA / NATIVE | Used Java heap / allocated native heap in MiB, not additive components of PSS. |
+| THRM | Android thermal severity via PowerManager on API 29+. Unavailable on older devices; not a measured CPU/GPU temperature or proof of actual throttling. |
+| REN / DISP | Host renderer backend / active display refresh rate reported by Android, not the maximum supported pacing rate. |
+
+The HUD deliberately names both guest and renderer cadence domains. It never
+treats FPS/CAP as a percentage or combines independent PAINT, COPY, and SUB
+measurements into a fabricated total frame duration. Intervals expire after
+their sampling window and then become —; no observed frame may legitimately
+yield an FPS of zero.
+
+Presets are Minimal (FPS/CAP/SPD), Standard (the default concise renderer and
+guest cadence diagnostics), Debug (curated useful diagnostics), and Custom
+(individual metric bits). A manual selection of all metrics remains possible,
+but selecting Debug does not automatically activate every sensor. Existing
+metric-bit identities remain stable; additional renderer interval options use
+new bits. An explicit empty selection stays empty.
 
 Text refreshes every 500ms. Frame rates use elapsed windows of at least one real
 second. Timing statistics retain up to the newest 4096 samples within five real
 seconds; sufficiently high event rates shorten this bounded window. CPU samples
-update every second; PSS, heap, hardware temperature, and thermal samples update
-every five seconds. Battery temperature follows Android battery broadcasts.
+update every second; PSS, heap, and Android thermal severity update every five
+seconds. A frame interval following an intentionally static MIDlet screen
+includes the idle gap and is not automatically a stutter.
 
-Optional work is proportional to the selected metrics. `FrameMetrics` exists only
-when FPS, RFPS, or COAL needs frame-traffic counters. Renderer frame accounting is
-enabled only for RFPS or COAL. Host renderer timing remains independent: selecting
+Optional work is proportional to the selected metrics. Host CAP, renderer identity,
+display Hz, speed and resource snapshots are queried only when selected.
+Render-only cadence
+captures publication timestamps but does not record guest interval statistics.
+`FrameMetrics` exists only
+when FPS, GFPS, or COAL needs frame-traffic counters. Renderer frame accounting is
+enabled only for FPS or COAL. Host renderer timing remains independent: selecting
 SUB or FRQ still records `PerformanceDiagnostics` renderer timing without creating
 or invoking `FrameMetrics`. Timing rings are allocated only for selected timing
 metrics, and process/device resource work follows the selected resource metrics.
 When `ShowFps` is true with an explicit zero metric mask, no overlay layer, timer,
 resource sampler, `FrameMetrics`, or `PerformanceDiagnostics` is created.
+Renderer cadence measurements use the same mailbox sequence and visibility
+boundary as FPS, without a second frame-ID authority. Debug timing is still
+optional and writes primitive samples into bounded, preallocated rings.
 
-The temperature fallback discovers `/sys/class/thermal/thermal_zone*/type` once
-per sampler and reads selected sensors' `temp` files on the five-second worker
-interval. It recognizes `cpu`, `cpuss`, and `gpu` labels with optional numeric
-hyphen suffixes, including the CPU clusters and GPU sensors verified on the
-reported device. Values use the Linux thermal ABI's millidegrees Celsius; no
-unit guessing, root, shell, Shizuku, or zone-number mapping is used by the app.
-Ambiguous board, battery, anonymous TSENS, and SoC labels are excluded. Individual
-read failures remain unavailable and never retain an old temperature. Different
-tools may select or aggregate sensors differently; these values do not promise
-the same reading as DevCheck.
+Android thermal severity is sampled through PowerManager only when THRM is
+selected. No hardware temperature calls, sysfs thermal scans, or battery
+temperature receiver remain. Device-specific sensor readings were retired
+because availability and interpretation vary across Android versions and vendors.
 
 Unavailable or insufficient data is `—`, not zero. A real zero-FPS static buffer
 is not treated as a failure. The overlay never infers achieved speed or marks a
@@ -104,10 +135,10 @@ finish against its old object, but that object is no longer sampled or owned by 
 replacement surface.
 
 Visibility boundaries reset sampler windows and `PerformanceDiagnostics` active
-state. When RFPS or COAL is selected, effective-visible activation serializes
+state. When FPS or COAL is selected, effective-visible activation serializes
 `FrameMetrics.abandonPendingFrames(currentMailboxSequence)` with renderer
 `recordRender(sequence)`. Publications pending before activation are therefore
-absorbed into the boundary rather than appearing as new-window RFPS/COAL. A stale
+absorbed into the boundary rather than appearing as new-window FPS/COAL. A stale
 renderer callback either finishes before the boundary and is covered by the new
 sampling baseline, or executes afterward and is rejected because its sequence is
 not newer. No extra epoch or publication counter is required.
