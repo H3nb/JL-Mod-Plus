@@ -46,7 +46,7 @@ public class FpsCounter extends TimerTask implements Layer {
 	private boolean stopped;
 	private FrameMetricsSnapshot previousSnapshot;
 	private long previousSampleNanos, previousGeneration = Long.MIN_VALUE;
-	private double fps = Double.NaN, renderFps = Double.NaN, coalesced = Double.NaN;
+	private double fps = Double.NaN, guestFps = Double.NaN, coalesced = Double.NaN;
 	// UI-thread layout cache; reflow only when text or available bounds change.
 	private String[][] laidOutGroups;
 	private String[] rows = new String[0];
@@ -94,7 +94,7 @@ public class FpsCounter extends TimerTask implements Layer {
 			previousSnapshot = snapshot;
 			previousSampleNanos = now;
 			previousGeneration = generation;
-			fps = renderFps = coalesced = Double.NaN;
+			fps = guestFps = coalesced = Double.NaN;
 			resources.resetCpuSample();
 		} else if (snapshot != null) {
 			if (previousSnapshot == null) {
@@ -103,8 +103,8 @@ public class FpsCounter extends TimerTask implements Layer {
 			} else {
 				long elapsed = now - previousSampleNanos;
 				if (elapsed >= 1_000_000_000L) {
-					fps = rate(snapshot.gameFrames(), previousSnapshot.gameFrames(), elapsed);
-					renderFps = rate(snapshot.renderFrames(), previousSnapshot.renderFrames(), elapsed);
+					fps = rate(snapshot.renderFrames(), previousSnapshot.renderFrames(), elapsed);
+					guestFps = rate(snapshot.gameFrames(), previousSnapshot.gameFrames(), elapsed);
 					coalesced = rate(snapshot.coalescedFrames(), previousSnapshot.coalescedFrames(), elapsed);
 					previousSnapshot = snapshot;
 					previousSampleNanos = now;
@@ -113,7 +113,7 @@ public class FpsCounter extends TimerTask implements Layer {
 		}
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
 		v.fps = fps;
-		v.renderFps = renderFps;
+		v.guestFps = guestFps;
 		v.coalesced = coalesced;
 		v.cap = owner.getPerformanceFpsCap();
 		TimingSnapshot timing = timingSession == null ? null : timingSession.snapshotIfOpen();

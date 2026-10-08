@@ -1010,7 +1010,7 @@ private val overlayParameterGroups = listOf(
     OverlayParameterGroup(R.string.perf_overlay_group_rate, listOf(
         OverlayParameter(PerformanceOverlayOptions.FPS, R.string.perf_overlay_fps),
         OverlayParameter(PerformanceOverlayOptions.CAP, R.string.perf_overlay_cap),
-        OverlayParameter(PerformanceOverlayOptions.RENDER_FPS, R.string.perf_overlay_render_fps),
+        OverlayParameter(PerformanceOverlayOptions.GUEST_FPS, R.string.perf_overlay_render_fps),
         OverlayParameter(PerformanceOverlayOptions.SPEED, R.string.perf_overlay_speed),
     )),
     OverlayParameterGroup(R.string.perf_overlay_group_timing, listOf(

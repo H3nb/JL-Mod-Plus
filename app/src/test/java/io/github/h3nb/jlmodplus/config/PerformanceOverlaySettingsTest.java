@@ -99,7 +99,7 @@ public class PerformanceOverlaySettingsTest {
 		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
 				PerformanceOverlayOptions.FPS));
 		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
-				PerformanceOverlayOptions.RENDER_FPS));
+				PerformanceOverlayOptions.GUEST_FPS));
 		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
 				PerformanceOverlayOptions.COALESCED));
 	}
@@ -108,13 +108,13 @@ public class PerformanceOverlaySettingsTest {
 	public void rendererMetricsAreRequiredOnlyForRenderConsumptionSelections() {
 		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(0));
 		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(
-				PerformanceOverlayOptions.FPS
+				PerformanceOverlayOptions.GUEST_FPS
 						| PerformanceOverlayOptions.CPU
 						| PerformanceOverlayOptions.RAM
 						| PerformanceOverlayOptions.SUBMIT
 						| PerformanceOverlayOptions.FRAME_QUEUE));
 		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
-				PerformanceOverlayOptions.RENDER_FPS));
+				PerformanceOverlayOptions.FPS));
 		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
 				PerformanceOverlayOptions.COALESCED));
 		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(

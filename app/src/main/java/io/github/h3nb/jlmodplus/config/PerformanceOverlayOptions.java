@@ -18,7 +18,8 @@ package io.github.h3nb.jlmodplus.config;
 public final class PerformanceOverlayOptions {
 	public static final int FPS = 1;
 	public static final int CAP = 1 << 1;
-	public static final int RENDER_FPS = 1 << 2;
+	/** Guest publications; preserves the pre-release bit identity. */
+	public static final int GUEST_FPS = 1 << 2;
 	public static final int SPEED = 1 << 3;
 	public static final int FRAME_INTERVAL = 1 << 4;
 	public static final int P95_INTERVAL = 1 << 5;
@@ -41,7 +42,7 @@ public final class PerformanceOverlayOptions {
 	public static final int DISPLAY = 1 << 22;
 	public static final int ALL = (1 << 23) - 1;
 	public static final int MINIMAL = FPS | CAP | SPEED;
-	public static final int STANDARD = MINIMAL | RENDER_FPS | FRAME_INTERVAL | CPU | RAM | DISPLAY;
+	public static final int STANDARD = MINIMAL | GUEST_FPS | FRAME_INTERVAL | CPU | RAM | DISPLAY;
 
 	public static final int TOP_LEFT = 0;
 	public static final int TOP_RIGHT = 1;
@@ -57,11 +58,11 @@ public final class PerformanceOverlayOptions {
 	}
 
 	public static boolean requiresFrameMetrics(int metrics) {
-		return (sanitize(metrics) & (FPS | RENDER_FPS | COALESCED)) != 0;
+		return (sanitize(metrics) & (FPS | GUEST_FPS | COALESCED)) != 0;
 	}
 
 	public static boolean requiresRendererMetrics(int metrics) {
-		return (sanitize(metrics) & (RENDER_FPS | COALESCED)) != 0;
+		return (sanitize(metrics) & (FPS | COALESCED)) != 0;
 	}
 
 	public static int sanitizePosition(int position) {

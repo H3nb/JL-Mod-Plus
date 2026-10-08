@@ -26,7 +26,7 @@ final class PerformanceOverlayText {
 	}
 
 	static final class Values {
-		double fps = Double.NaN, renderFps = Double.NaN, coalesced = Double.NaN;
+		double fps = Double.NaN, guestFps = Double.NaN, coalesced = Double.NaN;
 		double cap = Double.NaN;
 		double speedPercent = Double.NaN;
 		double interval = Double.NaN, p95 = Double.NaN, maximum = Double.NaN;
@@ -47,20 +47,19 @@ final class PerformanceOverlayText {
 		List<String[]> groups = new ArrayList<>();
 		List<String> row = new ArrayList<>();
 		if ((mask & FPS) != 0) {
-			row.add("FPS " + number(v.fps, 0) + ((mask & CAP) != 0 ? "/" + cap(v.cap) : ""));
-		} else {
-			if ((mask & CAP) != 0) row.add("CAP " + cap(v.cap));
+			row.add("FPS " + number(v.fps, 0));
 		}
-		add(row, mask, RENDER_FPS, "RFPS", v.renderFps, 0, "");
+		add(row, mask, GUEST_FPS, "GFPS", v.guestFps, 0, "");
+		if ((mask & CAP) != 0) row.add("CAP " + cap(v.cap));
 		if ((mask & SPEED) != 0) {
 			row.add(Double.isFinite(v.speedPercent)
 					? "SPD " + String.format(Locale.ROOT, "%.2fx", v.speedPercent / 100d)
 					: "SPD —");
 		}
 		finish(groups, row);
-		add(row, mask, FRAME_INTERVAL, "FI", v.interval, 1, " ms");
-		add(row, mask, P95_INTERVAL, "P95", v.p95, 1, " ms");
-		add(row, mask, MAX_INTERVAL, "MAX", v.maximum, 1, " ms");
+		add(row, mask, FRAME_INTERVAL, "GFI", v.interval, 1, " ms");
+		add(row, mask, P95_INTERVAL, "GP95", v.p95, 1, " ms");
+		add(row, mask, MAX_INTERVAL, "GMAX", v.maximum, 1, " ms");
 		finish(groups, row);
 		add(row, mask, PAINT, "PAINT", v.paint, 1, " ms");
 		add(row, mask, COPY, "COPY", v.copy, 1, " ms");
@@ -70,7 +69,7 @@ final class PerformanceOverlayText {
 		add(row, mask, FRAME_QUEUE, "FRQ", v.frameQueue, 1, " ms");
 		add(row, mask, COALESCED, "COAL", v.coalesced, 1, "/s");
 		finish(groups, row);
-		add(row, mask, CPU, "CPU", v.cpu, 0, "%");
+		if ((mask & CPU) != 0) row.add("CPU " + number(v.cpu / 100d, 2) + (Double.isFinite(v.cpu) ? "c" : ""));
 		add(row, mask, RAM, "RAM", v.ram, 0, " MiB");
 		finish(groups, row);
 		add(row, mask, JAVA_HEAP, "JAVA", v.javaHeap, 0, " MiB");
@@ -99,7 +98,7 @@ final class PerformanceOverlayText {
 	}
 
 	private static String cap(double value) {
-		if (value == 0) return "∞";
+		if (value == 0) return "—";
 		return number(value, value == Math.rint(value) ? 0 : 1);
 	}
 
