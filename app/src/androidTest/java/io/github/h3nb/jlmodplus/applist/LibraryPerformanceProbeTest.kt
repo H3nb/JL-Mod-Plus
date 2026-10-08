@@ -100,7 +100,9 @@ class LibraryPerformanceProbeTest {
             for (sort in intArrayOf(LibraryListProjection.SORT_DATE, LibraryListProjection.SORT_TITLE)) {
                 for (query in arrayOf("GAME", "absent")) {
                     val expected = if (query == "GAME") count else 0
-                    repeat(5) { assertEquals(expected, LibraryListProjection.project(rows, query, sort, Locale.US).size) }
+                    // The debug ART runtime can optimize newly exercised matching branches
+                    // during the first dozens of calls; keep that transition out of samples.
+                    repeat(100) { assertEquals(expected, LibraryListProjection.project(rows, query, sort, Locale.US).size) }
                     val cpuTimes = JSONArray()
                     repeat(20) {
                         Trace.beginSection("LibraryProbe/search/$count/$sort/$query")

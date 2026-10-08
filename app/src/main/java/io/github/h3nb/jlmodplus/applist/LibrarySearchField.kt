@@ -29,7 +29,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreInterceptKeyBeforeSoftKeyboard
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,10 +57,34 @@ internal fun LibrarySearchField(
     enabled: Boolean = true,
     onFocusChanged: (Boolean) -> Unit = {},
 ) {
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     TextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = modifier.height(librarySearchControlHeight()).onFocusChanged { onFocusChanged(it.hasFocus) },
+        modifier = modifier
+            .height(librarySearchControlHeight())
+            .onFocusChanged { onFocusChanged(it.hasFocus) }
+            .onPreInterceptKeyBeforeSoftKeyboard { event ->
+                // Back can cancel the IME's first show before any visible inset is reported.
+                // Handle that key while the field still owns focus; gesture Back continues
+                // through the destination's IME-hide observer and BackHandler.
+                if (!enabled || event.key != Key.Back) {
+                    false
+                } else {
+                    when (event.type) {
+                        KeyEventType.KeyDown -> true
+                        KeyEventType.KeyUp -> {
+                            if (!event.nativeKeyEvent.isCanceled) {
+                                keyboard?.hide()
+                                focusManager.clearFocus(force = true)
+                            }
+                            true
+                        }
+                        else -> false
+                    }
+                }
+            },
         textStyle = MaterialTheme.typography.bodyMedium,
         enabled = enabled,
         singleLine = true,

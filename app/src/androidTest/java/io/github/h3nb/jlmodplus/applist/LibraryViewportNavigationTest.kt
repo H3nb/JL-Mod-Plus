@@ -1,8 +1,12 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 package io.github.h3nb.jlmodplus.applist
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -16,6 +20,7 @@ import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -491,7 +496,12 @@ class LibraryViewportNavigationTest {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
             ) {
-                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
+                JLModPlusTheme {
+                    LibraryScreen(
+                        state = libraryState(LibraryLayout.List).copy(appliedFilter = "Library"),
+                        actions = host,
+                    )
+                }
             }
         }
         composeRule.onNode(hasSetTextAction()).performClick()
@@ -500,6 +510,34 @@ class LibraryViewportNavigationTest {
         composeRule.waitForIdle()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onNode(hasSetTextAction())
+                .fetchSemanticsNode().config[SemanticsProperties.Focused] == false
+        }
+        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+        composeRule.onNode(hasSetTextAction()).assertTextEquals("Library")
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun backDismissesLibrarySearchAfterImeBecomesVisible() {
+        val host = ViewportHost()
+        val imeVisible = mutableStateOf(false)
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+                SideEffect { imeVisible.value = imeBottom > 0 }
+                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
+            }
+        }
+        composeRule.onNode(hasSetTextAction()).performClick()
+        composeRule.onNode(hasSetTextAction()).assertIsFocused()
+        composeRule.waitUntil(timeoutMillis = 5_000) { imeVisible.value }
+        composeRule.waitForIdle()
+
+        pressBack()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            !imeVisible.value && composeRule.onNode(hasSetTextAction())
                 .fetchSemanticsNode().config[SemanticsProperties.Focused] == false
         }
         composeRule.onNode(hasSetTextAction()).assertIsNotFocused()

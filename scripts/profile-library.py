@@ -56,8 +56,28 @@ def wait_populated():
     raise RuntimeError("The real MainActivity did not display the seeded catalog")
 
 
-def capture(out, name, action):
-    config = out / "trace-config.pftxt"
+def wait_destination(out, name, members=False):
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        tree = hierarchy()
+        selected = any(node.get("selected") == "true" and
+                       any(child.get("text") == name or child.get("content-desc") == name
+                           for child in node.iter("node")) for node in tree.iter("node"))
+        texts = [node.get("text", "") for node in tree.iter("node")]
+        ready = (any("Probe Game" in text for text in texts) if name == "Apps" or members
+                 else "Probe Collection" in texts if name == "Collections" else "Settings" in texts)
+        if selected and ready:
+            (out / f"navigation-{name.lower()}-{'members' if members else 'root'}.xml").write_bytes(
+                ET.tostring(tree))
+            return
+        time.sleep(0.5)
+    raise RuntimeError(f"Destination {name} (members={members}) did not become selected and ready")
+
+
+def capture(out, name, action, seconds=20):
+    config = out / (name + "-config.pftxt")
+    config.write_text(re.sub(r"duration_ms: \d+", f"duration_ms: {seconds * 1000}",
+                             (out / "trace-config.pftxt").read_text()))
     log = out / (name + "-recorder.log")
     with log.open("w") as stream:
         process = subprocess.Popen(
@@ -115,6 +135,8 @@ duration_ms: 20000
 data_sources { config { name: "linux.ftrace" ftrace_config {
   ftrace_events: "sched/sched_switch"
   ftrace_events: "sched/sched_waking"
+  ftrace_events: "task/task_newtask"
+  ftrace_events: "task/task_rename"
   atrace_categories: "gfx"
   atrace_categories: "view"
   atrace_categories: "wm"
@@ -125,6 +147,7 @@ data_sources { config { name: "linux.ftrace" ftrace_config {
 data_sources { config { name: "android.surfaceflinger.frametimeline" } }
 data_sources { config { name: "linux.process_stats" process_stats_config {
   scan_all_processes_on_start: true
+  proc_stats_poll_ms: 1000
 } } }
 ''')
     for iteration in range(3):
@@ -134,9 +157,9 @@ data_sources { config { name: "linux.process_stats" process_stats_config {
             launch_result = adb("shell", "am", "start", "-W", "-n",
                                 PACKAGE + "/io.github.h3nb.jlmodplus.MainActivity")
             (out / f"cold-{iteration}-am-start.txt").write_text(launch_result)
-            wait_populated()
-
         capture(out, f"cold-{iteration}", launch)
+        # Accessibility dumps run after recording so they cannot inflate startup work.
+        wait_populated()
     nav = {name: point(name) for name in ("Apps", "Collections", "More")}
     tap(nav["Collections"])
     collection = point("Probe Collection")
@@ -154,14 +177,15 @@ data_sources { config { name: "linux.process_stats" process_stats_config {
     # Read semantics outside the measured gesture window, and verify navigation has returned.
     nav = {name: point(name) for name in ("Apps", "Collections", "More")}
 
-    def navigate():
-        tap(nav["Collections"])
-        tap(collection)
-        for name in ("Apps", "Collections", "More", "Apps", "Collections", "Apps"):
-            tap(nav[name])
+    # Separate transitions let us confirm each destination outside its measured window.
+    capture(out, "navigation-0-collections", lambda: tap(nav["Collections"]), seconds=5)
+    wait_destination(out, "Collections")
+    capture(out, "collection-open", lambda: tap(collection), seconds=5)
+    wait_destination(out, "Collections", members=True)
+    for index, name in enumerate(("Apps", "Collections", "More", "Apps", "Collections", "Apps"), 1):
+        capture(out, f"navigation-{index}-{name.lower()}", lambda: tap(nav[name]), seconds=5)
+        wait_destination(out, name, members=name == "Collections")
 
-    capture(out, "navigation", navigate)
-    adb("shell", "dumpsys", "gfxinfo", PACKAGE)
     (out / "gfxinfo.txt").write_text(adb("shell", "dumpsys", "gfxinfo", PACKAGE))
 
 

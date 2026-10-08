@@ -1,7 +1,20 @@
+-- Cold-start process snapshots can retain the inherited zygote name.
+-- Require the exact MainActivity layer and main-thread identity for that fallback.
+WITH app_process AS (
+    SELECT upid FROM process WHERE name = 'io.github.h3nb.jlmodplus.debug'
+    UNION
+    SELECT t.upid FROM thread t
+    WHERE t.is_main_thread = 1 AND t.name = 'jlmodplus.debug'
+      AND EXISTS (
+          SELECT 1 FROM actual_frame_timeline_slice f
+          WHERE f.upid = t.upid
+            AND f.layer_name GLOB 'TX - io.github.h3nb.jlmodplus.debug/io.github.h3nb.jlmodplus.MainActivity#*'
+      )
+)
 SELECT jank_type, COUNT(*) AS frames,
        ROUND(AVG(dur) / 1e6, 3) AS mean_ms,
        ROUND(MAX(dur) / 1e6, 3) AS max_ms
 FROM actual_frame_timeline_slice
 JOIN process USING (upid)
-WHERE process.name = 'io.github.h3nb.jlmodplus.debug' AND dur > 0
+WHERE process.upid IN (SELECT upid FROM app_process) AND dur > 0
 GROUP BY jank_type;
