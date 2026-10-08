@@ -116,6 +116,7 @@ import io.github.h3nb.jlmodplus.config.model.Size
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
+import io.github.h3nb.jlmodplus.ui.navigateToTab
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import kotlin.math.roundToInt
@@ -343,8 +344,8 @@ internal fun ConfigScreen(
     val selectedDestination = destinations.getOrElse(pagerState.currentPage) { destinations.first() }
     val selectDestination: (ConfigDestination) -> Unit = { destination ->
         val index = destinations.indexOf(destination)
-        if (index >= 0 && index != pagerState.currentPage) {
-            pagerScope.launch { pagerState.animateScrollToPage(index) }
+        if (index >= 0) {
+            pagerScope.launch { pagerState.navigateToTab(index) }
         }
     }
     val useNavigationRail = availableWindowWidthDp() >= 600.dp

@@ -123,6 +123,49 @@ class LibraryViewportNavigationTest {
     }
 
     @Test
+    fun distantNavigationBarTapSkipsCollectionInBothDirections() {
+        val host = ViewportHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
+            }
+        }
+
+        // Freeze frame advancement while tapping, then inspect every transition frame.
+        // An animated Apps -> More transition incorrectly makes Collections visible.
+        composeRule.mainClock.autoAdvance = false
+        try {
+            composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_more)))
+                .performClick()
+            repeat(18) {
+                composeRule.mainClock.advanceTimeByFrame()
+                composeRule.onAllNodesWithText(COLLECTION_NAME).assertCountEquals(0)
+            }
+        } finally {
+            composeRule.mainClock.autoAdvance = true
+        }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
+
+        composeRule.mainClock.autoAdvance = false
+        try {
+            composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps)))
+                .performClick()
+            repeat(18) {
+                composeRule.mainClock.advanceTimeByFrame()
+                composeRule.onAllNodesWithText(COLLECTION_NAME).assertCountEquals(0)
+            }
+        } finally {
+            composeRule.mainClock.autoAdvance = true
+        }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun collectionOverviewViewportSurvivesPagerRoundTrip() {
         val host = ViewportHost()
         composeRule.setContent {

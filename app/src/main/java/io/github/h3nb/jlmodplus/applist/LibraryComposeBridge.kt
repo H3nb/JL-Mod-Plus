@@ -207,6 +207,7 @@ import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
 import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
+import io.github.h3nb.jlmodplus.ui.navigateToTab
 import io.github.h3nb.jlmodplus.ui.clearNavigationFocusOnTouch
 import io.github.h3nb.jlmodplus.ui.isNavigationKeyEvent
 import io.github.h3nb.jlmodplus.ui.showNavigationFocusForKey
@@ -600,6 +601,9 @@ fun LibraryScreen(
         pageCount = { LibraryDestination.entries.size },
     )
     val coroutineScope = rememberCoroutineScope()
+    val selectDestination: (LibraryDestination) -> Unit = { section ->
+        coroutineScope.launch { pagerState.navigateToTab(section.ordinal) }
+    }
     val focusManager = LocalFocusManager.current
     // Indicators may follow the gesture; state-changing navigation commits only after settling.
     val destination = LibraryDestination.entries[pagerState.settledPage]
@@ -955,7 +959,7 @@ fun LibraryScreen(
                     LibraryControllerCommand.PreviousTab,
                     -> {
                         val delta = if (event.command == LibraryControllerCommand.NextTab) 1 else -1
-                        pagerState.animateScrollToPage(
+                        pagerState.navigateToTab(
                             (pagerState.currentPage + delta).coerceIn(
                                 0,
                                 LibraryDestination.entries.lastIndex,
@@ -1035,9 +1039,7 @@ fun LibraryScreen(
         if (useNavigationRail) {
             LibraryNavigationRail(
                 selected = indicatedDestination,
-                onSelected = { section ->
-                    coroutineScope.launch { pagerState.animateScrollToPage(section.ordinal) }
-                },
+                onSelected = selectDestination,
             )
         }
 
@@ -1120,9 +1122,7 @@ fun LibraryScreen(
                         Box(Modifier.onSizeChanged { navigationBarHeightPx = it.height }) {
                             LibraryNavigationBar(
                                 selected = indicatedDestination,
-                                onSelected = { section ->
-                                    coroutineScope.launch { pagerState.animateScrollToPage(section.ordinal) }
-                                },
+                                onSelected = selectDestination,
                             )
                         }
                     }

@@ -6,6 +6,9 @@ on:
     paths:
       - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/Library*.kt'
       - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/Library*.kt'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/config/ConfigComposeBridge.kt'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/config/ConfigTabNavigationTest.kt'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/ui/PagerTabNavigation.kt'
       - '.github/workflows/library-ui.yml'
   workflow_dispatch:
 
@@ -69,6 +72,7 @@ jobs:
               for name in ("LibraryViewportNavigationTest", "LibraryIconRefreshTest",
                            "LibraryCollectionsNavigationTest", "LibraryComposeTest")
           }
+          expected.add("io.github.h3nb.jlmodplus.config.ConfigTabNavigationTest")
           reports = list(Path("app/build/outputs/androidTest-results").rglob("TEST-*.xml"))
           if not reports:
               raise SystemExit("No UI contract XML reports were produced")
