@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -200,6 +201,19 @@ internal fun LibraryCollectionBrowser(
     var searchFocused by remember { mutableStateOf(false) }
     val searchFocusManager = LocalFocusManager.current
     val searchKeyboard = LocalSoftwareKeyboardController.current
+    val searchImeVisible = WindowInsets.isImeVisible
+    var searchImeWasVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(searchFocused, searchImeVisible) {
+        when {
+            !searchFocused -> searchImeWasVisible = false
+            searchImeVisible -> searchImeWasVisible = true
+            searchImeWasVisible -> {
+                searchFocusManager.clearFocus(force = true)
+                searchFocused = false
+                searchImeWasVisible = false
+            }
+        }
+    }
     BackHandler(enabled = interactionActive && searchFocused) {
         searchKeyboard?.hide()
         searchFocusManager.clearFocus(force = true)
