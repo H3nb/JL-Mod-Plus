@@ -779,14 +779,12 @@ fun LibraryScreen(
         )
         controllerFocusedAppIndex = nextIndex
         controllerFocusedAppId = apps[nextIndex].databaseId
-        android.util.Log.i("UILibraryController", "handoff starts: list=${appsListState.firstVisibleItemIndex}, scrolling=${appsListState.isScrollInProgress}")
         // A controller command takes over from the preceding touch gesture or fling.
         if (currentState.layout == LibraryLayout.List) {
             appsListState.stopScroll(MutatePriority.UserInput)
         } else {
             appsGridState.stopScroll(MutatePriority.UserInput)
         }
-        android.util.Log.i("UILibraryController", "handoff stopped prior scroll")
         val headerHeight = appsViewport.headerHeightPx.intValue
         // Partial headers settle expanded. Reserve that final height so focus stays unobscured.
         val focusOffset = if (appsViewport.headerOffsetPx.floatValue <= -headerHeight + 0.5f) {
@@ -810,7 +808,6 @@ fun LibraryScreen(
                 appsGridState.scrollToItem(targetIndex, focusOffset)
             }
         }
-        android.util.Log.i("UILibraryController", "handoff completed: list=${appsListState.firstVisibleItemIndex}")
     }
 
     BackHandler(

@@ -357,6 +357,9 @@ class LibraryComposeTest {
         appViewport().performTouchInput {
             swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.5f), 300)
         }
+        // Finish the touch gesture before exercising controller navigation. Mixing synthetic
+        // fling input with Espresso's idle synchronization can strand the test's idle waiter.
+        composeRule.waitForIdle()
         controllerEvents.tryEmit(LibraryControllerEvent(1L, LibraryControllerCommand.MoveUp))
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Demo MIDlet 0").assertIsDisplayed()
