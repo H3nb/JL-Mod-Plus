@@ -34,12 +34,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.github.h3nb.jlmodplus.R
 
 // Keep a compact default without clipping the input or sort control at large font scales.
 @Composable
 private fun librarySearchControlHeight() =
     (52f + 16f * (LocalDensity.current.fontScale - 1f).coerceAtLeast(0f)).dp
-import io.github.h3nb.jlmodplus.R
 
 /** Shared search field used by the Apps and Collections surfaces. */
 @Composable
