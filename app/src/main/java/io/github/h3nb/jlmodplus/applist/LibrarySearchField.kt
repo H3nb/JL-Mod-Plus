@@ -29,10 +29,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+
+// Keep a compact default without clipping the input or sort control at large font scales.
+@Composable
+private fun librarySearchControlHeight() =
+    (52f + 16f * (LocalDensity.current.fontScale - 1f).coerceAtLeast(0f)).dp
 import io.github.h3nb.jlmodplus.R
 
 /** Shared search field used by the Apps and Collections surfaces. */
@@ -47,7 +53,7 @@ internal fun LibrarySearchField(
     TextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = modifier.height(52.dp).onFocusChanged { onFocusChanged(it.isFocused) },
+        modifier = modifier.height(librarySearchControlHeight()).onFocusChanged { onFocusChanged(it.isFocused) },
         textStyle = MaterialTheme.typography.bodyMedium,
         enabled = enabled,
         singleLine = true,
@@ -100,7 +106,7 @@ internal fun LibrarySortButton(
     Surface(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.size(52.dp),
+        modifier = modifier.size(librarySearchControlHeight()),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         contentColor = if (enabled) {
