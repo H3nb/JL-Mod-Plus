@@ -103,11 +103,19 @@ validation, and app/instrumentation assembly. The broader connected runtime suit
 in the separate manual `runtime-smoke` mode described below. See the workflow for
 current tasks rather than assuming all source sets execute.
 Automatic PR runs exclude PRs whose entire diff consists of Markdown and `docs/**`.
-A scoped [Library UI workflow](../.github/workflows/library-ui.yml) executes pager,
-viewport recreation/workdir isolation, Collection interaction, and icon-refresh
-contracts on API 35 when the corresponding UI or tests change. It keeps animations
-enabled and uses `jlmodNativeBuild=false`; these checks exercise host UI behavior,
-not native game execution or physical-device frame pacing.
+The `LibraryUiContractSuite` remains a **targeted, opt-in** Android instrumentation
+suite for pager gestures, viewport/workdir isolation, Collection actions and icon
+refresh. Its former PR-triggered emulator workflow has been removed to avoid
+recurring emulator builds. When these boundaries change, run the suite on a
+disposable API 35 x86_64 emulator with animations enabled:
+
+```sh
+./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=io.github.h3nb.jlmodplus.applist.LibraryUiContractSuite :app:connectedEmulatorDebugAndroidTest
+```
+
+Review the executed test reports; compilation by default Android CI does not
+substitute for the connected run. This suite validates host UI behavior, not
+native game execution or physical-device frame pacing.
 A separate [Java ME graphics workflow](../.github/workflows/java-me-graphics.yml)
 runs Nokia polygon, MIDP triangle and core Graphics color, primitive, clip,
 lifecycle and bitmap-rebind instrumentation on API 23 and 36 when the
@@ -154,36 +162,41 @@ lint result; consult the final `build` check for overall status. The early APK
 artifact is not rewritten. Artifact availability does not mean validation passed.
 Inspect the individual reports when a combined step fails.
 
-### Library performance diagnostics
+### Library performance diagnostics (opt-in)
 
-`Library performance diagnostics` compares the fixed pre-optimization revision
-recorded in its workflow with the current PR head on one disposable API 35
-emulator. Both builds receive the same opt-in instrumentation fixture: 1,000
-installed catalog entries with real PNGs and a 500-member collection. These
-fixtures are not runnable MIDlets. The fixture never modifies a user-selected
-workdir; run it only on a disposable installation.
+The dedicated PR-triggered Library performance workflow has been removed.
+Profiling is an **investigation tool, not a routine merge check**. The existing
+`scripts/profile-library.py`, `scripts/summarize-library-performance.py`,
+`scripts/library-trace-*.sql`, and
+`app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/LibraryPerformanceProbeTest.kt`
+remain available for deliberately authorized, reproducible A/B investigations.
+They do not run as part of the default Android CI.
 
-The workflow records three process-cold `MainActivity` launches against an existing
-READY catalog, real touch scrolling, individually verified tab/collection
-transitions, raw Perfetto frame/scheduling traces, and per-thread CPU samples for
-search projections at 1,000/5,000 rows after 100 warm-up calls per case. It does not
-measure first indexing or cold filesystem caches. APKs use
-`emulatorDebug`, native compilation is disabled, animations remain enabled,
-and both installations request ART `speed` compilation (the command result and
-package dump are retained; debug code may still use JIT). This is diagnostic
-comparison rather than a release/device benchmark; do not interpret shared
-emulator frame timings as physical-device FPS. `am start -W` measures initial
-display, not fully populated Library readiness. Hierarchy checks verify content
-outside each recording window without claiming a time-to-full-display metric.
+Historical results in
+[interaction performance trials](interaction-performance-trials-2026-10-08.md)
+and the archived GitHub Actions runs describe the **then-recorded baseline
+and candidate**, not the latest branch by default. The previous workflow
+compared fixed baseline `925d9b29e14c05013b86d9bec810bdc738440fbc` to a
+candidate on a disposable API 35 emulator, with equal opt-in fixtures:
+1,000 installed catalog entries with PNGs, a 500-member collection, and
+search projections of 1,000/5,000 rows. These fixtures are not runnable
+MIDlets and must never modify a user-selected workdir.
 
-`JL-Mod-Plus-library-performance` retains the exact source identities, workload,
-CPU samples, raw traces, SQL summaries, and pinned official Perfetto processor.
-Trace-side action markers distinguish recording setup from the actual workload.
-Timing thresholds do not gate CI; fixture and recording failures do. Use these
-results to identify repeated work, then qualify release frame pacing/startup
-separately on a physical device. Change the explicit comparison revision when
-starting a new performance investigation rather than silently comparing against
-the base branch.
+For a future investigation, explicitly choose and record the comparison
+commits, build both matching `emulatorDebug` APK/test-APK revisions with the
+same fixture and configuration, then use the retained scripts and official
+Perfetto tooling on an isolated emulator. The former procedure used three
+process-cold `MainActivity` launches, real touch navigation/scrolling, verified
+state/hierarchy guards, ART `speed` requests, animation-enabled rendering,
+and per-thread CPU plus frame/scheduling traces. Preserve build, APK, fixture,
+tool revision and source identity with the results; do not silently reuse
+the historical baseline for unrelated work.
+
+These captures exclude first catalog indexing and cold filesystem caches.
+`am start -W` measures initial display, not full Library readiness. Emulator
+debug frame timings are not physical-device or release FPS evidence. Profile
+only when a concrete performance question warrants the work, and qualify
+release frame pacing separately on a physical device when necessary.
 
 
 ### Screenshot updates without a local Android toolchain

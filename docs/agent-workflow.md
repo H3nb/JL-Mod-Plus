@@ -77,7 +77,6 @@ Apply the scope and design priorities in [AGENTS.md](../AGENTS.md).
 - Before merge, verify that the **latest executable/testable state** has passing evidence for the relevant required checks. Documentation-only commits after that state do not change executable inputs, but GitHub skip instructions or path filters may leave required checks pending; inspect branch-protection and PR status and use the documented validation path when needed, rather than masking the missing check.
 - A commit message with `[skip ci]` does not itself establish successful validation, and required check behavior depends on workflow trigger configuration. Never skip to conceal failures or bypass final review.
 - For screenshot mismatches using only GitHub connector access, follow [GitHub-only reviewed screenshot promotion](development.md#github-only-reviewed-screenshot-promotion); do not redraw or force-update references.
-- Do not carry `[skip ci]` into the final squash commit message.
 - Prefer Squash Merge when PR history is mostly WIP, experiments, fixups, or reversions. Preserve individual commits only when they are intentionally useful for history, revert, or bisect.
 - Do not carry `[skip ci]` into the final squash commit message.
 

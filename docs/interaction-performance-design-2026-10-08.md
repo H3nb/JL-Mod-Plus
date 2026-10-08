@@ -1,5 +1,14 @@
 # Interaction performance solution decisions
 
+**Historical, pre-trial design candidates.** The
+[trial and acceptance record](interaction-performance-trials-2026-10-08.md)
+is authoritative for the outcome: bounded home retention and selected ordering/
+Config-comparison work were accepted, while row-lazy Config forms and the
+permanently retained navigation/FAB chrome trial were rejected. The
+`Selected design` table below records choices **proposed for measurement**,
+not the currently adopted architecture; do not implement rejected proposals
+based on this earlier document alone.
+
 Analysis only, following the user's request to select the best solutions. Source
 is unchanged at `1c16c1f0e`; measured evidence and its limitations are in
 [interaction performance analysis](interaction-performance-analysis-2026-10-08.md).

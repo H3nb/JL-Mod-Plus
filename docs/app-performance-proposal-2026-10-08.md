@@ -1,5 +1,12 @@
 # App-wide performance proposal
 
+**Historical proposal, not the current implementation plan.** Subsequent
+[interaction trials and acceptance](interaction-performance-trials-2026-10-08.md)
+accepted selected navigation/ordering/Config changes but rejected the
+row-lazy Config design and permanently retained scroll-chrome experiment.
+Read those later decisions before acting on the candidate list below. Other
+unimplemented candidates require fresh evidence and explicit task scope.
+
 This extends PR 158's investigation to all application-owned surfaces and
 services. MIDlet execution and guest API behavior remain outside this work.
 The user permits visual/backend changes but requires a concrete recommendation

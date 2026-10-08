@@ -1,5 +1,12 @@
 # Interaction performance and code-quality analysis
 
+**Historical investigation.** The later
+[implementation trials](interaction-performance-trials-2026-10-08.md)
+supersede its provisional recommendations and pre-implementation authorization
+status. In particular, Config row laziness and permanently retained chrome were
+measured and rejected. Retain the observations below as dated evidence, not
+instructions to reapply rejected designs.
+
 Analysis requested after accepting the Settings CPU trade-off. Scope: main-home
 tab taps/swipes, Library scroll/search/clear, Library-to-Config navigation,
 Config destination construction, scroll and option-edit architecture. MIDlet
