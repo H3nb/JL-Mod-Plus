@@ -51,6 +51,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -1711,7 +1712,7 @@ private fun LibraryNavigationBar(
 }
 
 @Composable
-private fun LibraryNavigationItem(
+private fun RowScope.LibraryNavigationItem(
     destination: LibraryDestination,
     selected: LibraryDestination,
     label: Int,

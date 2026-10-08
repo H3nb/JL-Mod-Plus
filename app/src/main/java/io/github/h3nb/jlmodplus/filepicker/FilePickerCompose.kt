@@ -21,17 +21,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -40,7 +34,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
-import androidx.compose.material3.Surface
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -220,47 +214,35 @@ fun FilePickerScreen(
             )
         },
         bottomBar = {
-            // The picker has selection actions, not navigation destinations. Use a short,
-            // inset-aware action bar instead of misrepresenting Cancel/Choose as tabs.
-            Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-                        .heightIn(min = 64.dp)
-                        .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+            BottomAppBar {
+                Text(
+                    text = when {
+                        state.request.mode == FilePickerContract.MODE_DIR ||
+                            (state.request.mode == FilePickerContract.MODE_FILE_AND_DIR &&
+                                state.selectedPaths.isEmpty()) -> {
+                            stringResource(R.string.file_picker_current_folder)
+                        }
+                        state.selectedPaths.isNotEmpty() -> {
+                            pluralStringResource(
+                                R.plurals.file_picker_selected_count,
+                                state.selectedPaths.size,
+                                state.selectedPaths.size,
+                            )
+                        }
+                        else -> stringResource(R.string.file_picker_select_file)
+                    },
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                TextButton(onClick = actions::onExit) {
+                    Text(stringResource(R.string.file_picker_cancel))
+                }
+                Button(
+                    onClick = actions::onConfirmSelection,
+                    enabled = state.canConfirm,
                 ) {
-                    Text(
-                        text = when {
-                            state.request.mode == FilePickerContract.MODE_DIR ||
-                                (state.request.mode == FilePickerContract.MODE_FILE_AND_DIR &&
-                                    state.selectedPaths.isEmpty()) -> {
-                                stringResource(R.string.file_picker_current_folder)
-                            }
-                            state.selectedPaths.isNotEmpty() -> {
-                                pluralStringResource(
-                                    R.plurals.file_picker_selected_count,
-                                    state.selectedPaths.size,
-                                    state.selectedPaths.size,
-                                )
-                            }
-                            else -> stringResource(R.string.file_picker_select_file)
-                        },
-                        modifier = Modifier.weight(1f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    TextButton(onClick = actions::onExit) {
-                        Text(stringResource(R.string.file_picker_cancel))
-                    }
-                    Button(
-                        onClick = actions::onConfirmSelection,
-                        enabled = state.canConfirm,
-                    ) {
-                        Text(stringResource(R.string.file_picker_choose))
-                    }
+                    Text(stringResource(R.string.file_picker_choose))
                 }
             }
         },
