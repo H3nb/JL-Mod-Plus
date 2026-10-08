@@ -44,6 +44,14 @@ public class CanvasVisibilityTest {
 	}
 
 	@Test
+	public void diagnosticCapMatchesPacerConfiguredCeilingIncludingAbsentTimingSession() {
+		assertEquals(120.0, Canvas.resolvePerformanceFpsCap(0, 120, 100), 0.0001);
+		assertEquals(240.0, Canvas.resolvePerformanceFpsCap(0, 120, 200), 0.0001);
+		assertEquals(72.0, Canvas.resolvePerformanceFpsCap(60, 120, 120), 0.0001);
+		assertEquals(0.0, Canvas.resolvePerformanceFpsCap(-1, 120, 100), 0.0001);
+	}
+
+	@Test
 	public void displayMaximumUsesHighestValidCapabilityAndFailsClosed() {
 		assertEquals(120, Canvas.resolveMaximumDisplayFps(
 				new float[]{30.0f, 60.0f, Float.NaN},

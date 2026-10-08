@@ -90,6 +90,7 @@ import javax.microedition.shell.MidletThread;
 import javax.microedition.shell.GuestTimingBridge;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.TimingSnapshot;
+import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.FramePacer;
 import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.shell.timing.PerformanceDiagnostics;
@@ -272,14 +273,17 @@ public abstract class Canvas extends Displayable {
 		return performanceGeneration;
 	}
 
-	/** Effective pacing target in real-time FPS; zero denotes an unrestricted target. */
+	/** Configured pacing target, not achieved FPS; absent sessions pace at normal speed. */
 	public double getPerformanceFpsCap() {
 		TimingSnapshot timing = timingSession == null ? null : timingSession.snapshotIfOpen();
-		if (timing == null) {
-			return Double.NaN;
-		}
-		int base = resolveFrameRateLimit(fpsLimit, displayMaximumFps);
-		return base <= 0 ? 0 : base * (timing.speedPercent() / 100.0);
+		if (timingSession != null && timing == null) return Double.NaN;
+		return resolvePerformanceFpsCap(fpsLimit, displayMaximumFps,
+				timing == null ? EmulationSpeed.NORMAL_PERCENT : timing.speedPercent());
+	}
+
+	static double resolvePerformanceFpsCap(int configuredFps, int maximumFps, int speedPercent) {
+		int base = resolveFrameRateLimit(configuredFps, maximumFps);
+		return base <= 0 ? 0 : base * (speedPercent / 100.0);
 	}
 
 	/** Active reported display rate, independent of the maximum used by compatibility pacing. */
@@ -1270,7 +1274,9 @@ public abstract class Canvas extends Displayable {
 		if (diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.FRAME_INTERVAL
 				| PerformanceDiagnostics.RENDER_CADENCE | PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
 			publishedFrameNanos = System.nanoTime();
-			diagnostics.recordPublication(sequence, publishedFrameNanos);
+			if (diagnostics.enabled(PerformanceDiagnostics.FRAME_INTERVAL)) {
+				diagnostics.recordPublication(sequence, publishedFrameNanos);
+			}
 		}
 		FrameMetrics metrics = frameMetrics;
 		if (metrics != null) {

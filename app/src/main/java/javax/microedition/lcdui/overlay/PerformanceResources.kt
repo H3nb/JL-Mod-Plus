@@ -14,18 +14,11 @@
 
 package javax.microedition.lcdui.overlay
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.BatteryManager
 import android.os.Build
 import android.os.Debug
-import android.os.HardwarePropertiesManager
 import android.os.PowerManager
 import android.os.Process
-import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
 import io.github.h3nb.jlmodplus.config.PerformanceOverlayOptions
 
 /**
@@ -36,8 +29,6 @@ import io.github.h3nb.jlmodplus.config.PerformanceOverlayOptions
 class PerformanceResources(context: Context, private val metricsMask: Int) : AutoCloseable {
     private val appContext = context.applicationContext
     private var closed = false
-    private var batteryReceiverRegistered = false
-    @Volatile private var batteryTempC = Double.NaN
     private var previousCpuNanos = Long.MIN_VALUE
     private var previousCpuMillis = -1L
     private var cpuPercent = Double.NaN
@@ -45,49 +36,16 @@ class PerformanceResources(context: Context, private val metricsMask: Int) : Aut
     private var ramMiB = Double.NaN
     private var javaHeapMiB = Double.NaN
     private var nativeHeapMiB = Double.NaN
-    private var lastTemperatureNanos = Long.MIN_VALUE
-    private var cpuTempC = Double.NaN
-    private var gpuTempC = Double.NaN
+    private var lastThermalNanos = Long.MIN_VALUE
     private var thermalStatus = -1
-    private var hardwareTemperaturesDenied = false
-    private val thermalSensors by lazy { ThermalSensorReader() }
-
     /** Unavailable values are NaN; thermal status is -1 when unavailable. */
     data class Snapshot(
         val cpuPercent: Double,
         val ramMiB: Double,
         val javaHeapMiB: Double,
         val nativeHeapMiB: Double,
-        val cpuTempC: Double,
-        val gpuTempC: Double,
-        val batteryTempC: Double,
         val thermalStatus: Int,
     )
-
-    private val batteryReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == Intent.ACTION_BATTERY_CHANGED) {
-                updateBatteryTemperature(intent)
-            }
-        }
-    }
-
-    init {
-        if (enabled(PerformanceOverlayOptions.BATTERY_TEMP)) {
-            try {
-                val sticky = ContextCompat.registerReceiver(
-                    appContext,
-                    batteryReceiver,
-                    IntentFilter(Intent.ACTION_BATTERY_CHANGED),
-                    ContextCompat.RECEIVER_NOT_EXPORTED,
-                )
-                batteryReceiverRegistered = true
-                if (sticky != null) updateBatteryTemperature(sticky)
-            } catch (_: RuntimeException) {
-                batteryTempC = Double.NaN
-            }
-        }
-    }
 
     @Synchronized
     fun sample(nowNanos: Long): Snapshot {
@@ -97,17 +55,14 @@ class PerformanceResources(context: Context, private val metricsMask: Int) : Aut
                 lastMemoryNanos = nowNanos
                 sampleMemory()
             }
-            if (metricsMask and TEMPERATURE_MASK != 0 &&
-                due(nowNanos, lastTemperatureNanos, SLOW_INTERVAL)
+            if (enabled(PerformanceOverlayOptions.THERMAL) &&
+                due(nowNanos, lastThermalNanos, SLOW_INTERVAL)
             ) {
-                lastTemperatureNanos = nowNanos
-                sampleTemperatures()
+                lastThermalNanos = nowNanos
+                sampleThermalStatus()
             }
         }
-        return Snapshot(
-            cpuPercent, ramMiB, javaHeapMiB, nativeHeapMiB,
-            cpuTempC, gpuTempC, batteryTempC, thermalStatus,
-        )
+        return Snapshot(cpuPercent, ramMiB, javaHeapMiB, nativeHeapMiB, thermalStatus)
     }
 
     /** Discard the baseline across a pause so the next percentage excludes paused time. */
@@ -120,16 +75,7 @@ class PerformanceResources(context: Context, private val metricsMask: Int) : Aut
 
     @Synchronized
     override fun close() {
-        if (closed) return
         closed = true
-        if (batteryReceiverRegistered) {
-            batteryReceiverRegistered = false
-            try {
-                appContext.unregisterReceiver(batteryReceiver)
-            } catch (_: RuntimeException) {
-                // The context may already have released the registration during teardown.
-            }
-        }
     }
 
     private fun enabled(bit: Int) = metricsMask and bit != 0
@@ -181,9 +127,9 @@ class PerformanceResources(context: Context, private val metricsMask: Int) : Aut
         }
     }
 
-    private fun sampleTemperatures() {
-        if (enabled(PerformanceOverlayOptions.THERMAL) && Build.VERSION.SDK_INT >= 29) {
-            thermalStatus = try {
+    private fun sampleThermalStatus() {
+        thermalStatus = if (Build.VERSION.SDK_INT >= 29) {
+            try {
                 val manager = appContext.getSystemService(Context.POWER_SERVICE) as? PowerManager
                 manager?.currentThermalStatus?.takeIf {
                     it in PowerManager.THERMAL_STATUS_NONE..PowerManager.THERMAL_STATUS_SHUTDOWN
@@ -191,77 +137,8 @@ class PerformanceResources(context: Context, private val metricsMask: Int) : Aut
             } catch (_: RuntimeException) {
                 -1
             }
-        }
-        if (metricsMask and HARDWARE_TEMPERATURE_MASK != 0) {
-            cpuTempC = Double.NaN
-            gpuTempC = Double.NaN
-            if (Build.VERSION.SDK_INT >= 24 && !hardwareTemperaturesDenied) {
-                sampleHardwareTemperatures()
-            }
-            val missingCpu = enabled(PerformanceOverlayOptions.CPU_TEMP) && !cpuTempC.isFinite()
-            val missingGpu = enabled(PerformanceOverlayOptions.GPU_TEMP) && !gpuTempC.isFinite()
-            if (missingCpu || missingGpu) {
-                val sensors = thermalSensors.sample(cpu = missingCpu, gpu = missingGpu)
-                if (missingCpu) cpuTempC = sensors.cpuTempC
-                if (missingGpu) gpuTempC = sensors.gpuTempC
-            }
-        }
-    }
-
-    @RequiresApi(24)
-    private fun sampleHardwareTemperatures() {
-        try {
-            val manager = appContext.getSystemService(Context.HARDWARE_PROPERTIES_SERVICE)
-                as? HardwarePropertiesManager
-            if (enabled(PerformanceOverlayOptions.CPU_TEMP)) {
-                cpuTempC = currentTemperature(manager, HardwarePropertiesManager.DEVICE_TEMPERATURE_CPU)
-            }
-            if (enabled(PerformanceOverlayOptions.GPU_TEMP)) {
-                gpuTempC = currentTemperature(manager, HardwarePropertiesManager.DEVICE_TEMPERATURE_GPU)
-            }
-        } catch (_: SecurityException) {
-            // Ordinary applications generally cannot access this service. Avoid repeated denied
-            // binder calls; explicitly named, readable thermal zones are handled separately.
-            hardwareTemperaturesDenied = true
-            cpuTempC = Double.NaN
-            gpuTempC = Double.NaN
-        } catch (_: RuntimeException) {
-            cpuTempC = Double.NaN
-            gpuTempC = Double.NaN
-        }
-    }
-
-    @RequiresApi(24)
-    private fun currentTemperature(manager: HardwarePropertiesManager?, device: Int): Double {
-        val temperatures = manager?.getDeviceTemperatures(
-            device, HardwarePropertiesManager.TEMPERATURE_CURRENT,
-        ) ?: return Double.NaN
-        // Multiple CPU/GPU sensors are possible: display the hottest valid current reading.
-        var maximum = Double.NaN
-        for (temperature in temperatures) {
-            if (temperature.isFinite() &&
-                temperature != HardwarePropertiesManager.UNDEFINED_TEMPERATURE &&
-                (maximum.isNaN() || temperature > maximum)
-            ) {
-                maximum = temperature.toDouble()
-            }
-        }
-        return maximum
-    }
-
-    private fun updateBatteryTemperature(intent: Intent) {
-        batteryTempC = try {
-            if (!intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true) ||
-                !intent.hasExtra(BatteryManager.EXTRA_TEMPERATURE)
-            ) {
-                Double.NaN
-            } else {
-                val tenths = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
-                // Reject absent/malformed data; a real zero-degree reading remains valid.
-                if (tenths in -1000..2000) tenths / 10.0 else Double.NaN
-            }
-        } catch (_: RuntimeException) {
-            Double.NaN
+        } else {
+            -1
         }
     }
 
@@ -276,8 +153,5 @@ class PerformanceResources(context: Context, private val metricsMask: Int) : Aut
         const val SLOW_INTERVAL = 5_000_000_000L
         const val MEMORY_MASK = PerformanceOverlayOptions.RAM or
             PerformanceOverlayOptions.JAVA_HEAP or PerformanceOverlayOptions.NATIVE_HEAP
-        const val HARDWARE_TEMPERATURE_MASK = PerformanceOverlayOptions.CPU_TEMP or
-            PerformanceOverlayOptions.GPU_TEMP
-        const val TEMPERATURE_MASK = HARDWARE_TEMPERATURE_MASK or PerformanceOverlayOptions.THERMAL
     }
 }

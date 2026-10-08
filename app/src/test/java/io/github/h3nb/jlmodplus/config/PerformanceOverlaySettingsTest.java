@@ -45,7 +45,7 @@ public class PerformanceOverlaySettingsTest {
 		profile.dir = Files.createTempDirectory("jlmod-perf-overlay").toFile();
 		profile.dir.deleteOnExit();
 		profile.version = ProfileModel.VERSION;
-		int custom = PerformanceOverlayOptions.CPU | PerformanceOverlayOptions.BATTERY_TEMP;
+		int custom = PerformanceOverlayOptions.CPU | PerformanceOverlayOptions.NATIVE_HEAP;
 		ConfigFormState draft = ConfigFormState.fromProfile(profile, "")
 				.toBuilder().performanceOverlayMetrics(custom)
 				.performanceOverlayPosition(PerformanceOverlayOptions.BOTTOM_RIGHT)
@@ -127,12 +127,24 @@ public class PerformanceOverlaySettingsTest {
 	@Test
 	public void debugIsCuratedAndCustomCanStillSelectAll() {
 		assertTrue((PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.FPS) != 0);
-		assertTrue((PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.DISPLAY) != 0);
+		assertTrue((PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.INPUT_QUEUE) != 0);
+		assertEquals(0, PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.DISPLAY);
 		assertTrue(PerformanceOverlayOptions.DEBUG != PerformanceOverlayOptions.ALL);
 		assertFalse(PerformanceOverlayOptions.requiresFrameMetrics(
 				PerformanceOverlayOptions.RENDER_INTERVAL));
 		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(
 				PerformanceOverlayOptions.RENDER_INTERVAL));
+	}
+
+	@Test
+	public void retiredTemperatureBitsAreClearedWithoutRenumberingActiveMetrics() {
+		int retired = (1 << 17) | (1 << 18) | (1 << 19);
+		assertEquals(23, Integer.bitCount(PerformanceOverlayOptions.ALL));
+		assertEquals(0, PerformanceOverlayOptions.sanitize(retired));
+		assertEquals(PerformanceOverlayOptions.THERMAL | PerformanceOverlayOptions.RENDER_MAX_INTERVAL,
+				PerformanceOverlayOptions.sanitize(retired
+						| PerformanceOverlayOptions.THERMAL
+						| PerformanceOverlayOptions.RENDER_MAX_INTERVAL));
 	}
 
 	@Test

@@ -149,9 +149,6 @@ public class FpsCounter extends TimerTask implements Layer {
 		v.ram = system.getRamMiB();
 		v.javaHeap = system.getJavaHeapMiB();
 		v.nativeHeap = system.getNativeHeapMiB();
-		v.cpuTemp = system.getCpuTempC();
-		v.gpuTemp = system.getGpuTempC();
-		v.batteryTemp = system.getBatteryTempC();
 		v.thermal = system.getThermalStatus();
 		String[][] nextGroups = PerformanceOverlayText.format(mask, v);
 		if (!Arrays.deepEquals(groups, nextGroups)) {

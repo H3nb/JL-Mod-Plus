@@ -34,8 +34,7 @@ final class PerformanceOverlayText {
 		double paint = Double.NaN, copy = Double.NaN, submit = Double.NaN;
 		double inputQueue = Double.NaN, frameQueue = Double.NaN;
 		double cpu = Double.NaN, ram = Double.NaN, javaHeap = Double.NaN;
-		double nativeHeap = Double.NaN, cpuTemp = Double.NaN, gpuTemp = Double.NaN;
-		double batteryTemp = Double.NaN, displayHz = Double.NaN;
+		double nativeHeap = Double.NaN, displayHz = Double.NaN;
 		int thermal = -1;
 		String renderer;
 	}
@@ -81,10 +80,6 @@ final class PerformanceOverlayText {
 		finish(groups, row);
 		add(row, mask, JAVA_HEAP, "JAVA", v.javaHeap, 0, " MiB");
 		add(row, mask, NATIVE_HEAP, "NATIVE", v.nativeHeap, 0, " MiB");
-		finish(groups, row);
-		add(row, mask, CPU_TEMP, "CPUT", v.cpuTemp, 1, "°C");
-		add(row, mask, GPU_TEMP, "GPUT", v.gpuTemp, 1, "°C");
-		add(row, mask, BATTERY_TEMP, "BAT", v.batteryTemp, 1, "°C");
 		finish(groups, row);
 		if ((mask & RENDERER) != 0) row.add("REN " + (v.renderer == null ? "—" : v.renderer));
 		add(row, mask, DISPLAY, "DISP", v.displayHz, 0, " Hz");

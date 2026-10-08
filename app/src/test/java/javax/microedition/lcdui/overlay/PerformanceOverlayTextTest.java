@@ -79,12 +79,11 @@ public class PerformanceOverlayTextTest {
 	public void unavailableSensorsAreNotZeroAndMulticoreCpuIsNotClamped() {
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
 		v.cpu = 182;
-		v.batteryTemp = 0;
-		String[][] groups = PerformanceOverlayText.format(CPU | CPU_TEMP | GPU_TEMP | BATTERY_TEMP, v);
+		String[][] groups = PerformanceOverlayText.format(CPU | THERMAL, v);
 		assertArrayEquals(new String[]{"CPU 1.82c"}, groups[0]);
+		assertArrayEquals(new String[]{"THRM —"}, groups[1]);
 		v.cpu = Double.NaN;
 		assertArrayEquals(new String[]{"CPU —"}, PerformanceOverlayText.format(CPU, v)[0]);
-		assertArrayEquals(new String[]{"CPUT —", "GPUT —", "BAT 0.0°C"}, groups[1]);
 	}
 
 	@Test

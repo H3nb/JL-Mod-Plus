@@ -34,21 +34,20 @@ public final class PerformanceOverlayOptions {
 	public static final int RAM = 1 << 14;
 	public static final int JAVA_HEAP = 1 << 15;
 	public static final int NATIVE_HEAP = 1 << 16;
-	public static final int CPU_TEMP = 1 << 17;
-	public static final int GPU_TEMP = 1 << 18;
-	public static final int BATTERY_TEMP = 1 << 19;
 	public static final int THERMAL = 1 << 20;
 	public static final int RENDERER = 1 << 21;
 	public static final int DISPLAY = 1 << 22;
 	public static final int RENDER_INTERVAL = 1 << 23;
 	public static final int RENDER_P95_INTERVAL = 1 << 24;
 	public static final int RENDER_MAX_INTERVAL = 1 << 25;
-	public static final int ALL = (1 << 26) - 1;
+	// Retire the three former hardware/battery temperature positions without repurposing them.
+	private static final int RETIRED_TEMPERATURE_BITS = 7 << 17;
+	public static final int ALL = ((1 << 26) - 1) & ~RETIRED_TEMPERATURE_BITS;
 	public static final int MINIMAL = FPS | CAP | SPEED;
 	public static final int STANDARD = MINIMAL | GUEST_FPS | FRAME_INTERVAL
 			| RENDER_INTERVAL | RENDER_P95_INTERVAL;
 	public static final int DEBUG = STANDARD | P95_INTERVAL | PAINT | COPY | SUBMIT
-			| FRAME_QUEUE | COALESCED | CPU | RAM | DISPLAY;
+			| INPUT_QUEUE | FRAME_QUEUE | COALESCED | CPU | RAM;
 
 	public static final int TOP_LEFT = 0;
 	public static final int TOP_RIGHT = 1;
