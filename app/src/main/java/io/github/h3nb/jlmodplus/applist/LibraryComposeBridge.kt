@@ -779,12 +779,14 @@ fun LibraryScreen(
         )
         controllerFocusedAppIndex = nextIndex
         controllerFocusedAppId = apps[nextIndex].databaseId
+        android.util.Log.i("UILibraryController", "handoff starts: list=${appsListState.firstVisibleItemIndex}, scrolling=${appsListState.isScrollInProgress}")
         // A controller command takes over from the preceding touch gesture or fling.
         if (currentState.layout == LibraryLayout.List) {
             appsListState.stopScroll(MutatePriority.UserInput)
         } else {
             appsGridState.stopScroll(MutatePriority.UserInput)
         }
+        android.util.Log.i("UILibraryController", "handoff stopped prior scroll")
         val headerHeight = appsViewport.headerHeightPx.intValue
         // Partial headers settle expanded. Reserve that final height so focus stays unobscured.
         val focusOffset = if (appsViewport.headerOffsetPx.floatValue <= -headerHeight + 0.5f) {
@@ -792,11 +794,23 @@ fun LibraryScreen(
         } else {
             -headerHeight
         }
+        val targetIndex = nextIndex + 1
+        // Touch can leave the retained focus far outside the viewport. Reveal it immediately
+        // rather than animating through unrelated rows; nearby controller movement stays smooth.
         if (currentState.layout == LibraryLayout.List) {
-            appsListState.animateScrollToItem(nextIndex + 1, focusOffset)
+            if (appsListState.layoutInfo.visibleItemsInfo.any { it.index == targetIndex }) {
+                appsListState.animateScrollToItem(targetIndex, focusOffset)
+            } else {
+                appsListState.scrollToItem(targetIndex, focusOffset)
+            }
         } else {
-            appsGridState.animateScrollToItem(nextIndex + 1, focusOffset)
+            if (appsGridState.layoutInfo.visibleItemsInfo.any { it.index == targetIndex }) {
+                appsGridState.animateScrollToItem(targetIndex, focusOffset)
+            } else {
+                appsGridState.scrollToItem(targetIndex, focusOffset)
+            }
         }
+        android.util.Log.i("UILibraryController", "handoff completed: list=${appsListState.firstVisibleItemIndex}")
     }
 
     BackHandler(
