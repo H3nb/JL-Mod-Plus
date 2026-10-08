@@ -101,9 +101,12 @@ internal fun rememberLibraryScrollChrome(
             }
             atTop to scrolling
         }.collectLatest { (atTop, scrolling) ->
+            // A filter projection can shrink a Lazy viewport back to item zero without
+            // any scroll gesture. That is a data change, not a request to reveal chrome.
+            val reachedTopByUser = atTop && intent.userInitiated
             if (!scrolling) intent.userInitiated = false
             if (!enabled) return@collectLatest
-            if (atTop) {
+            if (reachedTopByUser) {
                 viewport.headerOffsetPx.floatValue = 0f
                 hysteresis.reset()
                 currentVisibilityChanged(true)
