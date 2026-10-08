@@ -1,8 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 package io.github.h3nb.jlmodplus.applist
 
-import androidx.compose.animation.core.animate
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
@@ -44,8 +42,8 @@ internal fun rememberLibraryScrollChrome(
     LaunchedEffect(viewport.chromeVisible) {
         if (viewport.chromeVisible) hysteresis.reset()
     }
-    // Collect only scroll lifecycle/top transitions. This owns settling and cancels its animation
-    // when another drag, search focus, metadata overlay, or inactive page takes over.
+    // Observe only lifecycle/top transitions; partial headers are legitimate resting positions.
+    // Their offset follows consumed content scroll instead of running a competing settle animation.
     LaunchedEffect(viewport, layout, enabled) {
         if (!enabled) intent.userInitiated = false
         snapshotFlow {
@@ -58,26 +56,14 @@ internal fun rememberLibraryScrollChrome(
                     viewport.gridState.firstVisibleItemScrollOffset == 0) to
                     viewport.gridState.isScrollInProgress
             }
-            Triple(atTop, scrolling, headerHeightPx.intValue)
-        }.collectLatest { (atTop, scrolling, measuredHeight) ->
+            atTop to scrolling
+        }.collectLatest { (atTop, scrolling) ->
             if (!scrolling) intent.userInitiated = false
             if (!enabled) return@collectLatest
             if (atTop) {
                 viewport.headerOffsetPx.floatValue = 0f
                 hysteresis.reset()
                 currentVisibilityChanged(true)
-            } else if (!scrolling) {
-                val height = measuredHeight.toFloat()
-                val offset = viewport.headerOffsetPx.floatValue
-                // A partial header is never a resting state. Expand it rather than hiding more
-                // than the content actually scrolled, which would leave an empty header spacer.
-                if (offset < -0.5f && offset > -height + 0.5f) {
-                    currentVisibilityChanged(true)
-                    hysteresis.reset()
-                    animate(offset, 0f, animationSpec = tween(180)) { value, _ ->
-                        viewport.headerOffsetPx.floatValue = value
-                    }
-                }
             }
         }
     }
@@ -104,8 +90,9 @@ internal fun rememberLibraryScrollChrome(
                 if (!intent.userInitiated) return Offset.Zero
                 val height = headerHeightPx.intValue.toFloat()
                 if (height <= 0f) return Offset.Zero
-                // Ignore unconsumed forward fling distance: short content must stay expanded.
-                val delta = if (consumed.y != 0f) consumed.y else available.y.coerceAtLeast(0f)
+                // Only content motion moves the header: unconsumed overscroll at either edge
+                // must not detach it from the spacer or collapse a short list.
+                val delta = consumed.y
                 if (delta == 0f) return Offset.Zero
                 if (delta < 0f && viewport.headerOffsetPx.floatValue == 0f) {
                     val room = maxOf(height, minimumRoom)
