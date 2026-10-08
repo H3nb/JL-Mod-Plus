@@ -1856,7 +1856,12 @@ internal fun LibraryAppsDestination(
             state = state,
             sortVisible = sortVisible,
             onSortVisibilityChanged = { sortVisible = it },
-            onQuickView = onQuickView,
+            // A quick-filter switch changes the result set: show its beginning rather than
+            // retaining a deep viewport that belonged to a different filter.
+            onQuickView = { selected ->
+                onQuickView(selected)
+                revealSearchResults()
+            },
             onSort = onSort,
             selectionState = selectionState,
             onExitSelection = onExitSelection,
