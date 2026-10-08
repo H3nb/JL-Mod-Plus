@@ -1748,8 +1748,6 @@ internal fun LibraryAppsDestination(
     var sortVisible by remember { mutableStateOf(false) }
     val headerHeightPx = viewportState.headerHeightPx
     val headerOffsetPx = viewportState.headerOffsetPx
-    val density = LocalDensity.current
-    val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
     val currentActive by rememberUpdatedState(active)
     val currentOnFabVisibilityChanged by rememberUpdatedState(onFabVisibilityChanged)
     val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
@@ -1911,7 +1909,7 @@ internal fun LibraryAppsDestination(
                             false,
                         )
                     } else {
-                        Spacer(Modifier.height(headerSpacerHeight))
+                        LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
                     }
                 }
                 when {
@@ -1958,7 +1956,7 @@ internal fun LibraryAppsDestination(
                             false,
                         )
                     } else {
-                        Spacer(Modifier.height(headerSpacerHeight))
+                        LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
                     }
                 }
                 when {
