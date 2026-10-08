@@ -278,6 +278,22 @@ class LibraryViewportNavigationTest {
             composeRule.onNodeWithText(favorites).fetchSemanticsNode().boundsInRoot.top,
             1f,
         )
+
+        // A single filtered MIDlet can no longer consume backward scroll. Explicitly
+        // pulling down must still recover the hidden search rather than trapping the user.
+        composeRule.onNodeWithText(favorites).performClick()
+        composeRule.waitForIdle()
+        activeList(APP_PREFIX).performTouchInput {
+            down(Offset(width * 0.5f, height * 0.45f))
+            moveSmoothlyTo(
+                Offset(width * 0.5f, height * 0.85f),
+                durationMillis = 500,
+            )
+            advanceEventTime(150)
+            up()
+        }
+        composeRule.waitForIdle()
+        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
     }
 
     @Test
