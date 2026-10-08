@@ -969,7 +969,12 @@
     <string name="pref_accent_rose">Berry rose</string>
     <string name="pref_accent_green">Emerald green</string>
     <string name="pref_accent_amber">Golden amber</string>
-    <string name="pref_accent_blue">Classic blue</string>
+    <string name="pref_accent_blue">Default blue</string>
+    <string name="pref_accent_classic_blue">Classic blue</string>
+    <string name="pref_accent_indigo">Indigo</string>
+    <string name="pref_accent_cyan">Cyan</string>
+    <string name="pref_accent_orange">Orange</string>
+    <string name="pref_accent_pink">Pink</string>
     <string name="runtime_invalid_intent">Invalid launch request: the MIDlet path is missing.</string>
     <string name="runtime_storage_in_use">MIDlet storage is already in use by another runtime.</string>
     <string name="runtime_installation_changed">The MIDlet installation could not be prepared for launch.</string>

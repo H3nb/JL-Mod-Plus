@@ -108,7 +108,7 @@ data class SettingsUiState(
     val showProfiles: Boolean,
     val workingDirectory: String,
     val directoryError: String? = null,
-    val accent: SettingsOption = SettingsOption("blue", "Default blue"),
+    val accent: SettingsOption = SettingsOption("sapphire", "Sapphire blue"),
     val accents: List<SettingsOption> = emptyList(),
     val libraryChoices: List<SettingsChoice> = emptyList(),
     val librarySwitches: List<SettingsSwitch> = emptyList(),

@@ -20,7 +20,7 @@
         <item>@string/pref_accent_rose</item>
         <item>@string/pref_accent_green</item>
         <item>@string/pref_accent_amber</item>
-        <item>@string/pref_accent_blue</item>
+        <item>@string/pref_accent_classic_blue</item>
     </string-array>
     <string-array name="pref_accent_values" translatable="false" tools:ignore="InconsistentArrays">
         <item>sapphire</item>

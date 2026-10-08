@@ -102,11 +102,11 @@ private val DarkColors = darkColorScheme(
 
 enum class AccentPalette(val key: String) {
     Sapphire("sapphire"),
-    Orchid("violet"),
-    Jade("teal"),
+    Violet("violet"),
+    Teal("teal"),
     Coral("coral"),
-    Berry("rose"),
-    Emerald("green"),
+    Rose("rose"),
+    Green("green"),
     Amber("amber"),
     DefaultBlue("blue");
 
@@ -179,7 +179,7 @@ private val AccentToneSets = mapOf(
         onSecondaryFixedVariant = Color(0xFF373E4D),
         onTertiaryFixedVariant = Color(0xFF47354D),
     ),
-    AccentPalette.Orchid to AccentTones(
+    AccentPalette.Violet to AccentTones(
         light = AccentRoles(
             primary = Color(0xFF7142A9),
             primaryContainer = Color(0xFFE4D6FE),
@@ -206,7 +206,7 @@ private val AccentToneSets = mapOf(
         onSecondaryFixedVariant = Color(0xFF403B4A),
         onTertiaryFixedVariant = Color(0xFF50323D),
     ),
-    AccentPalette.Jade to AccentTones(
+    AccentPalette.Teal to AccentTones(
         light = AccentRoles(
             primary = Color(0xFF006C70),
             primaryContainer = Color(0xFFA6EDF0),
@@ -260,7 +260,7 @@ private val AccentToneSets = mapOf(
         onSecondaryFixedVariant = Color(0xFF4B3A34),
         onTertiaryFixedVariant = Color(0xFF443C1E),
     ),
-    AccentPalette.Berry to AccentTones(
+    AccentPalette.Rose to AccentTones(
         light = AccentRoles(
             primary = Color(0xFFA63265),
             primaryContainer = Color(0xFFFFCFDE),
@@ -287,7 +287,7 @@ private val AccentToneSets = mapOf(
         onSecondaryFixedVariant = Color(0xFF4B393E),
         onTertiaryFixedVariant = Color(0xFF503524),
     ),
-    AccentPalette.Emerald to AccentTones(
+    AccentPalette.Green to AccentTones(
         light = AccentRoles(
             primary = Color(0xFF327446),
             primaryContainer = Color(0xFFBDECC7),

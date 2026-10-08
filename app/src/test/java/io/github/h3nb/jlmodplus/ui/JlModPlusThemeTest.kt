@@ -35,6 +35,10 @@ class JlModPlusThemeTest {
             assertEquals(AccentPalette.Sapphire, AccentPalette.fromKey(removed))
         }
         assertEquals(AccentPalette.DefaultBlue, AccentPalette.fromKey("blue"))
+        assertEquals(AccentPalette.Teal, AccentPalette.fromKey("teal"))
+        assertEquals(AccentPalette.Violet, AccentPalette.fromKey("violet"))
+        assertEquals(AccentPalette.Rose, AccentPalette.fromKey("rose"))
+        assertEquals(AccentPalette.Green, AccentPalette.fromKey("green"))
         for (palette in AccentPalette.entries) {
             assertEquals(palette, AccentPalette.fromKey(palette.key))
         }
