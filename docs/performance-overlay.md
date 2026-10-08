@@ -47,8 +47,8 @@ alarm, or GPU utilization is included.
 | --- | --- |
 | FPS | Distinct guest mailbox sequences consumed by the host rendering path per real second. Repeated host redraws of the same sequence do not count; not confirmed display presentation. |
 | GFPS | Complete guest buffer publications per real second, including visually unchanged buffers. |
-| CAP | Effective host pacing ceiling from the configured FPS limit or the maximum supported display refresh rate, scaled by the manual speed multiplier. Without an installed TimingSession, CAP and FramePacer both fall back to normal speed (100%); a closed session is unavailable. CAP is **not** the native target FPS or a guaranteed bound for non-blocking callbacks. The configured value 0 means the display maximum, **not** unlimited. |
-| SPD | Configured TimingSession guest-clock multiplier. Not achieved emulation speed; if unavailable, display —, never assume 1.00x. |
+| CAP | Effective host pacing target from the configured FPS limit or maximum supported display refresh rate, scaled by the manual speed multiplier. With no TimingSession, CAP and FramePacer use 100% speed. A closed session or a nonpositive effective pacing input disables FramePacer and reports `OFF`; missing data reports `—`. The configured value 0 means display maximum, **not** unlimited. Internal `setLimitFps(-1)` restores the profile limit before pacing is resolved. CAP is neither native target FPS nor a guaranteed bound for non-blocking callbacks. |
+| SPD | Configured TimingSession guest-clock multiplier, exposed only for a runtime with the required universal timing transform. Not achieved emulation speed; if unavailable, display —, never assume 1.00x. CAP can remain available when SPD is unavailable. |
 | GFI / GP95 / GMAX | Mean, nearest-rank 95th percentile, and maximum host-time intervals between complete guest publications. |
 | RFI / RP95 / RMAX | Mean, nearest-rank 95th percentile, and maximum host-time intervals between distinct successful renderer frame-consumption observations. Not hardware presentation intervals. |
 | PAINT | Mean elapsed time in guest paint callbacks; absent for games that only use flush APIs. |
@@ -83,7 +83,9 @@ update every second; PSS, heap, and Android thermal severity update every five
 seconds. A frame interval following an intentionally static MIDlet screen
 includes the idle gap and is not automatically a stutter.
 
-Optional work is proportional to the selected metrics. Render-only cadence
+Optional work is proportional to the selected metrics. Host CAP, renderer identity,
+display Hz, speed and resource snapshots are queried only when selected.
+Render-only cadence
 captures publication timestamps but does not record guest interval statistics.
 `FrameMetrics` exists only
 when FPS, GFPS, or COAL needs frame-traffic counters. Renderer frame accounting is

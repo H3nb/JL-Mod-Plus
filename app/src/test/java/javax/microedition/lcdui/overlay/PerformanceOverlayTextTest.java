@@ -46,7 +46,9 @@ public class PerformanceOverlayTextTest {
 		v.cap = 73.8;
 		assertArrayEquals(new String[]{"FPS 46", "CAP 73.8"}, PerformanceOverlayText.format(FPS | CAP, v)[0]);
 		v.cap = 0;
-		assertArrayEquals(new String[]{"FPS 46", "CAP —"}, PerformanceOverlayText.format(FPS | CAP, v)[0]);
+		assertArrayEquals(new String[]{"FPS 46", "CAP OFF"}, PerformanceOverlayText.format(FPS | CAP, v)[0]);
+		v.cap = Double.NaN;
+		assertArrayEquals(new String[]{"CAP —"}, PerformanceOverlayText.format(CAP, v)[0]);
 		v.guestFps = 72;
 		assertArrayEquals(new String[]{"FPS 46", "GFPS 72"}, PerformanceOverlayText.format(FPS | GUEST_FPS, v)[0]);
 	}

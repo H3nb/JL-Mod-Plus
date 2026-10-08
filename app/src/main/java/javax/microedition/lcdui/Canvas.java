@@ -155,7 +155,8 @@ public abstract class Canvas extends Displayable {
 
 	private static ProfileModel settings;
 	private static boolean parallelRedraw;
-	private static int fpsLimit;
+	// Also read by the overlay sampler; guest/runtime code can change it while the surface is live.
+	private static volatile int fpsLimit;
 	private static boolean screenshotRawMode;
 	private static boolean timingOverlayEnabled;
 
@@ -276,7 +277,8 @@ public abstract class Canvas extends Displayable {
 	/** Configured pacing target, not achieved FPS; absent sessions pace at normal speed. */
 	public double getPerformanceFpsCap() {
 		TimingSnapshot timing = timingSession == null ? null : timingSession.snapshotIfOpen();
-		if (timingSession != null && timing == null) return Double.NaN;
+		// A closed session also disables FramePacer: report OFF, not an unknown cap.
+		if (timingSession != null && timing == null) return 0.0;
 		return resolvePerformanceFpsCap(fpsLimit, displayMaximumFps,
 				timing == null ? EmulationSpeed.NORMAL_PERCENT : timing.speedPercent());
 	}

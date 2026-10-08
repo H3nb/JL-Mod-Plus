@@ -95,7 +95,7 @@ public class FpsCounter extends TimerTask implements Layer {
 			previousSampleNanos = now;
 			previousGeneration = generation;
 			fps = guestFps = coalesced = Double.NaN;
-			resources.resetCpuSample();
+			if ((mask & CPU) != 0) resources.resetCpuSample();
 		} else if (snapshot != null) {
 			if (previousSnapshot == null) {
 				previousSnapshot = snapshot;
@@ -122,13 +122,13 @@ public class FpsCounter extends TimerTask implements Layer {
 		v.fps = fps;
 		v.guestFps = guestFps;
 		v.coalesced = coalesced;
-		v.cap = owner.getPerformanceFpsCap();
-		TimingSnapshot timing = timingSession == null ? null : timingSession.snapshotIfOpen();
-		if (timing != null) {
-			v.speedPercent = timing.speedPercent();
+		if ((mask & CAP) != 0) v.cap = owner.getPerformanceFpsCap();
+		if ((mask & SPEED) != 0 && timingSession != null) {
+			TimingSnapshot timing = timingSession.snapshotIfOpen();
+			if (timing != null) v.speedPercent = timing.speedPercent();
 		}
-		v.renderer = owner.getPerformanceRenderer();
-		v.displayHz = owner.getPerformanceDisplayHz();
+		if ((mask & RENDERER) != 0) v.renderer = owner.getPerformanceRenderer();
+		if ((mask & DISPLAY) != 0) v.displayHz = owner.getPerformanceDisplayHz();
 		PerformanceDiagnostics diagnostics = owner.getPerformanceDiagnostics();
 		if (diagnostics != null) {
 			PerformanceDiagnostics.Snapshot diagnosticSnapshot = diagnostics.snapshot(now);
@@ -144,12 +144,14 @@ public class FpsCounter extends TimerTask implements Layer {
 			v.inputQueue = diagnosticSnapshot.inputQueueMeanMs;
 			v.frameQueue = diagnosticSnapshot.frameQueueMeanMs;
 		}
-		PerformanceResources.Snapshot system = resources.sample(now);
-		v.cpu = system.getCpuPercent();
-		v.ram = system.getRamMiB();
-		v.javaHeap = system.getJavaHeapMiB();
-		v.nativeHeap = system.getNativeHeapMiB();
-		v.thermal = system.getThermalStatus();
+		if ((mask & (CPU | RAM | JAVA_HEAP | NATIVE_HEAP | THERMAL)) != 0) {
+			PerformanceResources.Snapshot system = resources.sample(now);
+			v.cpu = system.getCpuPercent();
+			v.ram = system.getRamMiB();
+			v.javaHeap = system.getJavaHeapMiB();
+			v.nativeHeap = system.getNativeHeapMiB();
+			v.thermal = system.getThermalStatus();
+		}
 		String[][] nextGroups = PerformanceOverlayText.format(mask, v);
 		if (!Arrays.deepEquals(groups, nextGroups)) {
 			groups = nextGroups;

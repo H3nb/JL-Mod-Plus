@@ -100,7 +100,7 @@ final class PerformanceOverlayText {
 	}
 
 	private static String cap(double value) {
-		if (value == 0) return "—";
+		if (value == 0) return "OFF";
 		return number(value, value == Math.rint(value) ? 0 : 1);
 	}
 
