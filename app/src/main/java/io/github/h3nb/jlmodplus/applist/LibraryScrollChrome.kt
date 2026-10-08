@@ -118,6 +118,22 @@ internal fun rememberLibraryScrollChrome(
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 if (currentEnabled && source == NestedScrollSource.UserInput && available.y != 0f) {
                     intent.userInitiated = true
+                    // A changed filter can leave a short result set at its top while the
+                    // search/header is partly hidden. Pull-down must still recover the header
+                    // even when the list has no backward scroll range to consume.
+                    val atTop = if (layout == LibraryLayout.List) {
+                        !viewport.listState.canScrollBackward
+                    } else {
+                        !viewport.gridState.canScrollBackward
+                    }
+                    if (available.y > 0f && atTop && viewport.headerOffsetPx.floatValue < 0f) {
+                        viewport.headerOffsetPx.floatValue =
+                            (viewport.headerOffsetPx.floatValue + available.y).coerceAtMost(0f)
+                        val visibilityChange = hysteresis.onScrollDelta(available.y)
+                        if (visibilityChange == true || viewport.headerOffsetPx.floatValue >= -0.5f) {
+                            currentVisibilityChanged(true)
+                        }
+                    }
                 }
                 return Offset.Zero
             }
