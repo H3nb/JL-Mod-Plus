@@ -205,8 +205,6 @@ internal fun LibraryCollectionBrowser(
     val gridState = viewportState.gridState
     val headerHeightPx = viewportState.headerHeightPx
     val headerOffsetPx = viewportState.headerOffsetPx
-    val density = LocalDensity.current
-    val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
     val headerHidden by remember(headerHeightPx, headerOffsetPx) {
         derivedStateOf {
             headerHeightPx.intValue > 0 &&
@@ -302,7 +300,7 @@ internal fun LibraryCollectionBrowser(
                             false,
                         )
                     } else {
-                        Spacer(Modifier.height(headerSpacerHeight))
+                        LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
                     }
                 }
                 if (projected.isEmpty()) {
@@ -348,7 +346,7 @@ internal fun LibraryCollectionBrowser(
                             false,
                         )
                     } else {
-                        Spacer(Modifier.height(headerSpacerHeight))
+                        LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
                     }
                 }
                 if (projected.isEmpty()) {
