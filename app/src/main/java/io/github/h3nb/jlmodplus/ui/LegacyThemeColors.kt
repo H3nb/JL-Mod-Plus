@@ -11,15 +11,13 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.ui.graphics.toArgb
 import androidx.preference.PreferenceManager
-import io.github.h3nb.jlmodplus.util.Constants
 
 /** Resolves app-owned colors for the legacy MIDlet canvas overlays. */
 object LegacyThemeColors {
     @JvmStatic
     fun accent(context: Context): Int {
         val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val key = preferences.getString(Constants.PREF_ACCENT, AccentPalette.DefaultBlue.key)
-        return AccentPalette.fromKey(key).previewColor(isDark(context)).toArgb()
+        return AccentPalette.readPreference(preferences).previewColor(isDark(context)).toArgb()
     }
 
     private fun isDark(context: Context): Boolean {
