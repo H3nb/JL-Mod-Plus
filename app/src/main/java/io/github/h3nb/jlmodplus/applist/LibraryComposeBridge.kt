@@ -37,6 +37,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.selection.toggleable
@@ -131,6 +132,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -1208,6 +1210,9 @@ fun LibraryScreen(
             }
             HorizontalPager(
                 state = pagerState,
+                // Retain the three bounded destinations; their own lists remain lazy.
+                // Viewport state alone cannot avoid rebuilding a page on every tab return.
+                beyondViewportPageCount = LibraryDestination.entries.lastIndex,
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.Top,
             ) { page ->
@@ -1218,7 +1223,18 @@ fun LibraryScreen(
                     // viewport state lives outside the pager and survives page disposal.
                     Modifier.clearAndSetSemantics { }
                 }
-                Box(modifier = pageModifier.fillMaxSize()) {
+                Box(
+                    modifier = pageModifier
+                        .fillMaxSize()
+                        .focusProperties {
+                            onEnter = {
+                                if (page != pagerState.currentPage || page != pagerState.settledPage) {
+                                    cancelFocusChange()
+                                }
+                            }
+                        }
+                        .focusGroup(),
+                ) {
                     when (LibraryDestination.entries[page]) {
                         LibraryDestination.Apps -> LibraryAppsDestination(
                             state = state,
@@ -1311,13 +1327,27 @@ fun LibraryScreen(
                         }
                         LibraryDestination.More -> LibraryMoreDestination(
                             scaffoldPadding = viewportPadding(),
-                            onImportAppBundle = actions::onImportAppBundle,
-                            onAbout = { infoDialog = LibraryInfoDialog.About },
-                            onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
-                            onSettings = actions::onOpenSettings,
-                            onHelp = { infoDialog = LibraryInfoDialog.Help },
-                            onCrashReports = actions::onOpenCrashReports,
-                            onSaveLog = actions::onSaveLog,
+                            onImportAppBundle = {
+                                if (currentControllerDestination == LibraryDestination.More) actions.onImportAppBundle()
+                            },
+                            onAbout = {
+                                if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.About
+                            },
+                            onLicenses = {
+                                if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.Licenses
+                            },
+                            onSettings = {
+                                if (currentControllerDestination == LibraryDestination.More) actions.onOpenSettings()
+                            },
+                            onHelp = {
+                                if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.Help
+                            },
+                            onCrashReports = {
+                                if (currentControllerDestination == LibraryDestination.More) actions.onOpenCrashReports()
+                            },
+                            onSaveLog = {
+                                if (currentControllerDestination == LibraryDestination.More) actions.onSaveLog()
+                            },
                         )
                     }
                 }
@@ -1535,7 +1565,6 @@ fun LibraryScreen(
     collectionsHost?.let { LibraryCollectionsDialogHost(it) }
 }
 
-private const val LIBRARY_CHROME_ANIMATION_MILLIS = 220
 // Require enough scroll progress to survive reclaiming the bottom navigation height. Without
 // this guard, a list/grid with only one or two rows of overflow becomes non-scrollable as soon
 // as the footer disappears, which immediately re-shows the chrome and causes a visible flicker.
@@ -1544,6 +1573,7 @@ internal const val LIBRARY_CHROME_HIDE_DISTANCE_DP = 80f
 // remaining content before hiding chrome so the viewport resize cannot immediately make the
 // list non-scrollable and start a hide/show loop.
 internal const val LIBRARY_CHROME_MIN_SCROLL_ROOM_DP = 160f
+private const val LIBRARY_CHROME_ANIMATION_MILLIS = 220
 private const val LIBRARY_RETURN_ANCHOR_SETTLE_FRAMES = 2
 private val LibraryGridMinCellSize = 88.dp
 private const val LIBRARY_GRID_ARTWORK_FRACTION = 0.78f
@@ -1771,9 +1801,23 @@ internal fun LibraryAppsDestination(
     val listState = viewportState.listState
     val gridState = viewportState.gridState
     var sortVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(active) {
+        if (!active) {
+            sortVisible = false
+            searchFocused = false
+        }
+    }
+    val currentActive by rememberUpdatedState(active)
+    // Read eligibility when an action arrives, retaining callback identity across tab changes.
+    val openApp: (Int) -> Unit = { if (currentActive) onOpenApp(it) }
+    val openActions: (LibraryAppUiItem) -> Unit = { if (currentActive) onOpenActions(it) }
+    val toggleSelection: (LibraryAppUiItem) -> Unit = { if (currentActive) onToggleSelection(it) }
+    val favoriteApp: (Int, Boolean) -> Unit = { id, favorite ->
+        if (currentActive) onFavorite(id, favorite)
+    }
+    val retry: () -> Unit = { if (currentActive) onRetry() }
     val headerHeightPx = viewportState.headerHeightPx
     val headerOffsetPx = viewportState.headerOffsetPx
-    val currentActive by rememberUpdatedState(active)
     val currentOnFabVisibilityChanged by rememberUpdatedState(onFabVisibilityChanged)
     val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
     val activeFabVisibilityChanged: (Boolean) -> Unit = remember(viewportState) {
@@ -1866,8 +1910,13 @@ internal fun LibraryAppsDestination(
         viewportState.headerOffsetPx.floatValue = 0f
         viewportState.chromeVisible = true
         searchScope.launch {
-            if (state.layout == LibraryLayout.List) listState.scrollToItem(0)
-            else gridState.scrollToItem(0)
+            if (state.layout == LibraryLayout.List) {
+                if (listState.firstVisibleItemIndex != 0 || listState.firstVisibleItemScrollOffset != 0) {
+                    listState.scrollToItem(0)
+                }
+            } else if (gridState.firstVisibleItemIndex != 0 || gridState.firstVisibleItemScrollOffset != 0) {
+                gridState.scrollToItem(0)
+            }
         }
     }
     LaunchedEffect(searchFocused) {
@@ -1879,29 +1928,31 @@ internal fun LibraryAppsDestination(
             query = query,
             headerOffsetPx = headerOffsetPx,
             onQueryChange = {
-                query = it
-                revealSearchResults()
+                if (currentActive) {
+                    query = it
+                    revealSearchResults()
+                }
             },
-            onSearchFocusChanged = { searchFocused = it },
+            onSearchFocusChanged = { searchFocused = currentActive && it },
             state = state,
-            sortVisible = sortVisible,
-            onSortVisibilityChanged = { sortVisible = it },
+            sortVisible = active && sortVisible,
+            onSortVisibilityChanged = { sortVisible = currentActive && it },
             // Request the beginning of the incoming Lazy projection before it remeasures.
             // Unlike search focus, a quick-filter switch never resets the floating header.
             onQuickView = { selected ->
-                if (selected != state.quickView) {
+                if (currentActive && selected != state.quickView) {
                     if (state.layout == LibraryLayout.List) listState.requestScrollToItem(0)
                     else gridState.requestScrollToItem(0)
                     onQuickView(selected)
                 }
             },
-            onSort = onSort,
+            onSort = { if (currentActive) onSort(it) },
             selectionState = selectionState,
-            onExitSelection = onExitSelection,
-            onSelectAll = onSelectAll,
-            onUnselectAll = onUnselectAll,
+            onExitSelection = { if (currentActive) onExitSelection() },
+            onSelectAll = { if (currentActive) onSelectAll() },
+            onUnselectAll = { if (currentActive) onUnselectAll() },
             title = title,
-            onBack = onBack,
+            onBack = onBack?.let { back -> { if (currentActive) back() } },
             showQuickViews = showQuickViews && !selectionState.isActive,
             interactive = interactive,
         )
@@ -1945,7 +1996,7 @@ internal fun LibraryAppsDestination(
                 }
                 when {
                     state.errorMessage != null -> item(span = { GridItemSpan(maxLineSpan) }) {
-                        LibraryErrorState(onRetry)
+                        LibraryErrorState(retry)
                     }
                     state.loading -> item(span = { GridItemSpan(maxLineSpan) }) {
                         LibraryLoadingState(state)
@@ -1961,13 +2012,13 @@ internal fun LibraryAppsDestination(
                             enhancedIcons = state.enhancedIcons,
                             hideTitle = state.hideGridTitles,
                             gridSpacing = state.gridSpacing.value,
-                            onOpenApp = onOpenApp,
-                            onOpenActions = onOpenActions,
+                            onOpenApp = openApp,
+                            onOpenActions = openActions,
                             controllerFocused = app.databaseId == controllerFocusedDatabaseId &&
                                 !selectionState.isActive,
                             selectionMode = selectionState.isActive,
                             selected = app.databaseId in selectionState.selectedAppIds,
-                            onToggleSelection = onToggleSelection,
+                            onToggleSelection = toggleSelection,
                         )
                     }
                 }
@@ -1991,7 +2042,7 @@ internal fun LibraryAppsDestination(
                     }
                 }
                 when {
-                    state.errorMessage != null -> item { LibraryErrorState(onRetry) }
+                    state.errorMessage != null -> item { LibraryErrorState(retry) }
                     state.loading -> item { LibraryLoadingState(state) }
                     state.apps.isEmpty() -> item { LibraryEmptyState(state.appliedFilter) }
                     else -> items(state.apps, key = { it.databaseId }) { app ->
@@ -2001,15 +2052,15 @@ internal fun LibraryAppsDestination(
                             iconShape = state.iconShape,
                             enhancedIcons = state.enhancedIcons,
                             showDescription = state.showListDescription,
-                            onOpenApp = onOpenApp,
-                            onOpenActions = onOpenActions,
-                            onFavorite = onFavorite,
+                            onOpenApp = openApp,
+                            onOpenActions = openActions,
+                            onFavorite = favoriteApp,
                             controllerFocused = app.databaseId == controllerFocusedDatabaseId &&
                                 !selectionState.isActive,
                             favoriteEnabled = state.databaseControlsReady,
                             selectionMode = selectionState.isActive,
                             selected = app.databaseId in selectionState.selectedAppIds,
-                            onToggleSelection = onToggleSelection,
+                            onToggleSelection = toggleSelection,
                         )
                     }
                 }

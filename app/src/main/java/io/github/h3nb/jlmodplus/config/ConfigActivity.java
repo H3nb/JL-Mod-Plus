@@ -57,6 +57,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import com.google.gson.JsonElement;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -2151,14 +2152,21 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		boolean originExists = profileOrigin != null && profileNames.contains(profileOrigin);
 		ConfigUiState.ProfileStatus profileStatus = resolveNamedPresetStatus(
 				namedLinked, profileOrigin, originExists, defaultProfile);
-		if (profileStatus == null && !isProfile && builtInThemeLinked && builtInDefaultParams != null
-				&& ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams)) {
+		boolean compareBuiltIn = profileStatus == null && !isProfile
+				&& builtInThemeLinked && builtInDefaultParams != null;
+		boolean comparePersisted = !isProfile && params != null && persistedBaseline != null;
+		JsonElement effectiveComparison = compareBuiltIn || comparePersisted
+				? ProfileConfigMatcher.comparisonSnapshot(ProfileConfigMatcher.effectiveConfig(params, state))
+				: null;
+		if (compareBuiltIn && effectiveComparison.equals(
+				ProfileConfigMatcher.comparisonSnapshot(builtInDefaultParams))) {
 			profileStatus = ConfigUiState.ProfileStatus.builtInDefault(defaultProfile);
 		} else if (profileStatus == null) {
 			profileStatus = ConfigUiState.ProfileStatus.custom(defaultProfile);
 		}
-		boolean draftDiverged = !isProfile
-				&& hasEffectiveDraftDivergence(params, state, persistedBaseline);
+		boolean draftDiverged = !isProfile && params != null
+				&& (persistedBaseline == null || !effectiveComparison.equals(
+						ProfileConfigMatcher.comparisonSnapshot(persistedBaseline)));
 		String updatePresetName = resolveUpdatePresetName(
 				isProfile, profileStatus, originExists, draftDiverged);
 		ArrayList<ConfigUiState.ProfileTemplate> templates = new ArrayList<>();

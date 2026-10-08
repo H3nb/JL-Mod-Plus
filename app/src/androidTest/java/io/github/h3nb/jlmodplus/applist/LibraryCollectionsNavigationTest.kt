@@ -22,6 +22,7 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
@@ -31,6 +32,7 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
@@ -120,6 +122,88 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun inactiveCollectionOverviewDismissesWindowsAndRejectsActions() {
+        val host = RecordingCollectionsHost()
+        val active = mutableStateOf(true)
+        val navigationChanges = mutableListOf<LibraryNavigationState>()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryCollectionsDestination(
+                        host = host,
+                        libraryState = sampleLibraryState(),
+                        scaffoldPadding = PaddingValues(),
+                        onNavigationStateChanged = { navigationChanges += it },
+                        onOpenActions = { _, _ -> },
+                        active = active.value,
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.library_collection_new)).performClick()
+        composeRule.onNode(isDialog()).assertExists()
+        composeRule.runOnIdle { active.value = false }
+        composeRule.onAllNodes(isDialog()).assertCountEquals(0)
+
+        // Test the action boundary directly while the retained page still has its visual tree.
+        composeRule.onNodeWithText(uiString(R.string.library_collection_new)).performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.onAllNodes(isDialog()).assertCountEquals(0)
+        assertEquals(emptyList<LibraryNavigationState>(), navigationChanges)
+        assertEquals(emptyList<Long>(), host.openedCollectionIds)
+
+        composeRule.runOnIdle { active.value = true }
+        composeRule.onAllNodes(isDialog()).assertCountEquals(0)
+        composeRule.onNodeWithText(uiString(R.string.library_collection_new)).performClick()
+        composeRule.onNode(isDialog()).assertExists()
+    }
+
+    @Test
+    fun inactiveRetainedCollectionStillReconcilesDeletedRoute() {
+        val host = RecordingCollectionsHost().apply {
+            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
+        }
+        val active = mutableStateOf(true)
+        val navigationState = mutableStateOf(
+            LibraryNavigationState(
+                destination = LibraryDestinationKey.Collections,
+                selectedCollectionId = COLLECTION_ID,
+            ),
+        )
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryCollectionsDestination(
+                        host = host,
+                        libraryState = sampleLibraryState(),
+                        scaffoldPadding = PaddingValues(),
+                        navigationState = navigationState.value,
+                        onNavigationStateChanged = { navigationState.value = it },
+                        onOpenActions = { _, _ -> },
+                        active = active.value,
+                    )
+                }
+            }
+        }
+        waitForMember()
+        composeRule.runOnIdle {
+            active.value = false
+            host.store.publishCollections(emptyList())
+        }
+        composeRule.waitForIdle()
+        assertNull(navigationState.value.selectedCollectionId)
+        assertNull(host.store.displayedMembersCollectionId())
+        composeRule.runOnIdle { active.value = true }
+        composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
+        composeRule.onNodeWithText(uiString(R.string.library_collections_empty_title))
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun inactiveCollectionPagePreservesSelectedDetailForPagerReturn() {
         val host = RecordingCollectionsHost().apply {
             store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
@@ -160,6 +244,7 @@ class LibraryCollectionsNavigationTest {
         // HorizontalPager keeps neighbouring pages composed. Losing active ownership must not
         // replace the selected Collection with the overview while the page is off-screen.
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).performClick().assertIsNotFocused()
         composeRule.runOnIdle {
             assertEquals(emptyList<Boolean>(), navigationVisibilityEvents)
             active.value = true

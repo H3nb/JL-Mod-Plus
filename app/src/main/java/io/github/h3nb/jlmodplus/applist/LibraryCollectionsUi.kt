@@ -9,6 +9,7 @@ package io.github.h3nb.jlmodplus.applist
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,6 +62,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
@@ -376,6 +378,10 @@ internal fun LibraryCollectionsDestination(
         value = scaffoldValue,
         modifier = Modifier
             .fillMaxSize()
+            .focusProperties {
+                onEnter = { if (!currentActive) cancelFocusChange() }
+            }
+            .focusGroup()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
         listPane = {
             AnimatedPane {
@@ -388,14 +394,16 @@ internal fun LibraryCollectionsDestination(
                     selectedCollectionId = selectedCollectionId,
                     active = active,
                     onOpenCollection = { collectionId ->
-                        onNavigationStateChanged(
-                            navigationState.copy(
-                                selectedCollectionId = collectionId,
-                                selectedCollectionScope =
-                                    libraryState.libraryScope.takeIf(String::isNotEmpty),
-                                collectionManageApps = false,
-                            ),
-                        )
+                        if (currentActive) {
+                            onNavigationStateChanged(
+                                navigationState.copy(
+                                    selectedCollectionId = collectionId,
+                                    selectedCollectionScope =
+                                        libraryState.libraryScope.takeIf(String::isNotEmpty),
+                                    collectionManageApps = false,
+                                ),
+                            )
+                        }
                     },
                     onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
                 )
@@ -473,6 +481,7 @@ private fun LibraryCollectionsOverview(
     onOpenCollection: (Long) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit,
 ) {
+    val currentActive by rememberUpdatedState(active)
     val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
     val publishNavigationVisibility: (Boolean) -> Unit = remember(viewportState) {
         { visible ->
@@ -485,6 +494,15 @@ private fun LibraryCollectionsOverview(
     var actionsTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
+    // These windows are presentation owned by the settled route, not retained viewport data.
+    LaunchedEffect(active) {
+        if (!active) {
+            createDialog = false
+            actionsTarget = null
+            renameTarget = null
+            deleteTarget = null
+        }
+    }
     val listState = viewportState.listState
     val headerHeightPx = viewportState.headerHeightPx
     val headerOffsetPx = viewportState.headerOffsetPx
@@ -521,7 +539,7 @@ private fun LibraryCollectionsOverview(
             )
             TextButton(
                 enabled = titleActionsEnabled,
-                onClick = { createDialog = true },
+                onClick = { if (currentActive) createDialog = true },
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_create_folder),
@@ -627,7 +645,7 @@ private fun LibraryCollectionsOverview(
                             )
                         },
                         trailingContent = {
-                            IconButton(onClick = { actionsTarget = collection }) {
+                            IconButton(onClick = { if (currentActive) actionsTarget = collection }) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_edit),
                                     contentDescription = stringResource(R.string.edit),
@@ -636,7 +654,7 @@ private fun LibraryCollectionsOverview(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onOpenCollection(collection.id) }
+                            .clickable { if (currentActive) onOpenCollection(collection.id) }
                             .semantics { this.selected = selected },
                     )
                     HorizontalDivider(
@@ -660,7 +678,7 @@ private fun LibraryCollectionsOverview(
         }
     }
 
-    if (createDialog) {
+    if (active && createDialog) {
         CollectionNameDialog(
             title = stringResource(R.string.library_collection_new),
             initialName = "",
@@ -668,12 +686,12 @@ private fun LibraryCollectionsOverview(
             onDismiss = { createDialog = false },
             onConfirm = { name ->
                 createDialog = false
-                host.onCreateCollection(name)
+                if (currentActive) host.onCreateCollection(name)
             },
         )
     }
 
-    actionsTarget?.let { collection ->
+    actionsTarget?.takeIf { active }?.let { collection ->
         CollectionActionsDialog(
             collection = collection,
             onDismiss = { actionsTarget = null },
@@ -688,7 +706,7 @@ private fun LibraryCollectionsOverview(
         )
     }
 
-    renameTarget?.let { collection ->
+    renameTarget?.takeIf { active }?.let { collection ->
         CollectionNameDialog(
             title = stringResource(R.string.action_context_rename),
             initialName = collection.name,
@@ -696,12 +714,12 @@ private fun LibraryCollectionsOverview(
             onDismiss = { renameTarget = null },
             onConfirm = { name ->
                 renameTarget = null
-                host.onRenameCollection(collection.id, name)
+                if (currentActive) host.onRenameCollection(collection.id, name)
             },
         )
     }
 
-    deleteTarget?.let { collection ->
+    deleteTarget?.takeIf { active }?.let { collection ->
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
             title = { Text(stringResource(R.string.action_context_delete)) },
@@ -709,7 +727,7 @@ private fun LibraryCollectionsOverview(
             confirmButton = {
                 TextButton(onClick = {
                     deleteTarget = null
-                    host.onDeleteCollection(collection.id)
+                    if (currentActive) host.onDeleteCollection(collection.id)
                 }) {
                     Text(
                         text = stringResource(R.string.action_context_delete),

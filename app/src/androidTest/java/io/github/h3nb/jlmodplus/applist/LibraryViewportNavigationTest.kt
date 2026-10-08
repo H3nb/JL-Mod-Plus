@@ -131,6 +131,29 @@ class LibraryViewportNavigationTest {
     }
 
     @Test
+    fun retainedAppsDoesNotRedispatchSearchOnDistantTabReturn() {
+        val host = ViewportHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
+            }
+        }
+        composeRule.waitForIdle()
+        assertEquals(listOf(""), host.searches)
+
+        composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_more)))
+            .performClick()
+        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
+        composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps)))
+            .performClick()
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
+            .assertIsDisplayed()
+        assertEquals(listOf(""), host.searches)
+    }
+
+    @Test
     fun distantNavigationBarTapSkipsCollectionInBothDirections() {
         val host = ViewportHost()
         composeRule.setContent {
@@ -775,7 +798,8 @@ class LibraryViewportNavigationTest {
         override fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long) = Unit
         override fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long) = Unit
         override fun onRemoveAppFromCollection(appId: Int, collectionId: Long) = Unit
-        override fun onSearch(query: String) = Unit
+        val searches = mutableListOf<String>()
+        override fun onSearch(query: String) { searches += query }
         override fun onLayoutChange(layout: LibraryLayout) = Unit
         override fun onSort(sortIndex: Int) = Unit
         override fun onInstall() = Unit

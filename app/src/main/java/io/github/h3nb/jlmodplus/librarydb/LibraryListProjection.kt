@@ -7,6 +7,7 @@
 package io.github.h3nb.jlmodplus.librarydb
 
 import java.text.Collator
+import java.util.Collections
 import java.util.Locale
 
 enum class LibraryQuickView {
@@ -25,25 +26,47 @@ object LibraryListProjection {
         locale: Locale = Locale.getDefault(),
         quickView: LibraryQuickView = LibraryQuickView.All,
     ): List<LibraryAppRow> {
-        val quickRows = when (quickView) {
-            LibraryQuickView.All -> rows
-            LibraryQuickView.Favorites -> rows.filter(LibraryAppRow::favorite)
-            LibraryQuickView.RecentlyAdded -> rows.filter { it.addedAt != null }
-            LibraryQuickView.RecentlyPlayed -> rows.filter { it.lastPlayedAt != null }
-        }
-        val query = filter.trim().lowercase(Locale.ROOT)
-        val ranked = if (query.isEmpty()) {
-            quickRows.map { RankedRow(it, NO_SEARCH_RANK) }
-        } else {
-            quickRows.mapNotNull { row ->
-                searchRank(row, query)?.let { rank -> RankedRow(row, rank) }
-            }
-        }
-        if (ranked.size < 2) {
-            return ranked.map(RankedRow::row)
-        }
+        return project(prepare(rows, sortVariant, locale, quickView), filter, quickView)
+    }
 
-        val fallbackComparator = when (quickView) {
+    /** One source ordering; query and Favorites changes do not change its comparator. */
+    internal class OrderedRows internal constructor(
+        private val source: List<LibraryAppRow>,
+        private val sortVariant: Int,
+        private val locale: Locale,
+        private val orderView: LibraryQuickView,
+        val rows: List<LibraryAppRow>,
+        val availableAppIds: Set<Long>,
+    ) {
+        fun matchesSource(source: List<LibraryAppRow>): Boolean = this.source == source
+
+        fun matchesOrdering(
+            sortVariant: Int,
+            locale: Locale,
+            quickView: LibraryQuickView,
+        ): Boolean = this.locale == locale && orderView == orderingView(quickView) &&
+            (orderView != LibraryQuickView.All || this.sortVariant == sortVariant)
+    }
+
+    internal fun prepare(
+        rows: List<LibraryAppRow>,
+        sortVariant: Int,
+        locale: Locale,
+        quickView: LibraryQuickView,
+        checkActive: () -> Unit = {},
+    ): OrderedRows {
+        checkActive()
+        val source = Collections.unmodifiableList(ArrayList(rows))
+        val availableIds = LinkedHashSet<Long>(source.size)
+        val ordered = ArrayList<LibraryAppRow>(source.size)
+        val orderView = orderingView(quickView)
+        for (index in source.indices) {
+            if (index % CANCELLATION_CHUNK == 0) checkActive()
+            val row = source[index]
+            availableIds.add(row.id)
+            if (eligible(row, orderView)) ordered.add(row)
+        }
+        val comparator = when (orderView) {
             LibraryQuickView.RecentlyAdded -> Comparator<LibraryAppRow> { left, right ->
                 val primary = requireNotNull(right.addedAt).compareTo(requireNotNull(left.addedAt))
                 if (primary != 0) primary else right.id.compareTo(left.id)
@@ -54,11 +77,59 @@ object LibraryListProjection {
             }
             else -> sortComparator(sortVariant, locale)
         }
-        val comparator = Comparator<RankedRow> { left, right ->
-            val rankOrder = left.rank.compareTo(right.rank)
-            if (rankOrder != 0) rankOrder else fallbackComparator.compare(left.row, right.row)
+        checkActive()
+        ordered.sortWith(comparator)
+        checkActive()
+        return OrderedRows(source, sortVariant, locale, orderView,
+            Collections.unmodifiableList(ordered), Collections.unmodifiableSet(availableIds))
+    }
+
+    internal fun project(
+        ordered: OrderedRows,
+        filter: String,
+        quickView: LibraryQuickView,
+        checkActive: () -> Unit = {},
+    ): List<LibraryAppRow> {
+        checkActive()
+        val query = filter.trim().lowercase(Locale.ROOT)
+        if (query.isEmpty()) {
+            if (quickView != LibraryQuickView.Favorites) return ordered.rows
+            val favorites = ArrayList<LibraryAppRow>()
+            for (index in ordered.rows.indices) {
+                if (index % CANCELLATION_CHUNK == 0) checkActive()
+                val row = ordered.rows[index]
+                if (row.favorite) favorites.add(row)
+            }
+            checkActive()
+            return Collections.unmodifiableList(favorites)
         }
-        return ranked.sortedWith(comparator).map(RankedRow::row)
+        val buckets = arrayOfNulls<ArrayList<LibraryAppRow>>(SEARCH_RANKS)
+        var count = 0
+        for (index in ordered.rows.indices) {
+            if (index % CANCELLATION_CHUNK == 0) checkActive()
+            val row = ordered.rows[index]
+            if (!eligible(row, quickView)) continue
+            val rank = searchRank(row, query) ?: continue
+            val bucket = buckets[rank] ?: ArrayList<LibraryAppRow>().also { buckets[rank] = it }
+            bucket.add(row)
+            count++
+        }
+        val result = ArrayList<LibraryAppRow>(count)
+        for (bucket in buckets) {
+            checkActive()
+            if (bucket != null) result.addAll(bucket)
+        }
+        return Collections.unmodifiableList(result)
+    }
+
+    private fun orderingView(quickView: LibraryQuickView) =
+        if (quickView == LibraryQuickView.Favorites) LibraryQuickView.All else quickView
+
+    private fun eligible(row: LibraryAppRow, quickView: LibraryQuickView) = when (quickView) {
+        LibraryQuickView.All -> true
+        LibraryQuickView.Favorites -> row.favorite
+        LibraryQuickView.RecentlyAdded -> row.addedAt != null
+        LibraryQuickView.RecentlyPlayed -> row.lastPlayedAt != null
     }
 
     private fun searchRank(row: LibraryAppRow, needle: String): Int? {
@@ -115,9 +186,8 @@ object LibraryListProjection {
         }
     }
 
-    private data class RankedRow(val row: LibraryAppRow, val rank: Int)
-
-    private const val NO_SEARCH_RANK = 0
+    private const val SEARCH_RANKS = 6
+    private const val CANCELLATION_CHUNK = 128
     const val SORT_TITLE = 0
     const val SORT_DATE = 1
     const val SORT_VENDOR = 2

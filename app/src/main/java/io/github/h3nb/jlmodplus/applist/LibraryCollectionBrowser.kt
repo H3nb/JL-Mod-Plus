@@ -120,6 +120,7 @@ internal fun LibraryCollectionBrowser(
     handleSystemBack: Boolean = true,
     interactionActive: Boolean = true,
 ) {
+    val currentInteractionActive by rememberUpdatedState(interactionActive)
     val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
     val publishNavigationVisibility: (Boolean) -> Unit = remember(viewportState) {
         { visible ->
@@ -140,7 +141,7 @@ internal fun LibraryCollectionBrowser(
         if (unresolved != pendingMemberships) pendingMemberships = unresolved
     }
     fun setManageApps(visible: Boolean) {
-        if (manageApps == visible) return
+        if (!currentInteractionActive || manageApps == visible) return
         onManageAppsChanged(visible)
         if (interactionActive) {
             onNavigationVisibilityChanged(!visible)
@@ -180,7 +181,7 @@ internal fun LibraryCollectionBrowser(
             loading = !allAppsPrepared,
             onBack = { setManageApps(false) },
             onSetMembership = { appId, included ->
-                if (appId !in pendingMemberships) {
+                if (currentInteractionActive && appId !in pendingMemberships) {
                     pendingMemberships = pendingMemberships + (appId to included)
                     onSetMembership(
                         appId,
@@ -220,6 +221,14 @@ internal fun LibraryCollectionBrowser(
         searchFocused = false
     }
     var sortVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(interactionActive) {
+        if (!interactionActive) {
+            sortVisible = false
+            searchFocused = false
+        }
+    }
+    val openApp: (Int) -> Unit = { if (currentInteractionActive) onOpenApp(it) }
+    val openActions: (LibraryAppUiItem) -> Unit = { if (currentInteractionActive) onOpenActions(it) }
     val projected = rememberCollectionAppsProjection(viewportState, members, libraryState.sortVariant)
     val projectedIds = remember(projected) {
         projected?.map(LibraryAppUiItem::databaseId).orEmpty()
@@ -261,13 +270,15 @@ internal fun LibraryCollectionBrowser(
             query = query,
             headerOffsetPx = headerOffsetPx,
             sortVariant = libraryState.sortVariant,
-            sortVisible = sortVisible,
+            sortVisible = interactionActive && sortVisible,
             selectionState = selectionState,
             visibleAppIds = projectedIds,
-            onBack = onBack,
-            onExitSelection = { onSelectionStateChanged(selectionState.clear()) },
+            onBack = { if (currentInteractionActive) onBack() },
+            onExitSelection = {
+                if (currentInteractionActive) onSelectionStateChanged(selectionState.clear())
+            },
             onSelectAll = {
-                onSelectionStateChanged(
+                if (currentInteractionActive) onSelectionStateChanged(
                     selectionState.selectVisible(
                         libraryState.generation,
                         projectedIds,
@@ -276,7 +287,7 @@ internal fun LibraryCollectionBrowser(
                 )
             },
             onUnselectAll = {
-                onSelectionStateChanged(
+                if (currentInteractionActive) onSelectionStateChanged(
                     selectionState.unselectVisible(
                         libraryState.generation,
                         projectedIds,
@@ -285,12 +296,14 @@ internal fun LibraryCollectionBrowser(
                 )
             },
             onQueryChange = {
-                query = it
-                revealSearchResults()
+                if (currentInteractionActive) {
+                    query = it
+                    revealSearchResults()
+                }
             },
-            onSearchFocusChanged = { searchFocused = it },
-            onSortVisibilityChanged = { sortVisible = it },
-            onSort = onSort,
+            onSearchFocusChanged = { searchFocused = currentInteractionActive && it },
+            onSortVisibilityChanged = { sortVisible = currentInteractionActive && it },
+            onSort = { if (currentInteractionActive) onSort(it) },
             onManageApps = { setManageApps(true) },
             interactive = interactive,
             showBackButton = showBackButton,
@@ -339,12 +352,12 @@ internal fun LibraryCollectionBrowser(
                             enhancedIcons = libraryState.enhancedIcons,
                             hideTitle = libraryState.hideGridTitles,
                             gridSpacing = libraryState.gridSpacing.value,
-                            onOpenApp = onOpenApp,
-                            onOpenActions = onOpenActions,
+                            onOpenApp = openApp,
+                            onOpenActions = openActions,
                             selectionMode = selectionState.isActive,
                             selected = app.databaseId in selectionState.selectedAppIds,
                             onToggleSelection = {
-                                onSelectionStateChanged(
+                                if (currentInteractionActive) onSelectionStateChanged(
                                     selectionState.toggle(
                                         libraryState.generation,
                                         it.databaseId,
@@ -382,12 +395,12 @@ internal fun LibraryCollectionBrowser(
                             iconShape = libraryState.iconShape,
                             enhancedIcons = libraryState.enhancedIcons,
                             showDescription = libraryState.showListDescription,
-                            onOpenApp = onOpenApp,
-                            onOpenActions = onOpenActions,
+                            onOpenApp = openApp,
+                            onOpenActions = openActions,
                             selectionMode = selectionState.isActive,
                             selected = app.databaseId in selectionState.selectedAppIds,
                             onToggleSelection = {
-                                onSelectionStateChanged(
+                                if (currentInteractionActive) onSelectionStateChanged(
                                     selectionState.toggle(
                                         libraryState.generation,
                                         it.databaseId,
