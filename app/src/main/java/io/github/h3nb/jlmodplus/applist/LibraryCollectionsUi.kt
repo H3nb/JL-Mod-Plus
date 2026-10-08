@@ -488,8 +488,6 @@ private fun LibraryCollectionsOverview(
     val listState = viewportState.listState
     val headerHeightPx = viewportState.headerHeightPx
     val headerOffsetPx = viewportState.headerOffsetPx
-    val density = LocalDensity.current
-    val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
     val headerHidden by remember(headerHeightPx, headerOffsetPx) {
         derivedStateOf {
             headerHeightPx.intValue > 0 &&
@@ -557,7 +555,7 @@ private fun LibraryCollectionsOverview(
                         false,
                     )
                 } else {
-                    Spacer(Modifier.height(headerSpacerHeight))
+                    LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
                 }
             }
 
