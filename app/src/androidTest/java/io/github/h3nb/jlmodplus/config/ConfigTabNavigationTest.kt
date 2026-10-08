@@ -78,9 +78,11 @@ class ConfigTabNavigationTest {
             assertFalse(composeRule.onNodeWithText(controlsHeading).isDisplayed())
         }
 
+        // Material 3 navigation items expose icon labels in the unmerged semantics tree.
+        // Tap the actual icon bounds and still assert the final page and skipped destinations.
         composeRule.mainClock.autoAdvance = false
         try {
-            composeRule.onNodeWithContentDescription(system).performClick()
+            composeRule.onNodeWithContentDescription(system, useUnmergedTree = true).performClick()
             repeat(18) {
                 composeRule.mainClock.advanceTimeByFrame()
                 assertIntermediatesHidden()
@@ -93,7 +95,7 @@ class ConfigTabNavigationTest {
 
         composeRule.mainClock.autoAdvance = false
         try {
-            composeRule.onNodeWithContentDescription(basic).performClick()
+            composeRule.onNodeWithContentDescription(basic, useUnmergedTree = true).performClick()
             repeat(18) {
                 composeRule.mainClock.advanceTimeByFrame()
                 assertIntermediatesHidden()
