@@ -3,17 +3,60 @@ package io.github.h3nb.jlmodplus.applist
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.collectLatest
+import kotlin.math.abs
+
+/**
+ * Separately gate touch, keyboard and accessibility for a header action group when its top
+ * edge enters the system-bar area. The transform does not change Compose layout coordinates;
+ * subtract it from the rendered position so only inset/geometry changes update the baseline.
+ * Derived state invalidates the controls only when their eligibility actually changes.
+ */
+internal class LibraryHeaderActionGate(
+    val positionModifier: Modifier,
+    val enabled: State<Boolean>,
+)
+
+@Composable
+internal fun rememberLibraryHeaderActionGate(
+    headerOffsetPx: MutableFloatState,
+): LibraryHeaderActionGate {
+    val safeTopPx = WindowInsets.safeDrawing.getTop(LocalDensity.current).toFloat()
+    val topWithoutTranslation = remember { mutableFloatStateOf(Float.POSITIVE_INFINITY) }
+    val enabled = remember(headerOffsetPx, safeTopPx) {
+        derivedStateOf {
+            topWithoutTranslation.floatValue + headerOffsetPx.floatValue >= safeTopPx - 0.5f
+        }
+    }
+    val positionModifier = remember(headerOffsetPx) {
+        Modifier.onGloballyPositioned { coordinates ->
+            val top = coordinates.positionInRoot().y - headerOffsetPx.floatValue
+            if (abs(top - topWithoutTranslation.floatValue) >= 1f) {
+                topWithoutTranslation.floatValue = top
+            }
+        }
+    }
+    return remember(positionModifier, enabled) { LibraryHeaderActionGate(positionModifier, enabled) }
+}
 
 private class LibraryScrollIntent {
     var userInitiated = false
