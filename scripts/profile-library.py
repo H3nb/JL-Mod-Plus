@@ -15,7 +15,10 @@ PROBE = "io.github.h3nb.jlmodplus.applist.LibraryPerformanceProbeTest"
 
 
 def run(*args):
-    return subprocess.check_output(args, text=True, stderr=subprocess.STDOUT)
+    try:
+        return subprocess.check_output(args, text=True, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError(f"Command {args!r} failed: {error.output}") from error
 
 
 def adb(*args):

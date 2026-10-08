@@ -80,8 +80,8 @@ jobs:
           arch: x86_64
           disable-animations: false
           script: |
-            python3 scripts/profile-library.py --label baseline --commit "$BASELINE_COMMIT" --apk "$(find performance-baseline/app/build/outputs/apk/emulator/debug -name '*.apk' | head -1)" --test-apk "$(find performance-baseline/app/build/outputs/apk/androidTest/emulator/debug -name '*.apk' | head -1)"
-            python3 scripts/profile-library.py --label candidate --commit "$(git rev-parse HEAD)" --apk "$(find app/build/outputs/apk/emulator/debug -name '*.apk' | head -1)" --test-apk "$(find app/build/outputs/apk/androidTest/emulator/debug -name '*.apk' | head -1)"
+            python3 scripts/profile-library.py --label baseline --commit "$BASELINE_COMMIT" --apk "$(find performance-baseline/app/build/outputs/apk/emulator/debug -name '*x86_64*.apk' | head -1)" --test-apk "$(find performance-baseline/app/build/outputs/apk/androidTest/emulator/debug -name '*.apk' | head -1)"
+            python3 scripts/profile-library.py --label candidate --commit "$(git rev-parse HEAD)" --apk "$(find app/build/outputs/apk/emulator/debug -name '*x86_64*.apk' | head -1)" --test-apk "$(find app/build/outputs/apk/androidTest/emulator/debug -name '*.apk' | head -1)"
 
       - name: Summarize trace data and preserve the analysis binary
         if: always()
