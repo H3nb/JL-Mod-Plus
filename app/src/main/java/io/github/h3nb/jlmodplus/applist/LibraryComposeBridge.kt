@@ -49,7 +49,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -94,6 +93,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -104,7 +104,8 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedTextField
@@ -114,6 +115,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -199,7 +201,6 @@ import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 import io.github.h3nb.jlmodplus.ui.jlModPlusFilterChipColors
-import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationBarItemColors
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import io.github.h3nb.jlmodplus.input.HostCommand
@@ -1647,14 +1648,14 @@ private fun ColumnScope.LibraryNavigationRailItem(
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun LibraryNavigationBar(
     selected: LibraryDestination,
     onSelected: (LibraryDestination) -> Unit,
 ) {
-    NavigationBar(
+    ShortNavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 0.dp,
     ) {
         LibraryNavigationItem(
             destination = LibraryDestination.Apps,
@@ -1680,8 +1681,9 @@ private fun LibraryNavigationBar(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun RowScope.LibraryNavigationItem(
+private fun LibraryNavigationItem(
     destination: LibraryDestination,
     selected: LibraryDestination,
     label: Int,
@@ -1689,18 +1691,16 @@ private fun RowScope.LibraryNavigationItem(
     onSelected: (LibraryDestination) -> Unit,
 ) {
     val labelText = stringResource(label)
-    NavigationBarItem(
+    ShortNavigationBarItem(
         selected = destination == selected,
         onClick = { onSelected(destination) },
-        colors = jlModPlusNavigationBarItemColors(),
         icon = {
             Icon(
                 painter = painterResource(icon),
-                contentDescription = labelText,
+                contentDescription = null,
             )
         },
         label = { Text(labelText) },
-        alwaysShowLabel = false,
     )
 }
 
@@ -1849,6 +1849,7 @@ internal fun LibraryAppsDestination(
         LibraryAppsHeader(
             modifier = headerModifier,
             query = query,
+            headerOffsetPx = headerOffsetPx,
             onQueryChange = {
                 query = it
                 revealSearchResults()
@@ -2184,6 +2185,7 @@ private fun JlModPlusWordmark(
 private fun LibraryAppsHeader(
     modifier: Modifier = Modifier,
     query: String,
+    headerOffsetPx: MutableFloatState,
     onQueryChange: (String) -> Unit,
     onSearchFocusChanged: (Boolean) -> Unit = {},
     state: LibraryUiState,
@@ -2206,6 +2208,15 @@ private fun LibraryAppsHeader(
     }
     val selectedSort = state.sortVariant and Int.MAX_VALUE
     val ascending = state.sortVariant >= 0
+    val searchGate = rememberLibraryHeaderActionGate(headerOffsetPx)
+    val filtersGate = rememberLibraryHeaderActionGate(headerOffsetPx)
+    val searchActionsEnabled = interactive && searchGate.enabled.value
+    val filterActionsEnabled = interactive && filtersGate.enabled.value
+    LaunchedEffect(sortVisible, searchActionsEnabled) {
+        if (interactive && sortVisible && !searchActionsEnabled) {
+            onSortVisibilityChanged(false)
+        }
+    }
     val quickControlsPagerBoundary = remember {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -2304,7 +2315,9 @@ private fun LibraryAppsHeader(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp),
+                .padding(top = 8.dp)
+                .then(searchGate.positionModifier)
+                .then(if (searchActionsEnabled) Modifier else Modifier.clearAndSetSemantics { }),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -2312,16 +2325,16 @@ private fun LibraryAppsHeader(
                 query = query,
                 onQueryChange = onQueryChange,
                 modifier = Modifier.weight(1f),
-                enabled = interactive,
+                enabled = searchActionsEnabled,
                 onFocusChanged = onSearchFocusChanged,
             )
             Box {
                 LibrarySortButton(
                     onClick = { onSortVisibilityChanged(true) },
-                    enabled = interactive,
+                    enabled = searchActionsEnabled,
                 )
                 LibrarySortMenu(
-                    expanded = sortVisible && interactive,
+                    expanded = sortVisible && searchActionsEnabled,
                     entries = sortEntries,
                     selectedSort = selectedSort,
                     ascending = ascending,
@@ -2337,7 +2350,9 @@ private fun LibraryAppsHeader(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp)
+                    .padding(top = 4.dp)
+                    .then(filtersGate.positionModifier)
+                    .then(if (filterActionsEnabled) Modifier else Modifier.clearAndSetSemantics { })
                     .nestedScroll(quickControlsPagerBoundary)
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -2346,28 +2361,28 @@ private fun LibraryAppsHeader(
                     label = R.string.library_filter_all,
                     icon = R.drawable.ic_apps,
                     selected = state.quickView == LibraryQuickView.All,
-                    enabled = interactive,
+                    enabled = filterActionsEnabled,
                     onClick = { onQuickView(LibraryQuickView.All) },
                 )
                 LibraryQuickFilter(
                     label = R.string.library_filter_favorites,
                     icon = R.drawable.ic_star,
                     selected = state.quickView == LibraryQuickView.Favorites,
-                    enabled = interactive && state.databaseControlsReady,
+                    enabled = filterActionsEnabled && state.databaseControlsReady,
                     onClick = { onQuickView(LibraryQuickView.Favorites) },
                 )
                 LibraryQuickFilter(
                     label = R.string.library_filter_recently_added,
                     icon = R.drawable.ic_recently_added,
                     selected = state.quickView == LibraryQuickView.RecentlyAdded,
-                    enabled = interactive && state.databaseControlsReady,
+                    enabled = filterActionsEnabled && state.databaseControlsReady,
                     onClick = { onQuickView(LibraryQuickView.RecentlyAdded) },
                 )
                 LibraryQuickFilter(
                     label = R.string.library_filter_recently_opened,
                     icon = R.drawable.ic_history,
                     selected = state.quickView == LibraryQuickView.RecentlyPlayed,
-                    enabled = interactive && state.databaseControlsReady,
+                    enabled = filterActionsEnabled && state.databaseControlsReady,
                     onClick = { onQuickView(LibraryQuickView.RecentlyPlayed) },
                 )
             }
