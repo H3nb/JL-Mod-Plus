@@ -79,31 +79,31 @@ class PerformanceOverlayOptionsComposeTest {
                 }
             }
         }
-        val displayTag = "perf_metric_${PerformanceOverlayOptions.DISPLAY}"
+        val thermalTag = "perf_metric_${PerformanceOverlayOptions.THERMAL}"
         composeRule.onNodeWithText("Done").assertIsDisplayed()
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToNode(hasTestTag(displayTag))
-        composeRule.onNodeWithTag(displayTag).assertIsOn().performClick().assertIsOff()
+            .performScrollToNode(hasTestTag(thermalTag))
+        composeRule.onNodeWithTag(thermalTag).assertIsOn().performClick().assertIsOff()
         // Exercise native Back dismissal for the dialog.
         InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         composeRule.onNodeWithText("Done").assertDoesNotExist()
 
         composeRule.onNodeWithText("Open Parameters").performClick()
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToNode(hasTestTag(displayTag))
-        composeRule.onNodeWithTag(displayTag).assertIsOff()
+            .performScrollToNode(hasTestTag(thermalTag))
+        composeRule.onNodeWithTag(thermalTag).assertIsOff()
         composeRule.onNodeWithText("Done").assertIsDisplayed().performClick()
         composeRule.onNodeWithText("Done").assertDoesNotExist()
         composeRule.runOnIdle {
             assertEquals(
-                PerformanceOverlayOptions.ALL and PerformanceOverlayOptions.DISPLAY.inv(),
+                PerformanceOverlayOptions.ALL and PerformanceOverlayOptions.THERMAL.inv(),
                 metrics,
             )
         }
     }
 
     @Test
-    fun presetAndLastCheckboxRemainReachableAndCustomSelectionPersists() {
+    fun presetAndCustomCheckboxRemainReachableAndCustomSelectionPersists() {
         var form by mutableStateOf(ConfigFormState.builder().showFps(true).build())
         composeRule.setContent {
             JLModPlusTheme {

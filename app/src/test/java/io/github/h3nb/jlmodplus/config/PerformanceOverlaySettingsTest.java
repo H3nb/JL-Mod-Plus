@@ -141,10 +141,13 @@ public class PerformanceOverlaySettingsTest {
 		int retired = (1 << 17) | (1 << 18) | (1 << 19);
 		assertEquals(23, Integer.bitCount(PerformanceOverlayOptions.ALL));
 		assertEquals(0, PerformanceOverlayOptions.sanitize(retired));
-		assertEquals(PerformanceOverlayOptions.THERMAL | PerformanceOverlayOptions.RENDER_MAX_INTERVAL,
-				PerformanceOverlayOptions.sanitize(retired
-						| PerformanceOverlayOptions.THERMAL
-						| PerformanceOverlayOptions.RENDER_MAX_INTERVAL));
+		int expected = PerformanceOverlayOptions.THERMAL
+				| PerformanceOverlayOptions.RENDER_MAX_INTERVAL;
+		assertEquals(expected, PerformanceOverlayOptions.sanitize(retired | expected));
+		ProfileModel oldCustomProfile = new ProfileModel();
+		oldCustomProfile.performanceOverlayMetrics = retired | expected;
+		assertEquals(expected,
+				ConfigFormState.fromProfile(oldCustomProfile, "").performanceOverlayMetrics);
 	}
 
 	@Test

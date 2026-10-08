@@ -133,6 +133,26 @@ public class PerformanceDiagnosticsTest {
 	}
 
 	@Test
+	public void idleGapsAreMeasuredAsIntervalsWithoutInventingAStutterVerdict() {
+		PerformanceDiagnostics d = new PerformanceDiagnostics(
+				PerformanceOverlayOptions.FRAME_INTERVAL | PerformanceOverlayOptions.P95_INTERVAL
+						| PerformanceOverlayOptions.RENDER_INTERVAL
+						| PerformanceOverlayOptions.RENDER_P95_INTERVAL);
+		d.setActive(true, 0L);
+		d.recordPublication(1, 10 * MS);
+		d.recordRender(1, 10 * MS, 11 * MS, 11 * MS, 12 * MS);
+		d.recordPublication(2, 10010 * MS);
+		d.recordRender(2, 10010 * MS, 10011 * MS, 10011 * MS, 10012 * MS);
+		PerformanceDiagnostics.Snapshot snapshot = d.snapshot(10012 * MS);
+		assertEquals(10000.0, snapshot.intervalMeanMs, 0.0001);
+		assertEquals(10000.0, snapshot.intervalP95Ms, 0.0001);
+		assertEquals(10000.0, snapshot.renderIntervalMeanMs, 0.0001);
+		assertEquals(10000.0, snapshot.renderIntervalP95Ms, 0.0001);
+		assertTrue(Double.isNaN(d.snapshot(15013 * MS).intervalMeanMs));
+		assertTrue(Double.isNaN(d.snapshot(15013 * MS).renderIntervalMeanMs));
+	}
+
+	@Test
 	public void durationsAreIndependentAndDisabledMetricsRemainUnavailable() {
 		PerformanceDiagnostics diagnostics = new PerformanceDiagnostics(PerformanceDiagnostics.PAINT);
 		diagnostics.setActive(true, 0);

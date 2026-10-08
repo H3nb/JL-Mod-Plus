@@ -38,6 +38,7 @@ class PerformanceResources(context: Context, private val metricsMask: Int) : Aut
     private var nativeHeapMiB = Double.NaN
     private var lastThermalNanos = Long.MIN_VALUE
     private var thermalStatus = -1
+
     /** Unavailable values are NaN; thermal status is -1 when unavailable. */
     data class Snapshot(
         val cpuPercent: Double,
