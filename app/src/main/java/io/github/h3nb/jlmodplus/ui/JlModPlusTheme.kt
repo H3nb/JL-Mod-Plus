@@ -301,8 +301,7 @@ internal fun jlModPlusNavigationBarItemColors() = NavigationBarItemDefaults.colo
 @Composable
 internal fun jlModPlusShortNavigationBarItemColors() = ShortNavigationBarItemDefaults.colors(
     selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    selectedTextColorTopIconPosition = MaterialTheme.colorScheme.onPrimaryContainer,
-    selectedTextColorStartIconPosition = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
     selectedIndicatorColor = MaterialTheme.colorScheme.primaryContainer,
     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
