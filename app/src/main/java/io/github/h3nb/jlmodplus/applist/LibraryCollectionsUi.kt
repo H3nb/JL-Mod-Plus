@@ -489,6 +489,12 @@ private fun LibraryCollectionsOverview(
     val headerOffsetPx = viewportState.headerOffsetPx
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
+    val headerHidden by remember(headerHeightPx, headerOffsetPx) {
+        derivedStateOf {
+            headerHeightPx.intValue > 0 &&
+                headerOffsetPx.floatValue <= -headerHeightPx.intValue + 0.5f
+        }
+    }
     val scrollConnection = rememberLibraryScrollChrome(
         viewport = viewportState,
         layout = LibraryLayout.List,
@@ -644,6 +650,7 @@ private fun LibraryCollectionsOverview(
                 .fillMaxWidth()
                 .graphicsLayer { translationY = headerOffsetPx.floatValue }
                 .background(MaterialTheme.colorScheme.background)
+                .then(if (headerHidden) Modifier.clearAndSetSemantics { } else Modifier)
                 .onSizeChanged { headerHeightPx.intValue = it.height },
         ) {
             renderHeader(Modifier, true)

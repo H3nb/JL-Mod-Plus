@@ -15,7 +15,6 @@
 package io.github.h3nb.jlmodplus.applist
 
 import androidx.compose.runtime.saveable.SaverScope
-import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -60,13 +59,9 @@ class LibraryNavigationStateTest {
     }
 
     @Test
-    fun saverRoundTripPreservesRouteAndCollectionScope() {
+    fun saverRoundTripPreservesOnlyRouteAndCollectionScope() {
         val state = LibraryNavigationState(
             destination = LibraryDestinationKey.Collections,
-            layout = LibraryLayout.Grid,
-            query = "demo",
-            quickView = LibraryQuickView.RecentlyPlayed,
-            sortVariant = -3,
             selectedCollectionId = 42L,
             selectedCollectionScope = "/work/library-a",
             collectionManageApps = true,
@@ -78,37 +73,25 @@ class LibraryNavigationStateTest {
 
         assertNotNull(saved)
         assertEquals(state, LibraryNavigationState.Saver.restore(saved!!))
-        val fields = saved as List<*>
-        assertEquals(emptyList<Any>(), fields[6])
-        assertEquals("/work/library-a", fields[7])
-        assertEquals(true, fields[8])
+        assertEquals(
+            listOf("Collections", 42L, "/work/library-a", true),
+            saved,
+        )
     }
 
     @Test
-    fun saverIgnoresLegacyAnchorsAndPreservesReleasedRouteFields() {
+    fun saverIgnoresLegacyPresentationAndAnchorsWhileRetainingRoute() {
         val restored = LibraryNavigationState.Saver.restore(
             listOf(
-                "Collections",
-                "Grid",
-                "demo",
-                "RecentlyPlayed",
-                -3,
-                42L,
-                listOf(
-                    listOf("CollectionAppsList", 9L, 100L, 7, 2, 42L, "/work/library-a"),
-                ),
-                "/work/library-a",
-                true,
+                "Collections", "Grid", "demo", "RecentlyPlayed", -3, 42L,
+                listOf(listOf("CollectionAppsList", 9L, 100L, 7, 2, 42L, "/work/library-a")),
+                "/work/library-a", true,
             ),
         )
 
         assertEquals(
             LibraryNavigationState(
                 destination = LibraryDestinationKey.Collections,
-                layout = LibraryLayout.Grid,
-                query = "demo",
-                quickView = LibraryQuickView.RecentlyPlayed,
-                sortVariant = -3,
                 selectedCollectionId = 42L,
                 selectedCollectionScope = "/work/library-a",
                 collectionManageApps = true,
@@ -118,7 +101,7 @@ class LibraryNavigationStateTest {
     }
 
     @Test
-    fun saverAcceptsOlderRouteShapeWithoutCollectionScopeOrManageState() {
+    fun saverAcceptsOlderRouteWithoutCollectionScopeOrManageState() {
         val restored = LibraryNavigationState.Saver.restore(
             listOf(
                 "Collections", "List", "", "All", 0, 42L,

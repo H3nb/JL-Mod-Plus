@@ -75,15 +75,15 @@ class LibraryChromeScrollHysteresisTest {
     }
 
     @Test
-    fun resetAndRevealNowRestoreChromeWithoutDuplicateTransitions() {
+    fun resetRestoresChromeWithoutDuplicateTransitions() {
         val state = LibraryChromeScrollHysteresis(
             hideDistancePx = 10f,
             revealDistancePx = 18f,
         )
         state.onScrollDelta(-10f)
 
-        assertTrue(state.revealNow()!!)
-        assertNull(state.revealNow())
+        assertTrue(state.reset()!!)
+        assertNull(state.reset())
         state.onScrollDelta(-10f)
         assertTrue(state.reset()!!)
         assertNull(state.reset())

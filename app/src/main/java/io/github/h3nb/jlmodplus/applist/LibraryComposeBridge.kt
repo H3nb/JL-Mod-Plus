@@ -695,15 +695,6 @@ fun LibraryScreen(
                 }
             }
     }
-    LaunchedEffect(state.layout, state.appliedFilter, state.sortVariant, state.quickView) {
-        navigationState = currentNavigationState.copy(
-            layout = state.layout,
-            query = state.appliedFilter,
-            sortVariant = state.sortVariant,
-            quickView = state.quickView,
-        )
-    }
-
     LaunchedEffect(state.generation, state.databaseControlsReady) {
         if (!state.databaseControlsReady) return@LaunchedEffect
         val retained = selectionState.retainGeneration(state.generation)
@@ -1570,17 +1561,6 @@ internal class LibraryChromeScrollHysteresis(
         private set
 
     fun reset(): Boolean? {
-        forwardDistance = 0f
-        reverseDistance = 0f
-        return if (chromeVisible) {
-            null
-        } else {
-            chromeVisible = true
-            true
-        }
-    }
-
-    fun revealNow(): Boolean? {
         forwardDistance = 0f
         reverseDistance = 0f
         return if (chromeVisible) {

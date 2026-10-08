@@ -206,6 +206,12 @@ internal fun LibraryCollectionBrowser(
     val headerOffsetPx = viewportState.headerOffsetPx
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
+    val headerHidden by remember(headerHeightPx, headerOffsetPx) {
+        derivedStateOf {
+            headerHeightPx.intValue > 0 &&
+                headerOffsetPx.floatValue <= -headerHeightPx.intValue + 0.5f
+        }
+    }
     val scrollConnection = rememberLibraryScrollChrome(
         viewport = viewportState,
         layout = libraryState.layout,
@@ -302,7 +308,7 @@ internal fun LibraryCollectionBrowser(
                         LibraryCollectionEmptyState(query)
                     }
                 } else {
-                    items(projected, key = { it.id }) { app ->
+                    items(projected, key = { it.databaseId }) { app ->
                         LibraryCollectionGridItem(
                             app = app,
                             iconRatio = libraryState.iconRatio,
@@ -346,7 +352,7 @@ internal fun LibraryCollectionBrowser(
                 if (projected.isEmpty()) {
                     item { LibraryCollectionEmptyState(query) }
                 } else {
-                    items(projected, key = { it.id }) { app ->
+                    items(projected, key = { it.databaseId }) { app ->
                         LibraryCollectionListItem(
                             app = app,
                             iconRatio = libraryState.iconRatio,
@@ -378,6 +384,7 @@ internal fun LibraryCollectionBrowser(
                 .fillMaxWidth()
                 .graphicsLayer { translationY = headerOffsetPx.floatValue }
                 .background(MaterialTheme.colorScheme.background)
+                .then(if (headerHidden) Modifier.clearAndSetSemantics { } else Modifier)
                 .onSizeChanged { headerHeightPx.intValue = it.height },
         ) {
             renderHeader(Modifier, true)
@@ -743,6 +750,7 @@ internal fun LibraryCollectionAppPicker(
     onSetMembership: (Int, Boolean) -> Unit,
 ) {
     var query by viewportState.queryState
+    val searchScope = rememberCoroutineScope()
     val visibleApps = rememberCollectionAppsProjection(viewportState, allApps, sortVariant, ready = !loading)
     Column(
         modifier = Modifier
@@ -798,13 +806,20 @@ internal fun LibraryCollectionAppPicker(
         }
         LibrarySearchField(
             query = query,
-            onQueryChange = { query = it },
+            onQueryChange = {
+                query = it
+                if (viewportState.listState.firstVisibleItemIndex != 0 ||
+                    viewportState.listState.firstVisibleItemScrollOffset != 0
+                ) {
+                    searchScope.launch { viewportState.listState.scrollToItem(0) }
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         )
         LazyColumn(modifier = Modifier.fillMaxSize(), state = viewportState.listState) {
-            items(visibleApps, key = { it.id }) { app ->
+            items(visibleApps, key = { it.databaseId }) { app ->
                 val pending = pendingMemberships[app.id]
                 val checked = pending ?: (app.id in memberIds)
                 val enabled = pending == null
@@ -879,7 +894,7 @@ private fun rememberCollectionAppsProjection(
         }
         viewportState.collectionProjection = LibraryCollectionProjection(source, query, sortVariant, apps)
     }
-    return viewportState.collectionProjection?.apps
+    return viewportState.collectionProjection?.takeIf { it.matches(source, query, sortVariant) }?.apps
 }
 
 private fun projectCollectionApps(

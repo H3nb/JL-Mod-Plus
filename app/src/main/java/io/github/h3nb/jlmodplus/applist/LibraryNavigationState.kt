@@ -16,7 +16,6 @@ package io.github.h3nb.jlmodplus.applist
 
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
-import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
 
 /** Explicit metadata-editor return position, independent of a Compose list/grid instance. */
 data class LibraryScrollAnchor(
@@ -29,72 +28,46 @@ data class LibraryScrollAnchor(
     val libraryScope: String? = null,
 )
 
+/** Only routing belongs here. App filter/sort/layout are owned by LibraryUiState. */
 data class LibraryNavigationState(
     val destination: LibraryDestinationKey = LibraryDestinationKey.Apps,
-    val layout: LibraryLayout = LibraryLayout.List,
-    val query: String = "",
-    val quickView: LibraryQuickView = LibraryQuickView.All,
-    val sortVariant: Int = 0,
     val selectedCollectionId: Long? = null,
     /** Stable workdir identity for [selectedCollectionId]; Room ids are local to one Library DB. */
     val selectedCollectionScope: String? = null,
-    /** Full-screen Collection membership editor state; belongs to the selected Collection route. */
+    /** Full-screen membership editor belongs to the selected Collection route. */
     val collectionManageApps: Boolean = false,
 ) {
     companion object {
-        /** Keeps route state; native Lazy states own each destination's saved viewport. */
+        /** Accept the previous nine-slot saved state without retaining duplicated presentation state. */
         val Saver: Saver<LibraryNavigationState, Any> = listSaver(
             save = { state ->
                 listOf(
                     state.destination.name,
-                    state.layout.name,
-                    state.query,
-                    state.quickView.name,
-                    state.sortVariant,
                     state.selectedCollectionId ?: Long.MIN_VALUE,
-                    // Reserved legacy anchor slot: keep later route fields at their released indices.
-                    emptyList<Any>(),
                     state.selectedCollectionScope.orEmpty(),
                     state.collectionManageApps,
                 )
             },
             restore = { saved ->
-                // The oldest shape contained only anchors. Those positions no longer belong to
-                // route state; restore the default route rather than interpreting anchor entries.
-                val routeState = saved.firstOrNull() is String
-                val destination = saved.getOrNull(0)?.toString()?.let { value ->
-                    // The third destination was previously called Options. Keep restored
-                    // activity state on the same page after the visible tab is renamed More.
-                    val compatibleValue = if (value == "Options") "More" else value
-                    runCatching { LibraryDestinationKey.valueOf(compatibleValue) }.getOrNull()
+                val destination = (saved.firstOrNull() as? String)?.let { value ->
+                    val compatible = if (value == "Options") "More" else value
+                    runCatching { LibraryDestinationKey.valueOf(compatible) }.getOrNull()
                 } ?: LibraryDestinationKey.Apps
-                val layout = saved.getOrNull(1)?.toString()?.let {
-                    runCatching { LibraryLayout.valueOf(it) }.getOrNull()
-                } ?: LibraryLayout.List
-                val query = saved.getOrNull(2) as? String ?: ""
-                val quickView = saved.getOrNull(3)?.toString()?.let {
-                    runCatching {
-                        LibraryQuickView.valueOf(it)
-                    }.getOrNull()
-                } ?: LibraryQuickView.All
-                val sortVariant = (saved.getOrNull(4) as? Number)?.toInt() ?: 0
-                val selectedCollectionId = (saved.getOrNull(5) as? Number)?.toLong()
+                // The previous format placed Layout.name in slot 1; newer state places an id.
+                // Older anchor-only state is neither format and restores the default route.
+                val legacyRoute = saved.getOrNull(1) is String
+                val idSlot = if (legacyRoute) 5 else 1
+                val scopeSlot = if (legacyRoute) 7 else 2
+                val manageSlot = if (legacyRoute) 8 else 3
+                val collectionId = (saved.getOrNull(idSlot) as? Number)?.toLong()
                     ?.takeUnless { it == Long.MIN_VALUE }
-                val selectedCollectionScope = if (routeState) {
-                    (saved.getOrNull(7) as? String)?.takeIf(String::isNotEmpty)
-                } else {
-                    null
-                }
-                val collectionManageApps = routeState && (saved.getOrNull(8) as? Boolean == true)
                 LibraryNavigationState(
                     destination = destination,
-                    layout = layout,
-                    query = query,
-                    quickView = quickView,
-                    sortVariant = sortVariant,
-                    selectedCollectionId = selectedCollectionId,
-                    selectedCollectionScope = selectedCollectionScope,
-                    collectionManageApps = collectionManageApps && selectedCollectionId != null,
+                    selectedCollectionId = collectionId,
+                    selectedCollectionScope = (saved.getOrNull(scopeSlot) as? String)
+                        ?.takeIf(String::isNotEmpty),
+                    collectionManageApps = saved.getOrNull(manageSlot) == true &&
+                        collectionId != null,
                 )
             },
         )
