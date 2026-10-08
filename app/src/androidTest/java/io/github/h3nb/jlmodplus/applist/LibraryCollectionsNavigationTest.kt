@@ -592,10 +592,11 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
         composeRule.onNode(hasSetTextAction()).performTextInput("Picker app 00")
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Picker app 00")
+            composeRule.onAllNodesWithTag("collection-membership-1000")
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Picker app 00").assertIsDisplayed()
+        // InputText contains the query too; assert the unique result row, not matching text.
+        composeRule.onNodeWithTag("collection-membership-1000").assertIsDisplayed()
         composeRule.onNode(hasSetTextAction()).assertIsFocused()
     }
 
