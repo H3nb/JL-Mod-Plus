@@ -831,8 +831,7 @@
     <string name="perf_overlay_debug">Debug</string>
     <string name="perf_overlay_custom">Kustom</string>
     <string name="perf_overlay_parameters">Parameter overlay</string>
-    <string name="perf_overlay_parameters_help">Pilih metrik yang ditampilkan saat bermain.</string>
-    <string name="perf_overlay_measurement_help">FPS menghitung frame baru yang diproses renderer; GFPS menghitung publikasi frame guest. SPD adalah kecepatan yang dipilih, bukan performa aktual. CPU menggunakan satuan core (1.00c = pemakaian penuh satu core).</string>
+    <string name="perf_overlay_parameters_help">Pilih metrik performa. FPS menghitung frame baru di renderer; GFPS menghitung frame dari game.</string>
     <plurals name="perf_overlay_selected">
         <item quantity="other">%d parameter dipilih</item>
     </plurals>

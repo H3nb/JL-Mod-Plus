@@ -910,8 +910,7 @@
     <string name="perf_overlay_debug">Debug</string>
     <string name="perf_overlay_custom">Custom</string>
     <string name="perf_overlay_parameters">Overlay parameters</string>
-    <string name="perf_overlay_parameters_help">Choose the metrics shown over the game.</string>
-    <string name="perf_overlay_measurement_help">FPS counts new frames processed by the host renderer; GFPS counts guest frame publications. SPD is the selected speed, not achieved performance. CPU uses core equivalents (1.00c = one fully used core).</string>
+    <string name="perf_overlay_parameters_help">Choose performance metrics. FPS counts new renderer frames; GFPS counts guest output.</string>
     <plurals name="perf_overlay_selected">
         <item quantity="one">%d parameter selected</item>
         <item quantity="other">%d parameters selected</item>

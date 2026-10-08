@@ -1065,14 +1065,6 @@ internal fun PerformanceOverlayParametersDialog(
         text = {
             Box(Modifier.fillMaxWidth().heightIn(max = maxHeight)) {
                 LazyColumn(state = listState, modifier = Modifier.fillMaxWidth()) {
-                    item(key = "metric_help") {
-                        Text(
-                            stringResource(R.string.perf_overlay_measurement_help),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 8.dp),
-                        )
-                    }
                     overlayParameterGroups.forEach { group ->
                         item(key = "group_${group.title}") {
                             Text(
