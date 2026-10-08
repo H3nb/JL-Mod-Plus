@@ -66,8 +66,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedButton
@@ -116,7 +116,6 @@ import io.github.h3nb.jlmodplus.config.model.Size
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
-import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationBarItemColors
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import kotlin.math.roundToInt
@@ -685,17 +684,15 @@ private fun ConfigNavigationBar(
     selected: ConfigDestination,
     onSelected: (ConfigDestination) -> Unit,
 ) {
-    NavigationBar(
+    ShortNavigationBar(
         modifier = Modifier.testTag(CONFIG_NAVIGATION_BAR_TAG),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 0.dp,
     ) {
         destinations.forEach { destination ->
             val label = stringResource(destination.label)
-            NavigationBarItem(
+            ShortNavigationBarItem(
                 selected = destination == selected,
                 onClick = { onSelected(destination) },
-                colors = jlModPlusNavigationBarItemColors(),
                 icon = {
                     Icon(
                         painter = painterResource(destination.icon),
@@ -705,7 +702,6 @@ private fun ConfigNavigationBar(
                 label = {
                     Text(label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
                 },
-                alwaysShowLabel = false,
             )
         }
     }
