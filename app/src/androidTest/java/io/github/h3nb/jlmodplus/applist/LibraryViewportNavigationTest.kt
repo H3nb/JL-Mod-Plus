@@ -356,6 +356,43 @@ class LibraryViewportNavigationTest {
     }
 
     @Test
+    fun quickFilterRestartsDeepResultsWithoutRevealingHeader() {
+        val initial = libraryState(LibraryLayout.List)
+        val visibleState = mutableStateOf(initial)
+        val host = ViewportHost().apply {
+            onQuickViewChanged = { filter ->
+                visibleState.value = visibleState.value.copy(
+                    quickView = filter,
+                    apps = if (filter == LibraryQuickView.Favorites) initial.apps.drop(60)
+                        else initial.apps,
+                )
+            }
+        }
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = visibleState.value, actions = host) }
+            }
+        }
+        activeList(APP_PREFIX).performScrollToNode(hasText(rowTitle(APP_PREFIX, 45)))
+        composeRule.waitForIdle()
+        assertTrue("Deep scroll was not reached", visibleRow(APP_PREFIX).title != rowTitle(APP_PREFIX, 0))
+        val favorites = composeRule.onNodeWithText(uiString(R.string.library_filter_favorites))
+        val chipTop = favorites.fetchSemanticsNode().boundsInRoot.top
+
+        favorites.performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 60), useUnmergedTree = true).assertIsDisplayed()
+        assertEquals(chipTop, favorites.fetchSemanticsNode().boundsInRoot.top, 1f)
+
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
+        assertEquals(chipTop, favorites.fetchSemanticsNode().boundsInRoot.top, 1f)
+    }
+
+    @Test
     fun backDismissesFocusedLibrarySearchBeforeLeavingScreen() {
         val host = ViewportHost()
         composeRule.setContent {
@@ -369,6 +406,10 @@ class LibraryViewportNavigationTest {
         composeRule.onNode(hasSetTextAction()).assertIsFocused()
         pressBack()
         composeRule.waitForIdle()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onNode(hasSetTextAction())
+                .fetchSemanticsNode().config[SemanticsProperties.Focused] == false
+        }
         composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
     }
