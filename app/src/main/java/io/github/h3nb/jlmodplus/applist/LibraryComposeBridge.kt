@@ -2208,8 +2208,10 @@ private fun LibraryAppsHeader(
     }
     val selectedSort = state.sortVariant and Int.MAX_VALUE
     val ascending = state.sortVariant >= 0
+    val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
     val searchGate = rememberLibraryHeaderActionGate(headerOffsetPx)
     val filtersGate = rememberLibraryHeaderActionGate(headerOffsetPx)
+    val titleActionsEnabled = interactive && titleGate.enabled.value
     val searchActionsEnabled = interactive && searchGate.enabled.value
     val filterActionsEnabled = interactive && filtersGate.enabled.value
     LaunchedEffect(sortVisible, searchActionsEnabled) {
@@ -2238,13 +2240,16 @@ private fun LibraryAppsHeader(
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(titleGate.positionModifier)
+                .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics { }),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (selectionState.isActive || onBack != null) {
                 IconButton(
                     onClick = if (selectionState.isActive) onExitSelection else requireNotNull(onBack),
-                    enabled = interactive,
+                    enabled = titleActionsEnabled,
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_arrow_back),
@@ -2294,7 +2299,7 @@ private fun LibraryAppsHeader(
                 )
                 IconButton(
                     onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
-                    enabled = visibleAppIds.isNotEmpty() && interactive,
+                    enabled = visibleAppIds.isNotEmpty() && titleActionsEnabled,
                     modifier = Modifier.semantics {
                         contentDescription = selectionToggleLabel
                     },
