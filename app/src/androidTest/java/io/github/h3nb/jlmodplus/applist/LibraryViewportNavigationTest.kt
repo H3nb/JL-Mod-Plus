@@ -393,7 +393,7 @@ class LibraryViewportNavigationTest {
         fun reassignMemberHostIds() {
             val inserted = LibraryAppUiItem(
                 id = 9_999,
-                title = "Collection app -1",
+                title = "Collection app 0",
                 author = "Vendor",
                 version = "1.0",
                 iconPath = null,
