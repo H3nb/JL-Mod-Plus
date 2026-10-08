@@ -24,6 +24,8 @@ Ground the solution in current evidence before committing to a production fix. B
 - Simplicity is the result of resolving complexity, not omitting necessary behavior. Preserve required lifecycle, concurrency, persistence, failure, compatibility, and recovery paths; do not narrow an authorized outcome or skip difficult work merely to make the implementation smaller.
 - Fix the underlying model or invariant rather than layering workarounds over symptoms. Restructure flawed code when necessary; do not preserve a bad boundary merely to minimize line count or diff size. A workaround or compatibility shim should protect a named current requirement; when evidence shows that requirement is gone, prefer deleting the shim and obsolete supporting tests/documentation rather than retaining it defensively.
 - Proceed when evidence supports the approach and no unresolved question is likely to change the design or its correctness. Further investigation or review should resolve a concrete uncertainty, not satisfy a quota of alternatives or review passes.
+- Before adding state, caches, synchronization, abstractions, fallback paths, or dependencies, identify the requirement or credible failure mode that justifies each. Prefer resolving ownership or data-flow problems and removing obsolete machinery to layering additional safeguards on a flawed model.
+- Treat code quality as cumulative: improve directly affected code when doing so strengthens correctness, coherence, reliability, or maintainability; keep unrelated improvements out of scope. Do not require a refactor for its own sake. Stop iterating when the behavior is correct, relevant checks provide sufficient evidence, and remaining alternatives do not offer a material benefit.
 - Review the result as if reviewing someone else's PR. Check correctness, failure paths, scope, unnecessary complexity, and whether a reasonable simpler approach meets the same contracts. For nontrivial changes, briefly report the cause, design rationale, and validation evidence.
 
 ## Working in this repository
@@ -32,11 +34,11 @@ Ground the solution in current evidence before committing to a production fix. B
 - Before an action needing additional authorization, prepare the concrete, reviewable result. Do not infer permission for destructive operations, publishing, or merging from a request for local edits.
 - Use the current integration branch as the base for unrelated work, develop on a dedicated branch, and integrate through a PR unless the user explicitly requests otherwise. Preserve unrelated work in the checkout.
 - Use validation proportional to the change. When designing or adding tests, follow [Testing strategy](docs/development.md#testing-strategy). Once relevant checks pass, broaden or repeat validation only when new changes, failures, or unresolved risks justify it. Inspect the final diff and report what passed and what remains unverified. Do not run `clean` routinely.
-- Before committing, decide whether the new commit creates a state that CI can meaningfully validate. Use `[skip ci]` for documentation/policy-only changes and intermediate commits that do not change production code, tests, resources, build/dependency configuration, CI behavior, or other validated inputs. Never use it to hide a failure or skip validation of a changed executable/testable state.
+- Before committing, identify whether the commit changes an executable or otherwise validated input. Use `[skip ci]` for documentation/policy-only commits and other truly non-testable intermediate commits, not for changes to production code, tests, resources, build/dependency configuration, workflows, or validation scripts. Avoid redundant push-triggered CI by batching coherent changes and validating meaningful checkpoints. Never use skip instructions to conceal failures or leave the final executable state unverified; see [CI discipline](docs/agent-workflow.md#ci-discipline).
 - For screenshot failures and baseline updates, follow [Visual verification and screenshot references](docs/development.md#visual-verification-and-screenshot-references). Inspect renderer evidence before accepting a reference change; a mismatch alone is not authorization to replace the expected image. When local binary editing is unavailable but the task has GitHub PR/workflow access, use the [GitHub-only reviewed screenshot promotion](docs/development.md#github-only-reviewed-screenshot-promotion) path instead of reconstructing or redrawing reference PNGs.
 - Preserve inherited rights and attribution notices. Do not make ownership or licensing assumptions.
 - Preserve the surrounding Markdown wrapping style and avoid reflow-only changes.
-- Use only task-relevant repository skills. Project policy and the matching interpretation in `.agents/UPSTREAM.md` override conflicting generic skill recipes; follow [Skill routing](docs/agent-workflow.md#repository-skills).
+- Route only task-relevant external Android skills through [Android skills](docs/android-skills.md). Do not assume skills are installed or force upstream recipes onto project-specific contracts. Project policy, user scope, and verified compatibility boundaries take precedence over generic examples.
 
 ## Read when relevant
 
@@ -44,6 +46,7 @@ Ground the solution in current evidence before committing to a production fix. B
 | --- | --- |
 | Repository history or provenance investigation; source-language choice; performance-sensitive code; licensing; Git, PR, CI, or versioning | Read only the matching section of [Agent development workflow](docs/agent-workflow.md) |
 | Build and test commands | [Build and validation](docs/development.md) |
+| Android tooling skills, upstream skill lookup or skill conflicts | [Android skills](docs/android-skills.md) |
 | App-owned UI architecture, adaptation, or navigation | [App-owned UI development](docs/app-ui-development.md) |
 | View/Compose/Java ME ownership boundary or UI migration | [UI ownership](docs/ui-ownership-map.md) |
 | Localization, semantic UI copy quality, translation, or locale/resource identity | [Localization contract](docs/localization.md) |

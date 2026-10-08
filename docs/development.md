@@ -209,6 +209,8 @@ remain verification gaps; they do not authorize bypassing required merge checks.
 
 ### GitHub-only reviewed screenshot promotion
 
+For agents limited to a GitHub connector, this is the supported path for updating binary screenshot references. Inspect the actual renderer-produced candidate images, diff and provenance, then use the existing owner-gated PR comment mechanism below; GitHub connector access alone is not proof of owner authorization. A Git tree edit, screenshot-test failure, or green CI badge is not permission to generate or replace expected PNGs without review.
+
 Use the owner-only screenshot promotion path when the expected screenshot change
 has been reviewed but the working environment cannot safely write or commit binary
 PNG references, such as an agent that has GitHub PR/workflow access without a

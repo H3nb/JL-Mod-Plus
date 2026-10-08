@@ -9,27 +9,11 @@ Read only the sections relevant to the task. [AGENTS.md](../AGENTS.md) defines t
 
 ## Repository skills
 
-The repository contains task-specific guidance under `.agents/skills/`. When a task matches a vendored skill, read its `SKILL.md` and the matching project-interpretation section in [.agents/UPSTREAM.md](../.agents/UPSTREAM.md) before planning or editing; do not load unrelated skill interpretations.
-
-- Apply the precedence in [AGENTS.md](../AGENTS.md) and read the matching project interpretation before following a skill recipe. Current behavior is evidence, not a requirement to preserve a known defect.
-- Use only skills that match the current task. A skill prerequisite is a planning constraint, not permission to widen the PR or perform unrelated migrations.
-- Do not install every framework, dependency, test tool, or architectural pattern suggested by a general skill. Prefer the current project stack and add only what the current task concretely requires.
-- Follow a skill's local `references/`, scripts, and validation instructions when they apply; do not substitute remembered or historical guidance for repository-provided material.
-- If a skill's assumptions do not match the project, preserve the task scope and required behavior, then adapt or defer the incompatible part rather than forcing the project to fit the skill.
-- Skill approval steps do not override authorization already given under [AGENTS.md](../AGENTS.md). If a skill would require a material pause, scope change, or divergence from the user's request, identify the exact instruction and explain why it applies.
-- Keep vendored skills unchanged for project policy adaptations; record provenance and local interpretation in [.agents/UPSTREAM.md](../.agents/UPSTREAM.md).
-
-Available skill routing:
-
-- `agp-9-upgrade`: AGP 9 migration, built-in Kotlin/new DSL work, AGP compatibility, or AGP-specific troubleshooting.
-- `testing-setup`: creating, replacing, or materially changing test infrastructure, frameworks, harnesses, or coverage setup. Do not load it merely to add ordinary tests with the existing stack.
-- `migrate-xml-views-to-jetpack-compose`: bounded XML/View-to-Compose migrations. Preserve visual and functional behavior and keep Android/emulator boundaries native/View when they still serve a concrete purpose.
-- `edge-to-edge`: Compose edge-to-edge, system-bar, WindowInsets, cutout, or IME work. Check its Compose and target-SDK prerequisites; do not silently widen an unrelated task to satisfy them.
-- `navigation-3`: Navigation 3 installation or migration, back stacks, deep links, scenes, navigation state, and related View/Compose interoperability.
-- `adaptive`: adaptive/multi-pane Compose UI across window sizes and device classes. Check its Compose and Navigation 3 prerequisites before applying it.
-- `r8-analyzer`: R8/keep-rule analysis and app-size optimization investigation. Treat the skill as analysis-only unless a separate implementation task is explicitly in scope.
-- `android-profiler`: Android performance traces, memory profiling, bottlenecks, jank, and related Perfetto analysis.
-- `camerax`: CameraX feature work or CameraX-specific camera integration.
+Android skills are maintained upstream rather than vendored into this repository. See
+[Android skills](android-skills.md) for official entry points, task routing, project
+interpretation, and fallback behavior. Read only the relevant skill and its
+references when the current task needs them; external guidance is not an
+authorization to widen scope or change the JL-Mod Plus compatibility contract.
 
 ## Current-state evidence
 
@@ -84,9 +68,16 @@ Apply the scope and design priorities in [AGENTS.md](../AGENTS.md).
 - Do not use a bare `#N` unless it intentionally refers to an issue or PR in the current repository and that target has been verified. When repository identity matters, use an explicit repository-qualified reference such as `owner/repository#N`.
 - For objects that are not issues or PRs, use an unambiguous label or direct Markdown link to the intended object. In particular, do not write an Actions run number as bare `#N`; link the run using the repository URL and run ID, or render the number as non-autolink text when no link is intended.
 - Before publishing PR bodies, comments, release notes, documentation, or other GitHub-rendered text, check that generated references cannot silently resolve through fork-network or cross-repository context to an unrelated project.
-- Use `[skip ci]` for documentation/policy-only commits and intermediate commits whose changes do not alter production code, tests, resources, build/dependency configuration, CI behavior, or another validated input. Judge the new commit, not the size of the whole PR.
-- Do not use `[skip ci]` to hide a failure or bypass validation of a changed executable/testable state. Before merge, ensure the latest relevant code/build/test state has successful CI evidence without a skip instruction; later documentation-only commits do not invalidate that evidence.
-- Do not create empty/no-op commits solely to manipulate CI; use a real follow-up change, rerun, or manual dispatch instead.
+### CI discipline
+
+- GitHub workflows already run automatically for matching PR changes. Check the current workflow triggers, path filters, and required checks before deciding to run or skip validation; do not assume each push must produce a fresh full build.
+- Use `[skip ci]` for documentation/policy-only commits and other commits that do not alter executable or validated inputs. Do **not** use it for production source, tests, assets/resources, build dependencies/configuration, workflow behavior, or validation scripts. An intermediate commit containing such changes is not docs-only merely because a later commit will finish the work.
+- Group logically related edits into meaningful checkpoints before pushing when feasible; with GitHub-only access, use a coherent Git tree/commit update rather than one separate push per file. Do not manufacture no-op commits, rerun all workflows to obtain an arbitrary green badge, or automatically retry failures before inspecting evidence.
+- Prefer the narrowest relevant test during iteration. When a run fails, classify the first failure (test assertion, product regression, infrastructure, stale baseline, or unrelated) and rerun only when the cause or changed state justifies it. A rerun cannot substitute for diagnosing an actual test failure.
+- Before merge, verify that the **latest executable/testable state** has passing evidence for the relevant required checks. Documentation-only commits after that state do not change executable inputs, but GitHub skip instructions or path filters may leave required checks pending; inspect branch-protection and PR status and use the documented validation path when needed, rather than masking the missing check.
+- A commit message with `[skip ci]` does not itself establish successful validation, and required check behavior depends on workflow trigger configuration. Never skip to conceal failures or bypass final review.
+- For screenshot mismatches using only GitHub connector access, follow [GitHub-only reviewed screenshot promotion](development.md#github-only-reviewed-screenshot-promotion); do not redraw or force-update references.
+- Do not carry `[skip ci]` into the final squash commit message.
 - Prefer Squash Merge when PR history is mostly WIP, experiments, fixups, or reversions. Preserve individual commits only when they are intentionally useful for history, revert, or bisect.
 - Do not carry `[skip ci]` into the final squash commit message.
 
