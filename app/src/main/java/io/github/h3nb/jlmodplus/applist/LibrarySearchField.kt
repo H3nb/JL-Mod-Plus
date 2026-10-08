@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.applist
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,7 +47,8 @@ internal fun LibrarySearchField(
     TextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = modifier.onFocusChanged { onFocusChanged(it.isFocused) },
+        modifier = modifier.height(52.dp).onFocusChanged { onFocusChanged(it.isFocused) },
+        textStyle = MaterialTheme.typography.bodyMedium,
         enabled = enabled,
         singleLine = true,
         shape = MaterialTheme.shapes.large,
@@ -98,7 +100,7 @@ internal fun LibrarySortButton(
     Surface(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.size(56.dp),
+        modifier = modifier.size(52.dp),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         contentColor = if (enabled) {
