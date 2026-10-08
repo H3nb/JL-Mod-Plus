@@ -8,6 +8,7 @@ on:
       - 'app/src/main/java/io/github/h3nb/jlmodplus/librarydb/LibraryListProjection.kt'
       - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/LibraryPerformanceProbeTest.kt'
       - 'scripts/profile-library.py'
+      - 'scripts/summarize-library-performance.py'
       - 'scripts/library-trace-*.sql'
       - '.github/workflows/library-performance.yml'
   workflow_dispatch:
@@ -91,9 +92,11 @@ jobs:
             python3 perfetto-tools/trace_processor -q scripts/library-trace-slices.sql "$trace" > "$trace.slices.csv"
             python3 perfetto-tools/trace_processor -q scripts/library-trace-cpu.sql "$trace" > "$trace.cpu.csv"
             python3 perfetto-tools/trace_processor -q scripts/library-trace-frames.sql "$trace" > "$trace.frames.csv"
+            python3 perfetto-tools/trace_processor -Q "SELECT ts, msg, (SELECT int_value FROM metadata WHERE name = 'all_data_source_started_ns' LIMIT 1) AS all_sources_started_ns FROM android_logs WHERE tag = 'LibraryPerformanceProbe' ORDER BY ts" "$trace" > "$trace.actions.csv"
           done
           binary=$(find ~/.local/share/perfetto/prebuilts -type f -name 'trace_processor_shell-*' | head -1)
           [ -z "$binary" ] || cp "$binary" performance-artifacts/trace_processor_shell
+          python3 scripts/summarize-library-performance.py
 
       - name: Upload raw evidence and source identities
         if: always()
