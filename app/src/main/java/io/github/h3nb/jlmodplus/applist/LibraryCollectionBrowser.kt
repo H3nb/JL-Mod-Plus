@@ -50,6 +50,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -237,6 +238,7 @@ internal fun LibraryCollectionBrowser(
             modifier = modifier,
             title = collection.name,
             query = query,
+            headerOffsetPx = headerOffsetPx,
             sortVariant = libraryState.sortVariant,
             sortVisible = sortVisible,
             selectionState = selectionState,
@@ -420,6 +422,7 @@ private fun LibraryCollectionHeader(
     modifier: Modifier = Modifier,
     title: String,
     query: String,
+    headerOffsetPx: MutableFloatState,
     sortVariant: Int,
     sortVisible: Boolean,
     selectionState: LibrarySelectionState,
@@ -441,6 +444,15 @@ private fun LibraryCollectionHeader(
     val ascending = sortVariant >= 0
     val selectionMode = selectionState.isActive
     val allVisibleSelected = selectionState.isAllVisibleSelected(visibleAppIds)
+    val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
+    val searchGate = rememberLibraryHeaderActionGate(headerOffsetPx)
+    val titleActionsEnabled = interactive && titleGate.enabled.value
+    val searchActionsEnabled = interactive && searchGate.enabled.value
+    LaunchedEffect(sortVisible, searchActionsEnabled) {
+        if (interactive && sortVisible && !searchActionsEnabled) {
+            onSortVisibilityChanged(false)
+        }
+    }
 
     Column(
         modifier = modifier
@@ -449,13 +461,16 @@ private fun LibraryCollectionHeader(
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(titleGate.positionModifier)
+                .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics { }),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (selectionMode || showBackButton) {
                 IconButton(
                     onClick = if (selectionMode) onExitSelection else onBack,
-                    enabled = interactive,
+                    enabled = titleActionsEnabled,
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_arrow_back),
@@ -489,7 +504,7 @@ private fun LibraryCollectionHeader(
                 )
                 TextButton(
                     onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
-                    enabled = visibleAppIds.isNotEmpty() && interactive,
+                    enabled = visibleAppIds.isNotEmpty() && titleActionsEnabled,
                 ) {
                     Icon(
                         painter = painterResource(
@@ -503,7 +518,7 @@ private fun LibraryCollectionHeader(
                     Text(toggleLabel)
                 }
             } else {
-                TextButton(onClick = onManageApps, enabled = interactive) {
+                TextButton(onClick = onManageApps, enabled = titleActionsEnabled) {
                     Icon(
                         painter = painterResource(R.drawable.ic_add_to_collection),
                         contentDescription = null,
@@ -517,7 +532,9 @@ private fun LibraryCollectionHeader(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp),
+                .padding(top = 8.dp)
+                .then(searchGate.positionModifier)
+                .then(if (searchActionsEnabled) Modifier else Modifier.clearAndSetSemantics { }),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -525,16 +542,16 @@ private fun LibraryCollectionHeader(
                 query = query,
                 onQueryChange = onQueryChange,
                 modifier = Modifier.weight(1f),
-                enabled = interactive,
+                enabled = searchActionsEnabled,
                 onFocusChanged = onSearchFocusChanged,
             )
             Box {
                 LibrarySortButton(
                     onClick = { onSortVisibilityChanged(true) },
-                    enabled = interactive,
+                    enabled = searchActionsEnabled,
                 )
                 LibrarySortMenu(
-                    expanded = sortVisible && interactive,
+                    expanded = sortVisible && searchActionsEnabled,
                     entries = sortEntries,
                     selectedSort = selectedSort,
                     ascending = ascending,
