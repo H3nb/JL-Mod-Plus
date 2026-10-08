@@ -5,6 +5,10 @@ tab taps/swipes, Library scroll/search/clear, Library-to-Config navigation,
 Config destination construction, scroll and option-edit architecture. MIDlet
 execution remains excluded. No production implementation is adopted here.
 
+The subsequent [solution decisions](interaction-performance-design-2026-10-08.md)
+compare lifetime policies, refine Config comparison semantics with a bounded JVM
+probe, and specify the preferred designs and their acceptance conditions.
+
 Source baseline is `6ac02c10568e0ef9054987f4e789bef386aa7f0a` on
 `fix/library-navigation-smoothness`. Three parallel investigations cover home
 navigation, Library projection/presentation and Config ownership. Their findings
