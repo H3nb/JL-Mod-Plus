@@ -26,6 +26,12 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.onAllNodes
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -550,6 +556,46 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun collectionPickerSearchReturnsToFirstResultAfterDeepScroll() {
+        val host = RecordingCollectionsHost().apply {
+            pickerApps = List(80) { index ->
+                SAMPLE_MEMBER.copy(
+                    id = 1_000 + index,
+                    databaseId = 10_000L + index,
+                    title = "Picker app " + index.toString().padStart(2, '0'),
+                )
+            }
+        }
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+        composeRule.onNodeWithText("Collections").performClick()
+        openCollection()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("collection-membership-1000")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onAllNodes(
+            hasScrollAction(),
+            useUnmergedTree = true,
+        ).onLast().performScrollToIndex(65)
+        composeRule.waitForIdle()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Picker app 00")
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Picker app 00")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Picker app 00").assertIsDisplayed()
+    }
+
+    @Test
     fun expandedWindowShowsListAndDetailWithoutDetailBack() {
         val host = RecordingCollectionsHost().apply {
             store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
@@ -611,6 +657,7 @@ class LibraryCollectionsNavigationTest {
         val singleRemovals = mutableListOf<Pair<Int, Long>>()
         val membershipRequests = mutableListOf<Triple<Int, Long, Boolean>>()
         var deferMembershipResult = false
+        var pickerApps: List<LibraryAppUiItem> = listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2)
         private var pendingMembershipResult: CollectionMembershipResultCallback? = null
         var loadMembersOnOpen = true
 
@@ -628,7 +675,7 @@ class LibraryCollectionsNavigationTest {
         override fun onRenameCollection(collectionId: Long, name: String) = Unit
         override fun onDeleteCollection(collectionId: Long) = Unit
         override fun onPrepareCollectionAppPicker() {
-            store.publishAllApps(listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
+            store.publishAllApps(pickerApps)
         }
         override fun onRequestAddToCollection(appId: Int) = Unit
         override fun onDismissAddToCollection() = Unit

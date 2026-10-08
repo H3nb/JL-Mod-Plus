@@ -93,6 +93,34 @@ class LibraryViewportNavigationTest {
     }
 
     @Test
+    fun collectionViewportSurvivesHostIdReassignmentWithStableDatabaseIds() {
+        val host = ViewportHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = libraryState(LibraryLayout.List), actions = host)
+                }
+            }
+        }
+        swipeToNextPage()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodes(rowMatcher(MEMBER_PREFIX)).fetchSemanticsNodes().isNotEmpty()
+        }
+        scrollAwayFromTop(MEMBER_PREFIX)
+        val before = visibleRow(MEMBER_PREFIX)
+
+        composeRule.runOnIdle { host.reassignMemberHostIds() }
+        composeRule.waitForIdle()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodes(rowMatcher(MEMBER_PREFIX)).fetchSemanticsNodes().isNotEmpty()
+        }
+        assertViewport(before, MEMBER_PREFIX)
+    }
+
+    @Test
     fun collectionOverviewViewportSurvivesPagerRoundTrip() {
         val host = ViewportHost()
         composeRule.setContent {
@@ -362,6 +390,12 @@ class LibraryViewportNavigationTest {
         }
         override fun collectionsStore() = store
         override fun onOpenCollection(collectionId: Long) = store.showMembers(collectionId, members)
+        fun reassignMemberHostIds() {
+            store.showMembers(
+                COLLECTION_ID,
+                members.mapIndexed { index, app -> app.copy(id = 1_001 + index) },
+            )
+        }
         override fun onDismissCollectionMembers() = store.dismissMembers()
         override fun onPrepareCollectionAppPicker() = store.publishAllApps(members)
         override fun onCreateCollection(name: String) = Unit
