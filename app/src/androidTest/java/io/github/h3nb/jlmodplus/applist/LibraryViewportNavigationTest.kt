@@ -303,6 +303,29 @@ class LibraryViewportNavigationTest {
         val allowedDifference = with(composeRule.density) { 6.dp.toPx() }
         assertEquals("Header and MIDlets must travel together", headerTravel, rowTravel,
             allowedDifference)
+
+        // Reverse again while the chrome is still only partially revealed. Both positions
+        // must reverse together; pre-consuming a deep upward drag used to freeze MIDlet rows.
+        activeList(APP_PREFIX).performTouchInput {
+            val start = Offset(width * 0.5f, height * 0.6f)
+            down(start)
+            moveSmoothlyTo(Offset(start.x, start.y - height * 0.035f), durationMillis = 750)
+            advanceEventTime(350)
+            up()
+        }
+        composeRule.waitForIdle()
+        val headerAfterReversal = composeRule.onNodeWithText(chip).assertIsDisplayed()
+            .fetchSemanticsNode().boundsInRoot.top
+        val rowAfterReversal = composeRule.onNodeWithText(before.title, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.top
+        val headerReverseTravel = headerAfterReversal - headerAfter
+        val rowReverseTravel = rowAfterReversal - rowAfter
+        assertTrue("Header did not collapse on drag reversal: $headerReverseTravel px",
+            headerReverseTravel < -minimumTravel / 2)
+        assertTrue("MIDlets froze while header collapsed: $rowReverseTravel px",
+            rowReverseTravel < -minimumTravel / 2)
+        assertEquals("Header and MIDlets diverged on drag reversal",
+            headerReverseTravel, rowReverseTravel, allowedDifference)
     }
 
     @Test

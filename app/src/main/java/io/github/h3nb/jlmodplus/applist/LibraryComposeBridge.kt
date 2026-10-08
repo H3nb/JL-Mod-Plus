@@ -203,6 +203,7 @@ import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 import io.github.h3nb.jlmodplus.ui.jlModPlusFilterChipColors
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
+import io.github.h3nb.jlmodplus.ui.jlModPlusShortNavigationBarItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
@@ -1692,6 +1693,7 @@ private fun LibraryNavigationItem(
     ShortNavigationBarItem(
         selected = destination == selected,
         onClick = { onSelected(destination) },
+        colors = jlModPlusShortNavigationBarItemColors(),
         icon = {
             Icon(
                 painter = painterResource(icon),

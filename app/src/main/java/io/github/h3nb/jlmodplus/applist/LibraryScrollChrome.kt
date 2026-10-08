@@ -66,9 +66,9 @@ internal fun rememberLibraryHeaderActionGate(
  * height. Read offset during measurement (not composition) to avoid recomposing thousands
  * of MIDlets each frame. This keeps short filtered lists flush with the still-visible chips.
  *
- * Collapse consumes motion before Lazy. On reverse scrolling, Lazy first moves deep rows
- * and the header follows in post-scroll. Once the spacer itself enters the viewport, grow
- * it in pre-scroll instead so one drag never moves the rows twice.
+ * When deep rows own scrolling, the header mirrors their consumed delta in post-scroll
+ * in either direction. When the leading placeholder enters the viewport, its height and
+ * header offset move together in pre-scroll so the rows never receive the delta twice.
  */
 @Composable
 internal fun LibraryChromeSpacer(
@@ -123,6 +123,23 @@ internal fun rememberLibraryScrollChrome(
     }
     return remember(viewport, layout, hysteresis, minimumRoom, intent) {
         object : NestedScrollConnection {
+            private fun headerItemVisible(): Boolean = if (layout == LibraryLayout.List) {
+                viewport.listState.firstVisibleItemIndex == 0
+            } else {
+                viewport.gridState.firstVisibleItemIndex == 0
+            }
+
+            private fun canCollapse(): Boolean {
+                val room = maxOf(headerHeightPx.intValue.toFloat(), minimumRoom)
+                return if (layout == LibraryLayout.List) {
+                    viewport.listState.hasLibraryChromeScrollRoom(room) ||
+                        viewport.listState.firstVisibleItemIndex > 1
+                } else {
+                    viewport.gridState.hasLibraryChromeScrollRoom(room) ||
+                        viewport.gridState.firstVisibleItemIndex > 1
+                }
+            }
+
             private fun moveHeader(delta: Float): Float {
                 val height = headerHeightPx.intValue.toFloat()
                 if (height <= 0f) return 0f
@@ -144,38 +161,20 @@ internal fun rememberLibraryScrollChrome(
                 if (source == NestedScrollSource.UserInput && available.y != 0f) {
                     intent.userInitiated = true
                 }
-                // Programmatic Lazy remeasurement and filter changes must never move chrome.
+                // Never derive chrome movement from a programmatic Lazy layout correction.
                 if (!intent.userInitiated || available.y == 0f) return Offset.Zero
-                if (available.y > 0f) {
-                    // While a row precedes the viewport, let Lazy scroll it downward first;
-                    // onPostScroll mirrors that movement in the header. Consuming it here
-                    // moves only the header and leaves the MIDlets stuck in place.
-                    //
-                    // Once the spacer itself is visible, grow it here instead: its changing
-                    // size moves the rows alongside the header without a second Lazy scroll.
-                    val spacerVisible = if (layout == LibraryLayout.List) {
-                        viewport.listState.firstVisibleItemIndex == 0
-                    } else {
-                        viewport.gridState.firstVisibleItemIndex == 0
-                    }
-                    if (!spacerVisible) return Offset.Zero
+                if (!headerItemVisible()) {
+                    // A deep list/grid owns the scroll delta in either direction.
+                    // Mirror its actual displacement in onPostScroll so reversing direction
+                    // cannot leave the MIDlets stationary while the header moves alone.
+                    return Offset.Zero
                 }
-                val height = headerHeightPx.intValue.toFloat()
-                if (height <= 0f) return Offset.Zero
-                if (available.y < 0f && viewport.headerOffsetPx.floatValue >= -0.5f) {
-                    // Preserve the short-content contract on an untouched expanded header.
-                    val room = maxOf(height, minimumRoom)
-                    val canCollapse = if (layout == LibraryLayout.List) {
-                        viewport.listState.hasLibraryChromeScrollRoom(room) ||
-                            viewport.listState.firstVisibleItemIndex > 1
-                    } else {
-                        viewport.gridState.hasLibraryChromeScrollRoom(room) ||
-                            viewport.gridState.firstVisibleItemIndex > 1
-                    }
-                    if (!canCollapse) return Offset.Zero
-                }
-                // Collapse at the leading edge; a visible spacer grows at the leading edge
-                // on reverse scroll. Both move the MIDlets exactly with the chrome.
+                if (available.y < 0f && viewport.headerOffsetPx.floatValue >= -0.5f &&
+                    !canCollapse()
+                ) return Offset.Zero
+
+                // The leading placeholder is now in the viewport. Resizing it consumes the
+                // same drag delta as the translated header and moves the first row with it.
                 return Offset(0f, moveHeader(available.y))
             }
 
@@ -185,15 +184,21 @@ internal fun rememberLibraryScrollChrome(
                 source: NestedScrollSource,
             ): Offset {
                 if (!currentEnabled || !intent.userInitiated) return Offset.Zero
-                val downward = consumed.y + available.y
-                if (downward <= 0f) return Offset.Zero
-                // Rows scrolled by Lazy already account for their own consumed distance.
-                // Only consume the remainder that actually expands the header.
-                val expanded = moveHeader(downward)
+                val delta = consumed.y + available.y
+                if (delta == 0f) return Offset.Zero
+                if (delta < 0f && viewport.headerOffsetPx.floatValue >= -0.5f &&
+                    !canCollapse()
+                ) return Offset.Zero
+
+                // Follow Lazy in BOTH directions while its leading placeholder is offscreen.
+                // Child-consumed distance already moved the MIDlets; return only the portion
+                // of any unconsumed distance that was actually used by the header.
+                val moved = moveHeader(delta)
+                val remaining = moved - consumed.y
                 return Offset(
                     0f,
-                    (expanded - consumed.y.coerceAtLeast(0f))
-                        .coerceIn(0f, available.y.coerceAtLeast(0f)),
+                    if (available.y >= 0f) remaining.coerceIn(0f, available.y)
+                    else remaining.coerceIn(available.y, 0f),
                 )
             }
         }

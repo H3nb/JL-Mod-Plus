@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRailItemDefaults
+import androidx.compose.material3.ShortNavigationBarItemDefaults
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -293,6 +294,16 @@ internal fun jlModPlusNavigationBarItemColors() = NavigationBarItemDefaults.colo
     selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
     selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+)
+
+@Composable
+internal fun jlModPlusShortNavigationBarItemColors() = ShortNavigationBarItemDefaults.colors(
+    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedTextColorTopIconPosition = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedTextColorStartIconPosition = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedIndicatorColor = MaterialTheme.colorScheme.primaryContainer,
     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
 )

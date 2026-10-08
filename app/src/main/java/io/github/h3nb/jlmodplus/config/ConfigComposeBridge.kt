@@ -118,6 +118,7 @@ import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.navigateToTab
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
+import io.github.h3nb.jlmodplus.ui.jlModPlusShortNavigationBarItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import kotlin.math.roundToInt
 
@@ -694,6 +695,7 @@ private fun ConfigNavigationBar(
             ShortNavigationBarItem(
                 selected = destination == selected,
                 onClick = { onSelected(destination) },
+                colors = jlModPlusShortNavigationBarItemColors(),
                 icon = {
                     Icon(
                         painter = painterResource(destination.icon),
