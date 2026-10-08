@@ -31,7 +31,7 @@ object LibraryListProjection {
             LibraryQuickView.RecentlyAdded -> rows.filter { it.addedAt != null }
             LibraryQuickView.RecentlyPlayed -> rows.filter { it.lastPlayedAt != null }
         }
-        val query = filter.trim()
+        val query = filter.trim().lowercase(Locale.ROOT)
         val ranked = if (query.isEmpty()) {
             quickRows.map { RankedRow(it, NO_SEARCH_RANK) }
         } else {
@@ -61,19 +61,15 @@ object LibraryListProjection {
         return ranked.sortedWith(comparator).map(RankedRow::row)
     }
 
-    private fun searchRank(row: LibraryAppRow, query: String): Int? {
-        val needle = query.lowercase(Locale.ROOT)
+    private fun searchRank(row: LibraryAppRow, needle: String): Int? {
         val title = row.title.lowercase(Locale.ROOT)
-        val vendor = row.vendor.lowercase(Locale.ROOT)
-        val version = row.version.lowercase(Locale.ROOT)
-        val description = row.description.lowercase(Locale.ROOT)
         return when {
             title == needle -> 0
             title.startsWith(needle) -> 1
             title.contains(needle) -> 2
-            vendor.contains(needle) -> 3
-            version.contains(needle) -> 4
-            description.contains(needle) -> 5
+            row.vendor.lowercase(Locale.ROOT).contains(needle) -> 3
+            row.version.lowercase(Locale.ROOT).contains(needle) -> 4
+            row.description.lowercase(Locale.ROOT).contains(needle) -> 5
             else -> null
         }
     }

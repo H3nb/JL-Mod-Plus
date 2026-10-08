@@ -3829,16 +3829,14 @@ private fun blendLibrarySlotColor(base: Color, accent: Color, amount: Float): Co
 private fun rememberLibraryIcon(
     app: LibraryAppUiItem,
     contentSize: Dp,
-    iconRatio: LibraryIconRatio,
     enhancedIcons: Boolean,
 ): LibraryNormalizedIcon? {
     val contentSizePx = with(LocalDensity.current) { contentSize.roundToPx() }.coerceAtLeast(1)
-    val cacheKey = remember(app.iconPath, app.iconRevision, contentSizePx, iconRatio, enhancedIcons) {
+    val cacheKey = remember(app.iconPath, app.iconRevision, contentSizePx, enhancedIcons) {
         libraryIconCacheKey(
             app.iconPath,
             app.iconRevision,
             contentSizePx,
-            iconRatio,
             enhancedIcons,
         )
     }
@@ -3850,17 +3848,30 @@ private fun rememberLibraryIcon(
             if (value != null) return@produceState
             val path = app.iconPath?.takeIf(String::isNotBlank) ?: return@produceState
             val normalized = LibraryIconWorkSemaphore.withPermit {
+                // Another visible consumer may have completed this source while we queued.
+                LibraryIconCache.get(cacheKey)?.let { return@withPermit it }
                 val bitmap = withContext(Dispatchers.IO) {
-                    decodeLibraryBitmap(path, contentSizePx)
+                    android.os.Trace.beginSection("Library/iconDecode")
+                    try {
+                        decodeLibraryBitmap(path, contentSizePx)
+                    } finally {
+                        android.os.Trace.endSection()
+                    }
                 } ?: return@withPermit null
                 withContext(Dispatchers.Default) {
-                    normalizeLibraryIcon(
-                        fileSource = bitmap,
-                        enhanceIcon = enhancedIcons,
-                    )
+                    android.os.Trace.beginSection("Library/iconNormalize")
+                    try {
+                        normalizeLibraryIcon(
+                            fileSource = bitmap,
+                            enhanceIcon = enhancedIcons,
+                        )
+                    } finally {
+                        android.os.Trace.endSection()
+                    }
+                }?.also {
+                    LibraryIconCache.put(cacheKey, it)
                 }
             } ?: return@produceState
-            LibraryIconCache.put(cacheKey, normalized)
             value = normalized
         }.value
     }
@@ -3870,10 +3881,9 @@ private fun libraryIconCacheKey(
     iconPath: String?,
     iconRevision: Long,
     targetSizePx: Int,
-    iconRatio: LibraryIconRatio,
     enhancedIcons: Boolean,
 ): String {
-    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:${iconPath.orEmpty()}:$iconRevision:$targetSizePx:${iconRatio.name}:$enhancedIcons"
+    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:${iconPath.orEmpty()}:$iconRevision:$targetSizePx:$enhancedIcons"
 }
 
 @Composable
@@ -3885,48 +3895,64 @@ internal fun LibraryIconSlot(
     iconShape: LibraryIconShape = LibraryIconShape.Round,
     enhancedIcons: Boolean = true,
 ) {
-    BoxWithConstraints(
-        modifier = modifier.aspectRatio(iconRatio.widthToHeight),
-    ) {
-        val artworkSize = contentSize ?: minOf(
-            maxWidth * LIBRARY_GRID_ARTWORK_FRACTION,
-            LibraryGridMaxArtworkSize,
-        )
-        val icon = if (app.iconPath.isNullOrBlank()) {
-            null
-        } else {
-            rememberLibraryIcon(app, artworkSize, iconRatio, enhancedIcons)
+    val slotModifier = modifier.aspectRatio(iconRatio.widthToHeight)
+    if (contentSize != null) {
+        Box(modifier = slotModifier) {
+            LibraryIconSlotContent(app, contentSize, iconRatio, iconShape, enhancedIcons)
         }
-        val isFallback = icon == null ||
-            icon.presentationMode == LibraryIconPresentationMode.Fallback
-        val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        val containerColor = when {
-            isFallback -> colorResource(R.color.library_default_icon_background)
-            icon.presentationMode == LibraryIconPresentationMode.Cover -> baseContainerColor
-            else -> icon.tileColor ?: baseContainerColor
+    } else {
+        BoxWithConstraints(modifier = slotModifier) {
+            val artworkSize = minOf(
+                maxWidth * LIBRARY_GRID_ARTWORK_FRACTION,
+                LibraryGridMaxArtworkSize,
+            )
+            LibraryIconSlotContent(app, artworkSize, iconRatio, iconShape, enhancedIcons)
         }
+    }
+}
 
-        Card(
+@Composable
+private fun LibraryIconSlotContent(
+    app: LibraryAppUiItem,
+    artworkSize: Dp,
+    iconRatio: LibraryIconRatio,
+    iconShape: LibraryIconShape,
+    enhancedIcons: Boolean,
+) {
+    val icon = if (app.iconPath.isNullOrBlank()) {
+        null
+    } else {
+        rememberLibraryIcon(app, artworkSize, enhancedIcons)
+    }
+    val isFallback = icon == null ||
+        icon.presentationMode == LibraryIconPresentationMode.Fallback
+    val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val containerColor = when {
+        isFallback -> colorResource(R.color.library_default_icon_background)
+        icon.presentationMode == LibraryIconPresentationMode.Cover -> baseContainerColor
+        else -> icon.tileColor ?: baseContainerColor
+    }
+
+    Card(
+        modifier = Modifier.fillMaxSize(),
+        shape = if (iconShape == LibraryIconShape.Round) {
+            MaterialTheme.shapes.medium
+        } else {
+            RoundedCornerShape(0.dp)
+        },
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+    ) {
+        Box(
             modifier = Modifier.fillMaxSize(),
-            shape = if (iconShape == LibraryIconShape.Round) {
-                MaterialTheme.shapes.medium
-            } else {
-                RoundedCornerShape(0.dp)
-            },
-            colors = CardDefaults.cardColors(containerColor = containerColor),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (isFallback) {
-                    LibraryFallbackIconArtwork(iconRatio)
-                } else {
-                    LibraryIconArtwork(
-                        icon = icon,
-                        contentSize = artworkSize,
-                    )
-                }
+            if (isFallback) {
+                LibraryFallbackIconArtwork(iconRatio)
+            } else {
+                LibraryIconArtwork(
+                    icon = icon,
+                    contentSize = artworkSize,
+                )
             }
         }
     }

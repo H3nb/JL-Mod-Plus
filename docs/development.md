@@ -154,6 +154,34 @@ lint result; consult the final `build` check for overall status. The early APK
 artifact is not rewritten. Artifact availability does not mean validation passed.
 Inspect the individual reports when a combined step fails.
 
+### Library performance diagnostics
+
+`Library performance diagnostics` compares the fixed pre-optimization revision
+recorded in its workflow with the current PR head on one disposable API 35
+emulator. Both builds receive the same opt-in instrumentation fixture: 1,000
+installed catalog entries with real PNGs and a 500-member collection. These
+fixtures are not runnable MIDlets. The fixture never modifies a user-selected
+workdir; run it only on a disposable installation.
+
+The workflow records three cold `MainActivity` launches, real touch scrolling,
+tab/collection navigation, raw Perfetto frame/scheduling traces, and per-thread
+CPU samples for search projections at 1,000/5,000 rows. APKs use
+`emulatorDebug`, native compilation is disabled, animations remain enabled,
+and ART compilation uses `speed` in both installations. This is diagnostic
+comparison rather than a release/device benchmark; do not interpret shared
+emulator frame timings as physical-device FPS. `am start -W` measures initial
+display, not fully populated Library readiness. Hierarchy checks verify content
+without claiming a time-to-full-display metric.
+
+`JL-Mod-Plus-library-performance` retains the exact source identities, workload,
+CPU samples, raw traces, SQL summaries, and pinned official Perfetto processor.
+Timing thresholds do not gate CI; fixture and recording failures do. Use these
+results to identify repeated work, then qualify release frame pacing/startup
+separately on a physical device. Change the explicit comparison revision when
+starting a new performance investigation rather than silently comparing against
+the base branch.
+
+
 ### Screenshot updates without a local Android toolchain
 
 1. Diagnose the mismatch from the `validate` run's screenshot report and authorized UI change.

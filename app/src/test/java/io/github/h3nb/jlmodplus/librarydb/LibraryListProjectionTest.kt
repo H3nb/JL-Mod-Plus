@@ -24,11 +24,11 @@ class LibraryListProjectionTest {
 
     @Test fun smartSearchRanksTitleBeforeVendorVersionAndDescription() {
         val searchable = listOf(
-            row(10, "Quest", "Vendor", version = "1.0", description = "plain"),
-            row(11, "Quest Deluxe", "Vendor", version = "1.0", description = "plain"),
-            row(12, "My Quest", "Vendor", version = "1.0", description = "plain"),
-            row(13, "Ordinary", "Quest Studios", version = "1.0", description = "plain"),
-            row(14, "Ordinary", "Vendor", version = "Quest build", description = "plain"),
+            row(10, "Quest", "Quest Studios", version = "Quest build", description = "quest mode"),
+            row(11, "Quest Deluxe", "Quest Studios", version = "Quest build", description = "quest mode"),
+            row(12, "My Quest", "Quest Studios", version = "Quest build", description = "quest mode"),
+            row(13, "Ordinary", "Quest Studios", version = "Quest build", description = "quest mode"),
+            row(14, "Ordinary", "Vendor", version = "Quest build", description = "quest mode"),
             row(15, "Ordinary", "Vendor", version = "1.0", description = "Includes quest mode"),
         )
 
@@ -40,6 +40,24 @@ class LibraryListProjectionTest {
         )
 
         assertEquals(listOf(10L, 11L, 12L, 13L, 14L, 15L), result.map { it.id })
+    }
+
+    @Test fun searchTrimsQueryAndUsesRootCaseMappingForUnicodeTitleAndDescription() {
+        val searchable = listOf(
+            row(10, "İSTANBUL", "Vendor"),
+            row(11, "Ordinary", "Vendor", description = "Visit İSTANBUL today"),
+            row(12, "Istanbul", "Vendor"),
+        )
+
+        val result = LibraryListProjection.project(
+            rows = searchable,
+            filter = "  İSTANBUL  ",
+            sortVariant = LibraryListProjection.SORT_TITLE,
+            locale = Locale.forLanguageTag("tr-TR"),
+        )
+
+        // ROOT preserves the dotted-I expansion; the selected sort locale must not alter search.
+        assertEquals(listOf(10L, 11L), result.map { it.id })
     }
 
     @Test fun searchRankUsesSelectedSortOnlyAsTieBreakerWithinSameRank() {

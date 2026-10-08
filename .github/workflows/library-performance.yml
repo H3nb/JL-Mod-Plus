@@ -1,0 +1,105 @@
+name: Library performance diagnostics
+
+on:
+  pull_request:
+    branches: [alpha, main]
+    paths:
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/applist/Library*.kt'
+      - 'app/src/main/java/io/github/h3nb/jlmodplus/librarydb/LibraryListProjection.kt'
+      - 'app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/LibraryPerformanceProbeTest.kt'
+      - 'scripts/profile-library.py'
+      - 'scripts/library-trace-*.sql'
+      - '.github/workflows/library-performance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: library-performance-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  profile:
+    name: Startup, scrolling and search diagnostics
+    runs-on: ubuntu-26.04
+    timeout-minutes: 35
+    env:
+      BASELINE_COMMIT: 925d9b29e14c05013b86d9bec810bdc738440fbc
+      PERFETTO_COMMIT: b642b0016614a50d0174299473feb691566aaa00
+    steps:
+      - name: Check out candidate source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Check out comparison source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.BASELINE_COMMIT }}
+          path: performance-baseline
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Set up Android SDK and platform 37
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools platforms;android-37.0'
+
+      - name: Build equal diagnostic fixtures against both revisions
+        run: |
+          fixture=app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/LibraryPerformanceProbeTest.kt
+          cp "$fixture" "performance-baseline/$fixture"
+          chmod +x gradlew performance-baseline/gradlew
+          ./gradlew -p performance-baseline --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 :app:assembleEmulatorDebug :app:assembleEmulatorDebugAndroidTest
+          ./gradlew --daemon --stacktrace -PjlmodNativeBuild=false -PjlmodRuntimeTestAbi=x86_64 :app:assembleEmulatorDebug :app:assembleEmulatorDebugAndroidTest
+
+      - name: Prepare official Perfetto tools and acceleration
+        run: |
+          mkdir -p perfetto-tools performance-artifacts
+          for tool in record_android_trace trace_processor; do
+            curl --fail --location --retry 3 "https://raw.githubusercontent.com/google/perfetto/$PERFETTO_COMMIT/tools/$tool" -o "perfetto-tools/$tool"
+          done
+          python3 perfetto-tools/trace_processor --version | tee performance-artifacts/trace-processor-version.txt
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Capture the same real MainActivity workload on one emulator
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: false
+          script: |
+            python3 scripts/profile-library.py --label baseline --commit "$BASELINE_COMMIT" --apk "$(find performance-baseline/app/build/outputs/apk/emulator/debug -name '*.apk' | head -1)" --test-apk "$(find performance-baseline/app/build/outputs/apk/androidTest/emulator/debug -name '*.apk' | head -1)"
+            python3 scripts/profile-library.py --label candidate --commit "$(git rev-parse HEAD)" --apk "$(find app/build/outputs/apk/emulator/debug -name '*.apk' | head -1)" --test-apk "$(find app/build/outputs/apk/androidTest/emulator/debug -name '*.apk' | head -1)"
+
+      - name: Summarize trace data and preserve the analysis binary
+        if: always()
+        run: |
+          for trace in performance-artifacts/*/*.perfetto-trace; do
+            [ -f "$trace" ] || continue
+            python3 perfetto-tools/trace_processor -q scripts/library-trace-slices.sql "$trace" > "$trace.slices.csv"
+            python3 perfetto-tools/trace_processor -q scripts/library-trace-cpu.sql "$trace" > "$trace.cpu.csv"
+            python3 perfetto-tools/trace_processor -q scripts/library-trace-frames.sql "$trace" > "$trace.frames.csv"
+          done
+          binary=$(find ~/.local/share/perfetto/prebuilts -type f -name 'trace_processor_shell-*' | head -1)
+          [ -z "$binary" ] || cp "$binary" performance-artifacts/trace_processor_shell
+
+      - name: Upload raw evidence and source identities
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: JL-Mod-Plus-library-performance
+          path: performance-artifacts/**
+          if-no-files-found: warn
+          retention-days: 7

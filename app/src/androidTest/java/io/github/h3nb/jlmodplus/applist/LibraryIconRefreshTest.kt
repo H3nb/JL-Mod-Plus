@@ -16,7 +16,7 @@ package io.github.h3nb.jlmodplus.applist
 
 import android.graphics.Bitmap
 import android.graphics.Color
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
@@ -69,18 +69,25 @@ class LibraryIconRefreshTest {
             LibraryAppUiItem(1, "Icon example", "Vendor", "1.0", original.path, true,
                 iconRevision = 1L),
         )
+        val ratio = mutableStateOf(LibraryIconRatio.Square)
         composeRule.setContent {
             JLModPlusTheme {
                 LibraryIconSlot(
                     app = app.value,
-                    modifier = Modifier.size(64.dp).testTag("icon-artwork"),
+                    modifier = Modifier.width(64.dp).testTag("icon-artwork"),
                     contentSize = 64.dp,
-                    iconRatio = LibraryIconRatio.Square,
+                    iconRatio = ratio.value,
                     enhancedIcons = false,
                 )
             }
         }
         waitForArtwork(Color.RED)
+        assertSlotRatio(LibraryIconRatio.Square)
+
+        // The slot changes shape while retaining artwork decoded at the same fixed size.
+        composeRule.runOnIdle { ratio.value = LibraryIconRatio.Portrait }
+        waitForArtwork(Color.RED)
+        assertSlotRatio(LibraryIconRatio.Portrait)
 
         // The persisted override replaces the file at the same path and advances its revision.
         writeIcon(original, Color.GREEN)
@@ -93,6 +100,15 @@ class LibraryIconRefreshTest {
         // Returning to a cached key must display that source, rather than keep the last bitmap.
         composeRule.runOnIdle { app.value = app.value.copy(iconPath = original.path) }
         waitForArtwork(Color.GREEN)
+
+        composeRule.runOnIdle { ratio.value = LibraryIconRatio.Square }
+        waitForArtwork(Color.GREEN)
+        assertSlotRatio(LibraryIconRatio.Square)
+    }
+
+    private fun assertSlotRatio(ratio: LibraryIconRatio) {
+        val image = composeRule.onNodeWithTag("icon-artwork").captureToImage()
+        assertEquals(image.width / ratio.widthToHeight, image.height.toFloat(), 1f)
     }
 
     private fun waitForArtwork(expectedColor: Int) {

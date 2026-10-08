@@ -970,16 +970,13 @@ private fun projectCollectionApps(
 
 private fun collectionSearchRank(row: LibraryAppUiItem, needle: String): Int? {
     val title = row.title.lowercase(Locale.ROOT)
-    val vendor = row.author.lowercase(Locale.ROOT)
-    val version = row.version.lowercase(Locale.ROOT)
-    val description = row.description.lowercase(Locale.ROOT)
     return when {
         title == needle -> 0
         title.startsWith(needle) -> 1
         title.contains(needle) -> 2
-        vendor.contains(needle) -> 3
-        version.contains(needle) -> 4
-        description.contains(needle) -> 5
+        row.author.lowercase(Locale.ROOT).contains(needle) -> 3
+        row.version.lowercase(Locale.ROOT).contains(needle) -> 4
+        row.description.lowercase(Locale.ROOT).contains(needle) -> 5
         else -> null
     }
 }
