@@ -782,13 +782,12 @@ fun LibraryScreen(
         } else {
             appsGridState.stopScroll(MutatePriority.UserInput)
         }
-        val headerHeight = appsViewport.headerHeightPx.intValue
-        // Partial headers settle expanded. Reserve that final height so focus stays unobscured.
-        val focusOffset = if (appsViewport.headerOffsetPx.floatValue <= -headerHeight + 0.5f) {
-            0
-        } else {
-            -headerHeight
-        }
+        // The list placeholder and the overlay both follow the *visible* header height.
+        // Reserving the original full height would reintroduce a controller-only empty gap.
+        val visibleHeaderHeight = (
+            appsViewport.headerHeightPx.intValue + appsViewport.headerOffsetPx.floatValue
+        ).coerceAtLeast(0f).roundToInt()
+        val focusOffset = -visibleHeaderHeight
         val targetIndex = nextIndex + 1
         // Touch can leave the retained focus far outside the viewport. Reveal it immediately
         // rather than animating through unrelated rows; nearby controller movement stays smooth.
@@ -1746,6 +1745,22 @@ internal fun LibraryAppsDestination(
     var searchFocused by remember { mutableStateOf(false) }
     val searchFocusManager = LocalFocusManager.current
     val searchKeyboard = LocalSoftwareKeyboardController.current
+    val searchImeVisible = WindowInsets.isImeVisible
+    var searchImeWasVisible by remember { mutableStateOf(false) }
+    // On Android the IME consumes the first system Back before the app's BackHandler runs.
+    // Dismiss focus when that same Back finishes hiding the keyboard, rather than leaving
+    // an invisible-but-focused field that lets the next Back exit the Library.
+    LaunchedEffect(searchFocused, searchImeVisible) {
+        when {
+            !searchFocused -> searchImeWasVisible = false
+            searchImeVisible -> searchImeWasVisible = true
+            searchImeWasVisible -> {
+                searchFocusManager.clearFocus(force = true)
+                searchFocused = false
+                searchImeWasVisible = false
+            }
+        }
+    }
     BackHandler(enabled = active && searchFocused) {
         searchKeyboard?.hide()
         searchFocusManager.clearFocus(force = true)
