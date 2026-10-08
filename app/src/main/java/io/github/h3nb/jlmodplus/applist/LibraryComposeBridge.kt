@@ -105,8 +105,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
-import androidx.compose.material3.ShortNavigationBar
-import androidx.compose.material3.ShortNavigationBarItem
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedTextField
@@ -205,7 +204,7 @@ import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 import io.github.h3nb.jlmodplus.ui.jlModPlusFilterChipColors
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
-import io.github.h3nb.jlmodplus.ui.jlModPlusShortNavigationBarItemColors
+import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationBarItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
@@ -1684,7 +1683,7 @@ private fun LibraryNavigationBar(
     selected: LibraryDestination,
     onSelected: (LibraryDestination) -> Unit,
 ) {
-    ShortNavigationBar(
+    NavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         LibraryNavigationItem(
@@ -1720,10 +1719,10 @@ private fun LibraryNavigationItem(
     onSelected: (LibraryDestination) -> Unit,
 ) {
     val labelText = stringResource(label)
-    ShortNavigationBarItem(
+    NavigationBarItem(
         selected = destination == selected,
         onClick = { onSelected(destination) },
-        colors = jlModPlusShortNavigationBarItemColors(),
+        colors = jlModPlusNavigationBarItemColors(),
         icon = {
             Icon(
                 painter = painterResource(icon),

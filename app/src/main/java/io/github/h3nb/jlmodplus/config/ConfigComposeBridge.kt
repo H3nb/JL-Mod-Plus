@@ -66,8 +66,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ShortNavigationBar
-import androidx.compose.material3.ShortNavigationBarItem
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedButton
@@ -118,7 +118,7 @@ import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.navigateToTab
 import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
-import io.github.h3nb.jlmodplus.ui.jlModPlusShortNavigationBarItemColors
+import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationBarItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import kotlin.math.roundToInt
 
@@ -686,16 +686,16 @@ private fun ConfigNavigationBar(
     selected: ConfigDestination,
     onSelected: (ConfigDestination) -> Unit,
 ) {
-    ShortNavigationBar(
+    NavigationBar(
         modifier = Modifier.testTag(CONFIG_NAVIGATION_BAR_TAG),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         destinations.forEach { destination ->
             val label = stringResource(destination.label)
-            ShortNavigationBarItem(
+            NavigationBarItem(
                 selected = destination == selected,
                 onClick = { onSelected(destination) },
-                colors = jlModPlusShortNavigationBarItemColors(),
+                colors = jlModPlusNavigationBarItemColors(),
                 icon = {
                     Icon(
                         painter = painterResource(destination.icon),
