@@ -856,11 +856,10 @@
     <string name="perf_overlay_group_runtime">Runtime-tiedot</string>
     <string name="perf_overlay_fps">Kehyksiä sekunnissa (FPS)</string>
     <string name="perf_overlay_cap">FPS-raja (CAP)</string>
-    <string name="perf_overlay_render_fps">Renderöityjä kehyksiä sekunnissa (RFPS)</string>
     <string name="perf_overlay_speed">Emulointinopeus (SPD)</string>
-    <string name="perf_overlay_interval">Kehysväli (FI)</string>
-    <string name="perf_overlay_p95">Kehysvälin 95. persentiili (P95)</string>
-    <string name="perf_overlay_max">Enimmäiskehysväli (MAX)</string>
+    <string name="perf_overlay_interval">Kehysväli (GFI)</string>
+    <string name="perf_overlay_p95">Kehysvälin 95. persentiili (GP95)</string>
+    <string name="perf_overlay_max">Enimmäiskehysväli (GMAX)</string>
     <string name="perf_overlay_coalesced">Yhdistetyt kehykset (COAL)</string>
     <string name="perf_overlay_paint">Piirron kesto (PAINT)</string>
     <string name="perf_overlay_copy">Puskurin kopioinnin kesto (COPY)</string>

@@ -979,11 +979,10 @@
     <string name="perf_overlay_group_runtime">Сведения о среде выполнения</string>
     <string name="perf_overlay_fps">Кадров в секунду (FPS)</string>
     <string name="perf_overlay_cap">Ограничение FPS (CAP)</string>
-    <string name="perf_overlay_render_fps">Кадров отрисовки в секунду (RFPS)</string>
     <string name="perf_overlay_speed">Скорость эмуляции (SPD)</string>
-    <string name="perf_overlay_interval">Интервал кадров (FI)</string>
-    <string name="perf_overlay_p95">95-й процентиль интервала кадров (P95)</string>
-    <string name="perf_overlay_max">Максимальный интервал кадров (MAX)</string>
+    <string name="perf_overlay_interval">Интервал кадров (GFI)</string>
+    <string name="perf_overlay_p95">95-й процентиль интервала кадров (GP95)</string>
+    <string name="perf_overlay_max">Максимальный интервал кадров (GMAX)</string>
     <string name="perf_overlay_coalesced">Объединённые кадры (COAL)</string>
     <string name="perf_overlay_paint">Время рисования (PAINT)</string>
     <string name="perf_overlay_copy">Время копирования буфера (COPY)</string>

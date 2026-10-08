@@ -863,11 +863,10 @@
     <string name="perf_overlay_group_runtime">Informations d’exécution</string>
     <string name="perf_overlay_fps">Images par seconde (FPS)</string>
     <string name="perf_overlay_cap">Limite FPS (CAP)</string>
-    <string name="perf_overlay_render_fps">Images rendues par seconde (RFPS)</string>
     <string name="perf_overlay_speed">Vitesse d’émulation (SPD)</string>
-    <string name="perf_overlay_interval">Intervalle d’image (FI)</string>
-    <string name="perf_overlay_p95">95e centile de l’intervalle d’image (P95)</string>
-    <string name="perf_overlay_max">Intervalle d’image maximal (MAX)</string>
+    <string name="perf_overlay_interval">Intervalle d’image (GFI)</string>
+    <string name="perf_overlay_p95">95e centile de l’intervalle d’image (GP95)</string>
+    <string name="perf_overlay_max">Intervalle d’image maximal (GMAX)</string>
     <string name="perf_overlay_coalesced">Images regroupées (COAL)</string>
     <string name="perf_overlay_paint">Durée de dessin (PAINT)</string>
     <string name="perf_overlay_copy">Durée de copie du tampon (COPY)</string>

@@ -856,11 +856,10 @@
     <string name="perf_overlay_group_runtime">Runtimeinformation</string>
     <string name="perf_overlay_fps">Bildrutor per sekund (FPS)</string>
     <string name="perf_overlay_cap">FPS-gräns (CAP)</string>
-    <string name="perf_overlay_render_fps">Renderade bildrutor per sekund (RFPS)</string>
     <string name="perf_overlay_speed">Emuleringshastighet (SPD)</string>
-    <string name="perf_overlay_interval">Bildruteintervall (FI)</string>
-    <string name="perf_overlay_p95">95:e percentilen för bildruteintervall (P95)</string>
-    <string name="perf_overlay_max">Maximalt bildruteintervall (MAX)</string>
+    <string name="perf_overlay_interval">Bildruteintervall (GFI)</string>
+    <string name="perf_overlay_p95">95:e percentilen för bildruteintervall (GP95)</string>
+    <string name="perf_overlay_max">Maximalt bildruteintervall (GMAX)</string>
     <string name="perf_overlay_coalesced">Sammanslagna bildrutor (COAL)</string>
     <string name="perf_overlay_paint">Ritningstid (PAINT)</string>
     <string name="perf_overlay_copy">Tid för buffertkopiering (COPY)</string>

@@ -856,11 +856,10 @@
     <string name="perf_overlay_group_runtime">Runtime-informatie</string>
     <string name="perf_overlay_fps">Frames per seconde (FPS)</string>
     <string name="perf_overlay_cap">FPS-limiet (CAP)</string>
-    <string name="perf_overlay_render_fps">Gerenderde frames per seconde (RFPS)</string>
     <string name="perf_overlay_speed">Emulatiesnelheid (SPD)</string>
-    <string name="perf_overlay_interval">Frame-interval (FI)</string>
-    <string name="perf_overlay_p95">95e percentiel frame-interval (P95)</string>
-    <string name="perf_overlay_max">Maximaal frame-interval (MAX)</string>
+    <string name="perf_overlay_interval">Frame-interval (GFI)</string>
+    <string name="perf_overlay_p95">95e percentiel frame-interval (GP95)</string>
+    <string name="perf_overlay_max">Maximaal frame-interval (GMAX)</string>
     <string name="perf_overlay_coalesced">Samengevoegde frames (COAL)</string>
     <string name="perf_overlay_paint">Tekenduur (PAINT)</string>
     <string name="perf_overlay_copy">Bufferkopieerduur (COPY)</string>

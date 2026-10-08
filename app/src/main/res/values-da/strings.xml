@@ -856,11 +856,10 @@
     <string name="perf_overlay_group_runtime">Runtime-oplysninger</string>
     <string name="perf_overlay_fps">Billeder pr. sekund (FPS)</string>
     <string name="perf_overlay_cap">FPS-grænse (CAP)</string>
-    <string name="perf_overlay_render_fps">Gengivne billeder pr. sekund (RFPS)</string>
     <string name="perf_overlay_speed">Emuleringshastighed (SPD)</string>
-    <string name="perf_overlay_interval">Frame-interval (FI)</string>
-    <string name="perf_overlay_p95">95.-percentil for frame-interval (P95)</string>
-    <string name="perf_overlay_max">Maksimalt frame-interval (MAX)</string>
+    <string name="perf_overlay_interval">Frame-interval (GFI)</string>
+    <string name="perf_overlay_p95">95.-percentil for frame-interval (GP95)</string>
+    <string name="perf_overlay_max">Maksimalt frame-interval (GMAX)</string>
     <string name="perf_overlay_coalesced">Sammenlagte frames (COAL)</string>
     <string name="perf_overlay_paint">Tegnevarighed (PAINT)</string>
     <string name="perf_overlay_copy">Varighed for bufferkopiering (COPY)</string>
