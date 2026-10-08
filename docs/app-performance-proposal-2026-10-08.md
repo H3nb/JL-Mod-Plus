@@ -13,6 +13,12 @@ Config and background file/decode changes remain proposals;
 the following composition attribution strengthens some recommendations and
 lowers confidence in others.
 
+The subsequent [interaction-focused analysis](interaction-performance-analysis-2026-10-08.md)
+adds parallel source investigations and fresh USB traces for home navigation,
+Library search/scroll, real Library-to-Config entry, Controls and System. It
+refines priorities around recurring page construction, scroll chrome, active
+editor ownership and repeated Config semantic/metadata projection work.
+
 ## Follow-up physical attribution
 
 The attribution below uses `19b5ffd4c96fdf7f6abb4bedaee943730a6f1788` on
