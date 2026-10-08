@@ -51,233 +51,359 @@ internal fun shouldUseDarkSystemBarIcons(barColor: Color, backgroundColor: Color
     barColor.compositeOver(backgroundColor).luminance() > 0.179f
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF34536B),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFD5E7F5),
-    onPrimaryContainer = Color(0xFF0E2738),
-    inversePrimary = Color(0xFFAEC9DE),
-    secondary = Color(0xFF4F616E),
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFD3E5EF),
-    onSecondaryContainer = Color(0xFF0C202B),
-    tertiary = Color(0xFF64597A),
-    onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFE9DDF5),
-    onTertiaryContainer = Color(0xFF211733),
     background = Color(AppBackgroundColors.argb(false)),
-    onBackground = Color(0xFF151A1D),
+    onBackground = Color(0xFF1B1F21),
     surface = Color(AppBackgroundColors.argb(false)),
-    onSurface = Color(0xFF151A1D),
-    surfaceVariant = Color(0xFFE0E6EA),
-    onSurfaceVariant = Color(0xFF414D55),
-    surfaceTint = Color(0xFF34536B),
+    onSurface = Color(0xFF1B1F21),
+    surfaceVariant = Color(0xFFE0E6E9),
+    onSurfaceVariant = Color(0xFF566168),
     inverseSurface = Color(0xFF293136),
-    inverseOnSurface = Color(0xFFEEF2F4),
+    inverseOnSurface = Color(0xFFEFF2F3),
+    outline = Color(0xFF75858D),
+    outlineVariant = Color(0xFFCDD5D9),
+    surfaceDim = Color(0xFFE2E7EA),
+    surfaceBright = Color(0xFFFCFCFD),
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFF3F5F6),
+    surfaceContainer = Color(0xFFEFF2F3),
+    surfaceContainerHigh = Color(0xFFE8ECEE),
+    surfaceContainerHighest = Color(0xFFE0E6E9),
     error = Color(0xFFBA1A1A),
-    onError = Color.White,
+    onError = Color(0xFFFFFFFF),
     errorContainer = Color(0xFFFFDAD6),
     onErrorContainer = Color(0xFF410002),
-    outline = Color(0xFF707C84),
-    outlineVariant = Color(0xFFC1CBD1),
-    scrim = Color.Black,
-    surfaceDim = Color(0xFFD9DEE1),
-    surfaceBright = Color(AppBackgroundColors.argb(false)),
-    surfaceContainerLowest = Color.White,
-    surfaceContainerLow = Color(0xFFF4F7F8),
-    surfaceContainer = Color(0xFFEEF2F4),
-    surfaceContainerHigh = Color(0xFFE6EBEE),
-    surfaceContainerHighest = Color(0xFFDDE4E8),
+    scrim = Color(0xFF000000),
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFFA9C8E5),
-    onPrimary = Color(0xFF103246),
-    primaryContainer = Color(0xFF234B63),
-    onPrimaryContainer = Color(0xFFD5EBFA),
-    inversePrimary = Color(0xFF3C6079),
-    secondary = Color(0xFFB7CCD8),
-    onSecondary = Color(0xFF1A303B),
-    secondaryContainer = Color(0xFF334B58),
-    onSecondaryContainer = Color(0xFFD3EAF5),
-    tertiary = Color(0xFFD2BDE7),
-    onTertiary = Color(0xFF382747),
-    tertiaryContainer = Color(0xFF4F3E5E),
-    onTertiaryContainer = Color(0xFFEEDFFF),
     background = Color(AppBackgroundColors.argb(true)),
-    onBackground = Color(0xFFE7EDF0),
+    onBackground = Color(0xFFE4E8EA),
     surface = Color(AppBackgroundColors.argb(true)),
-    onSurface = Color(0xFFE7EDF0),
-    surfaceVariant = Color(0xFF323B42),
-    onSurfaceVariant = Color(0xFFBBC6CD),
-    surfaceTint = Color(0xFFA9C8E5),
-    inverseSurface = Color(0xFFE7EDF0),
-    inverseOnSurface = Color(0xFF22292D),
+    onSurface = Color(0xFFE4E8EA),
+    surfaceVariant = Color(0xFF2B3439),
+    onSurfaceVariant = Color(0xFFB5BEC3),
+    inverseSurface = Color(0xFFE4E8EA),
+    inverseOnSurface = Color(0xFF22292E),
+    outline = Color(0xFF70808A),
+    outlineVariant = Color(0xFF3B454B),
+    surfaceDim = Color(0xFF101416),
+    surfaceBright = Color(0xFF333D43),
+    surfaceContainerLowest = Color(0xFF0C1012),
+    surfaceContainerLow = Color(0xFF151A1D),
+    surfaceContainer = Color(0xFF1B2125),
+    surfaceContainerHigh = Color(0xFF22292E),
+    surfaceContainerHighest = Color(0xFF2B3439),
     error = Color(0xFFFFB4AB),
     onError = Color(0xFF690005),
     errorContainer = Color(0xFF93000A),
     onErrorContainer = Color(0xFFFFDAD6),
-    outline = Color(0xFF89959D),
-    outlineVariant = Color(0xFF46525B),
-    scrim = Color.Black,
-    surfaceDim = Color(AppBackgroundColors.argb(true)),
-    surfaceBright = Color(0xFF353F47),
-    surfaceContainerLowest = Color(0xFF0A0D0F),
-    surfaceContainerLow = Color(0xFF1A2024),
-    surfaceContainer = Color(0xFF20272C),
-    surfaceContainerHigh = Color(0xFF283138),
-    surfaceContainerHighest = Color(0xFF323C43),
+    scrim = Color(0xFF000000),
 )
 
 enum class AccentPalette(val key: String) {
-    DefaultBlue("blue"),
-    Teal("teal"),
-    Green("green"),
+    Sapphire("sapphire"),
+    Orchid("violet"),
+    Jade("teal"),
+    Coral("coral"),
+    Berry("rose"),
+    Emerald("green"),
     Amber("amber"),
-    Rose("rose"),
-    Violet("violet"),
-    Indigo("indigo"),
-    Cyan("cyan"),
-    Orange("orange"),
-    Pink("pink");
+    DefaultBlue("blue");
 
     companion object {
-        fun fromKey(key: String?): AccentPalette = entries.firstOrNull { it.key == key } ?: DefaultBlue
+        val Default: AccentPalette = Sapphire
+
+        fun fromKey(key: String?): AccentPalette = entries.firstOrNull { it.key == key } ?: Default
+
+        /** Persistently reset obsolete/unknown saved options without writing an absent key. */
+        @JvmStatic
+        fun readPreference(preferences: SharedPreferences): AccentPalette {
+            val stored = preferences.getString(Constants.PREF_ACCENT, null)
+            val selected = fromKey(stored)
+            if (stored != null && stored != selected.key) {
+                preferences.edit().putString(Constants.PREF_ACCENT, selected.key).apply()
+            }
+            return selected
+        }
     }
 
-    fun previewColor(dark: Boolean): Color = colors(dark).primary
+    fun previewColor(dark: Boolean): Color = if (dark) tones().dark.primary else tones().light.primary
 }
 
-private data class AccentColors(
+private data class AccentRoles(
     val primary: Color,
-    val onPrimary: Color,
     val primaryContainer: Color,
     val onPrimaryContainer: Color,
-    val inversePrimary: Color,
+    val secondary: Color,
+    val secondaryContainer: Color,
+    val onSecondaryContainer: Color,
+    val tertiary: Color,
+    val tertiaryContainer: Color,
+    val onTertiaryContainer: Color,
 )
 
-private fun AccentPalette.colors(dark: Boolean): AccentColors = when (this) {
-    AccentPalette.DefaultBlue -> if (dark) {
-        AccentColors(
-            Color(0xFFA9C8E5), Color(0xFF103246), Color(0xFF234B63),
-            Color(0xFFD5EBFA), Color(0xFF3C6079),
-        )
-    } else {
-        AccentColors(
-            Color(0xFF34536B), Color.White, Color(0xFFD5E7F5),
-            Color(0xFF0E2738), Color(0xFFAEC9DE),
-        )
-    }
-    AccentPalette.Teal -> if (dark) {
-        AccentColors(
-            Color(0xFF70D5CB), Color(0xFF003735), Color(0xFF00504C),
-            Color(0xFF8CF2E8), Color(0xFF1E8F88),
-        )
-    } else {
-        AccentColors(
-            Color(0xFF006A64), Color.White, Color(0xFF9CF2E8),
-            Color(0xFF00201E), Color(0xFF006A64),
-        )
-    }
-    AccentPalette.Green -> if (dark) {
-        AccentColors(
-            Color(0xFF9CD67A), Color(0xFF17370F), Color(0xFF2A511F),
-            Color(0xFFB8F397), Color(0xFF4D8A39),
-        )
-    } else {
-        AccentColors(
-            Color(0xFF376A26), Color.White, Color(0xFFB8F397),
-            Color(0xFF0C2006), Color(0xFF376A26),
-        )
-    }
-    AccentPalette.Amber -> if (dark) {
-        AccentColors(
-            Color(0xFFFFC55E), Color(0xFF432B00), Color(0xFF604000),
-            Color(0xFFFFDFA6), Color(0xFF9A6800),
-        )
-    } else {
-        AccentColors(
-            Color(0xFF7A5100), Color.White, Color(0xFFFFDFA6),
-            Color(0xFF271900), Color(0xFF7A5100),
-        )
-    }
-    AccentPalette.Rose -> if (dark) {
-        AccentColors(
-            Color(0xFFFFB0C4), Color(0xFF570022), Color(0xFF780033),
-            Color(0xFFFFD9E1), Color(0xFFAA2D57),
-        )
-    } else {
-        AccentColors(
-            Color(0xFF9B234D), Color.White, Color(0xFFFFD9E1),
-            Color(0xFF3E0018), Color(0xFF9B234D),
-        )
-    }
-    AccentPalette.Violet -> if (dark) {
-        AccentColors(
-            Color(0xFFD0BCFF), Color(0xFF381E72), Color(0xFF4F378B),
-            Color(0xFFEADDFF), Color(0xFF6750A4),
-        )
-    } else {
-        AccentColors(
-            Color(0xFF6750A4), Color.White, Color(0xFFEADDFF),
-            Color(0xFF21005D), Color(0xFF6750A4),
-        )
-    }
-    AccentPalette.Indigo -> if (dark) {
-        AccentColors(
-            Color(0xFFBAC3FF), Color(0xFF1E2A67), Color(0xFF283777),
-            Color(0xFFDEE2FF), Color(0xFF5368C4),
-        )
-    } else {
-        AccentColors(
-            Color(0xFF3F51B5), Color.White, Color(0xFFDDE2FF),
-            Color(0xFF111A4B), Color(0xFF3F51B5),
-        )
-    }
-    AccentPalette.Cyan -> if (dark) {
-        AccentColors(
-            Color(0xFF4FD8E8), Color(0xFF00363D), Color(0xFF004F58),
-            Color(0xFF97F0FF), Color(0xFF006874),
-        )
-    } else {
-        AccentColors(
-            Color(0xFF006874), Color.White, Color(0xFF97F0FF),
-            Color(0xFF001F24), Color(0xFF006874),
-        )
-    }
-    AccentPalette.Orange -> if (dark) {
-        AccentColors(
-            Color(0xFFFFB599), Color(0xFF5B1A00), Color(0xFF7D2900),
-            Color(0xFFFFDCC8), Color(0xFFA13B00),
-        )
-    } else {
-        AccentColors(
-            Color(0xFFA13B00), Color.White, Color(0xFFFFDCC8),
-            Color(0xFF3A0B00), Color(0xFFA13B00),
-        )
-    }
-    AccentPalette.Pink -> if (dark) {
-        AccentColors(
-            Color(0xFFFFB0CB), Color(0xFF680035), Color(0xFF870047),
-            Color(0xFFFFD9E5), Color(0xFFD64E7D),
-        )
-    } else {
-        AccentColors(
-            Color(0xFFA9005A), Color.White, Color(0xFFFFD9E5),
-            Color(0xFF3F0020), Color(0xFFA9005A),
-        )
-    }
-}
+private data class AccentTones(
+    val light: AccentRoles,
+    val dark: AccentRoles,
+    val onPrimaryFixedVariant: Color,
+    val onSecondaryFixedVariant: Color,
+    val onTertiaryFixedVariant: Color,
+)
 
-private fun AccentPalette.colorScheme(dark: Boolean): androidx.compose.material3.ColorScheme {
+/** Static accent families keep surfaces neutral and require no per-frame tonal calculations. */
+private val AccentToneSets = mapOf(
+    AccentPalette.Sapphire to AccentTones(
+        light = AccentRoles(
+            primary = Color(0xFF285BC2),
+            primaryContainer = Color(0xFFCDDFFE),
+            onPrimaryContainer = Color(0xFF111D36),
+            secondary = Color(0xFF505867),
+            secondaryContainer = Color(0xFFD8E2F3),
+            onSecondaryContainer = Color(0xFF171E2B),
+            tertiary = Color(0xFF614D68),
+            tertiaryContainer = Color(0xFFEBD5F3),
+            onTertiaryContainer = Color(0xFF25162B),
+        ),
+        dark = AccentRoles(
+            primary = Color(0xFF9BBEFF),
+            primaryContainer = Color(0xFF25375A),
+            onPrimaryContainer = Color(0xFFCDDFFE),
+            secondary = Color(0xFFAFB8C8),
+            secondaryContainer = Color(0xFF313845),
+            onSecondaryContainer = Color(0xFFD8E2F3),
+            tertiary = Color(0xFFC5AECE),
+            tertiaryContainer = Color(0xFF433049),
+            onTertiaryContainer = Color(0xFFEDD4F5),
+        ),
+        onPrimaryFixedVariant = Color(0xFF394D72),
+        onSecondaryFixedVariant = Color(0xFF373E4D),
+        onTertiaryFixedVariant = Color(0xFF47354D),
+    ),
+    AccentPalette.Orchid to AccentTones(
+        light = AccentRoles(
+            primary = Color(0xFF7142A9),
+            primaryContainer = Color(0xFFE4D6FE),
+            onPrimaryContainer = Color(0xFF221832),
+            secondary = Color(0xFF5A5564),
+            secondaryContainer = Color(0xFFE4DEF0),
+            onSecondaryContainer = Color(0xFF201B29),
+            tertiary = Color(0xFF6C4A56),
+            tertiaryContainer = Color(0xFFFAD1DE),
+            onTertiaryContainer = Color(0xFF2D131D),
+        ),
+        dark = AccentRoles(
+            primary = Color(0xFFD0B4F1),
+            primaryContainer = Color(0xFF3E2F54),
+            onPrimaryContainer = Color(0xFFE4D7FA),
+            secondary = Color(0xFFBAB4C5),
+            secondaryContainer = Color(0xFF3A3543),
+            onSecondaryContainer = Color(0xFFE4DEF0),
+            tertiary = Color(0xFFD4AAB8),
+            tertiaryContainer = Color(0xFF4D2D38),
+            onTertiaryContainer = Color(0xFFFCD0DF),
+        ),
+        onPrimaryFixedVariant = Color(0xFF54446C),
+        onSecondaryFixedVariant = Color(0xFF403B4A),
+        onTertiaryFixedVariant = Color(0xFF50323D),
+    ),
+    AccentPalette.Jade to AccentTones(
+        light = AccentRoles(
+            primary = Color(0xFF006C70),
+            primaryContainer = Color(0xFFA6EDF0),
+            onPrimaryContainer = Color(0xFF012425),
+            secondary = Color(0xFF475D5E),
+            secondaryContainer = Color(0xFFCFE7E8),
+            onSecondaryContainer = Color(0xFF0D2223),
+            tertiary = Color(0xFF425771),
+            tertiaryContainer = Color(0xFFC9E0FE),
+            onTertiaryContainer = Color(0xFF0D1E32),
+        ),
+        dark = AccentRoles(
+            primary = Color(0xFF82D9CF),
+            primaryContainer = Color(0xFF014143),
+            onPrimaryContainer = Color(0xFFB8E9EB),
+            secondary = Color(0xFFA6BDBD),
+            secondaryContainer = Color(0xFF283C3D),
+            onSecondaryContainer = Color(0xFFCEE7E8),
+            tertiary = Color(0xFFA1BAD9),
+            tertiaryContainer = Color(0xFF253951),
+            onTertiaryContainer = Color(0xFFC8E0FF),
+        ),
+        onPrimaryFixedVariant = Color(0xFF0B585B),
+        onSecondaryFixedVariant = Color(0xFF2D4344),
+        onTertiaryFixedVariant = Color(0xFF2B3E55),
+    ),
+    AccentPalette.Coral to AccentTones(
+        light = AccentRoles(
+            primary = Color(0xFFA04F31),
+            primaryContainer = Color(0xFFFED3C4),
+            onPrimaryContainer = Color(0xFF31150A),
+            secondary = Color(0xFF65534D),
+            secondaryContainer = Color(0xFFF1DCD5),
+            onSecondaryContainer = Color(0xFF291A14),
+            tertiary = Color(0xFF5E5534),
+            tertiaryContainer = Color(0xFFE7DEBB),
+            onTertiaryContainer = Color(0xFF231C01),
+        ),
+        dark = AccentRoles(
+            primary = Color(0xFFF5B69D),
+            primaryContainer = Color(0xFF542B1D),
+            onPrimaryContainer = Color(0xFFFCD4C5),
+            secondary = Color(0xFFC6B2AB),
+            secondaryContainer = Color(0xFF44342E),
+            onSecondaryContainer = Color(0xFFF2DCD4),
+            tertiary = Color(0xFFC1B892),
+            tertiaryContainer = Color(0xFF403817),
+            onTertiaryContainer = Color(0xFFE8DEB8),
+        ),
+        onPrimaryFixedVariant = Color(0xFF6C4030),
+        onSecondaryFixedVariant = Color(0xFF4B3A34),
+        onTertiaryFixedVariant = Color(0xFF443C1E),
+    ),
+    AccentPalette.Berry to AccentTones(
+        light = AccentRoles(
+            primary = Color(0xFFA63265),
+            primaryContainer = Color(0xFFFFCFDE),
+            onPrimaryContainer = Color(0xFF30131E),
+            secondary = Color(0xFF655258),
+            secondaryContainer = Color(0xFFF0DBE1),
+            onSecondaryContainer = Color(0xFF29191E),
+            tertiary = Color(0xFF6C4E3B),
+            tertiaryContainer = Color(0xFFF9D6C1),
+            onTertiaryContainer = Color(0xFF2D1607),
+        ),
+        dark = AccentRoles(
+            primary = Color(0xFFF2A8C6),
+            primaryContainer = Color(0xFF522938),
+            onPrimaryContainer = Color(0xFFFBD1DE),
+            secondary = Color(0xFFC6B1B7),
+            secondaryContainer = Color(0xFF433338),
+            onSecondaryContainer = Color(0xFFF1DBE1),
+            tertiary = Color(0xFFD3AF99),
+            tertiaryContainer = Color(0xFF4C301F),
+            onTertiaryContainer = Color(0xFFFBD5BF),
+        ),
+        onPrimaryFixedVariant = Color(0xFF6B3D4D),
+        onSecondaryFixedVariant = Color(0xFF4B393E),
+        onTertiaryFixedVariant = Color(0xFF503524),
+    ),
+    AccentPalette.Emerald to AccentTones(
+        light = AccentRoles(
+            primary = Color(0xFF327446),
+            primaryContainer = Color(0xFFBDECC7),
+            onPrimaryContainer = Color(0xFF082511),
+            secondary = Color(0xFF4E5C51),
+            secondaryContainer = Color(0xFFD6E6D9),
+            onSecondaryContainer = Color(0xFF142218),
+            tertiary = Color(0xFF315D63),
+            tertiaryContainer = Color(0xFFBAE8EE),
+            onTertiaryContainer = Color(0xFF012226),
+        ),
+        dark = AccentRoles(
+            primary = Color(0xFFA4DEA7),
+            primaryContainer = Color(0xFF1B4126),
+            onPrimaryContainer = Color(0xFFC7E8CE),
+            secondary = Color(0xFFACBCAF),
+            secondaryContainer = Color(0xFF2F3C31),
+            onSecondaryContainer = Color(0xFFD5E7D9),
+            tertiary = Color(0xFF91C1C8),
+            tertiaryContainer = Color(0xFF103F45),
+            onTertiaryContainer = Color(0xFFB7E9EF),
+        ),
+        onPrimaryFixedVariant = Color(0xFF2F583A),
+        onSecondaryFixedVariant = Color(0xFF344238),
+        onTertiaryFixedVariant = Color(0xFF1C4348),
+    ),
+    AccentPalette.Amber to AccentTones(
+        light = AccentRoles(
+            primary = Color(0xFF86600F),
+            primaryContainer = Color(0xFFF7DAAA),
+            onPrimaryContainer = Color(0xFF2A1B00),
+            secondary = Color(0xFF605748),
+            secondaryContainer = Color(0xFFEAE0CF),
+            onSecondaryContainer = Color(0xFF251D0F),
+            tertiary = Color(0xFF495C3F),
+            tertiaryContainer = Color(0xFFD1E6C6),
+            onTertiaryContainer = Color(0xFF13210B),
+        ),
+        dark = AccentRoles(
+            primary = Color(0xFFEFCB7E),
+            primaryContainer = Color(0xFF493407),
+            onPrimaryContainer = Color(0xFFF0DBB9),
+            secondary = Color(0xFFC0B6A6),
+            secondaryContainer = Color(0xFF3F3729),
+            onSecondaryContainer = Color(0xFFEBE0CE),
+            tertiary = Color(0xFFA9BF9E),
+            tertiaryContainer = Color(0xFF2D3E23),
+            onTertiaryContainer = Color(0xFFD0E6C4),
+        ),
+        onPrimaryFixedVariant = Color(0xFF60491D),
+        onSecondaryFixedVariant = Color(0xFF463D2F),
+        onTertiaryFixedVariant = Color(0xFF314228),
+    ),
+    AccentPalette.DefaultBlue to AccentTones(
+        light = AccentRoles(
+            primary = Color(0xFF34536B),
+            primaryContainer = Color(0xFFC1E3FE),
+            onPrimaryContainer = Color(0xFF042034),
+            secondary = Color(0xFF4C5A66),
+            secondaryContainer = Color(0xFFD4E4F1),
+            onSecondaryContainer = Color(0xFF13202A),
+            tertiary = Color(0xFF584F6E),
+            tertiaryContainer = Color(0xFFE1D8FB),
+            onTertiaryContainer = Color(0xFF1F182F),
+        ),
+        dark = AccentRoles(
+            primary = Color(0xFFA9C8E5),
+            primaryContainer = Color(0xFF143B57),
+            onPrimaryContainer = Color(0xFFC2E3FD),
+            secondary = Color(0xFFAABAC6),
+            secondaryContainer = Color(0xFF2D3A44),
+            onSecondaryContainer = Color(0xFFD3E4F2),
+            tertiary = Color(0xFFBBB1D5),
+            tertiaryContainer = Color(0xFF3B324F),
+            onTertiaryContainer = Color(0xFFE2D7FD),
+        ),
+        onPrimaryFixedVariant = Color(0xFF29516F),
+        onSecondaryFixedVariant = Color(0xFF33404C),
+        onTertiaryFixedVariant = Color(0xFF3F3752),
+    ),
+)
+
+private fun AccentPalette.tones(): AccentTones = checkNotNull(AccentToneSets[this])
+
+/** Complete accent-specific Material 3 roles, including invariant fixed colors. */
+internal fun AccentPalette.colorScheme(dark: Boolean): androidx.compose.material3.ColorScheme {
     val base = if (dark) DarkColors else LightColors
-    val colors = colors(dark)
+    val tones = tones()
+    val roles = if (dark) tones.dark else tones.light
     return base.copy(
-        primary = colors.primary,
-        onPrimary = colors.onPrimary,
-        primaryContainer = colors.primaryContainer,
-        onPrimaryContainer = colors.onPrimaryContainer,
-        inversePrimary = colors.inversePrimary,
-        surfaceTint = colors.primary,
+        primary = roles.primary,
+        onPrimary = if (dark) tones.light.onPrimaryContainer else Color.White,
+        primaryContainer = roles.primaryContainer,
+        onPrimaryContainer = roles.onPrimaryContainer,
+        inversePrimary = if (dark) tones.light.primary else tones.dark.primary,
+        secondary = roles.secondary,
+        onSecondary = if (dark) tones.light.onSecondaryContainer else Color.White,
+        secondaryContainer = roles.secondaryContainer,
+        onSecondaryContainer = roles.onSecondaryContainer,
+        tertiary = roles.tertiary,
+        onTertiary = if (dark) tones.light.onTertiaryContainer else Color.White,
+        tertiaryContainer = roles.tertiaryContainer,
+        onTertiaryContainer = roles.onTertiaryContainer,
+        surfaceTint = roles.primary,
+        primaryFixed = tones.light.primaryContainer,
+        primaryFixedDim = tones.dark.primary,
+        onPrimaryFixed = tones.light.onPrimaryContainer,
+        onPrimaryFixedVariant = tones.onPrimaryFixedVariant,
+        secondaryFixed = tones.light.secondaryContainer,
+        secondaryFixedDim = tones.dark.secondary,
+        onSecondaryFixed = tones.light.onSecondaryContainer,
+        onSecondaryFixedVariant = tones.onSecondaryFixedVariant,
+        tertiaryFixed = tones.light.tertiaryContainer,
+        tertiaryFixedDim = tones.dark.tertiary,
+        onTertiaryFixed = tones.light.onTertiaryContainer,
+        onTertiaryFixedVariant = tones.onTertiaryFixedVariant,
     )
 }
 
@@ -364,16 +490,13 @@ fun JLModPlusTheme(
         PreferenceManager.getDefaultSharedPreferences(context)
     }
     var preferenceAccentKey by remember(preferences) {
-        mutableStateOf(preferences.getString(Constants.PREF_ACCENT, AccentPalette.DefaultBlue.key))
+        mutableStateOf(AccentPalette.readPreference(preferences).key)
     }
     DisposableEffect(preferences, accent) {
         if (accent == null) {
             val listener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
                 if (key == Constants.PREF_ACCENT) {
-                    preferenceAccentKey = shared.getString(
-                        Constants.PREF_ACCENT,
-                        AccentPalette.DefaultBlue.key,
-                    )
+                    preferenceAccentKey = AccentPalette.readPreference(shared).key
                 }
             }
             preferences.registerOnSharedPreferenceChangeListener(listener)
@@ -384,7 +507,7 @@ fun JLModPlusTheme(
     }
     val view = LocalView.current
     val selectedAccent = accent ?: AccentPalette.fromKey(preferenceAccentKey)
-    val colorScheme = selectedAccent.colorScheme(darkTheme)
+    val colorScheme = remember(selectedAccent, darkTheme) { selectedAccent.colorScheme(darkTheme) }
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
