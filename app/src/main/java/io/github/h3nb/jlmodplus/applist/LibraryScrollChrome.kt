@@ -85,32 +85,16 @@ internal fun rememberLibraryScrollChrome(
     LaunchedEffect(viewport.chromeVisible) {
         if (viewport.chromeVisible) hysteresis.reset()
     }
-    // Observe only lifecycle/top transitions; partial headers are legitimate resting positions.
-    // Their offset follows consumed content scroll instead of running a competing settle animation.
+    // Only observe the end of a scroll gesture. Chrome is moved by consumed user scroll
+    // and top-edge pull-down, not by a data projection changing the Lazy viewport's index.
+    // Explicit search actions own their own reveal and scroll-to-start behavior.
     LaunchedEffect(viewport, layout, enabled) {
         if (!enabled) intent.userInitiated = false
         snapshotFlow {
-            val (atTop, scrolling) = if (layout == LibraryLayout.List) {
-                (viewport.listState.firstVisibleItemIndex == 0 &&
-                    viewport.listState.firstVisibleItemScrollOffset == 0) to
-                    viewport.listState.isScrollInProgress
-            } else {
-                (viewport.gridState.firstVisibleItemIndex == 0 &&
-                    viewport.gridState.firstVisibleItemScrollOffset == 0) to
-                    viewport.gridState.isScrollInProgress
-            }
-            atTop to scrolling
-        }.collectLatest { (atTop, scrolling) ->
-            // A filter projection can shrink a Lazy viewport back to item zero without
-            // any scroll gesture. That is a data change, not a request to reveal chrome.
-            val reachedTopByUser = atTop && intent.userInitiated
+            if (layout == LibraryLayout.List) viewport.listState.isScrollInProgress
+            else viewport.gridState.isScrollInProgress
+        }.collectLatest { scrolling ->
             if (!scrolling) intent.userInitiated = false
-            if (!enabled) return@collectLatest
-            if (reachedTopByUser) {
-                viewport.headerOffsetPx.floatValue = 0f
-                hysteresis.reset()
-                currentVisibilityChanged(true)
-            }
         }
     }
     return remember(viewport, layout, hysteresis, minimumRoom, intent) {
