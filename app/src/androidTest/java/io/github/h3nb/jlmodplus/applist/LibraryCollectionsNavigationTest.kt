@@ -21,6 +21,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
@@ -593,6 +594,7 @@ class LibraryCollectionsNavigationTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Picker app 00").assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).assertIsFocused()
     }
 
     @Test

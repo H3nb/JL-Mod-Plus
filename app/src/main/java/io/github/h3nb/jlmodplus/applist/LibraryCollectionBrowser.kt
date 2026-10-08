@@ -793,17 +793,6 @@ internal fun LibraryCollectionAppPicker(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall,
         )
-        if (loading || visibleApps == null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
-            return@Column
-        }
         LibrarySearchField(
             query = query,
             onQueryChange = {
@@ -818,6 +807,19 @@ internal fun LibraryCollectionAppPicker(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         )
+        // Filtering may continue on Default; keep the search field and IME focus mounted
+        // while only the results pane waits for its matching projection.
+        if (loading || visibleApps == null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+            return@Column
+        }
         LazyColumn(modifier = Modifier.fillMaxSize(), state = viewportState.listState) {
             items(visibleApps, key = { it.databaseId }) { app ->
                 val pending = pendingMemberships[app.id]
