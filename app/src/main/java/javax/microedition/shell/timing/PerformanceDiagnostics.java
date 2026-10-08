@@ -179,7 +179,8 @@ public final class PerformanceDiagnostics {
 		double renderP95 = Double.NaN;
 		if (renderPercentileCount != 0) {
 			Arrays.sort(renderPercentileValues, 0, renderPercentileCount);
-			renderP95 = renderPercentileValues[(int) Math.ceil(renderPercentileCount * 0.95) - 1] / 1_000_000.0;
+			renderP95 = renderPercentileValues[(int) Math.ceil(renderPercentileCount * 0.95) - 1]
+					/ 1_000_000.0;
 		}
 		return new Snapshot(intervalMean, p95, intervalMax,
 				renderIntervalMean, renderP95, renderIntervalMax,

@@ -44,7 +44,7 @@ public class PerformanceOverlayTextTest {
 		assertArrayEquals(new String[]{"FPS 46"}, PerformanceOverlayText.format(FPS, v)[0]);
 		assertEquals(0, PerformanceOverlayText.format(0, v).length);
 		v.cap = 73.8;
-		assertEquals("FPS 46", PerformanceOverlayText.format(FPS | CAP, v)[0][0]);
+		assertArrayEquals(new String[]{"FPS 46", "CAP 73.8"}, PerformanceOverlayText.format(FPS | CAP, v)[0]);
 		v.cap = 0;
 		assertArrayEquals(new String[]{"FPS 46", "CAP —"}, PerformanceOverlayText.format(FPS | CAP, v)[0]);
 		v.guestFps = 72;
@@ -82,6 +82,8 @@ public class PerformanceOverlayTextTest {
 		v.batteryTemp = 0;
 		String[][] groups = PerformanceOverlayText.format(CPU | CPU_TEMP | GPU_TEMP | BATTERY_TEMP, v);
 		assertArrayEquals(new String[]{"CPU 1.82c"}, groups[0]);
+		v.cpu = Double.NaN;
+		assertArrayEquals(new String[]{"CPU —"}, PerformanceOverlayText.format(CPU, v)[0]);
 		assertArrayEquals(new String[]{"CPUT —", "GPUT —", "BAT 0.0°C"}, groups[1]);
 	}
 

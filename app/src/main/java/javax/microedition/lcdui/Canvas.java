@@ -788,7 +788,7 @@ public abstract class Canvas extends Displayable {
 			}
 			if (diagnostics != null && diagnostics.enabled(
 					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE
-						| PerformanceDiagnostics.RENDER_CADENCE)) {
+					| PerformanceDiagnostics.RENDER_CADENCE)) {
 				diagnostics.recordRender(frameSequence, publicationNanos, consumptionNanos,
 						submitStarted, System.nanoTime());
 			}
@@ -1267,8 +1267,8 @@ public abstract class Canvas extends Displayable {
 		}
 		publishedFrameSequence = sequence;
 		PerformanceDiagnostics diagnostics = performanceDiagnostics;
-		if (diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.FRAME_INTERVAL | PerformanceDiagnostics.RENDER_CADENCE
-				| PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
+		if (diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.FRAME_INTERVAL
+				| PerformanceDiagnostics.RENDER_CADENCE | PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
 			publishedFrameNanos = System.nanoTime();
 			diagnostics.recordPublication(sequence, publishedFrameNanos);
 		}
@@ -1385,7 +1385,7 @@ public abstract class Canvas extends Displayable {
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
 							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT
-						| PerformanceDiagnostics.RENDER_CADENCE)) {
+							| PerformanceDiagnostics.RENDER_CADENCE)) {
 						consumptionNanos = System.nanoTime();
 					}
 					g.drawImage(offscreenCopy, virtualScreen);
@@ -1403,7 +1403,7 @@ public abstract class Canvas extends Displayable {
 			}
 			if (diagnostics != null && diagnostics.enabled(
 					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE
-						| PerformanceDiagnostics.RENDER_CADENCE)) {
+					| PerformanceDiagnostics.RENDER_CADENCE)) {
 				diagnostics.recordRender(frameSequence, publicationNanos, consumptionNanos,
 						submitStarted, System.nanoTime());
 			}
@@ -1638,7 +1638,7 @@ public abstract class Canvas extends Displayable {
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
 							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT
-						| PerformanceDiagnostics.RENDER_CADENCE)) {
+							| PerformanceDiagnostics.RENDER_CADENCE)) {
 						consumptionNanos = System.nanoTime();
 					}
 					if (!textureValid || frameSequence != lastUploadedSequence

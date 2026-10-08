@@ -67,6 +67,7 @@ public final class PerformanceOverlayOptions {
 		return (sanitize(metrics) & (FPS | GUEST_FPS | COALESCED)) != 0;
 	}
 
+	/** Only the new-frame traffic counter: renderer cadence is an independent timing diagnostic. */
 	public static boolean requiresRendererMetrics(int metrics) {
 		return (sanitize(metrics) & (FPS | COALESCED)) != 0;
 	}

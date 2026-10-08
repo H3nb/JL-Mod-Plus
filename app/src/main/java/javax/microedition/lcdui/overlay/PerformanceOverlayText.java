@@ -74,7 +74,9 @@ final class PerformanceOverlayText {
 		add(row, mask, FRAME_QUEUE, "FRQ", v.frameQueue, 1, " ms");
 		add(row, mask, COALESCED, "COAL", v.coalesced, 1, "/s");
 		finish(groups, row);
-		if ((mask & CPU) != 0) row.add("CPU " + number(v.cpu / 100d, 2) + (Double.isFinite(v.cpu) ? "c" : ""));
+		if ((mask & CPU) != 0) {
+			row.add("CPU " + number(v.cpu / 100d, 2) + (Double.isFinite(v.cpu) ? "c" : ""));
+		}
 		add(row, mask, RAM, "RAM", v.ram, 0, " MiB");
 		finish(groups, row);
 		add(row, mask, JAVA_HEAP, "JAVA", v.javaHeap, 0, " MiB");
