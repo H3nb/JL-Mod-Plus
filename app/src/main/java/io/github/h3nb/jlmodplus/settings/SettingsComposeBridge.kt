@@ -272,7 +272,7 @@ fun SettingsScreen(
                 ) {
                     SettingsActionRow(
                         title = stringResource(R.string.pref_emulator_dir),
-                        summary = state.workingDirectory,
+                        value = state.workingDirectory,
                         onClick = actions::onChooseDirectory,
                     )
                 }
@@ -487,8 +487,8 @@ private fun SettingsChoiceRow(
             )
             Text(
                 text = selected.label,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.labelLarge,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -621,13 +621,13 @@ private fun SettingsSwitchRow(
                 text = setting.title,
                 style = MaterialTheme.typography.bodyLarge,
                 color = if (setting.enabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurfaceVariant,
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
             )
             setting.summary?.let { summary ->
                 Text(
                     text = summary,
                     color = if (setting.enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.62f),
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -644,6 +644,7 @@ private fun SettingsSwitchRow(
 private fun SettingsActionRow(
     title: String,
     summary: String? = null,
+    value: String? = null,
     onClick: () -> Unit,
 ) {
     Column(
@@ -657,11 +658,20 @@ private fun SettingsActionRow(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
         )
-        summary?.let { value ->
+        summary?.let { description ->
             Text(
-                text = value,
+                text = description,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        value?.let { currentValue ->
+            Text(
+                text = currentValue,
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.labelLarge,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )

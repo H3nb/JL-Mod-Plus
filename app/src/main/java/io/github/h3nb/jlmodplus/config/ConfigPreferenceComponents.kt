@@ -168,7 +168,7 @@ internal fun ConfigSwitchPreference(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (enabled) Color.Unspecified
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
             )
             Text(
@@ -443,7 +443,7 @@ private fun ConfigInlineMessage(text: String, level: ConfigMessageLevel) {
         Text(
             text = prefix + text,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = content,
         )
     }
