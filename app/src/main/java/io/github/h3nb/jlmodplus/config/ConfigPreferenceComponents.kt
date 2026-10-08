@@ -41,7 +41,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
-import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
 
 internal enum class ConfigMessageLevel { Info, Warning, Danger }
 

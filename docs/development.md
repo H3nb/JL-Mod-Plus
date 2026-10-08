@@ -162,42 +162,25 @@ lint result; consult the final `build` check for overall status. The early APK
 artifact is not rewritten. Artifact availability does not mean validation passed.
 Inspect the individual reports when a combined step fails.
 
-### Library performance diagnostics (opt-in)
+### Historical Library performance evidence
 
-The dedicated PR-triggered Library performance workflow has been removed.
-Profiling is an **investigation tool, not a routine merge check**. The existing
-`scripts/profile-library.py`, `scripts/summarize-library-performance.py`,
-`scripts/library-trace-*.sql`, and
-`app/src/androidTest/java/io/github/h3nb/jlmodplus/applist/LibraryPerformanceProbeTest.kt`
-remain available for deliberately authorized, reproducible A/B investigations.
-They do not run as part of the default Android CI.
+The PR-specific Library profiler workflow, its five diagnostic scripts, and two
+profiling-only instrumentation probes were retired after qualification. They are
+not active tests or supported utilities in the current repository. The separate
+Library UI contract suite remains available for opt-in interaction testing.
 
-Historical results in
-[interaction performance trials](interaction-performance-trials-2026-10-08.md)
-and the archived GitHub Actions runs describe the **then-recorded baseline
-and candidate**, not the latest branch by default. The previous workflow
-compared fixed baseline `925d9b29e14c05013b86d9bec810bdc738440fbc` to a
-candidate on a disposable API 35 emulator, with equal opt-in fixtures:
-1,000 installed catalog entries with PNGs, a 500-member collection, and
-search projections of 1,000/5,000 rows. These fixtures are not runnable
-MIDlets and must never modify a user-selected workdir.
+The [interaction performance trials](interaction-performance-trials-2026-10-08.md)
+and [app UI performance investigation](app-ui-performance-2026-10-08.md)
+preserve measured results, methodology and limitations. The former emulator A/B
+workload compared fixed baseline `925d9b29e14c05013b86d9bec810bdc738440fbc`
+to its then-current candidate on an isolated API 35 emulator. Historical runs
+are not evidence of current HEAD performance or a release FPS guarantee.
 
-For a future investigation, explicitly choose and record the comparison
-commits, build both matching `emulatorDebug` APK/test-APK revisions with the
-same fixture and configuration, then use the retained scripts and official
-Perfetto tooling on an isolated emulator. The former procedure used three
-process-cold `MainActivity` launches, real touch navigation/scrolling, verified
-state/hierarchy guards, ART `speed` requests, animation-enabled rendering,
-and per-thread CPU plus frame/scheduling traces. Preserve build, APK, fixture,
-tool revision and source identity with the results; do not silently reuse
-the historical baseline for unrelated work.
-
-These captures exclude first catalog indexing and cold filesystem caches.
-`am start -W` measures initial display, not full Library readiness. Emulator
-debug frame timings are not physical-device or release FPS evidence. Profile
-only when a concrete performance question warrants the work, and qualify
-release frame pacing separately on a physical device when necessary.
-
+For a future profiling investigation, independently choose and record relevant
+baseline/candidate revisions, equal isolated fixtures, device and tool versions,
+and trace/source identity. Use official Android/Perfetto tooling rather than
+assuming the removed PR-specific harness still exists. Profiling is an
+investigation activity, not a routine merge check.
 
 ### Screenshot updates without a local Android toolchain
 

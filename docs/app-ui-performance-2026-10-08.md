@@ -54,7 +54,7 @@ color arithmetic remain identical. For a 128-pixel bitmap this reduces native
 pixel-read calls from 8,192 to 128. The extra temporary memory is one row
 (512 bytes for that bitmap), rather than a full bitmap copy or a new cache.
 
-The opt-in `LibraryArtworkPerformanceProbeTest` measures normalization alone
+The since-retired opt-in `LibraryArtworkPerformanceProbeTest` measured normalization alone
 after 100 warm-up calls, with 20 thread-CPU samples for each case. Bitmap
 creation, hashing and property inspection are outside the timed interval.
 Every normalized bitmap's dimensions and ARGB SHA-256, together with all
