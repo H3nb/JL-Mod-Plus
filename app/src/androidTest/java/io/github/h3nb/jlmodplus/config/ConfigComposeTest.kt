@@ -240,6 +240,10 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithTag(CONFIG_NAVIGATION_BAR_TAG).assertExists()
         composeRule.onNodeWithTag(CONFIG_NAVIGATION_RAIL_TAG).assertDoesNotExist()
+        // The compact bar must still expose all five destinations, including the last one.
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_system))
+            .performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_edit_system_properties)).assertExists()
     }
 
     @Test
