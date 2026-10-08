@@ -53,7 +53,7 @@ internal fun LibrarySearchField(
     TextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = modifier.height(librarySearchControlHeight()).onFocusChanged { onFocusChanged(it.isFocused) },
+        modifier = modifier.height(librarySearchControlHeight()).onFocusChanged { onFocusChanged(it.hasFocus) },
         textStyle = MaterialTheme.typography.bodyMedium,
         enabled = enabled,
         singleLine = true,
