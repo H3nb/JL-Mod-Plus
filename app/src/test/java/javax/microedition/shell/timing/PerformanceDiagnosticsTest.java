@@ -18,6 +18,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import io.github.h3nb.jlmodplus.config.PerformanceOverlayOptions;
+
 public class PerformanceDiagnosticsTest {
 	private static final long MS = 1_000_000L;
 
@@ -80,6 +82,74 @@ public class PerformanceDiagnosticsTest {
 		assertTrue(Double.isNaN(snapshot.submitMeanMs));
 		diagnostics.recordPublication(5, 1030 * MS);
 		assertEquals(20.0, diagnostics.snapshot(1030 * MS).intervalMeanMs, 0.0001);
+	}
+
+	@Test
+	public void renderCadenceOnlyTracksNewSequencesAndExpiresAcrossVisibility() {
+		PerformanceDiagnostics diagnostics = new PerformanceDiagnostics(
+				PerformanceDiagnostics.RENDER_CADENCE);
+		diagnostics.setActive(true, 0L);
+		diagnostics.recordRender(1L, 10 * MS, 11 * MS, 11 * MS, 12 * MS);
+		diagnostics.recordRender(1L, 10 * MS, 11 * MS, 11 * MS, 13 * MS);
+		diagnostics.recordRender(2L, 20 * MS, 21 * MS, 21 * MS, 32 * MS);
+		diagnostics.recordRender(3L, 35 * MS, 36 * MS, 36 * MS, 47 * MS);
+		PerformanceDiagnostics.Snapshot snapshot = diagnostics.snapshot(47 * MS);
+		assertEquals(17.5, snapshot.renderIntervalMeanMs, 0.0001);
+		assertEquals(20, snapshot.renderIntervalP95Ms, 0.0001);
+		assertEquals(20, snapshot.renderIntervalMaxMs, 0.0001);
+		assertTrue(Double.isNaN(snapshot.intervalMeanMs));
+		assertTrue(Double.isNaN(diagnostics.snapshot(5050 * MS).renderIntervalMeanMs));
+		diagnostics.setActive(false, 5100 * MS);
+		diagnostics.setActive(true, 5200 * MS);
+		diagnostics.recordRender(4L, 10 * MS, 5210 * MS, 5210 * MS, 5215 * MS);
+		assertTrue(Double.isNaN(diagnostics.snapshot(5220 * MS).renderIntervalMeanMs));
+		diagnostics.recordRender(5L, 5230 * MS, 5231 * MS, 5231 * MS, 5240 * MS);
+		assertTrue(Double.isNaN(diagnostics.snapshot(5240 * MS).renderIntervalMeanMs));
+		diagnostics.recordRender(6L, 5250 * MS, 5251 * MS, 5251 * MS, 5260 * MS);
+		assertEquals(20, diagnostics.snapshot(5260 * MS).renderIntervalMeanMs, 0.0001);
+	}
+
+	@Test
+	public void rendererPercentileAndMaximumCanBeSelectedIndependently() {
+		int[] bits = {
+				PerformanceOverlayOptions.RENDER_P95_INTERVAL,
+				PerformanceOverlayOptions.RENDER_MAX_INTERVAL
+		};
+		for (int bit : bits) {
+			PerformanceDiagnostics diagnostics = new PerformanceDiagnostics(bit);
+			diagnostics.setActive(true, 0L);
+			diagnostics.recordRender(1, 10 * MS, 11 * MS, 11 * MS, 12 * MS);
+			diagnostics.recordRender(2, 20 * MS, 21 * MS, 21 * MS, 32 * MS);
+			PerformanceDiagnostics.Snapshot snapshot = diagnostics.snapshot(32 * MS);
+			assertTrue(Double.isNaN(snapshot.renderIntervalMeanMs));
+			if (bit == PerformanceOverlayOptions.RENDER_P95_INTERVAL) {
+				assertEquals(20, snapshot.renderIntervalP95Ms, 0.0001);
+				assertTrue(Double.isNaN(snapshot.renderIntervalMaxMs));
+			} else {
+				assertEquals(20, snapshot.renderIntervalMaxMs, 0.0001);
+				assertTrue(Double.isNaN(snapshot.renderIntervalP95Ms));
+			}
+		}
+	}
+
+	@Test
+	public void idleGapsAreMeasuredAsIntervalsWithoutInventingAStutterVerdict() {
+		PerformanceDiagnostics d = new PerformanceDiagnostics(
+				PerformanceOverlayOptions.FRAME_INTERVAL | PerformanceOverlayOptions.P95_INTERVAL
+						| PerformanceOverlayOptions.RENDER_INTERVAL
+						| PerformanceOverlayOptions.RENDER_P95_INTERVAL);
+		d.setActive(true, 0L);
+		d.recordPublication(1, 10 * MS);
+		d.recordRender(1, 10 * MS, 11 * MS, 11 * MS, 12 * MS);
+		d.recordPublication(2, 10010 * MS);
+		d.recordRender(2, 10010 * MS, 10011 * MS, 10011 * MS, 10012 * MS);
+		PerformanceDiagnostics.Snapshot snapshot = d.snapshot(10012 * MS);
+		assertEquals(10000.0, snapshot.intervalMeanMs, 0.0001);
+		assertEquals(10000.0, snapshot.intervalP95Ms, 0.0001);
+		assertEquals(10000.0, snapshot.renderIntervalMeanMs, 0.0001);
+		assertEquals(10000.0, snapshot.renderIntervalP95Ms, 0.0001);
+		assertTrue(Double.isNaN(d.snapshot(15013 * MS).intervalMeanMs));
+		assertTrue(Double.isNaN(d.snapshot(15013 * MS).renderIntervalMeanMs));
 	}
 
 	@Test

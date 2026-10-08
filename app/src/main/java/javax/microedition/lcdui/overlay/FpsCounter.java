@@ -46,7 +46,7 @@ public class FpsCounter extends TimerTask implements Layer {
 	private boolean stopped;
 	private FrameMetricsSnapshot previousSnapshot;
 	private long previousSampleNanos, previousGeneration = Long.MIN_VALUE;
-	private double fps = Double.NaN, renderFps = Double.NaN, coalesced = Double.NaN;
+	private double fps = Double.NaN, guestFps = Double.NaN, coalesced = Double.NaN;
 	// UI-thread layout cache; reflow only when text or available bounds change.
 	private String[][] laidOutGroups;
 	private String[] rows = new String[0];
@@ -94,8 +94,8 @@ public class FpsCounter extends TimerTask implements Layer {
 			previousSnapshot = snapshot;
 			previousSampleNanos = now;
 			previousGeneration = generation;
-			fps = renderFps = coalesced = Double.NaN;
-			resources.resetCpuSample();
+			fps = guestFps = coalesced = Double.NaN;
+			if ((mask & CPU) != 0) resources.resetCpuSample();
 		} else if (snapshot != null) {
 			if (previousSnapshot == null) {
 				previousSnapshot = snapshot;
@@ -103,48 +103,60 @@ public class FpsCounter extends TimerTask implements Layer {
 			} else {
 				long elapsed = now - previousSampleNanos;
 				if (elapsed >= 1_000_000_000L) {
-					fps = rate(snapshot.gameFrames(), previousSnapshot.gameFrames(), elapsed);
-					renderFps = rate(snapshot.renderFrames(), previousSnapshot.renderFrames(), elapsed);
+					fps = rate(snapshot.renderFrames(), previousSnapshot.renderFrames(), elapsed);
+					guestFps = rate(snapshot.gameFrames(), previousSnapshot.gameFrames(), elapsed);
 					coalesced = rate(snapshot.coalescedFrames(), previousSnapshot.coalescedFrames(), elapsed);
 					previousSnapshot = snapshot;
 					previousSampleNanos = now;
 				}
 			}
 		}
+		if (!active) {
+			if (groups.length != 0) {
+				groups = new String[0][];
+				view.postInvalidate();
+			}
+			return;
+		}
 		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
 		v.fps = fps;
-		v.renderFps = renderFps;
+		v.guestFps = guestFps;
 		v.coalesced = coalesced;
-		v.cap = owner.getPerformanceFpsCap();
-		TimingSnapshot timing = timingSession == null ? null : timingSession.snapshotIfOpen();
-		if (timing != null) {
-			v.speedPercent = timing.speedPercent();
+		if ((mask & CAP) != 0) v.cap = owner.getPerformanceFpsCap();
+		if ((mask & SPEED) != 0 && timingSession != null) {
+			TimingSnapshot timing = timingSession.snapshotIfOpen();
+			if (timing != null) v.speedPercent = timing.speedPercent();
 		}
-		v.renderer = owner.getPerformanceRenderer();
-		v.displayHz = owner.getPerformanceDisplayHz();
+		if ((mask & RENDERER) != 0) v.renderer = owner.getPerformanceRenderer();
+		if ((mask & DISPLAY) != 0) v.displayHz = owner.getPerformanceDisplayHz();
 		PerformanceDiagnostics diagnostics = owner.getPerformanceDiagnostics();
-		if (active && diagnostics != null) {
+		if (diagnostics != null) {
 			PerformanceDiagnostics.Snapshot diagnosticSnapshot = diagnostics.snapshot(now);
 			v.interval = diagnosticSnapshot.intervalMeanMs;
 			v.p95 = diagnosticSnapshot.intervalP95Ms;
 			v.maximum = diagnosticSnapshot.intervalMaxMs;
+			v.renderInterval = diagnosticSnapshot.renderIntervalMeanMs;
+			v.renderP95 = diagnosticSnapshot.renderIntervalP95Ms;
+			v.renderMaximum = diagnosticSnapshot.renderIntervalMaxMs;
 			v.paint = diagnosticSnapshot.paintMeanMs;
 			v.copy = diagnosticSnapshot.copyMeanMs;
 			v.submit = diagnosticSnapshot.submitMeanMs;
 			v.inputQueue = diagnosticSnapshot.inputQueueMeanMs;
 			v.frameQueue = diagnosticSnapshot.frameQueueMeanMs;
 		}
-		PerformanceResources.Snapshot system = resources.sample(now);
-		v.cpu = active ? system.getCpuPercent() : Double.NaN;
-		v.ram = system.getRamMiB();
-		v.javaHeap = system.getJavaHeapMiB();
-		v.nativeHeap = system.getNativeHeapMiB();
-		v.cpuTemp = system.getCpuTempC();
-		v.gpuTemp = system.getGpuTempC();
-		v.batteryTemp = system.getBatteryTempC();
-		v.thermal = system.getThermalStatus();
-		groups = PerformanceOverlayText.format(mask, v);
-		view.postInvalidate();
+		if ((mask & (CPU | RAM | JAVA_HEAP | NATIVE_HEAP | THERMAL)) != 0) {
+			PerformanceResources.Snapshot system = resources.sample(now);
+			v.cpu = system.getCpuPercent();
+			v.ram = system.getRamMiB();
+			v.javaHeap = system.getJavaHeapMiB();
+			v.nativeHeap = system.getNativeHeapMiB();
+			v.thermal = system.getThermalStatus();
+		}
+		String[][] nextGroups = PerformanceOverlayText.format(mask, v);
+		if (!Arrays.deepEquals(groups, nextGroups)) {
+			groups = nextGroups;
+			view.postInvalidate();
+		}
 	}
 
 	private static double rate(long current, long previous, long elapsedNanos) {

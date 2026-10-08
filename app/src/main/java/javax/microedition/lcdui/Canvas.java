@@ -90,6 +90,7 @@ import javax.microedition.shell.MidletThread;
 import javax.microedition.shell.GuestTimingBridge;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.TimingSnapshot;
+import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.FramePacer;
 import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.shell.timing.PerformanceDiagnostics;
@@ -154,7 +155,8 @@ public abstract class Canvas extends Displayable {
 
 	private static ProfileModel settings;
 	private static boolean parallelRedraw;
-	private static int fpsLimit;
+	// Also read by the overlay sampler; guest/runtime code can change it while the surface is live.
+	private static volatile int fpsLimit;
 	private static boolean screenshotRawMode;
 	private static boolean timingOverlayEnabled;
 
@@ -272,14 +274,18 @@ public abstract class Canvas extends Displayable {
 		return performanceGeneration;
 	}
 
-	/** Effective pacing target in real-time FPS; zero denotes an unrestricted target. */
+	/** Configured pacing target, not achieved FPS; absent sessions pace at normal speed. */
 	public double getPerformanceFpsCap() {
 		TimingSnapshot timing = timingSession == null ? null : timingSession.snapshotIfOpen();
-		if (timing == null) {
-			return Double.NaN;
-		}
-		int base = resolveFrameRateLimit(fpsLimit, displayMaximumFps);
-		return base <= 0 ? 0 : base * (timing.speedPercent() / 100.0);
+		// A closed session also disables FramePacer: report OFF, not an unknown cap.
+		if (timingSession != null && timing == null) return 0.0;
+		return resolvePerformanceFpsCap(fpsLimit, displayMaximumFps,
+				timing == null ? EmulationSpeed.NORMAL_PERCENT : timing.speedPercent());
+	}
+
+	static double resolvePerformanceFpsCap(int configuredFps, int maximumFps, int speedPercent) {
+		int base = resolveFrameRateLimit(configuredFps, maximumFps);
+		return base <= 0 ? 0 : base * (speedPercent / 100.0);
 	}
 
 	/** Active reported display rate, independent of the maximum used by compatibility pacing. */
@@ -775,7 +781,8 @@ public abstract class Canvas extends Displayable {
 				frameSequence = publishedFrameSequence;
 				publicationNanos = publishedFrameNanos;
 				if (diagnostics != null && diagnostics.enabled(
-						PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT)) {
+						PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT
+						| PerformanceDiagnostics.RENDER_CADENCE)) {
 					consumptionNanos = System.nanoTime();
 				}
 				offscreenCopy.getBitmap().prepareToDraw();
@@ -786,7 +793,8 @@ public abstract class Canvas extends Displayable {
 				metrics.recordRender(frameSequence);
 			}
 			if (diagnostics != null && diagnostics.enabled(
-					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
+					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE
+					| PerformanceDiagnostics.RENDER_CADENCE)) {
 				diagnostics.recordRender(frameSequence, publicationNanos, consumptionNanos,
 						submitStarted, System.nanoTime());
 			}
@@ -1266,9 +1274,11 @@ public abstract class Canvas extends Displayable {
 		publishedFrameSequence = sequence;
 		PerformanceDiagnostics diagnostics = performanceDiagnostics;
 		if (diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.FRAME_INTERVAL
-				| PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
+				| PerformanceDiagnostics.RENDER_CADENCE | PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
 			publishedFrameNanos = System.nanoTime();
-			diagnostics.recordPublication(sequence, publishedFrameNanos);
+			if (diagnostics.enabled(PerformanceDiagnostics.FRAME_INTERVAL)) {
+				diagnostics.recordPublication(sequence, publishedFrameNanos);
+			}
 		}
 		FrameMetrics metrics = frameMetrics;
 		if (metrics != null) {
@@ -1382,7 +1392,8 @@ public abstract class Canvas extends Displayable {
 					frameSequence = publishedFrameSequence;
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
-							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT)) {
+							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT
+							| PerformanceDiagnostics.RENDER_CADENCE)) {
 						consumptionNanos = System.nanoTime();
 					}
 					g.drawImage(offscreenCopy, virtualScreen);
@@ -1399,7 +1410,8 @@ public abstract class Canvas extends Displayable {
 				metrics.recordRender(frameSequence);
 			}
 			if (diagnostics != null && diagnostics.enabled(
-					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
+					PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE
+					| PerformanceDiagnostics.RENDER_CADENCE)) {
 				diagnostics.recordRender(frameSequence, publicationNanos, consumptionNanos,
 						submitStarted, System.nanoTime());
 			}
@@ -1633,7 +1645,8 @@ public abstract class Canvas extends Displayable {
 					frameSequence = publishedFrameSequence;
 					publicationNanos = publishedFrameNanos;
 					if (diagnostics != null && diagnostics.enabled(
-							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT)) {
+							PerformanceDiagnostics.FRAME_QUEUE | PerformanceDiagnostics.SUBMIT
+							| PerformanceDiagnostics.RENDER_CADENCE)) {
 						consumptionNanos = System.nanoTime();
 					}
 					if (!textureValid || frameSequence != lastUploadedSequence
@@ -1655,7 +1668,8 @@ public abstract class Canvas extends Displayable {
 					metrics.recordRender(frameSequence);
 				}
 				if (diagnostics != null && diagnostics.enabled(
-						PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE)) {
+						PerformanceDiagnostics.SUBMIT | PerformanceDiagnostics.FRAME_QUEUE
+						| PerformanceDiagnostics.RENDER_CADENCE)) {
 					diagnostics.recordRender(frameSequence, publicationNanos, consumptionNanos,
 							submitStarted, System.nanoTime());
 				}

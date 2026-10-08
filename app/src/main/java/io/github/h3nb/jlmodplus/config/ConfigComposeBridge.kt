@@ -949,7 +949,7 @@ internal fun PerformanceOverlayPreferences(
     val presetMasks = listOf(
         PerformanceOverlayOptions.MINIMAL,
         PerformanceOverlayOptions.STANDARD,
-        PerformanceOverlayOptions.ALL,
+        PerformanceOverlayOptions.DEBUG,
     )
     val presetIndex = presetMasks.indexOf(form.performanceOverlayMetrics).let { if (it < 0) 3 else it }
     ConfigChoicePreference(
@@ -1009,13 +1009,16 @@ private val overlayParameterGroups = listOf(
     OverlayParameterGroup(R.string.perf_overlay_group_rate, listOf(
         OverlayParameter(PerformanceOverlayOptions.FPS, R.string.perf_overlay_fps),
         OverlayParameter(PerformanceOverlayOptions.CAP, R.string.perf_overlay_cap),
-        OverlayParameter(PerformanceOverlayOptions.RENDER_FPS, R.string.perf_overlay_render_fps),
+        OverlayParameter(PerformanceOverlayOptions.GUEST_FPS, R.string.perf_overlay_guest_fps),
         OverlayParameter(PerformanceOverlayOptions.SPEED, R.string.perf_overlay_speed),
     )),
     OverlayParameterGroup(R.string.perf_overlay_group_timing, listOf(
         OverlayParameter(PerformanceOverlayOptions.FRAME_INTERVAL, R.string.perf_overlay_interval),
         OverlayParameter(PerformanceOverlayOptions.P95_INTERVAL, R.string.perf_overlay_p95),
         OverlayParameter(PerformanceOverlayOptions.MAX_INTERVAL, R.string.perf_overlay_max),
+        OverlayParameter(PerformanceOverlayOptions.RENDER_INTERVAL, R.string.perf_overlay_render_interval),
+        OverlayParameter(PerformanceOverlayOptions.RENDER_P95_INTERVAL, R.string.perf_overlay_render_p95),
+        OverlayParameter(PerformanceOverlayOptions.RENDER_MAX_INTERVAL, R.string.perf_overlay_render_max),
         OverlayParameter(PerformanceOverlayOptions.COALESCED, R.string.perf_overlay_coalesced),
     )),
     OverlayParameterGroup(R.string.perf_overlay_group_pipeline, listOf(
@@ -1033,15 +1036,10 @@ private val overlayParameterGroups = listOf(
         OverlayParameter(PerformanceOverlayOptions.JAVA_HEAP, R.string.perf_overlay_java),
         OverlayParameter(PerformanceOverlayOptions.NATIVE_HEAP, R.string.perf_overlay_native),
     )),
-    OverlayParameterGroup(R.string.perf_overlay_group_temperature, listOf(
-        OverlayParameter(PerformanceOverlayOptions.CPU_TEMP, R.string.perf_overlay_cpu_temp),
-        OverlayParameter(PerformanceOverlayOptions.GPU_TEMP, R.string.perf_overlay_gpu_temp),
-        OverlayParameter(PerformanceOverlayOptions.BATTERY_TEMP, R.string.perf_overlay_battery_temp),
-        OverlayParameter(PerformanceOverlayOptions.THERMAL, R.string.perf_overlay_thermal),
-    )),
     OverlayParameterGroup(R.string.perf_overlay_group_runtime, listOf(
         OverlayParameter(PerformanceOverlayOptions.RENDERER, R.string.perf_overlay_renderer),
         OverlayParameter(PerformanceOverlayOptions.DISPLAY, R.string.perf_overlay_display),
+        OverlayParameter(PerformanceOverlayOptions.THERMAL, R.string.perf_overlay_thermal),
     )),
 )
 
