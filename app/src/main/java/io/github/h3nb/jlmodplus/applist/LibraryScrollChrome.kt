@@ -12,7 +12,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.layout.Layout
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -24,6 +26,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * Separately gate touch, keyboard and accessibility for a header action group when its top
@@ -56,6 +59,26 @@ internal fun rememberLibraryHeaderActionGate(
         }
     }
     return remember(positionModifier, enabled) { LibraryHeaderActionGate(positionModifier, enabled) }
+}
+
+/**
+ * The Lazy header placeholder follows the *visible* chrome height, not its full measured
+ * height. Read offset during measurement (not composition) to avoid recomposing thousands
+ * of MIDlets each frame. This keeps short filtered lists flush with the still-visible chips.
+ *
+ * The nested-scroll connection must consume matching header motion in onPreScroll, so that
+ * content and placeholder cannot each move independently for the same gesture delta.
+ */
+@Composable
+internal fun LibraryChromeSpacer(
+    headerHeightPx: MutableIntState,
+    headerOffsetPx: MutableFloatState,
+) {
+    Layout(modifier = Modifier.fillMaxWidth(), content = {}) { _, constraints ->
+        val remaining = (headerHeightPx.intValue + headerOffsetPx.floatValue)
+            .roundToInt().coerceAtLeast(0)
+        layout(constraints.maxWidth, remaining) {}
+    }
 }
 
 private class LibraryScrollIntent {
@@ -100,47 +123,17 @@ internal fun rememberLibraryScrollChrome(
     return remember(viewport, layout, hysteresis, minimumRoom, intent) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (currentEnabled && source == NestedScrollSource.UserInput && available.y != 0f) {
-                    intent.userInitiated = true
-                    // A changed filter can leave a short result set at its top while the
-                    // search/header is partly hidden. Pull-down must still recover the header
-                    // even when the list has no backward scroll range to consume.
-                    val atTop = if (layout == LibraryLayout.List) {
-                        !viewport.listState.canScrollBackward
-                    } else {
-                        !viewport.gridState.canScrollBackward
-                    }
-                    if (available.y > 0f && atTop && viewport.headerOffsetPx.floatValue < 0f) {
-                        viewport.headerOffsetPx.floatValue =
-                            (viewport.headerOffsetPx.floatValue + available.y).coerceAtMost(0f)
-                        val visibilityChange = hysteresis.onScrollDelta(available.y)
-                        if (visibilityChange == true || viewport.headerOffsetPx.floatValue >= -0.5f) {
-                            currentVisibilityChanged(true)
-                        }
-                    }
-                }
-                return Offset.Zero
-            }
-
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset {
                 if (!currentEnabled) return Offset.Zero
-                if (source == NestedScrollSource.UserInput && consumed.y != 0f) {
+                if (source == NestedScrollSource.UserInput && available.y != 0f) {
                     intent.userInitiated = true
                 }
-                // SideEffect includes both flings and programmatic/semantics scrolling. Only
-                // continue user input (including accessibility) and its subsequent fling.
-                if (!intent.userInitiated) return Offset.Zero
+                // Programmatic Lazy remeasurement and filter changes must never move chrome.
+                if (!intent.userInitiated || available.y == 0f) return Offset.Zero
                 val height = headerHeightPx.intValue.toFloat()
                 if (height <= 0f) return Offset.Zero
-                // Only content motion moves the header: unconsumed overscroll at either edge
-                // must not detach it from the spacer or collapse a short list.
-                val delta = consumed.y
-                if (delta == 0f) return Offset.Zero
-                if (delta < 0f && viewport.headerOffsetPx.floatValue == 0f) {
+                val previous = viewport.headerOffsetPx.floatValue
+                if (available.y < 0f && previous >= -0.5f) {
+                    // Preserve the short-content contract on an untouched expanded header.
                     val room = maxOf(height, minimumRoom)
                     val canCollapse = if (layout == LibraryLayout.List) {
                         viewport.listState.hasLibraryChromeScrollRoom(room) ||
@@ -151,16 +144,19 @@ internal fun rememberLibraryScrollChrome(
                     }
                     if (!canCollapse) return Offset.Zero
                 }
-                viewport.headerOffsetPx.floatValue =
-                    (viewport.headerOffsetPx.floatValue + delta).coerceIn(-height, 0f)
-                val visibilityChange = hysteresis.onScrollDelta(delta)
+                val next = (previous + available.y).coerceIn(-height, 0f)
+                val headerDelta = next - previous
+                if (headerDelta == 0f) return Offset.Zero
+
+                // Header and placeholder move by the same consumed delta, exactly once.
+                // The Lazy viewport receives only leftover distance after chrome collapses.
+                viewport.headerOffsetPx.floatValue = next
+                val visibilityChange = hysteresis.onScrollDelta(headerDelta)
                 when {
-                    viewport.headerOffsetPx.floatValue <= -height + 0.5f ->
-                        currentVisibilityChanged(false)
-                    visibilityChange == true || viewport.headerOffsetPx.floatValue >= -0.5f ->
-                        currentVisibilityChanged(true)
+                    next <= -height + 0.5f -> currentVisibilityChanged(false)
+                    visibilityChange == true || next >= -0.5f -> currentVisibilityChanged(true)
                 }
-                return Offset.Zero
+                return Offset(0f, headerDelta)
             }
         }
     }
