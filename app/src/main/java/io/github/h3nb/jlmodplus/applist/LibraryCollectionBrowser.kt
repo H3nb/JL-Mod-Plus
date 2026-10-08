@@ -324,13 +324,13 @@ internal fun LibraryCollectionBrowser(
                 CircularProgressIndicator()
             }
         } else if (libraryState.layout == LibraryLayout.Grid) {
-            // Keep the original adaptive column count when adding the outer gutter.
+            // Compute columns before the outer gutter to preserve the grid density.
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed((maxWidth / LibraryGridMinCellSize).toInt().coerceAtLeast(1)),
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = LibraryGridHorizontalPadding),
+                    .fillMaxSize()
+                    .padding(horizontal = LibraryGridHorizontalPadding),
                     state = gridState,
                     contentPadding = scaffoldPadding,
                 ) {
@@ -340,38 +340,38 @@ internal fun LibraryCollectionBrowser(
                                 Modifier.alpha(0f).clearAndSetSemantics { },
                                 false,
                             )
-                            }
-        } else {
-                        LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
+                        } else {
+                            LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
+                        }
                     }
-                }
-                if (projected.isEmpty()) {
-                    item(span = { GridItemSpan(maxLineSpan) }) {
-                        LibraryCollectionEmptyState(query)
-                    }
-                } else {
-                    items(projected, key = { it.databaseId }) { app ->
-                        LibraryCollectionGridItem(
-                            app = app,
-                            iconRatio = libraryState.iconRatio,
-                            iconShape = libraryState.iconShape,
-                            enhancedIcons = libraryState.enhancedIcons,
-                            hideTitle = libraryState.hideGridTitles,
-                            gridSpacing = libraryState.gridSpacing.value,
-                            onOpenApp = openApp,
-                            onOpenActions = openActions,
-                            selectionMode = selectionState.isActive,
-                            selected = app.databaseId in selectionState.selectedAppIds,
-                            onToggleSelection = {
-                                if (currentInteractionActive) onSelectionStateChanged(
-                                    selectionState.toggle(
-                                        libraryState.generation,
-                                        it.databaseId,
-                                        collectionId = collection.id,
-                                    ),
-                                )
-                            },
-                        )
+                    if (projected.isEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            LibraryCollectionEmptyState(query)
+                        }
+                    } else {
+                        items(projected, key = { it.databaseId }) { app ->
+                            LibraryCollectionGridItem(
+                                app = app,
+                                iconRatio = libraryState.iconRatio,
+                                iconShape = libraryState.iconShape,
+                                enhancedIcons = libraryState.enhancedIcons,
+                                hideTitle = libraryState.hideGridTitles,
+                                gridSpacing = libraryState.gridSpacing.value,
+                                onOpenApp = openApp,
+                                onOpenActions = openActions,
+                                selectionMode = selectionState.isActive,
+                                selected = app.databaseId in selectionState.selectedAppIds,
+                                onToggleSelection = {
+                                    if (currentInteractionActive) onSelectionStateChanged(
+                                        selectionState.toggle(
+                                            libraryState.generation,
+                                            it.databaseId,
+                                            collectionId = collection.id,
+                                        ),
+                                    )
+                                },
+                            )
+                        }
                     }
                 }
             }

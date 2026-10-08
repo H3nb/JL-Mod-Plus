@@ -1976,13 +1976,13 @@ internal fun LibraryAppsDestination(
             .nestedScroll(headerScrollConnection),
     ) {
         if (state.layout == LibraryLayout.Grid) {
-            // Keep the original adaptive column count when adding the outer gutter.
+            // Compute columns before the outer gutter to preserve the grid density.
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed((maxWidth / LibraryGridMinCellSize).toInt().coerceAtLeast(1)),
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = LibraryGridHorizontalPadding),
+                    .fillMaxSize()
+                    .padding(horizontal = LibraryGridHorizontalPadding),
                     state = if (state.loading || state.errorMessage != null) rememberLazyGridState() else gridState,
                     contentPadding = scaffoldPadding,
                 ) {
@@ -1994,37 +1994,37 @@ internal fun LibraryAppsDestination(
                                     .clearAndSetSemantics { },
                                 false,
                             )
-                            }
-        } else {
-                        LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
+                        } else {
+                            LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
+                        }
                     }
-                }
-                when {
-                    state.errorMessage != null -> item(span = { GridItemSpan(maxLineSpan) }) {
-                        LibraryErrorState(retry)
-                    }
-                    state.loading -> item(span = { GridItemSpan(maxLineSpan) }) {
-                        LibraryLoadingState(state)
-                    }
-                    state.apps.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }) {
-                        LibraryEmptyState(state.appliedFilter)
-                    }
-                    else -> items(state.apps, key = { it.databaseId }) { app ->
-                        LibraryGridItem(
-                            app = app,
-                            iconRatio = state.iconRatio,
-                            iconShape = state.iconShape,
-                            enhancedIcons = state.enhancedIcons,
-                            hideTitle = state.hideGridTitles,
-                            gridSpacing = state.gridSpacing.value,
-                            onOpenApp = openApp,
-                            onOpenActions = openActions,
-                            controllerFocused = app.databaseId == controllerFocusedDatabaseId &&
-                                !selectionState.isActive,
-                            selectionMode = selectionState.isActive,
-                            selected = app.databaseId in selectionState.selectedAppIds,
-                            onToggleSelection = toggleSelection,
-                        )
+                    when {
+                        state.errorMessage != null -> item(span = { GridItemSpan(maxLineSpan) }) {
+                            LibraryErrorState(retry)
+                        }
+                        state.loading -> item(span = { GridItemSpan(maxLineSpan) }) {
+                            LibraryLoadingState(state)
+                        }
+                        state.apps.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }) {
+                            LibraryEmptyState(state.appliedFilter)
+                        }
+                        else -> items(state.apps, key = { it.databaseId }) { app ->
+                            LibraryGridItem(
+                                app = app,
+                                iconRatio = state.iconRatio,
+                                iconShape = state.iconShape,
+                                enhancedIcons = state.enhancedIcons,
+                                hideTitle = state.hideGridTitles,
+                                gridSpacing = state.gridSpacing.value,
+                                onOpenApp = openApp,
+                                onOpenActions = openActions,
+                                controllerFocused = app.databaseId == controllerFocusedDatabaseId &&
+                                    !selectionState.isActive,
+                                selectionMode = selectionState.isActive,
+                                selected = app.databaseId in selectionState.selectedAppIds,
+                                onToggleSelection = toggleSelection,
+                            )
+                        }
                     }
                 }
             }
