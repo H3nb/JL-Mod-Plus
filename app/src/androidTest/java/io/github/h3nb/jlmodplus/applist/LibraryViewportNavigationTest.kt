@@ -249,6 +249,63 @@ class LibraryViewportNavigationTest {
     }
 
     @Test
+    fun reverseScrollMovesHeaderWithDeepListRows() =
+        verifyReverseScrollMovesHeaderWithRows(LibraryLayout.List)
+
+    @Test
+    fun reverseScrollMovesHeaderWithDeepGridRows() =
+        verifyReverseScrollMovesHeaderWithRows(LibraryLayout.Grid)
+
+    private fun verifyReverseScrollMovesHeaderWithRows(layout: LibraryLayout) {
+        val host = ViewportHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = libraryState(layout), actions = host) }
+            }
+        }
+        // Deep enough that the expanding spacer is still well above the visible viewport.
+        activeList(APP_PREFIX).performScrollToIndex(35)
+        composeRule.waitForIdle()
+        activeList(APP_PREFIX).performTouchInput {
+            val start = Offset(width * 0.5f, height * 0.65f)
+            down(start)
+            moveSmoothlyTo(Offset(start.x, start.y - height * 0.12f), durationMillis = 750)
+            advanceEventTime(350)
+            up()
+        }
+        composeRule.waitForIdle()
+        val chip = uiString(R.string.library_filter_favorites)
+        val headerBefore = composeRule.onNodeWithText(chip).assertIsDisplayed()
+            .fetchSemanticsNode().boundsInRoot.top
+        val before = visibleRow(APP_PREFIX)
+
+        activeList(APP_PREFIX).performTouchInput {
+            val start = Offset(width * 0.5f, height * 0.38f)
+            down(start)
+            moveSmoothlyTo(Offset(start.x, start.y + height * 0.07f), durationMillis = 750)
+            advanceEventTime(350)
+            up()
+        }
+        composeRule.waitForIdle()
+        val headerAfter = composeRule.onNodeWithText(chip).assertIsDisplayed()
+            .fetchSemanticsNode().boundsInRoot.top
+        val rowAfter = composeRule.onNodeWithText(before.title, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.top
+        val headerTravel = headerAfter - headerBefore
+        val rowTravel = rowAfter - before.top
+        val minimumTravel = with(composeRule.density) { 16.dp.toPx() }
+        assertTrue("Header did not expand on reverse drag: $headerTravel px",
+            headerTravel > minimumTravel)
+        assertTrue("MIDlets stayed fixed while header expanded: $rowTravel px",
+            rowTravel > minimumTravel)
+        val allowedDifference = with(composeRule.density) { 6.dp.toPx() }
+        assertEquals("Header and MIDlets must travel together", headerTravel, rowTravel,
+            allowedDifference)
+    }
+
+    @Test
     fun quickFilterPreservesPartialLibraryHeaderInList() =
         verifyQuickFilterPreservesPartialHeader(LibraryLayout.List)
 
