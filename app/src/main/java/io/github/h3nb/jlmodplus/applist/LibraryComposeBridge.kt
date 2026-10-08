@@ -149,6 +149,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -1743,6 +1744,13 @@ internal fun LibraryAppsDestination(
 ) {
     var query by viewportState.queryState
     var searchFocused by remember { mutableStateOf(false) }
+    val searchFocusManager = LocalFocusManager.current
+    val searchKeyboard = LocalSoftwareKeyboardController.current
+    BackHandler(enabled = active && searchFocused) {
+        searchKeyboard?.hide()
+        searchFocusManager.clearFocus(force = true)
+        searchFocused = false
+    }
     val listState = viewportState.listState
     val gridState = viewportState.gridState
     var sortVisible by remember { mutableStateOf(false) }
@@ -1861,9 +1869,15 @@ internal fun LibraryAppsDestination(
             state = state,
             sortVisible = sortVisible,
             onSortVisibilityChanged = { sortVisible = it },
-            // Switching quick views updates the projected apps in place. Search focus,
-            // chrome offset, and the current list/grid viewport must not be reset.
-            onQuickView = onQuickView,
+            // Request the beginning of the incoming Lazy projection before it remeasures.
+            // Unlike search focus, a quick-filter switch never resets the floating header.
+            onQuickView = { selected ->
+                if (selected != state.quickView) {
+                    if (state.layout == LibraryLayout.List) listState.requestScrollToItem(0)
+                    else gridState.requestScrollToItem(0)
+                    onQuickView(selected)
+                }
+            },
             onSort = onSort,
             selectionState = selectionState,
             onExitSelection = onExitSelection,
