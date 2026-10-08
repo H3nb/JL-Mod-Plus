@@ -2358,8 +2358,8 @@ private fun LibraryAppsHeader(
                     .padding(top = 4.dp)
                     .then(filtersGate.positionModifier)
                     .then(if (filterActionsEnabled) Modifier else Modifier.clearAndSetSemantics { })
-                    .nestedScroll(quickControlsPagerBoundary)
-                    .horizontalScroll(rememberScrollState()),
+                    .then(if (filterActionsEnabled) Modifier.nestedScroll(quickControlsPagerBoundary) else Modifier)
+                    .horizontalScroll(rememberScrollState(), enabled = filterActionsEnabled),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 LibraryQuickFilter(
