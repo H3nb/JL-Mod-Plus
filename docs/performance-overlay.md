@@ -4,7 +4,9 @@ The profile's Performance Overlay switch retains the persisted `ShowFps` key.
 `PerformanceOverlayMetrics` stores independent metric bits; missing fields in old
 profiles use Standard, while an explicitly empty selection remains empty. The
 released legacy `ShowFps` key is preserved. Metric bits are not renumbered;
-existing development profiles may retain custom selections.
+existing development profiles may retain custom selections. The three retired
+sensor-temperature bit positions (17–19) are never repurposed, and sanitization
+clears those bits without shifting surviving options.
 `PerformanceOverlayPosition` selects one of four corners. Presets derive from
 the selected bits, so there is no separate preset state to become inconsistent.
 
@@ -45,7 +47,7 @@ alarm, or GPU utilization is included.
 | --- | --- |
 | FPS | Distinct guest mailbox sequences consumed by the host rendering path per real second. Repeated host redraws of the same sequence do not count; not confirmed display presentation. |
 | GFPS | Complete guest buffer publications per real second, including visually unchanged buffers. |
-| CAP | Effective host pacing ceiling from the configured FPS limit or the maximum supported display refresh rate, scaled by the manual speed multiplier. It is **not** the native target FPS or a guaranteed bound for non-blocking callback paths. The configured value 0 means the display maximum, **not** unlimited. |
+| CAP | Effective host pacing ceiling from the configured FPS limit or the maximum supported display refresh rate, scaled by the manual speed multiplier. Without an installed TimingSession, CAP and FramePacer both fall back to normal speed (100%); a closed session is unavailable. CAP is **not** the native target FPS or a guaranteed bound for non-blocking callbacks. The configured value 0 means the display maximum, **not** unlimited. |
 | SPD | Configured TimingSession guest-clock multiplier. Not achieved emulation speed; if unavailable, display —, never assume 1.00x. |
 | GFI / GP95 / GMAX | Mean, nearest-rank 95th percentile, and maximum host-time intervals between complete guest publications. |
 | RFI / RP95 / RMAX | Mean, nearest-rank 95th percentile, and maximum host-time intervals between distinct successful renderer frame-consumption observations. Not hardware presentation intervals. |
@@ -58,8 +60,7 @@ alarm, or GPU utilization is included.
 | CPU | Process CPU time per wall time, displayed in core equivalents: 1.00c equals 100% of one core. Includes all runtime-process threads and can exceed 1.00c. Not device-wide utilization. |
 | RAM | Runtime process proportional set size (PSS), MiB; not just guest allocations or all processes of the application. |
 | JAVA / NATIVE | Used Java heap / allocated native heap in MiB, not additive components of PSS. |
-| CPUT / GPUT | Hottest accessible current CPU/GPU sensor reading, without substituting battery readings. If unavailable, display —. |
-| BAT / THRM | Battery temperature reported by Android / Android thermal severity if supported. |
+| THRM | Android thermal severity via PowerManager on API 29+. Unavailable on older devices; not a measured CPU/GPU temperature or proof of actual throttling. |
 | REN / DISP | Host renderer backend / active display refresh rate reported by Android, not the maximum supported pacing rate. |
 
 The HUD deliberately names both guest and renderer cadence domains. It never
@@ -78,10 +79,13 @@ new bits. An explicit empty selection stays empty.
 Text refreshes every 500ms. Frame rates use elapsed windows of at least one real
 second. Timing statistics retain up to the newest 4096 samples within five real
 seconds; sufficiently high event rates shorten this bounded window. CPU samples
-update every second; PSS, heap, hardware temperature, and thermal samples update
-every five seconds. Battery temperature follows Android battery broadcasts.
+update every second; PSS, heap, and Android thermal severity update every five
+seconds. A frame interval following an intentionally static MIDlet screen
+includes the idle gap and is not automatically a stutter.
 
-Optional work is proportional to the selected metrics. `FrameMetrics` exists only
+Optional work is proportional to the selected metrics. Render-only cadence
+captures publication timestamps but does not record guest interval statistics.
+`FrameMetrics` exists only
 when FPS, GFPS, or COAL needs frame-traffic counters. Renderer frame accounting is
 enabled only for FPS or COAL. Host renderer timing remains independent: selecting
 SUB or FRQ still records `PerformanceDiagnostics` renderer timing without creating
@@ -93,16 +97,10 @@ Renderer cadence measurements use the same mailbox sequence and visibility
 boundary as FPS, without a second frame-ID authority. Debug timing is still
 optional and writes primitive samples into bounded, preallocated rings.
 
-The temperature fallback discovers `/sys/class/thermal/thermal_zone*/type` once
-per sampler and reads selected sensors' `temp` files on the five-second worker
-interval. It recognizes `cpu`, `cpuss`, and `gpu` labels with optional numeric
-hyphen suffixes, including the CPU clusters and GPU sensors verified on the
-reported device. Values use the Linux thermal ABI's millidegrees Celsius; no
-unit guessing, root, shell, Shizuku, or zone-number mapping is used by the app.
-Ambiguous board, battery, anonymous TSENS, and SoC labels are excluded. Individual
-read failures remain unavailable and never retain an old temperature. Different
-tools may select or aggregate sensors differently; these values do not promise
-the same reading as DevCheck.
+Android thermal severity is sampled through PowerManager only when THRM is
+selected. No hardware temperature calls, sysfs thermal scans, or battery
+temperature receiver remain. Device-specific sensor readings were retired
+because availability and interpretation vary across Android versions and vendors.
 
 Unavailable or insufficient data is `—`, not zero. A real zero-FPS static buffer
 is not treated as a failure. The overlay never infers achieved speed or marks a

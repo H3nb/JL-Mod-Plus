@@ -129,16 +129,15 @@ public class PerformanceOverlayRenderingTest {
 		String[][] groups = PerformanceOverlayText.format(ALL, exampleValues());
 		List<String> originalCells = new ArrayList<>();
 		for (String[] group : groups) originalCells.addAll(Arrays.asList(group));
-		assertEquals(26, Integer.bitCount(ALL));
+		assertEquals(23, Integer.bitCount(ALL));
 		// FPS, GFPS and CAP are independent measurement cells.
-		assertEquals(26, originalCells.size());
+		assertEquals(23, originalCells.size());
 		assertEquals("FPS 46", originalCells.get(0));
 		List<String> labels = new ArrayList<>();
 		for (String cell : originalCells) labels.add(cell.substring(0, cell.indexOf(' ')));
 		assertEquals(Arrays.asList("FPS", "GFPS", "CAP", "SPD", "GFI", "GP95", "GMAX",
 				"RFI", "RP95", "RMAX", "PAINT", "COPY", "SUB", "INQ", "FRQ",
-				"COAL", "CPU", "RAM", "JAVA", "NATIVE", "CPUT", "GPUT", "BAT",
-				"REN", "DISP", "THRM"), labels);
+				"COAL", "CPU", "RAM", "JAVA", "NATIVE", "REN", "DISP", "THRM"), labels);
 
 		float margin = 12 * density();
 		int panelWidth = (int) Math.ceil(360 * density());
@@ -234,9 +233,6 @@ public class PerformanceOverlayRenderingTest {
 		v.ram = 146;
 		v.javaHeap = 38;
 		v.nativeHeap = 24;
-		v.cpuTemp = 40;
-		v.gpuTemp = 40;
-		v.batteryTemp = 38.2;
 		v.thermal = 0;
 		v.renderer = "GLES";
 		return v;

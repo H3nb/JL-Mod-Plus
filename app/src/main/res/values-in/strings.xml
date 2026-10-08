@@ -847,7 +847,6 @@
     <string name="perf_overlay_group_pipeline">Pipeline timing</string>
     <string name="perf_overlay_group_queue">Input dan antrean</string>
     <string name="perf_overlay_group_resources">Sumber daya</string>
-    <string name="perf_overlay_group_temperature">Suhu</string>
     <string name="perf_overlay_group_runtime">Informasi runtime</string>
     <string name="perf_overlay_fps">Frame renderer per detik (FPS)</string>
     <string name="perf_overlay_cap">Batas FPS (CAP)</string>
@@ -869,9 +868,6 @@
     <string name="perf_overlay_ram">Penggunaan RAM (RAM)</string>
     <string name="perf_overlay_java">Penggunaan heap Java (JAVA)</string>
     <string name="perf_overlay_native">Penggunaan heap native (NATIVE)</string>
-    <string name="perf_overlay_cpu_temp">Suhu CPU (CPUT)</string>
-    <string name="perf_overlay_gpu_temp">Suhu GPU (GPUT)</string>
-    <string name="perf_overlay_battery_temp">Suhu baterai (BAT)</string>
     <string name="perf_overlay_thermal">Status termal (THRM)</string>
     <string name="perf_overlay_renderer">Renderer (REN)</string>
     <string name="perf_overlay_display">Refresh rate layar (DISP)</string>

@@ -116,23 +116,23 @@ class PerformanceOverlayOptionsComposeTest {
 
         composeRule.onNodeWithText(uiString(R.string.perf_overlay_parameters)).performClick()
         composeRule.onNodeWithTag("perf_metric_${PerformanceOverlayOptions.FPS}").assertIsOn()
-        val displayTag = "perf_metric_${PerformanceOverlayOptions.DISPLAY}"
+        val inputTag = "perf_metric_${PerformanceOverlayOptions.INPUT_QUEUE}"
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToNode(hasTestTag(displayTag))
-        composeRule.onNodeWithTag(displayTag).assertIsOn().performClick().assertIsOff()
+            .performScrollToNode(hasTestTag(inputTag))
+        composeRule.onNodeWithTag(inputTag).assertIsOn().performClick().assertIsOff()
         composeRule.onNodeWithText("Done").performClick()
         composeRule.onNodeWithText("Custom").assertExists()
         composeRule.runOnIdle {
             assertEquals(
-                PerformanceOverlayOptions.DEBUG and PerformanceOverlayOptions.DISPLAY.inv(),
+                PerformanceOverlayOptions.DEBUG and PerformanceOverlayOptions.INPUT_QUEUE.inv(),
                 form.performanceOverlayMetrics,
             )
         }
 
         composeRule.onNodeWithText(uiString(R.string.perf_overlay_parameters)).performClick()
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToNode(hasTestTag(displayTag))
-        composeRule.onNodeWithTag(displayTag).assertIsOff()
+            .performScrollToNode(hasTestTag(inputTag))
+        composeRule.onNodeWithTag(inputTag).assertIsOff()
         composeRule.onNodeWithText("Done").performClick()
     }
 }

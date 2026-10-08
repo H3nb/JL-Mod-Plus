@@ -1037,15 +1037,10 @@ private val overlayParameterGroups = listOf(
         OverlayParameter(PerformanceOverlayOptions.JAVA_HEAP, R.string.perf_overlay_java),
         OverlayParameter(PerformanceOverlayOptions.NATIVE_HEAP, R.string.perf_overlay_native),
     )),
-    OverlayParameterGroup(R.string.perf_overlay_group_temperature, listOf(
-        OverlayParameter(PerformanceOverlayOptions.CPU_TEMP, R.string.perf_overlay_cpu_temp),
-        OverlayParameter(PerformanceOverlayOptions.GPU_TEMP, R.string.perf_overlay_gpu_temp),
-        OverlayParameter(PerformanceOverlayOptions.BATTERY_TEMP, R.string.perf_overlay_battery_temp),
-        OverlayParameter(PerformanceOverlayOptions.THERMAL, R.string.perf_overlay_thermal),
-    )),
     OverlayParameterGroup(R.string.perf_overlay_group_runtime, listOf(
         OverlayParameter(PerformanceOverlayOptions.RENDERER, R.string.perf_overlay_renderer),
         OverlayParameter(PerformanceOverlayOptions.DISPLAY, R.string.perf_overlay_display),
+        OverlayParameter(PerformanceOverlayOptions.THERMAL, R.string.perf_overlay_thermal),
     )),
 )
 
