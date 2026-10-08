@@ -1745,7 +1745,7 @@ internal fun LibraryAppsDestination(
     var searchFocused by remember { mutableStateOf(false) }
     val searchFocusManager = LocalFocusManager.current
     val searchKeyboard = LocalSoftwareKeyboardController.current
-    val searchImeVisible = WindowInsets.isImeVisible
+    val searchImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     var searchImeWasVisible by remember { mutableStateOf(false) }
     // On Android the IME consumes the first system Back before the app's BackHandler runs.
     // Dismiss focus when that same Back finishes hiding the keyboard, rather than leaving
