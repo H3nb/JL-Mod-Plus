@@ -1698,7 +1698,14 @@ private fun LibraryNavigationItem(
                 contentDescription = null,
             )
         },
-        label = { Text(labelText) },
+        label = {
+            Text(
+                text = labelText,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
     )
 }
 
