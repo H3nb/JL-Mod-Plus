@@ -614,15 +614,11 @@ fun ProfileActionsScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "About dialog", widthDp = 360, heightDp = 640, showBackground = true)
+@Preview(name = "About screen", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
-fun AboutDialogScreenshot() {
+fun AboutScreenScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        LibraryInformationDialog(
-            dialog = LibraryInfoDialog.About,
-            onDismiss = {},
-            onOpen = {},
-        )
+        LibraryAboutScreen(onBack = {}, onLicenses = {}, onOpenGitHub = {})
     }
 }
 
@@ -634,7 +630,6 @@ fun DonationDialogScreenshot() {
         LibraryInformationDialog(
             dialog = LibraryInfoDialog.Donation,
             onDismiss = {},
-            onOpen = {},
             onDonate = {},
         )
     }
@@ -648,7 +643,6 @@ fun LicensesDialogScreenshot() {
         LibraryInformationDialog(
             dialog = LibraryInfoDialog.Licenses,
             onDismiss = {},
-            onOpen = {},
         )
     }
 }

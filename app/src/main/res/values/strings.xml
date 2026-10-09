@@ -6,8 +6,20 @@
     <string name="about_maintainer">Maintainer: %1$s</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
     <string name="app_debug_badge" translatable="false">DEBUG</string>
-    <string name="about_message">JL-Mod Plus runs J2ME apps and games on Android.</string>
-    <string name="about_lineage">JL-Mod Plus is a fork of JL-Mod by woesss (Yury Kharchenko), itself a fork and experimental mod of J2ME-Loader by Nikita Shakarun. The fork is maintained through sustained design, engineering, testing, and infrastructure work. Upstream attribution and license notices are preserved in the project.</string>
+    <string name="about_message">JL-Mod Plus is a free, open-source emulator for Java ME (J2ME) apps and games on Android. Install MIDlets, organize them in the Library, and adjust controls, display, audio, and performance to suit your device.</string>
+    <string name="about_subtitle">Java ME apps and games on Android</string>
+    <string name="about_compatibility">JL-Mod Plus aims to improve the experience of using classic Java ME software on modern Android devices. Compatibility varies by MIDlet, device, and supported Java ME APIs; not every app behaves exactly as it did on its original phone.</string>
+    <string name="about_lineage_title">Built on open-source work</string>
+    <string name="about_build_title">Build information</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_build_label">Build</string>
+    <string name="about_revision_label">Source revision</string>
+    <string name="about_links_title">Project and licenses</string>
+    <string name="about_github_label" translatable="false">GitHub</string>
+    <string name="about_github_repository" translatable="false">H3nb/JL-Mod-Plus</string>
+    <string name="about_github_link_copied">No browser available. The GitHub link was copied to the clipboard.</string>
+    <string name="about_github_browser_unavailable">No browser is available to open GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus builds on JL-Mod by woesss (Yury Kharchenko), which in turn builds on J2ME Loader by Nikita Shakarun. The project retains upstream attribution and applicable third-party notices.</string>
     <string name="action_context_delete">Delete</string>
     <string name="action_context_rename">Rename</string>
     <string name="action_context_shortcut">Add shortcut</string>
@@ -990,7 +1002,7 @@
     <string name="library_action_settings_summary">Configure global behavior and appearance.</string>
     <string name="library_action_crash_reports_summary">Review saved diagnostic reports.</string>
     <string name="library_action_save_log_summary">Save recent JL-Mod Plus logs for troubleshooting.</string>
-    <string name="library_action_about_summary">Version, project, and maintainer information.</string>
+    <string name="library_action_about_summary">Project overview, build information, and links.</string>
     <string name="library_action_licenses_summary">Third-party notices and license terms included with the app.</string>
     <string name="library_action_help_summary">Usage guidance and common controls.</string>
     <string name="library_donation_action">Support development</string>

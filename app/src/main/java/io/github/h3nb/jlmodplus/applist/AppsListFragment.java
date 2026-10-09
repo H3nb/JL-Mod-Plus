@@ -844,22 +844,20 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onOpenDonation() {
-                final String url = "https://sociabuzz.com/h3nb/tribe";
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                            .addCategory(Intent.CATEGORY_BROWSABLE));
-                } catch (ActivityNotFoundException | SecurityException e) {
-                    ClipboardManager clipboard = (ClipboardManager)
-                            requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                    if (clipboard != null) {
-                        clipboard.setPrimaryClip(ClipData.newPlainText("Sociabuzz", url));
-                        if (composeController != null) {
-                            composeController.showNotice(getString(R.string.library_donation_link_copied));
-                        }
-                    } else if (composeController != null) {
-                        composeController.showNotice(getString(R.string.library_donation_browser_unavailable));
-                    }
-                }
+                openExternalPage(
+                        "https://sociabuzz.com/h3nb/tribe",
+                        "Sociabuzz",
+                        R.string.library_donation_link_copied,
+                        R.string.library_donation_browser_unavailable);
+            }
+
+            @Override
+            public void onOpenProjectRepository() {
+                openExternalPage(
+                        "https://github.com/H3nb/JL-Mod-Plus",
+                        "GitHub",
+                        R.string.about_github_link_copied,
+                        R.string.about_github_browser_unavailable);
             }
 
             @Override
@@ -867,6 +865,33 @@ public class AppsListFragment extends Fragment {
                 libraryViewModel.retry();
             }
         };
+    }
+
+    private void openExternalPage(
+            @NonNull String url,
+            @NonNull String label,
+            int copiedMessage,
+            int unavailableMessage) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    .addCategory(Intent.CATEGORY_BROWSABLE));
+        } catch (ActivityNotFoundException | SecurityException e) {
+            boolean copied = false;
+            try {
+                ClipboardManager clipboard = (ClipboardManager)
+                        requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                if (clipboard != null) {
+                    clipboard.setPrimaryClip(ClipData.newPlainText(label, url));
+                    copied = true;
+                }
+            } catch (SecurityException ignored) {
+                // A clipboard failure must not turn an unavailable browser into a crash.
+            }
+            LibraryComposeController controller = composeController;
+            if (controller != null) {
+                controller.showNotice(getString(copied ? copiedMessage : unavailableMessage));
+            }
+        }
     }
 
     private LibraryAppRow findRow(int uiId) {

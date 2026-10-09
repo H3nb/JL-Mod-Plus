@@ -547,6 +547,11 @@ class LibraryComposeTest {
         ).fetchSemanticsNode().boundsInRoot.top
         assertTrue(importTop < donationTop)
         assertTrue(donationTop < aboutTop)
+        val crashTop = composeRule.onNodeWithText(
+            uiString(R.string.crash_reports),
+        ).fetchSemanticsNode().boundsInRoot.top
+        assertTrue(crashTop < aboutTop)
+        composeRule.onAllNodesWithText(uiString(R.string.licenses)).assertCountEquals(0)
     }
 
     @Test
@@ -567,6 +572,24 @@ class LibraryComposeTest {
         composeRule.onNodeWithText(uiString(R.string.library_donation_continue)).performClick()
         assertEquals(1, actions.donationCount)
         composeRule.onAllNodesWithText(uiString(R.string.library_donation_title)).assertCountEquals(0)
+    }
+
+    @Test
+    fun aboutIsASeparatePageWithLicensesAndGitHubLink() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+        composeRule.onNodeWithText(uiString(R.string.library_destination_more)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.about)).performClick()
+
+        composeRule.onNodeWithText(uiString(R.string.about_build_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_compatibility)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_github_label)).performClick()
+        assertEquals(1, actions.githubCount)
+        composeRule.onNodeWithText(uiString(R.string.licenses)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.licenses)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.close)).performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).assertIsDisplayed()
     }
 
     @Test
@@ -822,15 +845,17 @@ class LibraryComposeTest {
     fun aboutUsesCurrentProjectIdentityWithoutLegacyEmail() {
         composeRule.setContent {
             JLModPlusTheme {
-                LibraryInformationDialog(
-                    dialog = LibraryInfoDialog.About,
-                    onDismiss = {},
-                    onOpen = {},
+                LibraryAboutScreen(
+                    onBack = {},
+                    onLicenses = {},
+                    onOpenGitHub = {},
                 )
             }
         }
 
-        composeRule.onNodeWithText("JL-Mod Plus").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_product_name)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_compatibility)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_build_title)).assertIsDisplayed()
         composeRule.onAllNodesWithText("j2me.forever@gmail.com").assertCountEquals(0)
         composeRule.onAllNodesWithText("Copyright 2020-2026 Yury Kharchenko").assertCountEquals(0)
     }
@@ -935,6 +960,7 @@ class LibraryComposeTest {
         var renamed: Pair<Int, String>? = null
         var settingsCount = 0
         var donationCount = 0
+        var githubCount = 0
         var retryCount = 0
 
         override fun onSearch(query: String) { searches += query }
@@ -955,6 +981,7 @@ class LibraryComposeTest {
         override fun onOpenProfiles() = Unit
         override fun onOpenCrashReports() = Unit
         override fun onOpenDonation() { donationCount++ }
+        override fun onOpenProjectRepository() { githubCount++ }
         override fun onRetryLibrary() { retryCount++ }
     }
 }

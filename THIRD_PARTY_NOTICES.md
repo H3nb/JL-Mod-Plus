@@ -51,6 +51,15 @@ for identifying the external donation provider. Sociabuzz branding is not
 licensed under JL-Mod Plus's Apache-2.0 license; all branding rights remain
 with their respective owner. This graphic does not imply Sociabuzz endorsement.
 
+### GitHub Octicons asset
+
+`app/src/main/res/drawable/ic_github_mark.xml` is adapted from GitHub's
+`mark-github-24.svg`, revision `97825f832c98f817867f770d084c08e3edc6f78c`,
+source: `https://github.com/primer/octicons`. Octicons source is MIT-licensed,
+Copyright (c) 2026 GitHub Inc. The applicable copyright and complete MIT text
+are included in `app/src/main/assets/licenses.html`. GitHub trademark rights
+are separate from the source license; the mark identifies the linked GitHub repository.
+
 ### Custom Material-style icon
 
 `ic_memory_editor_search_unknown.xml` is a local composite used for the
