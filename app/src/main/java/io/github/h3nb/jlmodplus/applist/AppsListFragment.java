@@ -54,6 +54,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
@@ -887,10 +888,11 @@ public class AppsListFragment extends Fragment {
             } catch (SecurityException ignored) {
                 // A clipboard failure must not turn an unavailable browser into a crash.
             }
-            LibraryComposeController controller = composeController;
-            if (controller != null) {
-                controller.showNotice(getString(copied ? copiedMessage : unavailableMessage));
-            }
+            // The About page covers Library's snackbar host; use a system toast that
+            // remains visible regardless of which in-app destination opened the link.
+            Toast.makeText(requireContext(),
+                    copied ? copiedMessage : unavailableMessage,
+                    Toast.LENGTH_LONG).show();
         }
     }
 
