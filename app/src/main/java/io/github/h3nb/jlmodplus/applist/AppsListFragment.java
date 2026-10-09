@@ -93,7 +93,6 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryTransferIntents;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.settings.SettingsActivity;
 import io.github.h3nb.jlmodplus.util.AppUtils;
-import io.github.h3nb.jlmodplus.util.LogUtils;
 import io.github.h3nb.jlmodplus.installer.BulkInstallerDialog;
 import io.github.h3nb.jlmodplus.installer.InstallerDialog;
 
@@ -860,18 +859,6 @@ public class AppsListFragment extends Fragment {
                     } else if (composeController != null) {
                         composeController.showNotice(getString(R.string.library_donation_browser_unavailable));
                     }
-                }
-            }
-
-            @Override
-            public void onSaveLog() {
-                LibraryComposeController controller = composeController;
-                try {
-                    LogUtils.writeLog();
-                    if (controller != null) controller.showNotice(getString(R.string.log_save_started));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    if (controller != null) controller.showNotice(getString(R.string.log_save_failed));
                 }
             }
 

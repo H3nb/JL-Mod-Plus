@@ -373,7 +373,6 @@ interface LibraryActions {
     fun onOpenProfiles()
     fun onOpenCrashReports()
     fun onOpenDonation() = Unit
-    fun onSaveLog()
     fun onRetryLibrary()
 }
 
@@ -578,7 +577,6 @@ class LibraryComposeController(
 
 internal enum class LibraryInfoDialog {
     About,
-    Help,
     Licenses,
     Donation,
 }
@@ -1340,14 +1338,8 @@ fun LibraryScreen(
                             onSettings = {
                                 if (currentControllerDestination == LibraryDestination.More) actions.onOpenSettings()
                             },
-                            onHelp = {
-                                if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.Help
-                            },
                             onCrashReports = {
                                 if (currentControllerDestination == LibraryDestination.More) actions.onOpenCrashReports()
-                            },
-                            onSaveLog = {
-                                if (currentControllerDestination == LibraryDestination.More) actions.onSaveLog()
                             },
                         )
                     }
@@ -2665,9 +2657,7 @@ internal fun LibraryMoreDestination(
     onDonate: () -> Unit,
     onLicenses: () -> Unit,
     onSettings: () -> Unit,
-    onHelp: () -> Unit,
     onCrashReports: () -> Unit,
-    onSaveLog: () -> Unit,
 ) {
     val listState = rememberLazyListState()
     val canScrollForward = rememberLazyListCanScrollForward(listState)
@@ -2717,16 +2707,10 @@ internal fun LibraryMoreDestination(
                                     action = onImportAppBundle,
                                 )
                                 LibraryActionRow(
-                                    label = R.string.crash_reports,
-                                    summary = R.string.library_action_crash_reports_summary,
-                                    icon = R.drawable.ic_bug_report,
-                                    action = onCrashReports,
-                                )
-                                LibraryActionRow(
-                                    label = R.string.save_log,
-                                    summary = R.string.library_action_save_log_summary,
-                                    icon = R.drawable.ic_save,
-                                    action = onSaveLog,
+                                    label = R.string.library_donation_action,
+                                    summary = R.string.library_donation_summary,
+                                    icon = R.drawable.ic_favorite,
+                                    action = onDonate,
                                 )
                                 LibraryActionRow(
                                     label = R.string.about,
@@ -2735,22 +2719,16 @@ internal fun LibraryMoreDestination(
                                     action = onAbout,
                                 )
                                 LibraryActionRow(
-                                    label = R.string.library_donation_action,
-                                    summary = R.string.library_donation_summary,
-                                    icon = R.drawable.ic_favorite,
-                                    action = onDonate,
-                                )
-                                LibraryActionRow(
                                     label = R.string.licenses,
                                     summary = R.string.library_action_licenses_summary,
                                     icon = R.drawable.ic_license,
                                     action = onLicenses,
                                 )
                                 LibraryActionRow(
-                                    label = R.string.help,
-                                    summary = R.string.library_action_help_summary,
-                                    icon = R.drawable.ic_help,
-                                    action = onHelp,
+                                    label = R.string.crash_reports,
+                                    summary = R.string.library_action_crash_reports_summary,
+                                    icon = R.drawable.ic_bug_report,
+                                    action = onCrashReports,
                                 )
                             }
                         }
@@ -4550,13 +4528,11 @@ internal fun LibraryInformationDialog(
     val context = LocalContext.current
     val title = when (dialog) {
         LibraryInfoDialog.About -> stringResource(R.string.about)
-        LibraryInfoDialog.Help -> stringResource(R.string.help)
         LibraryInfoDialog.Licenses -> stringResource(R.string.licenses)
         LibraryInfoDialog.Donation -> stringResource(R.string.library_donation_title)
     }
     val icon = when (dialog) {
         LibraryInfoDialog.About -> R.drawable.ic_info
-        LibraryInfoDialog.Help -> R.drawable.ic_help
         LibraryInfoDialog.Licenses -> null
         LibraryInfoDialog.Donation -> R.drawable.ic_favorite
     }
@@ -4566,8 +4542,6 @@ internal fun LibraryInformationDialog(
     val message = when (dialog) {
         LibraryInfoDialog.About -> AnnotatedString(stringResource(R.string.about_message))
         LibraryInfoDialog.Donation -> AnnotatedString(stringResource(R.string.library_donation_message))
-        LibraryInfoDialog.Help -> AnnotatedString.fromHtml(stringResource(R.string.help_message),
-            linkStyles = linkStyles)
         LibraryInfoDialog.Licenses -> try {
             AnnotatedString.fromHtml(
                 context.assets.open("licenses.html").bufferedReader().use { it.readText() },
@@ -4611,10 +4585,6 @@ internal fun LibraryInformationDialog(
             when (dialog) {
                 LibraryInfoDialog.About -> LibraryAboutBody(maxHeight = maxMessageHeight)
                 LibraryInfoDialog.Donation -> LibraryDonationBody(maxHeight = maxMessageHeight)
-                LibraryInfoDialog.Help -> LibraryHelpBody(
-                    message = message,
-                    maxHeight = maxMessageHeight,
-                )
                 LibraryInfoDialog.Licenses -> {
                     val scrollState = rememberScrollState()
                     val canScrollForward = rememberScrollCanScrollForward(scrollState)
@@ -4751,55 +4721,3 @@ private fun LibraryAboutBody(
     }
 }
 
-@Composable
-private fun LibraryHelpBody(
-    message: AnnotatedString,
-    maxHeight: Dp,
-) {
-    val items = remember(message.text) {
-        message.text
-            .split('•')
-            .map(String::trim)
-            .filter(String::isNotEmpty)
-    }
-    val scrollState = rememberScrollState()
-    val canScrollForward = rememberScrollCanScrollForward(scrollState)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = maxHeight),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = maxHeight)
-                .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            items.forEach { item ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    Text(
-                        text = "•",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(
-                        text = item,
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-        ScrollableContentHint(
-            visible = canScrollForward,
-            modifier = Modifier
-                .align(Alignment.BottomCenter),
-        )
-    }
-}

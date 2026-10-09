@@ -916,7 +916,7 @@
     <string name="library_donation_action">Dukung pengembangan</string>
     <string name="library_donation_summary">Bantu JL-Mod Plus terus berkembang.</string>
     <string name="library_donation_title">Dukung JL-Mod Plus</string>
-    <string name="library_donation_message">JL-Mod Plus gratis dan bersumber terbuka. Dukungan sukarela Anda membantu keberlanjutan pengembangan, pemeliharaan, dan peningkatan kompatibilitasnya.</string>
+    <string name="library_donation_message">JL-Mod Plus gratis dan bersumber terbuka. Jika aplikasi ini bermanfaat, Anda bisa mendukung pengembangannya melalui donasi sukarela.</string>
     <string name="library_donation_provider_note">Donasi diproses di luar aplikasi melalui Sociabuzz.</string>
     <string name="library_donation_continue">Lanjutkan ke Sociabuzz</string>
     <string name="library_donation_not_now">Lain kali</string>

@@ -528,6 +528,28 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun moreKeepsDonationVisibleWithoutOldLogAndHelpMenus() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onNodeWithText(uiString(R.string.library_destination_more)).performClick()
+        composeRule.onAllNodesWithText(uiString(R.string.save_log)).assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.help)).assertCountEquals(0)
+
+        val importTop = composeRule.onNodeWithText(
+            uiString(R.string.library_action_import_bundle),
+        ).fetchSemanticsNode().boundsInRoot.top
+        val donationTop = composeRule.onNodeWithText(
+            uiString(R.string.library_donation_action),
+        ).fetchSemanticsNode().boundsInRoot.top
+        val aboutTop = composeRule.onNodeWithText(
+            uiString(R.string.about),
+        ).fetchSemanticsNode().boundsInRoot.top
+        assertTrue(importTop < donationTop)
+        assertTrue(donationTop < aboutTop)
+    }
+
+    @Test
     fun moreDonationIsVoluntaryAndOpensViaExplicitHostAction() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
@@ -933,7 +955,6 @@ class LibraryComposeTest {
         override fun onOpenProfiles() = Unit
         override fun onOpenCrashReports() = Unit
         override fun onOpenDonation() { donationCount++ }
-        override fun onSaveLog() = Unit
         override fun onRetryLibrary() { retryCount++ }
     }
 }

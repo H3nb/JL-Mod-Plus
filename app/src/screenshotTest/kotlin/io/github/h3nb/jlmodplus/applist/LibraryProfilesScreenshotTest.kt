@@ -451,9 +451,7 @@ fun LibraryOptionsScreenshot() {
             onDonate = {},
             onLicenses = {},
             onSettings = {},
-            onHelp = {},
             onCrashReports = {},
-            onSaveLog = {},
         )
     }
 }
@@ -513,9 +511,7 @@ fun LibraryOptionsIndonesianScreenshot() {
             onDonate = {},
             onLicenses = {},
             onSettings = {},
-            onHelp = {},
             onCrashReports = {},
-            onSaveLog = {},
         )
     }
 }
@@ -532,9 +528,7 @@ fun LibraryOptionsListDisplayScreenshot() {
             onDonate = {},
             onLicenses = {},
             onSettings = {},
-            onHelp = {},
             onCrashReports = {},
-            onSaveLog = {},
         )
     }
 }
@@ -551,9 +545,7 @@ fun LibraryOptionsGridTouchingScreenshot() {
             onDonate = {},
             onLicenses = {},
             onSettings = {},
-            onHelp = {},
             onCrashReports = {},
-            onSaveLog = {},
         )
     }
 }
@@ -635,14 +627,15 @@ fun AboutDialogScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "Help dialog", widthDp = 360, heightDp = 640, showBackground = true)
+@Preview(name = "Support development dialog", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
-fun HelpDialogScreenshot() {
+fun DonationDialogScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         LibraryInformationDialog(
-            dialog = LibraryInfoDialog.Help,
+            dialog = LibraryInfoDialog.Donation,
             onDismiss = {},
             onOpen = {},
+            onDonate = {},
         )
     }
 }
@@ -677,7 +670,6 @@ private object NoOpLibraryActions : LibraryActions {
     override fun onOpenSettings() = Unit
     override fun onOpenProfiles() = Unit
     override fun onOpenCrashReports() = Unit
-    override fun onSaveLog() = Unit
     override fun onRetryLibrary() = Unit
 }
 

@@ -996,7 +996,7 @@
     <string name="library_donation_action">Support development</string>
     <string name="library_donation_summary">Help keep JL-Mod Plus growing.</string>
     <string name="library_donation_title">Support JL-Mod Plus</string>
-    <string name="library_donation_message">JL-Mod Plus is free and open source. Your voluntary support helps sustain its development, maintenance, and compatibility improvements.</string>
+    <string name="library_donation_message">JL-Mod Plus is free and open source. If you find it useful, you can support its development with a voluntary donation.</string>
     <string name="library_donation_provider_note">Donations are handled externally by Sociabuzz.</string>
     <string name="library_donation_continue">Continue to Sociabuzz</string>
     <string name="library_donation_not_now">Not now</string>
