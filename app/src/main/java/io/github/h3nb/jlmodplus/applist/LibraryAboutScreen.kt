@@ -41,7 +41,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -90,9 +89,8 @@ internal fun LibraryAboutScreen(
             Column(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .fillMaxWidth()
                     .widthIn(max = 720.dp)
-                    .testTag("library_about_scroll")
+                    .fillMaxWidth()
                     .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -104,7 +102,7 @@ internal fun LibraryAboutScreen(
                 ) {
                     Image(
                         painter = painterResource(R.mipmap.ic_launcher_foreground),
-                        contentDescription = stringResource(R.string.about_product_name),
+                        contentDescription = null, // The adjacent heading already names the project.
                         modifier = Modifier.size(156.dp),
                     )
                     Text(

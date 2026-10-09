@@ -45,6 +45,7 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
@@ -581,18 +582,21 @@ class LibraryComposeTest {
         composeRule.onNodeWithText(uiString(R.string.library_destination_more)).performClick()
         composeRule.onNodeWithText(uiString(R.string.about)).performClick()
 
-        composeRule.onNodeWithTag("library_about_scroll")
-            .performScrollToNode(hasText(uiString(R.string.about_compatibility)))
-        composeRule.onNodeWithText(uiString(R.string.about_compatibility)).assertIsDisplayed()
-        composeRule.onNodeWithTag("library_about_scroll")
-            .performScrollToNode(hasText(uiString(R.string.about_build_title)))
-        composeRule.onNodeWithText(uiString(R.string.about_build_title)).assertIsDisplayed()
-        composeRule.onNodeWithTag("library_about_scroll")
-            .performScrollToNode(hasText(uiString(R.string.about_github_label)))
-        composeRule.onNodeWithText(uiString(R.string.about_github_label)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.about_compatibility))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_build_title))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_github_label))
+            .performScrollTo()
+            .performClick()
         assertEquals(1, actions.githubCount)
-        composeRule.onNodeWithText(uiString(R.string.licenses)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.licenses)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.licenses))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNode(hasText(uiString(R.string.licenses)) and hasAnyAncestor(isDialog()))
+            .assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.close)).performClick()
         composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_donation_action)).assertIsDisplayed()
@@ -861,9 +865,9 @@ class LibraryComposeTest {
 
         composeRule.onNodeWithText(uiString(R.string.about_product_name)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.about_compatibility)).assertIsDisplayed()
-        composeRule.onNodeWithTag("library_about_scroll")
-            .performScrollToNode(hasText(uiString(R.string.about_build_title)))
-        composeRule.onNodeWithText(uiString(R.string.about_build_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_build_title))
+            .performScrollTo()
+            .assertIsDisplayed()
         composeRule.onAllNodesWithText("j2me.forever@gmail.com").assertCountEquals(0)
         composeRule.onAllNodesWithText("Copyright 2020-2026 Yury Kharchenko").assertCountEquals(0)
     }
