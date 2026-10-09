@@ -623,6 +623,36 @@ fun AboutScreenScreenshot() {
 }
 
 @PreviewTest
+@Preview(
+    name = "About screen Indonesian",
+    widthDp = 360,
+    heightDp = 640,
+    locale = "id",
+    showBackground = true,
+)
+@Composable
+fun AboutScreenIndonesianScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryAboutScreen(onBack = {}, onLicenses = {}, onOpenGitHub = {})
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "About compact landscape large text",
+    widthDp = 480,
+    heightDp = 240,
+    fontScale = 2.0f,
+    showBackground = true,
+)
+@Composable
+fun AboutScreenCompactLandscapeScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryAboutScreen(onBack = {}, onLicenses = {}, onOpenGitHub = {})
+    }
+}
+
+@PreviewTest
 @Preview(name = "Support development dialog", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun DonationDialogScreenshot() {

@@ -19,7 +19,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -93,6 +92,7 @@ internal fun LibraryAboutScreen(
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .widthIn(max = 720.dp)
+                    .testTag("library_about_scroll")
                     .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
