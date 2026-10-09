@@ -993,6 +993,15 @@
     <string name="library_action_about_summary">Version, project, and maintainer information.</string>
     <string name="library_action_licenses_summary">Third-party notices and license terms included with the app.</string>
     <string name="library_action_help_summary">Usage guidance and common controls.</string>
+    <string name="library_donation_action">Support development</string>
+    <string name="library_donation_summary">Help keep JL-Mod Plus growing.</string>
+    <string name="library_donation_title">Support JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus is free and open source. Your voluntary support helps sustain its development, maintenance, and compatibility improvements.</string>
+    <string name="library_donation_provider_note">Donations are handled externally by Sociabuzz.</string>
+    <string name="library_donation_continue">Continue to Sociabuzz</string>
+    <string name="library_donation_not_now">Not now</string>
+    <string name="library_donation_link_copied">No browser available. The Sociabuzz link was copied to the clipboard.</string>
+    <string name="library_donation_browser_unavailable">No browser is available to open Sociabuzz.</string>
     <string name="library_bulk_delete_apps">Delete apps</string>
     <string name="library_bulk_add_collection">Add to collection</string>
     <string name="library_bulk_share_apps">Share apps</string>

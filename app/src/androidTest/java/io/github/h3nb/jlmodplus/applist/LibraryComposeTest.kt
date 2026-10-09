@@ -528,6 +528,26 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun moreDonationIsVoluntaryAndOpensViaExplicitHostAction() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+        composeRule.onAllNodesWithText(uiString(R.string.library_donation_title)).assertCountEquals(0)
+
+        composeRule.onNodeWithText(uiString(R.string.library_destination_more)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_message)).assertIsDisplayed()
+        assertEquals(0, actions.donationCount)
+        composeRule.onNodeWithText(uiString(R.string.library_donation_not_now)).performClick()
+        composeRule.onAllNodesWithText(uiString(R.string.library_donation_title)).assertCountEquals(0)
+
+        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_continue)).performClick()
+        assertEquals(1, actions.donationCount)
+        composeRule.onAllNodesWithText(uiString(R.string.library_donation_title)).assertCountEquals(0)
+    }
+
+    @Test
     fun moreExposesImportAppBundleCallback() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
@@ -892,6 +912,7 @@ class LibraryComposeTest {
         var openedId: Int? = null
         var renamed: Pair<Int, String>? = null
         var settingsCount = 0
+        var donationCount = 0
         var retryCount = 0
 
         override fun onSearch(query: String) { searches += query }
@@ -911,6 +932,7 @@ class LibraryComposeTest {
         override fun onOpenSettings() { settingsCount++ }
         override fun onOpenProfiles() = Unit
         override fun onOpenCrashReports() = Unit
+        override fun onOpenDonation() { donationCount++ }
         override fun onSaveLog() = Unit
         override fun onRetryLibrary() { retryCount++ }
     }

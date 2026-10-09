@@ -88,6 +88,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -371,6 +372,7 @@ interface LibraryActions {
     fun onOpenSettings()
     fun onOpenProfiles()
     fun onOpenCrashReports()
+    fun onOpenDonation() = Unit
     fun onSaveLog()
     fun onRetryLibrary()
 }
@@ -578,6 +580,7 @@ internal enum class LibraryInfoDialog {
     About,
     Help,
     Licenses,
+    Donation,
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -1328,6 +1331,9 @@ fun LibraryScreen(
                             onAbout = {
                                 if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.About
                             },
+                            onDonate = {
+                                if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.Donation
+                            },
                             onLicenses = {
                                 if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.Licenses
                             },
@@ -1555,6 +1561,7 @@ fun LibraryScreen(
             },
             onDismiss = { infoDialog = null },
             onOpen = { infoDialog = it },
+            onDonate = actions::onOpenDonation,
         )
     }
     collectionsHost?.let { LibraryCollectionsDialogHost(it) }
@@ -2655,6 +2662,7 @@ internal fun LibraryMoreDestination(
     scaffoldPadding: PaddingValues,
     onImportAppBundle: () -> Unit = {},
     onAbout: () -> Unit,
+    onDonate: () -> Unit,
     onLicenses: () -> Unit,
     onSettings: () -> Unit,
     onHelp: () -> Unit,
@@ -2725,6 +2733,12 @@ internal fun LibraryMoreDestination(
                                     summary = R.string.library_action_about_summary,
                                     icon = R.drawable.ic_info,
                                     action = onAbout,
+                                )
+                                LibraryActionRow(
+                                    label = R.string.library_donation_action,
+                                    summary = R.string.library_donation_summary,
+                                    icon = R.drawable.ic_favorite,
+                                    action = onDonate,
                                 )
                                 LibraryActionRow(
                                     label = R.string.licenses,
@@ -4531,23 +4545,27 @@ internal fun LibraryInformationDialog(
     onControllerKeyEvent: ((KeyEvent) -> Boolean)? = null,
     onDismiss: () -> Unit,
     onOpen: (LibraryInfoDialog) -> Unit,
+    onDonate: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val title = when (dialog) {
         LibraryInfoDialog.About -> stringResource(R.string.about)
         LibraryInfoDialog.Help -> stringResource(R.string.help)
         LibraryInfoDialog.Licenses -> stringResource(R.string.licenses)
+        LibraryInfoDialog.Donation -> stringResource(R.string.library_donation_title)
     }
     val icon = when (dialog) {
         LibraryInfoDialog.About -> R.drawable.ic_info
         LibraryInfoDialog.Help -> R.drawable.ic_help
         LibraryInfoDialog.Licenses -> null
+        LibraryInfoDialog.Donation -> R.drawable.ic_favorite
     }
     val layout = libraryDialogLayout()
     val maxMessageHeight = libraryDialogListHeight()
     val linkStyles = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary))
     val message = when (dialog) {
         LibraryInfoDialog.About -> AnnotatedString(stringResource(R.string.about_message))
+        LibraryInfoDialog.Donation -> AnnotatedString(stringResource(R.string.library_donation_message))
         LibraryInfoDialog.Help -> AnnotatedString.fromHtml(stringResource(R.string.help_message),
             linkStyles = linkStyles)
         LibraryInfoDialog.Licenses -> try {
@@ -4592,6 +4610,7 @@ internal fun LibraryInformationDialog(
         text = {
             when (dialog) {
                 LibraryInfoDialog.About -> LibraryAboutBody(maxHeight = maxMessageHeight)
+                LibraryInfoDialog.Donation -> LibraryDonationBody(maxHeight = maxMessageHeight)
                 LibraryInfoDialog.Help -> LibraryHelpBody(
                     message = message,
                     maxHeight = maxMessageHeight,
@@ -4623,9 +4642,54 @@ internal fun LibraryInformationDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+            if (dialog == LibraryInfoDialog.Donation) {
+                Button(onClick = { onDismiss(); onDonate() }) {
+                    Text(stringResource(R.string.library_donation_continue))
+                }
+            } else {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+            }
         },
+        dismissButton = if (dialog == LibraryInfoDialog.Donation) {
+            { TextButton(onClick = onDismiss) { Text(stringResource(R.string.library_donation_not_now)) } }
+        } else null,
     )
+}
+
+@Composable
+private fun LibraryDonationBody(maxHeight: Dp) {
+    val scrollState = rememberScrollState()
+    val canScrollForward = rememberScrollCanScrollForward(scrollState)
+    Box(modifier = Modifier.fillMaxWidth().heightIn(max = maxHeight)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().heightIn(max = maxHeight).verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.library_donation_message),
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Image(
+                painter = painterResource(R.drawable.sociabuzz_wordmark),
+                contentDescription = null, // Provider named in the action and supporting text.
+                modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 24.dp),
+                contentScale = ContentScale.Fit,
+            )
+            Text(
+                text = stringResource(R.string.library_donation_provider_note),
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        ScrollableContentHint(
+            visible = canScrollForward,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+    }
 }
 
 @Composable

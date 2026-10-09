@@ -913,6 +913,15 @@
     <string name="library_action_about_summary">Informasi versi, proyek, dan pengelola.</string>
     <string name="library_action_licenses_summary">Pemberitahuan pihak ketiga dan ketentuan lisensi yang disertakan.</string>
     <string name="library_action_help_summary">Panduan penggunaan dan kontrol umum.</string>
+    <string name="library_donation_action">Dukung pengembangan</string>
+    <string name="library_donation_summary">Bantu JL-Mod Plus terus berkembang.</string>
+    <string name="library_donation_title">Dukung JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus gratis dan bersumber terbuka. Dukungan sukarela Anda membantu keberlanjutan pengembangan, pemeliharaan, dan peningkatan kompatibilitasnya.</string>
+    <string name="library_donation_provider_note">Donasi diproses di luar aplikasi melalui Sociabuzz.</string>
+    <string name="library_donation_continue">Lanjutkan ke Sociabuzz</string>
+    <string name="library_donation_not_now">Lain kali</string>
+    <string name="library_donation_link_copied">Tidak ada browser yang tersedia. Tautan Sociabuzz telah disalin ke papan klip.</string>
+    <string name="library_donation_browser_unavailable">Tidak ada browser yang tersedia untuk membuka Sociabuzz.</string>
     <string name="library_action_select">Pilih</string>
     <string name="library_selection_select_all">Pilih semua</string>
     <string name="library_selection_unselect_all">Batalkan semua pilihan</string>

@@ -42,6 +42,9 @@ import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_LIST;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -838,6 +841,26 @@ public class AppsListFragment extends Fragment {
             @Override
             public void onOpenCrashReports() {
                 startActivity(new Intent(requireActivity(), CrashReportsActivity.class));
+            }
+
+            @Override
+            public void onOpenDonation() {
+                final String url = "https://sociabuzz.com/h3nb/tribe";
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            .addCategory(Intent.CATEGORY_BROWSABLE));
+                } catch (ActivityNotFoundException | SecurityException e) {
+                    ClipboardManager clipboard = (ClipboardManager)
+                            requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (clipboard != null) {
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Sociabuzz", url));
+                        if (composeController != null) {
+                            composeController.showNotice(getString(R.string.library_donation_link_copied));
+                        }
+                    } else if (composeController != null) {
+                        composeController.showNotice(getString(R.string.library_donation_browser_unavailable));
+                    }
+                }
             }
 
             @Override
