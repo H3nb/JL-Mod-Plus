@@ -15,7 +15,6 @@
 package io.github.h3nb.jlmodplus.applist
 
 import android.content.res.Configuration
-import java.util.Locale
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -34,6 +33,7 @@ import io.github.h3nb.jlmodplus.config.ProfilesScreen
 import io.github.h3nb.jlmodplus.config.ProfilesUiState
 import io.github.h3nb.jlmodplus.librarydb.LibraryCollectionRow
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import java.util.Locale
 
 private val PreviewApps = listOf(
     LibraryAppUiItem(
@@ -534,38 +534,6 @@ fun LibraryOptionsIndonesianScreenshot() {
                 onCrashReports = {},
             )
         }
-    }
-}
-
-@PreviewTest
-@Preview(name = "Library options list display", widthDp = 360, heightDp = 640, showBackground = true)
-@Composable
-fun LibraryOptionsListDisplayScreenshot() {
-    JLModPlusTheme(darkTheme = false) {
-        LibraryMoreDestination(
-            scaffoldPadding = PaddingValues(),
-            onImportAppBundle = {},
-            onAbout = {},
-            onDonate = {},
-            onSettings = {},
-            onCrashReports = {},
-        )
-    }
-}
-
-@PreviewTest
-@Preview(name = "Library options grid touching", widthDp = 360, heightDp = 640, showBackground = true)
-@Composable
-fun LibraryOptionsGridTouchingScreenshot() {
-    JLModPlusTheme(darkTheme = false) {
-        LibraryMoreDestination(
-            scaffoldPadding = PaddingValues(),
-            onImportAppBundle = {},
-            onAbout = {},
-            onDonate = {},
-            onSettings = {},
-            onCrashReports = {},
-        )
     }
 }
 
