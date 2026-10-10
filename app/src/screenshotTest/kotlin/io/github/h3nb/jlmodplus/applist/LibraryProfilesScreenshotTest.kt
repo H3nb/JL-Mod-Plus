@@ -449,7 +449,6 @@ fun LibraryOptionsScreenshot() {
             onImportAppBundle = {},
             onAbout = {},
             onDonate = {},
-            onLicenses = {},
             onSettings = {},
             onCrashReports = {},
         )
@@ -509,7 +508,6 @@ fun LibraryOptionsIndonesianScreenshot() {
             onImportAppBundle = {},
             onAbout = {},
             onDonate = {},
-            onLicenses = {},
             onSettings = {},
             onCrashReports = {},
         )
@@ -526,7 +524,6 @@ fun LibraryOptionsListDisplayScreenshot() {
             onImportAppBundle = {},
             onAbout = {},
             onDonate = {},
-            onLicenses = {},
             onSettings = {},
             onCrashReports = {},
         )
@@ -543,7 +540,6 @@ fun LibraryOptionsGridTouchingScreenshot() {
             onImportAppBundle = {},
             onAbout = {},
             onDonate = {},
-            onLicenses = {},
             onSettings = {},
             onCrashReports = {},
         )

@@ -4,7 +4,7 @@
     <string name="about_message">JL-Mod Plus adalah emulator gratis dan bersumber terbuka untuk aplikasi dan game Java ME (J2ME) di Android. Anda dapat memasang MIDlet, mengelolanya di pustaka, serta menyesuaikan kontrol, tampilan, audio, dan performa sesuai perangkat.</string>
     <string name="about_subtitle">Aplikasi dan game Java ME di Android</string>
     <string name="about_compatibility">JL-Mod Plus berupaya meningkatkan pengalaman menjalankan perangkat lunak Java ME klasik di Android modern. Kompatibilitas dapat berbeda menurut MIDlet, perangkat, dan API Java ME yang didukung; tidak semua aplikasi berjalan persis seperti di ponsel asalnya.</string>
-    <string name="about_lineage_title">Dibangun dari proyek sumber terbuka</string>
+    <string name="about_lineage_title">Asal-usul proyek</string>
     <string name="about_build_title">Informasi build</string>
     <string name="about_version_label">Versi</string>
     <string name="about_build_label">Build</string>
@@ -12,7 +12,7 @@
     <string name="about_links_title">Proyek dan lisensi</string>
     <string name="about_github_link_copied">Tidak ada browser yang tersedia. Tautan GitHub telah disalin ke papan klip.</string>
     <string name="about_github_browser_unavailable">Tidak ada browser yang tersedia untuk membuka GitHub.</string>
-    <string name="about_lineage">JL-Mod Plus dikembangkan dari JL-Mod oleh woesss (Yury Kharchenko), yang berakar dari J2ME Loader karya Nikita Shakarun. Proyek ini tetap mencantumkan atribusi proyek asal dan pemberitahuan lisensi pihak ketiga yang berlaku.</string>
+    <string name="about_lineage">JL-Mod Plus berawal sebagai fork dari JL-Mod karya woesss (Yury Kharchenko). JL-Mod sendiri dikembangkan dari J2ME Loader karya Nikita Shakarun. Dari fondasi tersebut, JL-Mod Plus menghadirkan antarmuka baru, penyempurnaan kontrol, dan dukungan untuk Android modern.</string>
     <string name="action_context_delete">Hapus</string>
     <string name="action_context_rename">Ubah nama</string>
     <string name="action_context_shortcut">Buat pintasan</string>
