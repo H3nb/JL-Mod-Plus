@@ -27,7 +27,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -92,21 +95,32 @@ internal fun LibraryAboutScreen(
                     .widthIn(max = 720.dp)
                     .fillMaxWidth()
                     .verticalScroll(scrollState)
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(28.dp),
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Image(
-                        painter = painterResource(R.mipmap.ic_launcher_foreground),
-                        contentDescription = null, // The adjacent heading already names the project.
-                        modifier = Modifier.size(156.dp),
-                    )
+                    // The adaptive launcher foreground includes a large transparent safe area.
+                    // Crop its canvas inside a fixed frame without modifying the launcher asset.
+                    Box(
+                        modifier = Modifier.size(128.dp).clipToBounds(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Image(
+                            painter = painterResource(R.mipmap.ic_launcher_foreground),
+                            contentDescription = null, // The adjacent heading already names the project.
+                            modifier = Modifier.matchParentSize().graphicsLayer(
+                                scaleX = 1.65f,
+                                scaleY = 1.65f,
+                            ),
+                        )
+                    }
                     Text(
                         text = stringResource(R.string.about_product_name),
+                        modifier = Modifier.padding(top = 8.dp),
                         style = MaterialTheme.typography.headlineSmall,
                         textAlign = TextAlign.Center,
                     )
@@ -121,7 +135,7 @@ internal fun LibraryAboutScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         text = stringResource(R.string.about_message),
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                     Text(
                         text = stringResource(R.string.about_compatibility),
@@ -130,13 +144,18 @@ internal fun LibraryAboutScreen(
                     )
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
                         text = stringResource(R.string.about_lineage_title),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
                         text = stringResource(R.string.about_lineage),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = stringResource(R.string.about_evolution),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

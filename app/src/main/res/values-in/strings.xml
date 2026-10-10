@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">Tentang</string>
-    <string name="about_message">JL-Mod Plus adalah emulator gratis dan bersumber terbuka untuk aplikasi dan game Java ME (J2ME) di Android. Anda dapat memasang MIDlet, mengelolanya di pustaka, serta menyesuaikan kontrol, tampilan, audio, dan performa sesuai perangkat.</string>
-    <string name="about_subtitle">Aplikasi dan game Java ME di Android</string>
-    <string name="about_compatibility">JL-Mod Plus berupaya meningkatkan pengalaman menjalankan perangkat lunak Java ME klasik di Android modern. Kompatibilitas dapat berbeda menurut MIDlet, perangkat, dan API Java ME yang didukung; tidak semua aplikasi berjalan persis seperti di ponsel asalnya.</string>
+    <string name="about_message">Jalankan aplikasi dan game klasik, kelola MIDlet dalam pustaka, serta sesuaikan kontrol, tampilan, audio, dan performa. JL-Mod Plus gratis dan bersumber terbuka.</string>
+    <string name="about_subtitle">Emulator Java ME untuk Android</string>
+    <string name="about_compatibility">Kompatibilitas bergantung pada MIDlet, perangkat, dan API Java ME yang didukung. Sebagian aplikasi mungkin berperilaku berbeda dibandingkan pada ponsel aslinya.</string>
     <string name="about_lineage_title">Asal-usul proyek</string>
     <string name="about_build_title">Informasi build</string>
     <string name="about_version_label">Versi</string>
@@ -12,7 +12,8 @@
     <string name="about_links_title">Proyek dan lisensi</string>
     <string name="about_github_link_copied">Tidak ada browser yang tersedia. Tautan GitHub telah disalin ke papan klip.</string>
     <string name="about_github_browser_unavailable">Tidak ada browser yang tersedia untuk membuka GitHub.</string>
-    <string name="about_lineage">JL-Mod Plus berawal sebagai fork dari JL-Mod karya woesss (Yury Kharchenko), yang dibangun di atas J2ME Loader karya Nikita Shakarun. Proyek ini melanjutkan pengembangannya dengan antarmuka baru, kontrol yang lebih fleksibel, dan dukungan untuk Android modern.</string>
+    <string name="about_lineage">JL-Mod Plus merupakan fork independen dari JL-Mod karya woesss (Yury Kharchenko). JL-Mod sendiri dikembangkan dari J2ME Loader karya Nikita Shakarun, yang berakar dari J2meLoader oleh NaikSoftware.</string>
+    <string name="about_evolution">JL-Mod Plus mengembangkan fondasi tersebut lebih lanjut dengan antarmuka modern, pengelolaan MIDlet yang lebih lengkap, berbagai fitur baru, dan dukungan untuk Android generasi terbaru.</string>
     <string name="action_context_delete">Hapus</string>
     <string name="action_context_rename">Ubah nama</string>
     <string name="action_context_shortcut">Buat pintasan</string>
