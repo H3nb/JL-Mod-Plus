@@ -2802,6 +2802,7 @@ final class ManagedJavaMemoryEngine {
 		final ArrayList<OwnerBucketBuilder> builders = new ArrayList<>();
 		final Map<Long, OwnerBucketBuilder> byOwner = new HashMap<>();
 		final long retainedRevisionBytes;
+		long stagedStorageBytes;
 		long candidateCount;
 
 		RevisionBuilder() {
@@ -2821,6 +2822,7 @@ final class ManagedJavaMemoryEngine {
 				builder = new OwnerBucketBuilder(owner, initialCapacity);
 				byOwner.put(owner.handle, builder);
 				builders.add(builder);
+				stagedStorageBytes = checkedAdd(stagedStorageBytes, newStorage);
 			}
 			return builder;
 		}
@@ -2839,6 +2841,7 @@ final class ManagedJavaMemoryEngine {
 			long growth = builder.additionalStorageForNext(limits.maxCandidates);
 			if (!canAddStorage(limits, extraBytes, growth)) return false;
 			if (!builder.add(slot, initialValue, previousValue, limits)) return false;
+			stagedStorageBytes = checkedAdd(stagedStorageBytes, growth);
 			candidateCount++;
 			return true;
 		}
@@ -2848,11 +2851,7 @@ final class ManagedJavaMemoryEngine {
 		}
 
 		long storageBytes() {
-			long total = retainedRevisionBytes;
-			for (OwnerBucketBuilder builder : builders) {
-				total = checkedAdd(total, builder.storageBytes());
-			}
-			return total;
+			return checkedAdd(retainedRevisionBytes, stagedStorageBytes);
 		}
 
 		Revision finish(long id, Limits limits, long extraBytes) {
