@@ -864,7 +864,9 @@ class LibraryComposeTest {
         }
 
         composeRule.onNodeWithText(uiString(R.string.about_product_name)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.about_compatibility)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_compatibility))
+            .performScrollTo()
+            .assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.about_evolution))
             .performScrollTo()
             .assertIsDisplayed()

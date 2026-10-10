@@ -4546,9 +4546,8 @@ internal fun LibraryInformationDialog(
     val layout = libraryDialogLayout()
     val maxMessageHeight = libraryDialogListHeight()
     val linkStyles = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary))
-    val message = when (dialog) {
-        LibraryInfoDialog.Donation -> AnnotatedString(stringResource(R.string.library_donation_message))
-        LibraryInfoDialog.Licenses -> try {
+    val licenseMessage = if (dialog == LibraryInfoDialog.Licenses) {
+        try {
             AnnotatedString.fromHtml(
                 context.assets.open("licenses.html").bufferedReader().use { it.readText() },
                 linkStyles = linkStyles,
@@ -4556,6 +4555,8 @@ internal fun LibraryInformationDialog(
         } catch (_: Exception) {
             AnnotatedString(stringResource(R.string.licenses_unavailable))
         }
+    } else {
+        null
     }
 
     AlertDialog(
@@ -4599,7 +4600,7 @@ internal fun LibraryInformationDialog(
                             .heightIn(max = maxMessageHeight),
                     ) {
                         Text(
-                            text = message,
+                            text = requireNotNull(licenseMessage),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = maxMessageHeight)

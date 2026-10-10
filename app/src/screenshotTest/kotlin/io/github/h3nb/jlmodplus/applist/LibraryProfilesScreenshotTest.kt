@@ -15,10 +15,13 @@
 package io.github.h3nb.jlmodplus.applist
 
 import android.content.res.Configuration
+import java.util.Locale
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
@@ -492,6 +495,24 @@ fun LibraryCollectionsScreenshot() {
     }
 }
 
+// The screenshot renderer currently renders @Preview(locale = "id") with English
+// resources. Supply both context and configuration to exercise Indonesian layouts.
+@Composable
+private fun IndonesianScreenshotContent(content: @Composable () -> Unit) {
+    val context = LocalContext.current
+    val localizedContext = remember(context) {
+        val config = Configuration(context.resources.configuration).apply {
+            setLocale(Locale.forLanguageTag("id"))
+        }
+        context.createConfigurationContext(config)
+    }
+    CompositionLocalProvider(
+        LocalContext provides localizedContext,
+        LocalConfiguration provides localizedContext.resources.configuration,
+        content = content,
+    )
+}
+
 @PreviewTest
 @Preview(
     name = "Library options Indonesian",
@@ -502,15 +523,17 @@ fun LibraryCollectionsScreenshot() {
 )
 @Composable
 fun LibraryOptionsIndonesianScreenshot() {
-    JLModPlusTheme(darkTheme = false) {
-        LibraryMoreDestination(
-            scaffoldPadding = PaddingValues(),
-            onImportAppBundle = {},
-            onAbout = {},
-            onDonate = {},
-            onSettings = {},
-            onCrashReports = {},
-        )
+    IndonesianScreenshotContent {
+        JLModPlusTheme(darkTheme = false) {
+            LibraryMoreDestination(
+                scaffoldPadding = PaddingValues(),
+                onImportAppBundle = {},
+                onAbout = {},
+                onDonate = {},
+                onSettings = {},
+                onCrashReports = {},
+            )
+        }
     }
 }
 
@@ -628,8 +651,10 @@ fun AboutScreenScreenshot() {
 )
 @Composable
 fun AboutScreenIndonesianScreenshot() {
-    JLModPlusTheme(darkTheme = false) {
-        LibraryAboutScreen(onBack = {}, onLicenses = {}, onOpenGitHub = {})
+    IndonesianScreenshotContent {
+        JLModPlusTheme(darkTheme = false) {
+            LibraryAboutScreen(onBack = {}, onLicenses = {}, onOpenGitHub = {})
+        }
     }
 }
 
