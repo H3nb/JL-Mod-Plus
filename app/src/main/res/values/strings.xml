@@ -6,8 +6,21 @@
     <string name="about_maintainer">Maintainer: %1$s</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
     <string name="app_debug_badge" translatable="false">DEBUG</string>
-    <string name="about_message">JL-Mod Plus runs J2ME apps and games on Android.</string>
-    <string name="about_lineage">JL-Mod Plus is a fork of JL-Mod by woesss (Yury Kharchenko), itself a fork and experimental mod of J2ME-Loader by Nikita Shakarun. The fork is maintained through sustained design, engineering, testing, and infrastructure work. Upstream attribution and license notices are preserved in the project.</string>
+    <string name="about_message">Run classic apps and games, organize MIDlets in your Library, and adjust controls, display, audio, and performance. JL-Mod Plus is free and open source.</string>
+    <string name="about_subtitle">Java ME emulator for Android</string>
+    <string name="about_compatibility">Compatibility depends on the MIDlet, device, and supported Java ME APIs. Some apps may behave differently from how they did on their original phones.</string>
+    <string name="about_lineage_title">Project origins</string>
+    <string name="about_build_title">Build information</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_build_label">Build</string>
+    <string name="about_revision_label">Source revision</string>
+    <string name="about_links_title">Project and licenses</string>
+    <string name="about_github_label" translatable="false">GitHub</string>
+    <string name="about_github_repository" translatable="false">H3nb/JL-Mod-Plus</string>
+    <string name="about_github_link_copied">No browser available. The GitHub link was copied to the clipboard.</string>
+    <string name="about_github_browser_unavailable">No browser is available to open GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus is an independent fork of JL-Mod by woesss (Yury Kharchenko). JL-Mod is based on J2ME Loader by Nikita Shakarun, which traces back to NaikSoftware’s J2meLoader.</string>
+    <string name="about_evolution">JL-Mod Plus builds on that foundation with a modern interface, a more capable MIDlet Library, a range of new features, and support for newer Android versions.</string>
     <string name="action_context_delete">Delete</string>
     <string name="action_context_rename">Rename</string>
     <string name="action_context_shortcut">Add shortcut</string>
@@ -990,9 +1003,18 @@
     <string name="library_action_settings_summary">Configure global behavior and appearance.</string>
     <string name="library_action_crash_reports_summary">Review saved diagnostic reports.</string>
     <string name="library_action_save_log_summary">Save recent JL-Mod Plus logs for troubleshooting.</string>
-    <string name="library_action_about_summary">Version, project, and maintainer information.</string>
+    <string name="library_action_about_summary">Project overview, build information, and links.</string>
     <string name="library_action_licenses_summary">Third-party notices and license terms included with the app.</string>
     <string name="library_action_help_summary">Usage guidance and common controls.</string>
+    <string name="library_donation_action">Support development</string>
+    <string name="library_donation_summary">Help keep JL-Mod Plus growing.</string>
+    <string name="library_donation_title">Support JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus is free and open source. If you find it useful, you can support its development with a voluntary donation.</string>
+    <string name="library_donation_provider_note">Donations are handled externally by Sociabuzz.</string>
+    <string name="library_donation_continue">Continue to Sociabuzz</string>
+    <string name="library_donation_not_now">Not now</string>
+    <string name="library_donation_link_copied">No browser available. The Sociabuzz link was copied to the clipboard.</string>
+    <string name="library_donation_browser_unavailable">No browser is available to open Sociabuzz.</string>
     <string name="library_bulk_delete_apps">Delete apps</string>
     <string name="library_bulk_add_collection">Add to collection</string>
     <string name="library_bulk_share_apps">Share apps</string>

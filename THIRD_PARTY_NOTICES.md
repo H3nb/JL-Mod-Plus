@@ -37,10 +37,28 @@ Gradle and CI do not access the network to obtain them.
 | `ic_license.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `04c5ae7ae82289583a80181c11cff9e06e27e686813a202f9d069cb9df8108e2`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_settings.xml` (`settings`), `ic_search.xml` (`search`), `ic_history.xml` (`history`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | matching official Android vectors at revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_add.xml` (`add`), `ic_delete.xml` (`delete`), `ic_deselect.xml` (`deselect`), `ic_edit.xml` (`edit`), `ic_help.xml` (`help`), `ic_info.xml` (`info`), `ic_keyboard_arrow_down.xml` (`keyboard_arrow_down`), `ic_keyboard_arrow_up.xml` (`keyboard_arrow_up`), `ic_memory_editor_inspector.xml` (`data_object`), `ic_memory_editor_watch.xml` (`bookmark`), `ic_memory_editor_watch_add.xml` (`bookmark_add`), `ic_more_vert.xml` (`more_vert`), `ic_save.xml` (`save`), `ic_screen_lock_rotation.xml` (`screen_lock_rotation`), `ic_select_all.xml` (`select_all`), `ic_sort.xml` (`sort`), `ic_warning.xml` (`warning`) | `https://github.com/google/material-design-icons` | outlined Material Symbols / equivalent Android vectors | Existing local vectors retain their current geometry; explicit source comments and/or geometry trace them to the named Google Material Symbols. New and revised assets use the repository pin `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e`. | Apache-2.0 |
+| `ic_favorite.xml` (source symbol: `favorite`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | Official vector at revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_install.xml` (`install_mobile`), `ic_recently_added.xml` (`calendar_add_on`), `ic_add_shortcut.xml` (`add_to_home_screen`), `ic_create_folder.xml` (`create_new_folder`), `ic_add_to_collection.xml` (`playlist_add`), `ic_remove_from_collection.xml` (`playlist_remove`), `ic_collections.xml` (`folder_copy`), `ic_more.xml` (`more_horiz`), `ic_remove.xml` (`remove`), `ic_open_external.xml` (`open_in_new`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_config_general.xml` (`tune`), `ic_check_circle.xml` (`check_circle`), `ic_save_as.xml` (`save_as`), `ic_sync.xml` (`sync`), `ic_refresh.xml` (`refresh`), `ic_reinstall.xml` (`restart_alt`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_lock.xml` (`lock`), `ic_unlock.xml` (`lock_open`), `ic_close.xml` (`close`), `ic_exit.xml` (`exit_to_app`), `ic_virtual_controls.xml` (`joystick`), `ic_control_layout.xml` (`dashboard_customize`), `ic_auto_mode.xml` (`auto_mode`), `ic_visibility.xml` (`visibility`), `ic_visibility_off.xml` (`visibility_off`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 
+
+### Sociabuzz identity
+
+`app/src/main/res/drawable-nodpi/sociabuzz_wordmark.png` is a reduced-color,
+resized copy of the Sociabuzz wordmark provided by the JL-Mod Plus maintainer
+for identifying the external donation provider. Sociabuzz branding is not
+licensed under JL-Mod Plus's Apache-2.0 license; all branding rights remain
+with their respective owner. This graphic does not imply Sociabuzz endorsement.
+
+### GitHub Octicons asset
+
+`app/src/main/res/drawable/ic_github_mark.xml` is adapted from GitHub's
+`mark-github-24.svg`, revision `97825f832c98f817867f770d084c08e3edc6f78c`,
+source: `https://github.com/primer/octicons`. Octicons source is MIT-licensed,
+Copyright (c) 2026 GitHub Inc. The applicable copyright and complete MIT text
+are included in `app/src/main/assets/licenses.html`. GitHub trademark rights
+are separate from the source license; the mark identifies the linked GitHub repository.
 
 ### Custom Material-style icon
 

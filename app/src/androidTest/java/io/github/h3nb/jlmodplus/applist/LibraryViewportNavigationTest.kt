@@ -812,7 +812,6 @@ class LibraryViewportNavigationTest {
         override fun onOpenSettings() = Unit
         override fun onOpenProfiles() = Unit
         override fun onOpenCrashReports() = Unit
-        override fun onSaveLog() = Unit
         override fun onRetryLibrary() = Unit
     }
 

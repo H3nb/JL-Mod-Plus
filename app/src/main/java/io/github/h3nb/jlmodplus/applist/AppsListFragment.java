@@ -42,6 +42,9 @@ import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_LIST;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -51,6 +54,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
@@ -90,7 +94,6 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryTransferIntents;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.settings.SettingsActivity;
 import io.github.h3nb.jlmodplus.util.AppUtils;
-import io.github.h3nb.jlmodplus.util.LogUtils;
 import io.github.h3nb.jlmodplus.installer.BulkInstallerDialog;
 import io.github.h3nb.jlmodplus.installer.InstallerDialog;
 
@@ -841,15 +844,21 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
-            public void onSaveLog() {
-                LibraryComposeController controller = composeController;
-                try {
-                    LogUtils.writeLog();
-                    if (controller != null) controller.showNotice(getString(R.string.log_save_started));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    if (controller != null) controller.showNotice(getString(R.string.log_save_failed));
-                }
+            public void onOpenDonation() {
+                openExternalPage(
+                        "https://sociabuzz.com/h3nb/tribe",
+                        "Sociabuzz",
+                        R.string.library_donation_link_copied,
+                        R.string.library_donation_browser_unavailable);
+            }
+
+            @Override
+            public void onOpenProjectRepository() {
+                openExternalPage(
+                        "https://github.com/H3nb/JL-Mod-Plus",
+                        "GitHub",
+                        R.string.about_github_link_copied,
+                        R.string.about_github_browser_unavailable);
             }
 
             @Override
@@ -857,6 +866,34 @@ public class AppsListFragment extends Fragment {
                 libraryViewModel.retry();
             }
         };
+    }
+
+    private void openExternalPage(
+            @NonNull String url,
+            @NonNull String label,
+            int copiedMessage,
+            int unavailableMessage) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    .addCategory(Intent.CATEGORY_BROWSABLE));
+        } catch (ActivityNotFoundException | SecurityException e) {
+            boolean copied = false;
+            try {
+                ClipboardManager clipboard = (ClipboardManager)
+                        requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                if (clipboard != null) {
+                    clipboard.setPrimaryClip(ClipData.newPlainText(label, url));
+                    copied = true;
+                }
+            } catch (SecurityException ignored) {
+                // A clipboard failure must not turn an unavailable browser into a crash.
+            }
+            // The About page covers Library's snackbar host; use a system toast that
+            // remains visible regardless of which in-app destination opened the link.
+            Toast.makeText(requireContext(),
+                    copied ? copiedMessage : unavailableMessage,
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     private LibraryAppRow findRow(int uiId) {

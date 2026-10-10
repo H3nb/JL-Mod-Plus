@@ -88,6 +88,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -371,7 +372,8 @@ interface LibraryActions {
     fun onOpenSettings()
     fun onOpenProfiles()
     fun onOpenCrashReports()
-    fun onSaveLog()
+    fun onOpenDonation() = Unit
+    fun onOpenProjectRepository() = Unit
     fun onRetryLibrary()
 }
 
@@ -575,9 +577,8 @@ class LibraryComposeController(
 }
 
 internal enum class LibraryInfoDialog {
-    About,
-    Help,
     Licenses,
+    Donation,
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -622,6 +623,7 @@ fun LibraryScreen(
     var appActionsCollectionId by remember { mutableStateOf<Long?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
+    var aboutPageVisible by rememberSaveable { mutableStateOf(false) }
     var pendingBulkDeleteIds by remember { mutableStateOf<Set<Long>?>(null) }
     var selectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
         mutableStateOf(initialSelectionState)
@@ -683,11 +685,12 @@ fun LibraryScreen(
     val currentControllerMetadataTarget by rememberUpdatedState(metadataTarget)
     val currentControllerDeleteTarget by rememberUpdatedState(deleteTarget)
     val currentControllerInfoDialog by rememberUpdatedState(infoDialog)
+    val currentControllerAboutPageVisible by rememberUpdatedState(aboutPageVisible)
     val currentControllerBulkDeleteIds by rememberUpdatedState(pendingBulkDeleteIds)
     val currentControllerSelectionActive by rememberUpdatedState(selectionActiveHere)
     val currentControllerOtherModalVisible by rememberUpdatedState(
         renameTarget != null || metadataTarget != null || deleteTarget != null ||
-            infoDialog != null || pendingBulkDeleteIds != null,
+            infoDialog != null || pendingBulkDeleteIds != null || aboutPageVisible,
     )
 
     LaunchedEffect(pagerState) {
@@ -808,6 +811,9 @@ fun LibraryScreen(
         enabled = destination == LibraryDestination.Apps && selectionActiveHere,
     ) {
         selectionState = selectionState.clear()
+    }
+    BackHandler(enabled = aboutPageVisible && infoDialog == null) {
+        aboutPageVisible = false
     }
 
     val metadataApp = metadataTarget?.let { target ->
@@ -950,6 +956,7 @@ fun LibraryScreen(
                         currentControllerDeleteTarget != null -> deleteTarget = null
                         currentControllerBulkDeleteIds != null -> pendingBulkDeleteIds = null
                         currentControllerInfoDialog != null -> infoDialog = null
+                        currentControllerAboutPageVisible -> aboutPageVisible = false
                         currentControllerSelectionActive -> selectionState = selectionState.clear()
                         else -> Unit
                     }
@@ -1018,6 +1025,7 @@ fun LibraryScreen(
     val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
     val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
+        || aboutPageVisible
     LaunchedEffect(libraryOverlayVisible, selectionActiveHere) {
         onControllerBackAvailabilityChanged(libraryOverlayVisible || selectionActiveHere)
     }
@@ -1326,22 +1334,16 @@ fun LibraryScreen(
                                 if (currentControllerDestination == LibraryDestination.More) actions.onImportAppBundle()
                             },
                             onAbout = {
-                                if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.About
+                                if (currentControllerDestination == LibraryDestination.More) aboutPageVisible = true
                             },
-                            onLicenses = {
-                                if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.Licenses
+                            onDonate = {
+                                if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.Donation
                             },
                             onSettings = {
                                 if (currentControllerDestination == LibraryDestination.More) actions.onOpenSettings()
                             },
-                            onHelp = {
-                                if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.Help
-                            },
                             onCrashReports = {
                                 if (currentControllerDestination == LibraryDestination.More) actions.onOpenCrashReports()
-                            },
-                            onSaveLog = {
-                                if (currentControllerDestination == LibraryDestination.More) actions.onSaveLog()
                             },
                         )
                     }
@@ -1350,6 +1352,20 @@ fun LibraryScreen(
         }
         }
 
+        if (aboutPageVisible) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .zIndex(4f),
+            ) {
+                LibraryAboutScreen(
+                    onBack = { aboutPageVisible = false },
+                    onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
+                    onOpenGitHub = actions::onOpenProjectRepository,
+                )
+            }
+        }
         metadataApp?.let { app ->
             Box(
                 modifier = Modifier
@@ -1554,7 +1570,7 @@ fun LibraryScreen(
                 { event -> handler.onControllerKeyEvent(event) }
             },
             onDismiss = { infoDialog = null },
-            onOpen = { infoDialog = it },
+            onDonate = actions::onOpenDonation,
         )
     }
     collectionsHost?.let { LibraryCollectionsDialogHost(it) }
@@ -2655,11 +2671,9 @@ internal fun LibraryMoreDestination(
     scaffoldPadding: PaddingValues,
     onImportAppBundle: () -> Unit = {},
     onAbout: () -> Unit,
-    onLicenses: () -> Unit,
+    onDonate: () -> Unit,
     onSettings: () -> Unit,
-    onHelp: () -> Unit,
     onCrashReports: () -> Unit,
-    onSaveLog: () -> Unit,
 ) {
     val listState = rememberLazyListState()
     val canScrollForward = rememberLazyListCanScrollForward(listState)
@@ -2709,34 +2723,22 @@ internal fun LibraryMoreDestination(
                                     action = onImportAppBundle,
                                 )
                                 LibraryActionRow(
+                                    label = R.string.library_donation_action,
+                                    summary = R.string.library_donation_summary,
+                                    icon = R.drawable.ic_favorite,
+                                    action = onDonate,
+                                )
+                                LibraryActionRow(
                                     label = R.string.crash_reports,
                                     summary = R.string.library_action_crash_reports_summary,
                                     icon = R.drawable.ic_bug_report,
                                     action = onCrashReports,
                                 )
                                 LibraryActionRow(
-                                    label = R.string.save_log,
-                                    summary = R.string.library_action_save_log_summary,
-                                    icon = R.drawable.ic_save,
-                                    action = onSaveLog,
-                                )
-                                LibraryActionRow(
                                     label = R.string.about,
                                     summary = R.string.library_action_about_summary,
                                     icon = R.drawable.ic_info,
                                     action = onAbout,
-                                )
-                                LibraryActionRow(
-                                    label = R.string.licenses,
-                                    summary = R.string.library_action_licenses_summary,
-                                    icon = R.drawable.ic_license,
-                                    action = onLicenses,
-                                )
-                                LibraryActionRow(
-                                    label = R.string.help,
-                                    summary = R.string.library_action_help_summary,
-                                    icon = R.drawable.ic_help,
-                                    action = onHelp,
                                 )
                             }
                         }
@@ -4530,27 +4532,22 @@ internal fun LibraryInformationDialog(
     dialog: LibraryInfoDialog,
     onControllerKeyEvent: ((KeyEvent) -> Boolean)? = null,
     onDismiss: () -> Unit,
-    onOpen: (LibraryInfoDialog) -> Unit,
+    onDonate: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val title = when (dialog) {
-        LibraryInfoDialog.About -> stringResource(R.string.about)
-        LibraryInfoDialog.Help -> stringResource(R.string.help)
         LibraryInfoDialog.Licenses -> stringResource(R.string.licenses)
+        LibraryInfoDialog.Donation -> stringResource(R.string.library_donation_title)
     }
     val icon = when (dialog) {
-        LibraryInfoDialog.About -> R.drawable.ic_info
-        LibraryInfoDialog.Help -> R.drawable.ic_help
         LibraryInfoDialog.Licenses -> null
+        LibraryInfoDialog.Donation -> R.drawable.ic_favorite
     }
     val layout = libraryDialogLayout()
     val maxMessageHeight = libraryDialogListHeight()
     val linkStyles = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary))
-    val message = when (dialog) {
-        LibraryInfoDialog.About -> AnnotatedString(stringResource(R.string.about_message))
-        LibraryInfoDialog.Help -> AnnotatedString.fromHtml(stringResource(R.string.help_message),
-            linkStyles = linkStyles)
-        LibraryInfoDialog.Licenses -> try {
+    val licenseMessage = if (dialog == LibraryInfoDialog.Licenses) {
+        try {
             AnnotatedString.fromHtml(
                 context.assets.open("licenses.html").bufferedReader().use { it.readText() },
                 linkStyles = linkStyles,
@@ -4558,6 +4555,8 @@ internal fun LibraryInformationDialog(
         } catch (_: Exception) {
             AnnotatedString(stringResource(R.string.licenses_unavailable))
         }
+    } else {
+        null
     }
 
     AlertDialog(
@@ -4591,11 +4590,7 @@ internal fun LibraryInformationDialog(
         },
         text = {
             when (dialog) {
-                LibraryInfoDialog.About -> LibraryAboutBody(maxHeight = maxMessageHeight)
-                LibraryInfoDialog.Help -> LibraryHelpBody(
-                    message = message,
-                    maxHeight = maxMessageHeight,
-                )
+                LibraryInfoDialog.Donation -> LibraryDonationBody(maxHeight = maxMessageHeight)
                 LibraryInfoDialog.Licenses -> {
                     val scrollState = rememberScrollState()
                     val canScrollForward = rememberScrollCanScrollForward(scrollState)
@@ -4605,7 +4600,7 @@ internal fun LibraryInformationDialog(
                             .heightIn(max = maxMessageHeight),
                     ) {
                         Text(
-                            text = message,
+                            text = requireNotNull(licenseMessage),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = maxMessageHeight)
@@ -4623,119 +4618,53 @@ internal fun LibraryInformationDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+            if (dialog == LibraryInfoDialog.Donation) {
+                Button(onClick = { onDismiss(); onDonate() }) {
+                    Text(stringResource(R.string.library_donation_continue))
+                }
+            } else {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+            }
         },
+        dismissButton = if (dialog == LibraryInfoDialog.Donation) {
+            { TextButton(onClick = onDismiss) { Text(stringResource(R.string.library_donation_not_now)) } }
+        } else null,
     )
 }
 
 @Composable
-private fun LibraryAboutBody(
-    maxHeight: Dp,
-) {
+private fun LibraryDonationBody(maxHeight: Dp) {
     val scrollState = rememberScrollState()
     val canScrollForward = rememberScrollCanScrollForward(scrollState)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = maxHeight),
-    ) {
+    Box(modifier = Modifier.fillMaxWidth().heightIn(max = maxHeight)) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = maxHeight)
-                .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(max = maxHeight).verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = stringResource(R.string.about_product_name),
-                style = MaterialTheme.typography.titleLarge,
-            )
-            Text(
-                text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+                text = stringResource(R.string.library_donation_message),
+                modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text(
-                text = AnnotatedString.fromHtml(stringResource(R.string.about_github),
-                    linkStyles = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary))),
-                style = MaterialTheme.typography.bodyMedium,
+            Image(
+                painter = painterResource(R.drawable.sociabuzz_wordmark),
+                contentDescription = null, // Provider named in the action and supporting text.
+                modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 24.dp),
+                contentScale = ContentScale.Fit,
             )
             Text(
-                text = stringResource(
-                    R.string.about_maintainer,
-                    stringResource(R.string.about_maintainer_name),
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = stringResource(R.string.about_message).trim(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = stringResource(R.string.about_lineage),
-                style = MaterialTheme.typography.bodyMedium,
+                text = stringResource(R.string.library_donation_provider_note),
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         ScrollableContentHint(
             visible = canScrollForward,
-            modifier = Modifier
-                .align(Alignment.BottomCenter),
+            modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
 }
 
-@Composable
-private fun LibraryHelpBody(
-    message: AnnotatedString,
-    maxHeight: Dp,
-) {
-    val items = remember(message.text) {
-        message.text
-            .split('•')
-            .map(String::trim)
-            .filter(String::isNotEmpty)
-    }
-    val scrollState = rememberScrollState()
-    val canScrollForward = rememberScrollCanScrollForward(scrollState)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = maxHeight),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = maxHeight)
-                .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            items.forEach { item ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    Text(
-                        text = "•",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(
-                        text = item,
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-        ScrollableContentHint(
-            visible = canScrollForward,
-            modifier = Modifier
-                .align(Alignment.BottomCenter),
-        )
-    }
-}

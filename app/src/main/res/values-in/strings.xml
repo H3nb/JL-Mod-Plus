@@ -1,8 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">Tentang</string>
-    <string name="about_message">JL-Mod Plus menjalankan aplikasi dan game J2ME di Android.</string>
-    <string name="about_lineage">JL-Mod Plus adalah fork dari JL-Mod oleh woesss (Yury Kharchenko), yang juga merupakan fork dan mod eksperimental dari J2ME-Loader oleh Nikita Shakarun. Fork ini dipelihara melalui pekerjaan desain, rekayasa, pengujian, dan infrastruktur yang berkelanjutan. Atribusi dan pemberitahuan lisensi upstream dipertahankan di dalam proyek.</string>
+    <string name="about_message">Jalankan aplikasi dan game klasik, kelola MIDlet dalam pustaka, serta sesuaikan kontrol, tampilan, audio, dan performa. JL-Mod Plus gratis dan bersumber terbuka.</string>
+    <string name="about_subtitle">Emulator Java ME untuk Android</string>
+    <string name="about_compatibility">Kompatibilitas bergantung pada MIDlet, perangkat, dan API Java ME yang didukung. Sebagian aplikasi mungkin berperilaku berbeda dibandingkan pada ponsel aslinya.</string>
+    <string name="about_lineage_title">Asal-usul proyek</string>
+    <string name="about_build_title">Informasi build</string>
+    <string name="about_version_label">Versi</string>
+    <string name="about_build_label">Build</string>
+    <string name="about_revision_label">Revisi sumber</string>
+    <string name="about_links_title">Proyek dan lisensi</string>
+    <string name="about_github_link_copied">Tidak ada browser yang tersedia. Tautan GitHub telah disalin ke papan klip.</string>
+    <string name="about_github_browser_unavailable">Tidak ada browser yang tersedia untuk membuka GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus merupakan fork independen dari JL-Mod karya woesss (Yury Kharchenko). JL-Mod sendiri dikembangkan dari J2ME Loader karya Nikita Shakarun, yang berakar dari J2meLoader oleh NaikSoftware.</string>
+    <string name="about_evolution">JL-Mod Plus mengembangkan fondasi tersebut lebih lanjut dengan antarmuka modern, pengelolaan MIDlet yang lebih lengkap, berbagai fitur baru, dan dukungan untuk Android generasi terbaru.</string>
     <string name="action_context_delete">Hapus</string>
     <string name="action_context_rename">Ubah nama</string>
     <string name="action_context_shortcut">Buat pintasan</string>
@@ -910,9 +921,18 @@
     <string name="library_action_settings_summary">Atur perilaku dan tampilan global aplikasi.</string>
     <string name="library_action_crash_reports_summary">Tinjau laporan diagnostik yang tersimpan.</string>
     <string name="library_action_save_log_summary">Simpan log terbaru JL-Mod Plus untuk pemecahan masalah.</string>
-    <string name="library_action_about_summary">Informasi versi, proyek, dan pengelola.</string>
+    <string name="library_action_about_summary">Ringkasan proyek, informasi build, dan tautan.</string>
     <string name="library_action_licenses_summary">Pemberitahuan pihak ketiga dan ketentuan lisensi yang disertakan.</string>
     <string name="library_action_help_summary">Panduan penggunaan dan kontrol umum.</string>
+    <string name="library_donation_action">Dukung pengembangan</string>
+    <string name="library_donation_summary">Bantu JL-Mod Plus terus berkembang.</string>
+    <string name="library_donation_title">Dukung JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus gratis dan bersumber terbuka. Jika aplikasi ini bermanfaat, Anda bisa mendukung pengembangannya melalui donasi sukarela.</string>
+    <string name="library_donation_provider_note">Donasi diproses di luar aplikasi melalui Sociabuzz.</string>
+    <string name="library_donation_continue">Lanjutkan ke Sociabuzz</string>
+    <string name="library_donation_not_now">Lain kali</string>
+    <string name="library_donation_link_copied">Tidak ada browser yang tersedia. Tautan Sociabuzz telah disalin ke papan klip.</string>
+    <string name="library_donation_browser_unavailable">Tidak ada browser yang tersedia untuk membuka Sociabuzz.</string>
     <string name="library_action_select">Pilih</string>
     <string name="library_selection_select_all">Pilih semua</string>
     <string name="library_selection_unselect_all">Batalkan semua pilihan</string>

@@ -45,6 +45,7 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
@@ -528,6 +529,80 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun moreKeepsDonationVisibleWithoutOldLogAndHelpMenus() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onNodeWithText(uiString(R.string.library_destination_more)).performClick()
+        composeRule.onAllNodesWithText(uiString(R.string.save_log)).assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.help)).assertCountEquals(0)
+
+        val importTop = composeRule.onNodeWithText(
+            uiString(R.string.library_action_import_bundle),
+        ).fetchSemanticsNode().boundsInRoot.top
+        val donationTop = composeRule.onNodeWithText(
+            uiString(R.string.library_donation_action),
+        ).fetchSemanticsNode().boundsInRoot.top
+        val aboutTop = composeRule.onNodeWithText(
+            uiString(R.string.about),
+        ).fetchSemanticsNode().boundsInRoot.top
+        assertTrue(importTop < donationTop)
+        assertTrue(donationTop < aboutTop)
+        val crashTop = composeRule.onNodeWithText(
+            uiString(R.string.crash_reports),
+        ).fetchSemanticsNode().boundsInRoot.top
+        assertTrue(crashTop < aboutTop)
+        composeRule.onAllNodesWithText(uiString(R.string.licenses)).assertCountEquals(0)
+    }
+
+    @Test
+    fun moreDonationIsVoluntaryAndOpensViaExplicitHostAction() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+        composeRule.onAllNodesWithText(uiString(R.string.library_donation_title)).assertCountEquals(0)
+
+        composeRule.onNodeWithText(uiString(R.string.library_destination_more)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_message)).assertIsDisplayed()
+        assertEquals(0, actions.donationCount)
+        composeRule.onNodeWithText(uiString(R.string.library_donation_not_now)).performClick()
+        composeRule.onAllNodesWithText(uiString(R.string.library_donation_title)).assertCountEquals(0)
+
+        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_continue)).performClick()
+        assertEquals(1, actions.donationCount)
+        composeRule.onAllNodesWithText(uiString(R.string.library_donation_title)).assertCountEquals(0)
+    }
+
+    @Test
+    fun aboutIsASeparatePageWithLicensesAndGitHubLink() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+        composeRule.onNodeWithText(uiString(R.string.library_destination_more)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.about)).performClick()
+
+        composeRule.onNodeWithText(uiString(R.string.about_compatibility))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_build_title))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_github_label))
+            .performScrollTo()
+            .performClick()
+        assertEquals(1, actions.githubCount)
+        composeRule.onNodeWithText(uiString(R.string.licenses))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNode(hasText(uiString(R.string.licenses)) and hasAnyAncestor(isDialog()))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.close)).performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).assertIsDisplayed()
+    }
+
+    @Test
     fun moreExposesImportAppBundleCallback() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
@@ -780,15 +855,24 @@ class LibraryComposeTest {
     fun aboutUsesCurrentProjectIdentityWithoutLegacyEmail() {
         composeRule.setContent {
             JLModPlusTheme {
-                LibraryInformationDialog(
-                    dialog = LibraryInfoDialog.About,
-                    onDismiss = {},
-                    onOpen = {},
+                LibraryAboutScreen(
+                    onBack = {},
+                    onLicenses = {},
+                    onOpenGitHub = {},
                 )
             }
         }
 
-        composeRule.onNodeWithText("JL-Mod Plus").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_product_name)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_compatibility))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_evolution))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about_build_title))
+            .performScrollTo()
+            .assertIsDisplayed()
         composeRule.onAllNodesWithText("j2me.forever@gmail.com").assertCountEquals(0)
         composeRule.onAllNodesWithText("Copyright 2020-2026 Yury Kharchenko").assertCountEquals(0)
     }
@@ -892,6 +976,8 @@ class LibraryComposeTest {
         var openedId: Int? = null
         var renamed: Pair<Int, String>? = null
         var settingsCount = 0
+        var donationCount = 0
+        var githubCount = 0
         var retryCount = 0
 
         override fun onSearch(query: String) { searches += query }
@@ -911,7 +997,8 @@ class LibraryComposeTest {
         override fun onOpenSettings() { settingsCount++ }
         override fun onOpenProfiles() = Unit
         override fun onOpenCrashReports() = Unit
-        override fun onSaveLog() = Unit
+        override fun onOpenDonation() { donationCount++ }
+        override fun onOpenProjectRepository() { githubCount++ }
         override fun onRetryLibrary() { retryCount++ }
     }
 }
