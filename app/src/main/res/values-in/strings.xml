@@ -12,7 +12,7 @@
     <string name="about_links_title">Proyek dan lisensi</string>
     <string name="about_github_link_copied">Tidak ada browser yang tersedia. Tautan GitHub telah disalin ke papan klip.</string>
     <string name="about_github_browser_unavailable">Tidak ada browser yang tersedia untuk membuka GitHub.</string>
-    <string name="about_lineage">JL-Mod Plus berawal sebagai fork dari JL-Mod karya woesss (Yury Kharchenko). JL-Mod sendiri dikembangkan dari J2ME Loader karya Nikita Shakarun. Dari fondasi tersebut, JL-Mod Plus menghadirkan antarmuka baru, penyempurnaan kontrol, dan dukungan untuk Android modern.</string>
+    <string name="about_lineage">JL-Mod Plus berawal sebagai fork dari JL-Mod karya woesss (Yury Kharchenko), yang dibangun di atas J2ME Loader karya Nikita Shakarun. Proyek ini melanjutkan pengembangannya dengan antarmuka baru, kontrol yang lebih fleksibel, dan dukungan untuk Android modern.</string>
     <string name="action_context_delete">Hapus</string>
     <string name="action_context_rename">Ubah nama</string>
     <string name="action_context_shortcut">Buat pintasan</string>

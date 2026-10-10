@@ -19,7 +19,7 @@
     <string name="about_github_repository" translatable="false">H3nb/JL-Mod-Plus</string>
     <string name="about_github_link_copied">No browser available. The GitHub link was copied to the clipboard.</string>
     <string name="about_github_browser_unavailable">No browser is available to open GitHub.</string>
-    <string name="about_lineage">JL-Mod Plus began as a fork of JL-Mod by woesss (Yury Kharchenko). JL-Mod itself builds on J2ME Loader by Nikita Shakarun. Building on that foundation, JL-Mod Plus adds a redesigned interface, input improvements, and support for modern Android versions.</string>
+    <string name="about_lineage">JL-Mod Plus began as a fork of JL-Mod by woesss (Yury Kharchenko), which builds on J2ME Loader by Nikita Shakarun. It continues that work with a redesigned interface, more flexible controls, and support for modern Android versions.</string>
     <string name="action_context_delete">Delete</string>
     <string name="action_context_rename">Rename</string>
     <string name="action_context_shortcut">Add shortcut</string>
