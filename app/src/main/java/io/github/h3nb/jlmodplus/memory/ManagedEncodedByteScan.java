@@ -25,6 +25,9 @@ final class ManagedEncodedByteScan {
         int count = 0;
         for (int offset = 0; offset <= before.length - 4; offset++) {
             if ((offset & 255) == 0 && !check.active()) return -1;
+            if (before[offset] == now[offset] && before[offset + 1] == now[offset + 1]
+                    && before[offset + 2] == now[offset + 2]
+                    && before[offset + 3] == now[offset + 3]) continue;
             int previous = (int) ManagedPackedValue.read(before, offset, 4, endian);
             int current = (int) ManagedPackedValue.read(now, offset, 4, endian);
             if (previous == current) continue;
