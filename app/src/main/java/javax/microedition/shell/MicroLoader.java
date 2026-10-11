@@ -440,13 +440,6 @@ public class MicroLoader {
 		MidletSystem.setProperty("fileconn.dir.memorycard", "file:///e:/");
 	}
 
-	static String fileConnectionDataUri(
-			String launchedWorkDir, String storageKey, String primaryStoragePath) {
-		File dataDir = new File(launchedWorkDir + Config.MIDLET_DATA_DIR + storageKey);
-		return "file:///c:" + dataDir.getPath().substring(primaryStoragePath.length())
-				.replace(File.separatorChar, '/');
-	}
-
 	public int getOrientation() {
 		return params.orientation;
 	}
