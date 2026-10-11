@@ -82,6 +82,7 @@ import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 import io.github.h3nb.jlmodplus.util.AppUtils;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
+import org.microemu.cldc.file.VirtualFileSystem;
 import io.github.h3nb.jlmodplus.jar.Descriptor;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
@@ -207,6 +208,7 @@ public class MicroLoader {
 	}
 
 	private void closeStorageLease() {
+		VirtualFileSystem.clear();
 		RuntimeStorageLease lease = storageLease;
 		storageLease = null;
 		if (lease != null) {
@@ -423,14 +425,14 @@ public class MicroLoader {
 
 	private void setProperties() {
 		MidletSystem.setProperty("microedition.locale", guestLocale);
-		final String primaryStoragePath = Environment.getExternalStorageDirectory().getPath();
-		String dataUri = fileConnectionDataUri(workDir, appDirName, primaryStoragePath);
-		String musicUri = "file:///c:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
-				.getPath().substring(primaryStoragePath.length());
-		MidletSystem.setProperty("fileconn.dir.cache", dataUri + "/cache");
-		MidletSystem.setProperty("fileconn.dir.private", dataUri + "/private");
-		MidletSystem.setProperty("fileconn.dir.music", musicUri);
-		MidletSystem.setProperty("user.home", primaryStoragePath);
+		MidletSystem.setProperty("fileconn.dir.cache", "file:///cache:/");
+		MidletSystem.setProperty("fileconn.dir.private", "file:///private:/");
+		MidletSystem.setProperty("fileconn.dir.music", "file:///e:/Music/");
+		MidletSystem.setProperty("fileconn.dir.photos", "file:///e:/Images/");
+		MidletSystem.setProperty("fileconn.dir.videos", "file:///e:/Videos/");
+		MidletSystem.setProperty("fileconn.dir.tones", "file:///c:/Sounds/");
+		MidletSystem.setProperty("fileconn.dir.recordings", "file:///e:/Recordings/");
+		MidletSystem.setProperty("fileconn.dir.memorycard", "file:///e:/");
 	}
 
 	static String fileConnectionDataUri(
@@ -562,6 +564,7 @@ public class MicroLoader {
 						ContextHolder.getActivity().getString(R.string.runtime_installation_changed));
 				return;
 			}
+			VirtualFileSystem.install(new File(workDir), appDirName);
 			startTimingSession();
 			MidletSessionJournal journal = MidletSessionJournal.create(
 					ContextHolder.getAppContext(),
