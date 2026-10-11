@@ -29,14 +29,27 @@ the exact array object at page/inspection read time; an instance parent is kept
 weakly. Metadata is bounded and complete or absent; a class/field/type name
 must not be truncated and treated as a valid identity.
 
-An array discovered through an `Object[]`, a container, a guest root, or a
-different unsupported path may have no direct-field source. This means **not
+A typed direct-field source is separate from the verified root-relative path.
+During scanning, one weak predecessor is captured per queued object and shared by
+all numeric candidates in that object or array. Inspector materializes at most
+24 steps and checks the current MIDlet, Displayable or initialized static root,
+every intermediate field or `Object[]` index, and the exact candidate owner.
+A changed edge is reported as changed; a chain beyond the depth/display limit
+is incomplete. There is no automatic rebinding by value or by path.
+For supported direct arrays, many numeric elements reuse the same ancestry.
+
+An array discovered through a container or an unsupported route may have no
+verified root path even when it has an observed direct-field source. Container
+elements do not acquire invented keys or positional identities; a `Vector`/
+`Stack`/`Hashtable` entry is not a persistent locator. This means **not
 traced**, not **no source exists**. Multiple fields may point to the same object;
 the first observed one is not guaranteed to be the preferred future route.
 An instance field's name alone never identifies the particular instance.
 
 The presentation renders a compact summary from typed source metadata while
-Inspector exposes the full declaring class, field name and type. The existing
+Inspector exposes the full declaring class, field name, type and, when verified,
+the root-relative path. A checked path is only an observation of the current
+runtime, not a stable identity of a game entity after restart. The existing
 diagnostic location text remains available independently, but must not be parsed
 to construct structural identity. An observation may become stale immediately
 after it is read because the guest is concurrent; refreshing revalidates it.
@@ -56,3 +69,18 @@ A future persistent record will need independent installed-MIDlet identity
 and compatible source-JAR identity, plus structural path verification. Nothing
 in the current contract serializes candidates, auto-applies writes or introduces
 raw-address scanning, JVM instrumentation, or additional MIDlet bytecode hooks.
+
+## Accounting and resource bounds
+
+Result staging now tracks owner allocation and buffer-capacity growth
+incrementally rather than rescanning all owner buckets for each numeric
+candidate. Finish-copy overlap, history, and traversal budgets still use
+saturating checked arithmetic. One retained predecessor is charged per
+distinct shared ancestor node, not per numeric element; temporary traversal
+entries are charged while the scanner is active. Captured references are
+weak and do not keep guest owners alive.
+
+No extra traversal, worker, timer, or bytecode hook runs when the editor
+is idle. Root-path validation is lazy on Inspector requests. A second
+on-demand graph traversal is intentionally not implemented: untraced
+containers remain untraced until a specific safe selector is supported.

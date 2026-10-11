@@ -68,6 +68,9 @@ final class ManagedJavaMemoryEngine {
 	private static final long FINISHED_BUCKET_BYTES = 64L;
 	private static final long TRAVERSAL_ENTRY_BYTES = 64L;
 	private static final long QUEUE_REFERENCE_BYTES = Long.BYTES;
+	/** Conservative accounting for one weak shared predecessor (not one per numeric element). */
+	private static final long PROVENANCE_NODE_BYTES = 80L;
+	private static final int MAX_PROVENANCE_DEPTH = 24;
 	private static final long SNAPSHOT_REFERENCE_BYTES = Long.BYTES;
 
 	private final Object stateLock = new Object();
@@ -122,8 +125,8 @@ final class ManagedJavaMemoryEngine {
 
 	private static void enqueueSnapshotRoots(ScanContext scan,
 	                                         MemoryDiscoveryBridge.Snapshot snapshot) {
-		scan.enqueue(snapshot.root());
-		scan.enqueue(snapshot.displayableRoot());
+		scan.enqueueRoot(snapshot.root(), ProvenanceNode.MIDLET_ROOT);
+		scan.enqueueRoot(snapshot.displayableRoot(), ProvenanceNode.DISPLAYABLE_ROOT);
 	}
 
 	ManagedCapabilities capabilities(long token) {
@@ -706,6 +709,7 @@ final class ManagedJavaMemoryEngine {
 			revision = committed;
 		}
 		CandidateSource anchorSource = sourceFor(owner, anchorSlot, strongOwner);
+		PathObservation path = inspectPath(token, owner, strongOwner, anchorSlot);
 		for (int index = 0; index < slots.size(); index++) {
 			int slot = slots.get(index);
 			int type = valueTypeFor(owner, slot);
@@ -739,7 +743,7 @@ final class ManagedJavaMemoryEngine {
 				revision == null ? expectedRevision : revision.id, ids, values, initial, previous,
 				types, states, offsets, expectedBits, labels, editable,
 				"managed-logical-owner=" + owner.handle + ":slot=" + anchorSlot,
-				anchorSource, null);
+				anchorSource, path, null);
 	}
 
 	ManagedOperationResult editInspector(long token, long expectedRevision, long anchorId,
@@ -2419,13 +2423,14 @@ final class ManagedJavaMemoryEngine {
 		final boolean[] editable;
 		final String provenance;
 		final CandidateSource source;
+		final PathObservation path;
 		final String message;
 
 		ManagedInspection(int code, long revision, long[] ids, String[] values,
 		                String[] initialValues, String[] previousValues, int[] types, int[] states,
 		                int[] relativeOffsets, long[] expectedBits, String[] labels,
 		                boolean[] editable, String provenance, CandidateSource source,
-		                String message) {
+		                PathObservation path, String message) {
 			this.code = code;
 			this.revision = revision;
 			this.ids = ids;
@@ -2440,13 +2445,15 @@ final class ManagedJavaMemoryEngine {
 			this.editable = editable;
 			this.provenance = provenance;
 			this.source = source;
+			this.path = path;
 			this.message = message;
 		}
 
 		static ManagedInspection failure(int code, @Nullable String message) {
 			return new ManagedInspection(code, 0L, new long[0], new String[0], new String[0],
 					new String[0], new int[0], new int[0], new int[0], new long[0], new String[0],
-					new boolean[0], "", CandidateSource.UNKNOWN, message);
+					new boolean[0], "", CandidateSource.UNKNOWN,
+					new PathObservation(MemoryEngineContract.PATH_UNKNOWN, ""), message);
 		}
 	}
 
@@ -2719,7 +2726,7 @@ final class ManagedJavaMemoryEngine {
 		final GroupPlan groupPlan;
 		final boolean captureAllValues;
 		final ArrayDeque<Object> queue = new ArrayDeque<>();
-		final IdentityHashMap<Object, Boolean> queued = new IdentityHashMap<>();
+		final IdentityHashMap<Object, ProvenanceNode> queued = new IdentityHashMap<>();
 		final IdentityHashMap<Object, Boolean> visited = new IdentityHashMap<>();
 		final IdentityHashMap<Object, OwnerBucket> objectOwners = new IdentityHashMap<>();
 		/** Pending direct-field paths only; the scanner already retains these queued arrays. */
@@ -2764,12 +2771,21 @@ final class ManagedJavaMemoryEngine {
 		}
 
 		void enqueue(@Nullable Object value) {
+			enqueuePath(value, null, null, -1, ProvenanceNode.UNKNOWN_ROOT);
+		}
+
+		void enqueueRoot(@Nullable Object value, int rootKind) {
+			enqueuePath(value, null, null, -1, rootKind);
+		}
+
+		void enqueuePath(@Nullable Object value, @Nullable ProvenanceNode parent,
+		                 @Nullable Field field, int index, int kind) {
 			if (value == null || queued.containsKey(value) || visited.containsKey(value)) return;
 			if (queue.size() >= limits.maxPending) {
 				throw new ResourceLimitException("Managed traversal pending queue exceeds the resource limit");
 			}
-			reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES + QUEUE_REFERENCE_BYTES);
-			queued.put(value, Boolean.TRUE);
+			reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES + QUEUE_REFERENCE_BYTES + PROVENANCE_NODE_BYTES);
+			queued.put(value, new ProvenanceNode(value, parent, field, index, kind));
 			queue.addLast(value);
 		}
 
@@ -2792,7 +2808,8 @@ final class ManagedJavaMemoryEngine {
 					pendingArrayReferences.put(value, new ArrayReference(source.field, parent));
 				}
 			}
-			enqueue(value);
+			enqueuePath(value, parent == null ? null : queued.get(parent), source.field, -1,
+					parent == null ? ProvenanceNode.STATIC_FIELD : ProvenanceNode.INSTANCE_FIELD);
 		}
 
 		boolean checkpoint() {
@@ -2848,8 +2865,10 @@ final class ManagedJavaMemoryEngine {
 						} else if (plan.accepts(field.valueType) && !field.finalField
 								&& (captureAllValues || plan.matchesKnown(field.valueType,
 										current))) {
-							if (owner == null) owner = ownerForObject(value, KIND_OBJECT_FIELD,
-									schema, objectOwners);
+							if (owner == null) {
+								owner = ownerForObject(value, KIND_OBJECT_FIELD, schema, objectOwners);
+								if (owner.provenancePath == null) owner.provenancePath = queued.get(value);
+							}
 							if (!addToActiveRevision(revision, owner, field.slot, current, current,
 									transientStorageBytes)) {
 								throw new ResourceLimitException(
@@ -2868,8 +2887,11 @@ final class ManagedJavaMemoryEngine {
 					concurrentFailures++;
 				}
 			}
-			if (groupMatcher != null && groupMatcher.complete()) publishGroup(value, KIND_OBJECT_FIELD,
-					schema, objectOwners);
+			if (groupMatcher != null && groupMatcher.complete()) {
+				publishGroup(value, KIND_OBJECT_FIELD, schema, objectOwners);
+				OwnerBucket groupOwner = objectOwners.get(value);
+				if (groupOwner != null) if (groupOwner.provenancePath == null) groupOwner.provenancePath = queued.get(value);
+			}
 		}
 
 		boolean scanStaticClass(Class<?> type) {
@@ -2939,6 +2961,7 @@ final class ManagedJavaMemoryEngine {
 					if (owner == null) {
 						owner = ownerForObject(array, KIND_ARRAY, null, objectOwners);
 						if (reference != null) owner.arrayReference = reference;
+						if (owner.provenancePath == null) owner.provenancePath = queued.get(array);
 					}
 					if (!addToActiveRevision(revision, owner, index, value[0], value[0],
 							transientStorageBytes)) {
@@ -2953,6 +2976,8 @@ final class ManagedJavaMemoryEngine {
 					OwnerBucket groupOwner = objectOwners.get(array);
 					if (groupOwner != null) groupOwner.arrayReference = reference;
 				}
+				OwnerBucket groupOwner = objectOwners.get(array);
+				if (groupOwner != null) if (groupOwner.provenancePath == null) groupOwner.provenancePath = queued.get(array);
 			}
 		}
 
@@ -2977,7 +3002,8 @@ final class ManagedJavaMemoryEngine {
 				if ((index & (CHECK_INTERVAL - 1)) == 0 && !isOperationActive(token, operationEpoch)) {
 					throw new OperationCancelledException();
 				}
-				enqueue(array[index]);
+				enqueuePath(array[index], queued.get(array), null, index,
+						ProvenanceNode.ARRAY_INDEX);
 			}
 		}
 
@@ -3055,6 +3081,7 @@ final class ManagedJavaMemoryEngine {
 		final ArrayList<OwnerBucketBuilder> builders = new ArrayList<>();
 		final Map<Long, OwnerBucketBuilder> byOwner = new HashMap<>();
 		final long retainedRevisionBytes;
+		long stagedStorageBytes;
 		long candidateCount;
 
 		RevisionBuilder() {
@@ -3074,6 +3101,7 @@ final class ManagedJavaMemoryEngine {
 				builder = new OwnerBucketBuilder(owner, initialCapacity);
 				byOwner.put(owner.handle, builder);
 				builders.add(builder);
+				stagedStorageBytes = checkedAdd(stagedStorageBytes, newStorage);
 			}
 			return builder;
 		}
@@ -3092,6 +3120,7 @@ final class ManagedJavaMemoryEngine {
 			long growth = builder.additionalStorageForNext(limits.maxCandidates);
 			if (!canAddStorage(limits, extraBytes, growth)) return false;
 			if (!builder.add(slot, initialValue, previousValue, limits)) return false;
+			stagedStorageBytes = checkedAdd(stagedStorageBytes, growth);
 			candidateCount++;
 			return true;
 		}
@@ -3101,11 +3130,7 @@ final class ManagedJavaMemoryEngine {
 		}
 
 		long storageBytes() {
-			long total = retainedRevisionBytes;
-			for (OwnerBucketBuilder builder : builders) {
-				total = checkedAdd(total, builder.storageBytes());
-			}
-			return total;
+			return checkedAdd(retainedRevisionBytes, stagedStorageBytes);
 		}
 
 		Revision finish(long id, Limits limits, long extraBytes) {
@@ -3119,7 +3144,8 @@ final class ManagedJavaMemoryEngine {
 						checkedAdd(checkedMultiply(builder.size, RESULT_SLOT_BYTES),
 								FINISHED_BUCKET_BYTES));
 			}
-			if (!canAddStorage(limits, extraBytes, finishedStorageBytes)) {
+			long pathBytes = retainedPathBytes();
+			if (!canAddStorage(limits, extraBytes, checkedAdd(finishedStorageBytes, pathBytes))) {
 				throw new ResourceLimitException("Managed result storage exceeds the byte budget");
 			}
 			ArrayList<BucketView> views = new ArrayList<>(builders.size());
@@ -3134,7 +3160,19 @@ final class ManagedJavaMemoryEngine {
 			}
 			if (nonEmptyBuckets == 0) finishedStorageBytes = 0L;
 			return new Revision(id, views.toArray(new BucketView[0]), count,
-					finishedStorageBytes);
+					checkedAdd(finishedStorageBytes, pathBytes));
+		}
+
+		private long retainedPathBytes() {
+			IdentityHashMap<ProvenanceNode, Boolean> retained = new IdentityHashMap<>();
+			for (OwnerBucketBuilder builder : builders) {
+				if (builder.size == 0) continue;
+				for (ProvenanceNode node = builder.owner.provenancePath;
+						node != null && retained.put(node, Boolean.TRUE) == null; node = node.parent) {
+					// Every retained ancestor is shared, regardless of the number of matching slots.
+				}
+			}
+			return checkedMultiply(retained.size(), PROVENANCE_NODE_BYTES);
 		}
 
 		private boolean canAddStorage(Limits limits, long extraBytes, long additionalBytes) {
@@ -3372,8 +3410,125 @@ final class ManagedJavaMemoryEngine {
 		}
 	}
 
+	/** A single incoming edge per discovered object, shared by every matching primitive slot. */
+	private static final class ProvenanceNode {
+		static final int UNKNOWN_ROOT = 0;
+		static final int MIDLET_ROOT = 1;
+		static final int DISPLAYABLE_ROOT = 2;
+		static final int STATIC_FIELD = 3;
+		static final int INSTANCE_FIELD = 4;
+		static final int ARRAY_INDEX = 5;
+		final WeakReference<Object> target;
+		@Nullable final ProvenanceNode parent;
+		@Nullable final Field field;
+		final int index;
+		final int kind;
+
+		ProvenanceNode(Object target, @Nullable ProvenanceNode parent,
+		               @Nullable Field field, int index, int kind) {
+			this.target = new WeakReference<>(target);
+			this.parent = parent;
+			this.field = field;
+			this.index = index;
+			this.kind = kind;
+		}
+	}
+
+	/** One observation of a path; never authorizes mutation or another-runtime rebinding. */
+	static final class PathObservation {
+		final int status;
+		final String path;
+
+		PathObservation(int status, String path) {
+			this.status = status;
+			this.path = path;
+		}
+	}
+
+	private PathObservation inspectPath(long token, OwnerBucket owner, Object actual, int slot) {
+		if (owner.kind == KIND_STATIC_FIELD) {
+			FieldSlot field = owner.schema.fieldAt(slot);
+			return field == null ? new PathObservation(MemoryEngineContract.PATH_UNKNOWN, "") :
+					new PathObservation(MemoryEngineContract.PATH_VERIFIED,
+							field.declaringClass.getName() + "." + field.field.getName());
+		}
+		ProvenanceNode leaf = owner.provenancePath;
+		if (leaf == null || actual == null) return new PathObservation(MemoryEngineContract.PATH_UNKNOWN, "");
+		ProvenanceNode[] nodes = new ProvenanceNode[MAX_PROVENANCE_DEPTH];
+		int depth = 0;
+		for (ProvenanceNode node = leaf; node != null; node = node.parent) {
+			if (depth == nodes.length) return new PathObservation(MemoryEngineContract.PATH_INCOMPLETE, "");
+			nodes[depth++] = node;
+		}
+		MemoryDiscoveryBridge.Snapshot runtime = MemoryDiscoveryBridge.snapshot(token);
+		if (!runtime.isAvailable()) return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+		StringBuilder label = new StringBuilder();
+		Object previous = null;
+		for (int index = depth - 1; index >= 0; index--) {
+			ProvenanceNode node = nodes[index];
+			Object current = node.target.get();
+			if (current == null) return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+			try {
+				switch (node.kind) {
+					case ProvenanceNode.MIDLET_ROOT:
+						if (runtime.root() != current) return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+						label.append("MIDlet");
+						break;
+					case ProvenanceNode.DISPLAYABLE_ROOT:
+						if (runtime.displayableRoot() != current) {
+							return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+						}
+						label.append("Displayable");
+						break;
+					case ProvenanceNode.STATIC_FIELD:
+						if (node.field == null || node.field.get(null) != current) {
+							return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+						}
+						label.append(node.field.getDeclaringClass().getName())
+								.append('.').append(node.field.getName());
+						break;
+					case ProvenanceNode.INSTANCE_FIELD:
+						if (node.field == null || previous == null || node.field.get(previous) != current) {
+							return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+						}
+						label.append(" → ").append(node.field.getDeclaringClass().getSimpleName())
+								.append('.').append(node.field.getName());
+						break;
+					case ProvenanceNode.ARRAY_INDEX:
+						if (!(previous instanceof Object[]) || node.index < 0
+								|| node.index >= ((Object[]) previous).length
+								|| ((Object[]) previous)[node.index] != current) {
+							return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+						}
+						label.append('[').append(node.index).append(']');
+						break;
+					default:
+						return new PathObservation(MemoryEngineContract.PATH_UNKNOWN, "");
+				}
+			} catch (IllegalAccessException | RuntimeException | LinkageError error) {
+				return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+			}
+			previous = current;
+			if (label.length() > MemoryEngineContract.MAX_IPC_DISPLAY_CHARS - 32) {
+				return new PathObservation(MemoryEngineContract.PATH_INCOMPLETE, "");
+			}
+		}
+		if (previous != actual) return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+		if (owner.kind == KIND_ARRAY) label.append('[').append(slot).append(']');
+		else {
+			FieldSlot field = owner.schema.fieldAt(slot);
+			if (field == null) return new PathObservation(MemoryEngineContract.PATH_CHANGED, "");
+			label.append(" → ").append(field.declaringClass.getSimpleName())
+					.append('.').append(field.field.getName());
+		}
+		return label.length() > MemoryEngineContract.MAX_IPC_DISPLAY_CHARS
+				? new PathObservation(MemoryEngineContract.PATH_INCOMPLETE, "")
+				: new PathObservation(MemoryEngineContract.PATH_VERIFIED, label.toString());
+	}
+
 	private static final class OwnerBucket {
 		@Nullable ArrayReference arrayReference;
+		@Nullable ProvenanceNode provenancePath;
 		final long handle;
 		final int kind;
 		final Class<?> staticClass;

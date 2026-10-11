@@ -1899,6 +1899,24 @@ private fun RuntimeInspectorTab(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        val pathSummary = when (snapshot.pathStatus) {
+                            MemoryEngineContract.PATH_VERIFIED ->
+                                snapshot.referencePath.takeIf { it.isNotEmpty() }
+                            MemoryEngineContract.PATH_CHANGED ->
+                                stringResource(R.string.memory_editor_path_changed)
+                            MemoryEngineContract.PATH_INCOMPLETE ->
+                                stringResource(R.string.memory_editor_path_incomplete)
+                            else -> null
+                        }
+                        if (pathSummary != null) {
+                            Text(
+                                pathSummary,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                     RuntimeActionIcon(
                         R.drawable.ic_refresh,

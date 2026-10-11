@@ -510,6 +510,8 @@
     <string name="memory_editor_candidate_instance">%1$s · %2$s · target #%3$d</string>
     <string name="memory_editor_reference_static">Referensi statis</string>
     <string name="memory_editor_reference_instance">Referensi instance</string>
+    <string name="memory_editor_path_changed">Jalur referensi berubah sejak pemindaian.</string>
+    <string name="memory_editor_path_incomplete">Jalur referensi melewati batas pemeriksaan.</string>
     <string name="memory_editor_source_unknown">Sumber belum terlacak</string>
     <string name="memory_editor_incremental_edit">Bertahap</string>
     <string name="memory_editor_increment_step">Langkah</string>

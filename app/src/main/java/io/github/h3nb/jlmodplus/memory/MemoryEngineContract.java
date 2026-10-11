@@ -141,6 +141,12 @@ public final class MemoryEngineContract {
 	public static final String KEY_RESULT_IDS = "resultIds";
 	public static final String KEY_RESULT_VALUES = "resultValues";
 	/** Source metadata describes a checked reference at read time, not a durable owner ID. */
+	public static final int PATH_UNKNOWN = 0;
+	public static final int PATH_VERIFIED = 1;
+	public static final int PATH_CHANGED = 2;
+	public static final int PATH_INCOMPLETE = 3;
+	public static final String KEY_INSPECT_PATH_STATUS = "inspectPathStatus";
+	public static final String KEY_INSPECT_PATH = "inspectPath";
 	public static final int SOURCE_UNKNOWN = 0;
 	public static final int SOURCE_STATIC_FIELD = 1;
 	public static final int SOURCE_INSTANCE_FIELD = 2;

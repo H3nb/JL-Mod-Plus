@@ -229,6 +229,8 @@ internal data class MemoryInspectorSnapshot(
     val provenance: String = "",
     val watchAnchor: Boolean = false,
     val source: MemoryCandidateSource = MemoryCandidateSource.UNKNOWN,
+    val pathStatus: Int = MemoryEngineContract.PATH_UNKNOWN,
+    val referencePath: String = "",
 )
 
 internal data class MemoryInspectorLogicalRow(

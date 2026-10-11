@@ -357,6 +357,8 @@ public final class MemoryTargetBridgeService extends Service {
 			result.putBooleanArray(MemoryEngineContract.KEY_INSPECT_EDITABLE, state.editable);
 			result.putString(MemoryEngineContract.KEY_INSPECT_PROVENANCE,
 					MemoryEngineContract.truncateDisplay(state.provenance));
+			result.putInt(MemoryEngineContract.KEY_INSPECT_PATH_STATUS, state.path.status);
+			result.putString(MemoryEngineContract.KEY_INSPECT_PATH, state.path.path);
 			result.putInt(MemoryEngineContract.KEY_INSPECT_SOURCE_KIND, state.source.kind);
 			result.putString(MemoryEngineContract.KEY_INSPECT_SOURCE_CLASS, state.source.declaringClass);
 			result.putString(MemoryEngineContract.KEY_INSPECT_SOURCE_FIELD, state.source.fieldName);

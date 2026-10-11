@@ -1062,6 +1062,8 @@ internal class MemoryEditorComposeController(
                             ),
                             provenance = bundle.getString(MemoryEngineContract.KEY_INSPECT_PROVENANCE).orEmpty(),
                             watchAnchor = watchAnchor,
+                            pathStatus = bundle.getInt(MemoryEngineContract.KEY_INSPECT_PATH_STATUS),
+                            referencePath = bundle.getString(MemoryEngineContract.KEY_INSPECT_PATH).orEmpty(),
                             source = MemoryCandidateSource.checked(
                                 bundle.getInt(MemoryEngineContract.KEY_INSPECT_SOURCE_KIND),
                                 bundle.getString(MemoryEngineContract.KEY_INSPECT_SOURCE_CLASS),

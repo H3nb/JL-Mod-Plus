@@ -1044,6 +1044,93 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void inspectorVerifiesSharedReferencePathsAndDetectsReplacement() {
+		int[] originalStatic = FixtureRoot.staticArray;
+		int[] original = root.array;
+		try {
+			FixtureRoot.staticArray = new int[]{234567};
+			root.array = new int[]{234567};
+			ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+					MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+					234567L, 0L, 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+			long staticId = idForAddress(search.revision, "FixtureRoot.staticArray");
+			long instanceId = idForAddress(search.revision, "FixtureRoot.array [instance]");
+			ManagedJavaMemoryEngine.ManagedInspection staticPath =
+					engine.inspect(TOKEN, search.revision, staticId, 1);
+			assertEquals(MemoryEngineContract.PATH_VERIFIED, staticPath.path.status);
+			assertTrue(staticPath.path.path.contains("FixtureRoot.staticArray[0]"));
+			ManagedJavaMemoryEngine.ManagedInspection instancePath =
+					engine.inspect(TOKEN, search.revision, instanceId, 1);
+			assertEquals(MemoryEngineContract.PATH_VERIFIED, instancePath.path.status);
+			assertTrue(instancePath.path.path.contains("MIDlet"));
+			assertTrue(instancePath.path.path.contains("FixtureRoot.array[0]"));
+
+			int[] priorSelectedArray = root.array;
+			root.array = new int[]{234567};
+			assertEquals(MemoryEngineContract.PATH_CHANGED,
+					engine.inspect(TOKEN, search.revision, instanceId, 1).path.status);
+			assertEquals(234567, priorSelectedArray[0]);
+		} finally {
+			FixtureRoot.staticArray = originalStatic;
+			root.array = original;
+		}
+	}
+
+	@Test
+	public void objectArrayIndexesHaveVerifiedPathsButExactContainersDoNot() {
+		int[] nested = new int[]{876543};
+		root.cycle[1] = nested;
+		root.vector.add(new int[]{876543});
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				876543L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		assertEquals(2, page.ids.length);
+		int verified = 0;
+		int untraced = 0;
+		for (long id : page.ids) {
+			ManagedJavaMemoryEngine.ManagedInspection inspected = engine.inspect(TOKEN,
+					search.revision, id, 1);
+			if (inspected.path.status == MemoryEngineContract.PATH_VERIFIED) {
+				verified++;
+				assertTrue(inspected.path.path.contains("[1][0]"));
+			} else {
+				assertEquals(MemoryEngineContract.PATH_UNKNOWN, inspected.path.status);
+				untraced++;
+			}
+		}
+		assertEquals(1, verified);
+		assertEquals(1, untraced);
+		root.cycle[1] = new int[]{876543};
+		for (long id : page.ids) {
+			ManagedJavaMemoryEngine.ManagedInspection inspected = engine.inspect(TOKEN,
+					search.revision, id, 1);
+			if (inspected.path.status == MemoryEngineContract.PATH_CHANGED) {
+				assertTrue(inspected.path.path.isEmpty());
+				return;
+			}
+		}
+		throw new AssertionError("Replaced Object[] element did not invalidate its old path");
+	}
+
+	@Test
+	public void sharedProvenanceDoesNotDuplicateForArrayElements() {
+		root.array = new int[]{707707, 707707, 707707};
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				707707L, 0L, 0L);
+		assertEquals(3, search.resultCount);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		for (long id : page.ids) {
+			assertEquals(MemoryEngineContract.PATH_VERIFIED,
+					engine.inspect(TOKEN, search.revision, id, 1).path.status);
+		}
+	}
+
+	@Test
 	public void arrayLabelsShowOnlyVerifiedDirectReferencePaths() {
 		int[] originalStatic = FixtureRoot.staticArray;
 		try {

@@ -562,6 +562,8 @@
     <string name="memory_editor_candidate_instance">%1$s · %2$s · target #%3$d</string>
     <string name="memory_editor_reference_static">Static reference</string>
     <string name="memory_editor_reference_instance">Instance reference</string>
+    <string name="memory_editor_path_changed">Reference path changed since scanning.</string>
+    <string name="memory_editor_path_incomplete">Reference path exceeds the inspection limit.</string>
     <string name="memory_editor_source_unknown">Source not traced</string>
     <string name="memory_editor_incremental_edit">Increment</string>
     <string name="memory_editor_increment_step">Step</string>
