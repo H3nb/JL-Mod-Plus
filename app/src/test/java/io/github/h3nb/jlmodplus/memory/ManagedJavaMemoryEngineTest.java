@@ -23,6 +23,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Hashtable;
+import java.util.Map;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Stack;
@@ -852,6 +855,156 @@ public class ManagedJavaMemoryEngineTest {
 				engine.edit(TOKEN, search.revision, new long[]{fabricated}, 1, false, 0L).code);
 		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 				engine.edit(TOKEN, search.revision, new long[]{1L}, 1, false, 0L).code);
+	}
+
+
+	@Test
+	public void incrementalFollowsCallerOrderAndSupportsBothStepDirections() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long changed = idForAddress(search.revision, "rootChanged");
+		long match = idForAddress(search.revision, "rootMatch");
+		ManagedJavaMemoryEngine.ManagedOperationResult decrement = engine.editIncremental(TOKEN,
+				search.revision, new long[]{changed, match},
+				MemoryEngineContract.TYPE_INT, "100", "-3", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, decrement.code);
+		assertEquals(2, decrement.written);
+		assertEquals(100, root.rootChanged);
+		assertEquals(97, root.rootMatch);
+		ManagedJavaMemoryEngine.ManagedOperationResult increment = engine.editIncremental(TOKEN,
+				search.revision, new long[]{match, changed},
+				MemoryEngineContract.TYPE_INT, "200", "2", 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, increment.code);
+		assertEquals(200, root.rootMatch);
+		assertEquals(202, root.rootChanged);
+	}
+
+	@Test
+	public void incrementalRejectsOverflowAndMixedTypesBeforeWriting() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long match = idForAddress(search.revision, "rootMatch");
+		long changed = idForAddress(search.revision, "rootChanged");
+		assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
+				engine.editIncremental(TOKEN, search.revision, new long[]{match, changed},
+						MemoryEngineContract.TYPE_INT, "2147483647", "1", 0L).code);
+		assertEquals(7, root.rootMatch);
+		assertEquals(7, root.rootChanged);
+
+		ManagedJavaMemoryEngine.ManagedOperationResult mixed = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_AUTO, MemoryEngineContract.PREDICATE_EQUAL,
+				"7", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
+				engine.editIncremental(TOKEN, mixed.revision,
+						new long[]{idForAddress(mixed.revision, "rootMatch"),
+								idForAddress(mixed.revision, "byteMatch")},
+						MemoryEngineContract.TYPE_INT, "50", "1", 0L).code);
+		assertEquals(7, root.rootMatch);
+		assertEquals(7, root.byteMatch);
+	}
+
+	@Test
+	public void revertRestoresValueImmediatelyBeforeLastEditAndRemovesOnlyOnSuccess() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		root.rootMatch = 120;
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "999", false, 0L).code);
+		root.rootMatch = 500;
+		ManagedJavaMemoryEngine.ManagedOperationResult conflict = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_PARTIAL_WRITE, conflict.code);
+		assertEquals(500, root.rootMatch);
+		assertTrue(hasId(engine.resultPage(TOKEN, search.revision, 0, 100), id));
+		root.rootMatch = 999;
+		ManagedJavaMemoryEngine.ManagedOperationResult restored = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, restored.code);
+		assertEquals(1, restored.written);
+		assertEquals(120, root.rootMatch);
+		assertFalse(hasId(engine.resultPage(TOKEN, restored.revision, 0, 100), id));
+	}
+
+	@Test
+	public void repeatedEditsRevertOnlyTheMostRecentConfirmedMutation() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "800", false, 0L).code);
+		root.rootMatch = 120;
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.revertAndRemove(TOKEN, search.revision, new long[]{id}, 0L).code);
+		assertEquals(120, root.rootMatch);
+	}
+
+	@Test
+	public void noOpEditDoesNotEraseLastActualMutation() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.revertAndRemove(TOKEN, search.revision, new long[]{id}, 0L).code);
+		assertEquals(7, root.rootMatch);
+	}
+
+	@Test
+	public void partialRestoreKeepsConflictingResultAndRemovesUneditedResult() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long first = idForAddress(search.revision, "rootMatch");
+		long second = idForAddress(search.revision, "rootChanged");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{first},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		root.rootMatch = 42;
+		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{first, second}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_PARTIAL_WRITE, result.code);
+		assertTrue(hasId(engine.resultPage(TOKEN, result.revision, 0, 100), first));
+		assertFalse(hasId(engine.resultPage(TOKEN, result.revision, 0, 100), second));
+		assertEquals(42, root.rootMatch);
+	}
+
+	@Test
+	public void revertedCandidatesRespectOriginalRevisionAndStaleIds() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		ManagedJavaMemoryEngine.ManagedOperationResult refined = engine.refine(TOKEN,
+				search.revision, MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				MemoryEngineContract.COMPARE_PREVIOUS, "7", "", 0L);
+		assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+				engine.revertAndRemove(TOKEN, search.revision, new long[]{id}, 0L).code);
+		assertEquals(7, root.rootMatch);
+	}
+	@Test
+	@SuppressWarnings("unchecked")
+	public void collectedWeakOwnerNeverRebindsDuringRevert() throws ReflectiveOperationException {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		// Clearing this exact weak handle models collection without relying on nondeterministic GC.
+		Field ownersField = ManagedJavaMemoryEngine.class.getDeclaredField("owners");
+		ownersField.setAccessible(true);
+		Map<Long, Object> owners = (Map<Long, Object>) ownersField.get(engine);
+		Object owner = owners.get(ManagedJavaMemoryIds.ownerHandle(id));
+		Field weakField = owner.getClass().getDeclaredField("weakOwner");
+		weakField.setAccessible(true);
+		((WeakReference<?>) weakField.get(owner)).clear();
+
+		ManagedJavaMemoryEngine.ManagedOperationResult rejected = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_PARTIAL_WRITE, rejected.code);
+		assertEquals(900, root.rootMatch);
+		assertTrue(hasId(engine.resultPage(TOKEN, search.revision, 0, 100), id));
 	}
 
 	private ManagedJavaMemoryEngine.ManagedOperationResult startExact() {

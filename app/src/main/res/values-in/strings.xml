@@ -497,6 +497,15 @@
     <string name="memory_editor_search_unknown_values">Cari nilai yang tidak diketahui</string>
     <string name="memory_editor_add_to_watch">Pantau pilihan</string>
     <string name="memory_editor_no_candidates">Tidak ada nilai yang dapat dicari</string>
+    <string name="memory_editor_remove_candidates_title">Hapus hasil yang dipilih?</string>
+    <string name="memory_editor_remove_candidates_description">Hapus hanya mengeluarkan hasil tanpa menulis ke memori game. Pulihkan dan hapus mengembalikan nilai sebelum perubahan terakhir jika nilai saat ini masih cocok; hasil yang berkonflik tetap ada.</string>
+    <string name="memory_editor_revert_and_remove">Pulihkan dan hapus</string>
+    <string name="memory_editor_revert_remove_outcome">Dipulihkan: %1$d. Dihapus: %2$d. Konflik: %3$d. Belum terkonfirmasi: %4$d. Belum dicoba: %5$d.</string>
+    <string name="memory_editor_incremental_edit">Nilai bertahap</string>
+    <string name="memory_editor_increment_step">Langkah</string>
+    <string name="memory_editor_increment_help">Setiap hasil terpilih mendapat nilai dasar + indeks × langkah sesuai urutan tampilan. Semua hasil harus bertipe bilangan bulat yang dipilih. Periksa urutan nilainya sebelum menerapkan.</string>
+    <string name="memory_editor_increment_invalid">Pilih satu tipe bilangan bulat yang sesuai serta nilai dasar dan langkah yang valid. Seluruh urutan nilai harus berada dalam rentang tipe data.</string>
+    <string name="memory_editor_increment_preview">Pratinjau urutan</string>
     <string name="memory_editor_edit">Ubah</string>
     <plurals name="memory_editor_edit_batch">
         <item quantity="other">Ubah %1$d nilai</item>

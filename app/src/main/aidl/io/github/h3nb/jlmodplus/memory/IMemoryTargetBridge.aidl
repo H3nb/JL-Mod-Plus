@@ -38,6 +38,10 @@ interface IMemoryTargetBridge {
             int replacement, boolean allowWatchOnly, long cancellationEpoch);
 	Bundle managedEditTyped(long runtimeToken, long expectedRevision, in long[] ids,
 			int declaredType, String replacement, boolean allowWatchOnly, long cancellationEpoch);
+    Bundle managedEditIncremental(long runtimeToken, long expectedRevision, in long[] orderedIds,
+            int valueType, String baseValue, String step, long cancellationEpoch);
+    Bundle managedRevertAndRemove(long runtimeToken, long expectedRevision, in long[] ids,
+            long cancellationEpoch);
     Bundle managedInspect(long runtimeToken, long expectedRevision, long candidateId, int radius,
             boolean allowWatchOnly);
     Bundle managedEditInspector(long runtimeToken, long expectedRevision, long anchorCandidateId,

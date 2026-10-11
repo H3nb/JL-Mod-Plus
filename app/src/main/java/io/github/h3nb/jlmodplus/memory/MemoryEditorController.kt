@@ -85,7 +85,7 @@ internal class MemoryEditorComposeController(
         val kind: OperationFeedbackKind,
         val resultCountBefore: Long,
     )
-    private enum class OperationFeedbackKind { NEXT_SCAN }
+    private enum class OperationFeedbackKind { NEXT_SCAN, REVERT_REMOVE }
 
     private val callback = object : IMemoryEngineCallback.Stub() {
         override fun onOperationProgress(
@@ -162,12 +162,28 @@ internal class MemoryEditorComposeController(
                 pendingInspectorRefresh = null
                 activeOperationId = 0L
                 val operationFeedbackMessage = operationMessage(resultCode, details)
-                val uiSuccessMessage = if (succeeded && feedback?.kind == OperationFeedbackKind.NEXT_SCAN) {
-                    context.getString(
-                        R.string.memory_editor_next_scan_result, feedback.resultCountBefore, resultCount,
-                    )
-                } else null
+                val uiSuccessMessage = when {
+                    succeeded && feedback?.kind == OperationFeedbackKind.NEXT_SCAN ->
+                        context.getString(
+                            R.string.memory_editor_next_scan_result,
+                            feedback.resultCountBefore, resultCount,
+                        )
+                    feedback?.kind == OperationFeedbackKind.REVERT_REMOVE &&
+                        details != null && (succeeded ||
+                            resultCode == MemoryEngineContract.RESULT_PARTIAL_WRITE) ->
+                        context.getString(
+                            R.string.memory_editor_revert_remove_outcome,
+                            details.getInt(MemoryEngineContract.KEY_MANAGED_WRITTEN),
+                            (feedback.resultCountBefore - resultCount).coerceAtLeast(0),
+                            details.getInt(MemoryEngineContract.KEY_MANAGED_SKIPPED),
+                            details.getInt(MemoryEngineContract.KEY_MANAGED_UNCONFIRMED),
+                            details.getInt(MemoryEngineContract.KEY_MANAGED_NOT_ATTEMPTED),
+                        )
+                    else -> null
+                }
                 val displayMessage = when {
+                    feedback?.kind == OperationFeedbackKind.REVERT_REMOVE && uiSuccessMessage != null ->
+                        uiSuccessMessage
                     !succeeded -> operationFeedbackMessage
                     uiSuccessMessage != null -> uiSuccessMessage
                     searchOperation -> null
@@ -807,6 +823,45 @@ internal class MemoryEditorComposeController(
                 )
             }
             else -> reloadState()
+        }
+    }
+
+    override fun editIncrementalTargets(
+        targets: List<MemoryEditTarget>,
+        expectedRevision: Long,
+        base: String,
+        step: String,
+        type: Int,
+    ) {
+        val snapshot = targets.toList()
+        if (snapshot.isEmpty() || snapshot.size > MemoryEngineContract.MAX_RESULT_PAGE_SIZE ||
+            snapshot.any { it.watch || it.type != type } ||
+            memoryIncrementalPreview(snapshot, type, base, step) == null
+        ) {
+            state = state.copy(
+                message = context.getString(R.string.memory_editor_increment_invalid),
+                messageIsError = true,
+            )
+            return
+        }
+        val ids = snapshot.map(MemoryEditTarget::id).toLongArray()
+        launchOperation { engine, token ->
+            engine.editResultsIncremental(token, expectedRevision, ids, type, base.trim(), step.trim())
+        }
+    }
+
+    override fun removeResultTargets(ids: List<Long>, expectedRevision: Long, revert: Boolean) {
+        val snapshot = ids.toLongArray()
+        if (snapshot.isEmpty() || snapshot.size > MemoryEngineContract.MAX_RESULT_PAGE_SIZE ||
+            snapshot.toSet().size != snapshot.size
+        ) return
+        launchOperation(
+            feedback = if (revert) PendingOperationFeedback(
+                OperationFeedbackKind.REVERT_REMOVE, state.resultCount,
+            ) else null,
+        ) { engine, token ->
+            if (revert) engine.revertAndRemoveResults(token, expectedRevision, snapshot)
+            else engine.filterResultGroups(token, expectedRevision, snapshot, false)
         }
     }
 

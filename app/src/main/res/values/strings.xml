@@ -549,6 +549,15 @@
     <string name="memory_editor_search_unknown_values">Search unknown values</string>
     <string name="memory_editor_add_to_watch">Add selected values to Watch</string>
     <string name="memory_editor_no_candidates">No searchable values found</string>
+    <string name="memory_editor_remove_candidates_title">Remove selected results?</string>
+    <string name="memory_editor_remove_candidates_description">Remove only hides results without writing to game memory. Revert &amp; remove restores the last confirmed edit when the current value matches; conflicting results remain.</string>
+    <string name="memory_editor_revert_and_remove">Revert &amp; remove</string>
+    <string name="memory_editor_revert_remove_outcome">Restored: %1$d. Removed: %2$d. Conflicts: %3$d. Unconfirmed: %4$d. Not attempted: %5$d.</string>
+    <string name="memory_editor_incremental_edit">Increment values</string>
+    <string name="memory_editor_increment_step">Step</string>
+    <string name="memory_editor_increment_help">Each selected result receives base + index × step in displayed order. All results must have the chosen integer type. Review the sequence before applying.</string>
+    <string name="memory_editor_increment_invalid">Choose one compatible integer type and valid base/step values. The complete sequence must fit without overflow.</string>
+    <string name="memory_editor_increment_preview">Preview sequence</string>
     <string name="memory_editor_edit">Edit</string>
     <plurals name="memory_editor_edit_batch">
         <item quantity="one">Edit %1$d value</item>

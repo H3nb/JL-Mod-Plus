@@ -376,6 +376,14 @@ internal interface MemoryEditorActions {
         addToWatch: Boolean,
         freezeAfter: Boolean,
     ) = editTargets(targets, expectedRevision, value, type)
+    fun editIncrementalTargets(
+        targets: List<MemoryEditTarget>,
+        expectedRevision: Long,
+        base: String,
+        step: String,
+        type: Int,
+    ) = Unit
+    fun removeResultTargets(ids: List<Long>, expectedRevision: Long, revert: Boolean) = Unit
     fun removeSelected(keep: Boolean)
     fun watchSelected(add: Boolean)
     fun labelWatch(id: Long, label: String)

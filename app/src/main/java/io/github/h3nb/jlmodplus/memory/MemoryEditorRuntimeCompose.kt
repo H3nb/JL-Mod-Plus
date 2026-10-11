@@ -588,6 +588,7 @@ private fun RuntimeSearchResultsTab(
     var unknownDialog by remember { mutableStateOf(false) }
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     var editRevision by remember { mutableStateOf(0L) }
+    var deleteSnapshot by remember { mutableStateOf<Pair<Long, List<Long>>?>(null) }
     val unknownBaseline = state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE
     val selectedRows = state.results.filter { it.id in state.selected }
     val selectedWriteSupported = selectedRows.isNotEmpty() && state.writeSupported
@@ -645,7 +646,9 @@ private fun RuntimeSearchResultsTab(
                 icon = R.drawable.ic_delete,
                 description = R.string.memory_editor_remove,
                 enabled = state.selected.isNotEmpty() && !state.busy && !unknownBaseline,
-                onClick = { actions.removeSelected(false) },
+                onClick = {
+                    deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
+                },
             )
             val visibleSelectionDescription = stringResource(
                 if (allVisibleSelected) R.string.memory_editor_clear_selection
@@ -767,12 +770,49 @@ private fun RuntimeSearchResultsTab(
                 onPeekUnderlayChanged(false)
                 editTargets = null
             },
-            onApply = { value, type, freeze ->
-                actions.editTargetsWithOptions(
-                    currentEditTargets, editRevision, value, type, false, freeze,
-                )
+            onApply = { value, type, freeze, incremental, step ->
+                if (incremental) {
+                    actions.editIncrementalTargets(
+                        currentEditTargets, editRevision, value, step, type,
+                    )
+                } else {
+                    actions.editTargetsWithOptions(
+                        currentEditTargets, editRevision, value, type, false, freeze,
+                    )
+                }
                 onPeekUnderlayChanged(false)
                 editTargets = null
+            },
+        )
+    }
+    deleteSnapshot?.let { (revision, ids) ->
+        AlertDialog(
+            onDismissRequest = { deleteSnapshot = null },
+            title = { Text(stringResource(R.string.memory_editor_remove_candidates_title)) },
+            text = {
+                Text(
+                    stringResource(R.string.memory_editor_remove_candidates_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        actions.removeResultTargets(ids, revision, false)
+                        deleteSnapshot = null
+                    },
+                ) { Text(stringResource(R.string.memory_editor_remove)) }
+                TextButton(
+                    onClick = {
+                        actions.removeResultTargets(ids, revision, true)
+                        deleteSnapshot = null
+                    },
+                ) { Text(stringResource(R.string.memory_editor_revert_and_remove)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteSnapshot = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
             },
         )
     }
@@ -932,7 +972,7 @@ private fun RuntimeWatchTab(
                 onPeekUnderlayChanged(false)
                 editTargets = null
             },
-            onApply = { value, type, freeze ->
+            onApply = { value, type, freeze, _, _ ->
                 actions.editTargetsWithOptions(
                     currentEditTargets, 0L, value, type, false, freeze,
                 )
@@ -1549,7 +1589,7 @@ private fun RuntimeEditDialog(
     writeSupported: Boolean,
     onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
-    onApply: (String, Int, Boolean) -> Unit,
+    onApply: (String, Int, Boolean, Boolean, String) -> Unit,
 ) {
     val firstTarget = targets.firstOrNull() ?: return
     val initialType = firstTarget.type
@@ -1567,13 +1607,25 @@ private fun RuntimeEditDialog(
         mutableIntStateOf(initialType.takeIf { it in editableTypes } ?: editableTypes.first())
     }
     val hasCompatibleType = editableTypes.any { it == type }
+    val incrementalAvailable = batch && targets.none(MemoryEditTarget::watch)
     var replacement by remember(targets, initialType, editableTypes) {
         mutableStateOf(TextFieldValue(initialValue, TextRange(initialValue.length)))
     }
     var freeze by remember { mutableStateOf(false) }
+    var incremental by remember(targets) { mutableStateOf(false) }
+    var previewReady by remember(targets) { mutableStateOf(false) }
+    var editingStep by remember(targets) { mutableStateOf(false) }
+    var step by remember(targets) { mutableStateOf(TextFieldValue("1", TextRange(1))) }
     var peekingUnderlay by remember { mutableStateOf(false) }
     val spec = remember(type) { MemoryInputSpec.forType(type) }
-    val replacementValid = if (targets.any(MemoryEditTarget::watch)) {
+    val preview = remember(targets, type, replacement.text, step.text, incremental) {
+        if (incremental) memoryIncrementalPreview(targets, type, replacement.text, step.text)
+        else null
+    }
+    val stepSpec = remember { MemoryInputSpec.forType(MemoryEngineContract.TYPE_LONG) }
+    val replacementValid = if (incremental) {
+        preview != null
+    } else if (targets.any(MemoryEditTarget::watch)) {
         targets.any { it.type == type } && spec.isComplete(replacement.text)
     } else {
         spec.isComplete(replacement.text)
@@ -1581,6 +1633,8 @@ private fun RuntimeEditDialog(
     val selectType: (Int) -> Unit = { selectedType ->
         if (selectedType != type) {
             type = selectedType
+            previewReady = false
+            editingStep = false
             val next = if (selectedType == initialType) initialValue else ""
             replacement = TextFieldValue(next, TextRange(next.length))
         }
@@ -1609,6 +1663,23 @@ private fun RuntimeEditDialog(
             RuntimeSearchDialogBody(
                 showKeypad = true,
                 controls = { sideDock ->
+                    if (incrementalAvailable) {
+                        val incrementLabel = stringResource(R.string.memory_editor_incremental_edit)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                modifier = Modifier.semantics {
+                                    contentDescription = incrementLabel
+                                },
+                                checked = incremental,
+                                onCheckedChange = {
+                                    incremental = it
+                                    previewReady = false
+                                    editingStep = false
+                                },
+                            )
+                            Text(incrementLabel)
+                        }
+                    }
                     if (sideDock) {
                         RuntimeSearchControlRow {
                             RuntimeEditTypeMenu(
@@ -1621,8 +1692,11 @@ private fun RuntimeEditDialog(
                                 label = stringResource(R.string.memory_editor_replacement),
                                 value = replacement,
                                 active = true,
-                                onClick = {},
-                                onValueChange = { replacement = it },
+                                onClick = { editingStep = false },
+                                onValueChange = {
+                                    replacement = it
+                                    previewReady = false
+                                },
                                 valueSpec = spec,
                                 modifier = Modifier.weight(1f),
                                 initialFocus = true,
@@ -1638,11 +1712,28 @@ private fun RuntimeEditDialog(
                             label = stringResource(R.string.memory_editor_replacement),
                             value = replacement,
                             active = true,
-                            onClick = {},
-                            onValueChange = { replacement = it },
+                            onClick = { editingStep = false },
+                            onValueChange = {
+                                replacement = it
+                                previewReady = false
+                            },
                             valueSpec = spec,
                             modifier = Modifier.fillMaxWidth(),
                             initialFocus = true,
+                        )
+                    }
+                    if (incremental) {
+                        RuntimeSearchField(
+                            label = stringResource(R.string.memory_editor_increment_step),
+                            value = step,
+                            active = true,
+                            onClick = { editingStep = true },
+                            onValueChange = {
+                                step = it
+                                previewReady = false
+                            },
+                            valueSpec = stepSpec,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                     if (!batch) {
@@ -1656,15 +1747,39 @@ private fun RuntimeEditDialog(
                     {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                stringResource(R.string.memory_editor_edit_batch_help),
+                                stringResource(
+                                    if (incremental) R.string.memory_editor_increment_help
+                                    else R.string.memory_editor_edit_batch_help
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                            if (!hasCompatibleType) {
+                            if (incremental && preview == null) {
+                                Text(
+                                    stringResource(R.string.memory_editor_increment_invalid),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            } else if (!hasCompatibleType) {
                                 Text(
                                     stringResource(R.string.memory_editor_edit_batch_no_common_type),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                            if (incremental && previewReady && preview != null) {
+                                Text(
+                                    stringResource(R.string.memory_editor_increment_preview),
+                                    style = MaterialTheme.typography.titleSmall,
+                                )
+                                val samples = preview.values.take(3).mapIndexed { index, value ->
+                                    "${index + 1}: $value"
+                                } + if (preview.values.size > 3) {
+                                    listOf("${preview.values.size}: ${preview.values.last()}")
+                                } else emptyList()
+                                Text(
+                                    samples.joinToString("\n"),
+                                    style = MaterialTheme.typography.bodyMedium,
                                 )
                             }
                         }
@@ -1682,24 +1797,53 @@ private fun RuntimeEditDialog(
                     RuntimeSearchKeypad(
                         landscape = landscape,
                         allowGroup = false,
-                        valueSpec = spec,
-                        onToken = { replacement = runtimeInsertValidated(replacement, it, spec) },
-                        onBackspace = { replacement = runtimeBackspace(replacement) },
-                        onMove = { replacement = runtimeMove(replacement, it) },
-                        onClear = { replacement = TextFieldValue("", TextRange(0)) },
+                        valueSpec = if (incremental && editingStep) stepSpec else spec,
+                        onToken = {
+                            if (incremental && editingStep) {
+                                step = runtimeInsertValidated(step, it, stepSpec)
+                            } else {
+                                replacement = runtimeInsertValidated(replacement, it, spec)
+                            }
+                            previewReady = false
+                        },
+                        onBackspace = {
+                            if (incremental && editingStep) step = runtimeBackspace(step)
+                            else replacement = runtimeBackspace(replacement)
+                            previewReady = false
+                        },
+                        onMove = {
+                            if (incremental && editingStep) step = runtimeMove(step, it)
+                            else replacement = runtimeMove(replacement, it)
+                        },
+                        onClear = {
+                            if (incremental && editingStep) step = TextFieldValue("", TextRange(0))
+                            else replacement = TextFieldValue("", TextRange(0))
+                            previewReady = false
+                        },
                     )
                 },
             )
         },
-        textScrollable = false,
+        textScrollable = batch,
         confirmButton = {
             Button(
                 enabled = writeSupported && hasCompatibleType && replacementValid,
                 onClick = {
-                    onApply(replacement.text, type, freeze)
-                    onDismiss()
+                    if (incremental && !previewReady) {
+                        previewReady = true
+                    } else {
+                        onApply(replacement.text, type, freeze, incremental, step.text)
+                        onDismiss()
+                    }
                 },
-            ) { Text(stringResource(R.string.memory_editor_save)) }
+            ) {
+                Text(
+                    stringResource(
+                        if (incremental && !previewReady) R.string.memory_editor_increment_preview
+                        else R.string.memory_editor_save
+                    )
+                )
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }

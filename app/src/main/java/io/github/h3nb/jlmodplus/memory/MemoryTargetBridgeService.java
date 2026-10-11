@@ -135,6 +135,20 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 
 		@Override
+		public Bundle managedEditIncremental(long runtimeToken, long expectedRevision, long[] orderedIds,
+				int valueType, String baseValue, String step, long cancellationEpoch) {
+			return managedResult(runtimeToken, managedEngine.editIncremental(runtimeToken,
+					expectedRevision, orderedIds, valueType, baseValue, step, cancellationEpoch));
+		}
+
+		@Override
+		public Bundle managedRevertAndRemove(long runtimeToken, long expectedRevision, long[] ids,
+				long cancellationEpoch) {
+			return managedResult(runtimeToken, managedEngine.revertAndRemove(runtimeToken,
+					expectedRevision, ids, cancellationEpoch));
+		}
+
+		@Override
 		public Bundle managedInspect(long runtimeToken, long expectedRevision, long candidateId,
 				int radius, boolean allowWatchOnly) {
 			return managedInspection(runtimeToken,

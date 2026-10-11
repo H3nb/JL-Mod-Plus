@@ -76,6 +76,7 @@ final class ManagedJavaMemoryEngine {
 	private final Map<Long, OwnerBucket> owners = new HashMap<>();
 	private final Map<Class<?>, Schema> schemaCache = new HashMap<>();
 	private final WatchStore watches = new WatchStore();
+	@Nullable private ManagedMemoryMutationJournal editJournal;
 	private final ArrayDeque<SearchState> searchHistory = new ArrayDeque<>();
 	private volatile long activeToken;
 	private ClassLoader activeLoader;
@@ -806,16 +807,36 @@ final class ManagedJavaMemoryEngine {
 			return failure(token, MemoryEngineContract.RESULT_CANCELLED,
 					"Managed Inspector edit was cancelled before writing");
 		}
+		long targetId = ManagedJavaMemoryIds.encode(owner.kind, owner.handle, targetSlot);
+		synchronized (stateLock) {
+			if (editJournal != null && !editJournal.canRecord(targetId)) {
+				return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+						"The bounded edit history is full");
+			}
+		}
+		long before = current[0];
+		boolean changed = before != parsed[0];
 		try {
-			writeTyped(owner, targetSlot, strongOwner, valueType, parsed[0]);
+			if (changed) writeTyped(owner, targetSlot, strongOwner, valueType, parsed[0]);
 			if (!readTyped(owner, targetSlot, strongOwner, current)
 					|| !writeConfirmed(current[0], parsed[0])) {
+				if (changed) {
+					synchronized (stateLock) { mutationJournalLocked().markUncertain(targetId, valueType); }
+				}
 				return resultDetailed(token, MemoryEngineContract.RESULT_PARTIAL_WRITE,
 						"Managed Inspector write was not confirmed", 1, 0, 0, 1, 0, 0, 0);
+			}
+			if (before != parsed[0]) {
+				synchronized (stateLock) {
+					mutationJournalLocked().record(targetId, valueType, before, parsed[0]);
+				}
 			}
 			return resultDetailed(token, MemoryEngineContract.RESULT_OK,
 					"Managed Inspector write confirmed", 1, 1, 0, 0, 0, 0, 0);
 		} catch (IllegalAccessException | RuntimeException | LinkageError error) {
+			if (changed) {
+				synchronized (stateLock) { mutationJournalLocked().markUncertain(targetId, valueType); }
+			}
 			return resultDetailed(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 					"Managed Inspector write was rejected before confirmation", 1, 0, 1, 0, 0, 1, 0);
 		}
@@ -881,6 +902,90 @@ final class ManagedJavaMemoryEngine {
 			return failure(token, MemoryEngineContract.RESULT_TARGET_LOST,
 					"Managed candidate filtering failed safely");
 		}
+	}
+
+
+	/**
+	 * Restores only the last confirmed explicit edit, conditioned on the current raw bits.
+	 * Never uses search baselines as mutation history. Unedited results need no write.
+	 */
+	ManagedOperationResult revertAndRemove(long token, long expectedRevision, @Nullable long[] ids,
+	                                      long operationEpoch) {
+		if (ids == null || ids.length == 0 || ids.length > MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
+			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Select up to 100 visible results to revert and remove");
+		}
+		long[] unique = uniqueIds(ids);
+		ResolvedBatch batch = resolveBatch(token, expectedRevision, unique, false);
+		if (batch.error != null) return batch.error;
+		ManagedOperationResult valid = revalidateBatch(token, expectedRevision, batch, false, operationEpoch);
+		if (valid != null) return valid;
+		long[] removable = new long[batch.count];
+		int removed = 0;
+		int restored = 0;
+		int conflicts = 0;
+		int unconfirmed = 0;
+		int attempts = 0;
+		long[] current = new long[1];
+		for (int index = 0; index < batch.count; index++) {
+			if (!isOperationActive(token, operationEpoch)) break;
+			valid = revalidateBatch(token, expectedRevision, batch, false, operationEpoch);
+			if (valid != null) break;
+			long id = batch.ids[index];
+			ManagedMemoryMutationJournal.Entry entry;
+			boolean frozen;
+			synchronized (stateLock) {
+				entry = editJournal == null ? null : editJournal.get(id);
+				int watchIndex = watches.indexOf(id);
+				frozen = watchIndex >= 0 && watches.freeze[watchIndex] && !watches.freezePaused[watchIndex];
+			}
+			if (entry == null) {
+				removable[removed++] = id;
+				continue;
+			}
+			OwnerBucket owner = batch.owners[index];
+			Object strongOwner = batch.strongOwners[index];
+			if (frozen || entry.uncertain || entry.type != valueTypeFor(owner, batch.slots[index])
+					|| !readTyped(owner, batch.slots[index], strongOwner, current)
+					|| current[0] != entry.after) {
+				conflicts++;
+				continue;
+			}
+			attempts++;
+			try {
+				writeTyped(owner, batch.slots[index], strongOwner, entry.type, entry.before);
+				if (readTyped(owner, batch.slots[index], strongOwner, current)
+						&& writeConfirmed(current[0], entry.before)) {
+					restored++;
+					removable[removed++] = id;
+					synchronized (stateLock) { if (editJournal != null) editJournal.remove(id); }
+					if (batch.watch[index]) updateWatchPrevious(id, current[0]);
+				} else {
+					unconfirmed++;
+					synchronized (stateLock) { mutationJournalLocked().markUncertain(id, entry.type); }
+				}
+			} catch (IllegalAccessException | RuntimeException | LinkageError error) {
+				conflicts++;
+				synchronized (stateLock) { mutationJournalLocked().markUncertain(id, entry.type); }
+			}
+		}
+		int notAttempted = batch.count - removed - conflicts - unconfirmed;
+		if (removed > 0) {
+			// Filtering publishes one new search revision; unsuccessful restores stay visible.
+			ManagedOperationResult filtered = filter(token, expectedRevision,
+					Arrays.copyOf(removable, removed), false, operationEpoch);
+			if (filtered.code != MemoryEngineContract.RESULT_OK) {
+				return resultDetailed(token, MemoryEngineContract.RESULT_PARTIAL_WRITE,
+						"Values may have been restored, but result removal was not committed",
+						attempts, restored, conflicts, unconfirmed, notAttempted, conflicts, 0);
+			}
+		}
+		int code = (conflicts == 0 && unconfirmed == 0 && notAttempted == 0)
+				? MemoryEngineContract.RESULT_OK : MemoryEngineContract.RESULT_PARTIAL_WRITE;
+		return resultDetailed(token, code, "Restored " + restored + ", removed " + removed
+				+ ", conflicts " + conflicts + ", unconfirmed " + unconfirmed
+				+ ", not attempted " + notAttempted, attempts, restored, conflicts,
+				unconfirmed, notAttempted, conflicts, 0);
 	}
 
 	ManagedPage watchPage(long token) {
@@ -951,7 +1056,22 @@ final class ManagedJavaMemoryEngine {
 	ManagedOperationResult editTyped(long token, long expectedRevision, @Nullable long[] ids,
 	                                int declaredType, @Nullable String replacementValue,
 	                                boolean allowWatchOnly, long operationEpoch) {
-		if (!MemoryEngineContract.isValueType(declaredType)) {
+		return editBatch(token, expectedRevision, ids, declaredType, replacementValue,
+				false, null, allowWatchOnly, operationEpoch);
+	}
+
+	ManagedOperationResult editIncremental(long token, long expectedRevision, @Nullable long[] ids,
+	                                      int type, @Nullable String base, @Nullable String step,
+	                                      long operationEpoch) {
+		return editBatch(token, expectedRevision, ids, type, base, true, step, false, operationEpoch);
+	}
+
+	private ManagedOperationResult editBatch(long token, long expectedRevision, @Nullable long[] ids,
+	                                        int declaredType, @Nullable String replacementValue,
+	                                        boolean incremental, @Nullable String stepText,
+	                                        boolean allowWatchOnly, long operationEpoch) {
+		if (!MemoryEngineContract.isValueType(declaredType)
+				|| (incremental && !ManagedMemoryMutationJournal.isIntegerType(declaredType))) {
 			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Managed edit received an unsupported declared primitive type");
 		}
@@ -963,6 +1083,10 @@ final class ManagedJavaMemoryEngine {
 							: "Managed edits are limited to 100 visible result rows");
 		}
 		long[] unique = uniqueIds(ids);
+		if (incremental && unique.length != ids.length) {
+			return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Incremental editing cannot repeat a candidate identity");
+		}
 		ResolvedBatch batch = resolveBatch(token, expectedRevision, unique, allowWatchOnly);
 		if (batch.error != null) return batch.error;
 		int[] selectedIndexes = new int[batch.count];
@@ -974,6 +1098,10 @@ final class ManagedJavaMemoryEngine {
 					&& actualType != declaredType) {
 				return failure(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
 						"A retained Watch target no longer matches the declared primitive type");
+			}
+			if (incremental && actualType != declaredType) {
+				return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+						"Incremental editing requires every selected target to have the chosen integer type");
 			}
 			if (declaredType == MemoryEngineContract.TYPE_AUTO || actualType == declaredType) {
 				selectedIndexes[selectedCount++] = index;
@@ -989,13 +1117,27 @@ final class ManagedJavaMemoryEngine {
 		}
 		long[] replacements = new long[writableBatch.count];
 		long[] parsed = new long[1];
-		for (int index = 0; index < writableBatch.count; index++) {
-			int type = valueTypeFor(writableBatch.owners[index], writableBatch.slots[index]);
-			if (!ManagedJavaValue.parse(replacementValue, type, parsed)) {
+		if (incremental) {
+			if (!ManagedMemoryMutationJournal.sequence(replacementValue, stepText,
+					declaredType, replacements)) {
 				return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
-						"Managed edit value is outside the selected primitive type");
+						"Incremental sequence exceeds the selected integer type or input limit");
 			}
-			replacements[index] = parsed[0];
+		} else {
+			for (int index = 0; index < writableBatch.count; index++) {
+				int type = valueTypeFor(writableBatch.owners[index], writableBatch.slots[index]);
+				if (!ManagedJavaValue.parse(replacementValue, type, parsed)) {
+					return failure(token, MemoryEngineContract.RESULT_INVALID_REQUEST,
+							"Managed edit value is outside the selected primitive type");
+				}
+				replacements[index] = parsed[0];
+			}
+		}
+		synchronized (stateLock) {
+			if (editJournal != null && !editJournal.canRecord(writableBatch.ids, replacements, writableBatch.count)) {
+				return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+						"The bounded edit history is full; restart the MIDlet before editing new targets");
+			}
 		}
 		ManagedOperationResult validation = revalidateBatch(token, expectedRevision, writableBatch,
 				allowWatchOnly, operationEpoch);
@@ -1028,19 +1170,44 @@ final class ManagedJavaMemoryEngine {
 					continue;
 				}
 				attempted++;
+				boolean writeStarted = false;
 				try {
 					int type = valueTypeFor(writableBatch.owners[index], writableBatch.slots[index]);
-					writeTyped(writableBatch.owners[index], writableBatch.slots[index], owner, type,
-							replacements[index]);
+					if (!readTyped(writableBatch.owners[index], writableBatch.slots[index], owner, readback)) {
+						rejectedBeforeWrite++;
+						continue;
+					}
+					long before = readback[0];
+					if (before != replacements[index]) {
+						writeStarted = true;
+						writeTyped(writableBatch.owners[index], writableBatch.slots[index], owner, type,
+								replacements[index]);
+					}
 					if (readTyped(writableBatch.owners[index], writableBatch.slots[index], owner, readback)
 							&& writeConfirmed(readback[0], replacements[index])) {
 						written++;
+						if (before != replacements[index]) {
+							synchronized (stateLock) {
+								mutationJournalLocked().record(writableBatch.ids[index], type, before, replacements[index]);
+							}
+						}
 						if (writableBatch.watch[index]) updateWatchPrevious(writableBatch.ids[index], readback[0]);
 					} else {
 						unconfirmed++;
+						if (writeStarted) {
+							synchronized (stateLock) {
+								mutationJournalLocked().markUncertain(writableBatch.ids[index], type);
+							}
+						}
 					}
 				} catch (IllegalAccessException | RuntimeException | LinkageError error) {
 					rejectedBeforeWrite++;
+					if (writeStarted) {
+						synchronized (stateLock) {
+							mutationJournalLocked().markUncertain(writableBatch.ids[index],
+									valueTypeFor(writableBatch.owners[index], writableBatch.slots[index]));
+						}
+					}
 				}
 			}
 		}
@@ -1466,6 +1633,7 @@ final class ManagedJavaMemoryEngine {
 		requestedType = MemoryEngineContract.TYPE_AUTO;
 		lastMessage = null;
 		watches.clear();
+		editJournal = null;
 		owners.clear();
 		schemaCache.clear();
 		nextOwnerHandle = 1L;
@@ -1512,6 +1680,12 @@ final class ManagedJavaMemoryEngine {
 			cleanupOwnersLocked();
 			return successLocked(diagnostic);
 		}
+	}
+
+	/** Allocate mutation tracking only after the first explicit write or uncertain attempt. */
+	private ManagedMemoryMutationJournal mutationJournalLocked() {
+		if (editJournal == null) editJournal = new ManagedMemoryMutationJournal();
+		return editJournal;
 	}
 
 	static boolean revisionCanCommit(long expectedRevision, long currentRevision) {
