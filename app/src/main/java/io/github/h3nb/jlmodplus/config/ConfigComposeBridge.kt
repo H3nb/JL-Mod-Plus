@@ -17,7 +17,9 @@ package io.github.h3nb.jlmodplus.config
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RectangleShape
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.clickable
@@ -35,6 +37,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -1665,14 +1668,17 @@ private fun InputSection(
 @Composable
 private fun VirtualControlsColorPreview(form: ConfigFormState) {
     var pressed by rememberSaveable { mutableStateOf(false) }
-    val background = parseColor(
-        if (pressed) form.vkSelectedBackground else form.vkBackground,
-    )
-    val foreground = parseColor(
-        if (pressed) form.vkSelectedForeground else form.vkForeground,
-    )
+    val background = parseColor(form.vkBackground)
+    val foreground = parseColor(form.vkForeground)
+    val selectedBackground = parseColor(form.vkSelectedBackground)
+    val selectedForeground = parseColor(form.vkSelectedForeground)
     val outline = parseColor(form.vkOutline)
-    val previewAlpha = (form.vkAlpha.coerceIn(0, 255) / 255f)
+    val previewOpacity = form.vkAlpha.coerceIn(0, 255) / 255f
+    val keyShape = when (form.vkButtonShape) {
+        0 -> CircleShape
+        1 -> RectangleShape
+        else -> MaterialTheme.shapes.small
+    }
 
     Surface(
         onClick = { pressed = !pressed },
@@ -1706,12 +1712,33 @@ private fun VirtualControlsColorPreview(form: ConfigFormState) {
                 )
             }
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(previewOpacity),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                ControlColorSample("L", background, foreground, outline, previewAlpha, false)
-                ControlColorSample("▲", background, foreground, outline, previewAlpha, false)
-                ControlColorSample("●", background, foreground, outline, previewAlpha, true)
+                Surface(
+                    modifier = Modifier.size(width = 52.dp, height = 40.dp),
+                    shape = keyShape,
+                    color = if (pressed) selectedBackground else background,
+                    border = BorderStroke(1.dp, outline),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "L",
+                            color = if (pressed) selectedForeground else foreground,
+                        )
+                    }
+                }
+                DpadColorSample(
+                    background, foreground, selectedBackground, selectedForeground,
+                    outline, pressed,
+                )
+                AnalogColorSample(
+                    background, foreground, selectedBackground, selectedForeground,
+                    outline, pressed,
+                )
             }
             Text(
                 text = stringResource(R.string.config_virtual_controls_preview_hint),
@@ -1723,28 +1750,106 @@ private fun VirtualControlsColorPreview(form: ConfigFormState) {
 }
 
 @Composable
-private fun ControlColorSample(
-    symbol: String,
+private fun DpadColorSample(
     background: Color,
     foreground: Color,
+    selectedBackground: Color,
+    selectedForeground: Color,
     outline: Color,
-    opacity: Float,
-    circular: Boolean,
+    pressed: Boolean,
+) {
+    Box(modifier = Modifier.size(72.dp)) {
+        DpadArrowSample(
+            "▲", pressed, background, foreground, selectedBackground, selectedForeground,
+            outline, Modifier.align(Alignment.TopCenter).size(width = 27.dp, height = 32.dp),
+        )
+        DpadArrowSample(
+            "▼", false, background, foreground, selectedBackground, selectedForeground,
+            outline, Modifier.align(Alignment.BottomCenter).size(width = 27.dp, height = 32.dp),
+        )
+        DpadArrowSample(
+            "◀", false, background, foreground, selectedBackground, selectedForeground,
+            outline, Modifier.align(Alignment.CenterStart).size(width = 32.dp, height = 27.dp),
+        )
+        DpadArrowSample(
+            "▶", false, background, foreground, selectedBackground, selectedForeground,
+            outline, Modifier.align(Alignment.CenterEnd).size(width = 32.dp, height = 27.dp),
+        )
+        Surface(
+            modifier = Modifier.align(Alignment.Center).size(15.dp),
+            shape = CircleShape,
+            color = background,
+            border = BorderStroke(1.dp, outline),
+        ) {}
+    }
+}
+
+@Composable
+private fun DpadArrowSample(
+    glyph: String,
+    pressed: Boolean,
+    background: Color,
+    foreground: Color,
+    selectedBackground: Color,
+    selectedForeground: Color,
+    outline: Color,
+    modifier: Modifier,
 ) {
     Surface(
-        modifier = Modifier
-            .size(44.dp)
-            .alpha(opacity),
-        shape = if (circular) CircleShape else MaterialTheme.shapes.small,
-        color = background,
+        modifier = modifier,
+        shape = MaterialTheme.shapes.extraSmall,
+        color = if (pressed) selectedBackground else background,
         border = BorderStroke(1.dp, outline),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
-                text = symbol,
-                style = MaterialTheme.typography.titleMedium,
-                color = foreground,
+                text = glyph,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (pressed) selectedForeground else foreground,
             )
+        }
+    }
+}
+
+@Composable
+private fun AnalogColorSample(
+    background: Color,
+    foreground: Color,
+    selectedBackground: Color,
+    selectedForeground: Color,
+    outline: Color,
+    pressed: Boolean,
+) {
+    Surface(
+        modifier = Modifier.size(72.dp),
+        shape = CircleShape,
+        color = background,
+        border = BorderStroke(1.dp, outline),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.size(49.dp).border(1.dp, outline, CircleShape),
+            )
+            Surface(
+                modifier = Modifier
+                    .offset(x = if (pressed) 11.dp else 0.dp, y = if (pressed) (-7).dp else 0.dp)
+                    .size(29.dp),
+                shape = CircleShape,
+                color = if (pressed) selectedBackground else background,
+                border = BorderStroke(1.dp, outline),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .size(5.dp)
+                            .border(
+                                2.5.dp,
+                                if (pressed) selectedForeground else foreground,
+                                CircleShape,
+                            ),
+                    )
+                }
+            }
         }
     }
 }
