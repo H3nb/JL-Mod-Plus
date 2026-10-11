@@ -56,6 +56,7 @@ import java.util.Vector;
 import java.util.regex.Pattern;
 
 import javax.microedition.io.file.ConnectionClosedException;
+import javax.microedition.io.file.IllegalModeException;
 import javax.microedition.util.ContextHolder;
 
 public class FileSystemFileConnection implements FileConnection {
@@ -123,13 +124,13 @@ public class FileSystemFileConnection implements FileConnection {
 
 	private void requireRead() {
 		throwClosed();
-		if (mode == Connector.WRITE) throw new IllegalStateException("Connection is write-only");
+		if (mode == Connector.WRITE) throw new IllegalModeException("Connection is write-only");
 		MidletPermissionManager.requireFileAccess(root, false);
 	}
 
 	private void requireWrite() {
 		throwClosed();
-		if (mode == Connector.READ) throw new IllegalStateException("Connection is read-only");
+		if (mode == Connector.READ) throw new IllegalModeException("Connection is read-only");
 		MidletPermissionManager.requireFileAccess(root, true);
 	}
 
