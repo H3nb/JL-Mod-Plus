@@ -186,10 +186,11 @@ internal class UpdateRepository private constructor(context: Context) {
             }
         }
         val pathPrefix = "https://github.com/H3nb/JL-Mod-Plus/releases/download/v" + version + "/"
-        if (!hasApk || metadataUrl != pathPrefix + "release-info.json") {
+        val infoUrl = metadataUrl ?: return UpdateStatus.NoRelease
+        if (!hasApk || infoUrl != pathPrefix + "release-info.json") {
             return UpdateStatus.NoRelease
         }
-        val meta = loadJson(metadataUrl) as JSONObject
+        val meta = loadJson(infoUrl) as JSONObject
         if (meta.optInt("schema") != 1 || meta.optString("versionName") != version ||
             meta.optString("applicationId") != "io.github.h3nb.jlmodplus" ||
             meta.optInt("minSdk", Int.MAX_VALUE) > Build.VERSION.SDK_INT) {
