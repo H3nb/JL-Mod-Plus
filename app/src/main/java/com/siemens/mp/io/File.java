@@ -27,8 +27,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 
-import javax.microedition.shell.AppClassLoader;
-import javax.microedition.util.ContextHolder;
+import org.microemu.cldc.file.VirtualFileSystem;
 
 import io.github.h3nb.jlmodplus.util.FileUtils;
 
@@ -144,7 +143,7 @@ public class File {
 
 	@SuppressLint("UsableSpace")
 	public static int spaceAvailable() throws IOException {
-		return (int) new java.io.File(AppClassLoader.getDataDir()).getUsableSpace();
+		return (int) Math.min(Integer.MAX_VALUE, VirtualFileSystem.resolve("siemens:/", "").getUsableSpace());
 	}
 
 	public static void truncate(int fileDescriptor, int size) throws IOException {
@@ -164,13 +163,27 @@ public class File {
 		return numBytes;
 	}
 
-	private static java.io.File getFile(String fileName) {
-		int colon = fileName.indexOf(':');
-		if (colon == -1) {
-			return ContextHolder.getFileByName(fileName);
-		} else {
-			fileName = fileName.substring(colon + 2);
-			return new java.io.File(System.getProperty("user.home"), fileName);
-		}
-	}
+    private static java.io.File getFile(String fileName) {
+        if (fileName == null) throw new NullPointerException("fileName");
+        String normalized = fileName.replace('\\', '/');
+        int colon = normalized.indexOf(':');
+        String root;
+        String path;
+        if (colon == -1) {
+            root = "siemens:/";
+            path = normalized;
+        } else {
+            if (colon == 0 || colon + 1 >= normalized.length()
+                    || normalized.charAt(colon + 1) != '/') {
+                throw new IllegalArgumentException("Invalid Siemens filesystem path");
+            }
+            root = normalized.substring(0, colon + 2);
+            path = normalized.substring(colon + 2);
+        }
+        try {
+            return VirtualFileSystem.resolve(root, path);
+        } catch (IOException error) {
+            throw new SecurityException("Invalid Siemens filesystem path", error);
+        }
+    }
 }
