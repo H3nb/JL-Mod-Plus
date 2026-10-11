@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.preference.PreferenceManager
 import io.github.h3nb.jlmodplus.BuildConfig
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -48,6 +49,18 @@ internal class UpdateRepository private constructor(context: Context) {
 
     var lastChecked by mutableStateOf(preferences.getLong(KEY_SUCCESS, 0L))
         private set
+
+    init {
+        val identity = BuildConfig.VERSION_NAME + "#" + BuildConfig.VERSION_CODE
+        if (preferences.getString(KEY_INSTALLED, null) != identity) {
+            preferences.edit()
+                .putString(KEY_INSTALLED, identity)
+                .remove(KEY_SUCCESS).remove(KEY_RESULT).remove(KEY_VERSION)
+                .remove(KEY_CODE).remove(KEY_URL).apply()
+            lastChecked = 0L
+            status = UpdateStatus.NotChecked
+        }
+    }
 
     fun setChannel(value: UpdateChannel) {
         if (channel == value) return
@@ -102,6 +115,9 @@ internal class UpdateRepository private constructor(context: Context) {
                 editor.remove(KEY_VERSION).remove(KEY_CODE).remove(KEY_URL)
             }
             editor.apply()
+        } catch (cancelled: CancellationException) {
+            if (channel == requestedChannel) status = UpdateStatus.NotChecked
+            throw cancelled
         } catch (_: IOException) {
             if (channel == requestedChannel) status = UpdateStatus.Failed
         } catch (_: org.json.JSONException) {
@@ -219,6 +235,7 @@ internal class UpdateRepository private constructor(context: Context) {
         private const val LATEST_API =
             "https://api.github.com/repos/H3nb/JL-Mod-Plus/releases/latest"
         private const val KEY_CHANNEL = "jlmod_updates_channel"
+        private const val KEY_INSTALLED = "jlmod_updates_installed_identity"
         private const val KEY_ENABLED = "jlmod_updates_enabled"
         private const val KEY_ATTEMPT = "jlmod_updates_last_attempt"
         private const val KEY_SUCCESS = "jlmod_updates_last_success"
