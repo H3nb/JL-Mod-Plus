@@ -140,6 +140,18 @@ public final class MemoryEngineContract {
 	public static final String KEY_INSPECT_PROVENANCE = "inspectProvenance";
 	public static final String KEY_RESULT_IDS = "resultIds";
 	public static final String KEY_RESULT_VALUES = "resultValues";
+	/** Source metadata describes a checked reference at read time, not a durable owner ID. */
+	public static final int SOURCE_UNKNOWN = 0;
+	public static final int SOURCE_STATIC_FIELD = 1;
+	public static final int SOURCE_INSTANCE_FIELD = 2;
+	public static final String KEY_RESULT_SOURCE_KINDS = "resultSourceKinds";
+	public static final String KEY_RESULT_SOURCE_CLASSES = "resultSourceClasses";
+	public static final String KEY_RESULT_SOURCE_FIELDS = "resultSourceFields";
+	public static final String KEY_RESULT_SOURCE_TYPES = "resultSourceTypes";
+	public static final String KEY_INSPECT_SOURCE_KIND = "inspectSourceKind";
+	public static final String KEY_INSPECT_SOURCE_CLASS = "inspectSourceClass";
+	public static final String KEY_INSPECT_SOURCE_FIELD = "inspectSourceField";
+	public static final String KEY_INSPECT_SOURCE_TYPE = "inspectSourceType";
 	public static final String KEY_RESULT_ADDRESSES = "resultAddresses";
 	public static final String KEY_RESULT_ALIAS_MASKS = "resultAliasMasks";
 	public static final String KEY_RESULT_TYPES = "resultTypes";

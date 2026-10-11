@@ -1623,6 +1623,10 @@ public final class MemoryEngineService extends Service {
 		result.putLongArray(MemoryEngineContract.KEY_RESULT_IDS, new long[0]);
 		result.putStringArray(MemoryEngineContract.KEY_RESULT_VALUES, new String[0]);
 		result.putStringArray(MemoryEngineContract.KEY_RESULT_ADDRESSES, new String[0]);
+		result.putIntArray(MemoryEngineContract.KEY_RESULT_SOURCE_KINDS, new int[0]);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_CLASSES, new String[0]);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_FIELDS, new String[0]);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_TYPES, new String[0]);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_ALIAS_MASKS, new int[0]);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_TYPES, new int[0]);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_STATES, new int[0]);

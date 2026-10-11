@@ -141,6 +141,43 @@ internal object MemoryEditorRuntimePreferences {
     }
 }
 
+/** A field reference checked against the currently running MIDlet, not a portable identifier. */
+internal data class MemoryCandidateSource(
+    val kind: Int,
+    val declaringClass: String,
+    val fieldName: String,
+    val fieldType: String,
+) {
+    companion object {
+        val UNKNOWN = MemoryCandidateSource(MemoryEngineContract.SOURCE_UNKNOWN, "", "", "")
+
+        fun checked(kind: Int, className: String?, fieldName: String?, fieldType: String?): MemoryCandidateSource {
+            if (kind !in MemoryEngineContract.SOURCE_STATIC_FIELD..MemoryEngineContract.SOURCE_INSTANCE_FIELD ||
+                className.isNullOrBlank() || fieldName.isNullOrBlank() || fieldType.isNullOrBlank()
+            ) return UNKNOWN
+            return MemoryCandidateSource(kind, className, fieldName, fieldType)
+        }
+    }
+
+    val shortFieldName: String
+        get() = "${declaringClass.substringAfterLast('.')}.$fieldName"
+}
+
+private fun parseCandidateSources(bundle: android.os.Bundle, count: Int): List<MemoryCandidateSource> {
+    val kinds = bundle.getIntArray(MemoryEngineContract.KEY_RESULT_SOURCE_KINDS)
+    val classes = bundle.getStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_CLASSES)
+    val fields = bundle.getStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_FIELDS)
+    val types = bundle.getStringArray(MemoryEngineContract.KEY_RESULT_SOURCE_TYPES)
+    if (kinds == null || classes == null || fields == null || types == null ||
+        kinds.size != count || classes.size != count || fields.size != count || types.size != count
+    ) {
+        return List(count) { MemoryCandidateSource.UNKNOWN }
+    }
+    return List(count) { index ->
+        MemoryCandidateSource.checked(kinds[index], classes[index], fields[index], types[index])
+    }
+}
+
 /** One engine-formatted Watch row used by the :memory_engine presentation. */
 internal data class MemoryWatchRow(
     val id: Long,
@@ -154,6 +191,7 @@ internal data class MemoryWatchRow(
     val label: String = "",
     val freezeMode: Int = -1,
     val freezePaused: Boolean = false,
+    val source: MemoryCandidateSource = MemoryCandidateSource.UNKNOWN,
 )
 
 /** One engine-formatted logical address result used by the :memory_engine presentation. */
@@ -165,6 +203,7 @@ internal data class MemoryResultRow(
     val primaryType: Int,
     val state: Int,
     val relocations: Int,
+    val source: MemoryCandidateSource = MemoryCandidateSource.UNKNOWN,
 ) {
     val aliasTypes: List<Int>
         get() = (MemoryEngineContract.TYPE_BYTE..MemoryEngineContract.TYPE_DOUBLE)
@@ -189,6 +228,7 @@ internal data class MemoryInspectorSnapshot(
     val expectedRevision: Long = 0L,
     val provenance: String = "",
     val watchAnchor: Boolean = false,
+    val source: MemoryCandidateSource = MemoryCandidateSource.UNKNOWN,
 )
 
 internal data class MemoryInspectorLogicalRow(
@@ -213,6 +253,7 @@ internal object MemoryResultPageParser {
         val types = bundle.getIntArray(MemoryEngineContract.KEY_RESULT_TYPES) ?: return emptyList()
         val states = bundle.getIntArray(MemoryEngineContract.KEY_RESULT_STATES) ?: return emptyList()
         val relocations = bundle.getIntArray(MemoryEngineContract.KEY_RESULT_RELOCATIONS) ?: return emptyList()
+        val sources = parseCandidateSources(bundle, ids.size)
         if (listOf(values.size, addresses.size, aliasMasks.size, types.size, states.size, relocations.size)
                 .any { it != ids.size }) {
             return emptyList()
@@ -233,6 +274,7 @@ internal object MemoryResultPageParser {
                     primaryType = type,
                     state = states[index],
                     relocations = relocations[index],
+                    source = sources[index],
                 )
             }
         }.takeIf { it.size == ids.size }.orEmpty()
@@ -254,7 +296,7 @@ internal object MemoryWatchPageParser {
         val freezePaused = bundle.getBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED) ?: return emptyList()
         return parse(
             ids, values, initialValues, previousValues, addresses, types, states, relocations,
-            labels, freezeModes, freezePaused,
+            labels, freezeModes, freezePaused, parseCandidateSources(bundle, ids.size),
         )
     }
 
@@ -270,10 +312,12 @@ internal object MemoryWatchPageParser {
         labels: Array<String>,
         freezeModes: IntArray,
         freezePaused: BooleanArray,
+        sources: List<MemoryCandidateSource> = List(ids.size) { MemoryCandidateSource.UNKNOWN },
     ): List<MemoryWatchRow> {
         if (listOf(
                 values.size, initialValues.size, previousValues.size, addresses.size, types.size,
                 states.size, relocations.size, labels.size, freezeModes.size, freezePaused.size,
+                sources.size,
             ).any { it != ids.size }) {
             return emptyList()
         }
@@ -294,6 +338,7 @@ internal object MemoryWatchPageParser {
                     label = labels[index],
                     freezeMode = freezeModes[index],
                     freezePaused = freezePaused[index],
+                    source = sources[index],
                 )
             }
         }.takeIf { it.size == ids.size }.orEmpty()

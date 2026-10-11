@@ -46,6 +46,14 @@ class MemoryOperationMessagesTest {
     }
 
     @Test
+    fun confirmedWriteHasACompactReadbackMessage() {
+        val message = memoryOperationMessage(MemoryEngineContract.RESULT_OK, written = 5)!!
+        assertEquals(R.string.memory_editor_write_confirmed, message.resource)
+        assertEquals(listOf(5), message.arguments)
+        assertNull(message.explanation)
+    }
+
+    @Test
     fun successfulNoOpAndAllRowsSkippedByTypeRemainDifferent() {
         assertNull(memoryOperationMessage(MemoryEngineContract.RESULT_OK))
         val message = memoryOperationMessage(MemoryEngineContract.RESULT_OK, skippedByType = 3)!!

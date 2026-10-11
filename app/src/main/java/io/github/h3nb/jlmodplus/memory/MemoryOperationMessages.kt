@@ -40,6 +40,11 @@ internal fun memoryOperationMessage(
         MemoryEngineContract.RESULT_PARTIAL_WRITE -> R.string.memory_editor_partial_write
         else -> R.string.memory_editor_invalid_request
     }
+    if (result == MemoryEngineContract.RESULT_OK && written > 0 &&
+        unconfirmed == 0 && skipped == 0 && notAttempted == 0 && skippedByType == 0
+    ) {
+        return MemoryOperationMessage(R.string.memory_editor_write_confirmed, listOf(written))
+    }
     // An unsafe/cancelled write can still have changed values. Keep its counters visible.
     if (written + unconfirmed + skipped + notAttempted + skippedByType > 0) {
         return MemoryOperationMessage(

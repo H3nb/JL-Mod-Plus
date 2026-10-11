@@ -1020,6 +1020,30 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void primitiveFieldSourceUsesExactDeclaringClassNameAndType() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		boolean foundStatic = false;
+		boolean foundInstance = false;
+		for (int index = 0; index < page.ids.length; index++) {
+			if ("staticMatch".equals(page.sourceFields[index])) {
+				foundStatic = true;
+				assertEquals(MemoryEngineContract.SOURCE_STATIC_FIELD, page.sourceKinds[index]);
+				assertEquals(FixtureRoot.class.getName(), page.sourceClasses[index]);
+				assertEquals("int", page.sourceTypes[index]);
+			}
+			if ("rootMatch".equals(page.sourceFields[index])) {
+				foundInstance = true;
+				assertEquals(MemoryEngineContract.SOURCE_INSTANCE_FIELD, page.sourceKinds[index]);
+				assertEquals(FixtureRoot.class.getName(), page.sourceClasses[index]);
+				assertEquals("int", page.sourceTypes[index]);
+			}
+		}
+		assertTrue(foundStatic);
+		assertTrue(foundInstance);
+	}
+
+	@Test
 	public void arrayLabelsShowOnlyVerifiedDirectReferencePaths() {
 		int[] originalStatic = FixtureRoot.staticArray;
 		try {
@@ -1035,11 +1059,45 @@ public class ManagedJavaMemoryEngineTest {
 					hasAddress(page, "FixtureRoot.staticArray [static]"));
 			assertTrue(Arrays.toString(page.addresses),
 					hasAddress(page, "FixtureRoot.array [instance]"));
+			int staticIndex = -1;
+			int instanceIndex = -1;
+			for (int index = 0; index < page.ids.length; index++) {
+				if (page.addresses[index].contains("FixtureRoot.staticArray")) staticIndex = index;
+				if (page.addresses[index].contains("FixtureRoot.array [instance]")) instanceIndex = index;
+			}
+			assertTrue(staticIndex >= 0 && instanceIndex >= 0);
+			assertEquals(MemoryEngineContract.SOURCE_STATIC_FIELD, page.sourceKinds[staticIndex]);
+			assertEquals(MemoryEngineContract.SOURCE_INSTANCE_FIELD, page.sourceKinds[instanceIndex]);
+			assertEquals(FixtureRoot.class.getName(), page.sourceClasses[staticIndex]);
+			assertEquals(FixtureRoot.class.getName(), page.sourceClasses[instanceIndex]);
+			assertEquals("staticArray", page.sourceFields[staticIndex]);
+			assertEquals("array", page.sourceFields[instanceIndex]);
+			assertEquals("[I", page.sourceTypes[staticIndex]);
+			assertEquals("[I", page.sourceTypes[instanceIndex]);
+
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					engine.addWatch(TOKEN, search.revision, new long[]{page.ids[staticIndex]}, 0L).code);
+			ManagedJavaMemoryEngine.ManagedPage watched = engine.watchPage(TOKEN);
+			assertEquals(1, watched.ids.length);
+			assertEquals(page.sourceKinds[staticIndex], watched.sourceKinds[0]);
+			assertEquals(page.sourceClasses[staticIndex], watched.sourceClasses[0]);
+			assertEquals(page.sourceFields[staticIndex], watched.sourceFields[0]);
+			ManagedJavaMemoryEngine.ManagedInspection inspected = engine.inspect(TOKEN,
+					search.revision, page.ids[staticIndex], 1);
+			assertEquals(MemoryEngineContract.RESULT_OK, inspected.code);
+			assertEquals(page.sourceFields[staticIndex], inspected.source.fieldName);
+			assertEquals(page.sourceTypes[staticIndex], inspected.source.fieldType);
 
 			root.array = new int[]{123457};
 			ManagedJavaMemoryEngine.ManagedPage afterReferenceChange = engine.resultPage(TOKEN,
 					search.revision, 0, 100);
 			assertFalse(hasAddress(afterReferenceChange, "FixtureRoot.array [instance]"));
+			for (int index = 0; index < afterReferenceChange.ids.length; index++) {
+				if (afterReferenceChange.ids[index] == page.ids[instanceIndex]) {
+					assertEquals(MemoryEngineContract.SOURCE_UNKNOWN,
+							afterReferenceChange.sourceKinds[index]);
+				}
+			}
 		} finally {
 			FixtureRoot.staticArray = originalStatic;
 		}
@@ -1056,6 +1114,9 @@ public class ManagedJavaMemoryEngineTest {
 		assertEquals(1, page.ids.length);
 		assertTrue(page.addresses[0].startsWith("int[]#"));
 		assertFalse(page.addresses[0].contains(" → "));
+		assertEquals(MemoryEngineContract.SOURCE_UNKNOWN, page.sourceKinds[0]);
+		assertEquals("", page.sourceClasses[0]);
+		assertEquals("", page.sourceFields[0]);
 	}
 
 	private ManagedJavaMemoryEngine.ManagedOperationResult startExact() {

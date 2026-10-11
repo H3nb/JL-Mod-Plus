@@ -622,6 +622,7 @@ final class ManagedJavaMemoryEngine {
 				page.values[output] = readValueText(bucket.owner, slot, strongOwner, type,
 						page.states, output, value);
 				page.addresses[output] = labelFor(bucket.owner, slot);
+				page.setSource(output, sourceFor(bucket.owner, slot, strongOwner));
 				page.aliasMasks[output] = 1 << type;
 				page.types[output] = type;
 				page.relocations[output] = 0;
@@ -734,7 +735,8 @@ final class ManagedJavaMemoryEngine {
 		return new ManagedInspection(MemoryEngineContract.RESULT_OK,
 				revision == null ? expectedRevision : revision.id, ids, values, initial, previous,
 				types, states, offsets, expectedBits, labels, editable,
-				"managed-logical-owner=" + owner.handle + ":slot=" + anchorSlot, null);
+				"managed-logical-owner=" + owner.handle + ":slot=" + anchorSlot,
+				sourceFor(owner, anchorSlot, strongOwner), null);
 	}
 
 	ManagedOperationResult editInspector(long token, long expectedRevision, long anchorId,
@@ -1006,6 +1008,7 @@ final class ManagedJavaMemoryEngine {
 			page.initialValues[index] = ManagedJavaValue.format(type, snapshot.initial[index]);
 			page.previousValues[index] = ManagedJavaValue.format(type, snapshot.previous[index]);
 			page.addresses[index] = owner == null ? "managed#LOST" : labelFor(owner, slot);
+			page.setSource(index, sourceFor(owner, slot, strongOwner));
 			page.types[index] = type;
 			page.relocations[index] = 0;
 			page.labels[index] = snapshot.labels[index] == null ? "" : snapshot.labels[index];
@@ -2072,16 +2075,38 @@ final class ManagedJavaMemoryEngine {
 		if (owner.kind == KIND_ARRAY) {
 			String identity = arrayTypeName(valueTypeFor(owner, slot)) + "[]#"
 					+ owner.handle + "[" + slot + "]";
-			ArrayReference source = owner.arrayReference;
-			Object array = owner.strongOwner();
-			String reference = source == null || array == null ? null : source.currentLabel(array);
-			return reference == null ? identity : reference + " → " + identity;
+			CandidateSource source = sourceFor(owner, slot, owner.strongOwner());
+			if (source == CandidateSource.UNKNOWN) return identity;
+			String className = source.declaringClass;
+			int lastDot = className.lastIndexOf('.');
+			return className.substring(lastDot + 1) + "." + source.fieldName
+					+ (source.kind == MemoryEngineContract.SOURCE_STATIC_FIELD ? " [static]" : " [instance]")
+					+ " → " + identity;
 		}
 		FieldSlot field = owner.schema.fieldAt(slot);
 		if (field == null) return "managed#" + owner.handle + "[" + slot + "]";
 		if (owner.kind == KIND_STATIC_FIELD) return field.declaringClass.getName() + "."
 				+ field.field.getName() + " [static]";
 		return field.declaringClass.getName() + "#" + owner.handle + "." + field.field.getName();
+	}
+
+	/**
+	 * The logical owner is authoritative for edits; this optional descriptor only reports an
+	 * existing, directly observed field reference. A matching value never identifies an object.
+	 */
+	private static CandidateSource sourceFor(@Nullable OwnerBucket owner, int slot,
+	                                         @Nullable Object strongOwner) {
+		if (owner == null || strongOwner == null) return CandidateSource.UNKNOWN;
+		if (owner.kind == KIND_ARRAY) {
+			return owner.arrayReference == null ? CandidateSource.UNKNOWN
+					: owner.arrayReference.currentSource(strongOwner);
+		}
+		FieldSlot field = owner.schema == null ? null : owner.schema.fieldAt(slot);
+		if (field == null || !field.primitiveField) return CandidateSource.UNKNOWN;
+		return CandidateSource.fromField(field.field,
+				owner.kind == KIND_STATIC_FIELD
+						? MemoryEngineContract.SOURCE_STATIC_FIELD
+						: MemoryEngineContract.SOURCE_INSTANCE_FIELD);
 	}
 
 	private static int valueTypeFor(OwnerBucket owner, int slot) {
@@ -2324,6 +2349,10 @@ final class ManagedJavaMemoryEngine {
 		final String[] initialValues;
 		final String[] previousValues;
 		final String[] addresses;
+		final int[] sourceKinds;
+		final String[] sourceClasses;
+		final String[] sourceFields;
+		final String[] sourceTypes;
 		final String[] labels;
 		final int[] aliasMasks;
 		final int[] types;
@@ -2337,6 +2366,10 @@ final class ManagedJavaMemoryEngine {
 			ids = new long[count];
 			values = new String[count];
 			addresses = new String[count];
+			sourceKinds = new int[count];
+			sourceClasses = new String[count];
+			sourceFields = new String[count];
+			sourceTypes = new String[count];
 			aliasMasks = new int[count];
 			types = new int[count];
 			states = new int[count];
@@ -2346,6 +2379,13 @@ final class ManagedJavaMemoryEngine {
 			labels = watch ? new String[count] : null;
 			freezeModes = watch ? new int[count] : null;
 			freezePaused = watch ? new boolean[count] : null;
+		}
+
+		void setSource(int index, CandidateSource source) {
+			sourceKinds[index] = source.kind;
+			sourceClasses[index] = source.declaringClass;
+			sourceFields[index] = source.fieldName;
+			sourceTypes[index] = source.fieldType;
 		}
 
 		static ManagedPage allocate(int count, long revision) {
@@ -2375,12 +2415,14 @@ final class ManagedJavaMemoryEngine {
 		final String[] labels;
 		final boolean[] editable;
 		final String provenance;
+		final CandidateSource source;
 		final String message;
 
 		ManagedInspection(int code, long revision, long[] ids, String[] values,
 		                String[] initialValues, String[] previousValues, int[] types, int[] states,
 		                int[] relativeOffsets, long[] expectedBits, String[] labels,
-		                boolean[] editable, String provenance, String message) {
+		                boolean[] editable, String provenance, CandidateSource source,
+		                String message) {
 			this.code = code;
 			this.revision = revision;
 			this.ids = ids;
@@ -2394,13 +2436,14 @@ final class ManagedJavaMemoryEngine {
 			this.labels = labels;
 			this.editable = editable;
 			this.provenance = provenance;
+			this.source = source;
 			this.message = message;
 		}
 
 		static ManagedInspection failure(int code, @Nullable String message) {
 			return new ManagedInspection(code, 0L, new long[0], new String[0], new String[0],
 					new String[0], new int[0], new int[0], new int[0], new long[0], new String[0],
-					new boolean[0], "", message);
+					new boolean[0], "", CandidateSource.UNKNOWN, message);
 		}
 	}
 
@@ -3272,7 +3315,37 @@ final class ManagedJavaMemoryEngine {
 		}
 	}
 
-	/** One observed direct reference path, never a claim of unique array ownership. */
+	/** Immutable descriptor; no references to the game or runtime are retained. */
+	static final class CandidateSource {
+		static final CandidateSource UNKNOWN = new CandidateSource(
+				MemoryEngineContract.SOURCE_UNKNOWN, "", "", "");
+		final int kind;
+		final String declaringClass;
+		final String fieldName;
+		final String fieldType;
+
+		private CandidateSource(int kind, String declaringClass, String fieldName, String fieldType) {
+			this.kind = kind;
+			this.declaringClass = declaringClass;
+			this.fieldName = fieldName;
+			this.fieldType = fieldType;
+		}
+
+		static CandidateSource fromField(Field field, int kind) {
+			String className = field.getDeclaringClass().getName();
+			String name = field.getName();
+			String type = field.getType().getName();
+			// Preserve complete names or report no source. Truncating a name changes identity.
+			if (className.length() > MemoryEngineContract.MAX_IPC_DISPLAY_CHARS
+					|| name.length() > MemoryEngineContract.MAX_IPC_DISPLAY_CHARS
+					|| type.length() > MemoryEngineContract.MAX_IPC_DISPLAY_CHARS) {
+				return UNKNOWN;
+			}
+			return new CandidateSource(kind, className, name, type);
+		}
+	}
+
+	/** A weak observation of one direct reference; other references may exist. */
 	private static final class ArrayReference {
 		final Field field;
 		final WeakReference<Object> instance;
@@ -3282,16 +3355,16 @@ final class ManagedJavaMemoryEngine {
 			this.instance = parent == null ? null : new WeakReference<>(parent);
 		}
 
-		@Nullable String currentLabel(Object array) {
+		CandidateSource currentSource(Object array) {
 			try {
 				Object parent = instance == null ? null : instance.get();
-				if (instance != null && parent == null) return null;
-				if (field.get(parent) != array) return null;
-				String type = field.getDeclaringClass().getSimpleName();
-				if (type.isEmpty()) type = field.getDeclaringClass().getName();
-				return type + "." + field.getName() + (instance == null ? " [static]" : " [instance]");
+				if (instance != null && parent == null) return CandidateSource.UNKNOWN;
+				if (field.get(parent) != array) return CandidateSource.UNKNOWN;
+				return CandidateSource.fromField(field, instance == null
+						? MemoryEngineContract.SOURCE_STATIC_FIELD
+						: MemoryEngineContract.SOURCE_INSTANCE_FIELD);
 			} catch (IllegalAccessException | RuntimeException | LinkageError ignored) {
-				return null;
+				return CandidateSource.UNKNOWN;
 			}
 		}
 	}

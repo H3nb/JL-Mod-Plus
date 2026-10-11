@@ -819,6 +819,33 @@ private fun RuntimeSearchResultsTab(
     }
 }
 
+@Composable
+private fun runtimeCandidateLocation(id: Long, source: MemoryCandidateSource, fallback: String): String {
+    if (source.kind == MemoryEngineContract.SOURCE_UNKNOWN) {
+        return if (ManagedJavaMemoryIds.kind(id) == ManagedJavaMemoryEngine.KIND_ARRAY) {
+            stringResource(
+                R.string.memory_editor_candidate_untraced,
+                ManagedJavaMemoryIds.ownerHandle(id),
+                ManagedJavaMemoryIds.slot(id),
+            )
+        } else fallback
+    }
+    val kind = stringResource(
+        if (source.kind == MemoryEngineContract.SOURCE_STATIC_FIELD) {
+            R.string.memory_editor_reference_static
+        } else R.string.memory_editor_reference_instance
+    )
+    val name = if (ManagedJavaMemoryIds.kind(id) == ManagedJavaMemoryEngine.KIND_ARRAY) {
+        "${source.shortFieldName}[${ManagedJavaMemoryIds.slot(id)}]"
+    } else source.shortFieldName
+    return if (source.kind == MemoryEngineContract.SOURCE_INSTANCE_FIELD) {
+        stringResource(
+            R.string.memory_editor_candidate_instance,
+            name, kind, ManagedJavaMemoryIds.ownerHandle(id),
+        )
+    } else stringResource(R.string.memory_editor_candidate_static, name, kind)
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RuntimeResultRow(
@@ -858,9 +885,11 @@ private fun RuntimeResultRow(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        row.locationText,
+                        runtimeCandidateLocation(row.id, row.source, row.locationText),
                         style = runtimeMemoryMetaTextStyle(),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
                     RuntimeCandidateStatus(row.state, row.relocations)
@@ -1027,8 +1056,10 @@ private fun RuntimeWatchRow(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "${row.locationText} · ${runtimeTypeShort(row.type)}",
+                        runtimeCandidateLocation(row.id, row.source, row.locationText),
                         style = runtimeMemoryMetaTextStyle(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
@@ -1850,12 +1881,20 @@ private fun RuntimeInspectorTab(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) },
+                            runtimeCandidateLocation(
+                                snapshot.candidateId, snapshot.source,
+                                snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) },
+                            ),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            snapshot.provenance.ifBlank { "logical" },
+                            if (snapshot.source == MemoryCandidateSource.UNKNOWN) {
+                                stringResource(R.string.memory_editor_source_unknown)
+                            } else {
+                                "${snapshot.source.declaringClass}.${snapshot.source.fieldName}: " +
+                                    snapshot.source.fieldType
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
