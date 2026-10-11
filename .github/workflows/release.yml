@@ -212,8 +212,10 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "mapping=$RELEASE_MAPPING" >> "$GITHUB_OUTPUT"
 
-      - name: Verify APK signatures
+      - name: Verify APK signatures and signing identity
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -234,6 +236,32 @@ jobs:
           for apk in "${apks[@]}"; do
             "$APKSIGNER" verify --verbose --print-certs "$apk"
           done
+          fingerprint() {
+            "$APKSIGNER" verify --print-certs "$1" |
+              awk -F ': ' '/Signer #1 certificate SHA-256 digest/ {print tolower($2); exit}'
+          }
+          built_fingerprint="$(fingerprint "${apks[0]}")"
+          if [[ ! "$built_fingerprint" =~ ^[0-9a-f]{64}$ ]]; then
+            echo 'Unable to read release signing fingerprint.' >&2
+            exit 1
+          fi
+          for apk in "${apks[@]}"; do
+            if [[ "$(fingerprint "$apk")" != "$built_fingerprint" ]]; then
+              echo "Release signer differs across APK variants: $apk" >&2
+              exit 1
+            fi
+          done
+
+          # Anchor the migration to the certificate on the first published JL-Mod Plus APK.
+          mkdir -p prior-release
+          gh release download v0.1.0-alpha.1 --repo "$GITHUB_REPOSITORY" \
+            --pattern '*-arm64-v8a.apk' --dir prior-release
+          shopt -s nullglob
+          prior_apks=(prior-release/*-arm64-v8a.apk)
+          if [[ ${#prior_apks[@]} -ne 1 || "$(fingerprint "${prior_apks[0]}")" != "$built_fingerprint" ]]; then
+            echo 'Signing certificate does not match the existing JL-Mod Plus release.' >&2
+            exit 1
+          fi
 
       - name: Publish complete GitHub release
         shell: bash
