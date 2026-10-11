@@ -15,11 +15,13 @@ import androidx.annotation.Nullable;
 /** Non-exported synchronous IPC endpoint hosted by the default/main application process. */
 public final class PresetAuthorityProvider extends ContentProvider {
 	private PresetAuthority authority;
+	private InstalledAppWriteGuard permissionGuard;
 
 	@Override
 	public boolean onCreate() {
 		if (getContext() == null) return false;
 		authority = PresetAuthority.create(getContext());
+		permissionGuard = InstalledAppWriteGuard.create(getContext());
 		return true;
 	}
 
@@ -40,6 +42,10 @@ public final class PresetAuthorityProvider extends ContentProvider {
 						resolve(appPath, expectedAppId);
 				case PresetAuthorityContract.METHOD_SAVE_VIRTUAL_KEYBOARD_LAYOUT ->
 						save(appPath, expectedAppId, extras);
+				case PresetAuthorityContract.METHOD_GET_FILE_PERMISSIONS ->
+						getFilePermissions(appPath, expectedAppId, extras);
+				case PresetAuthorityContract.METHOD_SET_FILE_PERMISSION ->
+						setFilePermission(appPath, expectedAppId, extras);
 				default -> result(PresetAuthorityContract.RESULT_INVALID);
 			};
 		} catch (RuntimeException failure) {
@@ -78,6 +84,40 @@ public final class PresetAuthorityProvider extends ContentProvider {
 		result.putInt(PresetAuthorityContract.KEY_UPDATE_OUTCOME, saved.updateOutcome);
 		return result;
 	}
+
+    private Bundle getFilePermissions(String appPath, long appId, Bundle extras) {
+        if (appId <= 0 || permissionGuard.resolveCurrentAppId(appPath) != appId) {
+            return result(PresetAuthorityContract.RESULT_STALE);
+        }
+        String fingerprint = extras.getString(PresetAuthorityContract.KEY_JAR_FINGERPRINT);
+        Bundle response = result(PresetAuthorityContract.RESULT_OK);
+        response.putInt(PresetAuthorityContract.KEY_FILE_READ_DECISION,
+                MidletPermissionStore.read(getContext(), appId,
+                        MidletPermissionStore.FILE_READ, fingerprint));
+        response.putInt(PresetAuthorityContract.KEY_FILE_WRITE_DECISION,
+                MidletPermissionStore.read(getContext(), appId,
+                        MidletPermissionStore.FILE_WRITE, fingerprint));
+        return response;
+    }
+
+    private Bundle setFilePermission(String appPath, long appId, Bundle extras) {
+        String capability = extras.getString(PresetAuthorityContract.KEY_PERMISSION_CAPABILITY);
+        int decision = extras.getInt(PresetAuthorityContract.KEY_PERMISSION_DECISION, -1);
+        String fingerprint = extras.getString(PresetAuthorityContract.KEY_JAR_FINGERPRINT);
+        if (!MidletPermissionStore.supported(capability)
+                || decision < MidletPermissionStore.ASK
+                || decision > MidletPermissionStore.DENY) {
+            return result(PresetAuthorityContract.RESULT_INVALID);
+        }
+        InstalledAppWriteGuard.Result saved = permissionGuard.run(appPath, appId,
+                () -> MidletPermissionStore.write(getContext(), appId,
+                        capability, fingerprint, decision));
+        return result(switch (saved) {
+            case SUCCESS -> PresetAuthorityContract.RESULT_OK;
+            case STALE -> PresetAuthorityContract.RESULT_STALE;
+            case FAILED -> PresetAuthorityContract.RESULT_FAILED;
+        });
+    }
 
 	private static Bundle result(int code) {
 		Bundle result = new Bundle();
