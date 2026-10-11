@@ -70,6 +70,8 @@ final class ManagedJavaMemoryEngine {
 	private static final long QUEUE_REFERENCE_BYTES = Long.BYTES;
 	/** Conservative accounting for one weak shared predecessor (not one per numeric element). */
 	private static final long PROVENANCE_NODE_BYTES = 80L;
+	private static final long MIN_PROVENANCE_STORAGE_BUDGET = 64L * 1024L;
+	private static final long MAX_PROVENANCE_CAPTURE_BYTES = 2L * 1024L * 1024L;
 	private static final int MAX_PROVENANCE_DEPTH = 24;
 	private static final long SNAPSHOT_REFERENCE_BYTES = Long.BYTES;
 
@@ -2736,6 +2738,9 @@ final class ManagedJavaMemoryEngine {
 		final GroupMatcher groupMatcher;
 		final long[] value = new long[1];
 		long transientStorageBytes;
+		final long maxProvenanceBytes;
+		final long provenanceHistoryBytes;
+		long provenanceBytes;
 		long visitCount;
 		int skippedFields;
 		int concurrentFailures;
@@ -2768,6 +2773,12 @@ final class ManagedJavaMemoryEngine {
 			this.captureAllValues = captureAllValues;
 			this.revision = new RevisionBuilder(retainedRevisionBytes);
 			this.groupMatcher = groupPlan == null ? null : new GroupMatcher(groupPlan);
+			this.maxProvenanceBytes = limits.maxResultStorageBytes < MIN_PROVENANCE_STORAGE_BUDGET
+					? 0L : Math.min(MAX_PROVENANCE_CAPTURE_BYTES,
+							limits.maxResultStorageBytes / 32L);
+			// Existing history can be evicted during scanning; using its initial size only
+			// makes optional provenance capture more conservative, never less safe.
+			this.provenanceHistoryBytes = maxProvenanceBytes == 0L ? 0L : historyStorageBytes();
 		}
 
 		void enqueue(@Nullable Object value) {
@@ -2784,8 +2795,18 @@ final class ManagedJavaMemoryEngine {
 			if (queue.size() >= limits.maxPending) {
 				throw new ResourceLimitException("Managed traversal pending queue exceeds the resource limit");
 			}
-			reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES + QUEUE_REFERENCE_BYTES + PROVENANCE_NODE_BYTES);
-			queued.put(value, new ProvenanceNode(value, parent, field, index, kind));
+			reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES + QUEUE_REFERENCE_BYTES);
+			ProvenanceNode node = null;
+			if (provenanceBytes < maxProvenanceBytes
+					&& maxProvenanceBytes - provenanceBytes >= PROVENANCE_NODE_BYTES
+					&& revision.withinStorageBudget(limits,
+							checkedAdd(checkedAdd(transientStorageBytes,
+									provenanceHistoryBytes), PROVENANCE_NODE_BYTES))) {
+				reserveTraversalBytes(PROVENANCE_NODE_BYTES);
+				provenanceBytes += PROVENANCE_NODE_BYTES;
+				node = new ProvenanceNode(value, parent, field, index, kind);
+			}
+			queued.put(value, node);
 			queue.addLast(value);
 		}
 
@@ -3145,7 +3166,9 @@ final class ManagedJavaMemoryEngine {
 								FINISHED_BUCKET_BYTES));
 			}
 			long pathBytes = retainedPathBytes();
-			if (!canAddStorage(limits, extraBytes, checkedAdd(finishedStorageBytes, pathBytes))) {
+			// Transient scan accounting already includes every retained path node at this point.
+			// Count only the finished candidate copies for the peak, then retain paths in Revision.
+			if (!canAddStorage(limits, extraBytes, finishedStorageBytes)) {
 				throw new ResourceLimitException("Managed result storage exceeds the byte budget");
 			}
 			ArrayList<BucketView> views = new ArrayList<>(builders.size());

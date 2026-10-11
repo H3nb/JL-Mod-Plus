@@ -46,6 +46,13 @@ traced**, not **no source exists**. Multiple fields may point to the same object
 the first observed one is not guaranteed to be the preferred future route.
 An instance field's name alone never identifies the particular instance.
 
+Predecessor capture is best-effort and bounded independently from numeric search
+results. When memory pressure is high or the configured byte budget is small, the
+scanner may omit optional ancestry rather than reject an otherwise valid numeric
+search. Inspector then reports an unknown path, not a false verified one. Retained
+paths are charged once to the owning result revision; transient paths are also
+accounted during scanning without double-charging them at the commit boundary.
+
 The presentation renders a compact summary from typed source metadata while
 Inspector exposes the full declaring class, field name, type and, when verified,
 the root-relative path. A checked path is only an observation of the current
