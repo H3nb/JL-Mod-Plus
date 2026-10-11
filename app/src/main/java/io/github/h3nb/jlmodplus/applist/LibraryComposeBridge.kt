@@ -146,6 +146,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -608,9 +609,13 @@ fun LibraryScreen(
     )
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current.applicationContext
-    val updateRepository = remember(context) { UpdateRepository.get(context) }
+    // Screenshot previews have no persistent preferences or active network stack.
+    val isInspection = LocalInspectionMode.current
+    val updateRepository = if (isInspection) null else remember(context) {
+        UpdateRepository.get(context)
+    }
     LaunchedEffect(updateRepository) {
-        if (!BuildConfig.DEBUG) updateRepository.check(manual = false)
+        if (!BuildConfig.DEBUG) updateRepository?.check(manual = false)
     }
     val selectDestination: (LibraryDestination) -> Unit = { section ->
         coroutineScope.launch { pagerState.navigateToTab(section.ordinal) }
@@ -831,10 +836,10 @@ fun LibraryScreen(
     BackHandler(enabled = updatesPageVisible) {
         updatesPageVisible = false
     }
-    val candidateVersion = (updateRepository.status as? UpdateStatus.Available)?.candidate?.versionName
+    val candidateVersion = (updateRepository?.status as? UpdateStatus.Available)?.candidate?.versionName
     val updateNotice = stringResource(R.string.updates_notice, candidateVersion.orEmpty())
-    LaunchedEffect(candidateVersion, updatesPageVisible, updateRepository.automaticChecks) {
-        if (!BuildConfig.DEBUG && updateRepository.automaticChecks &&
+    LaunchedEffect(candidateVersion, updatesPageVisible, updateRepository?.automaticChecks) {
+        if (!BuildConfig.DEBUG && updateRepository?.automaticChecks == true &&
             !updatesPageVisible && candidateVersion != null &&
             updateRepository.takeUnnotifiedVersion() != null) {
             onUpdateNotice(updateNotice)
@@ -1365,7 +1370,7 @@ fun LibraryScreen(
                             onUpdates = {
                                 if (currentControllerDestination == LibraryDestination.More) updatesPageVisible = true
                             },
-                            updateAvailable = updateRepository.status is UpdateStatus.Available,
+                            updateAvailable = updateRepository?.status is UpdateStatus.Available,
                             onDonate = {
                                 if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.Donation
                             },
@@ -1389,11 +1394,13 @@ fun LibraryScreen(
                     .background(MaterialTheme.colorScheme.background)
                     .zIndex(4f),
             ) {
-                UpdatesScreen(
-                    repository = updateRepository,
-                    onBack = { updatesPageVisible = false },
-                    onOpenRelease = actions::onOpenUpdateRelease,
-                )
+                updateRepository?.let { repository ->
+                    UpdatesScreen(
+                        repository = repository,
+                        onBack = { updatesPageVisible = false },
+                        onOpenRelease = actions::onOpenUpdateRelease,
+                    )
+                }
             }
         }
         if (aboutPageVisible) {
