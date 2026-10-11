@@ -58,7 +58,7 @@ public class VirtualFileSystemTest {
         File first = VirtualFileSystem.resolve("private:/", "save.dat");
         File vendor = VirtualFileSystem.resolve("siemens:/", "save.dat");
         assertTrue(relative(first).startsWith("data/game-a/private/"));
-        assertEquals("data/game-a/save.dat", relative(vendor));
+        assertEquals("data/game-a/vendor/siemens/save.dat", relative(vendor));
         VirtualFileSystem.install(temp.getRoot(), "game-b");
         File second = VirtualFileSystem.resolve("private:/", "save.dat");
         assertNotEquals(first, second);
@@ -89,6 +89,18 @@ public class VirtualFileSystemTest {
         assertTrue(storage.mkdirs());
         Files.createSymbolicLink(new File(storage, "c").toPath(), outside.toPath());
         assertThrows(IOException.class, () -> VirtualFileSystem.install(root, "game-a"));
+    }
+
+    @Test public void vendorFilesCannotExposeLegacyRmsRecords() throws Exception {
+        File recordData = new File(temp.getRoot(), "data/game-a/score.rsh");
+        File directory = recordData.getParentFile();
+        assertTrue(directory.mkdirs() || directory.isDirectory());
+        Files.write(recordData.toPath(), new byte[]{1, 2, 3});
+        VirtualFileSystem.install(temp.getRoot(), "game-a");
+        File vendorFile = VirtualFileSystem.resolve("siemens:/", "score.rsh");
+        assertNotEquals(recordData.getCanonicalFile(), vendorFile);
+        assertFalse(vendorFile.exists());
+        assertTrue(recordData.isFile());
     }
 
     @Test public void refusesInvalidInstallationIdentifiers() throws Exception {
