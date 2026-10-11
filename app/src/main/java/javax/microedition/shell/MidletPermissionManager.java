@@ -18,9 +18,10 @@ import io.github.h3nb.jlmodplus.config.MidletPermissionStore;
 /** Java ME file authorization for the current installed runtime, distinct from Android grants. */
 public final class MidletPermissionManager {
     private static final int CANCEL = 0;
-    private static final int SESSION = 1;
-    private static final int ALWAYS = 2;
-    private static final int DENY = 3;
+    private static final int ONCE = 1;
+    private static final int SESSION = 2;
+    private static final int ALWAYS = 3;
+    private static final int DENY = 4;
     private static volatile Session current;
 
     private MidletPermissionManager() {}
@@ -108,6 +109,7 @@ public final class MidletPermissionManager {
                 active.pending = null;
             }
             if (active.closed) throw new SecurityException("MIDlet runtime has ended");
+            if (result == ONCE) return;
             if (result == SESSION) {
                 if (write) active.writeSession = true;
                 else active.readSession = true;
@@ -139,6 +141,7 @@ public final class MidletPermissionManager {
         }
         try {
             String[] choices = {
+                    activity.getString(R.string.midlet_file_permission_allow_once),
                     activity.getString(R.string.midlet_file_permission_allow_session),
                     activity.getString(R.string.midlet_file_permission_allow_always),
                     activity.getString(R.string.midlet_file_permission_deny)
@@ -148,7 +151,8 @@ public final class MidletPermissionManager {
                     .setMessage(write ? R.string.midlet_file_permission_write
                             : R.string.midlet_file_permission_read)
                     .setItems(choices, (ignored, index) ->
-                            request.complete(index == 0 ? SESSION : index == 1 ? ALWAYS : DENY))
+                            request.complete(index == 0 ? ONCE : index == 1 ? SESSION
+                                    : index == 2 ? ALWAYS : DENY))
                     .setNegativeButton(android.R.string.cancel,
                             (ignored, index) -> request.complete(CANCEL))
                     .setOnCancelListener(ignored -> request.complete(CANCEL))

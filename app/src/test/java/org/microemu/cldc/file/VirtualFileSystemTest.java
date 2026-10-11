@@ -34,6 +34,9 @@ public class VirtualFileSystemTest {
         assertEquals(2, roots.size());
         assertEquals("c:/", roots.get(0));
         assertEquals("e:/", roots.get(1));
+        assertFalse(roots.contains("0:/"));
+        assertFalse(roots.contains("1:/"));
+        assertFalse(roots.contains("fs/mystuff/"));
     }
 
     @Test public void aliasesShareBackingFilesWithoutAdvertisingExtraRoots() throws Exception {

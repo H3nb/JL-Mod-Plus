@@ -1013,6 +1013,7 @@
     <string name="midlet_file_permission_title">Akses penyimpanan virtual</string>
     <string name="midlet_file_permission_read">Game ini ingin membaca berkas di penyimpanan virtual bersama JL-Mod Plus.</string>
     <string name="midlet_file_permission_write">Game ini ingin membuat, mengubah, atau menghapus berkas di penyimpanan virtual bersama JL-Mod Plus.</string>
+    <string name="midlet_file_permission_allow_once">Izinkan sekali</string>
     <string name="midlet_file_permission_allow_session">Izinkan selama bermain</string>
     <string name="midlet_file_permission_allow_always">Selalu izinkan</string>
     <string name="midlet_file_permission_deny">Tolak</string>

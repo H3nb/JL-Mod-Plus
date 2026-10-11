@@ -59,7 +59,8 @@ public final class VirtualFileSystem {
     }
 
     private static void alias(Map<String, Mount> mounts, String name, String target) {
-        mounts.put(name.toLowerCase(Locale.ROOT), mounts.get(target));
+        Mount original = mounts.get(target);
+        mounts.put(name.toLowerCase(Locale.ROOT), new Mount(original.directory, false));
     }
 
     private static Session active() throws IOException {

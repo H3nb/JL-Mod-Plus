@@ -185,6 +185,9 @@ public class File {
             root = normalized.substring(0, colon + 2);
             path = normalized.substring(colon + 2);
         }
+        if ((access & 2) != 0 && path.isEmpty()) {
+            throw new SecurityException("Cannot modify a virtual filesystem root");
+        }
         try {
             java.io.File result = VirtualFileSystem.resolve(root, path);
             if ((access & 1) != 0) MidletPermissionManager.requireFileAccess(root, false);

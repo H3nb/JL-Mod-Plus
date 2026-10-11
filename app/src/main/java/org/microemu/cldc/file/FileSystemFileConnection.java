@@ -91,6 +91,8 @@ public class FileSystemFileConnection implements FileConnection {
 		}
 		path = path.substring(1);
 		root = VirtualFileSystem.rootFor(path);
+		if ((mode & Connector.READ) != 0) MidletPermissionManager.requireFileAccess(root, false);
+		if ((mode & Connector.WRITE) != 0) MidletPermissionManager.requireFileAccess(root, true);
 		path = path.substring(root.length());
 		fsRootPath = VirtualFileSystem.resolve(root, "").getPath();
 		VirtualFileSystem.resolve(root, path);
@@ -125,13 +127,11 @@ public class FileSystemFileConnection implements FileConnection {
 	private void requireRead() {
 		throwClosed();
 		if (mode == Connector.WRITE) throw new IllegalModeException("Connection is write-only");
-		MidletPermissionManager.requireFileAccess(root, false);
 	}
 
 	private void requireWrite() {
 		throwClosed();
 		if (mode == Connector.READ) throw new IllegalModeException("Connection is read-only");
-		MidletPermissionManager.requireFileAccess(root, true);
 	}
 
 	@Override
