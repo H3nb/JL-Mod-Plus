@@ -1091,4 +1091,10 @@
     <string name="bulk_install_reason_version_conflict">Multiple app variants have the same version.</string>
     <string name="bulk_install_reason_older_candidate">A newer version of this app is in the same batch.</string>
     <string name="bulk_install_reason_source_error">This source could not be prepared for installation.</string>
+    <string name="midlet_file_permission_title">Virtual storage access</string>
+    <string name="midlet_file_permission_read">This game wants to read files in JL-Mod Plus\'s shared virtual storage.</string>
+    <string name="midlet_file_permission_write">This game wants to create, change, or delete files in JL-Mod Plus\'s shared virtual storage.</string>
+    <string name="midlet_file_permission_allow_session">Allow while playing</string>
+    <string name="midlet_file_permission_allow_always">Always allow</string>
+    <string name="midlet_file_permission_deny">Deny</string>
 </resources>
