@@ -14,6 +14,7 @@ permissions:
 concurrency:
   group: jlmod-plus-release-publishing
   cancel-in-progress: false
+  queue: max
 
 jobs:
   release:
