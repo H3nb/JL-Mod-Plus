@@ -37,9 +37,9 @@ public final class VirtualFileSystem {
         File privateBase = new File(new File(base, "data"), storageKey);
         mount(mounts, "private:/", new File(privateBase, "private"), false);
         mount(mounts, "cache:/", new File(privateBase, "cache"), false);
-        mount(mounts, "siemens:/", new File(privateBase, "vendor/siemens"), false);
+        mount(mounts, "siemens:/", privateBase, false);
         // Prepare common and installation-private directories before publishing the session.
-        for (String root : Arrays.asList("c:/", "e:/", "private:/", "cache:/", "siemens:/")) {
+        for (String root : Arrays.asList("c:/", "e:/", "private:/", "cache:/")) {
             File dir = mounts.get(root).directory;
             checkMount(mounts.get(root));
             if (!dir.isDirectory() && !dir.mkdirs()) {
