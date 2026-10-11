@@ -1688,58 +1688,58 @@ private fun VirtualControlsColorPreview(form: ConfigFormState) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.config_virtual_controls_color_preview),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Text(
-                    text = stringResource(
-                        if (pressed) R.string.config_virtual_controls_preview_pressed
-                        else R.string.config_virtual_controls_preview_normal,
-                    ),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .alpha(previewOpacity),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    modifier = Modifier.size(width = 52.dp, height = 40.dp),
-                    shape = keyShape,
-                    color = if (pressed) selectedBackground else background,
-                    border = BorderStroke(1.dp, outline),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "L",
-                            color = if (pressed) selectedForeground else foreground,
-                        )
-                    }
-                }
-                DpadColorSample(
-                    background, foreground, selectedBackground, selectedForeground,
-                    outline, pressed,
-                )
-                AnalogColorSample(
-                    background, foreground, selectedBackground, selectedForeground,
-                    outline, pressed,
-                )
-            }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
-                text = stringResource(R.string.config_virtual_controls_preview_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = stringResource(R.string.config_virtual_controls_color_preview),
+                style = MaterialTheme.typography.titleSmall,
             )
+            Text(
+                text = stringResource(
+                    if (pressed) R.string.config_virtual_controls_preview_pressed
+                    else R.string.config_virtual_controls_preview_normal,
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(previewOpacity),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                modifier = Modifier.size(width = 52.dp, height = 40.dp),
+                shape = keyShape,
+                color = if (pressed) selectedBackground else background,
+                border = BorderStroke(1.dp, outline),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "L",
+                        color = if (pressed) selectedForeground else foreground,
+                    )
+                }
+            }
+            DpadColorSample(
+                background, foreground, selectedBackground, selectedForeground,
+                outline, pressed,
+            )
+            AnalogColorSample(
+                background, foreground, selectedBackground, selectedForeground,
+                outline, pressed,
+            )
+        }
+        Text(
+            text = stringResource(R.string.config_virtual_controls_preview_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
