@@ -697,8 +697,10 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 				screenBounds, screen.left, screen.top, screen.right, screen.bottom);
 		boolean guestChanged = rectChanged(guestBounds, left, top, right, bottom);
 		int layout = getLayout();
+		// Portrait Standard geometry is screen-anchored; only landscape uses guest gutters/deck.
+		boolean guestAffectsGeometry = guestChanged && screen.width() > screen.height();
 		boolean reflowStandardTemplate = !applyingStandardTemplate && !standardTemplateEdited &&
-				isStandardTemplate(layout) && (screenChanged || guestChanged);
+				isStandardTemplate(layout) && (screenChanged || guestAffectsGeometry);
 
 		super.resize(screen, left, top, right, bottom);
 		screenBounds = new RectF(screen);
@@ -715,8 +717,8 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			} else if (activeCustomSource == ActiveCustomSource.BASE &&
 					customState.hasKnownBase() &&
 					isStandardTemplate(customState.baseVariant()) &&
-					(screenChanged || guestChanged)) {
-				// Missing Standard override remains derived and therefore follows current guest bounds.
+					(screenChanged || guestAffectsGeometry)) {
+				// A missing Standard override stays derived on host/orientation changes.
 				applyCustomBaseVariant(customState.baseVariant());
 			} else {
 				rebuildAnalogStick();

@@ -240,7 +240,7 @@ final class StandardVirtualControlsLayout {
 			float screenTop,
 			float screenRight,
 			float screenBottom,
-			float guestBottom,
+			float requestedDeckTop,
 			float keySize,
 			Placement placement) {
 		float movementRadius = keySize * MOVEMENT_RADIUS_KEYS;
@@ -248,7 +248,7 @@ final class StandardVirtualControlsLayout {
 		float shoulderWidth = keySize * SHOULDER_WIDTH_KEYS;
 		float shoulderHeight = keySize * SHOULDER_HEIGHT_KEYS;
 		float fireSize = keySize * FIRE_SIZE_KEYS;
-		float deckTop = clamp(guestBottom, screenTop, screenBottom);
+		float deckTop = clamp(requestedDeckTop, screenTop, screenBottom);
 		float deckHeight = Math.max(1.0f, screenBottom - deckTop);
 
 		float shoulderLeftX = screenLeft + margin + shoulderWidth * 0.5f;

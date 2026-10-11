@@ -229,7 +229,7 @@ public class VirtualControlsKeyboardResizeTest {
     }
 
     @Test
-    public void standardTemplateReflowsWhenOnlyGuestViewportChanges() throws Exception {
+    public void portraitStandardDoesNotReflowWhenOnlyGuestViewportChanges() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         keyboard.setView(new View(context) {
             @Override
