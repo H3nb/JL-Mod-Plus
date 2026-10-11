@@ -1390,15 +1390,15 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 			float left, float top, float right, float bottom, int round,
 			boolean pressed, int base, int activeBase, int outline) {
 		paintRect.set(left, top, right, bottom);
-		graphics.setFillColor(pressed ? activeBase : base);
+		graphics.setFillColor(opaqueColor(pressed ? activeBase : base));
 		graphics.fillRoundRect(paintRect, round, round);
-		graphics.setDrawColor(outline);
+		graphics.setDrawColor(opaqueColor(outline));
 		graphics.drawRoundRect(paintRect, round, round);
 	}
 
 	private void paintDpadGlyph(CanvasWrapper graphics, String glyph, float x, float y,
 			boolean pressed, int foreground, int activeForeground) {
-		graphics.setTextColor(pressed ? activeForeground : foreground);
+		graphics.setTextColor(opaqueColor(pressed ? activeForeground : foreground));
 		graphics.drawString(glyph, x, y);
 	}
 
@@ -1462,7 +1462,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		float offset = radius * 0.83f;
 		float length = Math.max(3.0f, radius * 0.082f);
 		float thickness = Math.max(1.2f, radius * 0.014f);
-		graphics.setFillColor(foreground);
+		graphics.setFillColor(opaqueColor(foreground));
 		paintRect.set(cx - thickness / 2f, cy - offset - length / 2f,
 				cx + thickness / 2f, cy - offset + length / 2f);
 		graphics.fillRect(paintRect);
@@ -1479,14 +1479,18 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 	private void fillCircle(CanvasWrapper graphics, float cx, float cy, float radius, int color) {
 		paintRect.set(cx - radius, cy - radius, cx + radius, cy + radius);
-		graphics.setFillColor(color);
+		graphics.setFillColor(opaqueColor(color));
 		graphics.fillArc(paintRect, 0, 360);
 	}
 
 	private void drawCircle(CanvasWrapper graphics, float cx, float cy, float radius, int color) {
 		paintRect.set(cx - radius, cy - radius, cx + radius, cy + radius);
-		graphics.setDrawColor(color);
+		graphics.setDrawColor(opaqueColor(color));
 		graphics.drawArc(paintRect, 0, 360);
+	}
+
+	private static int opaqueColor(int rgb) {
+		return 0xFF000000 | rgb;
 	}
 
 	private int beginControlLayer(CanvasWrapper graphics,
