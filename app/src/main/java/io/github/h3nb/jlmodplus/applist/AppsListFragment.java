@@ -853,6 +853,13 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onOpenUpdateRelease(@NonNull String url) {
+                if (url.startsWith("https://github.com/H3nb/JL-Mod-Plus/releases/tag/v")) {
+                    openExternalPage(url, "GitHub Releases",
+                            R.string.updates_link_copied, R.string.updates_browser_unavailable);
+                }
+            }
+            @Override
             public void onOpenProjectRepository() {
                 openExternalPage(
                         "https://github.com/H3nb/JL-Mod-Plus",

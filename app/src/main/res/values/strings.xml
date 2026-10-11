@@ -1091,4 +1091,27 @@
     <string name="bulk_install_reason_version_conflict">Multiple app variants have the same version.</string>
     <string name="bulk_install_reason_older_candidate">A newer version of this app is in the same batch.</string>
     <string name="bulk_install_reason_source_error">This source could not be prepared for installation.</string>
+    <string name="updates_title">Updates</string>
+    <string name="updates_more_summary">Check for new versions of JL-Mod Plus.</string>
+    <string name="updates_more_available">A newer version is available.</string>
+    <string name="updates_installed_version">Installed version: %1$s</string>
+    <string name="updates_build_code">Build %1$d</string>
+    <string name="updates_channel">Update channel</string>
+    <string name="updates_stable">Stable</string>
+    <string name="updates_preview">Preview</string>
+    <string name="updates_automatic">Check automatically when opening the Library</string>
+    <string name="updates_not_checked">No update check has been completed yet.</string>
+    <string name="updates_checking">Checking for updates…</string>
+    <string name="updates_current">You’re up to date.</string>
+    <string name="updates_no_release">No compatible published release is available on this channel.</string>
+    <string name="updates_not_installable">A newer release exists, but its build number cannot update this installation.</string>
+    <string name="updates_failed">Couldn’t check for updates. Check your connection and try again.</string>
+    <string name="updates_available">Update available</string>
+    <string name="updates_view_release">View release</string>
+    <string name="updates_last_checked">Last checked: %1$s</string>
+    <string name="updates_check">Check for updates</string>
+    <string name="updates_notice">JL-Mod Plus %1$s is available. See Updates in More.</string>
+    <string name="updates_debug_build">This is a debug build. GitHub release APKs are installed separately.</string>
+    <string name="updates_link_copied">No browser is available. The release link was copied.</string>
+    <string name="updates_browser_unavailable">No browser is available to open the release.</string>
 </resources>

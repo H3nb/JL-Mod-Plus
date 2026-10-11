@@ -1010,4 +1010,27 @@
     <string name="bulk_install_reason_version_conflict">Beberapa varian aplikasi memiliki versi yang sama.</string>
     <string name="bulk_install_reason_older_candidate">Versi yang lebih baru dari aplikasi ini ada dalam instalasi massal yang sama.</string>
     <string name="bulk_install_reason_source_error">Sumber ini tidak dapat disiapkan untuk instalasi.</string>
+    <string name="updates_title">Pembaruan</string>
+    <string name="updates_more_summary">Periksa versi terbaru JL-Mod Plus.</string>
+    <string name="updates_more_available">Versi yang lebih baru tersedia.</string>
+    <string name="updates_installed_version">Versi terpasang: %1$s</string>
+    <string name="updates_build_code">Build %1$d</string>
+    <string name="updates_channel">Saluran pembaruan</string>
+    <string name="updates_stable">Stabil</string>
+    <string name="updates_preview">Pratinjau</string>
+    <string name="updates_automatic">Periksa otomatis saat membuka Pustaka</string>
+    <string name="updates_not_checked">Belum ada pemeriksaan pembaruan yang selesai.</string>
+    <string name="updates_checking">Memeriksa pembaruan…</string>
+    <string name="updates_current">Anda sudah menggunakan versi terbaru.</string>
+    <string name="updates_no_release">Belum ada rilis terbitan yang kompatibel pada saluran ini.</string>
+    <string name="updates_not_installable">Ada rilis yang lebih baru, tetapi nomor build-nya tidak dapat memperbarui instalasi ini.</string>
+    <string name="updates_failed">Gagal memeriksa pembaruan. Periksa koneksi lalu coba lagi.</string>
+    <string name="updates_available">Pembaruan tersedia</string>
+    <string name="updates_view_release">Lihat rilis</string>
+    <string name="updates_last_checked">Terakhir diperiksa: %1$s</string>
+    <string name="updates_check">Periksa pembaruan</string>
+    <string name="updates_notice">JL-Mod Plus %1$s tersedia. Buka Pembaruan di tab Lainnya.</string>
+    <string name="updates_debug_build">Ini build debug. APK rilis GitHub terpasang secara terpisah.</string>
+    <string name="updates_link_copied">Tidak ada browser. Tautan rilis disalin.</string>
+    <string name="updates_browser_unavailable">Tidak ada browser untuk membuka rilis.</string>
 </resources>
