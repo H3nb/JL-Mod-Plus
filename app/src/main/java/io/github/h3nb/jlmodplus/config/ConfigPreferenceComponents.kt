@@ -239,7 +239,10 @@ internal fun ConfigNumberPreference(
     var dialogVisible by remember(value) { mutableStateOf(false) }
     val display = buildString {
         append(value.ifEmpty { fallbackLabel })
-        if (value.isNotEmpty() && valueSuffix != null) append(" ").append(valueSuffix)
+        if (value.isNotEmpty() && valueSuffix != null) {
+            if (valueSuffix != "%") append(" ")
+            append(valueSuffix)
+        }
     }
     ConfigValuePreference(
         title = title,
