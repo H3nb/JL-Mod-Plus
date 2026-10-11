@@ -174,6 +174,7 @@ public class FileSystemFileConnection implements FileConnection {
 	@Override
 	public void delete() throws IOException {
 		requireWrite();
+		if (name.isEmpty()) throw new IOException("Cannot delete a filesystem root");
 		if (openedInputStream != null) {
 			openedInputStream.close();
 			openedInputStream = null;
@@ -196,21 +197,33 @@ public class FileSystemFileConnection implements FileConnection {
 		return directorySize(file, includeSubDirs);
 	}
 
-	private static long directorySize(File dir, boolean includeSubDirs) {
-		long size = 0;
+	private long directorySize(File dir, boolean includeSubDirs) {
+		return directorySize(dir, includeSubDirs, new java.util.HashSet<>());
+	}
 
-		File[] files = dir.listFiles();
-		if (files == null) { // null if security restricted
+	private long directorySize(File dir, boolean includeSubDirs, java.util.Set<String> visited) {
+		File safeDir;
+		try {
+			safeDir = VirtualFileSystem.checked(root, dir);
+			if (!visited.add(safeDir.getPath())) return 0L;
+		} catch (IOException invalid) {
 			return 0L;
 		}
+		File[] files = safeDir.listFiles();
+		if (files == null) return 0L;
+		long size = 0L;
 		for (File child : files) {
-			if (includeSubDirs && child.isDirectory()) {
-				size += directorySize(child, true);
-			} else {
-				size += child.length();
+			try {
+				File safe = VirtualFileSystem.checked(root, child);
+				if (safe.isDirectory()) {
+					if (includeSubDirs) size += directorySize(safe, true, visited);
+				} else if (safe.isFile()) {
+					size += safe.length();
+				}
+			} catch (IOException ignored) {
+				// Do not traverse entries that resolve outside this virtual root.
 			}
 		}
-
 		return size;
 	}
 
@@ -331,6 +344,11 @@ public class FileSystemFileConnection implements FileConnection {
 				.compareTo(f2.getName().toLowerCase(Locale.ROOT)));
 		int dirsLen = 0;
 		for (File child : files) {
+			try {
+				VirtualFileSystem.checked(root, child);
+			} catch (IOException outsideRoot) {
+				continue;
+			}
 			if (!includeHidden && child.isHidden()) {
 				continue;
 			}
@@ -453,7 +471,7 @@ public class FileSystemFileConnection implements FileConnection {
 					+ newFile.getAbsolutePath());
 		}
 		this.file = newFile;
-		this.name = newName;
+		this.name = newFile.isDirectory() ? newName + DIR_SEP : newName;
 	}
 
 	@Override
