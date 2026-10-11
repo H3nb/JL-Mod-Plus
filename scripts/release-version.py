@@ -89,6 +89,8 @@ def allocate(version, branch, releases, code_for):
         highest = max(highest, code_for(tag, has_metadata))
         previous = tag.removeprefix("v")
         if previous == "0.1.0-dev.8.1.d09e75e":
+            if preview and compare(version, previous) <= 0:
+                raise ValueError("Use 0.2.0-alpha.1 or newer after legacy dev releases")
             continue
         if (preview or not was_preview) and compare(version, previous) <= 0:
             raise ValueError("Version must exceed " + previous)

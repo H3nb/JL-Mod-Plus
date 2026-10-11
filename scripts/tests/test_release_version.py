@@ -28,6 +28,15 @@ class ReleasePolicyTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 release.allocate(item, "alpha", (), lambda *_: 1)
 
+    def test_legacy_dev_migration(self):
+        prior = (("v0.1.0-dev.8.1.d09e75e", True, False),)
+        with self.assertRaises(ValueError):
+            release.allocate("0.1.0-alpha.2", "alpha", prior, lambda *_: 1)
+        self.assertEqual(
+            release.allocate("0.2.0-alpha.1", "alpha", prior, lambda *_: 1),
+            (2, True),
+        )
+
     def test_allocation_and_channels(self):
         prior = (("v0.2.0-alpha.3", True, True), ("v0.1.0", False, True))
         self.assertEqual(release.allocate("0.2.0-beta.1", "alpha", prior, lambda *_: 15), (16, True))
