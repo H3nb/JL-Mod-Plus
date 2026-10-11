@@ -1116,6 +1116,22 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void unsupportedContainerRouteDoesNotPretendToBeAChangedRoot() {
+		root.vector.add(new DetachedLink(808081));
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				808081L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		assertEquals(1, page.ids.length);
+		ManagedJavaMemoryEngine.ManagedInspection inspected = engine.inspect(TOKEN,
+				search.revision, page.ids[0], 1);
+		assertEquals(MemoryEngineContract.RESULT_OK, inspected.code);
+		assertEquals(MemoryEngineContract.PATH_UNKNOWN, inspected.path.status);
+		assertTrue(inspected.path.path.isEmpty());
+	}
+
+	@Test
 	public void sharedProvenanceDoesNotDuplicateForArrayElements() {
 		root.array = new int[]{707707, 707707, 707707};
 		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
@@ -1360,6 +1376,14 @@ public class ManagedJavaMemoryEngineTest {
 
 	private static final class DetachedDisplayRoot {
 		private int escapedMatch = 424_242;
+	}
+
+	private static final class DetachedLink {
+		final int[] values;
+
+		DetachedLink(int value) {
+			values = new int[]{value};
+		}
 	}
 
 	private static final class CapacityRoot {

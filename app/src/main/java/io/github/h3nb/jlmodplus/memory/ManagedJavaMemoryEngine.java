@@ -2797,7 +2797,13 @@ final class ManagedJavaMemoryEngine {
 			}
 			reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES + QUEUE_REFERENCE_BYTES);
 			ProvenanceNode node = null;
-			if (provenanceBytes < maxProvenanceBytes
+			// An edge without a captured predecessor cannot form a verified root path.
+			// Do not allocate misleading orphan nodes when optional capture is partial.
+			boolean rooted = kind == ProvenanceNode.MIDLET_ROOT
+					|| kind == ProvenanceNode.DISPLAYABLE_ROOT
+					|| kind == ProvenanceNode.STATIC_FIELD;
+			if ((rooted || (parent != null && kind != ProvenanceNode.UNKNOWN_ROOT))
+					&& provenanceBytes < maxProvenanceBytes
 					&& maxProvenanceBytes - provenanceBytes >= PROVENANCE_NODE_BYTES
 					&& revision.withinStorageBudget(limits,
 							checkedAdd(checkedAdd(transientStorageBytes,
