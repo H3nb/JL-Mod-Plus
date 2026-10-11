@@ -566,6 +566,8 @@ public class MicroLoader {
 				return;
 			}
 			VirtualFileSystem.install(new File(workDir), appDirName);
+			MidletPermissionManager.install(ContextHolder.getAppContext(), appDir.getPath(),
+					expectedAppId, jarSha256);
 			startTimingSession();
 			MidletSessionJournal journal = MidletSessionJournal.create(
 					ContextHolder.getAppContext(),
