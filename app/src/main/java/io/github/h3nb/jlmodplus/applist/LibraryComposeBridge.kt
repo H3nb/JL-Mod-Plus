@@ -833,8 +833,9 @@ fun LibraryScreen(
     }
     val candidateVersion = (updateRepository.status as? UpdateStatus.Available)?.candidate?.versionName
     val updateNotice = stringResource(R.string.updates_notice, candidateVersion.orEmpty())
-    LaunchedEffect(candidateVersion, updatesPageVisible) {
-        if (!BuildConfig.DEBUG && !updatesPageVisible && candidateVersion != null &&
+    LaunchedEffect(candidateVersion, updatesPageVisible, updateRepository.automaticChecks) {
+        if (!BuildConfig.DEBUG && updateRepository.automaticChecks &&
+            !updatesPageVisible && candidateVersion != null &&
             updateRepository.takeUnnotifiedVersion() != null) {
             onUpdateNotice(updateNotice)
         }
