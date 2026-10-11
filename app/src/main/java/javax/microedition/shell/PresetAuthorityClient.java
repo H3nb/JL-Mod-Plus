@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import io.github.h3nb.jlmodplus.config.PresetAuthorityContract;
+import io.github.h3nb.jlmodplus.config.MidletPermissionStore;
 
 /** Narrow fail-closed runtime facade over the main-process preset authority. */
 final class PresetAuthorityClient {
@@ -94,6 +95,31 @@ final class PresetAuthorityClient {
 			default -> VirtualKeyboardSaveResult.PresetUpdateOutcome.NONE;
 		});
 	}
+
+    int[] getFilePermissions(String appPath, long appId, String jarFingerprint) {
+        Bundle extras = identityExtras(appPath, appId);
+        extras.putString(PresetAuthorityContract.KEY_JAR_FINGERPRINT, jarFingerprint);
+        Bundle result = call(PresetAuthorityContract.METHOD_GET_FILE_PERMISSIONS, extras);
+        if (result == null || result.getInt(PresetAuthorityContract.KEY_RESULT,
+                PresetAuthorityContract.RESULT_FAILED) != PresetAuthorityContract.RESULT_OK) {
+            return new int[]{MidletPermissionStore.DENY, MidletPermissionStore.DENY};
+        }
+        return new int[]{
+                result.getInt(PresetAuthorityContract.KEY_FILE_READ_DECISION, MidletPermissionStore.DENY),
+                result.getInt(PresetAuthorityContract.KEY_FILE_WRITE_DECISION, MidletPermissionStore.DENY)
+        };
+    }
+
+    boolean setFilePermission(String appPath, long appId, String jarFingerprint,
+            String capability, int decision) {
+        Bundle extras = identityExtras(appPath, appId);
+        extras.putString(PresetAuthorityContract.KEY_JAR_FINGERPRINT, jarFingerprint);
+        extras.putString(PresetAuthorityContract.KEY_PERMISSION_CAPABILITY, capability);
+        extras.putInt(PresetAuthorityContract.KEY_PERMISSION_DECISION, decision);
+        Bundle result = call(PresetAuthorityContract.METHOD_SET_FILE_PERMISSION, extras);
+        return result != null && result.getInt(PresetAuthorityContract.KEY_RESULT,
+                PresetAuthorityContract.RESULT_FAILED) == PresetAuthorityContract.RESULT_OK;
+    }
 
 	private static Bundle identityExtras(String appPath, long expectedAppId) {
 		Bundle extras = new Bundle();
