@@ -599,17 +599,21 @@ private fun GeneralDestination(
             options = scaleOptions,
             onSelected = { index -> onFormChanged(form.toBuilder().screenScaleType(index).build()) },
         )
-        ConfigNumberPreference(
-            title = stringResource(R.string.PREF_SCALE_RATIO),
-            description = stringResource(R.string.config_help_scale_ratio),
-            value = form.screenScaleRatio,
-            fallbackLabel = "100",
-            valueSuffix = "%",
-            keyboardType = KeyboardType.Number,
-            onValueChange = { value ->
-                onFormChanged(form.toBuilder().screenScaleRatio(normalizeScaleRatio(value)).build())
-            },
-        )
+        if (form.screenScaleType == 0) {
+            ConfigNumberPreference(
+                title = stringResource(R.string.PREF_SCALE_RATIO),
+                description = stringResource(R.string.config_help_scale_ratio),
+                value = form.screenScaleRatio,
+                fallbackLabel = "100",
+                valueSuffix = "%",
+                keyboardType = KeyboardType.Number,
+                resetValue = "100",
+                validIntegerRange = 1..1000,
+                onValueChange = { value ->
+                    onFormChanged(form.toBuilder().screenScaleRatio(value).build())
+                },
+            )
+        }
         ConfigSwitchPreference(
             title = stringResource(R.string.PREF_FORCE_FULLSCREEN),
             description = stringResource(R.string.config_help_force_fullscreen),
@@ -1973,10 +1977,14 @@ internal fun ConfigNumberDialog(
     label: String?,
     keyboardType: KeyboardType,
     valueSuffix: String? = null,
+    resetValue: String? = null,
+    validIntegerRange: IntRange? = null,
     onDismissRequest: () -> Unit,
     onConfirm: (String) -> Unit,
 ) {
     var draft by remember(initialValue) { mutableStateOf(initialValue) }
+    val canConfirm = validIntegerRange == null ||
+        draft.toIntOrNull()?.let { it in validIntegerRange } == true
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
@@ -2005,12 +2013,19 @@ internal fun ConfigNumberDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismissRequest) {
-                Text(stringResource(android.R.string.cancel))
+            Row {
+                if (resetValue != null) {
+                    TextButton(onClick = { draft = resetValue }) {
+                        Text(stringResource(R.string.reset))
+                    }
+                }
+                TextButton(onClick = onDismissRequest) {
+                    Text(stringResource(android.R.string.cancel))
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(draft) }) {
+            TextButton(onClick = { onConfirm(draft) }, enabled = canConfirm) {
                 Text(stringResource(android.R.string.ok))
             }
         },
@@ -2268,11 +2283,6 @@ private fun ColorRow(
         value = value,
         onClick = onPick,
     )
-}
-
-private fun normalizeScaleRatio(value: String): String {
-    val filtered = value.filter(Char::isDigit).take(4)
-    return if (filtered.toIntOrNull()?.let { it > 1000 } == true) "1000" else filtered
 }
 
 private fun parseColor(value: String): Color {

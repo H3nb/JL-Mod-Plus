@@ -77,6 +77,11 @@ public class ProfileModel {
 	@SerializedName("ScreenScaleRatio")
 	public int screenScaleRatio;
 
+	public static int effectiveScreenScaleRatio(int scaleType, int ratio) {
+		if (scaleType != 0 || ratio <= 0) return 100;
+		return Math.min(ratio, 1000);
+	}
+
 	@SerializedName("Orientation")
 	public int orientation;
 

@@ -91,7 +91,8 @@ public final class ConfigFormState {
 		screenWidth = builder.screenWidth;
 		screenHeight = builder.screenHeight;
 		screenBackground = builder.screenBackground;
-		screenScaleRatio = builder.screenScaleRatio;
+		screenScaleRatio = Integer.toString(ProfileModel.effectiveScreenScaleRatio(
+				builder.screenScaleType, parseInt(builder.screenScaleRatio, 100)));
 		screenPadding = builder.screenPadding;
 		fpsLimit = builder.fpsLimit;
 		fontSizeSmall = builder.fontSizeSmall;
@@ -201,7 +202,8 @@ public final class ConfigFormState {
 		params.screenBackgroundColor = parseHexOrKeep(screenBackground, params.screenBackgroundColor);
 		params.screenBackgroundMode = BackgroundMode.sanitize(screenBackgroundMode);
 		params.screenBackgroundImage = screenBackgroundImage;
-		params.screenScaleRatio = parseInt(screenScaleRatio, 100);
+		params.screenScaleRatio = ProfileModel.effectiveScreenScaleRatio(
+				screenScaleType, parseInt(screenScaleRatio, 100));
 		params.orientation = orientation;
 		params.screenGravity = screenGravity;
 		params.screenPadding = parseInt(screenPadding, 0);
