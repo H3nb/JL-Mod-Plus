@@ -512,6 +512,7 @@
     <plurals name="memory_editor_edit_batch">
         <item quantity="other">Ubah %1$d nilai</item>
     </plurals>
+<string name="memory_editor_edit_batch_help">Nilai pengganti diterapkan ke target terpilih dengan tipe data yang sesuai. Pantauan dan pembekuan tidak tersedia untuk perubahan massal.</string>
     <string name="memory_editor_edit_batch_no_common_type">Hasil yang dipilih tidak mendukung tipe data yang dipilih. Ubah hasil yang kompatibel secara terpisah.</string>
     <string name="memory_editor_save">Terapkan</string>
     <string name="memory_editor_replacement">Nilai pengganti</string>

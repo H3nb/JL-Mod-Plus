@@ -1021,17 +1021,28 @@ public class ManagedJavaMemoryEngineTest {
 
 	@Test
 	public void arrayLabelsShowOnlyVerifiedDirectReferencePaths() {
-		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
-		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
-		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0,
-				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
-		assertTrue(hasAddress(page, "FixtureRoot.staticArray [static]"));
-		assertTrue(hasAddress(page, "FixtureRoot.array [instance]"));
+		int[] originalStatic = FixtureRoot.staticArray;
+		try {
+			FixtureRoot.staticArray = new int[]{123457};
+			root.array = new int[]{123457};
+			ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+					MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+					123457L, 0L, 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+			ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+			assertEquals(Arrays.toString(page.addresses), 2, page.ids.length);
+			assertTrue(Arrays.toString(page.addresses),
+					hasAddress(page, "FixtureRoot.staticArray [static]"));
+			assertTrue(Arrays.toString(page.addresses),
+					hasAddress(page, "FixtureRoot.array [instance]"));
 
-		root.array = new int[]{7, 4, 7};
-		ManagedJavaMemoryEngine.ManagedPage afterReferenceChange = engine.resultPage(TOKEN,
-				search.revision, 0, MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
-		assertFalse(hasAddress(afterReferenceChange, "FixtureRoot.array [instance]"));
+			root.array = new int[]{123457};
+			ManagedJavaMemoryEngine.ManagedPage afterReferenceChange = engine.resultPage(TOKEN,
+					search.revision, 0, 100);
+			assertFalse(hasAddress(afterReferenceChange, "FixtureRoot.array [instance]"));
+		} finally {
+			FixtureRoot.staticArray = originalStatic;
+		}
 	}
 
 	@Test

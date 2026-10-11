@@ -565,6 +565,7 @@
         <item quantity="one">Edit %1$d value</item>
         <item quantity="other">Edit %1$d values</item>
     </plurals>
+<string name="memory_editor_edit_batch_help">Applies the replacement value to selected targets compatible with the chosen data type. Watch and Freeze are unavailable for batch edits.</string>
     <string name="memory_editor_edit_batch_no_common_type">The selected results do not support the chosen data type. Edit compatible results separately.</string>
     <string name="memory_editor_save">Apply</string>
     <string name="memory_editor_replacement">Replacement value</string>
