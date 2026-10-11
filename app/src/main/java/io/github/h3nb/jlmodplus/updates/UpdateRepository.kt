@@ -62,7 +62,7 @@ internal class UpdateRepository private constructor(context: Context) {
         }
     }
 
-    fun setChannel(value: UpdateChannel) {
+    fun selectChannel(value: UpdateChannel) {
         if (channel == value) return
         channel = value
         preferences.edit().putString(KEY_CHANNEL, value.name)
@@ -72,7 +72,7 @@ internal class UpdateRepository private constructor(context: Context) {
         status = UpdateStatus.NotChecked
     }
 
-    fun setAutomaticChecks(enabled: Boolean) {
+    fun configureAutomaticChecks(enabled: Boolean) {
         automaticChecks = enabled
         preferences.edit().putBoolean(KEY_ENABLED, enabled).apply()
     }

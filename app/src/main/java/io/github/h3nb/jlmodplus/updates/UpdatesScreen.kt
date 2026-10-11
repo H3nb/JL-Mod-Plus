@@ -91,7 +91,7 @@ internal fun UpdatesScreen(
                     FilterChip(
                         selected = repository.channel == UpdateChannel.Stable,
                         onClick = {
-                            repository.setChannel(UpdateChannel.Stable)
+                            repository.selectChannel(UpdateChannel.Stable)
                             scope.launch { repository.check(manual = true) }
                         },
                         label = { Text(stringResource(R.string.updates_stable)) },
@@ -99,7 +99,7 @@ internal fun UpdatesScreen(
                     FilterChip(
                         selected = repository.channel == UpdateChannel.Preview,
                         onClick = {
-                            repository.setChannel(UpdateChannel.Preview)
+                            repository.selectChannel(UpdateChannel.Preview)
                             scope.launch { repository.check(manual = true) }
                         },
                         label = { Text(stringResource(R.string.updates_preview)) },
@@ -117,7 +117,7 @@ internal fun UpdatesScreen(
                 )
                 Switch(
                     checked = repository.automaticChecks,
-                    onCheckedChange = repository::setAutomaticChecks,
+                    onCheckedChange = repository::configureAutomaticChecks,
                 )
             }
             val message = when (status) {
