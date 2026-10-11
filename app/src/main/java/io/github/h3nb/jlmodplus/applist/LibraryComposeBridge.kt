@@ -195,6 +195,9 @@ import io.github.h3nb.jlmodplus.BuildConfig
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.librarydb.LibraryPlayStatsFormatter
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
+import io.github.h3nb.jlmodplus.updates.UpdateRepository
+import io.github.h3nb.jlmodplus.updates.UpdateStatus
+import io.github.h3nb.jlmodplus.updates.UpdatesScreen
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
@@ -374,6 +377,7 @@ interface LibraryActions {
     fun onOpenCrashReports()
     fun onOpenDonation() = Unit
     fun onOpenProjectRepository() = Unit
+    fun onOpenUpdateRelease(url: String) = Unit
     fun onRetryLibrary()
 }
 
@@ -426,6 +430,7 @@ class LibraryComposeController(
                         controllerBackAvailable = available
                     },
                     noticeHost = { TransientNoticeHost(state = noticeState) },
+                    onUpdateNotice = noticeState::show,
                 )
             }
         }
@@ -592,6 +597,7 @@ fun LibraryScreen(
     onControllerBackAvailabilityChanged: (Boolean) -> Unit = {},
     initialSelectionState: LibrarySelectionState = LibrarySelectionState(),
     noticeHost: @Composable () -> Unit = {},
+    onUpdateNotice: (String) -> Unit = {},
 ) {
     var navigationState by rememberSaveable(stateSaver = LibraryNavigationState.Saver) {
         mutableStateOf(LibraryNavigationState())
@@ -601,6 +607,11 @@ fun LibraryScreen(
         pageCount = { LibraryDestination.entries.size },
     )
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current.applicationContext
+    val updateRepository = remember(context) { UpdateRepository.get(context) }
+    LaunchedEffect(updateRepository) {
+        if (!BuildConfig.DEBUG) updateRepository.check(manual = false)
+    }
     val selectDestination: (LibraryDestination) -> Unit = { section ->
         coroutineScope.launch { pagerState.navigateToTab(section.ordinal) }
     }
@@ -624,6 +635,7 @@ fun LibraryScreen(
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
     var aboutPageVisible by rememberSaveable { mutableStateOf(false) }
+    var updatesPageVisible by rememberSaveable { mutableStateOf(false) }
     var pendingBulkDeleteIds by remember { mutableStateOf<Set<Long>?>(null) }
     var selectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
         mutableStateOf(initialSelectionState)
@@ -686,11 +698,12 @@ fun LibraryScreen(
     val currentControllerDeleteTarget by rememberUpdatedState(deleteTarget)
     val currentControllerInfoDialog by rememberUpdatedState(infoDialog)
     val currentControllerAboutPageVisible by rememberUpdatedState(aboutPageVisible)
+    val currentControllerUpdatesPageVisible by rememberUpdatedState(updatesPageVisible)
     val currentControllerBulkDeleteIds by rememberUpdatedState(pendingBulkDeleteIds)
     val currentControllerSelectionActive by rememberUpdatedState(selectionActiveHere)
     val currentControllerOtherModalVisible by rememberUpdatedState(
         renameTarget != null || metadataTarget != null || deleteTarget != null ||
-            infoDialog != null || pendingBulkDeleteIds != null || aboutPageVisible,
+            infoDialog != null || pendingBulkDeleteIds != null || aboutPageVisible || updatesPageVisible,
     )
 
     LaunchedEffect(pagerState) {
@@ -814,6 +827,17 @@ fun LibraryScreen(
     }
     BackHandler(enabled = aboutPageVisible && infoDialog == null) {
         aboutPageVisible = false
+    }
+    BackHandler(enabled = updatesPageVisible) {
+        updatesPageVisible = false
+    }
+    val candidateVersion = (updateRepository.status as? UpdateStatus.Available)?.candidate?.versionName
+    val updateNotice = stringResource(R.string.updates_notice, candidateVersion.orEmpty())
+    LaunchedEffect(candidateVersion, updatesPageVisible) {
+        if (!BuildConfig.DEBUG && !updatesPageVisible && candidateVersion != null &&
+            updateRepository.takeUnnotifiedVersion() != null) {
+            onUpdateNotice(updateNotice)
+        }
     }
 
     val metadataApp = metadataTarget?.let { target ->
@@ -957,6 +981,7 @@ fun LibraryScreen(
                         currentControllerBulkDeleteIds != null -> pendingBulkDeleteIds = null
                         currentControllerInfoDialog != null -> infoDialog = null
                         currentControllerAboutPageVisible -> aboutPageVisible = false
+                        currentControllerUpdatesPageVisible -> updatesPageVisible = false
                         currentControllerSelectionActive -> selectionState = selectionState.clear()
                         else -> Unit
                     }
@@ -1025,7 +1050,7 @@ fun LibraryScreen(
     val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
     val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
-        || aboutPageVisible
+        || aboutPageVisible || updatesPageVisible
     LaunchedEffect(libraryOverlayVisible, selectionActiveHere) {
         onControllerBackAvailabilityChanged(libraryOverlayVisible || selectionActiveHere)
     }
@@ -1336,6 +1361,10 @@ fun LibraryScreen(
                             onAbout = {
                                 if (currentControllerDestination == LibraryDestination.More) aboutPageVisible = true
                             },
+                            onUpdates = {
+                                if (currentControllerDestination == LibraryDestination.More) updatesPageVisible = true
+                            },
+                            updateAvailable = updateRepository.status is UpdateStatus.Available,
                             onDonate = {
                                 if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.Donation
                             },
@@ -1352,6 +1381,20 @@ fun LibraryScreen(
         }
         }
 
+        if (updatesPageVisible) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .zIndex(4f),
+            ) {
+                UpdatesScreen(
+                    repository = updateRepository,
+                    onBack = { updatesPageVisible = false },
+                    onOpenRelease = actions::onOpenUpdateRelease,
+                )
+            }
+        }
         if (aboutPageVisible) {
             Box(
                 modifier = Modifier
@@ -2674,6 +2717,8 @@ internal fun LibraryMoreDestination(
     onDonate: () -> Unit,
     onSettings: () -> Unit,
     onCrashReports: () -> Unit,
+    onUpdates: () -> Unit = {},
+    updateAvailable: Boolean = false,
 ) {
     val listState = rememberLazyListState()
     val canScrollForward = rememberLazyListCanScrollForward(listState)
@@ -2715,6 +2760,13 @@ internal fun LibraryMoreDestination(
                                     summary = R.string.library_action_settings_summary,
                                     icon = R.drawable.ic_settings,
                                     action = onSettings,
+                                )
+                                LibraryActionRow(
+                                    label = R.string.updates_title,
+                                    summary = if (updateAvailable) R.string.updates_more_available
+                                        else R.string.updates_more_summary,
+                                    icon = R.drawable.ic_refresh,
+                                    action = onUpdates,
                                 )
                                 LibraryActionRow(
                                     label = R.string.library_action_import_bundle,
