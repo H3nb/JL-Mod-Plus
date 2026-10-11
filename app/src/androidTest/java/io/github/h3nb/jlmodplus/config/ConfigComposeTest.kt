@@ -162,16 +162,26 @@ class ConfigComposeTest {
         scrollTo(scale)
         composeRule.onNodeWithText(scale).assertExists()
         composeRule.onNodeWithText(scale).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("")
+        composeRule.onNodeWithText("OK").assertIsNotEnabled()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("0")
         composeRule.onNodeWithText("OK").assertIsNotEnabled()
-        composeRule.onNode(hasSetTextAction()).performTextReplacement("600")
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("1001")
+        composeRule.onNodeWithText("OK").assertIsNotEnabled()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("1000")
+        composeRule.onNodeWithText("OK").assertIsEnabled()
         composeRule.onNodeWithText(uiString(R.string.reset)).performClick()
+        composeRule.onNodeWithText("100", substring = true).assertExists()
         composeRule.onNodeWithText("OK").performClick()
         composeRule.runOnIdle { assertEquals("100", currentForm.value.screenScaleRatio) }
 
         composeRule.onNodeWithText(scale).performClick()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("450")
         composeRule.onNodeWithText("OK").performClick()
+        composeRule.runOnIdle { assertEquals("450", currentForm.value.screenScaleRatio) }
+        composeRule.onNodeWithText(scale).performClick()
+        composeRule.onNodeWithText(uiString(R.string.reset)).performClick()
+        composeRule.onNodeWithText(uiString(android.R.string.cancel)).performClick()
         composeRule.runOnIdle { assertEquals("450", currentForm.value.screenScaleRatio) }
         composeRule.onNodeWithText(mode).performClick()
         composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type_fill)).performClick()
