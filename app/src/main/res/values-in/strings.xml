@@ -674,6 +674,10 @@
     <string name="config_controls_key_input">Input fisik</string>
     <string name="config_controls_virtual_keyboard">Kontrol virtual</string>
     <string name="config_controls_virtual_keyboard_colors">Warna kontrol virtual</string>
+    <string name="config_virtual_controls_color_preview">Pratinjau warna</string>
+    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_pressed">Ditekan</string>
+    <string name="config_virtual_controls_preview_hint">Ketuk untuk melihat warna saat ditekan. Pratinjau menggunakan opasitas yang dipilih.</string>
     <string name="config_controls_maintenance">Tata letak kontrol virtual</string>
     <string name="config_current_value">Nilai saat ini</string>
     <string name="config_screen_size">Ukuran layar</string>

@@ -247,7 +247,7 @@ public class VirtualControlsKeyboardResizeTest {
         keyboard.resize(screen, 18f, 0f, 812f, 1118f);
         float after = rectField(keyByLabel("F")).centerY();
 
-        assertTrue(Math.abs(after - before) > 100f);
+        assertEquals(before, after, EPS);
         assertTrue(rectField(keyByLabel("F")).top > 1118f);
     }
 

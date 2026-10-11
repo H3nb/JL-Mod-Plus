@@ -745,6 +745,10 @@
     <string name="config_controls_key_input">Physical input</string>
     <string name="config_controls_virtual_keyboard">Virtual controls</string>
     <string name="config_controls_virtual_keyboard_colors">Virtual control colors</string>
+    <string name="config_virtual_controls_color_preview">Color preview</string>
+    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_pressed">Pressed</string>
+    <string name="config_virtual_controls_preview_hint">Tap to preview pressed colors. The sample uses the selected opacity.</string>
     <string name="config_controls_maintenance">Virtual controls layout</string>
     <string name="config_current_value">Current value</string>
     <string name="config_maintenance">Reset &amp; data</string>

@@ -16,6 +16,8 @@ package io.github.h3nb.jlmodplus.config
 
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.clickable
@@ -82,6 +84,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -1616,6 +1619,7 @@ private fun InputSection(
     }
     ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard_colors)) {
         if (form.showKeyboard) {
+            VirtualControlsColorPreview(form)
             ConfigColorPreference(
                 title = stringResource(R.string.PREF_VK_FORE),
                 description = stringResource(R.string.config_help_vk_foreground),
@@ -1655,6 +1659,93 @@ private fun InputSection(
             destructive = true,
             onClick = { onRequestAction(ConfigAction.ResetLayout) },
         )
+    }
+}
+
+@Composable
+private fun VirtualControlsColorPreview(form: ConfigFormState) {
+    var pressed by rememberSaveable { mutableStateOf(false) }
+    val background = parseColor(
+        if (pressed) form.vkSelectedBackground else form.vkBackground,
+    )
+    val foreground = parseColor(
+        if (pressed) form.vkSelectedForeground else form.vkForeground,
+    )
+    val outline = parseColor(form.vkOutline)
+    val previewAlpha = (form.vkAlpha.coerceIn(0, 255) / 255f)
+
+    Surface(
+        onClick = { pressed = !pressed },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .testTag("virtual_controls_color_preview"),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.config_virtual_controls_color_preview),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    text = stringResource(
+                        if (pressed) R.string.config_virtual_controls_preview_pressed
+                        else R.string.config_virtual_controls_preview_normal,
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ControlColorSample("L", background, foreground, outline, previewAlpha, false)
+                ControlColorSample("▲", background, foreground, outline, previewAlpha, false)
+                ControlColorSample("●", background, foreground, outline, previewAlpha, true)
+            }
+            Text(
+                text = stringResource(R.string.config_virtual_controls_preview_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ControlColorSample(
+    symbol: String,
+    background: Color,
+    foreground: Color,
+    outline: Color,
+    opacity: Float,
+    circular: Boolean,
+) {
+    Surface(
+        modifier = Modifier
+            .size(44.dp)
+            .alpha(opacity),
+        shape = if (circular) CircleShape else MaterialTheme.shapes.small,
+        color = background,
+        border = BorderStroke(1.dp, outline),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = symbol,
+                style = MaterialTheme.typography.titleMedium,
+                color = foreground,
+            )
+        }
     }
 }
 
