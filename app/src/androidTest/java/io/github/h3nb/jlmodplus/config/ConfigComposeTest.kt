@@ -97,8 +97,8 @@ class ConfigComposeTest {
         composeRule.onNodeWithText(uiString(R.string.PREF_ORIENTATION)).assertExists()
         scrollTo(uiString(R.string.pref_screen_scale_type))
         composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type)).assertExists()
-        scrollTo("Scale (%)")
-        composeRule.onNodeWithText("Scale (%)").assertExists()
+        composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type_fit)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.PREF_SCALE_RATIO)).assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Start").assertExists()
         composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
 
@@ -109,7 +109,7 @@ class ConfigComposeTest {
         composeRule.onNodeWithText(uiString(R.string.config_screen_size)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.PREF_ORIENTATION)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type)).assertDoesNotExist()
-        composeRule.onNodeWithText("Scale (%)").assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.PREF_SCALE_RATIO)).assertDoesNotExist()
 
         composeRule.onNodeWithContentDescription("Controls").performClick()
         composeRule.onNodeWithText(uiString(R.string.config_controls_key_input)).assertExists()
@@ -123,6 +123,69 @@ class ConfigComposeTest {
         scrollTo(uiString(R.string.config_maintenance))
         composeRule.onNodeWithText(uiString(R.string.config_maintenance)).assertExists()
         composeRule.onNodeWithText("Advanced settings").assertDoesNotExist()
+    }
+
+    @Test
+    fun manualScalingIsConditionalAndResetsWhenSwitchingModes() {
+        val base = sampleState()
+        val currentForm = mutableStateOf(
+            base.form.toBuilder().screenScaleType(0).screenScaleRatio("400").build(),
+        )
+        val events = object : ConfigFormEvents by RecordingConfigEvents() {
+            override fun onFormChanged(form: ConfigFormState) {
+                currentForm.value = form
+            }
+        }
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(
+                    ConfigUiState(
+                        currentForm.value, base.screenPresets, base.fontPresets, base.skins,
+                        base.soundBanks, base.shaders, base.removableScreenPresets,
+                    ),
+                    events,
+                )
+            }
+        }
+
+        val mode = uiString(R.string.pref_screen_scale_type)
+        val scale = uiString(R.string.PREF_SCALE_RATIO)
+        scrollTo(scale)
+        composeRule.onNodeWithText(scale).assertExists()
+        composeRule.onNodeWithText(mode).performClick()
+        composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type_fit)).performClick()
+        composeRule.runOnIdle { assertEquals("100", currentForm.value.screenScaleRatio) }
+        composeRule.onNodeWithText(scale).assertDoesNotExist()
+
+        composeRule.onNodeWithText(mode).performClick()
+        composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type_none)).performClick()
+        scrollTo(scale)
+        composeRule.onNodeWithText(scale).assertExists()
+        composeRule.onNodeWithText(scale).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("")
+        composeRule.onNodeWithText("OK").assertIsNotEnabled()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("0")
+        composeRule.onNodeWithText("OK").assertIsNotEnabled()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("1001")
+        composeRule.onNodeWithText("OK").assertIsNotEnabled()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("1000")
+        composeRule.onNodeWithText("OK").assertIsEnabled()
+        composeRule.onNodeWithText(uiString(R.string.reset)).performClick()
+        composeRule.onNodeWithText("OK").performClick()
+        composeRule.runOnIdle { assertEquals("100", currentForm.value.screenScaleRatio) }
+
+        composeRule.onNodeWithText(scale).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("450")
+        composeRule.onNodeWithText("OK").performClick()
+        composeRule.runOnIdle { assertEquals("450", currentForm.value.screenScaleRatio) }
+        composeRule.onNodeWithText(scale).performClick()
+        composeRule.onNodeWithText(uiString(R.string.reset)).performClick()
+        composeRule.onNodeWithText(uiString(android.R.string.cancel)).performClick()
+        composeRule.runOnIdle { assertEquals("450", currentForm.value.screenScaleRatio) }
+        composeRule.onNodeWithText(mode).performClick()
+        composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type_fill)).performClick()
+        composeRule.runOnIdle { assertEquals("100", currentForm.value.screenScaleRatio) }
+        composeRule.onNodeWithText(scale).assertDoesNotExist()
     }
 
     @Test
@@ -894,6 +957,7 @@ class ConfigComposeTest {
             .screenWidth("240")
             .screenHeight("320")
             .screenBackground("D0D0D0")
+            .screenScaleType(1)
             .screenScaleRatio("100")
             .screenPadding("0")
             .fpsLimit("")

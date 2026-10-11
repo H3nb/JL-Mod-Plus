@@ -50,6 +50,9 @@ internal class ProfileConfigMatcher private constructor() {
         fun comparisonSnapshot(source: ProfileModel): JsonElement {
             val normalized = copy(source)
             normalized.systemProperties = ConfigFormState.normalizeSystemProperties(normalized.systemProperties)
+            normalized.screenScaleRatio = ProfileModel.effectiveScreenScaleRatio(
+                normalized.screenScaleType, normalized.screenScaleRatio,
+            )
             return GSON.toJsonTree(normalized)
         }
 

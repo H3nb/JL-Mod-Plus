@@ -118,6 +118,46 @@ public class ConfigFormStateTest {
 	}
 
 	@Test
+	public void automaticScalingDropsLegacyRatiosAndResetsManualRatio() {
+		ProfileModel model = new ProfileModel();
+		model.screenScaleType = 1;
+		model.screenScaleRatio = 80;
+		ConfigFormState fit = ConfigFormState.fromProfile(model, "");
+		assertEquals("100", fit.screenScaleRatio);
+		fit.applyTo(model);
+		assertEquals(100, model.screenScaleRatio);
+
+		model.screenScaleType = 2;
+		model.screenScaleRatio = 200;
+		ConfigFormState fill = ConfigFormState.fromProfile(model, "");
+		assertEquals("100", fill.screenScaleRatio);
+		fill.applyTo(model);
+		assertEquals(100, model.screenScaleRatio);
+
+		ConfigFormState manual = fill.toBuilder().screenScaleType(0).screenScaleRatio("400").build();
+		assertEquals("400", manual.screenScaleRatio);
+		ConfigFormState fitted = manual.toBuilder().screenScaleType(1).build();
+		assertEquals("100", fitted.screenScaleRatio);
+		assertEquals("100", fitted.toBuilder().screenScaleType(0).build().screenScaleRatio);
+	}
+
+	@Test
+	public void manualScaleRejectsInvalidValuesWithoutAffectingAutomaticModes() {
+		assertEquals(100, ProfileModel.effectiveScreenScaleRatio(0, 0));
+		assertEquals(100, ProfileModel.effectiveScreenScaleRatio(0, -50));
+		assertEquals(1000, ProfileModel.effectiveScreenScaleRatio(0, 2000));
+		assertEquals(1, ProfileModel.effectiveScreenScaleRatio(0, 1));
+		assertEquals(100, ProfileModel.effectiveScreenScaleRatio(1, 50));
+		assertEquals(100, ProfileModel.effectiveScreenScaleRatio(2, 400));
+
+		ConfigFormState state = ConfigFormState.builder()
+				.screenScaleType(0).screenScaleRatio("0").build();
+		assertEquals("100", state.screenScaleRatio);
+		state = state.toBuilder().screenScaleRatio("5000").build();
+		assertEquals("1000", state.screenScaleRatio);
+	}
+
+	@Test
 	public void systemPropertiesKeepLastValueAndSortKeys() {
 		assertEquals(
 				"a: second\nb: value\n",
