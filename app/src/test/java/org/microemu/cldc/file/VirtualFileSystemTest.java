@@ -51,7 +51,7 @@ public class VirtualFileSystemTest {
         File first = VirtualFileSystem.resolve("private:/", "save.dat");
         File vendor = VirtualFileSystem.resolve("siemens:/", "save.dat");
         assertTrue(relative(first).startsWith("data/game-a/private/"));
-        assertTrue(relative(vendor).startsWith("data/game-a/vendor/siemens/"));
+        assertEquals("data/game-a/save.dat", relative(vendor));
         VirtualFileSystem.install(temp.getRoot(), "game-b");
         File second = VirtualFileSystem.resolve("private:/", "save.dat");
         assertNotEquals(first, second);
