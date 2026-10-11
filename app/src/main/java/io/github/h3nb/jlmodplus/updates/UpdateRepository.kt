@@ -79,9 +79,11 @@ internal class UpdateRepository private constructor(context: Context) {
         if (!manual && now - attempted in 0 until RETRY_DELAY_MS) return@withLock
 
         preferences.edit().putLong(KEY_ATTEMPT, now).apply()
+        val requestedChannel = channel
         status = UpdateStatus.Checking
         try {
-            val result = withContext(Dispatchers.IO) { fetchLatest(channel) }
+            val result = withContext(Dispatchers.IO) { fetchLatest(requestedChannel) }
+            if (channel != requestedChannel) return@withLock
             lastChecked = System.currentTimeMillis()
             status = result
             val editor = preferences.edit()
@@ -101,9 +103,9 @@ internal class UpdateRepository private constructor(context: Context) {
             }
             editor.apply()
         } catch (_: IOException) {
-            status = UpdateStatus.Failed
+            if (channel == requestedChannel) status = UpdateStatus.Failed
         } catch (_: org.json.JSONException) {
-            status = UpdateStatus.Failed
+            if (channel == requestedChannel) status = UpdateStatus.Failed
         }
     }
 
@@ -113,8 +115,12 @@ internal class UpdateRepository private constructor(context: Context) {
                 val version = preferences.getString(KEY_VERSION, null)
                 val url = preferences.getString(KEY_URL, null)
                 val code = preferences.getInt(KEY_CODE, 0)
-                if (version != null && url != null && code > 0) {
-                    UpdateStatus.Available(UpdateCandidate(version, code, url))
+                val candidate = if (version != null && url != null && code > 0) {
+                    UpdateCandidate(version, code, url)
+                } else null
+                if (candidate != null && eligibleUpdate(
+                        BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, candidate)) {
+                    UpdateStatus.Available(candidate)
                 } else UpdateStatus.NotChecked
             }
             "current" -> UpdateStatus.Current
@@ -180,13 +186,12 @@ internal class UpdateRepository private constructor(context: Context) {
             versionCode = code,
             releaseUrl = "https://github.com/H3nb/JL-Mod-Plus/releases/tag/v" + version,
         )
+        val installed = ReleaseVersion.parse(BuildConfig.VERSION_NAME)
+        val remote = ReleaseVersion.parse(version)
         return when {
             eligibleUpdate(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, candidate) ->
                 UpdateStatus.Available(candidate)
-            ReleaseVersion.parse(version) != null &&
-                ReleaseVersion.parse(BuildConfig.VERSION_NAME)?.let {
-                    requireNotNull(ReleaseVersion.parse(version)) > it
-                } == true -> UpdateStatus.NotInstallable
+            installed != null && remote != null && remote > installed -> UpdateStatus.NotInstallable
             else -> UpdateStatus.Current
         }
     }
