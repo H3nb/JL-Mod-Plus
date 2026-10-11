@@ -145,6 +145,11 @@ jobs:
           fi
           VERSION_NAME="${VERSION_NAMES[0]}"
           VERSION_CODE="${VERSION_CODES[0]}"
+          PACKAGE_ID="$(jq -r '.applicationId // empty' "$METADATA")"
+          if [[ "$PACKAGE_ID" != "io.github.h3nb.jlmodplus" ]]; then
+            echo "Unexpected APK application ID: $PACKAGE_ID" >&2
+            exit 1
+          fi
 
           if [[ "$VERSION_NAME" != '${{ steps.channel.outputs.version_name }}' ||
                 "$VERSION_CODE" != '${{ steps.channel.outputs.version_code }}' ]]; then
