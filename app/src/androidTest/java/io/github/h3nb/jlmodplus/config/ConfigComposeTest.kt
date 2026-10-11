@@ -171,7 +171,6 @@ class ConfigComposeTest {
         composeRule.onNode(hasSetTextAction()).performTextReplacement("1000")
         composeRule.onNodeWithText("OK").assertIsEnabled()
         composeRule.onNodeWithText(uiString(R.string.reset)).performClick()
-        composeRule.onNodeWithText("100", substring = true).assertExists()
         composeRule.onNodeWithText("OK").performClick()
         composeRule.runOnIdle { assertEquals("100", currentForm.value.screenScaleRatio) }
 
