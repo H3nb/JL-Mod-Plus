@@ -149,7 +149,8 @@ internal class UpdateRepository private constructor(context: Context) {
     private fun fetchLatest(channel: UpdateChannel): UpdateStatus {
         val releases = mutableListOf<JSONObject>()
         if (channel == UpdateChannel.Preview) {
-            val recent = loadJson(RELEASES_API) as JSONArray
+            val recent = loadJson(RELEASES_API) as? JSONArray
+                ?: throw IOException("Invalid releases response")
             for (index in 0 until recent.length()) {
                 releases.add(recent.getJSONObject(index))
             }
@@ -190,7 +191,7 @@ internal class UpdateRepository private constructor(context: Context) {
         if (!hasApk || infoUrl != pathPrefix + "release-info.json") {
             return UpdateStatus.NoRelease
         }
-        val meta = loadJson(infoUrl) as JSONObject
+        val meta = loadJson(infoUrl) as? JSONObject ?: return UpdateStatus.NoRelease
         if (meta.optInt("schema") != 1 || meta.optString("versionName") != version ||
             meta.optString("applicationId") != "io.github.h3nb.jlmodplus" ||
             meta.optInt("minSdk", Int.MAX_VALUE) > Build.VERSION.SDK_INT) {
