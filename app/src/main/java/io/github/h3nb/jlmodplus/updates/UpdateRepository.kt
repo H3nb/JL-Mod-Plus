@@ -193,9 +193,10 @@ internal class UpdateRepository private constructor(context: Context) {
                 version + "/release-info.json"
             if (!hasApk || metadataUrl != expected) continue
             val meta = loadJson(expected) as? JSONObject ?: continue
+            val minimumSdk = meta.optInt("minSdk", 0)
             if (meta.optInt("schema") != 1 || meta.optString("versionName") != version ||
                 meta.optString("applicationId") != "io.github.h3nb.jlmodplus" ||
-                meta.optInt("minSdk", Int.MAX_VALUE) > Build.VERSION.SDK_INT) {
+                minimumSdk < 23 || minimumSdk > Build.VERSION.SDK_INT) {
                 continue
             }
             val code = meta.optInt("versionCode", 0)

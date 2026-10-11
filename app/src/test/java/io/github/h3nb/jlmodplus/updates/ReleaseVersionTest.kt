@@ -30,6 +30,30 @@ class ReleaseVersionTest {
     }
 
     @Test
+    fun buildMetadataDoesNotChangePrecedence() {
+        val base = requireNotNull(ReleaseVersion.parse("0.2.0+build.1"))
+        val other = requireNotNull(ReleaseVersion.parse("0.2.0+build.99"))
+        assertFalse(base > other)
+        assertFalse(other > base)
+    }
+
+    @Test
+    fun aNewerSemverWithAnOlderCodeIsNotAnUpdate() {
+        assertFalse(
+            eligibleUpdate(
+                "0.2.0-beta.2", 300,
+                UpdateCandidate("0.3.0-alpha.1", 299, "https://example.invalid"),
+            ),
+        )
+        assertTrue(
+            eligibleUpdate(
+                "0.2.0-beta.2", 300,
+                UpdateCandidate("0.3.0-alpha.1", 301, "https://example.invalid"),
+            ),
+        )
+    }
+
+    @Test
     fun refusesMalformedAndLeadingZeroVersions() {
         listOf("0.2.0-alpha.01", "v0.2.0", "0.2", "0.2.0-alpha..1",
             "0.2.0-alpha.1.", "0.2.0-").forEach {
