@@ -25,22 +25,25 @@ public final class MidletPermissionStore {
 
     private MidletPermissionStore() {}
 
-    public static int read(Context context, long appId, String capability, String fingerprint) {
+    public static int read(Context context, String appPath, long appId,
+            String capability, String fingerprint) {
         if (appId <= 0 || !supported(capability)) return DENY;
+        String key = key(appPath, appId, capability);
+        if (key == null) return DENY;
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String key = key(appId, capability);
         int choice = preferences.getInt(key, ASK);
         if (choice == DENY) return DENY;
         if (choice != ALLOW || fingerprint == null || fingerprint.isEmpty()) return ASK;
         return fingerprint.equals(preferences.getString(key + ".sha256", null)) ? ALLOW : ASK;
     }
 
-    public static boolean write(Context context, long appId, String capability,
-            String fingerprint, int decision) {
+    public static boolean write(Context context, String appPath, long appId,
+            String capability, String fingerprint, int decision) {
         if (appId <= 0 || !supported(capability)
                 || decision != ASK && decision != ALLOW && decision != DENY
                 || decision == ALLOW && (fingerprint == null || fingerprint.isEmpty())) return false;
-        String key = key(appId, capability);
+        String key = key(appPath, appId, capability);
+        if (key == null) return false;
         SharedPreferences.Editor edit = PreferenceManager.getDefaultSharedPreferences(context).edit();
         if (decision == ASK) {
             edit.remove(key).remove(key + ".sha256");
@@ -77,7 +80,14 @@ public final class MidletPermissionStore {
         return FILE_READ.equals(capability) || FILE_WRITE.equals(capability);
     }
 
-    private static String key(long appId, String capability) {
-        return "midlet_permission:" + appId + ":" + capability;
+    private static String key(String appPath, long appId, String capability) {
+        if (appPath == null || appPath.isEmpty()) return null;
+        try {
+            String canonical = new File(appPath).getCanonicalPath();
+            return "midlet_permission:" + appId + ":" + canonical.length() + ":" + canonical
+                    + ":" + capability;
+        } catch (IOException invalidPath) {
+            return null;
+        }
     }
 }

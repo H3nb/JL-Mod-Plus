@@ -92,10 +92,10 @@ public final class PresetAuthorityProvider extends ContentProvider {
         String fingerprint = extras.getString(PresetAuthorityContract.KEY_JAR_FINGERPRINT);
         Bundle response = result(PresetAuthorityContract.RESULT_OK);
         response.putInt(PresetAuthorityContract.KEY_FILE_READ_DECISION,
-                MidletPermissionStore.read(getContext(), appId,
+                MidletPermissionStore.read(getContext(), appPath, appId,
                         MidletPermissionStore.FILE_READ, fingerprint));
         response.putInt(PresetAuthorityContract.KEY_FILE_WRITE_DECISION,
-                MidletPermissionStore.read(getContext(), appId,
+                MidletPermissionStore.read(getContext(), appPath, appId,
                         MidletPermissionStore.FILE_WRITE, fingerprint));
         return response;
     }
@@ -110,7 +110,7 @@ public final class PresetAuthorityProvider extends ContentProvider {
             return result(PresetAuthorityContract.RESULT_INVALID);
         }
         InstalledAppWriteGuard.Result saved = permissionGuard.run(appPath, appId,
-                () -> MidletPermissionStore.write(getContext(), appId,
+                () -> MidletPermissionStore.write(getContext(), appPath, appId,
                         capability, fingerprint, decision));
         return result(switch (saved) {
             case SUCCESS -> PresetAuthorityContract.RESULT_OK;

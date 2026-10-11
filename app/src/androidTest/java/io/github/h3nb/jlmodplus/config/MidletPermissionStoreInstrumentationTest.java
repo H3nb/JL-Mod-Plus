@@ -26,13 +26,18 @@ public class MidletPermissionStoreInstrumentationTest {
     private final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
     private final long appId = (1L << 60) | (System.nanoTime() & 0x0000ffffffffffffL);
     private File temporaryJar;
+    private final String appPath = new File(context.getFilesDir(), "test-workdir-a/converted/app").getPath();
+    private final String otherWorkdirAppPath = new File(context.getFilesDir(),
+            "test-workdir-b/converted/app").getPath();
 
     @After
     public void tearDown() {
-        MidletPermissionStore.write(context, appId, MidletPermissionStore.FILE_READ, null,
-                MidletPermissionStore.ASK);
-        MidletPermissionStore.write(context, appId, MidletPermissionStore.FILE_WRITE, null,
-                MidletPermissionStore.ASK);
+        MidletPermissionStore.write(context, appPath, appId,
+                MidletPermissionStore.FILE_READ, null, MidletPermissionStore.ASK);
+        MidletPermissionStore.write(context, appPath, appId,
+                MidletPermissionStore.FILE_WRITE, null, MidletPermissionStore.ASK);
+        MidletPermissionStore.write(context, otherWorkdirAppPath, appId,
+                MidletPermissionStore.FILE_READ, null, MidletPermissionStore.ASK);
         if (temporaryJar != null) temporaryJar.delete();
     }
 
@@ -42,26 +47,29 @@ public class MidletPermissionStoreInstrumentationTest {
         String jarTwo = "jar-content-sha-2";
         String capability = MidletPermissionStore.FILE_READ;
         assertEquals(MidletPermissionStore.ASK,
-                MidletPermissionStore.read(context, appId, capability, jarOne));
-        assertFalse(MidletPermissionStore.write(context, appId, capability,
+                MidletPermissionStore.read(context, appPath, appId, capability, jarOne));
+        assertFalse(MidletPermissionStore.write(context, appPath, appId, capability,
                 null, MidletPermissionStore.ALLOW));
-        assertTrue(MidletPermissionStore.write(context, appId, capability,
+        assertTrue(MidletPermissionStore.write(context, appPath, appId, capability,
                 jarOne, MidletPermissionStore.ALLOW));
         assertEquals(MidletPermissionStore.ALLOW,
-                MidletPermissionStore.read(context, appId, capability, jarOne));
+                MidletPermissionStore.read(context, appPath, appId, capability, jarOne));
         assertEquals(MidletPermissionStore.ASK,
-                MidletPermissionStore.read(context, appId, capability, jarTwo));
+                MidletPermissionStore.read(context, appPath, appId, capability, jarTwo));
         assertEquals(MidletPermissionStore.ASK,
-                MidletPermissionStore.read(context, appId + 1, capability, jarOne));
+                MidletPermissionStore.read(context, appPath, appId + 1, capability, jarOne));
+        assertEquals(MidletPermissionStore.ASK,
+                MidletPermissionStore.read(context, otherWorkdirAppPath, appId,
+                        capability, jarOne));
 
-        assertTrue(MidletPermissionStore.write(context, appId, capability,
+        assertTrue(MidletPermissionStore.write(context, appPath, appId, capability,
                 jarOne, MidletPermissionStore.DENY));
         assertEquals(MidletPermissionStore.DENY,
-                MidletPermissionStore.read(context, appId, capability, jarTwo));
-        assertTrue(MidletPermissionStore.write(context, appId, capability,
+                MidletPermissionStore.read(context, appPath, appId, capability, jarTwo));
+        assertTrue(MidletPermissionStore.write(context, appPath, appId, capability,
                 null, MidletPermissionStore.ASK));
         assertEquals(MidletPermissionStore.ASK,
-                MidletPermissionStore.read(context, appId, capability, jarOne));
+                MidletPermissionStore.read(context, appPath, appId, capability, jarOne));
     }
 
     @Test

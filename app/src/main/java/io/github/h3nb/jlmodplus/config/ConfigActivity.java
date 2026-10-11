@@ -1526,7 +1526,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
         };
         String[] rows = new String[capabilities.length];
         for (int i = 0; i < capabilities.length; i++) {
-            int decision = MidletPermissionStore.read(this, expectedAppId,
+            int decision = MidletPermissionStore.read(this, appDir.getPath(), expectedAppId,
                     capabilities[i], fingerprint);
             rows[i] = getString(R.string.midlet_permissions_item,
                     titles[i], permissionDecisionLabel(decision));
@@ -1548,7 +1548,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
     }
 
     private void showFilePermissionChoices(String capability, String fingerprint) {
-        int initial = MidletPermissionStore.read(this, expectedAppId, capability, fingerprint);
+        int initial = MidletPermissionStore.read(this, appDir.getPath(), expectedAppId, capability, fingerprint);
         String[] choices = {
                 getString(R.string.midlet_permissions_ask),
                 getString(R.string.midlet_permissions_allow),
@@ -1560,7 +1560,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
                 .setSingleChoiceItems(choices, initial, (dialog, selection) -> {
                     dialog.dismiss();
                     boolean saved = runInstalledWrite(() ->
-                            MidletPermissionStore.write(this, expectedAppId, capability,
+                            MidletPermissionStore.write(this, appDir.getPath(), expectedAppId, capability,
                                     fingerprint, selection));
                     if (!saved) {
                         ThemedToast.show(this, R.string.midlet_permissions_save_failed,
