@@ -621,8 +621,9 @@ final class ManagedJavaMemoryEngine {
 						bucket.owner.handle, slot);
 				page.values[output] = readValueText(bucket.owner, slot, strongOwner, type,
 						page.states, output, value);
-				page.addresses[output] = labelFor(bucket.owner, slot);
-				page.setSource(output, sourceFor(bucket.owner, slot, strongOwner));
+				CandidateSource source = sourceFor(bucket.owner, slot, strongOwner);
+				page.addresses[output] = labelFor(bucket.owner, slot, source);
+				page.setSource(output, source);
 				page.aliasMasks[output] = 1 << type;
 				page.types[output] = type;
 				page.relocations[output] = 0;
@@ -704,13 +705,15 @@ final class ManagedJavaMemoryEngine {
 		synchronized (stateLock) {
 			revision = committed;
 		}
+		CandidateSource anchorSource = sourceFor(owner, anchorSlot, strongOwner);
 		for (int index = 0; index < slots.size(); index++) {
 			int slot = slots.get(index);
 			int type = valueTypeFor(owner, slot);
 			ids[index] = ManagedJavaMemoryIds.encode(owner.kind, owner.handle, slot);
 			types[index] = type;
 			offsets[index] = slot - anchorSlot;
-			labels[index] = labelFor(owner, slot);
+			labels[index] = labelFor(owner, slot, owner.kind == KIND_ARRAY
+					? anchorSource : sourceFor(owner, slot, strongOwner));
 			if (owner.kind == KIND_ARRAY) {
 				editable[index] = true;
 			} else {
@@ -736,7 +739,7 @@ final class ManagedJavaMemoryEngine {
 				revision == null ? expectedRevision : revision.id, ids, values, initial, previous,
 				types, states, offsets, expectedBits, labels, editable,
 				"managed-logical-owner=" + owner.handle + ":slot=" + anchorSlot,
-				sourceFor(owner, anchorSlot, strongOwner), null);
+				anchorSource, null);
 	}
 
 	ManagedOperationResult editInspector(long token, long expectedRevision, long anchorId,
@@ -1007,8 +1010,9 @@ final class ManagedJavaMemoryEngine {
 			page.values[index] = readValueText(owner, slot, strongOwner, type, page.states, index, value);
 			page.initialValues[index] = ManagedJavaValue.format(type, snapshot.initial[index]);
 			page.previousValues[index] = ManagedJavaValue.format(type, snapshot.previous[index]);
-			page.addresses[index] = owner == null ? "managed#LOST" : labelFor(owner, slot);
-			page.setSource(index, sourceFor(owner, slot, strongOwner));
+			CandidateSource source = sourceFor(owner, slot, strongOwner);
+			page.addresses[index] = labelFor(owner, slot, source);
+			page.setSource(index, source);
 			page.types[index] = type;
 			page.relocations[index] = 0;
 			page.labels[index] = snapshot.labels[index] == null ? "" : snapshot.labels[index];
@@ -2070,12 +2074,11 @@ final class ManagedJavaMemoryEngine {
 		return "LOST";
 	}
 
-	private String labelFor(OwnerBucket owner, int slot) {
+	private String labelFor(@Nullable OwnerBucket owner, int slot, CandidateSource source) {
 		if (owner == null) return "managed#LOST";
 		if (owner.kind == KIND_ARRAY) {
 			String identity = arrayTypeName(valueTypeFor(owner, slot)) + "[]#"
 					+ owner.handle + "[" + slot + "]";
-			CandidateSource source = sourceFor(owner, slot, owner.strongOwner());
 			if (source == CandidateSource.UNKNOWN) return identity;
 			String className = source.declaringClass;
 			int lastDot = className.lastIndexOf('.');
