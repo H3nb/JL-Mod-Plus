@@ -783,6 +783,7 @@ public class MicroActivity extends AppCompatActivity {
 		try {
 			boolean currentHost = ContextHolder.getActivity() == this;
 			if (currentHost) {
+				MidletPermissionManager.cancelPending();
 				Display display = Display.getDisplay(null);
 				if (display != null) {
 					display.detachHost();

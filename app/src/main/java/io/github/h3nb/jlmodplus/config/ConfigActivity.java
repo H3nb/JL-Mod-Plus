@@ -239,6 +239,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		@Override
+		public void onFilePermissions() {
+			showFilePermissionSettings();
+		}
+
+		@Override
 		public void onManageProfiles() {
 			startActivity(new Intent(ConfigActivity.this, ProfilesActivity.class));
 		}
@@ -1507,6 +1512,66 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			return false;
 		}
 	}
+
+    private void showFilePermissionSettings() {
+        if (isProfile || appDir == null || expectedAppId <= 0L) return;
+        String fingerprint = MidletPermissionStore.fingerprint(
+                new File(appDir, Config.MIDLET_RES_FILE.substring(1)));
+        String[] capabilities = {
+                MidletPermissionStore.FILE_READ, MidletPermissionStore.FILE_WRITE
+        };
+        String[] titles = {
+                getString(R.string.midlet_permissions_read),
+                getString(R.string.midlet_permissions_write)
+        };
+        String[] rows = new String[capabilities.length];
+        for (int i = 0; i < capabilities.length; i++) {
+            int decision = MidletPermissionStore.read(this, appDir.getPath(), expectedAppId,
+                    capabilities[i], fingerprint);
+            rows[i] = getString(R.string.midlet_permissions_item,
+                    titles[i], permissionDecisionLabel(decision));
+        }
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.midlet_permissions_storage)
+                .setItems(rows, (dialog, selected) ->
+                        showFilePermissionChoices(capabilities[selected], fingerprint))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private String permissionDecisionLabel(int decision) {
+        return getString(switch (decision) {
+            case MidletPermissionStore.ALLOW -> R.string.midlet_permissions_allow;
+            case MidletPermissionStore.DENY -> R.string.midlet_permissions_deny;
+            default -> R.string.midlet_permissions_ask;
+        });
+    }
+
+    private void showFilePermissionChoices(String capability, String fingerprint) {
+        int initial = MidletPermissionStore.read(this, appDir.getPath(), expectedAppId, capability, fingerprint);
+        String[] choices = {
+                getString(R.string.midlet_permissions_ask),
+                getString(R.string.midlet_permissions_allow),
+                getString(R.string.midlet_permissions_deny)
+        };
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(MidletPermissionStore.FILE_READ.equals(capability)
+                        ? R.string.midlet_permissions_read : R.string.midlet_permissions_write)
+                .setSingleChoiceItems(choices, initial, (dialog, selection) -> {
+                    dialog.dismiss();
+                    boolean saved = runInstalledWrite(() ->
+                            MidletPermissionStore.write(this, appDir.getPath(), expectedAppId, capability,
+                                    fingerprint, selection));
+                    if (!saved) {
+                        ThemedToast.show(this, R.string.midlet_permissions_save_failed,
+                                Toast.LENGTH_LONG);
+                    } else {
+                        showFilePermissionSettings();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
 
 	private boolean runInstalledWrite(@NonNull BooleanOperation operation) {
 		InstalledAppWriteGuard guard = installedWriteGuard;

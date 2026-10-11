@@ -1746,6 +1746,16 @@ private fun SystemSection(
         )
     }
 
+    if (showClearData) {
+        ConfigSection(title = stringResource(R.string.midlet_permissions_settings_title)) {
+            ConfigActionPreference(
+                title = stringResource(R.string.midlet_permissions_storage),
+                description = stringResource(R.string.midlet_permissions_settings_summary),
+                onClick = events::onFilePermissions,
+            )
+        }
+    }
+
     ConfigSection(title = stringResource(R.string.config_maintenance)) {
         ConfigActionPreference(
   title = stringResource(R.string.config_reset_all_settings),

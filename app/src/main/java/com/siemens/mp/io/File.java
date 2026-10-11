@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 
-import javax.microedition.shell.AppClassLoader;
-import javax.microedition.util.ContextHolder;
+import org.microemu.cldc.file.VirtualFileSystem;
+import javax.microedition.shell.MidletPermissionManager;
 
 import io.github.h3nb.jlmodplus.util.FileUtils;
 
@@ -60,19 +60,19 @@ public class File {
 	}
 
 	public static int copy(String source, String dest) throws IOException {
-		FileUtils.copyFileUsingChannel(getFile(source), getFile(dest));
+		FileUtils.copyFileUsingChannel(getFile(source), getFile(dest, 2));
 		return 1;
 	}
 
 	public static int debugWrite(String fileName, String infoString) throws IOException {
-		try (FileWriter writer = new FileWriter(getFile(fileName), true)) {
+		try (FileWriter writer = new FileWriter(getFile(fileName, 2), true)) {
 			writer.write(infoString);
 		}
 		return 1;
 	}
 
 	public static int delete(String fileName) {
-		return getFile(fileName).delete() ? 1 : -1;
+		return getFile(fileName, 2).delete() ? 1 : -1;
 	}
 
 	public static int exists(String fileName) throws IOException {
@@ -114,7 +114,7 @@ public class File {
 	}
 
 	public int open(String fileName) throws IOException {
-		java.io.File file = getFile(fileName);
+		java.io.File file = getFile(fileName, 3);
 		RandomAccessFile raf = new RandomAccessFile(file, "rw");
 		int fd = ++lastDescriptor;
 		OPENED_FILES.append(fd, raf);
@@ -130,7 +130,7 @@ public class File {
 	}
 
 	public static int rename(String source, String dest) {
-		return getFile(source).renameTo(getFile(dest)) ? 1 : -1;
+		return getFile(source, 2).renameTo(getFile(dest, 2)) ? 1 : -1;
 	}
 
 	public int seek(int fileDescriptor, int seekpos) throws IOException {
@@ -144,7 +144,7 @@ public class File {
 
 	@SuppressLint("UsableSpace")
 	public static int spaceAvailable() throws IOException {
-		return (int) new java.io.File(AppClassLoader.getDataDir()).getUsableSpace();
+		return (int) Math.min(Integer.MAX_VALUE, VirtualFileSystem.resolve("siemens:/", "").getUsableSpace());
 	}
 
 	public static void truncate(int fileDescriptor, int size) throws IOException {
@@ -164,13 +164,37 @@ public class File {
 		return numBytes;
 	}
 
-	private static java.io.File getFile(String fileName) {
-		int colon = fileName.indexOf(':');
-		if (colon == -1) {
-			return ContextHolder.getFileByName(fileName);
-		} else {
-			fileName = fileName.substring(colon + 2);
-			return new java.io.File(System.getProperty("user.home"), fileName);
-		}
-	}
+    private static java.io.File getFile(String fileName) {
+        return getFile(fileName, 1);
+    }
+
+    private static java.io.File getFile(String fileName, int access) {
+        if (fileName == null) throw new NullPointerException("fileName");
+        String normalized = fileName.replace('\\', '/');
+        int colon = normalized.indexOf(':');
+        String root;
+        String path;
+        if (colon == -1) {
+            root = "siemens:/";
+            path = normalized;
+        } else {
+            if (colon == 0 || colon + 1 >= normalized.length()
+                    || normalized.charAt(colon + 1) != '/') {
+                throw new IllegalArgumentException("Invalid Siemens filesystem path");
+            }
+            root = normalized.substring(0, colon + 2);
+            path = normalized.substring(colon + 2);
+        }
+        if ((access & 2) != 0 && path.isEmpty()) {
+            throw new SecurityException("Cannot modify a virtual filesystem root");
+        }
+        try {
+            java.io.File result = VirtualFileSystem.resolve(root, path);
+            if ((access & 1) != 0) MidletPermissionManager.requireFileAccess(root, false);
+            if ((access & 2) != 0) MidletPermissionManager.requireFileAccess(root, true);
+            return result;
+        } catch (IOException error) {
+            throw new SecurityException("Invalid Siemens filesystem path", error);
+        }
+    }
 }

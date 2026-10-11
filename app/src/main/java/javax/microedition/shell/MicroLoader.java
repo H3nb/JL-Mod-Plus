@@ -82,6 +82,7 @@ import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease;
 import io.github.h3nb.jlmodplus.util.AppUtils;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
+import org.microemu.cldc.file.VirtualFileSystem;
 import io.github.h3nb.jlmodplus.jar.Descriptor;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
@@ -111,6 +112,7 @@ public class MicroLoader {
 	private TimingSession timingSession;
 	private RuntimeAudioCoordinator audioSession;
 	private RuntimeStorageLease storageLease;
+	private boolean ownsVirtualStorage;
 	private long memoryRuntimeToken;
 	private boolean timingTransformCompatible;
 	/** Set only after the MIDlet thread has successfully received the timing session. */
@@ -207,6 +209,11 @@ public class MicroLoader {
 	}
 
 	private void closeStorageLease() {
+		if (ownsVirtualStorage) {
+			ownsVirtualStorage = false;
+			MidletPermissionManager.clear();
+			VirtualFileSystem.clear();
+		}
 		RuntimeStorageLease lease = storageLease;
 		storageLease = null;
 		if (lease != null) {
@@ -423,21 +430,14 @@ public class MicroLoader {
 
 	private void setProperties() {
 		MidletSystem.setProperty("microedition.locale", guestLocale);
-		final String primaryStoragePath = Environment.getExternalStorageDirectory().getPath();
-		String dataUri = fileConnectionDataUri(workDir, appDirName, primaryStoragePath);
-		String musicUri = "file:///c:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
-				.getPath().substring(primaryStoragePath.length());
-		MidletSystem.setProperty("fileconn.dir.cache", dataUri + "/cache");
-		MidletSystem.setProperty("fileconn.dir.private", dataUri + "/private");
-		MidletSystem.setProperty("fileconn.dir.music", musicUri);
-		MidletSystem.setProperty("user.home", primaryStoragePath);
-	}
-
-	static String fileConnectionDataUri(
-			String launchedWorkDir, String storageKey, String primaryStoragePath) {
-		File dataDir = new File(launchedWorkDir + Config.MIDLET_DATA_DIR + storageKey);
-		return "file:///c:" + dataDir.getPath().substring(primaryStoragePath.length())
-				.replace(File.separatorChar, '/');
+		MidletSystem.setProperty("fileconn.dir.cache", "file:///cache:/");
+		MidletSystem.setProperty("fileconn.dir.private", "file:///private:/");
+		MidletSystem.setProperty("fileconn.dir.music", "file:///e:/Music/");
+		MidletSystem.setProperty("fileconn.dir.photos", "file:///e:/Images/");
+		MidletSystem.setProperty("fileconn.dir.videos", "file:///e:/Videos/");
+		MidletSystem.setProperty("fileconn.dir.tones", "file:///c:/Sounds/");
+		MidletSystem.setProperty("fileconn.dir.recordings", "file:///e:/Recordings/");
+		MidletSystem.setProperty("fileconn.dir.memorycard", "file:///e:/");
 	}
 
 	public int getOrientation() {
@@ -562,6 +562,10 @@ public class MicroLoader {
 						ContextHolder.getActivity().getString(R.string.runtime_installation_changed));
 				return;
 			}
+			VirtualFileSystem.install(new File(workDir), appDirName);
+			ownsVirtualStorage = true;
+			MidletPermissionManager.install(ContextHolder.getAppContext(), appDir.getPath(),
+					expectedAppId, jarSha256);
 			startTimingSession();
 			MidletSessionJournal journal = MidletSessionJournal.create(
 					ContextHolder.getAppContext(),

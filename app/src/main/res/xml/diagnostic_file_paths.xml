@@ -14,4 +14,7 @@
     <cache-path
         name="library_export_bulk"
         path="library-export-bulk/" />
+    <cache-path
+        name="midlet_platform_share"
+        path="midlet-platform-share/" />
 </paths>

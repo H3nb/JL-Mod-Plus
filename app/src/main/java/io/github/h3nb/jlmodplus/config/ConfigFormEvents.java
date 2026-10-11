@@ -46,6 +46,10 @@ public interface ConfigFormEvents {
 	default void onShaderTuningComplete(float[] values) {
 	}
 
+	/** Opens installation-owned Java ME file permissions; these are never part of a preset. */
+	default void onFilePermissions() {
+	}
+
 	/** Opens preset management from the General destination. */
 	default void onManageProfiles() {
 	}

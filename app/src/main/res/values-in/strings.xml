@@ -1010,4 +1010,21 @@
     <string name="bulk_install_reason_version_conflict">Beberapa varian aplikasi memiliki versi yang sama.</string>
     <string name="bulk_install_reason_older_candidate">Versi yang lebih baru dari aplikasi ini ada dalam instalasi massal yang sama.</string>
     <string name="bulk_install_reason_source_error">Sumber ini tidak dapat disiapkan untuk instalasi.</string>
+    <string name="midlet_file_permission_title">Akses penyimpanan virtual</string>
+    <string name="midlet_file_permission_read">Game ini ingin membaca berkas di penyimpanan virtual bersama JL-Mod Plus.</string>
+    <string name="midlet_file_permission_write">Game ini ingin membuat, mengubah, atau menghapus berkas di penyimpanan virtual bersama JL-Mod Plus.</string>
+    <string name="midlet_file_permission_allow_once">Izinkan sekali</string>
+    <string name="midlet_file_permission_allow_session">Izinkan selama bermain</string>
+    <string name="midlet_file_permission_allow_always">Selalu izinkan</string>
+    <string name="midlet_file_permission_deny">Tolak</string>
+    <string name="midlet_permissions_settings_title">Izin</string>
+    <string name="midlet_permissions_storage">Penyimpanan virtual</string>
+    <string name="midlet_permissions_settings_summary">Atur akses baca dan tulis ke drive virtual bersama. Perubahan berlaku saat game dijalankan kembali.</string>
+    <string name="midlet_permissions_read">Baca berkas bersama</string>
+    <string name="midlet_permissions_write">Ubah berkas bersama</string>
+    <string name="midlet_permissions_ask">Tanyakan setiap kali</string>
+    <string name="midlet_permissions_allow">Selalu izinkan</string>
+    <string name="midlet_permissions_deny">Tolak</string>
+    <string name="midlet_permissions_item">%1$s · %2$s</string>
+    <string name="midlet_permissions_save_failed">Izin tidak dapat disimpan. Pastikan game masih terpasang dan berkas JAR aslinya tersedia.</string>
 </resources>
