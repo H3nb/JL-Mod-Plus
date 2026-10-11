@@ -16,9 +16,9 @@ package javax.microedition.lcdui.keyboard;
 /**
  * Pure geometry for the built-in D-pad/analog templates.
  *
- * The standard templates first use free space outside the MIDlet viewport: a tall layout prefers
- * the deck below the guest, while a wide layout uses matching side gutters. Only tight/full-screen
- * layouts fall back to an overlay. D-pad Standard and Analog Standard share this geometry.
+ * Portrait controls stay attached to the host's bottom edge at a screen-fitted size, regardless
+ * of guest viewport size. Landscape prefers free side gutters and falls back to a compact overlay.
+ * D-pad Standard and Analog Standard share this geometry.
  */
 final class StandardVirtualControlsLayout {
 	enum Placement {
@@ -150,11 +150,16 @@ final class StandardVirtualControlsLayout {
 				bottomDeck >= BOTTOM_MIN_HEIGHT_KEYS * keySize &&
 				width >= BOTTOM_MIN_WIDTH_KEYS * keySize;
 
-		// Tall windows usually have the most useful free space below the MIDlet. Wide windows
-		// prefer the two side gutters so the game remains unobstructed in the center.
-		if (height >= width && bottomFits) {
-			return resolveBottomDeck(
-					screenLeft, screenTop, screenRight, screenBottom, guestBottom, keySize);
+		// Portrait controls are anchored to the host's bottom edge. Guest resizing must not
+		// move the shoulders away from the movement/action clusters or switch their topology.
+		// Fit the *screen*, not the ever-changing amount of free space below a MIDlet.
+		if (height >= width) {
+			float fittedKeySize = Math.max(1.0f, Math.min(keySize,
+					Math.min(width / BOTTOM_MIN_WIDTH_KEYS, height / BOTTOM_MIN_HEIGHT_KEYS)));
+			float dockTop = screenBottom - fittedKeySize * BOTTOM_MIN_HEIGHT_KEYS;
+			return resolveBottomDeck(screenLeft, screenTop, screenRight, screenBottom,
+					dockTop, fittedKeySize,
+					guestBottom <= dockTop ? Placement.BOTTOM_DECK : Placement.COMPACT_OVERLAY);
 		}
 		if (sideFits) {
 			return resolveSideGutters(
@@ -163,7 +168,7 @@ final class StandardVirtualControlsLayout {
 		}
 		if (bottomFits) {
 			return resolveBottomDeck(
-					screenLeft, screenTop, screenRight, screenBottom, guestBottom, keySize);
+					screenLeft, screenTop, screenRight, screenBottom, guestBottom, keySize, Placement.BOTTOM_DECK);
 		}
 		return resolveCompactOverlay(
 				screenLeft, screenTop, screenRight, screenBottom, keySize);
@@ -236,7 +241,8 @@ final class StandardVirtualControlsLayout {
 			float screenRight,
 			float screenBottom,
 			float guestBottom,
-			float keySize) {
+			float keySize,
+			Placement placement) {
 		float movementRadius = keySize * MOVEMENT_RADIUS_KEYS;
 		float margin = keySize * OUTER_MARGIN_KEYS;
 		float shoulderWidth = keySize * SHOULDER_WIDTH_KEYS;
@@ -271,7 +277,7 @@ final class StandardVirtualControlsLayout {
 				clusterCenterY + keySize * BOTTOM_ACTION_BOTTOM_OFFSET_KEYS;
 
 		return new StandardVirtualControlsLayout(
-				Placement.BOTTOM_DECK,
+				placement,
 				keySize,
 				movementRadius,
 				movementCenterX,

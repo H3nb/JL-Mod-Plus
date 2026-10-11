@@ -91,6 +91,15 @@ public class CanvasWrapper {
 		canvas.drawColor(color, PorterDuff.Mode.SRC);
 	}
 
+	/** Applies one uniform opacity to a compound control without stacking translucent layers. */
+	public int saveAlphaLayer(RectF bounds, int alpha) {
+		return canvas.saveLayerAlpha(bounds.left, bounds.top, bounds.right, bounds.bottom, alpha);
+	}
+
+	public void restoreAlphaLayer(int saveCount) {
+		canvas.restoreToCount(saveCount);
+	}
+
 	public void drawArc(RectF oval, int startAngle, int sweepAngle) {
 		canvas.drawArc(oval, startAngle, sweepAngle, false, drawPaint);
 	}

@@ -819,7 +819,7 @@
     <string name="config_help_font_aa">Smooths the edges of rendered text.</string>
     <string name="config_help_key_layout">Chooses the key code layout reported to the MIDlet.</string>
     <string name="config_help_key_mapping">Maps physical Android keys and buttons to Java ME keypad actions.</string>
-    <string name="config_help_vk_button_shape">Sets the shape of virtual-control buttons.</string>
+    <string name="config_help_vk_button_shape">Sets the shape of keypad buttons. The D-pad and analog stick keep their own shapes.</string>
     <string name="config_help_vk_feedback">Vibrates on virtual-control presses when vibration is enabled in Settings.</string>
     <string name="config_help_vk_alpha">Sets control opacity: 0 = fully transparent; 255 = fully opaque.</string>
     <string name="config_help_vk_force_opacity">Makes controls outside the MIDlet screen opaque. Controls over the screen use the configured opacity.</string>

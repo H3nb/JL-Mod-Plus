@@ -1868,7 +1868,8 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	@Override
 	public void paint(CanvasWrapper g) {
-		if (visible && (layoutEditMode != LAYOUT_EOF || settings.vkAlpha > 0)) {
+		if (visible && (layoutEditMode != LAYOUT_EOF ||
+				settings.vkAlpha > 0 || settings.vkForceOpacity)) {
 			boolean keypadLegendContext = hasVisibleNumericKeypadContext();
 			for (VirtualKey key : keypad) {
 				if (key.visible) {
@@ -2303,16 +2304,10 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		}
 
 		void paint(CanvasWrapper g, boolean keypadLegendContext) {
-			int bgColor;
-			int fgColor;
-			if (selected) {
-				bgColor = settings.vkBgColorSelected;
-				fgColor = settings.vkFgColorSelected;
-			} else {
-				bgColor = settings.vkBgColor;
-				fgColor = settings.vkFgColor;
-			}
-			int alpha = (opaque || layoutEditMode != LAYOUT_EOF ? 0xFF : settings.vkAlpha) << 24;
+			int bgColor = VirtualControlAppearance.background(settings, selected);
+			int fgColor = VirtualControlAppearance.foreground(settings, selected);
+			int alpha = VirtualControlAppearance.opacity(settings.vkAlpha,
+					layoutEditMode != LAYOUT_EOF, opaque) << 24;
 			g.setFillColor((layoutEditMode != LAYOUT_EOF ? (0xFF / 3) << 24 : alpha) | bgColor);
 			g.setTextColor(alpha | fgColor);
 			g.setDrawColor(alpha | settings.vkOutlineColor);
