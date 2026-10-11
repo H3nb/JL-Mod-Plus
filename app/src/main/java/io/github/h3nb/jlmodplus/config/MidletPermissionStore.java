@@ -2,6 +2,12 @@ package io.github.h3nb.jlmodplus.config;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import androidx.preference.PreferenceManager;
 
@@ -44,6 +50,27 @@ public final class MidletPermissionStore {
             edit.putInt(key, ALLOW).putString(key + ".sha256", fingerprint);
         }
         return edit.commit();
+    }
+
+    public static String fingerprint(File retainedJar) {
+        if (retainedJar == null || !retainedJar.isFile()) return null;
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            try (InputStream input = new FileInputStream(retainedJar)) {
+                byte[] buffer = new byte[8192];
+                for (int n; (n = input.read(buffer)) != -1;) digest.update(buffer, 0, n);
+            }
+            char[] hex = new char[64];
+            char[] digits = "0123456789abcdef".toCharArray();
+            byte[] hash = digest.digest();
+            for (int i = 0; i < hash.length; i++) {
+                hex[i * 2] = digits[(hash[i] & 0xff) >>> 4];
+                hex[i * 2 + 1] = digits[hash[i] & 0x0f];
+            }
+            return new String(hex);
+        } catch (IOException | NoSuchAlgorithmException error) {
+            return null;
+        }
     }
 
     public static boolean supported(String capability) {
