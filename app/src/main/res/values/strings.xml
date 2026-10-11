@@ -1097,4 +1097,14 @@
     <string name="midlet_file_permission_allow_session">Allow while playing</string>
     <string name="midlet_file_permission_allow_always">Always allow</string>
     <string name="midlet_file_permission_deny">Deny</string>
+    <string name="midlet_permissions_settings_title">Permissions</string>
+    <string name="midlet_permissions_storage">Virtual storage</string>
+    <string name="midlet_permissions_settings_summary">Control read and write access to shared virtual drives. Changes apply the next time the game starts.</string>
+    <string name="midlet_permissions_read">Read shared files</string>
+    <string name="midlet_permissions_write">Change shared files</string>
+    <string name="midlet_permissions_ask">Ask each time</string>
+    <string name="midlet_permissions_allow">Always allow</string>
+    <string name="midlet_permissions_deny">Deny</string>
+    <string name="midlet_permissions_item">%1$s · %2$s</string>
+    <string name="midlet_permissions_save_failed">Could not save this permission. Check that the game is still installed and its original JAR is available.</string>
 </resources>
