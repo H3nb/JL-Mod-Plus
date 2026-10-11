@@ -208,6 +208,7 @@ public class MicroLoader {
 	}
 
 	private void closeStorageLease() {
+		MidletPermissionManager.clear();
 		VirtualFileSystem.clear();
 		RuntimeStorageLease lease = storageLease;
 		storageLease = null;
