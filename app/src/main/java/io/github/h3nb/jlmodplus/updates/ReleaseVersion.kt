@@ -2,12 +2,12 @@ package io.github.h3nb.jlmodplus.updates
 
 /** SemVer 2.0 precedence. Build metadata never affects update eligibility. */
 internal class ReleaseVersion private constructor(
-    private val core: List<Int>,
+    private val core: List<String>,
     private val pre: List<String>,
 ) : Comparable<ReleaseVersion> {
     override fun compareTo(other: ReleaseVersion): Int {
         for (i in core.indices) {
-            val comparison = core[i].compareTo(other.core[i])
+            val comparison = compareNumeric(core[i], other.core[i])
             if (comparison != 0) return comparison
         }
         if (pre.isEmpty() || other.pre.isEmpty()) {
@@ -40,7 +40,7 @@ internal class ReleaseVersion private constructor(
 
         fun parse(value: String): ReleaseVersion? {
             val match = pattern.matchEntire(value) ?: return null
-            val core = (1..3).map { match.groupValues[it].toIntOrNull() ?: return null }
+            val core = (1..3).map { match.groupValues[it] }
             val pre = match.groupValues[4].takeIf(String::isNotEmpty)
                 ?.split('.') ?: emptyList()
             if (pre.any { it.isEmpty() || (it.all(Char::isDigit) && it.length > 1 && it[0] == '0') }) {

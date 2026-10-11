@@ -159,7 +159,9 @@ internal class UpdateRepository private constructor(context: Context) {
         if (stable != null && releases.none { it.optString("tag_name") == stable.optString("tag_name") }) {
             releases.add(stable)
         }
-        val selected = releases.mapNotNull { release ->
+        val installed = ReleaseVersion.parse(BuildConfig.VERSION_NAME)
+            ?: return UpdateStatus.NoRelease
+        val ranked = releases.mapNotNull { release ->
             if (release.optBoolean("draft", false)) return@mapNotNull null
             if (channel == UpdateChannel.Stable && release.optBoolean("prerelease", false)) {
                 return@mapNotNull null
@@ -170,47 +172,49 @@ internal class UpdateRepository private constructor(context: Context) {
             val parsed = ReleaseVersion.parse(version) ?: return@mapNotNull null
             if (release.optBoolean("prerelease", false) != ('-' in version)) return@mapNotNull null
             Triple(release, version, parsed)
-        }.maxWithOrNull(compareBy { it.third }) ?: return UpdateStatus.NoRelease
+        }.sortedWith(compareByDescending { it.third })
 
-        val release = selected.first
-        val version = selected.second
-        val assets = release.optJSONArray("assets") ?: return UpdateStatus.NoRelease
-        var metadataUrl: String? = null
-        var hasApk = false
-        for (i in 0 until assets.length()) {
-            val asset = assets.getJSONObject(i)
-            val name = asset.optString("name")
-            if (name == "release-info.json") metadataUrl = asset.optString("browser_download_url")
-            if (name.endsWith(".apk") && (name.endsWith("-universal.apk") ||
-                        Build.SUPPORTED_ABIS.any { abi -> name.endsWith("-" + abi + ".apk") })) {
-                hasApk = true
+        var incompatible = false
+        val newer = ranked.filter { it.third > installed }.take(MAX_METADATA_CHECKS)
+        for ((release, version) in newer) {
+            val assets = release.optJSONArray("assets") ?: continue
+            var metadataUrl: String? = null
+            var hasApk = false
+            for (i in 0 until assets.length()) {
+                val asset = assets.getJSONObject(i)
+                val name = asset.optString("name")
+                if (name == "release-info.json") metadataUrl = asset.optString("browser_download_url")
+                if (name.endsWith(".apk") && (name.endsWith("-universal.apk") ||
+                            Build.SUPPORTED_ABIS.any { abi -> name.endsWith("-" + abi + ".apk") })) {
+                    hasApk = true
+                }
             }
+            val expected = "https://github.com/H3nb/JL-Mod-Plus/releases/download/v" +
+                version + "/release-info.json"
+            if (!hasApk || metadataUrl != expected) continue
+            val meta = loadJson(expected) as? JSONObject ?: continue
+            if (meta.optInt("schema") != 1 || meta.optString("versionName") != version ||
+                meta.optString("applicationId") != "io.github.h3nb.jlmodplus" ||
+                meta.optInt("minSdk", Int.MAX_VALUE) > Build.VERSION.SDK_INT) {
+                continue
+            }
+            val code = meta.optInt("versionCode", 0)
+            if (code < 1) continue
+            val candidate = UpdateCandidate(
+                versionName = version,
+                versionCode = code,
+                releaseUrl = "https://github.com/H3nb/JL-Mod-Plus/releases/tag/v" + version,
+            )
+            if (eligibleUpdate(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, candidate)) {
+                return UpdateStatus.Available(candidate)
+            }
+            incompatible = true
         }
-        val pathPrefix = "https://github.com/H3nb/JL-Mod-Plus/releases/download/v" + version + "/"
-        val infoUrl = metadataUrl ?: return UpdateStatus.NoRelease
-        if (!hasApk || infoUrl != pathPrefix + "release-info.json") {
-            return UpdateStatus.NoRelease
-        }
-        val meta = loadJson(infoUrl) as? JSONObject ?: return UpdateStatus.NoRelease
-        if (meta.optInt("schema") != 1 || meta.optString("versionName") != version ||
-            meta.optString("applicationId") != "io.github.h3nb.jlmodplus" ||
-            meta.optInt("minSdk", Int.MAX_VALUE) > Build.VERSION.SDK_INT) {
-            return UpdateStatus.NoRelease
-        }
-        val code = meta.optInt("versionCode", 0)
-        if (code < 1) return UpdateStatus.NoRelease
-        val candidate = UpdateCandidate(
-            versionName = version,
-            versionCode = code,
-            releaseUrl = "https://github.com/H3nb/JL-Mod-Plus/releases/tag/v" + version,
-        )
-        val installed = ReleaseVersion.parse(BuildConfig.VERSION_NAME)
-        val remote = ReleaseVersion.parse(version)
         return when {
-            eligibleUpdate(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, candidate) ->
-                UpdateStatus.Available(candidate)
-            installed != null && remote != null && remote > installed -> UpdateStatus.NotInstallable
-            else -> UpdateStatus.Current
+            incompatible -> UpdateStatus.NotInstallable
+            newer.isNotEmpty() -> UpdateStatus.NoRelease
+            ranked.isNotEmpty() -> UpdateStatus.Current
+            else -> UpdateStatus.NoRelease
         }
     }
 
@@ -248,6 +252,7 @@ internal class UpdateRepository private constructor(context: Context) {
         private const val KEY_NOTIFIED = "jlmod_updates_notified"
         private const val CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000L
         private const val RETRY_DELAY_MS = 30 * 60 * 1000L
+        private const val MAX_METADATA_CHECKS = 8
 
         @Volatile private var instance: UpdateRepository? = null
         fun get(context: Context): UpdateRepository =

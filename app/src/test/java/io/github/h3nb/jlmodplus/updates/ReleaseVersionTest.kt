@@ -13,6 +13,7 @@ class ReleaseVersionTest {
             "0.2.0-beta.1" to "0.2.0-alpha.50",
             "0.2.0-rc.1" to "0.2.0-beta.2",
             "0.2.0" to "0.2.0-rc.9",
+            "999999999999.0.0" to "0.99999999999.0",
         )
         pairs.forEach { (high, low) ->
             assertTrue(requireNotNull(ReleaseVersion.parse(high)) > requireNotNull(ReleaseVersion.parse(low)))
