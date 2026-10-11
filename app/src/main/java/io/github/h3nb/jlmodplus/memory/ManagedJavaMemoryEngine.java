@@ -2069,8 +2069,14 @@ final class ManagedJavaMemoryEngine {
 
 	private String labelFor(OwnerBucket owner, int slot) {
 		if (owner == null) return "managed#LOST";
-		if (owner.kind == KIND_ARRAY) return arrayTypeName(valueTypeFor(owner, slot)) + "[]#"
-				+ owner.handle + "[" + slot + "]";
+		if (owner.kind == KIND_ARRAY) {
+			String identity = arrayTypeName(valueTypeFor(owner, slot)) + "[]#"
+					+ owner.handle + "[" + slot + "]";
+			ArrayReference source = owner.arrayReference;
+			Object array = owner.strongOwner();
+			String reference = source == null || array == null ? null : source.currentLabel(array);
+			return reference == null ? identity : reference + " → " + identity;
+		}
 		FieldSlot field = owner.schema.fieldAt(slot);
 		if (field == null) return "managed#" + owner.handle + "[" + slot + "]";
 		if (owner.kind == KIND_STATIC_FIELD) return field.declaringClass.getName() + "."
@@ -2670,6 +2676,9 @@ final class ManagedJavaMemoryEngine {
 		final IdentityHashMap<Object, Boolean> queued = new IdentityHashMap<>();
 		final IdentityHashMap<Object, Boolean> visited = new IdentityHashMap<>();
 		final IdentityHashMap<Object, OwnerBucket> objectOwners = new IdentityHashMap<>();
+		/** Pending direct-field paths only; the scanner already retains these queued arrays. */
+		final IdentityHashMap<Object, ArrayReference> pendingArrayReferences = new IdentityHashMap<>();
+		ArrayReference dequeuedArrayReference;
 		final RevisionBuilder revision;
 		final GroupMatcher groupMatcher;
 		final long[] value = new long[1];
@@ -2721,7 +2730,23 @@ final class ManagedJavaMemoryEngine {
 		Object dequeue() {
 			Object value = queue.removeFirst();
 			releaseTraversalBytes(QUEUE_REFERENCE_BYTES);
+			dequeuedArrayReference = pendingArrayReferences.remove(value);
+			if (dequeuedArrayReference != null) releaseTraversalBytes(TRAVERSAL_ENTRY_BYTES);
 			return value;
+		}
+
+		void enqueueReference(@Nullable Object value, FieldSlot source, @Nullable Object parent) {
+			if (value != null && !visited.containsKey(value)
+					&& !pendingArrayReferences.containsKey(value)) {
+				Class<?> component = value.getClass().getComponentType();
+				int arrayType = ManagedJavaValue.typeForClass(component);
+				if (ManagedJavaValue.isSupportedType(arrayType)
+						&& (groupPlan != null ? groupPlan.type == arrayType : plan.accepts(arrayType))) {
+					reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES);
+					pendingArrayReferences.put(value, new ArrayReference(source.field, parent));
+				}
+			}
+			enqueue(value);
 		}
 
 		boolean checkpoint() {
@@ -2745,7 +2770,7 @@ final class ManagedJavaMemoryEngine {
 			Class<?> type = value.getClass();
 			int arrayType = ManagedJavaValue.typeForClass(type.getComponentType());
 			if (ManagedJavaValue.isSupportedType(arrayType)) {
-				scanPrimitiveArray(value, arrayType);
+				scanPrimitiveArray(value, arrayType, dequeuedArrayReference);
 				return;
 			}
 			if (value instanceof Object[]) {
@@ -2787,7 +2812,7 @@ final class ManagedJavaMemoryEngine {
 						}
 						if (field.finalField) skippedFields++;
 					} else if (field.referenceField) {
-						enqueue(field.field.get(value));
+						enqueueReference(field.field.get(value), field, value);
 					}
 				} catch (ResourceLimitException limit) {
 					throw limit;
@@ -2829,7 +2854,7 @@ final class ManagedJavaMemoryEngine {
 						}
 						if (field.finalField) skippedFields++;
 					} else if (field.referenceField) {
-						enqueue(field.field.get(null));
+						enqueueReference(field.field.get(null), field, null);
 					}
 				} catch (ResourceLimitException limit) {
 					throw limit;
@@ -2844,7 +2869,7 @@ final class ManagedJavaMemoryEngine {
 			return true;
 		}
 
-		void scanPrimitiveArray(Object array, int arrayType) {
+		void scanPrimitiveArray(Object array, int arrayType, @Nullable ArrayReference reference) {
 			if (groupMatcher != null) {
 				if (arrayType != groupPlan.type) return;
 			} else if (!plan.accepts(arrayType)) {
@@ -2865,7 +2890,10 @@ final class ManagedJavaMemoryEngine {
 					groupMatcher.match(index, arrayType, value[0]);
 					if (groupMatcher.complete()) break;
 				} else if (captureAllValues || plan.matchesKnown(arrayType, value[0])) {
-					if (owner == null) owner = ownerForObject(array, KIND_ARRAY, null, objectOwners);
+					if (owner == null) {
+						owner = ownerForObject(array, KIND_ARRAY, null, objectOwners);
+						if (reference != null) owner.arrayReference = reference;
+					}
 					if (!addToActiveRevision(revision, owner, index, value[0], value[0],
 							transientStorageBytes)) {
 						throw new ResourceLimitException(
@@ -2873,8 +2901,13 @@ final class ManagedJavaMemoryEngine {
 					}
 				}
 			}
-			if (groupMatcher != null && groupMatcher.complete()) publishGroup(array,
-					KIND_ARRAY, null, objectOwners);
+			if (groupMatcher != null && groupMatcher.complete()) {
+				publishGroup(array, KIND_ARRAY, null, objectOwners);
+				if (reference != null) {
+					OwnerBucket groupOwner = objectOwners.get(array);
+					if (groupOwner != null) groupOwner.arrayReference = reference;
+				}
+			}
 		}
 
 		private void publishGroup(Object ownerObject, int kind, @Nullable Schema schema,
@@ -3239,7 +3272,32 @@ final class ManagedJavaMemoryEngine {
 		}
 	}
 
+	/** One observed direct reference path, never a claim of unique array ownership. */
+	private static final class ArrayReference {
+		final Field field;
+		final WeakReference<Object> instance;
+
+		ArrayReference(Field field, @Nullable Object parent) {
+			this.field = field;
+			this.instance = parent == null ? null : new WeakReference<>(parent);
+		}
+
+		@Nullable String currentLabel(Object array) {
+			try {
+				Object parent = instance == null ? null : instance.get();
+				if (instance != null && parent == null) return null;
+				if (field.get(parent) != array) return null;
+				String type = field.getDeclaringClass().getSimpleName();
+				if (type.isEmpty()) type = field.getDeclaringClass().getName();
+				return type + "." + field.getName() + (instance == null ? " [static]" : " [instance]");
+			} catch (IllegalAccessException | RuntimeException | LinkageError ignored) {
+				return null;
+			}
+		}
+	}
+
 	private static final class OwnerBucket {
+		@Nullable ArrayReference arrayReference;
 		final long handle;
 		final int kind;
 		final Class<?> staticClass;

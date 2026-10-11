@@ -66,7 +66,7 @@ public class ManagedJavaMemoryEngineTest {
 		assertTrue(hasAddress(page, "stackOnly"));
 		assertTrue(hasAddress(page, "tableOnly"));
 		assertTrue(hasAddress(page, "staticMatch [static]"));
-		assertTrue(hasAddressPrefix(page, "int[]#"));
+		assertTrue(hasAddress(page, "int[]#"));
 		assertFalse(hasAddress(page, "finalMatch"));
 		assertFalse(hasAddress(page, "customOnly"));
 		assertTrue(allIdsUseManagedNamespace(page));
@@ -167,7 +167,7 @@ public class ManagedJavaMemoryEngineTest {
 		long first = 0L;
 		long second = 0L;
 		for (int index = 0; index < page.ids.length; index++) {
-			if (!page.addresses[index].startsWith("int[]#")) continue;
+			if (!page.addresses[index].contains("int[]#")) continue;
 			if (first == 0L) first = page.ids[index];
 			else if (second == 0L) second = page.ids[index];
 		}
@@ -563,7 +563,7 @@ public class ManagedJavaMemoryEngineTest {
 			ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision,
 					offset, MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
 			for (int index = 0; index < page.ids.length; index++) {
-				if (page.addresses[index].startsWith("int[]#")) arrayIds.add(page.ids[index]);
+				if (page.addresses[index].contains("int[]#")) arrayIds.add(page.ids[index]);
 			}
 		}
 		assertTrue(arrayIds.size() >= 100);
@@ -1007,6 +1007,46 @@ public class ManagedJavaMemoryEngineTest {
 		assertTrue(hasId(engine.resultPage(TOKEN, search.revision, 0, 100), id));
 	}
 
+	@Test
+	public void arraysWithEqualValuesRetainDistinctRuntimeIdentities() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long first = idForAddress(search.revision, "FixtureRoot.staticArray");
+		long second = idForAddress(search.revision, "FixtureRoot.array [instance]");
+		assertFalse(first == second);
+		assertFalse(ManagedJavaMemoryIds.ownerHandle(first)
+				== ManagedJavaMemoryIds.ownerHandle(second));
+		assertEquals(7, root.array[0]);
+		assertEquals(7, FixtureRoot.staticArray[0]);
+	}
+
+	@Test
+	public void arrayLabelsShowOnlyVerifiedDirectReferencePaths() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0,
+				MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		assertTrue(hasAddress(page, "FixtureRoot.staticArray [static]"));
+		assertTrue(hasAddress(page, "FixtureRoot.array [instance]"));
+
+		root.array = new int[]{7, 4, 7};
+		ManagedJavaMemoryEngine.ManagedPage afterReferenceChange = engine.resultPage(TOKEN,
+				search.revision, 0, MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
+		assertFalse(hasAddress(afterReferenceChange, "FixtureRoot.array [instance]"));
+	}
+
+	@Test
+	public void arrayReachedThroughObjectArrayDoesNotInventFieldOwnership() {
+		root.cycle[1] = new int[]{123456};
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				123456L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		assertEquals(1, page.ids.length);
+		assertTrue(page.addresses[0].startsWith("int[]#"));
+		assertFalse(page.addresses[0].contains(" → "));
+	}
+
 	private ManagedJavaMemoryEngine.ManagedOperationResult startExact() {
 		return engine.startExact(TOKEN, MemoryEngineContract.TYPE_INT,
 				MemoryEngineContract.PREDICATE_EQUAL, 7L, 0L, 0L);
@@ -1038,11 +1078,6 @@ public class ManagedJavaMemoryEngineTest {
 
 	private static boolean hasAddress(ManagedJavaMemoryEngine.ManagedPage page, String fragment) {
 		for (String address : page.addresses) if (address.contains(fragment)) return true;
-		return false;
-	}
-
-	private static boolean hasAddressPrefix(ManagedJavaMemoryEngine.ManagedPage page, String prefix) {
-		for (String address : page.addresses) if (address.startsWith(prefix)) return true;
 		return false;
 	}
 

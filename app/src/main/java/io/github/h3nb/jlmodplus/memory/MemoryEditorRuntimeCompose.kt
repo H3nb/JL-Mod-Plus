@@ -54,6 +54,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -1607,13 +1608,14 @@ private fun RuntimeEditDialog(
         mutableIntStateOf(initialType.takeIf { it in editableTypes } ?: editableTypes.first())
     }
     val hasCompatibleType = editableTypes.any { it == type }
-    val incrementalAvailable = batch && targets.none(MemoryEditTarget::watch)
+    val incrementalAvailable = batch && targets.none(MemoryEditTarget::watch) &&
+        firstTarget.type in MemoryEngineContract.TYPE_BYTE..MemoryEngineContract.TYPE_LONG &&
+        targets.all { it.type == firstTarget.type }
     var replacement by remember(targets, initialType, editableTypes) {
         mutableStateOf(TextFieldValue(initialValue, TextRange(initialValue.length)))
     }
     var freeze by remember { mutableStateOf(false) }
     var incremental by remember(targets) { mutableStateOf(false) }
-    var previewReady by remember(targets) { mutableStateOf(false) }
     var editingStep by remember(targets) { mutableStateOf(false) }
     var step by remember(targets) { mutableStateOf(TextFieldValue("1", TextRange(1))) }
     var peekingUnderlay by remember { mutableStateOf(false) }
@@ -1633,7 +1635,6 @@ private fun RuntimeEditDialog(
     val selectType: (Int) -> Unit = { selectedType ->
         if (selectedType != type) {
             type = selectedType
-            previewReady = false
             editingStep = false
             val next = if (selectedType == initialType) initialValue else ""
             replacement = TextFieldValue(next, TextRange(next.length))
@@ -1662,63 +1663,45 @@ private fun RuntimeEditDialog(
         text = {
             RuntimeSearchDialogBody(
                 showKeypad = true,
-                controls = { sideDock ->
+                controls = { _ ->
                     if (incrementalAvailable) {
-                        val incrementLabel = stringResource(R.string.memory_editor_incremental_edit)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                modifier = Modifier.semantics {
-                                    contentDescription = incrementLabel
-                                },
-                                checked = incremental,
-                                onCheckedChange = {
-                                    incremental = it
-                                    previewReady = false
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            FilterChip(
+                                selected = !incremental,
+                                onClick = {
+                                    incremental = false
                                     editingStep = false
                                 },
+                                label = { Text(stringResource(R.string.memory_editor_set_all)) },
                             )
-                            Text(incrementLabel)
+                            FilterChip(
+                                selected = incremental,
+                                onClick = { incremental = true },
+                                label = { Text(stringResource(R.string.memory_editor_incremental_edit)) },
+                            )
                         }
                     }
-                    if (sideDock) {
-                        RuntimeSearchControlRow {
-                            RuntimeEditTypeMenu(
-                                type = type,
-                                types = editableTypes,
-                                onType = selectType,
-                                modifier = Modifier.weight(1f),
-                            )
-                            RuntimeSearchField(
-                                label = stringResource(R.string.memory_editor_replacement),
-                                value = replacement,
-                                active = true,
-                                onClick = { editingStep = false },
-                                onValueChange = {
-                                    replacement = it
-                                    previewReady = false
-                                },
-                                valueSpec = spec,
-                                modifier = Modifier.weight(1f),
-                                initialFocus = true,
-                            )
-                        }
-                    } else {
+                    RuntimeSearchControlRow {
                         RuntimeEditTypeMenu(
                             type = type,
                             types = editableTypes,
                             onType = selectType,
+                            modifier = Modifier.weight(0.42f),
                         )
                         RuntimeSearchField(
-                            label = stringResource(R.string.memory_editor_replacement),
+                            label = stringResource(
+                                if (incremental) R.string.memory_editor_increment_start
+                                else R.string.memory_editor_replacement
+                            ),
                             value = replacement,
                             active = true,
                             onClick = { editingStep = false },
-                            onValueChange = {
-                                replacement = it
-                                previewReady = false
-                            },
+                            onValueChange = { replacement = it },
                             valueSpec = spec,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.weight(0.58f),
                             initialFocus = true,
                         )
                     }
@@ -1728,10 +1711,7 @@ private fun RuntimeEditDialog(
                             value = step,
                             active = true,
                             onClick = { editingStep = true },
-                            onValueChange = {
-                                step = it
-                                previewReady = false
-                            },
+                            onValueChange = { step = it },
                             valueSpec = stepSpec,
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -1745,41 +1725,38 @@ private fun RuntimeEditDialog(
                 },
                 supportingContent = if (batch) {
                     {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                stringResource(
-                                    if (incremental) R.string.memory_editor_increment_help
-                                    else R.string.memory_editor_edit_batch_help
-                                ),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            if (incremental && preview == null) {
+                        when {
+                            incremental && preview != null -> {
+                                val values = preview.values
+                                val sample = if (values.size <= 3) {
+                                    values.joinToString(" → ")
+                                } else {
+                                    "${values[0]} → ${values[1]} → … → ${values.last()}"
+                                }
+                                Text(
+                                    stringResource(
+                                        R.string.memory_editor_increment_preview,
+                                        sample,
+                                        values.size,
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            incremental && (replacement.text.isNotBlank() || step.text.isBlank()) -> {
                                 Text(
                                     stringResource(R.string.memory_editor_increment_invalid),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.error,
                                 )
-                            } else if (!hasCompatibleType) {
-                                Text(
-                                    stringResource(R.string.memory_editor_edit_batch_no_common_type),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.error,
-                                )
                             }
-                            if (incremental && previewReady && preview != null) {
+                            !incremental && targets.any { it.type != type } -> {
                                 Text(
-                                    stringResource(R.string.memory_editor_increment_preview),
-                                    style = MaterialTheme.typography.titleSmall,
-                                )
-                                val samples = preview.values.take(3).mapIndexed { index, value ->
-                                    "${index + 1}: $value"
-                                } + if (preview.values.size > 3) {
-                                    listOf("${preview.values.size}: ${preview.values.last()}")
-                                } else emptyList()
-                                Text(
-                                    samples.joinToString("\n"),
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    stringResource(R.string.memory_editor_edit_batch_type_notice),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
@@ -1804,12 +1781,10 @@ private fun RuntimeEditDialog(
                             } else {
                                 replacement = runtimeInsertValidated(replacement, it, spec)
                             }
-                            previewReady = false
                         },
                         onBackspace = {
                             if (incremental && editingStep) step = runtimeBackspace(step)
                             else replacement = runtimeBackspace(replacement)
-                            previewReady = false
                         },
                         onMove = {
                             if (incremental && editingStep) step = runtimeMove(step, it)
@@ -1818,7 +1793,6 @@ private fun RuntimeEditDialog(
                         onClear = {
                             if (incremental && editingStep) step = TextFieldValue("", TextRange(0))
                             else replacement = TextFieldValue("", TextRange(0))
-                            previewReady = false
                         },
                     )
                 },
@@ -1829,21 +1803,10 @@ private fun RuntimeEditDialog(
             Button(
                 enabled = writeSupported && hasCompatibleType && replacementValid,
                 onClick = {
-                    if (incremental && !previewReady) {
-                        previewReady = true
-                    } else {
-                        onApply(replacement.text, type, freeze, incremental, step.text)
-                        onDismiss()
-                    }
+                    onApply(replacement.text, type, freeze, incremental, step.text)
+                    onDismiss()
                 },
-            ) {
-                Text(
-                    stringResource(
-                        if (incremental && !previewReady) R.string.memory_editor_increment_preview
-                        else R.string.memory_editor_save
-                    )
-                )
-            }
+            ) { Text(stringResource(R.string.memory_editor_save)) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }

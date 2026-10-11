@@ -553,17 +553,18 @@
     <string name="memory_editor_remove_candidates_description">Remove only hides results without writing to game memory. Revert &amp; remove restores the last confirmed edit when the current value matches; conflicting results remain.</string>
     <string name="memory_editor_revert_and_remove">Revert &amp; remove</string>
     <string name="memory_editor_revert_remove_outcome">Restored: %1$d. Removed: %2$d. Conflicts: %3$d. Unconfirmed: %4$d. Not attempted: %5$d.</string>
-    <string name="memory_editor_incremental_edit">Increment values</string>
+    <string name="memory_editor_set_all">Set all</string>
+    <string name="memory_editor_increment_start">Start value</string>
+    <string name="memory_editor_edit_batch_type_notice">Only matching data types will be changed.</string>
+    <string name="memory_editor_incremental_edit">Increment</string>
     <string name="memory_editor_increment_step">Step</string>
-    <string name="memory_editor_increment_help">Each selected result receives base + index × step in displayed order. All results must have the chosen integer type. Review the sequence before applying.</string>
-    <string name="memory_editor_increment_invalid">Choose one compatible integer type and valid base/step values. The complete sequence must fit without overflow.</string>
-    <string name="memory_editor_increment_preview">Preview sequence</string>
+    <string name="memory_editor_increment_invalid">Use one integer type and values within its range.</string>
+    <string name="memory_editor_increment_preview">Preview: %1$s (%2$d values)</string>
     <string name="memory_editor_edit">Edit</string>
     <plurals name="memory_editor_edit_batch">
         <item quantity="one">Edit %1$d value</item>
         <item quantity="other">Edit %1$d values</item>
     </plurals>
-    <string name="memory_editor_edit_batch_help">Applies the replacement value to selected targets compatible with the chosen data type. Watch and Freeze are unavailable for batch edits.</string>
     <string name="memory_editor_edit_batch_no_common_type">The selected results do not support the chosen data type. Edit compatible results separately.</string>
     <string name="memory_editor_save">Apply</string>
     <string name="memory_editor_replacement">Replacement value</string>
