@@ -562,7 +562,7 @@
     <string name="memory_editor_candidate_instance">%1$s · %2$s · target #%3$d</string>
     <string name="memory_editor_reference_static">Static reference</string>
     <string name="memory_editor_reference_instance">Instance reference</string>
-    <string name="memory_editor_source_unknown">No verified direct field reference. The runtime target remains identifiable.</string>
+    <string name="memory_editor_source_unknown">Source not traced</string>
     <string name="memory_editor_incremental_edit">Increment</string>
     <string name="memory_editor_increment_step">Step</string>
     <string name="memory_editor_increment_invalid">Use one integer type and values within its range.</string>

@@ -1056,7 +1056,8 @@ private fun RuntimeWatchRow(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        runtimeCandidateLocation(row.id, row.source, row.locationText),
+                        "${runtimeCandidateLocation(row.id, row.source, row.locationText)} · " +
+                            runtimeTypeShort(row.type),
                         style = runtimeMemoryMetaTextStyle(),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
