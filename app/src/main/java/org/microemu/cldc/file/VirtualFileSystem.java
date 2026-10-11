@@ -41,6 +41,7 @@ public final class VirtualFileSystem {
         // Prepare common and installation-private directories before publishing the session.
         for (String root : Arrays.asList("c:/", "e:/", "private:/", "cache:/", "siemens:/")) {
             File dir = mounts.get(root).directory;
+            checkMount(mounts.get(root));
             if (!dir.isDirectory() && !dir.mkdirs()) {
                 throw new IOException("Cannot create virtual drive " + root);
             }
@@ -90,6 +91,7 @@ public final class VirtualFileSystem {
 
     public static File resolve(String root, String path) throws IOException {
         Mount mount = mount(root);
+        checkMount(mount);
         if (path == null || path.indexOf('\\') >= 0 || path.indexOf('\0') >= 0
                 || path.startsWith("/") || path.indexOf(':') >= 0) {
             throw new IOException("Invalid virtual filesystem path");
