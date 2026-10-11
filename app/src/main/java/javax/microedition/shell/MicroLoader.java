@@ -112,6 +112,7 @@ public class MicroLoader {
 	private TimingSession timingSession;
 	private RuntimeAudioCoordinator audioSession;
 	private RuntimeStorageLease storageLease;
+	private boolean ownsVirtualStorage;
 	private long memoryRuntimeToken;
 	private boolean timingTransformCompatible;
 	/** Set only after the MIDlet thread has successfully received the timing session. */
@@ -208,8 +209,11 @@ public class MicroLoader {
 	}
 
 	private void closeStorageLease() {
-		MidletPermissionManager.clear();
-		VirtualFileSystem.clear();
+		if (ownsVirtualStorage) {
+			ownsVirtualStorage = false;
+			MidletPermissionManager.clear();
+			VirtualFileSystem.clear();
+		}
 		RuntimeStorageLease lease = storageLease;
 		storageLease = null;
 		if (lease != null) {
@@ -566,6 +570,7 @@ public class MicroLoader {
 				return;
 			}
 			VirtualFileSystem.install(new File(workDir), appDirName);
+			ownsVirtualStorage = true;
 			MidletPermissionManager.install(ContextHolder.getAppContext(), appDir.getPath(),
 					expectedAppId, jarSha256);
 			startTimingSession();
