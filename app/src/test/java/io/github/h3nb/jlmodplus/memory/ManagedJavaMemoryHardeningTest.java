@@ -56,8 +56,16 @@ public class ManagedJavaMemoryHardeningTest {
 			cursor = cursor.next;
 		}
 		installRoot(chain, ChainNode.class);
+		// Every queued owner now carries bounded provenance metadata. The old limit
+		// must reject that metadata rather than silently omit it from accounting.
 		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
 				100, 100, 10, 10, 100, 100, 10_500L));
+		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+				engine.startExact(TOKEN, MemoryEngineContract.TYPE_INT,
+						MemoryEngineContract.PREDICATE_EQUAL, "999", "", 0L).code);
+
+		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
+				100, 100, 10, 10, 100, 100, 20_000L));
 		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN,
 				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
 				"999", "", 0L);
@@ -121,8 +129,9 @@ public class ManagedJavaMemoryHardeningTest {
 
 	@Test
 	public void historyIsEvictedBeforeItCanBlockTheNextRefine() {
+		// The cap must hold the same eight revisions plus the shared root predecessor.
 		engine = new ManagedJavaMemoryEngine(new ManagedJavaMemoryEngine.Limits(
-				100, 100, 10, 10, 100, 100, 1_100L));
+				100, 100, 10, 10, 100, 100, 2_000L));
 		ManagedJavaMemoryEngine.ManagedOperationResult result = engine.startExact(TOKEN,
 				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
 				"7", "", 0L);
