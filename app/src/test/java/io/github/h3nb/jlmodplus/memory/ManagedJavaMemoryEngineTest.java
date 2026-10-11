@@ -1120,8 +1120,8 @@ public class ManagedJavaMemoryEngineTest {
 		int[] shared = new int[]{486257};
 		Vector<Object> container = new Vector<>();
 		container.add(shared);
-		Object[] rootObjects = {container, new AliasCarrier(shared)};
-		MemoryDiscoveryBridge.setMidletRoot(TOKEN, rootObjects);
+		MemoryDiscoveryBridge.setMidletRoot(TOKEN,
+				new AliasRoot(container, new AliasCarrier(shared)));
 
 		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
 				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
@@ -1132,7 +1132,7 @@ public class ManagedJavaMemoryEngineTest {
 		ManagedJavaMemoryEngine.ManagedInspection inspection =
 				engine.inspect(TOKEN, search.revision, page.ids[0], 1);
 		assertEquals(MemoryEngineContract.PATH_VERIFIED, inspection.path.status);
-		assertTrue(inspection.path.path.contains("MIDlet[1]"));
+		assertTrue(inspection.path.path.contains("AliasRoot.contents[1]"));
 		assertTrue(inspection.path.path.contains("AliasCarrier.values[0]"));
 	}
 
@@ -1397,6 +1397,14 @@ public class ManagedJavaMemoryEngineTest {
 
 	private static final class DetachedDisplayRoot {
 		private int escapedMatch = 424_242;
+	}
+
+	private static final class AliasRoot {
+		final Object[] contents;
+
+		AliasRoot(Object first, Object second) {
+			contents = new Object[]{first, second};
+		}
 	}
 
 	private static final class AliasCarrier {
