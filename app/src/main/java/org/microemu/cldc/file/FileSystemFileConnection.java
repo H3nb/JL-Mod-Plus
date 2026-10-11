@@ -49,6 +49,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import javax.microedition.io.Connector;
+import javax.microedition.shell.MidletPermissionManager;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Vector;
@@ -123,11 +124,13 @@ public class FileSystemFileConnection implements FileConnection {
 	private void requireRead() {
 		throwClosed();
 		if (mode == Connector.WRITE) throw new IllegalStateException("Connection is write-only");
+		MidletPermissionManager.requireFileAccess(root, false);
 	}
 
 	private void requireWrite() {
 		throwClosed();
 		if (mode == Connector.READ) throw new IllegalStateException("Connection is read-only");
+		MidletPermissionManager.requireFileAccess(root, true);
 	}
 
 	@Override
