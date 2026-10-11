@@ -28,6 +28,7 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 import org.microemu.cldc.file.VirtualFileSystem;
+import javax.microedition.shell.MidletPermissionManager;
 
 import io.github.h3nb.jlmodplus.util.FileUtils;
 
@@ -59,19 +60,19 @@ public class File {
 	}
 
 	public static int copy(String source, String dest) throws IOException {
-		FileUtils.copyFileUsingChannel(getFile(source), getFile(dest));
+		FileUtils.copyFileUsingChannel(getFile(source), getFile(dest, 2));
 		return 1;
 	}
 
 	public static int debugWrite(String fileName, String infoString) throws IOException {
-		try (FileWriter writer = new FileWriter(getFile(fileName), true)) {
+		try (FileWriter writer = new FileWriter(getFile(fileName, 2), true)) {
 			writer.write(infoString);
 		}
 		return 1;
 	}
 
 	public static int delete(String fileName) {
-		return getFile(fileName).delete() ? 1 : -1;
+		return getFile(fileName, 2).delete() ? 1 : -1;
 	}
 
 	public static int exists(String fileName) throws IOException {
@@ -113,7 +114,7 @@ public class File {
 	}
 
 	public int open(String fileName) throws IOException {
-		java.io.File file = getFile(fileName);
+		java.io.File file = getFile(fileName, 3);
 		RandomAccessFile raf = new RandomAccessFile(file, "rw");
 		int fd = ++lastDescriptor;
 		OPENED_FILES.append(fd, raf);
@@ -129,7 +130,7 @@ public class File {
 	}
 
 	public static int rename(String source, String dest) {
-		return getFile(source).renameTo(getFile(dest)) ? 1 : -1;
+		return getFile(source, 2).renameTo(getFile(dest, 2)) ? 1 : -1;
 	}
 
 	public int seek(int fileDescriptor, int seekpos) throws IOException {
@@ -164,6 +165,10 @@ public class File {
 	}
 
     private static java.io.File getFile(String fileName) {
+        return getFile(fileName, 1);
+    }
+
+    private static java.io.File getFile(String fileName, int access) {
         if (fileName == null) throw new NullPointerException("fileName");
         String normalized = fileName.replace('\\', '/');
         int colon = normalized.indexOf(':');
@@ -181,7 +186,10 @@ public class File {
             path = normalized.substring(colon + 2);
         }
         try {
-            return VirtualFileSystem.resolve(root, path);
+            java.io.File result = VirtualFileSystem.resolve(root, path);
+            if ((access & 1) != 0) MidletPermissionManager.requireFileAccess(root, false);
+            if ((access & 2) != 0) MidletPermissionManager.requireFileAccess(root, true);
+            return result;
         } catch (IOException error) {
             throw new SecurityException("Invalid Siemens filesystem path", error);
         }
