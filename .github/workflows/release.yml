@@ -197,9 +197,14 @@ jobs:
           RELEASE_MAPPING="dist/JL-Mod-Plus-$TAG-r8-mapping.txt"
           cp "$MAPPING_SOURCE" "$RELEASE_MAPPING"
 
+          MIN_SDK="$(sed -nE 's/^androidMinSdk = "([0-9]+)"$/\1/p' gradle/libs.versions.toml)"
+          if [[ ! "$MIN_SDK" =~ ^[1-9][0-9]*$ ]]; then
+            echo 'Unable to resolve Android minSdk.' >&2
+            exit 1
+          fi
           jq -n --arg name "$VERSION_NAME" --argjson code "$VERSION_CODE" \
-            --arg commit "$GITHUB_SHA" \
-            '{schema:1,versionName:$name,versionCode:$code,applicationId:"io.github.h3nb.jlmodplus",minSdk:23,commit:$commit}' \
+            --arg commit "$GITHUB_SHA" --argjson minSdk "$MIN_SDK" \
+            '{schema:1,versionName:$name,versionCode:$code,applicationId:"io.github.h3nb.jlmodplus",minSdk:$minSdk,commit:$commit}' \
             > dist/release-info.json
           (
             cd dist
