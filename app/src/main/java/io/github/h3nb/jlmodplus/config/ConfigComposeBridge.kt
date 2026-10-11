@@ -1680,19 +1680,14 @@ private fun VirtualControlsColorPreview(form: ConfigFormState) {
         else -> MaterialTheme.shapes.small
     }
 
-    Surface(
-        onClick = { pressed = !pressed },
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .testTag("virtual_controls_color_preview"),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+            .testTag("virtual_controls_color_preview")
+            .clickable(role = Role.Button) { pressed = !pressed }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1745,7 +1740,6 @@ private fun VirtualControlsColorPreview(form: ConfigFormState) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
     }
 }
 
@@ -1839,15 +1833,11 @@ private fun AnalogColorSample(
                 border = BorderStroke(1.dp, outline),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Box(
-                        modifier = Modifier
-                            .size(5.dp)
-                            .border(
-                                2.5.dp,
-                                if (pressed) selectedForeground else foreground,
-                                CircleShape,
-                            ),
-                    )
+                    Surface(
+                        modifier = Modifier.size(6.dp),
+                        shape = CircleShape,
+                        color = if (pressed) selectedForeground else foreground,
+                    ) {}
                 }
             }
         }
