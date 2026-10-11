@@ -2791,11 +2791,15 @@ final class ManagedJavaMemoryEngine {
 
 		void enqueuePath(@Nullable Object value, @Nullable ProvenanceNode parent,
 		                 @Nullable Field field, int index, int kind) {
-			if (value == null || queued.containsKey(value) || visited.containsKey(value)) return;
-			if (queue.size() >= limits.maxPending) {
-				throw new ResourceLimitException("Managed traversal pending queue exceeds the resource limit");
+			if (value == null || visited.containsKey(value)) return;
+			boolean pending = queued.containsKey(value);
+			if (pending && queued.get(value) != null) return;
+			if (!pending) {
+				if (queue.size() >= limits.maxPending) {
+					throw new ResourceLimitException("Managed traversal pending queue exceeds the resource limit");
+				}
+				reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES + QUEUE_REFERENCE_BYTES);
 			}
-			reserveTraversalBytes(TRAVERSAL_ENTRY_BYTES + QUEUE_REFERENCE_BYTES);
 			ProvenanceNode node = null;
 			// An edge without a captured predecessor cannot form a verified root path.
 			// Do not allocate misleading orphan nodes when optional capture is partial.
@@ -2812,8 +2816,10 @@ final class ManagedJavaMemoryEngine {
 				provenanceBytes += PROVENANCE_NODE_BYTES;
 				node = new ProvenanceNode(value, parent, field, index, kind);
 			}
-			queued.put(value, node);
-			queue.addLast(value);
+			// A later rooted alias can upgrade an untraced pending object. Never replace an
+			// already captured route, and never add a second queue entry for the same object.
+			if (!pending || node != null) queued.put(value, node);
+			if (!pending) queue.addLast(value);
 		}
 
 		Object dequeue() {

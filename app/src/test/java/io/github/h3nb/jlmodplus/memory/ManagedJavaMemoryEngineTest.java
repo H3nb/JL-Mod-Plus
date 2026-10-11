@@ -1116,6 +1116,27 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void rootedAliasUpgradesUntracedPendingArrayWithoutRebinding() {
+		int[] shared = new int[]{486257};
+		Vector<Object> container = new Vector<>();
+		container.add(shared);
+		Object[] rootObjects = {container, new AliasCarrier(shared)};
+		MemoryDiscoveryBridge.setMidletRoot(TOKEN, rootObjects);
+
+		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
+				MemoryEngineContract.TYPE_INT, MemoryEngineContract.PREDICATE_EQUAL,
+				486257L, 0L, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		assertEquals(1L, search.resultCount);
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		ManagedJavaMemoryEngine.ManagedInspection inspection =
+				engine.inspect(TOKEN, search.revision, page.ids[0], 1);
+		assertEquals(MemoryEngineContract.PATH_VERIFIED, inspection.path.status);
+		assertTrue(inspection.path.path.contains("MIDlet[1]"));
+		assertTrue(inspection.path.path.contains("AliasCarrier.values[0]"));
+	}
+
+	@Test
 	public void unsupportedContainerRouteDoesNotPretendToBeAChangedRoot() {
 		root.vector.add(new DetachedLink(808081));
 		ManagedJavaMemoryEngine.ManagedOperationResult search = engine.startExact(TOKEN,
@@ -1376,6 +1397,14 @@ public class ManagedJavaMemoryEngineTest {
 
 	private static final class DetachedDisplayRoot {
 		private int escapedMatch = 424_242;
+	}
+
+	private static final class AliasCarrier {
+		final int[] values;
+
+		AliasCarrier(int[] values) {
+			this.values = values;
+		}
 	}
 
 	private static final class DetachedLink {
