@@ -65,7 +65,21 @@ public final class MidletPermissionManager {
         if ("javax.microedition.io.Connector.file.write".equals(name)) {
             return status(active.writeDecision, active.writeSession);
         }
-        return 0;
+        // Other existing Java ME protocols still use their legacy authorization behavior.
+        // Report their implemented capabilities as allowed until they have a policy gate.
+        return switch (name) {
+            case "javax.microedition.io.Connector.http",
+                    "javax.microedition.io.Connector.https",
+                    "javax.microedition.io.Connector.socket",
+                    "javax.microedition.io.Connector.ssl",
+                    "javax.microedition.io.Connector.datagram",
+                    "javax.microedition.io.Connector.sms",
+                    "javax.microedition.io.Connector.bluetooth.client",
+                    "javax.microedition.io.Connector.bluetooth.server",
+                    "javax.wireless.messaging.sms.send",
+                    "javax.wireless.messaging.sms.receive" -> 1;
+            default -> 0;
+        };
     }
 
     private static int status(int decision, boolean sessionGranted) {

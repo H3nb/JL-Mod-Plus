@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.io.BufferedOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -81,6 +82,10 @@ public class FileSystemFileConnection implements FileConnection {
 		this.mode = mode;
 		// <host>/<path>
 		Uri uri = Uri.parse(url);
+		if (!"file".equalsIgnoreCase(uri.getScheme()) || uri.getQuery() != null
+				|| uri.getFragment() != null || uri.getUserInfo() != null) {
+			throw new IOException("Invalid connection URL");
+		}
 		host = uri.getHost();
 		if (host == null) {
 			throw new IOException("Invalid connection specifier: " + url);
@@ -91,18 +96,18 @@ public class FileSystemFileConnection implements FileConnection {
 		}
 		path = path.substring(1);
 		root = VirtualFileSystem.rootFor(path);
-		if ((mode & Connector.READ) != 0) MidletPermissionManager.requireFileAccess(root, false);
-		if ((mode & Connector.WRITE) != 0) MidletPermissionManager.requireFileAccess(root, true);
 		path = path.substring(root.length());
 		fsRootPath = VirtualFileSystem.resolve(root, "").getPath();
-		VirtualFileSystem.resolve(root, path);
+		File resolved = VirtualFileSystem.resolve(root, path);
+		if ((mode & Connector.READ) != 0) MidletPermissionManager.requireFileAccess(root, false);
+		if ((mode & Connector.WRITE) != 0) MidletPermissionManager.requireFileAccess(root, true);
 		if (path.length() == 0) {
-			file = new File(fsRootPath);
+			file = resolved;
 			this.path = "";
 			name = "";
 			return;
 		}
-		file = VirtualFileSystem.resolve(root, path);
+		file = resolved;
 		int nameSeparator = path.lastIndexOf(DIR_SEP, path.length() - 2);
 		if (nameSeparator == -1) {
 			name = path;
@@ -267,11 +272,36 @@ public class FileSystemFileConnection implements FileConnection {
 		}
 	}
 
-	public Uri getURI() {
+	public Uri getURI() throws IOException {
 		requireRead();
+		if (!file.isFile()) throw new IOException("No file to share");
 		Context context = ContextHolder.getAppContext();
-		return FileProvider.getUriForFile(context,
-				context.getApplicationContext().getPackageName() + ".provider", file);
+		File directory = new File(context.getCacheDir(), "midlet-platform-share");
+		if (!directory.isDirectory() && !directory.mkdirs()) {
+			throw new IOException("Cannot create temporary shared-file directory");
+		}
+		String fileName = file.getName();
+		int dot = fileName.lastIndexOf('.');
+		String extension = dot > 0 && fileName.length() - dot <= 12
+				? fileName.substring(dot) : ".bin";
+		File shared = File.createTempFile("midlet-", extension, directory);
+		try (InputStream input = new FileInputStream(file);
+				OutputStream output = new BufferedOutputStream(new FileOutputStream(shared))) {
+			byte[] buffer = new byte[8192];
+			for (int count; (count = input.read(buffer)) != -1;) {
+				output.write(buffer, 0, count);
+			}
+		} catch (IOException failure) {
+			shared.delete();
+			throw failure;
+		}
+		try {
+			return FileProvider.getUriForFile(context,
+					context.getPackageName() + ".diagnostic-files", shared);
+		} catch (IllegalArgumentException failure) {
+			shared.delete();
+			throw new IOException("Cannot share virtual file", failure);
+		}
 	}
 
 	@Override

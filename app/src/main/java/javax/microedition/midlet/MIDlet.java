@@ -96,10 +96,14 @@ public abstract class MIDlet {
 		try {
 			Intent intent = new Intent(Intent.ACTION_VIEW);
 			if (url.startsWith("file://")) {
-				FileSystemFileConnection fileConnection = (FileSystemFileConnection) Connector.open(url);
-				intent.setData(fileConnection.getURI());
-				intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-				fileConnection.close();
+				FileSystemFileConnection fileConnection =
+						(FileSystemFileConnection) Connector.open(url, Connector.READ);
+				try {
+					intent.setData(fileConnection.getURI());
+					intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+				} finally {
+					fileConnection.close();
+				}
 			} else {
 				intent.setData(Uri.parse(url));
 			}

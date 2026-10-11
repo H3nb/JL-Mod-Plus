@@ -47,6 +47,16 @@ public final class VirtualFileSystem {
             }
             checkMount(mounts.get(root));
         }
+        for (String relative : Arrays.asList("Music", "Images", "Videos", "Recordings")) {
+            File folder = checked(mounts.get("e:/"), new File(mounts.get("e:/").directory, relative));
+            if (!folder.isDirectory() && !folder.mkdirs()) {
+                throw new IOException("Cannot prepare virtual media directory");
+            }
+        }
+        File sounds = checked(mounts.get("c:/"), new File(mounts.get("c:/").directory, "Sounds"));
+        if (!sounds.isDirectory() && !sounds.mkdirs()) {
+            throw new IOException("Cannot prepare virtual media directory");
+        }
         session = new Session(Collections.unmodifiableMap(mounts));
     }
 

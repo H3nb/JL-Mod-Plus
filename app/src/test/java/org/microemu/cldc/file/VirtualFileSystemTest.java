@@ -30,6 +30,10 @@ public class VirtualFileSystemTest {
         assertTrue(VirtualFileSystem.resolve("e:/", "").isDirectory());
         assertEquals("storage/c", relative(VirtualFileSystem.resolve("c:/", "")));
         assertEquals("storage/e", relative(VirtualFileSystem.resolve("e:/", "")));
+        for (String folder : new String[]{"Music", "Images", "Videos", "Recordings"}) {
+            assertTrue(VirtualFileSystem.resolve("e:/", folder).isDirectory());
+        }
+        assertTrue(VirtualFileSystem.resolve("c:/", "Sounds").isDirectory());
         ArrayList<String> roots = Collections.list(VirtualFileSystem.listRoots());
         assertEquals(2, roots.size());
         assertEquals("c:/", roots.get(0));
