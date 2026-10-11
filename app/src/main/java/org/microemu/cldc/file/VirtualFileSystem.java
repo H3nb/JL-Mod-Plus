@@ -38,8 +38,8 @@ public final class VirtualFileSystem {
         mount(mounts, "private:/", new File(privateBase, "private"), false);
         mount(mounts, "cache:/", new File(privateBase, "cache"), false);
         mount(mounts, "siemens:/", new File(privateBase, "vendor/siemens"), false);
-        // C and E are always present, even if Android has no removable SD card.
-        for (String root : Arrays.asList("c:/", "e:/")) {
+        // Prepare common and installation-private directories before publishing the session.
+        for (String root : Arrays.asList("c:/", "e:/", "private:/", "cache:/", "siemens:/")) {
             File dir = mounts.get(root).directory;
             if (!dir.isDirectory() && !dir.mkdirs()) {
                 throw new IOException("Cannot create virtual drive " + root);
@@ -90,7 +90,7 @@ public final class VirtualFileSystem {
 
     public static File resolve(String root, String path) throws IOException {
         Mount mount = mount(root);
-        if (path == null || path.indexOf('\\') >= 0 || path.indexOf('\\0') >= 0
+        if (path == null || path.indexOf('\\') >= 0 || path.indexOf('\0') >= 0
                 || path.startsWith("/") || path.indexOf(':') >= 0) {
             throw new IOException("Invalid virtual filesystem path");
         }
@@ -99,6 +99,9 @@ public final class VirtualFileSystem {
             if (segment.equals(".") || segment.equals("..")) {
                 throw new IOException("Relative path segments are not valid in file URLs");
             }
+        }
+        if (!mount.directory.isDirectory() && !mount.directory.mkdirs()) {
+            throw new IOException("Cannot prepare virtual filesystem root");
         }
         return checked(mount, new File(mount.directory, path));
     }
