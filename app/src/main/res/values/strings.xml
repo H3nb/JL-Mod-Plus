@@ -199,7 +199,7 @@
     <string name="PREF_FONT_MEDIUM">Medium</string>
     <string name="PREF_FONT_SIZE_IN_SP">Use Android font scale</string>
     <string name="PREF_FONT_SMALL">Small</string>
-    <string name="PREF_FORCE_FULLSCREEN">Start in fullscreen</string>
+    <string name="PREF_FORCE_FULLSCREEN">Start without command bar</string>
     <string name="pref_graphics_hw_gles">Hardware acceleration (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Hardware acceleration (Surface)</string>
     <string name="pref_graphics_hw_view">Hardware acceleration (Window)</string>
@@ -218,7 +218,7 @@
     <string name="pref_orientation_default">System default</string>
     <string name="pref_orientation_land">Landscape</string>
     <string name="pref_orientation_port">Portrait</string>
-    <string name="PREF_SCALE_RATIO">Scale (%)</string>
+    <string name="PREF_SCALE_RATIO">Scale</string>
     <string name="pref_screen_gravity">Screen position</string>
     <string name="pref_screen_gravity_bottom">Bottom</string>
     <string name="pref_screen_gravity_center">Center</string>
@@ -765,8 +765,8 @@
     <string name="profile_template_operation_failed">Could not complete the profile operation.</string>
     <string name="config_help_screen_size">Sets the virtual Java ME screen resolution used by the MIDlet.</string>
     <string name="config_help_orientation">Chooses the screen orientation while the MIDlet runs.</string>
-    <string name="config_help_scale_type">Chooses how the MIDlet screen is scaled relative to the available area.</string>
-    <string name="config_help_scale_ratio">Changes the displayed size without changing the MIDlet’s virtual resolution.</string>
+    <string name="config_help_scale_type">Choose how the game fits the display. Select Manual to set a custom scale.</string>
+    <string name="config_help_scale_ratio">Adjusts the displayed size from 1% to 1000%. At 100%, the game uses its original size; larger values may extend beyond the screen.</string>
     <string name="config_help_lock_custom_resolution_ratio">Keeps the aspect ratio while editing the custom resolution.</string>
     <string name="config_help_virtual_keyboard">Shows on-screen controls for this MIDlet.</string>
     <string name="config_help_touch_input">Lets the MIDlet receive pointer input from the touchscreen.</string>
@@ -789,7 +789,7 @@
     <string name="config_help_shader">Applies a shader to the MIDlet frame before it is displayed.</string>
     <string name="config_help_shader_tuning">Available controls depend on the selected shader.</string>
     <string name="config_help_parallel_redraw">Schedules frame presentation asynchronously. This may improve performance on some devices.</string>
-    <string name="config_help_force_fullscreen">Starts MIDlet Canvas screens in fullscreen mode. The MIDlet can change this mode.</string>
+    <string name="config_help_force_fullscreen">Starts Java ME Canvas screens without the softkey command bar. Games can change this mode.</string>
     <string name="config_help_fps_limit">Sets the FPS limit at 1× emulation speed. The effective limit follows emulation speed; 0 (Maximum) uses the display’s maximum refresh rate.</string>
     <string name="PREF_EMULATION_SPEED">Emulation speed</string>
     <string name="PREF_TIMING_MODE">Time source</string>

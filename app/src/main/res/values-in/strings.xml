@@ -154,7 +154,7 @@
     <string name="PREF_FONT_MEDIUM">Sedang</string>
     <string name="PREF_FONT_SIZE_IN_SP">Gunakan skala font Android</string>
     <string name="PREF_FONT_SMALL">Kecil</string>
-    <string name="PREF_FORCE_FULLSCREEN">Mulai dalam mode layar penuh</string>
+    <string name="PREF_FORCE_FULLSCREEN">Mulai tanpa bilah perintah</string>
     <string name="pref_graphics_hw_gles">Akselerasi hardware (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Akselerasi hardware (Surface)</string>
     <string name="pref_graphics_hw_view">Akselerasi hardware (Window)</string>
@@ -172,7 +172,7 @@
     <string name="pref_orientation_default">Bawaan sistem</string>
     <string name="pref_orientation_land">Lanskap</string>
     <string name="pref_orientation_port">Potret</string>
-    <string name="PREF_SCALE_RATIO">Skala (%)</string>
+    <string name="PREF_SCALE_RATIO">Skala</string>
     <string name="pref_screen_gravity">Posisi layar</string>
     <string name="pref_screen_gravity_bottom">Bawah</string>
     <string name="pref_screen_gravity_center">Tengah</string>
@@ -696,8 +696,8 @@
     <string name="profile_template_operation_failed">Operasi profil tidak dapat diselesaikan.</string>
     <string name="config_help_screen_size">Menentukan resolusi virtual layar Java ME yang digunakan MIDlet.</string>
     <string name="config_help_orientation">Menentukan orientasi tampilan saat MIDlet berjalan.</string>
-    <string name="config_help_scale_type">Menentukan cara penskalaan layar MIDlet terhadap area yang tersedia.</string>
-    <string name="config_help_scale_ratio">Mengubah ukuran tampilan tanpa mengubah resolusi virtual MIDlet.</string>
+    <string name="config_help_scale_type">Pilih cara game ditampilkan di layar. Gunakan Manual untuk mengatur skala sendiri.</string>
+    <string name="config_help_scale_ratio">Mengatur ukuran tampilan dari 1% hingga 1000%. Pada 100%, game menggunakan ukuran aslinya; nilai lebih besar dapat melewati batas layar.</string>
     <string name="config_help_lock_custom_resolution_ratio">Mempertahankan rasio lebar dan tinggi saat salah satunya diubah.</string>
     <string name="config_help_virtual_keyboard">Menampilkan kontrol virtual di layar untuk MIDlet ini.</string>
     <string name="config_help_touch_input">Mengizinkan MIDlet menerima input dari layar sentuh.</string>
@@ -720,7 +720,7 @@
     <string name="config_help_shader">Menerapkan shader pada frame MIDlet sebelum ditampilkan.</string>
     <string name="config_help_shader_tuning">Kontrol yang tersedia bergantung pada shader yang dipilih.</string>
     <string name="config_help_parallel_redraw">Menjadwalkan penyajian frame secara asinkron. Dapat meningkatkan performa pada perangkat tertentu.</string>
-    <string name="config_help_force_fullscreen">Memulai layar Canvas MIDlet dalam mode layar penuh. MIDlet tetap dapat mengubah mode ini.</string>
+    <string name="config_help_force_fullscreen">Memulai layar Canvas Java ME tanpa bilah perintah. Game dapat mengubah mode ini.</string>
     <string name="config_help_fps_limit">Menetapkan batas FPS pada kecepatan emulasi 1×. Batas efektif mengikuti kecepatan emulasi; 0 (Maksimum) memakai refresh rate maksimum layar.</string>
     <string name="PREF_EMULATION_SPEED">Kecepatan emulasi</string>
     <string name="PREF_TIMING_MODE">Sumber waktu</string>
