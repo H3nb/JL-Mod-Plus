@@ -1333,6 +1333,8 @@ public class ProfilesManager {
 				params.screenGravity = 1;
 				break;
 		}
+		params.screenScaleRatio = ProfileModel.effectiveScreenScaleRatio(
+				params.screenScaleType, params.screenScaleRatio);
 		boolean backgroundModeNeedsMigration = originalVersion < ProfileModel.VERSION;
 		if (backgroundModeNeedsMigration) {
 			params.screenBackgroundMode = context == BackgroundMigrationContext.MIDLET_CONFIG
@@ -1362,6 +1364,8 @@ public class ProfilesManager {
 		if (p == null || p.dir == null) {
 			return false;
 		}
+		p.screenScaleRatio = ProfileModel.effectiveScreenScaleRatio(
+				p.screenScaleType, p.screenScaleRatio);
 		File file = new File(p.dir, Config.MIDLET_CONFIG_FILE);
 		File parent = file.getParentFile();
 		File temporary = atomicSibling(file, ATOMIC_NEW_SUFFIX);

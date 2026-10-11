@@ -97,8 +97,8 @@ class ConfigComposeTest {
         composeRule.onNodeWithText(uiString(R.string.PREF_ORIENTATION)).assertExists()
         scrollTo(uiString(R.string.pref_screen_scale_type))
         composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type)).assertExists()
-        scrollTo(uiString(R.string.PREF_SCALE_RATIO))
-        composeRule.onNodeWithText(uiString(R.string.PREF_SCALE_RATIO)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type_fit)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.PREF_SCALE_RATIO)).assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Start").assertExists()
         composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
 
@@ -948,6 +948,7 @@ class ConfigComposeTest {
             .screenWidth("240")
             .screenHeight("320")
             .screenBackground("D0D0D0")
+            .screenScaleType(1)
             .screenScaleRatio("100")
             .screenPadding("0")
             .fpsLimit("")

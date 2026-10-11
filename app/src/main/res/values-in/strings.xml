@@ -697,7 +697,7 @@
     <string name="config_help_screen_size">Menentukan resolusi virtual layar Java ME yang digunakan MIDlet.</string>
     <string name="config_help_orientation">Menentukan orientasi tampilan saat MIDlet berjalan.</string>
     <string name="config_help_scale_type">Pilih cara game ditampilkan di layar. Gunakan Manual untuk mengatur skala sendiri.</string>
-    <string name="config_help_scale_ratio">Mengatur ukuran tampilan dari 1% hingga 1000%. Pada 100%, game menggunakan ukuran aslinya; nilai lebih besar dapat melewati batas layar.</string>
+    <string name="config_help_scale_ratio" formatted="false">Mengatur ukuran tampilan dari 1% hingga 1000%. Pada 100%, game menggunakan ukuran aslinya; nilai lebih besar dapat melewati batas layar.</string>
     <string name="config_help_lock_custom_resolution_ratio">Mempertahankan rasio lebar dan tinggi saat salah satunya diubah.</string>
     <string name="config_help_virtual_keyboard">Menampilkan kontrol virtual di layar untuk MIDlet ini.</string>
     <string name="config_help_touch_input">Mengizinkan MIDlet menerima input dari layar sentuh.</string>

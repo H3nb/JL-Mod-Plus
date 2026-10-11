@@ -766,7 +766,7 @@
     <string name="config_help_screen_size">Sets the virtual Java ME screen resolution used by the MIDlet.</string>
     <string name="config_help_orientation">Chooses the screen orientation while the MIDlet runs.</string>
     <string name="config_help_scale_type">Choose how the game fits the display. Select Manual to set a custom scale.</string>
-    <string name="config_help_scale_ratio">Adjusts the displayed size from 1% to 1000%. At 100%, the game uses its original size; larger values may extend beyond the screen.</string>
+    <string name="config_help_scale_ratio" formatted="false">Adjusts the displayed size from 1% to 1000%. At 100%, the game uses its original size; larger values may extend beyond the screen.</string>
     <string name="config_help_lock_custom_resolution_ratio">Keeps the aspect ratio while editing the custom resolution.</string>
     <string name="config_help_virtual_keyboard">Shows on-screen controls for this MIDlet.</string>
     <string name="config_help_touch_input">Lets the MIDlet receive pointer input from the touchscreen.</string>
