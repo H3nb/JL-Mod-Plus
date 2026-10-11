@@ -128,7 +128,7 @@ public abstract class MIDlet {
 	}
 
 	public final int checkPermission(String permission) {
-		return 1;
+		return javax.microedition.shell.MidletPermissionManager.checkPermission(permission);
 	}
 
 	public final void resumeRequest() {
