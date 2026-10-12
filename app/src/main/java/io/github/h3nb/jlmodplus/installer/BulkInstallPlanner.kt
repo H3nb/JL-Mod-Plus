@@ -72,7 +72,9 @@ object BulkInstallPlanner {
         val inspectionIndex = AppInstaller.InspectionIndex(
             generation.generation, generation.emulatorDir.canonicalFile, library.getAllApps(),
         )
-        check(requireNotNull(library.readyGeneration()).generation == generation.generation)
+        check(library.isReadyGeneration(generation.generation, generation.emulatorDir)) {
+            "Library generation changed during batch review"
+        }
         val inspected = units.map { unit ->
             checkActive(isActive)
             inspect(unit, generation, library, inspectionIndex, digestCache, isActive)

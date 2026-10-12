@@ -157,7 +157,7 @@ public class AppInstaller {
         }
 
         private static String key(String title, String vendor) {
-            return title + '\u0000' + vendor;
+            return title + '\0' + vendor;
         }
     }
     Stage getStage() { return stage; }
@@ -441,6 +441,9 @@ public class AppInstaller {
     }
     /** Finalize converted files first, then publish a generation-bound Room3 mutation asynchronously. */
     void install(SingleEmitter<Integer> emitter) throws ConverterException, IOException {
+        if (inspectionIndex != null) {
+            throw new InstallerFailure("Read-only batch review cannot publish an installation");
+        }
         checkCancelled();
         defaultProfileFallbackName = null;
         conversionResult = null;
