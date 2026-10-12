@@ -59,7 +59,8 @@ internal class BulkSourceDiscovery(
                 skippedEntries++
                 return
             }
-            children.sortedBy { it.name.lowercase(Locale.ROOT) }.forEach { child ->
+            // The planner sorts final candidates; avoid sorting every directory twice.
+            children.forEach { child ->
                 checkActive()
                 if (!child.name.startsWith(".")) visit(child)
             }

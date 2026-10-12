@@ -57,9 +57,11 @@ object BulkInstallPlanner {
         warnings: List<String>,
         isActive: () -> Boolean,
     ): BulkInstallPlan {
+        // Plan-local digests share reads between source identity and JAR fingerprinting.
+        val digestCache = HashMap<String, ByteArray>()
         val inspected = units.map { unit ->
             checkActive(isActive)
-            inspect(unit, generation, library)
+            inspect(unit, generation, library, digestCache, isActive)
         }
         checkActive(isActive)
         val deduplicated = markSemanticDuplicates(inspected)
@@ -76,6 +78,8 @@ object BulkInstallPlanner {
         unit: BulkSourceUnit,
         generation: LibraryGenerationToken,
         library: LibraryViewModel,
+        digestCache: MutableMap<String, ByteArray>,
+        isActive: () -> Boolean,
     ): BulkInstallItem {
         val discoveryStatus = unit.discoveryStatus
         if (discoveryStatus in hardDiscoveryFailures) {
@@ -85,7 +89,7 @@ object BulkInstallPlanner {
                 name = unit.primaryFile.name,
                 vendor = "",
                 version = "",
-                sourceFingerprint = runCatching { sourceFingerprint(unit.sourceFiles) }.getOrDefault(""),
+                sourceFingerprint = runCatching { sourceFingerprint(unit.sourceFiles, digestCache, isActive) }.getOrDefault(""),
                 status = requireNotNull(discoveryStatus),
                 preflightStatus = requireNotNull(discoveryStatus),
                 action = BulkInstallAction.Skip,
@@ -96,6 +100,7 @@ object BulkInstallPlanner {
         }
 
         val installer = AppInstaller(null, Uri.fromFile(unit.primaryFile), library)
+        installer.setReadOnlySourceInspection()
         return try {
             val installerStatus = Single.create<Int>(installer::loadInfo).blockingGet()
             val descriptor = requireNotNull(installer.newDescriptor) { "Installer returned no descriptor" }
@@ -125,8 +130,8 @@ object BulkInstallPlanner {
                 version = descriptor.version,
                 installedVersion = installer.currentVersion,
                 descriptorAttributes = HashMap(descriptor.attrs),
-                sourceFingerprint = sourceFingerprint(unit.sourceFiles),
-                jarFingerprint = jar?.takeIf(File::isFile)?.let(::hashFile),
+                sourceFingerprint = sourceFingerprint(unit.sourceFiles, digestCache, isActive),
+                jarFingerprint = jar?.takeIf(File::isFile)?.let { hashFile(it, digestCache, isActive) },
                 status = displayStatus,
                 preflightStatus = authoritativeStatus,
                 action = defaults.first,
@@ -134,6 +139,8 @@ object BulkInstallPlanner {
                 reviewReason = inspectionReviewReason(unit, authoritativeStatus, candidates.size),
                 diagnosticDetail = unit.diagnosticDetail,
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (error: Throwable) {
             BulkInstallItem(
                 id = unit.id,
@@ -141,7 +148,7 @@ object BulkInstallPlanner {
                 name = unit.primaryFile.name,
                 vendor = "",
                 version = "",
-                sourceFingerprint = runCatching { sourceFingerprint(unit.sourceFiles) }.getOrDefault(""),
+                sourceFingerprint = runCatching { sourceFingerprint(unit.sourceFiles, digestCache, isActive) }.getOrDefault(""),
                 status = BulkInstallStatus.SourceError,
                 preflightStatus = BulkInstallStatus.SourceError,
                 action = BulkInstallAction.Skip,
@@ -398,8 +405,20 @@ object BulkInstallPlanner {
 
         grouped.values.forEach { group ->
             if (group.size <= 1) return@forEach
-            val maxima = group.filter { candidate ->
-                group.none { other -> compareVersions(other.value.version, candidate.value.version) > 0 }
+            // A running maximum avoids quadratic every-pair comparisons in large collections.
+            var maximumVersion = group.first().value.version
+            val maxima = ArrayList<IndexedValue<BulkInstallItem>>()
+            maxima.add(group.first())
+            for (index in 1 until group.size) {
+                val candidate = group[index]
+                when (compareVersions(candidate.value.version, maximumVersion)) {
+                    1 -> {
+                        maximumVersion = candidate.value.version
+                        maxima.clear()
+                        maxima.add(candidate)
+                    }
+                    0 -> maxima.add(candidate)
+                }
             }
             if (maxima.size > 1) {
                 val semanticKeys = maxima
@@ -418,7 +437,7 @@ object BulkInstallPlanner {
                     }
                 }
             }
-            val maxVersion = maxima.firstOrNull()?.value?.version ?: return@forEach
+            val maxVersion = maximumVersion
             group.filter { compareVersions(it.value.version, maxVersion) < 0 }.forEach { indexedItem ->
                 replacements[indexedItem.index] = indexedItem.value.copy(
                     status = BulkInstallStatus.OlderBatchCandidate,
@@ -447,29 +466,46 @@ object BulkInstallPlanner {
     private fun requireReadyGeneration(library: LibraryViewModel): LibraryGenerationToken =
         requireNotNull(library.readyGeneration()) { "Library is not READY" }
 
-    private fun sourceFingerprint(files: List<File>): String {
+    private fun sourceFingerprint(
+        files: List<File>,
+        digestCache: MutableMap<String, ByteArray>? = null,
+        isActive: () -> Boolean = { true },
+    ): String {
         val digest = MessageDigest.getInstance("SHA-256")
         files.forEach { file ->
-            digest.update(hashFileBytes(file))
+            checkActive(isActive)
+            digest.update(hashFileBytes(file, digestCache, isActive))
             digest.update(0.toByte())
         }
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private fun hashFile(file: File): String =
-        hashFileBytes(file).joinToString("") { "%02x".format(it) }
+    private fun hashFile(
+        file: File,
+        digestCache: MutableMap<String, ByteArray>,
+        isActive: () -> Boolean,
+    ): String = hashFileBytes(file, digestCache, isActive).joinToString("") { "%02x".format(it) }
 
-    private fun hashFileBytes(file: File): ByteArray {
+    private fun hashFileBytes(
+        file: File,
+        digestCache: MutableMap<String, ByteArray>?,
+        isActive: () -> Boolean,
+    ): ByteArray {
+        val path = if (digestCache == null) null else file.canonicalPath
+        if (path != null) digestCache[path]?.let { return it }
         val digest = MessageDigest.getInstance("SHA-256")
         FileInputStream(file).use { input ->
-            val buffer = ByteArray(16 * 1024)
+            val buffer = ByteArray(32 * 1024)
             while (true) {
+                checkActive(isActive)
                 val read = input.read(buffer)
                 if (read < 0) break
                 if (read > 0) digest.update(buffer, 0, read)
             }
         }
-        return digest.digest()
+        return digest.digest().also { bytes ->
+            if (path != null) digestCache?.put(path, bytes)
+        }
     }
 
     private fun canonicalReadableFile(file: File): File? = try {

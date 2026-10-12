@@ -43,6 +43,17 @@ class BulkInstallPlannerTest {
     }
 
     @Test
+    fun largeVersionGroupRetainsOneMaximumWithoutQuadraticPairChecks() {
+        val candidates = (1..2000).map { version ->
+            item("version-$version", "1.$version", "hash-$version")
+        }
+        val grouped = BulkInstallPlanner.applyBatchVersionGrouping(candidates)
+        assertEquals(1, grouped.count { it.status == BulkInstallStatus.New })
+        assertEquals("1.2000", grouped.single { it.status == BulkInstallStatus.New }.version)
+        assertEquals(1999, grouped.count { it.status == BulkInstallStatus.OlderBatchCandidate })
+    }
+
+    @Test
     fun inspectionReasonsCarryMatchCountAndPreserveDiscoveryConflictPrecedence() {
         val unit = item("source").unit
         assertEquals(BulkInstallReviewReason.AmbiguousInstalledMatch(3),

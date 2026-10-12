@@ -90,6 +90,7 @@ public class AppInstaller {
     private final File resolvedJar;
 
     private volatile boolean cancelled;
+    private boolean readOnlySourceInspection;
     private Uri uri;
     private Descriptor manifest;
     private Descriptor newDesc;
@@ -117,6 +118,8 @@ public class AppInstaller {
     private Progress progress = ignored -> {};
 
     void setProgress(Progress progress) { this.progress = progress; }
+    /** Batch review inspects original files; installation still copies them into request-owned scratch. */
+    void setReadOnlySourceInspection() { readOnlySourceInspection = true; }
     Stage getStage() { return stage; }
     boolean hasPublished() { return published; }
     private void stage(Stage next) { stage = next; progress.update(next); }
@@ -258,10 +261,12 @@ public class AppInstaller {
                 return;
             }
         } else {
-            srcJar = scratch.copy(srcFile, "reviewed.jar");
+            srcJar = readOnlySourceInspection ? srcFile : scratch.copy(srcFile, "reviewed.jar");
             newDesc = loadManifest(srcJar);
         }
-        if (srcJar != null && resolvedJar == null) srcJar = scratch.copy(srcJar, "reviewed.jar");
+        if (srcJar != null && resolvedJar == null && !readOnlySourceInspection) {
+            srcJar = scratch.copy(srcJar, "reviewed.jar");
+        }
         emitLoadedStatus(emitter, checkDescriptor());
     }
 
@@ -666,7 +671,7 @@ public class AppInstaller {
             jar = new File(dir, name.substring(0, name.length() - 4) + ".jar");
             if (!jar.exists()) throw new ConverterException("Jar-file not found for url: " + jarUrl);
         }
-        srcJar = scratch.copy(jar, "reviewed.jar");
+        srcJar = readOnlySourceInspection ? jar : scratch.copy(jar, "reviewed.jar");
         manifest = loadManifest(srcJar);
         return manifest.equals(newDesc);
     }
