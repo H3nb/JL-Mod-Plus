@@ -1205,7 +1205,8 @@ public class AppsListFragment extends Fragment {
         if (first.getPath() != null) {
             preferences.edit().putString(PREF_LAST_PATH, first.getPath()).apply();
         }
-        if (uris.size() == 1 && (first.getPath() == null ||\n                !first.getPath().toLowerCase(java.util.Locale.ROOT).endsWith(".zip"))) {
+        if (uris.size() == 1 && (first.getPath() == null ||
+                !first.getPath().toLowerCase(java.util.Locale.ROOT).endsWith(".zip"))) {
             Activity activity = requireActivity();
             if (activity instanceof MainActivity) {
                 // A single JAR/JAD is the established single-app flow. Do not make the user
