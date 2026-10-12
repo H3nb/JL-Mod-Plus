@@ -26,7 +26,7 @@ public class DescriptorLocalizedDescriptionTest {
                 " petualangan bersama teman.\r\n",
                 false);
         Map<String, String> descriptions = MidletDescriptionLocalization.extract(descriptor.getAttrs());
-        assertEquals("Jelajahi dunia yangluas: penuh misteri danpetualangan bersama teman.",
+        assertEquals("Jelajahi dunia yang luas: penuh misteri dan petualangan bersama teman.",
                 descriptions.get("id"));
         assertEquals("Default description", descriptor.getAttrs().get(Descriptor.MIDLET_DESCRIPTION));
     }
