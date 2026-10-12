@@ -524,7 +524,7 @@ object BulkInstallPlanner {
         isActive: () -> Boolean,
     ): ByteArray {
         val path = if (digestCache == null) null else file.canonicalPath
-        if (path != null) digestCache[path]?.let { return it }
+        if (path != null) digestCache?.get(path)?.let { return it }
         val digest = MessageDigest.getInstance("SHA-256")
         FileInputStream(file).use { input ->
             val buffer = ByteArray(32 * 1024)
