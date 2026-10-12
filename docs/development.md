@@ -329,7 +329,17 @@ variant before merging changes to shrinking, signing, release configuration, or
 dependencies that can affect it. Manual release dispatch publishes an APK and is
 not a substitute for a non-publishing release build check.
 
-`jlmod.versionCode` remains source-controlled. The workflow checks that it is a
-positive integer, not that it exceeds every previously published APK. Follow the
-[versioning policy](agent-workflow.md#versioning) before publishing; a unique alpha
-version name or tag does not establish monotonic version codes.
+Published APK identities are allocated by the release workflow rather than edited in
+`gradle.properties`. On GitHub Actions, use **Release JL-Mod Plus** with the full
+SemVer value (for example, `0.2.0-alpha.1`), without a leading `v`. Only
+`alpha` permits pre-release publication. Stable publication requires a separately
+prepared `stable` branch based on the JL-Mod Plus codebase; the legacy `main`
+branch is not a release source.
+
+The workflow serializes publication across branches, computes the next Android
+`versionCode` from existing releases, checks the version and signing identity,
+and publishes APK assets together with `release-info.json` and checksums. Existing
+`0.1.0` pre-releases are handled through their tagged source metadata. A failure
+after draft creation requires investigation; do not reuse an existing tag or
+overwrite published assets. The working branch does not publish automatically.
+`gradle.properties` remains the default identity for non-publishing builds.

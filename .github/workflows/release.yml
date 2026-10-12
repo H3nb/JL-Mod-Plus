@@ -3,60 +3,25 @@ name: Release JL-Mod Plus
 on:
   workflow_dispatch:
     inputs:
-      prerelease_suffix:
-        description: 'Required on alpha (for example: alpha.1); leave empty for stable main releases'
-        required: false
+      version:
+        description: 'Full release version (e.g. 0.2.0-alpha.1 or 0.2.0)'
+        required: true
         type: string
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: jlmod-plus-release-publishing
   cancel-in-progress: false
+  queue: max
 
 jobs:
   release:
     runs-on: ubuntu-26.04
-    timeout-minutes: 45
+    timeout-minutes: 55
 
     steps:
-      - name: Validate release channel
-        id: channel
-        shell: bash
-        env:
-          BRANCH: ${{ github.ref_name }}
-          INPUT_SUFFIX: ${{ inputs.prerelease_suffix }}
-        run: |
-          set -euo pipefail
-
-          case "$BRANCH" in
-            alpha)
-              if [[ -z "$INPUT_SUFFIX" ]]; then
-                echo 'Manual alpha releases require prerelease_suffix (for example: alpha.1).' >&2
-                exit 1
-              fi
-              if [[ ! "$INPUT_SUFFIX" =~ ^[0-9A-Za-z]+([.-][0-9A-Za-z]+)*$ ]]; then
-                echo 'Invalid prerelease_suffix. Use identifiers such as alpha.1, beta.1, or rc.1.' >&2
-                exit 1
-              fi
-              echo "version_suffix=-$INPUT_SUFFIX" >> "$GITHUB_OUTPUT"
-              echo "prerelease=true" >> "$GITHUB_OUTPUT"
-              ;;
-            main)
-              if [[ -n "$INPUT_SUFFIX" ]]; then
-                echo 'main releases are stable; prerelease_suffix must be empty.' >&2
-                exit 1
-              fi
-              echo 'version_suffix=' >> "$GITHUB_OUTPUT"
-              echo "prerelease=false" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "Releases are allowed only from alpha or main, not '$BRANCH'." >&2
-              exit 1
-              ;;
-          esac
-
       - name: Check out sources
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -64,6 +29,20 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Test release version rules
+        run: python3 -B -m unittest discover -s scripts/tests -p 'test_release_version.py' -v
+
+      - name: Plan release identity
+        id: channel
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          BRANCH: ${{ github.ref_name }}
+        run: >-
+          python3 scripts/release-version.py
+          --version "$VERSION" --branch "$BRANCH"
+          --repo "$GITHUB_REPOSITORY" --output "$GITHUB_OUTPUT"
       - name: Restore release keystore
         shell: bash
         env:
@@ -126,10 +105,13 @@ jobs:
 
       - name: Assemble versioned release
         env:
-          VERSION_SUFFIX: ${{ steps.channel.outputs.version_suffix }}
+          RELEASE_VERSION: ${{ steps.channel.outputs.version_name }}
+          RELEASE_CODE: ${{ steps.channel.outputs.version_code }}
           JLMOD_BUILD_COMMIT: ${{ github.sha }}
         run: >-
           ./gradlew --daemon --stacktrace --profile
+          -Pjlmod.versionName="$RELEASE_VERSION"
+          -Pjlmod.versionCode="$RELEASE_CODE"
           :app:assembleEmulatorRelease
 
       - name: Prepare release artifacts
@@ -163,6 +145,17 @@ jobs:
           fi
           VERSION_NAME="${VERSION_NAMES[0]}"
           VERSION_CODE="${VERSION_CODES[0]}"
+          PACKAGE_ID="$(jq -r '.applicationId // empty' "$METADATA")"
+          if [[ "$PACKAGE_ID" != "io.github.h3nb.jlmodplus" ]]; then
+            echo "Unexpected APK application ID: $PACKAGE_ID" >&2
+            exit 1
+          fi
+
+          if [[ "$VERSION_NAME" != '${{ steps.channel.outputs.version_name }}' ||
+                "$VERSION_CODE" != '${{ steps.channel.outputs.version_code }}' ]]; then
+            echo 'Built APK identity differs from release plan.' >&2
+            exit 1
+          fi
 
           expected_abis=(arm64-v8a armeabi-v7a x86 x86_64)
           declare -A apk_by_label=()
@@ -190,18 +183,9 @@ jobs:
           fi
           apk_by_label[universal]="${universal_matches[0]}"
 
-          if [[ "${{ github.ref_name }}" == "alpha" && "$VERSION_NAME" != *-* ]]; then
-            echo "alpha must produce a pre-release versionName, got '$VERSION_NAME'." >&2
-            exit 1
-          fi
-          if [[ "${{ github.ref_name }}" == "main" && "$VERSION_NAME" == *-* ]]; then
-            echo "main must produce a stable versionName, got '$VERSION_NAME'." >&2
-            exit 1
-          fi
-
           TAG="v$VERSION_NAME"
           if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists." >&2
+            echo "Release tag $TAG already exists." >&2
             exit 1
           fi
 
@@ -219,9 +203,18 @@ jobs:
           RELEASE_MAPPING="dist/JL-Mod-Plus-$TAG-r8-mapping.txt"
           cp "$MAPPING_SOURCE" "$RELEASE_MAPPING"
 
+          MIN_SDK="$(sed -nE 's/^androidMinSdk = "([0-9]+)"$/\1/p' gradle/libs.versions.toml)"
+          if [[ ! "$MIN_SDK" =~ ^[1-9][0-9]*$ ]]; then
+            echo 'Unable to resolve Android minSdk.' >&2
+            exit 1
+          fi
+          jq -n --arg name "$VERSION_NAME" --argjson code "$VERSION_CODE" \
+            --arg commit "$GITHUB_SHA" --argjson minSdk "$MIN_SDK" \
+            '{schema:1,versionName:$name,versionCode:$code,applicationId:"io.github.h3nb.jlmodplus",minSdk:$minSdk,commit:$commit}' \
+            > dist/release-info.json
           (
             cd dist
-            sha256sum JL-Mod-Plus-"$TAG"-*.apk "$(basename "$RELEASE_MAPPING")" > SHA256SUMS.txt
+            sha256sum JL-Mod-Plus-"$TAG"-*.apk "$(basename "$RELEASE_MAPPING")" release-info.json > SHA256SUMS.txt
           )
 
           echo "Release version: $VERSION_NAME (versionCode $VERSION_CODE)"
@@ -230,8 +223,10 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "mapping=$RELEASE_MAPPING" >> "$GITHUB_OUTPUT"
 
-      - name: Verify APK signatures
+      - name: Verify APK signatures and signing identity
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -252,8 +247,34 @@ jobs:
           for apk in "${apks[@]}"; do
             "$APKSIGNER" verify --verbose --print-certs "$apk"
           done
+          fingerprint() {
+            "$APKSIGNER" verify --print-certs "$1" |
+              awk -F ': ' '/Signer #1 certificate SHA-256 digest/ {print tolower($2); exit}'
+          }
+          built_fingerprint="$(fingerprint "${apks[0]}")"
+          if [[ ! "$built_fingerprint" =~ ^[0-9a-f]{64}$ ]]; then
+            echo 'Unable to read release signing fingerprint.' >&2
+            exit 1
+          fi
+          for apk in "${apks[@]}"; do
+            if [[ "$(fingerprint "$apk")" != "$built_fingerprint" ]]; then
+              echo "Release signer differs across APK variants: $apk" >&2
+              exit 1
+            fi
+          done
 
-      - name: Create GitHub release
+          # Anchor the migration to the certificate on the first published JL-Mod Plus APK.
+          mkdir -p prior-release
+          gh release download v0.1.0-alpha.1 --repo "$GITHUB_REPOSITORY" \
+            --pattern '*-arm64-v8a.apk' --dir prior-release
+          shopt -s nullglob
+          prior_apks=(prior-release/*-arm64-v8a.apk)
+          if [[ ${#prior_apks[@]} -ne 1 || "$(fingerprint "${prior_apks[0]}")" != "$built_fingerprint" ]]; then
+            echo 'Signing certificate does not match the existing JL-Mod Plus release.' >&2
+            exit 1
+          fi
+
+      - name: Publish complete GitHub release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -263,32 +284,32 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-
           apks=(dist/JL-Mod-Plus-"$TAG"-*.apk)
           if [[ ${#apks[@]} -ne 5 ]]; then
-            echo "Expected five release APKs, found ${#apks[@]}." >&2
+            echo 'Expected five release APKs.' >&2
             exit 1
           fi
-
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo 'Release tag already exists. Publication aborted.' >&2
+            exit 1
+          fi
           args=(
-            release create "$TAG"
-            "${apks[@]}"
-            "$MAPPING_PATH"
-            dist/SHA256SUMS.txt
+            release create "$TAG" "${apks[@]}" "$MAPPING_PATH"
+            dist/release-info.json dist/SHA256SUMS.txt
             --repo "$GITHUB_REPOSITORY"
             --target "$GITHUB_SHA"
             --title "JL-Mod Plus $TAG"
-            --generate-notes
+            --generate-notes --draft
           )
-
-          if [[ "$PRERELEASE" == "true" ]]; then
+          if [[ "$PRERELEASE" == 'true' ]]; then
             args+=(--prerelease)
-          else
-            args+=(--latest)
           fi
-
           gh "${args[@]}"
-
+          if [[ "$PRERELEASE" == 'true' ]]; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease
+          else
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+          fi
       - name: Upload release diagnostics
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

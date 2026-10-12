@@ -58,6 +58,63 @@ public class ProfileConfigMatcherTest {
 				left.controller.getAsJsonObject().get("futureValue").getAsBigInteger());
 	}
 	@Test
+	public void obsoleteAutomaticScaleDoesNotMakeLinkedPresetLookModified() {
+		ProfileModel legacy = new ProfileModel();
+		legacy.screenScaleType = 1;
+		legacy.screenScaleRatio = 80;
+		ProfileModel baseline = ProfileConfigMatcher.copyConfig(legacy);
+		ConfigFormState draft = ConfigFormState.fromProfile(legacy, "");
+
+		assertEquals(80, legacy.screenScaleRatio);
+		assertTrue(ProfileConfigMatcher.sameEffectiveConfig(legacy, draft, baseline));
+		assertEquals(80, baseline.screenScaleRatio);
+
+		ProfileModel normalized = ProfileConfigMatcher.copyConfig(legacy);
+		normalized.screenScaleRatio = 100;
+		assertTrue(ProfileConfigMatcher.sameConfig(legacy, normalized));
+
+		legacy.screenScaleType = 2;
+		legacy.screenScaleRatio = 250;
+		assertTrue(ProfileConfigMatcher.sameConfig(legacy, normalized) == false);
+		normalized.screenScaleType = 2;
+		assertTrue(ProfileConfigMatcher.sameConfig(legacy, normalized));
+
+		legacy.screenScaleType = 0;
+		legacy.screenScaleRatio = 200;
+		normalized.screenScaleType = 0;
+		normalized.screenScaleRatio = 100;
+		assertFalse(ProfileConfigMatcher.sameConfig(legacy, normalized));
+	}
+
+	@Test
+	public void legacyScaleLoadsCanonicallyAndPersistsOnNextSave() throws Exception {
+		File directory = Files.createTempDirectory("jlmod-profile-scale").toFile();
+		directory.deleteOnExit();
+		ProfileModel legacy = new ProfileModel();
+		legacy.version = ProfileModel.VERSION;
+		legacy.dir = directory;
+		legacy.screenScaleType = 1;
+		legacy.screenScaleRatio = 75;
+		Files.write(new File(directory, Config.MIDLET_CONFIG_FILE).toPath(),
+				new Gson().toJson(legacy).getBytes(StandardCharsets.UTF_8));
+
+		ProfileModel loaded = ProfilesManager.loadConfig(directory, false,
+				ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false);
+		assertEquals(100, loaded.screenScaleRatio);
+		assertTrue(ProfilesManager.saveConfig(loaded));
+		ProfileModel saved = new Gson().fromJson(
+				new String(Files.readAllBytes(new File(directory, Config.MIDLET_CONFIG_FILE).toPath()),
+						StandardCharsets.UTF_8), ProfileModel.class);
+		assertEquals(100, saved.screenScaleRatio);
+
+		saved.screenScaleType = 0;
+		saved.screenScaleRatio = 400;
+		saved.dir = directory;
+		assertTrue(ProfilesManager.saveConfig(saved));
+		assertEquals(400, ProfilesManager.loadConfig(directory).screenScaleRatio);
+	}
+
+	@Test
 	public void effectiveDraftAppliesFormButPreservesUnexposedFields() {
 		ProfileModel current = new ProfileModel();
 		current.version = ProfileModel.VERSION;

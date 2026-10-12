@@ -896,7 +896,8 @@ public abstract class Canvas extends Displayable {
 
 		// We turn the size of the canvas into the size of the image
 		// that will be displayed on the screen of the device.
-		int scaleRatio = settings.screenScaleRatio;
+		int scaleRatio = ProfileModel.effectiveScreenScaleRatio(
+				settings.screenScaleType, settings.screenScaleRatio);
 		switch (settings.screenScaleType) {
 			case 0 -> {
 				// without scaling
@@ -912,23 +913,17 @@ public abstract class Canvas extends Displayable {
 					onHeight = scaledDisplayHeight;
 					onWidth = width * scaledDisplayHeight / height;
 				}
-				if (scaleRatio > 100) {
-					scaleRatio = 100;
-				}
 			}
 			case 2 -> {
 				// scaling without preserving the aspect ratio:
 				// just stretch the picture to full screen
 				onWidth = scaledDisplayWidth;
 				onHeight = scaledDisplayHeight;
-				if (scaleRatio > 100) {
-					scaleRatio = 100;
-				}
 			}
 		}
 
-		onWidth = onWidth * scaleRatio / 100;
-		onHeight = onHeight * scaleRatio / 100;
+		onWidth = Math.max(1, onWidth * scaleRatio / 100);
+		onHeight = Math.max(1, onHeight * scaleRatio / 100);
 
 		switch (settings.screenGravity) {
 			case 0 -> { // left

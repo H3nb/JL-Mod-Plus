@@ -10,6 +10,10 @@ It keeps the features and compatibility of JL-Mod while adding new features, UI 
 
 Open the latest release and download the APK from the **Assets** section.
 
+The app's **More → Updates** screen can check GitHub Releases manually or at Library startup.
+Choose **Stable** for stable versions only or **Preview** to include pre-releases.
+It opens the release page for manual APK installation; it does not install APKs silently.
+
 > JL-Mod Plus is still under active development. Releases may be marked as pre-release and may contain unfinished or experimental changes.
 
 ### Requirements
