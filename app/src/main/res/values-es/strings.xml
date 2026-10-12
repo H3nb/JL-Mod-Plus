@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">Acerca de</string>
-    <string name="about_message">Esta aplicación te permite ejecutar aplicaciones y juegos J2ME en Android.\n</string>
+    <string name="about_message">Ejecuta aplicaciones y juegos clásicos, organiza tus MIDlets en la biblioteca y ajusta los controles, la pantalla, el sonido y el rendimiento. JL-Mod Plus es gratuito y de código abierto.</string>
+    <string name="about_subtitle">Emulador de Java ME para Android</string>
+    <string name="about_compatibility">La compatibilidad depende del MIDlet, del dispositivo y de las API de Java ME admitidas. Algunas aplicaciones pueden comportarse de forma distinta a como lo hacían en los teléfonos originales.</string>
+    <string name="about_lineage_title">Orígenes del proyecto</string>
+    <string name="about_build_title">Información de compilación</string>
+    <string name="about_version_label">Versión</string>
+    <string name="about_build_label">Compilación</string>
+    <string name="about_revision_label">Revisión del código fuente</string>
+    <string name="about_links_title">Proyecto y licencias</string>
+    <string name="about_github_link_copied">No hay ningún navegador disponible. Se ha copiado el enlace de GitHub al portapapeles.</string>
+    <string name="about_github_browser_unavailable">No hay ningún navegador disponible para abrir GitHub.</string>
+    <string name="about_evolution">JL-Mod Plus amplía esa base con una interfaz moderna, una biblioteca de MIDlets más completa, diversas funciones nuevas y compatibilidad con versiones más recientes de Android.</string>
     <string name="action_context_delete">Eliminar</string>
     <string name="action_context_rename">Renombrar</string>
     <string name="action_context_shortcut">Añadir acceso directo</string>
@@ -141,7 +152,7 @@
     <string name="warn_install_from_net">El archivo se descargará de Internet.</string>
     <string name="warning">Advertencia</string>
     <string name="about_maintainer">Mantenedor: %1$s</string>
-    <string name="about_lineage">JL-Mod Plus es una bifurcación de JL-Mod de woesss (Yury Kharchenko), que a su vez es una bifurcación y modificación experimental de J2ME-Loader de Nikita Shakarun. Esta bifurcación se mantiene mediante trabajo continuo de diseño, ingeniería, pruebas e infraestructura. Se conservan en el proyecto las atribuciones y los avisos de licencia de los proyectos originales.</string>
+    <string name="about_lineage">JL-Mod Plus es una bifurcación independiente de JL-Mod, desarrollado por woesss (Yury Kharchenko). JL-Mod se basa en J2ME Loader de Nikita Shakarun, cuyos orígenes se remontan a J2meLoader de NaikSoftware.</string>
     <string name="action_back">Atrás</string>
     <string name="action_lock_orientation">Bloquear rotación de pantalla</string>
     <string name="dismiss_mapping">Descartar asignación</string>

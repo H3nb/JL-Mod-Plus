@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">Om</string>
-    <string name="about_message">Denne app gør det muligt at afvikle J2ME apps og spil på Android.\n</string>
+    <string name="about_message">Start klassiske apps og spil, organisér MIDlets i dit bibliotek, og tilpas styring, skærm, lyd og ydeevne. JL-Mod Plus er gratis og har åben kildekode.</string>
+    <string name="about_subtitle">Java ME-emulator til Android</string>
+    <string name="about_compatibility">Kompatibiliteten afhænger af MIDlet-programmet, enheden og de understøttede Java ME-API’er. Nogle apps kan opføre sig anderledes end på de oprindelige telefoner.</string>
+    <string name="about_lineage_title">Projektets oprindelse</string>
+    <string name="about_build_title">Buildoplysninger</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_build_label">Build</string>
+    <string name="about_revision_label">Kildekoderevision</string>
+    <string name="about_links_title">Projekt og licenser</string>
+    <string name="about_github_link_copied">Ingen browser er tilgængelig. GitHub-linket er kopieret til udklipsholderen.</string>
+    <string name="about_github_browser_unavailable">Ingen browser er tilgængelig til at åbne GitHub.</string>
+    <string name="about_evolution">JL-Mod Plus videreudvikler dette grundlag med en moderne brugerflade, et mere alsidigt MIDlet-bibliotek, nye funktioner og understøttelse af nyere Android-versioner.</string>
     <string name="action_context_delete">Slet</string>
     <string name="action_context_shortcut">Tilføj genvej</string>
     <string name="action_settings">Indstillinger</string>
@@ -55,7 +66,7 @@
     <string name="START_CMD">Start</string>
     <string name="SWAP_SIZES">Byt størrelser</string>
     <string name="about_maintainer">Vedligeholder: %1$s</string>
-    <string name="about_lineage">JL-Mod Plus er en fork af JL-Mod af woesss (Yury Kharchenko), som selv er en fork og eksperimentel mod af J2ME-Loader af Nikita Shakarun. Forken vedligeholdes gennem løbende design-, udviklings-, test- og infrastrukturarbedjde. Upstream-kreditering og licensmeddelelser bevares i projektet.</string>
+    <string name="about_lineage">JL-Mod Plus er en uafhængig fork af JL-Mod fra woesss (Yury Kharchenko). JL-Mod bygger på J2ME Loader fra Nikita Shakarun, som kan føres tilbage til NaikSoftwares J2meLoader.</string>
     <string name="action_context_rename">Omdøb</string>
     <string name="action_back">Tilbage</string>
     <string name="action_keyboard_ime">Tastatur (IME)</string>

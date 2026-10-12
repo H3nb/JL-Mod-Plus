@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">Tietoja</string>
-    <string name="about_message">Tämä sovellus mahdollistaa J2ME-sovellusten ja -ohjelmien käynnistämisen Android-järjestelmässä.\n</string>
+    <string name="about_message">Käynnistä klassisia sovelluksia ja pelejä, järjestä MIDlet-sovelluksia kirjastossasi ja säädä ohjausta, näyttöä, ääntä ja suorituskykyä. JL-Mod Plus on ilmainen ja avoimen lähdekoodin sovellus.</string>
+    <string name="about_subtitle">Java ME -emulaattori Androidille</string>
+    <string name="about_compatibility">Yhteensopivuus riippuu MIDlet-sovelluksesta, laitteesta ja tuetuista Java ME -rajapinnoista. Jotkin sovellukset voivat toimia eri tavalla kuin alkuperäisissä puhelimissa.</string>
+    <string name="about_lineage_title">Projektin alkuperä</string>
+    <string name="about_build_title">Koontitiedot</string>
+    <string name="about_version_label">Versio</string>
+    <string name="about_build_label">Koonti</string>
+    <string name="about_revision_label">Lähdekoodin revisio</string>
+    <string name="about_links_title">Projekti ja lisenssit</string>
+    <string name="about_github_link_copied">Selainta ei ole käytettävissä. GitHub-linkki kopioitiin leikepöydälle.</string>
+    <string name="about_github_browser_unavailable">GitHubia ei voi avata, koska selainta ei ole käytettävissä.</string>
+    <string name="about_evolution">JL-Mod Plus kehittää tätä perustaa edelleen modernilla käyttöliittymällä, monipuolisemmalla MIDlet-kirjastolla, uusilla ominaisuuksilla ja uudempien Android-versioiden tuella.</string>
     <string name="action_context_delete">Poista</string>
     <string name="action_context_rename">Nimeä uudelleen</string>
     <string name="action_context_shortcut">Lisää pikakuvake</string>
@@ -51,7 +62,7 @@
     <string name="START_CMD">Käynnistä</string>
     <string name="SWAP_SIZES">Vaihda koot</string>
     <string name="about_maintainer">Ylläpitäjä: %1$s</string>
-    <string name="about_lineage">JL-Mod Plus on woesssin (Yury Kharchenko) JL-Modin fork, joka puolestaan on Nikita Shakarunin J2ME-Loaderin fork ja kokeellinen muunnelma. Forkia ylläpidetään jatkuvalla suunnittelu-, kehitys-, testaus- ja infrastruktuurityöllä. Upstream-tekijätiedot ja lisenssi-ilmoitukset säilytetään projektissa.</string>
+    <string name="about_lineage">JL-Mod Plus on itsenäinen haarautuma woesssin (Yury Kharchenko) JL-Modista. JL-Mod perustuu Nikita Shakarunin J2ME Loaderiin, jonka juuret ulottuvat NaikSoftwaren J2meLoaderiin.</string>
     <string name="action_back">Takaisin</string>
     <string name="action_keyboard_ime">Näppäimistö (IME)</string>
     <string name="action_lock_orientation">Lukitse näytön kierto</string>
