@@ -422,7 +422,8 @@ public class MicroLoader {
 	}
 
 	private void setProperties() {
-		MidletSystem.setProperty("microedition.locale", guestLocale);
+		MidletSystem.setProperty("microedition.locale",
+				MidletLocaleResolver.withSystemProperties(guestLocale, params.systemProperties));
 		final String primaryStoragePath = Environment.getExternalStorageDirectory().getPath();
 		String dataUri = fileConnectionDataUri(workDir, appDirName, primaryStoragePath);
 		String musicUri = "file:///c:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
@@ -462,7 +463,7 @@ public class MicroLoader {
 			final String[] propLines = params.systemProperties.split("\n");
 			for (String line : propLines) {
 				String[] prop = line.split(": *", 2);
-				if (prop.length == 2) {
+				if (prop.length == 2 && !"microedition.locale".equals(prop[0])) {
 					MidletSystem.setProperty(prop[0], prop[1]);
 				}
 			}
