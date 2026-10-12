@@ -1642,7 +1642,7 @@ private fun RuntimeEditDialog(
     val hasCompatibleType = editableTypes.any { it == type }
     val incrementalAvailable = batch && targets.none(MemoryEditTarget::watch) &&
         firstTarget.type in MemoryEngineContract.TYPE_BYTE..MemoryEngineContract.TYPE_LONG &&
-        targets.all { it.type == firstTarget.type }
+        targets.all { it.type == firstTarget.type } && type == firstTarget.type
     var replacement by remember(targets, initialType, editableTypes) {
         mutableStateOf(TextFieldValue(initialValue, TextRange(initialValue.length)))
     }
@@ -1667,6 +1667,7 @@ private fun RuntimeEditDialog(
     val selectType: (Int) -> Unit = { selectedType ->
         if (selectedType != type) {
             type = selectedType
+            incremental = false
             editingStep = false
             val next = if (selectedType == initialType) initialValue else ""
             replacement = TextFieldValue(next, TextRange(next.length))
