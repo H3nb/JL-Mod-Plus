@@ -488,7 +488,10 @@ class BulkInstallViewModel : ViewModel() {
         try {
             val copiedDigests = ArrayList<ByteArray>(item.unit.sourceFiles.size)
             val copiedSources = item.unit.sourceFiles.mapIndexed { index, source ->
-                val extension = source.extension.lowercase(Locale.ROOT).ifBlank { "bin" }
+                // Only MIDlet-compatible ZIP sources reach the planner. Stage them with
+                // the JAR suffix expected by existing converter paths, without another copy.
+                val extension = source.extension.lowercase(Locale.ROOT)
+                    .ifBlank { "bin" }.let { if (it == "zip") "jar" else it }
                 val digest = MessageDigest.getInstance("SHA-256")
                 scratch.copy(source, "source-$index.$extension", digest).also {
                     copiedDigests.add(digest.digest())
