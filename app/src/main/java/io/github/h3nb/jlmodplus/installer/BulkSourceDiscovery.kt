@@ -139,18 +139,28 @@ internal class BulkSourceDiscovery(
                     } catch (cancelled: CancellationException) {
                         destination.delete()
                         throw cancelled
-                    } catch (_: IOException) {
+                    } catch (error: IOException) {
                         destination.delete()
+                        if (isStorageFull(error)) throw error
                         skippedEntries++
                     }
                 }
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
-        } catch (_: IOException) {
+        } catch (error: IOException) {
+            if (isStorageFull(error)) throw error
             unreadableArchives++
         }
     }
+
+    private fun isStorageFull(error: Throwable): Boolean =
+        generateSequence(error) { it.cause }.any { cause ->
+            cause.message?.let { message ->
+                message.contains("ENOSPC", ignoreCase = true) ||
+                    message.contains("No space left on device", ignoreCase = true)
+            } == true
+        }
 
     private fun resolveRenamedJarPairs(): List<File> = files.map { file ->
         if (file.extension.lowercase(Locale.ROOT) != "jad") return@map file
