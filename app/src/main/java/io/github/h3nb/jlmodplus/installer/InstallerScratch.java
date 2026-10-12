@@ -99,6 +99,7 @@ final class InstallerScratch {
         ensureDirectory();
         File target = safeChild(name);
         boolean sameFile = source.getCanonicalFile().equals(target);
+        if (sameFile && digest == null) return target;
         byte[] buffer = new byte[32 * 1024];
         try (InputStream input = new FileInputStream(source)) {
             if (sameFile) {
