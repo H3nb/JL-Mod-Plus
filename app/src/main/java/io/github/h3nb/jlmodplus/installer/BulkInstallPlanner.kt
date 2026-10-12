@@ -69,9 +69,13 @@ object BulkInstallPlanner {
     ): BulkInstallPlan {
         // Plan-local digests share reads between source identity and JAR fingerprinting.
         val digestCache = HashMap<String, ByteArray>()
+        val inspectionIndex = AppInstaller.InspectionIndex(
+            generation.generation, generation.emulatorDir.canonicalFile, library.getAllApps(),
+        )
+        check(requireNotNull(library.readyGeneration()).generation == generation.generation)
         val inspected = units.map { unit ->
             checkActive(isActive)
-            inspect(unit, generation, library, digestCache, isActive)
+            inspect(unit, generation, library, inspectionIndex, digestCache, isActive)
         }
         checkActive(isActive)
         val deduplicated = markSemanticDuplicates(inspected)
@@ -88,6 +92,7 @@ object BulkInstallPlanner {
         unit: BulkSourceUnit,
         generation: LibraryGenerationToken,
         library: LibraryViewModel,
+        inspectionIndex: AppInstaller.InspectionIndex,
         digestCache: MutableMap<String, ByteArray>,
         isActive: () -> Boolean,
     ): BulkInstallItem {
@@ -115,16 +120,12 @@ object BulkInstallPlanner {
             AppInstaller(null, Uri.fromFile(unit.primaryFile), library)
         }
         installer.setUseSourceDirectly()
+        installer.setInspectionIndex(inspectionIndex)
         return try {
             val installerStatus = Single.create<Int>(installer::loadInfo).blockingGet()
             val descriptor = requireNotNull(installer.newDescriptor) { "Installer returned no descriptor" }
             val jar = installer.jar
-            val candidates = library.findBySourceIdentity(
-                generation.generation,
-                generation.emulatorDir,
-                descriptor.name,
-                descriptor.vendor,
-            )
+            val candidates = inspectionIndex.candidates(descriptor.name, descriptor.vendor)
             val authoritativeStatus = if (candidates.size > 1) {
                 BulkInstallStatus.AmbiguousInstalledMatch
             } else {

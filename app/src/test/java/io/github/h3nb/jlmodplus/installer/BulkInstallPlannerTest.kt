@@ -43,6 +43,34 @@ class BulkInstallPlannerTest {
     }
 
     @Test
+    fun batchInspectionIndexMatchesSourceIdentityNotCustomMetadata() {
+        fun row(id: Long, title: String, vendor: String) =
+            io.github.h3nb.jlmodplus.librarydb.LibraryAppRow(
+                id = id,
+                storageKey = "game-$id",
+                sourceTitle = title,
+                sourceVendor = vendor,
+                sourceVersion = "1.0",
+                title = "Custom $title",
+                vendor = "Custom $vendor",
+                version = "1.0",
+                description = "",
+                favorite = false,
+                addedAt = null,
+                lastPlayedAt = null,
+                iconRevision = 0,
+            )
+        val apps = listOf(row(1, "Game", "Vendor"), row(2, "Game", "Vendor"),
+            row(3, "Game", "Another"), row(4, "Other", "Vendor"))
+        val index = AppInstaller.InspectionIndex(1L, File("/tmp/inspect"), apps)
+        assertEquals(listOf(1L, 2L),
+            index.candidates("Game", "Vendor").map { it.id })
+        assertEquals(listOf(3L), index.candidates("Game", "Another").map { it.id })
+        assertTrue(index.candidates("Custom Game", "Vendor").isEmpty())
+        assertTrue(index.candidates("Missing", "Vendor").isEmpty())
+    }
+
+    @Test
     fun largeVersionGroupRetainsOneMaximumWithoutQuadraticPairChecks() {
         val candidates = (1..2000).map { version ->
             item("version-$version", "1.$version", "hash-$version")
