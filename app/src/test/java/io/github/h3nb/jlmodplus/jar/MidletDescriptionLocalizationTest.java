@@ -36,6 +36,18 @@ public class MidletDescriptionLocalizationTest {
     }
 
     @Test
+    public void complexVariantFallsBackDirectlyToCountry() {
+        Map<String, String> values = Map.of(
+                "en-US-POSIX", "Intermediate variant",
+                "en-US", "US English",
+                "en", "English");
+        assertEquals("US English", MidletDescriptionLocalization.resolve(
+                values, "en-US-POSIX-EXT", "Default"));
+        assertEquals("Intermediate variant", MidletDescriptionLocalization.resolve(
+                values, "en-US-POSIX", "Default"));
+    }
+
+    @Test
     public void extractsOnlyLocalizedDescriptionAttributes() {
         Map<String, String> attributes = new HashMap<>();
         attributes.put("MIDlet-Description", "Default");
