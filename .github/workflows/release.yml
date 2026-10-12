@@ -249,7 +249,7 @@ jobs:
           done
           fingerprint() {
             "$APKSIGNER" verify --print-certs "$1" |
-              awk -F ': ' '/Signer #1 certificate SHA-256 digest/ {print tolower($2); exit}'
+              awk -F ': ' '/certificate SHA-256 digest:/ {print tolower($NF); exit}'
           }
           built_fingerprint="$(fingerprint "${apks[0]}")"
           if [[ ! "$built_fingerprint" =~ ^[0-9a-f]{64}$ ]]; then
