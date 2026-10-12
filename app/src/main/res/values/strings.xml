@@ -1118,4 +1118,8 @@
     <string name="bulk_install_choose_folder">Folder</string>
     <string name="bulk_install_unreadable_archives">Unreadable archives: %1$d</string>
     <string name="bulk_install_skipped_entries">Skipped archive entries: %1$d</string>
+    <string name="bulk_install_filter_all">All</string>
+    <string name="bulk_install_filter_selected">Selected</string>
+    <string name="bulk_install_filter_review">Review</string>
+    <string name="bulk_install_empty_filter">No matching games.</string>
 </resources>
