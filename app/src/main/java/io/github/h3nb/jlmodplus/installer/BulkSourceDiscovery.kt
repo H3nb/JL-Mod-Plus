@@ -11,6 +11,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.Locale
+import io.github.h3nb.jlmodplus.jar.Descriptor
 import java.util.concurrent.CancellationException
 import java.util.jar.Manifest
 import java.util.zip.ZipFile
@@ -32,6 +33,7 @@ internal class BulkSourceDiscovery(
 
     private val files = LinkedHashSet<File>()
     private val visitedDirectories = HashSet<String>()
+    private val renamedLocalJars = HashMap<String, File>()
     private var archiveSequence = 0
     private var expandedBytes = 0L
     private var unreadableArchives = 0
@@ -42,7 +44,7 @@ internal class BulkSourceDiscovery(
             checkActive()
             visit(source)
         }
-        return Result(files.toList(), unreadableArchives, skippedEntries)
+        return Result(resolveRenamedJarPairs(), unreadableArchives, skippedEntries)
     }
 
     private fun visit(source: File) {
@@ -80,6 +82,10 @@ internal class BulkSourceDiscovery(
                         ?: stagedFile("archive-${archiveSequence++}", source.nameWithoutExtension + ".jar")
                     copyBounded(source, target)
                     files.add(target)
+                    if (depth == 1 && renamedJarTarget == null) {
+                        val expected = File(source.parentFile, source.nameWithoutExtension + ".jar")
+                        renamedLocalJars[expected.canonicalPath] = target
+                    }
                     return
                 }
 
@@ -115,10 +121,12 @@ internal class BulkSourceDiscovery(
                             }
                         }
                         if (extension == "zip") {
-                            val renamed = stagedFile(
-                                targetDirectory,
-                                name.substringBeforeLast('.') + ".jar",
-                            )
+                            val jarName = name.substringBeforeLast('.') + ".jar"
+                            val renamed = if (archive.getEntry(jarName) == null) {
+                                stagedFile(targetDirectory, jarName)
+                            } else {
+                                stagedFile("archive-${archiveSequence++}", File(jarName).name)
+                            }
                             inspectArchive(destination, depth + 1, renamed)
                             destination.delete()
                         } else {
@@ -140,6 +148,23 @@ internal class BulkSourceDiscovery(
         }
     }
 
+    private fun resolveRenamedJarPairs(): List<File> = files.map { file ->
+        if (file.extension.lowercase(Locale.ROOT) != "jad") return@map file
+        val targetJar = try {
+            val reference = Descriptor(file, true).jarUrl ?: return@map file
+            val resolved = File(file.parentFile, reference).canonicalPath
+            renamedLocalJars[resolved] ?: return@map file
+        } catch (_: Exception) {
+            return@map file
+        }
+        val copiedJad = stagedFile(
+            targetJar.parentFile.relativeTo(stagingRoot).path,
+            file.name,
+        )
+        copyBounded(file, copiedJad)
+        copiedJad
+    }.distinct()
+
     private fun containsMidletManifest(archive: ZipFile): Boolean {
         val entry = archive.getEntry("META-INF/MANIFEST.MF") ?: return false
         if (entry.size > MAX_MANIFEST_BYTES) return false
@@ -148,8 +173,7 @@ internal class BulkSourceDiscovery(
                 val manifest = Manifest(input).mainAttributes
                 !manifest.getValue("MIDlet-Name").isNullOrBlank() &&
                     !manifest.getValue("MIDlet-Vendor").isNullOrBlank() &&
-                    !manifest.getValue("MIDlet-Version").isNullOrBlank() &&
-                    !manifest.getValue("MIDlet-1").isNullOrBlank()
+                    !manifest.getValue("MIDlet-Version").isNullOrBlank()
             }
         } catch (_: IOException) {
             false
