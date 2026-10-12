@@ -169,8 +169,10 @@ internal class MemoryEditorComposeController(
                             feedback.resultCountBefore, resultCount,
                         )
                     feedback?.kind == OperationFeedbackKind.REVERT_REMOVE &&
-                        details != null && (succeeded ||
-                            resultCode == MemoryEngineContract.RESULT_PARTIAL_WRITE) ->
+                        details != null &&
+                        details.getInt(MemoryEngineContract.KEY_OPERATION_REASON) !=
+                            MemoryEngineContract.REASON_REVERT_REMOVE_COMMIT_FAILED &&
+                        (succeeded || resultCode == MemoryEngineContract.RESULT_PARTIAL_WRITE) ->
                         context.getString(
                             R.string.memory_editor_revert_remove_outcome,
                             details.getInt(MemoryEngineContract.KEY_MANAGED_WRITTEN),

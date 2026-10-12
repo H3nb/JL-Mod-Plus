@@ -24,6 +24,11 @@ internal fun memoryOperationMessage(
     notAttempted: Int = 0,
     skippedByType: Int = 0,
 ): MemoryOperationMessage? {
+    if (result == MemoryEngineContract.RESULT_PARTIAL_WRITE &&
+        reason == MemoryEngineContract.REASON_REVERT_REMOVE_COMMIT_FAILED
+    ) {
+        return MemoryOperationMessage(R.string.memory_editor_revert_remove_commit_failed)
+    }
     val resource = when (result) {
         MemoryEngineContract.RESULT_OK -> null
         MemoryEngineContract.RESULT_CANCELLED -> R.string.memory_editor_cancelled
