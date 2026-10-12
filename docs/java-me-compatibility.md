@@ -37,6 +37,23 @@ both the host system-property backing store and the transformed MIDlet property 
 process state cannot override the current device locale. Profile system properties are applied
 afterward and remain the final authority, including an explicit `microedition.locale` override.
 
+## Localized MIDlet descriptions
+
+The host recognizes MIDP 3.0 `MIDlet-Description-<locale>` attributes in installed
+descriptors, including for older MIDP suites. The Library and installer use the same
+device-locale resolver as the running MIDlet; an explicit `microedition.locale` system
+property in the MIDlet's current configuration retains its existing final precedence.
+Match the complete MIDP locale first, then the locale without its entire variant, then
+the language alone; otherwise use the unqualified source description. Editing that
+default description does not replace a matching localized value.
+
+The translated text is presentation-only. The workdir's retained
+`converted.dex.conf` is the reconstructible source of localization metadata;
+the Library resolves it on a background worker and caches file-derived attributes.
+This lets existing installations gain translations without JAR conversion, a new Room
+schema, or rewriting any installed game. Existing custom metadata continues to own
+only the unqualified fallback, even when the Library displays a translation.
+
 ## Nokia polygon rendering
 
 Nokia `DirectGraphics` and MIDP `Graphics` share one current ARGB drawing state.
