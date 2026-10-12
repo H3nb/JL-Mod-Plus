@@ -294,6 +294,7 @@ data class LibraryAppUiItem(
     val totalPlayTimeMs: Long = 0L,
     /** Stable Room identity; [id] remains a transient Compose/host bridge id. */
     val databaseId: Long = id.toLong(),
+    val defaultDescription: String = description,
 )
 
 private data class MetadataRestoreRequest(
@@ -859,7 +860,7 @@ fun LibraryScreen(
         !state.loading && (current == null || (
             current.title == request.title &&
                 current.author == request.author &&
-                current.description == request.description
+                current.defaultDescription == request.description
             ))
     } ?: false
 
@@ -920,7 +921,7 @@ fun LibraryScreen(
                     databaseId = app.databaseId,
                     title = app.title,
                     author = app.author,
-                    description = app.description,
+                    description = app.defaultDescription,
                     viewport = metadataCapturedViewport,
                 )
             }
