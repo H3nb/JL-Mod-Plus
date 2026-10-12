@@ -88,6 +88,7 @@ object LibraryListProjection {
         ordered: OrderedRows,
         filter: String,
         quickView: LibraryQuickView,
+        localizedDescriptions: Map<Long, String> = emptyMap(),
         checkActive: () -> Unit = {},
     ): List<LibraryAppRow> {
         checkActive()
@@ -109,7 +110,7 @@ object LibraryListProjection {
             if (index % CANCELLATION_CHUNK == 0) checkActive()
             val row = ordered.rows[index]
             if (!eligible(row, quickView)) continue
-            val rank = searchRank(row, query) ?: continue
+            val rank = searchRank(row, query, localizedDescriptions) ?: continue
             val bucket = buckets[rank] ?: ArrayList<LibraryAppRow>().also { buckets[rank] = it }
             bucket.add(row)
             count++
@@ -132,7 +133,7 @@ object LibraryListProjection {
         LibraryQuickView.RecentlyPlayed -> row.lastPlayedAt != null
     }
 
-    private fun searchRank(row: LibraryAppRow, needle: String): Int? {
+    private fun searchRank(row: LibraryAppRow, needle: String, localizedDescriptions: Map<Long, String>): Int? {
         val title = row.title.lowercase(Locale.ROOT)
         return when {
             title == needle -> 0
@@ -140,7 +141,7 @@ object LibraryListProjection {
             title.contains(needle) -> 2
             row.vendor.lowercase(Locale.ROOT).contains(needle) -> 3
             row.version.lowercase(Locale.ROOT).contains(needle) -> 4
-            row.description.lowercase(Locale.ROOT).contains(needle) -> 5
+            (localizedDescriptions[row.id] ?: row.description).lowercase(Locale.ROOT).contains(needle) -> 5
             else -> null
         }
     }
