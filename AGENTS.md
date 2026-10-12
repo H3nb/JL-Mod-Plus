@@ -50,6 +50,7 @@ Ground the solution in current evidence before committing to a production fix. B
 | App-owned UI architecture, adaptation, or navigation | [App-owned UI development](docs/app-ui-development.md) |
 | View/Compose/Java ME ownership boundary or UI migration | [UI ownership](docs/ui-ownership-map.md) |
 | Localization, semantic UI copy quality, translation, or locale/resource identity | [Localization contract](docs/localization.md) |
+| AI translation batches, cross-language matrix, locale QA, or bulk translation workflow | [AI-assisted localization workflow](docs/localization-workflow.md) |
 | UI copy styling, capitalization, typography, color, iconography, or popup/dialog presentation | [UI copy and presentation style](docs/ui-copy-style.md) |
 | Runtime host UI, Java ME Screen soft keys, or host/LCDUI boundary | [Runtime UI](docs/runtime-ui.md) |
 | Java ME APIs, JSRs, vendor APIs, or guest compatibility | [Java ME compatibility](docs/java-me-compatibility.md) |

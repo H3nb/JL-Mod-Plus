@@ -126,6 +126,19 @@ source even when sentence structure or terminology differs.
 > English and Indonesian are two language renderings of one semantic contract,
 > not two independent sources of product meaning and not a literal translation pair.
 
+### Standard language and technical terminology
+
+Use standard grammar, orthography, and established contemporary UI usage for
+any target locale, without imposing English syntax or an artificially formal
+register. For Indonesian, consult KBBI VI for vocabulary and EYD V for spelling
+when uncertain; prefer natural, accurate Indonesian over literal translation.
+Retain familiar foreign or technical terms when their established software
+meaning is clearer than an uncommon forced equivalent, but do not leave
+ordinary UI prose in English without a good contextual reason. Resolve term
+choices against product semantics and the glossary rather than automatic word
+replacement. Apply equivalent locale-appropriate standards to other languages;
+region, script, and natural word order may differ.
+
 **Target:** every locale declared supported has a complete, reviewed catalog.
 Partial localization is acceptable during migration, not the desired permanent
 architecture. English fallback is a runtime safety mechanism, not a reason to
@@ -372,6 +385,14 @@ wordings establish vocabulary only, not proof of behavior. For another use of a
 term whose meaning is unclear, apply the evidence rule above first; if material
 uncertainty remains after available evidence is exhausted, record a narrowly
 scoped TODO or `NEEDS_CONTEXT` rather than extending the glossary by guesswork.
+
+## Translation matrix and operational workflow
+
+Use the [AI-assisted localization workflow](localization-workflow.md) for
+context-based batching, read-only cross-language matrix export, target-language
+quality review, and safe integration into Android resources. The matrix derives
+from the existing deterministic inventory and is not a second source of truth,
+a committed copy of translations, or an input to the Android build.
 
 ## AI-assisted workflow
 

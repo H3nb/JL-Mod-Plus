@@ -68,6 +68,21 @@ See the [inventory scope and limitations](localization.md#deterministic-inventor
 before interpreting coverage or placeholder findings. Android builds are not
 required for changes confined to this tool and its documentation/tests.
 
+### Translation matrix export
+
+Generate a read-only side-by-side JSON workspace from the existing inventory:
+
+```powershell
+python -B -m scripts.localization_matrix --prefix memory_editor_ --locale id --locale ru
+python -B -m unittest discover -s scripts/tests -p test_localization_matrix.py -v
+```
+
+The default output is `build/reports/localization/matrix.json` (ignored by
+Git). The exporter uses the inventory parser, does not modify Android resource
+files, and does not attest linguistic quality. See the [AI-assisted localization
+workflow](localization-workflow.md) for grouped key selection, preservation of
+plurals, and applying reviewed translations.
+
 ## Testing strategy
 
 The goal is useful regression confidence, not test count or coverage percentage.
