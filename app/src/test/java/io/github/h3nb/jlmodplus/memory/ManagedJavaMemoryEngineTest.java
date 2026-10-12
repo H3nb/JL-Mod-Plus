@@ -983,7 +983,7 @@ public class ManagedJavaMemoryEngineTest {
 		Field journalField = ManagedJavaMemoryEngine.class.getDeclaredField("editJournal");
 		journalField.setAccessible(true);
 		ManagedMemoryMutationJournal journal = (ManagedMemoryMutationJournal) journalField.get(engine);
-		assertNotNull(journal.get(id));
+		assertTrue(journal.get(id) != null);
 		assertEquals(MemoryEngineContract.RESULT_OK,
 				engine.clearSearchResult(TOKEN, search.revision, 0L).code);
 		assertEquals(null, journal.get(id));
