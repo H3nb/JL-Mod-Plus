@@ -44,6 +44,23 @@ class LibraryDescriptionCatalogTest {
         assertEquals("Edited default", app.description)
     }
 
+    @Test fun gameConfigurationOverrideMatchesRuntimeLocale() {
+        val workdir = temporaryFolder.newFolder("configured")
+        val gameDir = File(workdir, "converted/game").apply { mkdirs() }
+        File(gameDir, "converted.dex.conf").writeText(
+            "MIDlet-Name: Adventure\\nMIDlet-Vendor: Example\\nMIDlet-Version: 1.0\\n" +
+                "MIDlet-Description-id: Indonesia\\nMIDlet-Description-en: English\\n",
+        )
+        val configDir = File(workdir, "configs/game").apply { mkdirs() }
+        val config = File(configDir, "config.json")
+        config.writeText(
+            """{"Version":7,"SystemProperties":"microedition.locale: en-US"}""",
+        )
+        val app = app("Default")
+        val catalog = LibraryDescriptionCatalog()
+        assertEquals("English", catalog.resolve(workdir, listOf(app), "id-ID")[app.id])
+    }
+
     @Test fun replacingDescriptorRefreshesLocalizedMetadata() {
         val workdir = temporaryFolder.newFolder("replacement")
         val gameDir = File(workdir, "converted/game").apply { mkdirs() }
