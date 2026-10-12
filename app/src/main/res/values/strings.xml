@@ -1114,4 +1114,8 @@
     <string name="updates_debug_build">This is a debug build. GitHub release APKs are installed separately.</string>
     <string name="updates_link_copied">No browser is available. The release link was copied.</string>
     <string name="updates_browser_unavailable">No browser is available to open the release.</string>
+    <string name="bulk_install_choose_files">Files</string>
+    <string name="bulk_install_choose_folder">Folder</string>
+    <string name="bulk_install_unreadable_archives">Unreadable archives: %1$d</string>
+    <string name="bulk_install_skipped_entries">Skipped archive entries: %1$d</string>
 </resources>
