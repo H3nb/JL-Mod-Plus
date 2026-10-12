@@ -54,6 +54,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -588,6 +589,7 @@ private fun RuntimeSearchResultsTab(
     var unknownDialog by remember { mutableStateOf(false) }
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     var editRevision by remember { mutableStateOf(0L) }
+    var deleteSnapshot by remember { mutableStateOf<Pair<Long, List<Long>>?>(null) }
     val unknownBaseline = state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE
     val selectedRows = state.results.filter { it.id in state.selected }
     val selectedWriteSupported = selectedRows.isNotEmpty() && state.writeSupported
@@ -645,7 +647,9 @@ private fun RuntimeSearchResultsTab(
                 icon = R.drawable.ic_delete,
                 description = R.string.memory_editor_remove,
                 enabled = state.selected.isNotEmpty() && !state.busy && !unknownBaseline,
-                onClick = { actions.removeSelected(false) },
+                onClick = {
+                    deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
+                },
             )
             val visibleSelectionDescription = stringResource(
                 if (allVisibleSelected) R.string.memory_editor_clear_selection
@@ -767,15 +771,79 @@ private fun RuntimeSearchResultsTab(
                 onPeekUnderlayChanged(false)
                 editTargets = null
             },
-            onApply = { value, type, freeze ->
-                actions.editTargetsWithOptions(
-                    currentEditTargets, editRevision, value, type, false, freeze,
-                )
+            onApply = { value, type, freeze, incremental, step ->
+                if (incremental) {
+                    actions.editIncrementalTargets(
+                        currentEditTargets, editRevision, value, step, type,
+                    )
+                } else {
+                    actions.editTargetsWithOptions(
+                        currentEditTargets, editRevision, value, type, false, freeze,
+                    )
+                }
                 onPeekUnderlayChanged(false)
                 editTargets = null
             },
         )
     }
+    deleteSnapshot?.let { (revision, ids) ->
+        AlertDialog(
+            onDismissRequest = { deleteSnapshot = null },
+            title = { Text(stringResource(R.string.memory_editor_remove_candidates_title)) },
+            text = {
+                Text(
+                    stringResource(R.string.memory_editor_remove_candidates_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        actions.removeResultTargets(ids, revision, false)
+                        deleteSnapshot = null
+                    },
+                ) { Text(stringResource(R.string.memory_editor_remove)) }
+                TextButton(
+                    onClick = {
+                        actions.removeResultTargets(ids, revision, true)
+                        deleteSnapshot = null
+                    },
+                ) { Text(stringResource(R.string.memory_editor_revert_and_remove)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteSnapshot = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun runtimeCandidateLocation(id: Long, source: MemoryCandidateSource, fallback: String): String {
+    if (source.kind == MemoryEngineContract.SOURCE_UNKNOWN) {
+        return if (ManagedJavaMemoryIds.kind(id) == ManagedJavaMemoryEngine.KIND_ARRAY) {
+            stringResource(
+                R.string.memory_editor_candidate_untraced,
+                ManagedJavaMemoryIds.ownerHandle(id),
+                ManagedJavaMemoryIds.slot(id),
+            )
+        } else fallback
+    }
+    val kind = stringResource(
+        if (source.kind == MemoryEngineContract.SOURCE_STATIC_FIELD) {
+            R.string.memory_editor_reference_static
+        } else R.string.memory_editor_reference_instance
+    )
+    val name = if (ManagedJavaMemoryIds.kind(id) == ManagedJavaMemoryEngine.KIND_ARRAY) {
+        "${source.shortFieldName}[${ManagedJavaMemoryIds.slot(id)}]"
+    } else source.shortFieldName
+    return if (source.kind == MemoryEngineContract.SOURCE_INSTANCE_FIELD) {
+        stringResource(
+            R.string.memory_editor_candidate_instance,
+            name, kind, ManagedJavaMemoryIds.ownerHandle(id),
+        )
+    } else stringResource(R.string.memory_editor_candidate_static, name, kind)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -817,9 +885,11 @@ private fun RuntimeResultRow(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        row.locationText,
+                        runtimeCandidateLocation(row.id, row.source, row.locationText),
                         style = runtimeMemoryMetaTextStyle(),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
                     RuntimeCandidateStatus(row.state, row.relocations)
@@ -932,7 +1002,7 @@ private fun RuntimeWatchTab(
                 onPeekUnderlayChanged(false)
                 editTargets = null
             },
-            onApply = { value, type, freeze ->
+            onApply = { value, type, freeze, _, _ ->
                 actions.editTargetsWithOptions(
                     currentEditTargets, 0L, value, type, false, freeze,
                 )
@@ -986,8 +1056,11 @@ private fun RuntimeWatchRow(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "${row.locationText} · ${runtimeTypeShort(row.type)}",
+                        "${runtimeCandidateLocation(row.id, row.source, row.locationText)} · " +
+                            runtimeTypeShort(row.type),
                         style = runtimeMemoryMetaTextStyle(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
@@ -1549,7 +1622,7 @@ private fun RuntimeEditDialog(
     writeSupported: Boolean,
     onPeekUnderlayChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
-    onApply: (String, Int, Boolean) -> Unit,
+    onApply: (String, Int, Boolean, Boolean, String) -> Unit,
 ) {
     val firstTarget = targets.firstOrNull() ?: return
     val initialType = firstTarget.type
@@ -1567,13 +1640,26 @@ private fun RuntimeEditDialog(
         mutableIntStateOf(initialType.takeIf { it in editableTypes } ?: editableTypes.first())
     }
     val hasCompatibleType = editableTypes.any { it == type }
+    val incrementalAvailable = batch && targets.none(MemoryEditTarget::watch) &&
+        firstTarget.type in MemoryEngineContract.TYPE_BYTE..MemoryEngineContract.TYPE_LONG &&
+        targets.all { it.type == firstTarget.type } && type == firstTarget.type
     var replacement by remember(targets, initialType, editableTypes) {
         mutableStateOf(TextFieldValue(initialValue, TextRange(initialValue.length)))
     }
     var freeze by remember { mutableStateOf(false) }
+    var incremental by remember(targets) { mutableStateOf(false) }
+    var editingStep by remember(targets) { mutableStateOf(false) }
+    var step by remember(targets) { mutableStateOf(TextFieldValue("1", TextRange(1))) }
     var peekingUnderlay by remember { mutableStateOf(false) }
     val spec = remember(type) { MemoryInputSpec.forType(type) }
-    val replacementValid = if (targets.any(MemoryEditTarget::watch)) {
+    val preview = remember(targets, type, replacement.text, step.text, incremental) {
+        if (incremental) memoryIncrementalPreview(targets, type, replacement.text, step.text)
+        else null
+    }
+    val stepSpec = remember { MemoryInputSpec.forType(MemoryEngineContract.TYPE_LONG) }
+    val replacementValid = if (incremental) {
+        preview != null
+    } else if (targets.any(MemoryEditTarget::watch)) {
         targets.any { it.type == type } && spec.isComplete(replacement.text)
     } else {
         spec.isComplete(replacement.text)
@@ -1581,6 +1667,8 @@ private fun RuntimeEditDialog(
     val selectType: (Int) -> Unit = { selectedType ->
         if (selectedType != type) {
             type = selectedType
+            incremental = false
+            editingStep = false
             val next = if (selectedType == initialType) initialValue else ""
             replacement = TextFieldValue(next, TextRange(next.length))
         }
@@ -1608,41 +1696,57 @@ private fun RuntimeEditDialog(
         text = {
             RuntimeSearchDialogBody(
                 showKeypad = true,
-                controls = { sideDock ->
-                    if (sideDock) {
-                        RuntimeSearchControlRow {
-                            RuntimeEditTypeMenu(
-                                type = type,
-                                types = editableTypes,
-                                onType = selectType,
-                                modifier = Modifier.weight(1f),
+                controls = { _ ->
+                    if (incrementalAvailable) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            FilterChip(
+                                selected = !incremental,
+                                onClick = {
+                                    incremental = false
+                                    editingStep = false
+                                },
+                                label = { Text(stringResource(R.string.memory_editor_set_all)) },
                             )
-                            RuntimeSearchField(
-                                label = stringResource(R.string.memory_editor_replacement),
-                                value = replacement,
-                                active = true,
-                                onClick = {},
-                                onValueChange = { replacement = it },
-                                valueSpec = spec,
-                                modifier = Modifier.weight(1f),
-                                initialFocus = true,
+                            FilterChip(
+                                selected = incremental,
+                                onClick = { incremental = true },
+                                label = { Text(stringResource(R.string.memory_editor_incremental_edit)) },
                             )
                         }
-                    } else {
+                    }
+                    RuntimeSearchControlRow {
                         RuntimeEditTypeMenu(
                             type = type,
                             types = editableTypes,
                             onType = selectType,
+                            modifier = Modifier.weight(0.42f),
                         )
                         RuntimeSearchField(
-                            label = stringResource(R.string.memory_editor_replacement),
+                            label = stringResource(
+                                if (incremental) R.string.memory_editor_increment_start
+                                else R.string.memory_editor_replacement
+                            ),
                             value = replacement,
-                            active = true,
-                            onClick = {},
+                            active = !incremental || !editingStep,
+                            onClick = { editingStep = false },
                             onValueChange = { replacement = it },
                             valueSpec = spec,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.weight(0.58f),
                             initialFocus = true,
+                        )
+                    }
+                    if (incremental) {
+                        RuntimeSearchField(
+                            label = stringResource(R.string.memory_editor_increment_step),
+                            value = step,
+                            active = editingStep,
+                            onClick = { editingStep = true },
+                            onValueChange = { step = it },
+                            valueSpec = stepSpec,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                     if (!batch) {
@@ -1654,17 +1758,38 @@ private fun RuntimeEditDialog(
                 },
                 supportingContent = if (batch) {
                     {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                stringResource(R.string.memory_editor_edit_batch_help),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            if (!hasCompatibleType) {
+                        when {
+                            incremental && preview != null -> {
+                                val values = preview.values
+                                val sample = if (values.size <= 3) {
+                                    values.joinToString(" → ")
+                                } else {
+                                    "${values[0]} → ${values[1]} → … → ${values.last()}"
+                                }
                                 Text(
-                                    stringResource(R.string.memory_editor_edit_batch_no_common_type),
+                                    stringResource(
+                                        R.string.memory_editor_increment_preview,
+                                        sample,
+                                        values.size,
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            incremental && (replacement.text.isNotBlank() || step.text.isBlank()) -> {
+                                Text(
+                                    stringResource(R.string.memory_editor_increment_invalid),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                            !incremental && targets.any { it.type != type } -> {
+                                Text(
+                                    stringResource(R.string.memory_editor_edit_batch_type_notice),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
@@ -1682,21 +1807,36 @@ private fun RuntimeEditDialog(
                     RuntimeSearchKeypad(
                         landscape = landscape,
                         allowGroup = false,
-                        valueSpec = spec,
-                        onToken = { replacement = runtimeInsertValidated(replacement, it, spec) },
-                        onBackspace = { replacement = runtimeBackspace(replacement) },
-                        onMove = { replacement = runtimeMove(replacement, it) },
-                        onClear = { replacement = TextFieldValue("", TextRange(0)) },
+                        valueSpec = if (incremental && editingStep) stepSpec else spec,
+                        onToken = {
+                            if (incremental && editingStep) {
+                                step = runtimeInsertValidated(step, it, stepSpec)
+                            } else {
+                                replacement = runtimeInsertValidated(replacement, it, spec)
+                            }
+                        },
+                        onBackspace = {
+                            if (incremental && editingStep) step = runtimeBackspace(step)
+                            else replacement = runtimeBackspace(replacement)
+                        },
+                        onMove = {
+                            if (incremental && editingStep) step = runtimeMove(step, it)
+                            else replacement = runtimeMove(replacement, it)
+                        },
+                        onClear = {
+                            if (incremental && editingStep) step = TextFieldValue("", TextRange(0))
+                            else replacement = TextFieldValue("", TextRange(0))
+                        },
                     )
                 },
             )
         },
-        textScrollable = false,
+        textScrollable = batch,
         confirmButton = {
             Button(
                 enabled = writeSupported && hasCompatibleType && replacementValid,
                 onClick = {
-                    onApply(replacement.text, type, freeze)
+                    onApply(replacement.text, type, freeze, incremental, step.text)
                     onDismiss()
                 },
             ) { Text(stringResource(R.string.memory_editor_save)) }
@@ -1743,15 +1883,41 @@ private fun RuntimeInspectorTab(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) },
+                            runtimeCandidateLocation(
+                                snapshot.candidateId, snapshot.source,
+                                snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) },
+                            ),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            snapshot.provenance.ifBlank { "logical" },
+                            if (snapshot.source == MemoryCandidateSource.UNKNOWN) {
+                                stringResource(R.string.memory_editor_source_unknown)
+                            } else {
+                                "${snapshot.source.declaringClass}.${snapshot.source.fieldName}: " +
+                                    snapshot.source.fieldType
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        val pathSummary = when (snapshot.pathStatus) {
+                            MemoryEngineContract.PATH_VERIFIED ->
+                                snapshot.referencePath.takeIf { it.isNotEmpty() }
+                            MemoryEngineContract.PATH_CHANGED ->
+                                stringResource(R.string.memory_editor_path_changed)
+                            MemoryEngineContract.PATH_INCOMPLETE ->
+                                stringResource(R.string.memory_editor_path_incomplete)
+                            else -> null
+                        }
+                        if (pathSummary != null) {
+                            Text(
+                                pathSummary,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                     RuntimeActionIcon(
                         R.drawable.ic_refresh,

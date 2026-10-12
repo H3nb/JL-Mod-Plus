@@ -24,6 +24,11 @@ internal fun memoryOperationMessage(
     notAttempted: Int = 0,
     skippedByType: Int = 0,
 ): MemoryOperationMessage? {
+    if (result == MemoryEngineContract.RESULT_PARTIAL_WRITE &&
+        reason == MemoryEngineContract.REASON_REVERT_REMOVE_COMMIT_FAILED
+    ) {
+        return MemoryOperationMessage(R.string.memory_editor_revert_remove_commit_failed)
+    }
     val resource = when (result) {
         MemoryEngineContract.RESULT_OK -> null
         MemoryEngineContract.RESULT_CANCELLED -> R.string.memory_editor_cancelled
@@ -39,6 +44,11 @@ internal fun memoryOperationMessage(
         MemoryEngineContract.RESULT_UNSUPPORTED -> R.string.memory_editor_unsupported
         MemoryEngineContract.RESULT_PARTIAL_WRITE -> R.string.memory_editor_partial_write
         else -> R.string.memory_editor_invalid_request
+    }
+    if (result == MemoryEngineContract.RESULT_OK && written > 0 &&
+        unconfirmed == 0 && skipped == 0 && notAttempted == 0 && skippedByType == 0
+    ) {
+        return MemoryOperationMessage(R.string.memory_editor_write_confirmed, listOf(written))
     }
     // An unsafe/cancelled write can still have changed values. Keep its counters visible.
     if (written + unconfirmed + skipped + notAttempted + skippedByType > 0) {

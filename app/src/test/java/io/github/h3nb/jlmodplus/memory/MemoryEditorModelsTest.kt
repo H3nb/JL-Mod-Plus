@@ -11,6 +11,21 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MemoryEditorModelsTest {
+    @Test fun sourceMetadataRequiresACompleteCheckedFieldDescriptor() {
+        assertEquals(
+            MemoryCandidateSource.UNKNOWN,
+            MemoryCandidateSource.checked(MemoryEngineContract.SOURCE_UNKNOWN, "a", "aW", "[I"),
+        )
+        assertEquals(
+            MemoryCandidateSource.UNKNOWN,
+            MemoryCandidateSource.checked(MemoryEngineContract.SOURCE_STATIC_FIELD, "", "aW", "[I"),
+        )
+        val source = MemoryCandidateSource.checked(MemoryEngineContract.SOURCE_STATIC_FIELD, "com.game.a", "aW", "[I")
+        assertEquals("a.aW", source.shortFieldName)
+        assertEquals("com.game.a", source.declaringClass)
+        assertEquals("[I", source.fieldType)
+    }
+
     @Test fun watchPageParserRequiresOnlyFormattedPresentationFields() {
         assertTrue(MemoryWatchPageParser.parse(null).isEmpty())
         val parsed = MemoryWatchPageParser.parse(

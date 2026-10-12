@@ -28,6 +28,16 @@ class MemoryOperationMessagesTest {
     }
 
     @Test
+    fun revertRemovalFailureExplainsThatGameMemoryMayAlreadyBeRestored() {
+        val message = memoryOperationMessage(
+            MemoryEngineContract.RESULT_PARTIAL_WRITE,
+            MemoryEngineContract.REASON_REVERT_REMOVE_COMMIT_FAILED,
+            written = 2,
+        )!!
+        assertEquals(R.string.memory_editor_revert_remove_commit_failed, message.resource)
+    }
+
+    @Test
     fun inspectorUnconfirmedWriteNeverClaimsThatAnyWriteSucceeded() {
         val message = memoryOperationMessage(MemoryEngineContract.RESULT_PARTIAL_WRITE, unconfirmed = 1)!!
         assertEquals(R.string.memory_editor_write_failure_outcome, message.resource)
@@ -43,6 +53,14 @@ class MemoryOperationMessagesTest {
         )!!
         assertEquals(R.string.memory_editor_cancelled, message.explanation)
         assertEquals(listOf(3, 1, 2, 4, 5), message.arguments)
+    }
+
+    @Test
+    fun confirmedWriteHasACompactReadbackMessage() {
+        val message = memoryOperationMessage(MemoryEngineContract.RESULT_OK, written = 5)!!
+        assertEquals(R.string.memory_editor_write_confirmed, message.resource)
+        assertEquals(listOf(5), message.arguments)
+        assertNull(message.explanation)
     }
 
     @Test
