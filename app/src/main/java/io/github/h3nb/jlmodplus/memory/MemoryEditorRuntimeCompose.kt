@@ -1729,7 +1729,7 @@ private fun RuntimeEditDialog(
                                 else R.string.memory_editor_replacement
                             ),
                             value = replacement,
-                            active = true,
+                            active = !incremental || !editingStep,
                             onClick = { editingStep = false },
                             onValueChange = { replacement = it },
                             valueSpec = spec,
@@ -1741,7 +1741,7 @@ private fun RuntimeEditDialog(
                         RuntimeSearchField(
                             label = stringResource(R.string.memory_editor_increment_step),
                             value = step,
-                            active = true,
+                            active = editingStep,
                             onClick = { editingStep = true },
                             onValueChange = { step = it },
                             valueSpec = stepSpec,

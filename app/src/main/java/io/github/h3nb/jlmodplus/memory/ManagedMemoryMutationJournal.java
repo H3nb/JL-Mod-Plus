@@ -22,16 +22,33 @@ final class ManagedMemoryMutationJournal {
 		final long before;
 		final long after;
 		final boolean uncertain;
+		/** The original value was confirmed restored, but result removal may still be pending. */
+		final boolean restored;
 
-		Entry(int type, long before, long after, boolean uncertain) {
+		Entry(int type, long before, long after, boolean uncertain, boolean restored) {
 			this.type = type;
 			this.before = before;
 			this.after = after;
 			this.uncertain = uncertain;
+			this.restored = restored;
 		}
 	}
 
 	void clear() { lastEdit.clear(); }
+
+	/** Old runtime owner handles cannot authorize a future revert. */
+	void pruneOwners(java.util.Set<Long> retainedHandles) {
+		lastEdit.keySet().removeIf(id -> !retainedHandles.contains(
+				ManagedJavaMemoryIds.ownerHandle(id)));
+	}
+
+	/** Keep the restoration evidence until the search result is actually removed. */
+	void markRestored(long id, Entry expected) {
+		if (lastEdit.get(id) == expected && !expected.uncertain) {
+			lastEdit.put(id, new Entry(expected.type, expected.before, expected.after,
+					false, true));
+		}
+	}
 	Entry get(long id) { return lastEdit.get(id); }
 	void remove(long id) { lastEdit.remove(id); }
 
@@ -47,12 +64,12 @@ final class ManagedMemoryMutationJournal {
 
 	void record(long id, int type, long before, long after) {
 		if (before != after && canRecord(id)) {
-			lastEdit.put(id, new Entry(type, before, after, false));
+			lastEdit.put(id, new Entry(type, before, after, false, false));
 		}
 	}
 
 	void markUncertain(long id, int type) {
-		if (canRecord(id)) lastEdit.put(id, new Entry(type, 0L, 0L, true));
+		if (canRecord(id)) lastEdit.put(id, new Entry(type, 0L, 0L, true, false));
 	}
 
 	static boolean isIntegerType(int type) {

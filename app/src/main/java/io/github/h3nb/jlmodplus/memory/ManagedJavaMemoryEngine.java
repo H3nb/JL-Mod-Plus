@@ -950,16 +950,28 @@ final class ManagedJavaMemoryEngine {
 				int watchIndex = watches.indexOf(id);
 				frozen = watchIndex >= 0 && watches.freeze[watchIndex] && !watches.freezePaused[watchIndex];
 			}
+			// A live Freeze may immediately overwrite the restored value even if there is
+			// no explicit edit journal entry for this candidate.
+			if (frozen) {
+				conflicts++;
+				continue;
+			}
 			if (entry == null) {
 				removable[removed++] = id;
 				continue;
 			}
 			OwnerBucket owner = batch.owners[index];
 			Object strongOwner = batch.strongOwners[index];
-			if (frozen || entry.uncertain || entry.type != valueTypeFor(owner, batch.slots[index])
+			if (entry.uncertain || entry.type != valueTypeFor(owner, batch.slots[index])
 					|| !readTyped(owner, batch.slots[index], strongOwner, current)
-					|| current[0] != entry.after) {
+					|| current[0] != (entry.restored ? entry.before : entry.after)) {
 				conflicts++;
+				continue;
+			}
+			if (entry.restored) {
+				// A prior restore succeeded, but publishing the result removal did not.
+				// It is safe to retry removal only while the original value still matches.
+				removable[removed++] = id;
 				continue;
 			}
 			attempts++;
@@ -969,7 +981,9 @@ final class ManagedJavaMemoryEngine {
 						&& writeConfirmed(current[0], entry.before)) {
 					restored++;
 					removable[removed++] = id;
-					synchronized (stateLock) { if (editJournal != null) editJournal.remove(id); }
+					synchronized (stateLock) {
+						if (editJournal != null) editJournal.markRestored(id, entry);
+					}
 					if (batch.watch[index]) updateWatchPrevious(id, current[0]);
 				} else {
 					unconfirmed++;
@@ -989,6 +1003,12 @@ final class ManagedJavaMemoryEngine {
 				return resultDetailed(token, MemoryEngineContract.RESULT_PARTIAL_WRITE,
 						"Values may have been restored, but result removal was not committed",
 						attempts, restored, conflicts, unconfirmed, notAttempted, conflicts, 0);
+			}
+			// Journal entries are cleared only after filter commits the revised result set.
+			synchronized (stateLock) {
+				if (editJournal != null) {
+					for (int index = 0; index < removed; index++) editJournal.remove(removable[index]);
+				}
 			}
 		}
 		int code = (conflicts == 0 && unconfirmed == 0 && notAttempted == 0)
@@ -2219,6 +2239,7 @@ final class ManagedJavaMemoryEngine {
 		while (handles.hasNext()) {
 			if (!retained.contains(handles.next())) handles.remove();
 		}
+		if (editJournal != null) editJournal.pruneOwners(owners.keySet());
 	}
 
 	static final class Limits {

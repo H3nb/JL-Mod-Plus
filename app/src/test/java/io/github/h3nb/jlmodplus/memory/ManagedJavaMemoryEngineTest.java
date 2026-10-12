@@ -925,6 +925,32 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void retryAfterConfirmedRestoreOnlyRemovesIfRestoredValueStillMatches()
+			throws ReflectiveOperationException {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "900", false, 0L).code);
+		Field journalField = ManagedJavaMemoryEngine.class.getDeclaredField("editJournal");
+		journalField.setAccessible(true);
+		ManagedMemoryMutationJournal journal = (ManagedMemoryMutationJournal) journalField.get(engine);
+		journal.markRestored(id, journal.get(id));
+		root.rootMatch = 42;
+		assertEquals(MemoryEngineContract.RESULT_PARTIAL_WRITE,
+				engine.revertAndRemove(TOKEN, search.revision, new long[]{id}, 0L).code);
+		assertEquals(42, root.rootMatch);
+		assertTrue(hasId(engine.resultPage(TOKEN, search.revision, 0, 100), id));
+
+		root.rootMatch = 7;
+		ManagedJavaMemoryEngine.ManagedOperationResult retry = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, retry.code);
+		assertFalse(hasId(engine.resultPage(TOKEN, retry.revision, 0, 100), id));
+		assertEquals(null, journal.get(id));
+	}
+
+	@Test
 	public void repeatedEditsRevertOnlyTheMostRecentConfirmedMutation() {
 		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
 		long id = idForAddress(search.revision, "rootMatch");

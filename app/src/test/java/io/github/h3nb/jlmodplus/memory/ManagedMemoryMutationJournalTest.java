@@ -66,6 +66,22 @@ public class ManagedMemoryMutationJournalTest {
 	}
 
 	@Test
+	public void confirmedRestoreRemainsTrackedUntilRemovalCommits() {
+		ManagedMemoryMutationJournal journal = new ManagedMemoryMutationJournal();
+		long id = ManagedJavaMemoryIds.encode(ManagedJavaMemoryEngine.KIND_ARRAY, 3, 1);
+		journal.record(id, MemoryEngineContract.TYPE_INT, 11, 100);
+		ManagedMemoryMutationJournal.Entry original = journal.get(id);
+		journal.markRestored(id, original);
+		assertTrue(journal.get(id).restored);
+		assertEquals(11, journal.get(id).before);
+		assertEquals(100, journal.get(id).after);
+
+		// Obsolete owner handles must not consume the bounded history indefinitely.
+		journal.pruneOwners(java.util.Set.of(4L));
+		assertEquals(null, journal.get(id));
+	}
+
+	@Test
 	public void capacityRejectsNewTargetsRatherThanDiscardingHistory() {
 		ManagedMemoryMutationJournal journal = new ManagedMemoryMutationJournal();
 		for (int index = 0; index < 1024; index++) {
