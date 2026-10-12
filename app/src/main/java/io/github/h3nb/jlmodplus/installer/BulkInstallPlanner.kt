@@ -361,7 +361,6 @@ object BulkInstallPlanner {
                 return@map item
             }
             val key = buildString {
-                append(item.unit.kind.name).append('\u0000')
                 item.descriptorAttributes.toSortedMap().forEach { (name, value) ->
                     append(name).append('=').append(value).append('\u0001')
                 }
@@ -405,11 +404,7 @@ object BulkInstallPlanner {
             if (maxima.size > 1) {
                 val semanticKeys = maxima
                     .map {
-                        Triple(
-                            it.value.unit.kind,
-                            it.value.descriptorAttributes,
-                            it.value.jarFingerprint,
-                        )
+                        it.value.descriptorAttributes to it.value.jarFingerprint
                     }
                     .distinct()
                 if (semanticKeys.size > 1) {
