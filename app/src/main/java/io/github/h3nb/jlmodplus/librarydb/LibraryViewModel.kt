@@ -7,6 +7,7 @@
 package io.github.h3nb.jlmodplus.librarydb
 
 import android.app.Application
+import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
 import androidx.core.content.edit
@@ -42,6 +43,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -53,6 +55,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStatsHandoff
+import javax.microedition.shell.MidletLocaleResolver
 import io.github.h3nb.jlmodplus.util.Constants.PREF_APP_SORT
 import io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR
 
@@ -74,6 +77,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             val generation: Long,
             val emulatorDir: File,
             val apps: List<LibraryAppRow>,
+            val localizedDescriptions: Map<Long, String> = emptyMap(),
             val collections: List<LibraryCollectionRow>,
             val filter: String,
             val sortVariant: Int,
@@ -112,6 +116,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private val sortVariant = MutableStateFlow(readSortPreference(preferences))
     private val quickView = MutableStateFlow(LibraryQuickView.All)
     private val sortLocale = MutableStateFlow(Locale.getDefault())
+    private val descriptionLocale = MutableStateFlow(DescriptionLocale(null, 0L))
     private val playStatRefreshMutex = Mutex()
 
     private val playStatReadyWorker = scope.launch {
@@ -124,6 +129,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     val displayState: StateFlow<DisplayState> = libraryDisplayStates(
         repository.state, filter, sortVariant, quickView, sortLocale,
+        guestLocales = descriptionLocale,
     ).stateIn(scope, SharingStarted.Eagerly, DisplayState.Idle)
 
     init {
@@ -172,6 +178,14 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     /** Locale recreation can retain this Activity-scoped ViewModel. */
     fun refreshSortLocale() {
         sortLocale.value = Locale.getDefault()
+    }
+
+    /** The Library follows the same effective app locale as the MIDlet runtime. */
+    fun refreshDescriptionLocale(context: Context) {
+        val current = descriptionLocale.value
+        descriptionLocale.value = DescriptionLocale(
+            MidletLocaleResolver.resolve(context), current.revision + 1,
+        )
     }
 
     fun readyGeneration(): LibraryGenerationToken? = repository.currentReadyToken()
@@ -971,6 +985,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     }
 }
 
+internal data class DescriptionLocale(val value: String?, val revision: Long)
+
 private data class LibraryDisplayInputs(
     val repositoryState: LibraryRepository.State,
     val sourceRevision: Long,
@@ -978,11 +994,14 @@ private data class LibraryDisplayInputs(
     val sortVariant: Int,
     val quickView: LibraryQuickView,
     val locale: Locale,
+    val descriptionLocale: DescriptionLocale = DescriptionLocale(null, 0L),
 )
 
 private data class LibraryOrderedSource(
     val repositoryState: LibraryRepository.State.Ready,
     val ordered: LibraryListProjection.OrderedRows,
+    val localizedDescriptions: Map<Long, String>,
+    val descriptionLocale: DescriptionLocale,
 ) {
     fun matches(input: LibraryDisplayInputs): Boolean {
         val ready = input.repositoryState as? LibraryRepository.State.Ready ?: return false
@@ -1002,13 +1021,17 @@ internal fun libraryDisplayStates(
     quickViews: Flow<LibraryQuickView>,
     locales: Flow<Locale>,
     workerDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    guestLocales: Flow<DescriptionLocale> = flowOf(DescriptionLocale(null, 0L)),
 ): Flow<LibraryViewModel.DisplayState> = flow {
     var revision = 0L
     var prepared: LibraryOrderedSource? = null
+    val descriptionCatalog = LibraryDescriptionCatalog()
     val snapshots = repositoryStates.map { state -> (++revision) to state }
     emitAll(combine(snapshots, filters, sorts, quickViews, locales) {
             snapshot, query, sort, quickView, locale ->
         LibraryDisplayInputs(snapshot.second, snapshot.first, query, sort, quickView, locale)
+    }.combine(guestLocales) { input, guestLocale ->
+        input.copy(descriptionLocale = guestLocale)
     }.mapLatest { input ->
         when (val state = input.repositoryState) {
             LibraryRepository.State.Idle -> {
@@ -1030,14 +1053,24 @@ internal fun libraryDisplayStates(
             }
             is LibraryRepository.State.Ready -> {
                 val previous = prepared
+                val translated = if (previous != null &&
+                    previous.repositoryState === state &&
+                    previous.descriptionLocale == input.descriptionLocale) {
+                    previous.localizedDescriptions
+                } else withContext(Dispatchers.IO) {
+                    val context = currentCoroutineContext()
+                    descriptionCatalog.resolve(
+                        state.emulatorDir, state.apps, input.descriptionLocale.value,
+                    ) { context.ensureActive() }
+                }
                 val (source, projected) = withContext(workerDispatcher) {
                     val context = currentCoroutineContext()
                     val ordered = if (previous != null && previous.matches(input)) previous.ordered
                     else LibraryListProjection.prepare(state.apps, input.sortVariant,
                         input.locale, input.quickView) { context.ensureActive() }
                     val projected = LibraryListProjection.project(ordered, input.filter,
-                        input.quickView) { context.ensureActive() }
-                    LibraryOrderedSource(state, ordered) to projected
+                        input.quickView, translated) { context.ensureActive() }
+                    LibraryOrderedSource(state, ordered, translated, input.descriptionLocale) to projected
                 }
                 // Only completed, still-current work becomes the one retained ordering.
                 prepared = source
@@ -1045,6 +1078,7 @@ internal fun libraryDisplayStates(
                     generation = state.generation,
                     emulatorDir = state.emulatorDir,
                     apps = projected,
+                    localizedDescriptions = translated,
                     collections = state.collections,
                     filter = input.filter,
                     sortVariant = input.sortVariant,
