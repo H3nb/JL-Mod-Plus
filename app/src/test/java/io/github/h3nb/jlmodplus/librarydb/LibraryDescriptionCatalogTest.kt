@@ -59,6 +59,11 @@ class LibraryDescriptionCatalogTest {
         val app = app("Default")
         val catalog = LibraryDescriptionCatalog()
         assertEquals("English", catalog.resolve(workdir, listOf(app), "id-ID")[app.id])
+        // A profile change must invalidate the metadata cache without reinstalling the game.
+        config.writeText(
+            """{"Version":7,"SystemProperties":"microedition.locale: id"}""",
+        )
+        assertEquals("Indonesia", catalog.resolve(workdir, listOf(app), "id-ID")[app.id])
     }
 
     @Test fun replacingDescriptorRefreshesLocalizedMetadata() {

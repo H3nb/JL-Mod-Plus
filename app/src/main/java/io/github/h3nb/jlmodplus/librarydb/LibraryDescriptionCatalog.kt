@@ -22,6 +22,7 @@ internal class LibraryDescriptionCatalog {
     private data class Cached(
         val descriptorStamp: Stamp,
         val configStamp: Stamp,
+        val legacyConfigStamp: Stamp,
         val descriptions: Map<String, String>,
         val systemProperties: String?,
     )
@@ -47,11 +48,14 @@ internal class LibraryDescriptionCatalog {
             val descriptorFile = File(emulatorDir, "converted/${app.storageKey}/converted.dex.conf")
             val configDir = File(emulatorDir, "configs/${app.storageKey}")
             val configFile = File(configDir, "config.json")
+            val legacyConfigFile = File(configDir, "config.xml")
             val descriptorStamp = descriptorFile.stamp()
             val configStamp = configFile.stamp()
+            val legacyConfigStamp = legacyConfigFile.stamp()
             val prior = entries[app.storageKey]
             val entry = if (prior != null && prior.descriptorStamp == descriptorStamp
-                && prior.configStamp == configStamp) {
+                && prior.configStamp == configStamp
+                && prior.legacyConfigStamp == legacyConfigStamp) {
                 prior
             } else {
                 val descriptions = try {
@@ -62,13 +66,13 @@ internal class LibraryDescriptionCatalog {
                     emptyMap()
                 }
                 val systemProperties = try {
-                    if (descriptions.isNotEmpty() && configFile.isFile) {
+                    if (descriptions.isNotEmpty() && (configFile.isFile || legacyConfigFile.isFile)) {
                         ProfilesManager.loadPreparedMidletConfig(configDir, false)?.systemProperties
                     } else null
                 } catch (_: Exception) {
                     null
                 }
-                Cached(descriptorStamp, configStamp, descriptions, systemProperties)
+                Cached(descriptorStamp, configStamp, legacyConfigStamp, descriptions, systemProperties)
                     .also { entries[app.storageKey] = it }
             }
             if (entry.descriptions.isEmpty()) continue
