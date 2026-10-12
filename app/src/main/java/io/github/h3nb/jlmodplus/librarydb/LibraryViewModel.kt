@@ -1026,6 +1026,7 @@ internal fun libraryDisplayStates(
     var revision = 0L
     var prepared: LibraryOrderedSource? = null
     val descriptionCatalog = LibraryDescriptionCatalog()
+    val descriptionCatalogMutex = Mutex()
     val snapshots = repositoryStates.map { state -> (++revision) to state }
     emitAll(combine(snapshots, filters, sorts, quickViews, locales) {
             snapshot, query, sort, quickView, locale ->
@@ -1059,9 +1060,11 @@ internal fun libraryDisplayStates(
                     previous.localizedDescriptions
                 } else withContext(Dispatchers.IO) {
                     val context = currentCoroutineContext()
-                    descriptionCatalog.resolve(
-                        state.emulatorDir, state.apps, input.descriptionLocale.value,
-                    ) { context.ensureActive() }
+                    descriptionCatalogMutex.withLock {
+                        descriptionCatalog.resolve(
+                            state.emulatorDir, state.apps, input.descriptionLocale.value,
+                        ) { context.ensureActive() }
+                    }
                 }
                 val (source, projected) = withContext(workerDispatcher) {
                     val context = currentCoroutineContext()
