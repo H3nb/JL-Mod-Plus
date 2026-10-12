@@ -27,7 +27,7 @@ public final class MidletDescriptionLocalization {
             if (!name.startsWith(PREFIX)) continue;
             String locale = name.substring(PREFIX.length());
             String value = entry.getValue();
-            if (validLocale(locale) && value != null && !value.isBlank()) {
+            if (validLocale(locale) && value != null && !value.trim().isEmpty()) {
                 found.put(locale, value);
             }
         }
@@ -46,7 +46,7 @@ public final class MidletDescriptionLocalization {
         String candidate = guestLocale;
         while (true) {
             String value = translations.get(candidate);
-            if (value != null && !value.isBlank()) return value;
+            if (value != null && !value.trim().isEmpty()) return value;
             int separator = candidate.lastIndexOf('-');
             if (separator < 0) break;
             candidate = candidate.substring(0, separator);
