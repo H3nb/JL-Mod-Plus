@@ -50,6 +50,16 @@ object BulkInstallPlanner {
 
     fun fingerprint(files: List<File>): String = sourceFingerprint(files)
 
+    /** Same fingerprint composition as sourceFingerprint, using digests collected during copy. */
+    internal fun fingerprintFromDigests(digests: List<ByteArray>): String {
+        val fingerprint = MessageDigest.getInstance("SHA-256")
+        for (digest in digests) {
+            fingerprint.update(digest)
+            fingerprint.update(0.toByte())
+        }
+        return fingerprint.digest().joinToString("") { "%02x".format(it) }
+    }
+
     private fun inspectAndFinalize(
         units: List<BulkSourceUnit>,
         generation: LibraryGenerationToken,
@@ -104,7 +114,7 @@ object BulkInstallPlanner {
         } else {
             AppInstaller(null, Uri.fromFile(unit.primaryFile), library)
         }
-        installer.setReadOnlySourceInspection()
+        installer.setUseSourceDirectly()
         return try {
             val installerStatus = Single.create<Int>(installer::loadInfo).blockingGet()
             val descriptor = requireNotNull(installer.newDescriptor) { "Installer returned no descriptor" }

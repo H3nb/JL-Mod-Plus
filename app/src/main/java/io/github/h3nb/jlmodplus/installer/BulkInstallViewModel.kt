@@ -16,6 +16,7 @@ import androidx.lifecycle.viewModelScope
 import io.reactivex.Single
 import java.io.File
 import java.util.Locale
+import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
@@ -485,11 +486,15 @@ class BulkInstallViewModel : ViewModel() {
         val scratch = InstallerScratch()
         var installer: AppInstaller? = null
         try {
+            val copiedDigests = ArrayList<ByteArray>(item.unit.sourceFiles.size)
             val copiedSources = item.unit.sourceFiles.mapIndexed { index, source ->
                 val extension = source.extension.lowercase(Locale.ROOT).ifBlank { "bin" }
-                scratch.copy(source, "source-$index.$extension")
+                val digest = MessageDigest.getInstance("SHA-256")
+                scratch.copy(source, "source-$index.$extension", digest).also {
+                    copiedDigests.add(digest.digest())
+                }
             }
-            if (BulkInstallPlanner.fingerprint(copiedSources) != item.sourceFingerprint) {
+            if (BulkInstallPlanner.fingerprintFromDigests(copiedDigests) != item.sourceFingerprint) {
                 return BulkInstallResult(
                     item.id,
                     item.name,
@@ -526,6 +531,7 @@ class BulkInstallViewModel : ViewModel() {
                 AppInstaller(source, resolvedJar, library, scratch)
             }
             installer = activeInstaller
+            if (item.unit.reinstallAppId == null) activeInstaller.setUseSourceDirectly()
             activeInstaller.setProgress { stage ->
                 val running = mutableState.value as? State.Running
                 if (running != null) mutableState.value = running.copy(stageLabel = when (stage) {

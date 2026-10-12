@@ -182,6 +182,37 @@ class BulkInstallPlannerTest {
     }
 
     @Test
+    fun composingDigestsDuringCopyMatchesOrdinarySourceFingerprint() {
+        val root = Files.createTempDirectory("bulk-digest-composition").toFile()
+        try {
+            val jad = root.resolve("game.jad").apply { writeBytes(byteArrayOf(3, 2, 1)) }
+            val jar = root.resolve("game.jar").apply { writeBytes(ByteArray(4097) { (it % 251).toByte() }) }
+            val digests = listOf(jad, jar).map { source ->
+                val hash = java.security.MessageDigest.getInstance("SHA-256")
+                source.inputStream().use { input ->
+                    val bytes = ByteArray(101)
+                    while (true) {
+                        val read = input.read(bytes)
+                        if (read < 0) break
+                        hash.update(bytes, 0, read)
+                    }
+                }
+                hash.digest()
+            }
+            assertEquals(
+                BulkInstallPlanner.fingerprint(listOf(jad, jar)),
+                BulkInstallPlanner.fingerprintFromDigests(digests),
+            )
+            assertNotEquals(
+                BulkInstallPlanner.fingerprintFromDigests(digests),
+                BulkInstallPlanner.fingerprintFromDigests(digests.reversed()),
+            )
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
     fun sourceFingerprintTracksOrderedContentNotFileLocation() {
         val firstRoot = Files.createTempDirectory("bulk-fingerprint-a").toFile()
         val secondRoot = Files.createTempDirectory("bulk-fingerprint-b").toFile()

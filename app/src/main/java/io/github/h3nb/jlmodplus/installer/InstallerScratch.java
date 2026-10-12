@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
+import java.security.MessageDigest;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -87,18 +88,34 @@ final class InstallerScratch {
     }
 
     File copy(File source, String name) throws IOException {
+        return copy(source, name, null);
+    }
+
+    /** Optionally hashes the bytes being copied so bulk execution never has to read its scratch copy again. */
+    File copy(File source, String name, MessageDigest digest) throws IOException {
         if (source == null || !source.isFile()) {
             throw new IOException("Installer source is unavailable: " + source);
         }
         ensureDirectory();
         File target = safeChild(name);
-        if (source.getCanonicalFile().equals(target)) return target;
-        byte[] buffer = new byte[16 * 1024];
-        try (InputStream input = new FileInputStream(source);
-                OutputStream output = new FileOutputStream(target, false)) {
-            int read;
-            while ((read = input.read(buffer)) != -1) {
-                if (read > 0) output.write(buffer, 0, read);
+        boolean sameFile = source.getCanonicalFile().equals(target);
+        byte[] buffer = new byte[32 * 1024];
+        try (InputStream input = new FileInputStream(source)) {
+            if (sameFile) {
+                int read;
+                while ((read = input.read(buffer)) != -1) {
+                    if (read > 0 && digest != null) digest.update(buffer, 0, read);
+                }
+            } else {
+                try (OutputStream output = new FileOutputStream(target, false)) {
+                    int read;
+                    while ((read = input.read(buffer)) != -1) {
+                        if (read > 0) {
+                            output.write(buffer, 0, read);
+                            if (digest != null) digest.update(buffer, 0, read);
+                        }
+                    }
+                }
             }
         }
         return target;
