@@ -1167,22 +1167,29 @@ final class ManagedJavaMemoryEngine {
 				replacements[index] = parsed[0];
 			}
 		}
-		// A no-op needs no new mutation journal entry. Preflight all expected writes so an
-		// exhausted history rejects a changing batch before touching any target.
-		long[] needsHistory = new long[writableBatch.count];
-		int needsHistoryCount = 0;
-		long[] probe = new long[1];
-		for (int index = 0; index < writableBatch.count; index++) {
-			if (!readTyped(writableBatch.owners[index], writableBatch.slots[index],
-					writableBatch.strongOwners[index], probe)
-					|| probe[0] != replacements[index]) {
-				needsHistory[needsHistoryCount++] = writableBatch.ids[index];
-			}
-		}
+		// Most batches fit in the journal: avoid an extra reflection read for every
+		// candidate. Probe actual changes only when a conservative capacity check fails.
+		boolean needsNoOpProbe;
 		synchronized (stateLock) {
-			if (editJournal != null && !editJournal.canRecord(needsHistory, needsHistoryCount)) {
-				return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
-						"Edit history is full; clear unneeded results or restart the MIDlet");
+			needsNoOpProbe = editJournal != null
+					&& !editJournal.canRecord(writableBatch.ids, writableBatch.count);
+		}
+		if (needsNoOpProbe) {
+			long[] needsHistory = new long[writableBatch.count];
+			int needsHistoryCount = 0;
+			long[] probe = new long[1];
+			for (int index = 0; index < writableBatch.count; index++) {
+				if (!readTyped(writableBatch.owners[index], writableBatch.slots[index],
+						writableBatch.strongOwners[index], probe)
+						|| probe[0] != replacements[index]) {
+					needsHistory[needsHistoryCount++] = writableBatch.ids[index];
+				}
+			}
+			synchronized (stateLock) {
+				if (editJournal != null && !editJournal.canRecord(needsHistory, needsHistoryCount)) {
+					return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+							"Edit history is full; clear unneeded results or restart the MIDlet");
+				}
 			}
 		}
 		ManagedOperationResult validation = revalidateBatch(token, expectedRevision, writableBatch,
