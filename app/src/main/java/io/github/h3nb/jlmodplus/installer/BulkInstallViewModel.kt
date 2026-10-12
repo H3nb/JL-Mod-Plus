@@ -743,13 +743,13 @@ class BulkInstallViewModel : ViewModel() {
         BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
 
     fun close() {
-        planningJob?.cancel()
-        planningJob = null
-        cancelRequested.set(true)
         closeRequested.set(true)
+        cancelRequested.set(true)
+        val planning = planningJob != null
+        planningJob?.cancel()
         if (executionJob == null) {
             cleanupBundleImport()
-            if (planningJob == null) cleanupSourceStage()
+            if (!planning) cleanupSourceStage()
         }
     }
 
