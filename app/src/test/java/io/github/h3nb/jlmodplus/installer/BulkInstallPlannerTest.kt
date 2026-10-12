@@ -28,6 +28,21 @@ class BulkInstallPlannerTest {
     }
 
     @Test
+    fun equivalentJarAndJadJarPackagingDoesNotCreateDuplicateInstallations() {
+        val jarOnly = item("original")
+        val paired = item("paired").copy(
+            unit = item("paired").unit.copy(kind = BulkSourceKind.JadJarPair),
+        )
+        val checked = BulkInstallPlanner.markSemanticDuplicates(listOf(jarOnly, paired))
+        assertEquals(BulkInstallStatus.Duplicate, checked[1].status)
+        assertFalse(checked[1].selected)
+
+        val grouped = BulkInstallPlanner.applyBatchVersionGrouping(listOf(jarOnly, paired))
+        assertEquals(BulkInstallStatus.New, grouped[0].status)
+        assertEquals(BulkInstallStatus.New, grouped[1].status)
+    }
+
+    @Test
     fun inspectionReasonsCarryMatchCountAndPreserveDiscoveryConflictPrecedence() {
         val unit = item("source").unit
         assertEquals(BulkInstallReviewReason.AmbiguousInstalledMatch(3),
