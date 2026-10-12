@@ -112,6 +112,24 @@ class BulkSourceDiscoveryTest {
     }
 
     @Test
+    fun pairsAdjacentJadWithJarRenamedZipWithoutTouchingOriginals() = tempRoot { root ->
+        val source = File(root, "Demo.zip").apply { writeBytes(midletJar()) }
+        val jad = File(root, "Demo.jad").apply {
+            writeText(
+                "MIDlet-Name: Demo\\nMIDlet-Vendor: Test\\nMIDlet-Version: 1.0\\n" +
+                    "MIDlet-Jar-URL: Demo.jar\\nMIDlet-Jar-Size: 1024\\n",
+            )
+        }
+        val found = BulkSourceDiscovery(File(root, "stage")).discover(listOf(root)).files
+        val copiedJad = found.single { it.extension == "jad" }
+        val copiedJar = found.single { it.extension == "jar" }
+        assertFalse(jad.canonicalFile == copiedJad.canonicalFile)
+        assertEquals(BulkInstallPlanner.JadResolution.Local(copiedJar.canonicalFile),
+            BulkInstallPlanner.resolveJadReference(copiedJad, "Demo.jar", null))
+        assertTrue(source.exists())
+    }
+
+    @Test
     fun ignoresTraversalEntriesButContinuesAfterBadArchive() = tempRoot { root ->
         val source = File(root, "Pack.zip").apply {
             writeBytes(zip(
