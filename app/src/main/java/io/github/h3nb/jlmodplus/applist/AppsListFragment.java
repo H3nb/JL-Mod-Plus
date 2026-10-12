@@ -70,6 +70,7 @@ import androidx.preference.PreferenceManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1237,7 +1238,7 @@ public class AppsListFragment extends Fragment {
             return;
         }
         manager.beginTransaction()
-                .add(BulkInstallerDialog.newFiles(List.of(folder)), BulkInstallerDialog.TAG)
+                .add(BulkInstallerDialog.newFiles(Collections.singletonList(folder)), BulkInstallerDialog.TAG)
                 .commitAllowingStateLoss();
     }
 
