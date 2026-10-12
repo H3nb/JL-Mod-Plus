@@ -951,6 +951,45 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void revertAndRemoveDoesNotSilentlyDropAnActiveFreezeTarget() {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.setFreezeLock(TOKEN, search.revision, new long[]{id}, 900, 0L).code);
+
+		ManagedJavaMemoryEngine.ManagedOperationResult blocked = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_PARTIAL_WRITE, blocked.code);
+		assertTrue(hasId(engine.resultPage(TOKEN, search.revision, 0, 100), id));
+		assertEquals(7, root.rootMatch);
+
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.clearFreeze(TOKEN, new long[]{id}, 0L).code);
+		ManagedJavaMemoryEngine.ManagedOperationResult removed = engine.revertAndRemove(TOKEN,
+				search.revision, new long[]{id}, 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK, removed.code);
+		assertFalse(hasId(engine.resultPage(TOKEN, removed.revision, 0, 100), id));
+	}
+
+	@Test
+	public void clearSearchReleasesJournalHistoryForUnretainedOwners()
+			throws ReflectiveOperationException {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long id = idForAddress(search.revision, "rootMatch");
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{id},
+						MemoryEngineContract.TYPE_INT, "901", false, 0L).code);
+
+		Field journalField = ManagedJavaMemoryEngine.class.getDeclaredField("editJournal");
+		journalField.setAccessible(true);
+		ManagedMemoryMutationJournal journal = (ManagedMemoryMutationJournal) journalField.get(engine);
+		assertNotNull(journal.get(id));
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.clearSearchResult(TOKEN, search.revision, 0L).code);
+		assertEquals(null, journal.get(id));
+	}
+
+	@Test
 	public void repeatedEditsRevertOnlyTheMostRecentConfirmedMutation() {
 		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
 		long id = idForAddress(search.revision, "rootMatch");
