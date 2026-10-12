@@ -20,7 +20,7 @@
     <string name="converting_wait">JAR ᱵᱚᱫᱚᱞᱚᱜ ᱠᱟᱱᱟ…</string>
     <string name="create">ᱛᱮᱭᱟᱨ</string>
     <string name="create_apps_dir_failed">ᱚᱱᱟ ᱡᱟᱨᱚᱣᱟ ᱨᱮ ᱯᱚᱴᱚᱢ ᱛᱮᱭᱟᱨ ᱵᱷᱩᱞ:\n\'%s\'\nᱚᱞᱜᱟ ᱵᱟᱪᱷᱟᱣᱢᱮ ᱾</string>
-    <string name="default_label">"%s (ᱢᱩᱞ)"</string>
+    <string name="default_label">%1$s (ᱢᱩᱞ)</string>
     <string name="dismiss">ᱵᱚᱸᱫ</string>
     <string name="edit">ᱥᱟᱯᱲᱟᱣ</string>
     <string name="error">ᱵᱷᱩᱞ</string>
@@ -149,4 +149,15 @@
     <string name="take_screenshot">ᱥᱠᱨᱤᱱᱥᱚᱴ ᱤᱫᱤ ᱢᱮ</string>
     <string name="warn_install_from_net">ᱨᱮᱫᱽ ᱫᱚ ᱤᱱᱴᱚᱨᱱᱮᱴᱨ ᱠᱷᱚᱱ ᱰᱟᱩᱱᱞᱚᱰ ᱮᱱᱟ</string>
     <string name="warning">ᱦᱩᱥᱤᱭᱟᱹᱨ</string>
+    <string name="file_picker_cancel">ᱵᱟᱹᱰᱨᱟᱹ</string>
+    <string name="file_picker_choose">ᱵᱟᱪᱷᱟᱣ</string>
+    <string name="library_action_select">ᱵᱟᱪᱷᱟᱣ</string>
+    <string name="library_bulk_reinstall_apps">ᱫᱩᱦᱲᱟᱹᱵᱚᱦᱟᱞ</string>
+    <string name="library_destination_more">ᱵᱟᱹᱲᱛᱤ</string>
+    <string name="library_metadata_name">ᱧᱩᱛᱩᱢ</string>
+    <string name="library_metadata_save">ᱥᱟᱺᱪᱟᱣ</string>
+    <string name="library_metadata_vendor">ᱟᱹᱠᱷᱨᱤᱧᱤᱡ</string>
+    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_vendor_version">%1$s · %2$s</string>
 </resources>

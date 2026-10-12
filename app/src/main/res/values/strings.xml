@@ -503,7 +503,7 @@
     <string name="library_import_done">App bundle imported.</string>
     <string name="library_import_done_with_warning">App bundle imported with warnings.</string>
     <string name="library_import_invalid_bundle">The selected app bundle is invalid, damaged, or unsupported. Choose a valid JL-Mod Plus app bundle and try again.</string>
-    <string name="library_import_restore_existing">This app is already installed. Importing will replace the settings and save data contained in the bundle.</string>
+    <string name="library_import_restore_existing">This app is already installed. Any settings or save data included in the bundle will replace the corresponding existing data.</string>
     <string name="library_import_restore_failed">The app is installed, but its bundle data could not be restored. Retry the restore?</string>
     <string name="library_play_stats_summary">Plays: %1$d · Total time: %2$s</string>
     <string name="library_share_chooser_title">Share app</string>
@@ -1127,7 +1127,7 @@
     <string name="bulk_install_filter_review">Review</string>
     <string name="bulk_install_empty_filter">No matching games.</string>
     <string name="memory_editor_remove_candidates_title">Remove selected results?</string>
-    <string name="memory_editor_remove_candidates_description">Remove only hides results without writing to game memory. Revert &amp; remove restores the last confirmed edit when the current value matches; conflicting results remain.</string>
+    <string name="memory_editor_remove_candidates_description">Remove only hides results without writing to game memory. Revert &amp; remove undoes the last confirmed edit when the current value matches; conflicting results remain.</string>
     <string name="memory_editor_revert_and_remove">Revert &amp; remove</string>
     <string name="memory_editor_revert_remove_commit_failed">Values may have been restored, but results could not be removed. Refresh and retry; values changed by the game will not be overwritten.</string>
     <string name="memory_editor_revert_remove_outcome">Restored: %1$d. Removed: %2$d. Conflicts: %3$d. Unconfirmed: %4$d. Not attempted: %5$d.</string>

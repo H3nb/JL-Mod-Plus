@@ -117,6 +117,22 @@ identifiers, or diagnostic evidence.
    validation evidence, and any language-quality uncertainty. A complete
    catalog is not automatically a fully verified localization.
 
+For an accepted plain-text batch, `python -B -m scripts.localization_apply
+/path/to/batch.json` validates and reports a proposed single-locale catalog update;
+add `--apply` to write it. Schema version 1 contains `locale`, byte hashes
+`source_sha256` and `target_sha256`, `strings` (key → decoded UI text),
+`plurals` (key → quantity → decoded UI text), `revisions` (changed existing
+key → material reason), `reviewed_keys`, and `unresolved` (key/reason objects).
+Use actual newlines and quotes, not XML or Android escapes. Selected changes
+must be reviewed and resolved. The applier escapes plain text, checks resource
+and argument contracts, preserves unrelated bytes/comments/attributes, and
+replaces the catalog atomically only after validation. It rejects stale input,
+inline markup/reference edits, and plural category removal; use a direct
+reviewed patch for those cases. Reapplying an already accepted batch is a no-op;
+a changed target hash can never authorize additional writes. Keep proposal JSON
+under ignored `build/reports/localization/`, inspect the resulting Git diff,
+and complete Android resource/UI validation separately.
+
 The existing Crowdin configuration can support future community
 contributions, but a hosted translation management service is not required
 for this workflow. Keep contributions reviewable in Git and follow
