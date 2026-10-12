@@ -87,6 +87,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size as ComposeSize
 import androidx.compose.ui.Modifier
@@ -95,7 +96,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -1795,17 +1795,21 @@ private fun DpadColorSample(
         }
         drawPath(cross, background)
         if (pressed) {
-            clipPath(cross) {
-                drawRect(
-                    selectedBackground,
-                    topLeft = Offset(cx - a, cy - r),
-                    size = ComposeSize(a * 2f, r),
-                )
-            }
+            val inset = r * 0.045f
+            drawRoundRect(
+                selectedBackground,
+                topLeft = Offset(cx - a + inset, cy - r + inset),
+                size = ComposeSize(2f * (a - inset), r - inset - r * 0.235f),
+                cornerRadius = CornerRadius(r * 0.095f),
+            )
         }
-        drawPath(cross, outline, style = Stroke(1.dp.toPx()))
-        drawCircle(background, r * 0.18f, Offset(cx, cy))
-        drawCircle(outline, r * 0.18f, Offset(cx, cy), style = Stroke(1.dp.toPx()))
+        drawPath(cross, outline, style = Stroke(maxOf(1.dp.toPx(), r * 0.012f)))
+        drawCircle(background, r * 0.175f, Offset(cx, cy))
+        drawCircle(
+            lerp(background, outline, 0.45f),
+            r * 0.175f, Offset(cx, cy),
+            style = Stroke(maxOf(1.dp.toPx(), r * 0.012f)),
+        )
 
         val arrow = r * 0.11f
         for (direction in 0..3) {
@@ -1866,12 +1870,17 @@ private fun AnalogColorSample(
     ) {
         Box(contentAlignment = Alignment.Center) {
             Surface(
+                modifier = Modifier.size(48.dp),
+                shape = CircleShape,
+                color = lerp(background, outline, 0.075f),
+            ) {}
+            Surface(
                 modifier = Modifier
                     .offset(x = if (pressed) 11.dp else 0.dp, y = if (pressed) (-7).dp else 0.dp)
                     .size(31.dp),
                 shape = CircleShape,
                 color = if (pressed) selectedBackground else lerp(background, outline, 0.18f),
-                border = BorderStroke(1.dp, outline),
+                border = BorderStroke(1.dp, lerp(background, outline, 0.56f)),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Surface(

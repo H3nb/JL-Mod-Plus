@@ -78,6 +78,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	private final VirtualAnalogDirectionAdapter directionAdapter = new VirtualAnalogDirectionAdapter();
 	private final RectF paintRect = new RectF();
 	private final Path dpadOutline = new Path();
+	private final Path dpadArrow = new Path();
 	private final RectF guestBounds = new RectF();
 
 	private VirtualAnalogStick analogStick;
@@ -1353,60 +1354,107 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		int outline = VirtualControlAppearance.outline(settings);
 		int foreground = VirtualControlAppearance.foreground(settings, false);
 		int selectedForeground = VirtualControlAppearance.foreground(settings, true);
+		float stroke = Math.max(1.0f, r * 0.012f);
 
 		int layer = beginControlLayer(graphics, cx, cy, r * 1.06f, alpha);
 		try {
 			buildDpadOutline(dpadOutline, cx, cy, r);
-			graphics.setFillColor(opaqueColor(base));
-			graphics.fillPath(dpadOutline);
-
-			if (!pressed.isEmpty()) {
-				int clip = graphics.clipToPath(dpadOutline);
-				try {
-					float arm = r * 0.34f;
-					graphics.setFillColor(opaqueColor(selected));
-					if (pressed.contains(VirtualDpadDirection.UP)) {
-						paintRect.set(cx - arm, cy - r, cx + arm, cy);
-						graphics.fillRect(paintRect);
-					}
-					if (pressed.contains(VirtualDpadDirection.DOWN)) {
-						paintRect.set(cx - arm, cy, cx + arm, cy + r);
-						graphics.fillRect(paintRect);
-					}
-					if (pressed.contains(VirtualDpadDirection.LEFT)) {
-						paintRect.set(cx - r, cy - arm, cx, cy + arm);
-						graphics.fillRect(paintRect);
-					}
-					if (pressed.contains(VirtualDpadDirection.RIGHT)) {
-						paintRect.set(cx, cy - arm, cx + r, cy + arm);
-						graphics.fillRect(paintRect);
-					}
-				} finally {
-					graphics.restoreClip(clip);
-				}
+			graphics.fillControlPath(dpadOutline, opaqueColor(base));
+			// Inset pressed surfaces keep diagonals distinct and avoid harsh rectangular joins.
+			if (pressed.contains(VirtualDpadDirection.UP)) {
+				paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.UP, selected);
 			}
-			graphics.setDrawColor(opaqueColor(outline));
-			graphics.drawPath(dpadOutline);
-			// The neutral hub hides the segment junction without splitting the cross silhouette.
-			fillCircle(graphics, cx, cy, r * 0.18f, base);
-			drawCircle(graphics, cx, cy, r * 0.18f, outline);
+			if (pressed.contains(VirtualDpadDirection.DOWN)) {
+				paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.DOWN, selected);
+			}
+			if (pressed.contains(VirtualDpadDirection.LEFT)) {
+				paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.LEFT, selected);
+			}
+			if (pressed.contains(VirtualDpadDirection.RIGHT)) {
+				paintDpadPressed(graphics, cx, cy, r, VirtualDpadDirection.RIGHT, selected);
+			}
+			graphics.strokeControlPath(dpadOutline, opaqueColor(outline), stroke);
+			int hubOutline = VirtualControlAppearance.mixRgb(base, outline, 0.45f);
+			fillCircle(graphics, cx, cy, r * 0.175f, base);
+			graphics.strokeControlCircle(cx, cy, r * 0.175f,
+					opaqueColor(hubOutline), stroke);
 			if (getLayoutEditMode() != LAYOUT_EOF && editControl == EditControl.DPAD) {
-				drawCircle(graphics, cx, cy, r * 1.02f, selected);
+				graphics.strokeControlCircle(cx, cy, r * 1.02f,
+						opaqueColor(selected), stroke);
 			}
 
-			graphics.setTextScale(clamp(r / 116.0f, 0.72f, 1.12f));
-			paintDpadGlyph(graphics, "▲", cx, cy - r * 0.61f,
-					pressed.contains(VirtualDpadDirection.UP), foreground, selectedForeground);
-			paintDpadGlyph(graphics, "▼", cx, cy + r * 0.61f,
-					pressed.contains(VirtualDpadDirection.DOWN), foreground, selectedForeground);
-			paintDpadGlyph(graphics, "◀", cx - r * 0.61f, cy,
-					pressed.contains(VirtualDpadDirection.LEFT), foreground, selectedForeground);
-			paintDpadGlyph(graphics, "▶", cx + r * 0.61f, cy,
-					pressed.contains(VirtualDpadDirection.RIGHT), foreground, selectedForeground);
-			graphics.setTextScale(1.0f);
+			paintDpadArrow(graphics, cx, cy - r * 0.61f, r * 0.105f,
+					VirtualDpadDirection.UP, pressed.contains(VirtualDpadDirection.UP),
+					foreground, selectedForeground);
+			paintDpadArrow(graphics, cx, cy + r * 0.61f, r * 0.105f,
+					VirtualDpadDirection.DOWN, pressed.contains(VirtualDpadDirection.DOWN),
+					foreground, selectedForeground);
+			paintDpadArrow(graphics, cx - r * 0.61f, cy, r * 0.105f,
+					VirtualDpadDirection.LEFT, pressed.contains(VirtualDpadDirection.LEFT),
+					foreground, selectedForeground);
+			paintDpadArrow(graphics, cx + r * 0.61f, cy, r * 0.105f,
+					VirtualDpadDirection.RIGHT, pressed.contains(VirtualDpadDirection.RIGHT),
+					foreground, selectedForeground);
 		} finally {
 			endControlLayer(graphics, layer);
 		}
+	}
+
+	private void paintDpadPressed(CanvasWrapper graphics, float cx, float cy,
+			float r, VirtualDpadDirection direction, int selected) {
+		float arm = r * 0.34f;
+		float inset = r * 0.045f;
+		float inner = r * 0.235f;
+		float end = r - inset;
+		switch (direction) {
+			case UP:
+				paintRect.set(cx - arm + inset, cy - end, cx + arm - inset, cy - inner);
+				break;
+			case DOWN:
+				paintRect.set(cx - arm + inset, cy + inner, cx + arm - inset, cy + end);
+				break;
+			case LEFT:
+				paintRect.set(cx - end, cy - arm + inset, cx - inner, cy + arm - inset);
+				break;
+			case RIGHT:
+				paintRect.set(cx + inner, cy - arm + inset, cx + end, cy + arm - inset);
+				break;
+			default:
+				return;
+		}
+		graphics.fillControlRoundRect(paintRect, r * 0.095f, opaqueColor(selected));
+	}
+
+	private void paintDpadArrow(CanvasWrapper graphics, float x, float y, float half,
+			VirtualDpadDirection direction, boolean pressed, int foreground, int selectedForeground) {
+		dpadArrow.rewind();
+		switch (direction) {
+			case UP:
+				dpadArrow.moveTo(x, y - half);
+				dpadArrow.lineTo(x - half, y + half);
+				dpadArrow.lineTo(x + half, y + half);
+				break;
+			case DOWN:
+				dpadArrow.moveTo(x, y + half);
+				dpadArrow.lineTo(x - half, y - half);
+				dpadArrow.lineTo(x + half, y - half);
+				break;
+			case LEFT:
+				dpadArrow.moveTo(x - half, y);
+				dpadArrow.lineTo(x + half, y - half);
+				dpadArrow.lineTo(x + half, y + half);
+				break;
+			case RIGHT:
+				dpadArrow.moveTo(x + half, y);
+				dpadArrow.lineTo(x - half, y - half);
+				dpadArrow.lineTo(x - half, y + half);
+				break;
+			default:
+				return;
+		}
+		dpadArrow.close();
+		graphics.fillControlPath(dpadArrow,
+				opaqueColor(pressed ? selectedForeground : foreground));
 	}
 
 	/** Rounded outer corners and softened inner notches, with one continuous outline. */
@@ -1441,12 +1489,6 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 		path.lineTo(cx - a, cy - r + corner);
 		path.quadTo(cx - a, cy - r, cx - a + corner, cy - r);
 		path.close();
-	}
-
-	private void paintDpadGlyph(CanvasWrapper graphics, String glyph, float x, float y,
-			boolean pressed, int foreground, int selectedForeground) {
-		graphics.setTextColor(opaqueColor(pressed ? selectedForeground : foreground));
-		graphics.drawString(glyph, x, y);
 	}
 
 	private void paintAnalog(CanvasWrapper graphics) {
@@ -1486,17 +1528,22 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 
 		int layer = beginControlLayer(graphics, centerX, centerY, radius * 1.06f, alpha);
 		try {
+			float stroke = Math.max(1.0f, radius * 0.012f);
 			fillCircle(graphics, centerX, centerY, radius * 0.94f, base);
-			drawCircle(graphics, centerX, centerY, radius * 0.94f, outline);
+			// One quiet recessed surface separates the cap from its base without target rings.
+			fillCircle(graphics, centerX, centerY, radius * 0.67f,
+					VirtualControlAppearance.mixRgb(base, outline, 0.075f));
+			graphics.strokeControlCircle(centerX, centerY, radius * 0.94f,
+					opaqueColor(outline), stroke);
 			float thumbRadius = radius * 0.43f;
-			// The thumb has its own visible rim, even when its color equals the base.
-			drawCircle(graphics, thumbX, thumbY, thumbRadius * 1.07f, outline);
 			fillCircle(graphics, thumbX, thumbY, thumbRadius, thumbColor);
-			drawCircle(graphics, thumbX, thumbY, thumbRadius, outline);
+			graphics.strokeControlCircle(thumbX, thumbY, thumbRadius,
+					opaqueColor(VirtualControlAppearance.mixRgb(base, outline, 0.56f)),
+					Math.max(1.0f, radius * 0.016f));
 			fillCircle(graphics, thumbX, thumbY, thumbRadius * 0.13f, indicator);
 			if (editingAnalog) {
-				drawCircle(graphics, centerX, centerY, radius * 1.02f,
-						VirtualControlAppearance.background(settings, true));
+				graphics.strokeControlCircle(centerX, centerY, radius * 1.02f,
+						opaqueColor(VirtualControlAppearance.background(settings, true)), stroke);
 			}
 		} finally {
 			endControlLayer(graphics, layer);
@@ -1504,15 +1551,7 @@ public final class VirtualControlsKeyboard extends VirtualKeyboard {
 	}
 
 	private void fillCircle(CanvasWrapper graphics, float cx, float cy, float radius, int color) {
-		paintRect.set(cx - radius, cy - radius, cx + radius, cy + radius);
-		graphics.setFillColor(opaqueColor(color));
-		graphics.fillArc(paintRect, 0, 360);
-	}
-
-	private void drawCircle(CanvasWrapper graphics, float cx, float cy, float radius, int color) {
-		paintRect.set(cx - radius, cy - radius, cx + radius, cy + radius);
-		graphics.setDrawColor(opaqueColor(color));
-		graphics.drawArc(paintRect, 0, 360);
+		graphics.fillControlCircle(cx, cy, radius, opaqueColor(color));
 	}
 
 	private static int opaqueColor(int rgb) {

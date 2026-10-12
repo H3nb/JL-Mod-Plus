@@ -41,6 +41,8 @@ public class CanvasWrapper {
 	private final Paint textPaint = new Paint();
 	private final Paint imgPaint = new Paint();
 	private final Paint diagnosticPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+	private final Paint controlFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+	private final Paint controlStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private final float diagnosticAscent;
 	private final float diagnosticHeight;
 	private final float textSize;
@@ -58,6 +60,7 @@ public class CanvasWrapper {
 		this.filterBitmap = filterBitmap;
 		imgPaint.setFilterBitmap(filterBitmap);
 		drawPaint.setStyle(Paint.Style.STROKE);
+		controlStrokePaint.setStyle(Paint.Style.STROKE);
 		fillPaint.setStyle(Paint.Style.FILL);
 
 		// init text paint
@@ -101,34 +104,32 @@ public class CanvasWrapper {
 		canvas.restoreToCount(saveCount);
 	}
 
-	public void fillPath(Path path) {
-		boolean wasAntialiased = fillPaint.isAntiAlias();
-		fillPaint.setAntiAlias(true);
-		try {
-			canvas.drawPath(path, fillPaint);
-		} finally {
-			fillPaint.setAntiAlias(wasAntialiased);
-		}
+	/** Anti-aliased grouped-control primitives use independent paints, leaving legacy keys intact. */
+	public void fillControlPath(Path path, int color) {
+		controlFillPaint.setColor(color);
+		canvas.drawPath(path, controlFillPaint);
 	}
 
-	public void drawPath(Path path) {
-		boolean wasAntialiased = drawPaint.isAntiAlias();
-		drawPaint.setAntiAlias(true);
-		try {
-			canvas.drawPath(path, drawPaint);
-		} finally {
-			drawPaint.setAntiAlias(wasAntialiased);
-		}
+	public void strokeControlPath(Path path, int color, float width) {
+		controlStrokePaint.setColor(color);
+		controlStrokePaint.setStrokeWidth(width);
+		canvas.drawPath(path, controlStrokePaint);
 	}
 
-	public int clipToPath(Path path) {
-		int saved = canvas.save();
-		canvas.clipPath(path);
-		return saved;
+	public void fillControlRoundRect(RectF rect, float rounding, int color) {
+		controlFillPaint.setColor(color);
+		canvas.drawRoundRect(rect, rounding, rounding, controlFillPaint);
 	}
 
-	public void restoreClip(int saveCount) {
-		canvas.restoreToCount(saveCount);
+	public void fillControlCircle(float cx, float cy, float radius, int color) {
+		controlFillPaint.setColor(color);
+		canvas.drawCircle(cx, cy, radius, controlFillPaint);
+	}
+
+	public void strokeControlCircle(float cx, float cy, float radius, int color, float width) {
+		controlStrokePaint.setColor(color);
+		controlStrokePaint.setStrokeWidth(width);
+		canvas.drawCircle(cx, cy, radius, controlStrokePaint);
 	}
 
 	public void drawArc(RectF oval, int startAngle, int sweepAngle) {

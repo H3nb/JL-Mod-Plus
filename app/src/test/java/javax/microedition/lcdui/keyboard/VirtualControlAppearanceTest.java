@@ -34,6 +34,8 @@ public class VirtualControlAppearanceTest {
 		assertEquals(0xFFFFFF, VirtualControlAppearance.foreground(profile, false));
 		assertEquals(0x000000, VirtualControlAppearance.foreground(profile, true));
 		assertEquals(0x18A0F0, VirtualControlAppearance.outline(profile));
+		assertEquals(0x000000, VirtualControlAppearance.mixRgb(0x000000, 0xFFFFFF, 0.0f));
+		assertEquals(0xFFFFFF, VirtualControlAppearance.mixRgb(0x000000, 0xFFFFFF, 1.0f));
 		assertEquals(0xFF0000, VirtualControlAppearance.analogThumb(profile, true));
 	}
 
@@ -45,6 +47,7 @@ public class VirtualControlAppearanceTest {
 		profile.vkBgColorSelected = 0x369ABC;
 		assertEquals(0x2E2E2E, VirtualControlAppearance.analogThumb(profile, false));
 		assertEquals(0x369ABC, VirtualControlAppearance.analogThumb(profile, true));
+		assertEquals(0x131313, VirtualControlAppearance.mixRgb(0x000000, 0xFFFFFF, 0.075f));
 	}
 
 	@Test
