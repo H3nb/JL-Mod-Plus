@@ -990,6 +990,63 @@ public class ManagedJavaMemoryEngineTest {
 	}
 
 	@Test
+	public void noOpBatchCanRunWhenEditHistoryIsFullButAWriteCannot()
+			throws ReflectiveOperationException {
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		long unchanged = idForAddress(search.revision, "rootMatch");
+		long changing = idForAddress(search.revision, "rootChanged");
+		ManagedMemoryMutationJournal journal = new ManagedMemoryMutationJournal();
+		for (int index = 0; index < 1024; index++) {
+			long fakeId = ManagedJavaMemoryIds.encode(ManagedJavaMemoryEngine.KIND_ARRAY,
+					index + 5000, 0);
+			journal.record(fakeId, MemoryEngineContract.TYPE_INT, 0, 1);
+		}
+		Field field = ManagedJavaMemoryEngine.class.getDeclaredField("editJournal");
+		field.setAccessible(true);
+		field.set(engine, journal);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{unchanged, changing},
+						MemoryEngineContract.TYPE_INT, "7", false, 0L).code);
+		assertEquals(7, root.rootMatch);
+		assertEquals(7, root.rootChanged);
+		assertEquals(null, journal.get(unchanged));
+		root.rootChanged = 4;
+		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+				engine.editTyped(TOKEN, search.revision, new long[]{unchanged, changing},
+						MemoryEngineContract.TYPE_INT, "7", false, 0L).code);
+		assertEquals(4, root.rootChanged);
+	}
+
+	@Test
+	public void candidateHistoryPrunesUnwatchedArraySlotAfterClear()
+			throws ReflectiveOperationException {
+		root.array = new int[]{7, 7};
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, 0, 100);
+		long first = 0L;
+		long second = 0L;
+		for (int index = 0; index < page.ids.length; index++) {
+			if (!"array".equals(page.sourceFields[index])) continue;
+			if (ManagedJavaMemoryIds.slot(page.ids[index]) == 0) first = page.ids[index];
+			if (ManagedJavaMemoryIds.slot(page.ids[index]) == 1) second = page.ids[index];
+		}
+		assertTrue(first != 0L && second != 0L);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.addWatch(TOKEN, search.revision, new long[]{first}, 0L).code);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.editTyped(TOKEN, search.revision, new long[]{first, second},
+						MemoryEngineContract.TYPE_INT, "90", false, 0L).code);
+		Field field = ManagedJavaMemoryEngine.class.getDeclaredField("editJournal");
+		field.setAccessible(true);
+		ManagedMemoryMutationJournal journal = (ManagedMemoryMutationJournal) field.get(engine);
+		assertTrue(journal.get(first) != null && journal.get(second) != null);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				engine.clearSearchResult(TOKEN, search.revision, 0L).code);
+		assertTrue(journal.get(first) != null);
+		assertEquals(null, journal.get(second));
+	}
+
+	@Test
 	public void repeatedEditsRevertOnlyTheMostRecentConfirmedMutation() {
 		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
 		long id = idForAddress(search.revision, "rootMatch");

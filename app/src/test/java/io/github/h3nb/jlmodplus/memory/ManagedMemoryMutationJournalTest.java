@@ -77,8 +77,20 @@ public class ManagedMemoryMutationJournalTest {
 		assertEquals(100, journal.get(id).after);
 
 		// Obsolete owner handles must not consume the bounded history indefinitely.
-		journal.pruneOwners(java.util.Set.of(4L));
+		journal.pruneCandidates(value -> ManagedJavaMemoryIds.ownerHandle(value) == 4L);
 		assertEquals(null, journal.get(id));
+	}
+
+	@Test
+	public void candidatePruningRemovesSlotsWithinAnOtherwiseRetainedOwner() {
+		ManagedMemoryMutationJournal journal = new ManagedMemoryMutationJournal();
+		long first = ManagedJavaMemoryIds.encode(ManagedJavaMemoryEngine.KIND_ARRAY, 3, 0);
+		long second = ManagedJavaMemoryIds.encode(ManagedJavaMemoryEngine.KIND_ARRAY, 3, 1);
+		journal.record(first, MemoryEngineContract.TYPE_INT, 7, 12);
+		journal.record(second, MemoryEngineContract.TYPE_INT, 7, 13);
+		journal.pruneCandidates(id -> id == first);
+		assertNotNull(journal.get(first));
+		assertEquals(null, journal.get(second));
 	}
 
 	@Test

@@ -820,7 +820,7 @@ final class ManagedJavaMemoryEngine {
 		}
 		long targetId = ManagedJavaMemoryIds.encode(owner.kind, owner.handle, targetSlot);
 		synchronized (stateLock) {
-			if (editJournal != null && !editJournal.canRecord(targetId)) {
+			if (changed && editJournal != null && !editJournal.canRecord(targetId)) {
 				return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"The bounded edit history is full");
 			}
@@ -1002,7 +1002,8 @@ final class ManagedJavaMemoryEngine {
 			if (filtered.code != MemoryEngineContract.RESULT_OK) {
 				return resultDetailed(token, MemoryEngineContract.RESULT_PARTIAL_WRITE,
 						"Values may have been restored, but result removal was not committed",
-						attempts, restored, conflicts, unconfirmed, notAttempted, conflicts, 0);
+						attempts, restored, conflicts, unconfirmed, notAttempted, conflicts, 0,
+						MemoryEngineContract.REASON_REVERT_REMOVE_COMMIT_FAILED);
 			}
 			// Journal entries are cleared only after filter commits the revised result set.
 			synchronized (stateLock) {
@@ -1166,8 +1167,20 @@ final class ManagedJavaMemoryEngine {
 				replacements[index] = parsed[0];
 			}
 		}
+		// A no-op needs no new mutation journal entry. Preflight all expected writes so an
+		// exhausted history rejects a changing batch before touching any target.
+		long[] needsHistory = new long[writableBatch.count];
+		int needsHistoryCount = 0;
+		long[] probe = new long[1];
+		for (int index = 0; index < writableBatch.count; index++) {
+			if (!readTyped(writableBatch.owners[index], writableBatch.slots[index],
+					writableBatch.strongOwners[index], probe)
+					|| probe[0] != replacements[index]) {
+				needsHistory[needsHistoryCount++] = writableBatch.ids[index];
+			}
+		}
 		synchronized (stateLock) {
-			if (editJournal != null && !editJournal.canRecord(writableBatch.ids, writableBatch.count)) {
+			if (editJournal != null && !editJournal.canRecord(needsHistory, needsHistoryCount)) {
 				return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"Edit history is full; clear unneeded results or restart the MIDlet");
 			}
@@ -1212,6 +1225,14 @@ final class ManagedJavaMemoryEngine {
 					}
 					long before = readback[0];
 					if (before != replacements[index]) {
+						// The guest may change a value after preflight. Recheck before every
+						// write so a newly changing target never bypasses journal capacity.
+						synchronized (stateLock) {
+							if (editJournal != null && !editJournal.canRecord(writableBatch.ids[index])) {
+								rejectedBeforeWrite++;
+								continue;
+							}
+						}
 						writeStarted = true;
 						writeTyped(writableBatch.owners[index], writableBatch.slots[index], owner, type,
 								replacements[index]);
@@ -1268,11 +1289,20 @@ final class ManagedJavaMemoryEngine {
 	                                             int attempted, int written, int skipped,
 	                                             int unconfirmed, int notAttempted,
 	                                             int rejectedBeforeWrite, int skippedByType) {
+		return resultDetailed(token, code, message, attempted, written, skipped,
+				unconfirmed, notAttempted, rejectedBeforeWrite, skippedByType,
+				MemoryEngineContract.REASON_NONE);
+	}
+
+	private ManagedOperationResult resultDetailed(long token, int code, @Nullable String message,
+	                                             int attempted, int written, int skipped,
+	                                             int unconfirmed, int notAttempted,
+	                                             int rejectedBeforeWrite, int skippedByType, int reason) {
 		synchronized (stateLock) {
 			long revision = committed == null ? 0L : committed.id;
 			return new ManagedOperationResult(code, revision, visibleResultCountLocked(),
 					baselineCount, message, attempted, written, skipped, unconfirmed, notAttempted,
-					rejectedBeforeWrite, skippedByType, watches.count, watches.freezeCount());
+					rejectedBeforeWrite, skippedByType, watches.count, watches.freezeCount(), reason);
 		}
 	}
 
@@ -2239,7 +2269,20 @@ final class ManagedJavaMemoryEngine {
 		while (handles.hasNext()) {
 			if (!retained.contains(handles.next())) handles.remove();
 		}
-		if (editJournal != null) editJournal.pruneOwners(owners.keySet());
+		if (editJournal != null) {
+			editJournal.pruneCandidates(id -> {
+				long handle = ManagedJavaMemoryIds.ownerHandle(id);
+				if (!owners.containsKey(handle)) return false;
+				if (watches.indexOf(id) >= 0) return true;
+				int kind = ManagedJavaMemoryIds.kind(id);
+				int slot = ManagedJavaMemoryIds.slot(id);
+				if (committed != null && committed.contains(handle, kind, slot)) return true;
+				for (SearchState state : searchHistory) {
+					if (state.revision.contains(handle, kind, slot)) return true;
+				}
+				return false;
+			});
+		}
 	}
 
 	static final class Limits {
@@ -2349,12 +2392,25 @@ final class ManagedJavaMemoryEngine {
 		final int skippedByType;
 		final int watchCount;
 		final int freezeCount;
+		final int reason;
 
 		ManagedOperationResult(int code, long revision, long resultCount, long baselineCount,
 		                       String message,
 		                       int attempted, int written, int skipped, int unconfirmed,
 		                       int notAttempted, int rejectedBeforeWrite, int skippedByType,
 		                       int watchCount, int freezeCount) {
+			this(code, revision, resultCount, baselineCount, message,
+					attempted, written, skipped, unconfirmed, notAttempted,
+					rejectedBeforeWrite, skippedByType, watchCount, freezeCount,
+					MemoryEngineContract.REASON_NONE);
+		}
+
+		ManagedOperationResult(int code, long revision, long resultCount, long baselineCount,
+		                       String message,
+		                       int attempted, int written, int skipped, int unconfirmed,
+		                       int notAttempted, int rejectedBeforeWrite, int skippedByType,
+		                       int watchCount, int freezeCount, int reason) {
+			this.reason = reason;
 			this.code = code;
 			this.revision = revision;
 			this.resultCount = resultCount;

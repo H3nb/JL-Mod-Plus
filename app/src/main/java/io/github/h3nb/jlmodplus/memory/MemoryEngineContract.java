@@ -72,6 +72,8 @@ public final class MemoryEngineContract {
 	public static final int REASON_NO_RUNTIME = 1;
 	/** RESULT_NO_SESSION: Undo has no preceding committed search to restore. */
 	public static final int REASON_NO_SEARCH_HISTORY = 2;
+	/** Revert restored values, but the new Results revision could not be published. */
+	public static final int REASON_REVERT_REMOVE_COMMIT_FAILED = 3;
 
 	public static final int CANDIDATE_STABLE = 0;
 	public static final int CANDIDATE_RELOCATING = 1;

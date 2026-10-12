@@ -7,6 +7,7 @@ package io.github.h3nb.jlmodplus.memory;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.function.LongPredicate;
 
 /**
  * Runtime-local, bounded explicit-edit history. IDs encode logical owner slots, not addresses.
@@ -36,13 +37,11 @@ final class ManagedMemoryMutationJournal {
 
 	void clear() { lastEdit.clear(); }
 
-	/** Old runtime owner handles cannot authorize a future revert. */
-	void pruneOwners(java.util.Set<Long> retainedHandles) {
+	/** Release only targets absent from Results, search Undo history and Watch. */
+	void pruneCandidates(LongPredicate retained) {
 		java.util.Iterator<Long> ids = lastEdit.keySet().iterator();
 		while (ids.hasNext()) {
-			if (!retainedHandles.contains(ManagedJavaMemoryIds.ownerHandle(ids.next()))) {
-				ids.remove();
-			}
+			if (!retained.test(ids.next())) ids.remove();
 		}
 	}
 

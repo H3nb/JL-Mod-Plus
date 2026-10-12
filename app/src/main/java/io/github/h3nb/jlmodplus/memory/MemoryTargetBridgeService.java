@@ -308,7 +308,9 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, runtimeToken);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, state.code);
 		// Target-owned NO_SESSION is emitted only by Undo when search history is empty.
-		if (state.code == MemoryEngineContract.RESULT_NO_SESSION) {
+		if (state.reason != MemoryEngineContract.REASON_NONE) {
+			result.putInt(MemoryEngineContract.KEY_OPERATION_REASON, state.reason);
+		} else if (state.code == MemoryEngineContract.RESULT_NO_SESSION) {
 			result.putInt(MemoryEngineContract.KEY_OPERATION_REASON,
 					MemoryEngineContract.REASON_NO_SEARCH_HISTORY);
 		}
