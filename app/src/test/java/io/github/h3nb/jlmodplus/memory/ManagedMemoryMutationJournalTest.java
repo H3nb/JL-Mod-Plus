@@ -89,6 +89,6 @@ public class ManagedMemoryMutationJournalTest {
 		}
 		assertFalse(journal.canRecord(1025L));
 		assertTrue(journal.canRecord(11L));
-		assertFalse(journal.canRecord(new long[]{11L, 1025L}, new long[]{1L, 2L}, 2));
+		assertFalse(journal.canRecord(new long[]{11L, 1025L}, 2));
 	}
 }

@@ -948,7 +948,7 @@ final class ManagedJavaMemoryEngine {
 			synchronized (stateLock) {
 				entry = editJournal == null ? null : editJournal.get(id);
 				int watchIndex = watches.indexOf(id);
-				frozen = watchIndex >= 0 && watches.freeze[watchIndex] && !watches.freezePaused[watchIndex];
+				frozen = watchIndex >= 0 && watches.freeze[watchIndex];
 			}
 			// A live Freeze may immediately overwrite the restored value even if there is
 			// no explicit edit journal entry for this candidate.
@@ -1167,9 +1167,9 @@ final class ManagedJavaMemoryEngine {
 			}
 		}
 		synchronized (stateLock) {
-			if (editJournal != null && !editJournal.canRecord(writableBatch.ids, replacements, writableBatch.count)) {
+			if (editJournal != null && !editJournal.canRecord(writableBatch.ids, writableBatch.count)) {
 				return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
-						"The bounded edit history is full; restart the MIDlet before editing new targets");
+						"Edit history is full; clear unneeded results or restart the MIDlet");
 			}
 		}
 		ManagedOperationResult validation = revalidateBatch(token, expectedRevision, writableBatch,

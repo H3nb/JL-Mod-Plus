@@ -38,8 +38,12 @@ final class ManagedMemoryMutationJournal {
 
 	/** Old runtime owner handles cannot authorize a future revert. */
 	void pruneOwners(java.util.Set<Long> retainedHandles) {
-		lastEdit.keySet().removeIf(id -> !retainedHandles.contains(
-				ManagedJavaMemoryIds.ownerHandle(id)));
+		java.util.Iterator<Long> ids = lastEdit.keySet().iterator();
+		while (ids.hasNext()) {
+			if (!retainedHandles.contains(ManagedJavaMemoryIds.ownerHandle(ids.next()))) {
+				ids.remove();
+			}
+		}
 	}
 
 	/** Keep the restoration evidence until the search result is actually removed. */
@@ -54,7 +58,7 @@ final class ManagedMemoryMutationJournal {
 
 	boolean canRecord(long id) { return lastEdit.containsKey(id) || lastEdit.size() < MAX_ENTRIES; }
 
-	boolean canRecord(long[] ids, long[] values, int count) {
+	boolean canRecord(long[] ids, int count) {
 		int needed = 0;
 		for (int index = 0; index < count; index++) {
 			if (!lastEdit.containsKey(ids[index])) needed++;
