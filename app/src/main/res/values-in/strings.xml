@@ -1033,4 +1033,8 @@
     <string name="updates_debug_build">Ini build debug. APK rilis GitHub terpasang secara terpisah.</string>
     <string name="updates_link_copied">Tidak ada browser. Tautan rilis disalin.</string>
     <string name="updates_browser_unavailable">Tidak ada browser untuk membuka rilis.</string>
+    <string name="bulk_install_choose_files">File</string>
+    <string name="bulk_install_choose_folder">Folder</string>
+    <string name="bulk_install_unreadable_archives">Arsip tidak dapat dibaca: %1$d</string>
+    <string name="bulk_install_skipped_entries">Entri arsip dilewati: %1$d</string>
 </resources>
