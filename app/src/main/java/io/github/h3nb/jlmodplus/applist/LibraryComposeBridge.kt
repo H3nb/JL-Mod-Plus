@@ -364,6 +364,7 @@ interface LibraryActions {
     fun onGridSpacingChange(spacing: LibraryGridSpacing) = Unit
     fun onSort(sortIndex: Int)
     fun onInstall()
+    fun onInstallFolder() = Unit
     fun onImportAppBundle() = Unit
     fun onOpenApp(appId: Int)
     fun onAddShortcut(appId: Int)
@@ -640,6 +641,7 @@ fun LibraryScreen(
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
     var aboutPageVisible by rememberSaveable { mutableStateOf(false) }
+    var installSourceMenuVisible by remember { mutableStateOf(false) }
     var updatesPageVisible by rememberSaveable { mutableStateOf(false) }
     var pendingBulkDeleteIds by remember { mutableStateOf<Set<Long>?>(null) }
     var selectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
@@ -1215,11 +1217,32 @@ fun LibraryScreen(
                             targetOffsetY = { it / 2 },
                         ),
                     ) {
-                        FloatingActionButton(onClick = actions::onInstall) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_add),
-                                contentDescription = stringResource(R.string.install),
-                            )
+                        Box {
+                            FloatingActionButton(onClick = { installSourceMenuVisible = true }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_add),
+                                    contentDescription = stringResource(R.string.install),
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = installSourceMenuVisible,
+                                onDismissRequest = { installSourceMenuVisible = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.bulk_install_choose_files)) },
+                                    onClick = {
+                                        installSourceMenuVisible = false
+                                        actions.onInstall()
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.bulk_install_choose_folder)) },
+                                    onClick = {
+                                        installSourceMenuVisible = false
+                                        actions.onInstallFolder()
+                                    },
+                                )
+                            }
                         }
                     }
                 }
