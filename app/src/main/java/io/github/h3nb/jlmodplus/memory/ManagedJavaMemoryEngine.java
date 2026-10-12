@@ -819,14 +819,14 @@ final class ManagedJavaMemoryEngine {
 					"Managed Inspector edit was cancelled before writing");
 		}
 		long targetId = ManagedJavaMemoryIds.encode(owner.kind, owner.handle, targetSlot);
+		long before = current[0];
+		boolean changed = before != parsed[0];
 		synchronized (stateLock) {
 			if (changed && editJournal != null && !editJournal.canRecord(targetId)) {
 				return failureLocked(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
 						"The bounded edit history is full");
 			}
 		}
-		long before = current[0];
-		boolean changed = before != parsed[0];
 		try {
 			if (changed) writeTyped(owner, targetSlot, strongOwner, valueType, parsed[0]);
 			if (!readTyped(owner, targetSlot, strongOwner, current)
