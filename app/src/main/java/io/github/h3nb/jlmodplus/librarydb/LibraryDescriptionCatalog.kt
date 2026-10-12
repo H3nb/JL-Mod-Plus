@@ -62,7 +62,7 @@ internal class LibraryDescriptionCatalog {
                     emptyMap()
                 }
                 val systemProperties = try {
-                    if (configFile.isFile) {
+                    if (descriptions.isNotEmpty() && configFile.isFile) {
                         ProfilesManager.loadPreparedMidletConfig(configDir, false)?.systemProperties
                     } else null
                 } catch (_: Exception) {
