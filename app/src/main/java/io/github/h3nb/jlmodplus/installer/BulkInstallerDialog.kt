@@ -40,6 +40,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -48,9 +49,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -329,6 +334,8 @@ private fun PlanningContent(label: String? = null, onClose: () -> Unit) {
     }
 }
 
+private enum class ReviewFilter { All, Selected, Attention }
+
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 private fun ReviewContent(
@@ -342,6 +349,22 @@ private fun ReviewContent(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
+    var filter by rememberSaveable { mutableStateOf(ReviewFilter.All) }
+    val visibleItems = remember(plan.items, filter) {
+        plan.items.filter { item ->
+            when (filter) {
+                ReviewFilter.All -> true
+                ReviewFilter.Selected -> item.selected && item.action != BulkInstallAction.Skip
+                ReviewFilter.Attention -> item.status !in setOf(
+                    BulkInstallStatus.New,
+                    BulkInstallStatus.Update,
+                    BulkInstallStatus.AlreadyInstalled,
+                    BulkInstallStatus.Duplicate,
+                )
+            }
+        }
+    }
+    LaunchedEffect(filter) { listState.scrollToItem(0) }
     val canScrollForward = rememberLazyListCanScrollForward(listState)
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -392,6 +415,22 @@ private fun ReviewContent(
                             )
                         }
                         ReviewStatusSummary(plan, compactHeader)
+                        Row(
+                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            listOf(
+                                ReviewFilter.All to R.string.bulk_install_filter_all,
+                                ReviewFilter.Selected to R.string.bulk_install_filter_selected,
+                                ReviewFilter.Attention to R.string.bulk_install_filter_review,
+                            ).forEach { (option, label) ->
+                                FilterChip(
+                                    selected = filter == option,
+                                    onClick = { filter = option },
+                                    label = { Text(stringResource(label)) },
+                                )
+                            }
+                        }
                         if (plan.warnings.isNotEmpty()) {
                             Text(
                                 text = pluralStringResource(
@@ -428,16 +467,19 @@ private fun ReviewContent(
                         HorizontalDivider()
                     }
                 }
-                if (plan.items.isEmpty()) {
+                if (visibleItems.isEmpty()) {
                     item {
                         Text(
-                            text = stringResource(R.string.bulk_install_empty),
+                            text = stringResource(
+                                if (plan.items.isEmpty()) R.string.bulk_install_empty
+                                else R.string.bulk_install_empty_filter,
+                            ),
                             modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
-                items(plan.items, key = { it.id }) { item ->
+                items(visibleItems, key = { it.id }) { item ->
                     BulkItemRow(item, onToggle)
                 }
             }
