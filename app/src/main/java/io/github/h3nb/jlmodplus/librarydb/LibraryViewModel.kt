@@ -77,7 +77,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             val generation: Long,
             val emulatorDir: File,
             val apps: List<LibraryAppRow>,
-            val localizedDescriptions: Map<Long, String> = emptyMap(),
             val collections: List<LibraryCollectionRow>,
             val filter: String,
             val sortVariant: Int,
@@ -88,6 +87,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             val availableAppIds: Set<Long> = apps.mapTo(LinkedHashSet()) { it.id },
             /** Changes only when the authoritative Room-backed repository snapshot changes. */
             val sourceRevision: Long = 0L,
+            val localizedDescriptions: Map<Long, String> = emptyMap(),
         ) : DisplayState
         data class Error(val emulatorDir: File, val message: String) : DisplayState
     }
