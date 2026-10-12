@@ -33,12 +33,12 @@ import java.util.Locale;
  * otherwise borrows a region only from a compatible system locale. It never invents a country
  * merely because a modern locale database has a likely default.</p>
  */
-final class MidletLocaleResolver {
+public final class MidletLocaleResolver {
 	private MidletLocaleResolver() {
 	}
 
 	@Nullable
-	static String resolve(Context context) {
+	public static String resolve(Context context) {
 		LocaleListCompat effectiveLocales =
 				ConfigurationCompat.getLocales(context.getResources().getConfiguration());
 		LocaleListCompat systemLocaleList = LocaleManagerCompat.getSystemLocales(context);
@@ -55,6 +55,21 @@ final class MidletLocaleResolver {
 			effectiveLocale = systemLocales.get(0);
 		}
 		return resolve(effectiveLocale, systemLocales, LocaleListCompat::matchesLanguageAndScript);
+	}
+
+	/** Applies the same per-MIDlet system-property precedence used by the runtime. */
+	@Nullable
+	public static String withSystemProperties(
+			@Nullable String deviceLocale, @Nullable String systemProperties) {
+		String value = deviceLocale;
+		if (systemProperties == null) return value;
+		for (String line : systemProperties.split("\\n")) {
+			String[] property = line.split(": *", 2);
+			if (property.length == 2 && "microedition.locale".equals(property[0])) {
+				value = property[1];
+			}
+		}
+		return value;
 	}
 
 	@Nullable
